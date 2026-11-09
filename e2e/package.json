@@ -1,0 +1,14 @@
+{
+  "name": "moneyharpy-e2e",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "typescript": "^5.9.3"
+  },
+  "private": true
+}
