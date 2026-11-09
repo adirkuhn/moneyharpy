@@ -1,0 +1,9 @@
+.env
+node_modules/
+web/dist/*
+!web/dist/.gitkeep
+web/public/vendor/
+test-results/
+playwright-report/
+coverage/
+*.tsbuildinfo

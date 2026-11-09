@@ -1,0 +1,26 @@
+# Disposable stack for the end-to-end tests: docker compose -p moneyharpy-e2e
+services:
+  app:
+    build: ..
+    environment:
+      DATABASE_URL: postgres://moneyharpy:e2e-password@db:5432/moneyharpy?sslmode=disable
+      SECRET_KEY: e2e-only-secret-key-not-used-anywhere-else
+      BASE_URL: http://localhost:18080
+    ports:
+      - "18080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: moneyharpy
+      POSTGRES_PASSWORD: e2e-password
+      POSTGRES_DB: moneyharpy
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moneyharpy"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
