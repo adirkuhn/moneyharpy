@@ -362,25 +362,31 @@ func pageNumbers(page *Page, perPage *PerPage) (int, int) {
 
 // writePage answers with one page of contacts and Moneybird's Link header.
 func (s *server) writePage(w http.ResponseWriter, r *http.Request, page contacts.Page) {
-	last := max((page.Total+page.PerPage-1)/page.PerPage, 1)
+	s.writeLinks(w, r, page.Page, page.PerPage, page.Total)
+	writeJSON(w, http.StatusOK, s.toContacts(page.Contacts))
+}
+
+// writeLinks sets Moneybird's Link header to the first, previous, next and
+// last pages, and X-Total-Count to the number of records in all.
+func (s *server) writeLinks(w http.ResponseWriter, r *http.Request, page, perPage, total int) {
+	last := max((total+perPage-1)/perPage, 1)
 	link := func(n int, rel string) string {
 		q := r.URL.Query()
 		q.Set("page", strconv.Itoa(n))
-		q.Set("per_page", strconv.Itoa(page.PerPage))
+		q.Set("per_page", strconv.Itoa(perPage))
 		u := url.URL{Path: r.URL.Path, RawQuery: q.Encode()}
 		return fmt.Sprintf("<%s%s>; rel=%q", strings.TrimSuffix(s.deps.BaseURL, "/"), u.String(), rel)
 	}
 	links := []string{link(1, "first")}
-	if page.Page > 1 {
-		links = append(links, link(min(page.Page-1, last), "prev"))
+	if page > 1 {
+		links = append(links, link(min(page-1, last), "prev"))
 	}
-	if page.Page < last {
-		links = append(links, link(page.Page+1, "next"))
+	if page < last {
+		links = append(links, link(page+1, "next"))
 	}
 	links = append(links, link(last, "last"))
 	w.Header().Set("Link", strings.Join(links, ", "))
-	w.Header().Set("X-Total-Count", strconv.Itoa(page.Total))
-	writeJSON(w, http.StatusOK, s.toContacts(page.Contacts))
+	w.Header().Set("X-Total-Count", strconv.Itoa(total))
 }
 
 func archivedParam(v *string) bool { return v != nil && *v == "true" }

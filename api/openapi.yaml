@@ -50,6 +50,8 @@ tags:
     description: An administration's home page. MoneyHarpy extension.
   - name: Contacts
     description: Customers and suppliers with their contact people and notes. Compatible with the Moneybird API.
+  - name: Journal
+    description: Journal entries made by hand and the reports that read the whole journal. Compatible with the Moneybird API.
   - name: Booking rules
     description: Rules that book matching transactions automatically. MoneyHarpy extension.
   - name: Management
@@ -2665,6 +2667,482 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_journal_documents:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listGeneralJournalDocuments
+      x-permissions: [documents]
+      summary: List all journal entries
+      description: >-
+        Journal entries made by hand (general journal documents), newest first unless sort is date_asc. Filter terms: period (this year unless a filter is given), reference (several separated by |), contact_id, ledger_account_id, updated_after, attachment (all, with, without); state and recurring are accepted and match every entry. Paged with a Link header and X-Total-Count.
+      tags: [Journal]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+        - name: exclude_new_general_journal_documents
+          in: query
+          description: Accepted for compatibility; journal entries are never new.
+          schema:
+            type: string
+            enum: ['true', 'false']
+      responses:
+        '200':
+          $ref: '#/components/responses/GeneralJournalDocumentPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createGeneralJournalDocument
+      x-permissions: [documents]
+      summary: Create a journal entry
+      description: >-
+        Debit and credit must be equal. Rows cannot book on the debtors or creditors, which invoices settle, nor in the locked period.
+      tags: [Journal]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneralJournalDocumentRequest'
+      responses:
+        '201':
+          description: The created journal entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralJournalDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/documents/general_journal_documents/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listGeneralJournalDocumentVersions
+      x-permissions: [documents]
+      summary: List all ids and versions
+      tags: [Journal]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The ids and versions of the journal entries the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchGeneralJournalDocuments
+      x-permissions: [documents]
+      summary: Fetch journal entries with given ids
+      tags: [Journal]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The journal entries with these ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeneralJournalDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/documents/general_journal_documents/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getGeneralJournalDocument
+      x-permissions: [documents]
+      summary: Get a journal entry
+      tags: [Journal]
+      responses:
+        '200':
+          description: The journal entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralJournalDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateGeneralJournalDocument
+      x-permissions: [documents]
+      summary: Update a journal entry
+      description: >-
+        Rows with an id change, rows with _destroy go, rows without an id are added.
+      tags: [Journal]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneralJournalDocumentRequest'
+      responses:
+        '200':
+          description: The journal entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralJournalDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      operationId: deleteGeneralJournalDocument
+      x-permissions: [documents]
+      summary: Delete a journal entry
+      description: >-
+        Not in the locked period.
+      tags: [Journal]
+      responses:
+        '204':
+          description: The journal entry is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createGeneralJournalDocumentNote
+      x-permissions: [documents]
+      summary: Add note to a journal entry
+      tags: [Journal]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteGeneralJournalDocumentNote
+      x-permissions: [documents]
+      summary: Delete a note from a journal entry
+      tags: [Journal]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createGeneralJournalDocumentAttachment
+      x-permissions: [documents]
+      summary: Add attachment to a journal entry
+      description: >-
+        A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+      tags: [Journal]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/attachment_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteGeneralJournalDocumentAttachment
+      x-permissions: [documents]
+      summary: Delete an attachment from a journal entry
+      tags: [Journal]
+      responses:
+        '204':
+          description: The attachment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: downloadGeneralJournalDocumentAttachment
+      x-permissions: [documents]
+      summary: Download an attachment
+      description: >-
+        Answers with the file itself; Moneybird redirects to it instead.
+      tags: [Journal]
+      responses:
+        '200':
+          description: The file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/journal_entries:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getJournalEntriesReport
+      x-permissions: [documents, bank]
+      summary: Get journal entries report
+      description: >-
+        Every booking in the period, oldest first, on a ledger account, for a contact or for a project; one of them is required. account_type needs a contact_id or project_id. Bank transactions post too: the whole amount on the account, each booking against its category, and the part not booked yet against unprocessed transactions.
+      tags: [Journal]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: ledger_account_id
+          in: query
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+        - name: contact_id
+          in: query
+          description: A contact's id, or null for entries without a contact.
+          schema:
+            type: string
+            pattern: '^([0-9]{1,19}|null)$'
+        - name: project_id
+          in: query
+          description: A project's id, or null for entries without a project.
+          schema:
+            type: string
+            pattern: '^([0-9]{1,19}|null)$'
+        - name: account_type
+          in: query
+          schema:
+            type: string
+            enum: [non_current_assets, current_assets, equity, provisions, non_current_liabilities, current_liabilities, revenue, direct_costs, expenses, other_income_expenses, other, temporary]
+      responses:
+        '200':
+          description: The journal entries
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of entries selected in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JournalEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/reports/general_ledger:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getGeneralLedgerReport
+      x-permissions: [documents, bank]
+      summary: Get general ledger report
+      description: >-
+        Every ledger account with a balance or bookings: the debit and credit sums in the period and the balance at its start and end. Profit and loss accounts start each calendar year at zero. With granularity, periods repeats this per month, quarter or year.
+      tags: [Journal]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [month, quarter, year]
+      responses:
+        '200':
+          description: The general ledger
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralLedgerReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
   /api/v2/{administration_id}/booking_rules:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -4261,6 +4739,22 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Identifier'
+    document_filter:
+      name: filter
+      in: query
+      description: Comma-separated key:value terms.
+      schema:
+        type: string
+        maxLength: 1000
+    report_period:
+      name: period
+      in: query
+      description: >-
+        A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month,
+        next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+      schema:
+        type: string
+        maxLength: 20
     contact_id:
       name: contact_id
       in: path
@@ -4303,6 +4797,23 @@ components:
         type: string
         maxLength: 1000
   responses:
+    GeneralJournalDocumentPage:
+      description: A page of journal entries
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number of journal entries selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/GeneralJournalDocument'
     ContactPage:
       description: A page of contacts
       headers:
@@ -5929,6 +6440,144 @@ components:
               $ref: '#/components/schemas/FlexibleBoolean'
             assignee_id:
               $ref: '#/components/schemas/FlexibleIdentifier'
+    GeneralJournalDocument:
+      description: A Moneybird general journal document with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/general_journal_document_response'
+        - type: object
+          required: [id, administration_id, reference, date, version, general_journal_document_entries, notes, attachments, events, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    GeneralJournalDocumentRequest:
+      type: object
+      required: [general_journal_document]
+      additionalProperties: false
+      properties:
+        general_journal_document:
+          type: object
+          additionalProperties: false
+          properties:
+            reference:
+              type: string
+              maxLength: 255
+            date:
+              type: string
+              format: date
+            journal_type:
+              type: string
+              enum: [fiscal_year_ending, '']
+            general_journal_document_entries_attributes:
+              description: An array of rows, or an object of rows keyed by position, as Moneybird accepts.
+              oneOf:
+                - type: array
+                  maxItems: 200
+                  items:
+                    $ref: '#/components/schemas/GeneralJournalDocumentRowInput'
+                - type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/GeneralJournalDocumentRowInput'
+        all_taxes:
+          description: Accepted for compatibility.
+          $ref: '#/components/schemas/FlexibleBoolean'
+    GeneralJournalDocumentRowInput:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        ledger_account_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        contact_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        project_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        tax_rate_id:
+          description: Accepted for compatibility; journal entries post no VAT of their own.
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        debit:
+          $ref: '#/components/schemas/Money'
+        credit:
+          $ref: '#/components/schemas/Money'
+        description:
+          type: string
+          maxLength: 1000
+        row_order:
+          oneOf:
+            - type: integer
+            - type: string
+              pattern: '^[0-9]{1,6}$'
+        _destroy:
+          $ref: '#/components/schemas/FlexibleBoolean'
+    JournalEntry:
+      type: object
+      description: One booking in the journal. Debits are positive amounts, credits negative.
+      required: [id, date, document_type, document_id, ledger_account_id, amount]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        date:
+          type: string
+          format: date
+        document_type:
+          type: string
+          enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, Payment]
+        document_id:
+          $ref: '#/components/schemas/Identifier'
+        ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        project_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        tax_rate_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        financial_account_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        amount:
+          type: string
+        description:
+          type: string
+          nullable: true
+    LedgerAccountValues:
+      type: object
+      required: [ledger_accounts]
+      properties:
+        ledger_accounts:
+          type: array
+          items:
+            type: object
+            required: [ledger_account_id, value]
+            properties:
+              ledger_account_id:
+                $ref: '#/components/schemas/Identifier'
+              value:
+                type: string
+    GeneralLedgerPeriod:
+      type: object
+      required: [debit_sums, credit_sums, start_balance, final_balance]
+      properties:
+        period:
+          type: string
+          description: The part of the report's period, as yyyymmdd..yyyymmdd.
+        debit_sums:
+          $ref: '#/components/schemas/LedgerAccountValues'
+        credit_sums:
+          $ref: '#/components/schemas/LedgerAccountValues'
+        start_balance:
+          $ref: '#/components/schemas/LedgerAccountValues'
+        final_balance:
+          $ref: '#/components/schemas/LedgerAccountValues'
+    GeneralLedgerReport:
+      allOf:
+        - $ref: '#/components/schemas/GeneralLedgerPeriod'
+        - type: object
+          properties:
+            periods:
+              type: array
+              items:
+                $ref: '#/components/schemas/GeneralLedgerPeriod'
     BookingRuleRequest:
       type: object
       required: [booking_rule]

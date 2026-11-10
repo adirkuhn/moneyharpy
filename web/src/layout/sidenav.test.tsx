@@ -63,7 +63,7 @@ describe('side menu', () => {
     await userEvent.click(reports)
     expect(reports).toHaveAttribute('aria-expanded', 'true')
     const list = document.getElementById(reports.getAttribute('aria-controls') ?? '')!
-    expect(within(list).getAllByRole('link')).toHaveLength(17)
+    expect(within(list).getAllByRole('link')).toHaveLength(18)
     await userEvent.click(reports)
     expect(within(nav).queryByRole('link', { name: 'Balance sheet' })).toBeNull()
   })

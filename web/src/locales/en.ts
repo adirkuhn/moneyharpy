@@ -42,6 +42,19 @@ export const en = {
     confirmDeletePerson: 'Confirm remove {{name}}', remove: 'Remove', confirmRemove: 'Confirm remove', notes: 'Notes', newNote: 'New note',
     isTodo: 'This is a to-do', addNote: 'Add note', todo: 'To do', done: 'Done', deleteNote: 'Remove note', confirmDeleteNote: 'Confirm remove note',
   },
+  journal: {
+    trialBalance: 'Trial balance', trialBalanceSubtitle: 'Every category with its balance at the start, its debits and credits, and its balance at the end of the period.',
+    filters: 'Report filters', period: 'Period', periods: { this_month: 'This month', prev_month: 'Last month', this_quarter: 'This quarter', prev_quarter: 'Last quarter', this_year: 'This year', prev_year: 'Last year' },
+    category: 'Category', startBalance: 'Start balance', debit: 'Debit', credit: 'Credit', endBalance: 'End balance', total: 'Total',
+    nothingBooked: 'Nothing is booked in this period.', loadError: 'The report could not be loaded. Reload the page to try again.',
+    bookings: 'Bookings', bookingsSubtitle: 'Every booking on this category in the period.', backToTrialBalance: 'Back to the trial balance',
+    noBookings: 'No bookings on this category in this period.', date: 'Date', description: 'Description', document: 'Document',
+    documentTypes: { FinancialMutation: 'Bank transaction', GeneralJournalDocument: 'Journal entry', SalesInvoice: 'Sales invoice', ExternalSalesInvoice: 'External invoice', Payment: 'Payment' },
+    entries: 'Journal entries', entriesSubtitle: 'Bookings made by hand, such as corrections and closing a year.', newEntry: 'New journal entry',
+    noEntries: 'No journal entries in this period.', reference: 'Reference', amount: 'Amount', entrySubtitle: 'Debit and credit must be equal. Invoices settle the debtors and creditors.',
+    backToEntries: 'Back to journal entries', rows: 'Rows', actions: 'Actions', remove: 'Remove', removeRow: 'Remove row {{n}}', addRow: 'Add row',
+    balanced: 'Debit and credit are equal.', difference: 'Difference: {{amount}}', save: 'Save journal entry', delete: 'Delete', confirmDelete: 'Delete permanently',
+  },
   sidenav: {
     label: 'Administration menu', menu: 'Menu', collapse: 'Collapse menu', expand: 'Expand menu', collapseShort: 'Collapse', later: 'Not available yet',
     items: {
@@ -52,7 +65,7 @@ export const en = {
       reports: 'Reports', reportsOverview: 'Overview', profitLoss: 'Profit and loss statement', balanceSheet: 'Balance sheet', assetsReport: 'Assets report',
       vatSummary: 'VAT summary', cashFlow: 'Cash flow statement', debtors: 'Receivable overview', creditors: 'Payable overview',
       debtorsAging: 'Receivables aging', creditorsAging: 'Payables aging', revenueByContact: 'Revenue per contact', expensesByContact: 'Costs per contact',
-      revenueByProject: 'Revenue by project', expensesByProject: 'Expenses by project', trialBalance: 'Trial balance', auditReport: 'Audit report', events: 'Events',
+      revenueByProject: 'Revenue by project', expensesByProject: 'Expenses by project', journalEntries: 'Journal entries', trialBalance: 'Trial balance', auditReport: 'Audit report', events: 'Events',
       products: 'Products', productsOverview: 'Overview', onlineSales: 'Online sales',
       assets: 'Assets', projects: 'Projects', tasks: 'Task lists', taskLists: 'Task lists', taskTemplates: 'Templates', settings: 'Settings',
     },

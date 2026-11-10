@@ -317,19 +317,19 @@ func (e CustomFieldSource) Valid() bool {
 
 // Defines values for DeclarationPeriod.
 const (
-	Month   DeclarationPeriod = "month"
-	Quarter DeclarationPeriod = "quarter"
-	Year    DeclarationPeriod = "year"
+	DeclarationPeriodMonth   DeclarationPeriod = "month"
+	DeclarationPeriodQuarter DeclarationPeriod = "quarter"
+	DeclarationPeriodYear    DeclarationPeriod = "year"
 )
 
 // Valid indicates whether the value is a known member of the DeclarationPeriod enum.
 func (e DeclarationPeriod) Valid() bool {
 	switch e {
-	case Month:
+	case DeclarationPeriodMonth:
 		return true
-	case Quarter:
+	case DeclarationPeriodQuarter:
 		return true
-	case Year:
+	case DeclarationPeriodYear:
 		return true
 	default:
 		return false
@@ -582,6 +582,39 @@ func (e FlexibleBoolean1) Valid() bool {
 	}
 }
 
+// Defines values for GeneralJournalDocumentJournalType.
+const (
+	GeneralJournalDocumentJournalTypeFiscalYearEnding GeneralJournalDocumentJournalType = "fiscal_year_ending"
+)
+
+// Valid indicates whether the value is a known member of the GeneralJournalDocumentJournalType enum.
+func (e GeneralJournalDocumentJournalType) Valid() bool {
+	switch e {
+	case GeneralJournalDocumentJournalTypeFiscalYearEnding:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GeneralJournalDocumentRequestGeneralJournalDocumentJournalType.
+const (
+	GeneralJournalDocumentRequestGeneralJournalDocumentJournalTypeEmpty            GeneralJournalDocumentRequestGeneralJournalDocumentJournalType = ""
+	GeneralJournalDocumentRequestGeneralJournalDocumentJournalTypeFiscalYearEnding GeneralJournalDocumentRequestGeneralJournalDocumentJournalType = "fiscal_year_ending"
+)
+
+// Valid indicates whether the value is a known member of the GeneralJournalDocumentRequestGeneralJournalDocumentJournalType enum.
+func (e GeneralJournalDocumentRequestGeneralJournalDocumentJournalType) Valid() bool {
+	switch e {
+	case GeneralJournalDocumentRequestGeneralJournalDocumentJournalTypeEmpty:
+		return true
+	case GeneralJournalDocumentRequestGeneralJournalDocumentJournalTypeFiscalYearEnding:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IdentityRequestIdentityTaxNumberAbsenceReason.
 const (
 	IdentityRequestIdentityTaxNumberAbsenceReasonBelowTaxThreshold IdentityRequestIdentityTaxNumberAbsenceReason = "below_tax_threshold"
@@ -615,6 +648,33 @@ func (e ImportResultFormat) Valid() bool {
 	case Camt:
 		return true
 	case Mt940:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for JournalEntryDocumentType.
+const (
+	JournalEntryDocumentTypeExternalSalesInvoice   JournalEntryDocumentType = "ExternalSalesInvoice"
+	JournalEntryDocumentTypeFinancialMutation      JournalEntryDocumentType = "FinancialMutation"
+	JournalEntryDocumentTypeGeneralJournalDocument JournalEntryDocumentType = "GeneralJournalDocument"
+	JournalEntryDocumentTypePayment                JournalEntryDocumentType = "Payment"
+	JournalEntryDocumentTypeSalesInvoice           JournalEntryDocumentType = "SalesInvoice"
+)
+
+// Valid indicates whether the value is a known member of the JournalEntryDocumentType enum.
+func (e JournalEntryDocumentType) Valid() bool {
+	switch e {
+	case JournalEntryDocumentTypeExternalSalesInvoice:
+		return true
+	case JournalEntryDocumentTypeFinancialMutation:
+		return true
+	case JournalEntryDocumentTypeGeneralJournalDocument:
+		return true
+	case JournalEntryDocumentTypePayment:
+		return true
+	case JournalEntryDocumentTypeSalesInvoice:
 		return true
 	default:
 		return false
@@ -1167,6 +1227,39 @@ func (e WorkflowRequestWorkflowType) Valid() bool {
 	}
 }
 
+// Defines values for AttachmentResponseAttachableType.
+const (
+	AttachmentResponseAttachableTypeDocument              AttachmentResponseAttachableType = "Document"
+	AttachmentResponseAttachableTypeEstimate              AttachmentResponseAttachableType = "Estimate"
+	AttachmentResponseAttachableTypeExternalSalesInvoice  AttachmentResponseAttachableType = "ExternalSalesInvoice"
+	AttachmentResponseAttachableTypeFinancialStatement    AttachmentResponseAttachableType = "FinancialStatement"
+	AttachmentResponseAttachableTypeRecurringSalesInvoice AttachmentResponseAttachableType = "RecurringSalesInvoice"
+	AttachmentResponseAttachableTypeSalesInvoice          AttachmentResponseAttachableType = "SalesInvoice"
+	AttachmentResponseAttachableTypeWorkflow              AttachmentResponseAttachableType = "Workflow"
+)
+
+// Valid indicates whether the value is a known member of the AttachmentResponseAttachableType enum.
+func (e AttachmentResponseAttachableType) Valid() bool {
+	switch e {
+	case AttachmentResponseAttachableTypeDocument:
+		return true
+	case AttachmentResponseAttachableTypeEstimate:
+		return true
+	case AttachmentResponseAttachableTypeExternalSalesInvoice:
+		return true
+	case AttachmentResponseAttachableTypeFinancialStatement:
+		return true
+	case AttachmentResponseAttachableTypeRecurringSalesInvoice:
+		return true
+	case AttachmentResponseAttachableTypeSalesInvoice:
+		return true
+	case AttachmentResponseAttachableTypeWorkflow:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for BaseContactResponseCreditCardType.
 const (
 	BaseContactResponseCreditCardTypeMastercard BaseContactResponseCreditCardType = "mastercard"
@@ -1485,6 +1578,21 @@ func (e FinancialMutationResponseState) Valid() bool {
 	case FinancialMutationResponseStateProcessed:
 		return true
 	case FinancialMutationResponseStateUnprocessed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GeneralJournalDocumentResponseJournalType.
+const (
+	GeneralJournalDocumentResponseJournalTypeFiscalYearEnding GeneralJournalDocumentResponseJournalType = "fiscal_year_ending"
+)
+
+// Valid indicates whether the value is a known member of the GeneralJournalDocumentResponseJournalType enum.
+func (e GeneralJournalDocumentResponseJournalType) Valid() bool {
+	switch e {
+	case GeneralJournalDocumentResponseJournalTypeFiscalYearEnding:
 		return true
 	default:
 		return false
@@ -2040,6 +2148,111 @@ func (e GetContactParamsIncludeArchived) Valid() bool {
 	case GetContactParamsIncludeArchivedFalse:
 		return true
 	case GetContactParamsIncludeArchivedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGeneralJournalDocumentsParamsSort.
+const (
+	DateAsc  ListGeneralJournalDocumentsParamsSort = "date_asc"
+	DateDesc ListGeneralJournalDocumentsParamsSort = "date_desc"
+)
+
+// Valid indicates whether the value is a known member of the ListGeneralJournalDocumentsParamsSort enum.
+func (e ListGeneralJournalDocumentsParamsSort) Valid() bool {
+	switch e {
+	case DateAsc:
+		return true
+	case DateDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments.
+const (
+	ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsFalse ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments = "false"
+	ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsTrue  ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments enum.
+func (e ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments) Valid() bool {
+	switch e {
+	case ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsFalse:
+		return true
+	case ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetGeneralLedgerReportParamsGranularity.
+const (
+	GetGeneralLedgerReportParamsGranularityMonth   GetGeneralLedgerReportParamsGranularity = "month"
+	GetGeneralLedgerReportParamsGranularityQuarter GetGeneralLedgerReportParamsGranularity = "quarter"
+	GetGeneralLedgerReportParamsGranularityYear    GetGeneralLedgerReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetGeneralLedgerReportParamsGranularity enum.
+func (e GetGeneralLedgerReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetGeneralLedgerReportParamsGranularityMonth:
+		return true
+	case GetGeneralLedgerReportParamsGranularityQuarter:
+		return true
+	case GetGeneralLedgerReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetJournalEntriesReportParamsAccountType.
+const (
+	GetJournalEntriesReportParamsAccountTypeCurrentAssets         GetJournalEntriesReportParamsAccountType = "current_assets"
+	GetJournalEntriesReportParamsAccountTypeCurrentLiabilities    GetJournalEntriesReportParamsAccountType = "current_liabilities"
+	GetJournalEntriesReportParamsAccountTypeDirectCosts           GetJournalEntriesReportParamsAccountType = "direct_costs"
+	GetJournalEntriesReportParamsAccountTypeEquity                GetJournalEntriesReportParamsAccountType = "equity"
+	GetJournalEntriesReportParamsAccountTypeExpenses              GetJournalEntriesReportParamsAccountType = "expenses"
+	GetJournalEntriesReportParamsAccountTypeNonCurrentAssets      GetJournalEntriesReportParamsAccountType = "non_current_assets"
+	GetJournalEntriesReportParamsAccountTypeNonCurrentLiabilities GetJournalEntriesReportParamsAccountType = "non_current_liabilities"
+	GetJournalEntriesReportParamsAccountTypeOther                 GetJournalEntriesReportParamsAccountType = "other"
+	GetJournalEntriesReportParamsAccountTypeOtherIncomeExpenses   GetJournalEntriesReportParamsAccountType = "other_income_expenses"
+	GetJournalEntriesReportParamsAccountTypeProvisions            GetJournalEntriesReportParamsAccountType = "provisions"
+	GetJournalEntriesReportParamsAccountTypeRevenue               GetJournalEntriesReportParamsAccountType = "revenue"
+	GetJournalEntriesReportParamsAccountTypeTemporary             GetJournalEntriesReportParamsAccountType = "temporary"
+)
+
+// Valid indicates whether the value is a known member of the GetJournalEntriesReportParamsAccountType enum.
+func (e GetJournalEntriesReportParamsAccountType) Valid() bool {
+	switch e {
+	case GetJournalEntriesReportParamsAccountTypeCurrentAssets:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeCurrentLiabilities:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeDirectCosts:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeEquity:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeExpenses:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeNonCurrentAssets:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeNonCurrentLiabilities:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeOther:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeOtherIncomeExpenses:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeProvisions:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeRevenue:
+		return true
+	case GetJournalEntriesReportParamsAccountTypeTemporary:
 		return true
 	default:
 		return false
@@ -3053,6 +3266,132 @@ type FlexibleIdentifier0 = string
 // FlexibleIdentifier1 defines model for FlexibleIdentifier.1.
 type FlexibleIdentifier1 = int
 
+// GeneralJournalDocument A Moneybird general journal document with MoneyHarpy extensions.
+type GeneralJournalDocument struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier           `json:"administration_id"`
+	Attachments      []AttachmentResponse `json:"attachments"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt                     *Timestamp                            `json:"created_at,omitempty"`
+	Date                          openapi_types.Date                    `json:"date"`
+	Events                        []EventResponse                       `json:"events"`
+	GeneralJournalDocumentEntries []GeneralJournalDocumentEntryResponse `json:"general_journal_document_entries"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id          Identifier                         `json:"id"`
+	JournalType *GeneralJournalDocumentJournalType `json:"journal_type,omitempty"`
+	Notes       []NoteResponse                     `json:"notes"`
+	Reference   *string                            `json:"reference"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+
+	// Version Moneybird-compatible version.
+	Version Version `json:"version"`
+}
+
+// GeneralJournalDocumentJournalType defines model for GeneralJournalDocument.JournalType.
+type GeneralJournalDocumentJournalType string
+
+// GeneralJournalDocumentRequest defines model for GeneralJournalDocumentRequest.
+type GeneralJournalDocumentRequest struct {
+	// AllTaxes A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	AllTaxes               *FlexibleBoolean `json:"all_taxes,omitempty"`
+	GeneralJournalDocument struct {
+		Date *openapi_types.Date `json:"date,omitempty"`
+
+		// GeneralJournalDocumentEntriesAttributes An array of rows, or an object of rows keyed by position, as Moneybird accepts.
+		GeneralJournalDocumentEntriesAttributes *GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes `json:"general_journal_document_entries_attributes,omitempty"`
+		JournalType                             *GeneralJournalDocumentRequestGeneralJournalDocumentJournalType                               `json:"journal_type,omitempty"`
+		Reference                               *string                                                                                       `json:"reference,omitempty"`
+	} `json:"general_journal_document"`
+}
+
+// GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0 defines model for GeneralJournalDocumentRequest.GeneralJournalDocument.GeneralJournalDocumentEntriesAttributes.0.
+type GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0 = []GeneralJournalDocumentRowInput
+
+// GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1 defines model for GeneralJournalDocumentRequest.GeneralJournalDocument.GeneralJournalDocumentEntriesAttributes.1.
+type GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1 map[string]GeneralJournalDocumentRowInput
+
+// GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes An array of rows, or an object of rows keyed by position, as Moneybird accepts.
+type GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes struct {
+	union json.RawMessage
+}
+
+// GeneralJournalDocumentRequestGeneralJournalDocumentJournalType defines model for GeneralJournalDocumentRequest.GeneralJournalDocument.JournalType.
+type GeneralJournalDocumentRequestGeneralJournalDocumentJournalType string
+
+// GeneralJournalDocumentRowInput defines model for GeneralJournalDocumentRowInput.
+type GeneralJournalDocumentRowInput struct {
+	// UnderscoreDestroy A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	UnderscoreDestroy *FlexibleBoolean `json:"_destroy,omitempty"`
+
+	// ContactId An id as a string or a number; an empty string clears it.
+	ContactId *FlexibleIdentifier `json:"contact_id,omitempty"`
+
+	// Credit An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	Credit *Money `json:"credit,omitempty"`
+
+	// Debit An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	Debit       *Money  `json:"debit,omitempty"`
+	Description *string `json:"description,omitempty"`
+
+	// Id An id as a string or a number; an empty string clears it.
+	Id *FlexibleIdentifier `json:"id,omitempty"`
+
+	// LedgerAccountId An id as a string or a number; an empty string clears it.
+	LedgerAccountId *FlexibleIdentifier `json:"ledger_account_id,omitempty"`
+
+	// ProjectId An id as a string or a number; an empty string clears it.
+	ProjectId *FlexibleIdentifier                      `json:"project_id,omitempty"`
+	RowOrder  *GeneralJournalDocumentRowInput_RowOrder `json:"row_order,omitempty"`
+
+	// TaxRateId An id as a string or a number; an empty string clears it.
+	TaxRateId *FlexibleIdentifier `json:"tax_rate_id,omitempty"`
+}
+
+// GeneralJournalDocumentRowInputRowOrder0 defines model for GeneralJournalDocumentRowInput.RowOrder.0.
+type GeneralJournalDocumentRowInputRowOrder0 = int
+
+// GeneralJournalDocumentRowInputRowOrder1 defines model for GeneralJournalDocumentRowInput.RowOrder.1.
+type GeneralJournalDocumentRowInputRowOrder1 = string
+
+// GeneralJournalDocumentRowInput_RowOrder defines model for GeneralJournalDocumentRowInput.RowOrder.
+type GeneralJournalDocumentRowInput_RowOrder struct {
+	union json.RawMessage
+}
+
+// GeneralLedgerPeriod defines model for GeneralLedgerPeriod.
+type GeneralLedgerPeriod struct {
+	CreditSums   LedgerAccountValues `json:"credit_sums"`
+	DebitSums    LedgerAccountValues `json:"debit_sums"`
+	FinalBalance LedgerAccountValues `json:"final_balance"`
+
+	// Period The part of the report's period, as yyyymmdd..yyyymmdd.
+	Period       *string             `json:"period,omitempty"`
+	StartBalance LedgerAccountValues `json:"start_balance"`
+}
+
+// GeneralLedgerReport defines model for GeneralLedgerReport.
+type GeneralLedgerReport struct {
+	CreditSums   LedgerAccountValues `json:"credit_sums"`
+	DebitSums    LedgerAccountValues `json:"debit_sums"`
+	FinalBalance LedgerAccountValues `json:"final_balance"`
+
+	// Period The part of the report's period, as yyyymmdd..yyyymmdd.
+	Period       *string                `json:"period,omitempty"`
+	Periods      *[]GeneralLedgerPeriod `json:"periods,omitempty"`
+	StartBalance LedgerAccountValues    `json:"start_balance"`
+}
+
 // Identifier A unique record identifier. Parse as a string.
 //
 // Example: 123456789012345678
@@ -3261,6 +3600,44 @@ type InvoiceSettingsRequest struct {
 	} `json:"invoice_settings"`
 }
 
+// JournalEntry One booking in the journal. Debits are positive amounts, credits negative.
+type JournalEntry struct {
+	Amount string `json:"amount"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId   *IdentifierNullable `json:"contact_id,omitempty"`
+	Date        openapi_types.Date  `json:"date"`
+	Description *string             `json:"description,omitempty"`
+
+	// DocumentId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DocumentId   Identifier               `json:"document_id"`
+	DocumentType JournalEntryDocumentType `json:"document_type"`
+
+	// FinancialAccountId Moneybird-compatible identifier_nullable.
+	FinancialAccountId *IdentifierNullable `json:"financial_account_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	LedgerAccountId Identifier `json:"ledger_account_id"`
+
+	// ProjectId Moneybird-compatible identifier_nullable.
+	ProjectId *IdentifierNullable `json:"project_id,omitempty"`
+
+	// TaxRateId Moneybird-compatible identifier_nullable.
+	TaxRateId *IdentifierNullable `json:"tax_rate_id,omitempty"`
+}
+
+// JournalEntryDocumentType defines model for JournalEntry.DocumentType.
+type JournalEntryDocumentType string
+
 // JsonRpcMessage A JSON-RPC 2.0 request or notification.
 type JsonRpcMessage struct {
 	Id      *JsonRpcMessage_Id      `json:"id,omitempty"`
@@ -3447,6 +3824,17 @@ type LedgerAccountTemplate struct {
 		Name        string      `json:"name"`
 	} `json:"ledger_accounts"`
 	Name string `json:"name"`
+}
+
+// LedgerAccountValues defines model for LedgerAccountValues.
+type LedgerAccountValues struct {
+	LedgerAccounts []struct {
+		// LedgerAccountId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		LedgerAccountId Identifier `json:"ledger_account_id"`
+		Value           string     `json:"value"`
+	} `json:"ledger_accounts"`
 }
 
 // LinkBookingRequest defines model for LinkBookingRequest.
@@ -4092,6 +4480,34 @@ type WorkflowRequest struct {
 // WorkflowRequestWorkflowType Required when creating; ignored when updating.
 type WorkflowRequestWorkflowType string
 
+// AttachmentResponse Moneybird-compatible attachment_response.
+type AttachmentResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// AttachableId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AttachableId   *Identifier                       `json:"attachable_id,omitempty"`
+	AttachableType *AttachmentResponseAttachableType `json:"attachable_type,omitempty"`
+	ContentType    *string                           `json:"content_type,omitempty"`
+	CreatedAt      *time.Time                        `json:"created_at,omitempty"`
+	Filename       *string                           `json:"filename,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id        *Identifier `json:"id,omitempty"`
+	Rotation  *int        `json:"rotation,omitempty"`
+	Size      *int        `json:"size,omitempty"`
+	UpdatedAt *time.Time  `json:"updated_at,omitempty"`
+}
+
+// AttachmentResponseAttachableType defines model for AttachmentResponse.AttachableType.
+type AttachmentResponseAttachableType string
+
 // BankBalanceAmounts Moneybird-compatible bank_balance_amounts.
 type BankBalanceAmounts struct {
 	FinancialAccounts *[]struct {
@@ -4615,6 +5031,72 @@ type FinancialStatementResponse struct {
 	Reference       *string             `json:"reference,omitempty"`
 }
 
+// GeneralJournalDocumentEntryResponse Moneybird-compatible general_journal_document_entry_response.
+type GeneralJournalDocumentEntryResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp `json:"created_at,omitempty"`
+	Credit      *string    `json:"credit,omitempty"`
+	Debit       *string    `json:"debit,omitempty"`
+	Description *string    `json:"description,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	LedgerAccountId *Identifier `json:"ledger_account_id,omitempty"`
+
+	// ProjectId Moneybird-compatible identifier_nullable.
+	ProjectId *IdentifierNullable `json:"project_id,omitempty"`
+	RowOrder  *int                `json:"row_order,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// GeneralJournalDocumentResponse Moneybird-compatible general_journal_document_response.
+type GeneralJournalDocumentResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier           `json:"administration_id,omitempty"`
+	Attachments      *[]AttachmentResponse `json:"attachments,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt                     *Timestamp                             `json:"created_at,omitempty"`
+	Date                          *openapi_types.Date                    `json:"date,omitempty"`
+	Events                        *[]EventResponse                       `json:"events,omitempty"`
+	GeneralJournalDocumentEntries *[]GeneralJournalDocumentEntryResponse `json:"general_journal_document_entries,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id          *Identifier                                `json:"id,omitempty"`
+	JournalType *GeneralJournalDocumentResponseJournalType `json:"journal_type,omitempty"`
+	Notes       *[]NoteResponse                            `json:"notes,omitempty"`
+	Reference   *string                                    `json:"reference,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Version Moneybird-compatible version.
+	Version *Version `json:"version,omitempty"`
+}
+
+// GeneralJournalDocumentResponseJournalType defines model for GeneralJournalDocumentResponse.JournalType.
+type GeneralJournalDocumentResponseJournalType string
+
 // IdentifierNullable Moneybird-compatible identifier_nullable.
 type IdentifierNullable struct {
 	union json.RawMessage
@@ -5021,6 +5503,9 @@ type ContactId = Identifier
 // ContactQuery defines model for contact_query.
 type ContactQuery = string
 
+// DocumentFilter defines model for document_filter.
+type DocumentFilter = string
+
 // Id A unique record identifier. Parse as a string.
 //
 // Example: 123456789012345678
@@ -5035,6 +5520,9 @@ type Page = string
 // PerPage defines model for per_page.
 type PerPage = string
 
+// ReportPeriod defines model for report_period.
+type ReportPeriod = string
+
 // BadRequest defines model for BadRequest.
 type BadRequest = Error
 
@@ -5043,6 +5531,9 @@ type ContactPage = []Contact
 
 // Forbidden defines model for Forbidden.
 type Forbidden = Error
+
+// GeneralJournalDocumentPage defines model for GeneralJournalDocumentPage.
+type GeneralJournalDocumentPage = []GeneralJournalDocument
 
 // NotFound defines model for NotFound.
 type NotFound = Error
@@ -5168,11 +5659,77 @@ type GetContactParams struct {
 // GetContactParamsIncludeArchived defines parameters for GetContact.
 type GetContactParamsIncludeArchived string
 
+// ListGeneralJournalDocumentsParams defines parameters for ListGeneralJournalDocuments.
+type ListGeneralJournalDocumentsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage                               `form:"per_page,omitempty" json:"per_page,omitempty"`
+	Sort    *ListGeneralJournalDocumentsParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// ExcludeNewGeneralJournalDocuments Accepted for compatibility; journal entries are never new.
+	ExcludeNewGeneralJournalDocuments *ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments `form:"exclude_new_general_journal_documents,omitempty" json:"exclude_new_general_journal_documents,omitempty"`
+}
+
+// ListGeneralJournalDocumentsParamsSort defines parameters for ListGeneralJournalDocuments.
+type ListGeneralJournalDocumentsParamsSort string
+
+// ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments defines parameters for ListGeneralJournalDocuments.
+type ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments string
+
+// ListGeneralJournalDocumentVersionsParams defines parameters for ListGeneralJournalDocumentVersions.
+type ListGeneralJournalDocumentVersionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// CreateGeneralJournalDocumentAttachmentMultipartBody defines parameters for CreateGeneralJournalDocumentAttachment.
+type CreateGeneralJournalDocumentAttachmentMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
 // ListFinancialMutationsParams defines parameters for ListFinancialMutations.
 type ListFinancialMutationsParams struct {
 	// Filter Comma-separated key:value terms: period (this_week, prev_month, this_quarter, next_year and so on, or a range like 202401..202403 or 20240101..20240131), state (all, unprocessed, processed, auto_booked), mutation_type (all, debit, credit), financial_account_id, amount_from and amount_to. Join several states or types with a pipe. Without a filter, the period is this year.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 }
+
+// GetGeneralLedgerReportParams defines parameters for GetGeneralLedgerReport.
+type GetGeneralLedgerReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period      *ReportPeriod                            `form:"period,omitempty" json:"period,omitempty"`
+	Granularity *GetGeneralLedgerReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+}
+
+// GetGeneralLedgerReportParamsGranularity defines parameters for GetGeneralLedgerReport.
+type GetGeneralLedgerReportParamsGranularity string
+
+// GetJournalEntriesReportParams defines parameters for GetJournalEntriesReport.
+type GetJournalEntriesReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage         *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+	LedgerAccountId *string  `form:"ledger_account_id,omitempty" json:"ledger_account_id,omitempty"`
+
+	// ContactId A contact's id, or null for entries without a contact.
+	ContactId *string `form:"contact_id,omitempty" json:"contact_id,omitempty"`
+
+	// ProjectId A project's id, or null for entries without a project.
+	ProjectId   *string                                   `form:"project_id,omitempty" json:"project_id,omitempty"`
+	AccountType *GetJournalEntriesReportParamsAccountType `form:"account_type,omitempty" json:"account_type,omitempty"`
+}
+
+// GetJournalEntriesReportParamsAccountType defines parameters for GetJournalEntriesReport.
+type GetJournalEntriesReportParamsAccountType string
 
 // ListTaxRatesParams defines parameters for ListTaxRates.
 type ListTaxRatesParams struct {
@@ -5290,6 +5847,21 @@ type CreateDocumentStyleJSONRequestBody = DocumentStyleRequest
 
 // UpdateDocumentStyleJSONRequestBody defines body for UpdateDocumentStyle for application/json ContentType.
 type UpdateDocumentStyleJSONRequestBody = DocumentStyleRequest
+
+// CreateGeneralJournalDocumentJSONRequestBody defines body for CreateGeneralJournalDocument for application/json ContentType.
+type CreateGeneralJournalDocumentJSONRequestBody = GeneralJournalDocumentRequest
+
+// FetchGeneralJournalDocumentsJSONRequestBody defines body for FetchGeneralJournalDocuments for application/json ContentType.
+type FetchGeneralJournalDocumentsJSONRequestBody = SynchronizationRequest
+
+// UpdateGeneralJournalDocumentJSONRequestBody defines body for UpdateGeneralJournalDocument for application/json ContentType.
+type UpdateGeneralJournalDocumentJSONRequestBody = GeneralJournalDocumentRequest
+
+// CreateGeneralJournalDocumentAttachmentMultipartRequestBody defines body for CreateGeneralJournalDocumentAttachment for multipart/form-data ContentType.
+type CreateGeneralJournalDocumentAttachmentMultipartRequestBody CreateGeneralJournalDocumentAttachmentMultipartBody
+
+// CreateGeneralJournalDocumentNoteJSONRequestBody defines body for CreateGeneralJournalDocumentNote for application/json ContentType.
+type CreateGeneralJournalDocumentNoteJSONRequestBody = NoteRequest
 
 // CreateFinancialAccountJSONRequestBody defines body for CreateFinancialAccount for application/json ContentType.
 type CreateFinancialAccountJSONRequestBody = FinancialAccountRequest
@@ -5979,6 +6551,130 @@ func (t FlexibleIdentifier) MarshalJSON() ([]byte, error) {
 }
 
 func (t *FlexibleIdentifier) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0 returns the union data inside the GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes as a GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0
+func (t GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes) AsGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0() (GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0, error) {
+	var body GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0 overwrites any union data inside the GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes as the provided GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0
+func (t *GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes) FromGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0(v GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0 performs a merge with any union data inside the GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes, using the provided GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0
+func (t *GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes) MergeGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0(v GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1 returns the union data inside the GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes as a GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1
+func (t GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes) AsGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1() (GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1, error) {
+	var body GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1 overwrites any union data inside the GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes as the provided GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1
+func (t *GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes) FromGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1(v GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1 performs a merge with any union data inside the GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes, using the provided GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1
+func (t *GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes) MergeGeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1(v GeneralJournalDocumentRequestGeneralJournalDocumentGeneralJournalDocumentEntriesAttributes1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GeneralJournalDocumentRequest_GeneralJournalDocument_GeneralJournalDocumentEntriesAttributes) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsGeneralJournalDocumentRowInputRowOrder0 returns the union data inside the GeneralJournalDocumentRowInput_RowOrder as a GeneralJournalDocumentRowInputRowOrder0
+func (t GeneralJournalDocumentRowInput_RowOrder) AsGeneralJournalDocumentRowInputRowOrder0() (GeneralJournalDocumentRowInputRowOrder0, error) {
+	var body GeneralJournalDocumentRowInputRowOrder0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGeneralJournalDocumentRowInputRowOrder0 overwrites any union data inside the GeneralJournalDocumentRowInput_RowOrder as the provided GeneralJournalDocumentRowInputRowOrder0
+func (t *GeneralJournalDocumentRowInput_RowOrder) FromGeneralJournalDocumentRowInputRowOrder0(v GeneralJournalDocumentRowInputRowOrder0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGeneralJournalDocumentRowInputRowOrder0 performs a merge with any union data inside the GeneralJournalDocumentRowInput_RowOrder, using the provided GeneralJournalDocumentRowInputRowOrder0
+func (t *GeneralJournalDocumentRowInput_RowOrder) MergeGeneralJournalDocumentRowInputRowOrder0(v GeneralJournalDocumentRowInputRowOrder0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsGeneralJournalDocumentRowInputRowOrder1 returns the union data inside the GeneralJournalDocumentRowInput_RowOrder as a GeneralJournalDocumentRowInputRowOrder1
+func (t GeneralJournalDocumentRowInput_RowOrder) AsGeneralJournalDocumentRowInputRowOrder1() (GeneralJournalDocumentRowInputRowOrder1, error) {
+	var body GeneralJournalDocumentRowInputRowOrder1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGeneralJournalDocumentRowInputRowOrder1 overwrites any union data inside the GeneralJournalDocumentRowInput_RowOrder as the provided GeneralJournalDocumentRowInputRowOrder1
+func (t *GeneralJournalDocumentRowInput_RowOrder) FromGeneralJournalDocumentRowInputRowOrder1(v GeneralJournalDocumentRowInputRowOrder1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGeneralJournalDocumentRowInputRowOrder1 performs a merge with any union data inside the GeneralJournalDocumentRowInput_RowOrder, using the provided GeneralJournalDocumentRowInputRowOrder1
+func (t *GeneralJournalDocumentRowInput_RowOrder) MergeGeneralJournalDocumentRowInputRowOrder1(v GeneralJournalDocumentRowInputRowOrder1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GeneralJournalDocumentRowInput_RowOrder) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GeneralJournalDocumentRowInput_RowOrder) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -7729,6 +8425,42 @@ type ServerInterface interface {
 	// UploadDocumentStyleFile Upload a logo or background
 	// (PUT /api/v2/{administration_id}/document_styles/{id}/{file})
 	UploadDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string)
+	// ListGeneralJournalDocuments List all journal entries
+	// (GET /api/v2/{administration_id}/documents/general_journal_documents)
+	ListGeneralJournalDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralJournalDocumentsParams)
+	// CreateGeneralJournalDocument Create a journal entry
+	// (POST /api/v2/{administration_id}/documents/general_journal_documents)
+	CreateGeneralJournalDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListGeneralJournalDocumentVersions List all ids and versions
+	// (GET /api/v2/{administration_id}/documents/general_journal_documents/synchronization)
+	ListGeneralJournalDocumentVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralJournalDocumentVersionsParams)
+	// FetchGeneralJournalDocuments Fetch journal entries with given ids
+	// (POST /api/v2/{administration_id}/documents/general_journal_documents/synchronization)
+	FetchGeneralJournalDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteGeneralJournalDocument Delete a journal entry
+	// (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id})
+	DeleteGeneralJournalDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetGeneralJournalDocument Get a journal entry
+	// (GET /api/v2/{administration_id}/documents/general_journal_documents/{id})
+	GetGeneralJournalDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateGeneralJournalDocument Update a journal entry
+	// (PATCH /api/v2/{administration_id}/documents/general_journal_documents/{id})
+	UpdateGeneralJournalDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateGeneralJournalDocumentAttachment Add attachment to a journal entry
+	// (POST /api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments)
+	CreateGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteGeneralJournalDocumentAttachment Delete an attachment from a journal entry
+	// (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id})
+	DeleteGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// DownloadGeneralJournalDocumentAttachment Download an attachment
+	// (GET /api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id}/download)
+	DownloadGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// CreateGeneralJournalDocumentNote Add note to a journal entry
+	// (POST /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes)
+	CreateGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteGeneralJournalDocumentNote Delete a note from a journal entry
+	// (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id})
+	DeleteGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
 	// ListFinancialAccounts Retrieve financial accounts
 	// (GET /api/v2/{administration_id}/financial_accounts)
 	ListFinancialAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -7837,6 +8569,12 @@ type ServerInterface interface {
 	// GetBankBalance Bank balance report
 	// (GET /api/v2/{administration_id}/reports/bank_balance)
 	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetGeneralLedgerReport Get general ledger report
+	// (GET /api/v2/{administration_id}/reports/general_ledger)
+	GetGeneralLedgerReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetGeneralLedgerReportParams)
+	// GetJournalEntriesReport Get journal entries report
+	// (GET /api/v2/{administration_id}/reports/journal_entries)
+	GetJournalEntriesReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetJournalEntriesReportParams)
 	// RequireTwoFactor Require two-step verification
 	// (PUT /api/v2/{administration_id}/require_two_factor)
 	RequireTwoFactor(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -8428,6 +9166,78 @@ func (_ Unimplemented) UploadDocumentStyleFile(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListGeneralJournalDocuments List all journal entries
+// (GET /api/v2/{administration_id}/documents/general_journal_documents)
+func (_ Unimplemented) ListGeneralJournalDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralJournalDocumentsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateGeneralJournalDocument Create a journal entry
+// (POST /api/v2/{administration_id}/documents/general_journal_documents)
+func (_ Unimplemented) CreateGeneralJournalDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListGeneralJournalDocumentVersions List all ids and versions
+// (GET /api/v2/{administration_id}/documents/general_journal_documents/synchronization)
+func (_ Unimplemented) ListGeneralJournalDocumentVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralJournalDocumentVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchGeneralJournalDocuments Fetch journal entries with given ids
+// (POST /api/v2/{administration_id}/documents/general_journal_documents/synchronization)
+func (_ Unimplemented) FetchGeneralJournalDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGeneralJournalDocument Delete a journal entry
+// (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id})
+func (_ Unimplemented) DeleteGeneralJournalDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetGeneralJournalDocument Get a journal entry
+// (GET /api/v2/{administration_id}/documents/general_journal_documents/{id})
+func (_ Unimplemented) GetGeneralJournalDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateGeneralJournalDocument Update a journal entry
+// (PATCH /api/v2/{administration_id}/documents/general_journal_documents/{id})
+func (_ Unimplemented) UpdateGeneralJournalDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateGeneralJournalDocumentAttachment Add attachment to a journal entry
+// (POST /api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments)
+func (_ Unimplemented) CreateGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGeneralJournalDocumentAttachment Delete an attachment from a journal entry
+// (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id})
+func (_ Unimplemented) DeleteGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadGeneralJournalDocumentAttachment Download an attachment
+// (GET /api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id}/download)
+func (_ Unimplemented) DownloadGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateGeneralJournalDocumentNote Add note to a journal entry
+// (POST /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes)
+func (_ Unimplemented) CreateGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGeneralJournalDocumentNote Delete a note from a journal entry
+// (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id})
+func (_ Unimplemented) DeleteGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListFinancialAccounts Retrieve financial accounts
 // (GET /api/v2/{administration_id}/financial_accounts)
 func (_ Unimplemented) ListFinancialAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
@@ -8641,6 +9451,18 @@ func (_ Unimplemented) GetOverview(w http.ResponseWriter, r *http.Request, admin
 // GetBankBalance Bank balance report
 // (GET /api/v2/{administration_id}/reports/bank_balance)
 func (_ Unimplemented) GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetGeneralLedgerReport Get general ledger report
+// (GET /api/v2/{administration_id}/reports/general_ledger)
+func (_ Unimplemented) GetGeneralLedgerReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetGeneralLedgerReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetJournalEntriesReport Get journal entries report
+// (GET /api/v2/{administration_id}/reports/journal_entries)
+func (_ Unimplemented) GetJournalEntriesReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetJournalEntriesReportParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -11304,6 +12126,501 @@ func (siw *ServerInterfaceWrapper) UploadDocumentStyleFile(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ListGeneralJournalDocuments operation middleware
+func (siw *ServerInterfaceWrapper) ListGeneralJournalDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGeneralJournalDocumentsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "exclude_new_general_journal_documents" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "exclude_new_general_journal_documents", r.URL.Query(), &params.ExcludeNewGeneralJournalDocuments, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "exclude_new_general_journal_documents"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "exclude_new_general_journal_documents", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGeneralJournalDocuments(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGeneralJournalDocument operation middleware
+func (siw *ServerInterfaceWrapper) CreateGeneralJournalDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGeneralJournalDocument(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGeneralJournalDocumentVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListGeneralJournalDocumentVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGeneralJournalDocumentVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGeneralJournalDocumentVersions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchGeneralJournalDocuments operation middleware
+func (siw *ServerInterfaceWrapper) FetchGeneralJournalDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchGeneralJournalDocuments(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGeneralJournalDocument operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGeneralJournalDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGeneralJournalDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGeneralJournalDocument operation middleware
+func (siw *ServerInterfaceWrapper) GetGeneralJournalDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGeneralJournalDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateGeneralJournalDocument operation middleware
+func (siw *ServerInterfaceWrapper) UpdateGeneralJournalDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateGeneralJournalDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGeneralJournalDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) CreateGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGeneralJournalDocumentAttachment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGeneralJournalDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGeneralJournalDocumentAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadGeneralJournalDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DownloadGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadGeneralJournalDocumentAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGeneralJournalDocumentNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGeneralJournalDocumentNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGeneralJournalDocumentNote operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "note_id" -------------
+	var noteId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "note_id", chi.URLParam(r, "note_id"), &noteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "note_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGeneralJournalDocumentNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListFinancialAccounts operation middleware
 func (siw *ServerInterfaceWrapper) ListFinancialAccounts(w http.ResponseWriter, r *http.Request) {
 
@@ -12391,6 +13708,181 @@ func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetBankBalance(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGeneralLedgerReport operation middleware
+func (siw *ServerInterfaceWrapper) GetGeneralLedgerReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetGeneralLedgerReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGeneralLedgerReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetJournalEntriesReport operation middleware
+func (siw *ServerInterfaceWrapper) GetJournalEntriesReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetJournalEntriesReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "ledger_account_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ledger_account_id", r.URL.Query(), &params.LedgerAccountId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "ledger_account_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ledger_account_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contact_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_id", r.URL.Query(), &params.ContactId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "project_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "project_id", r.URL.Query(), &params.ProjectId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "project_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "account_type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "account_type", r.URL.Query(), &params.AccountType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "account_type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "account_type", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetJournalEntriesReport(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -13692,6 +15184,48 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/notes/{id}", wrapper.DeleteContactNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents", wrapper.ListGeneralJournalDocuments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents", wrapper.CreateGeneralJournalDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/synchronization", wrapper.ListGeneralJournalDocumentVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/synchronization", wrapper.FetchGeneralJournalDocuments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/{id}", wrapper.DeleteGeneralJournalDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/{id}", wrapper.GetGeneralJournalDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/{id}", wrapper.UpdateGeneralJournalDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/{id}/notes", wrapper.CreateGeneralJournalDocumentNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id}", wrapper.DeleteGeneralJournalDocumentNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments", wrapper.CreateGeneralJournalDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id}", wrapper.DeleteGeneralJournalDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id}/download", wrapper.DownloadGeneralJournalDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/journal_entries", wrapper.GetJournalEntriesReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/general_ledger", wrapper.GetGeneralLedgerReport)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/booking_rules", wrapper.ListBookingRules)
