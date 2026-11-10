@@ -132,6 +132,48 @@ func (q *Queries) AdministrationForUser(ctx context.Context, arg AdministrationF
 	return i, err
 }
 
+const attachmentsOf = `-- name: AttachmentsOf :many
+SELECT id, administration_id, entity_type, entity_id, filename, content_type, size, created_at, updated_at FROM attachments
+WHERE administration_id = $1 AND entity_type = $2 AND entity_id = ANY($3::bigint[])
+ORDER BY created_at, id
+`
+
+type AttachmentsOfParams struct {
+	AdministrationID int64
+	EntityType       string
+	Ids              []int64
+}
+
+func (q *Queries) AttachmentsOf(ctx context.Context, arg AttachmentsOfParams) ([]Attachment, error) {
+	rows, err := q.db.Query(ctx, attachmentsOf, arg.AdministrationID, arg.EntityType, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Attachment
+	for rows.Next() {
+		var i Attachment
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.EntityType,
+			&i.EntityID,
+			&i.Filename,
+			&i.ContentType,
+			&i.Size,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const bankSettings = `-- name: BankSettings :one
 SELECT bank_auto_link, bank_seeded FROM administrations WHERE id = $1
 `
@@ -491,6 +533,22 @@ func (q *Queries) ContactCustomFieldValuesOf(ctx context.Context, arg ContactCus
 	return items, nil
 }
 
+const contactInJournal = `-- name: ContactInJournal :one
+SELECT EXISTS (SELECT 1 FROM journal_entries WHERE administration_id = $1 AND contact_id = $2)
+`
+
+type ContactInJournalParams struct {
+	AdministrationID int64
+	ContactID        pgtype.Int8
+}
+
+func (q *Queries) ContactInJournal(ctx context.Context, arg ContactInJournalParams) (bool, error) {
+	row := q.db.QueryRow(ctx, contactInJournal, arg.AdministrationID, arg.ContactID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const contactPeopleOf = `-- name: ContactPeopleOf :many
 SELECT id, administration_id, contact_id, firstname, lastname, phone, email, department, created_at, updated_at FROM contact_people WHERE administration_id = $1 AND contact_id = ANY($2::bigint[]) ORDER BY created_at, id
 `
@@ -693,6 +751,20 @@ func (q *Queries) DeleteAdministration(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteAttachment = `-- name: DeleteAttachment :exec
+DELETE FROM attachments WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteAttachmentParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteAttachment(ctx context.Context, arg DeleteAttachmentParams) error {
+	_, err := q.db.Exec(ctx, deleteAttachment, arg.AdministrationID, arg.ID)
+	return err
+}
+
 const deleteBookingRule = `-- name: DeleteBookingRule :exec
 DELETE FROM booking_rules WHERE administration_id = $1 AND id = $2
 `
@@ -821,6 +893,20 @@ func (q *Queries) DeleteFinancialStatement(ctx context.Context, arg DeleteFinanc
 	return err
 }
 
+const deleteGeneralJournalDocument = `-- name: DeleteGeneralJournalDocument :exec
+DELETE FROM general_journal_documents WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteGeneralJournalDocumentParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteGeneralJournalDocument(ctx context.Context, arg DeleteGeneralJournalDocumentParams) error {
+	_, err := q.db.Exec(ctx, deleteGeneralJournalDocument, arg.AdministrationID, arg.ID)
+	return err
+}
+
 const deleteIdentity = `-- name: DeleteIdentity :execrows
 DELETE FROM identities WHERE administration_id = $1 AND id = $2
 `
@@ -862,6 +948,21 @@ func (q *Queries) DeleteInvitation(ctx context.Context, arg DeleteInvitationPara
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const deleteJournalEntriesOf = `-- name: DeleteJournalEntriesOf :exec
+DELETE FROM journal_entries WHERE administration_id = $1 AND document_type = $2 AND document_id = $3
+`
+
+type DeleteJournalEntriesOfParams struct {
+	AdministrationID int64
+	DocumentType     string
+	DocumentID       int64
+}
+
+func (q *Queries) DeleteJournalEntriesOf(ctx context.Context, arg DeleteJournalEntriesOfParams) error {
+	_, err := q.db.Exec(ctx, deleteJournalEntriesOf, arg.AdministrationID, arg.DocumentType, arg.DocumentID)
+	return err
 }
 
 const deleteLedgerAccount = `-- name: DeleteLedgerAccount :exec
@@ -1362,6 +1463,67 @@ func (q *Queries) FinancialStatementByID(ctx context.Context, arg FinancialState
 	return i, err
 }
 
+const generalJournalDocumentByID = `-- name: GeneralJournalDocumentByID :one
+SELECT id, administration_id, reference, date, journal_type, created_at, updated_at FROM general_journal_documents WHERE administration_id = $1 AND id = $2
+`
+
+type GeneralJournalDocumentByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) GeneralJournalDocumentByID(ctx context.Context, arg GeneralJournalDocumentByIDParams) (GeneralJournalDocument, error) {
+	row := q.db.QueryRow(ctx, generalJournalDocumentByID, arg.AdministrationID, arg.ID)
+	var i GeneralJournalDocument
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Reference,
+		&i.Date,
+		&i.JournalType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const generalJournalDocumentsByIDs = `-- name: GeneralJournalDocumentsByIDs :many
+SELECT id, administration_id, reference, date, journal_type, created_at, updated_at FROM general_journal_documents WHERE administration_id = $1 AND id = ANY($2::bigint[]) ORDER BY id
+`
+
+type GeneralJournalDocumentsByIDsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) GeneralJournalDocumentsByIDs(ctx context.Context, arg GeneralJournalDocumentsByIDsParams) ([]GeneralJournalDocument, error) {
+	rows, err := q.db.Query(ctx, generalJournalDocumentsByIDs, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GeneralJournalDocument
+	for rows.Next() {
+		var i GeneralJournalDocument
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.Reference,
+			&i.Date,
+			&i.JournalType,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const identityByID = `-- name: IdentityByID :one
 SELECT id, administration_id, is_default, company_name, country, city, zipcode, address1, address2, email, phone, legal_entity_type, chamber_of_commerce, tax_number, bank_account_name, bank_account_number, bank_account_bic, created_at, updated_at, tax_number_absence_reason FROM identities WHERE administration_id = $1 AND id = $2
 `
@@ -1427,6 +1589,38 @@ func (q *Queries) InsertAdministration(ctx context.Context, arg InsertAdministra
 		arg.Suspended,
 		arg.PeriodLockedUntil,
 		arg.PeriodStartDate,
+	)
+	return err
+}
+
+const insertAttachment = `-- name: InsertAttachment :exec
+INSERT INTO attachments (id, administration_id, entity_type, entity_id, filename, content_type, size, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+`
+
+type InsertAttachmentParams struct {
+	ID               int64
+	AdministrationID int64
+	EntityType       string
+	EntityID         int64
+	Filename         string
+	ContentType      string
+	Size             int64
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertAttachment(ctx context.Context, arg InsertAttachmentParams) error {
+	_, err := q.db.Exec(ctx, insertAttachment,
+		arg.ID,
+		arg.AdministrationID,
+		arg.EntityType,
+		arg.EntityID,
+		arg.Filename,
+		arg.ContentType,
+		arg.Size,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	return err
 }
@@ -1832,6 +2026,34 @@ func (q *Queries) InsertFinancialStatement(ctx context.Context, arg InsertFinanc
 	return err
 }
 
+const insertGeneralJournalDocument = `-- name: InsertGeneralJournalDocument :exec
+INSERT INTO general_journal_documents (id, administration_id, reference, date, journal_type, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+`
+
+type InsertGeneralJournalDocumentParams struct {
+	ID               int64
+	AdministrationID int64
+	Reference        string
+	Date             pgtype.Date
+	JournalType      string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertGeneralJournalDocument(ctx context.Context, arg InsertGeneralJournalDocumentParams) error {
+	_, err := q.db.Exec(ctx, insertGeneralJournalDocument,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Reference,
+		arg.Date,
+		arg.JournalType,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const insertIdentity = `-- name: InsertIdentity :exec
 INSERT INTO identities (id, administration_id, is_default, company_name, country, city, zipcode, address1, address2,
                         email, phone, legal_entity_type, chamber_of_commerce, tax_number,
@@ -1932,6 +2154,51 @@ func (q *Queries) InsertInvitation(ctx context.Context, arg InsertInvitationPara
 		arg.InvitedBy,
 		arg.CreatedAt,
 		arg.ExpiresAt,
+	)
+	return err
+}
+
+const insertJournalEntry = `-- name: InsertJournalEntry :exec
+INSERT INTO journal_entries (id, administration_id, document_type, document_id, date, ledger_account_id, contact_id, project_id, tax_rate_id,
+    financial_account_id, amount, description, row_order, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+`
+
+type InsertJournalEntryParams struct {
+	ID                 int64
+	AdministrationID   int64
+	DocumentType       string
+	DocumentID         int64
+	Date               pgtype.Date
+	LedgerAccountID    int64
+	ContactID          pgtype.Int8
+	ProjectID          pgtype.Int8
+	TaxRateID          pgtype.Int8
+	FinancialAccountID pgtype.Int8
+	Amount             int64
+	Description        string
+	RowOrder           int32
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+}
+
+func (q *Queries) InsertJournalEntry(ctx context.Context, arg InsertJournalEntryParams) error {
+	_, err := q.db.Exec(ctx, insertJournalEntry,
+		arg.ID,
+		arg.AdministrationID,
+		arg.DocumentType,
+		arg.DocumentID,
+		arg.Date,
+		arg.LedgerAccountID,
+		arg.ContactID,
+		arg.ProjectID,
+		arg.TaxRateID,
+		arg.FinancialAccountID,
+		arg.Amount,
+		arg.Description,
+		arg.RowOrder,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	return err
 }
@@ -2469,6 +2736,54 @@ func (q *Queries) IsMember(ctx context.Context, arg IsMemberParams) (bool, error
 	return exists, err
 }
 
+const journalEntriesOf = `-- name: JournalEntriesOf :many
+SELECT id, administration_id, document_type, document_id, date, ledger_account_id, contact_id, project_id, tax_rate_id, financial_account_id, amount, description, row_order, created_at, updated_at FROM journal_entries
+WHERE administration_id = $1 AND document_type = $2 AND document_id = ANY($3::bigint[])
+ORDER BY row_order, id
+`
+
+type JournalEntriesOfParams struct {
+	AdministrationID int64
+	DocumentType     string
+	Ids              []int64
+}
+
+func (q *Queries) JournalEntriesOf(ctx context.Context, arg JournalEntriesOfParams) ([]JournalEntry, error) {
+	rows, err := q.db.Query(ctx, journalEntriesOf, arg.AdministrationID, arg.DocumentType, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []JournalEntry
+	for rows.Next() {
+		var i JournalEntry
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.DocumentType,
+			&i.DocumentID,
+			&i.Date,
+			&i.LedgerAccountID,
+			&i.ContactID,
+			&i.ProjectID,
+			&i.TaxRateID,
+			&i.FinancialAccountID,
+			&i.Amount,
+			&i.Description,
+			&i.RowOrder,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const leaseDueDeliveries = `-- name: LeaseDueDeliveries :many
 UPDATE webhook_deliveries d SET next_attempt_at = $1
 FROM webhooks w
@@ -2556,6 +2871,65 @@ func (q *Queries) LedgerAccountByID(ctx context.Context, arg LedgerAccountByIDPa
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const ledgerSums = `-- name: LedgerSums :many
+SELECT e.ledger_account_id,
+       coalesce(sum(e.amount) FILTER (WHERE e.date >= $1 AND e.amount > 0), 0)::bigint AS debit,
+       coalesce(-sum(e.amount) FILTER (WHERE e.date >= $1 AND e.amount < 0), 0)::bigint AS credit,
+       coalesce(sum(e.amount) FILTER (WHERE e.date < $1 AND (
+           l.account_type IN ('non_current_assets', 'current_assets', 'equity', 'provisions', 'non_current_liabilities', 'current_liabilities')
+           OR e.date >= $2)), 0)::bigint AS start_balance
+FROM ledger_entries e JOIN ledger_accounts l ON l.id = e.ledger_account_id
+WHERE e.administration_id = $3 AND e.date <= $4
+GROUP BY e.ledger_account_id
+ORDER BY e.ledger_account_id
+`
+
+type LedgerSumsParams struct {
+	FromDate         pgtype.Date
+	YearStart        pgtype.Date
+	AdministrationID int64
+	ToDate           pgtype.Date
+}
+
+type LedgerSumsRow struct {
+	LedgerAccountID int64
+	Debit           int64
+	Credit          int64
+	StartBalance    int64
+}
+
+// Profit and loss categories start each calendar year at zero; balance
+// sheet categories carry their balance over.
+func (q *Queries) LedgerSums(ctx context.Context, arg LedgerSumsParams) ([]LedgerSumsRow, error) {
+	rows, err := q.db.Query(ctx, ledgerSums,
+		arg.FromDate,
+		arg.YearStart,
+		arg.AdministrationID,
+		arg.ToDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LedgerSumsRow
+	for rows.Next() {
+		var i LedgerSumsRow
+		if err := rows.Scan(
+			&i.LedgerAccountID,
+			&i.Debit,
+			&i.Credit,
+			&i.StartBalance,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const linkIdentity = `-- name: LinkIdentity :exec
@@ -3049,6 +3423,84 @@ func (q *Queries) ListFinancialMutations(ctx context.Context, arg ListFinancialM
 	return items, nil
 }
 
+const listGeneralJournalDocuments = `-- name: ListGeneralJournalDocuments :many
+SELECT d.id, d.administration_id, d.reference, d.date, d.journal_type, d.created_at, d.updated_at, count(*) OVER () AS total
+FROM general_journal_documents d
+WHERE d.administration_id = $1
+  AND ($2::date IS NULL OR d.date >= $2)
+  AND ($3::date IS NULL OR d.date <= $3)
+  AND ($4::text = '' OR d.reference = ANY(string_to_array($4, '|')))
+  AND ($5::timestamptz IS NULL OR d.updated_at > $5)
+  AND ($6::bigint IS NULL OR EXISTS (
+      SELECT 1 FROM journal_entries e WHERE e.document_id = d.id AND e.contact_id = $6))
+  AND ($7::bigint IS NULL OR EXISTS (
+      SELECT 1 FROM journal_entries e WHERE e.document_id = d.id AND e.ledger_account_id = $7))
+  AND ($8::text = '' OR ($8 = 'with') = EXISTS (
+      SELECT 1 FROM attachments a WHERE a.entity_id = d.id AND a.entity_type = 'GeneralJournalDocument'))
+ORDER BY CASE WHEN $9::boolean THEN d.date END ASC, CASE WHEN NOT $9::boolean THEN d.date END DESC, d.id
+LIMIT $11 OFFSET $10
+`
+
+type ListGeneralJournalDocumentsParams struct {
+	AdministrationID int64
+	FromDate         pgtype.Date
+	ToDate           pgtype.Date
+	Reference        string
+	UpdatedAfter     pgtype.Timestamptz
+	ContactID        pgtype.Int8
+	LedgerAccountID  pgtype.Int8
+	Attachment       string
+	Ascending        bool
+	Skip             int32
+	MaxRows          pgtype.Int4
+}
+
+type ListGeneralJournalDocumentsRow struct {
+	GeneralJournalDocument GeneralJournalDocument
+	Total                  int64
+}
+
+func (q *Queries) ListGeneralJournalDocuments(ctx context.Context, arg ListGeneralJournalDocumentsParams) ([]ListGeneralJournalDocumentsRow, error) {
+	rows, err := q.db.Query(ctx, listGeneralJournalDocuments,
+		arg.AdministrationID,
+		arg.FromDate,
+		arg.ToDate,
+		arg.Reference,
+		arg.UpdatedAfter,
+		arg.ContactID,
+		arg.LedgerAccountID,
+		arg.Attachment,
+		arg.Ascending,
+		arg.Skip,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListGeneralJournalDocumentsRow
+	for rows.Next() {
+		var i ListGeneralJournalDocumentsRow
+		if err := rows.Scan(
+			&i.GeneralJournalDocument.ID,
+			&i.GeneralJournalDocument.AdministrationID,
+			&i.GeneralJournalDocument.Reference,
+			&i.GeneralJournalDocument.Date,
+			&i.GeneralJournalDocument.JournalType,
+			&i.GeneralJournalDocument.CreatedAt,
+			&i.GeneralJournalDocument.UpdatedAt,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listIdentities = `-- name: ListIdentities :many
 SELECT id, administration_id, is_default, company_name, country, city, zipcode, address1, address2, email, phone, legal_entity_type, chamber_of_commerce, tax_number, bank_account_name, bank_account_number, bank_account_bic, created_at, updated_at, tax_number_absence_reason FROM identities WHERE administration_id = $1 ORDER BY is_default DESC, lower(company_name), id
 `
@@ -3162,6 +3614,99 @@ func (q *Queries) ListLedgerAccounts(ctx context.Context, administrationID int64
 			&i.TemplateKey,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLedgerEntries = `-- name: ListLedgerEntries :many
+SELECT e.id, e.administration_id, e.document_type, e.document_id, e.date, e.ledger_account_id, e.contact_id, e.project_id,
+       e.tax_rate_id, e.financial_account_id, e.amount, e.description, e.row_order, count(*) OVER () AS total
+FROM ledger_entries e JOIN ledger_accounts l ON l.id = e.ledger_account_id
+WHERE e.administration_id = $1 AND e.date >= $2 AND e.date <= $3
+  AND ($4::bigint IS NULL OR e.ledger_account_id = $4)
+  AND ($5::bigint IS NULL OR e.contact_id = $5)
+  AND (NOT $6::boolean OR e.contact_id IS NULL)
+  AND ($7::bigint IS NULL OR e.project_id = $7)
+  AND (NOT $8::boolean OR e.project_id IS NULL)
+  AND ($9::text = '' OR l.account_type = $9)
+ORDER BY e.date, e.document_id, e.row_order, e.id
+LIMIT $11 OFFSET $10
+`
+
+type ListLedgerEntriesParams struct {
+	AdministrationID int64
+	FromDate         pgtype.Date
+	ToDate           pgtype.Date
+	LedgerAccountID  pgtype.Int8
+	ContactID        pgtype.Int8
+	NoContact        bool
+	ProjectID        pgtype.Int8
+	NoProject        bool
+	AccountType      string
+	Skip             int32
+	MaxRows          int32
+}
+
+type ListLedgerEntriesRow struct {
+	ID                 int64
+	AdministrationID   int64
+	DocumentType       string
+	DocumentID         int64
+	Date               pgtype.Date
+	LedgerAccountID    int64
+	ContactID          pgtype.Int8
+	ProjectID          pgtype.Int8
+	TaxRateID          pgtype.Int8
+	FinancialAccountID pgtype.Int8
+	Amount             int64
+	Description        string
+	RowOrder           int32
+	Total              int64
+}
+
+func (q *Queries) ListLedgerEntries(ctx context.Context, arg ListLedgerEntriesParams) ([]ListLedgerEntriesRow, error) {
+	rows, err := q.db.Query(ctx, listLedgerEntries,
+		arg.AdministrationID,
+		arg.FromDate,
+		arg.ToDate,
+		arg.LedgerAccountID,
+		arg.ContactID,
+		arg.NoContact,
+		arg.ProjectID,
+		arg.NoProject,
+		arg.AccountType,
+		arg.Skip,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLedgerEntriesRow
+	for rows.Next() {
+		var i ListLedgerEntriesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.DocumentType,
+			&i.DocumentID,
+			&i.Date,
+			&i.LedgerAccountID,
+			&i.ContactID,
+			&i.ProjectID,
+			&i.TaxRateID,
+			&i.FinancialAccountID,
+			&i.Amount,
+			&i.Description,
+			&i.RowOrder,
+			&i.Total,
 		); err != nil {
 			return nil, err
 		}
@@ -3990,6 +4535,21 @@ func (q *Queries) TouchContact(ctx context.Context, arg TouchContactParams) erro
 	return err
 }
 
+const touchGeneralJournalDocument = `-- name: TouchGeneralJournalDocument :exec
+UPDATE general_journal_documents SET updated_at = $3 WHERE administration_id = $1 AND id = $2
+`
+
+type TouchGeneralJournalDocumentParams struct {
+	AdministrationID int64
+	ID               int64
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) TouchGeneralJournalDocument(ctx context.Context, arg TouchGeneralJournalDocumentParams) error {
+	_, err := q.db.Exec(ctx, touchGeneralJournalDocument, arg.AdministrationID, arg.ID, arg.UpdatedAt)
+	return err
+}
+
 const updateAdministration = `-- name: UpdateAdministration :exec
 UPDATE administrations
 SET name = $2, language = $3, currency = $4, time_zone = $5, small_business_scheme = $6,
@@ -4366,6 +4926,32 @@ func (q *Queries) UpdateFinancialStatement(ctx context.Context, arg UpdateFinanc
 		arg.Reference,
 		arg.OfficialDate,
 		arg.OfficialBalance,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const updateGeneralJournalDocument = `-- name: UpdateGeneralJournalDocument :exec
+UPDATE general_journal_documents SET reference = $3, date = $4, journal_type = $5, updated_at = $6
+WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateGeneralJournalDocumentParams struct {
+	AdministrationID int64
+	ID               int64
+	Reference        string
+	Date             pgtype.Date
+	JournalType      string
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateGeneralJournalDocument(ctx context.Context, arg UpdateGeneralJournalDocumentParams) error {
+	_, err := q.db.Exec(ctx, updateGeneralJournalDocument,
+		arg.AdministrationID,
+		arg.ID,
+		arg.Reference,
+		arg.Date,
+		arg.JournalType,
 		arg.UpdatedAt,
 	)
 	return err

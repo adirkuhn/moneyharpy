@@ -22,6 +22,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
+	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
@@ -80,6 +81,7 @@ type Deps struct {
 	Banking         *banking.Service
 	Overview        *overview.Service
 	Contacts        *contacts.Service
+	Journal         *journal.Service
 	Membership      *membership.Service
 	Connections     *connections.Service
 	Webhooks        *webhooks.Service
@@ -243,6 +245,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		bookkeeping.IsNotFound(err),
 		banking.IsNotFound(err),
 		contacts.IsNotFound(err),
+		journal.IsNotFound(err),
 		errors.Is(err, membership.ErrUserNotFound),
 		errors.Is(err, connections.ErrNotFound),
 		errors.Is(err, webhooks.ErrNotFound),

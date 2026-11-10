@@ -660,3 +660,32 @@ test('contacts are added, searched, completed with people and notes, and archive
   await expect(showArchived).toBeChecked()
   await expect(table.getByRole('link', { name: 'Ann Jansen' })).toBeVisible()
 })
+
+test('a journal entry made by hand shows in the trial balance', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Journal Co')
+  const menu = page.getByRole('navigation', { name: 'Administration menu' })
+  await menu.getByRole('button', { name: 'Reports' }).click()
+  await menu.getByRole('link', { name: 'Journal entries' }).click()
+  await expect(page.getByText('No journal entries in this period.')).toBeVisible()
+
+  await page.getByRole('link', { name: 'New journal entry' }).click()
+  await page.getByLabel('Reference').fill('Rent paid privately')
+  const rows = page.getByRole('table', { name: 'Rows' }).getByRole('row')
+  const optionValue = async (row: number, text: string) =>
+    (await rows.nth(row).getByLabel('Category').locator('option', { hasText: text }).first().getAttribute('value')) ?? ''
+  await rows.nth(1).getByLabel('Category').selectOption(await optionValue(1, 'Rent'))
+  await rows.nth(1).getByLabel('Debit').fill('400')
+  await rows.nth(2).getByLabel('Category').selectOption(await optionValue(2, 'Private deposits'))
+  await rows.nth(2).getByLabel('Credit').fill('400')
+  await expect(page.getByText('Debit and credit are equal.')).toBeVisible()
+  await page.getByRole('button', { name: 'Save journal entry' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Rent paid privately' })).toBeVisible()
+
+  await menu.getByRole('link', { name: 'Trial balance' }).click()
+  const table = page.getByRole('table', { name: 'Trial balance' })
+  await expect(table.getByRole('row', { name: /Rent/ })).toContainText('€400.00')
+  await expect(table.getByRole('row', { name: /Total/ })).toContainText('€400.00')
+  await table.getByRole('link', { name: /Rent/ }).click()
+  await expect(page.getByRole('table', { name: 'Bookings' }).getByRole('link', { name: 'Journal entry' })).toBeVisible()
+})

@@ -52,7 +52,7 @@ export const navItems: NavItem[] = [
   { kind: 'contacts', key: 'contacts', to: 'contacts', ready: true, permissions: ['sales_invoices', 'documents', 'estimates'] },
   { kind: 'vat', key: 'vat', to: 'declarations', ready: false, permissions: bookkeeping },
   {
-    kind: 'reports', key: 'reports', to: 'reports', ready: false, permissions: bookkeeping,
+    kind: 'reports', key: 'reports', to: 'reports', ready: false, permissions: ['bank', 'documents'],
     children: [
       link('reportsOverview', 'reports'),
       link('profitLoss', 'report/profit_loss'),
@@ -68,7 +68,8 @@ export const navItems: NavItem[] = [
       link('expensesByContact', 'report/expenses_by_contact'),
       link('revenueByProject', 'report/revenue_by_project'),
       link('expensesByProject', 'report/expenses_by_project'),
-      link('trialBalance', 'report/general_ledger'),
+      link('trialBalance', 'report/general_ledger', true),
+      link('journalEntries', 'documents/general_journal_documents', true),
       link('auditReport', 'report/audit_report'),
       link('events', 'events'),
     ],

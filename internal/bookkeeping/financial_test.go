@@ -44,6 +44,15 @@ func TestCheckBookable(t *testing.T) {
 	if err != nil || !ok || cash != byKey(t, store, "cash").ID {
 		t.Errorf("SeedLedgerAccount() = %d, %v, %v", cash, ok, err)
 	}
+	if problem, _ := svc.Bookable(ctx, adminID, owner, byKey(t, store, "accounts_receivable").ID, "general_journal_document"); problem == "" {
+		t.Error("debtors bookable in a journal entry")
+	}
+	if problem, _ := svc.Bookable(ctx, adminID, owner, byKey(t, store, "revenue").ID, "purchase_invoice"); problem == "" {
+		t.Error("revenue bookable on a purchase invoice")
+	}
+	if problem, err := svc.Bookable(ctx, adminID, owner, byKey(t, store, "rounding").ID, "general_journal_document"); problem != "" || err != nil {
+		t.Errorf("rounding in a journal entry: %q, %v", problem, err)
+	}
 	if day, _ := svc.LockedUntil(ctx, adminID, owner); day != "" {
 		t.Errorf("LockedUntil() = %q", day)
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -23,7 +24,7 @@ func contactService(t *testing.T) (*contacts.Service, *administration.Service, *
 	a, _, owner := newAdministrationWithIdentity(t)
 	admins := administration.NewService(postgres.NewAdministrationStore(testPool), ids, time.Now)
 	store := postgres.NewContactStore(testPool)
-	return contacts.NewService(admins, noWorkflows{}, admins, nil, store, ids, time.Now), admins, store, a.ID, owner
+	return contacts.NewService(admins, noWorkflows{}, admins, nil, notes.NewService(postgres.NewNoteStore(testPool), ids, time.Now), store, ids, time.Now), admins, store, a.ID, owner
 }
 
 func TestContactsRoundTrip(t *testing.T) {

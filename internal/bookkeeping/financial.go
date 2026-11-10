@@ -75,22 +75,44 @@ func (s *Service) SeedLedgerAccount(ctx context.Context, admin, user resource.ID
 // CheckBookable reports, as a validation error, why transactions cannot be
 // booked on a category.
 func (s *Service) CheckBookable(ctx context.Context, admin, user, id resource.ID) error {
-	if _, err := s.ensure(ctx, admin, user); err != nil {
+	problem, err := s.Bookable(ctx, admin, user, id, "financial_mutation")
+	if err != nil || problem == "" {
 		return err
 	}
 	var verr resource.ValidationError
+	verr.Add("booking_id", problem)
+	return &verr
+}
+
+// Bookable returns why the category cannot be used on a document of the
+// type, or "" when it can. Journal entries cannot book on the debtors and
+// creditors, which only documents settle.
+func (s *Service) Bookable(ctx context.Context, admin, user, id resource.ID, documentType string) (string, error) {
+	if _, err := s.ensure(ctx, admin, user); err != nil {
+		return "", err
+	}
 	l, err := s.store.LedgerAccount(ctx, admin, id)
 	switch {
 	case errors.Is(err, ErrLedgerAccountNotFound):
-		verr.Add("booking_id", "is not a category of this administration")
+		return "is not a category of this administration", nil
 	case err != nil:
-		return err
+		return "", err
 	case !l.Active:
-		verr.Add("booking_id", "is a deactivated category")
-	case !slices.Contains(l.AllowedDocumentTypes, "financial_mutation"):
-		verr.Add("booking_id", "is a category that cannot be used on bank transactions")
+		return "is a deactivated category", nil
+	case documentType == "general_journal_document" && (l.System == "accounts_receivable" || l.System == "accounts_payable"):
+		return "is settled by invoices and cannot be booked in a journal entry", nil
+	case !slices.Contains(l.AllowedDocumentTypes, documentType):
+		return documentUse[documentType], nil
 	}
-	return verr.OrNil()
+	return "", nil
+}
+
+var documentUse = map[string]string{
+	"financial_mutation":       "is a category that cannot be used on bank transactions",
+	"general_journal_document": "is a category that cannot be used in journal entries",
+	"sales_invoice":            "is a category that cannot be used on sales invoices",
+	"purchase_invoice":         "is a category that cannot be used on purchase invoices",
+	"payment":                  "is a category that cannot be used on payments",
 }
 
 // LockedUntil returns the last day of the locked period, or "".
