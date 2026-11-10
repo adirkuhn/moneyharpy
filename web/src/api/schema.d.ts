@@ -103,6 +103,229 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/invoice_settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get invoice and estimate settings
+         * @description MoneyHarpy extension. Numbering, document copies by email and payment options.
+         */
+        get: operations["getInvoiceSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update invoice and estimate settings
+         * @description MoneyHarpy extension. Omitted fields stay unchanged.
+         */
+        patch: operations["updateInvoiceSettings"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/workflows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve workflows
+         * @description The administration has a default invoice and a default estimate workflow.
+         */
+        get: operations["listWorkflows"];
+        put?: never;
+        /**
+         * Create a workflow
+         * @description MoneyHarpy extension. Moneybird manages workflows in its web app only. Omitted fields take the default workflow's values.
+         */
+        post: operations["createWorkflow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/workflows/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Retrieve a workflow */
+        get: operations["getWorkflow"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a workflow
+         * @description MoneyHarpy extension. The default workflows cannot be deleted.
+         */
+        delete: operations["deleteWorkflow"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a workflow
+         * @description MoneyHarpy extension. steps_attributes replaces all steps. The default workflow stays active.
+         */
+        patch: operations["updateWorkflow"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/document_styles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve document styles
+         * @description The default style comes first.
+         */
+        get: operations["listDocumentStyles"];
+        put?: never;
+        /**
+         * Create a document style
+         * @description MoneyHarpy extension. Omitted fields take the default values.
+         */
+        post: operations["createDocumentStyle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/document_styles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve a document style
+         * @description MoneyHarpy extension.
+         */
+        get: operations["getDocumentStyle"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a document style
+         * @description MoneyHarpy extension. The default style cannot be deleted.
+         */
+        delete: operations["deleteDocumentStyle"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a document style
+         * @description MoneyHarpy extension. Omitted fields stay unchanged.
+         */
+        patch: operations["updateDocumentStyle"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/document_styles/{id}/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                /** @description The logo, or the background (stationery) printed behind documents. */
+                file: "logo" | "background";
+            };
+            cookie?: never;
+        };
+        /**
+         * Download a document style's logo or background
+         * @description MoneyHarpy extension.
+         */
+        get: operations["getDocumentStyleFile"];
+        /**
+         * Upload a logo or background
+         * @description MoneyHarpy extension. Send the file as the request body. Logos are PNG, JPEG or GIF up to 2 MB; backgrounds are PNG, JPEG or PDF up to 10 MB. Files go to the S3-compatible storage configured for the installation, or to the server's disk when none is.
+         */
+        put: operations["uploadDocumentStyleFile"];
+        post?: never;
+        /**
+         * Remove a logo or background
+         * @description MoneyHarpy extension.
+         */
+        delete: operations["removeDocumentStyleFile"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/custom_fields/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Order the custom fields of one source
+         * @description MoneyHarpy extension. List every field of the source once, in the new order.
+         */
+        put: operations["reorderCustomFields"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/custom_fields/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve a custom field
+         * @description MoneyHarpy extension.
+         */
+        get: operations["getCustomField"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a custom field
+         * @description MoneyHarpy extension. Values records hold for the field are removed too.
+         */
+        delete: operations["deleteCustomField"];
+        options?: never;
+        head?: never;
+        /**
+         * Rename a custom field
+         * @description MoneyHarpy extension. The source cannot change.
+         */
+        patch: operations["updateCustomField"];
+        trace?: never;
+    };
     "/api/v2/{administration_id}/identities": {
         parameters: {
             query?: never;
@@ -500,6 +723,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/instance/settings/test_storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check the saved file storage settings
+         * @description Creates the bucket when it does not exist, then writes and removes a small object.
+         */
+        post: operations["testStorage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/instance/settings": {
         parameters: {
             query?: never;
@@ -802,6 +1045,16 @@ export interface components {
             smtp_password_set: boolean;
             smtp_from: string;
             smtp_security: string;
+            /** @description Whether uploads, such as logos, go to S3-compatible storage. */
+            storage_enabled: boolean;
+            /** @example https://s3.eu-west-1.amazonaws.com */
+            storage_endpoint: string;
+            storage_region: string;
+            storage_bucket: string;
+            storage_access_key: string;
+            storage_secret_key_set: boolean;
+            /** @description Address buckets as endpoint/bucket, which most self-hosted services need. */
+            storage_path_style: boolean;
         };
         UpdateInstanceSettingsRequest: {
             registration_open?: boolean;
@@ -824,6 +1077,1565 @@ export interface components {
             smtp_from?: string;
             /** @enum {string} */
             smtp_security?: "starttls" | "tls" | "none";
+            storage_enabled?: boolean;
+            storage_endpoint?: string;
+            storage_region?: string;
+            storage_bucket?: string;
+            storage_access_key?: string;
+            storage_secret_key?: string;
+            storage_path_style?: boolean;
+        };
+        /** @description A Moneybird workflow with MoneyHarpy extensions. */
+        Workflow: components["schemas"]["workflow_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        /** @description A Moneybird document style with MoneyHarpy extensions. */
+        DocumentStyle: components["schemas"]["document_style_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        WorkflowRequest: {
+            workflow: {
+                /**
+                 * @description Required when creating; ignored when updating.
+                 * @enum {string}
+                 */
+                type?: "InvoiceWorkflow" | "EstimateWorkflow";
+                name?: string;
+                currency?: string;
+                language?: components["schemas"]["Language"];
+                active?: boolean;
+                default?: boolean;
+                prices_are_incl_tax?: boolean;
+                show_qr_code?: boolean;
+                /** @description The payment term or validity first, then the reminders. */
+                steps_attributes?: {
+                    /** @description Days until payment is due, or until an estimate expires. First step only. */
+                    due_interval?: number;
+                    /** @description Days after the previous stage that this reminder is due. */
+                    reminder_delay?: number;
+                    reminder_text?: string;
+                    reminder_auto_send?: boolean;
+                }[];
+            };
+        };
+        /** @description One entry of a block on a document. bold prints it bold; label prints its name before it. */
+        DocumentStyleLine: {
+            field: string;
+            bold?: boolean;
+            label?: boolean;
+        };
+        DocumentStyleRequest: {
+            document_style: {
+                name?: string;
+                identity_id?: components["schemas"]["Identifier"];
+                default?: boolean;
+                logo_container_full_width?: boolean;
+                /** @description Logo width in percent of the available space, 10 to 100. */
+                logo_display_width?: number;
+                /** @enum {string} */
+                logo_position?: "left" | "center" | "right";
+                /** @description Leave the background out of PDFs because you print on pre-printed paper. */
+                print_on_stationery?: boolean;
+                /** @enum {string} */
+                paper_size?: "A4" | "letter";
+                /** @enum {string} */
+                address_position?: "left" | "right";
+                /** @description 8 to 14 points. */
+                font_size?: number;
+                font_family?: string;
+                custom_css?: string;
+                invoice_sender_address?: components["schemas"]["DocumentStyleLine"][];
+                invoice_metadata_left?: components["schemas"]["DocumentStyleLine"][];
+                invoice_metadata_right?: components["schemas"]["DocumentStyleLine"][];
+                estimate_sender_address?: components["schemas"]["DocumentStyleLine"][];
+                estimate_metadata_left?: components["schemas"]["DocumentStyleLine"][];
+                estimate_metadata_right?: components["schemas"]["DocumentStyleLine"][];
+            };
+        };
+        /** @description MoneyHarpy extension. */
+        InvoiceSettings: {
+            /**
+             * @description How invoice numbers are built, with tags such as {year} and the required {id}.
+             * @example {year}-{id}
+             */
+            invoice_id_template: string;
+            /**
+             * @description The next sequence number. Leading zeros are kept.
+             * @example 0001
+             */
+            invoice_sequence_id: string;
+            /**
+             * @description The next invoice number if it were made today.
+             * @example 2026-0001
+             */
+            invoice_id_example: string;
+            estimate_id_template: string;
+            estimate_sequence_id: string;
+            estimate_id_example: string;
+            /** @description Addresses, separated by commas, that get a copy of every invoice. */
+            invoice_bcc_email_address: string;
+            /** @description Also copy payment reminders to the invoice addresses. */
+            invoice_reminders_bcc_enabled: boolean;
+            estimate_bcc_email_address: string;
+            order_bcc_email_address: string;
+            /** @description Attach a UBL file to invoices emailed to new contacts. */
+            default_email_ubl: boolean;
+            /** @description Allow marking invoices paid without a bank transaction. */
+            payments_without_proof: boolean;
+        };
+        InvoiceSettingsRequest: {
+            invoice_settings: {
+                invoice_id_template?: string;
+                invoice_sequence_id?: string;
+                estimate_id_template?: string;
+                estimate_sequence_id?: string;
+                invoice_bcc_email_address?: string;
+                estimate_bcc_email_address?: string;
+                order_bcc_email_address?: string;
+                invoice_reminders_bcc_enabled?: boolean;
+                default_email_ubl?: boolean;
+                payments_without_proof?: boolean;
+            };
+        };
+        CustomFieldUpdateRequest: {
+            custom_field: {
+                name?: string;
+            };
+        };
+        CustomFieldOrderRequest: {
+            custom_fields_order: {
+                source: components["schemas"]["CustomFieldSource"];
+                ids: components["schemas"]["Identifier"][];
+            };
+        };
+        /** @description Moneybird-compatible administration_response. */
+        administration_response: {
+            /** @enum {string} */
+            access?: "accountant_company" | "user";
+            country?: string;
+            currency?: string;
+            id?: components["schemas"]["Identifier"];
+            /** @enum {string} */
+            language?: "nl" | "nl-be" | "en";
+            name?: string;
+            /** Format: date */
+            period_locked_until?: string | null;
+            /** Format: date */
+            period_start_date?: string;
+            suspended?: boolean;
+            time_zone?: string;
+        };
+        /** @description Moneybird-compatible aging_report_item. */
+        aging_report_item: {
+            aging_buckets?: {
+                amount?: string;
+                name?: string;
+            }[];
+            amount?: string;
+            contact_id?: components["schemas"]["identifier_nullable"];
+        };
+        /** @description Moneybird-compatible asset_response. */
+        asset_response: {
+            calculated_purchase_value?: components["schemas"]["number"];
+            current_value?: components["schemas"]["number"];
+            disposal?: components["schemas"]["disposal_response"] | null;
+            id?: components["schemas"]["identifier_nullable"];
+            ledger_account_id?: components["schemas"]["identifier_nullable"];
+            name?: string;
+            /** Format: date */
+            purchase_date?: string;
+            purchase_value?: components["schemas"]["number"];
+            reinvestment_reserve_purchase?: components["schemas"]["reinvestment_reserve_purchase_response"] | null;
+            sources?: components["schemas"]["source_response"][];
+            value_change_plan?: {
+                active?: boolean;
+                lifespan_in_years?: number;
+                monthly_depreciation?: components["schemas"]["number"];
+                residual_value?: components["schemas"]["number"];
+            } | null;
+            value_changes?: components["schemas"]["value_change_response"][];
+        };
+        /** @description Moneybird-compatible attachment_response. */
+        attachment_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            attachable_id?: components["schemas"]["Identifier"];
+            /** @enum {string} */
+            attachable_type?: "SalesInvoice" | "RecurringSalesInvoice" | "Document" | "FinancialStatement" | "Workflow" | "Estimate" | "ExternalSalesInvoice";
+            content_type?: string;
+            /** Format: date-time */
+            created_at?: string | null;
+            filename?: string;
+            id?: components["schemas"]["Identifier"];
+            rotation?: number | null;
+            size?: number;
+            /** Format: date-time */
+            updated_at?: string | null;
+        };
+        /** @description Moneybird-compatible balance_sheet_credit. */
+        balance_sheet_credit: {
+            current_liabilities?: components["schemas"]["balance_sheet_ledger_account"];
+            equity?: components["schemas"]["balance_sheet_ledger_account"];
+            non_current_liabilities?: components["schemas"]["balance_sheet_ledger_account"];
+            open_years?: {
+                value?: string;
+                year?: string;
+            }[];
+            provisions?: components["schemas"]["balance_sheet_ledger_account"];
+            total?: string;
+        };
+        /** @description Moneybird-compatible balance_sheet_debit. */
+        balance_sheet_debit: {
+            current_assets?: components["schemas"]["balance_sheet_ledger_account"];
+            non_current_assets?: components["schemas"]["balance_sheet_ledger_account"];
+            total?: string;
+        };
+        /** @description Moneybird-compatible balance_sheet_ledger_account. */
+        balance_sheet_ledger_account: {
+            children?: {
+                ledger_account_id?: string;
+                value?: string;
+            }[];
+            ledger_account_id?: string;
+            value?: string;
+        }[];
+        /** @description Moneybird-compatible bank_balance_amounts. */
+        bank_balance_amounts: {
+            financial_accounts?: {
+                balance: string;
+                financial_account_id: components["schemas"]["Identifier"];
+                name: string;
+                type: string;
+            }[];
+            total?: string;
+        };
+        /** @description Moneybird-compatible base_contact_response. */
+        base_contact_response: {
+            address1?: string | null;
+            address2?: string | null;
+            administration_id?: components["schemas"]["Identifier"];
+            archived?: boolean;
+            attention?: string | null;
+            bank_account?: string | null;
+            chamber_of_commerce?: string | null;
+            city?: string | null;
+            company_name?: unknown;
+            contact_people?: components["schemas"]["contact_person_response"][];
+            country?: string;
+            created_at?: components["schemas"]["timestamp"];
+            credit_card_number?: string | null;
+            credit_card_reference?: string | null;
+            /** @enum {string|null} */
+            credit_card_type?: "mastercard" | "visa" | null;
+            custom_fields?: components["schemas"]["custom_field_value_response"][];
+            customer_id?: string;
+            /** @enum {string|null} */
+            delivery_method?: "Email" | "Post" | "Manual" | "Simplerinvoicing" | "Peppol" | null;
+            direct_debit?: boolean;
+            email?: string | null;
+            email_ubl?: boolean;
+            estimate_workflow_id?: components["schemas"]["identifier_nullable"];
+            firstname?: string | null;
+            id?: components["schemas"]["Identifier"];
+            invoice_workflow_id?: components["schemas"]["identifier_nullable"];
+            is_trusted?: boolean;
+            lastname?: string | null;
+            max_transfer_amount?: string | null;
+            moneybird_payments_mandate?: boolean;
+            notes?: components["schemas"]["note_response"][];
+            phone?: string | null;
+            /** Format: uri */
+            sales_invoices_url?: string;
+            send_estimates_to_attention?: string | null;
+            send_estimates_to_email?: string | null;
+            send_invoices_to_attention?: string | null;
+            send_invoices_to_email?: string | null;
+            sepa_active?: boolean | null;
+            sepa_bic?: string | null;
+            sepa_iban?: string | null;
+            sepa_iban_account_name?: string | null;
+            /** Format: date */
+            sepa_mandate_date?: string | null;
+            sepa_mandate_id?: string | null;
+            /** @enum {string} */
+            sepa_sequence_type?: "RCUR" | "FRST" | "OOFF" | "FNAL";
+            si_identifier?: string | null;
+            si_identifier_type?: string | null;
+            tax_number?: string | null;
+            tax_number_valid?: boolean | null;
+            /** Format: date-time */
+            tax_number_validated_at?: string | null;
+            updated_at?: components["schemas"]["timestamp"];
+            version?: number;
+            zipcode?: string | null;
+        };
+        /** @description Moneybird-compatible base_user_response. */
+        base_user_response: {
+            created_at?: components["schemas"]["timestamp"];
+            id?: components["schemas"]["Identifier"];
+            name?: string;
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible cash_flow_amounts. */
+        cash_flow_amounts: {
+            cash_paid_by_ledger_account?: components["schemas"]["ledger_account_data"];
+            cash_received_by_ledger_account?: components["schemas"]["ledger_account_data"];
+            closing_balance?: string;
+            opening_balance?: string;
+        };
+        /** @description Moneybird-compatible contact_person_response. */
+        contact_person_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            contact_id?: components["schemas"]["identifier_nullable"];
+            /** Format: date-time */
+            created_at?: string | null;
+            department?: string | null;
+            email?: string | null;
+            firstname?: string | null;
+            id?: components["schemas"]["identifier_nullable"];
+            lastname?: string | null;
+            phone?: string | null;
+            /** Format: date-time */
+            updated_at?: string | null;
+            version?: number;
+        };
+        /** @description Moneybird-compatible contact_report_item. */
+        contact_report_item: {
+            amount: string;
+            contact_id: components["schemas"]["identifier_nullable"];
+        };
+        /** @description Moneybird-compatible contact_response. */
+        contact_response: components["schemas"]["base_contact_response"] & {
+            events?: components["schemas"]["event_response"][];
+        };
+        /** @description Moneybird-compatible creditors_report_item. */
+        creditors_report_item: {
+            amount: string;
+            contact_id: components["schemas"]["identifier_nullable"];
+        };
+        /** @description Moneybird-compatible currency. */
+        currency: string;
+        /** @description Moneybird-compatible custom_field_response. */
+        custom_field_response: {
+            administration_id?: components["schemas"]["Identifier"] | null;
+            id?: components["schemas"]["identifier_nullable"];
+            name?: string;
+            /** @enum {string|null} */
+            source?: "sales_invoice" | "estimate" | "contact" | "identity" | null;
+        };
+        /** @description Moneybird-compatible custom_field_value_response. */
+        custom_field_value_response: {
+            id?: components["schemas"]["Identifier"];
+            name?: string;
+            value?: string;
+        };
+        /** @description Moneybird-compatible custom_fields_attributes. */
+        custom_fields_attributes: {
+            [key: string]: {
+                id: components["schemas"]["Identifier"];
+                value: string;
+            };
+        } | {
+            id?: components["schemas"]["Identifier"];
+            value?: string;
+        }[];
+        /** @description Moneybird-compatible debtors_report_item. */
+        debtors_report_item: {
+            amount: string;
+            contact_id: components["schemas"]["identifier_nullable"];
+        };
+        /** @description Moneybird-compatible detail_response. */
+        detail_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            amount?: string | null;
+            amount_decimal?: string | null;
+            /** Format: date-time */
+            created_at?: string | null;
+            description?: string;
+            id?: components["schemas"]["Identifier"];
+            is_optional?: boolean;
+            is_selected?: boolean;
+            ledger_account_id?: components["schemas"]["Identifier"];
+            mandatory_tax_text?: string | null;
+            period?: string | null;
+            price?: string;
+            product_id?: components["schemas"]["identifier_nullable"];
+            project_id?: components["schemas"]["identifier_nullable"];
+            row_order?: number;
+            tax_rate_id?: components["schemas"]["Identifier"];
+            tax_report_reference?: (string | null)[];
+            total_price_excl_tax_with_discount?: components["schemas"]["number"];
+            total_price_excl_tax_with_discount_base?: components["schemas"]["number"];
+            /** Format: date-time */
+            updated_at?: string | null;
+        };
+        /** @description Moneybird-compatible details_attributes. */
+        details_attributes: {
+            [key: string]: {
+                _destroy?: boolean | string;
+                amount?: number | string;
+                automated_tax_enabled?: boolean | string;
+                description?: string;
+                id?: components["schemas"]["Identifier"];
+                is_optional?: boolean | string;
+                is_selected?: boolean | string;
+                ledger_account_id?: components["schemas"]["Identifier"];
+                period?: string;
+                price?: components["schemas"]["money"];
+                product_id?: components["schemas"]["Identifier"];
+                project_id?: components["schemas"]["Identifier"];
+                row_order?: number | string;
+                tax_rate_id?: components["schemas"]["Identifier"];
+            };
+        } | {
+            _destroy?: boolean | string;
+            amount?: number | string;
+            automated_tax_enabled?: boolean | string;
+            description?: string;
+            id?: components["schemas"]["Identifier"];
+            is_optional?: boolean | string;
+            is_selected?: boolean | string;
+            ledger_account_id?: components["schemas"]["Identifier"];
+            period?: string;
+            price?: components["schemas"]["money"];
+            product_id?: components["schemas"]["Identifier"];
+            project_id?: components["schemas"]["Identifier"];
+            row_order?: number | string;
+            tax_rate_id?: components["schemas"]["Identifier"];
+        }[];
+        /** @description Moneybird-compatible disposal_response. */
+        disposal_response: {
+            asset_id?: components["schemas"]["Identifier"];
+            /** Format: date */
+            date?: string;
+            externally_booked?: boolean;
+            /** @enum {string} */
+            reason?: "out_of_use" | "sold" | "private_withdrawal" | "divested";
+            reinvestment_reserve_sale?: components["schemas"]["reinvestment_reserve_sale_response"] | null;
+        };
+        /** @description Moneybird-compatible document_style_response. */
+        document_style_response: {
+            /** @enum {string} */
+            address_position?: "left" | "right";
+            administration_id?: components["schemas"]["Identifier"];
+            background_hash?: string | null;
+            /** Format: date-time */
+            created_at?: string | null;
+            custom_css?: string | null;
+            default?: boolean;
+            estimate_metadata_left?: {
+                [key: string]: string | boolean;
+            }[];
+            estimate_metadata_right?: {
+                [key: string]: string | boolean;
+            }[];
+            estimate_sender_address?: {
+                [key: string]: string | boolean;
+            }[];
+            font_family?: string;
+            font_size?: number;
+            id?: components["schemas"]["Identifier"];
+            identity_id?: components["schemas"]["Identifier"];
+            invoice_metadata_left?: {
+                [key: string]: string | boolean;
+            }[];
+            invoice_metadata_right?: {
+                [key: string]: string | boolean;
+            }[];
+            invoice_sender_address?: {
+                [key: string]: string | boolean;
+            }[];
+            logo_container_full_width?: boolean | null;
+            logo_display_width?: number | null;
+            logo_hash?: string | null;
+            /** @enum {string} */
+            logo_position?: "left" | "center" | "right";
+            name?: string;
+            /** @enum {string} */
+            paper_size?: "A4" | "letter";
+            print_on_stationery?: boolean | null;
+            /** Format: date-time */
+            updated_at?: string | null;
+        };
+        /** @description Moneybird-compatible download_response. */
+        download_response: {
+            content_type?: string;
+            created_at?: components["schemas"]["timestamp"];
+            download_type?: string;
+            downloaded?: boolean;
+            failed?: boolean;
+            filename?: string;
+            id?: components["schemas"]["Identifier"];
+            updated_at?: components["schemas"]["timestamp"];
+            user_id?: components["schemas"]["identifier_nullable"];
+        };
+        /** @description Moneybird-compatible estimate_response. */
+        estimate_response: {
+            /** Format: date */
+            accepted_at?: string | null;
+            administration_id?: components["schemas"]["Identifier"];
+            /** Format: date */
+            archived_at?: string | null;
+            attachments?: components["schemas"]["attachment_response"][];
+            contact?: components["schemas"]["simple_contact_response"] | null;
+            contact_id?: components["schemas"]["Identifier"];
+            contact_person?: components["schemas"]["contact_person_response"] | null;
+            contact_person_id?: components["schemas"]["identifier_nullable"];
+            /** Format: date-time */
+            created_at?: string | null;
+            currency?: string;
+            custom_fields?: components["schemas"]["custom_field_value_response"][];
+            details?: components["schemas"]["detail_response"][];
+            discount?: components["schemas"]["number"];
+            document_style_id?: components["schemas"]["Identifier"];
+            draft_id?: number | null;
+            /** Format: date */
+            due_date?: string;
+            /** Format: date */
+            estimate_date?: string | null;
+            estimate_id?: string | null;
+            estimate_sequence_id?: string | null;
+            events?: components["schemas"]["event_response"][];
+            exchange_rate?: components["schemas"]["number"];
+            id?: components["schemas"]["Identifier"];
+            identity_id?: components["schemas"]["Identifier"];
+            language?: string | null;
+            notes?: components["schemas"]["note_response"][];
+            original_estimate_id?: components["schemas"]["identifier_nullable"];
+            post_text?: string | null;
+            pre_text?: string | null;
+            prices_are_incl_tax?: boolean;
+            public_view_code?: string | null;
+            /** Format: date-time */
+            public_view_code_expires_at?: string | null;
+            reference?: string | null;
+            /** Format: date */
+            rejected_at?: string | null;
+            /** Format: date */
+            sent_at?: string | null;
+            show_tax?: boolean;
+            sign_online?: boolean;
+            /** @enum {string} */
+            state?: "draft" | "open" | "late" | "accepted" | "rejected" | "billed" | "archived";
+            tax_totals?: components["schemas"]["tax_subtotal_response"][];
+            total_discount?: components["schemas"]["number"];
+            total_price_excl_tax?: components["schemas"]["number"];
+            total_price_excl_tax_base?: components["schemas"]["number"];
+            total_price_incl_tax?: components["schemas"]["number"];
+            total_price_incl_tax_base?: components["schemas"]["number"];
+            /** Format: date-time */
+            updated_at?: string | null;
+            url?: string;
+            version?: number;
+            workflow_id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible event_response. */
+        event_response: {
+            action?: string;
+            administration_id?: components["schemas"]["Identifier"] | null;
+            created_at?: components["schemas"]["timestamp"];
+            data?: {
+                [key: string]: unknown;
+            };
+            link_entity_id?: components["schemas"]["identifier_nullable"];
+            link_entity_type?: string | null;
+            updated_at?: components["schemas"]["timestamp"];
+            user_id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible extended_user_response. */
+        extended_user_response: components["schemas"]["base_user_response"] & {
+            email?: string;
+            email_validated?: boolean;
+            language?: string;
+            permissions?: ("sales_invoices" | "documents" | "estimates" | "bank" | "settings" | "ownership" | "time_entries")[];
+            time_zone?: string;
+            /** @enum {string} */
+            user_type?: "end_user" | "api_user" | "system_user" | "deleted_end_user" | "deleted_api_user" | "owner" | "accountant" | "employee";
+        };
+        /** @description Moneybird-compatible external_sales_invoice_response. */
+        external_sales_invoice_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            attachments?: components["schemas"]["attachment_response"][];
+            contact?: components["schemas"]["simple_contact_response"] | null;
+            contact_id?: components["schemas"]["identifier_nullable"];
+            created_at?: components["schemas"]["timestamp"];
+            currency?: components["schemas"]["currency"];
+            /** Format: date */
+            date?: string;
+            details?: components["schemas"]["detail_response"][];
+            /** Format: date */
+            due_date?: string | null;
+            entry_number?: number;
+            events?: components["schemas"]["event_response"][];
+            id?: components["schemas"]["Identifier"];
+            /** Format: date */
+            marked_dubious_on?: string | null;
+            /** Format: date */
+            marked_uncollectible_on?: string | null;
+            notes?: components["schemas"]["note_response"][];
+            /** @enum {string|null} */
+            origin?: "upload" | "endpoint" | "si" | "email" | "si_local" | "si_peppol" | "api" | "moneybird_bv" | "mollie" | null;
+            /** Format: date */
+            paid_at?: string | null;
+            payments?: components["schemas"]["payment_response"][];
+            prices_are_incl_tax?: boolean;
+            reference?: string | null;
+            source?: string | null;
+            source_url?: string | null;
+            /** @enum {string} */
+            state?: "new" | "open" | "late" | "paid" | "uncollectible" | "pending_payment";
+            tax_totals?: components["schemas"]["tax_subtotal_response"][];
+            total_paid?: string;
+            total_price_excl_tax?: string;
+            total_price_excl_tax_base?: string;
+            total_price_incl_tax?: string;
+            total_price_incl_tax_base?: string;
+            total_unpaid?: string;
+            total_unpaid_base?: string;
+            updated_at?: components["schemas"]["timestamp"];
+            version?: components["schemas"]["version"];
+        };
+        /** @description Moneybird-compatible financial_account_response. */
+        financial_account_response: {
+            active?: boolean;
+            administration_id?: components["schemas"]["Identifier"];
+            created_at?: components["schemas"]["timestamp"];
+            currency?: components["schemas"]["currency"];
+            id?: components["schemas"]["Identifier"];
+            identifier?: string;
+            moneybird_account?: boolean;
+            name?: string;
+            provider?: string | null;
+            type?: string;
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible financial_mutation_response. */
+        financial_mutation_response: {
+            account_servicer_transaction_id?: string | null;
+            administration_id?: components["schemas"]["Identifier"];
+            amount?: string;
+            amount_open?: string;
+            batch_reference?: string | null;
+            code?: string | null;
+            contra_account_name?: string | null;
+            contra_account_number?: string;
+            created_at?: components["schemas"]["timestamp"];
+            currency?: components["schemas"]["currency"];
+            /** Format: date */
+            date?: string;
+            financial_account_id?: components["schemas"]["Identifier"];
+            financial_statement_id?: components["schemas"]["Identifier"];
+            id?: components["schemas"]["Identifier"];
+            ledger_account_bookings?: components["schemas"]["ledger_account_booking_response"][];
+            message?: string | null;
+            original_amount?: string | null;
+            payments?: components["schemas"]["payment_response"][];
+            /** Format: date-time */
+            processed_at?: string | null;
+            sepa_fields?: Record<string, never> | null;
+            /** @enum {string} */
+            settlement_state?: "authorised" | "cancelled" | "expired" | "settled" | "pending" | "refused" | "error" | "captured" | "failed" | "returned";
+            /** @enum {string} */
+            state?: "unprocessed" | "processed";
+            updated_at?: components["schemas"]["timestamp"];
+            version?: components["schemas"]["version"];
+        };
+        /** @description Moneybird-compatible financial_statement_response. */
+        financial_statement_response: {
+            financial_account_id?: components["schemas"]["Identifier"];
+            financial_mutations?: components["schemas"]["financial_mutation_response"][];
+            id?: components["schemas"]["Identifier"];
+            importer_service?: string | null;
+            official_balance?: string | null;
+            /** Format: date */
+            official_date?: string | null;
+            reference?: string;
+        };
+        /** @description Moneybird-compatible fiscal_allocation_response. */
+        fiscal_allocation_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            created_at?: components["schemas"]["timestamp"];
+            id?: components["schemas"]["Identifier"];
+            ledger_account_id?: components["schemas"]["Identifier"];
+            percentage?: components["schemas"]["number"];
+            price?: components["schemas"]["number"];
+            price_base?: components["schemas"]["number"];
+            private_ledger_account_id?: components["schemas"]["Identifier"];
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible fiscal_allocations_attributes. */
+        fiscal_allocations_attributes: {
+            [key: string]: {
+                _destroy?: boolean | string;
+                id?: components["schemas"]["Identifier"];
+                ledger_account_id?: components["schemas"]["Identifier"];
+                percentage?: components["schemas"]["number"];
+                private_ledger_account_id?: components["schemas"]["Identifier"];
+            };
+        } | {
+            _destroy?: boolean | string;
+            id?: components["schemas"]["Identifier"];
+            ledger_account_id?: components["schemas"]["Identifier"];
+            percentage?: components["schemas"]["number"];
+            private_ledger_account_id?: components["schemas"]["Identifier"];
+        }[];
+        /** @description Moneybird-compatible general_document_response. */
+        general_document_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            attachments?: components["schemas"]["attachment_response"][];
+            contact?: components["schemas"]["simple_contact_response"] | null;
+            contact_id?: components["schemas"]["identifier_nullable"];
+            created_at?: components["schemas"]["timestamp"];
+            /** Format: date */
+            date?: string;
+            /** Format: date */
+            due_date?: string | null;
+            entry_number?: number | null;
+            events?: components["schemas"]["event_response"][];
+            exchange_rate?: string | null;
+            id?: components["schemas"]["Identifier"];
+            notes?: components["schemas"]["note_response"][];
+            reference?: string | null;
+            /** @enum {string} */
+            state?: "new" | "open" | "late" | "paid" | "saved" | "pending_payment";
+            updated_at?: components["schemas"]["timestamp"];
+            version?: components["schemas"]["version"];
+        };
+        /** @description Moneybird-compatible general_journal_document_entry_response. */
+        general_journal_document_entry_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            contact_id?: components["schemas"]["identifier_nullable"];
+            created_at?: components["schemas"]["timestamp"];
+            credit?: string;
+            debit?: string;
+            description?: string | null;
+            id?: components["schemas"]["Identifier"];
+            ledger_account_id?: components["schemas"]["Identifier"];
+            project_id?: components["schemas"]["identifier_nullable"];
+            row_order?: number | null;
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible general_journal_document_response. */
+        general_journal_document_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            attachments?: components["schemas"]["attachment_response"][];
+            created_at?: components["schemas"]["timestamp"];
+            /** Format: date */
+            date?: string;
+            events?: components["schemas"]["event_response"][];
+            general_journal_document_entries?: components["schemas"]["general_journal_document_entry_response"][];
+            id?: components["schemas"]["Identifier"];
+            /** @enum {string|null} */
+            journal_type?: "fiscal_year_ending" | null;
+            notes?: components["schemas"]["note_response"][];
+            reference?: string | null;
+            updated_at?: components["schemas"]["timestamp"];
+            version?: components["schemas"]["version"];
+        };
+        /** @description Moneybird-compatible general_ledger_amounts. */
+        general_ledger_amounts: {
+            credit_sums?: components["schemas"]["ledger_account_data"];
+            debit_sums?: components["schemas"]["ledger_account_data"];
+            final_balance?: components["schemas"]["ledger_account_data"];
+            start_balance?: components["schemas"]["ledger_account_data"];
+        };
+        /** @description Moneybird-compatible identifier_nullable. */
+        identifier_nullable: (string | number) | null;
+        /** @description Moneybird-compatible identity_response. */
+        identity_response: {
+            address1?: string | null;
+            address2?: string | null;
+            administration_id?: components["schemas"]["Identifier"];
+            bank_account_bic?: string | null;
+            bank_account_name?: string | null;
+            bank_account_number?: string | null;
+            chamber_of_commerce?: string | null;
+            city?: string | null;
+            company_name?: string | null;
+            country?: string | null;
+            created_at?: components["schemas"]["timestamp"];
+            custom_fields?: components["schemas"]["custom_field_value_response"][];
+            email?: string | null;
+            id?: components["schemas"]["Identifier"];
+            phone?: string | null;
+            tax_number?: string | null;
+            updated_at?: components["schemas"]["timestamp"];
+            zipcode?: string | null;
+        };
+        /** @description Moneybird-compatible ledger_account_booking_response. */
+        ledger_account_booking_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            created_at?: components["schemas"]["timestamp"];
+            description?: string | null;
+            financial_mutation_id?: components["schemas"]["Identifier"];
+            id?: components["schemas"]["Identifier"];
+            ledger_account_id?: components["schemas"]["Identifier"];
+            price?: string;
+            project_id?: components["schemas"]["identifier_nullable"];
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible ledger_account_data. */
+        ledger_account_data: {
+            ledger_accounts: {
+                ledger_account_id: string;
+                value: string;
+            }[];
+        };
+        /** @description Moneybird-compatible ledger_account_response. */
+        ledger_account_response: {
+            account_id?: string | null;
+            /** @enum {string} */
+            account_type?: "non_current_assets" | "current_assets" | "equity" | "non_current_liabilities" | "current_liabilities" | "revenue" | "direct_costs" | "expenses" | "other_income_expenses" | "other" | "temporary" | "provisions";
+            active?: boolean;
+            administration_id?: components["schemas"]["Identifier"];
+            allowed_document_types?: ("sales_invoice" | "purchase_invoice" | "general_journal_document" | "financial_mutation" | "payment")[];
+            created_at?: components["schemas"]["timestamp"];
+            financial_account_id?: components["schemas"]["identifier_nullable"];
+            id?: components["schemas"]["Identifier"];
+            name?: string;
+            parent_id?: components["schemas"]["identifier_nullable"];
+            taxonomy_item?: components["schemas"]["taxonomy_item_response"] | null;
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible minimal_contact_response. */
+        minimal_contact_response: {
+            company_name?: string | null;
+            firstname?: string | null;
+            id?: components["schemas"]["Identifier"];
+            lastname?: string | null;
+        };
+        /** @description Moneybird-compatible minimal_time_entry_response. */
+        minimal_time_entry_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            billable?: boolean;
+            contact_id?: components["schemas"]["identifier_nullable"];
+            created_at?: components["schemas"]["timestamp"];
+            description?: string | null;
+            ended_at?: components["schemas"]["timestamp"];
+            id?: components["schemas"]["Identifier"];
+            paused_duration?: number;
+            project_id?: components["schemas"]["identifier_nullable"];
+            started_at?: components["schemas"]["timestamp"];
+            updated_at?: components["schemas"]["timestamp"];
+            user_id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible money. */
+        money: (string | number) | null;
+        /** @description Moneybird-compatible non_symbolic_error. */
+        non_symbolic_error: {
+            details?: {
+                [key: string]: ({
+                    error: string;
+                } & {
+                    [key: string]: unknown;
+                })[];
+            };
+            error?: {
+                [key: string]: (string | Record<string, never>)[];
+            };
+            full_message?: string;
+        };
+        /** @description Moneybird-compatible note_response. */
+        note_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            assignee_id?: components["schemas"]["identifier_nullable"];
+            /** Format: date-time */
+            completed_at?: string | null;
+            completed_by_id?: components["schemas"]["identifier_nullable"];
+            created_at?: components["schemas"]["timestamp"];
+            data?: Record<string, never> | null;
+            entity_id?: components["schemas"]["identifier_nullable"];
+            entity_type?: string;
+            id?: components["schemas"]["Identifier"];
+            note?: string | null;
+            todo?: (boolean | string) | null;
+            /** @enum {string|null} */
+            todo_type?: "sales_invoice_due" | "purchase_invoice_due" | "general_document_reminder" | "general_document_due" | "new_document_awaiting_processing" | "new_financial_mutation_awaiting_processing" | "financial_mutations_not_updated" | "sales_invoice_payment_not_linked_to_financial_mutation" | "document_payment_not_linked_to_financial_mutation" | "sales_invoice_awaiting_payment_batch" | "export_sales_invoices_ready" | "export_documents_ready" | "export_contacts_ready" | "import_contacts_ready" | "recurring_sales_invoice_auto_send_failed" | "sales_invoice_scheduled_sending_failed" | "sales_invoice_reminder_sending_failed" | "sales_invoice_payment_email_missing_sender_email" | "sales_invoice_becoming_due" | "sales_invoice_collecting_failed" | "estimate_due" | "export_estimates_ready" | "sales_invoice_email_delivery_failed" | "sales_invoice_email_marked_as_spam" | "estimate_email_delivery_failed" | "estimate_email_marked_as_spam" | "purchase_invoice_invalid_ubl" | "sales_invoice_unprintable" | "estimate_unprintable" | "auditfile_ready" | "import_financial_statement_finished" | "recurring_sales_invoice_auto_send_skipped_import_wizard" | "ledger_account_report_export_ready" | "recurring_sales_invoice_failed_deleted_contact" | "recurring_sales_invoice_create_invoice_failed" | "sales_invoice_simplerinvoicing_delivery_failed_unroutable" | "purchase_invoice_received_simplerinvoicing" | "sales_invoice_simplerinvoicing_delivery_error" | "purchase_transaction_expired" | "sales_invoice_si_delivery_failed_contact_unreachable" | "sales_invoice_si_delivery_failed_deactivated" | "sales_invoice_si_delivery_failed_identity_unverified" | "sales_invoice_si_delivery_failed_length_exceeded" | "recurring_document_stopped_by_contact_delete" | "sales_invoice_email_previously_bounced" | "estimate_email_previously_bounced" | "email_domain_invalidated" | "external_sales_invoice_invalid_ubl" | "sales_invoice_email_invalid_address" | "estimate_email_invalid_address" | "gateway_connection_terminated" | "sales_invoice_email_payload_too_large" | "estimate_email_payload_too_large" | "ponto_organization_not_activated" | "ponto_financial_institution_deprecated" | "contact_email_delivery_failed" | "contact_email_marked_as_spam" | "contact_email_previously_bounced" | "contact_email_invalid_address" | "contact_email_payload_too_large" | "sales_invoice_scheduling_failed_due_to_payment_information" | "sales_invoice_scheduling_failed_due_to_delivery_information" | "sales_invoice_scheduling_failed_due_to_collection_method" | "sales_invoice_scheduling_failed_due_to_sending_address" | "sales_invoice_collecting_failed_missing_subscription" | "sales_invoice_collecting_failed_no_mandate" | "sales_invoice_si_delivery_failed_ubl_validation_failed" | "sales_invoice_email_sender_limit" | "estimate_email_sender_limit" | "contact_email_sender_limit" | "sales_invoice_email_blocked" | "estimate_email_blocked" | "contact_email_blocked" | "sales_invoice_email_invalid_attachment" | "estimate_email_invalid_attachment" | "contact_email_invalid_attachment" | "sales_invoice_collecting_failed_monthly_limit_exceeded" | "sales_invoice_collecting_failed_invalid_currency" | "mollie_credential_needs_reconnect" | "adyen_verification_error" | "contact_email_not_present" | "financial_mutation_failed" | "sales_invoice_si_delivery_failed_invalid_sender" | "sales_invoice_tax_number_invalid" | "payment_transaction_no_positive_payment" | "financial_mutation_payment_locked" | "sales_invoice_withdrawal_requested" | null;
+            updated_at?: components["schemas"]["timestamp"];
+            user_id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible number. */
+        number: (string | number) | null;
+        /** @description Moneybird-compatible payment_response. */
+        payment_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            created_at?: components["schemas"]["timestamp"];
+            credit_invoice_id?: components["schemas"]["identifier_nullable"];
+            financial_account_id?: components["schemas"]["identifier_nullable"];
+            financial_mutation_id?: components["schemas"]["identifier_nullable"];
+            id?: components["schemas"]["Identifier"];
+            invoice_id?: components["schemas"]["Identifier"];
+            /** @enum {string} */
+            invoice_type?: "SalesInvoice" | "Document" | "ExternalSalesInvoice" | "VatDocument";
+            ledger_account_id?: components["schemas"]["identifier_nullable"];
+            linked_payment_id?: components["schemas"]["identifier_nullable"];
+            manual_payment_action?: string | null;
+            /** Format: date */
+            payment_date?: string;
+            payment_transaction_id?: components["schemas"]["identifier_nullable"];
+            price?: components["schemas"]["number"];
+            price_base?: components["schemas"]["number"];
+            transaction_identifier?: string | null;
+            updated_at?: components["schemas"]["timestamp"];
+            user_id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible product_response. */
+        product_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            created_at?: components["schemas"]["timestamp"];
+            currency?: string;
+            description?: string | null;
+            frequency?: number | null;
+            /** @enum {string|null} */
+            frequency_type?: "day" | "week" | "month" | "quarter" | "year" | null;
+            id?: components["schemas"]["Identifier"];
+            identifier?: string | null;
+            ledger_account_id?: components["schemas"]["Identifier"];
+            price?: string;
+            tax_rate_id?: components["schemas"]["identifier_nullable"];
+            title?: string | null;
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible profit_loss_amounts. */
+        profit_loss_amounts: {
+            direct_costs_by_ledger_account?: components["schemas"]["ledger_account_data"];
+            expenses_by_ledger_account?: components["schemas"]["ledger_account_data"];
+            gross_profit?: string;
+            net_profit?: string;
+            operating_profit?: string;
+            other_income_expenses_by_ledger_account?: components["schemas"]["ledger_account_data"];
+            revenue_by_ledger_account?: components["schemas"]["ledger_account_data"];
+            total_expenses?: string;
+            total_revenue?: string;
+        };
+        /** @description Moneybird-compatible project_report_item. */
+        project_report_item: {
+            amount: string;
+            project_id: components["schemas"]["identifier_nullable"];
+        };
+        /** @description Moneybird-compatible project_response. */
+        project_response: {
+            budget?: number | null;
+            id?: components["schemas"]["Identifier"];
+            name?: string;
+            /** @enum {string} */
+            state?: "active" | "archived";
+        };
+        /** @description Moneybird-compatible purchase_invoice_response. */
+        purchase_invoice_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            attachments?: components["schemas"]["attachment_response"][];
+            contact?: components["schemas"]["simple_contact_response"] | null;
+            contact_id?: components["schemas"]["identifier_nullable"];
+            created_at?: components["schemas"]["timestamp"];
+            currency?: components["schemas"]["currency"];
+            /** Format: date */
+            date?: string;
+            details?: components["schemas"]["detail_response"][];
+            /** Format: date */
+            due_date?: string | null;
+            entry_number?: number | null;
+            events?: components["schemas"]["event_response"][];
+            exchange_rate?: string | null;
+            fiscal_allocations?: components["schemas"]["fiscal_allocation_response"][];
+            id?: components["schemas"]["Identifier"];
+            notes?: components["schemas"]["note_response"][];
+            /** @enum {string|null} */
+            origin?: "upload" | "endpoint" | "si" | "email" | "si_local" | "si_peppol" | "api" | "moneybird_bv" | "mollie" | null;
+            /** Format: date */
+            paid_at?: string | null;
+            payments?: components["schemas"]["payment_response"][];
+            prices_are_incl_tax?: boolean | null;
+            reference?: string | null;
+            revenue_invoice?: boolean | null;
+            /** @enum {string} */
+            state?: "new" | "open" | "late" | "paid" | "saved" | "pending_payment";
+            tax_number?: string | null;
+            total_price_excl_tax?: string | null;
+            total_price_excl_tax_base?: string | null;
+            total_price_incl_tax?: string | null;
+            total_price_incl_tax_base?: string | null;
+            updated_at?: components["schemas"]["timestamp"];
+            version?: components["schemas"]["version"];
+        };
+        /** @description Moneybird-compatible purchase_transaction_batch_response. */
+        purchase_transaction_batch_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            created_at?: components["schemas"]["timestamp"];
+            financial_account_id?: components["schemas"]["Identifier"];
+            id?: components["schemas"]["Identifier"];
+            identifier?: string;
+            /** @enum {string} */
+            state?: "exported" | "cancelled" | "open";
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible purchase_transaction_response. */
+        purchase_transaction_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            amount?: string;
+            contact?: components["schemas"]["simple_contact_response"] | null;
+            created_at?: components["schemas"]["timestamp"];
+            /** Format: date */
+            date?: string | null;
+            description?: string;
+            end_to_end_id?: string;
+            financial_account_id?: components["schemas"]["Identifier"];
+            id?: components["schemas"]["Identifier"];
+            payable_id?: components["schemas"]["identifier_nullable"];
+            payable_type?: string | null;
+            payment_instrument_id?: components["schemas"]["identifier_nullable"];
+            payment_method?: string | null;
+            purchase_transaction_batch_id?: components["schemas"]["identifier_nullable"];
+            sepa_bic?: string;
+            sepa_iban?: string;
+            sepa_iban_account_name?: string;
+            source_sepa_iban?: string | null;
+            source_sepa_iban_account_name?: string | null;
+            /** @enum {string} */
+            state?: "open" | "cancelled" | "paid" | "pending_payment" | "error" | "awaiting_authorization" | "preparing";
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible receipt_response. */
+        receipt_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            attachments?: components["schemas"]["attachment_response"][];
+            contact?: components["schemas"]["simple_contact_response"] | null;
+            contact_id?: components["schemas"]["identifier_nullable"];
+            created_at?: components["schemas"]["timestamp"];
+            currency?: string | null;
+            /** Format: date */
+            date?: string;
+            details?: components["schemas"]["detail_response"][];
+            /** Format: date */
+            due_date?: string | null;
+            entry_number?: number | null;
+            events?: components["schemas"]["event_response"][];
+            exchange_rate?: components["schemas"]["number"];
+            fiscal_allocations?: components["schemas"]["fiscal_allocation_response"][];
+            id?: components["schemas"]["Identifier"];
+            notes?: components["schemas"]["note_response"][];
+            /** @enum {string|null} */
+            origin?: "upload" | "endpoint" | "si" | "email" | "si_local" | "si_peppol" | "api" | "moneybird_bv" | "mollie" | null;
+            /** Format: date */
+            paid_at?: string | null;
+            payments?: components["schemas"]["payment_response"][];
+            prices_are_incl_tax?: boolean | null;
+            reference?: string | null;
+            revenue_invoice?: boolean | null;
+            /** @enum {string} */
+            state?: "new" | "open" | "late" | "paid" | "saved" | "pending_payment";
+            tax_number?: string | null;
+            total_price_excl_tax?: string | null;
+            total_price_excl_tax_base?: string | null;
+            total_price_incl_tax?: string | null;
+            total_price_incl_tax_base?: string | null;
+            updated_at?: components["schemas"]["timestamp"];
+            version?: components["schemas"]["version"];
+        };
+        /** @description Moneybird-compatible recurring_contract_response. */
+        recurring_contract_response: {
+            bank?: string | null;
+            bic?: string | null;
+            card_expiry_month?: string | null;
+            card_expiry_year?: string | null;
+            card_final_digits?: string | null;
+            created_at?: components["schemas"]["timestamp"];
+            iban?: string | null;
+            iban_account_name?: string | null;
+            sepa_mandate?: boolean;
+            type?: string | null;
+        };
+        /** @description Moneybird-compatible recurring_sales_invoice_response. */
+        recurring_sales_invoice_response: {
+            active?: boolean | null;
+            administration_id?: components["schemas"]["Identifier"];
+            attachments?: components["schemas"]["attachment_response"][];
+            auto_send?: boolean | null;
+            contact?: components["schemas"]["simple_contact_response"];
+            contact_id?: components["schemas"]["Identifier"];
+            contact_person?: components["schemas"]["contact_person_response"] | null;
+            contact_person_id?: components["schemas"]["identifier_nullable"];
+            /** Format: date-time */
+            created_at?: string | null;
+            currency?: string;
+            custom_fields?: components["schemas"]["custom_field_value_response"][];
+            details?: components["schemas"]["detail_response"][];
+            discount?: string | null;
+            events?: components["schemas"]["event_response"][];
+            first_due_interval?: number;
+            frequency?: number;
+            /** @enum {string} */
+            frequency_type?: "day" | "week" | "month" | "quarter" | "year";
+            id?: components["schemas"]["Identifier"];
+            /** Format: date */
+            invoice_date?: string;
+            language?: string;
+            /** Format: date */
+            last_date?: string | null;
+            notes?: components["schemas"]["note_response"][];
+            payment_conditions?: string | null;
+            prices_are_incl_tax?: boolean;
+            reference?: string | null;
+            /** Format: date-time */
+            sending_scheduled_at?: string | null;
+            sending_scheduled_user_id?: components["schemas"]["identifier_nullable"];
+            /** Format: date */
+            start_date?: string;
+            subscription?: components["schemas"]["subscription_response"] | null;
+            total_price_excl_tax?: string;
+            total_price_excl_tax_base?: string;
+            total_price_incl_tax?: string;
+            total_price_incl_tax_base?: string;
+            /** Format: date-time */
+            updated_at?: string | null;
+            version?: components["schemas"]["version"];
+            workflow_id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible reinvestment_reserve_purchase_response. */
+        reinvestment_reserve_purchase_response: {
+            amount?: components["schemas"]["number"];
+            asset_id?: components["schemas"]["Identifier"];
+            /** Format: date */
+            date?: string;
+            id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible reinvestment_reserve_sale_response. */
+        reinvestment_reserve_sale_response: {
+            amount?: components["schemas"]["number"];
+            /** Format: date */
+            date?: string;
+            disposal_id?: components["schemas"]["Identifier"];
+            id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible sales_invoice_response. */
+        sales_invoice_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            attachments?: components["schemas"]["attachment_response"][];
+            contact?: components["schemas"]["simple_contact_response"];
+            contact_id?: components["schemas"]["Identifier"];
+            contact_person?: components["schemas"]["contact_person_response"] | null;
+            contact_person_id?: components["schemas"]["identifier_nullable"];
+            /** Format: date-time */
+            created_at?: string;
+            currency?: string;
+            custom_fields?: components["schemas"]["custom_field_value_response"][];
+            details?: components["schemas"]["detail_response"][];
+            discount?: string | null;
+            document_style_id?: components["schemas"]["Identifier"];
+            draft_id?: number | null;
+            /** Format: date */
+            due_date?: string;
+            events?: components["schemas"]["event_response"][];
+            id?: components["schemas"]["Identifier"];
+            identity_id?: components["schemas"]["Identifier"];
+            /** Format: date */
+            invoice_date?: string | null;
+            invoice_id?: string | null;
+            language?: string | null;
+            /** Format: date */
+            marked_dubious_on?: string | null;
+            /** Format: date */
+            marked_uncollectible_on?: string | null;
+            /** Format: date */
+            next_reminder?: string | null;
+            notes?: components["schemas"]["note_response"][];
+            original_estimate_id?: components["schemas"]["identifier_nullable"];
+            original_sales_invoice_id?: components["schemas"]["identifier_nullable"];
+            /** Format: date */
+            paid_at?: string | null;
+            paused?: boolean;
+            payment_conditions?: string | null;
+            payment_reference?: string | null;
+            payment_url?: string;
+            payments?: components["schemas"]["payment_response"][];
+            prices_are_incl_tax?: boolean;
+            public_view_code?: string | null;
+            /** Format: date-time */
+            public_view_code_expires_at?: string | null;
+            recurring_sales_invoice_id?: components["schemas"]["identifier_nullable"];
+            reference?: string | null;
+            reminder_count?: number | null;
+            /** Format: date */
+            sent_at?: string | null;
+            short_payment_reference?: string | null;
+            /** @enum {string} */
+            state?: "draft" | "scheduled" | "open" | "pending_payment" | "reminded" | "late" | "paid" | "uncollectible";
+            subscription_id?: components["schemas"]["identifier_nullable"];
+            tax_totals?: components["schemas"]["tax_subtotal_response"][];
+            time_entries?: components["schemas"]["minimal_time_entry_response"][];
+            total_discount?: string;
+            total_paid?: string;
+            total_price_excl_tax?: string;
+            total_price_excl_tax_base?: string;
+            total_price_incl_tax?: string;
+            total_price_incl_tax_base?: string;
+            total_unpaid?: string;
+            total_unpaid_base?: string;
+            /** Format: date-time */
+            updated_at?: string;
+            url?: string;
+            version?: components["schemas"]["version"];
+            workflow_id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible simple_contact_response. */
+        simple_contact_response: {
+            address1?: string | null;
+            address2?: string | null;
+            administration_id?: components["schemas"]["Identifier"];
+            archived?: boolean;
+            attention?: string | null;
+            bank_account?: string | null;
+            chamber_of_commerce?: string | null;
+            city?: string | null;
+            company_name?: string | null;
+            contact_people?: components["schemas"]["contact_person_response"][];
+            country?: string;
+            /** Format: date-time */
+            created_at?: string | null;
+            credit_card_number?: string | null;
+            credit_card_reference?: string | null;
+            /** @enum {string|null} */
+            credit_card_type?: "mastercard" | "visa" | null;
+            custom_fields?: components["schemas"]["custom_field_value_response"][];
+            customer_id?: string;
+            /** @enum {string|null} */
+            delivery_method?: "Email" | "Post" | "Manual" | "Simplerinvoicing" | "Peppol" | null;
+            direct_debit?: boolean;
+            email?: string | null;
+            email_ubl?: boolean;
+            estimate_workflow_id?: components["schemas"]["identifier_nullable"];
+            firstname?: string | null;
+            id?: components["schemas"]["Identifier"];
+            invoice_workflow_id?: components["schemas"]["identifier_nullable"];
+            is_trusted?: boolean;
+            lastname?: string | null;
+            max_transfer_amount?: string | null;
+            moneybird_payments_mandate?: boolean | null;
+            notes?: components["schemas"]["note_response"][];
+            phone?: string | null;
+            sales_invoices_url?: string;
+            send_estimates_to_attention?: string | null;
+            send_estimates_to_email?: string | null;
+            send_invoices_to_attention?: string | null;
+            send_invoices_to_email?: string | null;
+            sepa_active?: boolean | null;
+            sepa_bic?: string | null;
+            sepa_iban?: string | null;
+            sepa_iban_account_name?: string | null;
+            /** Format: date */
+            sepa_mandate_date?: string | null;
+            sepa_mandate_id?: string | null;
+            /** @enum {string} */
+            sepa_sequence_type?: "RCUR" | "FRST" | "OOFF" | "FNAL";
+            si_identifier?: string | null;
+            si_identifier_type?: string | null;
+            tax_number?: string | null;
+            tax_number_valid?: boolean | null;
+            /** Format: date-time */
+            tax_number_validated_at?: string | null;
+            /** Format: date-time */
+            updated_at?: string | null;
+            version?: components["schemas"]["version"];
+            zipcode?: string | null;
+        };
+        /** @description Moneybird-compatible source_response. */
+        source_response: {
+            asset_id?: components["schemas"]["Identifier"];
+            detail_id?: components["schemas"]["Identifier"];
+            general_journal_document_entry_id?: components["schemas"]["Identifier"];
+            id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible subscription_additional_charge_response. */
+        subscription_additional_charge_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            amount?: string | null;
+            contact_id?: components["schemas"]["identifier_nullable"];
+            description?: string;
+            detail_id?: components["schemas"]["identifier_nullable"];
+            id?: components["schemas"]["Identifier"];
+            period?: string;
+            price?: string;
+            product_id?: components["schemas"]["Identifier"];
+            subscription_id?: components["schemas"]["identifier_nullable"];
+        };
+        /** @description Moneybird-compatible subscription_product_response. */
+        subscription_product_response: {
+            amount?: string;
+            discount?: string | null;
+            /** Format: date */
+            end_date?: string | null;
+            product?: components["schemas"]["product_response"];
+            product_id?: components["schemas"]["Identifier"];
+            /** Format: date */
+            start_date?: string;
+        };
+        /** @description Moneybird-compatible subscription_response. */
+        subscription_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            /** Format: date-time */
+            cancelled_at?: string | null;
+            contact?: components["schemas"]["simple_contact_response"];
+            contact_id?: components["schemas"]["Identifier"];
+            contact_person?: components["schemas"]["contact_person_response"] | null;
+            contact_person_id?: components["schemas"]["identifier_nullable"];
+            /** Format: date */
+            end_date?: string | null;
+            frequency?: number | null;
+            /** @enum {string|null} */
+            frequency_type?: "day" | "week" | "month" | "quarter" | "year" | null;
+            id?: components["schemas"]["Identifier"];
+            product?: components["schemas"]["product_response"];
+            product_id?: components["schemas"]["Identifier"];
+            recurring_sales_invoice_id?: components["schemas"]["identifier_nullable"];
+            reference?: string | null;
+            /** Format: date */
+            start_date?: string;
+            subscription_products?: components["schemas"]["subscription_product_response"][];
+        };
+        /** @description Moneybird-compatible subscription_template_response. */
+        subscription_template_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            contact_can_update?: boolean;
+            document_style_id?: components["schemas"]["Identifier"];
+            id?: components["schemas"]["Identifier"];
+            mergeable?: boolean;
+            products?: components["schemas"]["product_response"][];
+            workflow_id?: components["schemas"]["Identifier"];
+        };
+        /** @description Moneybird-compatible symbolic_error. */
+        symbolic_error: {
+            error?: string;
+            symbolic?: {
+                [key: string]: string | Record<string, never> | unknown[];
+            };
+        };
+        /** @description Moneybird-compatible task_list_group_response. */
+        task_list_group_response: {
+            created_at?: components["schemas"]["timestamp"];
+            id?: components["schemas"]["Identifier"];
+            name?: string | null;
+            report_type?: string | null;
+            row_order?: number;
+            tasks?: components["schemas"]["task_list_task_response"][];
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible task_list_response. */
+        task_list_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            completed?: boolean;
+            completed_tasks_count?: number;
+            created_at?: components["schemas"]["timestamp"];
+            /** Format: date */
+            deadline_on?: string | null;
+            description?: string | null;
+            groups?: components["schemas"]["task_list_group_response"][];
+            id?: components["schemas"]["Identifier"];
+            name?: string;
+            /** Format: date */
+            period_begin?: string | null;
+            /** Format: date */
+            period_end?: string | null;
+            template_id?: components["schemas"]["identifier_nullable"];
+            total_tasks_count?: number;
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible task_list_task_response. */
+        task_list_task_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            assignee_id?: components["schemas"]["identifier_nullable"];
+            /** Format: date-time */
+            completed_at?: string | null;
+            created_at?: components["schemas"]["timestamp"];
+            description?: string | null;
+            events?: components["schemas"]["event_response"][];
+            id?: components["schemas"]["Identifier"];
+            name?: string;
+            notes?: components["schemas"]["note_response"][];
+            parent_task_id?: components["schemas"]["identifier_nullable"];
+            report_type?: string | null;
+            row_order?: number;
+            subtasks?: components["schemas"]["task_list_task_response"][];
+            task_lists_group_id?: components["schemas"]["identifier_nullable"];
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible task_list_template_response. */
+        task_list_template_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            created_at?: components["schemas"]["timestamp"];
+            deadline_after?: string | null;
+            description?: string | null;
+            groups?: components["schemas"]["task_list_group_response"][];
+            id?: components["schemas"]["Identifier"];
+            name?: string;
+            period?: string | null;
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible tax_rate_response. */
+        tax_rate_response: {
+            active?: boolean | null;
+            administration_id?: components["schemas"]["Identifier"];
+            country?: string | null;
+            /** Format: date-time */
+            created_at?: string | null;
+            id?: components["schemas"]["Identifier"];
+            name?: string;
+            percentage?: components["schemas"]["number"] | null;
+            show_tax?: boolean | null;
+            /** @enum {string} */
+            tax_rate_type?: "sales_invoice" | "purchase_invoice" | "general_journal_document";
+            /** Format: date-time */
+            updated_at?: string | null;
+        };
+        /** @description Moneybird-compatible tax_report_amounts. */
+        tax_report_amounts: {
+            tax_rates?: {
+                amount?: string;
+                name?: string;
+                percentage?: string | null;
+                report_reference?: string;
+                tax?: string;
+                tax_rate_id?: components["schemas"]["Identifier"];
+                type?: string;
+            }[];
+        };
+        /** @description Moneybird-compatible tax_subtotal_response. */
+        tax_subtotal_response: {
+            tax_amount?: components["schemas"]["number"];
+            tax_amount_base?: components["schemas"]["number"];
+            tax_rate_id?: components["schemas"]["Identifier"];
+            taxable_amount?: components["schemas"]["number"];
+            taxable_amount_base?: components["schemas"]["number"];
+        };
+        /** @description Moneybird-compatible taxonomy_item_response. */
+        taxonomy_item_response: {
+            code?: string;
+            name?: string;
+            name_english?: string | null;
+            reference?: string | null;
+            taxonomy_version?: string;
+        };
+        /** @description Moneybird-compatible time_entry_response. */
+        time_entry_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            billable?: boolean | null;
+            contact?: components["schemas"]["minimal_contact_response"] | null;
+            contact_id?: components["schemas"]["identifier_nullable"];
+            created_at?: components["schemas"]["timestamp"];
+            description?: string;
+            ended_at?: components["schemas"]["timestamp"] | null;
+            events?: components["schemas"]["event_response"][];
+            id?: components["schemas"]["Identifier"];
+            notes?: components["schemas"]["note_response"][];
+            paused_duration?: number;
+            project?: components["schemas"]["project_response"] | null;
+            project_id?: components["schemas"]["identifier_nullable"];
+            sales_invoice?: components["schemas"]["sales_invoice_response"] | null;
+            sales_invoice_id?: components["schemas"]["identifier_nullable"];
+            started_at?: components["schemas"]["timestamp"];
+            updated_at?: components["schemas"]["timestamp"];
+            user?: components["schemas"]["user_response"];
+            user_id?: components["schemas"]["Identifier"];
+        };
+        /**
+         * Format: date-time
+         * @description Moneybird-compatible timestamp.
+         */
+        timestamp: string;
+        /** @description Moneybird-compatible typeless_document_response. */
+        typeless_document_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            attachments?: components["schemas"]["attachment_response"][];
+            contact?: components["schemas"]["simple_contact_response"] | null;
+            contact_id?: components["schemas"]["identifier_nullable"];
+            created_at?: components["schemas"]["timestamp"];
+            /** Format: date */
+            date?: string;
+            events?: components["schemas"]["event_response"][];
+            id?: components["schemas"]["Identifier"];
+            /** @enum {string|null} */
+            origin?: "upload" | "endpoint" | "si" | "email" | "si_local" | "si_peppol" | "api" | "moneybird_bv" | "mollie" | null;
+            reference?: string | null;
+            /** @enum {string} */
+            state?: "new" | "open" | "late" | "paid" | "saved" | "pending_payment";
+            updated_at?: components["schemas"]["timestamp"];
+            version?: components["schemas"]["version"];
+        };
+        /** @description Moneybird-compatible user_response. */
+        user_response: components["schemas"]["base_user_response"];
+        /** @description Moneybird-compatible value_change_response. */
+        value_change_response: {
+            amount?: components["schemas"]["number"];
+            asset_id?: components["schemas"]["Identifier"];
+            /** Format: date */
+            date?: string;
+            description?: string | null;
+            externally_booked?: boolean;
+            /** @enum {string} */
+            type?: "divestment" | "full_depreciation" | "manual" | "arbitrary" | "linear";
+        };
+        /** @description Moneybird-compatible verification_response. */
+        verification_response: {
+            bank_account_numbers?: string[];
+            chamber_of_commerce_number?: string;
+            emails?: string[];
+            tax_number?: string;
+        };
+        /** @description Moneybird-compatible verifications_response. */
+        verifications_response: components["schemas"]["verification_response"];
+        /** @description Moneybird-compatible version. */
+        version: number;
+        /** @description Moneybird-compatible webhook_response. */
+        webhook_response: {
+            administration_id?: components["schemas"]["Identifier"];
+            deactivated_at?: components["schemas"]["timestamp"] | null;
+            enabled_events?: string[];
+            id?: components["schemas"]["Identifier"];
+            last_http_body?: string | null;
+            last_http_status?: (number | string) | null;
+            secret?: string;
+            token?: string;
+            url?: string;
+        };
+        /** @description Moneybird-compatible workflow_response. */
+        workflow_response: {
+            active?: boolean;
+            administration_id?: components["schemas"]["Identifier"];
+            collection_method?: string | null;
+            created_at?: components["schemas"]["timestamp"];
+            currency?: string;
+            default?: boolean;
+            id?: components["schemas"]["Identifier"];
+            language?: string;
+            name?: string;
+            number_of_collections?: number;
+            payment_methods?: string[] | null;
+            prices_are_incl_tax?: boolean;
+            show_qr_code?: boolean;
+            steps?: components["schemas"]["workflow_step_response"][];
+            type?: string;
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible workflow_step_response. */
+        workflow_step_response: {
+            /** @enum {string|null} */
+            action?: "suspend_moneybird_account" | "reactivate_moneybird_account" | "warn_moneybird_account" | "cancel_subscription" | null;
+            administration_id?: components["schemas"]["Identifier"];
+            created_at?: components["schemas"]["timestamp"];
+            due_interval?: number;
+            id?: components["schemas"]["Identifier"];
+            reminder_auto_send?: boolean;
+            reminder_delay?: number;
+            reminder_text?: string | null;
+            step_order?: number;
+            updated_at?: components["schemas"]["timestamp"];
+        };
+        /** @description Moneybird-compatible working_capital_amounts. */
+        working_capital_amounts: {
+            bank?: string;
+            to_pay?: string;
+            to_receive?: string;
+            working_capital?: string;
         };
     };
     responses: {
@@ -1105,6 +2917,570 @@ export interface operations {
         responses: {
             /** @description The created custom field */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomField"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getInvoiceSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateInvoiceSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvoiceSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listWorkflows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The workflows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowRequest"];
+            };
+        };
+        responses: {
+            /** @description The created workflow */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The workflow */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated workflow */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listDocumentStyles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The document styles */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentStyle"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createDocumentStyle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentStyleRequest"];
+            };
+        };
+        responses: {
+            /** @description The created document style */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentStyle"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getDocumentStyle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The document style */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentStyle"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteDocumentStyle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateDocumentStyle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentStyleRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated document style */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentStyle"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getDocumentStyleFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                /** @description The logo, or the background (stationery) printed behind documents. */
+                file: "logo" | "background";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                    "image/jpeg": string;
+                    "image/gif": string;
+                    "application/pdf": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    uploadDocumentStyleFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                /** @description The logo, or the background (stationery) printed behind documents. */
+                file: "logo" | "background";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/png": string;
+                "image/jpeg": string;
+                "image/gif": string;
+                "application/pdf": string;
+            };
+        };
+        responses: {
+            /** @description The updated document style */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentStyle"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    removeDocumentStyleFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                /** @description The logo, or the background (stationery) printed behind documents. */
+                file: "logo" | "background";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The updated document style */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentStyle"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    reorderCustomFields: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomFieldOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Reordered */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The custom field */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomField"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomFieldUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated custom field */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1774,6 +4150,35 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             /** @description The mail server refused or could not be reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    testStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The storage works */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /** @description The storage refused or could not be reached */
             502: {
                 headers: {
                     [name: string]: unknown;

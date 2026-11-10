@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"net/mail"
 	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -60,6 +61,22 @@ type SMTP struct {
 	Security string
 }
 
+// Storage configures the S3-compatible object storage that holds uploaded
+// files, such as logos.
+type Storage struct {
+	Enabled bool
+	// Endpoint is the service address, such as https://s3.eu-west-1.amazonaws.com
+	// or http://minio:9000. It has no path.
+	Endpoint  string
+	Region    string
+	Bucket    string
+	AccessKey string
+	SecretKey string
+	// PathStyle addresses buckets as endpoint/bucket rather than
+	// bucket.endpoint, which most self-hosted services need.
+	PathStyle bool
+}
+
 // Instance is the configuration of this MoneyHarpy installation.
 type Instance struct {
 	RegistrationOpen bool
@@ -70,6 +87,7 @@ type Instance struct {
 	// Dutch government address service to complete addresses.
 	AddressLookupEnabled bool
 	SMTP                 SMTP
+	Storage              Storage
 }
 
 // Update changes selected settings. Nil fields stay as they are, and an empty
@@ -94,6 +112,14 @@ type Update struct {
 	SMTPPassword *string
 	SMTPFrom     *string
 	SMTPSecurity *string
+
+	StorageEnabled   *bool
+	StorageEndpoint  *string
+	StorageRegion    *string
+	StorageBucket    *string
+	StorageAccessKey *string
+	StorageSecretKey *string
+	StoragePathStyle *bool
 }
 
 // Store persists opaque values by key.
@@ -132,6 +158,13 @@ type storedInstance struct {
 	SMTPPassword     string `json:"smtp_password_sealed"`
 	SMTPFrom         string `json:"smtp_from"`
 	SMTPSecurity     string `json:"smtp_security"`
+	StorageEnabled   bool   `json:"storage_enabled"`
+	StorageEndpoint  string `json:"storage_endpoint"`
+	StorageRegion    string `json:"storage_region"`
+	StorageBucket    string `json:"storage_bucket"`
+	StorageAccessKey string `json:"storage_access_key"`
+	StorageSecret    string `json:"storage_secret_key_sealed"`
+	StoragePathStyle bool   `json:"storage_path_style"`
 }
 
 // Instance returns the current settings with secrets decrypted.
@@ -158,6 +191,10 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 			Enabled: st.SMTPEnabled, Host: st.SMTPHost, Port: st.SMTPPort, Username: st.SMTPUsername,
 			From: st.SMTPFrom, Security: st.SMTPSecurity,
 		},
+		Storage: Storage{
+			Enabled: st.StorageEnabled, Endpoint: st.StorageEndpoint, Region: st.StorageRegion, Bucket: st.StorageBucket,
+			AccessKey: st.StorageAccessKey, PathStyle: st.StoragePathStyle,
+		},
 	}
 	if st.GoogleSecret != "" {
 		if inst.Google.ClientSecret, err = s.cipher.Open(st.GoogleSecret); err != nil {
@@ -172,6 +209,11 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 	if st.SMTPPassword != "" {
 		if inst.SMTP.Password, err = s.cipher.Open(st.SMTPPassword); err != nil {
 			return Instance{}, fmt.Errorf("decrypt smtp password: %w", err)
+		}
+	}
+	if st.StorageSecret != "" {
+		if inst.Storage.SecretKey, err = s.cipher.Open(st.StorageSecret); err != nil {
+			return Instance{}, fmt.Errorf("decrypt storage secret: %w", err)
 		}
 	}
 	return inst, nil
@@ -225,9 +267,11 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 	}
 
 	applySMTP(&inst.SMTP, u)
+	applyStorage(&inst.Storage, u)
 
 	var verr resource.ValidationError
 	validateSMTP(inst.SMTP, &verr)
+	validateStorage(inst.Storage, &verr)
 	if inst.KVK.Enabled && inst.KVK.APIKey == "" {
 		verr.Add("kvk_api_key", "can't be blank while company search is enabled")
 	}
@@ -265,6 +309,17 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		SMTPUsername:     inst.SMTP.Username,
 		SMTPFrom:         inst.SMTP.From,
 		SMTPSecurity:     inst.SMTP.Security,
+		StorageEnabled:   inst.Storage.Enabled,
+		StorageEndpoint:  inst.Storage.Endpoint,
+		StorageRegion:    inst.Storage.Region,
+		StorageBucket:    inst.Storage.Bucket,
+		StorageAccessKey: inst.Storage.AccessKey,
+		StoragePathStyle: inst.Storage.PathStyle,
+	}
+	if inst.Storage.SecretKey != "" {
+		if st.StorageSecret, err = s.cipher.Seal(inst.Storage.SecretKey); err != nil {
+			return Instance{}, fmt.Errorf("encrypt storage secret: %w", err)
+		}
 	}
 	if inst.SMTP.Password != "" {
 		if st.SMTPPassword, err = s.cipher.Seal(inst.SMTP.Password); err != nil {
@@ -330,6 +385,51 @@ func validateSMTP(cfg SMTP, verr *resource.ValidationError) {
 	}
 	if !slices.Contains([]string{"starttls", "tls", "none"}, cfg.Security) {
 		verr.Add("smtp_security", "is not included in the list")
+	}
+}
+
+func applyStorage(cfg *Storage, u Update) {
+	if u.StorageEnabled != nil {
+		cfg.Enabled = *u.StorageEnabled
+	}
+	if u.StorageEndpoint != nil {
+		cfg.Endpoint = strings.TrimRight(strings.TrimSpace(*u.StorageEndpoint), "/")
+	}
+	if u.StorageRegion != nil {
+		cfg.Region = strings.TrimSpace(*u.StorageRegion)
+	}
+	if u.StorageBucket != nil {
+		cfg.Bucket = strings.TrimSpace(*u.StorageBucket)
+	}
+	if u.StorageAccessKey != nil {
+		cfg.AccessKey = strings.TrimSpace(*u.StorageAccessKey)
+	}
+	if u.StorageSecretKey != nil {
+		cfg.SecretKey = cmp.Or(*u.StorageSecretKey, cfg.SecretKey)
+	}
+	if u.StoragePathStyle != nil {
+		cfg.PathStyle = *u.StoragePathStyle
+	}
+}
+
+// bucketPattern follows the S3 bucket naming rules.
+var bucketPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$`)
+
+func validateStorage(cfg Storage, verr *resource.ValidationError) {
+	if !cfg.Enabled {
+		return
+	}
+	if u, err := url.Parse(cfg.Endpoint); err != nil || !validHTTPAddress(cfg.Endpoint) || (u.Path != "" && u.Path != "/") {
+		verr.Add("storage_endpoint", "must be an http or https address without a path")
+	}
+	if !bucketPattern.MatchString(cfg.Bucket) {
+		verr.Add("storage_bucket", "must be a valid bucket name")
+	}
+	if cfg.AccessKey == "" {
+		verr.Add("storage_access_key", "can't be blank while file storage is enabled")
+	}
+	if cfg.SecretKey == "" {
+		verr.Add("storage_secret_key", "can't be blank while file storage is enabled")
 	}
 }
 

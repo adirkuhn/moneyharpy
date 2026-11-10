@@ -33,6 +33,10 @@ MoneyHarpy never holds LM2's signing key: it asks LM2 who a token belongs to. A 
 
 Enter your SMTP server under **Instance settings**, then use **Send test email** to confirm it works. Password recovery appears on the login page once email is enabled.
 
+### File storage
+
+Uploads, such as logos and stationery on document styles, work out of the box: without further setup they are kept on the server's disk, in the `uploads-data` volume (`UPLOADS_DIR`, default `/data/uploads`). Back that volume up with the database. For larger installations, use S3-compatible storage instead: Amazon S3, Cloudflare R2, Backblaze B2, MinIO, SeaweedFS or any other S3 service. The bundled compose file runs SeaweedFS. To use it, set `S3_ACCESS_KEY` and `S3_SECRET_KEY` in `.env`. Then enter them under **Instance settings > File storage** with endpoint `http://storage:8333`, any bucket name and path-style addresses on. **Test storage** creates the bucket if it is missing. Files uploaded before S3 was set up stay readable from disk.
+
 ### Company search and address lookup
 
 Both are optional and off by default, and the app works without them. Under **Instance settings**:
@@ -49,6 +53,8 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v2/administrati
 ```
 
 Create tokens under **User account**.
+
+The schemas follow Moneybird's published API description. `go run ./cmd/mbschemas` copies their structure (field names, types and enums, without Moneybird's text) into the contract. The *Moneybird compatibility* workflow reports when Moneybird's API changes.
 
 ## URIs
 

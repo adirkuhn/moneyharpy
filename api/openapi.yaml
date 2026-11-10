@@ -26,6 +26,12 @@ tags:
     description: Company accounts. Compatible with the Moneybird API.
   - name: Identities
     description: Company details and sender addresses. Compatible with the Moneybird API.
+  - name: Invoices and estimates
+    description: Numbering and document copies by email for invoices and estimates. MoneyHarpy extension.
+  - name: Workflows
+    description: How invoices and estimates are handled, such as payment terms and reminders. Compatible with the Moneybird API.
+  - name: Document styles
+    description: The look of invoices and estimates. Compatible with the Moneybird API.
   - name: Custom fields
     description: Extra fields on invoices, contacts, estimates and identities. Compatible with the Moneybird API.
   - name: Onboarding
@@ -233,6 +239,542 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/invoice_settings:
+    parameters: &id001
+    - &id002
+      $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getInvoiceSettings
+      summary: Get invoice and estimate settings
+      description: MoneyHarpy extension. Numbering, document copies by email and payment options.
+      tags:
+      - Invoices and estimates
+      responses:
+        '200':
+          description: The settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateInvoiceSettings
+      summary: Update invoice and estimate settings
+      description: MoneyHarpy extension. Omitted fields stay unchanged.
+      tags:
+      - Invoices and estimates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceSettingsRequest'
+      responses:
+        '200':
+          description: The updated settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/workflows:
+    parameters: *id001
+    get:
+      operationId: listWorkflows
+      summary: Retrieve workflows
+      description: The administration has a default invoice and a default estimate workflow.
+      tags:
+      - Workflows
+      responses:
+        '200':
+          description: The workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workflow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createWorkflow
+      summary: Create a workflow
+      description: MoneyHarpy extension. Moneybird manages workflows in its web app only. Omitted fields take the default workflow's values.
+      tags:
+      - Workflows
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowRequest'
+      responses:
+        '201':
+          description: The created workflow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/workflows/{id}:
+    parameters: &id003
+    - *id002
+    - &id004
+      $ref: '#/components/parameters/id'
+    get:
+      operationId: getWorkflow
+      summary: Retrieve a workflow
+      tags:
+      - Workflows
+      responses:
+        '200':
+          description: The workflow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateWorkflow
+      summary: Update a workflow
+      description: MoneyHarpy extension. steps_attributes replaces all steps. The default workflow stays active.
+      tags:
+      - Workflows
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowRequest'
+      responses:
+        '200':
+          description: The updated workflow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteWorkflow
+      summary: Delete a workflow
+      description: MoneyHarpy extension. The default workflows cannot be deleted.
+      tags:
+      - Workflows
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/document_styles:
+    parameters: *id001
+    get:
+      operationId: listDocumentStyles
+      summary: Retrieve document styles
+      description: The default style comes first.
+      tags:
+      - Document styles
+      responses:
+        '200':
+          description: The document styles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentStyle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createDocumentStyle
+      summary: Create a document style
+      description: MoneyHarpy extension. Omitted fields take the default values.
+      tags:
+      - Document styles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentStyleRequest'
+      responses:
+        '201':
+          description: The created document style
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStyle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/document_styles/{id}:
+    parameters: *id003
+    get:
+      operationId: getDocumentStyle
+      summary: Retrieve a document style
+      description: MoneyHarpy extension.
+      tags:
+      - Document styles
+      responses:
+        '200':
+          description: The document style
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStyle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateDocumentStyle
+      summary: Update a document style
+      description: MoneyHarpy extension. Omitted fields stay unchanged.
+      tags:
+      - Document styles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentStyleRequest'
+      responses:
+        '200':
+          description: The updated document style
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStyle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteDocumentStyle
+      summary: Delete a document style
+      description: MoneyHarpy extension. The default style cannot be deleted.
+      tags:
+      - Document styles
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/document_styles/{id}/{file}:
+    parameters:
+    - *id002
+    - *id004
+    - name: file
+      in: path
+      required: true
+      description: The logo, or the background (stationery) printed behind documents.
+      schema:
+        type: string
+        enum:
+        - logo
+        - background
+    get:
+      operationId: getDocumentStyleFile
+      summary: Download a document style's logo or background
+      description: MoneyHarpy extension.
+      tags:
+      - Document styles
+      responses:
+        '200':
+          description: The file
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    put:
+      operationId: uploadDocumentStyleFile
+      summary: Upload a logo or background
+      description: MoneyHarpy extension. Send the file as the request body. Logos are PNG, JPEG or GIF up to 2 MB; backgrounds are PNG, JPEG or PDF up to 10 MB. Files go to the S3-compatible storage configured for the installation, or to the server's disk when none is.
+      tags:
+      - Document styles
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/gif:
+            schema:
+              type: string
+              format: binary
+          application/pdf:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: The updated document style
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStyle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: removeDocumentStyleFile
+      summary: Remove a logo or background
+      description: MoneyHarpy extension.
+      tags:
+      - Document styles
+      responses:
+        '200':
+          description: The updated document style
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStyle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/custom_fields/order:
+    parameters: *id001
+    put:
+      operationId: reorderCustomFields
+      summary: Order the custom fields of one source
+      description: MoneyHarpy extension. List every field of the source once, in the new order.
+      tags:
+      - Custom fields
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomFieldOrderRequest'
+      responses:
+        '204':
+          description: Reordered
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/custom_fields/{id}:
+    parameters: *id003
+    get:
+      operationId: getCustomField
+      summary: Retrieve a custom field
+      description: MoneyHarpy extension.
+      tags:
+      - Custom fields
+      responses:
+        '200':
+          description: The custom field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomField'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateCustomField
+      summary: Rename a custom field
+      description: MoneyHarpy extension. The source cannot change.
+      tags:
+      - Custom fields
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomFieldUpdateRequest'
+      responses:
+        '200':
+          description: The updated custom field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomField'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteCustomField
+      summary: Delete a custom field
+      description: MoneyHarpy extension. Values records hold for the field are removed too.
+      tags:
+      - Custom fields
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/identities:
@@ -823,6 +1365,25 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '502':
           description: The mail server refused or could not be reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/instance/settings/test_storage:
+    post:
+      operationId: testStorage
+      summary: Check the saved file storage settings
+      description: Creates the bucket when it does not exist, then writes and removes a small object.
+      tags: [Instance]
+      responses:
+        '204':
+          description: The storage works
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '502':
+          description: The storage refused or could not be reached
           content:
             application/json:
               schema:
@@ -1461,7 +2022,7 @@ components:
           maxLength: 255
     InstanceSettings:
       type: object
-      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security]
+      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security, storage_enabled, storage_endpoint, storage_region, storage_bucket, storage_access_key, storage_secret_key_set, storage_path_style]
       properties:
         registration_open:
           type: boolean
@@ -1497,6 +2058,23 @@ components:
           type: string
         smtp_security:
           type: string
+        storage_enabled:
+          type: boolean
+          description: Whether uploads, such as logos, go to S3-compatible storage.
+        storage_endpoint:
+          type: string
+          example: https://s3.eu-west-1.amazonaws.com
+        storage_region:
+          type: string
+        storage_bucket:
+          type: string
+        storage_access_key:
+          type: string
+        storage_secret_key_set:
+          type: boolean
+        storage_path_style:
+          type: boolean
+          description: Address buckets as endpoint/bucket, which most self-hosted services need.
     UpdateInstanceSettingsRequest:
       type: object
       additionalProperties: false
@@ -1545,3 +2123,3741 @@ components:
         smtp_security:
           type: string
           enum: [starttls, tls, none]
+        storage_enabled:
+          type: boolean
+        storage_endpoint:
+          type: string
+          maxLength: 255
+        storage_region:
+          type: string
+          maxLength: 64
+        storage_bucket:
+          type: string
+          maxLength: 63
+        storage_access_key:
+          type: string
+          maxLength: 255
+        storage_secret_key:
+          type: string
+          writeOnly: true
+          maxLength: 1024
+        storage_path_style:
+          type: boolean
+    Workflow:
+      description: A Moneybird workflow with MoneyHarpy extensions.
+      allOf:
+      - $ref: '#/components/schemas/workflow_response'
+      - type: object
+        required:
+        - uri
+        properties:
+          uri:
+            type: string
+            description: MoneyHarpy extension. Canonical path of this resource.
+    DocumentStyle:
+      description: A Moneybird document style with MoneyHarpy extensions.
+      allOf:
+      - $ref: '#/components/schemas/document_style_response'
+      - type: object
+        required:
+        - uri
+        properties:
+          uri:
+            type: string
+            description: MoneyHarpy extension. Canonical path of this resource.
+    WorkflowRequest:
+      type: object
+      required:
+      - workflow
+      additionalProperties: false
+      properties:
+        workflow:
+          type: object
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              enum:
+              - InvoiceWorkflow
+              - EstimateWorkflow
+              description: Required when creating; ignored when updating.
+            name:
+              type: string
+              maxLength: 255
+            currency:
+              type: string
+              maxLength: 3
+            language:
+              $ref: '#/components/schemas/Language'
+            active:
+              type: boolean
+            default:
+              type: boolean
+            prices_are_incl_tax:
+              type: boolean
+            show_qr_code:
+              type: boolean
+            steps_attributes:
+              type: array
+              maxItems: 11
+              description: The payment term or validity first, then the reminders.
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  due_interval:
+                    type: integer
+                    minimum: 0
+                    maximum: 365
+                    description: Days until payment is due, or until an estimate expires. First step only.
+                  reminder_delay:
+                    type: integer
+                    minimum: 0
+                    maximum: 365
+                    description: Days after the previous stage that this reminder is due.
+                  reminder_text:
+                    type: string
+                    maxLength: 5000
+                  reminder_auto_send:
+                    type: boolean
+    DocumentStyleLine:
+      type: object
+      required:
+      - field
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+          maxLength: 64
+        bold:
+          type: boolean
+        label:
+          type: boolean
+      description: One entry of a block on a document. bold prints it bold; label prints its name before it.
+    DocumentStyleRequest:
+      type: object
+      required:
+      - document_style
+      additionalProperties: false
+      properties:
+        document_style:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+            identity_id:
+              $ref: '#/components/schemas/Identifier'
+            default:
+              type: boolean
+            logo_container_full_width:
+              type: boolean
+            logo_display_width:
+              type: integer
+              description: Logo width in percent of the available space, 10 to 100.
+            logo_position:
+              type: string
+              enum:
+              - left
+              - center
+              - right
+            print_on_stationery:
+              type: boolean
+              description: Leave the background out of PDFs because you print on pre-printed paper.
+            paper_size:
+              type: string
+              enum:
+              - A4
+              - letter
+            address_position:
+              type: string
+              enum:
+              - left
+              - right
+            font_size:
+              type: integer
+              description: 8 to 14 points.
+            font_family:
+              type: string
+              maxLength: 64
+            custom_css:
+              type: string
+              maxLength: 20000
+            invoice_sender_address: &id001
+              type: array
+              maxItems: 20
+              items:
+                $ref: '#/components/schemas/DocumentStyleLine'
+            invoice_metadata_left: *id001
+            invoice_metadata_right: *id001
+            estimate_sender_address: *id001
+            estimate_metadata_left: *id001
+            estimate_metadata_right: *id001
+    InvoiceSettings:
+      type: object
+      description: MoneyHarpy extension.
+      required:
+      - invoice_id_template
+      - invoice_sequence_id
+      - invoice_id_example
+      - estimate_id_template
+      - estimate_sequence_id
+      - estimate_id_example
+      - invoice_bcc_email_address
+      - invoice_reminders_bcc_enabled
+      - estimate_bcc_email_address
+      - order_bcc_email_address
+      - default_email_ubl
+      - payments_without_proof
+      properties:
+        invoice_id_template:
+          type: string
+          description: How invoice numbers are built, with tags such as {year} and the required {id}.
+          example: '{year}-{id}'
+        invoice_sequence_id:
+          type: string
+          description: The next sequence number. Leading zeros are kept.
+          example: '0001'
+        invoice_id_example:
+          type: string
+          description: The next invoice number if it were made today.
+          example: 2026-0001
+        estimate_id_template:
+          type: string
+        estimate_sequence_id:
+          type: string
+        estimate_id_example:
+          type: string
+        invoice_bcc_email_address:
+          type: string
+          description: Addresses, separated by commas, that get a copy of every invoice.
+        invoice_reminders_bcc_enabled:
+          type: boolean
+          description: Also copy payment reminders to the invoice addresses.
+        estimate_bcc_email_address:
+          type: string
+        order_bcc_email_address:
+          type: string
+        default_email_ubl:
+          type: boolean
+          description: Attach a UBL file to invoices emailed to new contacts.
+        payments_without_proof:
+          type: boolean
+          description: Allow marking invoices paid without a bank transaction.
+    InvoiceSettingsRequest:
+      type: object
+      required:
+      - invoice_settings
+      additionalProperties: false
+      properties:
+        invoice_settings:
+          type: object
+          additionalProperties: false
+          properties:
+            invoice_id_template:
+              type: string
+              maxLength: 255
+            invoice_sequence_id:
+              type: string
+              maxLength: 255
+            estimate_id_template:
+              type: string
+              maxLength: 255
+            estimate_sequence_id:
+              type: string
+              maxLength: 255
+            invoice_bcc_email_address:
+              type: string
+              maxLength: 1000
+            estimate_bcc_email_address:
+              type: string
+              maxLength: 1000
+            order_bcc_email_address:
+              type: string
+              maxLength: 1000
+            invoice_reminders_bcc_enabled:
+              type: boolean
+            default_email_ubl:
+              type: boolean
+            payments_without_proof:
+              type: boolean
+    CustomFieldUpdateRequest:
+      type: object
+      required:
+      - custom_field
+      additionalProperties: false
+      properties:
+        custom_field:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+    CustomFieldOrderRequest:
+      type: object
+      required:
+      - custom_fields_order
+      additionalProperties: false
+      properties:
+        custom_fields_order:
+          type: object
+          required:
+          - source
+          - ids
+          additionalProperties: false
+          properties:
+            source:
+              $ref: '#/components/schemas/CustomFieldSource'
+            ids:
+              type: array
+              maxItems: 500
+              items:
+                $ref: '#/components/schemas/Identifier'
+    # BEGIN Moneybird schemas: generated by cmd/mbschemas, do not edit.
+    administration_response:
+      description: Moneybird-compatible administration_response.
+      properties:
+        access:
+          enum:
+            - accountant_company
+            - user
+          type: string
+        country:
+          type: string
+        currency:
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        language:
+          enum:
+            - nl
+            - nl-be
+            - en
+          type: string
+        name:
+          type: string
+        period_locked_until:
+          format: date
+          nullable: true
+          type: string
+        period_start_date:
+          format: date
+          type: string
+        suspended:
+          type: boolean
+        time_zone:
+          type: string
+      type: object
+    aging_report_item:
+      description: Moneybird-compatible aging_report_item.
+      properties:
+        aging_buckets:
+          items:
+            properties:
+              amount:
+                type: string
+              name:
+                type: string
+            type: object
+          maxItems: 4
+          minItems: 4
+          type: array
+        amount:
+          type: string
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+      type: object
+    asset_response:
+      description: Moneybird-compatible asset_response.
+      properties:
+        calculated_purchase_value:
+          $ref: '#/components/schemas/number'
+        current_value:
+          $ref: '#/components/schemas/number'
+        disposal:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/disposal_response'
+        id:
+          $ref: '#/components/schemas/identifier_nullable'
+        ledger_account_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        name:
+          type: string
+        purchase_date:
+          format: date
+          type: string
+        purchase_value:
+          $ref: '#/components/schemas/number'
+        reinvestment_reserve_purchase:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/reinvestment_reserve_purchase_response'
+        sources:
+          items:
+            $ref: '#/components/schemas/source_response'
+          type: array
+        value_change_plan:
+          nullable: true
+          properties:
+            active:
+              type: boolean
+            lifespan_in_years:
+              type: number
+            monthly_depreciation:
+              $ref: '#/components/schemas/number'
+            residual_value:
+              $ref: '#/components/schemas/number'
+          type: object
+        value_changes:
+          items:
+            $ref: '#/components/schemas/value_change_response'
+          type: array
+      type: object
+    attachment_response:
+      description: Moneybird-compatible attachment_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        attachable_id:
+          $ref: '#/components/schemas/Identifier'
+        attachable_type:
+          enum:
+            - SalesInvoice
+            - RecurringSalesInvoice
+            - Document
+            - FinancialStatement
+            - Workflow
+            - Estimate
+            - ExternalSalesInvoice
+          type: string
+        content_type:
+          type: string
+        created_at:
+          format: date-time
+          nullable: true
+          type: string
+        filename:
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        rotation:
+          nullable: true
+          type: integer
+        size:
+          type: integer
+        updated_at:
+          format: date-time
+          nullable: true
+          type: string
+      type: object
+    balance_sheet_credit:
+      description: Moneybird-compatible balance_sheet_credit.
+      properties:
+        current_liabilities:
+          $ref: '#/components/schemas/balance_sheet_ledger_account'
+        equity:
+          $ref: '#/components/schemas/balance_sheet_ledger_account'
+        non_current_liabilities:
+          $ref: '#/components/schemas/balance_sheet_ledger_account'
+        open_years:
+          items:
+            properties:
+              value:
+                type: string
+              year:
+                type: string
+            type: object
+          type: array
+        provisions:
+          $ref: '#/components/schemas/balance_sheet_ledger_account'
+        total:
+          type: string
+      type: object
+    balance_sheet_debit:
+      description: Moneybird-compatible balance_sheet_debit.
+      properties:
+        current_assets:
+          $ref: '#/components/schemas/balance_sheet_ledger_account'
+        non_current_assets:
+          $ref: '#/components/schemas/balance_sheet_ledger_account'
+        total:
+          type: string
+      type: object
+    balance_sheet_ledger_account:
+      description: Moneybird-compatible balance_sheet_ledger_account.
+      items:
+        properties:
+          children:
+            items:
+              properties:
+                ledger_account_id:
+                  type: string
+                value:
+                  type: string
+              type: object
+            type: array
+          ledger_account_id:
+            type: string
+          value:
+            type: string
+        type: object
+      type: array
+    bank_balance_amounts:
+      description: Moneybird-compatible bank_balance_amounts.
+      properties:
+        financial_accounts:
+          items:
+            properties:
+              balance:
+                type: string
+              financial_account_id:
+                $ref: '#/components/schemas/Identifier'
+              name:
+                type: string
+              type:
+                type: string
+            required:
+              - financial_account_id
+              - name
+              - type
+              - balance
+            type: object
+          type: array
+        total:
+          type: string
+      type: object
+    base_contact_response:
+      description: Moneybird-compatible base_contact_response.
+      properties:
+        address1:
+          nullable: true
+          type: string
+        address2:
+          nullable: true
+          type: string
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        archived:
+          type: boolean
+        attention:
+          nullable: true
+          type: string
+        bank_account:
+          nullable: true
+          type: string
+        chamber_of_commerce:
+          nullable: true
+          type: string
+        city:
+          nullable: true
+          type: string
+        company_name: {}
+        contact_people:
+          items:
+            $ref: '#/components/schemas/contact_person_response'
+          type: array
+        country:
+          type: string
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        credit_card_number:
+          nullable: true
+          type: string
+        credit_card_reference:
+          nullable: true
+          type: string
+        credit_card_type:
+          enum:
+            - mastercard
+            - visa
+          nullable: true
+          type: string
+        custom_fields:
+          items:
+            $ref: '#/components/schemas/custom_field_value_response'
+          type: array
+        customer_id:
+          type: string
+        delivery_method:
+          enum:
+            - Email
+            - Post
+            - Manual
+            - Simplerinvoicing
+            - Peppol
+          nullable: true
+          type: string
+        direct_debit:
+          type: boolean
+        email:
+          nullable: true
+          type: string
+        email_ubl:
+          type: boolean
+        estimate_workflow_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        firstname:
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        invoice_workflow_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        is_trusted:
+          type: boolean
+        lastname:
+          nullable: true
+          type: string
+        max_transfer_amount:
+          nullable: true
+          type: string
+        moneybird_payments_mandate:
+          type: boolean
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        phone:
+          nullable: true
+          type: string
+        sales_invoices_url:
+          format: uri
+          pattern: ^https:\/\/moneybird\.\w{3,9}\/\d+\/sales_invoices\/[a-f0-9]{64}\/all$
+          type: string
+        send_estimates_to_attention:
+          nullable: true
+          type: string
+        send_estimates_to_email:
+          nullable: true
+          type: string
+        send_invoices_to_attention:
+          nullable: true
+          type: string
+        send_invoices_to_email:
+          nullable: true
+          type: string
+        sepa_active:
+          nullable: true
+          type: boolean
+        sepa_bic:
+          nullable: true
+          type: string
+        sepa_iban:
+          nullable: true
+          type: string
+        sepa_iban_account_name:
+          nullable: true
+          type: string
+        sepa_mandate_date:
+          format: date
+          nullable: true
+          type: string
+        sepa_mandate_id:
+          nullable: true
+          type: string
+        sepa_sequence_type:
+          enum:
+            - RCUR
+            - FRST
+            - OOFF
+            - FNAL
+          type: string
+        si_identifier:
+          nullable: true
+          type: string
+        si_identifier_type:
+          nullable: true
+          type: string
+        tax_number:
+          nullable: true
+          type: string
+        tax_number_valid:
+          nullable: true
+          type: boolean
+        tax_number_validated_at:
+          format: date-time
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        version:
+          type: integer
+        zipcode:
+          nullable: true
+          type: string
+      type: object
+    base_user_response:
+      description: Moneybird-compatible base_user_response.
+      properties:
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    cash_flow_amounts:
+      description: Moneybird-compatible cash_flow_amounts.
+      properties:
+        cash_paid_by_ledger_account:
+          $ref: '#/components/schemas/ledger_account_data'
+        cash_received_by_ledger_account:
+          $ref: '#/components/schemas/ledger_account_data'
+        closing_balance:
+          type: string
+        opening_balance:
+          type: string
+      type: object
+    contact_person_response:
+      description: Moneybird-compatible contact_person_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          format: date-time
+          nullable: true
+          type: string
+        department:
+          nullable: true
+          type: string
+        email:
+          nullable: true
+          type: string
+        firstname:
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/identifier_nullable'
+        lastname:
+          nullable: true
+          type: string
+        phone:
+          nullable: true
+          type: string
+        updated_at:
+          format: date-time
+          nullable: true
+          type: string
+        version:
+          type: integer
+      type: object
+    contact_report_item:
+      description: Moneybird-compatible contact_report_item.
+      properties:
+        amount:
+          type: string
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+      required:
+        - contact_id
+        - amount
+      type: object
+    contact_response:
+      allOf:
+        - $ref: '#/components/schemas/base_contact_response'
+        - properties:
+            events:
+              items:
+                $ref: '#/components/schemas/event_response'
+              type: array
+          type: object
+      description: Moneybird-compatible contact_response.
+    creditors_report_item:
+      description: Moneybird-compatible creditors_report_item.
+      properties:
+        amount:
+          type: string
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+      required:
+        - contact_id
+        - amount
+      type: object
+    currency:
+      description: Moneybird-compatible currency.
+      type: string
+    custom_field_response:
+      description: Moneybird-compatible custom_field_response.
+      properties:
+        administration_id:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/Identifier'
+        id:
+          $ref: '#/components/schemas/identifier_nullable'
+        name:
+          type: string
+        source:
+          enum:
+            - sales_invoice
+            - estimate
+            - contact
+            - identity
+          nullable: true
+          type: string
+      type: object
+    custom_field_value_response:
+      description: Moneybird-compatible custom_field_value_response.
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        value:
+          type: string
+      type: object
+    custom_fields_attributes:
+      description: Moneybird-compatible custom_fields_attributes.
+      oneOf:
+        - additionalProperties:
+            properties:
+              id:
+                $ref: '#/components/schemas/Identifier'
+              value:
+                type: string
+            required:
+              - id
+              - value
+            type: object
+          type: object
+        - items:
+            properties:
+              id:
+                $ref: '#/components/schemas/Identifier'
+              value:
+                type: string
+            type: object
+          type: array
+    debtors_report_item:
+      description: Moneybird-compatible debtors_report_item.
+      properties:
+        amount:
+          type: string
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+      required:
+        - contact_id
+        - amount
+      type: object
+    detail_response:
+      description: Moneybird-compatible detail_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        amount:
+          nullable: true
+          type: string
+        amount_decimal:
+          nullable: true
+          type: string
+        created_at:
+          format: date-time
+          nullable: true
+          type: string
+        description:
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        is_optional:
+          type: boolean
+        is_selected:
+          type: boolean
+        ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        mandatory_tax_text:
+          nullable: true
+          type: string
+        period:
+          nullable: true
+          pattern: ^\d{6,8}..\d{6,8}$
+          type: string
+        price:
+          pattern: ^-?\d+\.\d{1,2}$
+          type: string
+        product_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        project_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        row_order:
+          type: integer
+        tax_rate_id:
+          $ref: '#/components/schemas/Identifier'
+        tax_report_reference:
+          items:
+            nullable: true
+            type: string
+          type: array
+        total_price_excl_tax_with_discount:
+          $ref: '#/components/schemas/number'
+        total_price_excl_tax_with_discount_base:
+          $ref: '#/components/schemas/number'
+        updated_at:
+          format: date-time
+          nullable: true
+          type: string
+      type: object
+    details_attributes:
+      description: Moneybird-compatible details_attributes.
+      oneOf:
+        - additionalProperties:
+            properties:
+              _destroy:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              amount:
+                anyOf:
+                  - type: integer
+                  - type: string
+              automated_tax_enabled:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              description:
+                type: string
+              id:
+                $ref: '#/components/schemas/Identifier'
+              is_optional:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              is_selected:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              ledger_account_id:
+                $ref: '#/components/schemas/Identifier'
+              period:
+                type: string
+              price:
+                $ref: '#/components/schemas/money'
+              product_id:
+                $ref: '#/components/schemas/Identifier'
+              project_id:
+                $ref: '#/components/schemas/Identifier'
+              row_order:
+                anyOf:
+                  - type: integer
+                  - type: string
+              tax_rate_id:
+                $ref: '#/components/schemas/Identifier'
+            required: []
+            type: object
+          type: object
+        - items:
+            properties:
+              _destroy:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              amount:
+                anyOf:
+                  - type: integer
+                  - type: string
+              automated_tax_enabled:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              description:
+                type: string
+              id:
+                $ref: '#/components/schemas/Identifier'
+              is_optional:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              is_selected:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              ledger_account_id:
+                $ref: '#/components/schemas/Identifier'
+              period:
+                type: string
+              price:
+                $ref: '#/components/schemas/money'
+              product_id:
+                $ref: '#/components/schemas/Identifier'
+              project_id:
+                $ref: '#/components/schemas/Identifier'
+              row_order:
+                anyOf:
+                  - type: integer
+                  - type: string
+              tax_rate_id:
+                $ref: '#/components/schemas/Identifier'
+            type: object
+          type: array
+    disposal_response:
+      description: Moneybird-compatible disposal_response.
+      properties:
+        asset_id:
+          $ref: '#/components/schemas/Identifier'
+        date:
+          format: date
+          type: string
+        externally_booked:
+          type: boolean
+        reason:
+          enum:
+            - out_of_use
+            - sold
+            - private_withdrawal
+            - divested
+          type: string
+        reinvestment_reserve_sale:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/reinvestment_reserve_sale_response'
+      type: object
+    document_style_response:
+      description: Moneybird-compatible document_style_response.
+      properties:
+        address_position:
+          enum:
+            - left
+            - right
+          type: string
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        background_hash:
+          nullable: true
+          type: string
+        created_at:
+          format: date-time
+          nullable: true
+          type: string
+        custom_css:
+          nullable: true
+          type: string
+        default:
+          type: boolean
+        estimate_metadata_left:
+          items:
+            additionalProperties:
+              anyOf:
+                - type: string
+                - type: boolean
+            type: object
+          type: array
+        estimate_metadata_right:
+          items:
+            additionalProperties:
+              anyOf:
+                - type: string
+                - type: boolean
+            type: object
+          type: array
+        estimate_sender_address:
+          items:
+            additionalProperties:
+              anyOf:
+                - type: string
+                - type: boolean
+            type: object
+          type: array
+        font_family:
+          type: string
+        font_size:
+          type: integer
+        id:
+          $ref: '#/components/schemas/Identifier'
+        identity_id:
+          $ref: '#/components/schemas/Identifier'
+        invoice_metadata_left:
+          items:
+            additionalProperties:
+              anyOf:
+                - type: string
+                - type: boolean
+            type: object
+          type: array
+        invoice_metadata_right:
+          items:
+            additionalProperties:
+              anyOf:
+                - type: string
+                - type: boolean
+            type: object
+          type: array
+        invoice_sender_address:
+          items:
+            additionalProperties:
+              anyOf:
+                - type: string
+                - type: boolean
+            type: object
+          type: array
+        logo_container_full_width:
+          nullable: true
+          type: boolean
+        logo_display_width:
+          nullable: true
+          type: integer
+        logo_hash:
+          nullable: true
+          type: string
+        logo_position:
+          enum:
+            - left
+            - center
+            - right
+          type: string
+        name:
+          type: string
+        paper_size:
+          enum:
+            - A4
+            - letter
+          type: string
+        print_on_stationery:
+          nullable: true
+          type: boolean
+        updated_at:
+          format: date-time
+          nullable: true
+          type: string
+      type: object
+    download_response:
+      description: Moneybird-compatible download_response.
+      properties:
+        content_type:
+          type: string
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        download_type:
+          type: string
+        downloaded:
+          type: boolean
+        failed:
+          type: boolean
+        filename:
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        user_id:
+          $ref: '#/components/schemas/identifier_nullable'
+      type: object
+    estimate_response:
+      description: Moneybird-compatible estimate_response.
+      properties:
+        accepted_at:
+          format: date
+          nullable: true
+          type: string
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        archived_at:
+          format: date
+          nullable: true
+          type: string
+        attachments:
+          items:
+            $ref: '#/components/schemas/attachment_response'
+          type: array
+        contact:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/simple_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/Identifier'
+        contact_person:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/contact_person_response'
+        contact_person_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          format: date-time
+          nullable: true
+          type: string
+        currency:
+          type: string
+        custom_fields:
+          items:
+            $ref: '#/components/schemas/custom_field_value_response'
+          type: array
+        details:
+          items:
+            $ref: '#/components/schemas/detail_response'
+          type: array
+        discount:
+          $ref: '#/components/schemas/number'
+        document_style_id:
+          $ref: '#/components/schemas/Identifier'
+        draft_id:
+          nullable: true
+          type: integer
+        due_date:
+          format: date
+          type: string
+        estimate_date:
+          format: date
+          nullable: true
+          type: string
+        estimate_id:
+          nullable: true
+          type: string
+        estimate_sequence_id:
+          nullable: true
+          type: string
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        exchange_rate:
+          $ref: '#/components/schemas/number'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        identity_id:
+          $ref: '#/components/schemas/Identifier'
+        language:
+          nullable: true
+          type: string
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        original_estimate_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        post_text:
+          nullable: true
+          type: string
+        pre_text:
+          nullable: true
+          type: string
+        prices_are_incl_tax:
+          type: boolean
+        public_view_code:
+          nullable: true
+          pattern: ^\d+$
+          type: string
+        public_view_code_expires_at:
+          format: date-time
+          nullable: true
+          type: string
+        reference:
+          nullable: true
+          type: string
+        rejected_at:
+          format: date
+          nullable: true
+          type: string
+        sent_at:
+          format: date
+          nullable: true
+          type: string
+        show_tax:
+          type: boolean
+        sign_online:
+          type: boolean
+        state:
+          enum:
+            - draft
+            - open
+            - late
+            - accepted
+            - rejected
+            - billed
+            - archived
+          type: string
+        tax_totals:
+          items:
+            $ref: '#/components/schemas/tax_subtotal_response'
+          type: array
+        total_discount:
+          $ref: '#/components/schemas/number'
+        total_price_excl_tax:
+          $ref: '#/components/schemas/number'
+        total_price_excl_tax_base:
+          $ref: '#/components/schemas/number'
+        total_price_incl_tax:
+          $ref: '#/components/schemas/number'
+        total_price_incl_tax_base:
+          $ref: '#/components/schemas/number'
+        updated_at:
+          format: date-time
+          nullable: true
+          type: string
+        url:
+          type: string
+        version:
+          type: integer
+        workflow_id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    event_response:
+      description: Moneybird-compatible event_response.
+      properties:
+        action:
+          type: string
+        administration_id:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        data:
+          additionalProperties: true
+          type: object
+        link_entity_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        link_entity_type:
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        user_id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    extended_user_response:
+      allOf:
+        - $ref: '#/components/schemas/base_user_response'
+        - properties:
+            email:
+              type: string
+            email_validated:
+              type: boolean
+            language:
+              type: string
+            permissions:
+              items:
+                enum:
+                  - sales_invoices
+                  - documents
+                  - estimates
+                  - bank
+                  - settings
+                  - ownership
+                  - time_entries
+                type: string
+              type: array
+            time_zone:
+              type: string
+            user_type:
+              enum:
+                - end_user
+                - api_user
+                - system_user
+                - deleted_end_user
+                - deleted_api_user
+                - owner
+                - accountant
+                - employee
+              type: string
+          type: object
+      description: Moneybird-compatible extended_user_response.
+    external_sales_invoice_response:
+      description: Moneybird-compatible external_sales_invoice_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        attachments:
+          items:
+            $ref: '#/components/schemas/attachment_response'
+          type: array
+        contact:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/simple_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        currency:
+          $ref: '#/components/schemas/currency'
+        date:
+          format: date
+          type: string
+        details:
+          items:
+            $ref: '#/components/schemas/detail_response'
+          type: array
+        due_date:
+          format: date
+          nullable: true
+          type: string
+        entry_number:
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        marked_dubious_on:
+          format: date
+          nullable: true
+          type: string
+        marked_uncollectible_on:
+          format: date
+          nullable: true
+          type: string
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        origin:
+          enum:
+            - upload
+            - endpoint
+            - si
+            - email
+            - si_local
+            - si_peppol
+            - api
+            - moneybird_bv
+            - mollie
+          nullable: true
+          type: string
+        paid_at:
+          format: date
+          nullable: true
+          type: string
+        payments:
+          items:
+            $ref: '#/components/schemas/payment_response'
+          type: array
+        prices_are_incl_tax:
+          type: boolean
+        reference:
+          nullable: true
+          type: string
+        source:
+          nullable: true
+          type: string
+        source_url:
+          nullable: true
+          type: string
+        state:
+          enum:
+            - new
+            - open
+            - late
+            - paid
+            - uncollectible
+            - pending_payment
+          type: string
+        tax_totals:
+          items:
+            $ref: '#/components/schemas/tax_subtotal_response'
+          type: array
+        total_paid:
+          type: string
+        total_price_excl_tax:
+          type: string
+        total_price_excl_tax_base:
+          type: string
+        total_price_incl_tax:
+          type: string
+        total_price_incl_tax_base:
+          type: string
+        total_unpaid:
+          type: string
+        total_unpaid_base:
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        version:
+          $ref: '#/components/schemas/version'
+      type: object
+    financial_account_response:
+      description: Moneybird-compatible financial_account_response.
+      properties:
+        active:
+          type: boolean
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        currency:
+          $ref: '#/components/schemas/currency'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        identifier:
+          type: string
+        moneybird_account:
+          type: boolean
+        name:
+          type: string
+        provider:
+          nullable: true
+          type: string
+        type:
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    financial_mutation_response:
+      description: Moneybird-compatible financial_mutation_response.
+      properties:
+        account_servicer_transaction_id:
+          nullable: true
+          type: string
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        amount:
+          type: string
+        amount_open:
+          type: string
+        batch_reference:
+          nullable: true
+          type: string
+        code:
+          nullable: true
+          type: string
+        contra_account_name:
+          nullable: true
+          type: string
+        contra_account_number:
+          type: string
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        currency:
+          $ref: '#/components/schemas/currency'
+        date:
+          format: date
+          type: string
+        financial_account_id:
+          $ref: '#/components/schemas/Identifier'
+        financial_statement_id:
+          $ref: '#/components/schemas/Identifier'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        ledger_account_bookings:
+          items:
+            $ref: '#/components/schemas/ledger_account_booking_response'
+          type: array
+        message:
+          nullable: true
+          type: string
+        original_amount:
+          nullable: true
+          type: string
+        payments:
+          items:
+            $ref: '#/components/schemas/payment_response'
+          type: array
+        processed_at:
+          format: date-time
+          nullable: true
+          type: string
+        sepa_fields:
+          nullable: true
+          type: object
+        settlement_state:
+          enum:
+            - authorised
+            - cancelled
+            - expired
+            - settled
+            - pending
+            - refused
+            - error
+            - captured
+            - failed
+            - returned
+          type: string
+        state:
+          enum:
+            - unprocessed
+            - processed
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        version:
+          $ref: '#/components/schemas/version'
+      type: object
+    financial_statement_response:
+      description: Moneybird-compatible financial_statement_response.
+      properties:
+        financial_account_id:
+          $ref: '#/components/schemas/Identifier'
+        financial_mutations:
+          items:
+            $ref: '#/components/schemas/financial_mutation_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        importer_service:
+          nullable: true
+          type: string
+        official_balance:
+          nullable: true
+          type: string
+        official_date:
+          format: date
+          nullable: true
+          type: string
+        reference:
+          type: string
+      type: object
+    fiscal_allocation_response:
+      description: Moneybird-compatible fiscal_allocation_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        percentage:
+          $ref: '#/components/schemas/number'
+        price:
+          $ref: '#/components/schemas/number'
+        price_base:
+          $ref: '#/components/schemas/number'
+        private_ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    fiscal_allocations_attributes:
+      description: Moneybird-compatible fiscal_allocations_attributes.
+      oneOf:
+        - additionalProperties:
+            properties:
+              _destroy:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              id:
+                $ref: '#/components/schemas/Identifier'
+              ledger_account_id:
+                $ref: '#/components/schemas/Identifier'
+              percentage:
+                $ref: '#/components/schemas/number'
+              private_ledger_account_id:
+                $ref: '#/components/schemas/Identifier'
+            required: []
+            type: object
+          type: object
+        - items:
+            properties:
+              _destroy:
+                anyOf:
+                  - type: boolean
+                  - type: string
+              id:
+                $ref: '#/components/schemas/Identifier'
+              ledger_account_id:
+                $ref: '#/components/schemas/Identifier'
+              percentage:
+                $ref: '#/components/schemas/number'
+              private_ledger_account_id:
+                $ref: '#/components/schemas/Identifier'
+            type: object
+          type: array
+    general_document_response:
+      description: Moneybird-compatible general_document_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        attachments:
+          items:
+            $ref: '#/components/schemas/attachment_response'
+          type: array
+        contact:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/simple_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        date:
+          format: date
+          type: string
+        due_date:
+          format: date
+          nullable: true
+          type: string
+        entry_number:
+          nullable: true
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        exchange_rate:
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        reference:
+          nullable: true
+          type: string
+        state:
+          enum:
+            - new
+            - open
+            - late
+            - paid
+            - saved
+            - pending_payment
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        version:
+          $ref: '#/components/schemas/version'
+      type: object
+    general_journal_document_entry_response:
+      description: Moneybird-compatible general_journal_document_entry_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        credit:
+          type: string
+        debit:
+          type: string
+        description:
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        project_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        row_order:
+          nullable: true
+          type: integer
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    general_journal_document_response:
+      description: Moneybird-compatible general_journal_document_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        attachments:
+          items:
+            $ref: '#/components/schemas/attachment_response'
+          type: array
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        date:
+          format: date
+          type: string
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        general_journal_document_entries:
+          items:
+            $ref: '#/components/schemas/general_journal_document_entry_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        journal_type:
+          enum:
+            - fiscal_year_ending
+          nullable: true
+          type: string
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        reference:
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        version:
+          $ref: '#/components/schemas/version'
+      type: object
+    general_ledger_amounts:
+      description: Moneybird-compatible general_ledger_amounts.
+      properties:
+        credit_sums:
+          $ref: '#/components/schemas/ledger_account_data'
+        debit_sums:
+          $ref: '#/components/schemas/ledger_account_data'
+        final_balance:
+          $ref: '#/components/schemas/ledger_account_data'
+        start_balance:
+          $ref: '#/components/schemas/ledger_account_data'
+      type: object
+    identifier_nullable:
+      anyOf:
+        - pattern: ^\d+$
+          type: string
+        - type: integer
+      description: Moneybird-compatible identifier_nullable.
+      nullable: true
+    identity_response:
+      description: Moneybird-compatible identity_response.
+      properties:
+        address1:
+          nullable: true
+          type: string
+        address2:
+          nullable: true
+          type: string
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        bank_account_bic:
+          nullable: true
+          type: string
+        bank_account_name:
+          nullable: true
+          type: string
+        bank_account_number:
+          nullable: true
+          type: string
+        chamber_of_commerce:
+          nullable: true
+          type: string
+        city:
+          nullable: true
+          type: string
+        company_name:
+          nullable: true
+          type: string
+        country:
+          nullable: true
+          type: string
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        custom_fields:
+          items:
+            $ref: '#/components/schemas/custom_field_value_response'
+          type: array
+        email:
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        phone:
+          nullable: true
+          type: string
+        tax_number:
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        zipcode:
+          nullable: true
+          type: string
+      type: object
+    ledger_account_booking_response:
+      description: Moneybird-compatible ledger_account_booking_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        description:
+          nullable: true
+          type: string
+        financial_mutation_id:
+          $ref: '#/components/schemas/Identifier'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        price:
+          type: string
+        project_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    ledger_account_data:
+      description: Moneybird-compatible ledger_account_data.
+      properties:
+        ledger_accounts:
+          items:
+            properties:
+              ledger_account_id:
+                type: string
+              value:
+                type: string
+            required:
+              - ledger_account_id
+              - value
+            type: object
+          type: array
+      required:
+        - ledger_accounts
+      type: object
+    ledger_account_response:
+      description: Moneybird-compatible ledger_account_response.
+      properties:
+        account_id:
+          nullable: true
+          type: string
+        account_type:
+          enum:
+            - non_current_assets
+            - current_assets
+            - equity
+            - non_current_liabilities
+            - current_liabilities
+            - revenue
+            - direct_costs
+            - expenses
+            - other_income_expenses
+            - other
+            - temporary
+            - provisions
+          type: string
+        active:
+          type: boolean
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        allowed_document_types:
+          items:
+            enum:
+              - sales_invoice
+              - purchase_invoice
+              - general_journal_document
+              - financial_mutation
+              - payment
+            type: string
+          type: array
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        financial_account_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        parent_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        taxonomy_item:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/taxonomy_item_response'
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    minimal_contact_response:
+      description: Moneybird-compatible minimal_contact_response.
+      properties:
+        company_name:
+          nullable: true
+          type: string
+        firstname:
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        lastname:
+          nullable: true
+          type: string
+      type: object
+    minimal_time_entry_response:
+      description: Moneybird-compatible minimal_time_entry_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        billable:
+          type: boolean
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        description:
+          nullable: true
+          type: string
+        ended_at:
+          $ref: '#/components/schemas/timestamp'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        paused_duration:
+          type: integer
+        project_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        started_at:
+          $ref: '#/components/schemas/timestamp'
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        user_id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    money:
+      description: Moneybird-compatible money.
+      nullable: true
+      oneOf:
+        - pattern: ^-?[0-9]+[,\.]?[0-9]*$
+          type: string
+        - maximum: 1000000000
+          minimum: -1000000000
+          type: number
+    non_symbolic_error:
+      description: Moneybird-compatible non_symbolic_error.
+      properties:
+        details:
+          additionalProperties:
+            items:
+              additionalProperties: true
+              properties:
+                error:
+                  type: string
+              required:
+                - error
+              type: object
+            type: array
+          type: object
+        error:
+          additionalProperties:
+            items:
+              anyOf:
+                - type: string
+                - type: object
+            type: array
+          type: object
+        full_message:
+          type: string
+      type: object
+    note_response:
+      description: Moneybird-compatible note_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        assignee_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        completed_at:
+          format: date-time
+          nullable: true
+          type: string
+        completed_by_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        data:
+          nullable: true
+          type: object
+        entity_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        entity_type:
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        note:
+          nullable: true
+          type: string
+        todo:
+          anyOf:
+            - type: boolean
+            - type: string
+          nullable: true
+        todo_type:
+          enum:
+            - sales_invoice_due
+            - purchase_invoice_due
+            - general_document_reminder
+            - general_document_due
+            - new_document_awaiting_processing
+            - new_financial_mutation_awaiting_processing
+            - financial_mutations_not_updated
+            - sales_invoice_payment_not_linked_to_financial_mutation
+            - document_payment_not_linked_to_financial_mutation
+            - sales_invoice_awaiting_payment_batch
+            - export_sales_invoices_ready
+            - export_documents_ready
+            - export_contacts_ready
+            - import_contacts_ready
+            - recurring_sales_invoice_auto_send_failed
+            - sales_invoice_scheduled_sending_failed
+            - sales_invoice_reminder_sending_failed
+            - sales_invoice_payment_email_missing_sender_email
+            - sales_invoice_becoming_due
+            - sales_invoice_collecting_failed
+            - estimate_due
+            - export_estimates_ready
+            - sales_invoice_email_delivery_failed
+            - sales_invoice_email_marked_as_spam
+            - estimate_email_delivery_failed
+            - estimate_email_marked_as_spam
+            - purchase_invoice_invalid_ubl
+            - sales_invoice_unprintable
+            - estimate_unprintable
+            - auditfile_ready
+            - import_financial_statement_finished
+            - recurring_sales_invoice_auto_send_skipped_import_wizard
+            - ledger_account_report_export_ready
+            - recurring_sales_invoice_failed_deleted_contact
+            - recurring_sales_invoice_create_invoice_failed
+            - sales_invoice_simplerinvoicing_delivery_failed_unroutable
+            - purchase_invoice_received_simplerinvoicing
+            - sales_invoice_simplerinvoicing_delivery_error
+            - purchase_transaction_expired
+            - sales_invoice_si_delivery_failed_contact_unreachable
+            - sales_invoice_si_delivery_failed_deactivated
+            - sales_invoice_si_delivery_failed_identity_unverified
+            - sales_invoice_si_delivery_failed_length_exceeded
+            - recurring_document_stopped_by_contact_delete
+            - sales_invoice_email_previously_bounced
+            - estimate_email_previously_bounced
+            - email_domain_invalidated
+            - external_sales_invoice_invalid_ubl
+            - sales_invoice_email_invalid_address
+            - estimate_email_invalid_address
+            - gateway_connection_terminated
+            - sales_invoice_email_payload_too_large
+            - estimate_email_payload_too_large
+            - ponto_organization_not_activated
+            - ponto_financial_institution_deprecated
+            - contact_email_delivery_failed
+            - contact_email_marked_as_spam
+            - contact_email_previously_bounced
+            - contact_email_invalid_address
+            - contact_email_payload_too_large
+            - sales_invoice_scheduling_failed_due_to_payment_information
+            - sales_invoice_scheduling_failed_due_to_delivery_information
+            - sales_invoice_scheduling_failed_due_to_collection_method
+            - sales_invoice_scheduling_failed_due_to_sending_address
+            - sales_invoice_collecting_failed_missing_subscription
+            - sales_invoice_collecting_failed_no_mandate
+            - sales_invoice_si_delivery_failed_ubl_validation_failed
+            - sales_invoice_email_sender_limit
+            - estimate_email_sender_limit
+            - contact_email_sender_limit
+            - sales_invoice_email_blocked
+            - estimate_email_blocked
+            - contact_email_blocked
+            - sales_invoice_email_invalid_attachment
+            - estimate_email_invalid_attachment
+            - contact_email_invalid_attachment
+            - sales_invoice_collecting_failed_monthly_limit_exceeded
+            - sales_invoice_collecting_failed_invalid_currency
+            - mollie_credential_needs_reconnect
+            - adyen_verification_error
+            - contact_email_not_present
+            - financial_mutation_failed
+            - sales_invoice_si_delivery_failed_invalid_sender
+            - sales_invoice_tax_number_invalid
+            - payment_transaction_no_positive_payment
+            - financial_mutation_payment_locked
+            - sales_invoice_withdrawal_requested
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        user_id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    number:
+      description: Moneybird-compatible number.
+      nullable: true
+      oneOf:
+        - pattern: ^-?[0-9]+[,\.]?[0-9]*$
+          type: string
+        - type: number
+    payment_response:
+      description: Moneybird-compatible payment_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        credit_invoice_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        financial_account_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        financial_mutation_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        invoice_id:
+          $ref: '#/components/schemas/Identifier'
+        invoice_type:
+          enum:
+            - SalesInvoice
+            - Document
+            - ExternalSalesInvoice
+            - VatDocument
+          type: string
+        ledger_account_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        linked_payment_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        manual_payment_action:
+          nullable: true
+          type: string
+        payment_date:
+          format: date
+          type: string
+        payment_transaction_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        price:
+          $ref: '#/components/schemas/number'
+        price_base:
+          $ref: '#/components/schemas/number'
+        transaction_identifier:
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        user_id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    product_response:
+      description: Moneybird-compatible product_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        currency:
+          type: string
+        description:
+          nullable: true
+          type: string
+        frequency:
+          nullable: true
+          type: integer
+        frequency_type:
+          enum:
+            - day
+            - week
+            - month
+            - quarter
+            - year
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        identifier:
+          nullable: true
+          type: string
+        ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        price:
+          type: string
+        tax_rate_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        title:
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    profit_loss_amounts:
+      description: Moneybird-compatible profit_loss_amounts.
+      properties:
+        direct_costs_by_ledger_account:
+          $ref: '#/components/schemas/ledger_account_data'
+        expenses_by_ledger_account:
+          $ref: '#/components/schemas/ledger_account_data'
+        gross_profit:
+          type: string
+        net_profit:
+          type: string
+        operating_profit:
+          type: string
+        other_income_expenses_by_ledger_account:
+          $ref: '#/components/schemas/ledger_account_data'
+        revenue_by_ledger_account:
+          $ref: '#/components/schemas/ledger_account_data'
+        total_expenses:
+          type: string
+        total_revenue:
+          type: string
+      type: object
+    project_report_item:
+      description: Moneybird-compatible project_report_item.
+      properties:
+        amount:
+          type: string
+        project_id:
+          $ref: '#/components/schemas/identifier_nullable'
+      required:
+        - project_id
+        - amount
+      type: object
+    project_response:
+      description: Moneybird-compatible project_response.
+      properties:
+        budget:
+          nullable: true
+          type: integer
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        state:
+          enum:
+            - active
+            - archived
+          type: string
+      type: object
+    purchase_invoice_response:
+      description: Moneybird-compatible purchase_invoice_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        attachments:
+          items:
+            $ref: '#/components/schemas/attachment_response'
+          type: array
+        contact:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/simple_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        currency:
+          $ref: '#/components/schemas/currency'
+        date:
+          format: date
+          type: string
+        details:
+          items:
+            $ref: '#/components/schemas/detail_response'
+          type: array
+        due_date:
+          format: date
+          nullable: true
+          type: string
+        entry_number:
+          nullable: true
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        exchange_rate:
+          nullable: true
+          type: string
+        fiscal_allocations:
+          items:
+            $ref: '#/components/schemas/fiscal_allocation_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        origin:
+          enum:
+            - upload
+            - endpoint
+            - si
+            - email
+            - si_local
+            - si_peppol
+            - api
+            - moneybird_bv
+            - mollie
+          nullable: true
+          type: string
+        paid_at:
+          format: date
+          nullable: true
+          type: string
+        payments:
+          items:
+            $ref: '#/components/schemas/payment_response'
+          type: array
+        prices_are_incl_tax:
+          nullable: true
+          type: boolean
+        reference:
+          nullable: true
+          type: string
+        revenue_invoice:
+          nullable: true
+          type: boolean
+        state:
+          enum:
+            - new
+            - open
+            - late
+            - paid
+            - saved
+            - pending_payment
+          type: string
+        tax_number:
+          nullable: true
+          type: string
+        total_price_excl_tax:
+          nullable: true
+          type: string
+        total_price_excl_tax_base:
+          nullable: true
+          type: string
+        total_price_incl_tax:
+          nullable: true
+          type: string
+        total_price_incl_tax_base:
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        version:
+          $ref: '#/components/schemas/version'
+      type: object
+    purchase_transaction_batch_response:
+      description: Moneybird-compatible purchase_transaction_batch_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        financial_account_id:
+          $ref: '#/components/schemas/Identifier'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        identifier:
+          type: string
+        state:
+          enum:
+            - exported
+            - cancelled
+            - open
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    purchase_transaction_response:
+      description: Moneybird-compatible purchase_transaction_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        amount:
+          type: string
+        contact:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/simple_contact_response'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        date:
+          format: date
+          nullable: true
+          type: string
+        description:
+          type: string
+        end_to_end_id:
+          type: string
+        financial_account_id:
+          $ref: '#/components/schemas/Identifier'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        payable_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        payable_type:
+          nullable: true
+          type: string
+        payment_instrument_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        payment_method:
+          nullable: true
+          type: string
+        purchase_transaction_batch_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        sepa_bic:
+          type: string
+        sepa_iban:
+          type: string
+        sepa_iban_account_name:
+          type: string
+        source_sepa_iban:
+          nullable: true
+          type: string
+        source_sepa_iban_account_name:
+          nullable: true
+          type: string
+        state:
+          enum:
+            - open
+            - cancelled
+            - paid
+            - pending_payment
+            - error
+            - awaiting_authorization
+            - preparing
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    receipt_response:
+      description: Moneybird-compatible receipt_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        attachments:
+          items:
+            $ref: '#/components/schemas/attachment_response'
+          type: array
+        contact:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/simple_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        currency:
+          nullable: true
+          type: string
+        date:
+          format: date
+          type: string
+        details:
+          items:
+            $ref: '#/components/schemas/detail_response'
+          type: array
+        due_date:
+          format: date
+          nullable: true
+          type: string
+        entry_number:
+          nullable: true
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        exchange_rate:
+          $ref: '#/components/schemas/number'
+        fiscal_allocations:
+          items:
+            $ref: '#/components/schemas/fiscal_allocation_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        origin:
+          enum:
+            - upload
+            - endpoint
+            - si
+            - email
+            - si_local
+            - si_peppol
+            - api
+            - moneybird_bv
+            - mollie
+          nullable: true
+          type: string
+        paid_at:
+          format: date
+          nullable: true
+          type: string
+        payments:
+          items:
+            $ref: '#/components/schemas/payment_response'
+          type: array
+        prices_are_incl_tax:
+          nullable: true
+          type: boolean
+        reference:
+          nullable: true
+          type: string
+        revenue_invoice:
+          nullable: true
+          type: boolean
+        state:
+          enum:
+            - new
+            - open
+            - late
+            - paid
+            - saved
+            - pending_payment
+          type: string
+        tax_number:
+          nullable: true
+          type: string
+        total_price_excl_tax:
+          nullable: true
+          type: string
+        total_price_excl_tax_base:
+          nullable: true
+          type: string
+        total_price_incl_tax:
+          nullable: true
+          type: string
+        total_price_incl_tax_base:
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        version:
+          $ref: '#/components/schemas/version'
+      type: object
+    recurring_contract_response:
+      description: Moneybird-compatible recurring_contract_response.
+      properties:
+        bank:
+          nullable: true
+          type: string
+        bic:
+          nullable: true
+          type: string
+        card_expiry_month:
+          nullable: true
+          type: string
+        card_expiry_year:
+          nullable: true
+          type: string
+        card_final_digits:
+          nullable: true
+          type: string
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        iban:
+          nullable: true
+          type: string
+        iban_account_name:
+          nullable: true
+          type: string
+        sepa_mandate:
+          type: boolean
+        type:
+          nullable: true
+          type: string
+      type: object
+    recurring_sales_invoice_response:
+      description: Moneybird-compatible recurring_sales_invoice_response.
+      properties:
+        active:
+          nullable: true
+          type: boolean
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        attachments:
+          items:
+            $ref: '#/components/schemas/attachment_response'
+          type: array
+        auto_send:
+          nullable: true
+          type: boolean
+        contact:
+          $ref: '#/components/schemas/simple_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/Identifier'
+        contact_person:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/contact_person_response'
+        contact_person_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          format: date-time
+          nullable: true
+          type: string
+        currency:
+          type: string
+        custom_fields:
+          items:
+            $ref: '#/components/schemas/custom_field_value_response'
+          type: array
+        details:
+          items:
+            $ref: '#/components/schemas/detail_response'
+          type: array
+        discount:
+          nullable: true
+          type: string
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        first_due_interval:
+          type: integer
+        frequency:
+          type: integer
+        frequency_type:
+          enum:
+            - day
+            - week
+            - month
+            - quarter
+            - year
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        invoice_date:
+          format: date
+          type: string
+        language:
+          type: string
+        last_date:
+          format: date
+          nullable: true
+          type: string
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        payment_conditions:
+          nullable: true
+          type: string
+        prices_are_incl_tax:
+          type: boolean
+        reference:
+          nullable: true
+          type: string
+        sending_scheduled_at:
+          format: date-time
+          nullable: true
+          type: string
+        sending_scheduled_user_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        start_date:
+          format: date
+          type: string
+        subscription:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/subscription_response'
+        total_price_excl_tax:
+          type: string
+        total_price_excl_tax_base:
+          type: string
+        total_price_incl_tax:
+          type: string
+        total_price_incl_tax_base:
+          type: string
+        updated_at:
+          format: date-time
+          nullable: true
+          type: string
+        version:
+          $ref: '#/components/schemas/version'
+        workflow_id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    reinvestment_reserve_purchase_response:
+      description: Moneybird-compatible reinvestment_reserve_purchase_response.
+      properties:
+        amount:
+          $ref: '#/components/schemas/number'
+        asset_id:
+          $ref: '#/components/schemas/Identifier'
+        date:
+          format: date
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    reinvestment_reserve_sale_response:
+      description: Moneybird-compatible reinvestment_reserve_sale_response.
+      properties:
+        amount:
+          $ref: '#/components/schemas/number'
+        date:
+          format: date
+          type: string
+        disposal_id:
+          $ref: '#/components/schemas/Identifier'
+        id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    sales_invoice_response:
+      description: Moneybird-compatible sales_invoice_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        attachments:
+          items:
+            $ref: '#/components/schemas/attachment_response'
+          type: array
+        contact:
+          $ref: '#/components/schemas/simple_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/Identifier'
+        contact_person:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/contact_person_response'
+        contact_person_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          format: date-time
+          type: string
+        currency:
+          type: string
+        custom_fields:
+          items:
+            $ref: '#/components/schemas/custom_field_value_response'
+          type: array
+        details:
+          items:
+            $ref: '#/components/schemas/detail_response'
+          type: array
+        discount:
+          nullable: true
+          type: string
+        document_style_id:
+          $ref: '#/components/schemas/Identifier'
+        draft_id:
+          nullable: true
+          type: integer
+        due_date:
+          format: date
+          type: string
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        identity_id:
+          $ref: '#/components/schemas/Identifier'
+        invoice_date:
+          format: date
+          nullable: true
+          type: string
+        invoice_id:
+          nullable: true
+          type: string
+        language:
+          nullable: true
+          type: string
+        marked_dubious_on:
+          format: date
+          nullable: true
+          type: string
+        marked_uncollectible_on:
+          format: date
+          nullable: true
+          type: string
+        next_reminder:
+          format: date
+          nullable: true
+          type: string
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        original_estimate_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        original_sales_invoice_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        paid_at:
+          format: date
+          nullable: true
+          type: string
+        paused:
+          type: boolean
+        payment_conditions:
+          nullable: true
+          type: string
+        payment_reference:
+          nullable: true
+          type: string
+        payment_url:
+          type: string
+        payments:
+          items:
+            $ref: '#/components/schemas/payment_response'
+          type: array
+        prices_are_incl_tax:
+          type: boolean
+        public_view_code:
+          nullable: true
+          type: string
+        public_view_code_expires_at:
+          format: date-time
+          nullable: true
+          type: string
+        recurring_sales_invoice_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        reference:
+          nullable: true
+          type: string
+        reminder_count:
+          nullable: true
+          type: integer
+        sent_at:
+          format: date
+          nullable: true
+          type: string
+        short_payment_reference:
+          nullable: true
+          type: string
+        state:
+          enum:
+            - draft
+            - scheduled
+            - open
+            - pending_payment
+            - reminded
+            - late
+            - paid
+            - uncollectible
+          type: string
+        subscription_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        tax_totals:
+          items:
+            $ref: '#/components/schemas/tax_subtotal_response'
+          type: array
+        time_entries:
+          items:
+            $ref: '#/components/schemas/minimal_time_entry_response'
+          type: array
+        total_discount:
+          type: string
+        total_paid:
+          type: string
+        total_price_excl_tax:
+          type: string
+        total_price_excl_tax_base:
+          type: string
+        total_price_incl_tax:
+          type: string
+        total_price_incl_tax_base:
+          type: string
+        total_unpaid:
+          type: string
+        total_unpaid_base:
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        url:
+          type: string
+        version:
+          $ref: '#/components/schemas/version'
+        workflow_id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    simple_contact_response:
+      description: Moneybird-compatible simple_contact_response.
+      properties:
+        address1:
+          nullable: true
+          type: string
+        address2:
+          nullable: true
+          type: string
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        archived:
+          type: boolean
+        attention:
+          nullable: true
+          type: string
+        bank_account:
+          nullable: true
+          type: string
+        chamber_of_commerce:
+          nullable: true
+          type: string
+        city:
+          nullable: true
+          type: string
+        company_name:
+          nullable: true
+          type: string
+        contact_people:
+          items:
+            $ref: '#/components/schemas/contact_person_response'
+          type: array
+        country:
+          type: string
+        created_at:
+          format: date-time
+          nullable: true
+          type: string
+        credit_card_number:
+          nullable: true
+          type: string
+        credit_card_reference:
+          nullable: true
+          type: string
+        credit_card_type:
+          enum:
+            - mastercard
+            - visa
+          nullable: true
+          type: string
+        custom_fields:
+          items:
+            $ref: '#/components/schemas/custom_field_value_response'
+          type: array
+        customer_id:
+          type: string
+        delivery_method:
+          enum:
+            - Email
+            - Post
+            - Manual
+            - Simplerinvoicing
+            - Peppol
+          nullable: true
+          type: string
+        direct_debit:
+          type: boolean
+        email:
+          nullable: true
+          type: string
+        email_ubl:
+          type: boolean
+        estimate_workflow_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        firstname:
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        invoice_workflow_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        is_trusted:
+          type: boolean
+        lastname:
+          nullable: true
+          type: string
+        max_transfer_amount:
+          nullable: true
+          type: string
+        moneybird_payments_mandate:
+          nullable: true
+          type: boolean
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        phone:
+          nullable: true
+          type: string
+        sales_invoices_url:
+          type: string
+        send_estimates_to_attention:
+          nullable: true
+          type: string
+        send_estimates_to_email:
+          nullable: true
+          type: string
+        send_invoices_to_attention:
+          nullable: true
+          type: string
+        send_invoices_to_email:
+          nullable: true
+          type: string
+        sepa_active:
+          nullable: true
+          type: boolean
+        sepa_bic:
+          nullable: true
+          type: string
+        sepa_iban:
+          nullable: true
+          type: string
+        sepa_iban_account_name:
+          nullable: true
+          type: string
+        sepa_mandate_date:
+          format: date
+          nullable: true
+          type: string
+        sepa_mandate_id:
+          nullable: true
+          type: string
+        sepa_sequence_type:
+          enum:
+            - RCUR
+            - FRST
+            - OOFF
+            - FNAL
+          type: string
+        si_identifier:
+          nullable: true
+          type: string
+        si_identifier_type:
+          nullable: true
+          type: string
+        tax_number:
+          nullable: true
+          type: string
+        tax_number_valid:
+          nullable: true
+          type: boolean
+        tax_number_validated_at:
+          format: date-time
+          nullable: true
+          type: string
+        updated_at:
+          format: date-time
+          nullable: true
+          type: string
+        version:
+          $ref: '#/components/schemas/version'
+        zipcode:
+          nullable: true
+          type: string
+      type: object
+    source_response:
+      description: Moneybird-compatible source_response.
+      properties:
+        asset_id:
+          $ref: '#/components/schemas/Identifier'
+        detail_id:
+          $ref: '#/components/schemas/Identifier'
+        general_journal_document_entry_id:
+          $ref: '#/components/schemas/Identifier'
+        id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    subscription_additional_charge_response:
+      description: Moneybird-compatible subscription_additional_charge_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        amount:
+          nullable: true
+          type: string
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        description:
+          type: string
+        detail_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        period:
+          pattern: ^[0-9]{6}..[0-9]{6}$
+          type: string
+        price:
+          type: string
+        product_id:
+          $ref: '#/components/schemas/Identifier'
+        subscription_id:
+          $ref: '#/components/schemas/identifier_nullable'
+      type: object
+    subscription_product_response:
+      description: Moneybird-compatible subscription_product_response.
+      properties:
+        amount:
+          type: string
+        discount:
+          nullable: true
+          type: string
+        end_date:
+          format: date
+          nullable: true
+          type: string
+        product:
+          $ref: '#/components/schemas/product_response'
+        product_id:
+          $ref: '#/components/schemas/Identifier'
+        start_date:
+          format: date
+          type: string
+      type: object
+    subscription_response:
+      description: Moneybird-compatible subscription_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        cancelled_at:
+          format: date-time
+          nullable: true
+          type: string
+        contact:
+          $ref: '#/components/schemas/simple_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/Identifier'
+        contact_person:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/contact_person_response'
+        contact_person_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        end_date:
+          format: date
+          nullable: true
+          type: string
+        frequency:
+          nullable: true
+          type: integer
+        frequency_type:
+          enum:
+            - day
+            - week
+            - month
+            - quarter
+            - year
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        product:
+          $ref: '#/components/schemas/product_response'
+        product_id:
+          $ref: '#/components/schemas/Identifier'
+        recurring_sales_invoice_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        reference:
+          nullable: true
+          type: string
+        start_date:
+          format: date
+          type: string
+        subscription_products:
+          items:
+            $ref: '#/components/schemas/subscription_product_response'
+          type: array
+      type: object
+    subscription_template_response:
+      description: Moneybird-compatible subscription_template_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        contact_can_update:
+          type: boolean
+        document_style_id:
+          $ref: '#/components/schemas/Identifier'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        mergeable:
+          type: boolean
+        products:
+          items:
+            $ref: '#/components/schemas/product_response'
+          type: array
+        workflow_id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    symbolic_error:
+      description: Moneybird-compatible symbolic_error.
+      properties:
+        error:
+          type: string
+        symbolic:
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: object
+              - items: {}
+                type: array
+          type: object
+      type: object
+    task_list_group_response:
+      description: Moneybird-compatible task_list_group_response.
+      properties:
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          nullable: true
+          type: string
+        report_type:
+          nullable: true
+          type: string
+        row_order:
+          type: integer
+        tasks:
+          items:
+            $ref: '#/components/schemas/task_list_task_response'
+          type: array
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    task_list_response:
+      description: Moneybird-compatible task_list_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        completed:
+          type: boolean
+        completed_tasks_count:
+          type: integer
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        deadline_on:
+          format: date
+          nullable: true
+          type: string
+        description:
+          nullable: true
+          type: string
+        groups:
+          items:
+            $ref: '#/components/schemas/task_list_group_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        period_begin:
+          format: date
+          nullable: true
+          type: string
+        period_end:
+          format: date
+          nullable: true
+          type: string
+        template_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        total_tasks_count:
+          type: integer
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    task_list_task_response:
+      description: Moneybird-compatible task_list_task_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        assignee_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        completed_at:
+          format: date-time
+          nullable: true
+          type: string
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        description:
+          nullable: true
+          type: string
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        parent_task_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        report_type:
+          nullable: true
+          type: string
+        row_order:
+          type: integer
+        subtasks:
+          items:
+            $ref: '#/components/schemas/task_list_task_response'
+          type: array
+        task_lists_group_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    task_list_template_response:
+      description: Moneybird-compatible task_list_template_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        deadline_after:
+          nullable: true
+          type: string
+        description:
+          nullable: true
+          type: string
+        groups:
+          items:
+            $ref: '#/components/schemas/task_list_group_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        period:
+          nullable: true
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    tax_rate_response:
+      description: Moneybird-compatible tax_rate_response.
+      properties:
+        active:
+          nullable: true
+          type: boolean
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        country:
+          nullable: true
+          type: string
+        created_at:
+          format: date-time
+          nullable: true
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        percentage:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/number'
+        show_tax:
+          nullable: true
+          type: boolean
+        tax_rate_type:
+          enum:
+            - sales_invoice
+            - purchase_invoice
+            - general_journal_document
+          type: string
+        updated_at:
+          format: date-time
+          nullable: true
+          type: string
+      type: object
+    tax_report_amounts:
+      description: Moneybird-compatible tax_report_amounts.
+      properties:
+        tax_rates:
+          items:
+            properties:
+              amount:
+                type: string
+              name:
+                type: string
+              percentage:
+                nullable: true
+                type: string
+              report_reference:
+                type: string
+              tax:
+                type: string
+              tax_rate_id:
+                $ref: '#/components/schemas/Identifier'
+              type:
+                type: string
+            type: object
+          type: array
+      type: object
+    tax_subtotal_response:
+      description: Moneybird-compatible tax_subtotal_response.
+      properties:
+        tax_amount:
+          $ref: '#/components/schemas/number'
+        tax_amount_base:
+          $ref: '#/components/schemas/number'
+        tax_rate_id:
+          $ref: '#/components/schemas/Identifier'
+        taxable_amount:
+          $ref: '#/components/schemas/number'
+        taxable_amount_base:
+          $ref: '#/components/schemas/number'
+      type: object
+    taxonomy_item_response:
+      description: Moneybird-compatible taxonomy_item_response.
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        name_english:
+          nullable: true
+          type: string
+        reference:
+          nullable: true
+          type: string
+        taxonomy_version:
+          type: string
+      type: object
+    time_entry_response:
+      description: Moneybird-compatible time_entry_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        billable:
+          nullable: true
+          type: boolean
+        contact:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/minimal_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        description:
+          type: string
+        ended_at:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/timestamp'
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        notes:
+          items:
+            $ref: '#/components/schemas/note_response'
+          type: array
+        paused_duration:
+          type: integer
+        project:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/project_response'
+        project_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        sales_invoice:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/sales_invoice_response'
+        sales_invoice_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        started_at:
+          $ref: '#/components/schemas/timestamp'
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        user:
+          $ref: '#/components/schemas/user_response'
+        user_id:
+          $ref: '#/components/schemas/Identifier'
+      type: object
+    timestamp:
+      description: Moneybird-compatible timestamp.
+      format: date-time
+      type: string
+    typeless_document_response:
+      description: Moneybird-compatible typeless_document_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        attachments:
+          items:
+            $ref: '#/components/schemas/attachment_response'
+          type: array
+        contact:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/simple_contact_response'
+        contact_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        date:
+          format: date
+          type: string
+        events:
+          items:
+            $ref: '#/components/schemas/event_response'
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        origin:
+          enum:
+            - upload
+            - endpoint
+            - si
+            - email
+            - si_local
+            - si_peppol
+            - api
+            - moneybird_bv
+            - mollie
+          nullable: true
+          type: string
+        reference:
+          nullable: true
+          type: string
+        state:
+          enum:
+            - new
+            - open
+            - late
+            - paid
+            - saved
+            - pending_payment
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+        version:
+          $ref: '#/components/schemas/version'
+      type: object
+    user_response:
+      $ref: '#/components/schemas/base_user_response'
+      description: Moneybird-compatible user_response.
+    value_change_response:
+      description: Moneybird-compatible value_change_response.
+      properties:
+        amount:
+          $ref: '#/components/schemas/number'
+        asset_id:
+          $ref: '#/components/schemas/Identifier'
+        date:
+          format: date
+          type: string
+        description:
+          nullable: true
+          type: string
+        externally_booked:
+          type: boolean
+        type:
+          enum:
+            - divestment
+            - full_depreciation
+            - manual
+            - arbitrary
+            - linear
+          type: string
+      type: object
+    verification_response:
+      description: Moneybird-compatible verification_response.
+      properties:
+        bank_account_numbers:
+          items:
+            type: string
+          type: array
+        chamber_of_commerce_number:
+          type: string
+        emails:
+          items:
+            type: string
+          type: array
+        tax_number:
+          type: string
+      type: object
+    verifications_response:
+      $ref: '#/components/schemas/verification_response'
+      description: Moneybird-compatible verifications_response.
+    version:
+      description: Moneybird-compatible version.
+      type: integer
+    webhook_response:
+      description: Moneybird-compatible webhook_response.
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        deactivated_at:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/timestamp'
+        enabled_events:
+          items:
+            type: string
+          type: array
+        id:
+          $ref: '#/components/schemas/Identifier'
+        last_http_body:
+          nullable: true
+          type: string
+        last_http_status:
+          anyOf:
+            - type: integer
+            - type: string
+          nullable: true
+        secret:
+          type: string
+        token:
+          type: string
+        url:
+          type: string
+      type: object
+    workflow_response:
+      description: Moneybird-compatible workflow_response.
+      properties:
+        active:
+          type: boolean
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        collection_method:
+          nullable: true
+          type: string
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        currency:
+          type: string
+        default:
+          type: boolean
+        id:
+          $ref: '#/components/schemas/Identifier'
+        language:
+          type: string
+        name:
+          type: string
+        number_of_collections:
+          type: integer
+        payment_methods:
+          items:
+            type: string
+          nullable: true
+          type: array
+        prices_are_incl_tax:
+          type: boolean
+        show_qr_code:
+          type: boolean
+        steps:
+          items:
+            $ref: '#/components/schemas/workflow_step_response'
+          type: array
+        type:
+          type: string
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    workflow_step_response:
+      description: Moneybird-compatible workflow_step_response.
+      properties:
+        action:
+          enum:
+            - suspend_moneybird_account
+            - reactivate_moneybird_account
+            - warn_moneybird_account
+            - cancel_subscription
+          nullable: true
+          type: string
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        created_at:
+          $ref: '#/components/schemas/timestamp'
+        due_interval:
+          type: integer
+        id:
+          $ref: '#/components/schemas/Identifier'
+        reminder_auto_send:
+          type: boolean
+        reminder_delay:
+          type: integer
+        reminder_text:
+          nullable: true
+          type: string
+        step_order:
+          type: integer
+        updated_at:
+          $ref: '#/components/schemas/timestamp'
+      type: object
+    working_capital_amounts:
+      description: Moneybird-compatible working_capital_amounts.
+      properties:
+        bank:
+          type: string
+        to_pay:
+          type: string
+        to_receive:
+          type: string
+        working_capital:
+          type: string
+      type: object
+    # END Moneybird schemas

@@ -135,10 +135,19 @@ DELETE FROM identities WHERE administration_id = $1 AND id = $2;
 DELETE FROM resources WHERE id = $1;
 
 -- name: InsertCustomField :exec
-INSERT INTO custom_fields (id, administration_id, name, source, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6);
+INSERT INTO custom_fields (id, administration_id, name, source, position, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7);
 
 -- name: ListCustomFields :many
-SELECT * FROM custom_fields WHERE administration_id = $1 ORDER BY id;
+SELECT * FROM custom_fields WHERE administration_id = $1 ORDER BY position, id;
+
+-- name: CustomFieldByID :one
+SELECT * FROM custom_fields WHERE administration_id = $1 AND id = $2;
+
+-- name: UpdateCustomField :exec
+UPDATE custom_fields SET name = $3, position = $4, updated_at = $5 WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteCustomField :execrows
+DELETE FROM custom_fields WHERE administration_id = $1 AND id = $2;
 
 -- name: ListIdentityCustomFieldValues :many
 SELECT v.identity_id, f.id, f.name, v.value
@@ -151,3 +160,91 @@ DELETE FROM identity_custom_field_values WHERE identity_id = $1;
 
 -- name: InsertIdentityCustomFieldValue :exec
 INSERT INTO identity_custom_field_values (identity_id, custom_field_id, value) VALUES ($1, $2, $3);
+
+-- name: InvoiceSettings :one
+SELECT invoice_id_template, invoice_sequence_id, estimate_id_template, estimate_sequence_id,
+       invoice_bcc_email_address, invoice_reminders_bcc_enabled, estimate_bcc_email_address, order_bcc_email_address,
+       default_email_ubl, payments_without_proof
+FROM administrations WHERE id = $1;
+
+-- name: UpdateInvoiceSettings :exec
+UPDATE administrations
+SET invoice_id_template = $2, invoice_sequence_id = $3, estimate_id_template = $4, estimate_sequence_id = $5,
+    invoice_bcc_email_address = $6, invoice_reminders_bcc_enabled = $7, estimate_bcc_email_address = $8,
+    order_bcc_email_address = $9, default_email_ubl = $10, payments_without_proof = $11
+WHERE id = $1;
+
+-- name: ListWorkflows :many
+SELECT * FROM workflows WHERE administration_id = $1 ORDER BY id;
+
+-- name: WorkflowByID :one
+SELECT * FROM workflows WHERE administration_id = $1 AND id = $2;
+
+-- name: ListWorkflowSteps :many
+SELECT s.* FROM workflow_steps s JOIN workflows w ON w.id = s.workflow_id
+WHERE w.administration_id = $1
+ORDER BY s.workflow_id, s.step_order;
+
+-- name: InsertWorkflow :one
+INSERT INTO workflows (id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax,
+                       show_qr_code, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+ON CONFLICT (administration_id, type) WHERE is_default DO NOTHING
+RETURNING id;
+
+-- name: ClearDefaultWorkflow :exec
+UPDATE workflows SET is_default = false WHERE administration_id = $1 AND type = $2 AND id <> $3 AND is_default;
+
+-- name: UpdateWorkflow :exec
+UPDATE workflows
+SET name = $3, is_default = $4, currency = $5, language = $6, active = $7, prices_are_incl_tax = $8,
+    show_qr_code = $9, updated_at = $10
+WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteWorkflow :execrows
+DELETE FROM workflows WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteWorkflowSteps :exec
+DELETE FROM workflow_steps WHERE workflow_id = $1;
+
+-- name: InsertWorkflowStep :exec
+INSERT INTO workflow_steps (id, workflow_id, step_order, due_interval, reminder_delay, reminder_text, reminder_auto_send,
+                            created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+
+-- name: ListDocumentStyles :many
+SELECT * FROM document_styles WHERE administration_id = $1 ORDER BY id;
+
+-- name: DocumentStyleByID :one
+SELECT * FROM document_styles WHERE administration_id = $1 AND id = $2;
+
+-- name: InsertDocumentStyle :one
+INSERT INTO document_styles (id, administration_id, name, identity_id, is_default, logo_hash, logo_content_type,
+                             logo_container_full_width, logo_display_width, logo_position, background_hash,
+                             background_content_type, print_on_stationery, paper_size, address_position, font_size,
+                             font_family, custom_css, layout, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+ON CONFLICT (administration_id) WHERE is_default DO NOTHING
+RETURNING id;
+
+-- name: ClearDefaultDocumentStyle :exec
+UPDATE document_styles SET is_default = false WHERE administration_id = $1 AND id <> $2 AND is_default;
+
+-- name: UpdateDocumentStyle :exec
+UPDATE document_styles
+SET name = $3, identity_id = $4, is_default = $5, logo_hash = $6, logo_content_type = $7,
+    logo_container_full_width = $8, logo_display_width = $9, logo_position = $10, background_hash = $11,
+    background_content_type = $12, print_on_stationery = $13, paper_size = $14, address_position = $15,
+    font_size = $16, font_family = $17, custom_css = $18, layout = $19, updated_at = $20
+WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteDocumentStyle :execrows
+DELETE FROM document_styles WHERE administration_id = $1 AND id = $2;
+
+-- name: DocumentFileInUse :one
+SELECT EXISTS (SELECT 1 FROM document_styles WHERE administration_id = $1 AND (logo_hash = $2 OR background_hash = $2));
+
+-- name: MoveDocumentStylesToDefaultIdentity :exec
+UPDATE document_styles d SET identity_id = i.id
+FROM identities i
+WHERE d.identity_id = $1 AND i.administration_id = d.administration_id AND i.is_default;

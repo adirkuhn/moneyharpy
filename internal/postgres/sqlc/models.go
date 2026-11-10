@@ -23,6 +23,16 @@ type Administration struct {
 	CompanyActivitiesDescription string
 	CompanyWebsiteUrl            string
 	CompanyWebsiteAbsent         bool
+	InvoiceIDTemplate            string
+	InvoiceSequenceID            string
+	EstimateIDTemplate           string
+	EstimateSequenceID           string
+	InvoiceBccEmailAddress       string
+	InvoiceRemindersBccEnabled   bool
+	EstimateBccEmailAddress      string
+	OrderBccEmailAddress         string
+	DefaultEmailUbl              bool
+	PaymentsWithoutProof         bool
 }
 
 type AdministrationMember struct {
@@ -47,6 +57,31 @@ type CustomField struct {
 	Source           string
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
+	Position         int32
+}
+
+type DocumentStyle struct {
+	ID                     int64
+	AdministrationID       int64
+	Name                   string
+	IdentityID             int64
+	IsDefault              bool
+	LogoHash               pgtype.Text
+	LogoContentType        pgtype.Text
+	LogoContainerFullWidth bool
+	LogoDisplayWidth       int32
+	LogoPosition           string
+	BackgroundHash         pgtype.Text
+	BackgroundContentType  pgtype.Text
+	PrintOnStationery      bool
+	PaperSize              string
+	AddressPosition        string
+	FontSize               int32
+	FontFamily             string
+	CustomCss              string
+	Layout                 []byte
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
 }
 
 type Identity struct {
@@ -115,4 +150,31 @@ type UserIdentity struct {
 	Provider string
 	Subject  string
 	UserID   int64
+}
+
+type Workflow struct {
+	ID               int64
+	AdministrationID int64
+	Type             string
+	Name             string
+	IsDefault        bool
+	Currency         string
+	Language         string
+	Active           bool
+	PricesAreInclTax bool
+	ShowQrCode       bool
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type WorkflowStep struct {
+	ID               int64
+	WorkflowID       int64
+	StepOrder        int32
+	DueInterval      int32
+	ReminderDelay    int32
+	ReminderText     string
+	ReminderAutoSend bool
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
 }

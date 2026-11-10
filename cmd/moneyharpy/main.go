@@ -15,17 +15,21 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/diskstore"
 	"github.com/adirkuhn/moneyharpy/internal/google"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
+	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/kvk"
 	"github.com/adirkuhn/moneyharpy/internal/lm2"
 	"github.com/adirkuhn/moneyharpy/internal/mail"
+	"github.com/adirkuhn/moneyharpy/internal/objectstore"
 	"github.com/adirkuhn/moneyharpy/internal/pdok"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
+	"github.com/adirkuhn/moneyharpy/internal/uploads"
 	"github.com/adirkuhn/moneyharpy/web"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -46,6 +50,9 @@ type config struct {
 	baseURL           string
 	addr              string
 	trustProxyHeaders bool
+	// uploadsDir holds uploaded files while no S3-compatible storage is
+	// configured.
+	uploadsDir string
 }
 
 func loadConfig() (config, error) {
@@ -55,6 +62,7 @@ func loadConfig() (config, error) {
 		baseURL:           strings.TrimRight(os.Getenv("BASE_URL"), "/"),
 		addr:              cmp.Or(os.Getenv("LISTEN_ADDR"), ":8080"),
 		trustProxyHeaders: os.Getenv("TRUST_PROXY_HEADERS") == "true",
+		uploadsDir:        cmp.Or(os.Getenv("UPLOADS_DIR"), "/data/uploads"),
 	}
 	switch {
 	case c.databaseURL == "":
@@ -88,8 +96,13 @@ func run(logger *slog.Logger) error {
 	outbound := &http.Client{Timeout: 10 * time.Second}
 	instance := settings.NewService(postgres.NewSettingsStore(pool), settings.NewCipher(cfg.secretKey))
 	mailer := mail.New(instance, cfg.baseURL)
+	s3 := objectstore.New(instance)
+	files := uploads.New(s3, diskstore.New(cfg.uploadsDir))
+	admins := administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
-		Administrations:   administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now),
+		Administrations:   admins,
+		Invoicing:         invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now),
+		Storage:           s3,
 		Identity:          identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, time.Now),
 		Settings:          instance,
 		Resources:         postgres.NewResourceLocator(pool),

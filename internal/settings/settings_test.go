@@ -259,3 +259,68 @@ func TestSMTPValidation(t *testing.T) {
 		})
 	}
 }
+
+func validStorage() Update {
+	return Update{
+		StorageEnabled: ptr(true), StorageEndpoint: ptr(" https://s3.example.com/ "), StorageRegion: ptr("eu-west-1"),
+		StorageBucket: ptr("moneyharpy"), StorageAccessKey: ptr("access"), StorageSecretKey: ptr("storage-secret-value"),
+		StoragePathStyle: ptr(true),
+	}
+}
+
+func TestStorageSecretIsEncryptedAndKept(t *testing.T) {
+	s, store := newService(t)
+	ctx := context.Background()
+	if _, err := s.Update(ctx, validStorage()); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	for key, raw := range store.values {
+		if strings.Contains(string(raw), "storage-secret-value") {
+			t.Errorf("stored value for %q contains the secret key in clear", key)
+		}
+	}
+	got, err := s.Update(ctx, Update{StorageSecretKey: ptr("")})
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	want := Storage{
+		Enabled: true, Endpoint: "https://s3.example.com", Region: "eu-west-1", Bucket: "moneyharpy",
+		AccessKey: "access", SecretKey: "storage-secret-value", PathStyle: true,
+	}
+	if diff := cmp.Diff(want, got.Storage); diff != "" {
+		t.Errorf("Update() Storage diff (-want +got):\n%s", diff)
+	}
+}
+
+func TestStorageValidation(t *testing.T) {
+	with := func(change func(*Update)) Update {
+		u := validStorage()
+		change(&u)
+		return u
+	}
+	tests := []struct {
+		name  string
+		in    Update
+		field string
+	}{
+		{name: "no endpoint", in: with(func(u *Update) { u.StorageEndpoint = ptr("") }), field: "storage_endpoint"},
+		{name: "endpoint with a path", in: with(func(u *Update) { u.StorageEndpoint = ptr("https://s3.example.com/bucket") }), field: "storage_endpoint"},
+		{name: "endpoint not http", in: with(func(u *Update) { u.StorageEndpoint = ptr("ftp://s3.example.com") }), field: "storage_endpoint"},
+		{name: "bad bucket", in: with(func(u *Update) { u.StorageBucket = ptr("Not A Bucket") }), field: "storage_bucket"},
+		{name: "no access key", in: with(func(u *Update) { u.StorageAccessKey = ptr("") }), field: "storage_access_key"},
+		{name: "no secret", in: with(func(u *Update) { u.StorageSecretKey = nil }), field: "storage_secret_key"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, _ := newService(t)
+			_, err := s.Update(context.Background(), tt.in)
+			var verr *resource.ValidationError
+			if !errors.As(err, &verr) {
+				t.Fatalf("Update() error = %v, want *resource.ValidationError", err)
+			}
+			if _, ok := verr.Fields[tt.field]; !ok {
+				t.Errorf("Update() fields = %v, want key %q", verr.Fields, tt.field)
+			}
+		})
+	}
+}
