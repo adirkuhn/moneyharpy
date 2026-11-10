@@ -119,6 +119,16 @@ func (s *Service) Workflow(ctx context.Context, admin, id, user resource.ID) (Wo
 	return s.store.Workflow(ctx, admin, id)
 }
 
+// WorkflowKind returns a workflow's type and whether it is active, for
+// records that refer to one.
+func (s *Service) WorkflowKind(ctx context.Context, admin, id, user resource.ID) (string, bool, error) {
+	w, err := s.Workflow(ctx, admin, id, user)
+	if err != nil {
+		return "", false, err
+	}
+	return string(w.Type), w.Active, nil
+}
+
 // CreateWorkflow adds a workflow of type t, filled from the administration's
 // defaults where c leaves fields out.
 func (s *Service) CreateWorkflow(ctx context.Context, admin, user resource.ID, t WorkflowType, c WorkflowChanges) (Workflow, error) {

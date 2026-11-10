@@ -48,6 +48,8 @@ tags:
     description: Transactions and booking them on categories. Compatible with the Moneybird API.
   - name: Overview
     description: An administration's home page. MoneyHarpy extension.
+  - name: Contacts
+    description: Customers and suppliers with their contact people and notes. Compatible with the Moneybird API.
   - name: Booking rules
     description: Rules that book matching transactions automatically. MoneyHarpy extension.
   - name: Management
@@ -2171,6 +2173,498 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listContacts
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: List all contacts
+      description: >-
+        Returns one page of contacts ordered by name. The Link header holds the first, previous, next and last pages;
+        X-Total-Count the number of contacts selected, a MoneyHarpy extension.
+      tags: [Contacts]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/contact_query'
+        - $ref: '#/components/parameters/include_archived'
+        - name: todo
+          in: query
+          description: Any value keeps only contacts with an unfinished to-do.
+          schema:
+            type: string
+        - name: contact_field
+          in: query
+          description: Keeps contacts whose field equals contact_value, ignoring case.
+          schema:
+            type: string
+            enum: [customer_id, company_name, firstname, lastname, email, phone, tax_number, chamber_of_commerce, bank_account, sepa_iban, zipcode, city]
+        - name: contact_value
+          in: query
+          schema:
+            type: string
+        - name: contact_import_id
+          in: query
+          description: Contacts created by an import batch. MoneyHarpy has no contact imports yet, so this selects none.
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+      responses:
+        '200':
+          $ref: '#/components/responses/ContactPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createContact
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Create a new contact
+      description: Without a customer_id the contact gets the next number.
+      tags: [Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactRequest'
+      responses:
+        '201':
+          description: The created contact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/filter:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: filterContacts
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Filter contacts
+      description: >-
+        Filters are key:value terms separated by commas, such as first_name:henk,contact_type:company. Keys:
+        created_after and updated_after (ISO 8601 times), first_name, last_name, invoice_workflow_id, estimate_workflow_id,
+        contact_type (all, company, private_individual), delivery_method (all, email, post, manual, peppol, simplerinvoicing),
+        trusted_type (all, trusted, not_trusted) and mandate_type (all, manual, adyen, none). Paged like the list.
+      tags: [Contacts]
+      parameters:
+        - $ref: '#/components/parameters/contact_filter'
+        - $ref: '#/components/parameters/contact_query'
+        - $ref: '#/components/parameters/include_archived'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          $ref: '#/components/responses/ContactPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listContactVersions
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: List all ids and versions
+      tags: [Contacts]
+      parameters:
+        - $ref: '#/components/parameters/contact_filter'
+        - $ref: '#/components/parameters/include_archived'
+      responses:
+        '200':
+          description: The ids and versions of the contacts the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchContacts
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Fetch contacts with given ids
+      tags: [Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The contacts with these ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/doubles:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listContactDoubles
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: List possible duplicate contacts
+      description: Groups of contacts that share a chamber of commerce number, tax number, email address or name, 50 groups a page.
+      tags: [Contacts]
+      parameters:
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: A page of possible duplicate contact groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [contacts]
+                  properties:
+                    contacts:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Contact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/customer_id/{customer_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+    get:
+      operationId: getContactByCustomerId
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Get contact by customer id
+      tags: [Contacts]
+      responses:
+        '200':
+          $ref: '#/components/responses/OneContact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getContact
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Get a contact
+      description: Archived contacts are returned too.
+      tags: [Contacts]
+      parameters:
+        - $ref: '#/components/parameters/include_archived'
+      responses:
+        '200':
+          $ref: '#/components/responses/OneContact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateContact
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Update a contact
+      tags: [Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OneContact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteContact
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Delete a contact
+      description: A contact that documents refer to cannot be deleted (422); archive it instead.
+      tags: [Contacts]
+      responses:
+        '204':
+          description: The contact is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/{id}/archive:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: archiveContact
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Archive a contact
+      description: Archived contacts leave lists and pickers; their documents keep them. Update archived to false to bring one back.
+      tags: [Contacts]
+      responses:
+        '204':
+          description: The contact is archived
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/{contact_id}/contact_people:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/contact_id'
+    post:
+      operationId: createContactPerson
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Create a new contact person
+      tags: [Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactPersonRequest'
+      responses:
+        '201':
+          description: The created contact person
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/contact_person_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/contact_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getContactPerson
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Get a contact person
+      tags: [Contacts]
+      responses:
+        '200':
+          $ref: '#/components/responses/OneContactPerson'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateContactPerson
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Update a contact person
+      tags: [Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactPersonRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OneContactPerson'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteContactPerson
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Delete a contact person
+      tags: [Contacts]
+      responses:
+        '204':
+          description: The contact person is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/{contact_id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/contact_id'
+    post:
+      operationId: createContactNote
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Add note to a contact
+      tags: [Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/{contact_id}/notes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/contact_id'
+      - $ref: '#/components/parameters/id'
+    delete:
+      operationId: deleteContactNote
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Delete a note from a contact
+      tags: [Contacts]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/booking_rules:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -3767,7 +4261,77 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Identifier'
+    contact_id:
+      name: contact_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Identifier'
+    page:
+      name: page
+      in: query
+      description: The page to return, starting at 1.
+      schema:
+        type: string
+        pattern: '^[1-9][0-9]{0,8}$'
+    per_page:
+      name: per_page
+      in: query
+      description: Records per page, 50 unless given, at most 100.
+      schema:
+        type: string
+        pattern: '^(100|[1-9][0-9]?)$'
+    include_archived:
+      name: include_archived
+      in: query
+      description: Include archived records.
+      schema:
+        type: string
+        enum: ['true', 'false']
+    contact_query:
+      name: query
+      in: query
+      description: Free-text search across names, contact people, email, phone, customer id, tax and chamber of commerce numbers, IBAN and address.
+      schema:
+        type: string
+        maxLength: 255
+    contact_filter:
+      name: filter
+      in: query
+      description: Comma-separated key:value terms; see Filter contacts.
+      schema:
+        type: string
+        maxLength: 1000
   responses:
+    ContactPage:
+      description: A page of contacts
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number of contacts selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Contact'
+    OneContact:
+      description: The contact
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Contact'
+    OneContactPerson:
+      description: The contact person
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/contact_person_response'
     BadRequest:
       description: The request is malformed
       content:
@@ -5236,6 +5800,135 @@ components:
         updated_at:
           type: string
           format: date-time
+    FlexibleBoolean:
+      description: A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+      oneOf:
+        - type: boolean
+        - type: string
+          enum: ['true', 'false']
+    FlexibleIdentifier:
+      description: An id as a string or a number; an empty string clears it.
+      oneOf:
+        - type: string
+          pattern: '^[0-9]{0,19}$'
+        - type: integer
+          minimum: 0
+    Contact:
+      description: A Moneybird contact with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/contact_response'
+        - type: object
+          required: [id, administration_id, customer_id, country, archived, version, uri, contact_people, custom_fields, notes, events]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    ContactRequest:
+      type: object
+      required: [contact]
+      additionalProperties: false
+      properties:
+        contact:
+          type: object
+          additionalProperties: false
+          properties:
+            company_name: {type: string, maxLength: 255}
+            firstname: {type: string, maxLength: 255}
+            lastname: {type: string, maxLength: 255}
+            address1: {type: string, maxLength: 255}
+            address2: {type: string, maxLength: 255}
+            zipcode: {type: string, maxLength: 255}
+            city: {type: string, maxLength: 255}
+            country:
+              type: string
+              pattern: '^[A-Za-z]{2}$'
+              description: ISO 3166-1 alpha-2; the administration's country unless given.
+            phone: {type: string, maxLength: 255}
+            delivery_method:
+              type: string
+              description: Email, Post, Manual, Simplerinvoicing or Peppol, in any case.
+              pattern: '^(?i)(email|post|manual|simplerinvoicing|peppol)$'
+            customer_id:
+              type: string
+              maxLength: 50
+              description: Unique in the administration; the next number when left out.
+            tax_number: {type: string, maxLength: 255}
+            chamber_of_commerce: {type: string, maxLength: 255}
+            bank_account: {type: string, maxLength: 255}
+            send_invoices_to_attention: {type: string, maxLength: 255}
+            send_invoices_to_email:
+              type: string
+              maxLength: 255
+              description: One or more addresses separated by commas.
+            send_estimates_to_attention: {type: string, maxLength: 255}
+            send_estimates_to_email: {type: string, maxLength: 255}
+            email_ubl:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            direct_debit:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            sepa_active:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            sepa_iban: {type: string, maxLength: 64}
+            sepa_iban_account_name: {type: string, maxLength: 255}
+            sepa_bic: {type: string, maxLength: 16}
+            sepa_mandate_id: {type: string, maxLength: 255}
+            sepa_mandate_date:
+              type: string
+              description: yyyy-mm-dd; empty clears it.
+              pattern: '^([0-9]{4}-[0-9]{2}-[0-9]{2})?$'
+            sepa_sequence_type:
+              type: string
+              enum: [RCUR, FRST, OOFF, FNAL]
+            si_identifier_type:
+              type: string
+              maxLength: 20
+              description: The e-invoicing (Peppol) identifier scheme, such as 0106 for a Dutch chamber of commerce number.
+            si_identifier: {type: string, maxLength: 255}
+            invoice_workflow_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            estimate_workflow_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            archived:
+              type: boolean
+              description: MoneyHarpy extension. False brings an archived contact back.
+            custom_fields_attributes:
+              $ref: '#/components/schemas/custom_fields_attributes'
+            contact_person:
+              description: Adds a contact person with a new contact.
+              $ref: '#/components/schemas/ContactPersonFields'
+    ContactPersonFields:
+      type: object
+      additionalProperties: false
+      properties:
+        firstname: {type: string, maxLength: 255}
+        lastname: {type: string, maxLength: 255}
+        phone: {type: string, maxLength: 255}
+        email: {type: string, maxLength: 255}
+        department: {type: string, maxLength: 255}
+    ContactPersonRequest:
+      type: object
+      required: [contact_person]
+      additionalProperties: false
+      properties:
+        contact_person:
+          $ref: '#/components/schemas/ContactPersonFields'
+    NoteRequest:
+      type: object
+      required: [note]
+      additionalProperties: false
+      properties:
+        note:
+          type: object
+          required: [note]
+          additionalProperties: false
+          properties:
+            note:
+              type: string
+              maxLength: 10000
+            todo:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            assignee_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
     BookingRuleRequest:
       type: object
       required: [booking_rule]

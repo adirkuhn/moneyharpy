@@ -93,6 +93,65 @@ type Connection struct {
 	LastUsedAt       pgtype.Timestamptz
 }
 
+type Contact struct {
+	ID                       int64
+	AdministrationID         int64
+	CompanyName              string
+	Firstname                string
+	Lastname                 string
+	Address1                 string
+	Address2                 string
+	Zipcode                  string
+	City                     string
+	Country                  string
+	Phone                    string
+	CustomerID               string
+	TaxNumber                string
+	ChamberOfCommerce        string
+	BankAccount              string
+	DeliveryMethod           string
+	SendInvoicesToAttention  string
+	SendInvoicesToEmail      string
+	SendEstimatesToAttention string
+	SendEstimatesToEmail     string
+	EmailUbl                 bool
+	DirectDebit              bool
+	SepaActive               bool
+	SepaIban                 string
+	SepaIbanAccountName      string
+	SepaBic                  string
+	SepaMandateID            string
+	SepaMandateDate          pgtype.Date
+	SepaSequenceType         string
+	SiIdentifierType         string
+	SiIdentifier             string
+	InvoiceWorkflowID        pgtype.Int8
+	EstimateWorkflowID       pgtype.Int8
+	Archived                 bool
+	CreatedAt                pgtype.Timestamptz
+	UpdatedAt                pgtype.Timestamptz
+	SortName                 pgtype.Text
+}
+
+type ContactCustomFieldValue struct {
+	ContactID     int64
+	CustomFieldID int64
+	Value         string
+}
+
+type ContactPerson struct {
+	ID               int64
+	AdministrationID int64
+	ContactID        int64
+	Firstname        string
+	Lastname         string
+	Phone            string
+	Email            string
+	Department       string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type CustomField struct {
 	ID               int64
 	AdministrationID int64
@@ -242,6 +301,21 @@ type LoginChallenge struct {
 	UserID    int64
 	Attempts  int32
 	ExpiresAt pgtype.Timestamptz
+}
+
+type Note struct {
+	ID               int64
+	AdministrationID int64
+	EntityID         int64
+	EntityType       string
+	UserID           pgtype.Int8
+	AssigneeID       pgtype.Int8
+	Todo             bool
+	Note             string
+	CompletedAt      pgtype.Timestamptz
+	CompletedByID    pgtype.Int8
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
 }
 
 type PasswordResetToken struct {

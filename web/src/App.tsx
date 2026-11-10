@@ -44,6 +44,9 @@ import { SettingsLayout } from './settings/SettingsLayout'
 import { UserPage } from './user/UserPage'
 import { OverviewPage } from './overview/OverviewPage'
 import { StartPage } from './overview/StartPage'
+import { ContactFormPage } from './contacts/ContactFormPage'
+import { ContactPage } from './contacts/ContactPage'
+import { ContactsPage } from './contacts/ContactsPage'
 
 export function AppRoutes() {
   return (
@@ -70,6 +73,10 @@ export function AppRoutes() {
           <Route path="/:administrationId/feed" element={<OverviewPage />} />
           <Route path="/:administrationId/financial_mutations" element={<TransactionsPage />} />
           <Route path="/:administrationId/financial_mutations/:mutationId" element={<TransactionPage />} />
+          <Route path="/:administrationId/contacts" element={<ContactsPage />} />
+          <Route path="/:administrationId/contacts/new" element={<ContactFormPage />} />
+          <Route path="/:administrationId/contacts/:contactId" element={<ContactPage />} />
+          <Route path="/:administrationId/contacts/:contactId/edit" element={<ContactFormPage />} />
         </Route>
         <Route path="/:administrationId/settings" element={<SettingsLayout />}>
           <Route index element={<Navigate to="company" replace />} />

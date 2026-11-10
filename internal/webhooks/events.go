@@ -19,6 +19,8 @@ var Events = []string{
 	"financial_account_created", "financial_account_renamed", "financial_account_activated", "financial_account_deactivated",
 	"financial_statement_created", "financial_statement_updated", "financial_statement_destroyed",
 	"booking_rule_created", "booking_rule_updated", "booking_rule_destroyed",
+	"contact_created", "contact_changed", "contact_archived", "contact_activated", "contact_destroyed",
+	"contact_person_created", "contact_person_updated", "contact_person_destroyed",
 	"user_invited", "user_removed",
 	"access_token_created", "access_token_revoked",
 }
@@ -27,7 +29,7 @@ var Events = []string{
 // matches every event starting with it.
 var Groups = []string{
 	"administration", "identity", "default_identity", "workflow", "document_style", "tax_rate", "ledger_account",
-	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "user", "access_token",
+	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "user", "access_token",
 }
 
 // known reports whether a subscription names an event or a group.

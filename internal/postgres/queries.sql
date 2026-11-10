@@ -598,3 +598,116 @@ SELECT * FROM financial_mutations
 WHERE administration_id = @administration_id AND state = 'processed' AND processed_at IS NOT NULL
 ORDER BY processed_at DESC, id DESC
 LIMIT @max_rows;
+
+-- name: ListContacts :many
+-- Optional terms are skipped when their parameter is null or empty. search
+-- arrives with LIKE wildcards escaped.
+SELECT sqlc.embed(c), count(*) OVER () AS total
+FROM contacts c
+WHERE c.administration_id = @administration_id
+  AND (@include_archived::boolean OR NOT c.archived)
+  AND (sqlc.narg(created_after)::timestamptz IS NULL OR c.created_at > sqlc.narg(created_after))
+  AND (sqlc.narg(updated_after)::timestamptz IS NULL OR c.updated_at > sqlc.narg(updated_after))
+  AND (@first_name::text = '' OR lower(c.firstname) = lower(@first_name))
+  AND (@last_name::text = '' OR lower(c.lastname) = lower(@last_name))
+  AND (sqlc.narg(invoice_workflow_id)::bigint IS NULL OR c.invoice_workflow_id = sqlc.narg(invoice_workflow_id))
+  AND (sqlc.narg(estimate_workflow_id)::bigint IS NULL OR c.estimate_workflow_id = sqlc.narg(estimate_workflow_id))
+  AND (@contact_type::text = '' OR (@contact_type = 'company') = (c.company_name <> ''))
+  AND (@delivery_method::text = '' OR c.delivery_method = @delivery_method)
+  AND (@trusted::text <> 'trusted')
+  AND (@mandate::text = '' OR (@mandate = 'manual' AND c.sepa_active) OR (@mandate = 'none' AND NOT c.sepa_active))
+  AND (@field::text = '' OR lower(CASE @field
+      WHEN 'customer_id' THEN c.customer_id WHEN 'company_name' THEN c.company_name WHEN 'firstname' THEN c.firstname
+      WHEN 'lastname' THEN c.lastname WHEN 'email' THEN c.send_invoices_to_email WHEN 'phone' THEN c.phone
+      WHEN 'tax_number' THEN c.tax_number WHEN 'chamber_of_commerce' THEN c.chamber_of_commerce WHEN 'bank_account' THEN c.bank_account
+      WHEN 'sepa_iban' THEN c.sepa_iban WHEN 'zipcode' THEN c.zipcode WHEN 'city' THEN c.city END) = lower(@value::text))
+  AND (NOT @open_todos::boolean OR EXISTS (
+      SELECT 1 FROM notes n WHERE n.administration_id = c.administration_id AND n.entity_id = c.id AND n.todo AND n.completed_at IS NULL))
+  AND (@search::text = '' OR concat_ws(' ', c.company_name, c.firstname, c.lastname, btrim(c.firstname || ' ' || c.lastname),
+        c.send_invoices_to_email, c.send_estimates_to_email, c.phone, c.customer_id, c.tax_number, c.chamber_of_commerce,
+        c.bank_account, c.sepa_iban, c.address1, c.address2, c.zipcode, c.city) ILIKE '%' || @search || '%'
+    OR EXISTS (SELECT 1 FROM contact_people p WHERE p.contact_id = c.id
+        AND concat_ws(' ', p.firstname, p.lastname, btrim(p.firstname || ' ' || p.lastname), p.email, p.phone) ILIKE '%' || @search || '%'))
+ORDER BY c.sort_name, c.id
+LIMIT sqlc.narg(max_rows) OFFSET @skip;
+
+-- name: ContactByID :one
+SELECT * FROM contacts WHERE administration_id = $1 AND id = $2;
+
+-- name: ContactByCustomerID :one
+SELECT * FROM contacts WHERE administration_id = $1 AND customer_id = $2;
+
+-- name: ContactsByIDs :many
+SELECT * FROM contacts WHERE administration_id = @administration_id AND id = ANY(@ids::bigint[]) ORDER BY id;
+
+-- name: MaxCustomerNumber :one
+SELECT coalesce(max(customer_id::bigint), 0)::bigint FROM contacts WHERE administration_id = $1 AND customer_id ~ '^[0-9]{1,18}$';
+
+-- name: CustomerIDTaken :one
+SELECT EXISTS (SELECT 1 FROM contacts WHERE administration_id = $1 AND customer_id = $2 AND id <> $3);
+
+-- name: InsertContact :exec
+INSERT INTO contacts (
+    id, administration_id, company_name, firstname, lastname, address1, address2, zipcode, city, country, phone, customer_id,
+    tax_number, chamber_of_commerce, bank_account, delivery_method, send_invoices_to_attention, send_invoices_to_email,
+    send_estimates_to_attention, send_estimates_to_email, email_ubl, direct_debit, sepa_active, sepa_iban, sepa_iban_account_name,
+    sepa_bic, sepa_mandate_id, sepa_mandate_date, sepa_sequence_type, si_identifier_type, si_identifier, invoice_workflow_id,
+    estimate_workflow_id, archived, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26,
+    $27, $28, $29, $30, $31, $32, $33, $34, $35, $36);
+
+-- name: UpdateContact :exec
+UPDATE contacts
+SET company_name = $3, firstname = $4, lastname = $5, address1 = $6, address2 = $7, zipcode = $8, city = $9, country = $10, phone = $11,
+    customer_id = $12, tax_number = $13, chamber_of_commerce = $14, bank_account = $15, delivery_method = $16,
+    send_invoices_to_attention = $17, send_invoices_to_email = $18, send_estimates_to_attention = $19, send_estimates_to_email = $20,
+    email_ubl = $21, direct_debit = $22, sepa_active = $23, sepa_iban = $24, sepa_iban_account_name = $25, sepa_bic = $26,
+    sepa_mandate_id = $27, sepa_mandate_date = $28, sepa_sequence_type = $29, si_identifier_type = $30, si_identifier = $31,
+    invoice_workflow_id = $32, estimate_workflow_id = $33, archived = $34, updated_at = $35
+WHERE administration_id = $1 AND id = $2;
+
+-- name: TouchContact :exec
+UPDATE contacts SET updated_at = $3 WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteContact :exec
+DELETE FROM contacts WHERE administration_id = $1 AND id = $2;
+
+-- name: ContactPeopleOf :many
+SELECT * FROM contact_people WHERE administration_id = @administration_id AND contact_id = ANY(@ids::bigint[]) ORDER BY created_at, id;
+
+-- name: UpsertContactPerson :exec
+INSERT INTO contact_people (id, administration_id, contact_id, firstname, lastname, phone, email, department, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+ON CONFLICT (id) DO UPDATE SET firstname = EXCLUDED.firstname, lastname = EXCLUDED.lastname, phone = EXCLUDED.phone,
+    email = EXCLUDED.email, department = EXCLUDED.department, updated_at = EXCLUDED.updated_at;
+
+-- name: DeleteContactPerson :exec
+DELETE FROM contact_people WHERE administration_id = $1 AND contact_id = $2 AND id = $3;
+
+-- name: ContactCustomFieldValuesOf :many
+SELECT v.contact_id, f.id, f.name, v.value
+FROM contact_custom_field_values v JOIN custom_fields f ON f.id = v.custom_field_id
+WHERE f.administration_id = @administration_id AND v.contact_id = ANY(@ids::bigint[])
+ORDER BY f.position, f.id;
+
+-- name: DeleteContactCustomFieldValues :exec
+DELETE FROM contact_custom_field_values WHERE contact_id = $1;
+
+-- name: InsertContactCustomFieldValue :exec
+INSERT INTO contact_custom_field_values (contact_id, custom_field_id, value) VALUES ($1, $2, $3);
+
+-- name: NotesOf :many
+SELECT * FROM notes WHERE administration_id = @administration_id AND entity_id = ANY(@ids::bigint[]) ORDER BY created_at, id;
+
+-- name: InsertNote :exec
+INSERT INTO notes (id, administration_id, entity_id, entity_type, user_id, assignee_id, todo, note, completed_at, completed_by_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);
+
+-- name: DeleteNote :exec
+DELETE FROM notes WHERE administration_id = $1 AND entity_id = $2 AND id = $3;
+
+-- name: DeleteNotesOf :exec
+DELETE FROM notes WHERE administration_id = $1 AND entity_id = $2;
+
+-- name: IsMember :one
+SELECT EXISTS (SELECT 1 FROM administration_members WHERE administration_id = $1 AND user_id = $2);

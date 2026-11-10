@@ -18,6 +18,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
+	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/diskstore"
 	"github.com/adirkuhn/moneyharpy/internal/google"
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
@@ -118,6 +119,7 @@ func run(logger *slog.Logger) error {
 		Bookkeeping:       books,
 		Banking:           bank,
 		Overview:          overview.NewService(admins, bank),
+		Contacts:          contacts.NewService(admins, invoices, admins, nil, postgres.NewContactStore(pool), ids, time.Now),
 		Storage:           s3,
 		Identity:          people,
 		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
