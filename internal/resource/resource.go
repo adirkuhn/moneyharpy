@@ -86,8 +86,12 @@ func (g *Generator) Next() ID {
 // Type names a kind of resource, as it appears in URIs.
 type Type string
 
-// TypeAdministration is the type of an administration.
-const TypeAdministration Type = "administrations"
+// The types of resource.
+const (
+	TypeAdministration Type = "administrations"
+	TypeIdentity       Type = "identities"
+	TypeCustomField    Type = "custom_fields"
+)
 
 // Ref locates one resource.
 type Ref struct {

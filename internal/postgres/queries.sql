@@ -51,9 +51,8 @@ INSERT INTO settings (key, value) VALUES ($1, $2)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now();
 
 -- name: InsertAdministration :exec
-INSERT INTO administrations (id, name, language, currency, country, time_zone, suspended, period_locked_until, period_start_date,
-                             address1, address2, zipcode, city, chamber_of_commerce)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
+INSERT INTO administrations (id, name, language, currency, country, time_zone, suspended, period_locked_until, period_start_date)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 
 -- name: InsertMember :exec
 INSERT INTO administration_members (administration_id, user_id, access) VALUES ($1, $2, $3);
@@ -64,7 +63,7 @@ INSERT INTO resources (id, type, administration_id) VALUES ($1, $2, $3);
 -- name: ListAdministrations :many
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
-       a.address1, a.address2, a.zipcode, a.city, a.chamber_of_commerce,
+       a.small_business_scheme, a.company_activities_description, a.company_website_url, a.company_website_absent,
        m.access, m.favorite
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
 WHERE m.user_id = $1;
@@ -72,7 +71,7 @@ WHERE m.user_id = $1;
 -- name: AdministrationForUser :one
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
-       a.address1, a.address2, a.zipcode, a.city, a.chamber_of_commerce,
+       a.small_business_scheme, a.company_activities_description, a.company_website_url, a.company_website_absent,
        m.access, m.favorite
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
 WHERE a.id = $1 AND m.user_id = $2;
@@ -99,3 +98,56 @@ UPDATE users SET password_hash = $2 WHERE id = $1;
 
 -- name: DeleteUserSessions :exec
 DELETE FROM sessions WHERE user_id = $1;
+
+-- name: UpdateAdministration :exec
+UPDATE administrations
+SET name = $2, language = $3, currency = $4, time_zone = $5, small_business_scheme = $6,
+    company_activities_description = $7, company_website_url = $8, company_website_absent = $9
+WHERE id = $1;
+
+-- name: InsertIdentity :exec
+INSERT INTO identities (id, administration_id, is_default, company_name, country, city, zipcode, address1, address2,
+                        email, phone, legal_entity_type, chamber_of_commerce, tax_number,
+                        bank_account_name, bank_account_number, bank_account_bic, tax_number_absence_reason,
+                        created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20);
+
+-- name: ListIdentities :many
+SELECT * FROM identities WHERE administration_id = $1 ORDER BY is_default DESC, lower(company_name), id;
+
+-- name: DefaultIdentity :one
+SELECT * FROM identities WHERE administration_id = $1 AND is_default;
+
+-- name: IdentityByID :one
+SELECT * FROM identities WHERE administration_id = $1 AND id = $2;
+
+-- name: UpdateIdentity :exec
+UPDATE identities
+SET company_name = $3, country = $4, city = $5, zipcode = $6, address1 = $7, address2 = $8, email = $9, phone = $10,
+    legal_entity_type = $11, chamber_of_commerce = $12, tax_number = $13, bank_account_name = $14,
+    bank_account_number = $15, bank_account_bic = $16, tax_number_absence_reason = $17, updated_at = $18
+WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteIdentity :execrows
+DELETE FROM identities WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteResource :exec
+DELETE FROM resources WHERE id = $1;
+
+-- name: InsertCustomField :exec
+INSERT INTO custom_fields (id, administration_id, name, source, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6);
+
+-- name: ListCustomFields :many
+SELECT * FROM custom_fields WHERE administration_id = $1 ORDER BY id;
+
+-- name: ListIdentityCustomFieldValues :many
+SELECT v.identity_id, f.id, f.name, v.value
+FROM identity_custom_field_values v JOIN custom_fields f ON f.id = v.custom_field_id
+WHERE f.administration_id = $1
+ORDER BY f.id;
+
+-- name: DeleteIdentityCustomFieldValues :exec
+DELETE FROM identity_custom_field_values WHERE identity_id = $1;
+
+-- name: InsertIdentityCustomFieldValue :exec
+INSERT INTO identity_custom_field_values (identity_id, custom_field_id, value) VALUES ($1, $2, $3);

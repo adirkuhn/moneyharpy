@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { api, errorMessages, unwrap } from '../api/client'
-import { Field, Problems } from '../auth/AuthLayout'
+import { api, unwrap } from '../api/client'
+import { Problems } from '../auth/AuthLayout'
+import { formErrors, TextInput } from '../forms/Form'
 import { useCurrentUser } from '../auth/queries'
 import { Page } from '../layout/Page'
 
@@ -32,6 +33,7 @@ export function UserPage() {
     e.preventDefault()
     create.mutate()
   }
+  const tokenErrors = formErrors(create.error, { name: t('user.tokenName') })
 
   return (
     <Page title={t('user.title')}>
@@ -47,10 +49,12 @@ export function UserPage() {
           <code>{secret}</code>
         </div>
       )}
-      <form className="form form--inline" onSubmit={submit}>
-        <Problems messages={errorMessages(create.error, { name: t('user.tokenName') })} />
-        <Field label={t('user.tokenName')} required maxLength={255} value={name} onChange={(e) => setName(e.target.value)} />
-        <button className="btn btn--primary" disabled={create.isPending}>{t('user.create')}</button>
+      <form className="form-sheet form-sheet--compact" onSubmit={submit}>
+        <Problems messages={tokenErrors.general} />
+        <TextInput label={t('user.tokenName')} required maxLength={255} autoComplete="off" value={name} errors={tokenErrors.field('name')} onChange={(e) => setName(e.target.value)} />
+        <div className="form-sheet__actions">
+          <button className="btn btn--primary" disabled={create.isPending}>{t('user.create')}</button>
+        </div>
       </form>
       {tokens.data && tokens.data.length > 0 && (
         <ul className="ledger" aria-label={t('user.list')}>

@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { FormRow, type Width } from '../forms/Form'
 import { CaretIcon } from '../layout/icons'
 
 export type SelectOption = { value: string; label: string; separatorAfter?: boolean }
@@ -10,16 +11,18 @@ type Props = {
   value: string
   options: SelectOption[]
   onChange: (value: string) => void
+  errors?: string[]
+  help?: ReactNode
+  width?: Width
 }
 
 /** A select whose long list can be narrowed by typing. */
-export function SearchableSelect({ label, searchLabel, emptyLabel, value, options, onChange }: Props) {
+export function SearchableSelect({ label, searchLabel, emptyLabel, value, options, onChange, errors, help, width }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const root = useRef<HTMLDivElement>(null)
   const button = useRef<HTMLButtonElement>(null)
-  const id = useId()
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase()
@@ -68,18 +71,20 @@ export function SearchableSelect({ label, searchLabel, emptyLabel, value, option
   }
 
   return (
-    <div className="field" ref={root}>
-      <span id={`${id}-label`}>{label}</span>
-      <div className="picker">
+    <FormRow label={label} errors={errors} help={help} width={width}>
+      {({ id, labelId, ...described }) => (
+      <div className="picker" ref={root}>
         <button
           ref={button}
+          id={id}
           type="button"
           role="combobox"
           className="picker__button"
-          aria-labelledby={`${id}-label`}
+          aria-labelledby={labelId}
           aria-expanded={open}
           aria-haspopup="listbox"
           aria-controls={`${id}-list`}
+          {...described}
           onClick={() => setOpen(!open)}
         >
           <span className="picker__value">{options.find((o) => o.value === value)?.label ?? ''}</span>
@@ -99,7 +104,7 @@ export function SearchableSelect({ label, searchLabel, emptyLabel, value, option
               }}
               onKeyDown={onKeyDown}
             />
-            <ul id={`${id}-list`} role="listbox" aria-labelledby={`${id}-label`}>
+            <ul id={`${id}-list`} role="listbox" aria-labelledby={labelId}>
               {visible.map((option, index) => (
                 <li
                   key={option.value}
@@ -116,6 +121,7 @@ export function SearchableSelect({ label, searchLabel, emptyLabel, value, option
           </div>
         )}
       </div>
-    </div>
+      )}
+    </FormRow>
   )
 }

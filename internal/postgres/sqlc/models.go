@@ -9,21 +9,20 @@ import (
 )
 
 type Administration struct {
-	ID                int64
-	Name              string
-	Language          string
-	Currency          string
-	Country           string
-	TimeZone          string
-	Suspended         bool
-	PeriodLockedUntil pgtype.Date
-	PeriodStartDate   pgtype.Date
-	CreatedAt         pgtype.Timestamptz
-	Address1          string
-	Address2          string
-	Zipcode           string
-	City              string
-	ChamberOfCommerce string
+	ID                           int64
+	Name                         string
+	Language                     string
+	Currency                     string
+	Country                      string
+	TimeZone                     string
+	Suspended                    bool
+	PeriodLockedUntil            pgtype.Date
+	PeriodStartDate              pgtype.Date
+	CreatedAt                    pgtype.Timestamptz
+	SmallBusinessScheme          bool
+	CompanyActivitiesDescription string
+	CompanyWebsiteUrl            string
+	CompanyWebsiteAbsent         bool
 }
 
 type AdministrationMember struct {
@@ -39,6 +38,44 @@ type ApiToken struct {
 	Name      string
 	TokenHash string
 	CreatedAt pgtype.Timestamptz
+}
+
+type CustomField struct {
+	ID               int64
+	AdministrationID int64
+	Name             string
+	Source           string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type Identity struct {
+	ID                     int64
+	AdministrationID       int64
+	IsDefault              bool
+	CompanyName            string
+	Country                string
+	City                   string
+	Zipcode                string
+	Address1               string
+	Address2               string
+	Email                  string
+	Phone                  string
+	LegalEntityType        string
+	ChamberOfCommerce      string
+	TaxNumber              string
+	BankAccountName        string
+	BankAccountNumber      string
+	BankAccountBic         string
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+	TaxNumberAbsenceReason string
+}
+
+type IdentityCustomFieldValue struct {
+	IdentityID    int64
+	CustomFieldID int64
+	Value         string
 }
 
 type PasswordResetToken struct {

@@ -1,5 +1,5 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
-import { AdministrationHomePage, AdministrationSettingsPage } from './administrations/AdministrationPages'
+import { AdministrationHomePage } from './administrations/AdministrationPages'
 import { AdministrationsPage } from './administrations/AdministrationsPage'
 import { LoginPage } from './auth/LoginPage'
 import { EditPasswordPage, ForgotPasswordPage } from './auth/PasswordPages'
@@ -12,6 +12,12 @@ import { CreateAdministrationPage } from './onboarding/CreateAdministrationPage'
 import { FirstActionPage } from './onboarding/FirstActionPage'
 import { ManualCompanyPage } from './onboarding/ManualCompanyPage'
 import { PermalinkPage } from './resources/PermalinkPage'
+import { CompanySettingsPage } from './settings/CompanySettingsPage'
+import { CustomFieldFormPage } from './settings/CustomFieldFormPage'
+import { IdentityFormPage } from './settings/IdentityFormPage'
+import { ManagementSettingsPage } from './settings/ManagementSettingsPage'
+import { PlaceholderSettingsPage } from './settings/PlaceholderSettingsPage'
+import { SettingsLayout } from './settings/SettingsLayout'
 import { UserPage } from './user/UserPage'
 
 export function AppRoutes() {
@@ -33,7 +39,21 @@ export function AppRoutes() {
         <Route path="/instance/settings" element={<InstanceSettingsPage />} />
         <Route path="/r/:id" element={<PermalinkPage />} />
         <Route path="/:administrationId" element={<AdministrationHomePage />} />
-        <Route path="/:administrationId/settings" element={<AdministrationSettingsPage />} />
+        <Route path="/:administrationId/settings" element={<SettingsLayout />}>
+          <Route index element={<Navigate to="company" replace />} />
+          <Route path="company" element={<CompanySettingsPage />} />
+          <Route path="administration" element={<ManagementSettingsPage />} />
+          <Route path=":section" element={<PlaceholderSettingsPage />} />
+        </Route>
+        <Route path="/:administrationId/custom_fields" element={<SettingsLayout nav={false} />}>
+          <Route path="new" element={<CustomFieldFormPage />} />
+        </Route>
+        <Route path="/:administrationId/identities" element={<SettingsLayout nav={false} />}>
+          <Route path="new" element={<IdentityFormPage mode="new" />} />
+          <Route path="edit_default" element={<IdentityFormPage mode="default" />} />
+          <Route path=":identityId" element={<Navigate to="edit" replace />} />
+          <Route path=":identityId/edit" element={<IdentityFormPage mode="edit" />} />
+        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
