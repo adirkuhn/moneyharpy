@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/iban"
+
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -201,7 +203,7 @@ func applyAccount(a *Account, c AccountChanges, existing []Account) error {
 	if len(a.Identifier) > 64 {
 		verr.Add("identifier", "is too long (maximum is 64 characters)")
 	}
-	if ibanShape.MatchString(a.Identifier) && !validIBAN(a.Identifier) {
+	if ibanShape.MatchString(a.Identifier) && !iban.Valid(a.Identifier) {
 		verr.Add("identifier", "is not a valid IBAN")
 	}
 	if !currencyPattern.MatchString(a.Currency) {
@@ -216,24 +218,4 @@ func applyAccount(a *Account, c AccountChanges, existing []Account) error {
 		}
 	}
 	return verr.OrNil()
-}
-
-// validIBAN checks an IBAN's check digits.
-func validIBAN(iban string) bool {
-	if len(iban) < 15 || len(iban) > 34 {
-		return false
-	}
-	rearranged := iban[4:] + iban[:4]
-	mod := 0
-	for _, r := range rearranged {
-		switch {
-		case r >= '0' && r <= '9':
-			mod = (mod*10 + int(r-'0')) % 97
-		case r >= 'A' && r <= 'Z':
-			mod = (mod*100 + int(r-'A'+10)) % 97
-		default:
-			return false
-		}
-	}
-	return mod == 1
 }

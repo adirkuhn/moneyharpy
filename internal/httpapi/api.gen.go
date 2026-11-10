@@ -180,6 +180,99 @@ func (e ConnectionRequestConnectionKind) Valid() bool {
 	}
 }
 
+// Defines values for ContactCreditCardType.
+const (
+	ContactCreditCardTypeMastercard ContactCreditCardType = "mastercard"
+	ContactCreditCardTypeVisa       ContactCreditCardType = "visa"
+)
+
+// Valid indicates whether the value is a known member of the ContactCreditCardType enum.
+func (e ContactCreditCardType) Valid() bool {
+	switch e {
+	case ContactCreditCardTypeMastercard:
+		return true
+	case ContactCreditCardTypeVisa:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ContactDeliveryMethod.
+const (
+	ContactDeliveryMethodEmail            ContactDeliveryMethod = "Email"
+	ContactDeliveryMethodManual           ContactDeliveryMethod = "Manual"
+	ContactDeliveryMethodPeppol           ContactDeliveryMethod = "Peppol"
+	ContactDeliveryMethodPost             ContactDeliveryMethod = "Post"
+	ContactDeliveryMethodSimplerinvoicing ContactDeliveryMethod = "Simplerinvoicing"
+)
+
+// Valid indicates whether the value is a known member of the ContactDeliveryMethod enum.
+func (e ContactDeliveryMethod) Valid() bool {
+	switch e {
+	case ContactDeliveryMethodEmail:
+		return true
+	case ContactDeliveryMethodManual:
+		return true
+	case ContactDeliveryMethodPeppol:
+		return true
+	case ContactDeliveryMethodPost:
+		return true
+	case ContactDeliveryMethodSimplerinvoicing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ContactSepaSequenceType.
+const (
+	ContactSepaSequenceTypeFNAL ContactSepaSequenceType = "FNAL"
+	ContactSepaSequenceTypeFRST ContactSepaSequenceType = "FRST"
+	ContactSepaSequenceTypeOOFF ContactSepaSequenceType = "OOFF"
+	ContactSepaSequenceTypeRCUR ContactSepaSequenceType = "RCUR"
+)
+
+// Valid indicates whether the value is a known member of the ContactSepaSequenceType enum.
+func (e ContactSepaSequenceType) Valid() bool {
+	switch e {
+	case ContactSepaSequenceTypeFNAL:
+		return true
+	case ContactSepaSequenceTypeFRST:
+		return true
+	case ContactSepaSequenceTypeOOFF:
+		return true
+	case ContactSepaSequenceTypeRCUR:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ContactRequestContactSepaSequenceType.
+const (
+	ContactRequestContactSepaSequenceTypeFNAL ContactRequestContactSepaSequenceType = "FNAL"
+	ContactRequestContactSepaSequenceTypeFRST ContactRequestContactSepaSequenceType = "FRST"
+	ContactRequestContactSepaSequenceTypeOOFF ContactRequestContactSepaSequenceType = "OOFF"
+	ContactRequestContactSepaSequenceTypeRCUR ContactRequestContactSepaSequenceType = "RCUR"
+)
+
+// Valid indicates whether the value is a known member of the ContactRequestContactSepaSequenceType enum.
+func (e ContactRequestContactSepaSequenceType) Valid() bool {
+	switch e {
+	case ContactRequestContactSepaSequenceTypeFNAL:
+		return true
+	case ContactRequestContactSepaSequenceTypeFRST:
+		return true
+	case ContactRequestContactSepaSequenceTypeOOFF:
+		return true
+	case ContactRequestContactSepaSequenceTypeRCUR:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CreatedConnectionKind.
 const (
 	CreatedConnectionKindAi  CreatedConnectionKind = "ai"
@@ -386,25 +479,25 @@ func (e DocumentType) Valid() bool {
 
 // Defines values for FinancialAccountType.
 const (
-	BankAccount           FinancialAccountType = "BankAccount"
-	CashAccount           FinancialAccountType = "CashAccount"
-	CreditCardAccount     FinancialAccountType = "CreditCardAccount"
-	CustomAccount         FinancialAccountType = "CustomAccount"
-	PaymentServiceAccount FinancialAccountType = "PaymentServiceAccount"
+	FinancialAccountTypeBankAccount           FinancialAccountType = "BankAccount"
+	FinancialAccountTypeCashAccount           FinancialAccountType = "CashAccount"
+	FinancialAccountTypeCreditCardAccount     FinancialAccountType = "CreditCardAccount"
+	FinancialAccountTypeCustomAccount         FinancialAccountType = "CustomAccount"
+	FinancialAccountTypePaymentServiceAccount FinancialAccountType = "PaymentServiceAccount"
 )
 
 // Valid indicates whether the value is a known member of the FinancialAccountType enum.
 func (e FinancialAccountType) Valid() bool {
 	switch e {
-	case BankAccount:
+	case FinancialAccountTypeBankAccount:
 		return true
-	case CashAccount:
+	case FinancialAccountTypeCashAccount:
 		return true
-	case CreditCardAccount:
+	case FinancialAccountTypeCreditCardAccount:
 		return true
-	case CustomAccount:
+	case FinancialAccountTypeCustomAccount:
 		return true
-	case PaymentServiceAccount:
+	case FinancialAccountTypePaymentServiceAccount:
 		return true
 	default:
 		return false
@@ -465,6 +558,24 @@ func (e FinancialMutationState) Valid() bool {
 	case FinancialMutationStateProcessed:
 		return true
 	case FinancialMutationStateUnprocessed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FlexibleBoolean1.
+const (
+	FlexibleBoolean1False FlexibleBoolean1 = "false"
+	FlexibleBoolean1True  FlexibleBoolean1 = "true"
+)
+
+// Valid indicates whether the value is a known member of the FlexibleBoolean1 enum.
+func (e FlexibleBoolean1) Valid() bool {
+	switch e {
+	case FlexibleBoolean1False:
+		return true
+	case FlexibleBoolean1True:
 		return true
 	default:
 		return false
@@ -896,13 +1007,13 @@ func (e TaxonomyItemSide) Valid() bool {
 
 // Defines values for TwoFactorRequiredTwoFactorRequired.
 const (
-	True TwoFactorRequiredTwoFactorRequired = true
+	TwoFactorRequiredTwoFactorRequiredTrue TwoFactorRequiredTwoFactorRequired = true
 )
 
 // Valid indicates whether the value is a known member of the TwoFactorRequiredTwoFactorRequired enum.
 func (e TwoFactorRequiredTwoFactorRequired) Valid() bool {
 	switch e {
-	case True:
+	case TwoFactorRequiredTwoFactorRequiredTrue:
 		return true
 	default:
 		return false
@@ -1050,6 +1161,144 @@ func (e WorkflowRequestWorkflowType) Valid() bool {
 	case EstimateWorkflow:
 		return true
 	case InvoiceWorkflow:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BaseContactResponseCreditCardType.
+const (
+	BaseContactResponseCreditCardTypeMastercard BaseContactResponseCreditCardType = "mastercard"
+	BaseContactResponseCreditCardTypeVisa       BaseContactResponseCreditCardType = "visa"
+)
+
+// Valid indicates whether the value is a known member of the BaseContactResponseCreditCardType enum.
+func (e BaseContactResponseCreditCardType) Valid() bool {
+	switch e {
+	case BaseContactResponseCreditCardTypeMastercard:
+		return true
+	case BaseContactResponseCreditCardTypeVisa:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BaseContactResponseDeliveryMethod.
+const (
+	BaseContactResponseDeliveryMethodEmail            BaseContactResponseDeliveryMethod = "Email"
+	BaseContactResponseDeliveryMethodManual           BaseContactResponseDeliveryMethod = "Manual"
+	BaseContactResponseDeliveryMethodPeppol           BaseContactResponseDeliveryMethod = "Peppol"
+	BaseContactResponseDeliveryMethodPost             BaseContactResponseDeliveryMethod = "Post"
+	BaseContactResponseDeliveryMethodSimplerinvoicing BaseContactResponseDeliveryMethod = "Simplerinvoicing"
+)
+
+// Valid indicates whether the value is a known member of the BaseContactResponseDeliveryMethod enum.
+func (e BaseContactResponseDeliveryMethod) Valid() bool {
+	switch e {
+	case BaseContactResponseDeliveryMethodEmail:
+		return true
+	case BaseContactResponseDeliveryMethodManual:
+		return true
+	case BaseContactResponseDeliveryMethodPeppol:
+		return true
+	case BaseContactResponseDeliveryMethodPost:
+		return true
+	case BaseContactResponseDeliveryMethodSimplerinvoicing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BaseContactResponseSepaSequenceType.
+const (
+	BaseContactResponseSepaSequenceTypeFNAL BaseContactResponseSepaSequenceType = "FNAL"
+	BaseContactResponseSepaSequenceTypeFRST BaseContactResponseSepaSequenceType = "FRST"
+	BaseContactResponseSepaSequenceTypeOOFF BaseContactResponseSepaSequenceType = "OOFF"
+	BaseContactResponseSepaSequenceTypeRCUR BaseContactResponseSepaSequenceType = "RCUR"
+)
+
+// Valid indicates whether the value is a known member of the BaseContactResponseSepaSequenceType enum.
+func (e BaseContactResponseSepaSequenceType) Valid() bool {
+	switch e {
+	case BaseContactResponseSepaSequenceTypeFNAL:
+		return true
+	case BaseContactResponseSepaSequenceTypeFRST:
+		return true
+	case BaseContactResponseSepaSequenceTypeOOFF:
+		return true
+	case BaseContactResponseSepaSequenceTypeRCUR:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ContactResponseCreditCardType.
+const (
+	ContactResponseCreditCardTypeMastercard ContactResponseCreditCardType = "mastercard"
+	ContactResponseCreditCardTypeVisa       ContactResponseCreditCardType = "visa"
+)
+
+// Valid indicates whether the value is a known member of the ContactResponseCreditCardType enum.
+func (e ContactResponseCreditCardType) Valid() bool {
+	switch e {
+	case ContactResponseCreditCardTypeMastercard:
+		return true
+	case ContactResponseCreditCardTypeVisa:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ContactResponseDeliveryMethod.
+const (
+	ContactResponseDeliveryMethodEmail            ContactResponseDeliveryMethod = "Email"
+	ContactResponseDeliveryMethodManual           ContactResponseDeliveryMethod = "Manual"
+	ContactResponseDeliveryMethodPeppol           ContactResponseDeliveryMethod = "Peppol"
+	ContactResponseDeliveryMethodPost             ContactResponseDeliveryMethod = "Post"
+	ContactResponseDeliveryMethodSimplerinvoicing ContactResponseDeliveryMethod = "Simplerinvoicing"
+)
+
+// Valid indicates whether the value is a known member of the ContactResponseDeliveryMethod enum.
+func (e ContactResponseDeliveryMethod) Valid() bool {
+	switch e {
+	case ContactResponseDeliveryMethodEmail:
+		return true
+	case ContactResponseDeliveryMethodManual:
+		return true
+	case ContactResponseDeliveryMethodPeppol:
+		return true
+	case ContactResponseDeliveryMethodPost:
+		return true
+	case ContactResponseDeliveryMethodSimplerinvoicing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ContactResponseSepaSequenceType.
+const (
+	ContactResponseSepaSequenceTypeFNAL ContactResponseSepaSequenceType = "FNAL"
+	ContactResponseSepaSequenceTypeFRST ContactResponseSepaSequenceType = "FRST"
+	ContactResponseSepaSequenceTypeOOFF ContactResponseSepaSequenceType = "OOFF"
+	ContactResponseSepaSequenceTypeRCUR ContactResponseSepaSequenceType = "RCUR"
+)
+
+// Valid indicates whether the value is a known member of the ContactResponseSepaSequenceType enum.
+func (e ContactResponseSepaSequenceType) Valid() bool {
+	switch e {
+	case ContactResponseSepaSequenceTypeFNAL:
+		return true
+	case ContactResponseSepaSequenceTypeFRST:
+		return true
+	case ContactResponseSepaSequenceTypeOOFF:
+		return true
+	case ContactResponseSepaSequenceTypeRCUR:
 		return true
 	default:
 		return false
@@ -1659,6 +1908,144 @@ func (e WorkflowStepResponseAction) Valid() bool {
 	}
 }
 
+// Defines values for IncludeArchived.
+const (
+	IncludeArchivedFalse IncludeArchived = "false"
+	IncludeArchivedTrue  IncludeArchived = "true"
+)
+
+// Valid indicates whether the value is a known member of the IncludeArchived enum.
+func (e IncludeArchived) Valid() bool {
+	switch e {
+	case IncludeArchivedFalse:
+		return true
+	case IncludeArchivedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListContactsParamsIncludeArchived.
+const (
+	ListContactsParamsIncludeArchivedFalse ListContactsParamsIncludeArchived = "false"
+	ListContactsParamsIncludeArchivedTrue  ListContactsParamsIncludeArchived = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListContactsParamsIncludeArchived enum.
+func (e ListContactsParamsIncludeArchived) Valid() bool {
+	switch e {
+	case ListContactsParamsIncludeArchivedFalse:
+		return true
+	case ListContactsParamsIncludeArchivedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListContactsParamsContactField.
+const (
+	ListContactsParamsContactFieldBankAccount       ListContactsParamsContactField = "bank_account"
+	ListContactsParamsContactFieldChamberOfCommerce ListContactsParamsContactField = "chamber_of_commerce"
+	ListContactsParamsContactFieldCity              ListContactsParamsContactField = "city"
+	ListContactsParamsContactFieldCompanyName       ListContactsParamsContactField = "company_name"
+	ListContactsParamsContactFieldCustomerId        ListContactsParamsContactField = "customer_id"
+	ListContactsParamsContactFieldEmail             ListContactsParamsContactField = "email"
+	ListContactsParamsContactFieldFirstname         ListContactsParamsContactField = "firstname"
+	ListContactsParamsContactFieldLastname          ListContactsParamsContactField = "lastname"
+	ListContactsParamsContactFieldPhone             ListContactsParamsContactField = "phone"
+	ListContactsParamsContactFieldSepaIban          ListContactsParamsContactField = "sepa_iban"
+	ListContactsParamsContactFieldTaxNumber         ListContactsParamsContactField = "tax_number"
+	ListContactsParamsContactFieldZipcode           ListContactsParamsContactField = "zipcode"
+)
+
+// Valid indicates whether the value is a known member of the ListContactsParamsContactField enum.
+func (e ListContactsParamsContactField) Valid() bool {
+	switch e {
+	case ListContactsParamsContactFieldBankAccount:
+		return true
+	case ListContactsParamsContactFieldChamberOfCommerce:
+		return true
+	case ListContactsParamsContactFieldCity:
+		return true
+	case ListContactsParamsContactFieldCompanyName:
+		return true
+	case ListContactsParamsContactFieldCustomerId:
+		return true
+	case ListContactsParamsContactFieldEmail:
+		return true
+	case ListContactsParamsContactFieldFirstname:
+		return true
+	case ListContactsParamsContactFieldLastname:
+		return true
+	case ListContactsParamsContactFieldPhone:
+		return true
+	case ListContactsParamsContactFieldSepaIban:
+		return true
+	case ListContactsParamsContactFieldTaxNumber:
+		return true
+	case ListContactsParamsContactFieldZipcode:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FilterContactsParamsIncludeArchived.
+const (
+	FilterContactsParamsIncludeArchivedFalse FilterContactsParamsIncludeArchived = "false"
+	FilterContactsParamsIncludeArchivedTrue  FilterContactsParamsIncludeArchived = "true"
+)
+
+// Valid indicates whether the value is a known member of the FilterContactsParamsIncludeArchived enum.
+func (e FilterContactsParamsIncludeArchived) Valid() bool {
+	switch e {
+	case FilterContactsParamsIncludeArchivedFalse:
+		return true
+	case FilterContactsParamsIncludeArchivedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListContactVersionsParamsIncludeArchived.
+const (
+	ListContactVersionsParamsIncludeArchivedFalse ListContactVersionsParamsIncludeArchived = "false"
+	ListContactVersionsParamsIncludeArchivedTrue  ListContactVersionsParamsIncludeArchived = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListContactVersionsParamsIncludeArchived enum.
+func (e ListContactVersionsParamsIncludeArchived) Valid() bool {
+	switch e {
+	case ListContactVersionsParamsIncludeArchivedFalse:
+		return true
+	case ListContactVersionsParamsIncludeArchivedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetContactParamsIncludeArchived.
+const (
+	GetContactParamsIncludeArchivedFalse GetContactParamsIncludeArchived = "false"
+	GetContactParamsIncludeArchivedTrue  GetContactParamsIncludeArchived = "true"
+)
+
+// Valid indicates whether the value is a known member of the GetContactParamsIncludeArchived enum.
+func (e GetContactParamsIncludeArchived) Valid() bool {
+	switch e {
+	case GetContactParamsIncludeArchivedFalse:
+		return true
+	case GetContactParamsIncludeArchivedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
 // AccountType defines model for AccountType.
 type AccountType string
 
@@ -1928,6 +2315,173 @@ type ConnectionSettings struct {
 	// UsersMayConnect Users other than owners may create API tokens and AI connections.
 	UsersMayConnect bool `json:"users_may_connect"`
 }
+
+// Contact A Moneybird contact with MoneyHarpy extensions.
+type Contact struct {
+	Address1 *string `json:"address1,omitempty"`
+	Address2 *string `json:"address2,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId  Identifier              `json:"administration_id"`
+	Archived          bool                    `json:"archived"`
+	Attention         *string                 `json:"attention,omitempty"`
+	BankAccount       *string                 `json:"bank_account,omitempty"`
+	ChamberOfCommerce *string                 `json:"chamber_of_commerce,omitempty"`
+	City              *string                 `json:"city,omitempty"`
+	CompanyName       interface{}             `json:"company_name,omitempty"`
+	ContactPeople     []ContactPersonResponse `json:"contact_people"`
+	Country           string                  `json:"country"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt           *Timestamp                 `json:"created_at,omitempty"`
+	CreditCardNumber    *string                    `json:"credit_card_number,omitempty"`
+	CreditCardReference *string                    `json:"credit_card_reference,omitempty"`
+	CreditCardType      *ContactCreditCardType     `json:"credit_card_type,omitempty"`
+	CustomFields        []CustomFieldValueResponse `json:"custom_fields"`
+	CustomerId          string                     `json:"customer_id"`
+	DeliveryMethod      *ContactDeliveryMethod     `json:"delivery_method,omitempty"`
+	DirectDebit         *bool                      `json:"direct_debit,omitempty"`
+	Email               *string                    `json:"email,omitempty"`
+	EmailUbl            *bool                      `json:"email_ubl,omitempty"`
+
+	// EstimateWorkflowId Moneybird-compatible identifier_nullable.
+	EstimateWorkflowId *IdentifierNullable `json:"estimate_workflow_id,omitempty"`
+	Events             []EventResponse     `json:"events"`
+	Firstname          *string             `json:"firstname,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// InvoiceWorkflowId Moneybird-compatible identifier_nullable.
+	InvoiceWorkflowId        *IdentifierNullable      `json:"invoice_workflow_id,omitempty"`
+	IsTrusted                *bool                    `json:"is_trusted,omitempty"`
+	Lastname                 *string                  `json:"lastname,omitempty"`
+	MaxTransferAmount        *string                  `json:"max_transfer_amount,omitempty"`
+	MoneybirdPaymentsMandate *bool                    `json:"moneybird_payments_mandate,omitempty"`
+	Notes                    []NoteResponse           `json:"notes"`
+	Phone                    *string                  `json:"phone,omitempty"`
+	SalesInvoicesUrl         *string                  `json:"sales_invoices_url,omitempty"`
+	SendEstimatesToAttention *string                  `json:"send_estimates_to_attention,omitempty"`
+	SendEstimatesToEmail     *string                  `json:"send_estimates_to_email,omitempty"`
+	SendInvoicesToAttention  *string                  `json:"send_invoices_to_attention,omitempty"`
+	SendInvoicesToEmail      *string                  `json:"send_invoices_to_email,omitempty"`
+	SepaActive               *bool                    `json:"sepa_active,omitempty"`
+	SepaBic                  *string                  `json:"sepa_bic,omitempty"`
+	SepaIban                 *string                  `json:"sepa_iban,omitempty"`
+	SepaIbanAccountName      *string                  `json:"sepa_iban_account_name,omitempty"`
+	SepaMandateDate          *openapi_types.Date      `json:"sepa_mandate_date,omitempty"`
+	SepaMandateId            *string                  `json:"sepa_mandate_id,omitempty"`
+	SepaSequenceType         *ContactSepaSequenceType `json:"sepa_sequence_type,omitempty"`
+	SiIdentifier             *string                  `json:"si_identifier,omitempty"`
+	SiIdentifierType         *string                  `json:"si_identifier_type,omitempty"`
+	TaxNumber                *string                  `json:"tax_number,omitempty"`
+	TaxNumberValid           *bool                    `json:"tax_number_valid,omitempty"`
+	TaxNumberValidatedAt     *time.Time               `json:"tax_number_validated_at,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri     string  `json:"uri"`
+	Version int     `json:"version"`
+	Zipcode *string `json:"zipcode,omitempty"`
+}
+
+// ContactCreditCardType defines model for Contact.CreditCardType.
+type ContactCreditCardType string
+
+// ContactDeliveryMethod defines model for Contact.DeliveryMethod.
+type ContactDeliveryMethod string
+
+// ContactSepaSequenceType defines model for Contact.SepaSequenceType.
+type ContactSepaSequenceType string
+
+// ContactPersonFields defines model for ContactPersonFields.
+type ContactPersonFields struct {
+	Department *string `json:"department,omitempty"`
+	Email      *string `json:"email,omitempty"`
+	Firstname  *string `json:"firstname,omitempty"`
+	Lastname   *string `json:"lastname,omitempty"`
+	Phone      *string `json:"phone,omitempty"`
+}
+
+// ContactPersonRequest defines model for ContactPersonRequest.
+type ContactPersonRequest struct {
+	ContactPerson ContactPersonFields `json:"contact_person"`
+}
+
+// ContactRequest defines model for ContactRequest.
+type ContactRequest struct {
+	Contact struct {
+		Address1 *string `json:"address1,omitempty"`
+		Address2 *string `json:"address2,omitempty"`
+
+		// Archived MoneyHarpy extension. False brings an archived contact back.
+		Archived          *bool                `json:"archived,omitempty"`
+		BankAccount       *string              `json:"bank_account,omitempty"`
+		ChamberOfCommerce *string              `json:"chamber_of_commerce,omitempty"`
+		City              *string              `json:"city,omitempty"`
+		CompanyName       *string              `json:"company_name,omitempty"`
+		ContactPerson     *ContactPersonFields `json:"contact_person,omitempty"`
+
+		// Country ISO 3166-1 alpha-2; the administration's country unless given.
+		Country *string `json:"country,omitempty"`
+
+		// CustomFieldsAttributes Moneybird-compatible custom_fields_attributes.
+		CustomFieldsAttributes *CustomFieldsAttributes `json:"custom_fields_attributes,omitempty"`
+
+		// CustomerId Unique in the administration; the next number when left out.
+		CustomerId *string `json:"customer_id,omitempty"`
+
+		// DeliveryMethod Email, Post, Manual, Simplerinvoicing or Peppol, in any case.
+		DeliveryMethod *string `json:"delivery_method,omitempty"`
+
+		// DirectDebit A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		DirectDebit *FlexibleBoolean `json:"direct_debit,omitempty"`
+
+		// EmailUbl A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		EmailUbl *FlexibleBoolean `json:"email_ubl,omitempty"`
+
+		// EstimateWorkflowId An id as a string or a number; an empty string clears it.
+		EstimateWorkflowId *FlexibleIdentifier `json:"estimate_workflow_id,omitempty"`
+		Firstname          *string             `json:"firstname,omitempty"`
+
+		// InvoiceWorkflowId An id as a string or a number; an empty string clears it.
+		InvoiceWorkflowId        *FlexibleIdentifier `json:"invoice_workflow_id,omitempty"`
+		Lastname                 *string             `json:"lastname,omitempty"`
+		Phone                    *string             `json:"phone,omitempty"`
+		SendEstimatesToAttention *string             `json:"send_estimates_to_attention,omitempty"`
+		SendEstimatesToEmail     *string             `json:"send_estimates_to_email,omitempty"`
+		SendInvoicesToAttention  *string             `json:"send_invoices_to_attention,omitempty"`
+
+		// SendInvoicesToEmail One or more addresses separated by commas.
+		SendInvoicesToEmail *string `json:"send_invoices_to_email,omitempty"`
+
+		// SepaActive A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		SepaActive          *FlexibleBoolean `json:"sepa_active,omitempty"`
+		SepaBic             *string          `json:"sepa_bic,omitempty"`
+		SepaIban            *string          `json:"sepa_iban,omitempty"`
+		SepaIbanAccountName *string          `json:"sepa_iban_account_name,omitempty"`
+
+		// SepaMandateDate yyyy-mm-dd; empty clears it.
+		SepaMandateDate  *string                                `json:"sepa_mandate_date,omitempty"`
+		SepaMandateId    *string                                `json:"sepa_mandate_id,omitempty"`
+		SepaSequenceType *ContactRequestContactSepaSequenceType `json:"sepa_sequence_type,omitempty"`
+		SiIdentifier     *string                                `json:"si_identifier,omitempty"`
+
+		// SiIdentifierType The e-invoicing (Peppol) identifier scheme, such as 0106 for a Dutch chamber of commerce number.
+		SiIdentifierType *string `json:"si_identifier_type,omitempty"`
+		TaxNumber        *string `json:"tax_number,omitempty"`
+		Zipcode          *string `json:"zipcode,omitempty"`
+	} `json:"contact"`
+}
+
+// ContactRequestContactSepaSequenceType defines model for ContactRequest.Contact.SepaSequenceType.
+type ContactRequestContactSepaSequenceType string
 
 // CreateAdministrationRequest defines model for CreateAdministrationRequest.
 type CreateAdministrationRequest struct {
@@ -2477,6 +3031,28 @@ type FinancialStatementRequest_FinancialStatement_FinancialAccountId struct {
 	union json.RawMessage
 }
 
+// FlexibleBoolean A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+type FlexibleBoolean struct {
+	union json.RawMessage
+}
+
+// FlexibleBoolean0 defines model for FlexibleBoolean.0.
+type FlexibleBoolean0 = bool
+
+// FlexibleBoolean1 defines model for FlexibleBoolean.1.
+type FlexibleBoolean1 string
+
+// FlexibleIdentifier An id as a string or a number; an empty string clears it.
+type FlexibleIdentifier struct {
+	union json.RawMessage
+}
+
+// FlexibleIdentifier0 defines model for FlexibleIdentifier.0.
+type FlexibleIdentifier0 = string
+
+// FlexibleIdentifier1 defines model for FlexibleIdentifier.1.
+type FlexibleIdentifier1 = int
+
 // Identifier A unique record identifier. Parse as a string.
 //
 // Example: 123456789012345678
@@ -2935,6 +3511,18 @@ type Money0 = string
 
 // Money1 defines model for Money.1.
 type Money1 = float32
+
+// NoteRequest defines model for NoteRequest.
+type NoteRequest struct {
+	Note struct {
+		// AssigneeId An id as a string or a number; an empty string clears it.
+		AssigneeId *FlexibleIdentifier `json:"assignee_id,omitempty"`
+		Note       string              `json:"note"`
+
+		// Todo A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		Todo *FlexibleBoolean `json:"todo,omitempty"`
+	} `json:"note"`
+}
 
 // OnboardingOptions defines model for OnboardingOptions.
 type OnboardingOptions struct {
@@ -3519,6 +4107,86 @@ type BankBalanceAmounts struct {
 	Total *string `json:"total,omitempty"`
 }
 
+// BaseContactResponse Moneybird-compatible base_contact_response.
+type BaseContactResponse struct {
+	Address1 *string `json:"address1,omitempty"`
+	Address2 *string `json:"address2,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId  *Identifier              `json:"administration_id,omitempty"`
+	Archived          *bool                    `json:"archived,omitempty"`
+	Attention         *string                  `json:"attention,omitempty"`
+	BankAccount       *string                  `json:"bank_account,omitempty"`
+	ChamberOfCommerce *string                  `json:"chamber_of_commerce,omitempty"`
+	City              *string                  `json:"city,omitempty"`
+	CompanyName       interface{}              `json:"company_name,omitempty"`
+	ContactPeople     *[]ContactPersonResponse `json:"contact_people,omitempty"`
+	Country           *string                  `json:"country,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt           *Timestamp                         `json:"created_at,omitempty"`
+	CreditCardNumber    *string                            `json:"credit_card_number,omitempty"`
+	CreditCardReference *string                            `json:"credit_card_reference,omitempty"`
+	CreditCardType      *BaseContactResponseCreditCardType `json:"credit_card_type,omitempty"`
+	CustomFields        *[]CustomFieldValueResponse        `json:"custom_fields,omitempty"`
+	CustomerId          *string                            `json:"customer_id,omitempty"`
+	DeliveryMethod      *BaseContactResponseDeliveryMethod `json:"delivery_method,omitempty"`
+	DirectDebit         *bool                              `json:"direct_debit,omitempty"`
+	Email               *string                            `json:"email,omitempty"`
+	EmailUbl            *bool                              `json:"email_ubl,omitempty"`
+
+	// EstimateWorkflowId Moneybird-compatible identifier_nullable.
+	EstimateWorkflowId *IdentifierNullable `json:"estimate_workflow_id,omitempty"`
+	Firstname          *string             `json:"firstname,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+
+	// InvoiceWorkflowId Moneybird-compatible identifier_nullable.
+	InvoiceWorkflowId        *IdentifierNullable                  `json:"invoice_workflow_id,omitempty"`
+	IsTrusted                *bool                                `json:"is_trusted,omitempty"`
+	Lastname                 *string                              `json:"lastname,omitempty"`
+	MaxTransferAmount        *string                              `json:"max_transfer_amount,omitempty"`
+	MoneybirdPaymentsMandate *bool                                `json:"moneybird_payments_mandate,omitempty"`
+	Notes                    *[]NoteResponse                      `json:"notes,omitempty"`
+	Phone                    *string                              `json:"phone,omitempty"`
+	SalesInvoicesUrl         *string                              `json:"sales_invoices_url,omitempty"`
+	SendEstimatesToAttention *string                              `json:"send_estimates_to_attention,omitempty"`
+	SendEstimatesToEmail     *string                              `json:"send_estimates_to_email,omitempty"`
+	SendInvoicesToAttention  *string                              `json:"send_invoices_to_attention,omitempty"`
+	SendInvoicesToEmail      *string                              `json:"send_invoices_to_email,omitempty"`
+	SepaActive               *bool                                `json:"sepa_active,omitempty"`
+	SepaBic                  *string                              `json:"sepa_bic,omitempty"`
+	SepaIban                 *string                              `json:"sepa_iban,omitempty"`
+	SepaIbanAccountName      *string                              `json:"sepa_iban_account_name,omitempty"`
+	SepaMandateDate          *openapi_types.Date                  `json:"sepa_mandate_date,omitempty"`
+	SepaMandateId            *string                              `json:"sepa_mandate_id,omitempty"`
+	SepaSequenceType         *BaseContactResponseSepaSequenceType `json:"sepa_sequence_type,omitempty"`
+	SiIdentifier             *string                              `json:"si_identifier,omitempty"`
+	SiIdentifierType         *string                              `json:"si_identifier_type,omitempty"`
+	TaxNumber                *string                              `json:"tax_number,omitempty"`
+	TaxNumberValid           *bool                                `json:"tax_number_valid,omitempty"`
+	TaxNumberValidatedAt     *time.Time                           `json:"tax_number_validated_at,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+	Version   *int       `json:"version,omitempty"`
+	Zipcode   *string    `json:"zipcode,omitempty"`
+}
+
+// BaseContactResponseCreditCardType defines model for BaseContactResponse.CreditCardType.
+type BaseContactResponseCreditCardType string
+
+// BaseContactResponseDeliveryMethod defines model for BaseContactResponse.DeliveryMethod.
+type BaseContactResponseDeliveryMethod string
+
+// BaseContactResponseSepaSequenceType defines model for BaseContactResponse.SepaSequenceType.
+type BaseContactResponseSepaSequenceType string
+
 // BaseUserResponse Moneybird-compatible base_user_response.
 type BaseUserResponse struct {
 	// CreatedAt Moneybird-compatible timestamp.
@@ -3534,8 +4202,144 @@ type BaseUserResponse struct {
 	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
 }
 
+// ContactPersonResponse Moneybird-compatible contact_person_response.
+type ContactPersonResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId  *IdentifierNullable `json:"contact_id,omitempty"`
+	CreatedAt  *time.Time          `json:"created_at,omitempty"`
+	Department *string             `json:"department,omitempty"`
+	Email      *string             `json:"email,omitempty"`
+	Firstname  *string             `json:"firstname,omitempty"`
+
+	// Id Moneybird-compatible identifier_nullable.
+	Id        *IdentifierNullable `json:"id,omitempty"`
+	Lastname  *string             `json:"lastname,omitempty"`
+	Phone     *string             `json:"phone,omitempty"`
+	UpdatedAt *time.Time          `json:"updated_at,omitempty"`
+	Version   *int                `json:"version,omitempty"`
+}
+
+// ContactResponse Moneybird-compatible contact_response.
+type ContactResponse struct {
+	Address1 *string `json:"address1,omitempty"`
+	Address2 *string `json:"address2,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId  *Identifier              `json:"administration_id,omitempty"`
+	Archived          *bool                    `json:"archived,omitempty"`
+	Attention         *string                  `json:"attention,omitempty"`
+	BankAccount       *string                  `json:"bank_account,omitempty"`
+	ChamberOfCommerce *string                  `json:"chamber_of_commerce,omitempty"`
+	City              *string                  `json:"city,omitempty"`
+	CompanyName       interface{}              `json:"company_name,omitempty"`
+	ContactPeople     *[]ContactPersonResponse `json:"contact_people,omitempty"`
+	Country           *string                  `json:"country,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt           *Timestamp                     `json:"created_at,omitempty"`
+	CreditCardNumber    *string                        `json:"credit_card_number,omitempty"`
+	CreditCardReference *string                        `json:"credit_card_reference,omitempty"`
+	CreditCardType      *ContactResponseCreditCardType `json:"credit_card_type,omitempty"`
+	CustomFields        *[]CustomFieldValueResponse    `json:"custom_fields,omitempty"`
+	CustomerId          *string                        `json:"customer_id,omitempty"`
+	DeliveryMethod      *ContactResponseDeliveryMethod `json:"delivery_method,omitempty"`
+	DirectDebit         *bool                          `json:"direct_debit,omitempty"`
+	Email               *string                        `json:"email,omitempty"`
+	EmailUbl            *bool                          `json:"email_ubl,omitempty"`
+
+	// EstimateWorkflowId Moneybird-compatible identifier_nullable.
+	EstimateWorkflowId *IdentifierNullable `json:"estimate_workflow_id,omitempty"`
+	Events             *[]EventResponse    `json:"events,omitempty"`
+	Firstname          *string             `json:"firstname,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+
+	// InvoiceWorkflowId Moneybird-compatible identifier_nullable.
+	InvoiceWorkflowId        *IdentifierNullable              `json:"invoice_workflow_id,omitempty"`
+	IsTrusted                *bool                            `json:"is_trusted,omitempty"`
+	Lastname                 *string                          `json:"lastname,omitempty"`
+	MaxTransferAmount        *string                          `json:"max_transfer_amount,omitempty"`
+	MoneybirdPaymentsMandate *bool                            `json:"moneybird_payments_mandate,omitempty"`
+	Notes                    *[]NoteResponse                  `json:"notes,omitempty"`
+	Phone                    *string                          `json:"phone,omitempty"`
+	SalesInvoicesUrl         *string                          `json:"sales_invoices_url,omitempty"`
+	SendEstimatesToAttention *string                          `json:"send_estimates_to_attention,omitempty"`
+	SendEstimatesToEmail     *string                          `json:"send_estimates_to_email,omitempty"`
+	SendInvoicesToAttention  *string                          `json:"send_invoices_to_attention,omitempty"`
+	SendInvoicesToEmail      *string                          `json:"send_invoices_to_email,omitempty"`
+	SepaActive               *bool                            `json:"sepa_active,omitempty"`
+	SepaBic                  *string                          `json:"sepa_bic,omitempty"`
+	SepaIban                 *string                          `json:"sepa_iban,omitempty"`
+	SepaIbanAccountName      *string                          `json:"sepa_iban_account_name,omitempty"`
+	SepaMandateDate          *openapi_types.Date              `json:"sepa_mandate_date,omitempty"`
+	SepaMandateId            *string                          `json:"sepa_mandate_id,omitempty"`
+	SepaSequenceType         *ContactResponseSepaSequenceType `json:"sepa_sequence_type,omitempty"`
+	SiIdentifier             *string                          `json:"si_identifier,omitempty"`
+	SiIdentifierType         *string                          `json:"si_identifier_type,omitempty"`
+	TaxNumber                *string                          `json:"tax_number,omitempty"`
+	TaxNumberValid           *bool                            `json:"tax_number_valid,omitempty"`
+	TaxNumberValidatedAt     *time.Time                       `json:"tax_number_validated_at,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+	Version   *int       `json:"version,omitempty"`
+	Zipcode   *string    `json:"zipcode,omitempty"`
+}
+
+// ContactResponseCreditCardType defines model for ContactResponse.CreditCardType.
+type ContactResponseCreditCardType string
+
+// ContactResponseDeliveryMethod defines model for ContactResponse.DeliveryMethod.
+type ContactResponseDeliveryMethod string
+
+// ContactResponseSepaSequenceType defines model for ContactResponse.SepaSequenceType.
+type ContactResponseSepaSequenceType string
+
 // Currency Moneybird-compatible currency.
 type Currency = string
+
+// CustomFieldValueResponse Moneybird-compatible custom_field_value_response.
+type CustomFieldValueResponse struct {
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id    *Identifier `json:"id,omitempty"`
+	Name  *string     `json:"name,omitempty"`
+	Value *string     `json:"value,omitempty"`
+}
+
+// CustomFieldsAttributes Moneybird-compatible custom_fields_attributes.
+type CustomFieldsAttributes struct {
+	union json.RawMessage
+}
+
+// CustomFieldsAttributes0 defines model for CustomFieldsAttributes.0.
+type CustomFieldsAttributes0 map[string]struct {
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id    Identifier `json:"id"`
+	Value string     `json:"value"`
+}
+
+// CustomFieldsAttributes1 defines model for CustomFieldsAttributes.1.
+type CustomFieldsAttributes1 = []struct {
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id    *Identifier `json:"id,omitempty"`
+	Value *string     `json:"value,omitempty"`
+}
 
 // DocumentStyleResponse Moneybird-compatible document_style_response.
 type DocumentStyleResponse struct {
@@ -4206,19 +5010,48 @@ type WorkflowStepResponseAction string
 // Example: 123456789012345678
 type AdministrationId = Identifier
 
+// ContactFilter defines model for contact_filter.
+type ContactFilter = string
+
+// ContactId A unique record identifier. Parse as a string.
+//
+// Example: 123456789012345678
+type ContactId = Identifier
+
+// ContactQuery defines model for contact_query.
+type ContactQuery = string
+
 // Id A unique record identifier. Parse as a string.
 //
 // Example: 123456789012345678
 type Id = Identifier
 
+// IncludeArchived defines model for include_archived.
+type IncludeArchived string
+
+// Page defines model for page.
+type Page = string
+
+// PerPage defines model for per_page.
+type PerPage = string
+
 // BadRequest defines model for BadRequest.
 type BadRequest = Error
+
+// ContactPage defines model for ContactPage.
+type ContactPage = []Contact
 
 // Forbidden defines model for Forbidden.
 type Forbidden = Error
 
 // NotFound defines model for NotFound.
 type NotFound = Error
+
+// OneContact A Moneybird contact with MoneyHarpy extensions.
+type OneContact = Contact
+
+// OneContactPerson Moneybird-compatible contact_person_response.
+type OneContactPerson = ContactPersonResponse
 
 // TooManyRequests Example: Retry later
 type TooManyRequests = string
@@ -4255,6 +5088,85 @@ type CompanySearchParams struct {
 	Country string `form:"country" json:"country"`
 	Query   string `form:"query" json:"query"`
 }
+
+// ListContactsParams defines parameters for ListContacts.
+type ListContactsParams struct {
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Query Free-text search across names, contact people, email, phone, customer id, tax and chamber of commerce numbers, IBAN and address.
+	Query *ContactQuery `form:"query,omitempty" json:"query,omitempty"`
+
+	// IncludeArchived Include archived records.
+	IncludeArchived *ListContactsParamsIncludeArchived `form:"include_archived,omitempty" json:"include_archived,omitempty"`
+
+	// Todo Any value keeps only contacts with an unfinished to-do.
+	Todo *string `form:"todo,omitempty" json:"todo,omitempty"`
+
+	// ContactField Keeps contacts whose field equals contact_value, ignoring case.
+	ContactField *ListContactsParamsContactField `form:"contact_field,omitempty" json:"contact_field,omitempty"`
+	ContactValue *string                         `form:"contact_value,omitempty" json:"contact_value,omitempty"`
+
+	// ContactImportId Contacts created by an import batch. MoneyHarpy has no contact imports yet, so this selects none.
+	ContactImportId *string `form:"contact_import_id,omitempty" json:"contact_import_id,omitempty"`
+}
+
+// ListContactsParamsIncludeArchived defines parameters for ListContacts.
+type ListContactsParamsIncludeArchived string
+
+// ListContactsParamsContactField defines parameters for ListContacts.
+type ListContactsParamsContactField string
+
+// ListContactDoublesParams defines parameters for ListContactDoubles.
+type ListContactDoublesParams struct {
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+}
+
+// FilterContactsParams defines parameters for FilterContacts.
+type FilterContactsParams struct {
+	// Filter Comma-separated key:value terms; see Filter contacts.
+	Filter *ContactFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Query Free-text search across names, contact people, email, phone, customer id, tax and chamber of commerce numbers, IBAN and address.
+	Query *ContactQuery `form:"query,omitempty" json:"query,omitempty"`
+
+	// IncludeArchived Include archived records.
+	IncludeArchived *FilterContactsParamsIncludeArchived `form:"include_archived,omitempty" json:"include_archived,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// FilterContactsParamsIncludeArchived defines parameters for FilterContacts.
+type FilterContactsParamsIncludeArchived string
+
+// ListContactVersionsParams defines parameters for ListContactVersions.
+type ListContactVersionsParams struct {
+	// Filter Comma-separated key:value terms; see Filter contacts.
+	Filter *ContactFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// IncludeArchived Include archived records.
+	IncludeArchived *ListContactVersionsParamsIncludeArchived `form:"include_archived,omitempty" json:"include_archived,omitempty"`
+}
+
+// ListContactVersionsParamsIncludeArchived defines parameters for ListContactVersions.
+type ListContactVersionsParamsIncludeArchived string
+
+// GetContactParams defines parameters for GetContact.
+type GetContactParams struct {
+	// IncludeArchived Include archived records.
+	IncludeArchived *GetContactParamsIncludeArchived `form:"include_archived,omitempty" json:"include_archived,omitempty"`
+}
+
+// GetContactParamsIncludeArchived defines parameters for GetContact.
+type GetContactParamsIncludeArchived string
 
 // ListFinancialMutationsParams defines parameters for ListFinancialMutations.
 type ListFinancialMutationsParams struct {
@@ -4345,6 +5257,24 @@ type UpdateConnectionSettingsJSONRequestBody = ConnectionSettings
 
 // CreateConnectionJSONRequestBody defines body for CreateConnection for application/json ContentType.
 type CreateConnectionJSONRequestBody = ConnectionRequest
+
+// CreateContactJSONRequestBody defines body for CreateContact for application/json ContentType.
+type CreateContactJSONRequestBody = ContactRequest
+
+// FetchContactsJSONRequestBody defines body for FetchContacts for application/json ContentType.
+type FetchContactsJSONRequestBody = SynchronizationRequest
+
+// CreateContactPersonJSONRequestBody defines body for CreateContactPerson for application/json ContentType.
+type CreateContactPersonJSONRequestBody = ContactPersonRequest
+
+// UpdateContactPersonJSONRequestBody defines body for UpdateContactPerson for application/json ContentType.
+type UpdateContactPersonJSONRequestBody = ContactPersonRequest
+
+// CreateContactNoteJSONRequestBody defines body for CreateContactNote for application/json ContentType.
+type CreateContactNoteJSONRequestBody = NoteRequest
+
+// UpdateContactJSONRequestBody defines body for UpdateContact for application/json ContentType.
+type UpdateContactJSONRequestBody = ContactRequest
 
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldRequest
@@ -4925,6 +5855,130 @@ func (t FinancialStatementRequest_FinancialStatement_FinancialAccountId) Marshal
 }
 
 func (t *FinancialStatementRequest_FinancialStatement_FinancialAccountId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsFlexibleBoolean0 returns the union data inside the FlexibleBoolean as a FlexibleBoolean0
+func (t FlexibleBoolean) AsFlexibleBoolean0() (FlexibleBoolean0, error) {
+	var body FlexibleBoolean0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleBoolean0 overwrites any union data inside the FlexibleBoolean as the provided FlexibleBoolean0
+func (t *FlexibleBoolean) FromFlexibleBoolean0(v FlexibleBoolean0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleBoolean0 performs a merge with any union data inside the FlexibleBoolean, using the provided FlexibleBoolean0
+func (t *FlexibleBoolean) MergeFlexibleBoolean0(v FlexibleBoolean0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFlexibleBoolean1 returns the union data inside the FlexibleBoolean as a FlexibleBoolean1
+func (t FlexibleBoolean) AsFlexibleBoolean1() (FlexibleBoolean1, error) {
+	var body FlexibleBoolean1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleBoolean1 overwrites any union data inside the FlexibleBoolean as the provided FlexibleBoolean1
+func (t *FlexibleBoolean) FromFlexibleBoolean1(v FlexibleBoolean1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleBoolean1 performs a merge with any union data inside the FlexibleBoolean, using the provided FlexibleBoolean1
+func (t *FlexibleBoolean) MergeFlexibleBoolean1(v FlexibleBoolean1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t FlexibleBoolean) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *FlexibleBoolean) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsFlexibleIdentifier0 returns the union data inside the FlexibleIdentifier as a FlexibleIdentifier0
+func (t FlexibleIdentifier) AsFlexibleIdentifier0() (FlexibleIdentifier0, error) {
+	var body FlexibleIdentifier0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleIdentifier0 overwrites any union data inside the FlexibleIdentifier as the provided FlexibleIdentifier0
+func (t *FlexibleIdentifier) FromFlexibleIdentifier0(v FlexibleIdentifier0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleIdentifier0 performs a merge with any union data inside the FlexibleIdentifier, using the provided FlexibleIdentifier0
+func (t *FlexibleIdentifier) MergeFlexibleIdentifier0(v FlexibleIdentifier0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFlexibleIdentifier1 returns the union data inside the FlexibleIdentifier as a FlexibleIdentifier1
+func (t FlexibleIdentifier) AsFlexibleIdentifier1() (FlexibleIdentifier1, error) {
+	var body FlexibleIdentifier1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleIdentifier1 overwrites any union data inside the FlexibleIdentifier as the provided FlexibleIdentifier1
+func (t *FlexibleIdentifier) FromFlexibleIdentifier1(v FlexibleIdentifier1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleIdentifier1 performs a merge with any union data inside the FlexibleIdentifier, using the provided FlexibleIdentifier1
+func (t *FlexibleIdentifier) MergeFlexibleIdentifier1(v FlexibleIdentifier1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t FlexibleIdentifier) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *FlexibleIdentifier) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -5591,6 +6645,68 @@ func (t Webhook_LastHttpStatus) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Webhook_LastHttpStatus) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsCustomFieldsAttributes0 returns the union data inside the CustomFieldsAttributes as a CustomFieldsAttributes0
+func (t CustomFieldsAttributes) AsCustomFieldsAttributes0() (CustomFieldsAttributes0, error) {
+	var body CustomFieldsAttributes0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCustomFieldsAttributes0 overwrites any union data inside the CustomFieldsAttributes as the provided CustomFieldsAttributes0
+func (t *CustomFieldsAttributes) FromCustomFieldsAttributes0(v CustomFieldsAttributes0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCustomFieldsAttributes0 performs a merge with any union data inside the CustomFieldsAttributes, using the provided CustomFieldsAttributes0
+func (t *CustomFieldsAttributes) MergeCustomFieldsAttributes0(v CustomFieldsAttributes0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCustomFieldsAttributes1 returns the union data inside the CustomFieldsAttributes as a CustomFieldsAttributes1
+func (t CustomFieldsAttributes) AsCustomFieldsAttributes1() (CustomFieldsAttributes1, error) {
+	var body CustomFieldsAttributes1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCustomFieldsAttributes1 overwrites any union data inside the CustomFieldsAttributes as the provided CustomFieldsAttributes1
+func (t *CustomFieldsAttributes) FromCustomFieldsAttributes1(v CustomFieldsAttributes1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCustomFieldsAttributes1 performs a merge with any union data inside the CustomFieldsAttributes, using the provided CustomFieldsAttributes1
+func (t *CustomFieldsAttributes) MergeCustomFieldsAttributes1(v CustomFieldsAttributes1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t CustomFieldsAttributes) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *CustomFieldsAttributes) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -6520,6 +7636,57 @@ type ServerInterface interface {
 	// RevokeConnection Revoke a connection
 	// (DELETE /api/v2/{administration_id}/connections/{id})
 	RevokeConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListContacts List all contacts
+	// (GET /api/v2/{administration_id}/contacts)
+	ListContacts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactsParams)
+	// CreateContact Create a new contact
+	// (POST /api/v2/{administration_id}/contacts)
+	CreateContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetContactByCustomerId Get contact by customer id
+	// (GET /api/v2/{administration_id}/contacts/customer_id/{customer_id})
+	GetContactByCustomerId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, customerId string)
+	// ListContactDoubles List possible duplicate contacts
+	// (GET /api/v2/{administration_id}/contacts/doubles)
+	ListContactDoubles(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactDoublesParams)
+	// FilterContacts Filter contacts
+	// (GET /api/v2/{administration_id}/contacts/filter)
+	FilterContacts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params FilterContactsParams)
+	// ListContactVersions List all ids and versions
+	// (GET /api/v2/{administration_id}/contacts/synchronization)
+	ListContactVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactVersionsParams)
+	// FetchContacts Fetch contacts with given ids
+	// (POST /api/v2/{administration_id}/contacts/synchronization)
+	FetchContacts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateContactPerson Create a new contact person
+	// (POST /api/v2/{administration_id}/contacts/{contact_id}/contact_people)
+	CreateContactPerson(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId)
+	// DeleteContactPerson Delete a contact person
+	// (DELETE /api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id})
+	DeleteContactPerson(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id)
+	// GetContactPerson Get a contact person
+	// (GET /api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id})
+	GetContactPerson(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id)
+	// UpdateContactPerson Update a contact person
+	// (PATCH /api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id})
+	UpdateContactPerson(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id)
+	// CreateContactNote Add note to a contact
+	// (POST /api/v2/{administration_id}/contacts/{contact_id}/notes)
+	CreateContactNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId)
+	// DeleteContactNote Delete a note from a contact
+	// (DELETE /api/v2/{administration_id}/contacts/{contact_id}/notes/{id})
+	DeleteContactNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id)
+	// DeleteContact Delete a contact
+	// (DELETE /api/v2/{administration_id}/contacts/{id})
+	DeleteContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetContact Get a contact
+	// (GET /api/v2/{administration_id}/contacts/{id})
+	GetContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params GetContactParams)
+	// UpdateContact Update a contact
+	// (PATCH /api/v2/{administration_id}/contacts/{id})
+	UpdateContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ArchiveContact Archive a contact
+	// (PATCH /api/v2/{administration_id}/contacts/{id}/archive)
+	ArchiveContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListCustomFields Retrieve custom fields
 	// (GET /api/v2/{administration_id}/custom_fields)
 	ListCustomFields(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -7072,6 +8239,108 @@ func (_ Unimplemented) CreateConnection(w http.ResponseWriter, r *http.Request, 
 // RevokeConnection Revoke a connection
 // (DELETE /api/v2/{administration_id}/connections/{id})
 func (_ Unimplemented) RevokeConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListContacts List all contacts
+// (GET /api/v2/{administration_id}/contacts)
+func (_ Unimplemented) ListContacts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateContact Create a new contact
+// (POST /api/v2/{administration_id}/contacts)
+func (_ Unimplemented) CreateContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetContactByCustomerId Get contact by customer id
+// (GET /api/v2/{administration_id}/contacts/customer_id/{customer_id})
+func (_ Unimplemented) GetContactByCustomerId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, customerId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListContactDoubles List possible duplicate contacts
+// (GET /api/v2/{administration_id}/contacts/doubles)
+func (_ Unimplemented) ListContactDoubles(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactDoublesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FilterContacts Filter contacts
+// (GET /api/v2/{administration_id}/contacts/filter)
+func (_ Unimplemented) FilterContacts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params FilterContactsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListContactVersions List all ids and versions
+// (GET /api/v2/{administration_id}/contacts/synchronization)
+func (_ Unimplemented) ListContactVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchContacts Fetch contacts with given ids
+// (POST /api/v2/{administration_id}/contacts/synchronization)
+func (_ Unimplemented) FetchContacts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateContactPerson Create a new contact person
+// (POST /api/v2/{administration_id}/contacts/{contact_id}/contact_people)
+func (_ Unimplemented) CreateContactPerson(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteContactPerson Delete a contact person
+// (DELETE /api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id})
+func (_ Unimplemented) DeleteContactPerson(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetContactPerson Get a contact person
+// (GET /api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id})
+func (_ Unimplemented) GetContactPerson(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateContactPerson Update a contact person
+// (PATCH /api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id})
+func (_ Unimplemented) UpdateContactPerson(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateContactNote Add note to a contact
+// (POST /api/v2/{administration_id}/contacts/{contact_id}/notes)
+func (_ Unimplemented) CreateContactNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteContactNote Delete a note from a contact
+// (DELETE /api/v2/{administration_id}/contacts/{contact_id}/notes/{id})
+func (_ Unimplemented) DeleteContactNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteContact Delete a contact
+// (DELETE /api/v2/{administration_id}/contacts/{id})
+func (_ Unimplemented) DeleteContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetContact Get a contact
+// (GET /api/v2/{administration_id}/contacts/{id})
+func (_ Unimplemented) GetContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params GetContactParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateContact Update a contact
+// (PATCH /api/v2/{administration_id}/contacts/{id})
+func (_ Unimplemented) UpdateContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ArchiveContact Archive a contact
+// (PATCH /api/v2/{administration_id}/contacts/{id}/archive)
+func (_ Unimplemented) ArchiveContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8741,6 +10010,819 @@ func (siw *ServerInterfaceWrapper) RevokeConnection(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RevokeConnection(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListContacts operation middleware
+func (siw *ServerInterfaceWrapper) ListContacts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListContactsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_archived" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_archived"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "todo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "todo", r.URL.Query(), &params.Todo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "todo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "todo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contact_field" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_field", r.URL.Query(), &params.ContactField, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_field"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_field", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contact_value" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_value", r.URL.Query(), &params.ContactValue, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_value"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_value", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contact_import_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_import_id", r.URL.Query(), &params.ContactImportId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_import_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_import_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListContacts(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateContact operation middleware
+func (siw *ServerInterfaceWrapper) CreateContact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateContact(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetContactByCustomerId operation middleware
+func (siw *ServerInterfaceWrapper) GetContactByCustomerId(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "customer_id" -------------
+	var customerId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "customer_id", chi.URLParam(r, "customer_id"), &customerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "customer_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetContactByCustomerId(w, r, administrationId, customerId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListContactDoubles operation middleware
+func (siw *ServerInterfaceWrapper) ListContactDoubles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListContactDoublesParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListContactDoubles(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FilterContacts operation middleware
+func (siw *ServerInterfaceWrapper) FilterContacts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params FilterContactsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_archived" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_archived"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FilterContacts(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListContactVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListContactVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListContactVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_archived" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_archived"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListContactVersions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchContacts operation middleware
+func (siw *ServerInterfaceWrapper) FetchContacts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchContacts(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateContactPerson operation middleware
+func (siw *ServerInterfaceWrapper) CreateContactPerson(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateContactPerson(w, r, administrationId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteContactPerson operation middleware
+func (siw *ServerInterfaceWrapper) DeleteContactPerson(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteContactPerson(w, r, administrationId, contactId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetContactPerson operation middleware
+func (siw *ServerInterfaceWrapper) GetContactPerson(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetContactPerson(w, r, administrationId, contactId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateContactPerson operation middleware
+func (siw *ServerInterfaceWrapper) UpdateContactPerson(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateContactPerson(w, r, administrationId, contactId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateContactNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateContactNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateContactNote(w, r, administrationId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteContactNote operation middleware
+func (siw *ServerInterfaceWrapper) DeleteContactNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteContactNote(w, r, administrationId, contactId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteContact operation middleware
+func (siw *ServerInterfaceWrapper) DeleteContact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteContact(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetContact operation middleware
+func (siw *ServerInterfaceWrapper) GetContact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetContactParams
+
+	// ------------- Optional query parameter "include_archived" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_archived"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetContact(w, r, administrationId, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateContact operation middleware
+func (siw *ServerInterfaceWrapper) UpdateContact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateContact(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveContact operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveContact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveContact(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11559,6 +13641,57 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/overview", wrapper.GetOverview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts", wrapper.ListContacts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/contacts", wrapper.CreateContact)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/filter", wrapper.FilterContacts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/synchronization", wrapper.ListContactVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/contacts/synchronization", wrapper.FetchContacts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/doubles", wrapper.ListContactDoubles)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/customer_id/{customer_id}", wrapper.GetContactByCustomerId)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/contacts/{id}", wrapper.DeleteContact)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/{id}", wrapper.GetContact)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/contacts/{id}", wrapper.UpdateContact)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/contacts/{id}/archive", wrapper.ArchiveContact)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/contact_people", wrapper.CreateContactPerson)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id}", wrapper.DeleteContactPerson)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id}", wrapper.GetContactPerson)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id}", wrapper.UpdateContactPerson)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/notes", wrapper.CreateContactNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/notes/{id}", wrapper.DeleteContactNote)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/booking_rules", wrapper.ListBookingRules)

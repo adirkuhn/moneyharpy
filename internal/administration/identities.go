@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/big"
 	"net/mail"
 	"regexp"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/adirkuhn/moneyharpy/internal/iban"
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -20,10 +21,7 @@ var (
 	ErrDefaultIdentity  = errors.New("default identity cannot be deleted")
 )
 
-var (
-	ibanPattern = regexp.MustCompile(`^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$`)
-	bicPattern  = regexp.MustCompile(`^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$`)
-)
+var bicPattern = regexp.MustCompile(`^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$`)
 
 // Identity is a name and address an administration trades and invoices under.
 // The default one holds the company's own details.
@@ -159,7 +157,7 @@ func identityProblems(i Identity) *resource.ValidationError {
 			verr.Add("email", "is not a valid email address")
 		}
 	}
-	if i.BankAccountNumber != "" && !validIBAN(i.BankAccountNumber) {
+	if i.BankAccountNumber != "" && !iban.Valid(i.BankAccountNumber) {
 		verr.Add("bank_account_number", "is not a valid IBAN")
 	}
 	if i.BankAccountBIC != "" && !bicPattern.MatchString(i.BankAccountBIC) {
@@ -169,23 +167,6 @@ func identityProblems(i Identity) *resource.ValidationError {
 		verr.Add("tax_number_absence_reason", "is not included in the list")
 	}
 	return verr
-}
-
-// validIBAN checks the format and the ISO 13616 mod-97 checksum.
-func validIBAN(iban string) bool {
-	if !ibanPattern.MatchString(iban) {
-		return false
-	}
-	var digits strings.Builder
-	for _, r := range iban[4:] + iban[:4] {
-		if r >= 'A' {
-			fmt.Fprintf(&digits, "%d", r-'A'+10)
-		} else {
-			digits.WriteRune(r)
-		}
-	}
-	n, ok := new(big.Int).SetString(digits.String(), 10)
-	return ok && new(big.Int).Mod(n, big.NewInt(97)).Int64() == 1
 }
 
 // Identities lists an administration's identities, the default one first.
