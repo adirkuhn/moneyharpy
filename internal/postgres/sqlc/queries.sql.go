@@ -281,6 +281,48 @@ func (q *Queries) ClearLedgerAccountTaxonomy(ctx context.Context, administration
 	return err
 }
 
+const connectionByID = `-- name: ConnectionByID :one
+SELECT c.id, c.administration_id, c.user_id, c.kind, c.name, c.scopes, c.read_only, c.token_hash, c.created_at, c.last_used_at, u.name AS granted_by FROM connections c JOIN users u ON u.id = c.user_id WHERE c.administration_id = $1 AND c.id = $2
+`
+
+type ConnectionByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+type ConnectionByIDRow struct {
+	ID               int64
+	AdministrationID int64
+	UserID           int64
+	Kind             string
+	Name             string
+	Scopes           []string
+	ReadOnly         bool
+	TokenHash        string
+	CreatedAt        pgtype.Timestamptz
+	LastUsedAt       pgtype.Timestamptz
+	GrantedBy        string
+}
+
+func (q *Queries) ConnectionByID(ctx context.Context, arg ConnectionByIDParams) (ConnectionByIDRow, error) {
+	row := q.db.QueryRow(ctx, connectionByID, arg.AdministrationID, arg.ID)
+	var i ConnectionByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.UserID,
+		&i.Kind,
+		&i.Name,
+		&i.Scopes,
+		&i.ReadOnly,
+		&i.TokenHash,
+		&i.CreatedAt,
+		&i.LastUsedAt,
+		&i.GrantedBy,
+	)
+	return i, err
+}
+
 const consumeResetToken = `-- name: ConsumeResetToken :one
 DELETE FROM password_reset_tokens WHERE token_hash = $1 AND expires_at > $2 RETURNING user_id
 `
@@ -373,6 +415,20 @@ type DeleteBookingRuleParams struct {
 
 func (q *Queries) DeleteBookingRule(ctx context.Context, arg DeleteBookingRuleParams) error {
 	_, err := q.db.Exec(ctx, deleteBookingRule, arg.AdministrationID, arg.ID)
+	return err
+}
+
+const deleteConnection = `-- name: DeleteConnection :exec
+DELETE FROM connections WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteConnectionParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteConnection(ctx context.Context, arg DeleteConnectionParams) error {
+	_, err := q.db.Exec(ctx, deleteConnection, arg.AdministrationID, arg.ID)
 	return err
 }
 
@@ -615,6 +671,20 @@ DELETE FROM sessions WHERE user_id = $1
 
 func (q *Queries) DeleteUserSessions(ctx context.Context, userID int64) error {
 	_, err := q.db.Exec(ctx, deleteUserSessions, userID)
+	return err
+}
+
+const deleteWebhook = `-- name: DeleteWebhook :exec
+DELETE FROM webhooks WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteWebhookParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteWebhook(ctx context.Context, arg DeleteWebhookParams) error {
+	_, err := q.db.Exec(ctx, deleteWebhook, arg.AdministrationID, arg.ID)
 	return err
 }
 
@@ -1041,6 +1111,38 @@ func (q *Queries) InsertBookingRule(ctx context.Context, arg InsertBookingRulePa
 		arg.Description,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+	)
+	return err
+}
+
+const insertConnection = `-- name: InsertConnection :exec
+INSERT INTO connections (id, administration_id, user_id, kind, name, scopes, read_only, token_hash, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+`
+
+type InsertConnectionParams struct {
+	ID               int64
+	AdministrationID int64
+	UserID           int64
+	Kind             string
+	Name             string
+	Scopes           []string
+	ReadOnly         bool
+	TokenHash        string
+	CreatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertConnection(ctx context.Context, arg InsertConnectionParams) error {
+	_, err := q.db.Exec(ctx, insertConnection,
+		arg.ID,
+		arg.AdministrationID,
+		arg.UserID,
+		arg.Kind,
+		arg.Name,
+		arg.Scopes,
+		arg.ReadOnly,
+		arg.TokenHash,
+		arg.CreatedAt,
 	)
 	return err
 }
@@ -1636,6 +1738,63 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (InsertU
 	return i, err
 }
 
+const insertWebhook = `-- name: InsertWebhook :exec
+INSERT INTO webhooks (id, administration_id, url, enabled_events, token, secret_sealed, connection_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+`
+
+type InsertWebhookParams struct {
+	ID               int64
+	AdministrationID int64
+	Url              string
+	EnabledEvents    []string
+	Token            string
+	SecretSealed     string
+	ConnectionID     pgtype.Int8
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertWebhook(ctx context.Context, arg InsertWebhookParams) error {
+	_, err := q.db.Exec(ctx, insertWebhook,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Url,
+		arg.EnabledEvents,
+		arg.Token,
+		arg.SecretSealed,
+		arg.ConnectionID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const insertWebhookDelivery = `-- name: InsertWebhookDelivery :exec
+INSERT INTO webhook_deliveries (id, webhook_id, idempotency_key, payload, next_attempt_at, created_at) VALUES ($1, $2, $3, $4, $5, $6)
+`
+
+type InsertWebhookDeliveryParams struct {
+	ID             int64
+	WebhookID      int64
+	IdempotencyKey string
+	Payload        []byte
+	NextAttemptAt  pgtype.Timestamptz
+	CreatedAt      pgtype.Timestamptz
+}
+
+func (q *Queries) InsertWebhookDelivery(ctx context.Context, arg InsertWebhookDeliveryParams) error {
+	_, err := q.db.Exec(ctx, insertWebhookDelivery,
+		arg.ID,
+		arg.WebhookID,
+		arg.IdempotencyKey,
+		arg.Payload,
+		arg.NextAttemptAt,
+		arg.CreatedAt,
+	)
+	return err
+}
+
 const insertWorkflow = `-- name: InsertWorkflow :one
 INSERT INTO workflows (id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax,
                        show_qr_code, created_at, updated_at)
@@ -1793,6 +1952,63 @@ func (q *Queries) InvoiceSettings(ctx context.Context, id int64) (InvoiceSetting
 	return i, err
 }
 
+const leaseDueDeliveries = `-- name: LeaseDueDeliveries :many
+UPDATE webhook_deliveries d SET next_attempt_at = $1
+FROM webhooks w
+WHERE w.id = d.webhook_id AND d.id IN (
+    SELECT x.id FROM webhook_deliveries x JOIN webhooks y ON y.id = x.webhook_id
+    WHERE x.next_attempt_at <= $2 AND y.deactivated_at IS NULL
+    ORDER BY x.next_attempt_at LIMIT $3 FOR UPDATE OF x SKIP LOCKED
+)
+RETURNING d.id, d.webhook_id, d.idempotency_key, d.payload, d.attempts, d.created_at, w.url, w.secret_sealed
+`
+
+type LeaseDueDeliveriesParams struct {
+	Lease    pgtype.Timestamptz
+	Now      pgtype.Timestamptz
+	MaxCount int32
+}
+
+type LeaseDueDeliveriesRow struct {
+	ID             int64
+	WebhookID      int64
+	IdempotencyKey string
+	Payload        []byte
+	Attempts       int32
+	CreatedAt      pgtype.Timestamptz
+	Url            string
+	SecretSealed   string
+}
+
+func (q *Queries) LeaseDueDeliveries(ctx context.Context, arg LeaseDueDeliveriesParams) ([]LeaseDueDeliveriesRow, error) {
+	rows, err := q.db.Query(ctx, leaseDueDeliveries, arg.Lease, arg.Now, arg.MaxCount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LeaseDueDeliveriesRow
+	for rows.Next() {
+		var i LeaseDueDeliveriesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.WebhookID,
+			&i.IdempotencyKey,
+			&i.Payload,
+			&i.Attempts,
+			&i.CreatedAt,
+			&i.Url,
+			&i.SecretSealed,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const ledgerAccountByID = `-- name: LedgerAccountByID :one
 SELECT id, administration_id, name, account_type, account_id, parent_id, active, allowed_document_types, taxonomy_code, description, system_role, seed_key, template_key, created_at, updated_at FROM ledger_accounts WHERE administration_id = $1 AND id = $2
 `
@@ -1940,6 +2156,56 @@ func (q *Queries) ListBookingRules(ctx context.Context, administrationID int64) 
 			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listConnections = `-- name: ListConnections :many
+SELECT c.id, c.administration_id, c.user_id, c.kind, c.name, c.scopes, c.read_only, c.token_hash, c.created_at, c.last_used_at, u.name AS granted_by FROM connections c JOIN users u ON u.id = c.user_id WHERE c.administration_id = $1
+`
+
+type ListConnectionsRow struct {
+	ID               int64
+	AdministrationID int64
+	UserID           int64
+	Kind             string
+	Name             string
+	Scopes           []string
+	ReadOnly         bool
+	TokenHash        string
+	CreatedAt        pgtype.Timestamptz
+	LastUsedAt       pgtype.Timestamptz
+	GrantedBy        string
+}
+
+func (q *Queries) ListConnections(ctx context.Context, administrationID int64) ([]ListConnectionsRow, error) {
+	rows, err := q.db.Query(ctx, listConnections, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListConnectionsRow
+	for rows.Next() {
+		var i ListConnectionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.UserID,
+			&i.Kind,
+			&i.Name,
+			&i.Scopes,
+			&i.ReadOnly,
+			&i.TokenHash,
+			&i.CreatedAt,
+			&i.LastUsedAt,
+			&i.GrantedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -2427,6 +2693,43 @@ func (q *Queries) ListTokens(ctx context.Context, userID int64) ([]ListTokensRow
 	return items, nil
 }
 
+const listWebhooks = `-- name: ListWebhooks :many
+SELECT id, administration_id, url, enabled_events, token, secret_sealed, connection_id, last_http_status, last_http_body, deactivated_at, created_at, updated_at FROM webhooks WHERE administration_id = $1 ORDER BY created_at, id
+`
+
+func (q *Queries) ListWebhooks(ctx context.Context, administrationID int64) ([]Webhook, error) {
+	rows, err := q.db.Query(ctx, listWebhooks, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Webhook
+	for rows.Next() {
+		var i Webhook
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.Url,
+			&i.EnabledEvents,
+			&i.Token,
+			&i.SecretSealed,
+			&i.ConnectionID,
+			&i.LastHttpStatus,
+			&i.LastHttpBody,
+			&i.DeactivatedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listWorkflowSteps = `-- name: ListWorkflowSteps :many
 SELECT s.id, s.workflow_id, s.step_order, s.due_interval, s.reminder_delay, s.reminder_text, s.reminder_auto_send, s.created_at, s.updated_at FROM workflow_steps s JOIN workflows w ON w.id = s.workflow_id
 WHERE w.administration_id = $1
@@ -2651,6 +2954,31 @@ func (q *Queries) RequiresTwoFactor(ctx context.Context, userID int64) (bool, er
 	return exists, err
 }
 
+const saveDeliveryAttempt = `-- name: SaveDeliveryAttempt :exec
+UPDATE webhook_deliveries SET attempts = $2, next_attempt_at = $3, delivered_at = $4, last_status = $5, last_error = $6 WHERE id = $1
+`
+
+type SaveDeliveryAttemptParams struct {
+	ID            int64
+	Attempts      int32
+	NextAttemptAt pgtype.Timestamptz
+	DeliveredAt   pgtype.Timestamptz
+	LastStatus    pgtype.Int4
+	LastError     string
+}
+
+func (q *Queries) SaveDeliveryAttempt(ctx context.Context, arg SaveDeliveryAttemptParams) error {
+	_, err := q.db.Exec(ctx, saveDeliveryAttempt,
+		arg.ID,
+		arg.Attempts,
+		arg.NextAttemptAt,
+		arg.DeliveredAt,
+		arg.LastStatus,
+		arg.LastError,
+	)
+	return err
+}
+
 const saveSetting = `-- name: SaveSetting :exec
 INSERT INTO settings (key, value) VALUES ($1, $2)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
@@ -2663,6 +2991,21 @@ type SaveSettingParams struct {
 
 func (q *Queries) SaveSetting(ctx context.Context, arg SaveSettingParams) error {
 	_, err := q.db.Exec(ctx, saveSetting, arg.Key, arg.Value)
+	return err
+}
+
+const saveWebhookResponse = `-- name: SaveWebhookResponse :exec
+UPDATE webhooks SET last_http_status = $2, last_http_body = $3 WHERE id = $1
+`
+
+type SaveWebhookResponseParams struct {
+	ID             int64
+	LastHttpStatus pgtype.Int4
+	LastHttpBody   pgtype.Text
+}
+
+func (q *Queries) SaveWebhookResponse(ctx context.Context, arg SaveWebhookResponseParams) error {
+	_, err := q.db.Exec(ctx, saveWebhookResponse, arg.ID, arg.LastHttpStatus, arg.LastHttpBody)
 	return err
 }
 
@@ -2732,6 +3075,35 @@ type SetTOTPSecretParams struct {
 
 func (q *Queries) SetTOTPSecret(ctx context.Context, arg SetTOTPSecretParams) error {
 	_, err := q.db.Exec(ctx, setTOTPSecret, arg.ID, arg.TotpSecret)
+	return err
+}
+
+const setUsersMayConnect = `-- name: SetUsersMayConnect :exec
+UPDATE administrations SET users_may_connect = $2 WHERE id = $1
+`
+
+type SetUsersMayConnectParams struct {
+	ID              int64
+	UsersMayConnect bool
+}
+
+func (q *Queries) SetUsersMayConnect(ctx context.Context, arg SetUsersMayConnectParams) error {
+	_, err := q.db.Exec(ctx, setUsersMayConnect, arg.ID, arg.UsersMayConnect)
+	return err
+}
+
+const setWebhookDeactivated = `-- name: SetWebhookDeactivated :exec
+UPDATE webhooks SET deactivated_at = $3, updated_at = now() WHERE administration_id = $1 AND id = $2
+`
+
+type SetWebhookDeactivatedParams struct {
+	AdministrationID int64
+	ID               int64
+	DeactivatedAt    pgtype.Timestamptz
+}
+
+func (q *Queries) SetWebhookDeactivated(ctx context.Context, arg SetWebhookDeactivatedParams) error {
+	_, err := q.db.Exec(ctx, setWebhookDeactivated, arg.AdministrationID, arg.ID, arg.DeactivatedAt)
 	return err
 }
 
@@ -3411,6 +3783,52 @@ func (q *Queries) UpsertInvitedMember(ctx context.Context, arg UpsertInvitedMemb
 	return result.RowsAffected(), nil
 }
 
+const useConnection = `-- name: UseConnection :one
+UPDATE connections c SET last_used_at = $2
+FROM users u, administration_members m
+WHERE c.token_hash = $1 AND u.id = c.user_id AND m.administration_id = c.administration_id AND m.user_id = c.user_id AND m.active
+RETURNING c.id, c.administration_id, c.user_id, c.kind, c.name, c.scopes, c.read_only, c.created_at, c.last_used_at, u.name AS granted_by, u.email
+`
+
+type UseConnectionParams struct {
+	TokenHash  string
+	LastUsedAt pgtype.Timestamptz
+}
+
+type UseConnectionRow struct {
+	ID               int64
+	AdministrationID int64
+	UserID           int64
+	Kind             string
+	Name             string
+	Scopes           []string
+	ReadOnly         bool
+	CreatedAt        pgtype.Timestamptz
+	LastUsedAt       pgtype.Timestamptz
+	GrantedBy        string
+	Email            string
+}
+
+// A connection works while the user it acts for may open the administration.
+func (q *Queries) UseConnection(ctx context.Context, arg UseConnectionParams) (UseConnectionRow, error) {
+	row := q.db.QueryRow(ctx, useConnection, arg.TokenHash, arg.LastUsedAt)
+	var i UseConnectionRow
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.UserID,
+		&i.Kind,
+		&i.Name,
+		&i.Scopes,
+		&i.ReadOnly,
+		&i.CreatedAt,
+		&i.LastUsedAt,
+		&i.GrantedBy,
+		&i.Email,
+	)
+	return i, err
+}
+
 const useRecoveryCode = `-- name: UseRecoveryCode :execrows
 UPDATE recovery_codes SET used_at = $3 WHERE user_id = $1 AND code_hash = $2 AND used_at IS NULL
 `
@@ -3572,6 +3990,46 @@ func (q *Queries) UserTwoFactor(ctx context.Context, id int64) (UserTwoFactorRow
 	row := q.db.QueryRow(ctx, userTwoFactor, id)
 	var i UserTwoFactorRow
 	err := row.Scan(&i.TotpSecret, &i.TotpEnabledAt, &i.CodesLeft)
+	return i, err
+}
+
+const usersMayConnect = `-- name: UsersMayConnect :one
+SELECT users_may_connect FROM administrations WHERE id = $1
+`
+
+func (q *Queries) UsersMayConnect(ctx context.Context, id int64) (bool, error) {
+	row := q.db.QueryRow(ctx, usersMayConnect, id)
+	var users_may_connect bool
+	err := row.Scan(&users_may_connect)
+	return users_may_connect, err
+}
+
+const webhookByID = `-- name: WebhookByID :one
+SELECT id, administration_id, url, enabled_events, token, secret_sealed, connection_id, last_http_status, last_http_body, deactivated_at, created_at, updated_at FROM webhooks WHERE administration_id = $1 AND id = $2
+`
+
+type WebhookByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) WebhookByID(ctx context.Context, arg WebhookByIDParams) (Webhook, error) {
+	row := q.db.QueryRow(ctx, webhookByID, arg.AdministrationID, arg.ID)
+	var i Webhook
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Url,
+		&i.EnabledEvents,
+		&i.Token,
+		&i.SecretSealed,
+		&i.ConnectionID,
+		&i.LastHttpStatus,
+		&i.LastHttpBody,
+		&i.DeactivatedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 

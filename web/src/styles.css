@@ -697,3 +697,8 @@ textarea { min-height: 4.5rem; padding: 0.5rem 0.625rem; resize: vertical; }
 .recovery-codes { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.25rem 1rem; margin: 0; padding: 0; list-style: none; font-variant-numeric: tabular-nums; }
 .prose { max-width: 40rem; }
 .prose p { margin: 0 0 1rem; line-height: 1.6; }
+
+/* Integrations. */
+.code-block { margin: 0 0 1rem; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow-x: auto; font-size: 0.875rem; white-space: pre; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0 0 1rem; padding: 0; list-style: none; }
+.tag-list code { padding: 0.125rem 0.5rem; border: 1px solid var(--line); border-radius: 999px; font-size: 0.875rem; }

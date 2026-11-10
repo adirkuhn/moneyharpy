@@ -88,6 +88,9 @@ type Instance struct {
 	AddressLookupEnabled bool
 	SMTP                 SMTP
 	Storage              Storage
+	// WebhooksAllowLocal lets webhooks reach plain HTTP and private or
+	// loopback addresses, for development. Off, webhooks need public HTTPS.
+	WebhooksAllowLocal bool
 }
 
 // Update changes selected settings. Nil fields stay as they are, and an empty
@@ -120,6 +123,8 @@ type Update struct {
 	StorageAccessKey *string
 	StorageSecretKey *string
 	StoragePathStyle *bool
+
+	WebhooksAllowLocal *bool
 }
 
 // Store persists opaque values by key.
@@ -165,6 +170,7 @@ type storedInstance struct {
 	StorageAccessKey string `json:"storage_access_key"`
 	StorageSecret    string `json:"storage_secret_key_sealed"`
 	StoragePathStyle bool   `json:"storage_path_style"`
+	WebhooksLocal    bool   `json:"webhooks_allow_local"`
 }
 
 // Instance returns the current settings with secrets decrypted.
@@ -187,6 +193,7 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 		KVK:              KVK{Enabled: st.KVKEnabled},
 
 		AddressLookupEnabled: st.AddressLookup,
+		WebhooksAllowLocal:   st.WebhooksLocal,
 		SMTP: SMTP{
 			Enabled: st.SMTPEnabled, Host: st.SMTPHost, Port: st.SMTPPort, Username: st.SMTPUsername,
 			From: st.SMTPFrom, Security: st.SMTPSecurity,
@@ -217,6 +224,16 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 		}
 	}
 	return inst, nil
+}
+
+// WebhooksAllowLocal reports whether webhooks may reach plain HTTP and local
+// addresses.
+func (s *Service) WebhooksAllowLocal(ctx context.Context) (bool, error) {
+	inst, err := s.Instance(ctx)
+	if err != nil {
+		return false, err
+	}
+	return inst.WebhooksAllowLocal, nil
 }
 
 // RegistrationOpen reports whether new users may join.
@@ -262,6 +279,9 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 	if u.KVKAPIKey != nil {
 		inst.KVK.APIKey = cmp.Or(*u.KVKAPIKey, inst.KVK.APIKey)
 	}
+	if u.WebhooksAllowLocal != nil {
+		inst.WebhooksAllowLocal = *u.WebhooksAllowLocal
+	}
 	if u.AddressLookupEnabled != nil {
 		inst.AddressLookupEnabled = *u.AddressLookupEnabled
 	}
@@ -303,6 +323,7 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		LM2App:           inst.LM2.App,
 		KVKEnabled:       inst.KVK.Enabled,
 		AddressLookup:    inst.AddressLookupEnabled,
+		WebhooksLocal:    inst.WebhooksAllowLocal,
 		SMTPEnabled:      inst.SMTP.Enabled,
 		SMTPHost:         inst.SMTP.Host,
 		SMTPPort:         inst.SMTP.Port,

@@ -41,6 +41,7 @@ type Administration struct {
 	BankSeeded                   bool
 	RequireTwoFactor             bool
 	SupportAccessUntil           pgtype.Timestamptz
+	UsersMayConnect              bool
 }
 
 type AdministrationMember struct {
@@ -77,6 +78,19 @@ type BookingRule struct {
 	Description        string
 	CreatedAt          pgtype.Timestamptz
 	UpdatedAt          pgtype.Timestamptz
+}
+
+type Connection struct {
+	ID               int64
+	AdministrationID int64
+	UserID           int64
+	Kind             string
+	Name             string
+	Scopes           []string
+	ReadOnly         bool
+	TokenHash        string
+	CreatedAt        pgtype.Timestamptz
+	LastUsedAt       pgtype.Timestamptz
 }
 
 type CustomField struct {
@@ -305,6 +319,34 @@ type UserInvitation struct {
 	ExpiresAt        pgtype.Timestamptz
 	AcceptedAt       pgtype.Timestamptz
 	AcceptedBy       pgtype.Int8
+}
+
+type Webhook struct {
+	ID               int64
+	AdministrationID int64
+	Url              string
+	EnabledEvents    []string
+	Token            string
+	SecretSealed     string
+	ConnectionID     pgtype.Int8
+	LastHttpStatus   pgtype.Int4
+	LastHttpBody     pgtype.Text
+	DeactivatedAt    pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type WebhookDelivery struct {
+	ID             int64
+	WebhookID      int64
+	IdempotencyKey string
+	Payload        []byte
+	Attempts       int32
+	NextAttemptAt  pgtype.Timestamptz
+	DeliveredAt    pgtype.Timestamptz
+	LastStatus     pgtype.Int4
+	LastError      string
+	CreatedAt      pgtype.Timestamptz
 }
 
 type Workflow struct {
