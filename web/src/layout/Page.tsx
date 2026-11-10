@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { ArrowLeftIcon } from './icons'
 
 type Props = {
   title: string
@@ -15,7 +16,11 @@ export function Page({ title, subtitle, back, actions, children }: Props) {
     <>
       <header className="actionbar">
         <div className="actionbar__heading">
-          {back && <Link className="actionbar__back" to={back.to}>{back.label}</Link>}
+          {back && (
+            <Link className="actionbar__back" to={back.to} aria-label={back.label} title={back.label}>
+              <ArrowLeftIcon />
+            </Link>
+          )}
           <div>
             <h1>{title}</h1>
             {subtitle && <p className="actionbar__subtitle">{subtitle}</p>}

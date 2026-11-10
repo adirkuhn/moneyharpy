@@ -9,6 +9,7 @@ import { currentLanguage } from '../i18n'
 import { lookupAddress, useOnboardingOptions } from './queries'
 import { SearchableSelect, type SelectOption } from './SearchableSelect'
 import { Wizard } from './Wizard'
+import { Loading } from '../layout/Loading'
 
 type Options = components['schemas']['OnboardingOptions']
 type Company = components['schemas']['CompanyMatch']
@@ -18,7 +19,7 @@ const registerCountries = ['NL', 'BE']
 
 export function ManualCompanyPage() {
   const options = useOnboardingOptions()
-  return options.data ? <ManualForm options={options.data} /> : null
+  return options.data ? <ManualForm options={options.data} /> : <Loading />
 }
 
 function display(language: string, type: 'region' | 'currency', code: string): string {

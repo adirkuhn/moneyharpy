@@ -1,6 +1,7 @@
 import { type ReactNode, useId } from 'react'
 import { ApiError, errorMessages } from '../api/client'
 import { serverMessage } from '../i18n'
+import { InfoIcon } from '../layout/icons'
 
 /** How wide a control is, after Moneybird: short codes are small, text is long. */
 export type Width = 'small' | 'medium' | 'long'
@@ -122,7 +123,12 @@ export function FormSection({ title, children }: { title?: string; children: Rea
 
 /** A notice at the top of a form. */
 export function FormNotice({ children }: { children: ReactNode }) {
-  return <div className="alert alert--info" role="note">{children}</div>
+  return (
+    <div className="alert alert--info" role="note">
+      <InfoIcon />
+      <div>{children}</div>
+    </div>
+  )
 }
 
 export type FormErrors = {

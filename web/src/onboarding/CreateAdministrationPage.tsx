@@ -6,6 +6,7 @@ import { useCurrentUser } from '../auth/queries'
 import { TextInput } from '../forms/Form'
 import { manualPath, useCompanySearch, useOnboardingOptions } from './queries'
 import { Wizard } from './Wizard'
+import { Loading } from '../layout/Loading'
 
 type Company = components['schemas']['CompanyMatch']
 
@@ -16,7 +17,7 @@ export function CreateAdministrationPage() {
   const me = useCurrentUser()
   const options = useOnboardingOptions()
   if (!options.data) {
-    return null
+    return <Loading />
   }
   const title = t('onboarding.welcome', { name: me.data?.name.split(' ')[0] ?? '' })
   const subtitle = t('onboarding.subtitle')

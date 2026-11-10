@@ -19,7 +19,7 @@ export function Mark({ className }: IconProps) {
 
 export function StarIcon({ filled }: { filled: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" {...stroke} fill={filled ? 'currentColor' : 'none'}>
+    <svg viewBox="0 0 24 24" width="1.25em" height="1.25em" aria-hidden="true" {...stroke} fill={filled ? 'currentColor' : 'none'}>
       <path d="m12 3 2.800 5.800 6.200.9-4.500 4.400 1.100 6.300L12 17.400l-5.600 3 1.100-6.300L3 9.700l6.200-.9Z" />
     </svg>
   )
@@ -27,7 +27,7 @@ export function StarIcon({ filled }: { filled: boolean }) {
 
 export function CogIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" {...stroke}>
+    <svg viewBox="0 0 24 24" width="1.25em" height="1.25em" aria-hidden="true" {...stroke}>
       <circle cx="12" cy="12" r="3" />
       <path d="M19 12a7 7 0 0 0-.1-1.200l2-1.600-2-3.400-2.400 1a7 7 0 0 0-2-1.200L14 3h-4l-.5 2.600a7 7 0 0 0-2 1.200l-2.400-1-2 3.400 2 1.600a7 7 0 0 0 0 2.400l-2 1.600 2 3.400 2.400-1a7 7 0 0 0 2 1.200L10 21h4l.5-2.600a7 7 0 0 0 2-1.200l2.400 1 2-3.400-2-1.600c.1-.4.100-.8.100-1.200Z" />
     </svg>
@@ -36,7 +36,7 @@ export function CogIcon() {
 
 export function ChevronIcon({ className }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" {...stroke}>
+    <svg className={className} viewBox="0 0 24 24" width="1.125em" height="1.125em" aria-hidden="true" {...stroke}>
       <path d="m9 5 7 7-7 7" />
     </svg>
   )
@@ -44,7 +44,7 @@ export function ChevronIcon({ className }: IconProps) {
 
 export function CaretIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" {...stroke}>
+    <svg viewBox="0 0 24 24" width="0.875em" height="0.875em" aria-hidden="true" {...stroke}>
       <path d="m6 9 6 6 6-6" />
     </svg>
   )
@@ -52,9 +52,52 @@ export function CaretIcon() {
 
 export function BellIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" {...stroke}>
+    <svg viewBox="0 0 24 24" width="1.25em" height="1.25em" aria-hidden="true" {...stroke}>
       <path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4Z" />
       <path d="M10 21h4" />
+    </svg>
+  )
+}
+
+export function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1.125em" height="1.125em" aria-hidden="true" {...stroke}>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16 16 4.5 4.5" />
+    </svg>
+  )
+}
+
+export function ArrowLeftIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1.25em" height="1.25em" aria-hidden="true" {...stroke}>
+      <path d="M19 12H5m6-6-6 6 6 6" />
+    </svg>
+  )
+}
+
+export function InfoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1.125em" height="1.125em" aria-hidden="true" {...stroke}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5m0-8h.01" />
+    </svg>
+  )
+}
+
+/** Line icons for the settings sections, drawn for MoneyHarpy. */
+export function SectionIcon({ section }: { section: string }) {
+  const shapes: Record<string, React.ReactNode> = {
+    company: <><rect x="5" y="3.5" width="14" height="17" rx="1.5" /><path d="M9 8h1.5m3 0H15M9 12h1.5m3 0H15m-4.5 8.5V16h3v4.5" /></>,
+    invoices_and_estimates: <><path d="M6.5 3.5h8l3.5 3.5v13.5h-11.5Z" /><path d="M14.5 3.5V7H18M9.5 12h5m-5 3.5h5" /></>,
+    bookkeeping: <><rect x="3.5" y="4.5" width="17" height="12.5" rx="1.5" /><path d="m7 13 3-3 2.5 2.5L17 8M9 20.5h6" /></>,
+    bank: <><path d="M3.5 9 12 4l8.5 5Z" /><path d="M5.5 9.5v8m4.3-8v8m4.4-8v8m4.3-8v8M3.5 20.5h17" /></>,
+    administration: <><rect x="5" y="3.5" width="14" height="17" rx="1.5" /><path d="M8.5 8h7m-7 4h7m-7 4h4" /></>,
+    connections: <><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="6" r="2.5" /><circle cx="18" cy="18" r="2.5" /><path d="m8.2 10.8 7.6-3.6m-7.6 6 7.6 3.6" /></>,
+  }
+  return (
+    <svg viewBox="0 0 24 24" width="1.25em" height="1.25em" aria-hidden="true" {...stroke}>
+      {shapes[section]}
     </svg>
   )
 }

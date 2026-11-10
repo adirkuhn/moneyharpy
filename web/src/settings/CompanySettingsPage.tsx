@@ -1,6 +1,6 @@
-import { type ReactNode, useId } from 'react'
+import { type ReactNode, useEffect, useId } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { Page } from '../layout/Page'
 import { countryName, formatIBAN } from './format'
 import { type Identity, useIdentities } from './queries'
@@ -11,13 +11,22 @@ export function CompanySettingsPage() {
   const identities = useIdentities(administrationId)
   const main = identities.data?.find((i) => i.default)
   const senders = identities.data?.filter((i) => !i.default) ?? []
+  const { hash } = useLocation()
+
+  // The menu links to parts of this page; bring the part into view once loaded.
+  useEffect(() => {
+    if (hash && identities.data) {
+      document.getElementById(hash.slice(1))?.scrollIntoView?.({ block: 'start' })
+    }
+  }, [hash, identities.data])
 
   return (
     <Page title={t('settings.sections.company')} subtitle={t('settings.companySubtitle')}>
-      <Block title={t('settings.details')} subtitle={t('settings.detailsSubtitle')}>
+      <Block id="company-details" title={t('settings.details')} subtitle={t('settings.detailsSubtitle')}>
         {main && <IdentityCard identity={main} editPath={`/${administrationId}/identities/edit_default`} />}
       </Block>
       <Block
+        id="sender-addresses"
         title={t('settings.senders')}
         subtitle={t('settings.sendersSubtitle')}
         action={<Link className="btn btn--accent" to={`/${administrationId}/identities/new`}>{t('settings.add')}</Link>}
@@ -29,13 +38,15 @@ export function CompanySettingsPage() {
   )
 }
 
-function Block({ title, subtitle, action, children }: { title: string; subtitle: string; action?: ReactNode; children: ReactNode }) {
-  const id = useId()
+type BlockProps = { id: string; title: string; subtitle: string; action?: ReactNode; children: ReactNode }
+
+function Block({ id, title, subtitle, action, children }: BlockProps) {
+  const headingId = useId()
   return (
-    <section className="settings-block" aria-labelledby={id}>
+    <section id={id} className="settings-block" aria-labelledby={headingId}>
       <header className="settings-block__header">
         <div>
-          <h2 id={id}>{title}</h2>
+          <h2 id={headingId}>{title}</h2>
           <p className="hint">{subtitle}</p>
         </div>
         {action}
@@ -69,7 +80,7 @@ function IdentityCard({ identity: i, editPath }: { identity: Identity; editPath:
         {rows.map(([label, values]) => (
           <div className="datalist__row" key={label}>
             <dt>{label}</dt>
-            <dd>{values.length ? values.map((v) => <div key={v}>{v}</div>) : <span className="datalist__empty">-</span>}</dd>
+            <dd>{values.length ? values.map((v) => <div key={v}>{v}</div>) : <><span className="datalist__empty" aria-hidden="true">-</span><span className="sr-only">{t('settings.notSet')}</span></>}</dd>
           </div>
         ))}
       </dl>

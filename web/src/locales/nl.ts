@@ -1,7 +1,7 @@
 import type { Messages } from './en'
 
 export const nl: Messages = {
-  common: { language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt' },
+  common: { loading: 'Laden…', language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt' },
   login: {
     title: 'Inloggen', email: 'E-mailadres', password: 'Wachtwoord', submit: 'Inloggen bij MoneyHarpy', or: 'of', forgot: 'Wachtwoord vergeten?', noAccount: 'Geen account?', passwordChanged: 'Wachtwoord gewijzigd. Log in met je nieuwe wachtwoord.', google: 'Doorgaan met Google', lm2: 'Doorgaan met LM2',
     unreachable: 'MoneyHarpy is niet bereikbaar. Herlaad de pagina om het opnieuw te proberen.',
@@ -18,6 +18,7 @@ export const nl: Messages = {
     editTitle: 'Kies een nieuw wachtwoord', new: 'Nieuw wachtwoord', save: 'Nieuw wachtwoord opslaan', badLink: 'Deze link is ongeldig of verlopen', newLink: 'Nieuwe link aanvragen',
   },
   nav: {
+    search: 'Zoeken', searchSoon: 'Zoeken is nog niet beschikbaar.',
     main: 'Hoofdmenu', home: 'MoneyHarpy home', notifications: 'Meldingen', noNotifications: 'Je hebt geen meldingen.', select: 'Kies administratie', yours: 'Jouw administraties',
     all: 'Alle administraties', new: 'Nieuwe administratie', account: 'Gebruikersaccount', instance: 'Instellingen van deze installatie', docs: 'API-documentatie', signOut: 'Uitloggen',
   },
@@ -41,6 +42,7 @@ export const nl: Messages = {
     open: 'Ik wil mijn administratie openen', openBody: 'Kijk rond en richt je administratie op je eigen manier in.',
   },
   settings: {
+    notSet: 'Niet ingevuld',
     title: 'Instellingen', back: 'Terug', add: 'Toevoegen', edit: 'Bewerken', editName: '{{name}} bewerken', save: 'Opslaan', saved: 'Opgeslagen', delete: 'Verwijderen', confirmDelete: 'Verwijderen bevestigen',
     sections: { company: 'Bedrijf', invoices_and_estimates: 'Facturen en offertes', bookkeeping: 'Boekhouding', bank: 'Bank', administration: 'Beheer', connections: 'Koppelingen' },
     notAvailable: 'Dit onderdeel is nog niet beschikbaar.',
@@ -60,6 +62,7 @@ export const nl: Messages = {
     managementSubtitle: 'De naam, taal, valuta en tijdzone van deze administratie.', findTimeZone: 'Zoek tijdzone',
   },
   customField: {
+    back: 'Ga terug',
     title: 'Nieuw extra veld', name: 'Naam', source: 'Gebruikt voor',
     sources: { identity: 'Bedrijfsgegevens', contact: 'Contacten', sales_invoice: 'Facturen', estimate: 'Offertes' },
   },
@@ -79,7 +82,7 @@ export const nl: Messages = {
 export const nlServer: Record<string, string> = {
   "can't be blank": 'mag niet leeg zijn',
   'has already been taken': 'is al in gebruik',
-  'is not a valid email address': 'is geen geldig e-mailadres',
+  'is not a valid email address': 'is geen geldig e-mailadres. Gebruik de vorm naam@voorbeeld.nl.',
   'must be between 12 and 1024 characters': 'moet tussen 12 en 1024 tekens zijn',
   'is not included in the list': 'staat niet in de lijst',
   'must be an ISO 4217 code': 'moet een ISO 4217-code zijn',
@@ -92,9 +95,9 @@ export const nlServer: Record<string, string> = {
   'must be a host name': 'moet een hostnaam zijn',
   'must be between 1 and 65535': 'moet tussen 1 en 65535 zijn',
   'must be a plain email address': 'moet een gewoon e-mailadres zijn',
-  'is not a valid IBAN': 'is geen geldige IBAN',
-  'is not a valid BIC': 'is geen geldige BIC',
-  'is not a valid website address': 'is geen geldig websiteadres',
+  'is not a valid IBAN': 'is geen geldige IBAN. Controleer het op typefouten; een IBAN begint met een landcode, zoals NL91 ABNA 0417 1643 00.',
+  'is not a valid BIC': 'is geen geldige BIC. Een BIC heeft 8 of 11 letters en cijfers, zoals ABNANL2A.',
+  'is not a valid website address': 'is geen geldig websiteadres. Begin met https://, zoals https://voorbeeld.nl.',
   'must belong to identities of this administration': 'moet bij de bedrijfsgegevens van deze administratie horen',
   'The default identity cannot be deleted': 'De standaardgegevens kunnen niet worden verwijderd',
   'Invalid email or password': 'Onjuist e-mailadres of wachtwoord',
