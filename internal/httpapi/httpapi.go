@@ -16,6 +16,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/api"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
@@ -71,6 +72,7 @@ type Deps struct {
 	Administrations *administration.Service
 	Invoicing       *invoicing.Service
 	Bookkeeping     *bookkeeping.Service
+	Banking         *banking.Service
 	Storage         StorageChecker
 	Identity        *identity.Service
 	Settings        *settings.Service
@@ -165,6 +167,12 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"System ledger accounts cannot be deleted, deactivated or change type"}}))
 	case errors.Is(err, bookkeeping.ErrHasChildren):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Remove or move the sub-categories first"}}))
+	case errors.Is(err, bookkeeping.ErrInUse):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This category is used by transactions or booking rules; keep it deactivated instead"}}))
+	case errors.Is(err, banking.ErrBookingUnavailable):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet; only categories (LedgerAccount) can be booked so far"}}))
+	case errors.Is(err, banking.ErrStatementBooked):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Remove the bookings of this statement's transactions first"}}))
 	case errors.Is(err, administration.ErrDefaultIdentity):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The default identity cannot be deleted"}}))
 	case errors.Is(err, identity.ErrResetTokenInvalid):
@@ -181,6 +189,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		errors.Is(err, invoicing.ErrFileNotFound),
 		errors.Is(err, resource.ErrNotFound),
 		bookkeeping.IsNotFound(err),
+		banking.IsNotFound(err),
 		errors.Is(err, administration.ErrLookupUnavailable),
 		errors.Is(err, administration.ErrAddressUnknown),
 		errors.Is(err, identity.ErrTokenNotFound):

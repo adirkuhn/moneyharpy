@@ -303,3 +303,109 @@ WHERE administration_id = @administration_id AND id = @id;
 
 -- name: DeleteLedgerAccount :exec
 DELETE FROM ledger_accounts WHERE administration_id = $1 AND id = $2;
+
+-- name: BankSettings :one
+SELECT bank_auto_link, bank_seeded FROM administrations WHERE id = $1;
+
+-- name: SetBankAutoLink :exec
+UPDATE administrations SET bank_auto_link = $2 WHERE id = $1;
+
+-- name: MarkBankSeeded :execrows
+UPDATE administrations SET bank_seeded = true WHERE id = $1 AND NOT bank_seeded;
+
+-- name: DeleteResources :exec
+DELETE FROM resources WHERE id = ANY(@ids::bigint[]);
+
+-- name: InsertFinancialAccount :exec
+INSERT INTO financial_accounts (id, administration_id, type, name, identifier, currency, provider, active, position, ledger_account_id, last_import_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);
+
+-- name: ListFinancialAccounts :many
+SELECT * FROM financial_accounts WHERE administration_id = $1 ORDER BY position, id;
+
+-- name: FinancialAccountByID :one
+SELECT * FROM financial_accounts WHERE administration_id = $1 AND id = $2;
+
+-- name: UpdateFinancialAccount :exec
+UPDATE financial_accounts
+SET type = $3, name = $4, identifier = $5, currency = $6, provider = $7, active = $8, position = $9, last_import_at = $10, updated_at = $11
+WHERE administration_id = $1 AND id = $2;
+
+-- name: InsertFinancialStatement :exec
+INSERT INTO financial_statements (id, administration_id, financial_account_id, reference, official_date, official_balance, importer, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+
+-- name: FinancialStatementByID :one
+SELECT * FROM financial_statements WHERE administration_id = $1 AND id = $2;
+
+-- name: UpdateFinancialStatement :exec
+UPDATE financial_statements SET reference = $3, official_date = $4, official_balance = $5, updated_at = $6
+WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteFinancialStatement :exec
+DELETE FROM financial_statements WHERE administration_id = $1 AND id = $2;
+
+-- name: InsertFinancialMutation :execrows
+INSERT INTO financial_mutations (id, administration_id, financial_account_id, financial_statement_id, date, valutation_date, message, amount, currency,
+                                 code, contra_account_name, contra_account_number, batch_reference, transaction_id, fingerprint, position, state,
+                                 processed_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+ON CONFLICT DO NOTHING;
+
+-- name: UpdateFinancialMutation :exec
+UPDATE financial_mutations
+SET date = $3, valutation_date = $4, message = $5, amount = $6, code = $7, contra_account_name = $8, contra_account_number = $9,
+    batch_reference = $10, transaction_id = $11, position = $12, state = $13, processed_at = $14, updated_at = $15
+WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteFinancialMutations :exec
+DELETE FROM financial_mutations WHERE administration_id = @administration_id AND id = ANY(@ids::bigint[]);
+
+-- name: ListFinancialMutations :many
+SELECT * FROM financial_mutations
+WHERE administration_id = @administration_id
+  AND (sqlc.narg(financial_account_id)::bigint IS NULL OR financial_account_id = sqlc.narg(financial_account_id))
+  AND (sqlc.narg(date_from)::date IS NULL OR date >= sqlc.narg(date_from))
+  AND (sqlc.narg(date_to)::date IS NULL OR date <= sqlc.narg(date_to))
+ORDER BY date DESC, financial_statement_id DESC, position, id;
+
+-- name: FinancialMutationsByID :many
+SELECT * FROM financial_mutations WHERE administration_id = @administration_id AND id = ANY(@ids::bigint[]) ORDER BY id;
+
+-- name: FinancialMutationsOfStatement :many
+SELECT * FROM financial_mutations WHERE administration_id = $1 AND financial_statement_id = $2 ORDER BY position, id;
+
+-- name: FinancialMutationVersions :many
+SELECT id, updated_at FROM financial_mutations WHERE administration_id = $1 ORDER BY id;
+
+-- name: BookingsOfMutations :many
+SELECT * FROM ledger_account_bookings WHERE administration_id = @administration_id AND financial_mutation_id = ANY(@ids::bigint[]) ORDER BY created_at, id;
+
+-- name: InsertLedgerAccountBooking :exec
+INSERT INTO ledger_account_bookings (id, administration_id, financial_mutation_id, ledger_account_id, description, price, booking_rule_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+
+-- name: DeleteLedgerAccountBooking :exec
+DELETE FROM ledger_account_bookings WHERE administration_id = $1 AND financial_mutation_id = $2 AND id = $3;
+
+-- name: FinancialBalances :many
+SELECT financial_account_id, sum(amount)::bigint AS balance FROM financial_mutations WHERE administration_id = $1 GROUP BY financial_account_id;
+
+-- name: InsertBookingRule :exec
+INSERT INTO booking_rules (id, administration_id, name, active, position, match_all, direction, financial_account_id, conditions, ledger_account_id, description, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);
+
+-- name: ListBookingRules :many
+SELECT * FROM booking_rules WHERE administration_id = $1 ORDER BY position, id;
+
+-- name: BookingRuleByID :one
+SELECT * FROM booking_rules WHERE administration_id = $1 AND id = $2;
+
+-- name: UpdateBookingRule :exec
+UPDATE booking_rules
+SET name = $3, active = $4, position = $5, match_all = $6, direction = $7, financial_account_id = $8, conditions = $9, ledger_account_id = $10,
+    description = $11, updated_at = $12
+WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteBookingRule :exec
+DELETE FROM booking_rules WHERE administration_id = $1 AND id = $2;

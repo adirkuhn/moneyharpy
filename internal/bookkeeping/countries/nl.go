@@ -7,6 +7,10 @@ package countries
 var netherlands = Seed{
 	Country: "NL",
 	Scheme:  "nl-rgs-3.8",
+	FinancialAccounts: map[string]string{
+		"BankAccount": "BLimBanRba", "CashAccount": "BLimKasKas", "CreditCardAccount": "BLimKruCra",
+		"PaymentServiceAccount": "BLimKru", "CustomAccount": "BLimBan",
+	},
 	Boxes: []Box{
 		{"NL/1a", Text{"1a Supplies and services taxed at the standard rate", "1a Leveringen/diensten belast met hoog tarief"}},
 		{"NL/1b", Text{"1b Supplies and services taxed at the reduced rate", "1b Leveringen/diensten belast met laag tarief"}},

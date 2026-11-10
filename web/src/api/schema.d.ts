@@ -638,6 +638,370 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/bank_settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get bank settings
+         * @description MoneyHarpy extension.
+         */
+        get: operations["getBankSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update bank settings
+         * @description MoneyHarpy extension.
+         */
+        patch: operations["updateBankSettings"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve financial accounts
+         * @description A new administration starts with a cash account.
+         */
+        get: operations["listFinancialAccounts"];
+        put?: never;
+        /**
+         * Create a financial account
+         * @description MoneyHarpy extension. Moneybird adds accounts in its web app only. The account gets its own category under the financial accounts category.
+         */
+        post: operations["createFinancialAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_accounts/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Order the financial accounts
+         * @description MoneyHarpy extension. List every account once, in the new order.
+         */
+        put: operations["reorderFinancialAccounts"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve a financial account
+         * @description MoneyHarpy extension.
+         */
+        get: operations["getFinancialAccount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a financial account
+         * @description MoneyHarpy extension. Omitted fields stay unchanged. Accounts are deactivated, not deleted.
+         */
+        patch: operations["updateFinancialAccount"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_accounts/{id}/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import a statement file
+         * @description MoneyHarpy extension. Send a CAMT (052, 053 or 054) or MT940 file of at most 10 MB as the body. Transactions the account has already are skipped, and so are transactions in the locked period. With automatic booking on, the booking rules book what they match.
+         */
+        post: operations["importFinancialStatement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_statements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a financial statement
+         * @description Provided transactions are grouped in the statement. Transactions with an account_servicer_transaction_id the account has already are skipped. financial_mutations_attributes is an array; MoneyHarpy does not take the keyed-object form. manual is a MoneyHarpy extension that marks transactions typed in by hand.
+         */
+        post: operations["createFinancialStatement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_statements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve a financial statement
+         * @description MoneyHarpy extension.
+         */
+        get: operations["getFinancialStatement"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a financial statement
+         * @description Removes the statement and its transactions, unless one of them is booked.
+         */
+        delete: operations["deleteFinancialStatement"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a financial statement
+         * @description Omitted fields stay unchanged. Transactions with an id are changed, or removed with _destroy; others are added. Booked transactions cannot change.
+         */
+        patch: operations["updateFinancialStatement"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_mutations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /** Retrieve financial mutations */
+        get: operations["listFinancialMutations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_mutations/synchronization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /** List the ids and versions of all financial mutations */
+        get: operations["listFinancialMutationVersions"];
+        put?: never;
+        /**
+         * Fetch financial mutations by id
+         * @description At most 100 ids.
+         */
+        post: operations["fetchFinancialMutations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_mutations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Retrieve a financial mutation */
+        get: operations["getFinancialMutation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_mutations/{id}/link_booking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Link a booking to a financial mutation
+         * @description MoneyHarpy books on categories (LedgerAccount) so far; other booking types answer 422 until invoices and documents exist. price_base is the amount; positive books in the direction of the transaction, negative against it. Without it, the open amount is booked. Split a transaction with one request per part.
+         */
+        patch: operations["linkFinancialMutationBooking"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/financial_mutations/{id}/unlink_booking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unlink a booking from a financial mutation
+         * @description booking_type LedgerAccountBooking removes a booking on a category. Payment answers 422 until invoices exist.
+         */
+        delete: operations["unlinkFinancialMutationBooking"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/bank_balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Bank balance report
+         * @description The sum of every financial account's transactions. Accounts with a zero balance are left out.
+         */
+        get: operations["getBankBalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/booking_rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve booking rules
+         * @description MoneyHarpy extension.
+         */
+        get: operations["listBookingRules"];
+        put?: never;
+        /**
+         * Create a booking rule
+         * @description MoneyHarpy extension. The rule is tried last.
+         */
+        post: operations["createBookingRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/booking_rules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve a booking rule
+         * @description MoneyHarpy extension.
+         */
+        get: operations["getBookingRule"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a booking rule
+         * @description MoneyHarpy extension. Bookings the rule made stay.
+         */
+        delete: operations["deleteBookingRule"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a booking rule
+         * @description MoneyHarpy extension. Omitted fields stay unchanged.
+         */
+        patch: operations["updateBookingRule"];
+        trace?: never;
+    };
     "/api/onboarding/options": {
         parameters: {
             query?: never;
@@ -1497,6 +1861,182 @@ export interface components {
                 account_type: components["schemas"]["AccountType"];
                 account_id: string;
             }[];
+        };
+        /** @description An amount of money, such as "10.95" or "-3,5". A number is accepted too. */
+        Money: string | number;
+        /** @enum {string} */
+        FinancialAccountType: "BankAccount" | "CashAccount" | "CreditCardAccount" | "PaymentServiceAccount" | "CustomAccount";
+        /** @description MoneyHarpy extension. */
+        BankSettings: {
+            /** @description Book new transactions that match a booking rule. */
+            automatic_booking: boolean;
+        };
+        BankSettingsRequest: {
+            bank_settings: {
+                automatic_booking?: boolean;
+            };
+        };
+        /** @description A Moneybird financial account with MoneyHarpy extensions. */
+        FinancialAccount: components["schemas"]["financial_account_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            /** @description MoneyHarpy extension. Order among the accounts, from 1. */
+            position: number;
+            ledger_account_id: components["schemas"]["Identifier"];
+            /**
+             * Format: date-time
+             * @description MoneyHarpy extension. When transactions last came in.
+             */
+            last_import_at: string | null;
+        };
+        FinancialAccountRequest: {
+            financial_account: {
+                type?: components["schemas"]["FinancialAccountType"];
+                name?: string;
+                /** @description The account number, such as an IBAN, or a card's last digits. */
+                identifier?: string;
+                currency?: string;
+                active?: boolean;
+            };
+        };
+        IdsRequest: {
+            ids: components["schemas"]["Identifier"][];
+        };
+        /** @description A booking of (part of) a transaction on a category. */
+        LedgerAccountBooking: components["schemas"]["ledger_account_booking_response"] & {
+            /** @description MoneyHarpy extension. The rule that made the booking. */
+            booking_rule_id: components["schemas"]["Identifier"] | null;
+        };
+        /** @description A Moneybird financial mutation with MoneyHarpy extensions. */
+        FinancialMutation: components["schemas"]["financial_mutation_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            /**
+             * Format: date
+             * @description MoneyHarpy extension. When the money was credited or debited.
+             */
+            valutation_date: string | null;
+            ledger_account_bookings: components["schemas"]["LedgerAccountBooking"][];
+        };
+        /** @description A Moneybird financial statement with MoneyHarpy extensions. */
+        FinancialStatement: components["schemas"]["financial_statement_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            administration_id: components["schemas"]["Identifier"];
+            financial_mutations: components["schemas"]["FinancialMutation"][];
+        };
+        FinancialMutationInput: {
+            /** @description An existing transaction to change or remove; omit to add one. */
+            id?: components["schemas"]["Identifier"] | number;
+            _destroy?: boolean;
+            /** Format: date */
+            date?: string;
+            /** Format: date */
+            valutation_date?: string;
+            message?: string;
+            amount?: components["schemas"]["Money"];
+            code?: string;
+            contra_account_name?: string;
+            contra_account_number?: string;
+            batch_reference?: string;
+            offset?: number;
+            account_servicer_transaction_id?: string;
+        };
+        FinancialStatementRequest: {
+            financial_statement: {
+                financial_account_id?: components["schemas"]["Identifier"] | number;
+                reference?: string;
+                /** Format: date */
+                official_date?: string;
+                official_balance?: components["schemas"]["Money"];
+                importer_key?: string;
+                /** @description MoneyHarpy extension. The transactions were typed in by hand. */
+                manual?: boolean;
+                financial_mutations_attributes?: components["schemas"]["FinancialMutationInput"][];
+            };
+        };
+        SynchronizationItem: {
+            id: components["schemas"]["Identifier"];
+            version: number;
+        };
+        SynchronizationRequest: {
+            ids: (components["schemas"]["Identifier"] | number)[];
+        };
+        LinkBookingRequest: {
+            /** @enum {string} */
+            booking_type: "SalesInvoice" | "Document" | "LedgerAccount" | "PaymentTransactionBatch" | "PurchaseTransaction" | "NewPurchaseInvoice" | "NewReceipt" | "PaymentTransaction" | "PurchaseTransactionBatch" | "ExternalSalesInvoice" | "Payment" | "VatDocument";
+            booking_id?: components["schemas"]["Identifier"] | number;
+            price_base?: components["schemas"]["Money"];
+            price?: components["schemas"]["Money"];
+            description?: string;
+            project_id?: components["schemas"]["Identifier"] | number;
+            payment_batch_identifier?: string;
+            mark_open_sepa_transaction_as_paid?: boolean | string;
+        };
+        UnlinkBookingRequest: {
+            /** @enum {string} */
+            booking_type: "Payment" | "LedgerAccountBooking";
+            booking_id: components["schemas"]["Identifier"] | number;
+        };
+        /** @description MoneyHarpy extension. */
+        ImportResult: {
+            /** @enum {string} */
+            format: "camt" | "mt940";
+            /** @description New transactions. */
+            imported: number;
+            /** @description Transactions the account had already. */
+            duplicates: number;
+            /** @description Transactions skipped because they fall in the locked period. */
+            locked: number;
+            /** @description New transactions a booking rule booked. */
+            auto_booked: number;
+            financial_statements: components["schemas"]["FinancialStatement"][];
+        };
+        RuleCondition: {
+            /** @enum {string} */
+            field: "message" | "contra_account_name" | "contra_account_number" | "amount";
+            /**
+             * @description Text fields take contains, equals, starts_with or ends_with, ignoring case; amount takes equals, greater_than or less_than, without sign.
+             * @enum {string}
+             */
+            operator: "contains" | "equals" | "starts_with" | "ends_with" | "greater_than" | "less_than";
+            value: string;
+        };
+        /** @description MoneyHarpy extension. Books matching transactions on a category. */
+        BookingRule: {
+            id: components["schemas"]["Identifier"];
+            administration_id: components["schemas"]["Identifier"];
+            name: string;
+            active: boolean;
+            position: number;
+            /** @description Every condition must match; otherwise one is enough. */
+            match_all: boolean;
+            /** @enum {string} */
+            direction: "any" | "debit" | "credit";
+            /** @description Only transactions of this account; null for every account. */
+            financial_account_id: components["schemas"]["Identifier"] | null;
+            conditions: components["schemas"]["RuleCondition"][];
+            ledger_account_id: components["schemas"]["Identifier"];
+            description: string;
+            uri: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        BookingRuleRequest: {
+            booking_rule: {
+                name?: string;
+                active?: boolean;
+                match_all?: boolean;
+                /** @enum {string} */
+                direction?: "any" | "debit" | "credit";
+                /** @description Empty for every account. */
+                financial_account_id?: string;
+                conditions?: components["schemas"]["RuleCondition"][];
+                ledger_account_id?: components["schemas"]["Identifier"];
+                description?: string;
+            };
         };
         /** @description One entry of a block on a document. bold prints it bold; label prints its name before it. */
         DocumentStyleLine: {
@@ -4554,6 +5094,715 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getBankSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateBankSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listFinancialAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The financial accounts in their set order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialAccount"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createFinancialAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FinancialAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description The created financial account */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialAccount"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    reorderFinancialAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IdsRequest"];
+            };
+        };
+        responses: {
+            /** @description Reordered */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getFinancialAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The financial account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialAccount"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateFinancialAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FinancialAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated financial account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialAccount"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    importFinancialStatement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description What the import did */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createFinancialStatement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FinancialStatementRequest"];
+            };
+        };
+        responses: {
+            /** @description The created statement with the transactions that were new */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialStatement"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getFinancialStatement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The statement */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialStatement"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteFinancialStatement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateFinancialStatement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FinancialStatementRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated statement */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialStatement"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listFinancialMutations: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms: period (this_week, prev_month, this_quarter, next_year and so on, or a range like 202401..202403 or 20240101..20240131), state (all, unprocessed, processed, auto_booked), mutation_type (all, debit, credit), financial_account_id, amount_from and amount_to. Join several states or types with a pipe. Without a filter, the period is this year. */
+                filter?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The transactions, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialMutation"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listFinancialMutationVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ids and versions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SynchronizationItem"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    fetchFinancialMutations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SynchronizationRequest"];
+            };
+        };
+        responses: {
+            /** @description The transactions; unknown ids are left out */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialMutation"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getFinancialMutation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The transaction */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialMutation"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    linkFinancialMutationBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkBookingRequest"];
+            };
+        };
+        responses: {
+            /** @description The transaction with its bookings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialMutation"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    unlinkFinancialMutationBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnlinkBookingRequest"];
+            };
+        };
+        responses: {
+            /** @description The transaction with its remaining bookings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialMutation"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getBankBalance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The balance of every financial account with transactions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["bank_balance_amounts"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listBookingRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The rules in the order they are tried */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingRule"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createBookingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BookingRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description The created rule */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getBookingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The rule */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteBookingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateBookingRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BookingRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated rule */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };
     };

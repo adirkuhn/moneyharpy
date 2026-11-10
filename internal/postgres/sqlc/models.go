@@ -37,6 +37,8 @@ type Administration struct {
 	IcpDeclarationPeriod         string
 	ChartScheme                  string
 	BookkeepingSeeded            bool
+	BankAutoLink                 bool
+	BankSeeded                   bool
 }
 
 type AdministrationMember struct {
@@ -52,6 +54,22 @@ type ApiToken struct {
 	Name      string
 	TokenHash string
 	CreatedAt pgtype.Timestamptz
+}
+
+type BookingRule struct {
+	ID                 int64
+	AdministrationID   int64
+	Name               string
+	Active             bool
+	Position           int32
+	MatchAll           bool
+	Direction          string
+	FinancialAccountID pgtype.Int8
+	Conditions         []byte
+	LedgerAccountID    int64
+	Description        string
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
 }
 
 type CustomField struct {
@@ -86,6 +104,57 @@ type DocumentStyle struct {
 	Layout                 []byte
 	CreatedAt              pgtype.Timestamptz
 	UpdatedAt              pgtype.Timestamptz
+}
+
+type FinancialAccount struct {
+	ID               int64
+	AdministrationID int64
+	Type             string
+	Name             string
+	Identifier       string
+	Currency         string
+	Provider         string
+	Active           bool
+	Position         int32
+	LedgerAccountID  int64
+	LastImportAt     pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type FinancialMutation struct {
+	ID                   int64
+	AdministrationID     int64
+	FinancialAccountID   int64
+	FinancialStatementID int64
+	Date                 pgtype.Date
+	ValutationDate       pgtype.Date
+	Message              string
+	Amount               int64
+	Currency             string
+	Code                 string
+	ContraAccountName    string
+	ContraAccountNumber  string
+	BatchReference       string
+	TransactionID        string
+	Fingerprint          string
+	Position             int32
+	State                string
+	ProcessedAt          pgtype.Timestamptz
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+}
+
+type FinancialStatement struct {
+	ID                 int64
+	AdministrationID   int64
+	FinancialAccountID int64
+	Reference          string
+	OfficialDate       pgtype.Date
+	OfficialBalance    pgtype.Int8
+	Importer           string
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
 }
 
 type Identity struct {
@@ -133,6 +202,18 @@ type LedgerAccount struct {
 	TemplateKey          string
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
+}
+
+type LedgerAccountBooking struct {
+	ID                  int64
+	AdministrationID    int64
+	FinancialMutationID int64
+	LedgerAccountID     int64
+	Description         string
+	Price               int64
+	BookingRuleID       pgtype.Int8
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
 }
 
 type PasswordResetToken struct {

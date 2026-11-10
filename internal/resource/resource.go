@@ -95,6 +95,11 @@ const (
 	TypeDocumentStyle  Type = "document_styles"
 	TypeTaxRate        Type = "tax_rates"
 	TypeLedgerAccount  Type = "ledger_accounts"
+	// Banking.
+	TypeFinancialAccount   Type = "financial_accounts"
+	TypeFinancialStatement Type = "financial_statements"
+	TypeFinancialMutation  Type = "financial_mutations"
+	TypeBookingRule        Type = "booking_rules"
 )
 
 // Ref locates one resource.
