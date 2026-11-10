@@ -144,6 +144,60 @@ func (e BookingRuleRequestBookingRuleDirection) Valid() bool {
 	}
 }
 
+// Defines values for ConnectionKind.
+const (
+	ConnectionKindAi  ConnectionKind = "ai"
+	ConnectionKindApi ConnectionKind = "api"
+)
+
+// Valid indicates whether the value is a known member of the ConnectionKind enum.
+func (e ConnectionKind) Valid() bool {
+	switch e {
+	case ConnectionKindAi:
+		return true
+	case ConnectionKindApi:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ConnectionRequestConnectionKind.
+const (
+	ConnectionRequestConnectionKindAi  ConnectionRequestConnectionKind = "ai"
+	ConnectionRequestConnectionKindApi ConnectionRequestConnectionKind = "api"
+)
+
+// Valid indicates whether the value is a known member of the ConnectionRequestConnectionKind enum.
+func (e ConnectionRequestConnectionKind) Valid() bool {
+	switch e {
+	case ConnectionRequestConnectionKindAi:
+		return true
+	case ConnectionRequestConnectionKindApi:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreatedConnectionKind.
+const (
+	CreatedConnectionKindAi  CreatedConnectionKind = "ai"
+	CreatedConnectionKindApi CreatedConnectionKind = "api"
+)
+
+// Valid indicates whether the value is a known member of the CreatedConnectionKind enum.
+func (e CreatedConnectionKind) Valid() bool {
+	switch e {
+	case CreatedConnectionKindAi:
+		return true
+	case CreatedConnectionKindApi:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CustomFieldSource.
 const (
 	CustomFieldSourceContact      CustomFieldSource = "contact"
@@ -456,6 +510,36 @@ func (e ImportResultFormat) Valid() bool {
 	}
 }
 
+// Defines values for JsonRpcMessageJsonrpc.
+const (
+	JsonRpcMessageJsonrpcN20 JsonRpcMessageJsonrpc = "2.0"
+)
+
+// Valid indicates whether the value is a known member of the JsonRpcMessageJsonrpc enum.
+func (e JsonRpcMessageJsonrpc) Valid() bool {
+	switch e {
+	case JsonRpcMessageJsonrpcN20:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for JsonRpcResponseJsonrpc.
+const (
+	JsonRpcResponseJsonrpcN20 JsonRpcResponseJsonrpc = "2.0"
+)
+
+// Valid indicates whether the value is a known member of the JsonRpcResponseJsonrpc enum.
+func (e JsonRpcResponseJsonrpc) Valid() bool {
+	switch e {
+	case JsonRpcResponseJsonrpcN20:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Language.
 const (
 	En   Language = "en"
@@ -681,6 +765,36 @@ func (e RuleConditionOperator) Valid() bool {
 	case LessThan:
 		return true
 	case StartsWith:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Scope.
+const (
+	ScopeBank          Scope = "bank"
+	ScopeDocuments     Scope = "documents"
+	ScopeEstimates     Scope = "estimates"
+	ScopeSalesInvoices Scope = "sales_invoices"
+	ScopeSettings      Scope = "settings"
+	ScopeTimeEntries   Scope = "time_entries"
+)
+
+// Valid indicates whether the value is a known member of the Scope enum.
+func (e Scope) Valid() bool {
+	switch e {
+	case ScopeBank:
+		return true
+	case ScopeDocuments:
+		return true
+	case ScopeEstimates:
+		return true
+	case ScopeSalesInvoices:
+		return true
+	case ScopeSettings:
+		return true
+	case ScopeTimeEntries:
 		return true
 	default:
 		return false
@@ -1759,6 +1873,47 @@ type CompanyMatch struct {
 	Zipcode           string `json:"zipcode"`
 }
 
+// Connection MoneyHarpy extension. An API token or AI connection.
+type Connection struct {
+	CreatedAt time.Time `json:"created_at"`
+	GrantedBy string    `json:"granted_by"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id         Identifier     `json:"id"`
+	Kind       ConnectionKind `json:"kind"`
+	LastUsedAt *time.Time     `json:"last_used_at"`
+
+	// Mine You made it, so you may revoke it.
+	Mine     bool    `json:"mine"`
+	Name     string  `json:"name"`
+	ReadOnly bool    `json:"read_only"`
+	Scopes   []Scope `json:"scopes"`
+}
+
+// ConnectionKind defines model for Connection.Kind.
+type ConnectionKind string
+
+// ConnectionRequest defines model for ConnectionRequest.
+type ConnectionRequest struct {
+	Connection struct {
+		Kind     ConnectionRequestConnectionKind `json:"kind"`
+		Name     string                          `json:"name"`
+		ReadOnly *bool                           `json:"read_only,omitempty"`
+		Scopes   []Scope                         `json:"scopes"`
+	} `json:"connection"`
+}
+
+// ConnectionRequestConnectionKind defines model for ConnectionRequest.Connection.Kind.
+type ConnectionRequestConnectionKind string
+
+// ConnectionSettings defines model for ConnectionSettings.
+type ConnectionSettings struct {
+	// UsersMayConnect Users other than owners may create API tokens and AI connections.
+	UsersMayConnect bool `json:"users_may_connect"`
+}
+
 // CreateAdministrationRequest defines model for CreateAdministrationRequest.
 type CreateAdministrationRequest struct {
 	Administration struct {
@@ -1795,6 +1950,34 @@ type CreatedApiToken struct {
 	// Token The secret. Shown only once.
 	Token string `json:"token"`
 }
+
+// CreatedConnection defines model for CreatedConnection.
+type CreatedConnection struct {
+	CreatedAt time.Time `json:"created_at"`
+	GrantedBy string    `json:"granted_by"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id         Identifier            `json:"id"`
+	Kind       CreatedConnectionKind `json:"kind"`
+	LastUsedAt *time.Time            `json:"last_used_at"`
+
+	// McpUrl For AI connections, the address to give the assistant.
+	McpUrl *string `json:"mcp_url,omitempty"`
+
+	// Mine You made it, so you may revoke it.
+	Mine     bool    `json:"mine"`
+	Name     string  `json:"name"`
+	ReadOnly bool    `json:"read_only"`
+	Scopes   []Scope `json:"scopes"`
+
+	// Token Shown only now. Send it as a bearer token.
+	Token string `json:"token"`
+}
+
+// CreatedConnectionKind defines model for CreatedConnection.Kind.
+type CreatedConnectionKind string
 
 // CreatedUserInvitation defines model for CreatedUserInvitation.
 type CreatedUserInvitation struct {
@@ -2420,6 +2603,9 @@ type InstanceSettings struct {
 	StoragePathStyle    bool   `json:"storage_path_style"`
 	StorageRegion       string `json:"storage_region"`
 	StorageSecretKeySet bool   `json:"storage_secret_key_set"`
+
+	// WebhooksAllowLocal Let webhooks reach plain HTTP and private or loopback addresses, for development.
+	WebhooksAllowLocal bool `json:"webhooks_allow_local"`
 }
 
 // InvitationPreview defines model for InvitationPreview.
@@ -2483,6 +2669,53 @@ type InvoiceSettingsRequest struct {
 		PaymentsWithoutProof       *bool   `json:"payments_without_proof,omitempty"`
 	} `json:"invoice_settings"`
 }
+
+// JsonRpcMessage A JSON-RPC 2.0 request or notification.
+type JsonRpcMessage struct {
+	Id      *JsonRpcMessage_Id      `json:"id,omitempty"`
+	Jsonrpc JsonRpcMessageJsonrpc   `json:"jsonrpc"`
+	Method  string                  `json:"method"`
+	Params  *map[string]interface{} `json:"params,omitempty"`
+}
+
+// JsonRpcMessageId0 defines model for JsonRpcMessage.Id.0.
+type JsonRpcMessageId0 = string
+
+// JsonRpcMessageId1 defines model for JsonRpcMessage.Id.1.
+type JsonRpcMessageId1 = int
+
+// JsonRpcMessage_Id defines model for JsonRpcMessage.Id.
+type JsonRpcMessage_Id struct {
+	union json.RawMessage
+}
+
+// JsonRpcMessageJsonrpc defines model for JsonRpcMessage.Jsonrpc.
+type JsonRpcMessageJsonrpc string
+
+// JsonRpcResponse defines model for JsonRpcResponse.
+type JsonRpcResponse struct {
+	Error *struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+	Id      *JsonRpcResponse_Id     `json:"id"`
+	Jsonrpc JsonRpcResponseJsonrpc  `json:"jsonrpc"`
+	Result  *map[string]interface{} `json:"result,omitempty"`
+}
+
+// JsonRpcResponseId0 defines model for JsonRpcResponse.Id.0.
+type JsonRpcResponseId0 = string
+
+// JsonRpcResponseId1 defines model for JsonRpcResponse.Id.1.
+type JsonRpcResponseId1 = int
+
+// JsonRpcResponse_Id defines model for JsonRpcResponse.Id.
+type JsonRpcResponse_Id struct {
+	union json.RawMessage
+}
+
+// JsonRpcResponseJsonrpc defines model for JsonRpcResponse.Jsonrpc.
+type JsonRpcResponseJsonrpc string
 
 // Language The language code used in the administration
 type Language string
@@ -2765,6 +2998,9 @@ type RuleConditionField string
 // RuleConditionOperator Text fields take contains, equals, starts_with or ends_with, ignoring case; amount takes equals, greater_than or less_than, without sign.
 type RuleConditionOperator string
 
+// Scope defines model for Scope.
+type Scope string
+
 // SupportAccess defines model for SupportAccess.
 type SupportAccess struct {
 	Until *time.Time `json:"until"`
@@ -3006,6 +3242,9 @@ type UpdateInstanceSettingsRequest struct {
 	StoragePathStyle *bool                                      `json:"storage_path_style,omitempty"`
 	StorageRegion    *string                                    `json:"storage_region,omitempty"`
 	StorageSecretKey *string                                    `json:"storage_secret_key,omitempty"`
+
+	// WebhooksAllowLocal Let webhooks reach plain HTTP and private or loopback addresses, for development.
+	WebhooksAllowLocal *bool `json:"webhooks_allow_local,omitempty"`
 }
 
 // UpdateInstanceSettingsRequestSmtpSecurity defines model for UpdateInstanceSettingsRequest.SmtpSecurity.
@@ -3083,6 +3322,57 @@ type UserType string
 type ValidationError struct {
 	// Error Messages per invalid attribute.
 	Error map[string][]string `json:"error"`
+}
+
+// Webhook A Moneybird webhook with MoneyHarpy extensions.
+type Webhook struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier            `json:"administration_id,omitempty"`
+	DeactivatedAt    *Webhook_DeactivatedAt `json:"deactivated_at,omitempty"`
+	EnabledEvents    *[]string              `json:"enabled_events,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id             *Identifier             `json:"id,omitempty"`
+	LastHttpBody   *string                 `json:"last_http_body,omitempty"`
+	LastHttpStatus *Webhook_LastHttpStatus `json:"last_http_status,omitempty"`
+	Secret         *string                 `json:"secret,omitempty"`
+	Token          *string                 `json:"token,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string  `json:"uri"`
+	Url *string `json:"url,omitempty"`
+}
+
+// Webhook_DeactivatedAt defines model for Webhook.DeactivatedAt.
+type Webhook_DeactivatedAt struct {
+	union json.RawMessage
+}
+
+// WebhookLastHttpStatus0 defines model for Webhook.LastHttpStatus.0.
+type WebhookLastHttpStatus0 = int
+
+// WebhookLastHttpStatus1 defines model for Webhook.LastHttpStatus.1.
+type WebhookLastHttpStatus1 = string
+
+// Webhook_LastHttpStatus defines model for Webhook.LastHttpStatus.
+type Webhook_LastHttpStatus struct {
+	union json.RawMessage
+}
+
+// WebhookEvents defines model for WebhookEvents.
+type WebhookEvents struct {
+	Events []string `json:"events"`
+	Groups []string `json:"groups"`
+}
+
+// WebhookRequest defines model for WebhookRequest.
+type WebhookRequest struct {
+	EnabledEvents *[]string `json:"enabled_events,omitempty"`
+	Url           string    `json:"url"`
 }
 
 // Workflow A Moneybird workflow with MoneyHarpy extensions.
@@ -3752,6 +4042,42 @@ type Timestamp = time.Time
 // Version Moneybird-compatible version.
 type Version = int
 
+// WebhookResponse Moneybird-compatible webhook_response.
+type WebhookResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier                    `json:"administration_id,omitempty"`
+	DeactivatedAt    *WebhookResponse_DeactivatedAt `json:"deactivated_at,omitempty"`
+	EnabledEvents    *[]string                      `json:"enabled_events,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id             *Identifier                     `json:"id,omitempty"`
+	LastHttpBody   *string                         `json:"last_http_body,omitempty"`
+	LastHttpStatus *WebhookResponse_LastHttpStatus `json:"last_http_status,omitempty"`
+	Secret         *string                         `json:"secret,omitempty"`
+	Token          *string                         `json:"token,omitempty"`
+	Url            *string                         `json:"url,omitempty"`
+}
+
+// WebhookResponse_DeactivatedAt defines model for WebhookResponse.DeactivatedAt.
+type WebhookResponse_DeactivatedAt struct {
+	union json.RawMessage
+}
+
+// WebhookResponseLastHttpStatus0 defines model for WebhookResponse.LastHttpStatus.0.
+type WebhookResponseLastHttpStatus0 = int
+
+// WebhookResponseLastHttpStatus1 defines model for WebhookResponse.LastHttpStatus.1.
+type WebhookResponseLastHttpStatus1 = string
+
+// WebhookResponse_LastHttpStatus defines model for WebhookResponse.LastHttpStatus.
+type WebhookResponse_LastHttpStatus struct {
+	union json.RawMessage
+}
+
 // WorkflowResponse Moneybird-compatible workflow_response.
 type WorkflowResponse struct {
 	Active *bool `json:"active,omitempty"`
@@ -3916,6 +4242,9 @@ type CompleteSignInJSONRequestBody = TwoFactorCode
 // UpdateInstanceSettingsJSONRequestBody defines body for UpdateInstanceSettings for application/json ContentType.
 type UpdateInstanceSettingsJSONRequestBody = UpdateInstanceSettingsRequest
 
+// McpJSONRequestBody defines body for Mcp for application/json ContentType.
+type McpJSONRequestBody = JsonRpcMessage
+
 // CreateTokenJSONRequestBody defines body for CreateToken for application/json ContentType.
 type CreateTokenJSONRequestBody = CreateTokenRequest
 
@@ -3948,6 +4277,12 @@ type UpdateBookingRuleJSONRequestBody = BookingRuleRequest
 
 // UpdateBookkeepingSettingsJSONRequestBody defines body for UpdateBookkeepingSettings for application/json ContentType.
 type UpdateBookkeepingSettingsJSONRequestBody = BookkeepingSettingsRequest
+
+// UpdateConnectionSettingsJSONRequestBody defines body for UpdateConnectionSettings for application/json ContentType.
+type UpdateConnectionSettingsJSONRequestBody = ConnectionSettings
+
+// CreateConnectionJSONRequestBody defines body for CreateConnection for application/json ContentType.
+type CreateConnectionJSONRequestBody = ConnectionRequest
 
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldRequest
@@ -4026,6 +4361,9 @@ type CreateUserInvitationJSONRequestBody = UserInvitationRequest
 
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UserRequest
+
+// CreateWebhookJSONRequestBody defines body for CreateWebhook for application/json ContentType.
+type CreateWebhookJSONRequestBody = WebhookRequest
 
 // CreateWorkflowJSONRequestBody defines body for CreateWorkflow for application/json ContentType.
 type CreateWorkflowJSONRequestBody = WorkflowRequest
@@ -4529,6 +4867,130 @@ func (t *FinancialStatementRequest_FinancialStatement_FinancialAccountId) Unmars
 	return err
 }
 
+// AsJsonRpcMessageId0 returns the union data inside the JsonRpcMessage_Id as a JsonRpcMessageId0
+func (t JsonRpcMessage_Id) AsJsonRpcMessageId0() (JsonRpcMessageId0, error) {
+	var body JsonRpcMessageId0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromJsonRpcMessageId0 overwrites any union data inside the JsonRpcMessage_Id as the provided JsonRpcMessageId0
+func (t *JsonRpcMessage_Id) FromJsonRpcMessageId0(v JsonRpcMessageId0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeJsonRpcMessageId0 performs a merge with any union data inside the JsonRpcMessage_Id, using the provided JsonRpcMessageId0
+func (t *JsonRpcMessage_Id) MergeJsonRpcMessageId0(v JsonRpcMessageId0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsJsonRpcMessageId1 returns the union data inside the JsonRpcMessage_Id as a JsonRpcMessageId1
+func (t JsonRpcMessage_Id) AsJsonRpcMessageId1() (JsonRpcMessageId1, error) {
+	var body JsonRpcMessageId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromJsonRpcMessageId1 overwrites any union data inside the JsonRpcMessage_Id as the provided JsonRpcMessageId1
+func (t *JsonRpcMessage_Id) FromJsonRpcMessageId1(v JsonRpcMessageId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeJsonRpcMessageId1 performs a merge with any union data inside the JsonRpcMessage_Id, using the provided JsonRpcMessageId1
+func (t *JsonRpcMessage_Id) MergeJsonRpcMessageId1(v JsonRpcMessageId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t JsonRpcMessage_Id) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *JsonRpcMessage_Id) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsJsonRpcResponseId0 returns the union data inside the JsonRpcResponse_Id as a JsonRpcResponseId0
+func (t JsonRpcResponse_Id) AsJsonRpcResponseId0() (JsonRpcResponseId0, error) {
+	var body JsonRpcResponseId0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromJsonRpcResponseId0 overwrites any union data inside the JsonRpcResponse_Id as the provided JsonRpcResponseId0
+func (t *JsonRpcResponse_Id) FromJsonRpcResponseId0(v JsonRpcResponseId0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeJsonRpcResponseId0 performs a merge with any union data inside the JsonRpcResponse_Id, using the provided JsonRpcResponseId0
+func (t *JsonRpcResponse_Id) MergeJsonRpcResponseId0(v JsonRpcResponseId0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsJsonRpcResponseId1 returns the union data inside the JsonRpcResponse_Id as a JsonRpcResponseId1
+func (t JsonRpcResponse_Id) AsJsonRpcResponseId1() (JsonRpcResponseId1, error) {
+	var body JsonRpcResponseId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromJsonRpcResponseId1 overwrites any union data inside the JsonRpcResponse_Id as the provided JsonRpcResponseId1
+func (t *JsonRpcResponse_Id) FromJsonRpcResponseId1(v JsonRpcResponseId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeJsonRpcResponseId1 performs a merge with any union data inside the JsonRpcResponse_Id, using the provided JsonRpcResponseId1
+func (t *JsonRpcResponse_Id) MergeJsonRpcResponseId1(v JsonRpcResponseId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t JsonRpcResponse_Id) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *JsonRpcResponse_Id) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsTaxonomyItemResponse returns the union data inside the LedgerAccount_TaxonomyItem as a TaxonomyItemResponse
 func (t LedgerAccount_TaxonomyItem) AsTaxonomyItemResponse() (TaxonomyItemResponse, error) {
 	var body TaxonomyItemResponse
@@ -4969,6 +5431,104 @@ func (t UnlinkBookingRequest_BookingId) MarshalJSON() ([]byte, error) {
 }
 
 func (t *UnlinkBookingRequest_BookingId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTimestamp returns the union data inside the Webhook_DeactivatedAt as a Timestamp
+func (t Webhook_DeactivatedAt) AsTimestamp() (Timestamp, error) {
+	var body Timestamp
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTimestamp overwrites any union data inside the Webhook_DeactivatedAt as the provided Timestamp
+func (t *Webhook_DeactivatedAt) FromTimestamp(v Timestamp) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTimestamp performs a merge with any union data inside the Webhook_DeactivatedAt, using the provided Timestamp
+func (t *Webhook_DeactivatedAt) MergeTimestamp(v Timestamp) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Webhook_DeactivatedAt) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Webhook_DeactivatedAt) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsWebhookLastHttpStatus0 returns the union data inside the Webhook_LastHttpStatus as a WebhookLastHttpStatus0
+func (t Webhook_LastHttpStatus) AsWebhookLastHttpStatus0() (WebhookLastHttpStatus0, error) {
+	var body WebhookLastHttpStatus0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWebhookLastHttpStatus0 overwrites any union data inside the Webhook_LastHttpStatus as the provided WebhookLastHttpStatus0
+func (t *Webhook_LastHttpStatus) FromWebhookLastHttpStatus0(v WebhookLastHttpStatus0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWebhookLastHttpStatus0 performs a merge with any union data inside the Webhook_LastHttpStatus, using the provided WebhookLastHttpStatus0
+func (t *Webhook_LastHttpStatus) MergeWebhookLastHttpStatus0(v WebhookLastHttpStatus0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsWebhookLastHttpStatus1 returns the union data inside the Webhook_LastHttpStatus as a WebhookLastHttpStatus1
+func (t Webhook_LastHttpStatus) AsWebhookLastHttpStatus1() (WebhookLastHttpStatus1, error) {
+	var body WebhookLastHttpStatus1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWebhookLastHttpStatus1 overwrites any union data inside the Webhook_LastHttpStatus as the provided WebhookLastHttpStatus1
+func (t *Webhook_LastHttpStatus) FromWebhookLastHttpStatus1(v WebhookLastHttpStatus1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWebhookLastHttpStatus1 performs a merge with any union data inside the Webhook_LastHttpStatus, using the provided WebhookLastHttpStatus1
+func (t *Webhook_LastHttpStatus) MergeWebhookLastHttpStatus1(v WebhookLastHttpStatus1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Webhook_LastHttpStatus) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Webhook_LastHttpStatus) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -5639,6 +6199,104 @@ func (t *TaxRateResponse_Percentage) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsTimestamp returns the union data inside the WebhookResponse_DeactivatedAt as a Timestamp
+func (t WebhookResponse_DeactivatedAt) AsTimestamp() (Timestamp, error) {
+	var body Timestamp
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTimestamp overwrites any union data inside the WebhookResponse_DeactivatedAt as the provided Timestamp
+func (t *WebhookResponse_DeactivatedAt) FromTimestamp(v Timestamp) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTimestamp performs a merge with any union data inside the WebhookResponse_DeactivatedAt, using the provided Timestamp
+func (t *WebhookResponse_DeactivatedAt) MergeTimestamp(v Timestamp) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t WebhookResponse_DeactivatedAt) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *WebhookResponse_DeactivatedAt) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsWebhookResponseLastHttpStatus0 returns the union data inside the WebhookResponse_LastHttpStatus as a WebhookResponseLastHttpStatus0
+func (t WebhookResponse_LastHttpStatus) AsWebhookResponseLastHttpStatus0() (WebhookResponseLastHttpStatus0, error) {
+	var body WebhookResponseLastHttpStatus0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWebhookResponseLastHttpStatus0 overwrites any union data inside the WebhookResponse_LastHttpStatus as the provided WebhookResponseLastHttpStatus0
+func (t *WebhookResponse_LastHttpStatus) FromWebhookResponseLastHttpStatus0(v WebhookResponseLastHttpStatus0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWebhookResponseLastHttpStatus0 performs a merge with any union data inside the WebhookResponse_LastHttpStatus, using the provided WebhookResponseLastHttpStatus0
+func (t *WebhookResponse_LastHttpStatus) MergeWebhookResponseLastHttpStatus0(v WebhookResponseLastHttpStatus0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsWebhookResponseLastHttpStatus1 returns the union data inside the WebhookResponse_LastHttpStatus as a WebhookResponseLastHttpStatus1
+func (t WebhookResponse_LastHttpStatus) AsWebhookResponseLastHttpStatus1() (WebhookResponseLastHttpStatus1, error) {
+	var body WebhookResponseLastHttpStatus1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWebhookResponseLastHttpStatus1 overwrites any union data inside the WebhookResponse_LastHttpStatus as the provided WebhookResponseLastHttpStatus1
+func (t *WebhookResponse_LastHttpStatus) FromWebhookResponseLastHttpStatus1(v WebhookResponseLastHttpStatus1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWebhookResponseLastHttpStatus1 performs a merge with any union data inside the WebhookResponse_LastHttpStatus, using the provided WebhookResponseLastHttpStatus1
+func (t *WebhookResponse_LastHttpStatus) MergeWebhookResponseLastHttpStatus1(v WebhookResponseLastHttpStatus1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t WebhookResponse_LastHttpStatus) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *WebhookResponse_LastHttpStatus) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// GoogleCallback Finish signing in with Google
@@ -5698,6 +6356,9 @@ type ServerInterface interface {
 	// AcceptInvitation Accept an invitation
 	// (POST /api/invitations/{token}/accept)
 	AcceptInvitation(w http.ResponseWriter, r *http.Request, token string)
+	// Mcp Model Context Protocol endpoint
+	// (POST /api/mcp)
+	Mcp(w http.ResponseWriter, r *http.Request)
 	// AddressLookup Find a Dutch address by zipcode and house number
 	// (GET /api/onboarding/address_lookup)
 	AddressLookup(w http.ResponseWriter, r *http.Request, params AddressLookupParams)
@@ -5782,6 +6443,21 @@ type ServerInterface interface {
 	// UpdateBookkeepingSettings Update bookkeeping settings
 	// (PATCH /api/v2/{administration_id}/bookkeeping_settings)
 	UpdateBookkeepingSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetConnectionSettings Who can connect
+	// (GET /api/v2/{administration_id}/connection_settings)
+	GetConnectionSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// UpdateConnectionSettings Change who can connect
+	// (PATCH /api/v2/{administration_id}/connection_settings)
+	UpdateConnectionSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListConnections External applications and AI connections
+	// (GET /api/v2/{administration_id}/connections)
+	ListConnections(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateConnection Create an API token or AI connection
+	// (POST /api/v2/{administration_id}/connections)
+	CreateConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// RevokeConnection Revoke a connection
+	// (DELETE /api/v2/{administration_id}/connections/{id})
+	RevokeConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListCustomFields Retrieve custom fields
 	// (GET /api/v2/{administration_id}/custom_fields)
 	ListCustomFields(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -5974,6 +6650,27 @@ type ServerInterface interface {
 	// UpdateUser Change a user's access
 	// (PATCH /api/v2/{administration_id}/users/{id})
 	UpdateUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListWebhooks List all webhooks
+	// (GET /api/v2/{administration_id}/webhooks)
+	ListWebhooks(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateWebhook Create a webhook
+	// (POST /api/v2/{administration_id}/webhooks)
+	CreateWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListWebhookEvents The events webhooks can subscribe to
+	// (GET /api/v2/{administration_id}/webhooks/events)
+	ListWebhookEvents(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteWebhook Delete a webhook
+	// (DELETE /api/v2/{administration_id}/webhooks/{id})
+	DeleteWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetWebhook Retrieve a webhook
+	// (GET /api/v2/{administration_id}/webhooks/{id})
+	GetWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ActivateWebhook Activate a webhook
+	// (PATCH /api/v2/{administration_id}/webhooks/{id}/activate)
+	ActivateWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeactivateWebhook Deactivate a webhook
+	// (PATCH /api/v2/{administration_id}/webhooks/{id}/deactivate)
+	DeactivateWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListWorkflows Retrieve workflows
 	// (GET /api/v2/{administration_id}/workflows)
 	ListWorkflows(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -6106,6 +6803,12 @@ func (_ Unimplemented) GetInvitation(w http.ResponseWriter, r *http.Request, tok
 // AcceptInvitation Accept an invitation
 // (POST /api/invitations/{token}/accept)
 func (_ Unimplemented) AcceptInvitation(w http.ResponseWriter, r *http.Request, token string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Mcp Model Context Protocol endpoint
+// (POST /api/mcp)
+func (_ Unimplemented) Mcp(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6274,6 +6977,36 @@ func (_ Unimplemented) GetBookkeepingSettings(w http.ResponseWriter, r *http.Req
 // UpdateBookkeepingSettings Update bookkeeping settings
 // (PATCH /api/v2/{administration_id}/bookkeeping_settings)
 func (_ Unimplemented) UpdateBookkeepingSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetConnectionSettings Who can connect
+// (GET /api/v2/{administration_id}/connection_settings)
+func (_ Unimplemented) GetConnectionSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateConnectionSettings Change who can connect
+// (PATCH /api/v2/{administration_id}/connection_settings)
+func (_ Unimplemented) UpdateConnectionSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListConnections External applications and AI connections
+// (GET /api/v2/{administration_id}/connections)
+func (_ Unimplemented) ListConnections(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateConnection Create an API token or AI connection
+// (POST /api/v2/{administration_id}/connections)
+func (_ Unimplemented) CreateConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RevokeConnection Revoke a connection
+// (DELETE /api/v2/{administration_id}/connections/{id})
+func (_ Unimplemented) RevokeConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6658,6 +7391,48 @@ func (_ Unimplemented) GetUser(w http.ResponseWriter, r *http.Request, administr
 // UpdateUser Change a user's access
 // (PATCH /api/v2/{administration_id}/users/{id})
 func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListWebhooks List all webhooks
+// (GET /api/v2/{administration_id}/webhooks)
+func (_ Unimplemented) ListWebhooks(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateWebhook Create a webhook
+// (POST /api/v2/{administration_id}/webhooks)
+func (_ Unimplemented) CreateWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListWebhookEvents The events webhooks can subscribe to
+// (GET /api/v2/{administration_id}/webhooks/events)
+func (_ Unimplemented) ListWebhookEvents(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteWebhook Delete a webhook
+// (DELETE /api/v2/{administration_id}/webhooks/{id})
+func (_ Unimplemented) DeleteWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetWebhook Retrieve a webhook
+// (GET /api/v2/{administration_id}/webhooks/{id})
+func (_ Unimplemented) GetWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ActivateWebhook Activate a webhook
+// (PATCH /api/v2/{administration_id}/webhooks/{id}/activate)
+func (_ Unimplemented) ActivateWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeactivateWebhook Deactivate a webhook
+// (PATCH /api/v2/{administration_id}/webhooks/{id}/deactivate)
+func (_ Unimplemented) DeactivateWebhook(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7067,6 +7842,20 @@ func (siw *ServerInterfaceWrapper) AcceptInvitation(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AcceptInvitation(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Mcp operation middleware
+func (siw *ServerInterfaceWrapper) Mcp(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Mcp(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7742,6 +8531,145 @@ func (siw *ServerInterfaceWrapper) UpdateBookkeepingSettings(w http.ResponseWrit
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateBookkeepingSettings(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetConnectionSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetConnectionSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetConnectionSettings(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateConnectionSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateConnectionSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateConnectionSettings(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListConnections operation middleware
+func (siw *ServerInterfaceWrapper) ListConnections(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListConnections(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateConnection operation middleware
+func (siw *ServerInterfaceWrapper) CreateConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateConnection(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeConnection operation middleware
+func (siw *ServerInterfaceWrapper) RevokeConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeConnection(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9837,6 +10765,224 @@ func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// ListWebhooks operation middleware
+func (siw *ServerInterfaceWrapper) ListWebhooks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWebhooks(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWebhook operation middleware
+func (siw *ServerInterfaceWrapper) CreateWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWebhook(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWebhookEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListWebhookEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWebhookEvents(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteWebhook operation middleware
+func (siw *ServerInterfaceWrapper) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteWebhook(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWebhook operation middleware
+func (siw *ServerInterfaceWrapper) GetWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWebhook(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ActivateWebhook operation middleware
+func (siw *ServerInterfaceWrapper) ActivateWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ActivateWebhook(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeactivateWebhook operation middleware
+func (siw *ServerInterfaceWrapper) DeactivateWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeactivateWebhook(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListWorkflows operation middleware
 func (siw *ServerInterfaceWrapper) ListWorkflows(w http.ResponseWriter, r *http.Request) {
 
@@ -10388,6 +11534,45 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/user/two_factor/recovery_codes", wrapper.NewRecoveryCodes)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/connection_settings", wrapper.GetConnectionSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/connection_settings", wrapper.UpdateConnectionSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/connections", wrapper.ListConnections)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/connections", wrapper.CreateConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/connections/{id}", wrapper.RevokeConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/webhooks", wrapper.ListWebhooks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/webhooks", wrapper.CreateWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/webhooks/events", wrapper.ListWebhookEvents)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/webhooks/{id}", wrapper.DeleteWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/webhooks/{id}", wrapper.GetWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/webhooks/{id}/activate", wrapper.ActivateWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/webhooks/{id}/deactivate", wrapper.DeactivateWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/mcp", wrapper.Mcp)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/onboarding/options", wrapper.OnboardingOptions)

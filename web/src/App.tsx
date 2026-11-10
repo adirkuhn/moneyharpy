@@ -25,8 +25,10 @@ import { PrivacyPage } from './management/PrivacyPage'
 import { SupportAccessPage } from './management/SupportAccessPage'
 import { UserFormPage } from './management/UserFormPage'
 import { InvitationPage } from './auth/InvitationPage'
+import { ConnectionFormPage } from './integrations/ConnectionFormPage'
+import { IntegrationsPage } from './integrations/IntegrationsPage'
+import { WebhookFormPage, WebhookPage } from './integrations/WebhookPages'
 import { TwoFactorSignInPage } from './auth/TwoFactorSignInPage'
-import { PlaceholderSettingsPage } from './settings/PlaceholderSettingsPage'
 import { BankSettingsPage } from './banking/BankSettingsPage'
 import { BookingRuleFormPage } from './banking/BookingRuleFormPage'
 import { FinancialAccountPage } from './banking/FinancialAccountPage'
@@ -68,7 +70,8 @@ export function AppRoutes() {
           <Route path="invoices_and_estimates" element={<InvoicesSettingsPage />} />
           <Route path="bookkeeping" element={<BookkeepingSettingsPage />} />
           <Route path="bank" element={<BankSettingsPage />} />
-          <Route path=":section" element={<PlaceholderSettingsPage />} />
+          <Route path="connections" element={<IntegrationsPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route path="/:administrationId/custom_fields" element={<SettingsLayout />}>
           <Route path="new" element={<CustomFieldFormPage />} />
@@ -82,6 +85,13 @@ export function AppRoutes() {
           <Route path="new" element={<DocumentStyleFormPage />} />
           <Route path=":styleId" element={<Navigate to="edit" replace />} />
           <Route path=":styleId/edit" element={<DocumentStyleFormPage />} />
+        </Route>
+        <Route path="/:administrationId/connections" element={<SettingsLayout />}>
+          <Route path="new" element={<ConnectionFormPage />} />
+        </Route>
+        <Route path="/:administrationId/webhooks" element={<SettingsLayout />}>
+          <Route path="new" element={<WebhookFormPage />} />
+          <Route path=":webhookId" element={<WebhookPage />} />
         </Route>
         <Route path="/:administrationId/users" element={<SettingsLayout />}>
           <Route path=":userId" element={<UserFormPage />} />

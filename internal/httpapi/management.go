@@ -78,6 +78,7 @@ func (s *server) authorize(spec *openapi3.T, rules map[string][]administration.P
 				next.ServeHTTP(w, r)
 				return
 			}
+			r = r.WithContext(context.WithValue(r.Context(), routeKey, routeInfo{op: route.Operation.OperationID, params: params}))
 			perms, ruled := rules[route.Operation.OperationID]
 			u, signedIn := userFrom(r.Context())
 			if !ruled || !signedIn {
@@ -92,6 +93,19 @@ func (s *server) authorize(spec *openapi3.T, rules map[string][]administration.P
 			if err != nil {
 				next.ServeHTTP(w, r) // The contract answers malformed ids.
 				return
+			}
+			if g, ok := grantFrom(r.Context()); ok {
+				switch {
+				case admin != g.AdministrationID:
+					s.fail(w, r, administration.ErrNotFound)
+					return
+				case g.ReadOnly && r.Method != http.MethodGet:
+					writeError(w, http.StatusForbidden, "This connection may only read")
+					return
+				case !g.Allows(perms...):
+					writeError(w, http.StatusForbidden, "This connection has no scope for this")
+					return
+				}
 			}
 			if err := s.allowed(r.Context(), admin, u.ID, perms); err != nil {
 				s.fail(w, r, err)

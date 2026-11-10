@@ -88,6 +88,7 @@ function SettingsForm() {
       lm2_app: form.lm2_app,
       kvk_enabled: form.kvk_enabled,
       address_lookup_enabled: form.address_lookup_enabled,
+      webhooks_allow_local: form.webhooks_allow_local,
       ...(kvkKey ? { kvk_api_key: kvkKey } : {}),
       smtp_enabled: form.smtp_enabled,
       smtp_host: form.smtp_host,
@@ -108,7 +109,7 @@ function SettingsForm() {
   }
 
   const errors = formErrors(save.error, labels)
-  const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'address_lookup_enabled' | 'smtp_enabled' | 'storage_enabled' | 'storage_path_style', label: string, help?: string) => (
+  const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'address_lookup_enabled' | 'webhooks_allow_local' | 'smtp_enabled' | 'storage_enabled' | 'storage_path_style', label: string, help?: string) => (
     <CheckboxInput label={label} help={help} checked={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />
   )
   const text = (
@@ -156,6 +157,7 @@ function SettingsForm() {
         </FormSection>
         <FormSection title={t('instance.addressTitle')}>
           {check('address_lookup_enabled', t('instance.addressEnable'), t('instance.addressHint'))}
+          {check('webhooks_allow_local', t('instance.webhooksLocal'), t('instance.webhooksLocalHint'))}
         </FormSection>
         <FormSection title={t('instance.smtpTitle')}>
           {check('smtp_enabled', t('instance.smtpEnable'), t('instance.smtpHint'))}

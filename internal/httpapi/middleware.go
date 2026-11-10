@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -35,7 +36,32 @@ type contextKey int
 const (
 	userKey contextKey = iota
 	sessionKey
+	grantKey
+	routeKey
 )
+
+// routeInfo is the contract operation a request matched.
+type routeInfo struct {
+	op     string
+	params map[string]string
+}
+
+func grantFrom(ctx context.Context) (connections.Grant, bool) {
+	g, ok := ctx.Value(grantKey).(connections.Grant)
+	return g, ok
+}
+
+// limitGrants keeps connection tokens to the administration API and MCP;
+// they cannot reach accounts, instance settings or sign-in.
+func (s *server) limitGrants(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := grantFrom(r.Context()); ok && !strings.HasPrefix(r.URL.Path, "/api/v2/") && r.URL.Path != "/api/mcp" {
+			writeError(w, http.StatusForbidden, "Connection tokens only work on the API of their administration")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
 
 func userFrom(ctx context.Context) (identity.User, bool) {
 	u, ok := ctx.Value(userKey).(identity.User)
@@ -163,7 +189,15 @@ func (s *server) authenticate(next http.Handler) http.Handler {
 			user identity.User
 			err  = identity.ErrUnauthenticated
 		)
-		if bearer, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok {
+		if bearer, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok && strings.HasPrefix(bearer, connections.TokenPrefix) {
+			var g connections.Grant
+			if g, err = s.deps.Connections.Authenticate(ctx, bearer); err == nil {
+				user = identity.User{ID: g.UserID, Email: g.UserEmail, Name: g.UserName}
+				ctx = context.WithValue(ctx, grantKey, g)
+			} else if errors.Is(err, connections.ErrInvalidToken) {
+				err = identity.ErrUnauthenticated
+			}
+		} else if ok {
 			user, err = s.deps.Identity.AuthenticateToken(ctx, bearer)
 		} else if c, cerr := r.Cookie(sessionCookie); cerr == nil {
 			if user, err = s.deps.Identity.Authenticate(ctx, c.Value); err == nil {

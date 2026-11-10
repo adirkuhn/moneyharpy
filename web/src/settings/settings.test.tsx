@@ -61,11 +61,10 @@ describe('the settings area', () => {
     expect(screen.getByRole('region', { name: 'Sender addresses' })).toHaveAttribute('id', 'sender-addresses')
   })
 
-  it('keeps sections without a feature as clear placeholders', async () => {
+  it('answers an unknown section with not found', async () => {
     server.use(...loaded())
-    renderAt('/11/settings/connections')
-    expect(await screen.findByRole('heading', { name: 'Integrations', level: 1 })).toBeInTheDocument()
-    expect(screen.getByText('This section is not available yet.')).toBeInTheDocument()
+    renderAt('/11/settings/spaceship')
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
   })
 
   it('reports an administration the user cannot open', async () => {

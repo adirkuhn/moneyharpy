@@ -24,6 +24,7 @@ test.beforeAll(async ({ baseURL }) => {
       smtp_enabled: true, smtp_host: 'mailpit', smtp_port: 1025, smtp_from: 'books@example.com', smtp_security: 'none',
       storage_enabled: true, storage_endpoint: 'http://storage:8333', storage_region: 'us-east-1', storage_bucket: 'moneyharpy',
       storage_access_key: 's3-test', storage_secret_key: 's3-test-secret', storage_path_style: true,
+      webhooks_allow_local: true,
     },
   })
   expect(saved.status()).toBe(200)
@@ -522,4 +523,59 @@ test('owners invite users with limited rights and require two-step verification'
   await page.getByRole('button', { name: 'Delete permanently' }).click()
   await expect(page.getByRole('heading', { name: 'Select an administration' })).toBeVisible()
   await expect(page.getByText('Team Co')).toHaveCount(0)
+})
+
+
+test('external applications, AI assistants and webhooks connect to one administration', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Connect Co')
+  const uri = new URL(page.url()).pathname
+  const api = `/api/v2${uri}`
+  await page.goto(`${uri}/settings/connections`)
+  await expect(page.getByRole('heading', { name: 'Integrations', level: 1 })).toBeVisible()
+  await expect(page.getByText('Coming later')).toHaveCount(4)
+
+  // A read-only API token with only the bank scope.
+  await page.getByRole('link', { name: 'New API token' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Shop')
+  await page.getByLabel('Access').selectOption('read')
+  await page.getByRole('checkbox', { name: 'Bank', exact: true }).check()
+  await page.getByRole('button', { name: 'Create' }).click()
+  const token = (await page.getByRole('status').locator('code').textContent()) ?? ''
+  expect(token).toMatch(/^mhc_/)
+  const app = await playwrightRequest.newContext({ baseURL: new URL(page.url()).origin, extraHTTPHeaders: { Authorization: `Bearer ${token}`, ...randomClient() } })
+  expect((await app.get(`${api}/financial_mutations`)).status()).toBe(200)
+  expect((await app.get(`${api}/tax_rates`)).status()).toBe(403)
+  expect((await app.post(`${api}/financial_accounts`, { data: { financial_account: { name: 'Nope' } } })).status()).toBe(403)
+  await app.dispose()
+
+  // An AI connection speaks MCP.
+  await page.goto(`${uri}/connections/new?kind=ai`)
+  await page.getByLabel('Name', { exact: true }).fill('Assistant')
+  await page.getByRole('checkbox', { name: 'Settings', exact: true }).check()
+  await page.getByRole('button', { name: 'Create' }).click()
+  const aiToken = (await page.getByRole('status').locator('code').textContent()) ?? ''
+  const assistant = await playwrightRequest.newContext({ baseURL: new URL(page.url()).origin, extraHTTPHeaders: { Authorization: `Bearer ${aiToken}`, ...randomClient() } })
+  const listed = await (await assistant.post('/api/mcp', { data: { jsonrpc: '2.0', id: 1, method: 'tools/list' } })).json()
+  const names = listed.result.tools.map((t: { name: string }) => t.name)
+  expect(names).toContain('listTaxRates')
+  const called = await (await assistant.post('/api/mcp', { data: { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'listTaxRates', arguments: {} } } })).json()
+  expect(called.result.isError).toBe(false)
+  expect(called.result.content[0].text).toContain('"tax_rate_type":"sales_invoice"')
+  await assistant.dispose()
+
+  // A webhook receives a signed notification when a VAT rate is added.
+  await page.goto(`${uri}/webhooks/new`)
+  await page.getByLabel('URL').fill('http://app:8080/healthz')
+  await page.getByRole('checkbox', { name: 'Everything about VAT rates' }).check()
+  await page.getByRole('button', { name: 'Create webhook' }).click()
+  await expect(page.getByText('Copy this signing secret now.')).toBeVisible()
+  expect((await page.request.post(`${api}/tax_rates`, { data: { tax_rate: { name: 'Hooked 7%', percentage: '7', tax_rate_type: 'sales_invoice' } } })).status()).toBe(201)
+  await expect.poll(async () => {
+    const hooks = await (await page.request.get(`${api}/webhooks`)).json()
+    return hooks[0]?.last_http_status
+  }, { timeout: 20000 }).toBe(200)
+  await page.goto(`${uri}/settings/connections`)
+  await expect(page.getByRole('table', { name: 'Webhooks' })).toContainText('http://app:8080/healthz')
+  await expect(page.getByRole('table', { name: 'External applications' })).toContainText('Shop')
 })

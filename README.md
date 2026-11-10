@@ -101,6 +101,27 @@ owners can require it for an administration. Owners can also give this
 installation's admins time-limited support access, and delete the
 administration with all its data.
 
+## Integrations
+
+Settings → Integrations connects other software to one administration:
+
+- **API tokens** (`mhc_…`) act for the user who made them, in that
+  administration only, limited to Moneybird's scopes and, if chosen, to
+  reading. Owners can always make them; other users when "users may create
+  connections" is on, and never with more than their own rights.
+- **AI connections** use the same tokens over MCP at `/api/mcp` (streamable
+  HTTP, stateless JSON). The tools are the API operations the connection
+  may use, run through the same checks as any API call.
+- **Webhooks** follow Moneybird: subscribe to events or groups, receive
+  `{administration_id, webhook_id, webhook_token, entity_type, entity_id,
+  state, action, entity}` signed in `Moneybird-Signature: t=…,v1=…`
+  (HMAC-SHA256 of `t.body`), retried 10 times. Webhooks need public HTTPS
+  addresses; an instance setting allows plain HTTP and local addresses for
+  development.
+
+Payment services (Mollie, PayPal, SEPA direct debit, Online incasso) wait
+for invoices.
+
 ## Bank
 
 Transactions come in from statement files: CAMT.052, CAMT.053, CAMT.054 or
