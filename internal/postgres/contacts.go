@@ -241,38 +241,12 @@ func (s *ContactStore) DeletePerson(ctx context.Context, admin, contact, id reso
 	})
 }
 
-// CreateNote implements contacts.Store.
-func (s *ContactStore) CreateNote(ctx context.Context, n contacts.Note) error {
-	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
-		q := s.q.WithTx(tx)
-		if err := q.InsertNote(ctx, sqlc.InsertNoteParams{
-			ID: int64(n.ID), AdministrationID: int64(n.AdministrationID), EntityID: int64(n.EntityID), EntityType: n.EntityType,
-			UserID: pgtype.Int8{Int64: int64(n.UserID), Valid: n.UserID != 0}, AssigneeID: optionalID(n.AssigneeID), Todo: n.Todo, Note: n.Note,
-			CompletedAt: optionalTime(n.CompletedAt), CompletedByID: optionalID(n.CompletedByID), CreatedAt: timestamp(n.CreatedAt), UpdatedAt: timestamp(n.UpdatedAt),
-		}); err != nil {
-			return err
-		}
-		return q.TouchContact(ctx, sqlc.TouchContactParams{AdministrationID: int64(n.AdministrationID), ID: int64(n.EntityID), UpdatedAt: timestamp(n.CreatedAt)})
-	})
+// TouchContact implements contacts.Store.
+func (s *ContactStore) TouchContact(ctx context.Context, admin, id resource.ID, at time.Time) error {
+	return s.q.TouchContact(ctx, sqlc.TouchContactParams{AdministrationID: int64(admin), ID: int64(id), UpdatedAt: timestamp(at)})
 }
 
-// DeleteNote implements contacts.Store.
-func (s *ContactStore) DeleteNote(ctx context.Context, admin, entity, id resource.ID, at time.Time) error {
-	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
-		q := s.q.WithTx(tx)
-		if err := q.DeleteNote(ctx, sqlc.DeleteNoteParams{AdministrationID: int64(admin), EntityID: int64(entity), ID: int64(id)}); err != nil {
-			return err
-		}
-		return q.TouchContact(ctx, sqlc.TouchContactParams{AdministrationID: int64(admin), ID: int64(entity), UpdatedAt: timestamp(at)})
-	})
-}
-
-// IsMember implements contacts.Store.
-func (s *ContactStore) IsMember(ctx context.Context, admin, user resource.ID) (bool, error) {
-	return s.q.IsMember(ctx, sqlc.IsMemberParams{AdministrationID: int64(admin), UserID: int64(user)})
-}
-
-// complete converts rows and loads their people, custom fields and notes.
+// complete converts rows and loads their people and custom fields.
 func (s *ContactStore) complete(ctx context.Context, admin resource.ID, rows []sqlc.Contact) ([]contacts.Contact, error) {
 	out := make([]contacts.Contact, len(rows))
 	if len(rows) == 0 {
@@ -303,25 +277,6 @@ func (s *ContactStore) complete(ctx context.Context, admin resource.ID, rows []s
 	for _, v := range values {
 		c := &out[index[v.ContactID]]
 		c.CustomFields = append(c.CustomFields, contacts.FieldValue{FieldID: resource.ID(v.ID), Name: v.Name, Value: v.Value})
-	}
-	notes, err := s.q.NotesOf(ctx, sqlc.NotesOfParams{AdministrationID: int64(admin), Ids: ids})
-	if err != nil {
-		return nil, err
-	}
-	for _, n := range notes {
-		i, ok := index[n.EntityID]
-		if !ok || n.EntityType != contacts.NoteEntityType {
-			continue
-		}
-		note := contacts.Note{
-			ID: resource.ID(n.ID), AdministrationID: resource.ID(n.AdministrationID), EntityID: resource.ID(n.EntityID), EntityType: n.EntityType,
-			AssigneeID: idOf(n.AssigneeID), Todo: n.Todo, Note: n.Note, CompletedAt: timeOf(n.CompletedAt), CompletedByID: idOf(n.CompletedByID),
-			CreatedAt: n.CreatedAt.Time, UpdatedAt: n.UpdatedAt.Time,
-		}
-		if n.UserID.Valid {
-			note.UserID = resource.ID(n.UserID.Int64)
-		}
-		out[i].Notes = append(out[i].Notes, note)
 	}
 	return out, nil
 }

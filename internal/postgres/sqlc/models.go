@@ -64,6 +64,34 @@ type ApiToken struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type Attachment struct {
+	ID               int64
+	AdministrationID int64
+	EntityType       string
+	EntityID         int64
+	Filename         string
+	ContentType      string
+	Size             int64
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type BankJournalEntry struct {
+	ID                 int64
+	AdministrationID   int64
+	DocumentType       string
+	DocumentID         int64
+	Date               pgtype.Date
+	LedgerAccountID    int64
+	ContactID          pgtype.Int8
+	ProjectID          pgtype.Int8
+	TaxRateID          pgtype.Int8
+	FinancialAccountID int64
+	Amount             int64
+	Description        string
+	RowOrder           int32
+}
+
 type BookingRule struct {
 	ID                 int64
 	AdministrationID   int64
@@ -237,6 +265,16 @@ type FinancialStatement struct {
 	UpdatedAt          pgtype.Timestamptz
 }
 
+type GeneralJournalDocument struct {
+	ID               int64
+	AdministrationID int64
+	Reference        string
+	Date             pgtype.Date
+	JournalType      string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type Identity struct {
 	ID                     int64
 	AdministrationID       int64
@@ -264,6 +302,24 @@ type IdentityCustomFieldValue struct {
 	IdentityID    int64
 	CustomFieldID int64
 	Value         string
+}
+
+type JournalEntry struct {
+	ID                 int64
+	AdministrationID   int64
+	DocumentType       string
+	DocumentID         int64
+	Date               pgtype.Date
+	LedgerAccountID    int64
+	ContactID          pgtype.Int8
+	ProjectID          pgtype.Int8
+	TaxRateID          pgtype.Int8
+	FinancialAccountID pgtype.Int8
+	Amount             int64
+	Description        string
+	RowOrder           int32
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
 }
 
 type LedgerAccount struct {
@@ -294,6 +350,22 @@ type LedgerAccountBooking struct {
 	BookingRuleID       pgtype.Int8
 	CreatedAt           pgtype.Timestamptz
 	UpdatedAt           pgtype.Timestamptz
+}
+
+type LedgerEntry struct {
+	ID                 int64
+	AdministrationID   int64
+	DocumentType       string
+	DocumentID         int64
+	Date               pgtype.Date
+	LedgerAccountID    int64
+	ContactID          pgtype.Int8
+	ProjectID          pgtype.Int8
+	TaxRateID          pgtype.Int8
+	FinancialAccountID pgtype.Int8
+	Amount             int64
+	Description        string
+	RowOrder           int32
 }
 
 type LoginChallenge struct {

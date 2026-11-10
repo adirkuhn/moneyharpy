@@ -289,7 +289,8 @@ func isFileUpload(method, path string) bool {
 	case http.MethodPut:
 		return strings.Contains(path, "/document_styles/") && (strings.HasSuffix(path, "/logo") || strings.HasSuffix(path, "/background"))
 	case http.MethodPost:
-		return strings.Contains(path, "/financial_accounts/") && strings.HasSuffix(path, "/import") || strings.HasSuffix(path, "/financial_statements")
+		return strings.Contains(path, "/financial_accounts/") && strings.HasSuffix(path, "/import") || strings.HasSuffix(path, "/financial_statements") ||
+			strings.HasSuffix(path, "/attachments") || strings.HasSuffix(path, "/attachment")
 	case http.MethodPatch:
 		return strings.Contains(path, "/financial_statements/")
 	}

@@ -103,6 +103,8 @@ const (
 	TypeWebhook            Type = "webhooks"
 	// Contacts.
 	TypeContact Type = "contacts"
+	// Journal.
+	TypeGeneralJournalDocument Type = "documents/general_journal_documents"
 )
 
 // Ref locates one resource.

@@ -1212,6 +1212,233 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/documents/general_journal_documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all journal entries
+         * @description Journal entries made by hand (general journal documents), newest first unless sort is date_asc. Filter terms: period (this year unless a filter is given), reference (several separated by |), contact_id, ledger_account_id, updated_after, attachment (all, with, without); state and recurring are accepted and match every entry. Paged with a Link header and X-Total-Count.
+         */
+        get: operations["listGeneralJournalDocuments"];
+        put?: never;
+        /**
+         * Create a journal entry
+         * @description Debit and credit must be equal. Rows cannot book on the debtors or creditors, which invoices settle, nor in the locked period.
+         */
+        post: operations["createGeneralJournalDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/general_journal_documents/synchronization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /** List all ids and versions */
+        get: operations["listGeneralJournalDocumentVersions"];
+        put?: never;
+        /** Fetch journal entries with given ids */
+        post: operations["fetchGeneralJournalDocuments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/general_journal_documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get a journal entry */
+        get: operations["getGeneralJournalDocument"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a journal entry
+         * @description Not in the locked period.
+         */
+        delete: operations["deleteGeneralJournalDocument"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a journal entry
+         * @description Rows with an id change, rows with _destroy go, rows without an id are added.
+         */
+        patch: operations["updateGeneralJournalDocument"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/general_journal_documents/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add note to a journal entry */
+        post: operations["createGeneralJournalDocumentNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a note from a journal entry */
+        delete: operations["deleteGeneralJournalDocumentNote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add attachment to a journal entry
+         * @description A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+         */
+        post: operations["createGeneralJournalDocumentAttachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an attachment from a journal entry */
+        delete: operations["deleteGeneralJournalDocumentAttachment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download an attachment
+         * @description Answers with the file itself; Moneybird redirects to it instead.
+         */
+        get: operations["downloadGeneralJournalDocumentAttachment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/journal_entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get journal entries report
+         * @description Every booking in the period, oldest first, on a ledger account, for a contact or for a project; one of them is required. account_type needs a contact_id or project_id. Bank transactions post too: the whole amount on the account, each booking against its category, and the part not booked yet against unprocessed transactions.
+         */
+        get: operations["getJournalEntriesReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/general_ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get general ledger report
+         * @description Every ledger account with a balance or bookings: the debit and credit sums in the period and the balance at its start and end. Profit and loss accounts start each calendar year at zero. With granularity, periods repeats this per month, quarter or year.
+         */
+        get: operations["getGeneralLedgerReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/booking_rules": {
         parameters: {
             query?: never;
@@ -2968,6 +3195,72 @@ export interface components {
                 assignee_id?: components["schemas"]["FlexibleIdentifier"];
             };
         };
+        /** @description A Moneybird general journal document with MoneyHarpy extensions. */
+        GeneralJournalDocument: components["schemas"]["general_journal_document_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        GeneralJournalDocumentRequest: {
+            general_journal_document: {
+                reference?: string;
+                /** Format: date */
+                date?: string;
+                /** @enum {string} */
+                journal_type?: "fiscal_year_ending" | "";
+                /** @description An array of rows, or an object of rows keyed by position, as Moneybird accepts. */
+                general_journal_document_entries_attributes?: components["schemas"]["GeneralJournalDocumentRowInput"][] | {
+                    [key: string]: components["schemas"]["GeneralJournalDocumentRowInput"];
+                };
+            };
+            /** @description Accepted for compatibility. */
+            all_taxes?: components["schemas"]["FlexibleBoolean"];
+        };
+        GeneralJournalDocumentRowInput: {
+            id?: components["schemas"]["FlexibleIdentifier"];
+            ledger_account_id?: components["schemas"]["FlexibleIdentifier"];
+            contact_id?: components["schemas"]["FlexibleIdentifier"];
+            project_id?: components["schemas"]["FlexibleIdentifier"];
+            /** @description Accepted for compatibility; journal entries post no VAT of their own. */
+            tax_rate_id?: components["schemas"]["FlexibleIdentifier"];
+            debit?: components["schemas"]["Money"];
+            credit?: components["schemas"]["Money"];
+            description?: string;
+            row_order?: number | string;
+            _destroy?: components["schemas"]["FlexibleBoolean"];
+        };
+        /** @description One booking in the journal. Debits are positive amounts, credits negative. */
+        JournalEntry: {
+            id: components["schemas"]["Identifier"];
+            /** Format: date */
+            date: string;
+            /** @enum {string} */
+            document_type: "FinancialMutation" | "GeneralJournalDocument" | "SalesInvoice" | "ExternalSalesInvoice" | "Payment";
+            document_id: components["schemas"]["Identifier"];
+            ledger_account_id: components["schemas"]["Identifier"];
+            project_id?: components["schemas"]["identifier_nullable"];
+            contact_id?: components["schemas"]["identifier_nullable"];
+            tax_rate_id?: components["schemas"]["identifier_nullable"];
+            financial_account_id?: components["schemas"]["identifier_nullable"];
+            amount: string;
+            description?: string | null;
+        };
+        LedgerAccountValues: {
+            ledger_accounts: {
+                ledger_account_id: components["schemas"]["Identifier"];
+                value: string;
+            }[];
+        };
+        GeneralLedgerPeriod: {
+            /** @description The part of the report's period, as yyyymmdd..yyyymmdd. */
+            period?: string;
+            debit_sums: components["schemas"]["LedgerAccountValues"];
+            credit_sums: components["schemas"]["LedgerAccountValues"];
+            start_balance: components["schemas"]["LedgerAccountValues"];
+            final_balance: components["schemas"]["LedgerAccountValues"];
+        };
+        GeneralLedgerReport: components["schemas"]["GeneralLedgerPeriod"] & {
+            periods?: components["schemas"]["GeneralLedgerPeriod"][];
+        };
         BookingRuleRequest: {
             booking_rule: {
                 name?: string;
@@ -4665,6 +4958,19 @@ export interface components {
         };
     };
     responses: {
+        /** @description A page of journal entries */
+        GeneralJournalDocumentPage: {
+            headers: {
+                /** @description RFC 8288 links to the first, prev, next and last pages. */
+                Link?: string;
+                /** @description The number of journal entries selected in all. MoneyHarpy extension. */
+                "X-Total-Count"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["GeneralJournalDocument"][];
+            };
+        };
         /** @description A page of contacts */
         ContactPage: {
             headers: {
@@ -4762,6 +5068,10 @@ export interface components {
     parameters: {
         administration_id: components["schemas"]["Identifier"];
         id: components["schemas"]["Identifier"];
+        /** @description Comma-separated key:value terms. */
+        document_filter: string;
+        /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+        report_period: string;
         contact_id: components["schemas"]["Identifier"];
         /** @description The page to return, starting at 1. */
         page: string;
@@ -7344,6 +7654,446 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listGeneralJournalDocuments: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+                sort?: "date_desc" | "date_asc";
+                /** @description Accepted for compatibility; journal entries are never new. */
+                exclude_new_general_journal_documents?: "true" | "false";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GeneralJournalDocumentPage"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createGeneralJournalDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GeneralJournalDocumentRequest"];
+            };
+        };
+        responses: {
+            /** @description The created journal entry */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeneralJournalDocument"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listGeneralJournalDocumentVersions: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ids and versions of the journal entries the filter selects */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SynchronizationItem"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    fetchGeneralJournalDocuments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SynchronizationRequest"];
+            };
+        };
+        responses: {
+            /** @description The journal entries with these ids */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeneralJournalDocument"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getGeneralJournalDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The journal entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeneralJournalDocument"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteGeneralJournalDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The journal entry is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateGeneralJournalDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GeneralJournalDocumentRequest"];
+            };
+        };
+        responses: {
+            /** @description The journal entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeneralJournalDocument"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createGeneralJournalDocumentNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteRequest"];
+            };
+        };
+        responses: {
+            /** @description The created note */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["note_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteGeneralJournalDocumentNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The note is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createGeneralJournalDocumentAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The attachment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["attachment_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteGeneralJournalDocumentAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The attachment is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadGeneralJournalDocumentAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getJournalEntriesReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+                ledger_account_id?: string;
+                /** @description A contact's id, or null for entries without a contact. */
+                contact_id?: string;
+                /** @description A project's id, or null for entries without a project. */
+                project_id?: string;
+                account_type?: "non_current_assets" | "current_assets" | "equity" | "provisions" | "non_current_liabilities" | "current_liabilities" | "revenue" | "direct_costs" | "expenses" | "other_income_expenses" | "other" | "temporary";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The journal entries */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of entries selected in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntry"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getGeneralLedgerReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                granularity?: "month" | "quarter" | "year";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The general ledger */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeneralLedgerReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };
     };

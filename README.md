@@ -110,6 +110,21 @@ debit mandate needs its IBAN, holder, reference and date. Members with the
 sales invoices, documents or estimates permission work with contacts. A
 contact that documents refer to cannot be deleted; archive it instead.
 
+## Journal
+
+Everything that changes the books posts to one journal in double entry:
+debits positive, credits negative, every document's entries adding up to
+zero. Bank transactions post through a view, so they never run out of step:
+the whole amount on the account's category, each booking against its
+category, and the part not booked yet against unprocessed transactions.
+Journal entries made by hand (Moneybird's general journal documents, under
+`/api/v2/{administration_id}/documents/general_journal_documents`) post their
+rows, refuse the debtors and creditors that only invoices settle, and keep
+out of the locked period. `GET /reports/general_ledger` and
+`GET /reports/journal_entries` read the whole journal, as do the trial
+balance and a category's bookings under Reports. Notes and attachments are
+kept per record, so invoices reuse them.
+
 ## Users and permissions
 
 Each user of an administration is an owner, employee or accountant, with

@@ -711,3 +711,96 @@ DELETE FROM notes WHERE administration_id = $1 AND entity_id = $2;
 
 -- name: IsMember :one
 SELECT EXISTS (SELECT 1 FROM administration_members WHERE administration_id = $1 AND user_id = $2);
+
+-- name: InsertJournalEntry :exec
+INSERT INTO journal_entries (id, administration_id, document_type, document_id, date, ledger_account_id, contact_id, project_id, tax_rate_id,
+    financial_account_id, amount, description, row_order, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);
+
+-- name: DeleteJournalEntriesOf :exec
+DELETE FROM journal_entries WHERE administration_id = $1 AND document_type = $2 AND document_id = $3;
+
+-- name: JournalEntriesOf :many
+SELECT * FROM journal_entries
+WHERE administration_id = @administration_id AND document_type = @document_type AND document_id = ANY(@ids::bigint[])
+ORDER BY row_order, id;
+
+-- name: ListGeneralJournalDocuments :many
+SELECT sqlc.embed(d), count(*) OVER () AS total
+FROM general_journal_documents d
+WHERE d.administration_id = @administration_id
+  AND (sqlc.narg(from_date)::date IS NULL OR d.date >= sqlc.narg(from_date))
+  AND (sqlc.narg(to_date)::date IS NULL OR d.date <= sqlc.narg(to_date))
+  AND (@reference::text = '' OR d.reference = ANY(string_to_array(@reference, '|')))
+  AND (sqlc.narg(updated_after)::timestamptz IS NULL OR d.updated_at > sqlc.narg(updated_after))
+  AND (sqlc.narg(contact_id)::bigint IS NULL OR EXISTS (
+      SELECT 1 FROM journal_entries e WHERE e.document_id = d.id AND e.contact_id = sqlc.narg(contact_id)))
+  AND (sqlc.narg(ledger_account_id)::bigint IS NULL OR EXISTS (
+      SELECT 1 FROM journal_entries e WHERE e.document_id = d.id AND e.ledger_account_id = sqlc.narg(ledger_account_id)))
+  AND (@attachment::text = '' OR (@attachment = 'with') = EXISTS (
+      SELECT 1 FROM attachments a WHERE a.entity_id = d.id AND a.entity_type = 'GeneralJournalDocument'))
+ORDER BY CASE WHEN @ascending::boolean THEN d.date END ASC, CASE WHEN NOT @ascending::boolean THEN d.date END DESC, d.id
+LIMIT sqlc.narg(max_rows) OFFSET @skip;
+
+-- name: GeneralJournalDocumentByID :one
+SELECT * FROM general_journal_documents WHERE administration_id = $1 AND id = $2;
+
+-- name: GeneralJournalDocumentsByIDs :many
+SELECT * FROM general_journal_documents WHERE administration_id = @administration_id AND id = ANY(@ids::bigint[]) ORDER BY id;
+
+-- name: InsertGeneralJournalDocument :exec
+INSERT INTO general_journal_documents (id, administration_id, reference, date, journal_type, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7);
+
+-- name: UpdateGeneralJournalDocument :exec
+UPDATE general_journal_documents SET reference = $3, date = $4, journal_type = $5, updated_at = $6
+WHERE administration_id = $1 AND id = $2;
+
+-- name: TouchGeneralJournalDocument :exec
+UPDATE general_journal_documents SET updated_at = $3 WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteGeneralJournalDocument :exec
+DELETE FROM general_journal_documents WHERE administration_id = $1 AND id = $2;
+
+-- name: ListLedgerEntries :many
+SELECT e.id, e.administration_id, e.document_type, e.document_id, e.date, e.ledger_account_id, e.contact_id, e.project_id,
+       e.tax_rate_id, e.financial_account_id, e.amount, e.description, e.row_order, count(*) OVER () AS total
+FROM ledger_entries e JOIN ledger_accounts l ON l.id = e.ledger_account_id
+WHERE e.administration_id = @administration_id AND e.date >= @from_date AND e.date <= @to_date
+  AND (sqlc.narg(ledger_account_id)::bigint IS NULL OR e.ledger_account_id = sqlc.narg(ledger_account_id))
+  AND (sqlc.narg(contact_id)::bigint IS NULL OR e.contact_id = sqlc.narg(contact_id))
+  AND (NOT @no_contact::boolean OR e.contact_id IS NULL)
+  AND (sqlc.narg(project_id)::bigint IS NULL OR e.project_id = sqlc.narg(project_id))
+  AND (NOT @no_project::boolean OR e.project_id IS NULL)
+  AND (@account_type::text = '' OR l.account_type = @account_type)
+ORDER BY e.date, e.document_id, e.row_order, e.id
+LIMIT @max_rows OFFSET @skip;
+
+-- name: LedgerSums :many
+-- Profit and loss categories start each calendar year at zero; balance
+-- sheet categories carry their balance over.
+SELECT e.ledger_account_id,
+       coalesce(sum(e.amount) FILTER (WHERE e.date >= @from_date AND e.amount > 0), 0)::bigint AS debit,
+       coalesce(-sum(e.amount) FILTER (WHERE e.date >= @from_date AND e.amount < 0), 0)::bigint AS credit,
+       coalesce(sum(e.amount) FILTER (WHERE e.date < @from_date AND (
+           l.account_type IN ('non_current_assets', 'current_assets', 'equity', 'provisions', 'non_current_liabilities', 'current_liabilities')
+           OR e.date >= @year_start)), 0)::bigint AS start_balance
+FROM ledger_entries e JOIN ledger_accounts l ON l.id = e.ledger_account_id
+WHERE e.administration_id = @administration_id AND e.date <= @to_date
+GROUP BY e.ledger_account_id
+ORDER BY e.ledger_account_id;
+
+-- name: ContactInJournal :one
+SELECT EXISTS (SELECT 1 FROM journal_entries WHERE administration_id = $1 AND contact_id = $2);
+
+-- name: InsertAttachment :exec
+INSERT INTO attachments (id, administration_id, entity_type, entity_id, filename, content_type, size, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+
+-- name: DeleteAttachment :exec
+DELETE FROM attachments WHERE administration_id = $1 AND id = $2;
+
+-- name: AttachmentsOf :many
+SELECT * FROM attachments
+WHERE administration_id = @administration_id AND entity_type = @entity_type AND entity_id = ANY(@ids::bigint[])
+ORDER BY created_at, id;

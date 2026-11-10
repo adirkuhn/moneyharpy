@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
@@ -25,10 +26,12 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
+	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/kvk"
 	"github.com/adirkuhn/moneyharpy/internal/lm2"
 	"github.com/adirkuhn/moneyharpy/internal/mail"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
+	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/objectstore"
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/pdok"
@@ -113,13 +116,19 @@ func run(logger *slog.Logger) error {
 	people := identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, cipher, time.Now)
 	books := bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now)
 	bank := banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now)
+	noteService := notes.NewService(postgres.NewNoteStore(pool), ids, time.Now)
+	journalStore := postgres.NewJournalStore(pool)
+	contactService := contacts.NewService(admins, invoices, admins, journalStore, noteService, postgres.NewContactStore(pool), ids, time.Now)
+	ledger := journal.NewService(admins, books, contactService, journalStore, journalStore, noteService,
+		attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now), ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
 		Bookkeeping:       books,
 		Banking:           bank,
 		Overview:          overview.NewService(admins, bank),
-		Contacts:          contacts.NewService(admins, invoices, admins, nil, postgres.NewContactStore(pool), ids, time.Now),
+		Journal:           ledger,
+		Contacts:          contactService,
 		Storage:           s3,
 		Identity:          people,
 		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
