@@ -182,8 +182,8 @@ describe('transactions', () => {
     await userEvent.selectOptions(screen.getByLabelText('Account'), '501')
     await userEvent.click(screen.getByRole('radio', { name: 'All' }))
     await waitFor(() => expect(filter).toBe('period:this_year,state:all,financial_account_id:501'))
-    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Bank' })).toHaveAttribute('aria-current', 'page')
+    const nav = screen.getByRole('navigation', { name: 'Administration menu' })
+    expect(within(nav).getByRole('link', { name: 'Transactions' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('books part of a transaction on a category', async () => {

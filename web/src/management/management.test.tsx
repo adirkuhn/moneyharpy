@@ -97,7 +97,6 @@ describe('management settings', () => {
     const nav = screen.getByRole('navigation', { name: 'Settings' })
     expect(within(nav).queryByRole('link', { name: 'Bookkeeping' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('Administration name')).toBeDisabled()
-    expect(screen.getByRole('link', { name: 'Bank' })).toBeInTheDocument()
   })
 
   it('tells someone without access to a section', async () => {

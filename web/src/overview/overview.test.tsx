@@ -39,7 +39,8 @@ describe('administration overview', () => {
     renderAt('/11')
     expect(await screen.findByRole('heading', { level: 1, name: 'Good afternoon Ann!' })).toBeInTheDocument()
     expect(screen.getByTestId('path')).toHaveTextContent('/11/feed')
-    expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page')
+    const nav = screen.getByRole('navigation', { name: 'Administration menu' })
+    expect(within(nav).getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('shows the bank balance and what is left to link', async () => {

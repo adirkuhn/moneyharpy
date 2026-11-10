@@ -7,6 +7,7 @@ import { RegisterPage } from './auth/RegisterPage'
 import { RequireAuth } from './auth/RequireAuth'
 import { InstanceSettingsPage } from './instance/InstanceSettingsPage'
 import { AppShell } from './layout/AppShell'
+import { AdministrationLayout } from './layout/Sidenav'
 import { NotFoundPage } from './layout/NotFoundPage'
 import { CreateAdministrationPage } from './onboarding/CreateAdministrationPage'
 import { FirstActionPage } from './onboarding/FirstActionPage'
@@ -65,7 +66,11 @@ export function AppRoutes() {
         <Route path="/instance/settings" element={<InstanceSettingsPage />} />
         <Route path="/r/:id" element={<PermalinkPage />} />
         <Route path="/:administrationId" element={<AdministrationHomePage />} />
-        <Route path="/:administrationId/feed" element={<OverviewPage />} />
+        <Route element={<AdministrationLayout />}>
+          <Route path="/:administrationId/feed" element={<OverviewPage />} />
+          <Route path="/:administrationId/financial_mutations" element={<TransactionsPage />} />
+          <Route path="/:administrationId/financial_mutations/:mutationId" element={<TransactionPage />} />
+        </Route>
         <Route path="/:administrationId/settings" element={<SettingsLayout />}>
           <Route index element={<Navigate to="company" replace />} />
           <Route path="company" element={<CompanySettingsPage />} />
@@ -111,8 +116,6 @@ export function AppRoutes() {
         <Route path="/:administrationId/delete" element={<SettingsLayout />}>
           <Route index element={<DeletePage />} />
         </Route>
-        <Route path="/:administrationId/financial_mutations" element={<TransactionsPage />} />
-        <Route path="/:administrationId/financial_mutations/:mutationId" element={<TransactionPage />} />
         <Route path="/:administrationId/financial_accounts" element={<SettingsLayout />}>
           <Route path="new" element={<FinancialAccountPage />} />
           <Route path=":accountId" element={<FinancialAccountPage />} />
