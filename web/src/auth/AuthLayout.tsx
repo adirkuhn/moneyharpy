@@ -22,18 +22,6 @@ export function AuthInput({ label, ...input }: { label: string } & React.InputHT
   return <input className="auth__input" aria-label={label} placeholder={label} {...input} />
 }
 
-export function Field({
-  label,
-  ...input
-}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <input {...input} />
-    </label>
-  )
-}
-
 export function Problems({ messages }: { messages: string[] }) {
   if (messages.length === 0) {
     return null

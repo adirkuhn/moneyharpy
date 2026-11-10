@@ -90,6 +90,11 @@ func TestURI(t *testing.T) {
 			ref:  Ref{ID: 7, Type: Type("contacts"), AdministrationID: 42},
 			want: "/42/contacts/7",
 		},
+		{
+			name: "identity nests under its administration",
+			ref:  Ref{ID: 7, Type: TypeIdentity, AdministrationID: 42},
+			want: "/42/identities/7",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

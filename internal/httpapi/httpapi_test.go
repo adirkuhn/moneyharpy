@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"maps"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -342,6 +343,8 @@ func TestListAdministrationsMoneybirdShape(t *testing.T) {
 				"time_zone": "Europe/Amsterdam", "access": "user", "suspended": false,
 				"period_locked_until": nil, "period_start_date": time.Now().Format("2006") + "-01-01",
 				"favorite": false, "uri": "/" + created.Id,
+				"small_business_scheme": false, "company_activities_description": "", "company_website_url": "",
+				"company_website_absent": false,
 			}
 			if diff := cmp.Diff(want, got[0]); diff != "" {
 				t.Errorf("GET %s diff (-want +got):\n%s", path, diff)
@@ -743,7 +746,7 @@ func TestLM2Login(t *testing.T) {
 	})
 }
 
-func TestCreateAdministrationStoresCompanyDetails(t *testing.T) {
+func TestCreateAdministrationStartsDefaultIdentity(t *testing.T) {
 	c := newHarness(t, options{}).client()
 	c.register()
 	r := c.do(http.MethodPost, "/api/v2/administrations", map[string]any{"administration": map[string]string{
@@ -752,10 +755,15 @@ func TestCreateAdministrationStoresCompanyDetails(t *testing.T) {
 	wantStatus(t, r, http.StatusCreated)
 	created := decode[httpapi.Administration](t, r)
 
-	got := decode[map[string]any](t, c.do(http.MethodGet, "/api/v2/administrations/"+created.Id, nil))
-	for field, want := range map[string]string{"address1": "Dam 1", "address2": "Floor 2", "zipcode": "1012JS", "city": "Amsterdam", "chamber_of_commerce": "12345678"} {
-		if got[field] != want {
-			t.Errorf("GET administration %s = %v, want %q", field, got[field], want)
+	for _, path := range []string{"/api/v2/" + created.Id + "/identities/default", "/api/v2/" + created.Id + "/identities/default.json"} {
+		got := decode[map[string]any](t, c.do(http.MethodGet, path, nil))
+		for field, want := range map[string]any{
+			"company_name": "Harpy", "address1": "Dam 1", "address2": "Floor 2", "zipcode": "1012JS", "city": "Amsterdam",
+			"chamber_of_commerce": "12345678", "administration_id": created.Id, "country": "NL", "phone": nil, "default": true,
+		} {
+			if got[field] != want {
+				t.Errorf("GET %s %s = %v, want %v", path, field, got[field], want)
+			}
 		}
 	}
 
@@ -763,6 +771,169 @@ func TestCreateAdministrationStoresCompanyDetails(t *testing.T) {
 	if _, leaked := row["address1"]; leaked {
 		t.Error("administrations list includes address1, want Moneybird's fields only")
 	}
+}
+
+func TestIdentities(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, stranger := h.client(), h.client()
+	owner.register()
+	stranger.register()
+	a := owner.createAdministration("Harpy")
+	base := "/api/v2/" + a.Id + "/identities"
+	body := func(fields map[string]string) map[string]any { return map[string]any{"identity": fields} }
+
+	r := owner.do(http.MethodPost, base, body(map[string]string{"company_name": "Trade", "country": "NL", "bank_account_number": "NL91 ABNA 0417 1643 00"}))
+	wantStatus(t, r, http.StatusCreated)
+	extra := decode[httpapi.Identity](t, r)
+	if extra.Default {
+		t.Error("created identity is default")
+	}
+	if want := "/" + a.Id + "/identities/" + extra.Id; extra.Uri != want {
+		t.Errorf("uri = %q, want %q", extra.Uri, want)
+	}
+	if extra.BankAccountNumber == nil || *extra.BankAccountNumber != "NL91ABNA0417164300" {
+		t.Errorf("bank_account_number = %v", extra.BankAccountNumber)
+	}
+
+	listed := decode[[]httpapi.Identity](t, owner.do(http.MethodGet, base, nil))
+	if len(listed) != 2 || !listed[0].Default {
+		t.Errorf("list = %+v, want default first", listed)
+	}
+
+	r = owner.do(http.MethodPatch, base+"/"+extra.Id, body(map[string]string{"phone": "0612345678"}))
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[httpapi.Identity](t, r); got.Phone == nil || *got.Phone != "0612345678" || got.CompanyName == nil || *got.CompanyName != "Trade" {
+		t.Errorf("patched = %+v", got)
+	}
+
+	r = owner.do(http.MethodPatch, base+"/default", body(map[string]string{"email": "books@example.com"}))
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[httpapi.Identity](t, r); got.Email == nil || *got.Email != "books@example.com" {
+		t.Errorf("patched default = %+v", got)
+	}
+
+	r = owner.do(http.MethodPost, base, body(map[string]string{"company_name": "X", "country": "NL", "bank_account_number": "NL91ABNA0417164301"}))
+	wantStatus(t, r, http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPost, base, map[string]any{"identity": map[string]string{"evil": "x"}}), http.StatusBadRequest)
+
+	located := decode[httpapi.ResourceLocation](t, owner.do(http.MethodGet, "/api/resources/"+extra.Id, nil))
+	if located.Uri != extra.Uri {
+		t.Errorf("located uri = %q, want %q", located.Uri, extra.Uri)
+	}
+
+	for _, tt := range []struct {
+		method, path string
+		body         any
+	}{
+		{http.MethodGet, base, nil},
+		{http.MethodPost, base, body(map[string]string{"company_name": "X", "country": "NL"})},
+		{http.MethodGet, base + "/default", nil},
+		{http.MethodPatch, base + "/default", body(map[string]string{"phone": "1"})},
+		{http.MethodGet, base + "/" + extra.Id, nil},
+		{http.MethodPatch, base + "/" + extra.Id, body(map[string]string{"phone": "1"})},
+		{http.MethodDelete, base + "/" + extra.Id, nil},
+	} {
+		t.Run("stranger "+tt.method+" "+tt.path, func(t *testing.T) {
+			wantStatus(t, stranger.do(tt.method, tt.path, tt.body), http.StatusNotFound)
+		})
+	}
+
+	def := decode[httpapi.Identity](t, owner.do(http.MethodGet, base+"/default", nil))
+	wantStatus(t, owner.do(http.MethodDelete, base+"/"+def.Id, nil), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodDelete, base+"/"+extra.Id, nil), http.StatusNoContent)
+	wantStatus(t, owner.do(http.MethodGet, base+"/"+extra.Id, nil), http.StatusNotFound)
+}
+
+func TestUpdateAdministration(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, stranger := h.client(), h.client()
+	owner.register()
+	stranger.register()
+	a := owner.createAdministration("Harpy")
+	path := "/api/v2/administrations/" + a.Id
+	patch := func(fields map[string]string) map[string]any { return map[string]any{"administration": fields} }
+
+	r := owner.do(http.MethodPatch, path, patch(map[string]string{"name": "New", "language": "nl", "currency": "USD", "time_zone": "Europe/Brussels"}))
+	wantStatus(t, r, http.StatusOK)
+	got := decode[httpapi.Administration](t, r)
+	if got.Name != "New" || got.Language != "nl" || got.Currency != "USD" || got.TimeZone != "Europe/Brussels" {
+		t.Errorf("updated = %+v", got)
+	}
+	wantStatus(t, owner.do(http.MethodPatch, path, patch(map[string]string{"currency": "ABC"})), http.StatusUnprocessableEntity)
+	wantStatus(t, stranger.do(http.MethodPatch, path, patch(map[string]string{"name": "X"})), http.StatusNotFound)
+}
+
+func TestCompanyProfile(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	a := owner.createAdministration("Harpy")
+	if a.SmallBusinessScheme || a.CompanyWebsiteUrl != "" || a.CompanyActivitiesDescription != "" || a.CompanyWebsiteAbsent {
+		t.Errorf("new administration profile = %+v, want empty", a)
+	}
+	path := "/api/v2/administrations/" + a.Id
+
+	r := owner.do(http.MethodPatch, path, map[string]any{"administration": map[string]any{
+		"small_business_scheme": true, "company_activities_description": "Bakery", "company_website_url": "https://example.com",
+	}})
+	wantStatus(t, r, http.StatusOK)
+	got := decode[httpapi.Administration](t, r)
+	if !got.SmallBusinessScheme || got.CompanyActivitiesDescription != "Bakery" || got.CompanyWebsiteUrl != "https://example.com" {
+		t.Errorf("updated = %+v", got)
+	}
+	r = owner.do(http.MethodPatch, path, map[string]any{"administration": map[string]any{"company_website_url": "example"}})
+	wantStatus(t, r, http.StatusUnprocessableEntity)
+	if !bytes.Contains(r.body, []byte("company_website_url")) {
+		t.Errorf("error body = %s, want company_website_url", r.body)
+	}
+}
+
+func TestCustomFields(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, stranger := h.client(), h.client()
+	owner.register()
+	stranger.register()
+	a := owner.createAdministration("Harpy")
+	base := "/api/v2/" + a.Id + "/custom_fields"
+	field := func(name, source string) map[string]any {
+		return map[string]any{"custom_field": map[string]string{"name": name, "source": source}}
+	}
+
+	r := owner.do(http.MethodPost, base, field("Slogan", "identity"))
+	wantStatus(t, r, http.StatusCreated)
+	slogan := decode[httpapi.CustomField](t, r)
+	if slogan.Name != "Slogan" || slogan.Source != httpapi.CustomFieldSourceIdentity || slogan.Uri != "/"+a.Id+"/custom_fields/"+slogan.Id {
+		t.Errorf("created = %+v", slogan)
+	}
+	contact := decode[httpapi.CustomField](t, owner.do(http.MethodPost, base, field("Ref", "contact")))
+
+	listed := decode[[]httpapi.CustomField](t, owner.do(http.MethodGet, base+".json", nil))
+	if len(listed) != 2 || listed[0].Id != slogan.Id {
+		t.Errorf("list = %+v", listed)
+	}
+	wantStatus(t, owner.do(http.MethodPost, base, field(" ", "identity")), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPost, base, field("X", "planet")), http.StatusBadRequest)
+	wantStatus(t, stranger.do(http.MethodGet, base, nil), http.StatusNotFound)
+	wantStatus(t, stranger.do(http.MethodPost, base, field("X", "identity")), http.StatusNotFound)
+
+	identity := "/api/v2/" + a.Id + "/identities/default"
+	set := func(id, value string, extra map[string]any) map[string]any {
+		fields := map[string]any{"custom_fields_attributes": []map[string]string{{"id": id, "value": value}}}
+		maps.Copy(fields, extra)
+		return map[string]any{"identity": fields}
+	}
+	r = owner.do(http.MethodPatch, identity, set(slogan.Id, "Fresh", map[string]any{"tax_number": "", "tax_number_absence_reason": "industry_exemption"}))
+	wantStatus(t, r, http.StatusOK)
+	got := decode[httpapi.Identity](t, r)
+	want := []httpapi.CustomFieldValue{{Id: slogan.Id, Name: "Slogan", Value: "Fresh"}}
+	if diff := cmp.Diff(want, got.CustomFields); diff != "" {
+		t.Errorf("custom_fields diff (-want +got):\n%s", diff)
+	}
+	if got.TaxNumberAbsenceReason == nil || *got.TaxNumberAbsenceReason != httpapi.TaxNumberAbsenceReasonIndustryExemption {
+		t.Errorf("tax_number_absence_reason = %v", got.TaxNumberAbsenceReason)
+	}
+	wantStatus(t, owner.do(http.MethodPatch, identity, set(contact.Id, "x", nil)), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPatch, identity, map[string]any{"identity": map[string]string{"tax_number_absence_reason": "lazy"}}), http.StatusBadRequest)
 }
 
 func TestOnboardingLookups(t *testing.T) {

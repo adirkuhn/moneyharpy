@@ -140,6 +140,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(verr.Fields))
 	case errors.Is(err, identity.ErrEmailTaken):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"email": {"has already been taken"}}))
+	case errors.Is(err, administration.ErrDefaultIdentity):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The default identity cannot be deleted"}}))
 	case errors.Is(err, identity.ErrResetTokenInvalid):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"token": {"is invalid or has expired"}}))
 	case errors.Is(err, identity.ErrRegistrationClosed):
@@ -147,6 +149,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 	case errors.Is(err, identity.ErrInvalidCredentials):
 		writeError(w, http.StatusUnauthorized, "Invalid email or password")
 	case errors.Is(err, administration.ErrNotFound),
+		errors.Is(err, administration.ErrIdentityNotFound),
 		errors.Is(err, resource.ErrNotFound),
 		errors.Is(err, administration.ErrLookupUnavailable),
 		errors.Is(err, administration.ErrAddressUnknown),

@@ -26,6 +26,41 @@ export function administration(over: Partial<Administration> = {}): Administrati
     period_start_date: '2026-01-01',
     favorite: false,
     uri: `/${id}`,
+    small_business_scheme: false,
+    company_activities_description: '',
+    company_website_url: '',
+    company_website_absent: false,
+    ...over,
+  }
+}
+
+export type Identity = components['schemas']['Identity']
+
+export function identity(over: Partial<Identity> = {}): Identity {
+  const id = over.id ?? '500'
+  return {
+    id,
+    administration_id: '11',
+    company_name: 'Harpy B.V.',
+    country: 'NL',
+    city: 'Amsterdam',
+    zipcode: '1012JS',
+    address1: 'Dam 1',
+    address2: null,
+    email: 'books@example.com',
+    phone: null,
+    bank_account_name: null,
+    bank_account_number: 'NL91ABNA0417164300',
+    bank_account_bic: 'ABNANL2A',
+    chamber_of_commerce: '12345678',
+    tax_number: null,
+    custom_fields: [],
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    legal_entity_type: 'BV',
+    tax_number_absence_reason: null,
+    default: true,
+    uri: `/11/identities/${id}`,
     ...over,
   }
 }

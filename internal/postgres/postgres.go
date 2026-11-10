@@ -33,6 +33,21 @@ const (
 
 // Migrate brings the database at url up to the latest schema.
 func Migrate(ctx context.Context, url string) error {
+	return withProvider(url, func(p *goose.Provider) error {
+		_, err := p.Up(ctx)
+		return err
+	})
+}
+
+// MigrateTo brings the database at url up to a specific schema version.
+func MigrateTo(ctx context.Context, url string, version int64) error {
+	return withProvider(url, func(p *goose.Provider) error {
+		_, err := p.UpTo(ctx, version)
+		return err
+	})
+}
+
+func withProvider(url string, run func(*goose.Provider) error) error {
 	db, err := sql.Open("pgx", url)
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
@@ -46,7 +61,7 @@ func Migrate(ctx context.Context, url string) error {
 	if err != nil {
 		return fmt.Errorf("create migration provider: %w", err)
 	}
-	if _, err := provider.Up(ctx); err != nil {
+	if err := run(provider); err != nil {
 		return fmt.Errorf("apply migrations: %w", err)
 	}
 	return nil
@@ -250,9 +265,9 @@ func NewAdministrationStore(pool *pgxpool.Pool) *AdministrationStore {
 	return &AdministrationStore{pool: pool, q: sqlc.New(pool)}
 }
 
-// Create implements administration.Store, registering the administration as a
-// resource in the same transaction.
-func (s *AdministrationStore) Create(ctx context.Context, a administration.Administration, owner resource.ID) error {
+// Create implements administration.Store, registering the administration and
+// its default identity as resources in the same transaction.
+func (s *AdministrationStore) Create(ctx context.Context, a administration.Administration, owner resource.ID, def administration.Identity) error {
 	start, err := parseDate(a.PeriodStartDate)
 	if err != nil {
 		return fmt.Errorf("period start date: %w", err)
@@ -268,7 +283,6 @@ func (s *AdministrationStore) Create(ctx context.Context, a administration.Admin
 		if err := q.InsertAdministration(ctx, sqlc.InsertAdministrationParams{
 			ID: int64(a.ID), Name: a.Name, Language: a.Language, Currency: a.Currency, Country: a.Country,
 			TimeZone: a.TimeZone, Suspended: a.Suspended, PeriodLockedUntil: locked, PeriodStartDate: start,
-			Address1: a.Address1, Address2: a.Address2, Zipcode: a.Zipcode, City: a.City, ChamberOfCommerce: a.ChamberOfCommerce,
 		}); err != nil {
 			return err
 		}
@@ -277,9 +291,199 @@ func (s *AdministrationStore) Create(ctx context.Context, a administration.Admin
 		}); err != nil {
 			return err
 		}
-		return q.InsertResource(ctx, sqlc.InsertResourceParams{
+		if err := q.InsertResource(ctx, sqlc.InsertResourceParams{
 			ID: int64(a.ID), Type: string(resource.TypeAdministration), AdministrationID: int64(a.ID),
+		}); err != nil {
+			return err
+		}
+		return insertIdentity(ctx, q, def)
+	})
+}
+
+// Update implements administration.Store.
+func (s *AdministrationStore) Update(ctx context.Context, a administration.Administration) error {
+	return s.q.UpdateAdministration(ctx, sqlc.UpdateAdministrationParams{
+		ID: int64(a.ID), Name: a.Name, Language: a.Language, Currency: a.Currency, TimeZone: a.TimeZone,
+		SmallBusinessScheme: a.SmallBusinessScheme, CompanyActivitiesDescription: a.CompanyActivitiesDescription,
+		CompanyWebsiteUrl: a.CompanyWebsiteURL, CompanyWebsiteAbsent: a.CompanyWebsiteAbsent,
+	})
+}
+
+func insertIdentity(ctx context.Context, q *sqlc.Queries, i administration.Identity) error {
+	if err := q.InsertIdentity(ctx, sqlc.InsertIdentityParams{
+		ID: int64(i.ID), AdministrationID: int64(i.AdministrationID), IsDefault: i.Default, CompanyName: i.CompanyName,
+		Country: i.Country, City: i.City, Zipcode: i.Zipcode, Address1: i.Address1, Address2: i.Address2, Email: i.Email,
+		Phone: i.Phone, LegalEntityType: i.LegalEntityType, ChamberOfCommerce: i.ChamberOfCommerce, TaxNumber: i.TaxNumber,
+		BankAccountName: i.BankAccountName, BankAccountNumber: i.BankAccountNumber, BankAccountBic: i.BankAccountBIC,
+		TaxNumberAbsenceReason: string(i.TaxNumberAbsenceReason),
+		CreatedAt:              timestamp(i.CreatedAt), UpdatedAt: timestamp(i.UpdatedAt),
+	}); err != nil {
+		return err
+	}
+	if err := q.InsertResource(ctx, sqlc.InsertResourceParams{
+		ID: int64(i.ID), Type: string(resource.TypeIdentity), AdministrationID: int64(i.AdministrationID),
+	}); err != nil {
+		return err
+	}
+	return insertCustomFieldValues(ctx, q, i)
+}
+
+func insertCustomFieldValues(ctx context.Context, q *sqlc.Queries, i administration.Identity) error {
+	for _, v := range i.CustomFields {
+		if err := q.InsertIdentityCustomFieldValue(ctx, sqlc.InsertIdentityCustomFieldValueParams{
+			IdentityID: int64(i.ID), CustomFieldID: int64(v.ID), Value: v.Value,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// withCustomFields attaches the stored custom field values to identities of
+// one administration.
+func (s *AdministrationStore) withCustomFields(ctx context.Context, admin resource.ID, identities []administration.Identity) ([]administration.Identity, error) {
+	rows, err := s.q.ListIdentityCustomFieldValues(ctx, int64(admin))
+	if err != nil {
+		return nil, err
+	}
+	values := map[int64][]administration.CustomFieldValue{}
+	for _, r := range rows {
+		values[r.IdentityID] = append(values[r.IdentityID], administration.CustomFieldValue{ID: resource.ID(r.ID), Name: r.Name, Value: r.Value})
+	}
+	for i := range identities {
+		identities[i].CustomFields = values[int64(identities[i].ID)]
+	}
+	return identities, nil
+}
+
+func (s *AdministrationStore) oneWithCustomFields(ctx context.Context, i administration.Identity) (administration.Identity, error) {
+	out, err := s.withCustomFields(ctx, i.AdministrationID, []administration.Identity{i})
+	if err != nil {
+		return administration.Identity{}, err
+	}
+	return out[0], nil
+}
+
+func toIdentity(r sqlc.Identity) administration.Identity {
+	return administration.Identity{
+		ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), Default: r.IsDefault, CompanyName: r.CompanyName,
+		Country: r.Country, City: r.City, Zipcode: r.Zipcode, Address1: r.Address1, Address2: r.Address2, Email: r.Email,
+		Phone: r.Phone, LegalEntityType: r.LegalEntityType, ChamberOfCommerce: r.ChamberOfCommerce, TaxNumber: r.TaxNumber,
+		BankAccountName: r.BankAccountName, BankAccountNumber: r.BankAccountNumber, BankAccountBIC: r.BankAccountBic,
+		TaxNumberAbsenceReason: administration.TaxNumberAbsenceReason(r.TaxNumberAbsenceReason),
+		CreatedAt:              r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
+	}
+}
+
+func identityErr(err error) error {
+	if errors.Is(err, pgx.ErrNoRows) {
+		return administration.ErrIdentityNotFound
+	}
+	return err
+}
+
+// ListIdentities implements administration.Store.
+func (s *AdministrationStore) ListIdentities(ctx context.Context, admin resource.ID) ([]administration.Identity, error) {
+	rows, err := s.q.ListIdentities(ctx, int64(admin))
+	if err != nil {
+		return nil, err
+	}
+	identities := make([]administration.Identity, len(rows))
+	for i, r := range rows {
+		identities[i] = toIdentity(r)
+	}
+	return s.withCustomFields(ctx, admin, identities)
+}
+
+// DefaultIdentity implements administration.Store.
+func (s *AdministrationStore) DefaultIdentity(ctx context.Context, admin resource.ID) (administration.Identity, error) {
+	r, err := s.q.DefaultIdentity(ctx, int64(admin))
+	if err != nil {
+		return administration.Identity{}, identityErr(err)
+	}
+	return s.oneWithCustomFields(ctx, toIdentity(r))
+}
+
+// Identity implements administration.Store.
+func (s *AdministrationStore) Identity(ctx context.Context, admin, id resource.ID) (administration.Identity, error) {
+	r, err := s.q.IdentityByID(ctx, sqlc.IdentityByIDParams{AdministrationID: int64(admin), ID: int64(id)})
+	if err != nil {
+		return administration.Identity{}, identityErr(err)
+	}
+	return s.oneWithCustomFields(ctx, toIdentity(r))
+}
+
+// CreateIdentity implements administration.Store.
+func (s *AdministrationStore) CreateIdentity(ctx context.Context, i administration.Identity) error {
+	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		return insertIdentity(ctx, s.q.WithTx(tx), i)
+	})
+}
+
+// UpdateIdentity implements administration.Store.
+func (s *AdministrationStore) UpdateIdentity(ctx context.Context, i administration.Identity) error {
+	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		if err := q.UpdateIdentity(ctx, sqlc.UpdateIdentityParams{
+			AdministrationID: int64(i.AdministrationID), ID: int64(i.ID), CompanyName: i.CompanyName, Country: i.Country, City: i.City,
+			Zipcode: i.Zipcode, Address1: i.Address1, Address2: i.Address2, Email: i.Email, Phone: i.Phone,
+			LegalEntityType: i.LegalEntityType, ChamberOfCommerce: i.ChamberOfCommerce, TaxNumber: i.TaxNumber,
+			BankAccountName: i.BankAccountName, BankAccountNumber: i.BankAccountNumber, BankAccountBic: i.BankAccountBIC,
+			TaxNumberAbsenceReason: string(i.TaxNumberAbsenceReason), UpdatedAt: timestamp(i.UpdatedAt),
+		}); err != nil {
+			return err
+		}
+		if err := q.DeleteIdentityCustomFieldValues(ctx, int64(i.ID)); err != nil {
+			return err
+		}
+		return insertCustomFieldValues(ctx, q, i)
+	})
+}
+
+// CustomFields implements administration.Store.
+func (s *AdministrationStore) CustomFields(ctx context.Context, admin resource.ID) ([]administration.CustomField, error) {
+	rows, err := s.q.ListCustomFields(ctx, int64(admin))
+	if err != nil {
+		return nil, err
+	}
+	fields := make([]administration.CustomField, len(rows))
+	for i, r := range rows {
+		fields[i] = administration.CustomField{
+			ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), Name: r.Name,
+			Source: administration.Source(r.Source), CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
+		}
+	}
+	return fields, nil
+}
+
+// CreateCustomField implements administration.Store.
+func (s *AdministrationStore) CreateCustomField(ctx context.Context, f administration.CustomField) error {
+	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		if err := q.InsertCustomField(ctx, sqlc.InsertCustomFieldParams{
+			ID: int64(f.ID), AdministrationID: int64(f.AdministrationID), Name: f.Name, Source: string(f.Source),
+			CreatedAt: timestamp(f.CreatedAt), UpdatedAt: timestamp(f.UpdatedAt),
+		}); err != nil {
+			return err
+		}
+		return q.InsertResource(ctx, sqlc.InsertResourceParams{
+			ID: int64(f.ID), Type: string(resource.TypeCustomField), AdministrationID: int64(f.AdministrationID),
 		})
+	})
+}
+
+// DeleteIdentity implements administration.Store.
+func (s *AdministrationStore) DeleteIdentity(ctx context.Context, admin, id resource.ID) error {
+	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		n, err := q.DeleteIdentity(ctx, sqlc.DeleteIdentityParams{AdministrationID: int64(admin), ID: int64(id)})
+		if err != nil {
+			return err
+		}
+		if n == 0 {
+			return administration.ErrIdentityNotFound
+		}
+		return q.DeleteResource(ctx, int64(id))
 	})
 }
 
@@ -325,8 +529,9 @@ func toListed(r sqlc.AdministrationForUserRow) administration.Listed {
 		Administration: administration.Administration{
 			ID: resource.ID(r.ID), Name: r.Name, Language: r.Language, Currency: r.Currency, Country: r.Country,
 			TimeZone: r.TimeZone, Suspended: r.Suspended, PeriodStartDate: r.PeriodStartDate.Time.Format(dateLayout),
-			Company: administration.Company{
-				Address1: r.Address1, Address2: r.Address2, Zipcode: r.Zipcode, City: r.City, ChamberOfCommerce: r.ChamberOfCommerce,
+			Profile: administration.Profile{
+				SmallBusinessScheme: r.SmallBusinessScheme, CompanyActivitiesDescription: r.CompanyActivitiesDescription,
+				CompanyWebsiteURL: r.CompanyWebsiteUrl, CompanyWebsiteAbsent: r.CompanyWebsiteAbsent,
 			},
 		},
 		Membership: administration.Membership{Access: administration.Access(r.Access), Favorite: r.Favorite},
