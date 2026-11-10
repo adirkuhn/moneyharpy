@@ -51,6 +51,16 @@ describe('the settings area', () => {
     expect(within(nav).getByRole('link', { name: 'Company' })).toHaveAttribute('aria-current', 'page')
   })
 
+  it('lists the parts of the open section', async () => {
+    server.use(...loaded())
+    renderAt('/11/settings/company')
+    const nav = await screen.findByRole('navigation', { name: 'Settings' })
+    expect(within(nav).getByRole('link', { name: 'Company details' })).toHaveAttribute('href', '/11/settings/company#company-details')
+    expect(within(nav).getByRole('link', { name: 'Sender addresses' })).toHaveAttribute('href', '/11/settings/company#sender-addresses')
+    expect(await screen.findByRole('region', { name: 'Company details' })).toHaveAttribute('id', 'company-details')
+    expect(screen.getByRole('region', { name: 'Sender addresses' })).toHaveAttribute('id', 'sender-addresses')
+  })
+
   it('keeps sections without a feature as clear placeholders', async () => {
     server.use(...loaded())
     renderAt('/11/settings/bank')
@@ -85,6 +95,7 @@ describe('company settings', () => {
     const card = await screen.findByRole('region', { name: 'Company details' })
     await within(card).findByText('Dam 1')
     expect(within(card).getAllByText('-').length).toBeGreaterThan(0)
+    expect(within(card).getAllByText('Not set').length).toBeGreaterThan(0)
   })
 
   it('lists sender addresses and offers to add one', async () => {
@@ -132,17 +143,20 @@ describe('editing identities', () => {
     renderAt('/11/identities/edit_default')
     const account = await screen.findByLabelText('Account number')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(account).toHaveAccessibleDescription('Account number is not a valid IBAN'))
+    await waitFor(() =>
+      expect(account).toHaveAccessibleDescription('Account number is not a valid IBAN. Check it for typos; an IBAN starts with a country code, like NL91 ABNA 0417 1643 00.'),
+    )
     expect(account).toHaveAttribute('aria-invalid', 'true')
   })
 
-  it('edits on its own page with a way back to Company', async () => {
+  it('edits beside the settings menu with a way back to Company', async () => {
     server.use(...loaded())
     renderAt('/11/identities/edit_default')
     expect(await screen.findByRole('heading', { name: 'Edit company information', level: 1 })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'To Company' })).toHaveAttribute('href', '/11/settings/company')
     expect(screen.getByRole('note')).toHaveTextContent('The company details are shown on your invoices and estimates.')
-    expect(screen.queryByRole('navigation', { name: 'Settings' })).toBeNull()
+    const nav = screen.getByRole('navigation', { name: 'Settings' })
+    expect(within(nav).getByRole('link', { name: 'Company' })).toHaveAttribute('aria-current', 'true')
   })
 
   it('keeps the second address line behind a button', async () => {
@@ -220,7 +234,7 @@ describe('editing identities', () => {
     const website = await screen.findByLabelText('Website')
     await userEvent.type(website, 'nope')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(website).toHaveAccessibleDescription('Website is not a valid website address'))
+    await waitFor(() => expect(website).toHaveAccessibleDescription('Website is not a valid website address. Start it with https://, like https://example.com.'))
     expect(screen.getByTestId('path')).toHaveTextContent('/11/identities/edit_default')
   })
 
@@ -335,7 +349,7 @@ describe('custom fields', () => {
   it('never returns to another site', async () => {
     server.use(...loaded(), http.post('*/api/v2/11/custom_fields', () => HttpResponse.json(slogan, { status: 201 })))
     renderAt('/11/custom_fields/new?return_to=https%3A%2F%2Fevil.example')
-    expect(await screen.findByRole('link', { name: 'Back' })).toHaveAttribute('href', '/11/settings/company')
+    expect(await screen.findByRole('link', { name: 'Go back' })).toHaveAttribute('href', '/11/settings/company')
     await userEvent.type(screen.getByLabelText('Name'), 'X')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/settings/company'))

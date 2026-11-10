@@ -1,5 +1,5 @@
 export const en = {
-  common: { language: 'Language', theme: 'Theme', system: 'System', light: 'Light', dark: 'Dark', cancel: 'Cancel', next: 'Next', skip: 'Skip to content', genericError: 'Something went wrong. Try again.', requestFailed: 'The request failed' },
+  common: { loading: 'Loading…', language: 'Language', theme: 'Theme', system: 'System', light: 'Light', dark: 'Dark', cancel: 'Cancel', next: 'Next', skip: 'Skip to content', genericError: 'Something went wrong. Try again.', requestFailed: 'The request failed' },
   login: {
     title: 'Login', email: 'Email address', password: 'Password', submit: 'Login to MoneyHarpy', or: 'or', forgot: 'Forgot your password?', noAccount: 'No account?', passwordChanged: 'Password changed. Log in with your new password.', google: 'Continue with Google', lm2: 'Continue with LM2',
     unreachable: 'MoneyHarpy could not be reached. Reload the page to try again.',
@@ -16,6 +16,7 @@ export const en = {
     editTitle: 'Choose a new password', new: 'New password', save: 'Save new password', badLink: 'This link is invalid or has expired', newLink: 'Request a new link',
   },
   nav: {
+    search: 'Search', searchSoon: 'Search is not available yet.',
     main: 'Main', home: 'MoneyHarpy home', notifications: 'Notifications', noNotifications: 'You have no notifications.', select: 'Select administration', yours: 'Your administrations',
     all: 'All administrations', new: 'New administration', account: 'User account', instance: 'Instance settings', docs: 'API documentation', signOut: 'Sign out',
   },
@@ -39,6 +40,7 @@ export const en = {
     open: 'I want to open my administration', openBody: 'Look around and set up your administration your own way.',
   },
   settings: {
+    notSet: 'Not set',
     title: 'Settings', back: 'Back', add: 'Add', edit: 'Edit', editName: 'Edit {{name}}', save: 'Save', saved: 'Saved', delete: 'Delete', confirmDelete: 'Confirm delete',
     sections: { company: 'Company', invoices_and_estimates: 'Invoices and estimates', bookkeeping: 'Bookkeeping', bank: 'Bank', administration: 'Management', connections: 'Integrations' },
     notAvailable: 'This section is not available yet.',
@@ -58,6 +60,7 @@ export const en = {
     managementSubtitle: 'The name, language, currency and time zone of this administration.', findTimeZone: 'Find time zone',
   },
   customField: {
+    back: 'Go back',
     title: 'New custom field', name: 'Name', source: 'Used for',
     sources: { identity: 'Company details', contact: 'Contacts', sales_invoice: 'Invoices', estimate: 'Estimates' },
   },
@@ -74,3 +77,14 @@ export const en = {
 }
 
 export type Messages = typeof en
+
+/**
+ * English wording for the server's validation messages, where the plain
+ * message would not tell people how to fix the problem.
+ */
+export const enServer: Record<string, string> = {
+  'is not a valid IBAN': 'is not a valid IBAN. Check it for typos; an IBAN starts with a country code, like NL91 ABNA 0417 1643 00.',
+  'is not a valid BIC': 'is not a valid BIC. A BIC has 8 or 11 letters and digits, like ABNANL2A.',
+  'is not a valid email address': 'is not a valid email address. Use the form name@example.com.',
+  'is not a valid website address': 'is not a valid website address. Start it with https://, like https://example.com.',
+}

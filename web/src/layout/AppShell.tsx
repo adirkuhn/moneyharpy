@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useMatch, useNavigate } from 'react-router-dom'
 import { useAdministrations } from '../administrations/queries'
 import { useCurrentUser, useLogout } from '../auth/queries'
-import { BellIcon, Mark } from './icons'
+import { BellIcon, SearchIcon } from './icons'
 import { LanguageSelect } from './LanguageSelect'
+import { Logo } from './Logo'
 import { Menu } from './Menu'
 import { createPath } from '../onboarding/queries'
 import { saveTheme, storedTheme, type Theme } from './theme'
@@ -17,10 +18,15 @@ export function AppShell() {
       <nav className="topnav" aria-label={t('nav.main')}>
         <div className="topnav__left">
           <Link className="brand" to="/administrations" aria-label={t('nav.home')}>
-            <Mark className="brand__mark" />
-            <span className="brand__name">MoneyHarpy</span>
+            <Logo className="brand__full" />
+            <Logo variant="mark" className="brand__mark" decorative />
           </Link>
           <AdministrationSwitcher />
+        </div>
+        <div className="topnav__search" role="search">
+          <SearchIcon />
+          <input type="search" aria-label={t('nav.search')} placeholder={t('nav.search')} disabled aria-describedby="search-soon" />
+          <span id="search-soon" className="sr-only">{t('nav.searchSoon')}</span>
         </div>
         <div className="topnav__right">
           <Menu label={<BellIcon />} ariaLabel={t('nav.notifications')} caret={false} align="right">

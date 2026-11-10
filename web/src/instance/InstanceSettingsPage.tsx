@@ -7,6 +7,7 @@ import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '
 import { useCurrentUser } from '../auth/queries'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
+import { Loading } from '../layout/Loading'
 
 const defaultSmtpPort = 587
 
@@ -61,7 +62,7 @@ function SettingsForm() {
   const testEmail = useMutation({ mutationFn: () => unwrap(api.POST('/api/instance/settings/test_email')) })
 
   if (!form) {
-    return null
+    return <Loading />
   }
 
   const security = (form.smtp_security || 'starttls') as NonNullable<UpdateInstanceSettings['smtp_security']>

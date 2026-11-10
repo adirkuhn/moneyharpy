@@ -1,6 +1,6 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import { en } from './locales/en'
+import { en, enServer } from './locales/en'
 import { nl, nlServer } from './locales/nl'
 
 export type LanguageCode = 'en' | 'nl' | 'nl-be'
@@ -32,7 +32,7 @@ function initialLanguage(): LanguageCode {
 const dutch = { translation: nl, server: nlServer }
 
 void i18n.use(initReactI18next).init({
-  resources: { en: { translation: en, server: {} }, nl: dutch, 'nl-be': dutch },
+  resources: { en: { translation: en, server: enServer }, nl: dutch, 'nl-be': dutch },
   lng: initialLanguage(),
   fallbackLng: 'en',
   lowerCaseLng: true,
