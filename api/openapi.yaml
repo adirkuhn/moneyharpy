@@ -3827,7 +3827,7 @@ components:
       type: string
       pattern: '^[0-9]{1,19}$'
       description: A unique record identifier. Parse as a string.
-      example: '416072101932303822'
+      example: '123456789012345678'
     Error:
       type: object
       required: [error]
@@ -3892,7 +3892,7 @@ components:
         uri:
           type: string
           description: MoneyHarpy extension. Canonical path of this resource.
-          example: /416072101932303822
+          example: /123456789012345678
         small_business_scheme:
           type: boolean
           description: MoneyHarpy extension. Registered for the Dutch small business scheme (KOR).
@@ -4252,7 +4252,7 @@ components:
           example: administrations
         uri:
           type: string
-          example: /416072101932303822
+          example: /123456789012345678
     AuthProviders:
       type: object
       required: [registration_open, google, lm2, password_reset]

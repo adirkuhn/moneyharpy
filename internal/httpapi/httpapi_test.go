@@ -1251,7 +1251,7 @@ func TestServesContractAndWebApp(t *testing.T) {
 
 	wantStatus(t, c.do(http.MethodGet, "/healthz", nil), http.StatusOK)
 
-	for _, path := range []string{"/", "/administrations", "/416072101932303822/settings", "/r/123"} {
+	for _, path := range []string{"/", "/administrations", "/123456789012345678/settings", "/r/123"} {
 		r := c.do(http.MethodGet, path, nil)
 		wantStatus(t, r, http.StatusOK)
 		if string(r.body) != "<html>spa</html>" {
