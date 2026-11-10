@@ -1,0 +1,211 @@
+// Package mail sends MoneyHarpy's email through the SMTP server configured in
+// instance settings.
+package mail
+
+import (
+	"bytes"
+	"cmp"
+	"context"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
+	"fmt"
+	"mime"
+	"mime/quotedprintable"
+	"net"
+	stdmail "net/mail"
+	"net/smtp"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/adirkuhn/moneyharpy/internal/settings"
+)
+
+const sendTimeout = 30 * time.Second
+
+// ErrDisabled reports that email is not enabled.
+var ErrDisabled = errors.New("email is disabled")
+
+// Settings provides the configured mail server.
+type Settings interface {
+	Instance(ctx context.Context) (settings.Instance, error)
+}
+
+// Client sends email.
+type Client struct {
+	settings Settings
+	baseURL  string
+	rootCAs  *x509.CertPool // nil means the system roots.
+}
+
+// New returns a Client whose links point at baseURL.
+func New(s Settings, baseURL string) *Client {
+	return &Client{settings: s, baseURL: baseURL}
+}
+
+type message struct {
+	subject string
+	body    string
+}
+
+// SendPasswordReset emails a link for choosing a new password.
+func (c *Client) SendPasswordReset(ctx context.Context, to, token, language string) error {
+	link := c.baseURL + "/passwords/edit?token=" + url.QueryEscape(token)
+	if strings.HasPrefix(language, "nl") {
+		return c.send(ctx, to, message{
+			subject: "Stel je MoneyHarpy-wachtwoord opnieuw in",
+			body: "Iemand heeft gevraagd om het wachtwoord van je MoneyHarpy-account opnieuw in te stellen.\r\n\r\n" +
+				"Kies een nieuw wachtwoord via deze link. De link werkt één keer en verloopt na een uur:\r\n" + link + "\r\n\r\n" +
+				"Was jij dit niet? Dan kun je deze e-mail negeren. Je wachtwoord blijft hetzelfde.\r\n",
+		})
+	}
+	return c.send(ctx, to, message{
+		subject: "Reset your MoneyHarpy password",
+		body: "Someone asked to reset the password of your MoneyHarpy account.\r\n\r\n" +
+			"Choose a new password with this link. It works once and expires in one hour:\r\n" + link + "\r\n\r\n" +
+			"If this was not you, ignore this email. Your password stays the same.\r\n",
+	})
+}
+
+// SendTest emails a message confirming that the mail settings work.
+func (c *Client) SendTest(ctx context.Context, to string) error {
+	return c.send(ctx, to, message{
+		subject: "MoneyHarpy test email",
+		body:    "Your MoneyHarpy mail settings work.\r\n",
+	})
+}
+
+func (c *Client) send(ctx context.Context, to string, m message) error {
+	inst, err := c.settings.Instance(ctx)
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	cfg := inst.SMTP
+	if !cfg.Enabled {
+		return ErrDisabled
+	}
+	if addr, err := stdmail.ParseAddress(to); err != nil || addr.Address != to {
+		return errors.New("recipient is not a plain email address")
+	}
+	if cfg.Security == "none" && cfg.Username != "" {
+		return errors.New("refusing to send credentials without encryption")
+	}
+	raw, err := c.compose(cfg.From, to, m)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
+	defer cancel()
+	client, err := c.connect(ctx, cfg)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		// Close after Quit reports an already closed connection, which is fine.
+		_ = client.Close()
+	}()
+
+	if cfg.Username != "" {
+		if err := client.Auth(smtp.PlainAuth("", cfg.Username, cfg.Password, cfg.Host)); err != nil {
+			return fmt.Errorf("authenticate: %w", err)
+		}
+	}
+	if err := client.Mail(cfg.From); err != nil {
+		return fmt.Errorf("set sender: %w", err)
+	}
+	if err := client.Rcpt(to); err != nil {
+		return fmt.Errorf("set recipient: %w", err)
+	}
+	w, err := client.Data()
+	if err != nil {
+		return fmt.Errorf("start message: %w", err)
+	}
+	if _, err := w.Write(raw); err != nil {
+		return fmt.Errorf("write message: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("finish message: %w", err)
+	}
+	return client.Quit()
+}
+
+// connect opens an SMTP session with the encryption the settings ask for. With
+// starttls, a server not offering it is an error rather than a downgrade.
+func (c *Client) connect(ctx context.Context, cfg settings.SMTP) (*smtp.Client, error) {
+	address := net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port))
+	tlsConfig := &tls.Config{ServerName: cfg.Host, RootCAs: c.rootCAs, MinVersion: tls.VersionTLS12}
+
+	var (
+		conn net.Conn
+		err  error
+	)
+	if cfg.Security == "tls" {
+		conn, err = (&tls.Dialer{Config: tlsConfig}).DialContext(ctx, "tcp", address)
+	} else {
+		conn, err = new(net.Dialer).DialContext(ctx, "tcp", address)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("connect: %w", err)
+	}
+	if deadline, ok := ctx.Deadline(); ok {
+		if err := conn.SetDeadline(deadline); err != nil {
+			_ = conn.Close() // The deadline error is the one worth reporting.
+			return nil, fmt.Errorf("set deadline: %w", err)
+		}
+	}
+
+	client, err := smtp.NewClient(conn, cfg.Host)
+	if err != nil {
+		_ = conn.Close() // The greeting error is the one worth reporting.
+		return nil, fmt.Errorf("start session: %w", err)
+	}
+	if err := client.Hello(c.hostname()); err != nil {
+		_ = client.Close() // The greeting error is the one worth reporting.
+		return nil, fmt.Errorf("greet server: %w", err)
+	}
+	if cfg.Security == "starttls" {
+		if ok, _ := client.Extension("STARTTLS"); !ok {
+			_ = client.Close() // The missing extension is the one worth reporting.
+			return nil, errors.New("server does not offer STARTTLS")
+		}
+		if err := client.StartTLS(tlsConfig); err != nil {
+			_ = client.Close() // The handshake error is the one worth reporting.
+			return nil, fmt.Errorf("start TLS: %w", err)
+		}
+	}
+	return client, nil
+}
+
+func (c *Client) hostname() string {
+	if u, err := url.Parse(c.baseURL); err == nil {
+		return cmp.Or(u.Hostname(), "localhost")
+	}
+	return "localhost"
+}
+
+func (c *Client) compose(from, to string, m message) ([]byte, error) {
+	var out bytes.Buffer
+	header := func(name, value string) { fmt.Fprintf(&out, "%s: %s\r\n", name, value) }
+	header("From", from)
+	header("To", to)
+	header("Subject", mime.QEncoding.Encode("utf-8", m.subject))
+	header("Date", time.Now().Format(time.RFC1123Z))
+	header("Message-ID", "<"+rand.Text()+"@"+c.hostname()+">")
+	header("MIME-Version", "1.0")
+	header("Content-Type", "text/plain; charset=utf-8")
+	header("Content-Transfer-Encoding", "quoted-printable")
+	out.WriteString("\r\n")
+
+	w := quotedprintable.NewWriter(&out)
+	if _, err := w.Write([]byte(m.body)); err != nil {
+		return nil, fmt.Errorf("encode body: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("encode body: %w", err)
+	}
+	return out.Bytes(), nil
+}

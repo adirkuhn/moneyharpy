@@ -17,6 +17,7 @@ type memStore struct {
 	identities map[string]resource.ID
 	sessions   map[string]session
 	tokens     map[string]Token
+	resets     map[string]session
 }
 
 type session struct {
@@ -31,6 +32,7 @@ func newMemStore() *memStore {
 		identities: map[string]resource.ID{},
 		sessions:   map[string]session{},
 		tokens:     map[string]Token{},
+		resets:     map[string]session{},
 	}
 }
 
@@ -119,19 +121,57 @@ func (s *memStore) DeleteToken(_ context.Context, id, user resource.ID) error {
 	return ErrTokenNotFound
 }
 
+func (s *memStore) ReplaceResetToken(_ context.Context, hash string, user resource.ID, expires time.Time) error {
+	for k, r := range s.resets {
+		if r.user == user {
+			delete(s.resets, k)
+		}
+	}
+	s.resets[hash] = session{user: user, expires: expires}
+	return nil
+}
+
+func (s *memStore) ResetPassword(_ context.Context, hash, passwordHash string, now time.Time) error {
+	r, ok := s.resets[hash]
+	if !ok || !r.expires.After(now) {
+		return ErrResetTokenInvalid
+	}
+	delete(s.resets, hash)
+	s.hashes[r.user] = passwordHash
+	for k, sess := range s.sessions {
+		if sess.user == r.user {
+			delete(s.sessions, k)
+		}
+	}
+	return nil
+}
+
+type sentReset struct{ to, token, language string }
+
+type fakeMailer struct {
+	sent []sentReset
+	err  error
+}
+
+func (m *fakeMailer) SendPasswordReset(_ context.Context, to, token, language string) error {
+	m.sent = append(m.sent, sentReset{to, token, language})
+	return m.err
+}
+
 type policy struct{ open bool }
 
 func (p policy) RegistrationOpen(context.Context) (bool, error) { return p.open, nil }
 
 type harness struct {
 	*Service
-	store *memStore
-	now   time.Time
+	store  *memStore
+	mailer *fakeMailer
+	now    time.Time
 }
 
 func newHarness(open bool) *harness {
-	h := &harness{store: newMemStore(), now: time.Date(2026, 11, 10, 12, 0, 0, 0, time.UTC)}
-	h.Service = NewService(h.store, policy{open: open}, resource.NewGenerator(1), NewHasher(Params{Time: 1, MemoryKiB: 8, Threads: 1}), func() time.Time { return h.now })
+	h := &harness{store: newMemStore(), mailer: &fakeMailer{}, now: time.Date(2026, 11, 10, 12, 0, 0, 0, time.UTC)}
+	h.Service = NewService(h.store, policy{open: open}, resource.NewGenerator(1), NewHasher(Params{Time: 1, MemoryKiB: 8, Threads: 1}), h.mailer, func() time.Time { return h.now })
 	return h
 }
 
@@ -360,4 +400,101 @@ func TestLoginExternal(t *testing.T) {
 			t.Errorf("LoginExternal() error = %v, want ErrRegistrationClosed", err)
 		}
 	})
+}
+
+func TestPasswordResetChangesPasswordAndEndsSessions(t *testing.T) {
+	h := newHarness(true)
+	ctx := context.Background()
+	reg, err := h.Register(ctx, alice)
+	if err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	if err := h.RequestPasswordReset(ctx, " ALICE@example.com", "nl"); err != nil {
+		t.Fatalf("RequestPasswordReset() error = %v", err)
+	}
+	if len(h.mailer.sent) != 1 {
+		t.Fatalf("mails sent = %d, want 1", len(h.mailer.sent))
+	}
+	mail := h.mailer.sent[0]
+	if mail.to != "alice@example.com" || mail.language != "nl" {
+		t.Errorf("mail = %+v, want normalized address and language", mail)
+	}
+	for hash := range h.store.resets {
+		if hash == mail.token {
+			t.Error("reset token stored in clear, want hashed")
+		}
+	}
+
+	const next = "a brand new password"
+	if err := h.ResetPassword(ctx, mail.token, next); err != nil {
+		t.Fatalf("ResetPassword() error = %v", err)
+	}
+	if _, err := h.Login(ctx, alice.Email, alice.Password); !errors.Is(err, ErrInvalidCredentials) {
+		t.Errorf("Login() with old password error = %v, want ErrInvalidCredentials", err)
+	}
+	if _, err := h.Login(ctx, alice.Email, next); err != nil {
+		t.Errorf("Login() with new password error = %v", err)
+	}
+	if _, err := h.Authenticate(ctx, reg.SessionToken); !errors.Is(err, ErrUnauthenticated) {
+		t.Errorf("Authenticate() of old session error = %v, want ErrUnauthenticated", err)
+	}
+	if err := h.ResetPassword(ctx, mail.token, next); !errors.Is(err, ErrResetTokenInvalid) {
+		t.Errorf("ResetPassword() reused token error = %v, want ErrResetTokenInvalid", err)
+	}
+}
+
+func TestPasswordResetForUnknownEmailSendsNothing(t *testing.T) {
+	h := newHarness(true)
+	if err := h.RequestPasswordReset(context.Background(), "nobody@example.com", "en"); err != nil {
+		t.Fatalf("RequestPasswordReset() error = %v", err)
+	}
+	if len(h.mailer.sent) != 0 {
+		t.Errorf("mails sent = %d, want 0", len(h.mailer.sent))
+	}
+}
+
+func TestPasswordResetTokenExpires(t *testing.T) {
+	h := newHarness(true)
+	ctx := context.Background()
+	if _, err := h.Register(ctx, alice); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	if err := h.RequestPasswordReset(ctx, alice.Email, "en"); err != nil {
+		t.Fatalf("RequestPasswordReset() error = %v", err)
+	}
+	h.now = h.now.Add(resetLifetime + time.Minute)
+	if err := h.ResetPassword(ctx, h.mailer.sent[0].token, "a brand new password"); !errors.Is(err, ErrResetTokenInvalid) {
+		t.Errorf("ResetPassword() error = %v, want ErrResetTokenInvalid", err)
+	}
+}
+
+func TestNewPasswordResetReplacesEarlierToken(t *testing.T) {
+	h := newHarness(true)
+	ctx := context.Background()
+	if _, err := h.Register(ctx, alice); err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	for range 2 {
+		if err := h.RequestPasswordReset(ctx, alice.Email, "en"); err != nil {
+			t.Fatalf("RequestPasswordReset() error = %v", err)
+		}
+	}
+	if err := h.ResetPassword(ctx, h.mailer.sent[0].token, "a brand new password"); !errors.Is(err, ErrResetTokenInvalid) {
+		t.Errorf("ResetPassword() with first token error = %v, want ErrResetTokenInvalid", err)
+	}
+	if err := h.ResetPassword(ctx, h.mailer.sent[1].token, "a brand new password"); err != nil {
+		t.Errorf("ResetPassword() with latest token error = %v", err)
+	}
+}
+
+func TestResetPasswordValidatesNewPassword(t *testing.T) {
+	err := newHarness(true).ResetPassword(context.Background(), "any", "short")
+	var verr *resource.ValidationError
+	if !errors.As(err, &verr) {
+		t.Fatalf("ResetPassword() error = %v, want *resource.ValidationError", err)
+	}
+	if _, ok := verr.Fields["password"]; !ok {
+		t.Errorf("ResetPassword() fields = %v, want password", verr.Fields)
+	}
 }

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { NotFoundPage } from '../layout/NotFoundPage'
@@ -11,6 +12,7 @@ function useRouteAdministration() {
 }
 
 export function AdministrationHomePage() {
+  const { t } = useTranslation()
   const { valid, query } = useRouteAdministration()
   if (!valid || (query.error instanceof ApiError && query.error.status < 500)) {
     return <NotFoundPage />
@@ -20,12 +22,13 @@ export function AdministrationHomePage() {
   }
   return (
     <Page title={query.data.name}>
-      <p className="empty">Invoices, contacts and quotes for this administration will appear here.</p>
+      <p className="empty">{t('administrations.homeEmpty')}</p>
     </Page>
   )
 }
 
 export function AdministrationSettingsPage() {
+  const { t } = useTranslation()
   const { valid, query } = useRouteAdministration()
   if (!valid || (query.error instanceof ApiError && query.error.status < 500)) {
     return <NotFoundPage />
@@ -35,13 +38,13 @@ export function AdministrationSettingsPage() {
   }
   const a = query.data
   return (
-    <Page title={`${a.name} settings`}>
+    <Page title={t('administrations.settings', { name: a.name })}>
       <dl className="facts">
-        <dt>Language</dt><dd>{a.language}</dd>
-        <dt>Currency</dt><dd>{a.currency}</dd>
-        <dt>Country</dt><dd>{a.country}</dd>
-        <dt>Time zone</dt><dd>{a.time_zone}</dd>
-        <dt>Bookkeeping starts</dt><dd>{a.period_start_date}</dd>
+        <dt>{t('administrations.language')}</dt><dd>{a.language}</dd>
+        <dt>{t('administrations.currency')}</dt><dd>{a.currency}</dd>
+        <dt>{t('administrations.country')}</dt><dd>{a.country}</dd>
+        <dt>{t('administrations.timeZone')}</dt><dd>{a.time_zone}</dd>
+        <dt>{t('administrations.starts')}</dt><dd>{a.period_start_date}</dd>
       </dl>
     </Page>
   )

@@ -51,8 +51,9 @@ INSERT INTO settings (key, value) VALUES ($1, $2)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now();
 
 -- name: InsertAdministration :exec
-INSERT INTO administrations (id, name, language, currency, country, time_zone, suspended, period_locked_until, period_start_date)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+INSERT INTO administrations (id, name, language, currency, country, time_zone, suspended, period_locked_until, period_start_date,
+                             address1, address2, zipcode, city, chamber_of_commerce)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
 
 -- name: InsertMember :exec
 INSERT INTO administration_members (administration_id, user_id, access) VALUES ($1, $2, $3);
@@ -63,6 +64,7 @@ INSERT INTO resources (id, type, administration_id) VALUES ($1, $2, $3);
 -- name: ListAdministrations :many
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
+       a.address1, a.address2, a.zipcode, a.city, a.chamber_of_commerce,
        m.access, m.favorite
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
 WHERE m.user_id = $1;
@@ -70,6 +72,7 @@ WHERE m.user_id = $1;
 -- name: AdministrationForUser :one
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
+       a.address1, a.address2, a.zipcode, a.city, a.chamber_of_commerce,
        m.access, m.favorite
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
 WHERE a.id = $1 AND m.user_id = $2;
@@ -81,3 +84,18 @@ UPDATE administration_members SET favorite = $3 WHERE administration_id = $1 AND
 SELECT r.id, r.type, r.administration_id
 FROM resources r JOIN administration_members m ON m.administration_id = r.administration_id
 WHERE r.id = $1 AND m.user_id = $2;
+
+-- name: DeleteResetTokens :exec
+DELETE FROM password_reset_tokens WHERE user_id = $1;
+
+-- name: InsertResetToken :exec
+INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES ($1, $2, $3);
+
+-- name: ConsumeResetToken :one
+DELETE FROM password_reset_tokens WHERE token_hash = $1 AND expires_at > $2 RETURNING user_id;
+
+-- name: UpdatePassword :exec
+UPDATE users SET password_hash = $2 WHERE id = $1;
+
+-- name: DeleteUserSessions :exec
+DELETE FROM sessions WHERE user_id = $1;

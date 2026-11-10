@@ -40,7 +40,7 @@ describe('API tokens', () => {
 })
 
 describe('instance settings', () => {
-  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '' }
+  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '' }
 
   it('is closed to regular users', async () => {
     server.use(signedIn(), listing([]))
@@ -63,7 +63,7 @@ describe('instance settings', () => {
     await userEvent.click(await screen.findByLabelText('Allow new users to register'))
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() =>
-      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '' }),
+      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls' }),
     )
     expect(await screen.findByRole('status')).toHaveTextContent('Settings saved')
   })
@@ -87,6 +87,91 @@ describe('instance settings', () => {
     await waitFor(() =>
       expect(sent).toMatchObject({ lm2_enabled: true, lm2_url: 'https://lm.example.com', lm2_app: 'moneyharpy' }),
     )
+  })
+
+  it('adds company search and address lookup later', async () => {
+    let sent: unknown
+    server.use(
+      signedIn({ ...user, instance_admin: true }),
+      listing([]),
+      http.get('*/api/instance/settings', () => HttpResponse.json(current)),
+      http.patch('*/api/instance/settings', async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json(current)
+      }),
+    )
+    renderAt('/instance/settings')
+    await userEvent.click(await screen.findByLabelText('Search the Dutch company register'))
+    await userEvent.type(screen.getByLabelText('KVK API key'), 'kvk-key')
+    await userEvent.click(screen.getByLabelText('Complete Dutch addresses from zipcode and house number'))
+    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+    await waitFor(() =>
+      expect(sent).toMatchObject({ kvk_enabled: true, kvk_api_key: 'kvk-key', address_lookup_enabled: true }),
+    )
+  })
+
+  it('configures the mail server', async () => {
+    let sent: unknown
+    server.use(
+      signedIn({ ...user, instance_admin: true }),
+      listing([]),
+      http.get('*/api/instance/settings', () => HttpResponse.json(current)),
+      http.patch('*/api/instance/settings', async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json(current)
+      }),
+    )
+    renderAt('/instance/settings')
+    await userEvent.click(await screen.findByLabelText('Send email through this mail server'))
+    await userEvent.type(screen.getByLabelText('SMTP host'), 'mail.example.com')
+    await userEvent.clear(screen.getByLabelText('SMTP port'))
+    await userEvent.type(screen.getByLabelText('SMTP port'), '465')
+    await userEvent.type(screen.getByLabelText('SMTP username'), 'books')
+    await userEvent.type(screen.getByLabelText('SMTP password'), 'pw')
+    await userEvent.type(screen.getByLabelText('Send email from'), 'books@example.com')
+    await userEvent.selectOptions(screen.getByLabelText('Encryption'), 'tls')
+    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+    await waitFor(() =>
+      expect(sent).toMatchObject({
+        smtp_enabled: true, smtp_host: 'mail.example.com', smtp_port: 465, smtp_username: 'books',
+        smtp_password: 'pw', smtp_from: 'books@example.com', smtp_security: 'tls',
+      }),
+    )
+  })
+
+  describe('sending a test email', () => {
+    const saved = { ...current, smtp_enabled: true, smtp_host: 'h', smtp_port: 587, smtp_from: 'a@b.nl', smtp_security: 'starttls' }
+
+    it('is only offered for saved, enabled mail settings', async () => {
+      server.use(signedIn({ ...user, instance_admin: true }), listing([]), http.get('*/api/instance/settings', () => HttpResponse.json(current)))
+      renderAt('/instance/settings')
+      await screen.findByLabelText('SMTP host')
+      expect(screen.getByRole('button', { name: 'Send test email' })).toBeDisabled()
+    })
+
+    it('confirms delivery to the administrator', async () => {
+      server.use(
+        signedIn({ ...user, instance_admin: true }),
+        listing([]),
+        http.get('*/api/instance/settings', () => HttpResponse.json(saved)),
+        http.post('*/api/instance/settings/test_email', () => new HttpResponse(null, { status: 204 })),
+      )
+      renderAt('/instance/settings')
+      await userEvent.click(await screen.findByRole('button', { name: 'Send test email' }))
+      expect(await screen.findByText(`Test email sent to ${user.email}`)).toBeInTheDocument()
+    })
+
+    it('shows why the mail server refused', async () => {
+      server.use(
+        signedIn({ ...user, instance_admin: true }),
+        listing([]),
+        http.get('*/api/instance/settings', () => HttpResponse.json(saved)),
+        http.post('*/api/instance/settings/test_email', () => HttpResponse.json({ error: '535 authentication failed' }, { status: 502 })),
+      )
+      renderAt('/instance/settings')
+      await userEvent.click(await screen.findByRole('button', { name: 'Send test email' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('535 authentication failed')
+    })
   })
 
   it('keeps a stored secret unless a new one is typed', async () => {

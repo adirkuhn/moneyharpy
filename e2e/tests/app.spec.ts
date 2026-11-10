@@ -1,12 +1,51 @@
-import { expect, type Page, test } from '@playwright/test'
+import { expect, type Page, request as playwrightRequest, test } from '@playwright/test'
 
 const password = 'correct horse battery'
 const unique = () => `user${Date.now()}${Math.floor(Math.random() * 1e6)}@example.com`
 
+const randomClient = () => ({
+  'X-Forwarded-For': `10.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+})
+const mailpit = process.env.E2E_MAILPIT_URL ?? 'http://localhost:18025'
+const admin = { email: 'admin@example.com', name: 'Instance Admin', password }
+
+// Runs before every other test registers, so this account is the instance admin.
+test.beforeAll(async ({ baseURL }) => {
+  const api = await playwrightRequest.newContext({ baseURL, extraHTTPHeaders: randomClient() })
+  const signedIn = await api.post('/api/auth/login', { data: { email: admin.email, password } })
+  if (!signedIn.ok()) {
+    expect((await api.post('/api/auth/register', { data: admin })).status()).toBe(201)
+  }
+  const saved = await api.patch('/api/instance/settings', {
+    data: { smtp_enabled: true, smtp_host: 'mailpit', smtp_port: 1025, smtp_from: 'books@example.com', smtp_security: 'none' },
+  })
+  expect(saved.status()).toBe(200)
+  await api.dispose()
+})
+
+async function resetLinkFor(email: string): Promise<string> {
+  const api = await playwrightRequest.newContext()
+  let link = ''
+  await expect
+    .poll(async () => {
+      const found = await (await api.get(`${mailpit}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`)).json()
+      if (found.messages.length === 0) {
+        return false
+      }
+      const message = await (await api.get(`${mailpit}/api/v1/message/${found.messages[0].ID}`)).json()
+      link = /https?:\/\/\S+\/passwords\/edit\?token=\S+/.exec(message.Text)?.[0] ?? ''
+      return link !== ''
+    }, { timeout: 15000 })
+    .toBe(true)
+  await api.dispose()
+  return link
+}
+
 async function register(page: Page, name = 'Ann de Vries', email = unique()) {
+  await page.setExtraHTTPHeaders(randomClient())
   await page.goto('/register')
   await page.getByLabel('Name').fill(name)
-  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Email address').fill(email)
   await page.getByLabel('Password').fill(password)
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByRole('heading', { name: 'Select an administration' })).toBeVisible()
@@ -14,9 +53,12 @@ async function register(page: Page, name = 'Ann de Vries', email = unique()) {
 }
 
 async function addAdministration(page: Page, name: string) {
-  await page.goto('/administrations/new')
+  await page.goto('/onboarding/company/manually?country=NL')
   await page.getByLabel('Company name').fill(name)
-  await page.getByRole('button', { name: 'Add administration' }).click()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByRole('heading', { name: 'What do you want to start with?' })).toBeVisible()
+  await page.getByRole('radio', { name: /open my administration/ }).check()
+  await page.getByRole('button', { name: 'Get started' }).click()
   await expect(page.getByRole('heading', { name })).toBeVisible()
 }
 
@@ -50,6 +92,70 @@ test('a user manages administrations and opens them by URI', async ({ page }) =>
   await expect(page.getByRole('heading', { name: 'Harpy B.V. settings' })).toBeVisible()
 })
 
+test('adding an administration walks through the wizard', async ({ page }) => {
+  await register(page)
+  await page.getByRole('link', { name: 'Add administration' }).click()
+  await expect(page.getByRole('heading', { name: 'Welcome Ann' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0)
+  await page.getByRole('link', { name: 'Next' }).click()
+
+  await page.getByLabel('Company name').fill('Wizard Co')
+  await page.getByLabel('Address', { exact: true }).fill('Dam 1')
+  await page.getByLabel('Zipcode').fill('1012JS')
+  await page.getByLabel('City').fill('Amsterdam')
+  await page.getByRole('combobox', { name: 'Currency' }).click()
+  await page.getByRole('searchbox', { name: 'Find currency' }).fill('USD')
+  await page.getByRole('option', { name: /^USD/ }).click()
+  await page.getByRole('button', { name: 'Next' }).click()
+
+  await expect(page).toHaveURL(/\/\d+\/onboarding\/first_action\/new/)
+  await page.getByRole('radio', { name: /send an invoice/ }).check()
+  await page.getByRole('button', { name: 'Get started' }).click()
+  await expect(page.getByRole('heading', { name: 'Wizard Co' })).toBeVisible()
+
+  const id = new URL(page.url()).pathname.slice(1)
+  const res = await page.request.get(`/api/v2/administrations/${id}`)
+  expect(await res.json()).toMatchObject({ currency: 'USD', address1: 'Dam 1', zipcode: '1012JS', city: 'Amsterdam', country: 'NL' })
+})
+
+test('the whole app switches to Dutch and remembers it', async ({ page }) => {
+  await register(page)
+  await page.getByRole('button', { name: 'Ann de Vries' }).click()
+  await page.getByLabel('Language').selectOption('nl')
+  await expect(page.getByRole('heading', { name: 'Kies een administratie' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Kies een administratie' })).toBeVisible()
+})
+
+test('a forgotten password can be replaced through email', async ({ page }) => {
+  const email = await register(page)
+  await page.getByRole('button', { name: 'Ann de Vries' }).click()
+  await page.getByRole('button', { name: 'Sign out' }).click()
+
+  await page.getByRole('link', { name: 'Forgot your password?' }).click()
+  await expect(page.getByRole('heading', { name: 'Forgot your password?' })).toBeVisible()
+  await page.getByLabel('Email address').fill(email)
+  await page.getByRole('button', { name: 'Send reset link' }).click()
+  await expect(page.getByRole('status')).toContainText('we sent a link')
+
+  const link = new URL(await resetLinkFor(email))
+  await page.goto(link.pathname + link.search)
+  await page.getByLabel('New password').fill('a brand new password')
+  await page.getByRole('button', { name: 'Save new password' }).click()
+  await expect(page.getByRole('status')).toContainText('Password changed')
+  await expect(page.getByRole('heading', { name: 'Login', exact: true })).toBeVisible()
+
+  await page.getByLabel('Email address').fill(email)
+  await page.getByLabel('Password').fill('a brand new password')
+  await page.getByRole('button', { name: 'Login to MoneyHarpy' }).click()
+  await expect(page.getByRole('heading', { name: 'Select an administration' })).toBeVisible()
+
+  await page.goto(link.pathname + link.search)
+  await page.getByLabel('New password').fill('yet another password')
+  await page.getByRole('button', { name: 'Save new password' }).click()
+  await expect(page.getByRole('alert')).toContainText('invalid or has expired')
+})
+
 test('another user cannot open an administration by URI', async ({ browser, page }) => {
   await register(page)
   await addAdministration(page, 'Private Co')
@@ -70,13 +176,13 @@ test('a session survives reload and ends on sign out', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign out' }).click()
   await expect(page).toHaveURL(/\/login$/)
 
-  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Email address').fill(email)
   await page.getByLabel('Password').fill('not the password at all')
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Login to MoneyHarpy' }).click()
   await expect(page.getByRole('alert')).toContainText('Invalid email or password')
 
   await page.getByLabel('Password').fill(password)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Login to MoneyHarpy' }).click()
   await expect(page.getByRole('heading', { name: 'Select an administration' })).toBeVisible()
 })
 
