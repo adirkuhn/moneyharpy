@@ -687,3 +687,13 @@ textarea { min-height: 4.5rem; padding: 0.5rem 0.625rem; resize: vertical; }
   .topnav__sections { display: none; }
   .transactions__date { width: 6rem; }
 }
+
+/* Management and two-step verification. */
+.banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.75rem 1rem; background: var(--gold); color: var(--navy); }
+.banner p { margin: 0; font-weight: 600; }
+.ledger__name--danger { color: #b42318; }
+.qr { width: 12rem; height: 12rem; border: 1px solid var(--line); border-radius: 8px; background: var(--white); image-rendering: pixelated; }
+.secret-inline { padding: 0.125rem 0.375rem; border-radius: 4px; background: var(--surface); overflow-wrap: anywhere; font-size: 0.9375rem; }
+.recovery-codes { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.25rem 1rem; margin: 0; padding: 0; list-style: none; font-variant-numeric: tabular-nums; }
+.prose { max-width: 40rem; }
+.prose p { margin: 0 0 1rem; line-height: 1.6; }

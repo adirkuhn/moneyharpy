@@ -8,6 +8,7 @@ export function useAdministrations() {
 export function useAdministration(id: string) {
   return useQuery({
     queryKey: ['administrations', id],
+    enabled: /^\d{1,19}$/.test(id),
     queryFn: () => unwrap(api.GET('/api/v2/administrations/{id}', { params: { path: { id } } })),
   })
 }

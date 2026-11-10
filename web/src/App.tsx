@@ -18,7 +18,14 @@ import { WorkflowFormPage } from './invoicing/WorkflowFormPage'
 import { CompanySettingsPage } from './settings/CompanySettingsPage'
 import { CustomFieldFormPage } from './settings/CustomFieldFormPage'
 import { IdentityFormPage } from './settings/IdentityFormPage'
-import { ManagementSettingsPage } from './settings/ManagementSettingsPage'
+import { DeletePage } from './management/DeletePage'
+import { InvitePage } from './management/InvitePage'
+import { ManagementSettingsPage } from './management/ManagementSettingsPage'
+import { PrivacyPage } from './management/PrivacyPage'
+import { SupportAccessPage } from './management/SupportAccessPage'
+import { UserFormPage } from './management/UserFormPage'
+import { InvitationPage } from './auth/InvitationPage'
+import { TwoFactorSignInPage } from './auth/TwoFactorSignInPage'
 import { PlaceholderSettingsPage } from './settings/PlaceholderSettingsPage'
 import { BankSettingsPage } from './banking/BankSettingsPage'
 import { BookingRuleFormPage } from './banking/BookingRuleFormPage'
@@ -38,6 +45,8 @@ export function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/login/two-factor" element={<TwoFactorSignInPage />} />
+      <Route path="/invitations/:token" element={<InvitationPage />} />
       <Route path="/passwords/new" element={<ForgotPasswordPage />} />
       <Route path="/passwords/edit" element={<EditPasswordPage />} />
       <Route element={<RequireAuth><Outlet /></RequireAuth>}>
@@ -73,6 +82,21 @@ export function AppRoutes() {
           <Route path="new" element={<DocumentStyleFormPage />} />
           <Route path=":styleId" element={<Navigate to="edit" replace />} />
           <Route path=":styleId/edit" element={<DocumentStyleFormPage />} />
+        </Route>
+        <Route path="/:administrationId/users" element={<SettingsLayout />}>
+          <Route path=":userId" element={<UserFormPage />} />
+        </Route>
+        <Route path="/:administrationId/user_invitations" element={<SettingsLayout />}>
+          <Route path="new" element={<InvitePage />} />
+        </Route>
+        <Route path="/:administrationId/support_access" element={<SettingsLayout />}>
+          <Route index element={<SupportAccessPage />} />
+        </Route>
+        <Route path="/:administrationId/privacy" element={<SettingsLayout />}>
+          <Route path=":topic" element={<PrivacyPage />} />
+        </Route>
+        <Route path="/:administrationId/delete" element={<SettingsLayout />}>
+          <Route index element={<DeletePage />} />
         </Route>
         <Route path="/:administrationId/financial_mutations" element={<TransactionsPage />} />
         <Route path="/:administrationId/financial_mutations/:mutationId" element={<TransactionPage />} />

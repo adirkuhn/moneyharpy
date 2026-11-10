@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, type Page, request as playwrightRequest, test } from '@playwright/test'
@@ -32,6 +33,10 @@ test.beforeAll(async ({ baseURL }) => {
 })
 
 async function resetLinkFor(email: string): Promise<string> {
+  return linkFor(email, /https?:\/\/\S+\/passwords\/edit\?token=\S+/)
+}
+
+async function linkFor(email: string, pattern: RegExp): Promise<string> {
   const api = await playwrightRequest.newContext()
   let link = ''
   await expect
@@ -41,7 +46,7 @@ async function resetLinkFor(email: string): Promise<string> {
         return false
       }
       const message = await (await api.get(`${mailpit}/api/v1/message/${found.messages[0].ID}`)).json()
-      link = /https?:\/\/\S+\/passwords\/edit\?token=\S+/.exec(message.Text)?.[0] ?? ''
+      link = pattern.exec(message.Text)?.[0] ?? ''
       return link !== ''
     }, { timeout: 15000 })
     .toBe(true)
@@ -431,4 +436,90 @@ test('bank statements are imported, booked by rules and by hand', async ({ page 
   const id = uri.slice(1)
   const balance = await (await page.request.get(`/api/v2/${id}/reports/bank_balance`)).json()
   expect(balance.total).toBe('974.5')
+})
+
+
+// totp computes an authenticator code (RFC 6238) from a base32 secret.
+function totp(secret: string, at = Date.now()): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
+  let bits = ''
+  for (const c of secret) {
+    bits += alphabet.indexOf(c).toString(2).padStart(5, '0')
+  }
+  const key = Buffer.from(bits.match(/.{8}/g)!.map((b) => parseInt(b, 2)))
+  const counter = Buffer.alloc(8)
+  counter.writeBigUInt64BE(BigInt(Math.floor(at / 30000)))
+  const mac = createHmac('sha1', key).update(counter).digest()
+  const o = mac[mac.length - 1] & 0x0f
+  return String((mac.readUInt32BE(o) & 0x7fffffff) % 1_000_000).padStart(6, '0')
+}
+
+test('owners invite users with limited rights and require two-step verification', async ({ browser, page }) => {
+  const ownerEmail = await register(page)
+  await addAdministration(page, 'Team Co')
+  const uri = new URL(page.url()).pathname
+  await page.goto(`${uri}/settings/administration`)
+  await expect(page.getByRole('heading', { name: 'Management', level: 1 })).toBeVisible()
+
+  const colleagueEmail = unique()
+  await page.getByRole('region', { name: 'Users' }).getByRole('button', { name: 'Invite user' }).click()
+  await page.getByRole('link', { name: 'Employee' }).click()
+  await page.getByLabel('Email address').fill(colleagueEmail)
+  for (const name of ['Invoices', 'Purchase invoices and receipts', 'Quotes', 'Time tracking']) {
+    await page.getByRole('checkbox', { name, exact: true }).uncheck()
+  }
+  await page.getByRole('checkbox', { name: 'Bank', exact: true }).check()
+  await page.getByRole('button', { name: 'Send invitation' }).click()
+  await expect(page.getByRole('table', { name: 'Open invitations' })).toContainText(colleagueEmail)
+
+  const link = new URL(await linkFor(colleagueEmail, /https?:\/\/\S+\/invitations\/\S+/))
+  const colleague = await (await browser.newContext()).newPage()
+  await colleague.setExtraHTTPHeaders(randomClient())
+  await colleague.goto(link.pathname)
+  await expect(colleague.getByRole('heading', { name: 'Join Team Co' })).toBeVisible()
+  await colleague.getByRole('link', { name: 'Create an account' }).click()
+  await colleague.getByLabel('Name').fill('Colleague')
+  await colleague.getByLabel('Password').fill(password)
+  await colleague.getByRole('button', { name: 'Create account' }).click()
+  await colleague.getByRole('button', { name: 'Accept invitation' }).click()
+  await expect(colleague.getByRole('heading', { name: 'Team Co', level: 1 })).toBeVisible()
+  await expect(colleague.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Bank' })).toBeVisible()
+  await colleague.goto(`${uri}/settings/bookkeeping`)
+  await expect(colleague.getByRole('heading', { name: 'No access' })).toBeVisible()
+  const api = await colleague.request.get(`/api/v2${uri}/bookkeeping_settings`)
+  expect(api.status()).toBe(403)
+
+  // The owner turns on two-step verification and requires it.
+  await page.goto('/user')
+  await page.getByRole('button', { name: 'Set up two-step verification' }).click()
+  const key = (await page.locator('.secret-inline').textContent()) ?? ''
+  await page.getByLabel('Code').fill(totp(key))
+  await page.getByRole('button', { name: 'Turn on' }).click()
+  await expect(page.getByText('Save these recovery codes')).toBeVisible()
+  const recovery = (await page.locator('.recovery-codes code').first().textContent()) ?? ''
+
+  await page.goto(`${uri}/settings/administration#security`)
+  await page.getByRole('switch', { name: 'Require two-step verification' }).click({ force: true })
+  await page.getByRole('button', { name: 'Require two-step verification' }).click()
+  await expect(page.getByText('This cannot be turned off again.').first()).toBeVisible()
+
+  await colleague.goto(`${uri}/financial_mutations`)
+  await expect(colleague.getByText('Team Co requires two-step verification.')).toBeVisible()
+
+  // Signing in now takes the second step.
+  await page.getByRole('button', { name: 'Ann de Vries' }).click()
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.goto('/login')
+  await page.getByLabel('Email address').fill(ownerEmail)
+  await page.getByLabel('Password').fill(password)
+  await page.getByRole('button', { name: 'Login to MoneyHarpy' }).click()
+  await page.getByLabel('Code').fill(recovery)
+  await page.getByRole('button', { name: 'Verify' }).click()
+  await expect(page.getByRole('heading', { name: 'Select an administration' })).toBeVisible()
+
+  await page.goto(`${uri}/delete`)
+  await page.getByLabel('Administration name').fill('Team Co')
+  await page.getByRole('button', { name: 'Delete permanently' }).click()
+  await expect(page.getByRole('heading', { name: 'Select an administration' })).toBeVisible()
+  await expect(page.getByText('Team Co')).toHaveCount(0)
 })

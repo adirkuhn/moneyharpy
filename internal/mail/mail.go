@@ -70,6 +70,30 @@ func (c *Client) SendPasswordReset(ctx context.Context, to, token, language stri
 	})
 }
 
+// InvitationURL is where an invitation is accepted.
+func (c *Client) InvitationURL(token string) string {
+	return c.baseURL + "/invitations/" + url.PathEscape(token)
+}
+
+// SendInvitation emails an invitation to join an administration.
+func (c *Client) SendInvitation(ctx context.Context, to, token, administration, inviter, language string) error {
+	link := c.InvitationURL(token)
+	if strings.HasPrefix(language, "nl") {
+		return c.send(ctx, to, message{
+			subject: inviter + " nodigt je uit voor " + administration + " in MoneyHarpy",
+			body: inviter + " nodigt je uit om mee te werken in de administratie " + administration + " in MoneyHarpy.\r\n\r\n" +
+				"Accepteer de uitnodiging via deze link. Hij verloopt na 14 dagen:\r\n" + link + "\r\n\r\n" +
+				"Verwachtte je dit niet? Dan kun je deze e-mail negeren.\r\n",
+		})
+	}
+	return c.send(ctx, to, message{
+		subject: inviter + " invited you to " + administration + " on MoneyHarpy",
+		body: inviter + " invited you to work in the administration " + administration + " on MoneyHarpy.\r\n\r\n" +
+			"Accept the invitation with this link. It expires in 14 days:\r\n" + link + "\r\n\r\n" +
+			"If you did not expect this, ignore this email.\r\n",
+	})
+}
+
 // SendTest emails a message confirming that the mail settings work.
 func (c *Client) SendTest(ctx context.Context, to string) error {
 	return c.send(ctx, to, message{

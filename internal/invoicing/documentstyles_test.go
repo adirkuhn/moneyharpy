@@ -123,3 +123,21 @@ func TestUploadRejectsWrongFiles(t *testing.T) {
 		t.Errorf("PDF background error = %v", err)
 	}
 }
+
+func TestPurgeFilesDeletesEveryStyleFile(t *testing.T) {
+	svc, _, files := newTestService()
+	ctx := context.Background()
+	styles, err := svc.DocumentStyles(ctx, adminID, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.UploadFile(ctx, adminID, styles[0].ID, owner, Logo, append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 64)...)); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.PurgeFiles(ctx, adminID); err != nil {
+		t.Fatal(err)
+	}
+	if len(files.data) != 0 {
+		t.Errorf("files left: %v", files.data)
+	}
+}

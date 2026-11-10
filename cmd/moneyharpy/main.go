@@ -25,6 +25,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/kvk"
 	"github.com/adirkuhn/moneyharpy/internal/lm2"
 	"github.com/adirkuhn/moneyharpy/internal/mail"
+	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/objectstore"
 	"github.com/adirkuhn/moneyharpy/internal/pdok"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
@@ -96,19 +97,23 @@ func run(logger *slog.Logger) error {
 
 	ids := resource.NewGenerator(1)
 	outbound := &http.Client{Timeout: 10 * time.Second}
-	instance := settings.NewService(postgres.NewSettingsStore(pool), settings.NewCipher(cfg.secretKey))
+	cipher := settings.NewCipher(cfg.secretKey)
+	instance := settings.NewService(postgres.NewSettingsStore(pool), cipher)
 	mailer := mail.New(instance, cfg.baseURL)
 	s3 := objectstore.New(instance)
 	files := uploads.New(s3, diskstore.New(cfg.uploadsDir))
 	admins := administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now)
+	invoices := invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now)
+	people := identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, cipher, time.Now)
 	books := bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
-		Invoicing:         invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now),
+		Invoicing:         invoices,
 		Bookkeeping:       books,
 		Banking:           banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now),
 		Storage:           s3,
-		Identity:          identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, time.Now),
+		Identity:          people,
+		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
 		Settings:          instance,
 		Resources:         postgres.NewResourceLocator(pool),
 		Google:            google.New(instance, cfg.baseURL, google.Issuer),

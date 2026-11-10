@@ -67,11 +67,19 @@ func toAdministration(l administration.Listed) Administration {
 		CompanyActivitiesDescription: l.CompanyActivitiesDescription,
 		CompanyWebsiteUrl:            l.CompanyWebsiteURL,
 		CompanyWebsiteAbsent:         l.CompanyWebsiteAbsent,
+		UserType:                     AdministrationUserType(l.UserType),
+		Permissions:                  permissionsJSON(l.Permissions),
+		RequireTwoFactor:             l.RequireTwoFactor,
+		SupportAccessUntil:           l.SupportAccessUntil,
 	}
 }
 
-func toCurrentUser(u identity.User) CurrentUser {
-	return CurrentUser{Id: u.ID.String(), Email: u.Email, Name: u.Name, InstanceAdmin: u.InstanceAdmin}
+func permissionsJSON(ps []administration.Permission) []Permission {
+	out := make([]Permission, len(ps))
+	for i, p := range ps {
+		out[i] = Permission(p)
+	}
+	return out
 }
 
 // ListAdministrations implements ServerInterface.
@@ -141,7 +149,7 @@ func (s *server) UpdateAdministration(w http.ResponseWriter, r *http.Request, id
 	}
 	in := body.Administration
 	updated, err := s.deps.Administrations.Update(r.Context(), rid, user(r).ID, administration.Changes{
-		Name: in.Name, Language: (*string)(in.Language), Currency: in.Currency, TimeZone: in.TimeZone,
+		Name: in.Name, Country: in.Country, Language: (*string)(in.Language), Currency: in.Currency, TimeZone: in.TimeZone,
 		SmallBusinessScheme: in.SmallBusinessScheme, CompanyActivitiesDescription: in.CompanyActivitiesDescription,
 		CompanyWebsiteURL: in.CompanyWebsiteUrl, CompanyWebsiteAbsent: in.CompanyWebsiteAbsent,
 	})
@@ -511,13 +519,20 @@ func (s *server) Register(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	res, err := s.deps.Identity.Register(r.Context(), identity.Registration{Email: body.Email, Name: body.Name, Password: body.Password})
+	in := identity.Registration{Email: body.Email, Name: body.Name, Password: body.Password}
+	if body.InvitationToken != nil {
+		// An open invitation to this very address lets it register while
+		// registration is closed.
+		if v, err := s.deps.Membership.InvitationByToken(r.Context(), *body.InvitationToken); err == nil {
+			in.Invited = v.Open(time.Now()) && strings.EqualFold(v.Email, strings.TrimSpace(body.Email))
+		}
+	}
+	res, err := s.deps.Identity.Register(r.Context(), in)
 	if err != nil {
 		s.fail(w, r, err)
 		return
 	}
-	s.setSession(w, res.SessionToken, sessionMaxAge)
-	writeJSON(w, http.StatusCreated, toCurrentUser(res.User))
+	s.signedIn(w, r, http.StatusCreated, res)
 }
 
 // Login implements ServerInterface.
@@ -531,8 +546,7 @@ func (s *server) Login(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
-	s.setSession(w, res.SessionToken, sessionMaxAge)
-	writeJSON(w, http.StatusOK, toCurrentUser(res.User))
+	s.signedIn(w, r, http.StatusOK, res)
 }
 
 // RequestPasswordReset implements ServerInterface. The work happens after the
@@ -590,7 +604,7 @@ func (s *server) Logout(w http.ResponseWriter, r *http.Request) {
 
 // CurrentUser implements ServerInterface.
 func (s *server) CurrentUser(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, toCurrentUser(user(r)))
+	s.currentUser(w, r, http.StatusOK, user(r))
 }
 
 // GoogleStart implements ServerInterface.
@@ -685,6 +699,11 @@ func (s *server) finishExternalLogin(w http.ResponseWriter, r *http.Request, ext
 	case err != nil:
 		s.deps.Logger.ErrorContext(r.Context(), "external login failed", "provider", provider, "error", err)
 		http.Redirect(w, r, "/login?error="+provider, http.StatusFound)
+		return
+	}
+	if res.Challenge != "" {
+		s.setChallengeCookie(w, signInCookie, signInCookiePath, res.Challenge, signInCookieAge)
+		http.Redirect(w, r, "/login/two-factor", http.StatusFound)
 		return
 	}
 	s.setSession(w, res.SessionToken, sessionMaxAge)
