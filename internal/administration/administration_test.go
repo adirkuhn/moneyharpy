@@ -3,6 +3,7 @@ package administration
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 	"time"
 
@@ -102,6 +103,8 @@ func TestCreateRejectsInvalidInput(t *testing.T) {
 		{name: "unknown language", in: NewAdministration{Name: "A", Language: "de"}, wantField: "language"},
 		{name: "lowercase currency", in: NewAdministration{Name: "A", Currency: "eur"}, wantField: "currency"},
 		{name: "long country", in: NewAdministration{Name: "A", Country: "NLD"}, wantField: "country"},
+		{name: "unassigned country", in: NewAdministration{Name: "A", Country: "ZZ"}, wantField: "country"},
+		{name: "unknown currency", in: NewAdministration{Name: "A", Currency: "ABC"}, wantField: "currency"},
 		{name: "unknown time zone", in: NewAdministration{Name: "A", TimeZone: "Mars/Olympus"}, wantField: "time_zone"},
 	}
 	for _, tt := range tests {
@@ -163,5 +166,39 @@ func TestOtherUsersCannotReachAdministration(t *testing.T) {
 	}
 	if err := svc.SetFavorite(ctx, a.ID, 2, true); !errors.Is(err, ErrNotFound) {
 		t.Errorf("SetFavorite() error = %v, want ErrNotFound", err)
+	}
+}
+
+func TestCreateKeepsCompanyDetails(t *testing.T) {
+	got, err := newService(newMemStore()).Create(context.Background(), 1, NewAdministration{
+		Name:              "Harpy",
+		Address1:          " Dam 1 ",
+		Address2:          "Floor 2",
+		Zipcode:           "1012JS",
+		City:              " Amsterdam",
+		ChamberOfCommerce: "12345678",
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	want := Company{Address1: "Dam 1", Address2: "Floor 2", Zipcode: "1012JS", City: "Amsterdam", ChamberOfCommerce: "12345678"}
+	if diff := cmp.Diff(want, got.Company); diff != "" {
+		t.Errorf("Create() Company diff (-want +got):\n%s", diff)
+	}
+}
+
+func TestReferenceListsAreUsableChoices(t *testing.T) {
+	for _, code := range []string{"NL", "BE", "XK"} {
+		if !slices.Contains(Countries(), code) {
+			t.Errorf("Countries() lacks %q", code)
+		}
+	}
+	for _, code := range PopularCurrencies() {
+		if !slices.Contains(Currencies(), code) {
+			t.Errorf("Currencies() lacks popular currency %q", code)
+		}
+	}
+	if !slices.IsSorted(Countries()) || !slices.IsSorted(Currencies()) {
+		t.Error("reference lists are not sorted")
 	}
 }

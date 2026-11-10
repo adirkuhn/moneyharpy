@@ -19,6 +19,11 @@ type Administration struct {
 	PeriodLockedUntil pgtype.Date
 	PeriodStartDate   pgtype.Date
 	CreatedAt         pgtype.Timestamptz
+	Address1          string
+	Address2          string
+	Zipcode           string
+	City              string
+	ChamberOfCommerce string
 }
 
 type AdministrationMember struct {
@@ -34,6 +39,12 @@ type ApiToken struct {
 	Name      string
 	TokenHash string
 	CreatedAt pgtype.Timestamptz
+}
+
+type PasswordResetToken struct {
+	TokenHash string
+	UserID    int64
+	ExpiresAt pgtype.Timestamptz
 }
 
 type Resource struct {

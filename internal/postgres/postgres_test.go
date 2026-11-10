@@ -157,6 +157,7 @@ func newAdministration() administration.Administration {
 	return administration.Administration{
 		ID: ids.Next(), Name: "Harpy", Language: "en", Currency: "EUR", Country: "NL",
 		TimeZone: "Europe/Amsterdam", PeriodStartDate: "2026-01-01",
+		Company: administration.Company{Address1: "Dam 1", Address2: "2", Zipcode: "1012JS", City: "Amsterdam", ChamberOfCommerce: "123"},
 	}
 }
 
@@ -214,5 +215,46 @@ func TestLocateResource(t *testing.T) {
 
 	if _, err := locator.Locate(ctx, a.ID, stranger.ID); !errors.Is(err, resource.ErrNotFound) {
 		t.Errorf("Locate(stranger) error = %v, want resource.ErrNotFound", err)
+	}
+}
+
+func TestResetPasswordIsSingleUseAndEndsSessions(t *testing.T) {
+	ctx := context.Background()
+	s := postgres.NewIdentityStore(testPool)
+	u := newUser(t)
+	now := time.Now()
+	session := u.ID.String() + "-sess"
+	if err := s.InsertSession(ctx, session, u.ID, now.Add(time.Hour)); err != nil {
+		t.Fatalf("InsertSession() error = %v", err)
+	}
+	first, second := u.ID.String()+"-reset-1", u.ID.String()+"-reset-2"
+	for _, hash := range []string{first, second} {
+		if err := s.ReplaceResetToken(ctx, hash, u.ID, now.Add(time.Hour)); err != nil {
+			t.Fatalf("ReplaceResetToken() error = %v", err)
+		}
+	}
+
+	if err := s.ResetPassword(ctx, first, "new", now); !errors.Is(err, identity.ErrResetTokenInvalid) {
+		t.Errorf("ResetPassword() with replaced token error = %v, want ErrResetTokenInvalid", err)
+	}
+	if err := s.ResetPassword(ctx, second, "new", now.Add(2*time.Hour)); !errors.Is(err, identity.ErrResetTokenInvalid) {
+		t.Errorf("ResetPassword() with expired token error = %v, want ErrResetTokenInvalid", err)
+	}
+	if err := s.ResetPassword(ctx, second, "new", now); err != nil {
+		t.Fatalf("ResetPassword() error = %v", err)
+	}
+	if err := s.ResetPassword(ctx, second, "newer", now); !errors.Is(err, identity.ErrResetTokenInvalid) {
+		t.Errorf("ResetPassword() reused token error = %v, want ErrResetTokenInvalid", err)
+	}
+
+	_, hash, err := s.UserByEmail(ctx, u.Email)
+	if err != nil {
+		t.Fatalf("UserByEmail() error = %v", err)
+	}
+	if hash != "new" {
+		t.Errorf("password hash = %q, want new", hash)
+	}
+	if _, err := s.UserBySession(ctx, session, now); !errors.Is(err, identity.ErrUserNotFound) {
+		t.Errorf("UserBySession() error = %v, want ErrUserNotFound", err)
 	}
 }

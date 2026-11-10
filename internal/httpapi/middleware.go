@@ -86,8 +86,11 @@ func (s *server) throttle(next http.Handler) http.Handler {
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/api/v2/"):
 			limiter = s.deps.APILimiter
-		case r.URL.Path == "/api/auth/login", r.URL.Path == "/api/auth/register":
+		case r.URL.Path == "/api/auth/login", r.URL.Path == "/api/auth/register",
+			r.URL.Path == "/api/auth/password_reset/request", r.URL.Path == "/api/auth/password_reset/confirm":
 			limiter = s.deps.AuthLimiter
+		case r.URL.Path == "/api/onboarding/company_search", r.URL.Path == "/api/onboarding/address_lookup":
+			limiter = s.deps.LookupLimiter
 		default:
 			next.ServeHTTP(w, r)
 			return

@@ -14,7 +14,7 @@ describe('top navigation', () => {
     const menu = await screen.findByRole('navigation', { name: 'Your administrations' })
     expect(await within(menu).findByRole('link', { name: 'Harpy B.V.' })).toHaveAttribute('href', '/11')
     expect(within(menu).getByRole('link', { name: 'All administrations' })).toHaveAttribute('href', '/administrations')
-    expect(within(menu).getByRole('link', { name: 'New administration' })).toHaveAttribute('href', '/administrations/new')
+    expect(within(menu).getByRole('link', { name: 'New administration' })).toHaveAttribute('href', '/onboarding/company/create_administration?origin=onboarding')
   })
 
   it('closes a menu with Escape', async () => {
@@ -33,6 +33,16 @@ describe('top navigation', () => {
     await userEvent.selectOptions(screen.getByLabelText('Theme'), 'dark')
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
     expect(localStorage.getItem('moneyharpy.theme')).toBe('dark')
+  })
+
+  it('switches the language of the whole app', async () => {
+    server.use(signedIn(), listing([]))
+    renderAt('/administrations')
+    await userEvent.click(await screen.findByRole('button', { name: user.name }))
+    await userEvent.selectOptions(screen.getByLabelText('Language'), 'nl')
+    expect(await screen.findByRole('heading', { name: 'Kies een administratie' })).toBeInTheDocument()
+    expect(document.documentElement).toHaveAttribute('lang', 'nl')
+    expect(localStorage.getItem('moneyharpy.language')).toBe('nl')
   })
 
   it('links to the API documentation', async () => {

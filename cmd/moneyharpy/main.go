@@ -18,7 +18,10 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/google"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
+	"github.com/adirkuhn/moneyharpy/internal/kvk"
 	"github.com/adirkuhn/moneyharpy/internal/lm2"
+	"github.com/adirkuhn/moneyharpy/internal/mail"
+	"github.com/adirkuhn/moneyharpy/internal/pdok"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -82,14 +85,21 @@ func run(logger *slog.Logger) error {
 	defer pool.Close()
 
 	ids := resource.NewGenerator(1)
+	outbound := &http.Client{Timeout: 10 * time.Second}
 	instance := settings.NewService(postgres.NewSettingsStore(pool), settings.NewCipher(cfg.secretKey))
+	mailer := mail.New(instance, cfg.baseURL)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now),
-		Identity:          identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), time.Now),
+		Identity:          identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, time.Now),
 		Settings:          instance,
 		Resources:         postgres.NewResourceLocator(pool),
 		Google:            google.New(instance, cfg.baseURL, google.Issuer),
-		LM2:               lm2.New(instance, cfg.baseURL, &http.Client{Timeout: 10 * time.Second}),
+		LM2:               lm2.New(instance, cfg.baseURL, outbound),
+		Companies:         kvk.New(instance, kvk.ProductionURL, outbound),
+		Addresses:         pdok.New(instance, pdok.ProductionURL, outbound),
+		LookupLimiter:     ratelimit.New(60, time.Minute),
+		ResetLimiter:      ratelimit.New(3, time.Hour),
+		Mail:              mailer,
 		BaseURL:           cfg.baseURL,
 		Logger:            logger,
 		Web:               web.Dist(),

@@ -1,4 +1,5 @@
 import createClient from 'openapi-fetch'
+import i18n, { serverMessage } from '../i18n'
 import type { components, paths } from './schema'
 
 export type Administration = components['schemas']['Administration']
@@ -21,7 +22,7 @@ export class ApiError extends Error {
 
   constructor(status: number, body: unknown) {
     const error = (body as { error?: unknown } | undefined)?.error
-    super(typeof error === 'string' ? error : 'The request failed')
+    super(typeof error === 'string' ? serverMessage(error) : i18n.t('common.requestFailed'))
     this.status = status
     this.fields = typeof error === 'object' && error !== null ? (error as Record<string, string[]>) : {}
   }
@@ -41,11 +42,11 @@ export async function unwrap<T>(call: Promise<Result<T>>): Promise<T> {
 /** Turns an error into sentences, using labels for the field names. */
 export function errorMessages(error: unknown, labels: Record<string, string>): string[] {
   if (!(error instanceof ApiError)) {
-    return error ? ['Something went wrong. Try again.'] : []
+    return error ? [i18n.t('common.genericError')] : []
   }
   const fields = Object.entries(error.fields)
   if (fields.length === 0) {
     return [error.message]
   }
-  return fields.flatMap(([field, problems]) => problems.map((p) => `${labels[field] ?? field} ${p}`))
+  return fields.flatMap(([field, problems]) => problems.map((p) => `${labels[field] ?? field} ${serverMessage(p)}`))
 }

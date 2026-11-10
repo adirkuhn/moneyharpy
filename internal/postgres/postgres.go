@@ -171,6 +171,35 @@ func (s *IdentityStore) DeleteToken(ctx context.Context, id, u resource.ID) erro
 	return nil
 }
 
+// ReplaceResetToken implements identity.Store.
+func (s *IdentityStore) ReplaceResetToken(ctx context.Context, hash string, u resource.ID, expires time.Time) error {
+	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		if err := q.DeleteResetTokens(ctx, int64(u)); err != nil {
+			return err
+		}
+		return q.InsertResetToken(ctx, sqlc.InsertResetTokenParams{TokenHash: hash, UserID: int64(u), ExpiresAt: timestamp(expires)})
+	})
+}
+
+// ResetPassword implements identity.Store.
+func (s *IdentityStore) ResetPassword(ctx context.Context, hash, passwordHash string, now time.Time) error {
+	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		userID, err := q.ConsumeResetToken(ctx, sqlc.ConsumeResetTokenParams{TokenHash: hash, ExpiresAt: timestamp(now)})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return identity.ErrResetTokenInvalid
+		}
+		if err != nil {
+			return err
+		}
+		if err := q.UpdatePassword(ctx, sqlc.UpdatePasswordParams{ID: userID, PasswordHash: passwordHash}); err != nil {
+			return err
+		}
+		return q.DeleteUserSessions(ctx, userID)
+	})
+}
+
 func user(id int64, email, name string, admin bool) identity.User {
 	return identity.User{ID: resource.ID(id), Email: email, Name: name, InstanceAdmin: admin}
 }
@@ -239,6 +268,7 @@ func (s *AdministrationStore) Create(ctx context.Context, a administration.Admin
 		if err := q.InsertAdministration(ctx, sqlc.InsertAdministrationParams{
 			ID: int64(a.ID), Name: a.Name, Language: a.Language, Currency: a.Currency, Country: a.Country,
 			TimeZone: a.TimeZone, Suspended: a.Suspended, PeriodLockedUntil: locked, PeriodStartDate: start,
+			Address1: a.Address1, Address2: a.Address2, Zipcode: a.Zipcode, City: a.City, ChamberOfCommerce: a.ChamberOfCommerce,
 		}); err != nil {
 			return err
 		}
@@ -295,6 +325,9 @@ func toListed(r sqlc.AdministrationForUserRow) administration.Listed {
 		Administration: administration.Administration{
 			ID: resource.ID(r.ID), Name: r.Name, Language: r.Language, Currency: r.Currency, Country: r.Country,
 			TimeZone: r.TimeZone, Suspended: r.Suspended, PeriodStartDate: r.PeriodStartDate.Time.Format(dateLayout),
+			Company: administration.Company{
+				Address1: r.Address1, Address2: r.Address2, Zipcode: r.Zipcode, City: r.City, ChamberOfCommerce: r.ChamberOfCommerce,
+			},
 		},
 		Membership: administration.Membership{Access: administration.Access(r.Access), Favorite: r.Favorite},
 	}

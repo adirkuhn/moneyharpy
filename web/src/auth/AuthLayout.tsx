@@ -1,16 +1,25 @@
 import type { ReactNode } from 'react'
+import { LanguageSelect } from '../layout/LanguageSelect'
 import { Mark } from '../layout/icons'
 
 export function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <main className="auth">
+    <main className="wizard auth">
+      <Mark className="wizard__wing wizard__wing--left" />
+      <Mark className="wizard__wing wizard__wing--right" />
+      <LanguageSelect className="wizard__language auth__language" />
+      <p className="auth__logo"><Mark className="auth__mark" />MoneyHarpy</p>
       <div className="auth__panel">
-        <Mark className="auth__mark" />
         <h1>{title}</h1>
         {children}
       </div>
     </main>
   )
+}
+
+/** A compact input named by its placeholder, for short sign-in forms. */
+export function AuthInput({ label, ...input }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input className="auth__input" aria-label={label} placeholder={label} {...input} />
 }
 
 export function Field({

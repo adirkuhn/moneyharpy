@@ -29,6 +29,17 @@ In LM2, add this installation to `APP_REDIRECT_ALLOWLIST`, for example `moneyhar
 
 MoneyHarpy never holds LM2's signing key: it asks LM2 who a token belongs to. A LM2 user whose email matches an existing MoneyHarpy account is refused rather than linked, because LM2 does not confirm addresses.
 
+### Email
+
+Enter your SMTP server under **Instance settings**, then use **Send test email** to confirm it works. Password recovery appears on the login page once email is enabled.
+
+### Company search and address lookup
+
+Both are optional and off by default, and the app works without them. Under **Instance settings**:
+
+- **Company search** needs an API key from the [KVK developer portal](https://developers.kvk.nl/) and searches the Dutch company register while adding an administration.
+- **Address lookup** completes Dutch addresses from zipcode and house number. It sends those two values to PDOK, the Dutch government address service.
+
 ## API
 
 The contract is [`api/openapi.yaml`](api/openapi.yaml). A running instance renders it at `/docs/api/`.

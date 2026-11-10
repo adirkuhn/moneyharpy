@@ -24,6 +24,8 @@ servers:
 tags:
   - name: Administrations
     description: Company accounts. Compatible with the Moneybird API.
+  - name: Onboarding
+    description: Adding an administration.
   - name: Resources
     description: Locate any entity by its ID.
   - name: Authentication
@@ -89,7 +91,7 @@ paths:
     get:
       operationId: getAdministration
       summary: Get an administration
-      description: MoneyHarpy extension.
+      description: MoneyHarpy extension. Includes the company address, which the list omits to stay Moneybird-compatible.
       tags: [Administrations]
       responses:
         '200':
@@ -97,7 +99,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Administration'
+                $ref: '#/components/schemas/AdministrationDetail'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -145,6 +147,90 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /api/onboarding/options:
+    get:
+      operationId: onboardingOptions
+      summary: List what can be chosen when adding an administration
+      tags: [Onboarding]
+      responses:
+        '200':
+          description: The options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingOptions'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/onboarding/company_search:
+    get:
+      operationId: companySearch
+      summary: Search a company register
+      description: Only for countries listed in `company_search_countries`.
+      tags: [Onboarding]
+      parameters:
+        - name: country
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}$'
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 255
+      responses:
+        '200':
+          description: Matching companies. Address parts the register does not return are empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompanyMatch'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/onboarding/address_lookup:
+    get:
+      operationId: addressLookup
+      summary: Find a Dutch address by zipcode and house number
+      tags: [Onboarding]
+      parameters:
+        - name: zipcode
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 16
+        - name: house_number
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 16
+      responses:
+        '200':
+          description: The address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressMatch'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/resources/{id}:
     parameters:
       - $ref: '#/components/parameters/id'
@@ -240,6 +326,54 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /api/auth/password_reset/request:
+    post:
+      operationId: requestPasswordReset
+      summary: Ask for a password reset email
+      description: Answers 204 whether or not the address has an account, so accounts cannot be discovered.
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '204':
+          description: Accepted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/auth/password_reset/confirm:
+    post:
+      operationId: confirmPasswordReset
+      summary: Set a new password with an emailed token
+      description: Tokens work once and expire after an hour. All existing sessions end.
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmation'
+      responses:
+        '204':
+          description: Password changed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/auth/logout:
     post:
       operationId: logout
@@ -410,6 +544,24 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /api/instance/settings/test_email:
+    post:
+      operationId: sendTestEmail
+      summary: Send a test email to yourself using the saved mail settings
+      tags: [Instance]
+      responses:
+        '204':
+          description: Sent
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '502':
+          description: The mail server refused or could not be reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/instance/settings:
     get:
       operationId: instanceSettings
@@ -599,6 +751,74 @@ components:
           type: string
           description: MoneyHarpy extension. Canonical path of this resource.
           example: /416072101932303822
+    AdministrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/Administration'
+        - type: object
+          required: [address1, address2, zipcode, city, chamber_of_commerce]
+          properties:
+            address1:
+              type: string
+            address2:
+              type: string
+            zipcode:
+              type: string
+            city:
+              type: string
+            chamber_of_commerce:
+              type: string
+    OnboardingOptions:
+      type: object
+      required: [countries, currencies, popular_currencies, company_search_countries, address_lookup_countries]
+      properties:
+        countries:
+          type: array
+          description: ISO 3166-1 alpha-2 codes.
+          items:
+            type: string
+        currencies:
+          type: array
+          description: ISO 4217 codes.
+          items:
+            type: string
+        popular_currencies:
+          type: array
+          items:
+            type: string
+        company_search_countries:
+          type: array
+          description: Countries whose company register can be searched here.
+          items:
+            type: string
+        address_lookup_countries:
+          type: array
+          description: Countries whose addresses can be looked up here.
+          items:
+            type: string
+    CompanyMatch:
+      type: object
+      required: [name, chamber_of_commerce, address1, zipcode, city]
+      properties:
+        name:
+          type: string
+        chamber_of_commerce:
+          type: string
+        address1:
+          type: string
+        zipcode:
+          type: string
+        city:
+          type: string
+    AddressMatch:
+      type: object
+      required: [address1, zipcode, city]
+      properties:
+        address1:
+          type: string
+        zipcode:
+          type: string
+        city:
+          type: string
     Language:
       type: string
       enum: [nl, nl-be, en]
@@ -624,6 +844,21 @@ components:
               type: string
             time_zone:
               type: string
+            address1:
+              type: string
+              maxLength: 255
+            address2:
+              type: string
+              maxLength: 255
+            zipcode:
+              type: string
+              maxLength: 32
+            city:
+              type: string
+              maxLength: 255
+            chamber_of_commerce:
+              type: string
+              maxLength: 64
     ResourceLocation:
       type: object
       required: [id, type, uri]
@@ -638,7 +873,7 @@ components:
           example: /416072101932303822
     AuthProviders:
       type: object
-      required: [registration_open, google, lm2]
+      required: [registration_open, google, lm2, password_reset]
       properties:
         registration_open:
           type: boolean
@@ -646,6 +881,29 @@ components:
           type: boolean
         lm2:
           type: boolean
+        password_reset:
+          type: boolean
+    PasswordResetRequest:
+      type: object
+      required: [email]
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          maxLength: 320
+        language:
+          $ref: '#/components/schemas/Language'
+    PasswordResetConfirmation:
+      type: object
+      required: [token, password]
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+          maxLength: 128
+        password:
+          type: string
+          maxLength: 1024
     RegisterRequest:
       type: object
       required: [email, name, password]
@@ -713,7 +971,7 @@ components:
           maxLength: 255
     InstanceSettings:
       type: object
-      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app]
+      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security]
       properties:
         registration_open:
           type: boolean
@@ -728,6 +986,26 @@ components:
         lm2_url:
           type: string
         lm2_app:
+          type: string
+        kvk_enabled:
+          type: boolean
+        kvk_api_key_set:
+          type: boolean
+        address_lookup_enabled:
+          type: boolean
+        smtp_enabled:
+          type: boolean
+        smtp_host:
+          type: string
+        smtp_port:
+          type: integer
+        smtp_username:
+          type: string
+        smtp_password_set:
+          type: boolean
+        smtp_from:
+          type: string
+        smtp_security:
           type: string
     UpdateInstanceSettingsRequest:
       type: object
@@ -750,3 +1028,30 @@ components:
         lm2_app:
           type: string
           description: The name this installation is registered under in LM2.
+        kvk_enabled:
+          type: boolean
+        kvk_api_key:
+          type: string
+          writeOnly: true
+        address_lookup_enabled:
+          type: boolean
+        smtp_enabled:
+          type: boolean
+        smtp_host:
+          type: string
+          maxLength: 255
+        smtp_port:
+          type: integer
+        smtp_username:
+          type: string
+          maxLength: 255
+        smtp_password:
+          type: string
+          writeOnly: true
+          maxLength: 1024
+        smtp_from:
+          type: string
+          maxLength: 320
+        smtp_security:
+          type: string
+          enum: [starttls, tls, none]

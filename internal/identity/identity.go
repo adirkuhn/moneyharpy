@@ -25,10 +25,12 @@ var (
 	ErrRegistrationClosed = errors.New("registration is closed")
 	ErrUserNotFound       = errors.New("user not found")
 	ErrTokenNotFound      = errors.New("token not found")
+	ErrResetTokenInvalid  = errors.New("reset token is invalid or expired")
 )
 
 const (
 	sessionLifetime   = 30 * 24 * time.Hour
+	resetLifetime     = time.Hour
 	minPasswordLength = 12
 	maxPasswordLength = 1024
 	tokenPrefix       = "mh_"
@@ -92,6 +94,19 @@ type Store interface {
 	UserByToken(ctx context.Context, hash string) (User, error)
 	ListTokens(ctx context.Context, user resource.ID) ([]Token, error)
 	DeleteToken(ctx context.Context, id, user resource.ID) error
+
+	// ReplaceResetToken stores a password reset token, invalidating the
+	// user's earlier ones.
+	ReplaceResetToken(ctx context.Context, hash string, user resource.ID, expires time.Time) error
+	// ResetPassword spends a token, sets the password and ends the user's
+	// sessions, all or nothing. It returns ErrResetTokenInvalid for a token
+	// that is unknown, spent or expired.
+	ResetPassword(ctx context.Context, hash, passwordHash string, now time.Time) error
+}
+
+// Mailer delivers account email.
+type Mailer interface {
+	SendPasswordReset(ctx context.Context, to, token, language string) error
 }
 
 // Policy answers instance-wide questions about who may join.
@@ -105,6 +120,7 @@ type Service struct {
 	policy Policy
 	ids    *resource.Generator
 	hasher *Hasher
+	mailer Mailer
 	now    func() time.Time
 	// decoy is verified for unknown emails so response time does not reveal
 	// which addresses are registered.
@@ -113,12 +129,12 @@ type Service struct {
 
 // NewService returns a Service. It panics only if the system random source
 // fails, which leaves no way to create safe credentials.
-func NewService(store Store, policy Policy, ids *resource.Generator, hasher *Hasher, now func() time.Time) *Service {
+func NewService(store Store, policy Policy, ids *resource.Generator, hasher *Hasher, mailer Mailer, now func() time.Time) *Service {
 	decoy, err := hasher.Hash(randomSecret())
 	if err != nil {
 		panic(fmt.Sprintf("hash decoy password: %v", err))
 	}
-	return &Service{store: store, policy: policy, ids: ids, hasher: hasher, now: now, decoy: decoy}
+	return &Service{store: store, policy: policy, ids: ids, hasher: hasher, mailer: mailer, now: now, decoy: decoy}
 }
 
 // Register creates a password account and signs it in.
@@ -133,9 +149,7 @@ func (s *Service) Register(ctx context.Context, in Registration) (LoginResult, e
 	if name == "" {
 		verr.Add("name", "can't be blank")
 	}
-	if n := len(in.Password); n < minPasswordLength || n > maxPasswordLength {
-		verr.Add("password", fmt.Sprintf("must be between %d and %d characters", minPasswordLength, maxPasswordLength))
-	}
+	checkPassword(in.Password, &verr)
 	if err := verr.OrNil(); err != nil {
 		return LoginResult{}, err
 	}
@@ -205,6 +219,40 @@ func (s *Service) LoginExternal(ctx context.Context, ext External) (LoginResult,
 		return LoginResult{}, fmt.Errorf("link identity: %w", err)
 	}
 	return s.startSession(ctx, user)
+}
+
+// RequestPasswordReset emails a reset link if the address has an account. An
+// unknown address is not an error, so callers cannot discover accounts.
+func (s *Service) RequestPasswordReset(ctx context.Context, email, language string) error {
+	user, _, err := s.store.UserByEmail(ctx, normalizeEmail(email))
+	if errors.Is(err, ErrUserNotFound) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("find user: %w", err)
+	}
+	token := randomSecret()
+	if err := s.store.ReplaceResetToken(ctx, hashSecret(token), user.ID, s.now().Add(resetLifetime)); err != nil {
+		return fmt.Errorf("store reset token: %w", err)
+	}
+	if err := s.mailer.SendPasswordReset(ctx, user.Email, token, language); err != nil {
+		return fmt.Errorf("send reset mail: %w", err)
+	}
+	return nil
+}
+
+// ResetPassword sets a new password using an emailed token.
+func (s *Service) ResetPassword(ctx context.Context, token, password string) error {
+	var verr resource.ValidationError
+	checkPassword(password, &verr)
+	if err := verr.OrNil(); err != nil {
+		return err
+	}
+	hash, err := s.hasher.Hash(password)
+	if err != nil {
+		return fmt.Errorf("hash password: %w", err)
+	}
+	return s.store.ResetPassword(ctx, hashSecret(token), hash, s.now())
 }
 
 // Authenticate returns the user owning a session secret.
@@ -278,6 +326,12 @@ func authenticated(user User, err error) (User, error) {
 		return User{}, fmt.Errorf("find user: %w", err)
 	}
 	return user, nil
+}
+
+func checkPassword(password string, verr *resource.ValidationError) {
+	if n := len(password); n < minPasswordLength || n > maxPasswordLength {
+		verr.Add("password", fmt.Sprintf("must be between %d and %d characters", minPasswordLength, maxPasswordLength))
+	}
 }
 
 func normalizeEmail(email string) string { return strings.ToLower(strings.TrimSpace(email)) }
