@@ -16,6 +16,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/api"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
@@ -69,6 +70,7 @@ type TestMailer interface {
 type Deps struct {
 	Administrations *administration.Service
 	Invoicing       *invoicing.Service
+	Bookkeeping     *bookkeeping.Service
 	Storage         StorageChecker
 	Identity        *identity.Service
 	Settings        *settings.Service
@@ -159,6 +161,10 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"email": {"has already been taken"}}))
 	case errors.Is(err, invoicing.ErrDefaultInUse):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The default cannot be deleted or deactivated"}}))
+	case errors.Is(err, bookkeeping.ErrSystemAccount):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"System ledger accounts cannot be deleted, deactivated or change type"}}))
+	case errors.Is(err, bookkeeping.ErrHasChildren):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Remove or move the sub-categories first"}}))
 	case errors.Is(err, administration.ErrDefaultIdentity):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The default identity cannot be deleted"}}))
 	case errors.Is(err, identity.ErrResetTokenInvalid):
@@ -174,6 +180,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		errors.Is(err, invoicing.ErrDocumentStyleNotFound),
 		errors.Is(err, invoicing.ErrFileNotFound),
 		errors.Is(err, resource.ErrNotFound),
+		bookkeeping.IsNotFound(err),
 		errors.Is(err, administration.ErrLookupUnavailable),
 		errors.Is(err, administration.ErrAddressUnknown),
 		errors.Is(err, identity.ErrTokenNotFound):

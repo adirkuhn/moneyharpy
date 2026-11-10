@@ -86,6 +86,12 @@ Changes are test-driven. Go code follows the [Google Go style guide](https://goo
 
 To change the API, edit the contract first. Requests are validated against it at runtime, and backend tests fail on any response it does not describe.
 
+## Bookkeeping per country
+
+A new administration starts from its country's VAT rates, categories and
+chart scheme; the Netherlands comes with the Referentie Grootboekschema (RGS)
+3.8. See [docs/countries.md](docs/countries.md) to add a country.
+
 ## License
 
 [MIT](LICENSE)

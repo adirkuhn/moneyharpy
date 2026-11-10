@@ -25,6 +25,14 @@ const parts: Partial<Record<Section, { id: string; label: string }[]>> = {
     { id: 'payment-methods', label: 'invoicing.parts.payments' },
     { id: 'payments-without-proof', label: 'invoicing.parts.withoutProof' },
   ],
+  bookkeeping: [
+    { id: 'declaration-period', label: 'bookkeeping.parts.periods' },
+    { id: 'vat-rates', label: 'bookkeeping.parts.rates' },
+    { id: 'categories', label: 'bookkeeping.parts.categories' },
+    { id: 'chart-scheme', label: 'bookkeeping.parts.scheme' },
+    { id: 'locked-period', label: 'bookkeeping.parts.lock' },
+    { id: 'export', label: 'bookkeeping.parts.export' },
+  ],
 }
 
 /** Pages outside /settings and the section they belong to. */
@@ -33,6 +41,9 @@ const pageSections: Record<string, Section> = {
   document_styles: 'invoices_and_estimates',
   workflows: 'invoices_and_estimates',
   custom_fields: 'invoices_and_estimates',
+  tax_rates: 'bookkeeping',
+  ledger_accounts: 'bookkeeping',
+  ledger_account_templates: 'bookkeeping',
 }
 
 /**

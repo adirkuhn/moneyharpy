@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/diskstore"
 	"github.com/adirkuhn/moneyharpy/internal/google"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
@@ -102,6 +103,7 @@ func run(logger *slog.Logger) error {
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now),
+		Bookkeeping:       bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now),
 		Storage:           s3,
 		Identity:          identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, time.Now),
 		Settings:          instance,
