@@ -393,37 +393,3 @@ describe('custom fields', () => {
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/settings/company'))
   })
 })
-
-describe('management settings', () => {
-  it('shows a problem beside its field', async () => {
-    server.use(
-      ...loaded(),
-      http.patch('*/api/v2/administrations/11', () => HttpResponse.json({ error: { name: ["can't be blank"] } }, { status: 422 })),
-    )
-    renderAt('/11/settings/administration')
-    const name = await screen.findByLabelText('Name')
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(name).toHaveAccessibleDescription("Name can't be blank"))
-  })
-
-  it('saves the administration details', async () => {
-    let sent: unknown
-    server.use(
-      ...loaded(),
-      http.patch('*/api/v2/administrations/11', async ({ request }) => {
-        sent = await request.json()
-        return HttpResponse.json(harpy)
-      }),
-    )
-    renderAt('/11/settings/administration')
-    const name = await screen.findByLabelText('Name')
-    await userEvent.clear(name)
-    await userEvent.type(name, 'Renamed')
-    await userEvent.selectOptions(screen.getByLabelText('Language'), 'nl')
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() =>
-      expect(sent).toEqual({ administration: { name: 'Renamed', language: 'nl', currency: 'EUR', time_zone: 'Europe/Amsterdam' } }),
-    )
-    expect(await screen.findByRole('status')).toHaveTextContent('Saved')
-  })
-})

@@ -21,10 +21,25 @@ export function useProviders() {
   return useQuery({ queryKey: ['providers'], queryFn: () => unwrap(api.GET('/api/auth/providers')) })
 }
 
+/** Signs in; resolves to "two_factor" when a code is needed next. */
 export function useLogin() {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (body: { email: string; password: string }) => unwrap(api.POST('/api/auth/login', { body })),
+    mutationFn: async (body: { email: string; password: string }) => {
+      const result = await unwrap(api.POST('/api/auth/login', { body }))
+      if ('two_factor_required' in result) {
+        return 'two_factor' as const
+      }
+      client.setQueryData(['me'], result)
+      return 'signed_in' as const
+    },
+  })
+}
+
+export function useCompleteSignIn() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (code: string) => unwrap(api.POST('/api/auth/two_factor', { body: { code } })),
     onSuccess: (user) => client.setQueryData(['me'], user),
   })
 }
@@ -32,9 +47,13 @@ export function useLogin() {
 export function useRegister() {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (body: { email: string; name: string; password: string }) =>
+    mutationFn: (body: { email: string; name: string; password: string; invitation_token?: string }) =>
       unwrap(api.POST('/api/auth/register', { body })),
-    onSuccess: (user) => client.setQueryData(['me'], user),
+    onSuccess: (user) => {
+      if (!('two_factor_required' in user)) {
+        client.setQueryData(['me'], user)
+      }
+    },
   })
 }
 

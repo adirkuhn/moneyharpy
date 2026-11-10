@@ -352,7 +352,9 @@ func TestAdministrationRoundTripAndAccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ForUser() error = %v", err)
 	}
-	want := administration.Listed{Administration: a, Membership: administration.Membership{Access: administration.AccessUser}}
+	want := administration.Listed{Administration: a, Membership: administration.Membership{
+		Access: administration.AccessUser, UserType: administration.Owner, Permissions: administration.Permissions,
+	}}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("ForUser() diff (-want +got):\n%s", diff)
 	}

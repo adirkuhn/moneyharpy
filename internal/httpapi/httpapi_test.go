@@ -27,6 +27,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
+	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/postgres/postgrestest"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
@@ -123,9 +124,19 @@ func (f *fakeLookups) LookupAddress(_ context.Context, _, _ string) (administrat
 type sentMail struct{ to, token, language string }
 
 type fakeMailer struct {
-	resets  chan sentMail
-	testErr error
-	tested  []string
+	resets      chan sentMail
+	testErr     error
+	tested      []string
+	invitations []sentMail
+}
+
+func (m *fakeMailer) SendInvitation(_ context.Context, to, token, _, _, language string) error {
+	m.invitations = append(m.invitations, sentMail{to: to, token: token, language: language})
+	return nil
+}
+
+func (m *fakeMailer) InvitationURL(token string) string {
+	return "http://example.com/invitations/" + token
 }
 
 func (m *fakeMailer) SendPasswordReset(_ context.Context, to, token, language string) error {
@@ -213,13 +224,16 @@ func newHarness(t *testing.T, opts options) *harness {
 
 	admins := administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now)
 	books := bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now)
+	invoices := invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now)
+	people := identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), mailer, settings.NewCipher("test-secret"), time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
-		Invoicing:       invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now),
+		Invoicing:       invoices,
+		Membership:      membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
 		Bookkeeping:     books,
 		Banking:         banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now),
 		Storage:         files,
-		Identity:        identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), mailer, time.Now),
+		Identity:        people,
 		Settings:        settle,
 		Resources:       postgres.NewResourceLocator(pool),
 		Google:          google,
@@ -389,7 +403,8 @@ func TestListAdministrationsMoneybirdShape(t *testing.T) {
 				"period_locked_until": nil, "period_start_date": time.Now().Format("2006") + "-01-01",
 				"favorite": false, "uri": "/" + created.Id,
 				"small_business_scheme": false, "company_activities_description": "", "company_website_url": "",
-				"company_website_absent": false,
+				"company_website_absent": false, "user_type": "owner", "require_two_factor": false, "support_access_until": nil,
+				"permissions": []any{"sales_invoices", "documents", "estimates", "bank", "settings", "ownership", "time_entries"},
 			}
 			if diff := cmp.Diff(want, got[0]); diff != "" {
 				t.Errorf("GET %s diff (-want +got):\n%s", path, diff)

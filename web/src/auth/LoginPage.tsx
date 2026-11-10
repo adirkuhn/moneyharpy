@@ -26,7 +26,9 @@ export function LoginPage() {
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    login.mutate({ email, password }, { onSuccess: () => navigate(from, { replace: true }) })
+    login.mutate({ email, password }, {
+      onSuccess: (outcome) => navigate(outcome === 'two_factor' ? '/login/two-factor' : from, { replace: true, state: { from } }),
+    })
   }
 
   const code = params.get('error') ?? ''

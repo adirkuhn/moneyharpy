@@ -305,7 +305,7 @@ func (s *AdministrationStore) Update(ctx context.Context, a administration.Admin
 	return s.q.UpdateAdministration(ctx, sqlc.UpdateAdministrationParams{
 		ID: int64(a.ID), Name: a.Name, Language: a.Language, Currency: a.Currency, TimeZone: a.TimeZone,
 		SmallBusinessScheme: a.SmallBusinessScheme, CompanyActivitiesDescription: a.CompanyActivitiesDescription,
-		CompanyWebsiteUrl: a.CompanyWebsiteURL, CompanyWebsiteAbsent: a.CompanyWebsiteAbsent,
+		CompanyWebsiteUrl: a.CompanyWebsiteURL, CompanyWebsiteAbsent: a.CompanyWebsiteAbsent, Country: a.Country,
 	})
 }
 
@@ -548,12 +548,37 @@ func (s *AdministrationStore) ListForUser(ctx context.Context, u resource.ID) ([
 func (s *AdministrationStore) ForUser(ctx context.Context, id, u resource.ID) (administration.Listed, error) {
 	r, err := s.q.AdministrationForUser(ctx, sqlc.AdministrationForUserParams{ID: int64(id), UserID: int64(u)})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return administration.Listed{}, administration.ErrNotFound
+		return s.forSupport(ctx, id, u)
 	}
 	if err != nil {
 		return administration.Listed{}, err
 	}
 	return toListed(r), nil
+}
+
+// forSupport lets an instance admin in while the administration grants
+// support access, with every permission but ownership.
+func (s *AdministrationStore) forSupport(ctx context.Context, id, u resource.ID) (administration.Listed, error) {
+	r, err := s.q.AdministrationForSupport(ctx, sqlc.AdministrationForSupportParams{ID: int64(id), ID_2: int64(u)})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return administration.Listed{}, administration.ErrNotFound
+	}
+	if err != nil {
+		return administration.Listed{}, err
+	}
+	l := toListed(sqlc.AdministrationForUserRow{
+		ID: r.ID, Name: r.Name, Language: r.Language, Currency: r.Currency, Country: r.Country, TimeZone: r.TimeZone, Suspended: r.Suspended,
+		PeriodLockedUntil: r.PeriodLockedUntil, PeriodStartDate: r.PeriodStartDate, SmallBusinessScheme: r.SmallBusinessScheme,
+		CompanyActivitiesDescription: r.CompanyActivitiesDescription, CompanyWebsiteUrl: r.CompanyWebsiteUrl, CompanyWebsiteAbsent: r.CompanyWebsiteAbsent,
+		RequireTwoFactor: r.RequireTwoFactor, SupportAccessUntil: r.SupportAccessUntil, Access: string(administration.AccessSupport),
+		UserType: string(administration.Support),
+	})
+	for _, p := range administration.Permissions {
+		if p != administration.Ownership {
+			l.Permissions = append(l.Permissions, p)
+		}
+	}
+	return l, nil
 }
 
 // SetFavorite implements administration.Store.
@@ -578,13 +603,26 @@ func toListed(r sqlc.AdministrationForUserRow) administration.Listed {
 				CompanyWebsiteURL: r.CompanyWebsiteUrl, CompanyWebsiteAbsent: r.CompanyWebsiteAbsent,
 			},
 		},
-		Membership: administration.Membership{Access: administration.Access(r.Access), Favorite: r.Favorite},
+		Membership: administration.Membership{
+			Access: administration.Access(r.Access), Favorite: r.Favorite, UserType: administration.UserType(r.UserType),
+			Permissions: permissionsOf(r.Permissions),
+		},
 	}
+	l.RequireTwoFactor = r.RequireTwoFactor
+	l.SupportAccessUntil = timeOf(r.SupportAccessUntil)
 	if r.PeriodLockedUntil.Valid {
 		locked := r.PeriodLockedUntil.Time.Format(dateLayout)
 		l.PeriodLockedUntil = &locked
 	}
 	return l
+}
+
+func permissionsOf(raw []string) []administration.Permission {
+	out := make([]administration.Permission, len(raw))
+	for i, p := range raw {
+		out[i] = administration.Permission(p)
+	}
+	return out
 }
 
 func parseDate(s string) (pgtype.Date, error) {
