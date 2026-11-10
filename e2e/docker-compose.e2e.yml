@@ -6,11 +6,17 @@ services:
       DATABASE_URL: postgres://moneyharpy:e2e-password@db:5432/moneyharpy?sslmode=disable
       SECRET_KEY: e2e-only-secret-key-not-used-anywhere-else
       BASE_URL: http://localhost:18080
+      # Lets each test act as its own client, so real rate limits stay on.
+      TRUST_PROXY_HEADERS: "true"
     ports:
       - "18080:8080"
     depends_on:
       db:
         condition: service_healthy
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "18025:8025"
   db:
     image: postgres:17-alpine
     environment:

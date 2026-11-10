@@ -14,6 +14,7 @@ import (
 const administrationForUser = `-- name: AdministrationForUser :one
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
+       a.address1, a.address2, a.zipcode, a.city, a.chamber_of_commerce,
        m.access, m.favorite
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
 WHERE a.id = $1 AND m.user_id = $2
@@ -34,6 +35,11 @@ type AdministrationForUserRow struct {
 	Suspended         bool
 	PeriodLockedUntil pgtype.Date
 	PeriodStartDate   pgtype.Date
+	Address1          string
+	Address2          string
+	Zipcode           string
+	City              string
+	ChamberOfCommerce string
 	Access            string
 	Favorite          bool
 }
@@ -51,10 +57,40 @@ func (q *Queries) AdministrationForUser(ctx context.Context, arg AdministrationF
 		&i.Suspended,
 		&i.PeriodLockedUntil,
 		&i.PeriodStartDate,
+		&i.Address1,
+		&i.Address2,
+		&i.Zipcode,
+		&i.City,
+		&i.ChamberOfCommerce,
 		&i.Access,
 		&i.Favorite,
 	)
 	return i, err
+}
+
+const consumeResetToken = `-- name: ConsumeResetToken :one
+DELETE FROM password_reset_tokens WHERE token_hash = $1 AND expires_at > $2 RETURNING user_id
+`
+
+type ConsumeResetTokenParams struct {
+	TokenHash string
+	ExpiresAt pgtype.Timestamptz
+}
+
+func (q *Queries) ConsumeResetToken(ctx context.Context, arg ConsumeResetTokenParams) (int64, error) {
+	row := q.db.QueryRow(ctx, consumeResetToken, arg.TokenHash, arg.ExpiresAt)
+	var user_id int64
+	err := row.Scan(&user_id)
+	return user_id, err
+}
+
+const deleteResetTokens = `-- name: DeleteResetTokens :exec
+DELETE FROM password_reset_tokens WHERE user_id = $1
+`
+
+func (q *Queries) DeleteResetTokens(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, deleteResetTokens, userID)
+	return err
 }
 
 const deleteSession = `-- name: DeleteSession :exec
@@ -83,9 +119,19 @@ func (q *Queries) DeleteToken(ctx context.Context, arg DeleteTokenParams) (int64
 	return result.RowsAffected(), nil
 }
 
+const deleteUserSessions = `-- name: DeleteUserSessions :exec
+DELETE FROM sessions WHERE user_id = $1
+`
+
+func (q *Queries) DeleteUserSessions(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, deleteUserSessions, userID)
+	return err
+}
+
 const insertAdministration = `-- name: InsertAdministration :exec
-INSERT INTO administrations (id, name, language, currency, country, time_zone, suspended, period_locked_until, period_start_date)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO administrations (id, name, language, currency, country, time_zone, suspended, period_locked_until, period_start_date,
+                             address1, address2, zipcode, city, chamber_of_commerce)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 `
 
 type InsertAdministrationParams struct {
@@ -98,6 +144,11 @@ type InsertAdministrationParams struct {
 	Suspended         bool
 	PeriodLockedUntil pgtype.Date
 	PeriodStartDate   pgtype.Date
+	Address1          string
+	Address2          string
+	Zipcode           string
+	City              string
+	ChamberOfCommerce string
 }
 
 func (q *Queries) InsertAdministration(ctx context.Context, arg InsertAdministrationParams) error {
@@ -111,6 +162,11 @@ func (q *Queries) InsertAdministration(ctx context.Context, arg InsertAdministra
 		arg.Suspended,
 		arg.PeriodLockedUntil,
 		arg.PeriodStartDate,
+		arg.Address1,
+		arg.Address2,
+		arg.Zipcode,
+		arg.City,
+		arg.ChamberOfCommerce,
 	)
 	return err
 }
@@ -127,6 +183,21 @@ type InsertMemberParams struct {
 
 func (q *Queries) InsertMember(ctx context.Context, arg InsertMemberParams) error {
 	_, err := q.db.Exec(ctx, insertMember, arg.AdministrationID, arg.UserID, arg.Access)
+	return err
+}
+
+const insertResetToken = `-- name: InsertResetToken :exec
+INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES ($1, $2, $3)
+`
+
+type InsertResetTokenParams struct {
+	TokenHash string
+	UserID    int64
+	ExpiresAt pgtype.Timestamptz
+}
+
+func (q *Queries) InsertResetToken(ctx context.Context, arg InsertResetTokenParams) error {
+	_, err := q.db.Exec(ctx, insertResetToken, arg.TokenHash, arg.UserID, arg.ExpiresAt)
 	return err
 }
 
@@ -239,6 +310,7 @@ func (q *Queries) LinkIdentity(ctx context.Context, arg LinkIdentityParams) erro
 const listAdministrations = `-- name: ListAdministrations :many
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
+       a.address1, a.address2, a.zipcode, a.city, a.chamber_of_commerce,
        m.access, m.favorite
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
 WHERE m.user_id = $1
@@ -254,6 +326,11 @@ type ListAdministrationsRow struct {
 	Suspended         bool
 	PeriodLockedUntil pgtype.Date
 	PeriodStartDate   pgtype.Date
+	Address1          string
+	Address2          string
+	Zipcode           string
+	City              string
+	ChamberOfCommerce string
 	Access            string
 	Favorite          bool
 }
@@ -277,6 +354,11 @@ func (q *Queries) ListAdministrations(ctx context.Context, userID int64) ([]List
 			&i.Suspended,
 			&i.PeriodLockedUntil,
 			&i.PeriodStartDate,
+			&i.Address1,
+			&i.Address2,
+			&i.Zipcode,
+			&i.City,
+			&i.ChamberOfCommerce,
 			&i.Access,
 			&i.Favorite,
 		); err != nil {
@@ -395,6 +477,20 @@ func (q *Queries) SetFavorite(ctx context.Context, arg SetFavoriteParams) (int64
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const updatePassword = `-- name: UpdatePassword :exec
+UPDATE users SET password_hash = $2 WHERE id = $1
+`
+
+type UpdatePasswordParams struct {
+	ID           int64
+	PasswordHash string
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
+	_, err := q.db.Exec(ctx, updatePassword, arg.ID, arg.PasswordHash)
+	return err
 }
 
 const userByEmail = `-- name: UserByEmail :one

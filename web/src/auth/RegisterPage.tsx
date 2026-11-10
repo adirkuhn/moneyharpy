@@ -1,12 +1,13 @@
 import { type FormEvent, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { errorMessages } from '../api/client'
-import { AuthLayout, Field, Problems } from './AuthLayout'
+import { AuthInput, AuthLayout, Problems } from './AuthLayout'
 import { useProviders, useRegister } from './queries'
 
-const labels = { email: 'Email', name: 'Name', password: 'Password' }
-
 export function RegisterPage() {
+  const { t } = useTranslation()
+  const labels = { email: t('login.email'), name: t('register.name'), password: t('login.password') }
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const navigate = useNavigate()
   const providers = useProviders()
@@ -18,20 +19,24 @@ export function RegisterPage() {
   }
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [key]: e.target.value })
+  const external = providers.data?.google || providers.data?.lm2
 
   return (
-    <AuthLayout title="Create your MoneyHarpy account">
+    <AuthLayout title={t('register.title')}>
       <Problems messages={errorMessages(register.error, labels)} />
       <form onSubmit={submit}>
-        <Field label="Name" autoComplete="name" required value={form.name} onChange={set('name')} />
-        <Field label="Email" type="email" autoComplete="email" required value={form.email} onChange={set('email')} />
-        <Field label="Password" type="password" autoComplete="new-password" required minLength={12} value={form.password} onChange={set('password')} />
-        <p className="hint">Use at least 12 characters.</p>
-        <button className="btn btn--primary btn--wide" disabled={register.isPending}>Create account</button>
+        <AuthInput label={t('register.name')} autoComplete="name" autoFocus required value={form.name} onChange={set('name')} />
+        <AuthInput label={t('login.email')} type="email" autoComplete="email" required value={form.email} onChange={set('email')} />
+        <AuthInput label={t('login.password')} type="password" autoComplete="new-password" required minLength={12} value={form.password} onChange={set('password')} />
+        <p className="hint">{t('register.hint')}</p>
+        <button className="btn btn--primary btn--wide" disabled={register.isPending}>{t('register.submit')}</button>
       </form>
-      {providers.data?.google && <a className="btn btn--secondary btn--wide" href="/api/auth/google/start">Continue with Google</a>}
-      {providers.data?.lm2 && <a className="btn btn--secondary btn--wide" href="/api/auth/lm2/start">Continue with LM2</a>}
-      <p className="auth__alt">Already registered? <Link to="/login">Sign in</Link></p>
+      {external && <p className="auth__or">{t('login.or')}</p>}
+      {providers.data?.google && <a className="btn btn--secondary btn--wide" href="/api/auth/google/start">{t('login.google')}</a>}
+      {providers.data?.lm2 && <a className="btn btn--secondary btn--wide" href="/api/auth/lm2/start">{t('login.lm2')}</a>}
+      <div className="auth__actions">
+        <Link className="btn btn--secondary" to="/login">{t('register.already')}</Link>
+      </div>
     </AuthLayout>
   )
 }

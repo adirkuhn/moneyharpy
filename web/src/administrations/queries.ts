@@ -33,6 +33,11 @@ export type NewAdministration = {
   currency: string
   country: string
   time_zone: string
+  address1: string
+  address2: string
+  zipcode: string
+  city: string
+  chamber_of_commerce: string
 }
 
 export function useCreateAdministration() {

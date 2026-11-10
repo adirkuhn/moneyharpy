@@ -1,0 +1,75 @@
+import type { Messages } from './en'
+
+export const nl: Messages = {
+  common: { language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt' },
+  login: {
+    title: 'Inloggen', email: 'E-mailadres', password: 'Wachtwoord', submit: 'Inloggen bij MoneyHarpy', or: 'of', forgot: 'Wachtwoord vergeten?', noAccount: 'Geen account?', passwordChanged: 'Wachtwoord gewijzigd. Log in met je nieuwe wachtwoord.', google: 'Doorgaan met Google', lm2: 'Doorgaan met LM2',
+    unreachable: 'MoneyHarpy is niet bereikbaar. Herlaad de pagina om het opnieuw te proberen.',
+    errors: {
+      google: 'Inloggen met Google is niet gelukt. Probeer het opnieuw of gebruik je wachtwoord.',
+      lm2: 'Inloggen met LM2 is niet gelukt. Probeer het opnieuw of gebruik je wachtwoord.',
+      registration_closed: 'Registreren is gesloten. Vraag een beheerder om toegang.',
+      email_taken: 'Dit e-mailadres heeft al een account. Log in met je wachtwoord.',
+    },
+  },
+  register: { title: 'Maak je MoneyHarpy-account aan', name: 'Naam', hint: 'Gebruik minstens 12 tekens.', submit: 'Account aanmaken', already: 'Heb je al een account?' },
+  passwords: {
+    forgotTitle: 'Wachtwoord vergeten?', forgotBody: 'Vul je e-mailadres in en we sturen je een link om een nieuw wachtwoord te kiezen.', send: 'Link versturen', sent: 'Als dit adres een account heeft, hebben we er een link naartoe gestuurd. De link werkt een uur.', back: 'Terug naar inloggen',
+    editTitle: 'Kies een nieuw wachtwoord', new: 'Nieuw wachtwoord', save: 'Nieuw wachtwoord opslaan', badLink: 'Deze link is ongeldig of verlopen', newLink: 'Nieuwe link aanvragen',
+  },
+  nav: {
+    main: 'Hoofdmenu', home: 'MoneyHarpy home', notifications: 'Meldingen', noNotifications: 'Je hebt geen meldingen.', select: 'Kies administratie', yours: 'Jouw administraties',
+    all: 'Alle administraties', new: 'Nieuwe administratie', account: 'Gebruikersaccount', instance: 'Instellingen van deze installatie', docs: 'API-documentatie', signOut: 'Uitloggen',
+  },
+  notFound: { title: 'Pagina niet gevonden', body: 'Deze pagina bestaat niet of je hebt er geen toegang toe.', back: 'Ga naar je administraties' },
+  administrations: {
+    title: 'Kies een administratie', add: 'Administratie toevoegen', list: 'Administraties', loadError: 'De administraties konden niet worden geladen. Herlaad de pagina om het opnieuw te proberen.',
+    empty: 'Voeg je eerste administratie toe om te beginnen met boekhouden.', favorite: 'Markeer {{name}} als favoriet', unfavorite: 'Verwijder {{name}} uit favorieten', settingsFor: 'Instellingen van {{name}}',
+    homeEmpty: 'Facturen, contacten en offertes van deze administratie komen hier te staan.', settings: 'Instellingen van {{name}}', language: 'Taal', currency: 'Valuta', country: 'Land', timeZone: 'Tijdzone', starts: 'Boekhouding start op',
+  },
+  onboarding: {
+    welcome: 'Welkom {{name}}', subtitle: 'In een paar stappen maken we je financiële administratie aan.',
+    companyQuestion: 'Wat is de naam van het bedrijf?', searchPlaceholder: 'Zoeken...', searchHelp: 'We zoeken in het Handelsregister van de KVK.',
+    notRegistered: 'Het bedrijf is nog niet ingeschreven, of is niet Nederlands', noResults: 'Geen bedrijf gevonden. Controleer de naam of vul de gegevens zelf in.', searchFailed: 'Het Handelsregister is niet bereikbaar. Vul de gegevens zelf in.', kvkNumber: 'KVK {{number}}',
+    createTitle: 'Bedrijf aanmaken', createSubtitle: 'Wat zijn de naam en het adres van je bedrijf?', companyName: 'Bedrijfsnaam', country: 'Land', findCountry: 'Zoek land', zipcode: 'Postcode', houseNumber: 'Huisnummer',
+    address: 'Adres', addDetails: 'Adresgegevens toevoegen', removeDetails: 'Adresgegevens verwijderen', additional: 'Aanvullende adresgegevens', city: 'Plaats', coc: 'Handelsregisternummer', currency: 'Valuta', findCurrency: 'Zoek valuta', noOption: 'Niets gevonden',
+    unknownAddress: 'Combinatie van postcode en huisnummer is onbekend',
+    firstTitle: 'Waarmee wil je beginnen?', firstSubtitle: 'Kies hieronder een optie om te starten.', getStarted: 'Aan de slag',
+    invoice: 'Ik wil een factuur sturen', invoiceBody: 'Beschrijf wat je hebt verkocht, kies bedrag en btw-tarief en mail het naar je klant.',
+    purchase: 'Ik wil een inkoop verwerken', purchaseBody: 'Voeg de facturen en bonnen toe van wat je bedrijf heeft gekocht.',
+    bank: 'Ik wil mijn bank koppelen', bankBody: 'Haal je transacties binnen, zodat ze aan je facturen gekoppeld kunnen worden.',
+    open: 'Ik wil mijn administratie openen', openBody: 'Kijk rond en richt je administratie op je eigen manier in.',
+  },
+  user: {
+    title: 'Gebruikersaccount', name: 'Naam', email: 'E-mailadres', tokens: 'API-tokens', tokensHint: 'Stuur een token als bearer-token om de', api: 'API te gebruiken', copy: 'Kopieer dit token nu. Het wordt niet opnieuw getoond.', tokenName: 'Naam van token', create: 'Token aanmaken', list: 'API-tokens', revoke: 'Intrekken', revokeName: '{{name}} intrekken',
+  },
+  instance: {
+    title: 'Instellingen van deze installatie', register: 'Nieuwe gebruikers mogen zich registreren', googleTitle: 'Inloggen met Google', googleEnable: 'Gebruikers kunnen doorgaan met Google', googleId: 'Google client-ID', googleSecret: 'Google client-secret', stored: 'Opgeslagen. Typ om te vervangen.',
+    lm2Title: 'Inloggen met LM2', lm2Enable: 'Gebruikers kunnen doorgaan met LM2', lm2Url: 'LM2-adres', lm2App: 'Appnaam in LM2',
+    kvkTitle: 'Bedrijven zoeken', kvkEnable: 'Zoeken in het Handelsregister', kvkKey: 'KVK API-sleutel', addressTitle: 'Adres opzoeken', addressEnable: 'Vul Nederlandse adressen aan met postcode en huisnummer', addressHint: 'Stuurt postcode en huisnummer naar PDOK, de adresservice van de Nederlandse overheid.',
+    smtpTitle: 'E-mail', smtpEnable: 'Verstuur e-mail via deze mailserver', smtpHint: 'Nodig om wachtwoorden te herstellen.', smtpHost: 'SMTP-host', smtpPort: 'SMTP-poort', smtpUser: 'SMTP-gebruikersnaam', smtpPassword: 'SMTP-wachtwoord', smtpFrom: 'Verstuur e-mail vanaf', smtpSecurity: 'Versleuteling', smtpStarttls: 'STARTTLS (meestal poort 587)', smtpTls: 'TLS (meestal poort 465)', smtpNone: 'Geen', testEmail: 'Testmail versturen', testSent: 'Testmail verstuurd naar {{email}}',
+    save: 'Instellingen opslaan', saved: 'Instellingen opgeslagen',
+  },
+}
+
+/** Dutch for the messages the server sends. Unknown ones stay as sent. */
+export const nlServer: Record<string, string> = {
+  "can't be blank": 'mag niet leeg zijn',
+  'has already been taken': 'is al in gebruik',
+  'is not a valid email address': 'is geen geldig e-mailadres',
+  'must be between 12 and 1024 characters': 'moet tussen 12 en 1024 tekens zijn',
+  'is not included in the list': 'staat niet in de lijst',
+  'must be an ISO 4217 code': 'moet een ISO 4217-code zijn',
+  'must be an ISO 3166-1 alpha-2 code': 'moet een ISO 3166-1-code zijn',
+  'is not a known time zone': 'is geen bekende tijdzone',
+  "can't be blank while Google login is enabled": 'mag niet leeg zijn als inloggen met Google aanstaat',
+  "can't be blank while LM2 login is enabled": 'mag niet leeg zijn als inloggen met LM2 aanstaat',
+  "can't be blank while company search is enabled": 'mag niet leeg zijn als bedrijven zoeken aanstaat',
+  'must be an http or https address without a query': 'moet een http- of https-adres zonder query zijn',
+  'must be a host name': 'moet een hostnaam zijn',
+  'must be between 1 and 65535': 'moet tussen 1 en 65535 zijn',
+  'must be a plain email address': 'moet een gewoon e-mailadres zijn',
+  'Invalid email or password': 'Onjuist e-mailadres of wachtwoord',
+  'Registration is closed': 'Registreren is gesloten',
+  'Too many requests': 'Te veel verzoeken',
+}

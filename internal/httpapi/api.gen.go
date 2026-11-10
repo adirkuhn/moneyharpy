@@ -15,16 +15,34 @@ import (
 
 // Defines values for AdministrationAccess.
 const (
-	AccountantCompany AdministrationAccess = "accountant_company"
-	User              AdministrationAccess = "user"
+	AdministrationAccessAccountantCompany AdministrationAccess = "accountant_company"
+	AdministrationAccessUser              AdministrationAccess = "user"
 )
 
 // Valid indicates whether the value is a known member of the AdministrationAccess enum.
 func (e AdministrationAccess) Valid() bool {
 	switch e {
-	case AccountantCompany:
+	case AdministrationAccessAccountantCompany:
 		return true
-	case User:
+	case AdministrationAccessUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdministrationDetailAccess.
+const (
+	AdministrationDetailAccessAccountantCompany AdministrationDetailAccess = "accountant_company"
+	AdministrationDetailAccessUser              AdministrationDetailAccess = "user"
+)
+
+// Valid indicates whether the value is a known member of the AdministrationDetailAccess enum.
+func (e AdministrationDetailAccess) Valid() bool {
+	switch e {
+	case AdministrationDetailAccessAccountantCompany:
+		return true
+	case AdministrationDetailAccessUser:
 		return true
 	default:
 		return false
@@ -50,6 +68,34 @@ func (e Language) Valid() bool {
 	default:
 		return false
 	}
+}
+
+// Defines values for UpdateInstanceSettingsRequestSmtpSecurity.
+const (
+	None     UpdateInstanceSettingsRequestSmtpSecurity = "none"
+	Starttls UpdateInstanceSettingsRequestSmtpSecurity = "starttls"
+	Tls      UpdateInstanceSettingsRequestSmtpSecurity = "tls"
+)
+
+// Valid indicates whether the value is a known member of the UpdateInstanceSettingsRequestSmtpSecurity enum.
+func (e UpdateInstanceSettingsRequestSmtpSecurity) Valid() bool {
+	switch e {
+	case None:
+		return true
+	case Starttls:
+		return true
+	case Tls:
+		return true
+	default:
+		return false
+	}
+}
+
+// AddressMatch defines model for AddressMatch.
+type AddressMatch struct {
+	Address1 string `json:"address1"`
+	City     string `json:"city"`
+	Zipcode  string `json:"zipcode"`
 }
 
 // Administration defines model for Administration.
@@ -98,6 +144,57 @@ type Administration struct {
 // AdministrationAccess The type of access the user has to this administration
 type AdministrationAccess string
 
+// AdministrationDetail defines model for AdministrationDetail.
+type AdministrationDetail struct {
+	// Access The type of access the user has to this administration
+	Access            AdministrationDetailAccess `json:"access"`
+	Address1          string                     `json:"address1"`
+	Address2          string                     `json:"address2"`
+	ChamberOfCommerce string                     `json:"chamber_of_commerce"`
+	City              string                     `json:"city"`
+
+	// Country The ISO 3166-1 alpha-2 country code
+	//
+	// Example: NL
+	Country string `json:"country"`
+
+	// Currency The ISO 4217 currency code
+	//
+	// Example: EUR
+	Currency string `json:"currency"`
+
+	// Favorite MoneyHarpy extension.
+	Favorite bool `json:"favorite"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id Identifier `json:"id"`
+
+	// Language The language code used in the administration
+	Language Language `json:"language"`
+
+	// Name Example: Harpy B.V.
+	Name              string  `json:"name"`
+	PeriodLockedUntil *string `json:"period_locked_until"`
+
+	// PeriodStartDate Example: 2026-01-01
+	PeriodStartDate string `json:"period_start_date"`
+	Suspended       bool   `json:"suspended"`
+
+	// TimeZone Example: Europe/Amsterdam
+	TimeZone string `json:"time_zone"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	//
+	// Example: /416072101932303822
+	Uri     string `json:"uri"`
+	Zipcode string `json:"zipcode"`
+}
+
+// AdministrationDetailAccess The type of access the user has to this administration
+type AdministrationDetailAccess string
+
 // ApiToken defines model for ApiToken.
 type ApiToken struct {
 	CreatedAt time.Time `json:"created_at"`
@@ -113,19 +210,34 @@ type ApiToken struct {
 type AuthProviders struct {
 	Google           bool `json:"google"`
 	Lm2              bool `json:"lm2"`
+	PasswordReset    bool `json:"password_reset"`
 	RegistrationOpen bool `json:"registration_open"`
+}
+
+// CompanyMatch defines model for CompanyMatch.
+type CompanyMatch struct {
+	Address1          string `json:"address1"`
+	ChamberOfCommerce string `json:"chamber_of_commerce"`
+	City              string `json:"city"`
+	Name              string `json:"name"`
+	Zipcode           string `json:"zipcode"`
 }
 
 // CreateAdministrationRequest defines model for CreateAdministrationRequest.
 type CreateAdministrationRequest struct {
 	Administration struct {
-		Country  *string `json:"country,omitempty"`
-		Currency *string `json:"currency,omitempty"`
+		Address1          *string `json:"address1,omitempty"`
+		Address2          *string `json:"address2,omitempty"`
+		ChamberOfCommerce *string `json:"chamber_of_commerce,omitempty"`
+		City              *string `json:"city,omitempty"`
+		Country           *string `json:"country,omitempty"`
+		Currency          *string `json:"currency,omitempty"`
 
 		// Language The language code used in the administration
 		Language *Language `json:"language,omitempty"`
 		Name     string    `json:"name"`
 		TimeZone *string   `json:"time_zone,omitempty"`
+		Zipcode  *string   `json:"zipcode,omitempty"`
 	} `json:"administration"`
 }
 
@@ -173,13 +285,23 @@ type Identifier = string
 
 // InstanceSettings defines model for InstanceSettings.
 type InstanceSettings struct {
+	AddressLookupEnabled  bool   `json:"address_lookup_enabled"`
 	GoogleClientId        string `json:"google_client_id"`
 	GoogleClientSecretSet bool   `json:"google_client_secret_set"`
 	GoogleEnabled         bool   `json:"google_enabled"`
+	KvkApiKeySet          bool   `json:"kvk_api_key_set"`
+	KvkEnabled            bool   `json:"kvk_enabled"`
 	Lm2App                string `json:"lm2_app"`
 	Lm2Enabled            bool   `json:"lm2_enabled"`
 	Lm2Url                string `json:"lm2_url"`
 	RegistrationOpen      bool   `json:"registration_open"`
+	SmtpEnabled           bool   `json:"smtp_enabled"`
+	SmtpFrom              string `json:"smtp_from"`
+	SmtpHost              string `json:"smtp_host"`
+	SmtpPasswordSet       bool   `json:"smtp_password_set"`
+	SmtpPort              int    `json:"smtp_port"`
+	SmtpSecurity          string `json:"smtp_security"`
+	SmtpUsername          string `json:"smtp_username"`
 }
 
 // Language The language code used in the administration
@@ -189,6 +311,36 @@ type Language string
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+// OnboardingOptions defines model for OnboardingOptions.
+type OnboardingOptions struct {
+	// AddressLookupCountries Countries whose addresses can be looked up here.
+	AddressLookupCountries []string `json:"address_lookup_countries"`
+
+	// CompanySearchCountries Countries whose company register can be searched here.
+	CompanySearchCountries []string `json:"company_search_countries"`
+
+	// Countries ISO 3166-1 alpha-2 codes.
+	Countries []string `json:"countries"`
+
+	// Currencies ISO 4217 codes.
+	Currencies        []string `json:"currencies"`
+	PopularCurrencies []string `json:"popular_currencies"`
+}
+
+// PasswordResetConfirmation defines model for PasswordResetConfirmation.
+type PasswordResetConfirmation struct {
+	Password string `json:"password"`
+	Token    string `json:"token"`
+}
+
+// PasswordResetRequest defines model for PasswordResetRequest.
+type PasswordResetRequest struct {
+	Email string `json:"email"`
+
+	// Language The language code used in the administration
+	Language *Language `json:"language,omitempty"`
 }
 
 // RegisterRequest defines model for RegisterRequest.
@@ -214,18 +366,31 @@ type ResourceLocation struct {
 
 // UpdateInstanceSettingsRequest defines model for UpdateInstanceSettingsRequest.
 type UpdateInstanceSettingsRequest struct {
-	GoogleClientId     *string `json:"google_client_id,omitempty"`
-	GoogleClientSecret *string `json:"google_client_secret,omitempty"`
-	GoogleEnabled      *bool   `json:"google_enabled,omitempty"`
+	AddressLookupEnabled *bool   `json:"address_lookup_enabled,omitempty"`
+	GoogleClientId       *string `json:"google_client_id,omitempty"`
+	GoogleClientSecret   *string `json:"google_client_secret,omitempty"`
+	GoogleEnabled        *bool   `json:"google_enabled,omitempty"`
+	KvkApiKey            *string `json:"kvk_api_key,omitempty"`
+	KvkEnabled           *bool   `json:"kvk_enabled,omitempty"`
 
 	// Lm2App The name this installation is registered under in LM2.
 	Lm2App     *string `json:"lm2_app,omitempty"`
 	Lm2Enabled *bool   `json:"lm2_enabled,omitempty"`
 
 	// Lm2Url Public address of the LM2 installation.
-	Lm2Url           *string `json:"lm2_url,omitempty"`
-	RegistrationOpen *bool   `json:"registration_open,omitempty"`
+	Lm2Url           *string                                    `json:"lm2_url,omitempty"`
+	RegistrationOpen *bool                                      `json:"registration_open,omitempty"`
+	SmtpEnabled      *bool                                      `json:"smtp_enabled,omitempty"`
+	SmtpFrom         *string                                    `json:"smtp_from,omitempty"`
+	SmtpHost         *string                                    `json:"smtp_host,omitempty"`
+	SmtpPassword     *string                                    `json:"smtp_password,omitempty"`
+	SmtpPort         *int                                       `json:"smtp_port,omitempty"`
+	SmtpSecurity     *UpdateInstanceSettingsRequestSmtpSecurity `json:"smtp_security,omitempty"`
+	SmtpUsername     *string                                    `json:"smtp_username,omitempty"`
 }
+
+// UpdateInstanceSettingsRequestSmtpSecurity defines model for UpdateInstanceSettingsRequest.SmtpSecurity.
+type UpdateInstanceSettingsRequestSmtpSecurity string
 
 // ValidationError defines model for ValidationError.
 type ValidationError struct {
@@ -271,8 +436,26 @@ type Lm2CallbackParams struct {
 	RefreshToken *string `form:"refresh_token,omitempty" json:"refresh_token,omitempty"`
 }
 
+// AddressLookupParams defines parameters for AddressLookup.
+type AddressLookupParams struct {
+	Zipcode     string `form:"zipcode" json:"zipcode"`
+	HouseNumber string `form:"house_number" json:"house_number"`
+}
+
+// CompanySearchParams defines parameters for CompanySearch.
+type CompanySearchParams struct {
+	Country string `form:"country" json:"country"`
+	Query   string `form:"query" json:"query"`
+}
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
+
+// ConfirmPasswordResetJSONRequestBody defines body for ConfirmPasswordReset for application/json ContentType.
+type ConfirmPasswordResetJSONRequestBody = PasswordResetConfirmation
+
+// RequestPasswordResetJSONRequestBody defines body for RequestPasswordReset for application/json ContentType.
+type RequestPasswordResetJSONRequestBody = PasswordResetRequest
 
 // RegisterJSONRequestBody defines body for Register for application/json ContentType.
 type RegisterJSONRequestBody = RegisterRequest
@@ -309,6 +492,12 @@ type ServerInterface interface {
 	// CurrentUser Get the signed-in user
 	// (GET /api/auth/me)
 	CurrentUser(w http.ResponseWriter, r *http.Request)
+	// ConfirmPasswordReset Set a new password with an emailed token
+	// (POST /api/auth/password_reset/confirm)
+	ConfirmPasswordReset(w http.ResponseWriter, r *http.Request)
+	// RequestPasswordReset Ask for a password reset email
+	// (POST /api/auth/password_reset/request)
+	RequestPasswordReset(w http.ResponseWriter, r *http.Request)
 	// AuthProviders List available sign-in methods
 	// (GET /api/auth/providers)
 	AuthProviders(w http.ResponseWriter, r *http.Request)
@@ -321,6 +510,18 @@ type ServerInterface interface {
 	// UpdateInstanceSettings Update instance settings
 	// (PATCH /api/instance/settings)
 	UpdateInstanceSettings(w http.ResponseWriter, r *http.Request)
+	// SendTestEmail Send a test email to yourself using the saved mail settings
+	// (POST /api/instance/settings/test_email)
+	SendTestEmail(w http.ResponseWriter, r *http.Request)
+	// AddressLookup Find a Dutch address by zipcode and house number
+	// (GET /api/onboarding/address_lookup)
+	AddressLookup(w http.ResponseWriter, r *http.Request, params AddressLookupParams)
+	// CompanySearch Search a company register
+	// (GET /api/onboarding/company_search)
+	CompanySearch(w http.ResponseWriter, r *http.Request, params CompanySearchParams)
+	// OnboardingOptions List what can be chosen when adding an administration
+	// (GET /api/onboarding/options)
+	OnboardingOptions(w http.ResponseWriter, r *http.Request)
 	// LocateResource Locate a resource
 	// (GET /api/resources/{id})
 	LocateResource(w http.ResponseWriter, r *http.Request, id Id)
@@ -396,6 +597,18 @@ func (_ Unimplemented) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ConfirmPasswordReset Set a new password with an emailed token
+// (POST /api/auth/password_reset/confirm)
+func (_ Unimplemented) ConfirmPasswordReset(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RequestPasswordReset Ask for a password reset email
+// (POST /api/auth/password_reset/request)
+func (_ Unimplemented) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // AuthProviders List available sign-in methods
 // (GET /api/auth/providers)
 func (_ Unimplemented) AuthProviders(w http.ResponseWriter, r *http.Request) {
@@ -417,6 +630,30 @@ func (_ Unimplemented) InstanceSettings(w http.ResponseWriter, r *http.Request) 
 // UpdateInstanceSettings Update instance settings
 // (PATCH /api/instance/settings)
 func (_ Unimplemented) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SendTestEmail Send a test email to yourself using the saved mail settings
+// (POST /api/instance/settings/test_email)
+func (_ Unimplemented) SendTestEmail(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AddressLookup Find a Dutch address by zipcode and house number
+// (GET /api/onboarding/address_lookup)
+func (_ Unimplemented) AddressLookup(w http.ResponseWriter, r *http.Request, params AddressLookupParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CompanySearch Search a company register
+// (GET /api/onboarding/company_search)
+func (_ Unimplemented) CompanySearch(w http.ResponseWriter, r *http.Request, params CompanySearchParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// OnboardingOptions List what can be chosen when adding an administration
+// (GET /api/onboarding/options)
+func (_ Unimplemented) OnboardingOptions(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -667,6 +904,34 @@ func (siw *ServerInterfaceWrapper) CurrentUser(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ConfirmPasswordReset operation middleware
+func (siw *ServerInterfaceWrapper) ConfirmPasswordReset(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ConfirmPasswordReset(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequestPasswordReset operation middleware
+func (siw *ServerInterfaceWrapper) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestPasswordReset(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // AuthProviders operation middleware
 func (siw *ServerInterfaceWrapper) AuthProviders(w http.ResponseWriter, r *http.Request) {
 
@@ -714,6 +979,126 @@ func (siw *ServerInterfaceWrapper) UpdateInstanceSettings(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateInstanceSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SendTestEmail operation middleware
+func (siw *ServerInterfaceWrapper) SendTestEmail(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SendTestEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddressLookup operation middleware
+func (siw *ServerInterfaceWrapper) AddressLookup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AddressLookupParams
+
+	// ------------- Required query parameter "zipcode" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "zipcode", r.URL.Query(), &params.Zipcode, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "zipcode"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "zipcode", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "house_number" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "house_number", r.URL.Query(), &params.HouseNumber, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "house_number"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "house_number", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddressLookup(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CompanySearch operation middleware
+func (siw *ServerInterfaceWrapper) CompanySearch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CompanySearchParams
+
+	// ------------- Required query parameter "country" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "country", r.URL.Query(), &params.Country, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "country"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "country", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CompanySearch(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// OnboardingOptions operation middleware
+func (siw *ServerInterfaceWrapper) OnboardingOptions(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.OnboardingOptions(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1038,6 +1423,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/api/v2/administrations/{id}/favorite", wrapper.FavoriteAdministration)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/onboarding/options", wrapper.OnboardingOptions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/onboarding/company_search", wrapper.CompanySearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/onboarding/address_lookup", wrapper.AddressLookup)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/resources/{id}", wrapper.LocateResource)
 	})
 	r.Group(func(r chi.Router) {
@@ -1048,6 +1442,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/auth/login", wrapper.Login)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/auth/password_reset/request", wrapper.RequestPasswordReset)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/auth/password_reset/confirm", wrapper.ConfirmPasswordReset)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/auth/logout", wrapper.Logout)
@@ -1075,6 +1475,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/user/tokens/{id}", wrapper.DeleteToken)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/instance/settings/test_email", wrapper.SendTestEmail)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/instance/settings", wrapper.InstanceSettings)

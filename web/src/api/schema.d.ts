@@ -39,7 +39,7 @@ export interface paths {
         };
         /**
          * Get an administration
-         * @description MoneyHarpy extension.
+         * @description MoneyHarpy extension. Includes the company address, which the list omits to stay Moneybird-compatible.
          */
         get: operations["getAdministration"];
         put?: never;
@@ -71,6 +71,60 @@ export interface paths {
          * @description MoneyHarpy extension.
          */
         delete: operations["unfavoriteAdministration"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/onboarding/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List what can be chosen when adding an administration */
+        get: operations["onboardingOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/onboarding/company_search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search a company register
+         * @description Only for countries listed in `company_search_countries`.
+         */
+        get: operations["companySearch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/onboarding/address_lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Find a Dutch address by zipcode and house number */
+        get: operations["addressLookup"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -146,6 +200,46 @@ export interface paths {
         put?: never;
         /** Sign in with email and password */
         post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/password_reset/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for a password reset email
+         * @description Answers 204 whether or not the address has an account, so accounts cannot be discovered.
+         */
+        post: operations["requestPasswordReset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/password_reset/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a new password with an emailed token
+         * @description Tokens work once and expire after an hour. All existing sessions end.
+         */
+        post: operations["confirmPasswordReset"];
         delete?: never;
         options?: never;
         head?: never;
@@ -294,6 +388,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/instance/settings/test_email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a test email to yourself using the saved mail settings */
+        post: operations["sendTestEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/instance/settings": {
         parameters: {
             query?: never;
@@ -374,6 +485,36 @@ export interface components {
              */
             uri: string;
         };
+        AdministrationDetail: components["schemas"]["Administration"] & {
+            address1: string;
+            address2: string;
+            zipcode: string;
+            city: string;
+            chamber_of_commerce: string;
+        };
+        OnboardingOptions: {
+            /** @description ISO 3166-1 alpha-2 codes. */
+            countries: string[];
+            /** @description ISO 4217 codes. */
+            currencies: string[];
+            popular_currencies: string[];
+            /** @description Countries whose company register can be searched here. */
+            company_search_countries: string[];
+            /** @description Countries whose addresses can be looked up here. */
+            address_lookup_countries: string[];
+        };
+        CompanyMatch: {
+            name: string;
+            chamber_of_commerce: string;
+            address1: string;
+            zipcode: string;
+            city: string;
+        };
+        AddressMatch: {
+            address1: string;
+            zipcode: string;
+            city: string;
+        };
         /**
          * @description The language code used in the administration
          * @enum {string}
@@ -386,6 +527,11 @@ export interface components {
                 currency?: string;
                 country?: string;
                 time_zone?: string;
+                address1?: string;
+                address2?: string;
+                zipcode?: string;
+                city?: string;
+                chamber_of_commerce?: string;
             };
         };
         ResourceLocation: {
@@ -399,6 +545,15 @@ export interface components {
             registration_open: boolean;
             google: boolean;
             lm2: boolean;
+            password_reset: boolean;
+        };
+        PasswordResetRequest: {
+            email: string;
+            language?: components["schemas"]["Language"];
+        };
+        PasswordResetConfirmation: {
+            token: string;
+            password: string;
         };
         RegisterRequest: {
             email: string;
@@ -436,6 +591,16 @@ export interface components {
             lm2_enabled: boolean;
             lm2_url: string;
             lm2_app: string;
+            kvk_enabled: boolean;
+            kvk_api_key_set: boolean;
+            address_lookup_enabled: boolean;
+            smtp_enabled: boolean;
+            smtp_host: string;
+            smtp_port: number;
+            smtp_username: string;
+            smtp_password_set: boolean;
+            smtp_from: string;
+            smtp_security: string;
         };
         UpdateInstanceSettingsRequest: {
             registration_open?: boolean;
@@ -447,6 +612,17 @@ export interface components {
             lm2_url?: string;
             /** @description The name this installation is registered under in LM2. */
             lm2_app?: string;
+            kvk_enabled?: boolean;
+            kvk_api_key?: string;
+            address_lookup_enabled?: boolean;
+            smtp_enabled?: boolean;
+            smtp_host?: string;
+            smtp_port?: number;
+            smtp_username?: string;
+            smtp_password?: string;
+            smtp_from?: string;
+            /** @enum {string} */
+            smtp_security?: "starttls" | "tls" | "none";
         };
     };
     responses: {
@@ -593,7 +769,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Administration"];
+                    "application/json": components["schemas"]["AdministrationDetail"];
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -648,6 +824,81 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    onboardingOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The options */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingOptions"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    companySearch: {
+        parameters: {
+            query: {
+                country: string;
+                query: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matching companies. Address parts the register does not return are empty. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyMatch"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    addressLookup: {
+        parameters: {
+            query: {
+                zipcode: string;
+                house_number: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The address */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddressMatch"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
@@ -752,6 +1003,58 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    requestPasswordReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    confirmPasswordReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetConfirmation"];
+            };
+        };
+        responses: {
+            /** @description Password changed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };
     };
@@ -955,6 +1258,35 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    sendTestEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sent */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /** @description The mail server refused or could not be reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     instanceSettings: {

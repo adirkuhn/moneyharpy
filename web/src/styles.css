@@ -57,7 +57,6 @@ body {
   background: var(--bg);
   color: var(--text);
   font: 400 1rem/1.5 var(--font);
-  font-feature-settings: 'tnum';
 }
 
 a { color: var(--link); }
@@ -262,18 +261,32 @@ input:not([type='checkbox']), select {
 .secret p { margin: 0 0 0.375rem; font-weight: 600; }
 .secret code { overflow-wrap: anywhere; }
 
-/* Sign-in: the navy of the top bar, carried across the whole page. */
-.auth {
-  display: grid;
-  place-items: center;
-  min-height: 100dvh;
-  padding: 1rem;
-  background: var(--navy);
+/* Sign-in shares the open page of the guided flows, with a narrower column. */
+.auth__language { max-width: 25rem; }
+.auth__logo {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.5rem 0 1.25rem;
+  font-size: 1.625rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
 }
-.auth__panel { width: 100%; max-width: 25rem; padding: 2rem; border-radius: 10px; background: var(--surface); }
-.auth__mark { display: block; width: 3rem; height: 3rem; margin-bottom: 0.75rem; }
+.auth__mark { width: 2.5rem; height: 2.5rem; }
+.auth__panel { position: relative; z-index: 1; max-width: 25rem; margin: 0 auto; padding: 2rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .auth h1 { margin-bottom: 1.25rem; font-size: 1.5rem; }
-.auth__alt { margin: 1rem 0 0; color: var(--muted); }
+.auth input.auth__input { display: block; width: 100%; margin-bottom: 0.75rem; }
+.auth__intro { margin: 0 0 0.875rem; }
+.auth__or { display: flex; align-items: center; gap: 0.75rem; margin: 1.125rem 0 0.25rem; color: var(--muted); }
+.auth__or::before, .auth__or::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
+.auth__actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; margin-top: 1.25rem; }
+.auth__actions .btn { flex: 1 0 auto; padding: 0 0.5rem; white-space: nowrap; }
+.auth__actions:empty { display: none; }
+.notice { margin: 0 0 1rem; padding: 0.625rem 0.875rem; border-left: 4px solid var(--teal); background: var(--row-hover); }
+.form__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
 
 @media (max-width: 40rem) {
   .brand__name { display: none; }
@@ -287,4 +300,119 @@ input:not([type='checkbox']), select {
 
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; }
+}
+
+/* Guided flows: a single card on an open page, with the brand's wings behind it. */
+.wizard {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: 1rem 1rem 2rem;
+}
+.wizard__wing {
+  position: absolute;
+  z-index: 0;
+  width: 44rem;
+  height: 44rem;
+  opacity: 0.09;
+  pointer-events: none;
+}
+.wizard__wing--left { left: -22rem; top: 8rem; transform: rotate(-14deg); }
+.wizard__wing--right { right: -22rem; bottom: -8rem; transform: rotate(14deg); }
+.wizard__language {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 36rem;
+  margin: 0 auto 0.75rem;
+  color: var(--muted);
+}
+.wizard__card {
+  position: relative;
+  z-index: 1;
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.wizard__art { display: block; width: 15rem; max-width: 100%; margin: 0 auto 1.25rem; }
+.wizard__card h1 { font-size: 1.625rem; }
+.wizard__subtitle { margin: 0.375rem 0 0; color: var(--muted); }
+.wizard__body { display: grid; gap: 1rem; margin-top: 1.5rem; }
+.wizard__footer { display: flex; justify-content: space-between; gap: 0.75rem; margin-top: 1.75rem; }
+.wizard__end { margin-left: auto; }
+.wizard__brand { position: relative; z-index: 0; display: flex; justify-content: center; align-items: center; gap: 0.375rem; margin: 1.5rem 0 0; font-weight: 750; letter-spacing: -0.02em; }
+.wizard .hint { margin: 0; }
+.wizard .problems { margin: 0; }
+.wizard .empty { margin: 0; }
+
+.field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.field-with-action { display: flex; align-items: flex-end; gap: 0.375rem; }
+.field-with-action .field { flex: 1; }
+.field-with-action .icon-btn { font-size: 1.375rem; line-height: 1; }
+.field input, .field select { width: 100%; }
+.warning { margin: 0; padding: 0.5rem 0.75rem; border-left: 4px solid var(--gold); background: var(--row-hover); }
+
+.choices { display: grid; gap: 0.5rem; }
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.choice:hover { background: var(--row-hover); }
+.choice:has(input:checked) { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+.choice input { flex: none; width: 1.125rem; height: 1.125rem; margin: 0.1875rem 0 0; accent-color: var(--blue); }
+.choice__text { display: grid; gap: 0.125rem; min-width: 0; }
+
+.picker { position: relative; }
+.picker__button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0 0.625rem;
+  border: 1px solid #8096b5;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+.picker__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker__panel {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  padding: 0.375rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 12px 28px rgb(9 38 83 / 0.28);
+}
+.picker__panel input { width: 100%; }
+.picker__panel ul { max-height: 15rem; margin: 0.375rem 0 0; padding: 0; overflow-y: auto; font-weight: 400; list-style: none; }
+.picker__panel li { padding: 0.4375rem 0.625rem; border-radius: 5px; cursor: pointer; }
+.picker__panel li:hover, .picker__panel li.is-active { background: var(--row-hover); }
+.picker__panel li[aria-selected='true'] { font-weight: 650; }
+.picker__panel li.has-separator { margin-bottom: 0.375rem; border-bottom: 1px solid var(--line); border-radius: 5px 5px 0 0; }
+.picker__empty { margin: 0.375rem 0.625rem; color: var(--muted); font-weight: 400; }
+
+@media (max-width: 40rem) {
+  .wizard__wing { display: none; }
+  .wizard__card { padding: 1.25rem; }
+  .field-pair { grid-template-columns: 1fr; }
 }

@@ -163,3 +163,99 @@ func TestLM2Validation(t *testing.T) {
 		})
 	}
 }
+
+func TestKVKKeyIsEncryptedAndKept(t *testing.T) {
+	s, store := newService(t)
+	ctx := context.Background()
+	const key = "kvk-api-key-value"
+	if _, err := s.Update(ctx, Update{KVKEnabled: ptr(true), KVKAPIKey: ptr(key), AddressLookupEnabled: ptr(true)}); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	for k, raw := range store.values {
+		if strings.Contains(string(raw), key) {
+			t.Errorf("stored value for %q contains the key in clear", k)
+		}
+	}
+	got, err := s.Update(ctx, Update{KVKAPIKey: ptr("")})
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	if got.KVK.APIKey != key || !got.KVK.Enabled || !got.AddressLookupEnabled {
+		t.Errorf("Update() = %+v, want key kept and flags on", got)
+	}
+}
+
+func TestEnablingKVKRequiresKey(t *testing.T) {
+	s, _ := newService(t)
+	_, err := s.Update(context.Background(), Update{KVKEnabled: ptr(true)})
+	var verr *resource.ValidationError
+	if !errors.As(err, &verr) {
+		t.Fatalf("Update() error = %v, want *resource.ValidationError", err)
+	}
+	if _, ok := verr.Fields["kvk_api_key"]; !ok {
+		t.Errorf("Update() fields = %v, want kvk_api_key", verr.Fields)
+	}
+}
+
+func validSMTP() Update {
+	return Update{
+		SMTPEnabled: ptr(true), SMTPHost: ptr("mail.example.com"), SMTPPort: ptr(587),
+		SMTPUsername: ptr("user"), SMTPPassword: ptr("smtp-password-value"),
+		SMTPFrom: ptr("books@example.com"), SMTPSecurity: ptr("starttls"),
+	}
+}
+
+func TestSMTPPasswordIsEncryptedAndKept(t *testing.T) {
+	s, store := newService(t)
+	ctx := context.Background()
+	if _, err := s.Update(ctx, validSMTP()); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	for key, raw := range store.values {
+		if strings.Contains(string(raw), "smtp-password-value") {
+			t.Errorf("stored value for %q contains the password in clear", key)
+		}
+	}
+	got, err := s.Update(ctx, Update{SMTPPassword: ptr("")})
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	want := SMTP{Enabled: true, Host: "mail.example.com", Port: 587, Username: "user", Password: "smtp-password-value", From: "books@example.com", Security: "starttls"}
+	if diff := cmp.Diff(want, got.SMTP); diff != "" {
+		t.Errorf("Update() SMTP diff (-want +got):\n%s", diff)
+	}
+}
+
+func TestSMTPValidation(t *testing.T) {
+	with := func(change func(*Update)) Update {
+		u := validSMTP()
+		change(&u)
+		return u
+	}
+	tests := []struct {
+		name  string
+		in    Update
+		field string
+	}{
+		{name: "no host", in: with(func(u *Update) { u.SMTPHost = ptr("") }), field: "smtp_host"},
+		{name: "host with line break", in: with(func(u *Update) { u.SMTPHost = ptr("a\r\nb") }), field: "smtp_host"},
+		{name: "port too low", in: with(func(u *Update) { u.SMTPPort = ptr(0) }), field: "smtp_port"},
+		{name: "port too high", in: with(func(u *Update) { u.SMTPPort = ptr(70000) }), field: "smtp_port"},
+		{name: "bad from", in: with(func(u *Update) { u.SMTPFrom = ptr("nope") }), field: "smtp_from"},
+		{name: "from with header injection", in: with(func(u *Update) { u.SMTPFrom = ptr("a@b.nl\r\nBcc: x@y.nl") }), field: "smtp_from"},
+		{name: "unknown security", in: with(func(u *Update) { u.SMTPSecurity = ptr("ssl3") }), field: "smtp_security"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, _ := newService(t)
+			_, err := s.Update(context.Background(), tt.in)
+			var verr *resource.ValidationError
+			if !errors.As(err, &verr) {
+				t.Fatalf("Update() error = %v, want *resource.ValidationError", err)
+			}
+			if _, ok := verr.Fields[tt.field]; !ok {
+				t.Errorf("Update() fields = %v, want key %q", verr.Fields, tt.field)
+			}
+		})
+	}
+}

@@ -13,7 +13,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/mail"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -40,11 +42,34 @@ type LM2 struct {
 	App string
 }
 
+// KVK configures company search in the Dutch Chamber of Commerce register.
+type KVK struct {
+	Enabled bool
+	APIKey  string
+}
+
+// SMTP configures the mail server used for outgoing email.
+type SMTP struct {
+	Enabled  bool
+	Host     string
+	Port     int
+	Username string
+	Password string
+	From     string
+	// Security is "starttls", "tls" or "none".
+	Security string
+}
+
 // Instance is the configuration of this MoneyHarpy installation.
 type Instance struct {
 	RegistrationOpen bool
 	Google           Google
 	LM2              LM2
+	KVK              KVK
+	// AddressLookupEnabled allows sending zipcodes and house numbers to the
+	// Dutch government address service to complete addresses.
+	AddressLookupEnabled bool
+	SMTP                 SMTP
 }
 
 // Update changes selected settings. Nil fields stay as they are, and an empty
@@ -57,6 +82,18 @@ type Update struct {
 	LM2Enabled         *bool
 	LM2URL             *string
 	LM2App             *string
+
+	KVKEnabled           *bool
+	KVKAPIKey            *string
+	AddressLookupEnabled *bool
+
+	SMTPEnabled  *bool
+	SMTPHost     *string
+	SMTPPort     *int
+	SMTPUsername *string
+	SMTPPassword *string
+	SMTPFrom     *string
+	SMTPSecurity *string
 }
 
 // Store persists opaque values by key.
@@ -85,6 +122,16 @@ type storedInstance struct {
 	LM2Enabled       bool   `json:"lm2_enabled"`
 	LM2URL           string `json:"lm2_url"`
 	LM2App           string `json:"lm2_app"`
+	KVKEnabled       bool   `json:"kvk_enabled"`
+	KVKKey           string `json:"kvk_api_key_sealed"`
+	AddressLookup    bool   `json:"address_lookup_enabled"`
+	SMTPEnabled      bool   `json:"smtp_enabled"`
+	SMTPHost         string `json:"smtp_host"`
+	SMTPPort         int    `json:"smtp_port"`
+	SMTPUsername     string `json:"smtp_username"`
+	SMTPPassword     string `json:"smtp_password_sealed"`
+	SMTPFrom         string `json:"smtp_from"`
+	SMTPSecurity     string `json:"smtp_security"`
 }
 
 // Instance returns the current settings with secrets decrypted.
@@ -104,10 +151,27 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 		RegistrationOpen: st.RegistrationOpen,
 		Google:           Google{Enabled: st.GoogleEnabled, ClientID: st.GoogleClientID},
 		LM2:              LM2{Enabled: st.LM2Enabled, URL: st.LM2URL, App: st.LM2App},
+		KVK:              KVK{Enabled: st.KVKEnabled},
+
+		AddressLookupEnabled: st.AddressLookup,
+		SMTP: SMTP{
+			Enabled: st.SMTPEnabled, Host: st.SMTPHost, Port: st.SMTPPort, Username: st.SMTPUsername,
+			From: st.SMTPFrom, Security: st.SMTPSecurity,
+		},
 	}
 	if st.GoogleSecret != "" {
 		if inst.Google.ClientSecret, err = s.cipher.Open(st.GoogleSecret); err != nil {
 			return Instance{}, fmt.Errorf("decrypt google secret: %w", err)
+		}
+	}
+	if st.KVKKey != "" {
+		if inst.KVK.APIKey, err = s.cipher.Open(st.KVKKey); err != nil {
+			return Instance{}, fmt.Errorf("decrypt kvk key: %w", err)
+		}
+	}
+	if st.SMTPPassword != "" {
+		if inst.SMTP.Password, err = s.cipher.Open(st.SMTPPassword); err != nil {
+			return Instance{}, fmt.Errorf("decrypt smtp password: %w", err)
 		}
 	}
 	return inst, nil
@@ -150,7 +214,23 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		inst.LM2.App = strings.TrimSpace(*u.LM2App)
 	}
 
+	if u.KVKEnabled != nil {
+		inst.KVK.Enabled = *u.KVKEnabled
+	}
+	if u.KVKAPIKey != nil {
+		inst.KVK.APIKey = cmp.Or(*u.KVKAPIKey, inst.KVK.APIKey)
+	}
+	if u.AddressLookupEnabled != nil {
+		inst.AddressLookupEnabled = *u.AddressLookupEnabled
+	}
+
+	applySMTP(&inst.SMTP, u)
+
 	var verr resource.ValidationError
+	validateSMTP(inst.SMTP, &verr)
+	if inst.KVK.Enabled && inst.KVK.APIKey == "" {
+		verr.Add("kvk_api_key", "can't be blank while company search is enabled")
+	}
 	if inst.Google.Enabled && inst.Google.ClientID == "" {
 		verr.Add("google_client_id", "can't be blank while Google login is enabled")
 	}
@@ -177,6 +257,24 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		LM2Enabled:       inst.LM2.Enabled,
 		LM2URL:           inst.LM2.URL,
 		LM2App:           inst.LM2.App,
+		KVKEnabled:       inst.KVK.Enabled,
+		AddressLookup:    inst.AddressLookupEnabled,
+		SMTPEnabled:      inst.SMTP.Enabled,
+		SMTPHost:         inst.SMTP.Host,
+		SMTPPort:         inst.SMTP.Port,
+		SMTPUsername:     inst.SMTP.Username,
+		SMTPFrom:         inst.SMTP.From,
+		SMTPSecurity:     inst.SMTP.Security,
+	}
+	if inst.SMTP.Password != "" {
+		if st.SMTPPassword, err = s.cipher.Seal(inst.SMTP.Password); err != nil {
+			return Instance{}, fmt.Errorf("encrypt smtp password: %w", err)
+		}
+	}
+	if inst.KVK.APIKey != "" {
+		if st.KVKKey, err = s.cipher.Seal(inst.KVK.APIKey); err != nil {
+			return Instance{}, fmt.Errorf("encrypt kvk key: %w", err)
+		}
 	}
 	if inst.Google.ClientSecret != "" {
 		if st.GoogleSecret, err = s.cipher.Seal(inst.Google.ClientSecret); err != nil {
@@ -191,6 +289,48 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		return Instance{}, fmt.Errorf("save settings: %w", err)
 	}
 	return inst, nil
+}
+
+func applySMTP(cfg *SMTP, u Update) {
+	if u.SMTPEnabled != nil {
+		cfg.Enabled = *u.SMTPEnabled
+	}
+	if u.SMTPHost != nil {
+		cfg.Host = strings.TrimSpace(*u.SMTPHost)
+	}
+	if u.SMTPPort != nil {
+		cfg.Port = *u.SMTPPort
+	}
+	if u.SMTPUsername != nil {
+		cfg.Username = strings.TrimSpace(*u.SMTPUsername)
+	}
+	if u.SMTPPassword != nil {
+		cfg.Password = cmp.Or(*u.SMTPPassword, cfg.Password)
+	}
+	if u.SMTPFrom != nil {
+		cfg.From = strings.TrimSpace(*u.SMTPFrom)
+	}
+	if u.SMTPSecurity != nil {
+		cfg.Security = *u.SMTPSecurity
+	}
+}
+
+func validateSMTP(cfg SMTP, verr *resource.ValidationError) {
+	if !cfg.Enabled {
+		return
+	}
+	if cfg.Host == "" || strings.ContainsAny(cfg.Host, " \t\r\n") {
+		verr.Add("smtp_host", "must be a host name")
+	}
+	if cfg.Port < 1 || cfg.Port > 65535 {
+		verr.Add("smtp_port", "must be between 1 and 65535")
+	}
+	if addr, err := mail.ParseAddress(cfg.From); err != nil || addr.Address != cfg.From {
+		verr.Add("smtp_from", "must be a plain email address")
+	}
+	if !slices.Contains([]string{"starttls", "tls", "none"}, cfg.Security) {
+		verr.Add("smtp_security", "is not included in the list")
+	}
 }
 
 func validHTTPAddress(address string) bool {

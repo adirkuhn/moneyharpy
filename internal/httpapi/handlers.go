@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/json"
@@ -19,13 +20,14 @@ import (
 )
 
 const (
-	sessionMaxAge   = 30 * 24 * time.Hour
-	oauthCookieAge  = 10 * time.Minute
-	oauthCookie     = "moneyharpy_oauth"
-	oauthCookiePath = "/api/auth/google"
-	lm2Cookie       = "moneyharpy_lm2"
-	lm2CookiePath   = "/api/auth/lm2"
-	afterLoginPath  = "/administrations"
+	sessionMaxAge    = 30 * 24 * time.Hour
+	resetSendTimeout = time.Minute
+	oauthCookieAge   = 10 * time.Minute
+	oauthCookie      = "moneyharpy_oauth"
+	oauthCookiePath  = "/api/auth/google"
+	lm2Cookie        = "moneyharpy_lm2"
+	lm2CookiePath    = "/api/auth/lm2"
+	afterLoginPath   = "/administrations"
 )
 
 func decodeBody[T any](w http.ResponseWriter, r *http.Request) (T, bool) {
@@ -94,6 +96,12 @@ func (s *server) CreateAdministration(w http.ResponseWriter, r *http.Request) {
 		Currency: deref(in.Currency),
 		Country:  deref(in.Country),
 		TimeZone: deref(in.TimeZone),
+
+		Address1:          deref(in.Address1),
+		Address2:          deref(in.Address2),
+		Zipcode:           deref(in.Zipcode),
+		City:              deref(in.City),
+		ChamberOfCommerce: deref(in.ChamberOfCommerce),
 	})
 	if err != nil {
 		s.fail(w, r, err)
@@ -113,7 +121,79 @@ func (s *server) GetAdministration(w http.ResponseWriter, r *http.Request, id Id
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toAdministration(got))
+	writeJSON(w, http.StatusOK, administrationDetail{
+		Administration:    toAdministration(got),
+		Address1:          got.Address1,
+		Address2:          got.Address2,
+		Zipcode:           got.Zipcode,
+		City:              got.City,
+		ChamberOfCommerce: got.ChamberOfCommerce,
+	})
+}
+
+// administrationDetail is the wire form of AdministrationDetail.
+type administrationDetail struct {
+	Administration
+	Address1          string `json:"address1"`
+	Address2          string `json:"address2"`
+	Zipcode           string `json:"zipcode"`
+	City              string `json:"city"`
+	ChamberOfCommerce string `json:"chamber_of_commerce"`
+}
+
+// lookupCountry is the only country with a register and address service wired
+// in so far.
+const lookupCountry = "NL"
+
+// OnboardingOptions implements ServerInterface.
+func (s *server) OnboardingOptions(w http.ResponseWriter, r *http.Request) {
+	inst, err := s.deps.Settings.Instance(r.Context())
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	out := OnboardingOptions{
+		Countries:              administration.Countries(),
+		Currencies:             administration.Currencies(),
+		PopularCurrencies:      administration.PopularCurrencies(),
+		CompanySearchCountries: []string{},
+		AddressLookupCountries: []string{},
+	}
+	if inst.KVK.Enabled {
+		out.CompanySearchCountries = []string{lookupCountry}
+	}
+	if inst.AddressLookupEnabled {
+		out.AddressLookupCountries = []string{lookupCountry}
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// CompanySearch implements ServerInterface.
+func (s *server) CompanySearch(w http.ResponseWriter, r *http.Request, params CompanySearchParams) {
+	if params.Country != lookupCountry {
+		s.fail(w, r, administration.ErrLookupUnavailable)
+		return
+	}
+	found, err := s.deps.Companies.SearchCompanies(r.Context(), params.Query)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	out := make([]CompanyMatch, len(found))
+	for i, c := range found {
+		out[i] = CompanyMatch{Name: c.Name, ChamberOfCommerce: c.ChamberOfCommerce, Address1: c.Address1, Zipcode: c.Zipcode, City: c.City}
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// AddressLookup implements ServerInterface.
+func (s *server) AddressLookup(w http.ResponseWriter, r *http.Request, params AddressLookupParams) {
+	found, err := s.deps.Addresses.LookupAddress(r.Context(), params.Zipcode, params.HouseNumber)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, AddressMatch{Address1: found.Address1, Zipcode: found.Zipcode, City: found.City})
 }
 
 // FavoriteAdministration implements ServerInterface.
@@ -159,7 +239,7 @@ func (s *server) AuthProviders(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, AuthProviders{RegistrationOpen: inst.RegistrationOpen, Google: inst.Google.Enabled, Lm2: inst.LM2.Enabled})
+	writeJSON(w, http.StatusOK, AuthProviders{RegistrationOpen: inst.RegistrationOpen, Google: inst.Google.Enabled, Lm2: inst.LM2.Enabled, PasswordReset: inst.SMTP.Enabled})
 }
 
 // Register implements ServerInterface.
@@ -190,6 +270,47 @@ func (s *server) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	s.setSession(w, res.SessionToken, sessionMaxAge)
 	writeJSON(w, http.StatusOK, toCurrentUser(res.User))
+}
+
+// RequestPasswordReset implements ServerInterface. The work happens after the
+// response, so an address with an account takes as long as one without.
+func (s *server) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+	inst, err := s.deps.Settings.Instance(r.Context())
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	if !inst.SMTP.Enabled {
+		writeError(w, http.StatusNotFound, "Not found")
+		return
+	}
+	body, ok := decodeBody[PasswordResetRequest](w, r)
+	if !ok {
+		return
+	}
+	if s.deps.ResetLimiter.Allow(strings.ToLower(strings.TrimSpace(body.Email))).Allowed {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), resetSendTimeout)
+		go func() {
+			defer cancel()
+			if err := s.deps.Identity.RequestPasswordReset(ctx, body.Email, string(deref(body.Language))); err != nil {
+				s.deps.Logger.ErrorContext(ctx, "password reset failed", "error", err)
+			}
+		}()
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ConfirmPasswordReset implements ServerInterface.
+func (s *server) ConfirmPasswordReset(w http.ResponseWriter, r *http.Request) {
+	body, ok := decodeBody[PasswordResetConfirmation](w, r)
+	if !ok {
+		return
+	}
+	if err := s.deps.Identity.ResetPassword(r.Context(), body.Token, body.Password); err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // Logout implements ServerInterface.
@@ -393,6 +514,16 @@ func toInstanceSettings(inst settings.Instance) InstanceSettings {
 		Lm2Enabled:            inst.LM2.Enabled,
 		Lm2Url:                inst.LM2.URL,
 		Lm2App:                inst.LM2.App,
+		KvkEnabled:            inst.KVK.Enabled,
+		KvkApiKeySet:          inst.KVK.APIKey != "",
+		AddressLookupEnabled:  inst.AddressLookupEnabled,
+		SmtpEnabled:           inst.SMTP.Enabled,
+		SmtpHost:              inst.SMTP.Host,
+		SmtpPort:              inst.SMTP.Port,
+		SmtpUsername:          inst.SMTP.Username,
+		SmtpPasswordSet:       inst.SMTP.Password != "",
+		SmtpFrom:              inst.SMTP.From,
+		SmtpSecurity:          inst.SMTP.Security,
 	}
 }
 
@@ -417,6 +548,19 @@ func (s *server) InstanceSettings(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toInstanceSettings(inst))
 }
 
+// SendTestEmail implements ServerInterface. The mail server's reason is shown
+// because only instance administrators can reach this and need it to fix setup.
+func (s *server) SendTestEmail(w http.ResponseWriter, r *http.Request) {
+	if !requireInstanceAdmin(w, r) {
+		return
+	}
+	if err := s.deps.Mail.SendTest(r.Context(), user(r).Email); err != nil {
+		writeError(w, http.StatusBadGateway, err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // UpdateInstanceSettings implements ServerInterface.
 func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) {
 	if !requireInstanceAdmin(w, r) {
@@ -434,6 +578,18 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 		LM2Enabled:         body.Lm2Enabled,
 		LM2URL:             body.Lm2Url,
 		LM2App:             body.Lm2App,
+
+		KVKEnabled:           body.KvkEnabled,
+		KVKAPIKey:            body.KvkApiKey,
+		AddressLookupEnabled: body.AddressLookupEnabled,
+
+		SMTPEnabled:  body.SmtpEnabled,
+		SMTPHost:     body.SmtpHost,
+		SMTPPort:     body.SmtpPort,
+		SMTPUsername: body.SmtpUsername,
+		SMTPPassword: body.SmtpPassword,
+		SMTPFrom:     body.SmtpFrom,
+		SMTPSecurity: (*string)(body.SmtpSecurity),
 	})
 	if err != nil {
 		s.fail(w, r, err)
