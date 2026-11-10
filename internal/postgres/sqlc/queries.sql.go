@@ -66,6 +66,32 @@ func (q *Queries) AdministrationForUser(ctx context.Context, arg AdministrationF
 	return i, err
 }
 
+const bookkeepingSettings = `-- name: BookkeepingSettings :one
+SELECT vat_documents_period, icp_declaration_period, chart_scheme, bookkeeping_seeded, period_locked_until
+FROM administrations WHERE id = $1
+`
+
+type BookkeepingSettingsRow struct {
+	VatDocumentsPeriod   string
+	IcpDeclarationPeriod string
+	ChartScheme          string
+	BookkeepingSeeded    bool
+	PeriodLockedUntil    pgtype.Date
+}
+
+func (q *Queries) BookkeepingSettings(ctx context.Context, id int64) (BookkeepingSettingsRow, error) {
+	row := q.db.QueryRow(ctx, bookkeepingSettings, id)
+	var i BookkeepingSettingsRow
+	err := row.Scan(
+		&i.VatDocumentsPeriod,
+		&i.IcpDeclarationPeriod,
+		&i.ChartScheme,
+		&i.BookkeepingSeeded,
+		&i.PeriodLockedUntil,
+	)
+	return i, err
+}
+
 const clearDefaultDocumentStyle = `-- name: ClearDefaultDocumentStyle :exec
 UPDATE document_styles SET is_default = false WHERE administration_id = $1 AND id <> $2 AND is_default
 `
@@ -92,6 +118,15 @@ type ClearDefaultWorkflowParams struct {
 
 func (q *Queries) ClearDefaultWorkflow(ctx context.Context, arg ClearDefaultWorkflowParams) error {
 	_, err := q.db.Exec(ctx, clearDefaultWorkflow, arg.AdministrationID, arg.Type, arg.ID)
+	return err
+}
+
+const clearLedgerAccountTaxonomy = `-- name: ClearLedgerAccountTaxonomy :exec
+UPDATE ledger_accounts SET taxonomy_code = '' WHERE administration_id = $1
+`
+
+func (q *Queries) ClearLedgerAccountTaxonomy(ctx context.Context, administrationID int64) error {
+	_, err := q.db.Exec(ctx, clearLedgerAccountTaxonomy, administrationID)
 	return err
 }
 
@@ -224,6 +259,20 @@ DELETE FROM identity_custom_field_values WHERE identity_id = $1
 
 func (q *Queries) DeleteIdentityCustomFieldValues(ctx context.Context, identityID int64) error {
 	_, err := q.db.Exec(ctx, deleteIdentityCustomFieldValues, identityID)
+	return err
+}
+
+const deleteLedgerAccount = `-- name: DeleteLedgerAccount :exec
+DELETE FROM ledger_accounts WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteLedgerAccountParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteLedgerAccount(ctx context.Context, arg DeleteLedgerAccountParams) error {
+	_, err := q.db.Exec(ctx, deleteLedgerAccount, arg.AdministrationID, arg.ID)
 	return err
 }
 
@@ -591,6 +640,52 @@ func (q *Queries) InsertIdentityCustomFieldValue(ctx context.Context, arg Insert
 	return err
 }
 
+const insertLedgerAccount = `-- name: InsertLedgerAccount :exec
+INSERT INTO ledger_accounts (id, administration_id, name, account_type, account_id, parent_id, active, allowed_document_types,
+                             taxonomy_code, description, system_role, seed_key, template_key, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8::text[],
+        $9, $10, $11, $12, $13, $14, $15)
+`
+
+type InsertLedgerAccountParams struct {
+	ID                   int64
+	AdministrationID     int64
+	Name                 string
+	AccountType          string
+	AccountID            string
+	ParentID             pgtype.Int8
+	Active               bool
+	AllowedDocumentTypes []string
+	TaxonomyCode         string
+	Description          string
+	SystemRole           string
+	SeedKey              string
+	TemplateKey          string
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+}
+
+func (q *Queries) InsertLedgerAccount(ctx context.Context, arg InsertLedgerAccountParams) error {
+	_, err := q.db.Exec(ctx, insertLedgerAccount,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Name,
+		arg.AccountType,
+		arg.AccountID,
+		arg.ParentID,
+		arg.Active,
+		arg.AllowedDocumentTypes,
+		arg.TaxonomyCode,
+		arg.Description,
+		arg.SystemRole,
+		arg.SeedKey,
+		arg.TemplateKey,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const insertMember = `-- name: InsertMember :exec
 INSERT INTO administration_members (administration_id, user_id, access) VALUES ($1, $2, $3)
 `
@@ -648,6 +743,44 @@ type InsertSessionParams struct {
 
 func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) error {
 	_, err := q.db.Exec(ctx, insertSession, arg.TokenHash, arg.UserID, arg.ExpiresAt)
+	return err
+}
+
+const insertTaxRate = `-- name: InsertTaxRate :exec
+INSERT INTO tax_rates (id, administration_id, name, percentage, tax_rate_type, show_tax, active, country, report_boxes, position, created_at, updated_at)
+VALUES ($1, $2, $3, ($4::text)::numeric, $5, $6, $7, $8, $9::text[], $10, $11, $12)
+`
+
+type InsertTaxRateParams struct {
+	ID               int64
+	AdministrationID int64
+	Name             string
+	Percentage       string
+	TaxRateType      string
+	ShowTax          bool
+	Active           bool
+	Country          string
+	ReportBoxes      []string
+	Position         int32
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertTaxRate(ctx context.Context, arg InsertTaxRateParams) error {
+	_, err := q.db.Exec(ctx, insertTaxRate,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Name,
+		arg.Percentage,
+		arg.TaxRateType,
+		arg.ShowTax,
+		arg.Active,
+		arg.Country,
+		arg.ReportBoxes,
+		arg.Position,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
 	return err
 }
 
@@ -821,6 +954,38 @@ func (q *Queries) InvoiceSettings(ctx context.Context, id int64) (InvoiceSetting
 		&i.OrderBccEmailAddress,
 		&i.DefaultEmailUbl,
 		&i.PaymentsWithoutProof,
+	)
+	return i, err
+}
+
+const ledgerAccountByID = `-- name: LedgerAccountByID :one
+SELECT id, administration_id, name, account_type, account_id, parent_id, active, allowed_document_types, taxonomy_code, description, system_role, seed_key, template_key, created_at, updated_at FROM ledger_accounts WHERE administration_id = $1 AND id = $2
+`
+
+type LedgerAccountByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) LedgerAccountByID(ctx context.Context, arg LedgerAccountByIDParams) (LedgerAccount, error) {
+	row := q.db.QueryRow(ctx, ledgerAccountByID, arg.AdministrationID, arg.ID)
+	var i LedgerAccount
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Name,
+		&i.AccountType,
+		&i.AccountID,
+		&i.ParentID,
+		&i.Active,
+		&i.AllowedDocumentTypes,
+		&i.TaxonomyCode,
+		&i.Description,
+		&i.SystemRole,
+		&i.SeedKey,
+		&i.TemplateKey,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -1066,6 +1231,99 @@ func (q *Queries) ListIdentityCustomFieldValues(ctx context.Context, administrat
 	return items, nil
 }
 
+const listLedgerAccounts = `-- name: ListLedgerAccounts :many
+SELECT id, administration_id, name, account_type, account_id, parent_id, active, allowed_document_types, taxonomy_code, description, system_role, seed_key, template_key, created_at, updated_at FROM ledger_accounts WHERE administration_id = $1 ORDER BY account_type, account_id, id
+`
+
+func (q *Queries) ListLedgerAccounts(ctx context.Context, administrationID int64) ([]LedgerAccount, error) {
+	rows, err := q.db.Query(ctx, listLedgerAccounts, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LedgerAccount
+	for rows.Next() {
+		var i LedgerAccount
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.Name,
+			&i.AccountType,
+			&i.AccountID,
+			&i.ParentID,
+			&i.Active,
+			&i.AllowedDocumentTypes,
+			&i.TaxonomyCode,
+			&i.Description,
+			&i.SystemRole,
+			&i.SeedKey,
+			&i.TemplateKey,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTaxRates = `-- name: ListTaxRates :many
+SELECT id, administration_id, name, percentage::text AS percentage, tax_rate_type, show_tax, active, country, report_boxes, position, created_at, updated_at
+FROM tax_rates WHERE administration_id = $1 ORDER BY tax_rate_type, position, id
+`
+
+type ListTaxRatesRow struct {
+	ID               int64
+	AdministrationID int64
+	Name             string
+	Percentage       string
+	TaxRateType      string
+	ShowTax          bool
+	Active           bool
+	Country          string
+	ReportBoxes      []string
+	Position         int32
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) ListTaxRates(ctx context.Context, administrationID int64) ([]ListTaxRatesRow, error) {
+	rows, err := q.db.Query(ctx, listTaxRates, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTaxRatesRow
+	for rows.Next() {
+		var i ListTaxRatesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.Name,
+			&i.Percentage,
+			&i.TaxRateType,
+			&i.ShowTax,
+			&i.Active,
+			&i.Country,
+			&i.ReportBoxes,
+			&i.Position,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTokens = `-- name: ListTokens :many
 SELECT id, user_id, name, created_at FROM api_tokens WHERE user_id = $1 ORDER BY created_at DESC, id DESC
 `
@@ -1213,6 +1471,23 @@ func (q *Queries) LockFirstUser(ctx context.Context) error {
 	return err
 }
 
+const markBookkeepingSeeded = `-- name: MarkBookkeepingSeeded :execrows
+UPDATE administrations SET bookkeeping_seeded = true, chart_scheme = $2 WHERE id = $1 AND NOT bookkeeping_seeded
+`
+
+type MarkBookkeepingSeededParams struct {
+	ID          int64
+	ChartScheme string
+}
+
+func (q *Queries) MarkBookkeepingSeeded(ctx context.Context, arg MarkBookkeepingSeededParams) (int64, error) {
+	result, err := q.db.Exec(ctx, markBookkeepingSeeded, arg.ID, arg.ChartScheme)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const moveDocumentStylesToDefaultIdentity = `-- name: MoveDocumentStylesToDefaultIdentity :exec
 UPDATE document_styles d SET identity_id = i.id
 FROM identities i
@@ -1257,6 +1532,51 @@ func (q *Queries) SetFavorite(ctx context.Context, arg SetFavoriteParams) (int64
 	return result.RowsAffected(), nil
 }
 
+const taxRateByID = `-- name: TaxRateByID :one
+SELECT id, administration_id, name, percentage::text AS percentage, tax_rate_type, show_tax, active, country, report_boxes, position, created_at, updated_at
+FROM tax_rates WHERE administration_id = $1 AND id = $2
+`
+
+type TaxRateByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+type TaxRateByIDRow struct {
+	ID               int64
+	AdministrationID int64
+	Name             string
+	Percentage       string
+	TaxRateType      string
+	ShowTax          bool
+	Active           bool
+	Country          string
+	ReportBoxes      []string
+	Position         int32
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) TaxRateByID(ctx context.Context, arg TaxRateByIDParams) (TaxRateByIDRow, error) {
+	row := q.db.QueryRow(ctx, taxRateByID, arg.AdministrationID, arg.ID)
+	var i TaxRateByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Name,
+		&i.Percentage,
+		&i.TaxRateType,
+		&i.ShowTax,
+		&i.Active,
+		&i.Country,
+		&i.ReportBoxes,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateAdministration = `-- name: UpdateAdministration :exec
 UPDATE administrations
 SET name = $2, language = $3, currency = $4, time_zone = $5, small_business_scheme = $6,
@@ -1287,6 +1607,31 @@ func (q *Queries) UpdateAdministration(ctx context.Context, arg UpdateAdministra
 		arg.CompanyActivitiesDescription,
 		arg.CompanyWebsiteUrl,
 		arg.CompanyWebsiteAbsent,
+	)
+	return err
+}
+
+const updateBookkeepingSettings = `-- name: UpdateBookkeepingSettings :exec
+UPDATE administrations
+SET vat_documents_period = $2, icp_declaration_period = $3, chart_scheme = $4, period_locked_until = $5
+WHERE id = $1
+`
+
+type UpdateBookkeepingSettingsParams struct {
+	ID                   int64
+	VatDocumentsPeriod   string
+	IcpDeclarationPeriod string
+	ChartScheme          string
+	PeriodLockedUntil    pgtype.Date
+}
+
+func (q *Queries) UpdateBookkeepingSettings(ctx context.Context, arg UpdateBookkeepingSettingsParams) error {
+	_, err := q.db.Exec(ctx, updateBookkeepingSettings,
+		arg.ID,
+		arg.VatDocumentsPeriod,
+		arg.IcpDeclarationPeriod,
+		arg.ChartScheme,
+		arg.PeriodLockedUntil,
 	)
 	return err
 }
@@ -1464,6 +1809,45 @@ func (q *Queries) UpdateInvoiceSettings(ctx context.Context, arg UpdateInvoiceSe
 	return err
 }
 
+const updateLedgerAccount = `-- name: UpdateLedgerAccount :exec
+UPDATE ledger_accounts
+SET name = $1, account_type = $2, account_id = $3, parent_id = $4, active = $5,
+    allowed_document_types = $6::text[], taxonomy_code = $7, description = $8,
+    updated_at = $9
+WHERE administration_id = $10 AND id = $11
+`
+
+type UpdateLedgerAccountParams struct {
+	Name                 string
+	AccountType          string
+	AccountID            string
+	ParentID             pgtype.Int8
+	Active               bool
+	AllowedDocumentTypes []string
+	TaxonomyCode         string
+	Description          string
+	UpdatedAt            pgtype.Timestamptz
+	AdministrationID     int64
+	ID                   int64
+}
+
+func (q *Queries) UpdateLedgerAccount(ctx context.Context, arg UpdateLedgerAccountParams) error {
+	_, err := q.db.Exec(ctx, updateLedgerAccount,
+		arg.Name,
+		arg.AccountType,
+		arg.AccountID,
+		arg.ParentID,
+		arg.Active,
+		arg.AllowedDocumentTypes,
+		arg.TaxonomyCode,
+		arg.Description,
+		arg.UpdatedAt,
+		arg.AdministrationID,
+		arg.ID,
+	)
+	return err
+}
+
 const updatePassword = `-- name: UpdatePassword :exec
 UPDATE users SET password_hash = $2 WHERE id = $1
 `
@@ -1475,6 +1859,44 @@ type UpdatePasswordParams struct {
 
 func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
 	_, err := q.db.Exec(ctx, updatePassword, arg.ID, arg.PasswordHash)
+	return err
+}
+
+const updateTaxRate = `-- name: UpdateTaxRate :exec
+UPDATE tax_rates
+SET name = $1, percentage = ($2::text)::numeric, tax_rate_type = $3, show_tax = $4, active = $5,
+    country = $6, report_boxes = $7::text[], position = $8, updated_at = $9
+WHERE administration_id = $10 AND id = $11
+`
+
+type UpdateTaxRateParams struct {
+	Name             string
+	Percentage       string
+	TaxRateType      string
+	ShowTax          bool
+	Active           bool
+	Country          string
+	ReportBoxes      []string
+	Position         int32
+	UpdatedAt        pgtype.Timestamptz
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) UpdateTaxRate(ctx context.Context, arg UpdateTaxRateParams) error {
+	_, err := q.db.Exec(ctx, updateTaxRate,
+		arg.Name,
+		arg.Percentage,
+		arg.TaxRateType,
+		arg.ShowTax,
+		arg.Active,
+		arg.Country,
+		arg.ReportBoxes,
+		arg.Position,
+		arg.UpdatedAt,
+		arg.AdministrationID,
+		arg.ID,
+	)
 	return err
 }
 

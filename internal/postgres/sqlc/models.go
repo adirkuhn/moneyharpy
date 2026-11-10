@@ -33,6 +33,10 @@ type Administration struct {
 	OrderBccEmailAddress         string
 	DefaultEmailUbl              bool
 	PaymentsWithoutProof         bool
+	VatDocumentsPeriod           string
+	IcpDeclarationPeriod         string
+	ChartScheme                  string
+	BookkeepingSeeded            bool
 }
 
 type AdministrationMember struct {
@@ -113,6 +117,24 @@ type IdentityCustomFieldValue struct {
 	Value         string
 }
 
+type LedgerAccount struct {
+	ID                   int64
+	AdministrationID     int64
+	Name                 string
+	AccountType          string
+	AccountID            string
+	ParentID             pgtype.Int8
+	Active               bool
+	AllowedDocumentTypes []string
+	TaxonomyCode         string
+	Description          string
+	SystemRole           string
+	SeedKey              string
+	TemplateKey          string
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+}
+
 type PasswordResetToken struct {
 	TokenHash string
 	UserID    int64
@@ -135,6 +157,21 @@ type Setting struct {
 	Key       string
 	Value     []byte
 	UpdatedAt pgtype.Timestamptz
+}
+
+type TaxRate struct {
+	ID               int64
+	AdministrationID int64
+	Name             string
+	Percentage       pgtype.Numeric
+	TaxRateType      string
+	ShowTax          bool
+	Active           bool
+	Country          string
+	ReportBoxes      []string
+	Position         int32
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
 }
 
 type User struct {

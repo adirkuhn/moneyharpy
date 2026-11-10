@@ -22,6 +22,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/api"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
@@ -213,6 +214,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now),
+		Bookkeeping:     bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now),
 		Storage:         files,
 		Identity:        identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), mailer, time.Now),
 		Settings:        settle,

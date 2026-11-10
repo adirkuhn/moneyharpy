@@ -248,3 +248,58 @@ SELECT EXISTS (SELECT 1 FROM document_styles WHERE administration_id = $1 AND (l
 UPDATE document_styles d SET identity_id = i.id
 FROM identities i
 WHERE d.identity_id = $1 AND i.administration_id = d.administration_id AND i.is_default;
+
+-- name: BookkeepingSettings :one
+SELECT vat_documents_period, icp_declaration_period, chart_scheme, bookkeeping_seeded, period_locked_until
+FROM administrations WHERE id = $1;
+
+-- name: UpdateBookkeepingSettings :exec
+UPDATE administrations
+SET vat_documents_period = $2, icp_declaration_period = $3, chart_scheme = $4, period_locked_until = $5
+WHERE id = $1;
+
+-- name: MarkBookkeepingSeeded :execrows
+UPDATE administrations SET bookkeeping_seeded = true, chart_scheme = $2 WHERE id = $1 AND NOT bookkeeping_seeded;
+
+-- name: ClearLedgerAccountTaxonomy :exec
+UPDATE ledger_accounts SET taxonomy_code = '' WHERE administration_id = $1;
+
+-- name: InsertTaxRate :exec
+INSERT INTO tax_rates (id, administration_id, name, percentage, tax_rate_type, show_tax, active, country, report_boxes, position, created_at, updated_at)
+VALUES (@id, @administration_id, @name, (@percentage::text)::numeric, @tax_rate_type, @show_tax, @active, @country, @report_boxes::text[], @position, @created_at, @updated_at);
+
+-- name: ListTaxRates :many
+SELECT id, administration_id, name, percentage::text AS percentage, tax_rate_type, show_tax, active, country, report_boxes, position, created_at, updated_at
+FROM tax_rates WHERE administration_id = $1 ORDER BY tax_rate_type, position, id;
+
+-- name: TaxRateByID :one
+SELECT id, administration_id, name, percentage::text AS percentage, tax_rate_type, show_tax, active, country, report_boxes, position, created_at, updated_at
+FROM tax_rates WHERE administration_id = $1 AND id = $2;
+
+-- name: UpdateTaxRate :exec
+UPDATE tax_rates
+SET name = @name, percentage = (@percentage::text)::numeric, tax_rate_type = @tax_rate_type, show_tax = @show_tax, active = @active,
+    country = @country, report_boxes = @report_boxes::text[], position = @position, updated_at = @updated_at
+WHERE administration_id = @administration_id AND id = @id;
+
+-- name: InsertLedgerAccount :exec
+INSERT INTO ledger_accounts (id, administration_id, name, account_type, account_id, parent_id, active, allowed_document_types,
+                             taxonomy_code, description, system_role, seed_key, template_key, created_at, updated_at)
+VALUES (@id, @administration_id, @name, @account_type, @account_id, @parent_id, @active, @allowed_document_types::text[],
+        @taxonomy_code, @description, @system_role, @seed_key, @template_key, @created_at, @updated_at);
+
+-- name: ListLedgerAccounts :many
+SELECT * FROM ledger_accounts WHERE administration_id = $1 ORDER BY account_type, account_id, id;
+
+-- name: LedgerAccountByID :one
+SELECT * FROM ledger_accounts WHERE administration_id = $1 AND id = $2;
+
+-- name: UpdateLedgerAccount :exec
+UPDATE ledger_accounts
+SET name = @name, account_type = @account_type, account_id = @account_id, parent_id = @parent_id, active = @active,
+    allowed_document_types = @allowed_document_types::text[], taxonomy_code = @taxonomy_code, description = @description,
+    updated_at = @updated_at
+WHERE administration_id = @administration_id AND id = @id;
+
+-- name: DeleteLedgerAccount :exec
+DELETE FROM ledger_accounts WHERE administration_id = $1 AND id = $2;

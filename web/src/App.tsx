@@ -20,6 +20,11 @@ import { CustomFieldFormPage } from './settings/CustomFieldFormPage'
 import { IdentityFormPage } from './settings/IdentityFormPage'
 import { ManagementSettingsPage } from './settings/ManagementSettingsPage'
 import { PlaceholderSettingsPage } from './settings/PlaceholderSettingsPage'
+import { BookkeepingSettingsPage } from './bookkeeping/BookkeepingSettingsPage'
+import { LedgerAccountFormPage } from './bookkeeping/LedgerAccountFormPage'
+import { SchemePage } from './bookkeeping/SchemePage'
+import { TaxRateFormPage } from './bookkeeping/TaxRateFormPage'
+import { TemplatesPage } from './bookkeeping/TemplatesPage'
 import { SettingsLayout } from './settings/SettingsLayout'
 import { UserPage } from './user/UserPage'
 
@@ -47,6 +52,7 @@ export function AppRoutes() {
           <Route path="company" element={<CompanySettingsPage />} />
           <Route path="administration" element={<ManagementSettingsPage />} />
           <Route path="invoices_and_estimates" element={<InvoicesSettingsPage />} />
+          <Route path="bookkeeping" element={<BookkeepingSettingsPage />} />
           <Route path=":section" element={<PlaceholderSettingsPage />} />
         </Route>
         <Route path="/:administrationId/custom_fields" element={<SettingsLayout />}>
@@ -61,6 +67,18 @@ export function AppRoutes() {
           <Route path="new" element={<DocumentStyleFormPage />} />
           <Route path=":styleId" element={<Navigate to="edit" replace />} />
           <Route path=":styleId/edit" element={<DocumentStyleFormPage />} />
+        </Route>
+        <Route path="/:administrationId/tax_rates" element={<SettingsLayout />}>
+          <Route path="new" element={<TaxRateFormPage />} />
+          <Route path=":taxRateId" element={<TaxRateFormPage />} />
+        </Route>
+        <Route path="/:administrationId/ledger_accounts" element={<SettingsLayout />}>
+          <Route path="new" element={<LedgerAccountFormPage />} />
+          <Route path="scheme" element={<SchemePage />} />
+          <Route path=":ledgerAccountId" element={<LedgerAccountFormPage />} />
+        </Route>
+        <Route path="/:administrationId/ledger_account_templates" element={<SettingsLayout />}>
+          <Route index element={<TemplatesPage />} />
         </Route>
         <Route path="/:administrationId/identities" element={<SettingsLayout />}>
           <Route path="new" element={<IdentityFormPage mode="new" />} />

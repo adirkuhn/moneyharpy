@@ -336,3 +336,47 @@ test('invoices and estimates are set up in settings', async ({ page }) => {
   const workflows = await (await page.request.get(`/api/v2/${id}/workflows.json`)).json()
   expect(workflows.map((w: { name: string }) => w.name)).toContain('Export')
 })
+
+test('bookkeeping starts from the Dutch standard and is adjusted in settings', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Books Co')
+  const uri = new URL(page.url()).pathname
+  await page.goto(`${uri}/settings/company`)
+  await page.getByRole('navigation', { name: 'Settings' }).getByRole('link', { name: 'Bookkeeping' }).click()
+  await expect(page.getByRole('heading', { name: 'Bookkeeping', level: 1 })).toBeVisible()
+
+  const vat = page.getByRole('group', { name: 'VAT return' })
+  await vat.getByText('Month').click()
+  await page.getByRole('button', { name: 'Change' }).click()
+  await expect(vat.getByRole('radio', { name: 'Month' })).toBeChecked()
+
+  const sales = page.getByRole('table', { name: 'Sales' })
+  await expect(sales.getByText('VAT 21%').first()).toBeVisible()
+  await page.getByRole('region', { name: 'VAT rates' }).getByRole('link', { name: 'Add VAT rate' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Reduced 9.5%')
+  await page.getByLabel('Percentage').fill('9,5')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByRole('table', { name: 'Sales' }).getByRole('link', { name: 'Reduced 9.5%' })).toBeVisible()
+
+  const categories = page.getByRole('region', { name: 'Categories' })
+  await categories.getByRole('button', { name: 'Add' }).click()
+  await page.getByRole('link', { name: 'Add category' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Hosting')
+  await page.getByLabel('Account number').fill('4460')
+  await page.getByLabel('Part of').selectOption({ label: '4400 Office costs' })
+  await page.getByLabel('Chart scheme code').fill('WBedKanSof')
+  await page.getByRole('button', { name: 'Save' }).click()
+  const pl = page.getByRole('table', { name: 'Profit and loss' })
+  await expect(pl.getByRole('link', { name: 'Hosting' })).toBeVisible()
+
+  await categories.getByRole('button', { name: 'Add' }).click()
+  await page.getByRole('link', { name: 'Add from template' }).click()
+  await page.getByRole('button', { name: 'Add Company car' }).click()
+  await expect(page.getByRole('region', { name: 'Company car' }).getByText('Added')).toBeVisible()
+
+  const id = uri.slice(1)
+  const accounts = await (await page.request.get(`/api/v2/${id}/ledger_accounts.json`)).json()
+  const hosting = accounts.find((a: { name: string }) => a.name === 'Hosting')
+  expect(hosting.taxonomy_item.code).toBe('WBedKanSof')
+  expect(accounts.map((a: { name: string }) => a.name)).toContain('Company car fuel')
+})
