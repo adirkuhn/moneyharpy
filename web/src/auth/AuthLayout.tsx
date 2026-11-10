@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { LanguageSelect } from '../layout/LanguageSelect'
 import { Mark } from '../layout/icons'
+import { Logo } from '../layout/Logo'
 
 export function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -8,7 +9,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
       <Mark className="wizard__wing wizard__wing--left" />
       <Mark className="wizard__wing wizard__wing--right" />
       <LanguageSelect className="wizard__language auth__language" />
-      <p className="auth__logo"><Mark className="auth__mark" />MoneyHarpy</p>
+      <p className="auth__logo"><Logo /></p>
       <div className="auth__panel">
         <h1>{title}</h1>
         {children}

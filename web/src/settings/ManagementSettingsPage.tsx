@@ -9,6 +9,7 @@ import { Page } from '../layout/Page'
 import { useOnboardingOptions } from '../onboarding/queries'
 import { SearchableSelect } from '../onboarding/SearchableSelect'
 import { useUpdateAdministration } from './queries'
+import { Loading } from '../layout/Loading'
 
 function timeZones(current: string): string[] {
   const zones = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : []
@@ -37,7 +38,7 @@ export function ManagementSettingsPage() {
   const zoneOptions = useMemo(() => timeZones(form.time_zone).map((value) => ({ value, label: value })), [form.time_zone])
 
   if (!administration.data) {
-    return null
+    return <Loading />
   }
   const submit = (e: FormEvent) => {
     e.preventDefault()

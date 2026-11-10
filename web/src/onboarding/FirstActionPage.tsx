@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { Wizard } from './Wizard'
+import { Loading } from '../layout/Loading'
 
 const actions = ['invoice', 'purchase', 'bank', 'open'] as const
 type Action = (typeof actions)[number]
@@ -15,7 +16,7 @@ export function FirstActionPage() {
   const [choice, setChoice] = useState<Action | null>(null)
 
   if (!administration.data) {
-    return null
+    return <Loading />
   }
   // Every choice opens the administration until its feature exists.
   const submit = (e: FormEvent) => {
