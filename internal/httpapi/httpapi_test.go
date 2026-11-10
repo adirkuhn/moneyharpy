@@ -98,6 +98,41 @@ func (l *fakeLM2) Identify(_ context.Context, token string) (identity.External, 
 	return l.external, l.err
 }
 
+type fakeLookups struct {
+	companies    []administration.CompanyMatch
+	companiesErr error
+	gotQuery     string
+	address      administration.AddressMatch
+	addressErr   error
+}
+
+func (f *fakeLookups) SearchCompanies(_ context.Context, query string) ([]administration.CompanyMatch, error) {
+	f.gotQuery = query
+	return f.companies, f.companiesErr
+}
+
+func (f *fakeLookups) LookupAddress(_ context.Context, _, _ string) (administration.AddressMatch, error) {
+	return f.address, f.addressErr
+}
+
+type sentMail struct{ to, token, language string }
+
+type fakeMailer struct {
+	resets  chan sentMail
+	testErr error
+	tested  []string
+}
+
+func (m *fakeMailer) SendPasswordReset(_ context.Context, to, token, language string) error {
+	m.resets <- sentMail{to, token, language}
+	return nil
+}
+
+func (m *fakeMailer) SendTest(_ context.Context, to string) error {
+	m.tested = append(m.tested, to)
+	return m.testErr
+}
+
 type options struct {
 	pool       *pgxpool.Pool
 	apiLimiter *ratelimit.Limiter
@@ -108,6 +143,8 @@ type harness struct {
 	server *httptest.Server
 	google *fakeGoogle
 	lm2    *fakeLM2
+	lookup *fakeLookups
+	mailer *fakeMailer
 	settle *settings.Service
 }
 
@@ -126,18 +163,26 @@ func newHarness(t *testing.T, opts options) *harness {
 
 	lm2 := &fakeLM2{}
 
-	h := &harness{t: t, google: google, lm2: lm2, settle: settle}
+	lookup := &fakeLookups{}
+	mailer := &fakeMailer{resets: make(chan sentMail, 8)}
+
+	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, settle: settle}
 	h.server = httptest.NewUnstartedServer(nil)
 	h.server.Start()
 	t.Cleanup(h.server.Close)
 
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now),
-		Identity:        identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), time.Now),
+		Identity:        identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), mailer, time.Now),
 		Settings:        settle,
 		Resources:       postgres.NewResourceLocator(pool),
 		Google:          google,
 		LM2:             lm2,
+		Companies:       lookup,
+		Addresses:       lookup,
+		LookupLimiter:   ratelimit.New(100000, time.Minute),
+		ResetLimiter:    ratelimit.New(2, time.Hour),
+		Mail:            mailer,
 		BaseURL:         h.server.URL,
 		Logger:          slog.New(slog.DiscardHandler),
 		Web:             fstest.MapFS{"index.html": {Data: []byte("<html>spa</html>")}, "assets/app.js": {Data: []byte("js")}},
@@ -696,6 +741,262 @@ func TestLM2Login(t *testing.T) {
 		state := start(t, c)
 		location(t, c.do(http.MethodGet, "/api/auth/lm2/callback/"+state+"?token=abc", nil), "/login?error=email_taken")
 	})
+}
+
+func TestCreateAdministrationStoresCompanyDetails(t *testing.T) {
+	c := newHarness(t, options{}).client()
+	c.register()
+	r := c.do(http.MethodPost, "/api/v2/administrations", map[string]any{"administration": map[string]string{
+		"name": "Harpy", "address1": "Dam 1", "address2": "Floor 2", "zipcode": "1012JS", "city": "Amsterdam", "chamber_of_commerce": "12345678",
+	}})
+	wantStatus(t, r, http.StatusCreated)
+	created := decode[httpapi.Administration](t, r)
+
+	got := decode[map[string]any](t, c.do(http.MethodGet, "/api/v2/administrations/"+created.Id, nil))
+	for field, want := range map[string]string{"address1": "Dam 1", "address2": "Floor 2", "zipcode": "1012JS", "city": "Amsterdam", "chamber_of_commerce": "12345678"} {
+		if got[field] != want {
+			t.Errorf("GET administration %s = %v, want %q", field, got[field], want)
+		}
+	}
+
+	row := decode[[]map[string]any](t, c.do(http.MethodGet, "/api/v2/administrations", nil))[0]
+	if _, leaked := row["address1"]; leaked {
+		t.Error("administrations list includes address1, want Moneybird's fields only")
+	}
+}
+
+func TestOnboardingLookups(t *testing.T) {
+	ctx := context.Background()
+	pool, cleanup, err := postgrestest.Start(ctx)
+	if err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	defer cleanup()
+	h := newHarness(t, options{pool: pool})
+	c := h.client()
+	c.register()
+
+	const search = "/api/onboarding/company_search?country=NL&query=harpy"
+	const lookup = "/api/onboarding/address_lookup?zipcode=1012RJ&house_number=147"
+
+	t.Run("options without integrations", func(t *testing.T) {
+		got := decode[httpapi.OnboardingOptions](t, c.do(http.MethodGet, "/api/onboarding/options", nil))
+		if len(got.CompanySearchCountries) != 0 || len(got.AddressLookupCountries) != 0 {
+			t.Errorf("options = %+v, want no lookups", got)
+		}
+		if len(got.Countries) == 0 || len(got.Currencies) == 0 || len(got.PopularCurrencies) == 0 {
+			t.Errorf("options = %+v, want reference lists", got)
+		}
+	})
+
+	t.Run("lookups are unavailable until enabled", func(t *testing.T) {
+		h.lookup.companiesErr, h.lookup.addressErr = administration.ErrLookupUnavailable, administration.ErrLookupUnavailable
+		defer func() { h.lookup.companiesErr, h.lookup.addressErr = nil, nil }()
+		wantStatus(t, c.do(http.MethodGet, search, nil), http.StatusNotFound)
+		wantStatus(t, c.do(http.MethodGet, lookup, nil), http.StatusNotFound)
+	})
+
+	on, key := true, "key"
+	if _, err := h.settle.Update(ctx, settings.Update{KVKEnabled: &on, KVKAPIKey: &key, AddressLookupEnabled: &on}); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+
+	t.Run("options with integrations", func(t *testing.T) {
+		got := decode[httpapi.OnboardingOptions](t, c.do(http.MethodGet, "/api/onboarding/options", nil))
+		want := []string{"NL"}
+		if diff := cmp.Diff(want, got.CompanySearchCountries); diff != "" {
+			t.Errorf("company_search_countries diff (-want +got):\n%s", diff)
+		}
+		if diff := cmp.Diff(want, got.AddressLookupCountries); diff != "" {
+			t.Errorf("address_lookup_countries diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("searches the register", func(t *testing.T) {
+		h.lookup.companies = []administration.CompanyMatch{{Name: "Harpy", ChamberOfCommerce: "123", City: "Lochem"}}
+		r := c.do(http.MethodGet, search, nil)
+		wantStatus(t, r, http.StatusOK)
+		want := []httpapi.CompanyMatch{{Name: "Harpy", ChamberOfCommerce: "123", City: "Lochem"}}
+		if diff := cmp.Diff(want, decode[[]httpapi.CompanyMatch](t, r)); diff != "" {
+			t.Errorf("search diff (-want +got):\n%s", diff)
+		}
+		if h.lookup.gotQuery != "harpy" {
+			t.Errorf("query = %q, want harpy", h.lookup.gotQuery)
+		}
+	})
+
+	t.Run("no matches is an empty list", func(t *testing.T) {
+		h.lookup.companies = nil
+		r := c.do(http.MethodGet, search, nil)
+		wantStatus(t, r, http.StatusOK)
+		if got := strings.TrimSpace(string(r.body)); got != "[]" {
+			t.Errorf("body = %q, want []", got)
+		}
+	})
+
+	t.Run("only searches registers it supports", func(t *testing.T) {
+		wantStatus(t, c.do(http.MethodGet, "/api/onboarding/company_search?country=BE&query=harpy", nil), http.StatusNotFound)
+	})
+
+	t.Run("finds an address", func(t *testing.T) {
+		h.lookup.address = administration.AddressMatch{Address1: "NZ Voorburgwal 147", Zipcode: "1012RJ", City: "Amsterdam"}
+		r := c.do(http.MethodGet, lookup, nil)
+		wantStatus(t, r, http.StatusOK)
+		want := httpapi.AddressMatch{Address1: "NZ Voorburgwal 147", Zipcode: "1012RJ", City: "Amsterdam"}
+		if diff := cmp.Diff(want, decode[httpapi.AddressMatch](t, r)); diff != "" {
+			t.Errorf("lookup diff (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("unknown address is not found", func(t *testing.T) {
+		h.lookup.addressErr = administration.ErrAddressUnknown
+		defer func() { h.lookup.addressErr = nil }()
+		wantStatus(t, c.do(http.MethodGet, lookup, nil), http.StatusNotFound)
+	})
+
+	t.Run("requires sign in", func(t *testing.T) {
+		wantStatus(t, h.client().do(http.MethodGet, search, nil), http.StatusUnauthorized)
+	})
+
+	t.Run("key is never returned", func(t *testing.T) {
+		r := c.do(http.MethodGet, "/api/instance/settings", nil)
+		wantStatus(t, r, http.StatusOK)
+		got := decode[httpapi.InstanceSettings](t, r)
+		if !got.KvkEnabled || !got.KvkApiKeySet || !got.AddressLookupEnabled {
+			t.Errorf("settings = %+v, want integrations on", got)
+		}
+		if strings.Contains(string(r.body), `"kvk_api_key":`) {
+			t.Error("settings response contains the key")
+		}
+	})
+}
+
+func TestPasswordReset(t *testing.T) {
+	ctx := context.Background()
+	pool, cleanup, err := postgrestest.Start(ctx)
+	if err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	defer cleanup()
+	h := newHarness(t, options{pool: pool})
+	const request, confirm = "/api/auth/password_reset/request", "/api/auth/password_reset/confirm"
+
+	browser := h.client()
+	email := uniqueEmail()
+	wantStatus(t, browser.do(http.MethodPost, "/api/auth/register", map[string]string{"email": email, "name": "Ann", "password": password}), http.StatusCreated)
+	ask := map[string]string{"email": email, "language": "nl"}
+
+	t.Run("unavailable until mail is configured", func(t *testing.T) {
+		wantStatus(t, h.client().do(http.MethodPost, request, ask), http.StatusNotFound)
+		if got := decode[httpapi.AuthProviders](t, h.client().do(http.MethodGet, "/api/auth/providers", nil)); got.PasswordReset {
+			t.Error("providers password_reset = true before mail is configured")
+		}
+	})
+
+	on, host, port, from, security := true, "mail.example.com", 587, "books@example.com", "starttls"
+	if _, err := h.settle.Update(ctx, settings.Update{SMTPEnabled: &on, SMTPHost: &host, SMTPPort: &port, SMTPFrom: &from, SMTPSecurity: &security}); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	if got := decode[httpapi.AuthProviders](t, h.client().do(http.MethodGet, "/api/auth/providers", nil)); !got.PasswordReset {
+		t.Error("providers password_reset = false after mail is configured")
+	}
+
+	receive := func(t *testing.T) sentMail {
+		t.Helper()
+		select {
+		case m := <-h.mailer.resets:
+			return m
+		case <-time.After(5 * time.Second):
+			t.Fatal("no reset mail was sent")
+			return sentMail{}
+		}
+	}
+
+	t.Run("unknown address looks the same and sends nothing", func(t *testing.T) {
+		wantStatus(t, h.client().do(http.MethodPost, request, map[string]string{"email": uniqueEmail()}), http.StatusNoContent)
+		select {
+		case m := <-h.mailer.resets:
+			t.Errorf("mail sent to unknown address: %+v", m)
+		case <-time.After(200 * time.Millisecond):
+		}
+	})
+
+	var token string
+	t.Run("mails a token", func(t *testing.T) {
+		wantStatus(t, h.client().do(http.MethodPost, request, ask), http.StatusNoContent)
+		m := receive(t)
+		if m.to != email || m.language != "nl" || m.token == "" {
+			t.Errorf("mail = %+v", m)
+		}
+		token = m.token
+	})
+
+	t.Run("rejects a bad token", func(t *testing.T) {
+		r := h.client().do(http.MethodPost, confirm, map[string]string{"token": "forged", "password": "a brand new password"})
+		wantStatus(t, r, http.StatusUnprocessableEntity)
+		if _, ok := decode[httpapi.ValidationError](t, r).Error["token"]; !ok {
+			t.Errorf("body = %s, want a token error", r.body)
+		}
+	})
+
+	t.Run("changes the password and ends sessions", func(t *testing.T) {
+		wantStatus(t, h.client().do(http.MethodPost, confirm, map[string]string{"token": token, "password": "a brand new password"}), http.StatusNoContent)
+		wantStatus(t, browser.do(http.MethodGet, "/api/auth/me", nil), http.StatusUnauthorized)
+		wantStatus(t, h.client().do(http.MethodPost, "/api/auth/login", map[string]string{"email": email, "password": password}), http.StatusUnauthorized)
+		wantStatus(t, h.client().do(http.MethodPost, "/api/auth/login", map[string]string{"email": email, "password": "a brand new password"}), http.StatusOK)
+	})
+
+	t.Run("stops flooding one inbox", func(t *testing.T) {
+		wantStatus(t, h.client().do(http.MethodPost, request, ask), http.StatusNoContent)
+		receive(t)
+		wantStatus(t, h.client().do(http.MethodPost, request, ask), http.StatusNoContent)
+		select {
+		case m := <-h.mailer.resets:
+			t.Errorf("mail sent past the limit: %+v", m)
+		case <-time.After(200 * time.Millisecond):
+		}
+	})
+}
+
+func TestMailSettingsAndTestEmail(t *testing.T) {
+	ctx := context.Background()
+	pool, cleanup, err := postgrestest.Start(ctx)
+	if err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	defer cleanup()
+	h := newHarness(t, options{pool: pool})
+	admin, member := h.client(), h.client()
+	me := admin.register()
+	member.register()
+
+	const secret = "smtp-password-value"
+	r := admin.do(http.MethodPatch, "/api/instance/settings", map[string]any{
+		"smtp_enabled": true, "smtp_host": "mail.example.com", "smtp_port": 587, "smtp_username": "u",
+		"smtp_password": secret, "smtp_from": "books@example.com", "smtp_security": "starttls",
+	})
+	wantStatus(t, r, http.StatusOK)
+	if strings.Contains(string(r.body), secret) {
+		t.Error("settings response contains the password")
+	}
+	got := decode[httpapi.InstanceSettings](t, r)
+	if !got.SmtpEnabled || got.SmtpHost != "mail.example.com" || got.SmtpPort != 587 || !got.SmtpPasswordSet || got.SmtpFrom != "books@example.com" || got.SmtpSecurity != "starttls" {
+		t.Errorf("settings = %+v", got)
+	}
+
+	const path = "/api/instance/settings/test_email"
+	wantStatus(t, member.do(http.MethodPost, path, nil), http.StatusForbidden)
+	wantStatus(t, admin.do(http.MethodPost, path, nil), http.StatusNoContent)
+	if len(h.mailer.tested) != 1 || h.mailer.tested[0] != me.Email {
+		t.Errorf("test mail went to %v, want the admin", h.mailer.tested)
+	}
+
+	h.mailer.testErr = errors.New("535 authentication failed")
+	r = admin.do(http.MethodPost, path, nil)
+	wantStatus(t, r, http.StatusBadGateway)
+	if !strings.Contains(string(r.body), "535 authentication failed") {
+		t.Errorf("body = %s, want the mail server's reason for the admin", r.body)
+	}
 }
 
 func TestServesContractAndWebApp(t *testing.T) {

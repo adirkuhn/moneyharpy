@@ -35,7 +35,7 @@ export const signedOut = () =>
   http.get('*/api/auth/me', () => HttpResponse.json({ error: 'Authorization required' }, { status: 401 }))
 export const listing = (rows: Administration[]) =>
   http.get('*/api/v2/administrations', () => HttpResponse.json(rows))
-export const providers = (google = false, registration_open = true, lm2 = false) =>
-  http.get('*/api/auth/providers', () => HttpResponse.json({ google, registration_open, lm2 }))
+export const providers = (google = false, registration_open = true, lm2 = false, password_reset = false) =>
+  http.get('*/api/auth/providers', () => HttpResponse.json({ google, registration_open, lm2, password_reset }))
 
 export const server = setupServer()

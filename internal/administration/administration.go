@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -15,9 +14,17 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
-// ErrNotFound reports an administration that does not exist or that the user
-// has no access to. The two are indistinguishable so IDs cannot be probed.
-var ErrNotFound = errors.New("administration not found")
+// Errors returned by Service, Store and the onboarding lookups.
+var (
+	// ErrNotFound reports an administration that does not exist or that the
+	// user has no access to. The two are indistinguishable so IDs cannot be
+	// probed.
+	ErrNotFound = errors.New("administration not found")
+	// ErrLookupUnavailable reports a lookup this installation has not enabled.
+	ErrLookupUnavailable = errors.New("lookup unavailable")
+	// ErrAddressUnknown reports a zipcode and house number that match nothing.
+	ErrAddressUnknown = errors.New("address unknown")
+)
 
 // Access describes how a user reaches an administration.
 type Access string
@@ -39,6 +46,34 @@ type Administration struct {
 	Suspended         bool
 	PeriodLockedUntil *string
 	PeriodStartDate   string
+	Company
+}
+
+// Company holds the registered details of the business behind an
+// administration.
+type Company struct {
+	Address1          string
+	Address2          string
+	Zipcode           string
+	City              string
+	ChamberOfCommerce string
+}
+
+// CompanyMatch is a company found in a public register. Address parts the
+// register does not return are empty.
+type CompanyMatch struct {
+	Name              string
+	ChamberOfCommerce string
+	Address1          string
+	Zipcode           string
+	City              string
+}
+
+// AddressMatch is an address found by zipcode and house number.
+type AddressMatch struct {
+	Address1 string
+	Zipcode  string
+	City     string
 }
 
 // Ref locates the administration.
@@ -66,6 +101,12 @@ type NewAdministration struct {
 	Currency string
 	Country  string
 	TimeZone string
+
+	Address1          string
+	Address2          string
+	Zipcode           string
+	City              string
+	ChamberOfCommerce string
 }
 
 // Store persists administrations. Methods reading or changing a single
@@ -89,11 +130,6 @@ func NewService(store Store, ids *resource.Generator, now func() time.Time) *Ser
 	return &Service{store: store, ids: ids, now: now}
 }
 
-var (
-	currencyPattern = regexp.MustCompile(`^[A-Z]{3}$`)
-	countryPattern  = regexp.MustCompile(`^[A-Z]{2}$`)
-)
-
 // Create adds an administration owned by owner.
 func (s *Service) Create(ctx context.Context, owner resource.ID, in NewAdministration) (Listed, error) {
 	a, err := s.build(in)
@@ -114,6 +150,13 @@ func (s *Service) build(in NewAdministration) (Administration, error) {
 		Country:         cmp.Or(in.Country, "NL"),
 		TimeZone:        cmp.Or(in.TimeZone, "Europe/Amsterdam"),
 		PeriodStartDate: fmt.Sprintf("%d-01-01", s.now().Year()),
+		Company: Company{
+			Address1:          strings.TrimSpace(in.Address1),
+			Address2:          strings.TrimSpace(in.Address2),
+			Zipcode:           strings.TrimSpace(in.Zipcode),
+			City:              strings.TrimSpace(in.City),
+			ChamberOfCommerce: strings.TrimSpace(in.ChamberOfCommerce),
+		},
 	}
 
 	var verr resource.ValidationError
@@ -123,10 +166,10 @@ func (s *Service) build(in NewAdministration) (Administration, error) {
 	if !slices.Contains([]string{"nl", "nl-be", "en"}, a.Language) {
 		verr.Add("language", "is not included in the list")
 	}
-	if !currencyPattern.MatchString(a.Currency) {
+	if !slices.Contains(currencies, a.Currency) {
 		verr.Add("currency", "must be an ISO 4217 code")
 	}
-	if !countryPattern.MatchString(a.Country) {
+	if !slices.Contains(countries, a.Country) {
 		verr.Add("country", "must be an ISO 3166-1 alpha-2 code")
 	}
 	if _, err := time.LoadLocation(a.TimeZone); err != nil {

@@ -44,6 +44,21 @@ type LM2Client interface {
 	Identify(ctx context.Context, token string) (identity.External, error)
 }
 
+// CompanySearcher finds companies in the Dutch company register.
+type CompanySearcher interface {
+	SearchCompanies(ctx context.Context, query string) ([]administration.CompanyMatch, error)
+}
+
+// AddressLookup completes Dutch addresses.
+type AddressLookup interface {
+	LookupAddress(ctx context.Context, zipcode, houseNumber string) (administration.AddressMatch, error)
+}
+
+// TestMailer checks that the mail settings work.
+type TestMailer interface {
+	SendTest(ctx context.Context, to string) error
+}
+
 // Deps are the collaborators of the HTTP layer.
 type Deps struct {
 	Administrations *administration.Service
@@ -52,6 +67,9 @@ type Deps struct {
 	Resources       ResourceLocator
 	Google          GoogleClient
 	LM2             LM2Client
+	Companies       CompanySearcher
+	Addresses       AddressLookup
+	Mail            TestMailer
 	// BaseURL is the public origin of this installation.
 	BaseURL string
 	Logger  *slog.Logger
@@ -60,6 +78,11 @@ type Deps struct {
 	// APILimiter throttles /api/v2, AuthLimiter throttles password endpoints.
 	APILimiter  *ratelimit.Limiter
 	AuthLimiter *ratelimit.Limiter
+	// LookupLimiter throttles calls that reach third-party registers.
+	LookupLimiter *ratelimit.Limiter
+	// ResetLimiter caps reset mails per address, so nobody's inbox can be
+	// flooded.
+	ResetLimiter *ratelimit.Limiter
 	// TrustProxyHeaders takes the client address from X-Forwarded-For. Enable
 	// it only behind exactly one reverse proxy that appends to the header.
 	TrustProxyHeaders bool
@@ -117,12 +140,16 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(verr.Fields))
 	case errors.Is(err, identity.ErrEmailTaken):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"email": {"has already been taken"}}))
+	case errors.Is(err, identity.ErrResetTokenInvalid):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"token": {"is invalid or has expired"}}))
 	case errors.Is(err, identity.ErrRegistrationClosed):
 		writeError(w, http.StatusForbidden, "Registration is closed")
 	case errors.Is(err, identity.ErrInvalidCredentials):
 		writeError(w, http.StatusUnauthorized, "Invalid email or password")
 	case errors.Is(err, administration.ErrNotFound),
 		errors.Is(err, resource.ErrNotFound),
+		errors.Is(err, administration.ErrLookupUnavailable),
+		errors.Is(err, administration.ErrAddressUnknown),
 		errors.Is(err, identity.ErrTokenNotFound):
 		writeError(w, http.StatusNotFound, "Not found")
 	default:

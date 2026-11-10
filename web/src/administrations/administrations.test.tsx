@@ -17,7 +17,7 @@ describe('selecting an administration', () => {
     const list = await screen.findByRole('list', { name: 'Administrations' })
     expect(within(list).getByRole('link', { name: 'Harpy B.V.' })).toHaveAttribute('href', '/11')
     expect(within(list).getByRole('link', { name: 'Settings for Harpy B.V.' })).toHaveAttribute('href', '/11/settings')
-    expect(screen.getByRole('link', { name: 'Add administration' })).toHaveAttribute('href', '/administrations/new')
+    expect(screen.getByRole('link', { name: 'Add administration' })).toHaveAttribute('href', '/onboarding/company/create_administration?origin=onboarding')
   })
 
   it('invites the user to add the first one', async () => {
@@ -53,42 +53,6 @@ describe('selecting an administration', () => {
     await userEvent.click(mark)
     await userEvent.click(screen.getByRole('button', { name: 'Remove Developer company from favorites' }))
     await waitFor(() => expect(calls).toEqual(['PUT 11', 'DELETE 22']))
-  })
-})
-
-describe('adding an administration', () => {
-  const type = async (name: string) => userEvent.type(await screen.findByLabelText('Company name'), name)
-
-  it('opens the new administration', async () => {
-    server.use(
-      signedIn(),
-      listing([]),
-      http.post('*/api/v2/administrations', async ({ request }) => {
-        expect(await request.json()).toEqual({
-          administration: { name: 'New Co', language: 'en', currency: 'EUR', country: 'NL', time_zone: 'Europe/Amsterdam' },
-        })
-        return HttpResponse.json(administration({ id: '33', name: 'New Co' }), { status: 201 })
-      }),
-      http.get('*/api/v2/administrations/33', () => HttpResponse.json(administration({ id: '33', name: 'New Co' }))),
-    )
-    renderAt('/administrations/new')
-    await type('New Co')
-    await userEvent.click(screen.getByRole('button', { name: 'Add administration' }))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/33'))
-  })
-
-  it('shows which field is wrong', async () => {
-    server.use(
-      signedIn(),
-      listing([]),
-      http.post('*/api/v2/administrations', () =>
-        HttpResponse.json({ error: { name: ["can't be blank"] } }, { status: 422 }),
-      ),
-    )
-    renderAt('/administrations/new')
-    await type('x')
-    await userEvent.click(screen.getByRole('button', { name: 'Add administration' }))
-    expect(await screen.findByText("Company name can't be blank")).toBeInTheDocument()
   })
 })
 

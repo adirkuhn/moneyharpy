@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api, errorMessages, unwrap } from '../api/client'
 import { Field, Problems } from '../auth/AuthLayout'
 import { useCurrentUser } from '../auth/queries'
 import { Page } from '../layout/Page'
 
 export function UserPage() {
+  const { t, i18n } = useTranslation()
   const me = useCurrentUser()
   const client = useQueryClient()
   const [name, setName] = useState('')
@@ -15,8 +17,8 @@ export function UserPage() {
   const refresh = () => client.invalidateQueries({ queryKey: ['tokens'] })
   const create = useMutation({
     mutationFn: () => unwrap(api.POST('/api/user/tokens', { body: { name } })),
-    onSuccess: (t) => {
-      setSecret(t.token)
+    onSuccess: (created) => {
+      setSecret(created.token)
       setName('')
       void refresh()
     },
@@ -32,31 +34,31 @@ export function UserPage() {
   }
 
   return (
-    <Page title="User account">
+    <Page title={t('user.title')}>
       <dl className="facts">
-        <dt>Name</dt><dd>{me.data?.name}</dd>
-        <dt>Email</dt><dd>{me.data?.email}</dd>
+        <dt>{t('user.name')}</dt><dd>{me.data?.name}</dd>
+        <dt>{t('user.email')}</dt><dd>{me.data?.email}</dd>
       </dl>
-      <h2>API tokens</h2>
-      <p className="hint">Send a token as a bearer token to use the <a href="/docs/api/">API</a>.</p>
+      <h2>{t('user.tokens')}</h2>
+      <p className="hint">{t('user.tokensHint')} <a href="/docs/api/">{t('user.api')}</a>.</p>
       {secret && (
         <div className="secret">
-          <p>Copy this token now. It will not be shown again.</p>
+          <p>{t('user.copy')}</p>
           <code>{secret}</code>
         </div>
       )}
       <form className="form form--inline" onSubmit={submit}>
-        <Problems messages={errorMessages(create.error, { name: 'Token name' })} />
-        <Field label="Token name" required maxLength={255} value={name} onChange={(e) => setName(e.target.value)} />
-        <button className="btn btn--primary" disabled={create.isPending}>Create token</button>
+        <Problems messages={errorMessages(create.error, { name: t('user.tokenName') })} />
+        <Field label={t('user.tokenName')} required maxLength={255} value={name} onChange={(e) => setName(e.target.value)} />
+        <button className="btn btn--primary" disabled={create.isPending}>{t('user.create')}</button>
       </form>
       {tokens.data && tokens.data.length > 0 && (
-        <ul className="ledger" aria-label="API tokens">
-          {tokens.data.map((t) => (
-            <li className="ledger__row" key={t.id}>
-              <span className="ledger__name">{t.name}</span>
-              <time className="hint" dateTime={t.created_at}>{new Date(t.created_at).toLocaleDateString()}</time>
-              <button type="button" className="btn btn--secondary" aria-label={`Revoke ${t.name}`} onClick={() => revoke.mutate(t.id)}>Revoke</button>
+        <ul className="ledger" aria-label={t('user.list')}>
+          {tokens.data.map((token) => (
+            <li className="ledger__row" key={token.id}>
+              <span className="ledger__name">{token.name}</span>
+              <time className="hint" dateTime={token.created_at}>{new Date(token.created_at).toLocaleDateString(i18n.language)}</time>
+              <button type="button" className="btn btn--secondary" aria-label={t('user.revokeName', { name: token.name })} onClick={() => revoke.mutate(token.id)}>{t('user.revoke')}</button>
             </li>
           ))}
         </ul>
