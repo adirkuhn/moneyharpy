@@ -18,10 +18,24 @@ export const nl: Messages = {
     editTitle: 'Kies een nieuw wachtwoord', new: 'Nieuw wachtwoord', save: 'Nieuw wachtwoord opslaan', badLink: 'Deze link is ongeldig of verlopen', newLink: 'Nieuwe link aanvragen',
   },
   nav: {
-    overview: 'Overzicht', bank: 'Bank', settings: 'Instellingen',
     search: 'Zoeken', searchSoon: 'Zoeken is nog niet beschikbaar.',
     main: 'Hoofdmenu', home: 'MoneyHarpy home', notifications: 'Meldingen', noNotifications: 'Je hebt geen meldingen.', select: 'Kies administratie', yours: 'Jouw administraties',
     all: 'Alle administraties', new: 'Nieuwe administratie', account: 'Gebruikersaccount', instance: 'Instellingen van deze installatie', docs: 'API-documentatie', signOut: 'Uitloggen',
+  },
+  sidenav: {
+    label: 'Administratiemenu', menu: 'Menu', collapse: 'Menu inklappen', expand: 'Menu uitklappen', collapseShort: 'Inklappen', later: 'Nog niet beschikbaar',
+    items: {
+      overview: 'Overzicht', invoices: 'Facturen', salesInvoices: 'Verkoopfacturen', externalInvoices: 'Externe facturen', recurringInvoices: 'Periodieke facturen',
+      incoming: 'Inkomend', quotes: 'Offertes', bank: 'Bank', financialAccounts: 'Rekeningen', transactions: 'Transacties', payments: 'Betalingen',
+      timesheets: 'Uren', register: 'Registreren', hoursReport: 'Urenrapport', projectsReport: 'Projectenrapport',
+      contacts: 'Contacten', vat: 'Btw-aangiftes',
+      reports: 'Rapportages', reportsOverview: 'Overzicht', profitLoss: 'Winst-en-verliesrekening', balanceSheet: 'Balans', assetsReport: 'Activarapport',
+      vatSummary: 'Btw-overzicht', cashFlow: 'Kasstroomoverzicht', debtors: 'Debiteurenoverzicht', creditors: 'Crediteurenoverzicht',
+      debtorsAging: 'Ouderdomsanalyse debiteuren', creditorsAging: 'Ouderdomsanalyse crediteuren', revenueByContact: 'Omzet per contact', expensesByContact: 'Kosten per contact',
+      revenueByProject: 'Omzet per project', expensesByProject: 'Kosten per project', trialBalance: 'Proef- en saldibalans', auditReport: 'Controlerapport', events: 'Gebeurtenissen',
+      products: 'Producten', productsOverview: 'Overzicht', onlineSales: 'Online verkopen',
+      assets: 'Activa', projects: 'Projecten', tasks: 'Takenlijsten', taskLists: 'Takenlijsten', taskTemplates: 'Sjablonen', settings: 'Instellingen',
+    },
   },
   notFound: { title: 'Pagina niet gevonden', body: 'Deze pagina bestaat niet of je hebt er geen toegang toe.', back: 'Ga naar je administraties' },
   administrations: {
