@@ -17,9 +17,15 @@ test.beforeAll(async ({ baseURL }) => {
     expect((await api.post('/api/auth/register', { data: admin })).status()).toBe(201)
   }
   const saved = await api.patch('/api/instance/settings', {
-    data: { smtp_enabled: true, smtp_host: 'mailpit', smtp_port: 1025, smtp_from: 'books@example.com', smtp_security: 'none' },
+    data: {
+      smtp_enabled: true, smtp_host: 'mailpit', smtp_port: 1025, smtp_from: 'books@example.com', smtp_security: 'none',
+      storage_enabled: true, storage_endpoint: 'http://storage:8333', storage_region: 'us-east-1', storage_bucket: 'moneyharpy',
+      storage_access_key: 's3-test', storage_secret_key: 's3-test-secret', storage_path_style: true,
+    },
   })
   expect(saved.status()).toBe(200)
+  // Creates the bucket on first run.
+  expect((await api.post('/api/instance/settings/test_storage')).status()).toBe(204)
   await api.dispose()
 })
 
@@ -280,4 +286,53 @@ test('the API documentation renders from the contract', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /MoneyHarpy API/ })).toBeVisible({ timeout: 20000 })
   await expect(page.getByText('/api/v2/administrations').first()).toBeVisible()
   expect(errors).toEqual([])
+})
+
+// A 1x1 transparent PNG.
+const tinyPNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64')
+
+test('invoices and estimates are set up in settings', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Invoice Co')
+  const uri = new URL(page.url()).pathname
+  await page.goto(`${uri}/settings/company`)
+  await page.getByRole('navigation', { name: 'Settings' }).getByRole('link', { name: 'Invoices and estimates' }).click()
+  await expect(page.getByRole('heading', { name: 'Invoices and estimates', level: 1 })).toBeVisible()
+
+  const numbering = page.getByRole('group', { name: 'Invoice number' })
+  await numbering.getByLabel('Template').fill('F{year}-{id}')
+  await numbering.getByLabel('Next number').fill('0100')
+  await numbering.getByRole('button', { name: 'Save' }).click()
+  await expect(numbering.getByText(`Example: F${new Date().getFullYear()}-0100`)).toBeVisible()
+  await expect(numbering.getByRole('button', { name: 'Save' })).toBeHidden()
+
+  await page.getByRole('region', { name: 'Workflows' }).getByRole('button', { name: 'Add' }).click()
+  await page.getByRole('link', { name: 'Add invoice workflow' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Export')
+  await page.getByRole('button', { name: 'Add reminder' }).click()
+  await page.getByRole('group', { name: 'Reminder 1' }).getByLabel('Reminder text').fill('Please pay')
+  await page.getByRole('button', { name: 'Save' }).click()
+  const invoiceFlows = page.getByRole('table', { name: 'Invoice workflows' })
+  await expect(invoiceFlows.getByRole('link', { name: 'Export' })).toBeVisible()
+  await expect(invoiceFlows.getByRole('button', { name: 'Default workflow cannot be deleted' })).toBeDisabled()
+
+  const styles = page.getByRole('region', { name: 'Document styles' })
+  await styles.getByRole('link', { name: 'Add' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('The Best')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await styles.getByRole('link', { name: 'The Best' }).click()
+  await page.getByLabel('Upload Logo').setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: tinyPNG })
+  const logo = page.getByRole('img', { name: 'Current Logo' })
+  await expect(logo).toBeVisible()
+  await expect.poll(() => logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(1)
+
+  await page.goto(`${uri}/settings/invoices_and_estimates`)
+  await page.getByRole('region', { name: 'Custom fields' }).getByRole('link', { name: 'Add' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Slogan')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByRole('table', { name: 'Sender address' })).toContainText('Slogan')
+
+  const id = uri.slice(1)
+  const workflows = await (await page.request.get(`/api/v2/${id}/workflows.json`)).json()
+  expect(workflows.map((w: { name: string }) => w.name)).toContain('Export')
 })

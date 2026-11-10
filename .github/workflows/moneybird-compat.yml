@@ -1,0 +1,23 @@
+name: Moneybird compatibility
+
+# Compares the contract with Moneybird's published API description, so a
+# change on their side shows up here instead of in a client's integration.
+on:
+  pull_request:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Contract matches Moneybird's schemas
+        run: go test -tags moneybird ./cmd/mbschemas

@@ -15,11 +15,29 @@ const parts: Partial<Record<Section, { id: string; label: string }[]>> = {
     { id: 'company-details', label: 'settings.details' },
     { id: 'sender-addresses', label: 'settings.senders' },
   ],
+  invoices_and_estimates: [
+    { id: 'document-styles', label: 'invoicing.parts.styles' },
+    { id: 'workflows', label: 'invoicing.parts.workflows' },
+    { id: 'numbering', label: 'invoicing.parts.numbering' },
+    { id: 'peppol-ubl', label: 'invoicing.parts.peppol' },
+    { id: 'custom-fields', label: 'invoicing.parts.customFields' },
+    { id: 'forward-documents', label: 'invoicing.parts.forwarding' },
+    { id: 'payment-methods', label: 'invoicing.parts.payments' },
+    { id: 'payments-without-proof', label: 'invoicing.parts.withoutProof' },
+  ],
+}
+
+/** Pages outside /settings and the section they belong to. */
+const pageSections: Record<string, Section> = {
+  identities: 'company',
+  document_styles: 'invoices_and_estimates',
+  workflows: 'invoices_and_estimates',
+  custom_fields: 'invoices_and_estimates',
 }
 
 /**
  * The settings area of one administration: a section menu beside the page.
- * Pages outside /settings, such as the identity forms, belong to Company.
+ * Pages outside /settings, such as the identity forms, belong to a section.
  */
 export function SettingsLayout() {
   const { t } = useTranslation()
@@ -36,7 +54,7 @@ export function SettingsLayout() {
   }
   const base = `/${administrationId}`
   const [, , area, page] = pathname.split('/')
-  const current: Section = area === 'settings' && sections.includes(page as Section) ? (page as Section) : 'company'
+  const current: Section = area === 'settings' && sections.includes(page as Section) ? (page as Section) : (pageSections[area ?? ''] ?? 'company')
   const onSectionPage = area === 'settings' && page === current
 
   return (

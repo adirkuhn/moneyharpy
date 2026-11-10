@@ -96,3 +96,44 @@ export function useUpdateAdministration(administrationId: string) {
     onSuccess: () => client.invalidateQueries({ queryKey: ['administrations'] }),
   })
 }
+
+export function useCustomField(administrationId: string, id?: string) {
+  return useQuery({
+    queryKey: ['custom-fields', administrationId, id],
+    enabled: id !== undefined,
+    queryFn: () =>
+      unwrap(api.GET('/api/v2/{administration_id}/custom_fields/{id}', { params: { path: { administration_id: administrationId, id: id ?? '' } } })),
+  })
+}
+
+export function useUpdateCustomField(administrationId: string, id: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) =>
+      unwrap(
+        api.PATCH('/api/v2/{administration_id}/custom_fields/{id}', {
+          params: { path: { administration_id: administrationId, id } },
+          body: { custom_field: { name } },
+        }),
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['custom-fields', administrationId] }),
+  })
+}
+
+export function useDeleteCustomField(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      unwrap(api.DELETE('/api/v2/{administration_id}/custom_fields/{id}', { params: { path: { administration_id: administrationId, id } } })),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['custom-fields', administrationId] }),
+  })
+}
+
+export function useReorderCustomFields(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (order: { source: CustomFieldSource; ids: string[] }) =>
+      unwrap(api.PUT('/api/v2/{administration_id}/custom_fields/order', { ...path(administrationId), body: { custom_fields_order: order } })),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['custom-fields', administrationId] }),
+  })
+}

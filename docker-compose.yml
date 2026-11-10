@@ -7,9 +7,29 @@ services:
       BASE_URL: ${BASE_URL:-http://localhost:8080}
     ports:
       - "8080:8080"
+    volumes:
+      # Uploads, such as logos, while no S3-compatible storage is configured.
+      - uploads-data:/data/uploads
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  # S3-compatible file storage for uploads such as logos. Any S3 service works
+  # instead; enter its details under Instance settings > File storage.
+  storage:
+    image: chrislusf/seaweedfs:4.52
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        printf '{"identities":[{"name":"moneyharpy","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
+        "$$S3_ACCESS_KEY" "$$S3_SECRET_KEY" > /tmp/s3.json &&
+        exec weed server -s3 -s3.port=8333 -dir=/data -s3.config=/tmp/s3.json
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+    volumes:
+      - storage-data:/data
     restart: unless-stopped
 
   db:
@@ -29,3 +49,5 @@ services:
 
 volumes:
   db-data:
+  storage-data:
+  uploads-data:

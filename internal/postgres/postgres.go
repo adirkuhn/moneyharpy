@@ -448,12 +448,52 @@ func (s *AdministrationStore) CustomFields(ctx context.Context, admin resource.I
 	}
 	fields := make([]administration.CustomField, len(rows))
 	for i, r := range rows {
-		fields[i] = administration.CustomField{
-			ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), Name: r.Name,
-			Source: administration.Source(r.Source), CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
-		}
+		fields[i] = toCustomField(r)
 	}
 	return fields, nil
+}
+
+func toCustomField(r sqlc.CustomField) administration.CustomField {
+	return administration.CustomField{
+		ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), Name: r.Name,
+		Source: administration.Source(r.Source), Position: int(r.Position), CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
+	}
+}
+
+// CustomField implements administration.Store.
+func (s *AdministrationStore) CustomField(ctx context.Context, admin, id resource.ID) (administration.CustomField, error) {
+	r, err := s.q.CustomFieldByID(ctx, sqlc.CustomFieldByIDParams{AdministrationID: int64(admin), ID: int64(id)})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return administration.CustomField{}, administration.ErrCustomFieldNotFound
+	}
+	if err != nil {
+		return administration.CustomField{}, err
+	}
+	return toCustomField(r), nil
+}
+
+// UpdateCustomField implements administration.Store.
+func (s *AdministrationStore) UpdateCustomField(ctx context.Context, f administration.CustomField) error {
+	return s.q.UpdateCustomField(ctx, sqlc.UpdateCustomFieldParams{
+		AdministrationID: int64(f.AdministrationID), ID: int64(f.ID), Name: f.Name, Position: int32(f.Position),
+		UpdatedAt: timestamp(f.UpdatedAt),
+	})
+}
+
+// DeleteCustomField implements administration.Store. Values records hold for
+// the field go with it.
+func (s *AdministrationStore) DeleteCustomField(ctx context.Context, admin, id resource.ID) error {
+	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		n, err := q.DeleteCustomField(ctx, sqlc.DeleteCustomFieldParams{AdministrationID: int64(admin), ID: int64(id)})
+		if err != nil {
+			return err
+		}
+		if n == 0 {
+			return administration.ErrCustomFieldNotFound
+		}
+		return q.DeleteResource(ctx, int64(id))
+	})
 }
 
 // CreateCustomField implements administration.Store.
@@ -462,7 +502,7 @@ func (s *AdministrationStore) CreateCustomField(ctx context.Context, f administr
 		q := s.q.WithTx(tx)
 		if err := q.InsertCustomField(ctx, sqlc.InsertCustomFieldParams{
 			ID: int64(f.ID), AdministrationID: int64(f.AdministrationID), Name: f.Name, Source: string(f.Source),
-			CreatedAt: timestamp(f.CreatedAt), UpdatedAt: timestamp(f.UpdatedAt),
+			Position: int32(f.Position), CreatedAt: timestamp(f.CreatedAt), UpdatedAt: timestamp(f.UpdatedAt),
 		}); err != nil {
 			return err
 		}
@@ -472,10 +512,14 @@ func (s *AdministrationStore) CreateCustomField(ctx context.Context, f administr
 	})
 }
 
-// DeleteIdentity implements administration.Store.
+// DeleteIdentity implements administration.Store. Document styles that send
+// from the identity fall back to the company details.
 func (s *AdministrationStore) DeleteIdentity(ctx context.Context, admin, id resource.ID) error {
 	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
+		if err := q.MoveDocumentStylesToDefaultIdentity(ctx, int64(id)); err != nil {
+			return err
+		}
 		n, err := q.DeleteIdentity(ctx, sqlc.DeleteIdentityParams{AdministrationID: int64(admin), ID: int64(id)})
 		if err != nil {
 			return err

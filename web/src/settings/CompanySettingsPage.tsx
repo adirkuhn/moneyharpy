@@ -1,7 +1,8 @@
-import { type ReactNode, useEffect, useId } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { Page } from '../layout/Page'
+import { Block } from './Block'
 import { countryName, formatIBAN } from './format'
 import { type Identity, useIdentities } from './queries'
 
@@ -35,24 +36,6 @@ export function CompanySettingsPage() {
         {senders.map((s) => <IdentityCard key={s.id} identity={s} editPath={`${s.uri}/edit`} />)}
       </Block>
     </Page>
-  )
-}
-
-type BlockProps = { id: string; title: string; subtitle: string; action?: ReactNode; children: ReactNode }
-
-function Block({ id, title, subtitle, action, children }: BlockProps) {
-  const headingId = useId()
-  return (
-    <section id={id} className="settings-block" aria-labelledby={headingId}>
-      <header className="settings-block__header">
-        <div>
-          <h2 id={headingId}>{title}</h2>
-          <p className="hint">{subtitle}</p>
-        </div>
-        {action}
-      </header>
-      {children}
-    </section>
   )
 }
 

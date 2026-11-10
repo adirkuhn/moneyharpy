@@ -328,6 +328,44 @@ describe('editing identities', () => {
 })
 
 describe('custom fields', () => {
+  it('renames a custom field', async () => {
+    let sent: unknown
+    server.use(
+      ...loaded(),
+      http.get('*/api/v2/11/custom_fields/701', () => HttpResponse.json(slogan)),
+      http.patch('*/api/v2/11/custom_fields/701', async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json({ ...slogan, name: 'Motto' })
+      }),
+    )
+    renderAt('/11/custom_fields/701/edit?return_to=%2F11%2Fsettings%2Finvoices_and_estimates')
+    expect(await screen.findByRole('heading', { name: 'Edit custom field', level: 1 })).toBeInTheDocument()
+    expect(screen.getByLabelText('Used for')).toBeDisabled()
+    const name = screen.getByLabelText('Name')
+    await userEvent.clear(name)
+    await userEvent.type(name, 'Motto')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/settings/invoices_and_estimates'))
+    expect(sent).toEqual({ custom_field: { name: 'Motto' } })
+  })
+
+  it('deletes a custom field after confirming', async () => {
+    let deleted = false
+    server.use(
+      ...loaded(),
+      http.get('*/api/v2/11/custom_fields/701', () => HttpResponse.json(slogan)),
+      http.delete('*/api/v2/11/custom_fields/701', () => {
+        deleted = true
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    renderAt('/11/custom_fields/701/edit')
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+    expect(deleted).toBe(false)
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm delete' }))
+    await waitFor(() => expect(deleted).toBe(true))
+  })
+
   it('adds a custom field and returns to the form it came from', async () => {
     let sent: unknown
     server.use(

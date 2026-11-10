@@ -17,6 +17,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/api"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
+	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
@@ -54,6 +55,11 @@ type AddressLookup interface {
 	LookupAddress(ctx context.Context, zipcode, houseNumber string) (administration.AddressMatch, error)
 }
 
+// StorageChecker checks that the file storage settings work.
+type StorageChecker interface {
+	Check(ctx context.Context) error
+}
+
 // TestMailer checks that the mail settings work.
 type TestMailer interface {
 	SendTest(ctx context.Context, to string) error
@@ -62,6 +68,8 @@ type TestMailer interface {
 // Deps are the collaborators of the HTTP layer.
 type Deps struct {
 	Administrations *administration.Service
+	Invoicing       *invoicing.Service
+	Storage         StorageChecker
 	Identity        *identity.Service
 	Settings        *settings.Service
 	Resources       ResourceLocator
@@ -86,6 +94,15 @@ type Deps struct {
 	// TrustProxyHeaders takes the client address from X-Forwarded-For. Enable
 	// it only behind exactly one reverse proxy that appends to the header.
 	TrustProxyHeaders bool
+}
+
+// uploadTypes are the binary request and response bodies in the contract.
+var uploadTypes = []string{"image/png", "image/jpeg", "image/gif", "application/pdf"}
+
+func init() {
+	for _, t := range uploadTypes {
+		openapi3filter.RegisterBodyDecoder(t, openapi3filter.FileBodyDecoder)
+	}
 }
 
 // NewHandler returns the handler for the whole application.
@@ -140,6 +157,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(verr.Fields))
 	case errors.Is(err, identity.ErrEmailTaken):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"email": {"has already been taken"}}))
+	case errors.Is(err, invoicing.ErrDefaultInUse):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The default cannot be deleted or deactivated"}}))
 	case errors.Is(err, administration.ErrDefaultIdentity):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The default identity cannot be deleted"}}))
 	case errors.Is(err, identity.ErrResetTokenInvalid):
@@ -150,6 +169,10 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeError(w, http.StatusUnauthorized, "Invalid email or password")
 	case errors.Is(err, administration.ErrNotFound),
 		errors.Is(err, administration.ErrIdentityNotFound),
+		errors.Is(err, administration.ErrCustomFieldNotFound),
+		errors.Is(err, invoicing.ErrWorkflowNotFound),
+		errors.Is(err, invoicing.ErrDocumentStyleNotFound),
+		errors.Is(err, invoicing.ErrFileNotFound),
 		errors.Is(err, resource.ErrNotFound),
 		errors.Is(err, administration.ErrLookupUnavailable),
 		errors.Is(err, administration.ErrAddressUnknown),

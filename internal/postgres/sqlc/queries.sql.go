@@ -66,6 +66,35 @@ func (q *Queries) AdministrationForUser(ctx context.Context, arg AdministrationF
 	return i, err
 }
 
+const clearDefaultDocumentStyle = `-- name: ClearDefaultDocumentStyle :exec
+UPDATE document_styles SET is_default = false WHERE administration_id = $1 AND id <> $2 AND is_default
+`
+
+type ClearDefaultDocumentStyleParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) ClearDefaultDocumentStyle(ctx context.Context, arg ClearDefaultDocumentStyleParams) error {
+	_, err := q.db.Exec(ctx, clearDefaultDocumentStyle, arg.AdministrationID, arg.ID)
+	return err
+}
+
+const clearDefaultWorkflow = `-- name: ClearDefaultWorkflow :exec
+UPDATE workflows SET is_default = false WHERE administration_id = $1 AND type = $2 AND id <> $3 AND is_default
+`
+
+type ClearDefaultWorkflowParams struct {
+	AdministrationID int64
+	Type             string
+	ID               int64
+}
+
+func (q *Queries) ClearDefaultWorkflow(ctx context.Context, arg ClearDefaultWorkflowParams) error {
+	_, err := q.db.Exec(ctx, clearDefaultWorkflow, arg.AdministrationID, arg.Type, arg.ID)
+	return err
+}
+
 const consumeResetToken = `-- name: ConsumeResetToken :one
 DELETE FROM password_reset_tokens WHERE token_hash = $1 AND expires_at > $2 RETURNING user_id
 `
@@ -80,6 +109,30 @@ func (q *Queries) ConsumeResetToken(ctx context.Context, arg ConsumeResetTokenPa
 	var user_id int64
 	err := row.Scan(&user_id)
 	return user_id, err
+}
+
+const customFieldByID = `-- name: CustomFieldByID :one
+SELECT id, administration_id, name, source, created_at, updated_at, position FROM custom_fields WHERE administration_id = $1 AND id = $2
+`
+
+type CustomFieldByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) CustomFieldByID(ctx context.Context, arg CustomFieldByIDParams) (CustomField, error) {
+	row := q.db.QueryRow(ctx, customFieldByID, arg.AdministrationID, arg.ID)
+	var i CustomField
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Name,
+		&i.Source,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Position,
+	)
+	return i, err
 }
 
 const defaultIdentity = `-- name: DefaultIdentity :one
@@ -112,6 +165,40 @@ func (q *Queries) DefaultIdentity(ctx context.Context, administrationID int64) (
 		&i.TaxNumberAbsenceReason,
 	)
 	return i, err
+}
+
+const deleteCustomField = `-- name: DeleteCustomField :execrows
+DELETE FROM custom_fields WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteCustomFieldParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteCustomField(ctx context.Context, arg DeleteCustomFieldParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteCustomField, arg.AdministrationID, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteDocumentStyle = `-- name: DeleteDocumentStyle :execrows
+DELETE FROM document_styles WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteDocumentStyleParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteDocumentStyle(ctx context.Context, arg DeleteDocumentStyleParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteDocumentStyle, arg.AdministrationID, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const deleteIdentity = `-- name: DeleteIdentity :execrows
@@ -193,6 +280,86 @@ func (q *Queries) DeleteUserSessions(ctx context.Context, userID int64) error {
 	return err
 }
 
+const deleteWorkflow = `-- name: DeleteWorkflow :execrows
+DELETE FROM workflows WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteWorkflowParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteWorkflow(ctx context.Context, arg DeleteWorkflowParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteWorkflow, arg.AdministrationID, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteWorkflowSteps = `-- name: DeleteWorkflowSteps :exec
+DELETE FROM workflow_steps WHERE workflow_id = $1
+`
+
+func (q *Queries) DeleteWorkflowSteps(ctx context.Context, workflowID int64) error {
+	_, err := q.db.Exec(ctx, deleteWorkflowSteps, workflowID)
+	return err
+}
+
+const documentFileInUse = `-- name: DocumentFileInUse :one
+SELECT EXISTS (SELECT 1 FROM document_styles WHERE administration_id = $1 AND (logo_hash = $2 OR background_hash = $2))
+`
+
+type DocumentFileInUseParams struct {
+	AdministrationID int64
+	LogoHash         pgtype.Text
+}
+
+func (q *Queries) DocumentFileInUse(ctx context.Context, arg DocumentFileInUseParams) (bool, error) {
+	row := q.db.QueryRow(ctx, documentFileInUse, arg.AdministrationID, arg.LogoHash)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const documentStyleByID = `-- name: DocumentStyleByID :one
+SELECT id, administration_id, name, identity_id, is_default, logo_hash, logo_content_type, logo_container_full_width, logo_display_width, logo_position, background_hash, background_content_type, print_on_stationery, paper_size, address_position, font_size, font_family, custom_css, layout, created_at, updated_at FROM document_styles WHERE administration_id = $1 AND id = $2
+`
+
+type DocumentStyleByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DocumentStyleByID(ctx context.Context, arg DocumentStyleByIDParams) (DocumentStyle, error) {
+	row := q.db.QueryRow(ctx, documentStyleByID, arg.AdministrationID, arg.ID)
+	var i DocumentStyle
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Name,
+		&i.IdentityID,
+		&i.IsDefault,
+		&i.LogoHash,
+		&i.LogoContentType,
+		&i.LogoContainerFullWidth,
+		&i.LogoDisplayWidth,
+		&i.LogoPosition,
+		&i.BackgroundHash,
+		&i.BackgroundContentType,
+		&i.PrintOnStationery,
+		&i.PaperSize,
+		&i.AddressPosition,
+		&i.FontSize,
+		&i.FontFamily,
+		&i.CustomCss,
+		&i.Layout,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const identityByID = `-- name: IdentityByID :one
 SELECT id, administration_id, is_default, company_name, country, city, zipcode, address1, address2, email, phone, legal_entity_type, chamber_of_commerce, tax_number, bank_account_name, bank_account_number, bank_account_bic, created_at, updated_at, tax_number_absence_reason FROM identities WHERE administration_id = $1 AND id = $2
 `
@@ -263,7 +430,7 @@ func (q *Queries) InsertAdministration(ctx context.Context, arg InsertAdministra
 }
 
 const insertCustomField = `-- name: InsertCustomField :exec
-INSERT INTO custom_fields (id, administration_id, name, source, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO custom_fields (id, administration_id, name, source, position, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type InsertCustomFieldParams struct {
@@ -271,6 +438,7 @@ type InsertCustomFieldParams struct {
 	AdministrationID int64
 	Name             string
 	Source           string
+	Position         int32
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
 }
@@ -281,10 +449,74 @@ func (q *Queries) InsertCustomField(ctx context.Context, arg InsertCustomFieldPa
 		arg.AdministrationID,
 		arg.Name,
 		arg.Source,
+		arg.Position,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
 	return err
+}
+
+const insertDocumentStyle = `-- name: InsertDocumentStyle :one
+INSERT INTO document_styles (id, administration_id, name, identity_id, is_default, logo_hash, logo_content_type,
+                             logo_container_full_width, logo_display_width, logo_position, background_hash,
+                             background_content_type, print_on_stationery, paper_size, address_position, font_size,
+                             font_family, custom_css, layout, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+ON CONFLICT (administration_id) WHERE is_default DO NOTHING
+RETURNING id
+`
+
+type InsertDocumentStyleParams struct {
+	ID                     int64
+	AdministrationID       int64
+	Name                   string
+	IdentityID             int64
+	IsDefault              bool
+	LogoHash               pgtype.Text
+	LogoContentType        pgtype.Text
+	LogoContainerFullWidth bool
+	LogoDisplayWidth       int32
+	LogoPosition           string
+	BackgroundHash         pgtype.Text
+	BackgroundContentType  pgtype.Text
+	PrintOnStationery      bool
+	PaperSize              string
+	AddressPosition        string
+	FontSize               int32
+	FontFamily             string
+	CustomCss              string
+	Layout                 []byte
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+}
+
+func (q *Queries) InsertDocumentStyle(ctx context.Context, arg InsertDocumentStyleParams) (int64, error) {
+	row := q.db.QueryRow(ctx, insertDocumentStyle,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Name,
+		arg.IdentityID,
+		arg.IsDefault,
+		arg.LogoHash,
+		arg.LogoContentType,
+		arg.LogoContainerFullWidth,
+		arg.LogoDisplayWidth,
+		arg.LogoPosition,
+		arg.BackgroundHash,
+		arg.BackgroundContentType,
+		arg.PrintOnStationery,
+		arg.PaperSize,
+		arg.AddressPosition,
+		arg.FontSize,
+		arg.FontFamily,
+		arg.CustomCss,
+		arg.Layout,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const insertIdentity = `-- name: InsertIdentity :exec
@@ -479,6 +711,120 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (InsertU
 	return i, err
 }
 
+const insertWorkflow = `-- name: InsertWorkflow :one
+INSERT INTO workflows (id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax,
+                       show_qr_code, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+ON CONFLICT (administration_id, type) WHERE is_default DO NOTHING
+RETURNING id
+`
+
+type InsertWorkflowParams struct {
+	ID               int64
+	AdministrationID int64
+	Type             string
+	Name             string
+	IsDefault        bool
+	Currency         string
+	Language         string
+	Active           bool
+	PricesAreInclTax bool
+	ShowQrCode       bool
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertWorkflow(ctx context.Context, arg InsertWorkflowParams) (int64, error) {
+	row := q.db.QueryRow(ctx, insertWorkflow,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Type,
+		arg.Name,
+		arg.IsDefault,
+		arg.Currency,
+		arg.Language,
+		arg.Active,
+		arg.PricesAreInclTax,
+		arg.ShowQrCode,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertWorkflowStep = `-- name: InsertWorkflowStep :exec
+INSERT INTO workflow_steps (id, workflow_id, step_order, due_interval, reminder_delay, reminder_text, reminder_auto_send,
+                            created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+`
+
+type InsertWorkflowStepParams struct {
+	ID               int64
+	WorkflowID       int64
+	StepOrder        int32
+	DueInterval      int32
+	ReminderDelay    int32
+	ReminderText     string
+	ReminderAutoSend bool
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertWorkflowStep(ctx context.Context, arg InsertWorkflowStepParams) error {
+	_, err := q.db.Exec(ctx, insertWorkflowStep,
+		arg.ID,
+		arg.WorkflowID,
+		arg.StepOrder,
+		arg.DueInterval,
+		arg.ReminderDelay,
+		arg.ReminderText,
+		arg.ReminderAutoSend,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const invoiceSettings = `-- name: InvoiceSettings :one
+SELECT invoice_id_template, invoice_sequence_id, estimate_id_template, estimate_sequence_id,
+       invoice_bcc_email_address, invoice_reminders_bcc_enabled, estimate_bcc_email_address, order_bcc_email_address,
+       default_email_ubl, payments_without_proof
+FROM administrations WHERE id = $1
+`
+
+type InvoiceSettingsRow struct {
+	InvoiceIDTemplate          string
+	InvoiceSequenceID          string
+	EstimateIDTemplate         string
+	EstimateSequenceID         string
+	InvoiceBccEmailAddress     string
+	InvoiceRemindersBccEnabled bool
+	EstimateBccEmailAddress    string
+	OrderBccEmailAddress       string
+	DefaultEmailUbl            bool
+	PaymentsWithoutProof       bool
+}
+
+func (q *Queries) InvoiceSettings(ctx context.Context, id int64) (InvoiceSettingsRow, error) {
+	row := q.db.QueryRow(ctx, invoiceSettings, id)
+	var i InvoiceSettingsRow
+	err := row.Scan(
+		&i.InvoiceIDTemplate,
+		&i.InvoiceSequenceID,
+		&i.EstimateIDTemplate,
+		&i.EstimateSequenceID,
+		&i.InvoiceBccEmailAddress,
+		&i.InvoiceRemindersBccEnabled,
+		&i.EstimateBccEmailAddress,
+		&i.OrderBccEmailAddress,
+		&i.DefaultEmailUbl,
+		&i.PaymentsWithoutProof,
+	)
+	return i, err
+}
+
 const linkIdentity = `-- name: LinkIdentity :exec
 INSERT INTO user_identities (provider, subject, user_id) VALUES ($1, $2, $3)
 ON CONFLICT DO NOTHING
@@ -559,7 +905,7 @@ func (q *Queries) ListAdministrations(ctx context.Context, userID int64) ([]List
 }
 
 const listCustomFields = `-- name: ListCustomFields :many
-SELECT id, administration_id, name, source, created_at, updated_at FROM custom_fields WHERE administration_id = $1 ORDER BY id
+SELECT id, administration_id, name, source, created_at, updated_at, position FROM custom_fields WHERE administration_id = $1 ORDER BY position, id
 `
 
 func (q *Queries) ListCustomFields(ctx context.Context, administrationID int64) ([]CustomField, error) {
@@ -576,6 +922,53 @@ func (q *Queries) ListCustomFields(ctx context.Context, administrationID int64) 
 			&i.AdministrationID,
 			&i.Name,
 			&i.Source,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Position,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDocumentStyles = `-- name: ListDocumentStyles :many
+SELECT id, administration_id, name, identity_id, is_default, logo_hash, logo_content_type, logo_container_full_width, logo_display_width, logo_position, background_hash, background_content_type, print_on_stationery, paper_size, address_position, font_size, font_family, custom_css, layout, created_at, updated_at FROM document_styles WHERE administration_id = $1 ORDER BY id
+`
+
+func (q *Queries) ListDocumentStyles(ctx context.Context, administrationID int64) ([]DocumentStyle, error) {
+	rows, err := q.db.Query(ctx, listDocumentStyles, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DocumentStyle
+	for rows.Next() {
+		var i DocumentStyle
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.Name,
+			&i.IdentityID,
+			&i.IsDefault,
+			&i.LogoHash,
+			&i.LogoContentType,
+			&i.LogoContainerFullWidth,
+			&i.LogoDisplayWidth,
+			&i.LogoPosition,
+			&i.BackgroundHash,
+			&i.BackgroundContentType,
+			&i.PrintOnStationery,
+			&i.PaperSize,
+			&i.AddressPosition,
+			&i.FontSize,
+			&i.FontFamily,
+			&i.CustomCss,
+			&i.Layout,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -709,6 +1102,79 @@ func (q *Queries) ListTokens(ctx context.Context, userID int64) ([]ListTokensRow
 	return items, nil
 }
 
+const listWorkflowSteps = `-- name: ListWorkflowSteps :many
+SELECT s.id, s.workflow_id, s.step_order, s.due_interval, s.reminder_delay, s.reminder_text, s.reminder_auto_send, s.created_at, s.updated_at FROM workflow_steps s JOIN workflows w ON w.id = s.workflow_id
+WHERE w.administration_id = $1
+ORDER BY s.workflow_id, s.step_order
+`
+
+func (q *Queries) ListWorkflowSteps(ctx context.Context, administrationID int64) ([]WorkflowStep, error) {
+	rows, err := q.db.Query(ctx, listWorkflowSteps, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []WorkflowStep
+	for rows.Next() {
+		var i WorkflowStep
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkflowID,
+			&i.StepOrder,
+			&i.DueInterval,
+			&i.ReminderDelay,
+			&i.ReminderText,
+			&i.ReminderAutoSend,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listWorkflows = `-- name: ListWorkflows :many
+SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at FROM workflows WHERE administration_id = $1 ORDER BY id
+`
+
+func (q *Queries) ListWorkflows(ctx context.Context, administrationID int64) ([]Workflow, error) {
+	rows, err := q.db.Query(ctx, listWorkflows, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Workflow
+	for rows.Next() {
+		var i Workflow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.Type,
+			&i.Name,
+			&i.IsDefault,
+			&i.Currency,
+			&i.Language,
+			&i.Active,
+			&i.PricesAreInclTax,
+			&i.ShowQrCode,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const loadSetting = `-- name: LoadSetting :one
 SELECT value FROM settings WHERE key = $1
 `
@@ -744,6 +1210,17 @@ SELECT pg_advisory_xact_lock(727001)
 
 func (q *Queries) LockFirstUser(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, lockFirstUser)
+	return err
+}
+
+const moveDocumentStylesToDefaultIdentity = `-- name: MoveDocumentStylesToDefaultIdentity :exec
+UPDATE document_styles d SET identity_id = i.id
+FROM identities i
+WHERE d.identity_id = $1 AND i.administration_id = d.administration_id AND i.is_default
+`
+
+func (q *Queries) MoveDocumentStylesToDefaultIdentity(ctx context.Context, identityID int64) error {
+	_, err := q.db.Exec(ctx, moveDocumentStylesToDefaultIdentity, identityID)
 	return err
 }
 
@@ -814,6 +1291,87 @@ func (q *Queries) UpdateAdministration(ctx context.Context, arg UpdateAdministra
 	return err
 }
 
+const updateCustomField = `-- name: UpdateCustomField :exec
+UPDATE custom_fields SET name = $3, position = $4, updated_at = $5 WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateCustomFieldParams struct {
+	AdministrationID int64
+	ID               int64
+	Name             string
+	Position         int32
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateCustomField(ctx context.Context, arg UpdateCustomFieldParams) error {
+	_, err := q.db.Exec(ctx, updateCustomField,
+		arg.AdministrationID,
+		arg.ID,
+		arg.Name,
+		arg.Position,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const updateDocumentStyle = `-- name: UpdateDocumentStyle :exec
+UPDATE document_styles
+SET name = $3, identity_id = $4, is_default = $5, logo_hash = $6, logo_content_type = $7,
+    logo_container_full_width = $8, logo_display_width = $9, logo_position = $10, background_hash = $11,
+    background_content_type = $12, print_on_stationery = $13, paper_size = $14, address_position = $15,
+    font_size = $16, font_family = $17, custom_css = $18, layout = $19, updated_at = $20
+WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateDocumentStyleParams struct {
+	AdministrationID       int64
+	ID                     int64
+	Name                   string
+	IdentityID             int64
+	IsDefault              bool
+	LogoHash               pgtype.Text
+	LogoContentType        pgtype.Text
+	LogoContainerFullWidth bool
+	LogoDisplayWidth       int32
+	LogoPosition           string
+	BackgroundHash         pgtype.Text
+	BackgroundContentType  pgtype.Text
+	PrintOnStationery      bool
+	PaperSize              string
+	AddressPosition        string
+	FontSize               int32
+	FontFamily             string
+	CustomCss              string
+	Layout                 []byte
+	UpdatedAt              pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateDocumentStyle(ctx context.Context, arg UpdateDocumentStyleParams) error {
+	_, err := q.db.Exec(ctx, updateDocumentStyle,
+		arg.AdministrationID,
+		arg.ID,
+		arg.Name,
+		arg.IdentityID,
+		arg.IsDefault,
+		arg.LogoHash,
+		arg.LogoContentType,
+		arg.LogoContainerFullWidth,
+		arg.LogoDisplayWidth,
+		arg.LogoPosition,
+		arg.BackgroundHash,
+		arg.BackgroundContentType,
+		arg.PrintOnStationery,
+		arg.PaperSize,
+		arg.AddressPosition,
+		arg.FontSize,
+		arg.FontFamily,
+		arg.CustomCss,
+		arg.Layout,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const updateIdentity = `-- name: UpdateIdentity :exec
 UPDATE identities
 SET company_name = $3, country = $4, city = $5, zipcode = $6, address1 = $7, address2 = $8, email = $9, phone = $10,
@@ -867,6 +1425,45 @@ func (q *Queries) UpdateIdentity(ctx context.Context, arg UpdateIdentityParams) 
 	return err
 }
 
+const updateInvoiceSettings = `-- name: UpdateInvoiceSettings :exec
+UPDATE administrations
+SET invoice_id_template = $2, invoice_sequence_id = $3, estimate_id_template = $4, estimate_sequence_id = $5,
+    invoice_bcc_email_address = $6, invoice_reminders_bcc_enabled = $7, estimate_bcc_email_address = $8,
+    order_bcc_email_address = $9, default_email_ubl = $10, payments_without_proof = $11
+WHERE id = $1
+`
+
+type UpdateInvoiceSettingsParams struct {
+	ID                         int64
+	InvoiceIDTemplate          string
+	InvoiceSequenceID          string
+	EstimateIDTemplate         string
+	EstimateSequenceID         string
+	InvoiceBccEmailAddress     string
+	InvoiceRemindersBccEnabled bool
+	EstimateBccEmailAddress    string
+	OrderBccEmailAddress       string
+	DefaultEmailUbl            bool
+	PaymentsWithoutProof       bool
+}
+
+func (q *Queries) UpdateInvoiceSettings(ctx context.Context, arg UpdateInvoiceSettingsParams) error {
+	_, err := q.db.Exec(ctx, updateInvoiceSettings,
+		arg.ID,
+		arg.InvoiceIDTemplate,
+		arg.InvoiceSequenceID,
+		arg.EstimateIDTemplate,
+		arg.EstimateSequenceID,
+		arg.InvoiceBccEmailAddress,
+		arg.InvoiceRemindersBccEnabled,
+		arg.EstimateBccEmailAddress,
+		arg.OrderBccEmailAddress,
+		arg.DefaultEmailUbl,
+		arg.PaymentsWithoutProof,
+	)
+	return err
+}
+
 const updatePassword = `-- name: UpdatePassword :exec
 UPDATE users SET password_hash = $2 WHERE id = $1
 `
@@ -878,6 +1475,42 @@ type UpdatePasswordParams struct {
 
 func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
 	_, err := q.db.Exec(ctx, updatePassword, arg.ID, arg.PasswordHash)
+	return err
+}
+
+const updateWorkflow = `-- name: UpdateWorkflow :exec
+UPDATE workflows
+SET name = $3, is_default = $4, currency = $5, language = $6, active = $7, prices_are_incl_tax = $8,
+    show_qr_code = $9, updated_at = $10
+WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateWorkflowParams struct {
+	AdministrationID int64
+	ID               int64
+	Name             string
+	IsDefault        bool
+	Currency         string
+	Language         string
+	Active           bool
+	PricesAreInclTax bool
+	ShowQrCode       bool
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateWorkflow(ctx context.Context, arg UpdateWorkflowParams) error {
+	_, err := q.db.Exec(ctx, updateWorkflow,
+		arg.AdministrationID,
+		arg.ID,
+		arg.Name,
+		arg.IsDefault,
+		arg.Currency,
+		arg.Language,
+		arg.Active,
+		arg.PricesAreInclTax,
+		arg.ShowQrCode,
+		arg.UpdatedAt,
+	)
 	return err
 }
 
@@ -987,6 +1620,35 @@ func (q *Queries) UserByToken(ctx context.Context, tokenHash string) (UserByToke
 		&i.Email,
 		&i.Name,
 		&i.IsInstanceAdmin,
+	)
+	return i, err
+}
+
+const workflowByID = `-- name: WorkflowByID :one
+SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at FROM workflows WHERE administration_id = $1 AND id = $2
+`
+
+type WorkflowByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) WorkflowByID(ctx context.Context, arg WorkflowByIDParams) (Workflow, error) {
+	row := q.db.QueryRow(ctx, workflowByID, arg.AdministrationID, arg.ID)
+	var i Workflow
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Type,
+		&i.Name,
+		&i.IsDefault,
+		&i.Currency,
+		&i.Language,
+		&i.Active,
+		&i.PricesAreInclTax,
+		&i.ShowQrCode,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
