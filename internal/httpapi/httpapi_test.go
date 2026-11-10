@@ -83,6 +83,21 @@ func (g *fakeGoogle) Exchange(_ context.Context, _, nonce string) (identity.Exte
 	return g.external, g.err
 }
 
+type fakeLM2 struct {
+	external identity.External
+	err      error
+	gotToken string
+}
+
+func (l *fakeLM2) LoginURL(_ context.Context, state string) (string, error) {
+	return "https://lm.example/app-login?state=" + state, nil
+}
+
+func (l *fakeLM2) Identify(_ context.Context, token string) (identity.External, error) {
+	l.gotToken = token
+	return l.external, l.err
+}
+
 type options struct {
 	pool       *pgxpool.Pool
 	apiLimiter *ratelimit.Limiter
@@ -92,6 +107,7 @@ type harness struct {
 	t      *testing.T
 	server *httptest.Server
 	google *fakeGoogle
+	lm2    *fakeLM2
 	settle *settings.Service
 }
 
@@ -108,7 +124,9 @@ func newHarness(t *testing.T, opts options) *harness {
 	settle := settings.NewService(postgres.NewSettingsStore(pool), settings.NewCipher("test-secret"))
 	google := &fakeGoogle{}
 
-	h := &harness{t: t, google: google, settle: settle}
+	lm2 := &fakeLM2{}
+
+	h := &harness{t: t, google: google, lm2: lm2, settle: settle}
 	h.server = httptest.NewUnstartedServer(nil)
 	h.server.Start()
 	t.Cleanup(h.server.Close)
@@ -119,6 +137,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Settings:        settle,
 		Resources:       postgres.NewResourceLocator(pool),
 		Google:          google,
+		LM2:             lm2,
 		BaseURL:         h.server.URL,
 		Logger:          slog.New(slog.DiscardHandler),
 		Web:             fstest.MapFS{"index.html": {Data: []byte("<html>spa</html>")}, "assets/app.js": {Data: []byte("js")}},
@@ -584,6 +603,98 @@ func TestGoogleLogin(t *testing.T) {
 		if got := r.header.Get("Location"); got != "/login?error=google" {
 			t.Errorf("Location = %q, want /login?error=google", got)
 		}
+	})
+}
+
+func TestLM2Login(t *testing.T) {
+	ctx := context.Background()
+	pool, cleanup, err := postgrestest.Start(ctx)
+	if err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	defer cleanup()
+
+	h := newHarness(t, options{pool: pool})
+	wantStatus(t, h.client().do(http.MethodGet, "/api/auth/lm2/start", nil), http.StatusNotFound)
+	if got := decode[httpapi.AuthProviders](t, h.client().do(http.MethodGet, "/api/auth/providers", nil)); got.Lm2 {
+		t.Error("providers lm2 = true before it is enabled")
+	}
+
+	on, addr, app := true, "https://lm.example", "moneyharpy"
+	if _, err := h.settle.Update(ctx, settings.Update{LM2Enabled: &on, LM2URL: &addr, LM2App: &app}); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+
+	start := func(t *testing.T, c *client) string {
+		t.Helper()
+		r := c.do(http.MethodGet, "/api/auth/lm2/start", nil)
+		wantStatus(t, r, http.StatusFound)
+		loc, err := url.Parse(r.header.Get("Location"))
+		if err != nil {
+			t.Fatalf("Parse(Location) error = %v", err)
+		}
+		return loc.Query().Get("state")
+	}
+	location := func(t *testing.T, r response, want string) {
+		t.Helper()
+		wantStatus(t, r, http.StatusFound)
+		if got := r.header.Get("Location"); got != want {
+			t.Errorf("Location = %q, want %q", got, want)
+		}
+	}
+
+	t.Run("signs in with the returned token", func(t *testing.T) {
+		h.lm2.external = identity.External{Provider: "lm2", Subject: "u1", Email: uniqueEmail(), Name: "Ann"}
+		c := h.client()
+		state := start(t, c)
+		location(t, c.do(http.MethodGet, "/api/auth/lm2/callback/"+state+"?token=abc&refresh_token=def", nil), "/administrations")
+		if h.lm2.gotToken != "abc" {
+			t.Errorf("Identify token = %q, want abc", h.lm2.gotToken)
+		}
+		wantStatus(t, c.do(http.MethodGet, "/api/auth/me", nil), http.StatusOK)
+	})
+
+	t.Run("rejects forged state", func(t *testing.T) {
+		c := h.client()
+		start(t, c)
+		location(t, c.do(http.MethodGet, "/api/auth/lm2/callback/forged?token=abc", nil), "/login?error=lm2")
+		wantStatus(t, c.do(http.MethodGet, "/api/auth/me", nil), http.StatusUnauthorized)
+	})
+
+	t.Run("rejects a callback without a prior start", func(t *testing.T) {
+		location(t, h.client().do(http.MethodGet, "/api/auth/lm2/callback/any?token=abc", nil), "/login?error=lm2")
+	})
+
+	t.Run("rejects a state used twice", func(t *testing.T) {
+		c := h.client()
+		state := start(t, c)
+		c.do(http.MethodGet, "/api/auth/lm2/callback/"+state+"?token=abc", nil)
+		location(t, c.do(http.MethodGet, "/api/auth/lm2/callback/"+state+"?token=abc", nil), "/login?error=lm2")
+	})
+
+	t.Run("rejects a missing token", func(t *testing.T) {
+		c := h.client()
+		state := start(t, c)
+		location(t, c.do(http.MethodGet, "/api/auth/lm2/callback/"+state, nil), "/login?error=lm2")
+	})
+
+	t.Run("reports a token LM2 refuses", func(t *testing.T) {
+		h.lm2.err = errors.New("refused")
+		defer func() { h.lm2.err = nil }()
+		c := h.client()
+		state := start(t, c)
+		location(t, c.do(http.MethodGet, "/api/auth/lm2/callback/"+state+"?token=abc", nil), "/login?error=lm2")
+	})
+
+	t.Run("does not take over an existing account by email", func(t *testing.T) {
+		owner := h.client()
+		email := uniqueEmail()
+		wantStatus(t, owner.do(http.MethodPost, "/api/auth/register", map[string]string{"email": email, "name": "Own", "password": password}), http.StatusCreated)
+
+		h.lm2.external = identity.External{Provider: "lm2", Subject: "u2", Email: email, Name: "Own"}
+		c := h.client()
+		state := start(t, c)
+		location(t, c.do(http.MethodGet, "/api/auth/lm2/callback/"+state+"?token=abc", nil), "/login?error=email_taken")
 	})
 }
 

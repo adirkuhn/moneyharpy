@@ -307,6 +307,50 @@ paths:
             Location:
               schema:
                 type: string
+  /api/auth/lm2/start:
+    get:
+      operationId: lm2Start
+      summary: Start signing in with LM2
+      tags: [Authentication]
+      security: []
+      responses:
+        '302':
+          description: Redirect to the LM2 login page
+          headers:
+            Location:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/auth/lm2/callback/{state}:
+    get:
+      operationId: lm2Callback
+      summary: Finish signing in with LM2
+      description: The state is in the path because LM2 appends its own query string to the redirect address.
+      tags: [Authentication]
+      security: []
+      parameters:
+        - name: state
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: query
+          schema:
+            type: string
+        - name: refresh_token
+          in: query
+          description: Sent by LM2. MoneyHarpy ignores and never stores it.
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect into the application
+          headers:
+            Location:
+              schema:
+                type: string
   /api/user/tokens:
     get:
       operationId: listTokens
@@ -594,11 +638,13 @@ components:
           example: /416072101932303822
     AuthProviders:
       type: object
-      required: [registration_open, google]
+      required: [registration_open, google, lm2]
       properties:
         registration_open:
           type: boolean
         google:
+          type: boolean
+        lm2:
           type: boolean
     RegisterRequest:
       type: object
@@ -667,7 +713,7 @@ components:
           maxLength: 255
     InstanceSettings:
       type: object
-      required: [registration_open, google_enabled, google_client_id, google_client_secret_set]
+      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app]
       properties:
         registration_open:
           type: boolean
@@ -677,6 +723,12 @@ components:
           type: string
         google_client_secret_set:
           type: boolean
+        lm2_enabled:
+          type: boolean
+        lm2_url:
+          type: string
+        lm2_app:
+          type: string
     UpdateInstanceSettingsRequest:
       type: object
       additionalProperties: false
@@ -690,3 +742,11 @@ components:
         google_client_secret:
           type: string
           writeOnly: true
+        lm2_enabled:
+          type: boolean
+        lm2_url:
+          type: string
+          description: Public address of the LM2 installation.
+        lm2_app:
+          type: string
+          description: The name this installation is registered under in LM2.

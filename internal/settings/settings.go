@@ -13,6 +13,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -29,10 +31,20 @@ type Google struct {
 	ClientSecret string
 }
 
+// LM2 configures sign-in through an Akantio LM2 installation.
+type LM2 struct {
+	Enabled bool
+	// URL is the public address of the LM2 installation.
+	URL string
+	// App is the name this installation is allowlisted under in LM2.
+	App string
+}
+
 // Instance is the configuration of this MoneyHarpy installation.
 type Instance struct {
 	RegistrationOpen bool
 	Google           Google
+	LM2              LM2
 }
 
 // Update changes selected settings. Nil fields stay as they are, and an empty
@@ -42,6 +54,9 @@ type Update struct {
 	GoogleEnabled      *bool
 	GoogleClientID     *string
 	GoogleClientSecret *string
+	LM2Enabled         *bool
+	LM2URL             *string
+	LM2App             *string
 }
 
 // Store persists opaque values by key.
@@ -67,6 +82,9 @@ type storedInstance struct {
 	GoogleEnabled    bool   `json:"google_enabled"`
 	GoogleClientID   string `json:"google_client_id"`
 	GoogleSecret     string `json:"google_client_secret_sealed"`
+	LM2Enabled       bool   `json:"lm2_enabled"`
+	LM2URL           string `json:"lm2_url"`
+	LM2App           string `json:"lm2_app"`
 }
 
 // Instance returns the current settings with secrets decrypted.
@@ -85,6 +103,7 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 	inst := Instance{
 		RegistrationOpen: st.RegistrationOpen,
 		Google:           Google{Enabled: st.GoogleEnabled, ClientID: st.GoogleClientID},
+		LM2:              LM2{Enabled: st.LM2Enabled, URL: st.LM2URL, App: st.LM2App},
 	}
 	if st.GoogleSecret != "" {
 		if inst.Google.ClientSecret, err = s.cipher.Open(st.GoogleSecret); err != nil {
@@ -121,6 +140,15 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 	if u.GoogleClientSecret != nil {
 		inst.Google.ClientSecret = cmp.Or(*u.GoogleClientSecret, inst.Google.ClientSecret)
 	}
+	if u.LM2Enabled != nil {
+		inst.LM2.Enabled = *u.LM2Enabled
+	}
+	if u.LM2URL != nil {
+		inst.LM2.URL = strings.TrimRight(strings.TrimSpace(*u.LM2URL), "/")
+	}
+	if u.LM2App != nil {
+		inst.LM2.App = strings.TrimSpace(*u.LM2App)
+	}
 
 	var verr resource.ValidationError
 	if inst.Google.Enabled && inst.Google.ClientID == "" {
@@ -128,6 +156,15 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 	}
 	if inst.Google.Enabled && inst.Google.ClientSecret == "" {
 		verr.Add("google_client_secret", "can't be blank while Google login is enabled")
+	}
+	if inst.LM2.Enabled && inst.LM2.URL == "" {
+		verr.Add("lm2_url", "can't be blank while LM2 login is enabled")
+	}
+	if inst.LM2.Enabled && inst.LM2.App == "" {
+		verr.Add("lm2_app", "can't be blank while LM2 login is enabled")
+	}
+	if inst.LM2.URL != "" && !validHTTPAddress(inst.LM2.URL) {
+		verr.Add("lm2_url", "must be an http or https address without a query")
 	}
 	if err := verr.OrNil(); err != nil {
 		return Instance{}, err
@@ -137,6 +174,9 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		RegistrationOpen: inst.RegistrationOpen,
 		GoogleEnabled:    inst.Google.Enabled,
 		GoogleClientID:   inst.Google.ClientID,
+		LM2Enabled:       inst.LM2.Enabled,
+		LM2URL:           inst.LM2.URL,
+		LM2App:           inst.LM2.App,
 	}
 	if inst.Google.ClientSecret != "" {
 		if st.GoogleSecret, err = s.cipher.Seal(inst.Google.ClientSecret); err != nil {
@@ -151,6 +191,12 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		return Instance{}, fmt.Errorf("save settings: %w", err)
 	}
 	return inst, nil
+}
+
+func validHTTPAddress(address string) bool {
+	u, err := url.Parse(address)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != "" &&
+		u.User == nil && u.RawQuery == "" && u.Fragment == ""
 }
 
 // Cipher encrypts values with AES-256-GCM.

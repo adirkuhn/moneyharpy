@@ -30,6 +30,7 @@ export function RegisterPage() {
         <button className="btn btn--primary btn--wide" disabled={register.isPending}>Create account</button>
       </form>
       {providers.data?.google && <a className="btn btn--secondary btn--wide" href="/api/auth/google/start">Continue with Google</a>}
+      {providers.data?.lm2 && <a className="btn btn--secondary btn--wide" href="/api/auth/lm2/start">Continue with LM2</a>}
       <p className="auth__alt">Already registered? <Link to="/login">Sign in</Link></p>
     </AuthLayout>
   )

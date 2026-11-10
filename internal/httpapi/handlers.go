@@ -20,9 +20,11 @@ import (
 
 const (
 	sessionMaxAge   = 30 * 24 * time.Hour
-	oauthCookie     = "moneyharpy_oauth"
 	oauthCookieAge  = 10 * time.Minute
+	oauthCookie     = "moneyharpy_oauth"
 	oauthCookiePath = "/api/auth/google"
+	lm2Cookie       = "moneyharpy_lm2"
+	lm2CookiePath   = "/api/auth/lm2"
 	afterLoginPath  = "/administrations"
 )
 
@@ -157,7 +159,7 @@ func (s *server) AuthProviders(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, AuthProviders{RegistrationOpen: inst.RegistrationOpen, Google: inst.Google.Enabled})
+	writeJSON(w, http.StatusOK, AuthProviders{RegistrationOpen: inst.RegistrationOpen, Google: inst.Google.Enabled, Lm2: inst.LM2.Enabled})
 }
 
 // Register implements ServerInterface.
@@ -224,17 +226,16 @@ func (s *server) GoogleStart(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
-	s.setOAuthCookie(w, state+"."+nonce, oauthCookieAge)
+	s.setChallengeCookie(w, oauthCookie, oauthCookiePath, state+"."+nonce, oauthCookieAge)
 	http.Redirect(w, r, target, http.StatusFound)
 }
 
 // GoogleCallback implements ServerInterface.
 func (s *server) GoogleCallback(w http.ResponseWriter, r *http.Request, params GoogleCallbackParams) {
-	s.setOAuthCookie(w, "", -time.Second)
+	s.setChallengeCookie(w, oauthCookie, oauthCookiePath, "", -time.Second)
 
 	state, nonce, ok := s.oauthChallenge(r)
-	if !ok || params.Error != nil || params.Code == nil || params.State == nil ||
-		subtle.ConstantTimeCompare([]byte(*params.State), []byte(state)) != 1 {
+	if !ok || params.Error != nil || params.Code == nil || params.State == nil || !sameSecret(*params.State, state) {
 		http.Redirect(w, r, "/login?error=google", http.StatusFound)
 		return
 	}
@@ -245,6 +246,50 @@ func (s *server) GoogleCallback(w http.ResponseWriter, r *http.Request, params G
 		http.Redirect(w, r, "/login?error=google", http.StatusFound)
 		return
 	}
+	s.finishExternalLogin(w, r, external, "google")
+}
+
+// Lm2Start implements ServerInterface.
+func (s *server) Lm2Start(w http.ResponseWriter, r *http.Request) {
+	inst, err := s.deps.Settings.Instance(r.Context())
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	if !inst.LM2.Enabled {
+		writeError(w, http.StatusNotFound, "Not found")
+		return
+	}
+	state := rand.Text()
+	target, err := s.deps.LM2.LoginURL(r.Context(), state)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	s.setChallengeCookie(w, lm2Cookie, lm2CookiePath, state, oauthCookieAge)
+	http.Redirect(w, r, target, http.StatusFound)
+}
+
+// Lm2Callback implements ServerInterface. The token arrives in the address
+// because that is how LM2 hands it over, so it must never be logged.
+func (s *server) Lm2Callback(w http.ResponseWriter, r *http.Request, state string, params Lm2CallbackParams) {
+	s.setChallengeCookie(w, lm2Cookie, lm2CookiePath, "", -time.Second)
+
+	c, err := r.Cookie(lm2Cookie)
+	if err != nil || params.Token == nil || !sameSecret(state, c.Value) {
+		http.Redirect(w, r, "/login?error=lm2", http.StatusFound)
+		return
+	}
+	external, err := s.deps.LM2.Identify(r.Context(), *params.Token)
+	if err != nil {
+		s.deps.Logger.WarnContext(r.Context(), "lm2 identify failed", "error", err)
+		http.Redirect(w, r, "/login?error=lm2", http.StatusFound)
+		return
+	}
+	s.finishExternalLogin(w, r, external, "lm2")
+}
+
+func (s *server) finishExternalLogin(w http.ResponseWriter, r *http.Request, external identity.External, provider string) {
 	res, err := s.deps.Identity.LoginExternal(r.Context(), external)
 	switch {
 	case errors.Is(err, identity.ErrRegistrationClosed):
@@ -254,12 +299,16 @@ func (s *server) GoogleCallback(w http.ResponseWriter, r *http.Request, params G
 		http.Redirect(w, r, "/login?error=email_taken", http.StatusFound)
 		return
 	case err != nil:
-		s.deps.Logger.ErrorContext(r.Context(), "google login failed", "error", err)
-		http.Redirect(w, r, "/login?error=google", http.StatusFound)
+		s.deps.Logger.ErrorContext(r.Context(), "external login failed", "provider", provider, "error", err)
+		http.Redirect(w, r, "/login?error="+provider, http.StatusFound)
 		return
 	}
 	s.setSession(w, res.SessionToken, sessionMaxAge)
 	http.Redirect(w, r, afterLoginPath, http.StatusFound)
+}
+
+func sameSecret(a, b string) bool {
+	return subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }
 
 func (s *server) oauthChallenge(r *http.Request) (state, nonce string, ok bool) {
@@ -270,11 +319,13 @@ func (s *server) oauthChallenge(r *http.Request) (state, nonce string, ok bool) 
 	return strings.Cut(c.Value, ".")
 }
 
-func (s *server) setOAuthCookie(w http.ResponseWriter, value string, maxAge time.Duration) {
+// setChallengeCookie stores a sign-in challenge. SameSite=Lax keeps it on the
+// top-level redirect back from the provider.
+func (s *server) setChallengeCookie(w http.ResponseWriter, name, cookiePath, value string, maxAge time.Duration) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     oauthCookie,
+		Name:     name,
 		Value:    value,
-		Path:     oauthCookiePath,
+		Path:     cookiePath,
 		MaxAge:   int(maxAge.Seconds()),
 		HttpOnly: true,
 		Secure:   s.secureCookies,
@@ -339,6 +390,9 @@ func toInstanceSettings(inst settings.Instance) InstanceSettings {
 		GoogleEnabled:         inst.Google.Enabled,
 		GoogleClientId:        inst.Google.ClientID,
 		GoogleClientSecretSet: inst.Google.ClientSecret != "",
+		Lm2Enabled:            inst.LM2.Enabled,
+		Lm2Url:                inst.LM2.URL,
+		Lm2App:                inst.LM2.App,
 	}
 }
 
@@ -377,6 +431,9 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 		GoogleEnabled:      body.GoogleEnabled,
 		GoogleClientID:     body.GoogleClientId,
 		GoogleClientSecret: body.GoogleClientSecret,
+		LM2Enabled:         body.Lm2Enabled,
+		LM2URL:             body.Lm2Url,
+		LM2App:             body.Lm2App,
 	})
 	if err != nil {
 		s.fail(w, r, err)

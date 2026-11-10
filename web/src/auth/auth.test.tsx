@@ -55,12 +55,26 @@ describe('signing in', () => {
     expect(link).toHaveAttribute('href', '/api/auth/google/start')
   })
 
+  it('offers LM2 only when it is enabled', async () => {
+    server.use(signedOut(), providers(false, true, true))
+    renderAt('/login')
+    const link = await screen.findByRole('link', { name: 'Continue with LM2' })
+    expect(link).toHaveAttribute('href', '/api/auth/lm2/start')
+  })
+
+  it('explains a failed LM2 sign-in', async () => {
+    server.use(signedOut(), providers(false, true, true))
+    renderAt('/login?error=lm2')
+    expect(await screen.findByRole('alert')).toHaveTextContent('LM2 sign-in did not complete')
+  })
+
   it('hides Google and registration when they are off', async () => {
     server.use(signedOut(), providers(false, false))
     renderAt('/login')
     await screen.findByRole('heading', { name: 'Sign in to MoneyHarpy' })
     await waitFor(() => expect(screen.queryByRole('link', { name: 'Create an account' })).toBeNull())
     expect(screen.queryByRole('link', { name: 'Continue with Google' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Continue with LM2' })).toBeNull()
   })
 
   it('shows why a Google sign-in failed', async () => {

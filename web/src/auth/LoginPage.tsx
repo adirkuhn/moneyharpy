@@ -6,6 +6,7 @@ import { useCurrentUser, useLogin, useProviders } from './queries'
 
 const providerErrors: Record<string, string> = {
   google: 'Google sign-in did not complete. Try again or use your password.',
+  lm2: 'LM2 sign-in did not complete. Try again or use your password.',
   registration_closed: 'Registration is closed. Ask an administrator for access.',
   email_taken: 'This email already has an account. Sign in with your password.',
 }
@@ -42,6 +43,7 @@ export function LoginPage() {
         <button className="btn btn--primary btn--wide" disabled={login.isPending}>Sign in</button>
       </form>
       {providers.data?.google && <a className="btn btn--secondary btn--wide" href="/api/auth/google/start">Continue with Google</a>}
+      {providers.data?.lm2 && <a className="btn btn--secondary btn--wide" href="/api/auth/lm2/start">Continue with LM2</a>}
       {providers.data?.registration_open && <p className="auth__alt">New here? <Link to="/register">Create an account</Link></p>}
     </AuthLayout>
   )
