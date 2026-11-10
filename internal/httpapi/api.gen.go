@@ -12,7 +12,50 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Defines values for AccountType.
+const (
+	AccountTypeCurrentAssets         AccountType = "current_assets"
+	AccountTypeCurrentLiabilities    AccountType = "current_liabilities"
+	AccountTypeDirectCosts           AccountType = "direct_costs"
+	AccountTypeEquity                AccountType = "equity"
+	AccountTypeExpenses              AccountType = "expenses"
+	AccountTypeNonCurrentAssets      AccountType = "non_current_assets"
+	AccountTypeNonCurrentLiabilities AccountType = "non_current_liabilities"
+	AccountTypeOtherIncomeExpenses   AccountType = "other_income_expenses"
+	AccountTypeProvisions            AccountType = "provisions"
+	AccountTypeRevenue               AccountType = "revenue"
+)
+
+// Valid indicates whether the value is a known member of the AccountType enum.
+func (e AccountType) Valid() bool {
+	switch e {
+	case AccountTypeCurrentAssets:
+		return true
+	case AccountTypeCurrentLiabilities:
+		return true
+	case AccountTypeDirectCosts:
+		return true
+	case AccountTypeEquity:
+		return true
+	case AccountTypeExpenses:
+		return true
+	case AccountTypeNonCurrentAssets:
+		return true
+	case AccountTypeNonCurrentLiabilities:
+		return true
+	case AccountTypeOtherIncomeExpenses:
+		return true
+	case AccountTypeProvisions:
+		return true
+	case AccountTypeRevenue:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for AdministrationAccess.
 const (
@@ -50,6 +93,27 @@ func (e CustomFieldSource) Valid() bool {
 	case CustomFieldSourceIdentity:
 		return true
 	case CustomFieldSourceSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DeclarationPeriod.
+const (
+	Month   DeclarationPeriod = "month"
+	Quarter DeclarationPeriod = "quarter"
+	Year    DeclarationPeriod = "year"
+)
+
+// Valid indicates whether the value is a known member of the DeclarationPeriod enum.
+func (e DeclarationPeriod) Valid() bool {
+	switch e {
+	case Month:
+		return true
+	case Quarter:
+		return true
+	case Year:
 		return true
 	default:
 		return false
@@ -170,6 +234,33 @@ func (e DocumentStyleRequestDocumentStylePaperSize) Valid() bool {
 	}
 }
 
+// Defines values for DocumentType.
+const (
+	DocumentTypeFinancialMutation      DocumentType = "financial_mutation"
+	DocumentTypeGeneralJournalDocument DocumentType = "general_journal_document"
+	DocumentTypePayment                DocumentType = "payment"
+	DocumentTypePurchaseInvoice        DocumentType = "purchase_invoice"
+	DocumentTypeSalesInvoice           DocumentType = "sales_invoice"
+)
+
+// Valid indicates whether the value is a known member of the DocumentType enum.
+func (e DocumentType) Valid() bool {
+	switch e {
+	case DocumentTypeFinancialMutation:
+		return true
+	case DocumentTypeGeneralJournalDocument:
+		return true
+	case DocumentTypePayment:
+		return true
+	case DocumentTypePurchaseInvoice:
+		return true
+	case DocumentTypeSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IdentityRequestIdentityTaxNumberAbsenceReason.
 const (
 	IdentityRequestIdentityTaxNumberAbsenceReasonBelowTaxThreshold IdentityRequestIdentityTaxNumberAbsenceReason = "below_tax_threshold"
@@ -212,6 +303,81 @@ func (e Language) Valid() bool {
 	}
 }
 
+// Defines values for LedgerAccountAccountType.
+const (
+	LedgerAccountAccountTypeCurrentAssets         LedgerAccountAccountType = "current_assets"
+	LedgerAccountAccountTypeCurrentLiabilities    LedgerAccountAccountType = "current_liabilities"
+	LedgerAccountAccountTypeDirectCosts           LedgerAccountAccountType = "direct_costs"
+	LedgerAccountAccountTypeEquity                LedgerAccountAccountType = "equity"
+	LedgerAccountAccountTypeExpenses              LedgerAccountAccountType = "expenses"
+	LedgerAccountAccountTypeNonCurrentAssets      LedgerAccountAccountType = "non_current_assets"
+	LedgerAccountAccountTypeNonCurrentLiabilities LedgerAccountAccountType = "non_current_liabilities"
+	LedgerAccountAccountTypeOther                 LedgerAccountAccountType = "other"
+	LedgerAccountAccountTypeOtherIncomeExpenses   LedgerAccountAccountType = "other_income_expenses"
+	LedgerAccountAccountTypeProvisions            LedgerAccountAccountType = "provisions"
+	LedgerAccountAccountTypeRevenue               LedgerAccountAccountType = "revenue"
+	LedgerAccountAccountTypeTemporary             LedgerAccountAccountType = "temporary"
+)
+
+// Valid indicates whether the value is a known member of the LedgerAccountAccountType enum.
+func (e LedgerAccountAccountType) Valid() bool {
+	switch e {
+	case LedgerAccountAccountTypeCurrentAssets:
+		return true
+	case LedgerAccountAccountTypeCurrentLiabilities:
+		return true
+	case LedgerAccountAccountTypeDirectCosts:
+		return true
+	case LedgerAccountAccountTypeEquity:
+		return true
+	case LedgerAccountAccountTypeExpenses:
+		return true
+	case LedgerAccountAccountTypeNonCurrentAssets:
+		return true
+	case LedgerAccountAccountTypeNonCurrentLiabilities:
+		return true
+	case LedgerAccountAccountTypeOther:
+		return true
+	case LedgerAccountAccountTypeOtherIncomeExpenses:
+		return true
+	case LedgerAccountAccountTypeProvisions:
+		return true
+	case LedgerAccountAccountTypeRevenue:
+		return true
+	case LedgerAccountAccountTypeTemporary:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LedgerAccountAllowedDocumentTypes.
+const (
+	LedgerAccountAllowedDocumentTypesFinancialMutation      LedgerAccountAllowedDocumentTypes = "financial_mutation"
+	LedgerAccountAllowedDocumentTypesGeneralJournalDocument LedgerAccountAllowedDocumentTypes = "general_journal_document"
+	LedgerAccountAllowedDocumentTypesPayment                LedgerAccountAllowedDocumentTypes = "payment"
+	LedgerAccountAllowedDocumentTypesPurchaseInvoice        LedgerAccountAllowedDocumentTypes = "purchase_invoice"
+	LedgerAccountAllowedDocumentTypesSalesInvoice           LedgerAccountAllowedDocumentTypes = "sales_invoice"
+)
+
+// Valid indicates whether the value is a known member of the LedgerAccountAllowedDocumentTypes enum.
+func (e LedgerAccountAllowedDocumentTypes) Valid() bool {
+	switch e {
+	case LedgerAccountAllowedDocumentTypesFinancialMutation:
+		return true
+	case LedgerAccountAllowedDocumentTypesGeneralJournalDocument:
+		return true
+	case LedgerAccountAllowedDocumentTypesPayment:
+		return true
+	case LedgerAccountAllowedDocumentTypesPurchaseInvoice:
+		return true
+	case LedgerAccountAllowedDocumentTypesSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TaxNumberAbsenceReason.
 const (
 	TaxNumberAbsenceReasonBelowTaxThreshold TaxNumberAbsenceReason = "below_tax_threshold"
@@ -224,6 +390,66 @@ func (e TaxNumberAbsenceReason) Valid() bool {
 	case TaxNumberAbsenceReasonBelowTaxThreshold:
 		return true
 	case TaxNumberAbsenceReasonIndustryExemption:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TaxRateTaxRateType.
+const (
+	TaxRateTaxRateTypeGeneralJournalDocument TaxRateTaxRateType = "general_journal_document"
+	TaxRateTaxRateTypePurchaseInvoice        TaxRateTaxRateType = "purchase_invoice"
+	TaxRateTaxRateTypeSalesInvoice           TaxRateTaxRateType = "sales_invoice"
+)
+
+// Valid indicates whether the value is a known member of the TaxRateTaxRateType enum.
+func (e TaxRateTaxRateType) Valid() bool {
+	switch e {
+	case TaxRateTaxRateTypeGeneralJournalDocument:
+		return true
+	case TaxRateTaxRateTypePurchaseInvoice:
+		return true
+	case TaxRateTaxRateTypeSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TaxRateType.
+const (
+	TaxRateTypeGeneralJournalDocument TaxRateType = "general_journal_document"
+	TaxRateTypePurchaseInvoice        TaxRateType = "purchase_invoice"
+	TaxRateTypeSalesInvoice           TaxRateType = "sales_invoice"
+)
+
+// Valid indicates whether the value is a known member of the TaxRateType enum.
+func (e TaxRateType) Valid() bool {
+	switch e {
+	case TaxRateTypeGeneralJournalDocument:
+		return true
+	case TaxRateTypePurchaseInvoice:
+		return true
+	case TaxRateTypeSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TaxonomyItemSide.
+const (
+	BalanceSheet  TaxonomyItemSide = "balance_sheet"
+	ProfitAndLoss TaxonomyItemSide = "profit_and_loss"
+)
+
+// Valid indicates whether the value is a known member of the TaxonomyItemSide enum.
+func (e TaxonomyItemSide) Valid() bool {
+	switch e {
+	case BalanceSheet:
+		return true
+	case ProfitAndLoss:
 		return true
 	default:
 		return false
@@ -320,6 +546,81 @@ func (e DocumentStyleResponsePaperSize) Valid() bool {
 	case DocumentStyleResponsePaperSizeA4:
 		return true
 	case DocumentStyleResponsePaperSizeLetter:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LedgerAccountResponseAccountType.
+const (
+	LedgerAccountResponseAccountTypeCurrentAssets         LedgerAccountResponseAccountType = "current_assets"
+	LedgerAccountResponseAccountTypeCurrentLiabilities    LedgerAccountResponseAccountType = "current_liabilities"
+	LedgerAccountResponseAccountTypeDirectCosts           LedgerAccountResponseAccountType = "direct_costs"
+	LedgerAccountResponseAccountTypeEquity                LedgerAccountResponseAccountType = "equity"
+	LedgerAccountResponseAccountTypeExpenses              LedgerAccountResponseAccountType = "expenses"
+	LedgerAccountResponseAccountTypeNonCurrentAssets      LedgerAccountResponseAccountType = "non_current_assets"
+	LedgerAccountResponseAccountTypeNonCurrentLiabilities LedgerAccountResponseAccountType = "non_current_liabilities"
+	LedgerAccountResponseAccountTypeOther                 LedgerAccountResponseAccountType = "other"
+	LedgerAccountResponseAccountTypeOtherIncomeExpenses   LedgerAccountResponseAccountType = "other_income_expenses"
+	LedgerAccountResponseAccountTypeProvisions            LedgerAccountResponseAccountType = "provisions"
+	LedgerAccountResponseAccountTypeRevenue               LedgerAccountResponseAccountType = "revenue"
+	LedgerAccountResponseAccountTypeTemporary             LedgerAccountResponseAccountType = "temporary"
+)
+
+// Valid indicates whether the value is a known member of the LedgerAccountResponseAccountType enum.
+func (e LedgerAccountResponseAccountType) Valid() bool {
+	switch e {
+	case LedgerAccountResponseAccountTypeCurrentAssets:
+		return true
+	case LedgerAccountResponseAccountTypeCurrentLiabilities:
+		return true
+	case LedgerAccountResponseAccountTypeDirectCosts:
+		return true
+	case LedgerAccountResponseAccountTypeEquity:
+		return true
+	case LedgerAccountResponseAccountTypeExpenses:
+		return true
+	case LedgerAccountResponseAccountTypeNonCurrentAssets:
+		return true
+	case LedgerAccountResponseAccountTypeNonCurrentLiabilities:
+		return true
+	case LedgerAccountResponseAccountTypeOther:
+		return true
+	case LedgerAccountResponseAccountTypeOtherIncomeExpenses:
+		return true
+	case LedgerAccountResponseAccountTypeProvisions:
+		return true
+	case LedgerAccountResponseAccountTypeRevenue:
+		return true
+	case LedgerAccountResponseAccountTypeTemporary:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LedgerAccountResponseAllowedDocumentTypes.
+const (
+	LedgerAccountResponseAllowedDocumentTypesFinancialMutation      LedgerAccountResponseAllowedDocumentTypes = "financial_mutation"
+	LedgerAccountResponseAllowedDocumentTypesGeneralJournalDocument LedgerAccountResponseAllowedDocumentTypes = "general_journal_document"
+	LedgerAccountResponseAllowedDocumentTypesPayment                LedgerAccountResponseAllowedDocumentTypes = "payment"
+	LedgerAccountResponseAllowedDocumentTypesPurchaseInvoice        LedgerAccountResponseAllowedDocumentTypes = "purchase_invoice"
+	LedgerAccountResponseAllowedDocumentTypesSalesInvoice           LedgerAccountResponseAllowedDocumentTypes = "sales_invoice"
+)
+
+// Valid indicates whether the value is a known member of the LedgerAccountResponseAllowedDocumentTypes enum.
+func (e LedgerAccountResponseAllowedDocumentTypes) Valid() bool {
+	switch e {
+	case LedgerAccountResponseAllowedDocumentTypesFinancialMutation:
+		return true
+	case LedgerAccountResponseAllowedDocumentTypesGeneralJournalDocument:
+		return true
+	case LedgerAccountResponseAllowedDocumentTypesPayment:
+		return true
+	case LedgerAccountResponseAllowedDocumentTypesPurchaseInvoice:
+		return true
+	case LedgerAccountResponseAllowedDocumentTypesSalesInvoice:
 		return true
 	default:
 		return false
@@ -599,6 +900,27 @@ func (e NoteResponseTodoType) Valid() bool {
 	}
 }
 
+// Defines values for TaxRateResponseTaxRateType.
+const (
+	TaxRateResponseTaxRateTypeGeneralJournalDocument TaxRateResponseTaxRateType = "general_journal_document"
+	TaxRateResponseTaxRateTypePurchaseInvoice        TaxRateResponseTaxRateType = "purchase_invoice"
+	TaxRateResponseTaxRateTypeSalesInvoice           TaxRateResponseTaxRateType = "sales_invoice"
+)
+
+// Valid indicates whether the value is a known member of the TaxRateResponseTaxRateType enum.
+func (e TaxRateResponseTaxRateType) Valid() bool {
+	switch e {
+	case TaxRateResponseTaxRateTypeGeneralJournalDocument:
+		return true
+	case TaxRateResponseTaxRateTypePurchaseInvoice:
+		return true
+	case TaxRateResponseTaxRateTypeSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for WorkflowStepResponseAction.
 const (
 	CancelSubscription         WorkflowStepResponseAction = "cancel_subscription"
@@ -622,6 +944,9 @@ func (e WorkflowStepResponseAction) Valid() bool {
 		return false
 	}
 }
+
+// AccountType defines model for AccountType.
+type AccountType string
 
 // AddressMatch defines model for AddressMatch.
 type AddressMatch struct {
@@ -707,6 +1032,49 @@ type AuthProviders struct {
 	Lm2              bool `json:"lm2"`
 	PasswordReset    bool `json:"password_reset"`
 	RegistrationOpen bool `json:"registration_open"`
+}
+
+// BookkeepingSettings MoneyHarpy extension.
+type BookkeepingSettings struct {
+	// ChartScheme ID of the chart scheme categories map to; empty for none.
+	ChartScheme string `json:"chart_scheme"`
+
+	// ChartSchemes The chart schemes that can be chosen.
+	ChartSchemes                                []ChartScheme     `json:"chart_schemes"`
+	IntraCommunityTransactionsDeclarationPeriod DeclarationPeriod `json:"intra_community_transactions_declaration_period"`
+
+	// PeriodLockedUntil The books are closed up to and including this date.
+	PeriodLockedUntil *openapi_types.Date `json:"period_locked_until"`
+
+	// TaxReportBoxes The boxes of the administration's VAT return.
+	TaxReportBoxes     []TaxReportBox    `json:"tax_report_boxes"`
+	VatDocumentsPeriod DeclarationPeriod `json:"vat_documents_period"`
+}
+
+// BookkeepingSettingsRequest defines model for BookkeepingSettingsRequest.
+type BookkeepingSettingsRequest struct {
+	BookkeepingSettings struct {
+		ChartScheme                                 *string            `json:"chart_scheme,omitempty"`
+		IntraCommunityTransactionsDeclarationPeriod *DeclarationPeriod `json:"intra_community_transactions_declaration_period,omitempty"`
+
+		// PeriodLockedUntil A date (YYYY-MM-DD) not in the future, or empty to unlock.
+		PeriodLockedUntil  *string            `json:"period_locked_until,omitempty"`
+		VatDocumentsPeriod *DeclarationPeriod `json:"vat_documents_period,omitempty"`
+	} `json:"bookkeeping_settings"`
+}
+
+// ChartScheme MoneyHarpy extension. A standard chart of accounts categories can map to.
+type ChartScheme struct {
+	// Country Example: NL
+	Country string `json:"country"`
+
+	// Id Example: nl-rgs-3.8
+	Id   string `json:"id"`
+	Name string `json:"name"`
+
+	// Source Where the scheme is published.
+	Source  string `json:"source"`
+	Version string `json:"version"`
 }
 
 // CompanyMatch defines model for CompanyMatch.
@@ -828,6 +1196,9 @@ type CustomFieldValue struct {
 	Name  string     `json:"name"`
 	Value string     `json:"value"`
 }
+
+// DeclarationPeriod defines model for DeclarationPeriod.
+type DeclarationPeriod string
 
 // DocumentStyle A Moneybird document style with MoneyHarpy extensions.
 type DocumentStyle struct {
@@ -996,6 +1367,9 @@ type DocumentStyleRequestDocumentStyleLogoPosition string
 
 // DocumentStyleRequestDocumentStylePaperSize defines model for DocumentStyleRequest.DocumentStyle.PaperSize.
 type DocumentStyleRequestDocumentStylePaperSize string
+
+// DocumentType defines model for DocumentType.
+type DocumentType string
 
 // Error defines model for Error.
 type Error struct {
@@ -1175,6 +1549,107 @@ type InvoiceSettingsRequest struct {
 // Language The language code used in the administration
 type Language string
 
+// LedgerAccount A Moneybird ledger account with MoneyHarpy extensions.
+type LedgerAccount struct {
+	AccountId   *string                   `json:"account_id,omitempty"`
+	AccountType *LedgerAccountAccountType `json:"account_type,omitempty"`
+	Active      *bool                     `json:"active,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId     *Identifier                          `json:"administration_id,omitempty"`
+	AllowedDocumentTypes *[]LedgerAccountAllowedDocumentTypes `json:"allowed_document_types,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Description MoneyHarpy extension. What the category is for.
+	Description *string `json:"description"`
+
+	// FinancialAccountId Moneybird-compatible identifier_nullable.
+	FinancialAccountId *IdentifierNullable `json:"financial_account_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id   *Identifier `json:"id,omitempty"`
+	Name *string     `json:"name,omitempty"`
+
+	// ParentId Moneybird-compatible identifier_nullable.
+	ParentId *IdentifierNullable `json:"parent_id,omitempty"`
+
+	// SystemRole MoneyHarpy extension. Set on categories the books rely on, which cannot be removed or change type.
+	SystemRole   *string                     `json:"system_role"`
+	TaxonomyItem *LedgerAccount_TaxonomyItem `json:"taxonomy_item,omitempty"`
+
+	// Template MoneyHarpy extension. Key of the template the category was added with.
+	Template *string `json:"template"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// LedgerAccountAccountType defines model for LedgerAccount.AccountType.
+type LedgerAccountAccountType string
+
+// LedgerAccountAllowedDocumentTypes defines model for LedgerAccount.AllowedDocumentTypes.
+type LedgerAccountAllowedDocumentTypes string
+
+// LedgerAccount_TaxonomyItem defines model for LedgerAccount.TaxonomyItem.
+type LedgerAccount_TaxonomyItem struct {
+	union json.RawMessage
+}
+
+// LedgerAccountRequest defines model for LedgerAccountRequest.
+type LedgerAccountRequest struct {
+	LedgerAccount struct {
+		// AccountId The account number, such as 8000.
+		AccountId   *string      `json:"account_id,omitempty"`
+		AccountType *AccountType `json:"account_type,omitempty"`
+
+		// Active MoneyHarpy extension.
+		Active               *bool           `json:"active,omitempty"`
+		AllowedDocumentTypes *[]DocumentType `json:"allowed_document_types,omitempty"`
+		Description          *string         `json:"description,omitempty"`
+		Name                 *string         `json:"name,omitempty"`
+
+		// ParentId Empty for none.
+		ParentId *string `json:"parent_id,omitempty"`
+	} `json:"ledger_account"`
+
+	// RgsCode Code in the administration's chart scheme. Required on create when it has one.
+	RgsCode *string `json:"rgs_code,omitempty"`
+}
+
+// LedgerAccountSchemeRequest defines model for LedgerAccountSchemeRequest.
+type LedgerAccountSchemeRequest struct {
+	LedgerAccounts []struct {
+		// Id A unique record identifier. Parse as a string.
+		//
+		// Example: 416072101932303822
+		Id      Identifier `json:"id"`
+		RgsCode string     `json:"rgs_code"`
+	} `json:"ledger_accounts"`
+}
+
+// LedgerAccountTemplate MoneyHarpy extension. A group of ledger accounts for a common situation.
+type LedgerAccountTemplate struct {
+	// Applied The administration has all of the template's ledger accounts.
+	Applied        bool   `json:"applied"`
+	Description    string `json:"description"`
+	Key            string `json:"key"`
+	LedgerAccounts []struct {
+		AccountId   string      `json:"account_id"`
+		AccountType AccountType `json:"account_type"`
+		Name        string      `json:"name"`
+	} `json:"ledger_accounts"`
+	Name string `json:"name"`
+}
+
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
 	Email    string `json:"email"`
@@ -1234,6 +1709,99 @@ type ResourceLocation struct {
 
 // TaxNumberAbsenceReason defines model for TaxNumberAbsenceReason.
 type TaxNumberAbsenceReason string
+
+// TaxRate A Moneybird tax rate with MoneyHarpy extensions.
+type TaxRate struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+	Country          *string     `json:"country,omitempty"`
+	CreatedAt        *time.Time  `json:"created_at,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id         *Identifier         `json:"id,omitempty"`
+	Name       *string             `json:"name,omitempty"`
+	Percentage *TaxRate_Percentage `json:"percentage,omitempty"`
+
+	// Position MoneyHarpy extension. Order among the rates of its type, from 1.
+	Position    int                 `json:"position"`
+	ShowTax     *bool               `json:"show_tax,omitempty"`
+	TaxRateType *TaxRateTaxRateType `json:"tax_rate_type,omitempty"`
+
+	// TaxReportBoxes MoneyHarpy extension. The boxes of the VAT return the rate counts in.
+	TaxReportBoxes []string   `json:"tax_report_boxes"`
+	UpdatedAt      *time.Time `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// TaxRate_Percentage defines model for TaxRate.Percentage.
+type TaxRate_Percentage struct {
+	union json.RawMessage
+}
+
+// TaxRateTaxRateType defines model for TaxRate.TaxRateType.
+type TaxRateTaxRateType string
+
+// TaxRateOrderRequest defines model for TaxRateOrderRequest.
+type TaxRateOrderRequest struct {
+	Ids         []Identifier `json:"ids"`
+	TaxRateType TaxRateType  `json:"tax_rate_type"`
+}
+
+// TaxRateRequest defines model for TaxRateRequest.
+type TaxRateRequest struct {
+	TaxRate struct {
+		Active *bool `json:"active,omitempty"`
+
+		// Country ISO 3166-1 alpha-2 code for a rate of another country; empty for the administration's own.
+		Country *string `json:"country,omitempty"`
+		Name    *string `json:"name,omitempty"`
+
+		// Percentage From 0 to 100 with at most two decimals; a comma is accepted.
+		Percentage *string `json:"percentage,omitempty"`
+
+		// ShowTax Print the VAT on the document. Off for reverse-charged and exempt rates.
+		ShowTax        *bool        `json:"show_tax,omitempty"`
+		TaxRateType    *TaxRateType `json:"tax_rate_type,omitempty"`
+		TaxReportBoxes *[]string    `json:"tax_report_boxes,omitempty"`
+	} `json:"tax_rate"`
+}
+
+// TaxRateType defines model for TaxRateType.
+type TaxRateType string
+
+// TaxReportBox MoneyHarpy extension. One box of the country's VAT return.
+type TaxReportBox struct {
+	// Code Example: NL/1a
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+// TaxonomyItem A code of a chart scheme with MoneyHarpy extensions.
+type TaxonomyItem struct {
+	Code        *string `json:"code,omitempty"`
+	Description *string `json:"description,omitempty"`
+
+	// Level MoneyHarpy extension. Depth in the scheme, from 1.
+	Level       int     `json:"level"`
+	Name        *string `json:"name,omitempty"`
+	NameEnglish *string `json:"name_english,omitempty"`
+	Reference   *string `json:"reference,omitempty"`
+
+	// Side MoneyHarpy extension.
+	Side            TaxonomyItemSide `json:"side"`
+	TaxonomyVersion *string          `json:"taxonomy_version,omitempty"`
+}
+
+// TaxonomyItemSide MoneyHarpy extension.
+type TaxonomyItemSide string
 
 // UpdateAdministrationRequest defines model for UpdateAdministrationRequest.
 type UpdateAdministrationRequest struct {
@@ -1519,6 +2087,49 @@ type IdentifierNullable0 = string
 // IdentifierNullable1 defines model for IdentifierNullable.1.
 type IdentifierNullable1 = int
 
+// LedgerAccountResponse Moneybird-compatible ledger_account_response.
+type LedgerAccountResponse struct {
+	AccountId   *string                           `json:"account_id,omitempty"`
+	AccountType *LedgerAccountResponseAccountType `json:"account_type,omitempty"`
+	Active      *bool                             `json:"active,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId     *Identifier                                  `json:"administration_id,omitempty"`
+	AllowedDocumentTypes *[]LedgerAccountResponseAllowedDocumentTypes `json:"allowed_document_types,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// FinancialAccountId Moneybird-compatible identifier_nullable.
+	FinancialAccountId *IdentifierNullable `json:"financial_account_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id   *Identifier `json:"id,omitempty"`
+	Name *string     `json:"name,omitempty"`
+
+	// ParentId Moneybird-compatible identifier_nullable.
+	ParentId     *IdentifierNullable                 `json:"parent_id,omitempty"`
+	TaxonomyItem *LedgerAccountResponse_TaxonomyItem `json:"taxonomy_item,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// LedgerAccountResponseAccountType defines model for LedgerAccountResponse.AccountType.
+type LedgerAccountResponseAccountType string
+
+// LedgerAccountResponseAllowedDocumentTypes defines model for LedgerAccountResponse.AllowedDocumentTypes.
+type LedgerAccountResponseAllowedDocumentTypes string
+
+// LedgerAccountResponse_TaxonomyItem defines model for LedgerAccountResponse.TaxonomyItem.
+type LedgerAccountResponse_TaxonomyItem struct {
+	union json.RawMessage
+}
+
 // NoteResponse Moneybird-compatible note_response.
 type NoteResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -1572,6 +2183,17 @@ type NoteResponse_Todo struct {
 // NoteResponseTodoType defines model for NoteResponse.TodoType.
 type NoteResponseTodoType string
 
+// Number Moneybird-compatible number.
+type Number struct {
+	union json.RawMessage
+}
+
+// Number0 defines model for Number.0.
+type Number0 = string
+
+// Number1 defines model for Number.1.
+type Number1 = float32
+
 // TaskListTaskResponse Moneybird-compatible task_list_task_response.
 type TaskListTaskResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -1606,6 +2228,45 @@ type TaskListTaskResponse struct {
 
 	// UpdatedAt Moneybird-compatible timestamp.
 	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// TaxRateResponse Moneybird-compatible tax_rate_response.
+type TaxRateResponse struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+	Country          *string     `json:"country,omitempty"`
+	CreatedAt        *time.Time  `json:"created_at,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id          *Identifier                 `json:"id,omitempty"`
+	Name        *string                     `json:"name,omitempty"`
+	Percentage  *TaxRateResponse_Percentage `json:"percentage,omitempty"`
+	ShowTax     *bool                       `json:"show_tax,omitempty"`
+	TaxRateType *TaxRateResponseTaxRateType `json:"tax_rate_type,omitempty"`
+	UpdatedAt   *time.Time                  `json:"updated_at,omitempty"`
+}
+
+// TaxRateResponse_Percentage defines model for TaxRateResponse.Percentage.
+type TaxRateResponse_Percentage struct {
+	union json.RawMessage
+}
+
+// TaxRateResponseTaxRateType defines model for TaxRateResponse.TaxRateType.
+type TaxRateResponseTaxRateType string
+
+// TaxonomyItemResponse Moneybird-compatible taxonomy_item_response.
+type TaxonomyItemResponse struct {
+	Code            *string `json:"code,omitempty"`
+	Name            *string `json:"name,omitempty"`
+	NameEnglish     *string `json:"name_english,omitempty"`
+	Reference       *string `json:"reference,omitempty"`
+	TaxonomyVersion *string `json:"taxonomy_version,omitempty"`
 }
 
 // Timestamp Moneybird-compatible timestamp.
@@ -1727,6 +2388,21 @@ type CompanySearchParams struct {
 	Query   string `form:"query" json:"query"`
 }
 
+// ListTaxRatesParams defines parameters for ListTaxRates.
+type ListTaxRatesParams struct {
+	// Filter Comma-separated key:value pairs. Keys are name, partial_name, percentage, tax_rate_type, country, show_tax, active, created_after and updated_after, for example tax_rate_type:sales_invoice,active:true.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// SearchTaxonomyItemsParams defines parameters for SearchTaxonomyItems.
+type SearchTaxonomyItemsParams struct {
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+
+	// AccountType Only codes on the side of the books this account type is on.
+	AccountType *AccountType `form:"account_type,omitempty" json:"account_type,omitempty"`
+	Limit       *int         `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
@@ -1750,6 +2426,9 @@ type CreateAdministrationJSONRequestBody = CreateAdministrationRequest
 
 // UpdateAdministrationJSONRequestBody defines body for UpdateAdministration for application/json ContentType.
 type UpdateAdministrationJSONRequestBody = UpdateAdministrationRequest
+
+// UpdateBookkeepingSettingsJSONRequestBody defines body for UpdateBookkeepingSettings for application/json ContentType.
+type UpdateBookkeepingSettingsJSONRequestBody = BookkeepingSettingsRequest
 
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldRequest
@@ -1777,6 +2456,24 @@ type UpdateIdentityJSONRequestBody = IdentityRequest
 
 // UpdateInvoiceSettingsJSONRequestBody defines body for UpdateInvoiceSettings for application/json ContentType.
 type UpdateInvoiceSettingsJSONRequestBody = InvoiceSettingsRequest
+
+// CreateLedgerAccountJSONRequestBody defines body for CreateLedgerAccount for application/json ContentType.
+type CreateLedgerAccountJSONRequestBody = LedgerAccountRequest
+
+// UpdateLedgerAccountSchemeJSONRequestBody defines body for UpdateLedgerAccountScheme for application/json ContentType.
+type UpdateLedgerAccountSchemeJSONRequestBody = LedgerAccountSchemeRequest
+
+// UpdateLedgerAccountJSONRequestBody defines body for UpdateLedgerAccount for application/json ContentType.
+type UpdateLedgerAccountJSONRequestBody = LedgerAccountRequest
+
+// CreateTaxRateJSONRequestBody defines body for CreateTaxRate for application/json ContentType.
+type CreateTaxRateJSONRequestBody = TaxRateRequest
+
+// ReorderTaxRatesJSONRequestBody defines body for ReorderTaxRates for application/json ContentType.
+type ReorderTaxRatesJSONRequestBody = TaxRateOrderRequest
+
+// UpdateTaxRateJSONRequestBody defines body for UpdateTaxRate for application/json ContentType.
+type UpdateTaxRateJSONRequestBody = TaxRateRequest
 
 // CreateWorkflowJSONRequestBody defines body for CreateWorkflow for application/json ContentType.
 type CreateWorkflowJSONRequestBody = WorkflowRequest
@@ -2152,6 +2849,78 @@ func (t DocumentStyle_InvoiceSenderAddress_AdditionalProperties) MarshalJSON() (
 }
 
 func (t *DocumentStyle_InvoiceSenderAddress_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTaxonomyItemResponse returns the union data inside the LedgerAccount_TaxonomyItem as a TaxonomyItemResponse
+func (t LedgerAccount_TaxonomyItem) AsTaxonomyItemResponse() (TaxonomyItemResponse, error) {
+	var body TaxonomyItemResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTaxonomyItemResponse overwrites any union data inside the LedgerAccount_TaxonomyItem as the provided TaxonomyItemResponse
+func (t *LedgerAccount_TaxonomyItem) FromTaxonomyItemResponse(v TaxonomyItemResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTaxonomyItemResponse performs a merge with any union data inside the LedgerAccount_TaxonomyItem, using the provided TaxonomyItemResponse
+func (t *LedgerAccount_TaxonomyItem) MergeTaxonomyItemResponse(v TaxonomyItemResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t LedgerAccount_TaxonomyItem) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *LedgerAccount_TaxonomyItem) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsNumber returns the union data inside the TaxRate_Percentage as a Number
+func (t TaxRate_Percentage) AsNumber() (Number, error) {
+	var body Number
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNumber overwrites any union data inside the TaxRate_Percentage as the provided Number
+func (t *TaxRate_Percentage) FromNumber(v Number) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNumber performs a merge with any union data inside the TaxRate_Percentage, using the provided Number
+func (t *TaxRate_Percentage) MergeNumber(v Number) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TaxRate_Percentage) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TaxRate_Percentage) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -2626,6 +3395,42 @@ func (t *IdentifierNullable) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsTaxonomyItemResponse returns the union data inside the LedgerAccountResponse_TaxonomyItem as a TaxonomyItemResponse
+func (t LedgerAccountResponse_TaxonomyItem) AsTaxonomyItemResponse() (TaxonomyItemResponse, error) {
+	var body TaxonomyItemResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTaxonomyItemResponse overwrites any union data inside the LedgerAccountResponse_TaxonomyItem as the provided TaxonomyItemResponse
+func (t *LedgerAccountResponse_TaxonomyItem) FromTaxonomyItemResponse(v TaxonomyItemResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTaxonomyItemResponse performs a merge with any union data inside the LedgerAccountResponse_TaxonomyItem, using the provided TaxonomyItemResponse
+func (t *LedgerAccountResponse_TaxonomyItem) MergeTaxonomyItemResponse(v TaxonomyItemResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t LedgerAccountResponse_TaxonomyItem) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *LedgerAccountResponse_TaxonomyItem) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsNoteResponseTodo0 returns the union data inside the NoteResponse_Todo as a NoteResponseTodo0
 func (t NoteResponse_Todo) AsNoteResponseTodo0() (NoteResponseTodo0, error) {
 	var body NoteResponseTodo0
@@ -2684,6 +3489,104 @@ func (t NoteResponse_Todo) MarshalJSON() ([]byte, error) {
 }
 
 func (t *NoteResponse_Todo) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsNumber0 returns the union data inside the Number as a Number0
+func (t Number) AsNumber0() (Number0, error) {
+	var body Number0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNumber0 overwrites any union data inside the Number as the provided Number0
+func (t *Number) FromNumber0(v Number0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNumber0 performs a merge with any union data inside the Number, using the provided Number0
+func (t *Number) MergeNumber0(v Number0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNumber1 returns the union data inside the Number as a Number1
+func (t Number) AsNumber1() (Number1, error) {
+	var body Number1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNumber1 overwrites any union data inside the Number as the provided Number1
+func (t *Number) FromNumber1(v Number1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNumber1 performs a merge with any union data inside the Number, using the provided Number1
+func (t *Number) MergeNumber1(v Number1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Number) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Number) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsNumber returns the union data inside the TaxRateResponse_Percentage as a Number
+func (t TaxRateResponse_Percentage) AsNumber() (Number, error) {
+	var body Number
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNumber overwrites any union data inside the TaxRateResponse_Percentage as the provided Number
+func (t *TaxRateResponse_Percentage) FromNumber(v Number) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNumber performs a merge with any union data inside the TaxRateResponse_Percentage, using the provided Number
+func (t *TaxRateResponse_Percentage) MergeNumber(v Number) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TaxRateResponse_Percentage) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TaxRateResponse_Percentage) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -2774,6 +3677,12 @@ type ServerInterface interface {
 	// FavoriteAdministration Mark an administration as favorite
 	// (PUT /api/v2/administrations/{id}/favorite)
 	FavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id)
+	// GetBookkeepingSettings Get bookkeeping settings
+	// (GET /api/v2/{administration_id}/bookkeeping_settings)
+	GetBookkeepingSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// UpdateBookkeepingSettings Update bookkeeping settings
+	// (PATCH /api/v2/{administration_id}/bookkeeping_settings)
+	UpdateBookkeepingSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// ListCustomFields Retrieve custom fields
 	// (GET /api/v2/{administration_id}/custom_fields)
 	ListCustomFields(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -2843,6 +3752,48 @@ type ServerInterface interface {
 	// UpdateInvoiceSettings Update invoice and estimate settings
 	// (PATCH /api/v2/{administration_id}/invoice_settings)
 	UpdateInvoiceSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListLedgerAccountTemplates Retrieve ledger account templates
+	// (GET /api/v2/{administration_id}/ledger_account_templates)
+	ListLedgerAccountTemplates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ApplyLedgerAccountTemplate Add a template's ledger accounts
+	// (POST /api/v2/{administration_id}/ledger_account_templates/{key})
+	ApplyLedgerAccountTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, key string)
+	// ListLedgerAccounts Retrieve ledger accounts
+	// (GET /api/v2/{administration_id}/ledger_accounts)
+	ListLedgerAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateLedgerAccount Create a ledger account
+	// (POST /api/v2/{administration_id}/ledger_accounts)
+	CreateLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// UpdateLedgerAccountScheme Set the chart scheme codes of several ledger accounts
+	// (PUT /api/v2/{administration_id}/ledger_accounts/scheme)
+	UpdateLedgerAccountScheme(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteLedgerAccount Delete a ledger account
+	// (DELETE /api/v2/{administration_id}/ledger_accounts/{id})
+	DeleteLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetLedgerAccount Retrieve a ledger account
+	// (GET /api/v2/{administration_id}/ledger_accounts/{id})
+	GetLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateLedgerAccount Update a ledger account
+	// (PATCH /api/v2/{administration_id}/ledger_accounts/{id})
+	UpdateLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListTaxRates Retrieve tax rates
+	// (GET /api/v2/{administration_id}/tax_rates)
+	ListTaxRates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTaxRatesParams)
+	// CreateTaxRate Create a tax rate
+	// (POST /api/v2/{administration_id}/tax_rates)
+	CreateTaxRate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ReorderTaxRates Order the tax rates of one type
+	// (PUT /api/v2/{administration_id}/tax_rates/order)
+	ReorderTaxRates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetTaxRate Retrieve a tax rate
+	// (GET /api/v2/{administration_id}/tax_rates/{id})
+	GetTaxRate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateTaxRate Update a tax rate
+	// (PATCH /api/v2/{administration_id}/tax_rates/{id})
+	UpdateTaxRate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// SearchTaxonomyItems Search the chart scheme
+	// (GET /api/v2/{administration_id}/taxonomy_items)
+	SearchTaxonomyItems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params SearchTaxonomyItemsParams)
 	// ListWorkflows Retrieve workflows
 	// (GET /api/v2/{administration_id}/workflows)
 	ListWorkflows(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -3032,6 +3983,18 @@ func (_ Unimplemented) FavoriteAdministration(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetBookkeepingSettings Get bookkeeping settings
+// (GET /api/v2/{administration_id}/bookkeeping_settings)
+func (_ Unimplemented) GetBookkeepingSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateBookkeepingSettings Update bookkeeping settings
+// (PATCH /api/v2/{administration_id}/bookkeeping_settings)
+func (_ Unimplemented) UpdateBookkeepingSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListCustomFields Retrieve custom fields
 // (GET /api/v2/{administration_id}/custom_fields)
 func (_ Unimplemented) ListCustomFields(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
@@ -3167,6 +4130,90 @@ func (_ Unimplemented) GetInvoiceSettings(w http.ResponseWriter, r *http.Request
 // UpdateInvoiceSettings Update invoice and estimate settings
 // (PATCH /api/v2/{administration_id}/invoice_settings)
 func (_ Unimplemented) UpdateInvoiceSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListLedgerAccountTemplates Retrieve ledger account templates
+// (GET /api/v2/{administration_id}/ledger_account_templates)
+func (_ Unimplemented) ListLedgerAccountTemplates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ApplyLedgerAccountTemplate Add a template's ledger accounts
+// (POST /api/v2/{administration_id}/ledger_account_templates/{key})
+func (_ Unimplemented) ApplyLedgerAccountTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, key string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListLedgerAccounts Retrieve ledger accounts
+// (GET /api/v2/{administration_id}/ledger_accounts)
+func (_ Unimplemented) ListLedgerAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateLedgerAccount Create a ledger account
+// (POST /api/v2/{administration_id}/ledger_accounts)
+func (_ Unimplemented) CreateLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateLedgerAccountScheme Set the chart scheme codes of several ledger accounts
+// (PUT /api/v2/{administration_id}/ledger_accounts/scheme)
+func (_ Unimplemented) UpdateLedgerAccountScheme(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteLedgerAccount Delete a ledger account
+// (DELETE /api/v2/{administration_id}/ledger_accounts/{id})
+func (_ Unimplemented) DeleteLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetLedgerAccount Retrieve a ledger account
+// (GET /api/v2/{administration_id}/ledger_accounts/{id})
+func (_ Unimplemented) GetLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateLedgerAccount Update a ledger account
+// (PATCH /api/v2/{administration_id}/ledger_accounts/{id})
+func (_ Unimplemented) UpdateLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTaxRates Retrieve tax rates
+// (GET /api/v2/{administration_id}/tax_rates)
+func (_ Unimplemented) ListTaxRates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTaxRatesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTaxRate Create a tax rate
+// (POST /api/v2/{administration_id}/tax_rates)
+func (_ Unimplemented) CreateTaxRate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ReorderTaxRates Order the tax rates of one type
+// (PUT /api/v2/{administration_id}/tax_rates/order)
+func (_ Unimplemented) ReorderTaxRates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTaxRate Retrieve a tax rate
+// (GET /api/v2/{administration_id}/tax_rates/{id})
+func (_ Unimplemented) GetTaxRate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTaxRate Update a tax rate
+// (PATCH /api/v2/{administration_id}/tax_rates/{id})
+func (_ Unimplemented) UpdateTaxRate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SearchTaxonomyItems Search the chart scheme
+// (GET /api/v2/{administration_id}/taxonomy_items)
+func (_ Unimplemented) SearchTaxonomyItems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params SearchTaxonomyItemsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3814,6 +4861,58 @@ func (siw *ServerInterfaceWrapper) FavoriteAdministration(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.FavoriteAdministration(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBookkeepingSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetBookkeepingSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBookkeepingSettings(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateBookkeepingSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateBookkeepingSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateBookkeepingSettings(w, r, administrationId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4556,6 +5655,482 @@ func (siw *ServerInterfaceWrapper) UpdateInvoiceSettings(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r)
 }
 
+// ListLedgerAccountTemplates operation middleware
+func (siw *ServerInterfaceWrapper) ListLedgerAccountTemplates(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLedgerAccountTemplates(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ApplyLedgerAccountTemplate operation middleware
+func (siw *ServerInterfaceWrapper) ApplyLedgerAccountTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "key" -------------
+	var key string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "key", chi.URLParam(r, "key"), &key, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "key", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ApplyLedgerAccountTemplate(w, r, administrationId, key)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListLedgerAccounts operation middleware
+func (siw *ServerInterfaceWrapper) ListLedgerAccounts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLedgerAccounts(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLedgerAccount operation middleware
+func (siw *ServerInterfaceWrapper) CreateLedgerAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLedgerAccount(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLedgerAccountScheme operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLedgerAccountScheme(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLedgerAccountScheme(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteLedgerAccount operation middleware
+func (siw *ServerInterfaceWrapper) DeleteLedgerAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteLedgerAccount(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLedgerAccount operation middleware
+func (siw *ServerInterfaceWrapper) GetLedgerAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLedgerAccount(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLedgerAccount operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLedgerAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLedgerAccount(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTaxRates operation middleware
+func (siw *ServerInterfaceWrapper) ListTaxRates(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTaxRatesParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTaxRates(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTaxRate operation middleware
+func (siw *ServerInterfaceWrapper) CreateTaxRate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTaxRate(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReorderTaxRates operation middleware
+func (siw *ServerInterfaceWrapper) ReorderTaxRates(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReorderTaxRates(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTaxRate operation middleware
+func (siw *ServerInterfaceWrapper) GetTaxRate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTaxRate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTaxRate operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTaxRate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTaxRate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SearchTaxonomyItems operation middleware
+func (siw *ServerInterfaceWrapper) SearchTaxonomyItems(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchTaxonomyItemsParams
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "account_type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "account_type", r.URL.Query(), &params.AccountType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "account_type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "account_type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchTaxonomyItems(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListWorkflows operation middleware
 func (siw *ServerInterfaceWrapper) ListWorkflows(w http.ResponseWriter, r *http.Request) {
 
@@ -4927,6 +6502,54 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/identities/{id}", wrapper.UpdateIdentity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/bookkeeping_settings", wrapper.GetBookkeepingSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/bookkeeping_settings", wrapper.UpdateBookkeepingSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/tax_rates", wrapper.ListTaxRates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/tax_rates", wrapper.CreateTaxRate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v2/{administration_id}/tax_rates/order", wrapper.ReorderTaxRates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/tax_rates/{id}", wrapper.GetTaxRate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/tax_rates/{id}", wrapper.UpdateTaxRate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/ledger_accounts", wrapper.ListLedgerAccounts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/ledger_accounts", wrapper.CreateLedgerAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v2/{administration_id}/ledger_accounts/scheme", wrapper.UpdateLedgerAccountScheme)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/ledger_accounts/{id}", wrapper.DeleteLedgerAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/ledger_accounts/{id}", wrapper.GetLedgerAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/ledger_accounts/{id}", wrapper.UpdateLedgerAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/ledger_account_templates", wrapper.ListLedgerAccountTemplates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/ledger_account_templates/{key}", wrapper.ApplyLedgerAccountTemplate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/taxonomy_items", wrapper.SearchTaxonomyItems)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/onboarding/options", wrapper.OnboardingOptions)

@@ -644,3 +644,28 @@ textarea { min-height: 4.5rem; padding: 0.5rem 0.625rem; resize: vertical; }
   .brand__full { display: none !important; }
   .brand__mark { display: inline-flex !important; }
 }
+
+/* Bookkeeping settings. */
+.segmented { min-width: 0; margin: 0; padding: 0; border: 0; }
+.segmented__legend { margin-bottom: 0.5rem; padding: 0; font-weight: 600; }
+.segmented__options { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--input-border); border-radius: 8px; overflow: hidden; }
+.segmented__option { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 1rem; cursor: pointer; }
+.segmented__option + .segmented__option { border-left: 1px solid var(--input-border); }
+.segmented__option input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented__option.is-checked { background: var(--blue); color: var(--white); font-weight: 600; }
+.segmented__option:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+.segmented__option:has(input:disabled) { cursor: default; opacity: 0.7; }
+.confirm-row { display: grid; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: 8px; background: var(--surface-muted, var(--bg)); }
+.confirm-row p { margin: 0; }
+.confirm-row__buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.block-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.code-chip { display: inline-block; margin-right: 0.5rem; padding: 0 0.375rem; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.category { display: flex; align-items: baseline; }
+.category__text { min-width: 0; }
+.category__text .hint { margin: 0; }
+.category-table__group th { padding-top: 0.875rem; border-top: 1px solid var(--line); color: var(--text); font-weight: 600; }
+.category-table thead + tbody .category-table__group th { border-top: 0; }
+.data-table tr.is-inactive td > :not(.data-table__actions *) { color: var(--muted); }
+.scheme-input { width: 100%; max-width: 14rem; }
+.template__accounts { margin: 0.5rem 0 0; padding: 0; list-style: none; }
+.template__accounts li { padding: 0.25rem 0; }

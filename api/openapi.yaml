@@ -32,6 +32,12 @@ tags:
     description: How invoices and estimates are handled, such as payment terms and reminders. Compatible with the Moneybird API.
   - name: Document styles
     description: The look of invoices and estimates. Compatible with the Moneybird API.
+  - name: Bookkeeping
+    description: VAT declaration periods, chart scheme and locked period. MoneyHarpy extension.
+  - name: Tax rates
+    description: VAT rates and the VAT return boxes they count in. Compatible with the Moneybird API.
+  - name: Ledger accounts
+    description: Categories the books are kept in, mapped to a chart scheme such as RGS. Compatible with the Moneybird API.
   - name: Custom fields
     description: Extra fields on invoices, contacts, estimates and identities. Compatible with the Moneybird API.
   - name: Onboarding
@@ -952,6 +958,482 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/bookkeeping_settings:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getBookkeepingSettings
+      summary: Get bookkeeping settings
+      description: MoneyHarpy extension. Declaration periods, chart scheme and locked period. The first call applies the country's standard VAT rates and categories.
+      tags: [Bookkeeping]
+      responses:
+        '200':
+          description: The settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookkeepingSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateBookkeepingSettings
+      summary: Update bookkeeping settings
+      description: MoneyHarpy extension. Omitted fields stay unchanged. Choosing another chart scheme removes the codes categories had in the previous one.
+      tags: [Bookkeeping]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookkeepingSettingsRequest'
+      responses:
+        '200':
+          description: The updated settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookkeepingSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/tax_rates:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listTaxRates
+      summary: Retrieve tax rates
+      description: Sales rates first, then purchase and journal rates, each in their set order.
+      tags: [Tax rates]
+      parameters:
+        - name: filter
+          in: query
+          required: false
+          description: >-
+            Comma-separated key:value pairs. Keys are name, partial_name, percentage, tax_rate_type, country,
+            show_tax, active, created_after and updated_after, for example tax_rate_type:sales_invoice,active:true.
+          schema:
+            type: string
+            maxLength: 1000
+      responses:
+        '200':
+          description: The tax rates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaxRate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createTaxRate
+      summary: Create a tax rate
+      description: MoneyHarpy extension. Moneybird manages tax rates in its web app only. The rate comes last among its type.
+      tags: [Tax rates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaxRateRequest'
+      responses:
+        '201':
+          description: The created tax rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxRate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/tax_rates/order:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    put:
+      operationId: reorderTaxRates
+      summary: Order the tax rates of one type
+      description: MoneyHarpy extension. List every rate of the type once, in the new order.
+      tags: [Tax rates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaxRateOrderRequest'
+      responses:
+        '204':
+          description: Reordered
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/tax_rates/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getTaxRate
+      summary: Retrieve a tax rate
+      description: MoneyHarpy extension.
+      tags: [Tax rates]
+      responses:
+        '200':
+          description: The tax rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxRate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateTaxRate
+      summary: Update a tax rate
+      description: MoneyHarpy extension. Omitted fields stay unchanged. Rates are deactivated, not deleted, because documents keep using them.
+      tags: [Tax rates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaxRateRequest'
+      responses:
+        '200':
+          description: The updated tax rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxRate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/ledger_accounts:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listLedgerAccounts
+      summary: Retrieve ledger accounts
+      description: Balance sheet types first, then profit and loss, each by account number.
+      tags: [Ledger accounts]
+      responses:
+        '200':
+          description: The ledger accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LedgerAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createLedgerAccount
+      summary: Create a ledger account
+      description: rgs_code is required when the administration has a chart scheme.
+      tags: [Ledger accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LedgerAccountRequest'
+      responses:
+        '201':
+          description: The created ledger account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/ledger_accounts/scheme:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    put:
+      operationId: updateLedgerAccountScheme
+      summary: Set the chart scheme codes of several ledger accounts
+      description: MoneyHarpy extension. An empty rgs_code removes the code. Returns every ledger account.
+      tags: [Ledger accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LedgerAccountSchemeRequest'
+      responses:
+        '200':
+          description: The ledger accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LedgerAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/ledger_accounts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getLedgerAccount
+      summary: Retrieve a ledger account
+      tags: [Ledger accounts]
+      responses:
+        '200':
+          description: The ledger account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateLedgerAccount
+      summary: Update a ledger account
+      description: Omitted fields stay unchanged. System ledger accounts cannot change type or be deactivated.
+      tags: [Ledger accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LedgerAccountRequest'
+      responses:
+        '200':
+          description: The updated ledger account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteLedgerAccount
+      summary: Delete a ledger account
+      description: >-
+        An active ledger account is deactivated and returned; an inactive one is deleted. System ledger accounts
+        and ones with active sub-accounts cannot be removed.
+      tags: [Ledger accounts]
+      responses:
+        '200':
+          description: The deactivated ledger account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerAccount'
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/ledger_account_templates:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listLedgerAccountTemplates
+      summary: Retrieve ledger account templates
+      description: MoneyHarpy extension. Groups of ledger accounts for a common situation, such as a company car.
+      tags: [Ledger accounts]
+      responses:
+        '200':
+          description: The templates of the administration's country
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LedgerAccountTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/ledger_account_templates/{key}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[a-z0-9_]{1,64}$'
+    post:
+      operationId: applyLedgerAccountTemplate
+      summary: Add a template's ledger accounts
+      description: MoneyHarpy extension. Adds the ledger accounts the administration does not have yet and returns them.
+      tags: [Ledger accounts]
+      responses:
+        '201':
+          description: The added ledger accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LedgerAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/taxonomy_items:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: searchTaxonomyItems
+      summary: Search the chart scheme
+      description: MoneyHarpy extension. Codes of the administration's chart scheme whose code or name matches; codes starting with the query come first. Empty without a chart scheme.
+      tags: [Ledger accounts]
+      parameters:
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: account_type
+          in: query
+          required: false
+          description: Only codes on the side of the books this account type is on.
+          schema:
+            $ref: '#/components/schemas/AccountType'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        '200':
+          description: The matching codes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaxonomyItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /api/onboarding/options:
@@ -2220,6 +2702,277 @@ components:
                     maxLength: 5000
                   reminder_auto_send:
                     type: boolean
+    DeclarationPeriod:
+      type: string
+      enum: [month, quarter, year]
+    AccountType:
+      type: string
+      enum: [non_current_assets, current_assets, equity, provisions, non_current_liabilities, current_liabilities, revenue, direct_costs, expenses, other_income_expenses]
+    DocumentType:
+      type: string
+      enum: [sales_invoice, purchase_invoice, general_journal_document, financial_mutation, payment]
+    TaxRateType:
+      type: string
+      enum: [sales_invoice, purchase_invoice, general_journal_document]
+    ChartScheme:
+      type: object
+      description: MoneyHarpy extension. A standard chart of accounts categories can map to.
+      required: [id, country, name, version, source]
+      properties:
+        id:
+          type: string
+          example: nl-rgs-3.8
+        country:
+          type: string
+          example: NL
+        name:
+          type: string
+        version:
+          type: string
+        source:
+          type: string
+          description: Where the scheme is published.
+    TaxReportBox:
+      type: object
+      description: MoneyHarpy extension. One box of the country's VAT return.
+      required: [code, name]
+      properties:
+        code:
+          type: string
+          example: NL/1a
+        name:
+          type: string
+    BookkeepingSettings:
+      type: object
+      description: MoneyHarpy extension.
+      required: [vat_documents_period, intra_community_transactions_declaration_period, chart_scheme, period_locked_until, chart_schemes, tax_report_boxes]
+      properties:
+        vat_documents_period:
+          $ref: '#/components/schemas/DeclarationPeriod'
+        intra_community_transactions_declaration_period:
+          $ref: '#/components/schemas/DeclarationPeriod'
+        chart_scheme:
+          type: string
+          description: ID of the chart scheme categories map to; empty for none.
+        period_locked_until:
+          type: string
+          format: date
+          nullable: true
+          description: The books are closed up to and including this date.
+        chart_schemes:
+          type: array
+          description: The chart schemes that can be chosen.
+          items:
+            $ref: '#/components/schemas/ChartScheme'
+        tax_report_boxes:
+          type: array
+          description: The boxes of the administration's VAT return.
+          items:
+            $ref: '#/components/schemas/TaxReportBox'
+    BookkeepingSettingsRequest:
+      type: object
+      required: [bookkeeping_settings]
+      additionalProperties: false
+      properties:
+        bookkeeping_settings:
+          type: object
+          additionalProperties: false
+          properties:
+            vat_documents_period:
+              $ref: '#/components/schemas/DeclarationPeriod'
+            intra_community_transactions_declaration_period:
+              $ref: '#/components/schemas/DeclarationPeriod'
+            chart_scheme:
+              type: string
+              maxLength: 64
+            period_locked_until:
+              type: string
+              maxLength: 10
+              description: A date (YYYY-MM-DD) not in the future, or empty to unlock.
+    TaxRate:
+      description: A Moneybird tax rate with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/tax_rate_response'
+        - type: object
+          required: [uri, tax_report_boxes, position]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            tax_report_boxes:
+              type: array
+              description: MoneyHarpy extension. The boxes of the VAT return the rate counts in.
+              items:
+                type: string
+            position:
+              type: integer
+              description: MoneyHarpy extension. Order among the rates of its type, from 1.
+    TaxRateRequest:
+      type: object
+      required: [tax_rate]
+      additionalProperties: false
+      properties:
+        tax_rate:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+            percentage:
+              type: string
+              maxLength: 6
+              description: From 0 to 100 with at most two decimals; a comma is accepted.
+            tax_rate_type:
+              $ref: '#/components/schemas/TaxRateType'
+            show_tax:
+              type: boolean
+              description: Print the VAT on the document. Off for reverse-charged and exempt rates.
+            active:
+              type: boolean
+            country:
+              type: string
+              maxLength: 2
+              description: ISO 3166-1 alpha-2 code for a rate of another country; empty for the administration's own.
+            tax_report_boxes:
+              type: array
+              maxItems: 20
+              items:
+                type: string
+                maxLength: 16
+    TaxRateOrderRequest:
+      type: object
+      required: [tax_rate_type, ids]
+      additionalProperties: false
+      properties:
+        tax_rate_type:
+          $ref: '#/components/schemas/TaxRateType'
+        ids:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/Identifier'
+    TaxonomyItem:
+      description: A code of a chart scheme with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/taxonomy_item_response'
+        - type: object
+          required: [level, side]
+          properties:
+            description:
+              type: string
+              nullable: true
+            level:
+              type: integer
+              description: MoneyHarpy extension. Depth in the scheme, from 1.
+            side:
+              type: string
+              enum: [balance_sheet, profit_and_loss]
+              description: MoneyHarpy extension.
+    LedgerAccount:
+      description: A Moneybird ledger account with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/ledger_account_response'
+        - type: object
+          required: [uri, description, system_role, template]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            description:
+              type: string
+              nullable: true
+              description: MoneyHarpy extension. What the category is for.
+            system_role:
+              type: string
+              nullable: true
+              description: MoneyHarpy extension. Set on categories the books rely on, which cannot be removed or change type.
+            template:
+              type: string
+              nullable: true
+              description: MoneyHarpy extension. Key of the template the category was added with.
+    LedgerAccountRequest:
+      type: object
+      required: [ledger_account]
+      additionalProperties: false
+      properties:
+        ledger_account:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+            account_type:
+              $ref: '#/components/schemas/AccountType'
+            account_id:
+              type: string
+              maxLength: 20
+              description: The account number, such as 8000.
+            parent_id:
+              type: string
+              pattern: '^[0-9]{0,19}$'
+              nullable: true
+              description: Empty for none.
+            active:
+              type: boolean
+              description: MoneyHarpy extension.
+            allowed_document_types:
+              type: array
+              maxItems: 5
+              items:
+                $ref: '#/components/schemas/DocumentType'
+            description:
+              type: string
+              maxLength: 1000
+        rgs_code:
+          type: string
+          maxLength: 32
+          description: Code in the administration's chart scheme. Required on create when it has one.
+    LedgerAccountSchemeRequest:
+      type: object
+      required: [ledger_accounts]
+      additionalProperties: false
+      properties:
+        ledger_accounts:
+          type: array
+          maxItems: 1000
+          items:
+            type: object
+            required: [id, rgs_code]
+            additionalProperties: false
+            properties:
+              id:
+                $ref: '#/components/schemas/Identifier'
+              rgs_code:
+                type: string
+                maxLength: 32
+    LedgerAccountTemplate:
+      type: object
+      description: MoneyHarpy extension. A group of ledger accounts for a common situation.
+      required: [key, name, description, applied, ledger_accounts]
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        applied:
+          type: boolean
+          description: The administration has all of the template's ledger accounts.
+        ledger_accounts:
+          type: array
+          items:
+            type: object
+            required: [name, account_type, account_id]
+            properties:
+              name:
+                type: string
+              account_type:
+                $ref: '#/components/schemas/AccountType'
+              account_id:
+                type: string
     DocumentStyleLine:
       type: object
       required:

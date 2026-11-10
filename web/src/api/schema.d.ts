@@ -394,6 +394,250 @@ export interface paths {
         patch: operations["updateIdentity"];
         trace?: never;
     };
+    "/api/v2/{administration_id}/bookkeeping_settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get bookkeeping settings
+         * @description MoneyHarpy extension. Declaration periods, chart scheme and locked period. The first call applies the country's standard VAT rates and categories.
+         */
+        get: operations["getBookkeepingSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update bookkeeping settings
+         * @description MoneyHarpy extension. Omitted fields stay unchanged. Choosing another chart scheme removes the codes categories had in the previous one.
+         */
+        patch: operations["updateBookkeepingSettings"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/tax_rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve tax rates
+         * @description Sales rates first, then purchase and journal rates, each in their set order.
+         */
+        get: operations["listTaxRates"];
+        put?: never;
+        /**
+         * Create a tax rate
+         * @description MoneyHarpy extension. Moneybird manages tax rates in its web app only. The rate comes last among its type.
+         */
+        post: operations["createTaxRate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/tax_rates/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Order the tax rates of one type
+         * @description MoneyHarpy extension. List every rate of the type once, in the new order.
+         */
+        put: operations["reorderTaxRates"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/tax_rates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve a tax rate
+         * @description MoneyHarpy extension.
+         */
+        get: operations["getTaxRate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a tax rate
+         * @description MoneyHarpy extension. Omitted fields stay unchanged. Rates are deactivated, not deleted, because documents keep using them.
+         */
+        patch: operations["updateTaxRate"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/ledger_accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve ledger accounts
+         * @description Balance sheet types first, then profit and loss, each by account number.
+         */
+        get: operations["listLedgerAccounts"];
+        put?: never;
+        /**
+         * Create a ledger account
+         * @description rgs_code is required when the administration has a chart scheme.
+         */
+        post: operations["createLedgerAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/ledger_accounts/scheme": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set the chart scheme codes of several ledger accounts
+         * @description MoneyHarpy extension. An empty rgs_code removes the code. Returns every ledger account.
+         */
+        put: operations["updateLedgerAccountScheme"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/ledger_accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Retrieve a ledger account */
+        get: operations["getLedgerAccount"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a ledger account
+         * @description An active ledger account is deactivated and returned; an inactive one is deleted. System ledger accounts and ones with active sub-accounts cannot be removed.
+         */
+        delete: operations["deleteLedgerAccount"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a ledger account
+         * @description Omitted fields stay unchanged. System ledger accounts cannot change type or be deactivated.
+         */
+        patch: operations["updateLedgerAccount"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/ledger_account_templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve ledger account templates
+         * @description MoneyHarpy extension. Groups of ledger accounts for a common situation, such as a company car.
+         */
+        get: operations["listLedgerAccountTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/ledger_account_templates/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                key: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a template's ledger accounts
+         * @description MoneyHarpy extension. Adds the ledger accounts the administration does not have yet and returns them.
+         */
+        post: operations["applyLedgerAccountTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/taxonomy_items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Search the chart scheme
+         * @description MoneyHarpy extension. Codes of the administration's chart scheme whose code or name matches; codes starting with the query come first. Empty without a chart scheme.
+         */
+        get: operations["searchTaxonomyItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/onboarding/options": {
         parameters: {
             query?: never;
@@ -1119,6 +1363,140 @@ export interface components {
                     reminder_auto_send?: boolean;
                 }[];
             };
+        };
+        /** @enum {string} */
+        DeclarationPeriod: "month" | "quarter" | "year";
+        /** @enum {string} */
+        AccountType: "non_current_assets" | "current_assets" | "equity" | "provisions" | "non_current_liabilities" | "current_liabilities" | "revenue" | "direct_costs" | "expenses" | "other_income_expenses";
+        /** @enum {string} */
+        DocumentType: "sales_invoice" | "purchase_invoice" | "general_journal_document" | "financial_mutation" | "payment";
+        /** @enum {string} */
+        TaxRateType: "sales_invoice" | "purchase_invoice" | "general_journal_document";
+        /** @description MoneyHarpy extension. A standard chart of accounts categories can map to. */
+        ChartScheme: {
+            /** @example nl-rgs-3.8 */
+            id: string;
+            /** @example NL */
+            country: string;
+            name: string;
+            version: string;
+            /** @description Where the scheme is published. */
+            source: string;
+        };
+        /** @description MoneyHarpy extension. One box of the country's VAT return. */
+        TaxReportBox: {
+            /** @example NL/1a */
+            code: string;
+            name: string;
+        };
+        /** @description MoneyHarpy extension. */
+        BookkeepingSettings: {
+            vat_documents_period: components["schemas"]["DeclarationPeriod"];
+            intra_community_transactions_declaration_period: components["schemas"]["DeclarationPeriod"];
+            /** @description ID of the chart scheme categories map to; empty for none. */
+            chart_scheme: string;
+            /**
+             * Format: date
+             * @description The books are closed up to and including this date.
+             */
+            period_locked_until: string | null;
+            /** @description The chart schemes that can be chosen. */
+            chart_schemes: components["schemas"]["ChartScheme"][];
+            /** @description The boxes of the administration's VAT return. */
+            tax_report_boxes: components["schemas"]["TaxReportBox"][];
+        };
+        BookkeepingSettingsRequest: {
+            bookkeeping_settings: {
+                vat_documents_period?: components["schemas"]["DeclarationPeriod"];
+                intra_community_transactions_declaration_period?: components["schemas"]["DeclarationPeriod"];
+                chart_scheme?: string;
+                /** @description A date (YYYY-MM-DD) not in the future, or empty to unlock. */
+                period_locked_until?: string;
+            };
+        };
+        /** @description A Moneybird tax rate with MoneyHarpy extensions. */
+        TaxRate: components["schemas"]["tax_rate_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            /** @description MoneyHarpy extension. The boxes of the VAT return the rate counts in. */
+            tax_report_boxes: string[];
+            /** @description MoneyHarpy extension. Order among the rates of its type, from 1. */
+            position: number;
+        };
+        TaxRateRequest: {
+            tax_rate: {
+                name?: string;
+                /** @description From 0 to 100 with at most two decimals; a comma is accepted. */
+                percentage?: string;
+                tax_rate_type?: components["schemas"]["TaxRateType"];
+                /** @description Print the VAT on the document. Off for reverse-charged and exempt rates. */
+                show_tax?: boolean;
+                active?: boolean;
+                /** @description ISO 3166-1 alpha-2 code for a rate of another country; empty for the administration's own. */
+                country?: string;
+                tax_report_boxes?: string[];
+            };
+        };
+        TaxRateOrderRequest: {
+            tax_rate_type: components["schemas"]["TaxRateType"];
+            ids: components["schemas"]["Identifier"][];
+        };
+        /** @description A code of a chart scheme with MoneyHarpy extensions. */
+        TaxonomyItem: components["schemas"]["taxonomy_item_response"] & {
+            description?: string | null;
+            /** @description MoneyHarpy extension. Depth in the scheme, from 1. */
+            level: number;
+            /**
+             * @description MoneyHarpy extension.
+             * @enum {string}
+             */
+            side: "balance_sheet" | "profit_and_loss";
+        };
+        /** @description A Moneybird ledger account with MoneyHarpy extensions. */
+        LedgerAccount: components["schemas"]["ledger_account_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            /** @description MoneyHarpy extension. What the category is for. */
+            description: string | null;
+            /** @description MoneyHarpy extension. Set on categories the books rely on, which cannot be removed or change type. */
+            system_role: string | null;
+            /** @description MoneyHarpy extension. Key of the template the category was added with. */
+            template: string | null;
+        };
+        LedgerAccountRequest: {
+            ledger_account: {
+                name?: string;
+                account_type?: components["schemas"]["AccountType"];
+                /** @description The account number, such as 8000. */
+                account_id?: string;
+                /** @description Empty for none. */
+                parent_id?: string | null;
+                /** @description MoneyHarpy extension. */
+                active?: boolean;
+                allowed_document_types?: components["schemas"]["DocumentType"][];
+                description?: string;
+            };
+            /** @description Code in the administration's chart scheme. Required on create when it has one. */
+            rgs_code?: string;
+        };
+        LedgerAccountSchemeRequest: {
+            ledger_accounts: {
+                id: components["schemas"]["Identifier"];
+                rgs_code: string;
+            }[];
+        };
+        /** @description MoneyHarpy extension. A group of ledger accounts for a common situation. */
+        LedgerAccountTemplate: {
+            key: string;
+            name: string;
+            description: string;
+            /** @description The administration has all of the template's ledger accounts. */
+            applied: boolean;
+            ledger_accounts: {
+                name: string;
+                account_type: components["schemas"]["AccountType"];
+                account_id: string;
+            }[];
         };
         /** @description One entry of a block on a document. bold prints it bold; label prints its name before it. */
         DocumentStyleLine: {
@@ -3696,6 +4074,486 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getBookkeepingSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookkeepingSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateBookkeepingSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BookkeepingSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookkeepingSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listTaxRates: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value pairs. Keys are name, partial_name, percentage, tax_rate_type, country, show_tax, active, created_after and updated_after, for example tax_rate_type:sales_invoice,active:true. */
+                filter?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The tax rates */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxRate"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTaxRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxRateRequest"];
+            };
+        };
+        responses: {
+            /** @description The created tax rate */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxRate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    reorderTaxRates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxRateOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Reordered */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getTaxRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The tax rate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxRate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateTaxRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxRateRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated tax rate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxRate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listLedgerAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ledger accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccount"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createLedgerAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LedgerAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description The created ledger account */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccount"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateLedgerAccountScheme: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LedgerAccountSchemeRequest"];
+            };
+        };
+        responses: {
+            /** @description The ledger accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccount"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getLedgerAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ledger account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccount"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteLedgerAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The deactivated ledger account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccount"];
+                };
+            };
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateLedgerAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LedgerAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated ledger account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccount"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listLedgerAccountTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The templates of the administration's country */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccountTemplate"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    applyLedgerAccountTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The added ledger accounts */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAccount"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    searchTaxonomyItems: {
+        parameters: {
+            query?: {
+                query?: string;
+                /** @description Only codes on the side of the books this account type is on. */
+                account_type?: components["schemas"]["AccountType"];
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The matching codes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxonomyItem"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };

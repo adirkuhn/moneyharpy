@@ -93,6 +93,8 @@ const (
 	TypeCustomField    Type = "custom_fields"
 	TypeWorkflow       Type = "workflows"
 	TypeDocumentStyle  Type = "document_styles"
+	TypeTaxRate        Type = "tax_rates"
+	TypeLedgerAccount  Type = "ledger_accounts"
 )
 
 // Ref locates one resource.
