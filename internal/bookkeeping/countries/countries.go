@@ -64,6 +64,9 @@ type Seed struct {
 	TaxRates  []TaxRate
 	Accounts  []Account
 	Templates []Template
+	// FinancialAccounts maps a financial account type, such as BankAccount,
+	// to the chart scheme code of the category its money is kept in.
+	FinancialAccounts map[string]string
 }
 
 var seeds = map[string]Seed{"NL": netherlands}

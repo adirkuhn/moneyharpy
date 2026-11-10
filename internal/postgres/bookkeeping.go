@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -210,7 +211,11 @@ func (s *BookkeepingStore) UpdateLedgerAccounts(ctx context.Context, accounts []
 func (s *BookkeepingStore) DeleteLedgerAccount(ctx context.Context, admin, id resource.ID) error {
 	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
-		if err := q.DeleteLedgerAccount(ctx, sqlc.DeleteLedgerAccountParams{AdministrationID: int64(admin), ID: int64(id)}); err != nil {
+		err := q.DeleteLedgerAccount(ctx, sqlc.DeleteLedgerAccountParams{AdministrationID: int64(admin), ID: int64(id)})
+		if pgErr := (*pgconn.PgError)(nil); errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return bookkeeping.ErrInUse // Transactions, rules or accounts refer to it.
+		}
+		if err != nil {
 			return err
 		}
 		return q.DeleteResource(ctx, int64(id))

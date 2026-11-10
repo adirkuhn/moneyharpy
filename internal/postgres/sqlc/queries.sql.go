@@ -66,6 +66,91 @@ func (q *Queries) AdministrationForUser(ctx context.Context, arg AdministrationF
 	return i, err
 }
 
+const bankSettings = `-- name: BankSettings :one
+SELECT bank_auto_link, bank_seeded FROM administrations WHERE id = $1
+`
+
+type BankSettingsRow struct {
+	BankAutoLink bool
+	BankSeeded   bool
+}
+
+func (q *Queries) BankSettings(ctx context.Context, id int64) (BankSettingsRow, error) {
+	row := q.db.QueryRow(ctx, bankSettings, id)
+	var i BankSettingsRow
+	err := row.Scan(&i.BankAutoLink, &i.BankSeeded)
+	return i, err
+}
+
+const bookingRuleByID = `-- name: BookingRuleByID :one
+SELECT id, administration_id, name, active, position, match_all, direction, financial_account_id, conditions, ledger_account_id, description, created_at, updated_at FROM booking_rules WHERE administration_id = $1 AND id = $2
+`
+
+type BookingRuleByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) BookingRuleByID(ctx context.Context, arg BookingRuleByIDParams) (BookingRule, error) {
+	row := q.db.QueryRow(ctx, bookingRuleByID, arg.AdministrationID, arg.ID)
+	var i BookingRule
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Name,
+		&i.Active,
+		&i.Position,
+		&i.MatchAll,
+		&i.Direction,
+		&i.FinancialAccountID,
+		&i.Conditions,
+		&i.LedgerAccountID,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const bookingsOfMutations = `-- name: BookingsOfMutations :many
+SELECT id, administration_id, financial_mutation_id, ledger_account_id, description, price, booking_rule_id, created_at, updated_at FROM ledger_account_bookings WHERE administration_id = $1 AND financial_mutation_id = ANY($2::bigint[]) ORDER BY created_at, id
+`
+
+type BookingsOfMutationsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) BookingsOfMutations(ctx context.Context, arg BookingsOfMutationsParams) ([]LedgerAccountBooking, error) {
+	rows, err := q.db.Query(ctx, bookingsOfMutations, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LedgerAccountBooking
+	for rows.Next() {
+		var i LedgerAccountBooking
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.FinancialMutationID,
+			&i.LedgerAccountID,
+			&i.Description,
+			&i.Price,
+			&i.BookingRuleID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const bookkeepingSettings = `-- name: BookkeepingSettings :one
 SELECT vat_documents_period, icp_declaration_period, chart_scheme, bookkeeping_seeded, period_locked_until
 FROM administrations WHERE id = $1
@@ -202,6 +287,20 @@ func (q *Queries) DefaultIdentity(ctx context.Context, administrationID int64) (
 	return i, err
 }
 
+const deleteBookingRule = `-- name: DeleteBookingRule :exec
+DELETE FROM booking_rules WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteBookingRuleParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteBookingRule(ctx context.Context, arg DeleteBookingRuleParams) error {
+	_, err := q.db.Exec(ctx, deleteBookingRule, arg.AdministrationID, arg.ID)
+	return err
+}
+
 const deleteCustomField = `-- name: DeleteCustomField :execrows
 DELETE FROM custom_fields WHERE administration_id = $1 AND id = $2
 `
@@ -234,6 +333,34 @@ func (q *Queries) DeleteDocumentStyle(ctx context.Context, arg DeleteDocumentSty
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const deleteFinancialMutations = `-- name: DeleteFinancialMutations :exec
+DELETE FROM financial_mutations WHERE administration_id = $1 AND id = ANY($2::bigint[])
+`
+
+type DeleteFinancialMutationsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) DeleteFinancialMutations(ctx context.Context, arg DeleteFinancialMutationsParams) error {
+	_, err := q.db.Exec(ctx, deleteFinancialMutations, arg.AdministrationID, arg.Ids)
+	return err
+}
+
+const deleteFinancialStatement = `-- name: DeleteFinancialStatement :exec
+DELETE FROM financial_statements WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteFinancialStatementParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteFinancialStatement(ctx context.Context, arg DeleteFinancialStatementParams) error {
+	_, err := q.db.Exec(ctx, deleteFinancialStatement, arg.AdministrationID, arg.ID)
+	return err
 }
 
 const deleteIdentity = `-- name: DeleteIdentity :execrows
@@ -276,6 +403,21 @@ func (q *Queries) DeleteLedgerAccount(ctx context.Context, arg DeleteLedgerAccou
 	return err
 }
 
+const deleteLedgerAccountBooking = `-- name: DeleteLedgerAccountBooking :exec
+DELETE FROM ledger_account_bookings WHERE administration_id = $1 AND financial_mutation_id = $2 AND id = $3
+`
+
+type DeleteLedgerAccountBookingParams struct {
+	AdministrationID    int64
+	FinancialMutationID int64
+	ID                  int64
+}
+
+func (q *Queries) DeleteLedgerAccountBooking(ctx context.Context, arg DeleteLedgerAccountBookingParams) error {
+	_, err := q.db.Exec(ctx, deleteLedgerAccountBooking, arg.AdministrationID, arg.FinancialMutationID, arg.ID)
+	return err
+}
+
 const deleteResetTokens = `-- name: DeleteResetTokens :exec
 DELETE FROM password_reset_tokens WHERE user_id = $1
 `
@@ -291,6 +433,15 @@ DELETE FROM resources WHERE id = $1
 
 func (q *Queries) DeleteResource(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteResource, id)
+	return err
+}
+
+const deleteResources = `-- name: DeleteResources :exec
+DELETE FROM resources WHERE id = ANY($1::bigint[])
+`
+
+func (q *Queries) DeleteResources(ctx context.Context, ids []int64) error {
+	_, err := q.db.Exec(ctx, deleteResources, ids)
 	return err
 }
 
@@ -409,6 +560,220 @@ func (q *Queries) DocumentStyleByID(ctx context.Context, arg DocumentStyleByIDPa
 	return i, err
 }
 
+const financialAccountByID = `-- name: FinancialAccountByID :one
+SELECT id, administration_id, type, name, identifier, currency, provider, active, position, ledger_account_id, last_import_at, created_at, updated_at FROM financial_accounts WHERE administration_id = $1 AND id = $2
+`
+
+type FinancialAccountByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) FinancialAccountByID(ctx context.Context, arg FinancialAccountByIDParams) (FinancialAccount, error) {
+	row := q.db.QueryRow(ctx, financialAccountByID, arg.AdministrationID, arg.ID)
+	var i FinancialAccount
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Type,
+		&i.Name,
+		&i.Identifier,
+		&i.Currency,
+		&i.Provider,
+		&i.Active,
+		&i.Position,
+		&i.LedgerAccountID,
+		&i.LastImportAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const financialBalances = `-- name: FinancialBalances :many
+SELECT financial_account_id, sum(amount)::bigint AS balance FROM financial_mutations WHERE administration_id = $1 GROUP BY financial_account_id
+`
+
+type FinancialBalancesRow struct {
+	FinancialAccountID int64
+	Balance            int64
+}
+
+func (q *Queries) FinancialBalances(ctx context.Context, administrationID int64) ([]FinancialBalancesRow, error) {
+	rows, err := q.db.Query(ctx, financialBalances, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FinancialBalancesRow
+	for rows.Next() {
+		var i FinancialBalancesRow
+		if err := rows.Scan(&i.FinancialAccountID, &i.Balance); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const financialMutationVersions = `-- name: FinancialMutationVersions :many
+SELECT id, updated_at FROM financial_mutations WHERE administration_id = $1 ORDER BY id
+`
+
+type FinancialMutationVersionsRow struct {
+	ID        int64
+	UpdatedAt pgtype.Timestamptz
+}
+
+func (q *Queries) FinancialMutationVersions(ctx context.Context, administrationID int64) ([]FinancialMutationVersionsRow, error) {
+	rows, err := q.db.Query(ctx, financialMutationVersions, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FinancialMutationVersionsRow
+	for rows.Next() {
+		var i FinancialMutationVersionsRow
+		if err := rows.Scan(&i.ID, &i.UpdatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const financialMutationsByID = `-- name: FinancialMutationsByID :many
+SELECT id, administration_id, financial_account_id, financial_statement_id, date, valutation_date, message, amount, currency, code, contra_account_name, contra_account_number, batch_reference, transaction_id, fingerprint, position, state, processed_at, created_at, updated_at FROM financial_mutations WHERE administration_id = $1 AND id = ANY($2::bigint[]) ORDER BY id
+`
+
+type FinancialMutationsByIDParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) FinancialMutationsByID(ctx context.Context, arg FinancialMutationsByIDParams) ([]FinancialMutation, error) {
+	rows, err := q.db.Query(ctx, financialMutationsByID, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FinancialMutation
+	for rows.Next() {
+		var i FinancialMutation
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.FinancialAccountID,
+			&i.FinancialStatementID,
+			&i.Date,
+			&i.ValutationDate,
+			&i.Message,
+			&i.Amount,
+			&i.Currency,
+			&i.Code,
+			&i.ContraAccountName,
+			&i.ContraAccountNumber,
+			&i.BatchReference,
+			&i.TransactionID,
+			&i.Fingerprint,
+			&i.Position,
+			&i.State,
+			&i.ProcessedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const financialMutationsOfStatement = `-- name: FinancialMutationsOfStatement :many
+SELECT id, administration_id, financial_account_id, financial_statement_id, date, valutation_date, message, amount, currency, code, contra_account_name, contra_account_number, batch_reference, transaction_id, fingerprint, position, state, processed_at, created_at, updated_at FROM financial_mutations WHERE administration_id = $1 AND financial_statement_id = $2 ORDER BY position, id
+`
+
+type FinancialMutationsOfStatementParams struct {
+	AdministrationID     int64
+	FinancialStatementID int64
+}
+
+func (q *Queries) FinancialMutationsOfStatement(ctx context.Context, arg FinancialMutationsOfStatementParams) ([]FinancialMutation, error) {
+	rows, err := q.db.Query(ctx, financialMutationsOfStatement, arg.AdministrationID, arg.FinancialStatementID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FinancialMutation
+	for rows.Next() {
+		var i FinancialMutation
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.FinancialAccountID,
+			&i.FinancialStatementID,
+			&i.Date,
+			&i.ValutationDate,
+			&i.Message,
+			&i.Amount,
+			&i.Currency,
+			&i.Code,
+			&i.ContraAccountName,
+			&i.ContraAccountNumber,
+			&i.BatchReference,
+			&i.TransactionID,
+			&i.Fingerprint,
+			&i.Position,
+			&i.State,
+			&i.ProcessedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const financialStatementByID = `-- name: FinancialStatementByID :one
+SELECT id, administration_id, financial_account_id, reference, official_date, official_balance, importer, created_at, updated_at FROM financial_statements WHERE administration_id = $1 AND id = $2
+`
+
+type FinancialStatementByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) FinancialStatementByID(ctx context.Context, arg FinancialStatementByIDParams) (FinancialStatement, error) {
+	row := q.db.QueryRow(ctx, financialStatementByID, arg.AdministrationID, arg.ID)
+	var i FinancialStatement
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.FinancialAccountID,
+		&i.Reference,
+		&i.OfficialDate,
+		&i.OfficialBalance,
+		&i.Importer,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const identityByID = `-- name: IdentityByID :one
 SELECT id, administration_id, is_default, company_name, country, city, zipcode, address1, address2, email, phone, legal_entity_type, chamber_of_commerce, tax_number, bank_account_name, bank_account_number, bank_account_bic, created_at, updated_at, tax_number_absence_reason FROM identities WHERE administration_id = $1 AND id = $2
 `
@@ -474,6 +839,46 @@ func (q *Queries) InsertAdministration(ctx context.Context, arg InsertAdministra
 		arg.Suspended,
 		arg.PeriodLockedUntil,
 		arg.PeriodStartDate,
+	)
+	return err
+}
+
+const insertBookingRule = `-- name: InsertBookingRule :exec
+INSERT INTO booking_rules (id, administration_id, name, active, position, match_all, direction, financial_account_id, conditions, ledger_account_id, description, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+`
+
+type InsertBookingRuleParams struct {
+	ID                 int64
+	AdministrationID   int64
+	Name               string
+	Active             bool
+	Position           int32
+	MatchAll           bool
+	Direction          string
+	FinancialAccountID pgtype.Int8
+	Conditions         []byte
+	LedgerAccountID    int64
+	Description        string
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+}
+
+func (q *Queries) InsertBookingRule(ctx context.Context, arg InsertBookingRuleParams) error {
+	_, err := q.db.Exec(ctx, insertBookingRule,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Name,
+		arg.Active,
+		arg.Position,
+		arg.MatchAll,
+		arg.Direction,
+		arg.FinancialAccountID,
+		arg.Conditions,
+		arg.LedgerAccountID,
+		arg.Description,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	return err
 }
@@ -566,6 +971,138 @@ func (q *Queries) InsertDocumentStyle(ctx context.Context, arg InsertDocumentSty
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const insertFinancialAccount = `-- name: InsertFinancialAccount :exec
+INSERT INTO financial_accounts (id, administration_id, type, name, identifier, currency, provider, active, position, ledger_account_id, last_import_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+`
+
+type InsertFinancialAccountParams struct {
+	ID               int64
+	AdministrationID int64
+	Type             string
+	Name             string
+	Identifier       string
+	Currency         string
+	Provider         string
+	Active           bool
+	Position         int32
+	LedgerAccountID  int64
+	LastImportAt     pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertFinancialAccount(ctx context.Context, arg InsertFinancialAccountParams) error {
+	_, err := q.db.Exec(ctx, insertFinancialAccount,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Type,
+		arg.Name,
+		arg.Identifier,
+		arg.Currency,
+		arg.Provider,
+		arg.Active,
+		arg.Position,
+		arg.LedgerAccountID,
+		arg.LastImportAt,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const insertFinancialMutation = `-- name: InsertFinancialMutation :execrows
+INSERT INTO financial_mutations (id, administration_id, financial_account_id, financial_statement_id, date, valutation_date, message, amount, currency,
+                                 code, contra_account_name, contra_account_number, batch_reference, transaction_id, fingerprint, position, state,
+                                 processed_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+ON CONFLICT DO NOTHING
+`
+
+type InsertFinancialMutationParams struct {
+	ID                   int64
+	AdministrationID     int64
+	FinancialAccountID   int64
+	FinancialStatementID int64
+	Date                 pgtype.Date
+	ValutationDate       pgtype.Date
+	Message              string
+	Amount               int64
+	Currency             string
+	Code                 string
+	ContraAccountName    string
+	ContraAccountNumber  string
+	BatchReference       string
+	TransactionID        string
+	Fingerprint          string
+	Position             int32
+	State                string
+	ProcessedAt          pgtype.Timestamptz
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+}
+
+func (q *Queries) InsertFinancialMutation(ctx context.Context, arg InsertFinancialMutationParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertFinancialMutation,
+		arg.ID,
+		arg.AdministrationID,
+		arg.FinancialAccountID,
+		arg.FinancialStatementID,
+		arg.Date,
+		arg.ValutationDate,
+		arg.Message,
+		arg.Amount,
+		arg.Currency,
+		arg.Code,
+		arg.ContraAccountName,
+		arg.ContraAccountNumber,
+		arg.BatchReference,
+		arg.TransactionID,
+		arg.Fingerprint,
+		arg.Position,
+		arg.State,
+		arg.ProcessedAt,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const insertFinancialStatement = `-- name: InsertFinancialStatement :exec
+INSERT INTO financial_statements (id, administration_id, financial_account_id, reference, official_date, official_balance, importer, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+`
+
+type InsertFinancialStatementParams struct {
+	ID                 int64
+	AdministrationID   int64
+	FinancialAccountID int64
+	Reference          string
+	OfficialDate       pgtype.Date
+	OfficialBalance    pgtype.Int8
+	Importer           string
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+}
+
+func (q *Queries) InsertFinancialStatement(ctx context.Context, arg InsertFinancialStatementParams) error {
+	_, err := q.db.Exec(ctx, insertFinancialStatement,
+		arg.ID,
+		arg.AdministrationID,
+		arg.FinancialAccountID,
+		arg.Reference,
+		arg.OfficialDate,
+		arg.OfficialBalance,
+		arg.Importer,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
 }
 
 const insertIdentity = `-- name: InsertIdentity :exec
@@ -680,6 +1217,38 @@ func (q *Queries) InsertLedgerAccount(ctx context.Context, arg InsertLedgerAccou
 		arg.SystemRole,
 		arg.SeedKey,
 		arg.TemplateKey,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const insertLedgerAccountBooking = `-- name: InsertLedgerAccountBooking :exec
+INSERT INTO ledger_account_bookings (id, administration_id, financial_mutation_id, ledger_account_id, description, price, booking_rule_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+`
+
+type InsertLedgerAccountBookingParams struct {
+	ID                  int64
+	AdministrationID    int64
+	FinancialMutationID int64
+	LedgerAccountID     int64
+	Description         string
+	Price               int64
+	BookingRuleID       pgtype.Int8
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+}
+
+func (q *Queries) InsertLedgerAccountBooking(ctx context.Context, arg InsertLedgerAccountBookingParams) error {
+	_, err := q.db.Exec(ctx, insertLedgerAccountBooking,
+		arg.ID,
+		arg.AdministrationID,
+		arg.FinancialMutationID,
+		arg.LedgerAccountID,
+		arg.Description,
+		arg.Price,
+		arg.BookingRuleID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -1069,6 +1638,44 @@ func (q *Queries) ListAdministrations(ctx context.Context, userID int64) ([]List
 	return items, nil
 }
 
+const listBookingRules = `-- name: ListBookingRules :many
+SELECT id, administration_id, name, active, position, match_all, direction, financial_account_id, conditions, ledger_account_id, description, created_at, updated_at FROM booking_rules WHERE administration_id = $1 ORDER BY position, id
+`
+
+func (q *Queries) ListBookingRules(ctx context.Context, administrationID int64) ([]BookingRule, error) {
+	rows, err := q.db.Query(ctx, listBookingRules, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []BookingRule
+	for rows.Next() {
+		var i BookingRule
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.Name,
+			&i.Active,
+			&i.Position,
+			&i.MatchAll,
+			&i.Direction,
+			&i.FinancialAccountID,
+			&i.Conditions,
+			&i.LedgerAccountID,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCustomFields = `-- name: ListCustomFields :many
 SELECT id, administration_id, name, source, created_at, updated_at, position FROM custom_fields WHERE administration_id = $1 ORDER BY position, id
 `
@@ -1134,6 +1741,106 @@ func (q *Queries) ListDocumentStyles(ctx context.Context, administrationID int64
 			&i.FontFamily,
 			&i.CustomCss,
 			&i.Layout,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFinancialAccounts = `-- name: ListFinancialAccounts :many
+SELECT id, administration_id, type, name, identifier, currency, provider, active, position, ledger_account_id, last_import_at, created_at, updated_at FROM financial_accounts WHERE administration_id = $1 ORDER BY position, id
+`
+
+func (q *Queries) ListFinancialAccounts(ctx context.Context, administrationID int64) ([]FinancialAccount, error) {
+	rows, err := q.db.Query(ctx, listFinancialAccounts, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FinancialAccount
+	for rows.Next() {
+		var i FinancialAccount
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.Type,
+			&i.Name,
+			&i.Identifier,
+			&i.Currency,
+			&i.Provider,
+			&i.Active,
+			&i.Position,
+			&i.LedgerAccountID,
+			&i.LastImportAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFinancialMutations = `-- name: ListFinancialMutations :many
+SELECT id, administration_id, financial_account_id, financial_statement_id, date, valutation_date, message, amount, currency, code, contra_account_name, contra_account_number, batch_reference, transaction_id, fingerprint, position, state, processed_at, created_at, updated_at FROM financial_mutations
+WHERE administration_id = $1
+  AND ($2::bigint IS NULL OR financial_account_id = $2)
+  AND ($3::date IS NULL OR date >= $3)
+  AND ($4::date IS NULL OR date <= $4)
+ORDER BY date DESC, financial_statement_id DESC, position, id
+`
+
+type ListFinancialMutationsParams struct {
+	AdministrationID   int64
+	FinancialAccountID pgtype.Int8
+	DateFrom           pgtype.Date
+	DateTo             pgtype.Date
+}
+
+func (q *Queries) ListFinancialMutations(ctx context.Context, arg ListFinancialMutationsParams) ([]FinancialMutation, error) {
+	rows, err := q.db.Query(ctx, listFinancialMutations,
+		arg.AdministrationID,
+		arg.FinancialAccountID,
+		arg.DateFrom,
+		arg.DateTo,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FinancialMutation
+	for rows.Next() {
+		var i FinancialMutation
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.FinancialAccountID,
+			&i.FinancialStatementID,
+			&i.Date,
+			&i.ValutationDate,
+			&i.Message,
+			&i.Amount,
+			&i.Currency,
+			&i.Code,
+			&i.ContraAccountName,
+			&i.ContraAccountNumber,
+			&i.BatchReference,
+			&i.TransactionID,
+			&i.Fingerprint,
+			&i.Position,
+			&i.State,
+			&i.ProcessedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -1471,6 +2178,18 @@ func (q *Queries) LockFirstUser(ctx context.Context) error {
 	return err
 }
 
+const markBankSeeded = `-- name: MarkBankSeeded :execrows
+UPDATE administrations SET bank_seeded = true WHERE id = $1 AND NOT bank_seeded
+`
+
+func (q *Queries) MarkBankSeeded(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, markBankSeeded, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const markBookkeepingSeeded = `-- name: MarkBookkeepingSeeded :execrows
 UPDATE administrations SET bookkeeping_seeded = true, chart_scheme = $2 WHERE id = $1 AND NOT bookkeeping_seeded
 `
@@ -1511,6 +2230,20 @@ type SaveSettingParams struct {
 
 func (q *Queries) SaveSetting(ctx context.Context, arg SaveSettingParams) error {
 	_, err := q.db.Exec(ctx, saveSetting, arg.Key, arg.Value)
+	return err
+}
+
+const setBankAutoLink = `-- name: SetBankAutoLink :exec
+UPDATE administrations SET bank_auto_link = $2 WHERE id = $1
+`
+
+type SetBankAutoLinkParams struct {
+	ID           int64
+	BankAutoLink bool
+}
+
+func (q *Queries) SetBankAutoLink(ctx context.Context, arg SetBankAutoLinkParams) error {
+	_, err := q.db.Exec(ctx, setBankAutoLink, arg.ID, arg.BankAutoLink)
 	return err
 }
 
@@ -1607,6 +2340,46 @@ func (q *Queries) UpdateAdministration(ctx context.Context, arg UpdateAdministra
 		arg.CompanyActivitiesDescription,
 		arg.CompanyWebsiteUrl,
 		arg.CompanyWebsiteAbsent,
+	)
+	return err
+}
+
+const updateBookingRule = `-- name: UpdateBookingRule :exec
+UPDATE booking_rules
+SET name = $3, active = $4, position = $5, match_all = $6, direction = $7, financial_account_id = $8, conditions = $9, ledger_account_id = $10,
+    description = $11, updated_at = $12
+WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateBookingRuleParams struct {
+	AdministrationID   int64
+	ID                 int64
+	Name               string
+	Active             bool
+	Position           int32
+	MatchAll           bool
+	Direction          string
+	FinancialAccountID pgtype.Int8
+	Conditions         []byte
+	LedgerAccountID    int64
+	Description        string
+	UpdatedAt          pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateBookingRule(ctx context.Context, arg UpdateBookingRuleParams) error {
+	_, err := q.db.Exec(ctx, updateBookingRule,
+		arg.AdministrationID,
+		arg.ID,
+		arg.Name,
+		arg.Active,
+		arg.Position,
+		arg.MatchAll,
+		arg.Direction,
+		arg.FinancialAccountID,
+		arg.Conditions,
+		arg.LedgerAccountID,
+		arg.Description,
+		arg.UpdatedAt,
 	)
 	return err
 }
@@ -1712,6 +2485,115 @@ func (q *Queries) UpdateDocumentStyle(ctx context.Context, arg UpdateDocumentSty
 		arg.FontFamily,
 		arg.CustomCss,
 		arg.Layout,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const updateFinancialAccount = `-- name: UpdateFinancialAccount :exec
+UPDATE financial_accounts
+SET type = $3, name = $4, identifier = $5, currency = $6, provider = $7, active = $8, position = $9, last_import_at = $10, updated_at = $11
+WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateFinancialAccountParams struct {
+	AdministrationID int64
+	ID               int64
+	Type             string
+	Name             string
+	Identifier       string
+	Currency         string
+	Provider         string
+	Active           bool
+	Position         int32
+	LastImportAt     pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateFinancialAccount(ctx context.Context, arg UpdateFinancialAccountParams) error {
+	_, err := q.db.Exec(ctx, updateFinancialAccount,
+		arg.AdministrationID,
+		arg.ID,
+		arg.Type,
+		arg.Name,
+		arg.Identifier,
+		arg.Currency,
+		arg.Provider,
+		arg.Active,
+		arg.Position,
+		arg.LastImportAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const updateFinancialMutation = `-- name: UpdateFinancialMutation :exec
+UPDATE financial_mutations
+SET date = $3, valutation_date = $4, message = $5, amount = $6, code = $7, contra_account_name = $8, contra_account_number = $9,
+    batch_reference = $10, transaction_id = $11, position = $12, state = $13, processed_at = $14, updated_at = $15
+WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateFinancialMutationParams struct {
+	AdministrationID    int64
+	ID                  int64
+	Date                pgtype.Date
+	ValutationDate      pgtype.Date
+	Message             string
+	Amount              int64
+	Code                string
+	ContraAccountName   string
+	ContraAccountNumber string
+	BatchReference      string
+	TransactionID       string
+	Position            int32
+	State               string
+	ProcessedAt         pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateFinancialMutation(ctx context.Context, arg UpdateFinancialMutationParams) error {
+	_, err := q.db.Exec(ctx, updateFinancialMutation,
+		arg.AdministrationID,
+		arg.ID,
+		arg.Date,
+		arg.ValutationDate,
+		arg.Message,
+		arg.Amount,
+		arg.Code,
+		arg.ContraAccountName,
+		arg.ContraAccountNumber,
+		arg.BatchReference,
+		arg.TransactionID,
+		arg.Position,
+		arg.State,
+		arg.ProcessedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const updateFinancialStatement = `-- name: UpdateFinancialStatement :exec
+UPDATE financial_statements SET reference = $3, official_date = $4, official_balance = $5, updated_at = $6
+WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateFinancialStatementParams struct {
+	AdministrationID int64
+	ID               int64
+	Reference        string
+	OfficialDate     pgtype.Date
+	OfficialBalance  pgtype.Int8
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateFinancialStatement(ctx context.Context, arg UpdateFinancialStatementParams) error {
+	_, err := q.db.Exec(ctx, updateFinancialStatement,
+		arg.AdministrationID,
+		arg.ID,
+		arg.Reference,
+		arg.OfficialDate,
+		arg.OfficialBalance,
 		arg.UpdatedAt,
 	)
 	return err

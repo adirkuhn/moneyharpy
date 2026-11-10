@@ -63,8 +63,8 @@ describe('the settings area', () => {
 
   it('keeps sections without a feature as clear placeholders', async () => {
     server.use(...loaded())
-    renderAt('/11/settings/bank')
-    expect(await screen.findByRole('heading', { name: 'Bank', level: 1 })).toBeInTheDocument()
+    renderAt('/11/settings/connections')
+    expect(await screen.findByRole('heading', { name: 'Integrations', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('This section is not available yet.')).toBeInTheDocument()
   })
 

@@ -20,6 +20,11 @@ import { CustomFieldFormPage } from './settings/CustomFieldFormPage'
 import { IdentityFormPage } from './settings/IdentityFormPage'
 import { ManagementSettingsPage } from './settings/ManagementSettingsPage'
 import { PlaceholderSettingsPage } from './settings/PlaceholderSettingsPage'
+import { BankSettingsPage } from './banking/BankSettingsPage'
+import { BookingRuleFormPage } from './banking/BookingRuleFormPage'
+import { FinancialAccountPage } from './banking/FinancialAccountPage'
+import { TransactionPage } from './banking/TransactionPage'
+import { TransactionsPage } from './banking/TransactionsPage'
 import { BookkeepingSettingsPage } from './bookkeeping/BookkeepingSettingsPage'
 import { LedgerAccountFormPage } from './bookkeeping/LedgerAccountFormPage'
 import { SchemePage } from './bookkeeping/SchemePage'
@@ -53,6 +58,7 @@ export function AppRoutes() {
           <Route path="administration" element={<ManagementSettingsPage />} />
           <Route path="invoices_and_estimates" element={<InvoicesSettingsPage />} />
           <Route path="bookkeeping" element={<BookkeepingSettingsPage />} />
+          <Route path="bank" element={<BankSettingsPage />} />
           <Route path=":section" element={<PlaceholderSettingsPage />} />
         </Route>
         <Route path="/:administrationId/custom_fields" element={<SettingsLayout />}>
@@ -67,6 +73,16 @@ export function AppRoutes() {
           <Route path="new" element={<DocumentStyleFormPage />} />
           <Route path=":styleId" element={<Navigate to="edit" replace />} />
           <Route path=":styleId/edit" element={<DocumentStyleFormPage />} />
+        </Route>
+        <Route path="/:administrationId/financial_mutations" element={<TransactionsPage />} />
+        <Route path="/:administrationId/financial_mutations/:mutationId" element={<TransactionPage />} />
+        <Route path="/:administrationId/financial_accounts" element={<SettingsLayout />}>
+          <Route path="new" element={<FinancialAccountPage />} />
+          <Route path=":accountId" element={<FinancialAccountPage />} />
+        </Route>
+        <Route path="/:administrationId/booking_rules" element={<SettingsLayout />}>
+          <Route path="new" element={<BookingRuleFormPage />} />
+          <Route path=":ruleId" element={<BookingRuleFormPage />} />
         </Route>
         <Route path="/:administrationId/tax_rates" element={<SettingsLayout />}>
           <Route path="new" element={<TaxRateFormPage />} />

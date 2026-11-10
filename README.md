@@ -86,6 +86,18 @@ Changes are test-driven. Go code follows the [Google Go style guide](https://goo
 
 To change the API, edit the contract first. Requests are validated against it at runtime, and backend tests fail on any response it does not describe.
 
+## Bank
+
+Transactions come in from statement files: CAMT.052, CAMT.053, CAMT.054 or
+MT940, downloaded from online banking and imported on an account under
+Settings → Bank. Transactions an account has already are skipped, so a file
+can be imported twice. Cash and other accounts without files take
+transactions typed in by hand. Booking rules book matching transactions on a
+category as they come in; the rest are booked under Bank. The API follows
+Moneybird's financial accounts, statements and mutations. Direct bank
+connections are not built yet; `internal/bankfile` is where another source
+would hand over its transactions.
+
 ## Bookkeeping per country
 
 A new administration starts from its country's VAT rates, categories and
