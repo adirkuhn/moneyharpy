@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import type { components } from '../api/schema'
 import { useCurrentUser } from '../auth/queries'
+import { TextInput } from '../forms/Form'
 import { manualPath, useCompanySearch, useOnboardingOptions } from './queries'
 import { Wizard } from './Wizard'
 
@@ -72,10 +73,7 @@ function CompanySearch({ title, subtitle }: { title: string; subtitle: string })
         </>
       }
     >
-      <label className="field">
-        <span>{t('onboarding.companyQuestion')}</span>
-        <input type="text" autoComplete="off" placeholder={t('onboarding.searchPlaceholder')} value={input} onChange={(e) => setInput(e.target.value)} />
-      </label>
+      <TextInput label={t('onboarding.companyQuestion')} autoComplete="off" placeholder={t('onboarding.searchPlaceholder')} value={input} onChange={(e) => setInput(e.target.value)} />
       <p className="hint">
         {t('onboarding.searchHelp')} <Link to={manualPath()}>{t('onboarding.notRegistered')}</Link>
       </p>

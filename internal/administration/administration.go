@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -46,17 +47,20 @@ type Administration struct {
 	Suspended         bool
 	PeriodLockedUntil *string
 	PeriodStartDate   string
-	Company
+	Profile
 }
 
-// Company holds the registered details of the business behind an
-// administration.
-type Company struct {
-	Address1          string
-	Address2          string
-	Zipcode           string
-	City              string
-	ChamberOfCommerce string
+// Profile describes what the company does. Moneybird keeps these on the
+// administration and shows them on the company details form.
+type Profile struct {
+	// SmallBusinessScheme reports registration for the Dutch small business
+	// scheme (KOR), under which no VAT is charged.
+	SmallBusinessScheme          bool
+	CompanyActivitiesDescription string
+	CompanyWebsiteURL            string
+	// CompanyWebsiteAbsent confirms the company has no website. It is false
+	// whenever a website is set.
+	CompanyWebsiteAbsent bool
 }
 
 // CompanyMatch is a company found in a public register. Address parts the
@@ -112,10 +116,26 @@ type NewAdministration struct {
 // Store persists administrations. Methods reading or changing a single
 // administration return ErrNotFound when the user has no access to it.
 type Store interface {
-	Create(ctx context.Context, a Administration, owner resource.ID) error
+	// Create stores an administration with its owner and default identity.
+	Create(ctx context.Context, a Administration, owner resource.ID, def Identity) error
+	Update(ctx context.Context, a Administration) error
 	ListForUser(ctx context.Context, user resource.ID) ([]Listed, error)
 	ForUser(ctx context.Context, id, user resource.ID) (Listed, error)
 	SetFavorite(ctx context.Context, id, user resource.ID, favorite bool) error
+
+	// The identity methods trust the caller to have checked access. Identity
+	// and DeleteIdentity return ErrIdentityNotFound for an identity outside
+	// the administration.
+	ListIdentities(ctx context.Context, admin resource.ID) ([]Identity, error)
+	DefaultIdentity(ctx context.Context, admin resource.ID) (Identity, error)
+	Identity(ctx context.Context, admin, id resource.ID) (Identity, error)
+	CreateIdentity(ctx context.Context, i Identity) error
+	UpdateIdentity(ctx context.Context, i Identity) error
+	DeleteIdentity(ctx context.Context, admin, id resource.ID) error
+
+	// The custom field methods trust the caller to have checked access.
+	CustomFields(ctx context.Context, admin resource.ID) ([]CustomField, error)
+	CreateCustomField(ctx context.Context, f CustomField) error
 }
 
 // Service implements the administration use cases.
@@ -130,19 +150,9 @@ func NewService(store Store, ids *resource.Generator, now func() time.Time) *Ser
 	return &Service{store: store, ids: ids, now: now}
 }
 
-// Create adds an administration owned by owner.
+// Create adds an administration owned by owner, with a default identity made
+// from the company details.
 func (s *Service) Create(ctx context.Context, owner resource.ID, in NewAdministration) (Listed, error) {
-	a, err := s.build(in)
-	if err != nil {
-		return Listed{}, err
-	}
-	if err := s.store.Create(ctx, a, owner); err != nil {
-		return Listed{}, fmt.Errorf("store administration: %w", err)
-	}
-	return Listed{Administration: a, Membership: Membership{Access: AccessUser}}, nil
-}
-
-func (s *Service) build(in NewAdministration) (Administration, error) {
 	a := Administration{
 		Name:            strings.TrimSpace(in.Name),
 		Language:        cmp.Or(in.Language, "en"),
@@ -150,15 +160,86 @@ func (s *Service) build(in NewAdministration) (Administration, error) {
 		Country:         cmp.Or(in.Country, "NL"),
 		TimeZone:        cmp.Or(in.TimeZone, "Europe/Amsterdam"),
 		PeriodStartDate: fmt.Sprintf("%d-01-01", s.now().Year()),
-		Company: Company{
-			Address1:          strings.TrimSpace(in.Address1),
-			Address2:          strings.TrimSpace(in.Address2),
-			Zipcode:           strings.TrimSpace(in.Zipcode),
-			City:              strings.TrimSpace(in.City),
-			ChamberOfCommerce: strings.TrimSpace(in.ChamberOfCommerce),
-		},
 	}
+	if err := validate(a); err != nil {
+		return Listed{}, err
+	}
+	a.ID = s.ids.Next()
 
+	now := s.now()
+	def := Identity{ID: s.ids.Next(), AdministrationID: a.ID, Default: true, CreatedAt: now, UpdatedAt: now}
+	IdentityChanges{
+		CompanyName:       &a.Name,
+		Country:           &a.Country,
+		Address1:          &in.Address1,
+		Address2:          &in.Address2,
+		Zipcode:           &in.Zipcode,
+		City:              &in.City,
+		ChamberOfCommerce: &in.ChamberOfCommerce,
+	}.applyTo(&def)
+
+	if err := s.store.Create(ctx, a, owner, def); err != nil {
+		return Listed{}, fmt.Errorf("store administration: %w", err)
+	}
+	return Listed{Administration: a, Membership: Membership{Access: AccessUser}}, nil
+}
+
+// Changes holds the administration fields to set. Nil fields stay as they are.
+type Changes struct {
+	Name     *string
+	Language *string
+	Currency *string
+	TimeZone *string
+
+	SmallBusinessScheme          *bool
+	CompanyActivitiesDescription *string
+	CompanyWebsiteURL            *string
+	CompanyWebsiteAbsent         *bool
+}
+
+// Update changes an administration's own settings.
+func (s *Service) Update(ctx context.Context, id, user resource.ID, c Changes) (Listed, error) {
+	l, err := s.store.ForUser(ctx, id, user)
+	if err != nil {
+		return Listed{}, err
+	}
+	if c.Name != nil {
+		l.Name = strings.TrimSpace(*c.Name)
+	}
+	if c.Language != nil {
+		l.Language = *c.Language
+	}
+	if c.Currency != nil {
+		l.Currency = *c.Currency
+	}
+	if c.TimeZone != nil {
+		l.TimeZone = *c.TimeZone
+	}
+	if c.SmallBusinessScheme != nil {
+		l.SmallBusinessScheme = *c.SmallBusinessScheme
+	}
+	if c.CompanyActivitiesDescription != nil {
+		l.CompanyActivitiesDescription = strings.TrimSpace(*c.CompanyActivitiesDescription)
+	}
+	if c.CompanyWebsiteURL != nil {
+		l.CompanyWebsiteURL = strings.TrimSpace(*c.CompanyWebsiteURL)
+	}
+	if c.CompanyWebsiteAbsent != nil {
+		l.CompanyWebsiteAbsent = *c.CompanyWebsiteAbsent
+	}
+	if l.CompanyWebsiteURL != "" {
+		l.CompanyWebsiteAbsent = false
+	}
+	if err := validate(l.Administration); err != nil {
+		return Listed{}, err
+	}
+	if err := s.store.Update(ctx, l.Administration); err != nil {
+		return Listed{}, fmt.Errorf("store administration: %w", err)
+	}
+	return l, nil
+}
+
+func validate(a Administration) error {
 	var verr resource.ValidationError
 	if a.Name == "" {
 		verr.Add("name", "can't be blank")
@@ -175,12 +256,16 @@ func (s *Service) build(in NewAdministration) (Administration, error) {
 	if _, err := time.LoadLocation(a.TimeZone); err != nil {
 		verr.Add("time_zone", "is not a known time zone")
 	}
-	if err := verr.OrNil(); err != nil {
-		return Administration{}, err
+	if a.CompanyWebsiteURL != "" && !validWebsite(a.CompanyWebsiteURL) {
+		verr.Add("company_website_url", "is not a valid website address")
 	}
+	return verr.OrNil()
+}
 
-	a.ID = s.ids.Next()
-	return a, nil
+// validWebsite accepts absolute http and https URLs with a host.
+func validWebsite(s string) bool {
+	u, err := url.Parse(s)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }
 
 // List returns the administrations user can access, favorites first and then

@@ -14,7 +14,7 @@ import (
 const administrationForUser = `-- name: AdministrationForUser :one
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
-       a.address1, a.address2, a.zipcode, a.city, a.chamber_of_commerce,
+       a.small_business_scheme, a.company_activities_description, a.company_website_url, a.company_website_absent,
        m.access, m.favorite
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
 WHERE a.id = $1 AND m.user_id = $2
@@ -26,22 +26,21 @@ type AdministrationForUserParams struct {
 }
 
 type AdministrationForUserRow struct {
-	ID                int64
-	Name              string
-	Language          string
-	Currency          string
-	Country           string
-	TimeZone          string
-	Suspended         bool
-	PeriodLockedUntil pgtype.Date
-	PeriodStartDate   pgtype.Date
-	Address1          string
-	Address2          string
-	Zipcode           string
-	City              string
-	ChamberOfCommerce string
-	Access            string
-	Favorite          bool
+	ID                           int64
+	Name                         string
+	Language                     string
+	Currency                     string
+	Country                      string
+	TimeZone                     string
+	Suspended                    bool
+	PeriodLockedUntil            pgtype.Date
+	PeriodStartDate              pgtype.Date
+	SmallBusinessScheme          bool
+	CompanyActivitiesDescription string
+	CompanyWebsiteUrl            string
+	CompanyWebsiteAbsent         bool
+	Access                       string
+	Favorite                     bool
 }
 
 func (q *Queries) AdministrationForUser(ctx context.Context, arg AdministrationForUserParams) (AdministrationForUserRow, error) {
@@ -57,11 +56,10 @@ func (q *Queries) AdministrationForUser(ctx context.Context, arg AdministrationF
 		&i.Suspended,
 		&i.PeriodLockedUntil,
 		&i.PeriodStartDate,
-		&i.Address1,
-		&i.Address2,
-		&i.Zipcode,
-		&i.City,
-		&i.ChamberOfCommerce,
+		&i.SmallBusinessScheme,
+		&i.CompanyActivitiesDescription,
+		&i.CompanyWebsiteUrl,
+		&i.CompanyWebsiteAbsent,
 		&i.Access,
 		&i.Favorite,
 	)
@@ -84,12 +82,79 @@ func (q *Queries) ConsumeResetToken(ctx context.Context, arg ConsumeResetTokenPa
 	return user_id, err
 }
 
+const defaultIdentity = `-- name: DefaultIdentity :one
+SELECT id, administration_id, is_default, company_name, country, city, zipcode, address1, address2, email, phone, legal_entity_type, chamber_of_commerce, tax_number, bank_account_name, bank_account_number, bank_account_bic, created_at, updated_at, tax_number_absence_reason FROM identities WHERE administration_id = $1 AND is_default
+`
+
+func (q *Queries) DefaultIdentity(ctx context.Context, administrationID int64) (Identity, error) {
+	row := q.db.QueryRow(ctx, defaultIdentity, administrationID)
+	var i Identity
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.IsDefault,
+		&i.CompanyName,
+		&i.Country,
+		&i.City,
+		&i.Zipcode,
+		&i.Address1,
+		&i.Address2,
+		&i.Email,
+		&i.Phone,
+		&i.LegalEntityType,
+		&i.ChamberOfCommerce,
+		&i.TaxNumber,
+		&i.BankAccountName,
+		&i.BankAccountNumber,
+		&i.BankAccountBic,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TaxNumberAbsenceReason,
+	)
+	return i, err
+}
+
+const deleteIdentity = `-- name: DeleteIdentity :execrows
+DELETE FROM identities WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteIdentityParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteIdentity(ctx context.Context, arg DeleteIdentityParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteIdentity, arg.AdministrationID, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteIdentityCustomFieldValues = `-- name: DeleteIdentityCustomFieldValues :exec
+DELETE FROM identity_custom_field_values WHERE identity_id = $1
+`
+
+func (q *Queries) DeleteIdentityCustomFieldValues(ctx context.Context, identityID int64) error {
+	_, err := q.db.Exec(ctx, deleteIdentityCustomFieldValues, identityID)
+	return err
+}
+
 const deleteResetTokens = `-- name: DeleteResetTokens :exec
 DELETE FROM password_reset_tokens WHERE user_id = $1
 `
 
 func (q *Queries) DeleteResetTokens(ctx context.Context, userID int64) error {
 	_, err := q.db.Exec(ctx, deleteResetTokens, userID)
+	return err
+}
+
+const deleteResource = `-- name: DeleteResource :exec
+DELETE FROM resources WHERE id = $1
+`
+
+func (q *Queries) DeleteResource(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteResource, id)
 	return err
 }
 
@@ -128,10 +193,46 @@ func (q *Queries) DeleteUserSessions(ctx context.Context, userID int64) error {
 	return err
 }
 
+const identityByID = `-- name: IdentityByID :one
+SELECT id, administration_id, is_default, company_name, country, city, zipcode, address1, address2, email, phone, legal_entity_type, chamber_of_commerce, tax_number, bank_account_name, bank_account_number, bank_account_bic, created_at, updated_at, tax_number_absence_reason FROM identities WHERE administration_id = $1 AND id = $2
+`
+
+type IdentityByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) IdentityByID(ctx context.Context, arg IdentityByIDParams) (Identity, error) {
+	row := q.db.QueryRow(ctx, identityByID, arg.AdministrationID, arg.ID)
+	var i Identity
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.IsDefault,
+		&i.CompanyName,
+		&i.Country,
+		&i.City,
+		&i.Zipcode,
+		&i.Address1,
+		&i.Address2,
+		&i.Email,
+		&i.Phone,
+		&i.LegalEntityType,
+		&i.ChamberOfCommerce,
+		&i.TaxNumber,
+		&i.BankAccountName,
+		&i.BankAccountNumber,
+		&i.BankAccountBic,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TaxNumberAbsenceReason,
+	)
+	return i, err
+}
+
 const insertAdministration = `-- name: InsertAdministration :exec
-INSERT INTO administrations (id, name, language, currency, country, time_zone, suspended, period_locked_until, period_start_date,
-                             address1, address2, zipcode, city, chamber_of_commerce)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+INSERT INTO administrations (id, name, language, currency, country, time_zone, suspended, period_locked_until, period_start_date)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 `
 
 type InsertAdministrationParams struct {
@@ -144,11 +245,6 @@ type InsertAdministrationParams struct {
 	Suspended         bool
 	PeriodLockedUntil pgtype.Date
 	PeriodStartDate   pgtype.Date
-	Address1          string
-	Address2          string
-	Zipcode           string
-	City              string
-	ChamberOfCommerce string
 }
 
 func (q *Queries) InsertAdministration(ctx context.Context, arg InsertAdministrationParams) error {
@@ -162,12 +258,104 @@ func (q *Queries) InsertAdministration(ctx context.Context, arg InsertAdministra
 		arg.Suspended,
 		arg.PeriodLockedUntil,
 		arg.PeriodStartDate,
+	)
+	return err
+}
+
+const insertCustomField = `-- name: InsertCustomField :exec
+INSERT INTO custom_fields (id, administration_id, name, source, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)
+`
+
+type InsertCustomFieldParams struct {
+	ID               int64
+	AdministrationID int64
+	Name             string
+	Source           string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertCustomField(ctx context.Context, arg InsertCustomFieldParams) error {
+	_, err := q.db.Exec(ctx, insertCustomField,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Name,
+		arg.Source,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const insertIdentity = `-- name: InsertIdentity :exec
+INSERT INTO identities (id, administration_id, is_default, company_name, country, city, zipcode, address1, address2,
+                        email, phone, legal_entity_type, chamber_of_commerce, tax_number,
+                        bank_account_name, bank_account_number, bank_account_bic, tax_number_absence_reason,
+                        created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+`
+
+type InsertIdentityParams struct {
+	ID                     int64
+	AdministrationID       int64
+	IsDefault              bool
+	CompanyName            string
+	Country                string
+	City                   string
+	Zipcode                string
+	Address1               string
+	Address2               string
+	Email                  string
+	Phone                  string
+	LegalEntityType        string
+	ChamberOfCommerce      string
+	TaxNumber              string
+	BankAccountName        string
+	BankAccountNumber      string
+	BankAccountBic         string
+	TaxNumberAbsenceReason string
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+}
+
+func (q *Queries) InsertIdentity(ctx context.Context, arg InsertIdentityParams) error {
+	_, err := q.db.Exec(ctx, insertIdentity,
+		arg.ID,
+		arg.AdministrationID,
+		arg.IsDefault,
+		arg.CompanyName,
+		arg.Country,
+		arg.City,
+		arg.Zipcode,
 		arg.Address1,
 		arg.Address2,
-		arg.Zipcode,
-		arg.City,
+		arg.Email,
+		arg.Phone,
+		arg.LegalEntityType,
 		arg.ChamberOfCommerce,
+		arg.TaxNumber,
+		arg.BankAccountName,
+		arg.BankAccountNumber,
+		arg.BankAccountBic,
+		arg.TaxNumberAbsenceReason,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
+	return err
+}
+
+const insertIdentityCustomFieldValue = `-- name: InsertIdentityCustomFieldValue :exec
+INSERT INTO identity_custom_field_values (identity_id, custom_field_id, value) VALUES ($1, $2, $3)
+`
+
+type InsertIdentityCustomFieldValueParams struct {
+	IdentityID    int64
+	CustomFieldID int64
+	Value         string
+}
+
+func (q *Queries) InsertIdentityCustomFieldValue(ctx context.Context, arg InsertIdentityCustomFieldValueParams) error {
+	_, err := q.db.Exec(ctx, insertIdentityCustomFieldValue, arg.IdentityID, arg.CustomFieldID, arg.Value)
 	return err
 }
 
@@ -310,29 +498,28 @@ func (q *Queries) LinkIdentity(ctx context.Context, arg LinkIdentityParams) erro
 const listAdministrations = `-- name: ListAdministrations :many
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
-       a.address1, a.address2, a.zipcode, a.city, a.chamber_of_commerce,
+       a.small_business_scheme, a.company_activities_description, a.company_website_url, a.company_website_absent,
        m.access, m.favorite
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
 WHERE m.user_id = $1
 `
 
 type ListAdministrationsRow struct {
-	ID                int64
-	Name              string
-	Language          string
-	Currency          string
-	Country           string
-	TimeZone          string
-	Suspended         bool
-	PeriodLockedUntil pgtype.Date
-	PeriodStartDate   pgtype.Date
-	Address1          string
-	Address2          string
-	Zipcode           string
-	City              string
-	ChamberOfCommerce string
-	Access            string
-	Favorite          bool
+	ID                           int64
+	Name                         string
+	Language                     string
+	Currency                     string
+	Country                      string
+	TimeZone                     string
+	Suspended                    bool
+	PeriodLockedUntil            pgtype.Date
+	PeriodStartDate              pgtype.Date
+	SmallBusinessScheme          bool
+	CompanyActivitiesDescription string
+	CompanyWebsiteUrl            string
+	CompanyWebsiteAbsent         bool
+	Access                       string
+	Favorite                     bool
 }
 
 func (q *Queries) ListAdministrations(ctx context.Context, userID int64) ([]ListAdministrationsRow, error) {
@@ -354,13 +541,127 @@ func (q *Queries) ListAdministrations(ctx context.Context, userID int64) ([]List
 			&i.Suspended,
 			&i.PeriodLockedUntil,
 			&i.PeriodStartDate,
-			&i.Address1,
-			&i.Address2,
-			&i.Zipcode,
-			&i.City,
-			&i.ChamberOfCommerce,
+			&i.SmallBusinessScheme,
+			&i.CompanyActivitiesDescription,
+			&i.CompanyWebsiteUrl,
+			&i.CompanyWebsiteAbsent,
 			&i.Access,
 			&i.Favorite,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCustomFields = `-- name: ListCustomFields :many
+SELECT id, administration_id, name, source, created_at, updated_at FROM custom_fields WHERE administration_id = $1 ORDER BY id
+`
+
+func (q *Queries) ListCustomFields(ctx context.Context, administrationID int64) ([]CustomField, error) {
+	rows, err := q.db.Query(ctx, listCustomFields, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CustomField
+	for rows.Next() {
+		var i CustomField
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.Name,
+			&i.Source,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listIdentities = `-- name: ListIdentities :many
+SELECT id, administration_id, is_default, company_name, country, city, zipcode, address1, address2, email, phone, legal_entity_type, chamber_of_commerce, tax_number, bank_account_name, bank_account_number, bank_account_bic, created_at, updated_at, tax_number_absence_reason FROM identities WHERE administration_id = $1 ORDER BY is_default DESC, lower(company_name), id
+`
+
+func (q *Queries) ListIdentities(ctx context.Context, administrationID int64) ([]Identity, error) {
+	rows, err := q.db.Query(ctx, listIdentities, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Identity
+	for rows.Next() {
+		var i Identity
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.IsDefault,
+			&i.CompanyName,
+			&i.Country,
+			&i.City,
+			&i.Zipcode,
+			&i.Address1,
+			&i.Address2,
+			&i.Email,
+			&i.Phone,
+			&i.LegalEntityType,
+			&i.ChamberOfCommerce,
+			&i.TaxNumber,
+			&i.BankAccountName,
+			&i.BankAccountNumber,
+			&i.BankAccountBic,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.TaxNumberAbsenceReason,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listIdentityCustomFieldValues = `-- name: ListIdentityCustomFieldValues :many
+SELECT v.identity_id, f.id, f.name, v.value
+FROM identity_custom_field_values v JOIN custom_fields f ON f.id = v.custom_field_id
+WHERE f.administration_id = $1
+ORDER BY f.id
+`
+
+type ListIdentityCustomFieldValuesRow struct {
+	IdentityID int64
+	ID         int64
+	Name       string
+	Value      string
+}
+
+func (q *Queries) ListIdentityCustomFieldValues(ctx context.Context, administrationID int64) ([]ListIdentityCustomFieldValuesRow, error) {
+	rows, err := q.db.Query(ctx, listIdentityCustomFieldValues, administrationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListIdentityCustomFieldValuesRow
+	for rows.Next() {
+		var i ListIdentityCustomFieldValuesRow
+		if err := rows.Scan(
+			&i.IdentityID,
+			&i.ID,
+			&i.Name,
+			&i.Value,
 		); err != nil {
 			return nil, err
 		}
@@ -477,6 +778,93 @@ func (q *Queries) SetFavorite(ctx context.Context, arg SetFavoriteParams) (int64
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const updateAdministration = `-- name: UpdateAdministration :exec
+UPDATE administrations
+SET name = $2, language = $3, currency = $4, time_zone = $5, small_business_scheme = $6,
+    company_activities_description = $7, company_website_url = $8, company_website_absent = $9
+WHERE id = $1
+`
+
+type UpdateAdministrationParams struct {
+	ID                           int64
+	Name                         string
+	Language                     string
+	Currency                     string
+	TimeZone                     string
+	SmallBusinessScheme          bool
+	CompanyActivitiesDescription string
+	CompanyWebsiteUrl            string
+	CompanyWebsiteAbsent         bool
+}
+
+func (q *Queries) UpdateAdministration(ctx context.Context, arg UpdateAdministrationParams) error {
+	_, err := q.db.Exec(ctx, updateAdministration,
+		arg.ID,
+		arg.Name,
+		arg.Language,
+		arg.Currency,
+		arg.TimeZone,
+		arg.SmallBusinessScheme,
+		arg.CompanyActivitiesDescription,
+		arg.CompanyWebsiteUrl,
+		arg.CompanyWebsiteAbsent,
+	)
+	return err
+}
+
+const updateIdentity = `-- name: UpdateIdentity :exec
+UPDATE identities
+SET company_name = $3, country = $4, city = $5, zipcode = $6, address1 = $7, address2 = $8, email = $9, phone = $10,
+    legal_entity_type = $11, chamber_of_commerce = $12, tax_number = $13, bank_account_name = $14,
+    bank_account_number = $15, bank_account_bic = $16, tax_number_absence_reason = $17, updated_at = $18
+WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateIdentityParams struct {
+	AdministrationID       int64
+	ID                     int64
+	CompanyName            string
+	Country                string
+	City                   string
+	Zipcode                string
+	Address1               string
+	Address2               string
+	Email                  string
+	Phone                  string
+	LegalEntityType        string
+	ChamberOfCommerce      string
+	TaxNumber              string
+	BankAccountName        string
+	BankAccountNumber      string
+	BankAccountBic         string
+	TaxNumberAbsenceReason string
+	UpdatedAt              pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateIdentity(ctx context.Context, arg UpdateIdentityParams) error {
+	_, err := q.db.Exec(ctx, updateIdentity,
+		arg.AdministrationID,
+		arg.ID,
+		arg.CompanyName,
+		arg.Country,
+		arg.City,
+		arg.Zipcode,
+		arg.Address1,
+		arg.Address2,
+		arg.Email,
+		arg.Phone,
+		arg.LegalEntityType,
+		arg.ChamberOfCommerce,
+		arg.TaxNumber,
+		arg.BankAccountName,
+		arg.BankAccountNumber,
+		arg.BankAccountBic,
+		arg.TaxNumberAbsenceReason,
+		arg.UpdatedAt,
+	)
+	return err
 }
 
 const updatePassword = `-- name: UpdatePassword :exec

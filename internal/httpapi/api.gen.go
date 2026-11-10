@@ -15,34 +15,61 @@ import (
 
 // Defines values for AdministrationAccess.
 const (
-	AdministrationAccessAccountantCompany AdministrationAccess = "accountant_company"
-	AdministrationAccessUser              AdministrationAccess = "user"
+	AccountantCompany AdministrationAccess = "accountant_company"
+	User              AdministrationAccess = "user"
 )
 
 // Valid indicates whether the value is a known member of the AdministrationAccess enum.
 func (e AdministrationAccess) Valid() bool {
 	switch e {
-	case AdministrationAccessAccountantCompany:
+	case AccountantCompany:
 		return true
-	case AdministrationAccessUser:
+	case User:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for AdministrationDetailAccess.
+// Defines values for CustomFieldSource.
 const (
-	AdministrationDetailAccessAccountantCompany AdministrationDetailAccess = "accountant_company"
-	AdministrationDetailAccessUser              AdministrationDetailAccess = "user"
+	CustomFieldSourceContact      CustomFieldSource = "contact"
+	CustomFieldSourceEstimate     CustomFieldSource = "estimate"
+	CustomFieldSourceIdentity     CustomFieldSource = "identity"
+	CustomFieldSourceSalesInvoice CustomFieldSource = "sales_invoice"
 )
 
-// Valid indicates whether the value is a known member of the AdministrationDetailAccess enum.
-func (e AdministrationDetailAccess) Valid() bool {
+// Valid indicates whether the value is a known member of the CustomFieldSource enum.
+func (e CustomFieldSource) Valid() bool {
 	switch e {
-	case AdministrationDetailAccessAccountantCompany:
+	case CustomFieldSourceContact:
 		return true
-	case AdministrationDetailAccessUser:
+	case CustomFieldSourceEstimate:
+		return true
+	case CustomFieldSourceIdentity:
+		return true
+	case CustomFieldSourceSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IdentityRequestIdentityTaxNumberAbsenceReason.
+const (
+	IdentityRequestIdentityTaxNumberAbsenceReasonBelowTaxThreshold IdentityRequestIdentityTaxNumberAbsenceReason = "below_tax_threshold"
+	IdentityRequestIdentityTaxNumberAbsenceReasonEmpty             IdentityRequestIdentityTaxNumberAbsenceReason = ""
+	IdentityRequestIdentityTaxNumberAbsenceReasonIndustryExemption IdentityRequestIdentityTaxNumberAbsenceReason = "industry_exemption"
+)
+
+// Valid indicates whether the value is a known member of the IdentityRequestIdentityTaxNumberAbsenceReason enum.
+func (e IdentityRequestIdentityTaxNumberAbsenceReason) Valid() bool {
+	switch e {
+	case IdentityRequestIdentityTaxNumberAbsenceReasonBelowTaxThreshold:
+		return true
+	case IdentityRequestIdentityTaxNumberAbsenceReasonEmpty:
+		return true
+	case IdentityRequestIdentityTaxNumberAbsenceReasonIndustryExemption:
 		return true
 	default:
 		return false
@@ -64,6 +91,24 @@ func (e Language) Valid() bool {
 	case Nl:
 		return true
 	case NlBe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TaxNumberAbsenceReason.
+const (
+	TaxNumberAbsenceReasonBelowTaxThreshold TaxNumberAbsenceReason = "below_tax_threshold"
+	TaxNumberAbsenceReasonIndustryExemption TaxNumberAbsenceReason = "industry_exemption"
+)
+
+// Valid indicates whether the value is a known member of the TaxNumberAbsenceReason enum.
+func (e TaxNumberAbsenceReason) Valid() bool {
+	switch e {
+	case TaxNumberAbsenceReasonBelowTaxThreshold:
+		return true
+	case TaxNumberAbsenceReasonIndustryExemption:
 		return true
 	default:
 		return false
@@ -103,6 +148,17 @@ type Administration struct {
 	// Access The type of access the user has to this administration
 	Access AdministrationAccess `json:"access"`
 
+	// CompanyActivitiesDescription MoneyHarpy extension. What the company does.
+	CompanyActivitiesDescription string `json:"company_activities_description"`
+
+	// CompanyWebsiteAbsent MoneyHarpy extension. The company confirmed it has no website.
+	CompanyWebsiteAbsent bool `json:"company_website_absent"`
+
+	// CompanyWebsiteUrl MoneyHarpy extension. Empty when unknown.
+	//
+	// Example: https://example.com
+	CompanyWebsiteUrl string `json:"company_website_url"`
+
 	// Country The ISO 3166-1 alpha-2 country code
 	//
 	// Example: NL
@@ -130,7 +186,10 @@ type Administration struct {
 
 	// PeriodStartDate Example: 2026-01-01
 	PeriodStartDate string `json:"period_start_date"`
-	Suspended       bool   `json:"suspended"`
+
+	// SmallBusinessScheme MoneyHarpy extension. Registered for the Dutch small business scheme (KOR).
+	SmallBusinessScheme bool `json:"small_business_scheme"`
+	Suspended           bool `json:"suspended"`
 
 	// TimeZone Example: Europe/Amsterdam
 	TimeZone string `json:"time_zone"`
@@ -143,57 +202,6 @@ type Administration struct {
 
 // AdministrationAccess The type of access the user has to this administration
 type AdministrationAccess string
-
-// AdministrationDetail defines model for AdministrationDetail.
-type AdministrationDetail struct {
-	// Access The type of access the user has to this administration
-	Access            AdministrationDetailAccess `json:"access"`
-	Address1          string                     `json:"address1"`
-	Address2          string                     `json:"address2"`
-	ChamberOfCommerce string                     `json:"chamber_of_commerce"`
-	City              string                     `json:"city"`
-
-	// Country The ISO 3166-1 alpha-2 country code
-	//
-	// Example: NL
-	Country string `json:"country"`
-
-	// Currency The ISO 4217 currency code
-	//
-	// Example: EUR
-	Currency string `json:"currency"`
-
-	// Favorite MoneyHarpy extension.
-	Favorite bool `json:"favorite"`
-
-	// Id A unique record identifier. Parse as a string.
-	//
-	// Example: 416072101932303822
-	Id Identifier `json:"id"`
-
-	// Language The language code used in the administration
-	Language Language `json:"language"`
-
-	// Name Example: Harpy B.V.
-	Name              string  `json:"name"`
-	PeriodLockedUntil *string `json:"period_locked_until"`
-
-	// PeriodStartDate Example: 2026-01-01
-	PeriodStartDate string `json:"period_start_date"`
-	Suspended       bool   `json:"suspended"`
-
-	// TimeZone Example: Europe/Amsterdam
-	TimeZone string `json:"time_zone"`
-
-	// Uri MoneyHarpy extension. Canonical path of this resource.
-	//
-	// Example: /416072101932303822
-	Uri     string `json:"uri"`
-	Zipcode string `json:"zipcode"`
-}
-
-// AdministrationDetailAccess The type of access the user has to this administration
-type AdministrationDetailAccess string
 
 // ApiToken defines model for ApiToken.
 type ApiToken struct {
@@ -272,6 +280,51 @@ type CurrentUser struct {
 	Name          string     `json:"name"`
 }
 
+// CustomField defines model for CustomField.
+type CustomField struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId Identifier `json:"administration_id"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id Identifier `json:"id"`
+
+	// Name Example: Slogan
+	Name string `json:"name"`
+
+	// Source The kind of record the field belongs to.
+	Source CustomFieldSource `json:"source"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// CustomFieldRequest defines model for CustomFieldRequest.
+type CustomFieldRequest struct {
+	CustomField struct {
+		Name string `json:"name"`
+
+		// Source The kind of record the field belongs to.
+		Source CustomFieldSource `json:"source"`
+	} `json:"custom_field"`
+}
+
+// CustomFieldSource The kind of record the field belongs to.
+type CustomFieldSource string
+
+// CustomFieldValue defines model for CustomFieldValue.
+type CustomFieldValue struct {
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id    Identifier `json:"id"`
+	Name  string     `json:"name"`
+	Value string     `json:"value"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	Error    string                  `json:"error"`
@@ -282,6 +335,85 @@ type Error struct {
 //
 // Example: 416072101932303822
 type Identifier = string
+
+// Identity defines model for Identity.
+type Identity struct {
+	Address1 *string `json:"address1"`
+	Address2 *string `json:"address2"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId  Identifier `json:"administration_id"`
+	BankAccountBic    *string    `json:"bank_account_bic"`
+	BankAccountName   *string    `json:"bank_account_name"`
+	BankAccountNumber *string    `json:"bank_account_number"`
+	ChamberOfCommerce *string    `json:"chamber_of_commerce"`
+	City              *string    `json:"city"`
+	CompanyName       *string    `json:"company_name"`
+	Country           *string    `json:"country"`
+	CreatedAt         time.Time  `json:"created_at"`
+
+	// CustomFields The identity's non-empty custom field values.
+	CustomFields []CustomFieldValue `json:"custom_fields"`
+
+	// Default MoneyHarpy extension. Whether this identity holds the company details.
+	Default bool    `json:"default"`
+	Email   *string `json:"email"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id Identifier `json:"id"`
+
+	// LegalEntityType MoneyHarpy extension.
+	LegalEntityType *string `json:"legal_entity_type"`
+	Phone           *string `json:"phone"`
+	TaxNumber       *string `json:"tax_number"`
+
+	// TaxNumberAbsenceReason MoneyHarpy extension. Why the company has no VAT number; null when it has one or gave no reason.
+	TaxNumberAbsenceReason *TaxNumberAbsenceReason `json:"tax_number_absence_reason"`
+	UpdatedAt              time.Time               `json:"updated_at"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri     string  `json:"uri"`
+	Zipcode *string `json:"zipcode"`
+}
+
+// IdentityRequest defines model for IdentityRequest.
+type IdentityRequest struct {
+	Identity struct {
+		Address1          *string `json:"address1,omitempty"`
+		Address2          *string `json:"address2,omitempty"`
+		BankAccountBic    *string `json:"bank_account_bic,omitempty"`
+		BankAccountName   *string `json:"bank_account_name,omitempty"`
+		BankAccountNumber *string `json:"bank_account_number,omitempty"`
+		ChamberOfCommerce *string `json:"chamber_of_commerce,omitempty"`
+		City              *string `json:"city,omitempty"`
+		CompanyName       *string `json:"company_name,omitempty"`
+		Country           *string `json:"country,omitempty"`
+
+		// CustomFieldsAttributes Custom field values to set. An empty value removes it.
+		CustomFieldsAttributes *[]struct {
+			// Id A unique record identifier. Parse as a string.
+			//
+			// Example: 416072101932303822
+			Id    Identifier `json:"id"`
+			Value string     `json:"value"`
+		} `json:"custom_fields_attributes,omitempty"`
+		Email           *string `json:"email,omitempty"`
+		LegalEntityType *string `json:"legal_entity_type,omitempty"`
+		Phone           *string `json:"phone,omitempty"`
+		TaxNumber       *string `json:"tax_number,omitempty"`
+
+		// TaxNumberAbsenceReason MoneyHarpy extension. Empty clears it. Ignored while a VAT number is set.
+		TaxNumberAbsenceReason *IdentityRequestIdentityTaxNumberAbsenceReason `json:"tax_number_absence_reason,omitempty"`
+		Zipcode                *string                                        `json:"zipcode,omitempty"`
+	} `json:"identity"`
+}
+
+// IdentityRequestIdentityTaxNumberAbsenceReason MoneyHarpy extension. Empty clears it. Ignored while a VAT number is set.
+type IdentityRequestIdentityTaxNumberAbsenceReason string
 
 // InstanceSettings defines model for InstanceSettings.
 type InstanceSettings struct {
@@ -364,6 +496,32 @@ type ResourceLocation struct {
 	Uri string `json:"uri"`
 }
 
+// TaxNumberAbsenceReason defines model for TaxNumberAbsenceReason.
+type TaxNumberAbsenceReason string
+
+// UpdateAdministrationRequest defines model for UpdateAdministrationRequest.
+type UpdateAdministrationRequest struct {
+	Administration struct {
+		// CompanyActivitiesDescription MoneyHarpy extension.
+		CompanyActivitiesDescription *string `json:"company_activities_description,omitempty"`
+
+		// CompanyWebsiteAbsent MoneyHarpy extension. Ignored while a website is set.
+		CompanyWebsiteAbsent *bool `json:"company_website_absent,omitempty"`
+
+		// CompanyWebsiteUrl MoneyHarpy extension. An http or https address, or empty.
+		CompanyWebsiteUrl *string `json:"company_website_url,omitempty"`
+		Currency          *string `json:"currency,omitempty"`
+
+		// Language The language code used in the administration
+		Language *Language `json:"language,omitempty"`
+		Name     *string   `json:"name,omitempty"`
+
+		// SmallBusinessScheme MoneyHarpy extension.
+		SmallBusinessScheme *bool   `json:"small_business_scheme,omitempty"`
+		TimeZone            *string `json:"time_zone,omitempty"`
+	} `json:"administration"`
+}
+
 // UpdateInstanceSettingsRequest defines model for UpdateInstanceSettingsRequest.
 type UpdateInstanceSettingsRequest struct {
 	AddressLookupEnabled *bool   `json:"address_lookup_enabled,omitempty"`
@@ -397,6 +555,11 @@ type ValidationError struct {
 	// Error Messages per invalid attribute.
 	Error map[string][]string `json:"error"`
 }
+
+// AdministrationId A unique record identifier. Parse as a string.
+//
+// Example: 416072101932303822
+type AdministrationId = Identifier
 
 // Id A unique record identifier. Parse as a string.
 //
@@ -468,6 +631,21 @@ type CreateTokenJSONRequestBody = CreateTokenRequest
 
 // CreateAdministrationJSONRequestBody defines body for CreateAdministration for application/json ContentType.
 type CreateAdministrationJSONRequestBody = CreateAdministrationRequest
+
+// UpdateAdministrationJSONRequestBody defines body for UpdateAdministration for application/json ContentType.
+type UpdateAdministrationJSONRequestBody = UpdateAdministrationRequest
+
+// CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
+type CreateCustomFieldJSONRequestBody = CustomFieldRequest
+
+// CreateIdentityJSONRequestBody defines body for CreateIdentity for application/json ContentType.
+type CreateIdentityJSONRequestBody = IdentityRequest
+
+// UpdateDefaultIdentityJSONRequestBody defines body for UpdateDefaultIdentity for application/json ContentType.
+type UpdateDefaultIdentityJSONRequestBody = IdentityRequest
+
+// UpdateIdentityJSONRequestBody defines body for UpdateIdentity for application/json ContentType.
+type UpdateIdentityJSONRequestBody = IdentityRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -543,12 +721,42 @@ type ServerInterface interface {
 	// GetAdministration Get an administration
 	// (GET /api/v2/administrations/{id})
 	GetAdministration(w http.ResponseWriter, r *http.Request, id Id)
+	// UpdateAdministration Update an administration
+	// (PATCH /api/v2/administrations/{id})
+	UpdateAdministration(w http.ResponseWriter, r *http.Request, id Id)
 	// UnfavoriteAdministration Remove an administration from favorites
 	// (DELETE /api/v2/administrations/{id}/favorite)
 	UnfavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id)
 	// FavoriteAdministration Mark an administration as favorite
 	// (PUT /api/v2/administrations/{id}/favorite)
 	FavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id)
+	// ListCustomFields Retrieve custom fields
+	// (GET /api/v2/{administration_id}/custom_fields)
+	ListCustomFields(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateCustomField Create a custom field
+	// (POST /api/v2/{administration_id}/custom_fields)
+	CreateCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListIdentities Retrieve identities
+	// (GET /api/v2/{administration_id}/identities)
+	ListIdentities(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateIdentity Create an identity
+	// (POST /api/v2/{administration_id}/identities)
+	CreateIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetDefaultIdentity Retrieve the default identity
+	// (GET /api/v2/{administration_id}/identities/default)
+	GetDefaultIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// UpdateDefaultIdentity Update the default identity
+	// (PATCH /api/v2/{administration_id}/identities/default)
+	UpdateDefaultIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteIdentity Delete an identity
+	// (DELETE /api/v2/{administration_id}/identities/{id})
+	DeleteIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetIdentity Retrieve an identity
+	// (GET /api/v2/{administration_id}/identities/{id})
+	GetIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateIdentity Update an identity
+	// (PATCH /api/v2/{administration_id}/identities/{id})
+	UpdateIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -699,6 +907,12 @@ func (_ Unimplemented) GetAdministration(w http.ResponseWriter, r *http.Request,
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// UpdateAdministration Update an administration
+// (PATCH /api/v2/administrations/{id})
+func (_ Unimplemented) UpdateAdministration(w http.ResponseWriter, r *http.Request, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // UnfavoriteAdministration Remove an administration from favorites
 // (DELETE /api/v2/administrations/{id}/favorite)
 func (_ Unimplemented) UnfavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id) {
@@ -708,6 +922,60 @@ func (_ Unimplemented) UnfavoriteAdministration(w http.ResponseWriter, r *http.R
 // FavoriteAdministration Mark an administration as favorite
 // (PUT /api/v2/administrations/{id}/favorite)
 func (_ Unimplemented) FavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListCustomFields Retrieve custom fields
+// (GET /api/v2/{administration_id}/custom_fields)
+func (_ Unimplemented) ListCustomFields(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateCustomField Create a custom field
+// (POST /api/v2/{administration_id}/custom_fields)
+func (_ Unimplemented) CreateCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListIdentities Retrieve identities
+// (GET /api/v2/{administration_id}/identities)
+func (_ Unimplemented) ListIdentities(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateIdentity Create an identity
+// (POST /api/v2/{administration_id}/identities)
+func (_ Unimplemented) CreateIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDefaultIdentity Retrieve the default identity
+// (GET /api/v2/{administration_id}/identities/default)
+func (_ Unimplemented) GetDefaultIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateDefaultIdentity Update the default identity
+// (PATCH /api/v2/{administration_id}/identities/default)
+func (_ Unimplemented) UpdateDefaultIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteIdentity Delete an identity
+// (DELETE /api/v2/{administration_id}/identities/{id})
+func (_ Unimplemented) DeleteIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetIdentity Retrieve an identity
+// (GET /api/v2/{administration_id}/identities/{id})
+func (_ Unimplemented) GetIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateIdentity Update an identity
+// (PATCH /api/v2/{administration_id}/identities/{id})
+func (_ Unimplemented) UpdateIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1242,6 +1510,32 @@ func (siw *ServerInterfaceWrapper) GetAdministration(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// UpdateAdministration operation middleware
+func (siw *ServerInterfaceWrapper) UpdateAdministration(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateAdministration(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // UnfavoriteAdministration operation middleware
 func (siw *ServerInterfaceWrapper) UnfavoriteAdministration(w http.ResponseWriter, r *http.Request) {
 
@@ -1285,6 +1579,267 @@ func (siw *ServerInterfaceWrapper) FavoriteAdministration(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.FavoriteAdministration(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCustomFields operation middleware
+func (siw *ServerInterfaceWrapper) ListCustomFields(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCustomFields(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateCustomField operation middleware
+func (siw *ServerInterfaceWrapper) CreateCustomField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateCustomField(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIdentities operation middleware
+func (siw *ServerInterfaceWrapper) ListIdentities(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIdentities(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateIdentity operation middleware
+func (siw *ServerInterfaceWrapper) CreateIdentity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateIdentity(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDefaultIdentity operation middleware
+func (siw *ServerInterfaceWrapper) GetDefaultIdentity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDefaultIdentity(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateDefaultIdentity operation middleware
+func (siw *ServerInterfaceWrapper) UpdateDefaultIdentity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateDefaultIdentity(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteIdentity operation middleware
+func (siw *ServerInterfaceWrapper) DeleteIdentity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteIdentity(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetIdentity operation middleware
+func (siw *ServerInterfaceWrapper) GetIdentity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetIdentity(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateIdentity operation middleware
+func (siw *ServerInterfaceWrapper) UpdateIdentity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateIdentity(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1417,10 +1972,40 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/v2/administrations/{id}", wrapper.GetAdministration)
 	})
 	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/administrations/{id}", wrapper.UpdateAdministration)
+	})
+	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/v2/administrations/{id}/favorite", wrapper.UnfavoriteAdministration)
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/api/v2/administrations/{id}/favorite", wrapper.FavoriteAdministration)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/custom_fields", wrapper.ListCustomFields)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/custom_fields", wrapper.CreateCustomField)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/identities", wrapper.ListIdentities)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/identities", wrapper.CreateIdentity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/identities/default", wrapper.GetDefaultIdentity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/identities/default", wrapper.UpdateDefaultIdentity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/identities/{id}", wrapper.DeleteIdentity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/identities/{id}", wrapper.GetIdentity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/identities/{id}", wrapper.UpdateIdentity)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/onboarding/options", wrapper.OnboardingOptions)

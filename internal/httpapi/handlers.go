@@ -62,6 +62,11 @@ func toAdministration(l administration.Listed) Administration {
 		PeriodStartDate:   l.PeriodStartDate,
 		Favorite:          l.Favorite,
 		Uri:               l.Ref().URI(),
+
+		SmallBusinessScheme:          l.SmallBusinessScheme,
+		CompanyActivitiesDescription: l.CompanyActivitiesDescription,
+		CompanyWebsiteUrl:            l.CompanyWebsiteURL,
+		CompanyWebsiteAbsent:         l.CompanyWebsiteAbsent,
 	}
 }
 
@@ -121,24 +126,282 @@ func (s *server) GetAdministration(w http.ResponseWriter, r *http.Request, id Id
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, administrationDetail{
-		Administration:    toAdministration(got),
-		Address1:          got.Address1,
-		Address2:          got.Address2,
-		Zipcode:           got.Zipcode,
-		City:              got.City,
-		ChamberOfCommerce: got.ChamberOfCommerce,
-	})
+	writeJSON(w, http.StatusOK, toAdministration(got))
 }
 
-// administrationDetail is the wire form of AdministrationDetail.
-type administrationDetail struct {
-	Administration
-	Address1          string `json:"address1"`
-	Address2          string `json:"address2"`
-	Zipcode           string `json:"zipcode"`
-	City              string `json:"city"`
-	ChamberOfCommerce string `json:"chamber_of_commerce"`
+// UpdateAdministration implements ServerInterface.
+func (s *server) UpdateAdministration(w http.ResponseWriter, r *http.Request, id Id) {
+	rid, ok := parseID(w, id)
+	if !ok {
+		return
+	}
+	body, ok := decodeBody[UpdateAdministrationRequest](w, r)
+	if !ok {
+		return
+	}
+	in := body.Administration
+	updated, err := s.deps.Administrations.Update(r.Context(), rid, user(r).ID, administration.Changes{
+		Name: in.Name, Language: (*string)(in.Language), Currency: in.Currency, TimeZone: in.TimeZone,
+		SmallBusinessScheme: in.SmallBusinessScheme, CompanyActivitiesDescription: in.CompanyActivitiesDescription,
+		CompanyWebsiteURL: in.CompanyWebsiteUrl, CompanyWebsiteAbsent: in.CompanyWebsiteAbsent,
+	})
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toAdministration(updated))
+}
+
+// nullable maps an empty value to JSON null, as Moneybird does.
+func nullable[S ~string](s S) *S {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func toIdentity(i administration.Identity) Identity {
+	return Identity{
+		Id:                i.ID.String(),
+		AdministrationId:  i.AdministrationID.String(),
+		CompanyName:       nullable(i.CompanyName),
+		Country:           nullable(i.Country),
+		City:              nullable(i.City),
+		Zipcode:           nullable(i.Zipcode),
+		Address1:          nullable(i.Address1),
+		Address2:          nullable(i.Address2),
+		Email:             nullable(i.Email),
+		Phone:             nullable(i.Phone),
+		BankAccountName:   nullable(i.BankAccountName),
+		BankAccountNumber: nullable(i.BankAccountNumber),
+		BankAccountBic:    nullable(i.BankAccountBIC),
+		ChamberOfCommerce: nullable(i.ChamberOfCommerce),
+		TaxNumber:         nullable(i.TaxNumber),
+		LegalEntityType:   nullable(i.LegalEntityType),
+		CustomFields:      toCustomFieldValues(i.CustomFields),
+		CreatedAt:         i.CreatedAt,
+		UpdatedAt:         i.UpdatedAt,
+		Default:           i.Default,
+		Uri:               i.Ref().URI(),
+
+		TaxNumberAbsenceReason: nullable(TaxNumberAbsenceReason(i.TaxNumberAbsenceReason)),
+	}
+}
+
+func toCustomFieldValues(values []administration.CustomFieldValue) []CustomFieldValue {
+	out := make([]CustomFieldValue, len(values))
+	for i, v := range values {
+		out[i] = CustomFieldValue{Id: v.ID.String(), Name: v.Name, Value: v.Value}
+	}
+	return out
+}
+
+func toCustomField(f administration.CustomField) CustomField {
+	return CustomField{
+		Id: f.ID.String(), AdministrationId: f.AdministrationID.String(), Name: f.Name,
+		Source: CustomFieldSource(f.Source), Uri: f.Ref().URI(),
+	}
+}
+
+func toIdentityChanges(body IdentityRequest) administration.IdentityChanges {
+	in := body.Identity
+	return administration.IdentityChanges{
+		CompanyName:       in.CompanyName,
+		Country:           in.Country,
+		City:              in.City,
+		Zipcode:           in.Zipcode,
+		Address1:          in.Address1,
+		Address2:          in.Address2,
+		Email:             in.Email,
+		Phone:             in.Phone,
+		LegalEntityType:   in.LegalEntityType,
+		ChamberOfCommerce: in.ChamberOfCommerce,
+		TaxNumber:         in.TaxNumber,
+		BankAccountName:   in.BankAccountName,
+		BankAccountNumber: in.BankAccountNumber,
+		BankAccountBIC:    in.BankAccountBic,
+
+		TaxNumberAbsenceReason: (*string)(in.TaxNumberAbsenceReason),
+		CustomFields:           toCustomFieldChanges(in.CustomFieldsAttributes),
+	}
+}
+
+// toCustomFieldChanges converts requested values. The contract guarantees
+// numeric IDs; one that overflows becomes 0, which matches no field and so
+// fails validation.
+func toCustomFieldChanges(in *[]struct {
+	Id    Identifier `json:"id"`
+	Value string     `json:"value"`
+}) []administration.CustomFieldChange {
+	if in == nil {
+		return nil
+	}
+	out := make([]administration.CustomFieldChange, len(*in))
+	for i, c := range *in {
+		id, _ := resource.ParseID(c.Id)
+		out[i] = administration.CustomFieldChange{ID: id, Value: c.Value}
+	}
+	return out
+}
+
+// ListCustomFields implements ServerInterface.
+func (s *server) ListCustomFields(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	fields, err := s.deps.Administrations.CustomFields(r.Context(), admin, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	out := make([]CustomField, len(fields))
+	for i, f := range fields {
+		out[i] = toCustomField(f)
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// CreateCustomField implements ServerInterface.
+func (s *server) CreateCustomField(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	body, ok := decodeBody[CustomFieldRequest](w, r)
+	if !ok {
+		return
+	}
+	created, err := s.deps.Administrations.CreateCustomField(r.Context(), admin, user(r).ID, administration.NewCustomField{
+		Name: body.CustomField.Name, Source: administration.Source(body.CustomField.Source),
+	})
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, toCustomField(created))
+}
+
+// ListIdentities implements ServerInterface.
+func (s *server) ListIdentities(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	identities, err := s.deps.Administrations.Identities(r.Context(), admin, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	out := make([]Identity, len(identities))
+	for i, identity := range identities {
+		out[i] = toIdentity(identity)
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// CreateIdentity implements ServerInterface.
+func (s *server) CreateIdentity(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	body, ok := decodeBody[IdentityRequest](w, r)
+	if !ok {
+		return
+	}
+	created, err := s.deps.Administrations.CreateIdentity(r.Context(), admin, user(r).ID, toIdentityChanges(body))
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, toIdentity(created))
+}
+
+// GetDefaultIdentity implements ServerInterface.
+func (s *server) GetDefaultIdentity(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	got, err := s.deps.Administrations.DefaultIdentity(r.Context(), admin, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toIdentity(got))
+}
+
+// UpdateDefaultIdentity implements ServerInterface.
+func (s *server) UpdateDefaultIdentity(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	body, ok := decodeBody[IdentityRequest](w, r)
+	if !ok {
+		return
+	}
+	updated, err := s.deps.Administrations.UpdateDefaultIdentity(r.Context(), admin, user(r).ID, toIdentityChanges(body))
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toIdentity(updated))
+}
+
+// GetIdentity implements ServerInterface.
+func (s *server) GetIdentity(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	got, err := s.deps.Administrations.Identity(r.Context(), admin, rid, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toIdentity(got))
+}
+
+// UpdateIdentity implements ServerInterface.
+func (s *server) UpdateIdentity(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	body, ok := decodeBody[IdentityRequest](w, r)
+	if !ok {
+		return
+	}
+	updated, err := s.deps.Administrations.UpdateIdentity(r.Context(), admin, rid, user(r).ID, toIdentityChanges(body))
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toIdentity(updated))
+}
+
+// DeleteIdentity implements ServerInterface.
+func (s *server) DeleteIdentity(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	if err := s.deps.Administrations.DeleteIdentity(r.Context(), admin, rid, user(r).ID); err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func parseIDs(w http.ResponseWriter, administrationID AdministrationId, id Id) (resource.ID, resource.ID, bool) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return 0, 0, false
+	}
+	rid, ok := parseID(w, id)
+	return admin, rid, ok
 }
 
 // lookupCountry is the only country with a register and address service wired

@@ -89,7 +89,8 @@ test('a user manages administrations and opens them by URI', async ({ page }) =>
   await page.goto(`/r${uri}`)
   await expect(page).toHaveURL(new RegExp(`${uri}$`))
   await page.goto(`${uri}/settings`)
-  await expect(page.getByRole('heading', { name: 'Harpy B.V. settings' })).toBeVisible()
+  await expect(page).toHaveURL(new RegExp(`${uri}/settings/company$`))
+  await expect(page.getByRole('heading', { name: 'Company', exact: true })).toBeVisible()
 })
 
 test('adding an administration walks through the wizard', async ({ page }) => {
@@ -114,8 +115,75 @@ test('adding an administration walks through the wizard', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Wizard Co' })).toBeVisible()
 
   const id = new URL(page.url()).pathname.slice(1)
-  const res = await page.request.get(`/api/v2/administrations/${id}`)
-  expect(await res.json()).toMatchObject({ currency: 'USD', address1: 'Dam 1', zipcode: '1012JS', city: 'Amsterdam', country: 'NL' })
+  const administration = await (await page.request.get(`/api/v2/administrations/${id}`)).json()
+  expect(administration).toMatchObject({ currency: 'USD', country: 'NL' })
+  const company = await (await page.request.get(`/api/v2/${id}/identities/default.json`)).json()
+  expect(company).toMatchObject({ company_name: 'Wizard Co', address1: 'Dam 1', zipcode: '1012JS', city: 'Amsterdam', country: 'NL' })
+})
+
+test('company details and sender addresses are managed in settings', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Settings Co')
+  const uri = new URL(page.url()).pathname
+
+  await page.goto('/administrations')
+  await page.getByRole('link', { name: 'Settings for Settings Co' }).click()
+  await expect(page).toHaveURL(new RegExp(`${uri}/settings/company$`))
+  const details = page.getByRole('region', { name: 'Company details' })
+  await expect(details).toContainText('Settings Co')
+
+  await details.getByRole('link', { name: 'Edit' }).click()
+  await expect(page.getByRole('heading', { name: 'Edit company information' })).toBeVisible()
+  await page.getByLabel('Phone number').fill('0201234567')
+  const account = page.getByLabel('Account number')
+  await account.fill('NL91 ABNA 0417 1643 01')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(account).toHaveAccessibleDescription('Account number is not a valid IBAN')
+  await expect(page.getByText('Account number is not a valid IBAN')).toBeVisible()
+  await account.fill('NL91 ABNA 0417 1643 00')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(details).toContainText('0201234567')
+  await expect(details).toContainText('NL91 ABNA 0417 1643 00')
+
+  await details.getByRole('link', { name: 'Edit' }).click()
+  await page.getByRole('link', { name: 'Add custom field' }).click()
+  await expect(page.getByRole('heading', { name: 'New custom field' })).toBeVisible()
+  await page.getByLabel('Name').fill('Slogan')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByRole('heading', { name: 'Edit company information' })).toBeVisible()
+  await page.getByLabel('Slogan').fill('Fresh bread')
+  await page.getByRole('checkbox', { name: 'Company has been registered for the small business scheme (KOR)' }).check()
+  await page.getByLabel('Website', { exact: true }).fill('https://settings.example')
+  await page.getByRole('checkbox', { name: 'Company does not have a VAT number' }).check()
+  await page.getByLabel('Reason').selectOption('industry_exemption')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page).toHaveURL(new RegExp(`${uri}/settings/company$`))
+  const id = uri.slice(1)
+  const saved = await (await page.request.get(`/api/v2/${id}/identities/default.json`)).json()
+  expect(saved.custom_fields).toEqual([expect.objectContaining({ name: 'Slogan', value: 'Fresh bread' })])
+  expect(saved.tax_number_absence_reason).toBe('industry_exemption')
+  const profile = await (await page.request.get(`/api/v2/administrations/${id}.json`)).json()
+  expect(profile).toMatchObject({ small_business_scheme: true, company_website_url: 'https://settings.example' })
+
+  const senders = page.getByRole('region', { name: 'Sender addresses' })
+  await senders.getByRole('link', { name: 'Add' }).click()
+  await page.getByLabel('Company name').fill('Side Trade')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(senders).toContainText('Side Trade')
+
+  await senders.getByRole('link', { name: 'Edit Side Trade' }).click()
+  const editUri = new URL(page.url()).pathname
+  await page.goto(editUri.replace(/\/edit$/, ''))
+  await expect(page).toHaveURL(new RegExp(`${editUri}$`))
+  await page.getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('button', { name: 'Confirm delete' }).click()
+  await expect(senders).not.toContainText('Side Trade')
+
+  await page.getByRole('navigation', { name: 'Settings' }).getByRole('link', { name: 'Management' }).click()
+  await page.getByLabel('Name').fill('Renamed Co')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByRole('status')).toContainText('Saved')
+  await expect(page.getByRole('button', { name: 'Renamed Co' })).toBeVisible()
 })
 
 test('the whole app switches to Dutch and remembers it', async ({ page }) => {
