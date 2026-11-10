@@ -16,10 +16,24 @@ export const en = {
     editTitle: 'Choose a new password', new: 'New password', save: 'Save new password', badLink: 'This link is invalid or has expired', newLink: 'Request a new link',
   },
   nav: {
-    overview: 'Overview', bank: 'Bank', settings: 'Settings',
     search: 'Search', searchSoon: 'Search is not available yet.',
     main: 'Main', home: 'MoneyHarpy home', notifications: 'Notifications', noNotifications: 'You have no notifications.', select: 'Select administration', yours: 'Your administrations',
     all: 'All administrations', new: 'New administration', account: 'User account', instance: 'Instance settings', docs: 'API documentation', signOut: 'Sign out',
+  },
+  sidenav: {
+    label: 'Administration menu', menu: 'Menu', collapse: 'Collapse menu', expand: 'Expand menu', collapseShort: 'Collapse', later: 'Not available yet',
+    items: {
+      overview: 'Overview', invoices: 'Invoices', salesInvoices: 'Sales invoices', externalInvoices: 'External invoices', recurringInvoices: 'Recurring invoices',
+      incoming: 'Incoming', quotes: 'Quotes', bank: 'Bank', financialAccounts: 'Financial accounts', transactions: 'Transactions', payments: 'Payments',
+      timesheets: 'Timesheets', register: 'Register', hoursReport: 'Hours report', projectsReport: 'Projects report',
+      contacts: 'Contacts', vat: 'VAT returns',
+      reports: 'Reports', reportsOverview: 'Overview', profitLoss: 'Profit and loss statement', balanceSheet: 'Balance sheet', assetsReport: 'Assets report',
+      vatSummary: 'VAT summary', cashFlow: 'Cash flow statement', debtors: 'Receivable overview', creditors: 'Payable overview',
+      debtorsAging: 'Receivables aging', creditorsAging: 'Payables aging', revenueByContact: 'Revenue per contact', expensesByContact: 'Costs per contact',
+      revenueByProject: 'Revenue by project', expensesByProject: 'Expenses by project', trialBalance: 'Trial balance', auditReport: 'Audit report', events: 'Events',
+      products: 'Products', productsOverview: 'Overview', onlineSales: 'Online sales',
+      assets: 'Assets', projects: 'Projects', tasks: 'Task lists', taskLists: 'Task lists', taskTemplates: 'Templates', settings: 'Settings',
+    },
   },
   notFound: { title: 'Page not found', body: 'This page does not exist or you have no access to it.', back: 'Go to your administrations' },
   administrations: {
