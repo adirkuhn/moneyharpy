@@ -16,7 +16,7 @@ export const en = {
     editTitle: 'Choose a new password', new: 'New password', save: 'Save new password', badLink: 'This link is invalid or has expired', newLink: 'Request a new link',
   },
   nav: {
-    bank: 'Bank', settings: 'Settings',
+    overview: 'Overview', bank: 'Bank', settings: 'Settings',
     search: 'Search', searchSoon: 'Search is not available yet.',
     main: 'Main', home: 'MoneyHarpy home', notifications: 'Notifications', noNotifications: 'You have no notifications.', select: 'Select administration', yours: 'Your administrations',
     all: 'All administrations', new: 'New administration', account: 'User account', instance: 'Instance settings', docs: 'API documentation', signOut: 'Sign out',
@@ -25,7 +25,19 @@ export const en = {
   administrations: {
     title: 'Select an administration', add: 'Add administration', list: 'Administrations', loadError: 'Administrations could not be loaded. Reload the page to try again.',
     empty: 'Add your first administration to start bookkeeping.', favorite: 'Mark {{name}} as favorite', unfavorite: 'Remove {{name}} from favorites', settingsFor: 'Settings for {{name}}',
-    homeEmpty: 'Invoices, contacts and quotes for this administration will appear here.', settings: '{{name}} settings', language: 'Language', currency: 'Currency', country: 'Country', timeZone: 'Time zone', starts: 'Bookkeeping starts',
+    settings: '{{name}} settings', language: 'Language', currency: 'Currency', country: 'Country', timeZone: 'Time zone', starts: 'Bookkeeping starts',
+  },
+  overview: {
+    title: 'Overview', morning: 'Good morning {{name}}!', afternoon: 'Good afternoon {{name}}!', evening: 'Good evening {{name}}!',
+    add: 'Add', addMenu: 'Add to this administration', addAccount: 'Financial account', addRule: 'Booking rule', addCategory: 'Category',
+    summary: 'Summary', bank: 'Bank', balance: 'Balance', toLink: 'To link',
+    salesInvoices: 'Sales invoices and external invoices', toReceive: 'To receive', toRemind: 'To remind',
+    incoming: 'Incoming', toPay: 'To pay', toProcess: 'To process',
+    later: 'Not available yet', laterHint: 'Shows here once this part of MoneyHarpy is ready.',
+    recent: 'Recently processed', noRecent: 'Nothing processed yet. Booked transactions appear here.',
+    nothing: 'You have no access to the parts of this administration shown here. Ask an owner for permissions.',
+    types: { financial_mutation: 'Transaction' }, states: { processed: 'Booked' },
+    loadError: 'The overview could not be loaded. Reload the page to try again.',
   },
   onboarding: {
     welcome: 'Welcome {{name}}', subtitle: 'In a few steps, we will create your financial administration.',
@@ -158,7 +170,7 @@ export const en = {
     addCondition: 'Add condition', removeCondition: 'Remove condition {{n}}', then: 'Then', category: 'Category', chooseCategory: 'Choose a category',
     transactions: 'Transactions', transactionsSubtitle: 'Book what came in and went out on your categories.', filters: 'Filter transactions', state: 'State',
     states: { unprocessed: 'To book', processed: 'Booked', all: 'All' }, account: 'Account', period: 'Period',
-    periods: { this_month: 'This month', prev_month: 'Last month', this_quarter: 'This quarter', prev_quarter: 'Last quarter', this_year: 'This year', prev_year: 'Last year' },
+    periods: { this_month: 'This month', prev_month: 'Last month', this_quarter: 'This quarter', prev_quarter: 'Last quarter', this_year: 'This year', prev_year: 'Last year', all: 'All time' },
     nothingToBook: 'Nothing to book in this period.', noTransactions: 'No transactions in this period. Import a statement file on an account in the bank settings.',
     open: 'Open', booked: 'Booked', noDescription: 'No description', transaction: 'Transaction', toTransactions: 'To Transactions',
     bookings: 'Bookings', bookingsSubtitle: 'The categories this transaction is booked on.', noBookings: 'Not booked yet.', byRule: 'Booked by a rule',

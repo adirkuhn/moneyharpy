@@ -8,7 +8,7 @@ import { Page } from '../layout/Page'
 import { formatAmount, useFinancialAccounts, useMutations } from './queries'
 
 const states = ['unprocessed', 'processed', 'all'] as const
-const periods = ['this_month', 'prev_month', 'this_quarter', 'prev_quarter', 'this_year', 'prev_year'] as const
+const periods = ['this_month', 'prev_month', 'this_quarter', 'prev_quarter', 'this_year', 'prev_year', 'all'] as const
 
 /** The administration's transactions, filtered by account, state and period. */
 export function TransactionsPage() {
@@ -20,7 +20,8 @@ export function TransactionsPage() {
   const state = (states as readonly string[]).includes(search.get('state') ?? '') ? search.get('state')! : 'unprocessed'
   const period = (periods as readonly string[]).includes(search.get('period') ?? '') ? search.get('period')! : 'this_year'
   const account = search.get('account') ?? ''
-  const filter = [`period:${period}`, `state:${state}`, ...(account ? [`financial_account_id:${account}`] : [])].join(',')
+  // Without a period term the filter covers every period.
+  const filter = [...(period === 'all' ? [] : [`period:${period}`]), `state:${state}`, ...(account ? [`financial_account_id:${account}`] : [])].join(',')
   const mutations = useMutations(administrationId, filter)
 
   if (administration.error instanceof ApiError && administration.error.status < 500) {

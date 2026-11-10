@@ -684,6 +684,21 @@ func (e LinkBookingRequestBookingType) Valid() bool {
 	}
 }
 
+// Defines values for OverviewItemType.
+const (
+	OverviewItemTypeFinancialMutation OverviewItemType = "financial_mutation"
+)
+
+// Valid indicates whether the value is a known member of the OverviewItemType enum.
+func (e OverviewItemType) Valid() bool {
+	switch e {
+	case OverviewItemTypeFinancialMutation:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Permission.
 const (
 	PermissionBank          Permission = "bank"
@@ -2936,6 +2951,53 @@ type OnboardingOptions struct {
 	Currencies        []string `json:"currencies"`
 	PopularCurrencies []string `json:"popular_currencies"`
 }
+
+// Overview MoneyHarpy extension. An administration's home page.
+type Overview struct {
+	// Bank Present only with the bank permission.
+	Bank *OverviewBank `json:"bank,omitempty"`
+
+	// RecentlyProcessed The records processed last, newest first, at most 25.
+	RecentlyProcessed []OverviewItem `json:"recently_processed"`
+}
+
+// OverviewBank Present only with the bank permission.
+type OverviewBank struct {
+	// Balance The sum of every financial account's balance.
+	//
+	// Example: 1250.0
+	Balance string `json:"balance"`
+
+	// Currency Example: EUR
+	Currency string `json:"currency"`
+
+	// UnprocessedCount Transactions of active accounts still to link.
+	UnprocessedCount int `json:"unprocessed_count"`
+}
+
+// OverviewItem One recently processed record.
+type OverviewItem struct {
+	// Amount Positive for money in, negative for money out.
+	Amount      string             `json:"amount"`
+	Currency    string             `json:"currency"`
+	Date        openapi_types.Date `json:"date"`
+	Description string             `json:"description"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id          Identifier `json:"id"`
+	ProcessedAt time.Time  `json:"processed_at"`
+	State       string     `json:"state"`
+	Title       string     `json:"title"`
+
+	// Type What kind of record this is; more kinds join as MoneyHarpy grows.
+	Type OverviewItemType `json:"type"`
+	Uri  string           `json:"uri"`
+}
+
+// OverviewItemType What kind of record this is; more kinds join as MoneyHarpy grows.
+type OverviewItemType string
 
 // PasswordResetConfirmation defines model for PasswordResetConfirmation.
 type PasswordResetConfirmation struct {
@@ -6602,6 +6664,9 @@ type ServerInterface interface {
 	// LeaveAdministration Leave the administration
 	// (DELETE /api/v2/{administration_id}/membership)
 	LeaveAdministration(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetOverview Get the administration's overview
+	// (GET /api/v2/{administration_id}/overview)
+	GetOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// GetBankBalance Bank balance report
 	// (GET /api/v2/{administration_id}/reports/bank_balance)
 	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -7295,6 +7360,12 @@ func (_ Unimplemented) UpdateLedgerAccount(w http.ResponseWriter, r *http.Reques
 // LeaveAdministration Leave the administration
 // (DELETE /api/v2/{administration_id}/membership)
 func (_ Unimplemented) LeaveAdministration(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetOverview Get the administration's overview
+// (GET /api/v2/{administration_id}/overview)
+func (_ Unimplemented) GetOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -10195,6 +10266,32 @@ func (siw *ServerInterfaceWrapper) LeaveAdministration(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// GetOverview operation middleware
+func (siw *ServerInterfaceWrapper) GetOverview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOverview(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetBankBalance operation middleware
 func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http.Request) {
 
@@ -11459,6 +11556,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/bank_balance", wrapper.GetBankBalance)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/overview", wrapper.GetOverview)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/booking_rules", wrapper.ListBookingRules)

@@ -101,3 +101,18 @@ export function SectionIcon({ section }: { section: string }) {
     </svg>
   )
 }
+
+/** Icons for the overview tiles: a balance, work waiting, money in and money out. */
+export function TileIcon({ kind }: { kind: 'balance' | 'attention' | 'in' | 'out' }) {
+  const shapes = {
+    balance: <><rect x="3.5" y="6.5" width="17" height="12" rx="2" /><path d="M3.5 10.5h17M15.5 14.5h2" /></>,
+    attention: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5.5m0 3v.01" /></>,
+    in: <><circle cx="12" cy="12" r="8.5" /><path d="M12 8v8m-4-4h8" /></>,
+    out: <><circle cx="12" cy="12" r="8.5" /><path d="M8 12h8" /></>,
+  }
+  return (
+    <svg viewBox="0 0 24 24" width="1.25em" height="1.25em" aria-hidden="true" {...stroke}>
+      {shapes[kind]}
+    </svg>
+  )
+}
