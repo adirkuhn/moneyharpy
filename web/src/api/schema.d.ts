@@ -39,7 +39,7 @@ export interface paths {
         };
         /**
          * Get an administration
-         * @description MoneyHarpy extension. Includes the company address, which the list omits to stay Moneybird-compatible.
+         * @description MoneyHarpy extension.
          */
         get: operations["getAdministration"];
         put?: never;
@@ -47,7 +47,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update an administration
+         * @description MoneyHarpy extension. Omitted fields stay unchanged.
+         */
+        patch: operations["updateAdministration"];
         trace?: never;
     };
     "/api/v2/administrations/{id}/favorite": {
@@ -74,6 +78,97 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/custom_fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /** Retrieve custom fields */
+        get: operations["listCustomFields"];
+        put?: never;
+        /**
+         * Create a custom field
+         * @description MoneyHarpy extension. Moneybird manages custom fields in its web app only.
+         */
+        post: operations["createCustomField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/identities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve identities
+         * @description The default identity holds the company details. Others are additional sender addresses.
+         */
+        get: operations["listIdentities"];
+        put?: never;
+        /** Create an identity */
+        post: operations["createIdentity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/identities/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /** Retrieve the default identity */
+        get: operations["getDefaultIdentity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the default identity */
+        patch: operations["updateDefaultIdentity"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/identities/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Retrieve an identity */
+        get: operations["getIdentity"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an identity
+         * @description The default identity cannot be deleted.
+         */
+        delete: operations["deleteIdentity"];
+        options?: never;
+        head?: never;
+        /** Update an identity */
+        patch: operations["updateIdentity"];
         trace?: never;
     };
     "/api/onboarding/options": {
@@ -484,13 +579,119 @@ export interface components {
              * @example /416072101932303822
              */
             uri: string;
+            /** @description MoneyHarpy extension. Registered for the Dutch small business scheme (KOR). */
+            small_business_scheme: boolean;
+            /** @description MoneyHarpy extension. What the company does. */
+            company_activities_description: string;
+            /**
+             * @description MoneyHarpy extension. Empty when unknown.
+             * @example https://example.com
+             */
+            company_website_url: string;
+            /** @description MoneyHarpy extension. The company confirmed it has no website. */
+            company_website_absent: boolean;
         };
-        AdministrationDetail: components["schemas"]["Administration"] & {
-            address1: string;
-            address2: string;
-            zipcode: string;
-            city: string;
-            chamber_of_commerce: string;
+        CustomField: {
+            id: components["schemas"]["Identifier"];
+            administration_id: components["schemas"]["Identifier"];
+            /** @example Slogan */
+            name: string;
+            source: components["schemas"]["CustomFieldSource"];
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        /**
+         * @description The kind of record the field belongs to.
+         * @enum {string}
+         */
+        CustomFieldSource: "sales_invoice" | "contact" | "identity" | "estimate";
+        CustomFieldRequest: {
+            custom_field: {
+                name: string;
+                source: components["schemas"]["CustomFieldSource"];
+            };
+        };
+        CustomFieldValue: {
+            id: components["schemas"]["Identifier"];
+            name: string;
+            value: string;
+        };
+        Identity: {
+            id: components["schemas"]["Identifier"];
+            administration_id: components["schemas"]["Identifier"];
+            company_name: string | null;
+            country: string | null;
+            city: string | null;
+            zipcode: string | null;
+            address1: string | null;
+            address2: string | null;
+            email: string | null;
+            phone: string | null;
+            bank_account_name: string | null;
+            bank_account_number: string | null;
+            bank_account_bic: string | null;
+            chamber_of_commerce: string | null;
+            tax_number: string | null;
+            /** @description The identity's non-empty custom field values. */
+            custom_fields: components["schemas"]["CustomFieldValue"][];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** @description MoneyHarpy extension. */
+            legal_entity_type: string | null;
+            /** @description MoneyHarpy extension. Why the company has no VAT number; null when it has one or gave no reason. */
+            tax_number_absence_reason: components["schemas"]["TaxNumberAbsenceReason"] | null;
+            /** @description MoneyHarpy extension. Whether this identity holds the company details. */
+            default: boolean;
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        IdentityRequest: {
+            identity: {
+                company_name?: string;
+                country?: string;
+                city?: string;
+                zipcode?: string;
+                address1?: string;
+                address2?: string;
+                email?: string;
+                phone?: string;
+                bank_account_name?: string;
+                bank_account_number?: string;
+                bank_account_bic?: string;
+                chamber_of_commerce?: string;
+                tax_number?: string;
+                legal_entity_type?: string;
+                /**
+                 * @description MoneyHarpy extension. Empty clears it. Ignored while a VAT number is set.
+                 * @enum {string}
+                 */
+                tax_number_absence_reason?: "" | "below_tax_threshold" | "industry_exemption";
+                /** @description Custom field values to set. An empty value removes it. */
+                custom_fields_attributes?: {
+                    id: components["schemas"]["Identifier"];
+                    value: string;
+                }[];
+            };
+        };
+        /** @enum {string} */
+        TaxNumberAbsenceReason: "below_tax_threshold" | "industry_exemption";
+        UpdateAdministrationRequest: {
+            administration: {
+                name?: string;
+                language?: components["schemas"]["Language"];
+                currency?: string;
+                time_zone?: string;
+                /** @description MoneyHarpy extension. */
+                small_business_scheme?: boolean;
+                /** @description MoneyHarpy extension. */
+                company_activities_description?: string;
+                /** @description MoneyHarpy extension. An http or https address, or empty. */
+                company_website_url?: string;
+                /** @description MoneyHarpy extension. Ignored while a website is set. */
+                company_website_absent?: boolean;
+            };
         };
         OnboardingOptions: {
             /** @description ISO 3166-1 alpha-2 codes. */
@@ -690,6 +891,7 @@ export interface components {
         };
     };
     parameters: {
+        administration_id: components["schemas"]["Identifier"];
         id: components["schemas"]["Identifier"];
     };
     requestBodies: never;
@@ -769,12 +971,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdministrationDetail"];
+                    "application/json": components["schemas"]["Administration"];
                 };
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateAdministration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAdministrationRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated administration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Administration"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };
     };
@@ -825,6 +1059,267 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listCustomFields: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The custom fields, oldest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomField"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomFieldRequest"];
+            };
+        };
+        responses: {
+            /** @description The created custom field */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomField"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listIdentities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The identities, default first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Identity"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createIdentity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IdentityRequest"];
+            };
+        };
+        responses: {
+            /** @description The created identity */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Identity"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getDefaultIdentity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The default identity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Identity"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateDefaultIdentity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IdentityRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated identity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Identity"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getIdentity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The identity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Identity"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteIdentity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateIdentity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IdentityRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated identity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Identity"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };
     };

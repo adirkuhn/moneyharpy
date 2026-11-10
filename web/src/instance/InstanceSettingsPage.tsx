@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, errorMessages, type InstanceSettings, unwrap, type UpdateInstanceSettings } from '../api/client'
-import { Field, Problems } from '../auth/AuthLayout'
+import { Problems } from '../auth/AuthLayout'
+import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
 import { useCurrentUser } from '../auth/queries'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
@@ -29,6 +30,8 @@ function SettingsForm() {
     smtp_port: t('instance.smtpPort'),
     smtp_from: t('instance.smtpFrom'),
     smtp_security: t('instance.smtpSecurity'),
+    smtp_username: t('instance.smtpUser'),
+    smtp_password: t('instance.smtpPassword'),
   }
   const client = useQueryClient()
   const settings = useQuery({ queryKey: ['instance-settings'], queryFn: () => unwrap(api.GET('/api/instance/settings')) })
@@ -86,89 +89,100 @@ function SettingsForm() {
     })
   }
 
+  const errors = formErrors(save.error, labels)
+  const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'address_lookup_enabled' | 'smtp_enabled', label: string, help?: string) => (
+    <CheckboxInput label={label} help={help} checked={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />
+  )
+  const text = (
+    key: 'google_client_id' | 'lm2_url' | 'lm2_app' | 'smtp_host' | 'smtp_username' | 'smtp_from',
+    label: string,
+    extra: Partial<React.ComponentProps<typeof TextInput>> = {},
+  ) => (
+    <TextInput label={label} autoComplete="off" value={form[key]} errors={errors.field(key)} onChange={(e) => setForm({ ...form, [key]: e.target.value })} {...extra} />
+  )
+
   return (
     <Page title={t('instance.title')}>
-      <form className="form" onSubmit={submit}>
-        <Problems messages={errorMessages(save.error, labels)} />
-        {save.isSuccess && <p role="status" className="saved">{t('instance.saved')}</p>}
-        <label className="check">
-          <input type="checkbox" checked={form.registration_open} onChange={(e) => setForm({ ...form, registration_open: e.target.checked })} />
-          <span>{t('instance.register')}</span>
-        </label>
-        <h2>{t('instance.googleTitle')}</h2>
-        <label className="check">
-          <input type="checkbox" checked={form.google_enabled} onChange={(e) => setForm({ ...form, google_enabled: e.target.checked })} />
-          <span>{t('instance.googleEnable')}</span>
-        </label>
-        <Field label={t('instance.googleId')} value={form.google_client_id} onChange={(e) => setForm({ ...form, google_client_id: e.target.value })} />
-        <Field
-          label={t('instance.googleSecret')}
-          type="password"
-          autoComplete="off"
-          placeholder={form.google_client_secret_set ? t('instance.stored') : ''}
-          value={secret}
-          onChange={(e) => setSecret(e.target.value)}
-        />
-        <h2>{t('instance.lm2Title')}</h2>
-        <label className="check">
-          <input type="checkbox" checked={form.lm2_enabled} onChange={(e) => setForm({ ...form, lm2_enabled: e.target.checked })} />
-          <span>{t('instance.lm2Enable')}</span>
-        </label>
-        <Field label={t('instance.lm2Url')} type="url" placeholder="https://lm.example.com" value={form.lm2_url} onChange={(e) => setForm({ ...form, lm2_url: e.target.value })} />
-        <Field label={t('instance.lm2App')} value={form.lm2_app} onChange={(e) => setForm({ ...form, lm2_app: e.target.value })} />
-        <h2>{t('instance.kvkTitle')}</h2>
-        <label className="check">
-          <input type="checkbox" checked={form.kvk_enabled} onChange={(e) => setForm({ ...form, kvk_enabled: e.target.checked })} />
-          <span>{t('instance.kvkEnable')}</span>
-        </label>
-        <Field
-          label={t('instance.kvkKey')}
-          type="password"
-          autoComplete="off"
-          placeholder={form.kvk_api_key_set ? t('instance.stored') : ''}
-          value={kvkKey}
-          onChange={(e) => setKvkKey(e.target.value)}
-        />
-        <h2>{t('instance.addressTitle')}</h2>
-        <label className="check">
-          <input type="checkbox" checked={form.address_lookup_enabled} onChange={(e) => setForm({ ...form, address_lookup_enabled: e.target.checked })} />
-          <span>{t('instance.addressEnable')}</span>
-        </label>
-        <p className="hint">{t('instance.addressHint')}</p>
-        <h2>{t('instance.smtpTitle')}</h2>
-        <label className="check">
-          <input type="checkbox" checked={form.smtp_enabled} onChange={(e) => setForm({ ...form, smtp_enabled: e.target.checked })} />
-          <span>{t('instance.smtpEnable')}</span>
-        </label>
-        <p className="hint">{t('instance.smtpHint')}</p>
-        <Field label={t('instance.smtpHost')} autoComplete="off" value={form.smtp_host} onChange={(e) => setForm({ ...form, smtp_host: e.target.value })} />
-        <Field label={t('instance.smtpPort')} type="number" min={1} max={65535} value={form.smtp_port || ''} onChange={(e) => setForm({ ...form, smtp_port: Number(e.target.value) })} />
-        <label className="field">
-          <span>{t('instance.smtpSecurity')}</span>
-          <select value={security} onChange={(e) => setForm({ ...form, smtp_security: e.target.value })}>
+      <form className="form-sheet" onSubmit={submit} noValidate>
+        <Problems messages={errors.general} />
+        <FormSection>{check('registration_open', t('instance.register'))}</FormSection>
+        <FormSection title={t('instance.googleTitle')}>
+          {check('google_enabled', t('instance.googleEnable'))}
+          {text('google_client_id', labels.google_client_id)}
+          <TextInput
+            label={labels.google_client_secret}
+            type="password"
+            autoComplete="off"
+            placeholder={form.google_client_secret_set ? t('instance.stored') : ''}
+            value={secret}
+            errors={errors.field('google_client_secret')}
+            onChange={(e) => setSecret(e.target.value)}
+          />
+        </FormSection>
+        <FormSection title={t('instance.lm2Title')}>
+          {check('lm2_enabled', t('instance.lm2Enable'))}
+          {text('lm2_url', labels.lm2_url, { type: 'url', placeholder: 'https://lm.example.com' })}
+          {text('lm2_app', labels.lm2_app, { width: 'medium' })}
+        </FormSection>
+        <FormSection title={t('instance.kvkTitle')}>
+          {check('kvk_enabled', t('instance.kvkEnable'))}
+          <TextInput
+            label={labels.kvk_api_key}
+            type="password"
+            autoComplete="off"
+            placeholder={form.kvk_api_key_set ? t('instance.stored') : ''}
+            value={kvkKey}
+            errors={errors.field('kvk_api_key')}
+            onChange={(e) => setKvkKey(e.target.value)}
+          />
+        </FormSection>
+        <FormSection title={t('instance.addressTitle')}>
+          {check('address_lookup_enabled', t('instance.addressEnable'), t('instance.addressHint'))}
+        </FormSection>
+        <FormSection title={t('instance.smtpTitle')}>
+          {check('smtp_enabled', t('instance.smtpEnable'), t('instance.smtpHint'))}
+          {text('smtp_host', labels.smtp_host)}
+          <TextInput
+            label={labels.smtp_port}
+            type="number"
+            width="small"
+            min={1}
+            max={65535}
+            value={form.smtp_port || ''}
+            errors={errors.field('smtp_port')}
+            onChange={(e) => setForm({ ...form, smtp_port: Number(e.target.value) })}
+          />
+          <SelectInput label={labels.smtp_security} width="medium" value={security} errors={errors.field('smtp_security')} onChange={(e) => setForm({ ...form, smtp_security: e.target.value })}>
             <option value="starttls">{t('instance.smtpStarttls')}</option>
             <option value="tls">{t('instance.smtpTls')}</option>
             <option value="none">{t('instance.smtpNone')}</option>
-          </select>
-        </label>
-        <Field label={t('instance.smtpUser')} autoComplete="off" value={form.smtp_username} onChange={(e) => setForm({ ...form, smtp_username: e.target.value })} />
-        <Field
-          label={t('instance.smtpPassword')}
-          type="password"
-          autoComplete="off"
-          placeholder={form.smtp_password_set ? t('instance.stored') : ''}
-          value={smtpPassword}
-          onChange={(e) => setSmtpPassword(e.target.value)}
-        />
-        <Field label={t('instance.smtpFrom')} type="email" autoComplete="off" value={form.smtp_from} onChange={(e) => setForm({ ...form, smtp_from: e.target.value })} />
-        <div className="form__actions">
-          <button type="button" className="btn btn--secondary" disabled={!settings.data?.smtp_enabled || testEmail.isPending} onClick={() => testEmail.mutate()}>
-            {t('instance.testEmail')}
-          </button>
-          {testEmail.isSuccess && <span className="saved">{t('instance.testSent', { email: me.data?.email })}</span>}
+          </SelectInput>
+          {text('smtp_username', t('instance.smtpUser'))}
+          <TextInput
+            label={t('instance.smtpPassword')}
+            type="password"
+            autoComplete="off"
+            placeholder={form.smtp_password_set ? t('instance.stored') : ''}
+            value={smtpPassword}
+            errors={errors.field('smtp_password')}
+            onChange={(e) => setSmtpPassword(e.target.value)}
+          />
+          {text('smtp_from', labels.smtp_from, { type: 'email' })}
+          <div className="form-input form-input--check">
+            <span className="form-input__label" aria-hidden="true" />
+            <div className="form-input__body form__actions">
+              <button type="button" className="btn btn--secondary" disabled={!settings.data?.smtp_enabled || testEmail.isPending} onClick={() => testEmail.mutate()}>
+                {t('instance.testEmail')}
+              </button>
+              {testEmail.isSuccess && <span className="saved">{t('instance.testSent', { email: me.data?.email })}</span>}
+            </div>
+          </div>
+          <Problems messages={errorMessages(testEmail.error, {})} />
+        </FormSection>
+        <div className="form-sheet__actions">
+          <button className="btn btn--primary" disabled={save.isPending}>{t('instance.save')}</button>
+          {save.isSuccess && <p role="status" className="saved">{t('instance.saved')}</p>}
         </div>
-        <Problems messages={errorMessages(testEmail.error, {})} />
-        <button className="btn btn--primary" disabled={save.isPending}>{t('instance.save')}</button>
       </form>
     </Page>
   )

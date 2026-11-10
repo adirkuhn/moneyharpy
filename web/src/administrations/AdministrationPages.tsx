@@ -26,26 +26,3 @@ export function AdministrationHomePage() {
     </Page>
   )
 }
-
-export function AdministrationSettingsPage() {
-  const { t } = useTranslation()
-  const { valid, query } = useRouteAdministration()
-  if (!valid || (query.error instanceof ApiError && query.error.status < 500)) {
-    return <NotFoundPage />
-  }
-  if (!query.data) {
-    return null
-  }
-  const a = query.data
-  return (
-    <Page title={t('administrations.settings', { name: a.name })}>
-      <dl className="facts">
-        <dt>{t('administrations.language')}</dt><dd>{a.language}</dd>
-        <dt>{t('administrations.currency')}</dt><dd>{a.currency}</dd>
-        <dt>{t('administrations.country')}</dt><dd>{a.country}</dd>
-        <dt>{t('administrations.timeZone')}</dt><dd>{a.time_zone}</dd>
-        <dt>{t('administrations.starts')}</dt><dd>{a.period_start_date}</dd>
-      </dl>
-    </Page>
-  )
-}

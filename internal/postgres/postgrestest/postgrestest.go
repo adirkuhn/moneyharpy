@@ -11,9 +11,9 @@ import (
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-// Start runs a new PostgreSQL container with all migrations applied. The
-// returned function releases the pool and removes the container.
-func Start(ctx context.Context) (*pgxpool.Pool, func(), error) {
+// StartEmpty runs a new PostgreSQL container with no schema and returns its
+// connection string. The returned function removes the container.
+func StartEmpty(ctx context.Context) (string, func(), error) {
 	container, err := tcpostgres.Run(ctx, "postgres:17-alpine",
 		tcpostgres.WithDatabase("moneyharpy"),
 		tcpostgres.WithUsername("moneyharpy"),
@@ -21,17 +21,26 @@ func Start(ctx context.Context) (*pgxpool.Pool, func(), error) {
 		tcpostgres.BasicWaitStrategies(),
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("start container: %w", err)
+		return "", nil, fmt.Errorf("start container: %w", err)
 	}
 	stop := func() {
 		// Best effort: a leftover container is reaped by testcontainers.
 		_ = testcontainers.TerminateContainer(container)
 	}
-
 	url, err := container.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
 		stop()
-		return nil, nil, fmt.Errorf("connection string: %w", err)
+		return "", nil, fmt.Errorf("connection string: %w", err)
+	}
+	return url, stop, nil
+}
+
+// Start runs a new PostgreSQL container with all migrations applied. The
+// returned function releases the pool and removes the container.
+func Start(ctx context.Context) (*pgxpool.Pool, func(), error) {
+	url, stop, err := StartEmpty(ctx)
+	if err != nil {
+		return nil, nil, err
 	}
 	if err := postgres.Migrate(ctx, url); err != nil {
 		stop()

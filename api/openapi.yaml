@@ -24,6 +24,10 @@ servers:
 tags:
   - name: Administrations
     description: Company accounts. Compatible with the Moneybird API.
+  - name: Identities
+    description: Company details and sender addresses. Compatible with the Moneybird API.
+  - name: Custom fields
+    description: Extra fields on invoices, contacts, estimates and identities. Compatible with the Moneybird API.
   - name: Onboarding
     description: Adding an administration.
   - name: Resources
@@ -91,7 +95,7 @@ paths:
     get:
       operationId: getAdministration
       summary: Get an administration
-      description: MoneyHarpy extension. Includes the company address, which the list omits to stay Moneybird-compatible.
+      description: MoneyHarpy extension.
       tags: [Administrations]
       responses:
         '200':
@@ -99,7 +103,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdministrationDetail'
+                $ref: '#/components/schemas/Administration'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -108,6 +112,36 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '400':
           $ref: '#/components/responses/BadRequest'
+    patch:
+      operationId: updateAdministration
+      summary: Update an administration
+      description: MoneyHarpy extension. Omitted fields stay unchanged.
+      tags: [Administrations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdministrationRequest'
+      responses:
+        '200':
+          description: The updated administration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Administration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/administrations/{id}/favorite:
     parameters:
       - $ref: '#/components/parameters/id'
@@ -147,6 +181,237 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /api/v2/{administration_id}/custom_fields:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listCustomFields
+      summary: Retrieve custom fields
+      tags: [Custom fields]
+      responses:
+        '200':
+          description: The custom fields, oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomField'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createCustomField
+      summary: Create a custom field
+      description: MoneyHarpy extension. Moneybird manages custom fields in its web app only.
+      tags: [Custom fields]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomFieldRequest'
+      responses:
+        '201':
+          description: The created custom field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomField'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/identities:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listIdentities
+      summary: Retrieve identities
+      description: The default identity holds the company details. Others are additional sender addresses.
+      tags: [Identities]
+      responses:
+        '200':
+          description: The identities, default first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Identity'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createIdentity
+      summary: Create an identity
+      tags: [Identities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityRequest'
+      responses:
+        '201':
+          description: The created identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/identities/default:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getDefaultIdentity
+      summary: Retrieve the default identity
+      tags: [Identities]
+      responses:
+        '200':
+          description: The default identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateDefaultIdentity
+      summary: Update the default identity
+      tags: [Identities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityRequest'
+      responses:
+        '200':
+          description: The updated identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/identities/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getIdentity
+      summary: Retrieve an identity
+      tags: [Identities]
+      responses:
+        '200':
+          description: The identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateIdentity
+      summary: Update an identity
+      tags: [Identities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityRequest'
+      responses:
+        '200':
+          description: The updated identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteIdentity
+      summary: Delete an identity
+      description: The default identity cannot be deleted.
+      tags: [Identities]
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/onboarding/options:
     get:
       operationId: onboardingOptions
@@ -619,6 +884,12 @@ components:
       schema:
         type: string
   parameters:
+    administration_id:
+      name: administration_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Identifier'
     id:
       name: id
       in: path
@@ -708,7 +979,7 @@ components:
               type: string
     Administration:
       type: object
-      required: [id, name, language, currency, country, time_zone, access, suspended, period_locked_until, period_start_date, favorite, uri]
+      required: [id, name, language, currency, country, time_zone, access, suspended, period_locked_until, period_start_date, favorite, uri, small_business_scheme, company_activities_description, company_website_url, company_website_absent]
       properties:
         id:
           $ref: '#/components/schemas/Identifier'
@@ -751,22 +1022,241 @@ components:
           type: string
           description: MoneyHarpy extension. Canonical path of this resource.
           example: /416072101932303822
-    AdministrationDetail:
-      allOf:
-        - $ref: '#/components/schemas/Administration'
-        - type: object
-          required: [address1, address2, zipcode, city, chamber_of_commerce]
+        small_business_scheme:
+          type: boolean
+          description: MoneyHarpy extension. Registered for the Dutch small business scheme (KOR).
+        company_activities_description:
+          type: string
+          description: MoneyHarpy extension. What the company does.
+        company_website_url:
+          type: string
+          description: MoneyHarpy extension. Empty when unknown.
+          example: https://example.com
+        company_website_absent:
+          type: boolean
+          description: MoneyHarpy extension. The company confirmed it has no website.
+    CustomField:
+      type: object
+      required: [id, administration_id, name, source, uri]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+          example: Slogan
+        source:
+          $ref: '#/components/schemas/CustomFieldSource'
+        uri:
+          type: string
+          description: MoneyHarpy extension. Canonical path of this resource.
+    CustomFieldSource:
+      type: string
+      enum: [sales_invoice, contact, identity, estimate]
+      description: The kind of record the field belongs to.
+    CustomFieldRequest:
+      type: object
+      required: [custom_field]
+      additionalProperties: false
+      properties:
+        custom_field:
+          type: object
+          required: [name, source]
+          additionalProperties: false
           properties:
-            address1:
+            name:
               type: string
-            address2:
+              maxLength: 255
+            source:
+              $ref: '#/components/schemas/CustomFieldSource'
+    CustomFieldValue:
+      type: object
+      required: [id, name, value]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        value:
+          type: string
+    Identity:
+      type: object
+      required: [id, administration_id, company_name, country, city, zipcode, address1, address2, email, phone, bank_account_name, bank_account_number, bank_account_bic, chamber_of_commerce, tax_number, custom_fields, created_at, updated_at, legal_entity_type, tax_number_absence_reason, default, uri]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        company_name:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        zipcode:
+          type: string
+          nullable: true
+        address1:
+          type: string
+          nullable: true
+        address2:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        bank_account_name:
+          type: string
+          nullable: true
+        bank_account_number:
+          type: string
+          nullable: true
+        bank_account_bic:
+          type: string
+          nullable: true
+        chamber_of_commerce:
+          type: string
+          nullable: true
+        tax_number:
+          type: string
+          nullable: true
+        custom_fields:
+          type: array
+          description: The identity's non-empty custom field values.
+          items:
+            $ref: '#/components/schemas/CustomFieldValue'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        legal_entity_type:
+          type: string
+          nullable: true
+          description: MoneyHarpy extension.
+        tax_number_absence_reason:
+          allOf:
+            - $ref: '#/components/schemas/TaxNumberAbsenceReason'
+          nullable: true
+          description: MoneyHarpy extension. Why the company has no VAT number; null when it has one or gave no reason.
+        default:
+          type: boolean
+          description: MoneyHarpy extension. Whether this identity holds the company details.
+        uri:
+          type: string
+          description: MoneyHarpy extension. Canonical path of this resource.
+    IdentityRequest:
+      type: object
+      required: [identity]
+      additionalProperties: false
+      properties:
+        identity:
+          type: object
+          additionalProperties: false
+          properties:
+            company_name:
               type: string
-            zipcode:
+              maxLength: 255
+            country:
               type: string
+              maxLength: 255
             city:
               type: string
+              maxLength: 255
+            zipcode:
+              type: string
+              maxLength: 255
+            address1:
+              type: string
+              maxLength: 255
+            address2:
+              type: string
+              maxLength: 255
+            email:
+              type: string
+              maxLength: 255
+            phone:
+              type: string
+              maxLength: 255
+            bank_account_name:
+              type: string
+              maxLength: 255
+            bank_account_number:
+              type: string
+              maxLength: 255
+            bank_account_bic:
+              type: string
+              maxLength: 255
             chamber_of_commerce:
               type: string
+              maxLength: 255
+            tax_number:
+              type: string
+              maxLength: 255
+            legal_entity_type:
+              type: string
+              maxLength: 255
+            tax_number_absence_reason:
+              type: string
+              enum: ['', below_tax_threshold, industry_exemption]
+              description: MoneyHarpy extension. Empty clears it. Ignored while a VAT number is set.
+            custom_fields_attributes:
+              type: array
+              description: Custom field values to set. An empty value removes it.
+              maxItems: 100
+              items:
+                type: object
+                required: [id, value]
+                additionalProperties: false
+                properties:
+                  id:
+                    $ref: '#/components/schemas/Identifier'
+                  value:
+                    type: string
+                    maxLength: 255
+    TaxNumberAbsenceReason:
+      type: string
+      enum: [below_tax_threshold, industry_exemption]
+    UpdateAdministrationRequest:
+      type: object
+      required: [administration]
+      additionalProperties: false
+      properties:
+        administration:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+            language:
+              $ref: '#/components/schemas/Language'
+            currency:
+              type: string
+            time_zone:
+              type: string
+            small_business_scheme:
+              type: boolean
+              description: MoneyHarpy extension.
+            company_activities_description:
+              type: string
+              maxLength: 1000
+              description: MoneyHarpy extension.
+            company_website_url:
+              type: string
+              maxLength: 255
+              description: MoneyHarpy extension. An http or https address, or empty.
+            company_website_absent:
+              type: boolean
+              description: MoneyHarpy extension. Ignored while a website is set.
     OnboardingOptions:
       type: object
       required: [countries, currencies, popular_currencies, company_search_countries, address_lookup_countries]

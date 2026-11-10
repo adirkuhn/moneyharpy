@@ -2,9 +2,9 @@ import { type FormEvent, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCreateAdministration } from '../administrations/queries'
-import { errorMessages } from '../api/client'
 import type { components } from '../api/schema'
-import { Field, Problems } from '../auth/AuthLayout'
+import { Problems } from '../auth/AuthLayout'
+import { formErrors, TextInput } from '../forms/Form'
 import { currentLanguage } from '../i18n'
 import { lookupAddress, useOnboardingOptions } from './queries'
 import { SearchableSelect, type SelectOption } from './SearchableSelect'
@@ -91,11 +91,15 @@ function ManualForm({ options }: { options: Options }) {
     )
   }
 
-  const zipcodeField = <Field label={t('onboarding.zipcode')} autoComplete="off" maxLength={32} value={form.zipcode} onChange={set('zipcode')} onBlur={autofill} />
   const labels = {
     name: t('onboarding.companyName'), country: t('onboarding.country'), currency: t('onboarding.currency'), address1: t('onboarding.address'),
     address2: t('onboarding.additional'), zipcode: t('onboarding.zipcode'), city: t('onboarding.city'), chamber_of_commerce: t('onboarding.coc'),
   }
+  const errors = formErrors(create.error, labels)
+  const text = (key: Exclude<keyof typeof form, 'country' | 'currency'>, extra: Partial<React.ComponentProps<typeof TextInput>> = {}) => (
+    <TextInput label={labels[key]} autoComplete="off" maxLength={255} value={form[key]} errors={errors.field(key)} onChange={set(key)} {...extra} />
+  )
+  const zipcodeField = text('zipcode', { maxLength: 32, width: 'small', onBlur: autofill })
 
   return (
     <Wizard
@@ -109,14 +113,15 @@ function ManualForm({ options }: { options: Options }) {
         </>
       }
     >
-      <Problems messages={errorMessages(create.error, labels)} />
-      <Field label={t('onboarding.companyName')} autoComplete="off" required maxLength={255} value={form.name} onChange={set('name')} />
+      <Problems messages={errors.general} />
+      {text('name', { required: true })}
       <SearchableSelect
         label={t('onboarding.country')}
         searchLabel={t('onboarding.findCountry')}
         emptyLabel={t('onboarding.noOption')}
         value={form.country}
         options={countryOptions}
+        errors={errors.field('country')}
         onChange={(country) => {
           setForm({ ...form, country })
           setUnknownAddress(false)
@@ -125,41 +130,42 @@ function ManualForm({ options }: { options: Options }) {
       {canLookUp && (
         <div className="field-pair">
           {zipcodeField}
-          <Field label={t('onboarding.houseNumber')} autoComplete="off" maxLength={16} value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} onBlur={autofill} />
+          <TextInput label={t('onboarding.houseNumber')} width="small" autoComplete="off" maxLength={16} value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} onBlur={autofill} />
         </div>
       )}
       {unknownAddress && <p className="warning">{t('onboarding.unknownAddress')}</p>}
-      <div className="field-with-action">
-        <Field label={t('onboarding.address')} autoComplete="off" maxLength={255} value={form.address1} onChange={set('address1')} />
-        {!extraLine && (
+      {text('address1', {
+        action: !extraLine && (
           <button type="button" className="icon-btn" aria-label={t('onboarding.addDetails')} onClick={() => setExtraLine(true)}>+</button>
-        )}
-      </div>
-      {extraLine && (
-        <div className="field-with-action">
-          <Field label={t('onboarding.additional')} autoComplete="off" maxLength={255} value={form.address2} onChange={set('address2')} />
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label={t('onboarding.removeDetails')}
-            onClick={() => {
-              setExtraLine(false)
-              setForm({ ...form, address2: '' })
-            }}
-          >
-            &minus;
-          </button>
-        </div>
-      )}
+        ),
+      })}
+      {extraLine &&
+        text('address2', {
+          action: (
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label={t('onboarding.removeDetails')}
+              onClick={() => {
+                setExtraLine(false)
+                setForm({ ...form, address2: '' })
+              }}
+            >
+              &minus;
+            </button>
+          ),
+        })}
       {!canLookUp && zipcodeField}
-      <Field label={t('onboarding.city')} autoComplete="off" maxLength={255} value={form.city} onChange={set('city')} />
-      {showRegisterNumber && <Field label={t('onboarding.coc')} autoComplete="off" maxLength={64} value={form.chamber_of_commerce} onChange={set('chamber_of_commerce')} />}
+      {text('city')}
+      {showRegisterNumber && text('chamber_of_commerce', { maxLength: 64, width: 'medium' })}
       <SearchableSelect
         label={t('onboarding.currency')}
         searchLabel={t('onboarding.findCurrency')}
         emptyLabel={t('onboarding.noOption')}
         value={form.currency}
         options={currencyOptions}
+        width="medium"
+        errors={errors.field('currency')}
         onChange={(currency) => setForm({ ...form, currency })}
       />
     </Wizard>
