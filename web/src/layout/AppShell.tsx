@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useMatch, useNavigate } from 'react-router-dom'
-import { useAdministrations } from '../administrations/queries'
+import { useAdministration, useAdministrations } from '../administrations/queries'
+import { can } from '../management/queries'
 import { useCurrentUser, useLogout } from '../auth/queries'
 import { BellIcon, SearchIcon } from './icons'
 import { LanguageSelect } from './LanguageSelect'
@@ -36,6 +37,7 @@ export function AppShell() {
           <UserMenu />
         </div>
       </nav>
+      <TwoFactorBanner />
       <main id="main" tabIndex={-1}>
         <Outlet />
       </main>
@@ -72,20 +74,46 @@ function AdministrationSwitcher() {
 /** Links to the parts of the open administration. */
 function AdministrationSections() {
   const { t } = useTranslation()
+  const id = useAdministrationId()
+  const administration = useAdministration(id)
   const nested = useMatch('/:id/*')
-  const home = useMatch('/:id')
-  const id = home?.params.id ?? nested?.params.id ?? ''
-  if (!/^\d{1,19}$/.test(id)) {
+  if (!id) {
     return null
   }
   const section = nested?.params['*']?.split('/')[0] ?? ''
+  const bank = can(administration.data, 'bank')
   const link = (to: string, label: string, active: boolean) => (
     <Link className="topnav__btn topnav__section" to={`/${id}/${to}`} aria-current={active ? 'page' : undefined}>{label}</Link>
   )
   return (
     <div className="topnav__sections">
-      {link('financial_mutations', t('nav.bank'), section === 'financial_mutations')}
+      {bank && link('financial_mutations', t('nav.bank'), section === 'financial_mutations')}
       {link('settings', t('nav.settings'), section === 'settings')}
+    </div>
+  )
+}
+
+/** The open administration's id, if the address is inside one. */
+function useAdministrationId() {
+  const nested = useMatch('/:id/*')
+  const home = useMatch('/:id')
+  const id = home?.params.id ?? nested?.params.id ?? ''
+  return /^\d{1,19}$/.test(id) ? id : ''
+}
+
+/** Tells a user without two-step verification that this administration needs it. */
+function TwoFactorBanner() {
+  const { t } = useTranslation()
+  const id = useAdministrationId()
+  const administration = useAdministration(id)
+  const me = useCurrentUser()
+  if (!id || !administration.data?.require_two_factor || me.data?.two_factor_enabled !== false) {
+    return null
+  }
+  return (
+    <div className="banner" role="alert">
+      <p>{t('management.bannerRequired', { name: administration.data.name })}</p>
+      <Link className="btn btn--accent btn--small" to="/user#two-step">{t('management.setUpTwoFactor')}</Link>
     </div>
   )
 }

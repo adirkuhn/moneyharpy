@@ -48,6 +48,8 @@ tags:
     description: Transactions and booking them on categories. Compatible with the Moneybird API.
   - name: Booking rules
     description: Rules that book matching transactions automatically. MoneyHarpy extension.
+  - name: Management
+    description: Users, invitations, permissions, security and deleting an administration. Users is compatible with the Moneybird API; the rest is a MoneyHarpy extension.
   - name: Custom fields
     description: Extra fields on invoices, contacts, estimates and identities. Compatible with the Moneybird API.
   - name: Onboarding
@@ -116,10 +118,13 @@ paths:
       - $ref: '#/components/parameters/id'
     get:
       operationId: getAdministration
+      x-permissions: []
       summary: Get an administration
       description: MoneyHarpy extension.
       tags: [Administrations]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The administration
           content:
@@ -136,6 +141,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
     patch:
       operationId: updateAdministration
+      x-permissions: [settings]
       summary: Update an administration
       description: MoneyHarpy extension. Omitted fields stay unchanged.
       tags: [Administrations]
@@ -169,6 +175,7 @@ paths:
       - $ref: '#/components/parameters/id'
     put:
       operationId: favoriteAdministration
+      x-permissions: []
       summary: Mark an administration as favorite
       description: MoneyHarpy extension.
       tags: [Administrations]
@@ -187,6 +194,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
     delete:
       operationId: unfavoriteAdministration
+      x-permissions: []
       summary: Remove an administration from favorites
       description: MoneyHarpy extension.
       tags: [Administrations]
@@ -208,9 +216,12 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listCustomFields
+      x-permissions: [settings, sales_invoices, documents, estimates, bank]
       summary: Retrieve custom fields
       tags: [Custom fields]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The custom fields, oldest first
           content:
@@ -229,6 +240,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createCustomField
+      x-permissions: [settings]
       summary: Create a custom field
       description: MoneyHarpy extension. Moneybird manages custom fields in its web app only.
       tags: [Custom fields]
@@ -263,11 +275,14 @@ paths:
       $ref: '#/components/parameters/administration_id'
     get:
       operationId: getInvoiceSettings
+      x-permissions: [settings, sales_invoices, estimates]
       summary: Get invoice and estimate settings
       description: MoneyHarpy extension. Numbering, document copies by email and payment options.
       tags:
       - Invoices and estimates
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The settings
           content:
@@ -284,6 +299,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateInvoiceSettings
+      x-permissions: [settings]
       summary: Update invoice and estimate settings
       description: MoneyHarpy extension. Omitted fields stay unchanged.
       tags:
@@ -317,11 +333,14 @@ paths:
     parameters: *id001
     get:
       operationId: listWorkflows
+      x-permissions: [settings, sales_invoices, documents, estimates, bank]
       summary: Retrieve workflows
       description: The administration has a default invoice and a default estimate workflow.
       tags:
       - Workflows
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The workflows
           content:
@@ -340,6 +359,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createWorkflow
+      x-permissions: [settings]
       summary: Create a workflow
       description: MoneyHarpy extension. Moneybird manages workflows in its web app only. Omitted fields take the default workflow's values.
       tags:
@@ -376,10 +396,13 @@ paths:
       $ref: '#/components/parameters/id'
     get:
       operationId: getWorkflow
+      x-permissions: [settings, sales_invoices, documents, estimates, bank]
       summary: Retrieve a workflow
       tags:
       - Workflows
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The workflow
           content:
@@ -396,6 +419,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateWorkflow
+      x-permissions: [settings]
       summary: Update a workflow
       description: MoneyHarpy extension. steps_attributes replaces all steps. The default workflow stays active.
       tags:
@@ -427,6 +451,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteWorkflow
+      x-permissions: [settings]
       summary: Delete a workflow
       description: MoneyHarpy extension. The default workflows cannot be deleted.
       tags:
@@ -450,11 +475,14 @@ paths:
     parameters: *id001
     get:
       operationId: listDocumentStyles
+      x-permissions: [settings, sales_invoices, estimates]
       summary: Retrieve document styles
       description: The default style comes first.
       tags:
       - Document styles
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The document styles
           content:
@@ -473,6 +501,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createDocumentStyle
+      x-permissions: [settings]
       summary: Create a document style
       description: MoneyHarpy extension. Omitted fields take the default values.
       tags:
@@ -506,11 +535,14 @@ paths:
     parameters: *id003
     get:
       operationId: getDocumentStyle
+      x-permissions: [settings, sales_invoices, estimates]
       summary: Retrieve a document style
       description: MoneyHarpy extension.
       tags:
       - Document styles
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The document style
           content:
@@ -527,6 +559,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateDocumentStyle
+      x-permissions: [settings]
       summary: Update a document style
       description: MoneyHarpy extension. Omitted fields stay unchanged.
       tags:
@@ -558,6 +591,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteDocumentStyle
+      x-permissions: [settings]
       summary: Delete a document style
       description: MoneyHarpy extension. The default style cannot be deleted.
       tags:
@@ -592,11 +626,14 @@ paths:
         - background
     get:
       operationId: getDocumentStyleFile
+      x-permissions: [settings, sales_invoices, estimates]
       summary: Download a document style's logo or background
       description: MoneyHarpy extension.
       tags:
       - Document styles
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The file
           content:
@@ -626,6 +663,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     put:
       operationId: uploadDocumentStyleFile
+      x-permissions: [settings]
       summary: Upload a logo or background
       description: MoneyHarpy extension. Send the file as the request body. Logos are PNG, JPEG or GIF up to 2 MB; backgrounds are PNG, JPEG or PDF up to 10 MB. Files go to the S3-compatible storage configured for the installation, or to the server's disk when none is.
       tags:
@@ -670,6 +708,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: removeDocumentStyleFile
+      x-permissions: [settings]
       summary: Remove a logo or background
       description: MoneyHarpy extension.
       tags:
@@ -695,6 +734,7 @@ paths:
     parameters: *id001
     put:
       operationId: reorderCustomFields
+      x-permissions: [settings]
       summary: Order the custom fields of one source
       description: MoneyHarpy extension. List every field of the source once, in the new order.
       tags:
@@ -724,11 +764,14 @@ paths:
     parameters: *id003
     get:
       operationId: getCustomField
+      x-permissions: [settings, sales_invoices, documents, estimates, bank]
       summary: Retrieve a custom field
       description: MoneyHarpy extension.
       tags:
       - Custom fields
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The custom field
           content:
@@ -745,6 +788,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateCustomField
+      x-permissions: [settings]
       summary: Rename a custom field
       description: MoneyHarpy extension. The source cannot change.
       tags:
@@ -776,6 +820,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteCustomField
+      x-permissions: [settings]
       summary: Delete a custom field
       description: MoneyHarpy extension. Values records hold for the field are removed too.
       tags:
@@ -798,10 +843,13 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listIdentities
+      x-permissions: [settings]
       summary: Retrieve identities
       description: The default identity holds the company details. Others are additional sender addresses.
       tags: [Identities]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The identities, default first
           content:
@@ -820,6 +868,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createIdentity
+      x-permissions: [settings]
       summary: Create an identity
       tags: [Identities]
       requestBody:
@@ -852,9 +901,12 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: getDefaultIdentity
+      x-permissions: [settings]
       summary: Retrieve the default identity
       tags: [Identities]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The default identity
           content:
@@ -871,6 +923,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateDefaultIdentity
+      x-permissions: [settings]
       summary: Update the default identity
       tags: [Identities]
       requestBody:
@@ -904,9 +957,12 @@ paths:
       - $ref: '#/components/parameters/id'
     get:
       operationId: getIdentity
+      x-permissions: [settings]
       summary: Retrieve an identity
       tags: [Identities]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The identity
           content:
@@ -923,6 +979,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateIdentity
+      x-permissions: [settings]
       summary: Update an identity
       tags: [Identities]
       requestBody:
@@ -952,6 +1009,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteIdentity
+      x-permissions: [settings]
       summary: Delete an identity
       description: The default identity cannot be deleted.
       tags: [Identities]
@@ -975,10 +1033,13 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: getBookkeepingSettings
+      x-permissions: [settings]
       summary: Get bookkeeping settings
       description: MoneyHarpy extension. Declaration periods, chart scheme and locked period. The first call applies the country's standard VAT rates and categories.
       tags: [Bookkeeping]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The settings
           content:
@@ -995,6 +1056,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateBookkeepingSettings
+      x-permissions: [settings]
       summary: Update bookkeeping settings
       description: MoneyHarpy extension. Omitted fields stay unchanged. Choosing another chart scheme removes the codes categories had in the previous one.
       tags: [Bookkeeping]
@@ -1028,6 +1090,7 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listTaxRates
+      x-permissions: [settings, sales_invoices, documents, estimates]
       summary: Retrieve tax rates
       description: Sales rates first, then purchase and journal rates, each in their set order.
       tags: [Tax rates]
@@ -1042,6 +1105,8 @@ paths:
             type: string
             maxLength: 1000
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The tax rates
           content:
@@ -1060,6 +1125,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createTaxRate
+      x-permissions: [settings]
       summary: Create a tax rate
       description: MoneyHarpy extension. Moneybird manages tax rates in its web app only. The rate comes last among its type.
       tags: [Tax rates]
@@ -1093,6 +1159,7 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     put:
       operationId: reorderTaxRates
+      x-permissions: [settings]
       summary: Order the tax rates of one type
       description: MoneyHarpy extension. List every rate of the type once, in the new order.
       tags: [Tax rates]
@@ -1123,10 +1190,13 @@ paths:
       - $ref: '#/components/parameters/id'
     get:
       operationId: getTaxRate
+      x-permissions: [settings, sales_invoices, documents, estimates]
       summary: Retrieve a tax rate
       description: MoneyHarpy extension.
       tags: [Tax rates]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The tax rate
           content:
@@ -1143,6 +1213,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateTaxRate
+      x-permissions: [settings]
       summary: Update a tax rate
       description: MoneyHarpy extension. Omitted fields stay unchanged. Rates are deactivated, not deleted, because documents keep using them.
       tags: [Tax rates]
@@ -1176,10 +1247,13 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listLedgerAccounts
+      x-permissions: [settings, sales_invoices, documents, estimates, bank]
       summary: Retrieve ledger accounts
       description: Balance sheet types first, then profit and loss, each by account number.
       tags: [Ledger accounts]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The ledger accounts
           content:
@@ -1198,6 +1272,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createLedgerAccount
+      x-permissions: [settings]
       summary: Create a ledger account
       description: rgs_code is required when the administration has a chart scheme.
       tags: [Ledger accounts]
@@ -1231,6 +1306,7 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     put:
       operationId: updateLedgerAccountScheme
+      x-permissions: [settings]
       summary: Set the chart scheme codes of several ledger accounts
       description: MoneyHarpy extension. An empty rgs_code removes the code. Returns every ledger account.
       tags: [Ledger accounts]
@@ -1267,9 +1343,12 @@ paths:
       - $ref: '#/components/parameters/id'
     get:
       operationId: getLedgerAccount
+      x-permissions: [settings, sales_invoices, documents, estimates, bank]
       summary: Retrieve a ledger account
       tags: [Ledger accounts]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The ledger account
           content:
@@ -1286,6 +1365,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateLedgerAccount
+      x-permissions: [settings]
       summary: Update a ledger account
       description: Omitted fields stay unchanged. System ledger accounts cannot change type or be deactivated.
       tags: [Ledger accounts]
@@ -1316,6 +1396,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteLedgerAccount
+      x-permissions: [settings]
       summary: Delete a ledger account
       description: >-
         An active ledger account is deactivated and returned; an inactive one is deleted. System ledger accounts
@@ -1347,10 +1428,13 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listLedgerAccountTemplates
+      x-permissions: [settings]
       summary: Retrieve ledger account templates
       description: MoneyHarpy extension. Groups of ledger accounts for a common situation, such as a company car.
       tags: [Ledger accounts]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The templates of the administration's country
           content:
@@ -1378,6 +1462,7 @@ paths:
           pattern: '^[a-z0-9_]{1,64}$'
     post:
       operationId: applyLedgerAccountTemplate
+      x-permissions: [settings]
       summary: Add a template's ledger accounts
       description: MoneyHarpy extension. Adds the ledger accounts the administration does not have yet and returns them.
       tags: [Ledger accounts]
@@ -1405,6 +1490,7 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: searchTaxonomyItems
+      x-permissions: [settings]
       summary: Search the chart scheme
       description: MoneyHarpy extension. Codes of the administration's chart scheme whose code or name matches; codes starting with the query come first. Empty without a chart scheme.
       tags: [Ledger accounts]
@@ -1430,6 +1516,8 @@ paths:
             maximum: 100
             default: 25
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The matching codes
           content:
@@ -1451,11 +1539,14 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: getBankSettings
+      x-permissions: [settings, bank]
       summary: Get bank settings
       description: >-
         MoneyHarpy extension.
       tags: [Bank]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The settings
           content:
@@ -1472,6 +1563,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateBankSettings
+      x-permissions: [settings]
       summary: Update bank settings
       description: >-
         MoneyHarpy extension.
@@ -1506,11 +1598,14 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listFinancialAccounts
+      x-permissions: [settings, bank]
       summary: Retrieve financial accounts
       description: >-
         A new administration starts with a cash account.
       tags: [Financial accounts]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The financial accounts in their set order
           content:
@@ -1529,6 +1624,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createFinancialAccount
+      x-permissions: [settings]
       summary: Create a financial account
       description: >-
         MoneyHarpy extension. Moneybird adds accounts in its web app only. The account gets its own category
@@ -1564,6 +1660,7 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     put:
       operationId: reorderFinancialAccounts
+      x-permissions: [settings]
       summary: Order the financial accounts
       description: >-
         MoneyHarpy extension. List every account once, in the new order.
@@ -1595,11 +1692,14 @@ paths:
       - $ref: '#/components/parameters/id'
     get:
       operationId: getFinancialAccount
+      x-permissions: [settings, bank]
       summary: Retrieve a financial account
       description: >-
         MoneyHarpy extension.
       tags: [Financial accounts]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The financial account
           content:
@@ -1616,6 +1716,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateFinancialAccount
+      x-permissions: [settings]
       summary: Update a financial account
       description: >-
         MoneyHarpy extension. Omitted fields stay unchanged. Accounts are deactivated, not deleted.
@@ -1651,6 +1752,7 @@ paths:
       - $ref: '#/components/parameters/id'
     post:
       operationId: importFinancialStatement
+      x-permissions: [bank]
       summary: Import a statement file
       description: >-
         MoneyHarpy extension. Send a CAMT (052, 053 or 054) or MT940 file of at most 10 MB as the body.
@@ -1688,6 +1790,7 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     post:
       operationId: createFinancialStatement
+      x-permissions: [bank]
       summary: Create a financial statement
       description: >-
         Provided transactions are grouped in the statement. Transactions with an
@@ -1726,11 +1829,14 @@ paths:
       - $ref: '#/components/parameters/id'
     get:
       operationId: getFinancialStatement
+      x-permissions: [bank]
       summary: Retrieve a financial statement
       description: >-
         MoneyHarpy extension.
       tags: [Financial statements]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The statement
           content:
@@ -1747,6 +1853,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateFinancialStatement
+      x-permissions: [bank]
       summary: Update a financial statement
       description: >-
         Omitted fields stay unchanged. Transactions with an id are changed, or removed with _destroy; others
@@ -1779,6 +1886,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteFinancialStatement
+      x-permissions: [bank]
       summary: Delete a financial statement
       description: >-
         Removes the statement and its transactions, unless one of them is booked.
@@ -1803,6 +1911,7 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listFinancialMutations
+      x-permissions: [bank]
       summary: Retrieve financial mutations
       tags: [Financial mutations]
       parameters:
@@ -1818,6 +1927,8 @@ paths:
             type: string
             maxLength: 1000
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The transactions, newest first
           content:
@@ -1839,9 +1950,12 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listFinancialMutationVersions
+      x-permissions: [bank]
       summary: List the ids and versions of all financial mutations
       tags: [Financial mutations]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Ids and versions
           content:
@@ -1860,6 +1974,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: fetchFinancialMutations
+      x-permissions: [bank]
       summary: Fetch financial mutations by id
       description: >-
         At most 100 ids.
@@ -1897,9 +2012,12 @@ paths:
       - $ref: '#/components/parameters/id'
     get:
       operationId: getFinancialMutation
+      x-permissions: [bank]
       summary: Retrieve a financial mutation
       tags: [Financial mutations]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The transaction
           content:
@@ -1920,6 +2038,7 @@ paths:
       - $ref: '#/components/parameters/id'
     patch:
       operationId: linkFinancialMutationBooking
+      x-permissions: [bank]
       summary: Link a booking to a financial mutation
       description: >-
         MoneyHarpy books on categories (LedgerAccount) so far; other booking types answer 422 until invoices
@@ -1958,6 +2077,7 @@ paths:
       - $ref: '#/components/parameters/id'
     delete:
       operationId: unlinkFinancialMutationBooking
+      x-permissions: [bank]
       summary: Unlink a booking from a financial mutation
       description: >-
         booking_type LedgerAccountBooking removes a booking on a category. Payment answers 422 until
@@ -1993,11 +2113,14 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: getBankBalance
+      x-permissions: [bank]
       summary: Bank balance report
       description: >-
         The sum of every financial account's transactions. Accounts with a zero balance are left out.
       tags: [Financial mutations]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The balance of every financial account with transactions
           content:
@@ -2017,11 +2140,14 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listBookingRules
+      x-permissions: [settings, bank]
       summary: Retrieve booking rules
       description: >-
         MoneyHarpy extension.
       tags: [Booking rules]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The rules in the order they are tried
           content:
@@ -2040,6 +2166,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createBookingRule
+      x-permissions: [settings]
       summary: Create a booking rule
       description: >-
         MoneyHarpy extension. The rule is tried last.
@@ -2075,11 +2202,14 @@ paths:
       - $ref: '#/components/parameters/id'
     get:
       operationId: getBookingRule
+      x-permissions: [settings, bank]
       summary: Retrieve a booking rule
       description: >-
         MoneyHarpy extension.
       tags: [Booking rules]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The rule
           content:
@@ -2096,6 +2226,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateBookingRule
+      x-permissions: [settings]
       summary: Update a booking rule
       description: >-
         MoneyHarpy extension. Omitted fields stay unchanged.
@@ -2127,6 +2258,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteBookingRule
+      x-permissions: [settings]
       summary: Delete a booking rule
       description: >-
         MoneyHarpy extension. Bookings the rule made stay.
@@ -2142,6 +2274,567 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/administrations/{id}/delete:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: deleteAdministration
+      x-permissions: [ownership]
+      summary: Delete an administration
+      description: >-
+        MoneyHarpy extension. Removes the administration with all its data and files, permanently. Send its name
+        exactly as confirmation. Owners only.
+      tags: [Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAdministrationRequest'
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/users:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listUsers
+      x-permissions: [settings]
+      summary: List all users
+      description: Inactive users and accountants are left out unless asked for. MoneyHarpy has no separate API users.
+      tags: [Management]
+      parameters:
+        - name: include_inactive
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: include_accountants
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: include_api_users
+          in: query
+          required: false
+          description: Accepted for compatibility; there are no API users to include.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: The users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getUser
+      x-permissions: [settings]
+      summary: Retrieve a user
+      description: MoneyHarpy extension.
+      tags: [Management]
+      responses:
+        '200':
+          description: The user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateUser
+      x-permissions: [ownership]
+      summary: Change a user's access
+      description: >-
+        MoneyHarpy extension. Owners hold every permission, others never ownership. The administration keeps at least
+        one active owner. Owners only.
+      tags: [Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '200':
+          description: The updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: removeUser
+      x-permissions: [ownership]
+      summary: Remove a user from the administration
+      description: MoneyHarpy extension. Owners only; the last owner cannot be removed.
+      tags: [Management]
+      responses:
+        '204':
+          description: Removed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/membership:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    delete:
+      operationId: leaveAdministration
+      x-permissions: []
+      summary: Leave the administration
+      description: MoneyHarpy extension. The last owner cannot leave; make someone else an owner first.
+      tags: [Management]
+      responses:
+        '204':
+          description: Left
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/user_invitations:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listUserInvitations
+      x-permissions: [ownership]
+      summary: List open invitations
+      description: MoneyHarpy extension. Invitations not accepted yet, expired ones too.
+      tags: [Management]
+      responses:
+        '200':
+          description: The invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserInvitation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createUserInvitation
+      x-permissions: [ownership]
+      summary: Invite someone
+      description: >-
+        MoneyHarpy extension. Emails a link that is valid for 14 days and replaces an open invitation to the same
+        address. accept_url is returned once, so the link can be shared when email is off.
+      tags: [Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInvitationRequest'
+      responses:
+        '201':
+          description: The invitation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedUserInvitation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/user_invitations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    delete:
+      operationId: revokeUserInvitation
+      x-permissions: [ownership]
+      summary: Withdraw an invitation
+      description: MoneyHarpy extension.
+      tags: [Management]
+      responses:
+        '204':
+          description: Withdrawn
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/require_two_factor:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    put:
+      operationId: requireTwoFactor
+      x-permissions: [ownership]
+      summary: Require two-step verification
+      description: >-
+        MoneyHarpy extension. Every user then needs two-step verification to use the administration. You need it
+        yourself first. As at Moneybird, it cannot be turned off again.
+      tags: [Management]
+      responses:
+        '204':
+          description: Required from now on
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/support_access:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    put:
+      operationId: updateSupportAccess
+      x-permissions: [ownership]
+      summary: Let the instance admins in
+      description: >-
+        MoneyHarpy extension. Gives this installation's admins every permission but ownership until the moment
+        given, at most 90 days ahead; null ends it.
+      tags: [Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupportAccess'
+      responses:
+        '200':
+          description: The support access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportAccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/invitations/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{20,100}$'
+    get:
+      operationId: getInvitation
+      summary: Look at an invitation
+      description: For whoever holds the link, signed in or not.
+      tags: [Management]
+      security: []
+      responses:
+        '200':
+          description: The invitation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationPreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/invitations/{token}/accept:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{20,100}$'
+    post:
+      operationId: acceptInvitation
+      summary: Accept an invitation
+      description: Adds the signed-in user to the administration.
+      tags: [Management]
+      responses:
+        '200':
+          description: The administration joined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Administration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/instance/support_access:
+    get:
+      operationId: listSupportGrants
+      summary: Administrations that let the instance admins in
+      description: Instance admins only.
+      tags: [Instance]
+      responses:
+        '200':
+          description: The administrations, ending soonest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupportGrant'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/auth/two_factor:
+    post:
+      operationId: completeSignIn
+      summary: Finish signing in with a second step
+      description: >-
+        After a sign-in answered 202, send a code from the authenticator app or a recovery code. The pending sign-in
+        travels in a cookie and lasts 10 minutes and 5 attempts.
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCode'
+      responses:
+        '200':
+          description: Signed in
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SessionCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/user/two_factor:
+    get:
+      operationId: getTwoFactor
+      summary: Two-step verification of your account
+      tags: [User]
+      responses:
+        '200':
+          description: The status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: startTwoFactor
+      summary: Set up two-step verification
+      description: Makes a new secret for an authenticator app. It works once confirmed with a code.
+      tags: [User]
+      responses:
+        '201':
+          description: Scan the QR code or type the secret into the app
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorSetup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: disableTwoFactor
+      summary: Turn two-step verification off
+      description: Needs a code. Not possible while an administration you work in requires it.
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCode'
+      responses:
+        '204':
+          description: Turned off
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/user/two_factor/confirm:
+    post:
+      operationId: confirmTwoFactor
+      summary: Turn two-step verification on
+      description: Confirms the setup with a code from the app and returns recovery codes, shown only this once.
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCode'
+      responses:
+        '200':
+          description: Turned on
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryCodes'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/user/two_factor/recovery_codes:
+    post:
+      operationId: newRecoveryCodes
+      summary: Replace your recovery codes
+      description: Needs a code. The old recovery codes stop working.
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorCode'
+      responses:
+        '200':
+          description: The new codes, shown only this once
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryCodes'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
@@ -2317,6 +3010,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CurrentUser'
+        '202':
+          description: The password is right; finish with a code at /api/auth/two_factor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorRequired'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2732,7 +3431,7 @@ components:
               type: string
     Administration:
       type: object
-      required: [id, name, language, currency, country, time_zone, access, suspended, period_locked_until, period_start_date, favorite, uri, small_business_scheme, company_activities_description, company_website_url, company_website_absent]
+      required: [id, name, language, currency, country, time_zone, access, suspended, period_locked_until, period_start_date, favorite, uri, small_business_scheme, company_activities_description, company_website_url, company_website_absent, user_type, permissions, require_two_factor, support_access_until]
       properties:
         id:
           $ref: '#/components/schemas/Identifier'
@@ -2754,8 +3453,8 @@ components:
           example: Europe/Amsterdam
         access:
           type: string
-          enum: [accountant_company, user]
-          description: The type of access the user has to this administration
+          enum: [accountant_company, user, support]
+          description: The type of access the user has to this administration. support is a MoneyHarpy extension.
         suspended:
           type: boolean
         period_locked_until:
@@ -2788,6 +3487,23 @@ components:
         company_website_absent:
           type: boolean
           description: MoneyHarpy extension. The company confirmed it has no website.
+        user_type:
+          type: string
+          enum: [owner, employee, accountant, support]
+          description: MoneyHarpy extension. Your role; support is an instance admin let in through support access.
+        permissions:
+          type: array
+          description: MoneyHarpy extension. What you may do here.
+          items:
+            $ref: '#/components/schemas/Permission'
+        require_two_factor:
+          type: boolean
+          description: MoneyHarpy extension. Every user needs two-step verification.
+        support_access_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: MoneyHarpy extension. The instance admins may help until then.
     CustomField:
       type: object
       required: [id, administration_id, name, source, uri]
@@ -2990,6 +3706,10 @@ components:
             name:
               type: string
               maxLength: 255
+            country:
+              type: string
+              maxLength: 2
+              description: ISO 3166-1 alpha-2. The VAT return follows the new country; VAT rates and categories stay.
             language:
               $ref: '#/components/schemas/Language'
             currency:
@@ -3161,6 +3881,10 @@ components:
         password:
           type: string
           maxLength: 1024
+        invitation_token:
+          type: string
+          maxLength: 100
+          description: Lets the invited address register while registration is closed.
     LoginRequest:
       type: object
       required: [email, password]
@@ -3174,8 +3898,10 @@ components:
           maxLength: 1024
     CurrentUser:
       type: object
-      required: [id, email, name, instance_admin]
+      required: [id, email, name, instance_admin, two_factor_enabled]
       properties:
+        two_factor_enabled:
+          type: boolean
         id:
           $ref: '#/components/schemas/Identifier'
         email:
@@ -4060,6 +4786,192 @@ components:
             description:
               type: string
               maxLength: 1000
+    Permission:
+      type: string
+      enum: [sales_invoices, documents, estimates, bank, settings, ownership, time_entries]
+      description: >-
+        Opens the API resources of the scope with the same name; ownership opens managing the administration: its
+        users, security and deletion.
+    UserType:
+      type: string
+      enum: [owner, employee, accountant]
+    User:
+      description: A Moneybird user of the administration with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/extended_user_response'
+        - type: object
+          required: [active]
+          properties:
+            active:
+              type: boolean
+              description: MoneyHarpy extension. Deactivated users cannot open the administration.
+    UserRequest:
+      type: object
+      required: [user]
+      additionalProperties: false
+      properties:
+        user:
+          type: object
+          additionalProperties: false
+          properties:
+            user_type:
+              $ref: '#/components/schemas/UserType'
+            permissions:
+              type: array
+              maxItems: 7
+              items:
+                $ref: '#/components/schemas/Permission'
+            active:
+              type: boolean
+    UserInvitation:
+      type: object
+      description: MoneyHarpy extension.
+      required: [id, email, user_type, permissions, created_at, expires_at, expired]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        email:
+          type: string
+        user_type:
+          $ref: '#/components/schemas/UserType'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        expired:
+          type: boolean
+    CreatedUserInvitation:
+      allOf:
+        - $ref: '#/components/schemas/UserInvitation'
+        - type: object
+          required: [accept_url, email_sent]
+          properties:
+            accept_url:
+              type: string
+              description: The link to accept, shown only now.
+            email_sent:
+              type: boolean
+              description: False when email is off; share the link yourself.
+    UserInvitationRequest:
+      type: object
+      required: [user_invitation]
+      additionalProperties: false
+      properties:
+        user_invitation:
+          type: object
+          required: [email, user_type]
+          additionalProperties: false
+          properties:
+            email:
+              type: string
+              maxLength: 254
+            user_type:
+              $ref: '#/components/schemas/UserType'
+            permissions:
+              type: array
+              maxItems: 7
+              description: Omit for the type's defaults.
+              items:
+                $ref: '#/components/schemas/Permission'
+    InvitationPreview:
+      type: object
+      required: [administration_name, inviter_name, email, user_type, open]
+      properties:
+        administration_name:
+          type: string
+        inviter_name:
+          type: string
+        email:
+          type: string
+        user_type:
+          $ref: '#/components/schemas/UserType'
+        open:
+          type: boolean
+          description: False once accepted or expired.
+    SupportAccess:
+      type: object
+      required: [until]
+      additionalProperties: false
+      properties:
+        until:
+          type: string
+          format: date-time
+          nullable: true
+    SupportGrant:
+      type: object
+      required: [administration_id, name, until, uri]
+      properties:
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        until:
+          type: string
+          format: date-time
+        uri:
+          type: string
+    DeleteAdministrationRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: The administration's name, exactly, to confirm.
+    TwoFactorCode:
+      type: object
+      required: [code]
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          maxLength: 32
+          description: Six digits from the authenticator app, or a recovery code.
+    TwoFactorStatus:
+      type: object
+      required: [enabled, required, recovery_codes_left]
+      properties:
+        enabled:
+          type: boolean
+        required:
+          type: boolean
+          description: An administration you work in requires it.
+        recovery_codes_left:
+          type: integer
+    TwoFactorSetup:
+      type: object
+      required: [secret, otpauth_uri, qr_svg]
+      properties:
+        secret:
+          type: string
+          description: For typing into the app, in base32.
+        otpauth_uri:
+          type: string
+        qr_svg:
+          type: string
+          description: The otpauth URI as an SVG QR code.
+    RecoveryCodes:
+      type: object
+      required: [recovery_codes]
+      properties:
+        recovery_codes:
+          type: array
+          items:
+            type: string
+    TwoFactorRequired:
+      type: object
+      required: [two_factor_required]
+      properties:
+        two_factor_required:
+          type: boolean
+          enum: [true]
     DocumentStyleLine:
       type: object
       required:

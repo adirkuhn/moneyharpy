@@ -20,6 +20,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
+	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
@@ -73,6 +74,7 @@ type Deps struct {
 	Invoicing       *invoicing.Service
 	Bookkeeping     *bookkeeping.Service
 	Banking         *banking.Service
+	Membership      *membership.Service
 	Storage         StorageChecker
 	Identity        *identity.Service
 	Settings        *settings.Service
@@ -120,6 +122,14 @@ func NewHandler(d Deps) (http.Handler, error) {
 	}
 
 	s := &server{deps: d, secureCookies: strings.HasPrefix(d.BaseURL, "https://")}
+	rules, err := permissionRules(spec)
+	if err != nil {
+		return nil, err
+	}
+	authorize, err := s.authorize(spec, rules)
+	if err != nil {
+		return nil, err
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID, s.recoverPanics, securityHeaders)
@@ -131,7 +141,7 @@ func NewHandler(d Deps) (http.Handler, error) {
 		Options: openapi3filter.Options{
 			AuthenticationFunc: requireUser,
 		},
-	}))
+	}), authorize)
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	r.Get("/api/openapi.yaml", func(w http.ResponseWriter, _ *http.Request) {
@@ -173,6 +183,28 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet; only categories (LedgerAccount) can be booked so far"}}))
 	case errors.Is(err, banking.ErrStatementBooked):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Remove the bookings of this statement's transactions first"}}))
+	case errors.Is(err, errNeedsTwoFactor):
+		writeError(w, http.StatusForbidden, "This administration requires two-step verification. Turn it on for your account first.")
+	case errors.Is(err, errNoPermission), errors.Is(err, membership.ErrForbidden):
+		writeError(w, http.StatusForbidden, "Your user has no permission for this")
+	case errors.Is(err, membership.ErrLastOwner):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The administration needs an owner; make someone else an owner first"}}))
+	case errors.Is(err, membership.ErrAlreadyMember):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"You are a user of this administration already"}}))
+	case errors.Is(err, membership.ErrInvitationUsed):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This invitation was accepted or has expired; ask for a new one"}}))
+	case errors.Is(err, membership.ErrTwoFactorNeeded):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Turn on two-step verification for your own account first"}}))
+	case errors.Is(err, identity.ErrInvalidCode):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"code": {"is not valid"}}))
+	case errors.Is(err, identity.ErrChallengeInvalid):
+		writeError(w, http.StatusUnauthorized, "The sign-in expired; sign in again")
+	case errors.Is(err, identity.ErrTwoFactorOn):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Two-step verification is on already"}}))
+	case errors.Is(err, identity.ErrTwoFactorOff):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Two-step verification is off; set it up first"}}))
+	case errors.Is(err, identity.ErrTwoFactorRequired):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"An administration you work in requires two-step verification"}}))
 	case errors.Is(err, administration.ErrDefaultIdentity):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The default identity cannot be deleted"}}))
 	case errors.Is(err, identity.ErrResetTokenInvalid):
@@ -190,6 +222,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		errors.Is(err, resource.ErrNotFound),
 		bookkeeping.IsNotFound(err),
 		banking.IsNotFound(err),
+		errors.Is(err, membership.ErrUserNotFound),
+		errors.Is(err, membership.ErrInvitationNotFound),
 		errors.Is(err, administration.ErrLookupUnavailable),
 		errors.Is(err, administration.ErrAddressUnknown),
 		errors.Is(err, identity.ErrTokenNotFound):

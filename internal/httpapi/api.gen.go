@@ -59,16 +59,43 @@ func (e AccountType) Valid() bool {
 
 // Defines values for AdministrationAccess.
 const (
-	AccountantCompany AdministrationAccess = "accountant_company"
-	User              AdministrationAccess = "user"
+	AdministrationAccessAccountantCompany AdministrationAccess = "accountant_company"
+	AdministrationAccessSupport           AdministrationAccess = "support"
+	AdministrationAccessUser              AdministrationAccess = "user"
 )
 
 // Valid indicates whether the value is a known member of the AdministrationAccess enum.
 func (e AdministrationAccess) Valid() bool {
 	switch e {
-	case AccountantCompany:
+	case AdministrationAccessAccountantCompany:
 		return true
-	case User:
+	case AdministrationAccessSupport:
+		return true
+	case AdministrationAccessUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdministrationUserType.
+const (
+	AdministrationUserTypeAccountant AdministrationUserType = "accountant"
+	AdministrationUserTypeEmployee   AdministrationUserType = "employee"
+	AdministrationUserTypeOwner      AdministrationUserType = "owner"
+	AdministrationUserTypeSupport    AdministrationUserType = "support"
+)
+
+// Valid indicates whether the value is a known member of the AdministrationUserType enum.
+func (e AdministrationUserType) Valid() bool {
+	switch e {
+	case AdministrationUserTypeAccountant:
+		return true
+	case AdministrationUserTypeEmployee:
+		return true
+	case AdministrationUserTypeOwner:
+		return true
+	case AdministrationUserTypeSupport:
 		return true
 	default:
 		return false
@@ -573,6 +600,39 @@ func (e LinkBookingRequestBookingType) Valid() bool {
 	}
 }
 
+// Defines values for Permission.
+const (
+	PermissionBank          Permission = "bank"
+	PermissionDocuments     Permission = "documents"
+	PermissionEstimates     Permission = "estimates"
+	PermissionOwnership     Permission = "ownership"
+	PermissionSalesInvoices Permission = "sales_invoices"
+	PermissionSettings      Permission = "settings"
+	PermissionTimeEntries   Permission = "time_entries"
+)
+
+// Valid indicates whether the value is a known member of the Permission enum.
+func (e Permission) Valid() bool {
+	switch e {
+	case PermissionBank:
+		return true
+	case PermissionDocuments:
+		return true
+	case PermissionEstimates:
+		return true
+	case PermissionOwnership:
+		return true
+	case PermissionSalesInvoices:
+		return true
+	case PermissionSettings:
+		return true
+	case PermissionTimeEntries:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RuleConditionField.
 const (
 	Amount              RuleConditionField = "amount"
@@ -705,6 +765,21 @@ func (e TaxonomyItemSide) Valid() bool {
 	}
 }
 
+// Defines values for TwoFactorRequiredTwoFactorRequired.
+const (
+	True TwoFactorRequiredTwoFactorRequired = true
+)
+
+// Valid indicates whether the value is a known member of the TwoFactorRequiredTwoFactorRequired enum.
+func (e TwoFactorRequiredTwoFactorRequired) Valid() bool {
+	switch e {
+	case True:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UnlinkBookingRequestBookingType.
 const (
 	UnlinkBookingRequestBookingTypeLedgerAccountBooking UnlinkBookingRequestBookingType = "LedgerAccountBooking"
@@ -738,6 +813,96 @@ func (e UpdateInstanceSettingsRequestSmtpSecurity) Valid() bool {
 	case Starttls:
 		return true
 	case Tls:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserPermissions.
+const (
+	UserPermissionsBank          UserPermissions = "bank"
+	UserPermissionsDocuments     UserPermissions = "documents"
+	UserPermissionsEstimates     UserPermissions = "estimates"
+	UserPermissionsOwnership     UserPermissions = "ownership"
+	UserPermissionsSalesInvoices UserPermissions = "sales_invoices"
+	UserPermissionsSettings      UserPermissions = "settings"
+	UserPermissionsTimeEntries   UserPermissions = "time_entries"
+)
+
+// Valid indicates whether the value is a known member of the UserPermissions enum.
+func (e UserPermissions) Valid() bool {
+	switch e {
+	case UserPermissionsBank:
+		return true
+	case UserPermissionsDocuments:
+		return true
+	case UserPermissionsEstimates:
+		return true
+	case UserPermissionsOwnership:
+		return true
+	case UserPermissionsSalesInvoices:
+		return true
+	case UserPermissionsSettings:
+		return true
+	case UserPermissionsTimeEntries:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserUserType.
+const (
+	UserUserTypeAccountant     UserUserType = "accountant"
+	UserUserTypeApiUser        UserUserType = "api_user"
+	UserUserTypeDeletedApiUser UserUserType = "deleted_api_user"
+	UserUserTypeDeletedEndUser UserUserType = "deleted_end_user"
+	UserUserTypeEmployee       UserUserType = "employee"
+	UserUserTypeEndUser        UserUserType = "end_user"
+	UserUserTypeOwner          UserUserType = "owner"
+	UserUserTypeSystemUser     UserUserType = "system_user"
+)
+
+// Valid indicates whether the value is a known member of the UserUserType enum.
+func (e UserUserType) Valid() bool {
+	switch e {
+	case UserUserTypeAccountant:
+		return true
+	case UserUserTypeApiUser:
+		return true
+	case UserUserTypeDeletedApiUser:
+		return true
+	case UserUserTypeDeletedEndUser:
+		return true
+	case UserUserTypeEmployee:
+		return true
+	case UserUserTypeEndUser:
+		return true
+	case UserUserTypeOwner:
+		return true
+	case UserUserTypeSystemUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserType.
+const (
+	UserTypeAccountant UserType = "accountant"
+	UserTypeEmployee   UserType = "employee"
+	UserTypeOwner      UserType = "owner"
+)
+
+// Valid indicates whether the value is a known member of the UserType enum.
+func (e UserType) Valid() bool {
+	switch e {
+	case UserTypeAccountant:
+		return true
+	case UserTypeEmployee:
+		return true
+	case UserTypeOwner:
 		return true
 	default:
 		return false
@@ -813,6 +978,75 @@ func (e DocumentStyleResponsePaperSize) Valid() bool {
 	case DocumentStyleResponsePaperSizeA4:
 		return true
 	case DocumentStyleResponsePaperSizeLetter:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExtendedUserResponsePermissions.
+const (
+	ExtendedUserResponsePermissionsBank          ExtendedUserResponsePermissions = "bank"
+	ExtendedUserResponsePermissionsDocuments     ExtendedUserResponsePermissions = "documents"
+	ExtendedUserResponsePermissionsEstimates     ExtendedUserResponsePermissions = "estimates"
+	ExtendedUserResponsePermissionsOwnership     ExtendedUserResponsePermissions = "ownership"
+	ExtendedUserResponsePermissionsSalesInvoices ExtendedUserResponsePermissions = "sales_invoices"
+	ExtendedUserResponsePermissionsSettings      ExtendedUserResponsePermissions = "settings"
+	ExtendedUserResponsePermissionsTimeEntries   ExtendedUserResponsePermissions = "time_entries"
+)
+
+// Valid indicates whether the value is a known member of the ExtendedUserResponsePermissions enum.
+func (e ExtendedUserResponsePermissions) Valid() bool {
+	switch e {
+	case ExtendedUserResponsePermissionsBank:
+		return true
+	case ExtendedUserResponsePermissionsDocuments:
+		return true
+	case ExtendedUserResponsePermissionsEstimates:
+		return true
+	case ExtendedUserResponsePermissionsOwnership:
+		return true
+	case ExtendedUserResponsePermissionsSalesInvoices:
+		return true
+	case ExtendedUserResponsePermissionsSettings:
+		return true
+	case ExtendedUserResponsePermissionsTimeEntries:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExtendedUserResponseUserType.
+const (
+	ExtendedUserResponseUserTypeAccountant     ExtendedUserResponseUserType = "accountant"
+	ExtendedUserResponseUserTypeApiUser        ExtendedUserResponseUserType = "api_user"
+	ExtendedUserResponseUserTypeDeletedApiUser ExtendedUserResponseUserType = "deleted_api_user"
+	ExtendedUserResponseUserTypeDeletedEndUser ExtendedUserResponseUserType = "deleted_end_user"
+	ExtendedUserResponseUserTypeEmployee       ExtendedUserResponseUserType = "employee"
+	ExtendedUserResponseUserTypeEndUser        ExtendedUserResponseUserType = "end_user"
+	ExtendedUserResponseUserTypeOwner          ExtendedUserResponseUserType = "owner"
+	ExtendedUserResponseUserTypeSystemUser     ExtendedUserResponseUserType = "system_user"
+)
+
+// Valid indicates whether the value is a known member of the ExtendedUserResponseUserType enum.
+func (e ExtendedUserResponseUserType) Valid() bool {
+	switch e {
+	case ExtendedUserResponseUserTypeAccountant:
+		return true
+	case ExtendedUserResponseUserTypeApiUser:
+		return true
+	case ExtendedUserResponseUserTypeDeletedApiUser:
+		return true
+	case ExtendedUserResponseUserTypeDeletedEndUser:
+		return true
+	case ExtendedUserResponseUserTypeEmployee:
+		return true
+	case ExtendedUserResponseUserTypeEndUser:
+		return true
+	case ExtendedUserResponseUserTypeOwner:
+		return true
+	case ExtendedUserResponseUserTypeSystemUser:
 		return true
 	default:
 		return false
@@ -1308,7 +1542,7 @@ type AddressMatch struct {
 
 // Administration defines model for Administration.
 type Administration struct {
-	// Access The type of access the user has to this administration
+	// Access The type of access the user has to this administration. support is a MoneyHarpy extension.
 	Access AdministrationAccess `json:"access"`
 
 	// CompanyActivitiesDescription MoneyHarpy extension. What the company does.
@@ -1350,9 +1584,18 @@ type Administration struct {
 	// PeriodStartDate Example: 2026-01-01
 	PeriodStartDate string `json:"period_start_date"`
 
+	// Permissions MoneyHarpy extension. What you may do here.
+	Permissions []Permission `json:"permissions"`
+
+	// RequireTwoFactor MoneyHarpy extension. Every user needs two-step verification.
+	RequireTwoFactor bool `json:"require_two_factor"`
+
 	// SmallBusinessScheme MoneyHarpy extension. Registered for the Dutch small business scheme (KOR).
 	SmallBusinessScheme bool `json:"small_business_scheme"`
-	Suspended           bool `json:"suspended"`
+
+	// SupportAccessUntil MoneyHarpy extension. The instance admins may help until then.
+	SupportAccessUntil *time.Time `json:"support_access_until"`
+	Suspended          bool       `json:"suspended"`
 
 	// TimeZone Example: Europe/Amsterdam
 	TimeZone string `json:"time_zone"`
@@ -1361,10 +1604,16 @@ type Administration struct {
 	//
 	// Example: /416072101932303822
 	Uri string `json:"uri"`
+
+	// UserType MoneyHarpy extension. Your role; support is an instance admin let in through support access.
+	UserType AdministrationUserType `json:"user_type"`
 }
 
-// AdministrationAccess The type of access the user has to this administration
+// AdministrationAccess The type of access the user has to this administration. support is a MoneyHarpy extension.
 type AdministrationAccess string
+
+// AdministrationUserType MoneyHarpy extension. Your role; support is an instance admin let in through support access.
+type AdministrationUserType string
 
 // ApiToken defines model for ApiToken.
 type ApiToken struct {
@@ -1547,6 +1796,26 @@ type CreatedApiToken struct {
 	Token string `json:"token"`
 }
 
+// CreatedUserInvitation defines model for CreatedUserInvitation.
+type CreatedUserInvitation struct {
+	// AcceptUrl The link to accept, shown only now.
+	AcceptUrl string    `json:"accept_url"`
+	CreatedAt time.Time `json:"created_at"`
+	Email     string    `json:"email"`
+
+	// EmailSent False when email is off; share the link yourself.
+	EmailSent bool      `json:"email_sent"`
+	Expired   bool      `json:"expired"`
+	ExpiresAt time.Time `json:"expires_at"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id          Identifier   `json:"id"`
+	Permissions []Permission `json:"permissions"`
+	UserType    UserType     `json:"user_type"`
+}
+
 // CurrentUser defines model for CurrentUser.
 type CurrentUser struct {
 	Email string `json:"email"`
@@ -1554,9 +1823,10 @@ type CurrentUser struct {
 	// Id A unique record identifier. Parse as a string.
 	//
 	// Example: 416072101932303822
-	Id            Identifier `json:"id"`
-	InstanceAdmin bool       `json:"instance_admin"`
-	Name          string     `json:"name"`
+	Id               Identifier `json:"id"`
+	InstanceAdmin    bool       `json:"instance_admin"`
+	Name             string     `json:"name"`
+	TwoFactorEnabled bool       `json:"two_factor_enabled"`
 }
 
 // CustomField defines model for CustomField.
@@ -1623,6 +1893,12 @@ type CustomFieldValue struct {
 
 // DeclarationPeriod defines model for DeclarationPeriod.
 type DeclarationPeriod string
+
+// DeleteAdministrationRequest defines model for DeleteAdministrationRequest.
+type DeleteAdministrationRequest struct {
+	// Name The administration's name, exactly, to confirm.
+	Name string `json:"name"`
+}
 
 // DocumentStyle A Moneybird document style with MoneyHarpy extensions.
 type DocumentStyle struct {
@@ -2146,6 +2422,17 @@ type InstanceSettings struct {
 	StorageSecretKeySet bool   `json:"storage_secret_key_set"`
 }
 
+// InvitationPreview defines model for InvitationPreview.
+type InvitationPreview struct {
+	AdministrationName string `json:"administration_name"`
+	Email              string `json:"email"`
+	InviterName        string `json:"inviter_name"`
+
+	// Open False once accepted or expired.
+	Open     bool     `json:"open"`
+	UserType UserType `json:"user_type"`
+}
+
 // InvoiceSettings MoneyHarpy extension.
 type InvoiceSettings struct {
 	// DefaultEmailUbl Attach a UBL file to invoices emailed to new contacts.
@@ -2431,11 +2718,22 @@ type PasswordResetRequest struct {
 	Language *Language `json:"language,omitempty"`
 }
 
+// Permission Opens the API resources of the scope with the same name; ownership opens managing the administration: its users, security and deletion.
+type Permission string
+
+// RecoveryCodes defines model for RecoveryCodes.
+type RecoveryCodes struct {
+	RecoveryCodes []string `json:"recovery_codes"`
+}
+
 // RegisterRequest defines model for RegisterRequest.
 type RegisterRequest struct {
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	Email string `json:"email"`
+
+	// InvitationToken Lets the invited address register while registration is closed.
+	InvitationToken *string `json:"invitation_token,omitempty"`
+	Name            string  `json:"name"`
+	Password        string  `json:"password"`
 }
 
 // ResourceLocation defines model for ResourceLocation.
@@ -2466,6 +2764,22 @@ type RuleConditionField string
 
 // RuleConditionOperator Text fields take contains, equals, starts_with or ends_with, ignoring case; amount takes equals, greater_than or less_than, without sign.
 type RuleConditionOperator string
+
+// SupportAccess defines model for SupportAccess.
+type SupportAccess struct {
+	Until *time.Time `json:"until"`
+}
+
+// SupportGrant defines model for SupportGrant.
+type SupportGrant struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId Identifier `json:"administration_id"`
+	Name             string     `json:"name"`
+	Until            time.Time  `json:"until"`
+	Uri              string     `json:"uri"`
+}
 
 // SynchronizationItem defines model for SynchronizationItem.
 type SynchronizationItem struct {
@@ -2585,6 +2899,40 @@ type TaxonomyItem struct {
 // TaxonomyItemSide MoneyHarpy extension.
 type TaxonomyItemSide string
 
+// TwoFactorCode defines model for TwoFactorCode.
+type TwoFactorCode struct {
+	// Code Six digits from the authenticator app, or a recovery code.
+	Code string `json:"code"`
+}
+
+// TwoFactorRequired defines model for TwoFactorRequired.
+type TwoFactorRequired struct {
+	TwoFactorRequired TwoFactorRequiredTwoFactorRequired `json:"two_factor_required"`
+}
+
+// TwoFactorRequiredTwoFactorRequired defines model for TwoFactorRequired.TwoFactorRequired.
+type TwoFactorRequiredTwoFactorRequired bool
+
+// TwoFactorSetup defines model for TwoFactorSetup.
+type TwoFactorSetup struct {
+	OtpauthUri string `json:"otpauth_uri"`
+
+	// QrSvg The otpauth URI as an SVG QR code.
+	QrSvg string `json:"qr_svg"`
+
+	// Secret For typing into the app, in base32.
+	Secret string `json:"secret"`
+}
+
+// TwoFactorStatus defines model for TwoFactorStatus.
+type TwoFactorStatus struct {
+	Enabled           bool `json:"enabled"`
+	RecoveryCodesLeft int  `json:"recovery_codes_left"`
+
+	// Required An administration you work in requires it.
+	Required bool `json:"required"`
+}
+
 // UnlinkBookingRequest defines model for UnlinkBookingRequest.
 type UnlinkBookingRequest struct {
 	BookingId   UnlinkBookingRequest_BookingId  `json:"booking_id"`
@@ -2613,7 +2961,10 @@ type UpdateAdministrationRequest struct {
 
 		// CompanyWebsiteUrl MoneyHarpy extension. An http or https address, or empty.
 		CompanyWebsiteUrl *string `json:"company_website_url,omitempty"`
-		Currency          *string `json:"currency,omitempty"`
+
+		// Country ISO 3166-1 alpha-2. The VAT return follows the new country; VAT rates and categories stay.
+		Country  *string `json:"country,omitempty"`
+		Currency *string `json:"currency,omitempty"`
 
 		// Language The language code used in the administration
 		Language *Language `json:"language,omitempty"`
@@ -2659,6 +3010,74 @@ type UpdateInstanceSettingsRequest struct {
 
 // UpdateInstanceSettingsRequestSmtpSecurity defines model for UpdateInstanceSettingsRequest.SmtpSecurity.
 type UpdateInstanceSettingsRequestSmtpSecurity string
+
+// User A Moneybird user of the administration with MoneyHarpy extensions.
+type User struct {
+	// Active MoneyHarpy extension. Deactivated users cannot open the administration.
+	Active bool `json:"active"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt      *Timestamp `json:"created_at,omitempty"`
+	Email          *string    `json:"email,omitempty"`
+	EmailValidated *bool      `json:"email_validated,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id          *Identifier        `json:"id,omitempty"`
+	Language    *string            `json:"language,omitempty"`
+	Name        *string            `json:"name,omitempty"`
+	Permissions *[]UserPermissions `json:"permissions,omitempty"`
+	TimeZone    *string            `json:"time_zone,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp    `json:"updated_at,omitempty"`
+	UserType  *UserUserType `json:"user_type,omitempty"`
+}
+
+// UserPermissions defines model for User.Permissions.
+type UserPermissions string
+
+// UserUserType defines model for User.UserType.
+type UserUserType string
+
+// UserInvitation MoneyHarpy extension.
+type UserInvitation struct {
+	CreatedAt time.Time `json:"created_at"`
+	Email     string    `json:"email"`
+	Expired   bool      `json:"expired"`
+	ExpiresAt time.Time `json:"expires_at"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id          Identifier   `json:"id"`
+	Permissions []Permission `json:"permissions"`
+	UserType    UserType     `json:"user_type"`
+}
+
+// UserInvitationRequest defines model for UserInvitationRequest.
+type UserInvitationRequest struct {
+	UserInvitation struct {
+		Email string `json:"email"`
+
+		// Permissions Omit for the type's defaults.
+		Permissions *[]Permission `json:"permissions,omitempty"`
+		UserType    UserType      `json:"user_type"`
+	} `json:"user_invitation"`
+}
+
+// UserRequest defines model for UserRequest.
+type UserRequest struct {
+	User struct {
+		Active      *bool         `json:"active,omitempty"`
+		Permissions *[]Permission `json:"permissions,omitempty"`
+		UserType    *UserType     `json:"user_type,omitempty"`
+	} `json:"user"`
+}
+
+// UserType defines model for UserType.
+type UserType string
 
 // ValidationError defines model for ValidationError.
 type ValidationError struct {
@@ -2746,6 +3165,21 @@ type BankBalanceAmounts struct {
 		Type               string     `json:"type"`
 	} `json:"financial_accounts,omitempty"`
 	Total *string `json:"total,omitempty"`
+}
+
+// BaseUserResponse Moneybird-compatible base_user_response.
+type BaseUserResponse struct {
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id   *Identifier `json:"id,omitempty"`
+	Name *string     `json:"name,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
 }
 
 // Currency Moneybird-compatible currency.
@@ -2892,6 +3326,33 @@ type EventResponse struct {
 type EventResponse_AdministrationId struct {
 	union json.RawMessage
 }
+
+// ExtendedUserResponse Moneybird-compatible extended_user_response.
+type ExtendedUserResponse struct {
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt      *Timestamp `json:"created_at,omitempty"`
+	Email          *string    `json:"email,omitempty"`
+	EmailValidated *bool      `json:"email_validated,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id          *Identifier                        `json:"id,omitempty"`
+	Language    *string                            `json:"language,omitempty"`
+	Name        *string                            `json:"name,omitempty"`
+	Permissions *[]ExtendedUserResponsePermissions `json:"permissions,omitempty"`
+	TimeZone    *string                            `json:"time_zone,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp                    `json:"updated_at,omitempty"`
+	UserType  *ExtendedUserResponseUserType `json:"user_type,omitempty"`
+}
+
+// ExtendedUserResponsePermissions defines model for ExtendedUserResponse.Permissions.
+type ExtendedUserResponsePermissions string
+
+// ExtendedUserResponseUserType defines model for ExtendedUserResponse.UserType.
+type ExtendedUserResponseUserType string
 
 // FinancialAccountResponse Moneybird-compatible financial_account_response.
 type FinancialAccountResponse struct {
@@ -3428,6 +3889,15 @@ type SearchTaxonomyItemsParams struct {
 	Limit       *int         `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListUsersParams defines parameters for ListUsers.
+type ListUsersParams struct {
+	IncludeInactive    *bool `form:"include_inactive,omitempty" json:"include_inactive,omitempty"`
+	IncludeAccountants *bool `form:"include_accountants,omitempty" json:"include_accountants,omitempty"`
+
+	// IncludeApiUsers Accepted for compatibility; there are no API users to include.
+	IncludeApiUsers *bool `form:"include_api_users,omitempty" json:"include_api_users,omitempty"`
+}
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
@@ -3440,17 +3910,32 @@ type RequestPasswordResetJSONRequestBody = PasswordResetRequest
 // RegisterJSONRequestBody defines body for Register for application/json ContentType.
 type RegisterJSONRequestBody = RegisterRequest
 
+// CompleteSignInJSONRequestBody defines body for CompleteSignIn for application/json ContentType.
+type CompleteSignInJSONRequestBody = TwoFactorCode
+
 // UpdateInstanceSettingsJSONRequestBody defines body for UpdateInstanceSettings for application/json ContentType.
 type UpdateInstanceSettingsJSONRequestBody = UpdateInstanceSettingsRequest
 
 // CreateTokenJSONRequestBody defines body for CreateToken for application/json ContentType.
 type CreateTokenJSONRequestBody = CreateTokenRequest
 
+// DisableTwoFactorJSONRequestBody defines body for DisableTwoFactor for application/json ContentType.
+type DisableTwoFactorJSONRequestBody = TwoFactorCode
+
+// ConfirmTwoFactorJSONRequestBody defines body for ConfirmTwoFactor for application/json ContentType.
+type ConfirmTwoFactorJSONRequestBody = TwoFactorCode
+
+// NewRecoveryCodesJSONRequestBody defines body for NewRecoveryCodes for application/json ContentType.
+type NewRecoveryCodesJSONRequestBody = TwoFactorCode
+
 // CreateAdministrationJSONRequestBody defines body for CreateAdministration for application/json ContentType.
 type CreateAdministrationJSONRequestBody = CreateAdministrationRequest
 
 // UpdateAdministrationJSONRequestBody defines body for UpdateAdministration for application/json ContentType.
 type UpdateAdministrationJSONRequestBody = UpdateAdministrationRequest
+
+// DeleteAdministrationJSONRequestBody defines body for DeleteAdministration for application/json ContentType.
+type DeleteAdministrationJSONRequestBody = DeleteAdministrationRequest
 
 // UpdateBankSettingsJSONRequestBody defines body for UpdateBankSettings for application/json ContentType.
 type UpdateBankSettingsJSONRequestBody = BankSettingsRequest
@@ -3524,6 +4009,9 @@ type UpdateLedgerAccountSchemeJSONRequestBody = LedgerAccountSchemeRequest
 // UpdateLedgerAccountJSONRequestBody defines body for UpdateLedgerAccount for application/json ContentType.
 type UpdateLedgerAccountJSONRequestBody = LedgerAccountRequest
 
+// UpdateSupportAccessJSONRequestBody defines body for UpdateSupportAccess for application/json ContentType.
+type UpdateSupportAccessJSONRequestBody = SupportAccess
+
 // CreateTaxRateJSONRequestBody defines body for CreateTaxRate for application/json ContentType.
 type CreateTaxRateJSONRequestBody = TaxRateRequest
 
@@ -3532,6 +4020,12 @@ type ReorderTaxRatesJSONRequestBody = TaxRateOrderRequest
 
 // UpdateTaxRateJSONRequestBody defines body for UpdateTaxRate for application/json ContentType.
 type UpdateTaxRateJSONRequestBody = TaxRateRequest
+
+// CreateUserInvitationJSONRequestBody defines body for CreateUserInvitation for application/json ContentType.
+type CreateUserInvitationJSONRequestBody = UserInvitationRequest
+
+// UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
+type UpdateUserJSONRequestBody = UserRequest
 
 // CreateWorkflowJSONRequestBody defines body for CreateWorkflow for application/json ContentType.
 type CreateWorkflowJSONRequestBody = WorkflowRequest
@@ -5180,6 +5674,9 @@ type ServerInterface interface {
 	// Register Register a new user
 	// (POST /api/auth/register)
 	Register(w http.ResponseWriter, r *http.Request)
+	// CompleteSignIn Finish signing in with a second step
+	// (POST /api/auth/two_factor)
+	CompleteSignIn(w http.ResponseWriter, r *http.Request)
 	// InstanceSettings Get instance settings
 	// (GET /api/instance/settings)
 	InstanceSettings(w http.ResponseWriter, r *http.Request)
@@ -5192,6 +5689,15 @@ type ServerInterface interface {
 	// TestStorage Check the saved file storage settings
 	// (POST /api/instance/settings/test_storage)
 	TestStorage(w http.ResponseWriter, r *http.Request)
+	// ListSupportGrants Administrations that let the instance admins in
+	// (GET /api/instance/support_access)
+	ListSupportGrants(w http.ResponseWriter, r *http.Request)
+	// GetInvitation Look at an invitation
+	// (GET /api/invitations/{token})
+	GetInvitation(w http.ResponseWriter, r *http.Request, token string)
+	// AcceptInvitation Accept an invitation
+	// (POST /api/invitations/{token}/accept)
+	AcceptInvitation(w http.ResponseWriter, r *http.Request, token string)
 	// AddressLookup Find a Dutch address by zipcode and house number
 	// (GET /api/onboarding/address_lookup)
 	AddressLookup(w http.ResponseWriter, r *http.Request, params AddressLookupParams)
@@ -5213,6 +5719,21 @@ type ServerInterface interface {
 	// DeleteToken Revoke a personal API token
 	// (DELETE /api/user/tokens/{id})
 	DeleteToken(w http.ResponseWriter, r *http.Request, id Id)
+	// DisableTwoFactor Turn two-step verification off
+	// (DELETE /api/user/two_factor)
+	DisableTwoFactor(w http.ResponseWriter, r *http.Request)
+	// GetTwoFactor Two-step verification of your account
+	// (GET /api/user/two_factor)
+	GetTwoFactor(w http.ResponseWriter, r *http.Request)
+	// StartTwoFactor Set up two-step verification
+	// (POST /api/user/two_factor)
+	StartTwoFactor(w http.ResponseWriter, r *http.Request)
+	// ConfirmTwoFactor Turn two-step verification on
+	// (POST /api/user/two_factor/confirm)
+	ConfirmTwoFactor(w http.ResponseWriter, r *http.Request)
+	// NewRecoveryCodes Replace your recovery codes
+	// (POST /api/user/two_factor/recovery_codes)
+	NewRecoveryCodes(w http.ResponseWriter, r *http.Request)
 	// ListAdministrations List all administrations
 	// (GET /api/v2/administrations)
 	ListAdministrations(w http.ResponseWriter, r *http.Request)
@@ -5225,6 +5746,9 @@ type ServerInterface interface {
 	// UpdateAdministration Update an administration
 	// (PATCH /api/v2/administrations/{id})
 	UpdateAdministration(w http.ResponseWriter, r *http.Request, id Id)
+	// DeleteAdministration Delete an administration
+	// (POST /api/v2/administrations/{id}/delete)
+	DeleteAdministration(w http.ResponseWriter, r *http.Request, id Id)
 	// UnfavoriteAdministration Remove an administration from favorites
 	// (DELETE /api/v2/administrations/{id}/favorite)
 	UnfavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id)
@@ -5399,9 +5923,18 @@ type ServerInterface interface {
 	// UpdateLedgerAccount Update a ledger account
 	// (PATCH /api/v2/{administration_id}/ledger_accounts/{id})
 	UpdateLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// LeaveAdministration Leave the administration
+	// (DELETE /api/v2/{administration_id}/membership)
+	LeaveAdministration(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// GetBankBalance Bank balance report
 	// (GET /api/v2/{administration_id}/reports/bank_balance)
 	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// RequireTwoFactor Require two-step verification
+	// (PUT /api/v2/{administration_id}/require_two_factor)
+	RequireTwoFactor(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// UpdateSupportAccess Let the instance admins in
+	// (PUT /api/v2/{administration_id}/support_access)
+	UpdateSupportAccess(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// ListTaxRates Retrieve tax rates
 	// (GET /api/v2/{administration_id}/tax_rates)
 	ListTaxRates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTaxRatesParams)
@@ -5420,6 +5953,27 @@ type ServerInterface interface {
 	// SearchTaxonomyItems Search the chart scheme
 	// (GET /api/v2/{administration_id}/taxonomy_items)
 	SearchTaxonomyItems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params SearchTaxonomyItemsParams)
+	// ListUserInvitations List open invitations
+	// (GET /api/v2/{administration_id}/user_invitations)
+	ListUserInvitations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateUserInvitation Invite someone
+	// (POST /api/v2/{administration_id}/user_invitations)
+	CreateUserInvitation(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// RevokeUserInvitation Withdraw an invitation
+	// (DELETE /api/v2/{administration_id}/user_invitations/{id})
+	RevokeUserInvitation(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListUsers List all users
+	// (GET /api/v2/{administration_id}/users)
+	ListUsers(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListUsersParams)
+	// RemoveUser Remove a user from the administration
+	// (DELETE /api/v2/{administration_id}/users/{id})
+	RemoveUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetUser Retrieve a user
+	// (GET /api/v2/{administration_id}/users/{id})
+	GetUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateUser Change a user's access
+	// (PATCH /api/v2/{administration_id}/users/{id})
+	UpdateUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListWorkflows Retrieve workflows
 	// (GET /api/v2/{administration_id}/workflows)
 	ListWorkflows(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -5507,6 +6061,12 @@ func (_ Unimplemented) Register(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// CompleteSignIn Finish signing in with a second step
+// (POST /api/auth/two_factor)
+func (_ Unimplemented) CompleteSignIn(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // InstanceSettings Get instance settings
 // (GET /api/instance/settings)
 func (_ Unimplemented) InstanceSettings(w http.ResponseWriter, r *http.Request) {
@@ -5528,6 +6088,24 @@ func (_ Unimplemented) SendTestEmail(w http.ResponseWriter, r *http.Request) {
 // TestStorage Check the saved file storage settings
 // (POST /api/instance/settings/test_storage)
 func (_ Unimplemented) TestStorage(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListSupportGrants Administrations that let the instance admins in
+// (GET /api/instance/support_access)
+func (_ Unimplemented) ListSupportGrants(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetInvitation Look at an invitation
+// (GET /api/invitations/{token})
+func (_ Unimplemented) GetInvitation(w http.ResponseWriter, r *http.Request, token string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AcceptInvitation Accept an invitation
+// (POST /api/invitations/{token}/accept)
+func (_ Unimplemented) AcceptInvitation(w http.ResponseWriter, r *http.Request, token string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5573,6 +6151,36 @@ func (_ Unimplemented) DeleteToken(w http.ResponseWriter, r *http.Request, id Id
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// DisableTwoFactor Turn two-step verification off
+// (DELETE /api/user/two_factor)
+func (_ Unimplemented) DisableTwoFactor(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTwoFactor Two-step verification of your account
+// (GET /api/user/two_factor)
+func (_ Unimplemented) GetTwoFactor(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// StartTwoFactor Set up two-step verification
+// (POST /api/user/two_factor)
+func (_ Unimplemented) StartTwoFactor(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ConfirmTwoFactor Turn two-step verification on
+// (POST /api/user/two_factor/confirm)
+func (_ Unimplemented) ConfirmTwoFactor(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// NewRecoveryCodes Replace your recovery codes
+// (POST /api/user/two_factor/recovery_codes)
+func (_ Unimplemented) NewRecoveryCodes(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListAdministrations List all administrations
 // (GET /api/v2/administrations)
 func (_ Unimplemented) ListAdministrations(w http.ResponseWriter, r *http.Request) {
@@ -5594,6 +6202,12 @@ func (_ Unimplemented) GetAdministration(w http.ResponseWriter, r *http.Request,
 // UpdateAdministration Update an administration
 // (PATCH /api/v2/administrations/{id})
 func (_ Unimplemented) UpdateAdministration(w http.ResponseWriter, r *http.Request, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteAdministration Delete an administration
+// (POST /api/v2/administrations/{id}/delete)
+func (_ Unimplemented) DeleteAdministration(w http.ResponseWriter, r *http.Request, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5945,9 +6559,27 @@ func (_ Unimplemented) UpdateLedgerAccount(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// LeaveAdministration Leave the administration
+// (DELETE /api/v2/{administration_id}/membership)
+func (_ Unimplemented) LeaveAdministration(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetBankBalance Bank balance report
 // (GET /api/v2/{administration_id}/reports/bank_balance)
 func (_ Unimplemented) GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RequireTwoFactor Require two-step verification
+// (PUT /api/v2/{administration_id}/require_two_factor)
+func (_ Unimplemented) RequireTwoFactor(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateSupportAccess Let the instance admins in
+// (PUT /api/v2/{administration_id}/support_access)
+func (_ Unimplemented) UpdateSupportAccess(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5984,6 +6616,48 @@ func (_ Unimplemented) UpdateTaxRate(w http.ResponseWriter, r *http.Request, adm
 // SearchTaxonomyItems Search the chart scheme
 // (GET /api/v2/{administration_id}/taxonomy_items)
 func (_ Unimplemented) SearchTaxonomyItems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params SearchTaxonomyItemsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListUserInvitations List open invitations
+// (GET /api/v2/{administration_id}/user_invitations)
+func (_ Unimplemented) ListUserInvitations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateUserInvitation Invite someone
+// (POST /api/v2/{administration_id}/user_invitations)
+func (_ Unimplemented) CreateUserInvitation(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RevokeUserInvitation Withdraw an invitation
+// (DELETE /api/v2/{administration_id}/user_invitations/{id})
+func (_ Unimplemented) RevokeUserInvitation(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListUsers List all users
+// (GET /api/v2/{administration_id}/users)
+func (_ Unimplemented) ListUsers(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListUsersParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RemoveUser Remove a user from the administration
+// (DELETE /api/v2/{administration_id}/users/{id})
+func (_ Unimplemented) RemoveUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetUser Retrieve a user
+// (GET /api/v2/{administration_id}/users/{id})
+func (_ Unimplemented) GetUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateUser Change a user's access
+// (PATCH /api/v2/{administration_id}/users/{id})
+func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6266,6 +6940,20 @@ func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Reque
 	handler.ServeHTTP(w, r)
 }
 
+// CompleteSignIn operation middleware
+func (siw *ServerInterfaceWrapper) CompleteSignIn(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CompleteSignIn(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // InstanceSettings operation middleware
 func (siw *ServerInterfaceWrapper) InstanceSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -6313,6 +7001,72 @@ func (siw *ServerInterfaceWrapper) TestStorage(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestStorage(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSupportGrants operation middleware
+func (siw *ServerInterfaceWrapper) ListSupportGrants(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSupportGrants(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetInvitation operation middleware
+func (siw *ServerInterfaceWrapper) GetInvitation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", chi.URLParam(r, "token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInvitation(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptInvitation operation middleware
+func (siw *ServerInterfaceWrapper) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", chi.URLParam(r, "token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AcceptInvitation(w, r, token)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6508,6 +7262,76 @@ func (siw *ServerInterfaceWrapper) DeleteToken(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// DisableTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) DisableTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DisableTwoFactor(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) GetTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTwoFactor(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StartTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) StartTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StartTwoFactor(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ConfirmTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) ConfirmTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ConfirmTwoFactor(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// NewRecoveryCodes operation middleware
+func (siw *ServerInterfaceWrapper) NewRecoveryCodes(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.NewRecoveryCodes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListAdministrations operation middleware
 func (siw *ServerInterfaceWrapper) ListAdministrations(w http.ResponseWriter, r *http.Request) {
 
@@ -6579,6 +7403,32 @@ func (siw *ServerInterfaceWrapper) UpdateAdministration(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateAdministration(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAdministration operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAdministration(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAdministration(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8391,6 +9241,32 @@ func (siw *ServerInterfaceWrapper) UpdateLedgerAccount(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// LeaveAdministration operation middleware
+func (siw *ServerInterfaceWrapper) LeaveAdministration(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LeaveAdministration(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetBankBalance operation middleware
 func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http.Request) {
 
@@ -8408,6 +9284,58 @@ func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetBankBalance(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequireTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) RequireTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequireTwoFactor(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSupportAccess operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSupportAccess(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSupportAccess(w, r, administrationId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8640,6 +9568,266 @@ func (siw *ServerInterfaceWrapper) SearchTaxonomyItems(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SearchTaxonomyItems(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListUserInvitations operation middleware
+func (siw *ServerInterfaceWrapper) ListUserInvitations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserInvitations(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateUserInvitation operation middleware
+func (siw *ServerInterfaceWrapper) CreateUserInvitation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateUserInvitation(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeUserInvitation operation middleware
+func (siw *ServerInterfaceWrapper) RevokeUserInvitation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeUserInvitation(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListUsers operation middleware
+func (siw *ServerInterfaceWrapper) ListUsers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListUsersParams
+
+	// ------------- Optional query parameter "include_inactive" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_inactive", r.URL.Query(), &params.IncludeInactive, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_inactive"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_inactive", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_accountants" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_accountants", r.URL.Query(), &params.IncludeAccountants, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_accountants"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_accountants", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_api_users" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_api_users", r.URL.Query(), &params.IncludeApiUsers, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_api_users"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_api_users", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUsers(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveUser operation middleware
+func (siw *ServerInterfaceWrapper) RemoveUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveUser(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUser operation middleware
+func (siw *ServerInterfaceWrapper) GetUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUser(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateUser operation middleware
+func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateUser(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9140,6 +10328,66 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/booking_rules/{id}", wrapper.UpdateBookingRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/administrations/{id}/delete", wrapper.DeleteAdministration)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/users", wrapper.ListUsers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/users/{id}", wrapper.RemoveUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/users/{id}", wrapper.GetUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/users/{id}", wrapper.UpdateUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/membership", wrapper.LeaveAdministration)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/user_invitations", wrapper.ListUserInvitations)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/user_invitations", wrapper.CreateUserInvitation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/user_invitations/{id}", wrapper.RevokeUserInvitation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v2/{administration_id}/require_two_factor", wrapper.RequireTwoFactor)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v2/{administration_id}/support_access", wrapper.UpdateSupportAccess)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/invitations/{token}", wrapper.GetInvitation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/invitations/{token}/accept", wrapper.AcceptInvitation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/instance/support_access", wrapper.ListSupportGrants)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/auth/two_factor", wrapper.CompleteSignIn)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/user/two_factor", wrapper.DisableTwoFactor)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/user/two_factor", wrapper.GetTwoFactor)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/user/two_factor", wrapper.StartTwoFactor)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/user/two_factor/confirm", wrapper.ConfirmTwoFactor)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/user/two_factor/recovery_codes", wrapper.NewRecoveryCodes)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/onboarding/options", wrapper.OnboardingOptions)

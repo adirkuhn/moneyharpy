@@ -86,6 +86,21 @@ Changes are test-driven. Go code follows the [Google Go style guide](https://goo
 
 To change the API, edit the contract first. Requests are validated against it at runtime, and backend tests fail on any response it does not describe.
 
+## Users and permissions
+
+Each user of an administration is an owner, employee or accountant, with
+Moneybird's permissions: `sales_invoices`, `documents`, `estimates`, `bank`,
+`settings`, `time_entries` and `ownership`. Every operation in
+`api/openapi.yaml` declares the permissions it needs in `x-permissions`
+(one of them is enough), and the server refuses to start if an operation on
+an administration declares none. Owners invite people under Settings →
+Management; without email, the invitation link is shown to share by hand.
+
+Users can turn on two-step verification with an authenticator app, and
+owners can require it for an administration. Owners can also give this
+installation's admins time-limited support access, and delete the
+administration with all its data.
+
 ## Bank
 
 Transactions come in from statement files: CAMT.052, CAMT.053, CAMT.054 or

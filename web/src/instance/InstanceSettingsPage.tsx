@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { api, errorMessages, type InstanceSettings, unwrap, type UpdateInstanceSettings } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
@@ -8,6 +9,7 @@ import { useCurrentUser } from '../auth/queries'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { Loading } from '../layout/Loading'
+import { useSupportGrants } from '../management/queries'
 
 const defaultSmtpPort = 587
 
@@ -227,6 +229,35 @@ function SettingsForm() {
           {save.isSuccess && <p role="status" className="saved">{t('instance.saved')}</p>}
         </div>
       </form>
+      <SupportGrants />
     </Page>
+  )
+}
+
+/** The administrations that let the instance admins in right now. */
+function SupportGrants() {
+  const { t, i18n } = useTranslation()
+  const grants = useSupportGrants()
+  return (
+    <section className="settings-block" aria-labelledby="support-grants">
+      <header className="settings-block__header">
+        <div>
+          <h2 id="support-grants">{t('management.grantsTitle')}</h2>
+          <p className="hint">{t('management.grantsSubtitle')}</p>
+        </div>
+      </header>
+      {grants.data?.length ? (
+        <ul className="ledger">
+          {grants.data.map((g) => (
+            <li className="ledger__row" key={g.administration_id}>
+              <Link className="ledger__name" to={g.uri}>{g.name}</Link>
+              <span className="hint">{t('management.activeUntil', { date: new Date(g.until).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }) })}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="empty">{t('management.noGrants')}</p>
+      )}
+    </section>
   )
 }

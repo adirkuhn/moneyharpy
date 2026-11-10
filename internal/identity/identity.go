@@ -58,6 +58,9 @@ type Registration struct {
 	Email    string
 	Name     string
 	Password string
+	// Invited lets the address register while registration is closed,
+	// because an administration invited it.
+	Invited bool
 }
 
 // External is a user vouched for by an external login provider.
@@ -69,10 +72,13 @@ type External struct {
 	Name          string
 }
 
-// LoginResult is a signed-in user and the secret of their new session.
+// LoginResult is a signed-in user and the secret of their new session. A
+// user with two-step verification gets a Challenge instead, to finish with
+// CompleteSignIn.
 type LoginResult struct {
 	User         User
 	SessionToken string
+	Challenge    string
 }
 
 // Store persists users and their credentials. Token and session secrets reach
@@ -102,6 +108,8 @@ type Store interface {
 	// sessions, all or nothing. It returns ErrResetTokenInvalid for a token
 	// that is unknown, spent or expired.
 	ResetPassword(ctx context.Context, hash, passwordHash string, now time.Time) error
+
+	TwoFactorStore
 }
 
 // Mailer delivers account email.
@@ -121,6 +129,7 @@ type Service struct {
 	ids    *resource.Generator
 	hasher *Hasher
 	mailer Mailer
+	sealer Sealer
 	now    func() time.Time
 	// decoy is verified for unknown emails so response time does not reveal
 	// which addresses are registered.
@@ -129,12 +138,12 @@ type Service struct {
 
 // NewService returns a Service. It panics only if the system random source
 // fails, which leaves no way to create safe credentials.
-func NewService(store Store, policy Policy, ids *resource.Generator, hasher *Hasher, mailer Mailer, now func() time.Time) *Service {
+func NewService(store Store, policy Policy, ids *resource.Generator, hasher *Hasher, mailer Mailer, sealer Sealer, now func() time.Time) *Service {
 	decoy, err := hasher.Hash(randomSecret())
 	if err != nil {
 		panic(fmt.Sprintf("hash decoy password: %v", err))
 	}
-	return &Service{store: store, policy: policy, ids: ids, hasher: hasher, mailer: mailer, now: now, decoy: decoy}
+	return &Service{store: store, policy: policy, ids: ids, hasher: hasher, mailer: mailer, sealer: sealer, now: now, decoy: decoy}
 }
 
 // Register creates a password account and signs it in.
@@ -153,8 +162,10 @@ func (s *Service) Register(ctx context.Context, in Registration) (LoginResult, e
 	if err := verr.OrNil(); err != nil {
 		return LoginResult{}, err
 	}
-	if err := s.requireOpen(ctx); err != nil {
-		return LoginResult{}, err
+	if !in.Invited {
+		if err := s.requireOpen(ctx); err != nil {
+			return LoginResult{}, err
+		}
 	}
 
 	hash, err := s.hasher.Hash(in.Password)
@@ -181,7 +192,7 @@ func (s *Service) Login(ctx context.Context, email, password string) (LoginResul
 	if !s.hasher.Verify(hash, password) {
 		return LoginResult{}, ErrInvalidCredentials
 	}
-	return s.startSession(ctx, user)
+	return s.signIn(ctx, user)
 }
 
 // LoginExternal signs in a user vouched for by an external provider, creating
@@ -190,7 +201,7 @@ func (s *Service) Login(ctx context.Context, email, password string) (LoginResul
 func (s *Service) LoginExternal(ctx context.Context, ext External) (LoginResult, error) {
 	user, err := s.store.UserByIdentity(ctx, ext.Provider, ext.Subject)
 	if err == nil {
-		return s.startSession(ctx, user)
+		return s.signIn(ctx, user)
 	}
 	if !errors.Is(err, ErrUserNotFound) {
 		return LoginResult{}, fmt.Errorf("find identity: %w", err)
@@ -218,7 +229,7 @@ func (s *Service) LoginExternal(ctx context.Context, ext External) (LoginResult,
 	if err := s.store.LinkIdentity(ctx, user.ID, ext.Provider, ext.Subject); err != nil {
 		return LoginResult{}, fmt.Errorf("link identity: %w", err)
 	}
-	return s.startSession(ctx, user)
+	return s.signIn(ctx, user)
 }
 
 // RequestPasswordReset emails a reset link if the address has an account. An

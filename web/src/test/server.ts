@@ -9,6 +9,7 @@ export const user: components['schemas']['CurrentUser'] = {
   email: 'ann@example.com',
   name: 'Ann de Vries',
   instance_admin: false,
+  two_factor_enabled: false,
 }
 
 export function administration(over: Partial<Administration> = {}): Administration {
@@ -30,6 +31,10 @@ export function administration(over: Partial<Administration> = {}): Administrati
     company_activities_description: '',
     company_website_url: '',
     company_website_absent: false,
+    user_type: 'owner',
+    permissions: ['sales_invoices', 'documents', 'estimates', 'bank', 'settings', 'ownership', 'time_entries'],
+    require_two_factor: false,
+    support_access_until: null,
     ...over,
   }
 }

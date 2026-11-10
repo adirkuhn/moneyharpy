@@ -5,6 +5,8 @@ import { ApiError } from '../api/client'
 import { ArrowLeftIcon, SectionIcon } from '../layout/icons'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Loading } from '../layout/Loading'
+import { Page } from '../layout/Page'
+import { can } from '../management/queries'
 
 export const sections = ['company', 'invoices_and_estimates', 'bookkeeping', 'bank', 'administration', 'connections'] as const
 export type Section = (typeof sections)[number]
@@ -33,6 +35,13 @@ const parts: Partial<Record<Section, { id: string; label: string }[]>> = {
     { id: 'locked-period', label: 'bookkeeping.parts.lock' },
     { id: 'export', label: 'bookkeeping.parts.export' },
   ],
+  administration: [
+    { id: 'administration-details', label: 'management.parts.details' },
+    { id: 'users', label: 'management.parts.users' },
+    { id: 'security', label: 'management.parts.security' },
+    { id: 'privacy', label: 'management.parts.privacy' },
+    { id: 'leave-or-delete', label: 'management.parts.leave' },
+  ],
   bank: [
     { id: 'accounts', label: 'bank.parts.accounts' },
     { id: 'bank-connections', label: 'bank.parts.connections' },
@@ -54,7 +63,15 @@ const pageSections: Record<string, Section> = {
   ledger_account_templates: 'bookkeeping',
   financial_accounts: 'bank',
   booking_rules: 'bank',
+  users: 'administration',
+  user_invitations: 'administration',
+  support_access: 'administration',
+  privacy: 'administration',
+  delete: 'administration',
 }
+
+/** Every section but Management works on the administration's settings. */
+const sectionNeedsSettings = (section: Section) => section !== 'administration'
 
 /**
  * The settings area of one administration: a section menu beside the page.
@@ -77,6 +94,8 @@ export function SettingsLayout() {
   const [, , area, page] = pathname.split('/')
   const current: Section = area === 'settings' && sections.includes(page as Section) ? (page as Section) : (pageSections[area ?? ''] ?? 'company')
   const onSectionPage = area === 'settings' && page === current
+  const settings = can(administration.data, 'settings')
+  const visible = sections.filter((section) => settings || !sectionNeedsSettings(section))
 
   return (
     <div className="settings">
@@ -87,7 +106,7 @@ export function SettingsLayout() {
         </Link>
         <p className="settings__heading">{t('settings.title')}</p>
         <ul>
-          {sections.map((section) => (
+          {visible.map((section) => (
             <li key={section}>
               <Link
                 to={`${base}/settings/${section}`}
@@ -111,8 +130,18 @@ export function SettingsLayout() {
         </ul>
       </nav>
       <div className="settings__page">
-        <Outlet />
+        {visible.includes(current) ? <Outlet /> : <NoAccess />}
       </div>
     </div>
+  )
+}
+
+/** Shown in a section the user has no permission for. */
+function NoAccess() {
+  const { t } = useTranslation()
+  return (
+    <Page title={t('management.noAccessTitle')}>
+      <p className="empty">{t('management.noAccess')}</p>
+    </Page>
   )
 }

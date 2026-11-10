@@ -6,6 +6,7 @@ import { Problems } from '../auth/AuthLayout'
 import { formErrors, TextInput } from '../forms/Form'
 import { useCurrentUser } from '../auth/queries'
 import { Page } from '../layout/Page'
+import { TwoFactorBlock } from './TwoFactorBlock'
 
 export function UserPage() {
   const { t, i18n } = useTranslation()
@@ -41,6 +42,7 @@ export function UserPage() {
         <dt>{t('user.name')}</dt><dd>{me.data?.name}</dd>
         <dt>{t('user.email')}</dt><dd>{me.data?.email}</dd>
       </dl>
+      <TwoFactorBlock />
       <h2>{t('user.tokens')}</h2>
       <p className="hint">{t('user.tokensHint')} <a href="/docs/api/">{t('user.api')}</a>.</p>
       {secret && (

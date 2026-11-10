@@ -473,3 +473,23 @@ func defaultDocumentStyle(admin, identity resource.ID, name string) DocumentStyl
 		},
 	}
 }
+
+// PurgeFiles deletes every stored file of the administration's document
+// styles, for when the administration itself goes. Callers check access.
+func (s *Service) PurgeFiles(ctx context.Context, admin resource.ID) error {
+	styles, err := s.store.DocumentStyles(ctx, admin)
+	if err != nil {
+		return fmt.Errorf("list document styles: %w", err)
+	}
+	seen := map[string]bool{}
+	var errs []error
+	for _, d := range styles {
+		for _, f := range []*StoredFile{d.Logo, d.Background} {
+			if f != nil && !seen[f.Hash] {
+				seen[f.Hash] = true
+				errs = append(errs, s.files.Delete(ctx, fileKey(admin, f.Hash)))
+			}
+		}
+	}
+	return errors.Join(errs...)
+}

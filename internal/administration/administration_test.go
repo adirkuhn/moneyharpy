@@ -172,7 +172,7 @@ func TestCreateAppliesDefaults(t *testing.T) {
 			TimeZone:        "Europe/Amsterdam",
 			PeriodStartDate: "2026-01-01",
 		},
-		Membership: Membership{Access: AccessUser},
+		Membership: Membership{Access: AccessUser, UserType: Owner, Permissions: Permissions},
 	}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("Create() diff (-want +got):\n%s", diff)

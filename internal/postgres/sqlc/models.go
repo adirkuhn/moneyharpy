@@ -39,6 +39,8 @@ type Administration struct {
 	BookkeepingSeeded            bool
 	BankAutoLink                 bool
 	BankSeeded                   bool
+	RequireTwoFactor             bool
+	SupportAccessUntil           pgtype.Timestamptz
 }
 
 type AdministrationMember struct {
@@ -46,6 +48,11 @@ type AdministrationMember struct {
 	UserID           int64
 	Access           string
 	Favorite         bool
+	UserType         string
+	Permissions      []string
+	Active           bool
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
 }
 
 type ApiToken struct {
@@ -216,10 +223,23 @@ type LedgerAccountBooking struct {
 	UpdatedAt           pgtype.Timestamptz
 }
 
+type LoginChallenge struct {
+	TokenHash string
+	UserID    int64
+	Attempts  int32
+	ExpiresAt pgtype.Timestamptz
+}
+
 type PasswordResetToken struct {
 	TokenHash string
 	UserID    int64
 	ExpiresAt pgtype.Timestamptz
+}
+
+type RecoveryCode struct {
+	UserID   int64
+	CodeHash string
+	UsedAt   pgtype.Timestamptz
 }
 
 type Resource struct {
@@ -262,12 +282,29 @@ type User struct {
 	PasswordHash    string
 	IsInstanceAdmin bool
 	CreatedAt       pgtype.Timestamptz
+	TotpSecret      string
+	TotpEnabledAt   pgtype.Timestamptz
+	TotpLastStep    int64
 }
 
 type UserIdentity struct {
 	Provider string
 	Subject  string
 	UserID   int64
+}
+
+type UserInvitation struct {
+	ID               int64
+	AdministrationID int64
+	Email            string
+	UserType         string
+	Permissions      []string
+	TokenHash        string
+	InvitedBy        pgtype.Int8
+	CreatedAt        pgtype.Timestamptz
+	ExpiresAt        pgtype.Timestamptz
+	AcceptedAt       pgtype.Timestamptz
+	AcceptedBy       pgtype.Int8
 }
 
 type Workflow struct {

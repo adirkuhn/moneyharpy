@@ -18,6 +18,22 @@ type memStore struct {
 	sessions   map[string]session
 	tokens     map[string]Token
 	resets     map[string]session
+	tfa        map[resource.ID]*tfaState
+	challenges map[string]*challenge
+	required   map[resource.ID]bool
+}
+
+type tfaState struct {
+	secret   string
+	enabled  *time.Time
+	lastStep int64
+	codes    map[string]bool
+}
+
+type challenge struct {
+	user     resource.ID
+	attempts int
+	expires  time.Time
 }
 
 type session struct {
@@ -33,6 +49,9 @@ func newMemStore() *memStore {
 		sessions:   map[string]session{},
 		tokens:     map[string]Token{},
 		resets:     map[string]session{},
+		tfa:        map[resource.ID]*tfaState{},
+		challenges: map[string]*challenge{},
+		required:   map[resource.ID]bool{},
 	}
 }
 
@@ -171,7 +190,7 @@ type harness struct {
 
 func newHarness(open bool) *harness {
 	h := &harness{store: newMemStore(), mailer: &fakeMailer{}, now: time.Date(2026, 11, 10, 12, 0, 0, 0, time.UTC)}
-	h.Service = NewService(h.store, policy{open: open}, resource.NewGenerator(1), NewHasher(Params{Time: 1, MemoryKiB: 8, Threads: 1}), h.mailer, func() time.Time { return h.now })
+	h.Service = NewService(h.store, policy{open: open}, resource.NewGenerator(1), NewHasher(Params{Time: 1, MemoryKiB: 8, Threads: 1}), h.mailer, plainSealer{}, func() time.Time { return h.now })
 	return h
 }
 

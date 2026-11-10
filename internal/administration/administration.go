@@ -34,7 +34,40 @@ type Access string
 const (
 	AccessUser              Access = "user"
 	AccessAccountantCompany Access = "accountant_company"
+	// AccessSupport is an instance admin let in through support access.
+	AccessSupport Access = "support"
 )
+
+// UserType is a member's role, with Moneybird's names.
+type UserType string
+
+// The user types members can have.
+const (
+	Owner      UserType = "owner"
+	Employee   UserType = "employee"
+	Accountant UserType = "accountant"
+	// Support is an instance admin let in through support access.
+	Support UserType = "support"
+)
+
+// Permission is something a member may do, with Moneybird's names. Each one
+// opens the API resources of the scope with the same name; ownership opens
+// managing the administration itself.
+type Permission string
+
+// The permissions, in Moneybird's order.
+const (
+	SalesInvoices Permission = "sales_invoices"
+	Documents     Permission = "documents"
+	Estimates     Permission = "estimates"
+	Bank          Permission = "bank"
+	Settings      Permission = "settings"
+	Ownership     Permission = "ownership"
+	TimeEntries   Permission = "time_entries"
+)
+
+// Permissions lists every permission.
+var Permissions = []Permission{SalesInvoices, Documents, Estimates, Bank, Settings, Ownership, TimeEntries}
 
 // Administration is one company account.
 type Administration struct {
@@ -48,6 +81,11 @@ type Administration struct {
 	PeriodLockedUntil *string
 	PeriodStartDate   string
 	Profile
+	// RequireTwoFactor makes every member sign in with two-step
+	// verification before using the administration.
+	RequireTwoFactor bool
+	// SupportAccessUntil lets the instance admins in until then.
+	SupportAccessUntil *time.Time
 }
 
 // Profile describes what the company does. Moneybird keeps these on the
@@ -89,6 +127,23 @@ func (a Administration) Ref() resource.Ref {
 type Membership struct {
 	Access   Access
 	Favorite bool
+	UserType UserType
+	// Permissions are what the user may do, after Moneybird's permissions.
+	Permissions []Permission
+}
+
+// Can reports whether the member holds at least one of the permissions. No
+// permissions asks only for membership.
+func (m Membership) Can(perms ...Permission) bool {
+	if len(perms) == 0 {
+		return true
+	}
+	for _, p := range perms {
+		if slices.Contains(m.Permissions, p) {
+			return true
+		}
+	}
+	return false
 }
 
 // Listed is an administration as seen by one user.
@@ -185,12 +240,13 @@ func (s *Service) Create(ctx context.Context, owner resource.ID, in NewAdministr
 	if err := s.store.Create(ctx, a, owner, def); err != nil {
 		return Listed{}, fmt.Errorf("store administration: %w", err)
 	}
-	return Listed{Administration: a, Membership: Membership{Access: AccessUser}}, nil
+	return Listed{Administration: a, Membership: Membership{Access: AccessUser, UserType: Owner, Permissions: slices.Clone(Permissions)}}, nil
 }
 
 // Changes holds the administration fields to set. Nil fields stay as they are.
 type Changes struct {
 	Name     *string
+	Country  *string
 	Language *string
 	Currency *string
 	TimeZone *string
@@ -212,6 +268,9 @@ func (s *Service) Update(ctx context.Context, id, user resource.ID, c Changes) (
 	}
 	if c.Language != nil {
 		l.Language = *c.Language
+	}
+	if c.Country != nil {
+		l.Country = strings.ToUpper(strings.TrimSpace(*c.Country))
 	}
 	if c.Currency != nil {
 		l.Currency = *c.Currency

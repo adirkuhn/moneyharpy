@@ -64,17 +64,29 @@ INSERT INTO resources (id, type, administration_id) VALUES ($1, $2, $3);
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
        a.small_business_scheme, a.company_activities_description, a.company_website_url, a.company_website_absent,
-       m.access, m.favorite
+       a.require_two_factor, a.support_access_until,
+       m.access, m.favorite, m.user_type, m.permissions
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
-WHERE m.user_id = $1;
+WHERE m.user_id = $1 AND m.active;
 
 -- name: AdministrationForUser :one
 SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
        a.period_locked_until, a.period_start_date,
        a.small_business_scheme, a.company_activities_description, a.company_website_url, a.company_website_absent,
-       m.access, m.favorite
+       a.require_two_factor, a.support_access_until,
+       m.access, m.favorite, m.user_type, m.permissions
 FROM administrations a JOIN administration_members m ON m.administration_id = a.id
-WHERE a.id = $1 AND m.user_id = $2;
+WHERE a.id = $1 AND m.user_id = $2 AND m.active;
+
+-- name: AdministrationForSupport :one
+-- An instance admin the administration granted support access to, while the
+-- grant lasts. They work as a member with every permission but ownership.
+SELECT a.id, a.name, a.language, a.currency, a.country, a.time_zone, a.suspended,
+       a.period_locked_until, a.period_start_date,
+       a.small_business_scheme, a.company_activities_description, a.company_website_url, a.company_website_absent,
+       a.require_two_factor, a.support_access_until
+FROM administrations a JOIN users u ON u.id = $2 AND u.is_instance_admin
+WHERE a.id = $1 AND a.support_access_until > now();
 
 -- name: SetFavorite :execrows
 UPDATE administration_members SET favorite = $3 WHERE administration_id = $1 AND user_id = $2;
@@ -82,7 +94,7 @@ UPDATE administration_members SET favorite = $3 WHERE administration_id = $1 AND
 -- name: LocateResource :one
 SELECT r.id, r.type, r.administration_id
 FROM resources r JOIN administration_members m ON m.administration_id = r.administration_id
-WHERE r.id = $1 AND m.user_id = $2;
+WHERE r.id = $1 AND m.user_id = $2 AND m.active;
 
 -- name: DeleteResetTokens :exec
 DELETE FROM password_reset_tokens WHERE user_id = $1;
@@ -102,7 +114,7 @@ DELETE FROM sessions WHERE user_id = $1;
 -- name: UpdateAdministration :exec
 UPDATE administrations
 SET name = $2, language = $3, currency = $4, time_zone = $5, small_business_scheme = $6,
-    company_activities_description = $7, company_website_url = $8, company_website_absent = $9
+    company_activities_description = $7, company_website_url = $8, company_website_absent = $9, country = $10
 WHERE id = $1;
 
 -- name: InsertIdentity :exec
@@ -409,3 +421,108 @@ WHERE administration_id = $1 AND id = $2;
 
 -- name: DeleteBookingRule :exec
 DELETE FROM booking_rules WHERE administration_id = $1 AND id = $2;
+
+-- name: UserTwoFactor :one
+SELECT u.totp_secret, u.totp_enabled_at,
+       (SELECT count(*) FROM recovery_codes c WHERE c.user_id = u.id AND c.used_at IS NULL)::int AS codes_left
+FROM users u WHERE u.id = $1;
+
+-- name: SetTOTPSecret :exec
+UPDATE users SET totp_secret = $2 WHERE id = $1 AND totp_enabled_at IS NULL;
+
+-- name: EnableTOTP :exec
+UPDATE users SET totp_enabled_at = $2, totp_last_step = $3 WHERE id = $1;
+
+-- name: DisableTOTP :exec
+UPDATE users SET totp_secret = '', totp_enabled_at = NULL, totp_last_step = 0 WHERE id = $1;
+
+-- name: UseTOTPStep :execrows
+UPDATE users SET totp_last_step = $2 WHERE id = $1 AND totp_last_step < $2;
+
+-- name: DeleteRecoveryCodes :exec
+DELETE FROM recovery_codes WHERE user_id = $1;
+
+-- name: InsertRecoveryCode :exec
+INSERT INTO recovery_codes (user_id, code_hash) VALUES ($1, $2);
+
+-- name: UseRecoveryCode :execrows
+UPDATE recovery_codes SET used_at = $3 WHERE user_id = $1 AND code_hash = $2 AND used_at IS NULL;
+
+-- name: RequiresTwoFactor :one
+SELECT EXISTS (
+    SELECT 1 FROM administration_members m JOIN administrations a ON a.id = m.administration_id
+    WHERE m.user_id = $1 AND m.active AND a.require_two_factor
+);
+
+-- name: InsertLoginChallenge :exec
+INSERT INTO login_challenges (token_hash, user_id, expires_at) VALUES ($1, $2, $3);
+
+-- name: SpendLoginChallengeAttempt :one
+UPDATE login_challenges c SET attempts = c.attempts + 1
+FROM users u
+WHERE c.token_hash = $1 AND c.expires_at > $2 AND u.id = c.user_id
+RETURNING u.id, u.email, u.name, u.is_instance_admin, c.attempts;
+
+-- name: DeleteLoginChallenge :exec
+DELETE FROM login_challenges WHERE token_hash = $1 OR expires_at < now();
+
+-- name: ListMembers :many
+SELECT u.id, u.name, u.email, m.user_type, m.permissions, m.active, m.created_at, m.updated_at,
+       EXISTS (SELECT 1 FROM user_identities i WHERE i.user_id = u.id) AS email_validated
+FROM administration_members m JOIN users u ON u.id = m.user_id
+WHERE m.administration_id = $1;
+
+-- name: MemberByUser :one
+SELECT u.id, u.name, u.email, m.user_type, m.permissions, m.active, m.created_at, m.updated_at,
+       EXISTS (SELECT 1 FROM user_identities i WHERE i.user_id = u.id) AS email_validated
+FROM administration_members m JOIN users u ON u.id = m.user_id
+WHERE m.administration_id = $1 AND m.user_id = $2;
+
+-- name: UpdateMember :exec
+UPDATE administration_members SET user_type = $3, permissions = $4, active = $5, updated_at = $6
+WHERE administration_id = $1 AND user_id = $2;
+
+-- name: DeleteMember :exec
+DELETE FROM administration_members WHERE administration_id = $1 AND user_id = $2;
+
+-- name: UpsertInvitedMember :execrows
+-- Adds the user, or brings back one who was deactivated; an active user
+-- stays as they are.
+INSERT INTO administration_members (administration_id, user_id, access, user_type, permissions, active, created_at, updated_at)
+VALUES ($1, $2, 'user', $3, $4, true, $5, $5)
+ON CONFLICT (administration_id, user_id) DO UPDATE
+SET user_type = EXCLUDED.user_type, permissions = EXCLUDED.permissions, active = true, updated_at = EXCLUDED.updated_at
+WHERE NOT administration_members.active;
+
+-- name: ListOpenInvitations :many
+SELECT * FROM user_invitations WHERE administration_id = $1 AND accepted_at IS NULL ORDER BY created_at, id;
+
+-- name: InsertInvitation :exec
+INSERT INTO user_invitations (id, administration_id, email, user_type, permissions, token_hash, invited_by, created_at, expires_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+
+-- name: DeleteOpenInvitationsFor :exec
+DELETE FROM user_invitations WHERE administration_id = $1 AND lower(email) = lower($2) AND accepted_at IS NULL;
+
+-- name: InvitationByToken :one
+SELECT i.*, a.name AS administration_name, COALESCE(u.name, '') AS inviter_name
+FROM user_invitations i JOIN administrations a ON a.id = i.administration_id LEFT JOIN users u ON u.id = i.invited_by
+WHERE i.token_hash = $1;
+
+-- name: DeleteInvitation :execrows
+DELETE FROM user_invitations WHERE administration_id = $1 AND id = $2 AND accepted_at IS NULL;
+
+-- name: MarkInvitationAccepted :execrows
+UPDATE user_invitations SET accepted_at = $2, accepted_by = $3 WHERE id = $1 AND accepted_at IS NULL;
+
+-- name: SetRequireTwoFactor :exec
+UPDATE administrations SET require_two_factor = true WHERE id = $1;
+
+-- name: SetSupportAccess :exec
+UPDATE administrations SET support_access_until = $2 WHERE id = $1;
+
+-- name: SupportGrants :many
+SELECT id, name, support_access_until FROM administrations WHERE support_access_until > $1 ORDER BY support_access_until, id;
+
+-- name: DeleteAdministration :exec
+DELETE FROM administrations WHERE id = $1;

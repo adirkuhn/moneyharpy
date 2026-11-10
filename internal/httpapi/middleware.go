@@ -247,7 +247,6 @@ func (s *server) setSession(w http.ResponseWriter, token string, maxAge time.Dur
 	})
 }
 
-// isFileUpload reports whether path receives a document style file.
 // isFileUpload reports requests that carry a file or a whole bank
 // statement, which may be larger than other bodies.
 func isFileUpload(method, path string) bool {
