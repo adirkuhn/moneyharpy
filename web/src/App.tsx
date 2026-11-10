@@ -12,6 +12,9 @@ import { CreateAdministrationPage } from './onboarding/CreateAdministrationPage'
 import { FirstActionPage } from './onboarding/FirstActionPage'
 import { ManualCompanyPage } from './onboarding/ManualCompanyPage'
 import { PermalinkPage } from './resources/PermalinkPage'
+import { DocumentStyleFormPage } from './invoicing/DocumentStyleFormPage'
+import { InvoicesSettingsPage } from './invoicing/InvoicesSettingsPage'
+import { WorkflowFormPage } from './invoicing/WorkflowFormPage'
 import { CompanySettingsPage } from './settings/CompanySettingsPage'
 import { CustomFieldFormPage } from './settings/CustomFieldFormPage'
 import { IdentityFormPage } from './settings/IdentityFormPage'
@@ -43,10 +46,21 @@ export function AppRoutes() {
           <Route index element={<Navigate to="company" replace />} />
           <Route path="company" element={<CompanySettingsPage />} />
           <Route path="administration" element={<ManagementSettingsPage />} />
+          <Route path="invoices_and_estimates" element={<InvoicesSettingsPage />} />
           <Route path=":section" element={<PlaceholderSettingsPage />} />
         </Route>
         <Route path="/:administrationId/custom_fields" element={<SettingsLayout />}>
           <Route path="new" element={<CustomFieldFormPage />} />
+          <Route path=":fieldId/edit" element={<CustomFieldFormPage />} />
+        </Route>
+        <Route path="/:administrationId/workflows" element={<SettingsLayout />}>
+          <Route path="new/:kind" element={<WorkflowFormPage />} />
+          <Route path=":workflowId" element={<WorkflowFormPage />} />
+        </Route>
+        <Route path="/:administrationId/document_styles" element={<SettingsLayout />}>
+          <Route path="new" element={<DocumentStyleFormPage />} />
+          <Route path=":styleId" element={<Navigate to="edit" replace />} />
+          <Route path=":styleId/edit" element={<DocumentStyleFormPage />} />
         </Route>
         <Route path="/:administrationId/identities" element={<SettingsLayout />}>
           <Route path="new" element={<IdentityFormPage mode="new" />} />

@@ -7,11 +7,13 @@ type MenuProps = {
   ariaLabel?: string
   caret?: boolean
   align?: 'left' | 'right'
+  /** Styles the button; the top-navigation look by default. */
+  buttonClassName?: string
   children: ReactNode
 }
 
 /** A top-navigation button that opens a panel. */
-export function Menu({ label, ariaLabel, caret = true, align = 'left', children }: MenuProps) {
+export function Menu({ label, ariaLabel, caret = true, align = 'left', buttonClassName = 'topnav__btn', children }: MenuProps) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const { pathname } = useLocation()
@@ -37,7 +39,7 @@ export function Menu({ label, ariaLabel, caret = true, align = 'left', children 
 
   return (
     <div className="menu" ref={root}>
-      <button type="button" className="topnav__btn" aria-label={ariaLabel} aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}>
+      <button type="button" className={buttonClassName} aria-label={ariaLabel} aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}>
         <span className="topnav__label">{label}</span>
         {caret && <CaretIcon />}
       </button>

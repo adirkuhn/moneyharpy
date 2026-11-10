@@ -136,6 +136,10 @@ type Store interface {
 	// The custom field methods trust the caller to have checked access.
 	CustomFields(ctx context.Context, admin resource.ID) ([]CustomField, error)
 	CreateCustomField(ctx context.Context, f CustomField) error
+	// CustomField returns ErrCustomFieldNotFound for a field outside admin.
+	CustomField(ctx context.Context, admin, id resource.ID) (CustomField, error)
+	UpdateCustomField(ctx context.Context, f CustomField) error
+	DeleteCustomField(ctx context.Context, admin, id resource.ID) error
 }
 
 // Service implements the administration use cases.

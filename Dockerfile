@@ -12,8 +12,12 @@ RUN go mod download
 COPY . .
 COPY --from=web /src/web/dist ./web/dist
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /moneyharpy ./cmd/moneyharpy
+# Uploads live here while no S3-compatible storage is configured. A volume
+# mounted on it takes this ownership, so the non-root user can write.
+RUN mkdir -p /out/data/uploads
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=server /moneyharpy /moneyharpy
+COPY --from=server --chown=65532:65532 /out/data /data
 EXPOSE 8080
 ENTRYPOINT ["/moneyharpy"]

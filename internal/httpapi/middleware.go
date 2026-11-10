@@ -22,6 +22,8 @@ import (
 const (
 	sessionCookie = "moneyharpy_session"
 	maxBodyBytes  = 1 << 20
+	// maxUploadBytes fits the largest document style file, a 10 MB background.
+	maxUploadBytes = 10<<20 + 1<<10
 
 	contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
 		"img-src 'self' data:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; " +
@@ -143,7 +145,11 @@ func (s *server) crossOriginProtection() func(http.Handler) http.Handler {
 
 func limitBody(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
+		limit := int64(maxBodyBytes)
+		if r.Method == http.MethodPut && isFileUpload(r.URL.Path) {
+			limit = maxUploadBytes
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, limit)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -239,4 +245,9 @@ func (s *server) setSession(w http.ResponseWriter, token string, maxAge time.Dur
 		Secure:   s.secureCookies,
 		SameSite: http.SameSiteLaxMode,
 	})
+}
+
+// isFileUpload reports whether path receives a document style file.
+func isFileUpload(path string) bool {
+	return strings.Contains(path, "/document_styles/") && (strings.HasSuffix(path, "/logo") || strings.HasSuffix(path, "/background"))
 }

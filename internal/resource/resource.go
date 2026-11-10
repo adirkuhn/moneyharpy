@@ -91,6 +91,8 @@ const (
 	TypeAdministration Type = "administrations"
 	TypeIdentity       Type = "identities"
 	TypeCustomField    Type = "custom_fields"
+	TypeWorkflow       Type = "workflows"
+	TypeDocumentStyle  Type = "document_styles"
 )
 
 // Ref locates one resource.
