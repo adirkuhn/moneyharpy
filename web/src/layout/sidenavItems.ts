@@ -49,7 +49,7 @@ export const navItems: NavItem[] = [
       link('projectsReport', 'time_entries_report/projects'),
     ],
   },
-  { kind: 'contacts', key: 'contacts', to: 'contacts', ready: false, permissions: ['sales_invoices', 'documents', 'estimates'] },
+  { kind: 'contacts', key: 'contacts', to: 'contacts', ready: true, permissions: ['sales_invoices', 'documents', 'estimates'] },
   { kind: 'vat', key: 'vat', to: 'declarations', ready: false, permissions: bookkeeping },
   {
     kind: 'reports', key: 'reports', to: 'reports', ready: false, permissions: bookkeeping,

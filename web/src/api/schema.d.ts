@@ -967,6 +967,251 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all contacts
+         * @description Returns one page of contacts ordered by name. The Link header holds the first, previous, next and last pages; X-Total-Count the number of contacts selected, a MoneyHarpy extension.
+         */
+        get: operations["listContacts"];
+        put?: never;
+        /**
+         * Create a new contact
+         * @description Without a customer_id the contact gets the next number.
+         */
+        post: operations["createContact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/filter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Filter contacts
+         * @description Filters are key:value terms separated by commas, such as first_name:henk,contact_type:company. Keys: created_after and updated_after (ISO 8601 times), first_name, last_name, invoice_workflow_id, estimate_workflow_id, contact_type (all, company, private_individual), delivery_method (all, email, post, manual, peppol, simplerinvoicing), trusted_type (all, trusted, not_trusted) and mandate_type (all, manual, adyen, none). Paged like the list.
+         */
+        get: operations["filterContacts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/synchronization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /** List all ids and versions */
+        get: operations["listContactVersions"];
+        put?: never;
+        /** Fetch contacts with given ids */
+        post: operations["fetchContacts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/doubles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List possible duplicate contacts
+         * @description Groups of contacts that share a chamber of commerce number, tax number, email address or name, 50 groups a page.
+         */
+        get: operations["listContactDoubles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/customer_id/{customer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        /** Get contact by customer id */
+        get: operations["getContactByCustomerId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a contact
+         * @description Archived contacts are returned too.
+         */
+        get: operations["getContact"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a contact
+         * @description A contact that documents refer to cannot be deleted (422); archive it instead.
+         */
+        delete: operations["deleteContact"];
+        options?: never;
+        head?: never;
+        /** Update a contact */
+        patch: operations["updateContact"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Archive a contact
+         * @description Archived contacts leave lists and pickers; their documents keep them. Update archived to false to bring one back.
+         */
+        patch: operations["archiveContact"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/{contact_id}/contact_people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a new contact person */
+        post: operations["createContactPerson"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get a contact person */
+        get: operations["getContactPerson"];
+        put?: never;
+        post?: never;
+        /** Delete a contact person */
+        delete: operations["deleteContactPerson"];
+        options?: never;
+        head?: never;
+        /** Update a contact person */
+        patch: operations["updateContactPerson"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/{contact_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add note to a contact */
+        post: operations["createContactNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/{contact_id}/notes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a note from a contact */
+        delete: operations["deleteContactNote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/booking_rules": {
         parameters: {
             query?: never;
@@ -2649,6 +2894,79 @@ export interface components {
             created_at: string;
             /** Format: date-time */
             updated_at: string;
+        };
+        /** @description A boolean; the strings "true" and "false" are accepted too, as at Moneybird. */
+        FlexibleBoolean: boolean | ("true" | "false");
+        /** @description An id as a string or a number; an empty string clears it. */
+        FlexibleIdentifier: string | number;
+        /** @description A Moneybird contact with MoneyHarpy extensions. */
+        Contact: components["schemas"]["contact_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        ContactRequest: {
+            contact: {
+                company_name?: string;
+                firstname?: string;
+                lastname?: string;
+                address1?: string;
+                address2?: string;
+                zipcode?: string;
+                city?: string;
+                /** @description ISO 3166-1 alpha-2; the administration's country unless given. */
+                country?: string;
+                phone?: string;
+                /** @description Email, Post, Manual, Simplerinvoicing or Peppol, in any case. */
+                delivery_method?: string;
+                /** @description Unique in the administration; the next number when left out. */
+                customer_id?: string;
+                tax_number?: string;
+                chamber_of_commerce?: string;
+                bank_account?: string;
+                send_invoices_to_attention?: string;
+                /** @description One or more addresses separated by commas. */
+                send_invoices_to_email?: string;
+                send_estimates_to_attention?: string;
+                send_estimates_to_email?: string;
+                email_ubl?: components["schemas"]["FlexibleBoolean"];
+                direct_debit?: components["schemas"]["FlexibleBoolean"];
+                sepa_active?: components["schemas"]["FlexibleBoolean"];
+                sepa_iban?: string;
+                sepa_iban_account_name?: string;
+                sepa_bic?: string;
+                sepa_mandate_id?: string;
+                /** @description yyyy-mm-dd; empty clears it. */
+                sepa_mandate_date?: string;
+                /** @enum {string} */
+                sepa_sequence_type?: "RCUR" | "FRST" | "OOFF" | "FNAL";
+                /** @description The e-invoicing (Peppol) identifier scheme, such as 0106 for a Dutch chamber of commerce number. */
+                si_identifier_type?: string;
+                si_identifier?: string;
+                invoice_workflow_id?: components["schemas"]["FlexibleIdentifier"];
+                estimate_workflow_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description MoneyHarpy extension. False brings an archived contact back. */
+                archived?: boolean;
+                custom_fields_attributes?: components["schemas"]["custom_fields_attributes"];
+                /** @description Adds a contact person with a new contact. */
+                contact_person?: components["schemas"]["ContactPersonFields"];
+            };
+        };
+        ContactPersonFields: {
+            firstname?: string;
+            lastname?: string;
+            phone?: string;
+            email?: string;
+            department?: string;
+        };
+        ContactPersonRequest: {
+            contact_person: components["schemas"]["ContactPersonFields"];
+        };
+        NoteRequest: {
+            note: {
+                note: string;
+                todo?: components["schemas"]["FlexibleBoolean"];
+                assignee_id?: components["schemas"]["FlexibleIdentifier"];
+            };
         };
         BookingRuleRequest: {
             booking_rule: {
@@ -4347,6 +4665,37 @@ export interface components {
         };
     };
     responses: {
+        /** @description A page of contacts */
+        ContactPage: {
+            headers: {
+                /** @description RFC 8288 links to the first, prev, next and last pages. */
+                Link?: string;
+                /** @description The number of contacts selected in all. MoneyHarpy extension. */
+                "X-Total-Count"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Contact"][];
+            };
+        };
+        /** @description The contact */
+        OneContact: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Contact"];
+            };
+        };
+        /** @description The contact person */
+        OneContactPerson: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["contact_person_response"];
+            };
+        };
         /** @description The request is malformed */
         BadRequest: {
             headers: {
@@ -4413,6 +4762,17 @@ export interface components {
     parameters: {
         administration_id: components["schemas"]["Identifier"];
         id: components["schemas"]["Identifier"];
+        contact_id: components["schemas"]["Identifier"];
+        /** @description The page to return, starting at 1. */
+        page: string;
+        /** @description Records per page, 50 unless given, at most 100. */
+        per_page: string;
+        /** @description Include archived records. */
+        include_archived: "true" | "false";
+        /** @description Free-text search across names, contact people, email, phone, customer id, tax and chamber of commerce numbers, IBAN and address. */
+        contact_query: string;
+        /** @description Comma-separated key:value terms; see Filter contacts. */
+        contact_filter: string;
     };
     requestBodies: never;
     headers: {
@@ -6498,6 +6858,487 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Overview"];
                 };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listContacts: {
+        parameters: {
+            query?: {
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+                /** @description Free-text search across names, contact people, email, phone, customer id, tax and chamber of commerce numbers, IBAN and address. */
+                query?: components["parameters"]["contact_query"];
+                /** @description Include archived records. */
+                include_archived?: components["parameters"]["include_archived"];
+                /** @description Any value keeps only contacts with an unfinished to-do. */
+                todo?: string;
+                /** @description Keeps contacts whose field equals contact_value, ignoring case. */
+                contact_field?: "customer_id" | "company_name" | "firstname" | "lastname" | "email" | "phone" | "tax_number" | "chamber_of_commerce" | "bank_account" | "sepa_iban" | "zipcode" | "city";
+                contact_value?: string;
+                /** @description Contacts created by an import batch. MoneyHarpy has no contact imports yet, so this selects none. */
+                contact_import_id?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ContactPage"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactRequest"];
+            };
+        };
+        responses: {
+            /** @description The created contact */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Contact"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    filterContacts: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms; see Filter contacts. */
+                filter?: components["parameters"]["contact_filter"];
+                /** @description Free-text search across names, contact people, email, phone, customer id, tax and chamber of commerce numbers, IBAN and address. */
+                query?: components["parameters"]["contact_query"];
+                /** @description Include archived records. */
+                include_archived?: components["parameters"]["include_archived"];
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ContactPage"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listContactVersions: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms; see Filter contacts. */
+                filter?: components["parameters"]["contact_filter"];
+                /** @description Include archived records. */
+                include_archived?: components["parameters"]["include_archived"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ids and versions of the contacts the filter selects */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SynchronizationItem"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    fetchContacts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SynchronizationRequest"];
+            };
+        };
+        responses: {
+            /** @description The contacts with these ids */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Contact"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listContactDoubles: {
+        parameters: {
+            query?: {
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of possible duplicate contact groups */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        contacts: components["schemas"]["Contact"][];
+                    }[];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getContactByCustomerId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OneContact"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getContact: {
+        parameters: {
+            query?: {
+                /** @description Include archived records. */
+                include_archived?: components["parameters"]["include_archived"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OneContact"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The contact is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["OneContact"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    archiveContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The contact is archived */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createContactPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactPersonRequest"];
+            };
+        };
+        responses: {
+            /** @description The created contact person */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["contact_person_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getContactPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["OneContactPerson"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteContactPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The contact person is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateContactPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactPersonRequest"];
+            };
+        };
+        responses: {
+            200: components["responses"]["OneContactPerson"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createContactNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteRequest"];
+            };
+        };
+        responses: {
+            /** @description The created note */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["note_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteContactNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The note is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];

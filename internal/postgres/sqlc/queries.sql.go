@@ -339,6 +339,265 @@ func (q *Queries) ConsumeResetToken(ctx context.Context, arg ConsumeResetTokenPa
 	return user_id, err
 }
 
+const contactByCustomerID = `-- name: ContactByCustomerID :one
+SELECT id, administration_id, company_name, firstname, lastname, address1, address2, zipcode, city, country, phone, customer_id, tax_number, chamber_of_commerce, bank_account, delivery_method, send_invoices_to_attention, send_invoices_to_email, send_estimates_to_attention, send_estimates_to_email, email_ubl, direct_debit, sepa_active, sepa_iban, sepa_iban_account_name, sepa_bic, sepa_mandate_id, sepa_mandate_date, sepa_sequence_type, si_identifier_type, si_identifier, invoice_workflow_id, estimate_workflow_id, archived, created_at, updated_at, sort_name FROM contacts WHERE administration_id = $1 AND customer_id = $2
+`
+
+type ContactByCustomerIDParams struct {
+	AdministrationID int64
+	CustomerID       string
+}
+
+func (q *Queries) ContactByCustomerID(ctx context.Context, arg ContactByCustomerIDParams) (Contact, error) {
+	row := q.db.QueryRow(ctx, contactByCustomerID, arg.AdministrationID, arg.CustomerID)
+	var i Contact
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.CompanyName,
+		&i.Firstname,
+		&i.Lastname,
+		&i.Address1,
+		&i.Address2,
+		&i.Zipcode,
+		&i.City,
+		&i.Country,
+		&i.Phone,
+		&i.CustomerID,
+		&i.TaxNumber,
+		&i.ChamberOfCommerce,
+		&i.BankAccount,
+		&i.DeliveryMethod,
+		&i.SendInvoicesToAttention,
+		&i.SendInvoicesToEmail,
+		&i.SendEstimatesToAttention,
+		&i.SendEstimatesToEmail,
+		&i.EmailUbl,
+		&i.DirectDebit,
+		&i.SepaActive,
+		&i.SepaIban,
+		&i.SepaIbanAccountName,
+		&i.SepaBic,
+		&i.SepaMandateID,
+		&i.SepaMandateDate,
+		&i.SepaSequenceType,
+		&i.SiIdentifierType,
+		&i.SiIdentifier,
+		&i.InvoiceWorkflowID,
+		&i.EstimateWorkflowID,
+		&i.Archived,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SortName,
+	)
+	return i, err
+}
+
+const contactByID = `-- name: ContactByID :one
+SELECT id, administration_id, company_name, firstname, lastname, address1, address2, zipcode, city, country, phone, customer_id, tax_number, chamber_of_commerce, bank_account, delivery_method, send_invoices_to_attention, send_invoices_to_email, send_estimates_to_attention, send_estimates_to_email, email_ubl, direct_debit, sepa_active, sepa_iban, sepa_iban_account_name, sepa_bic, sepa_mandate_id, sepa_mandate_date, sepa_sequence_type, si_identifier_type, si_identifier, invoice_workflow_id, estimate_workflow_id, archived, created_at, updated_at, sort_name FROM contacts WHERE administration_id = $1 AND id = $2
+`
+
+type ContactByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) ContactByID(ctx context.Context, arg ContactByIDParams) (Contact, error) {
+	row := q.db.QueryRow(ctx, contactByID, arg.AdministrationID, arg.ID)
+	var i Contact
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.CompanyName,
+		&i.Firstname,
+		&i.Lastname,
+		&i.Address1,
+		&i.Address2,
+		&i.Zipcode,
+		&i.City,
+		&i.Country,
+		&i.Phone,
+		&i.CustomerID,
+		&i.TaxNumber,
+		&i.ChamberOfCommerce,
+		&i.BankAccount,
+		&i.DeliveryMethod,
+		&i.SendInvoicesToAttention,
+		&i.SendInvoicesToEmail,
+		&i.SendEstimatesToAttention,
+		&i.SendEstimatesToEmail,
+		&i.EmailUbl,
+		&i.DirectDebit,
+		&i.SepaActive,
+		&i.SepaIban,
+		&i.SepaIbanAccountName,
+		&i.SepaBic,
+		&i.SepaMandateID,
+		&i.SepaMandateDate,
+		&i.SepaSequenceType,
+		&i.SiIdentifierType,
+		&i.SiIdentifier,
+		&i.InvoiceWorkflowID,
+		&i.EstimateWorkflowID,
+		&i.Archived,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SortName,
+	)
+	return i, err
+}
+
+const contactCustomFieldValuesOf = `-- name: ContactCustomFieldValuesOf :many
+SELECT v.contact_id, f.id, f.name, v.value
+FROM contact_custom_field_values v JOIN custom_fields f ON f.id = v.custom_field_id
+WHERE f.administration_id = $1 AND v.contact_id = ANY($2::bigint[])
+ORDER BY f.position, f.id
+`
+
+type ContactCustomFieldValuesOfParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+type ContactCustomFieldValuesOfRow struct {
+	ContactID int64
+	ID        int64
+	Name      string
+	Value     string
+}
+
+func (q *Queries) ContactCustomFieldValuesOf(ctx context.Context, arg ContactCustomFieldValuesOfParams) ([]ContactCustomFieldValuesOfRow, error) {
+	rows, err := q.db.Query(ctx, contactCustomFieldValuesOf, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ContactCustomFieldValuesOfRow
+	for rows.Next() {
+		var i ContactCustomFieldValuesOfRow
+		if err := rows.Scan(
+			&i.ContactID,
+			&i.ID,
+			&i.Name,
+			&i.Value,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const contactPeopleOf = `-- name: ContactPeopleOf :many
+SELECT id, administration_id, contact_id, firstname, lastname, phone, email, department, created_at, updated_at FROM contact_people WHERE administration_id = $1 AND contact_id = ANY($2::bigint[]) ORDER BY created_at, id
+`
+
+type ContactPeopleOfParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) ContactPeopleOf(ctx context.Context, arg ContactPeopleOfParams) ([]ContactPerson, error) {
+	rows, err := q.db.Query(ctx, contactPeopleOf, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ContactPerson
+	for rows.Next() {
+		var i ContactPerson
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.ContactID,
+			&i.Firstname,
+			&i.Lastname,
+			&i.Phone,
+			&i.Email,
+			&i.Department,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const contactsByIDs = `-- name: ContactsByIDs :many
+SELECT id, administration_id, company_name, firstname, lastname, address1, address2, zipcode, city, country, phone, customer_id, tax_number, chamber_of_commerce, bank_account, delivery_method, send_invoices_to_attention, send_invoices_to_email, send_estimates_to_attention, send_estimates_to_email, email_ubl, direct_debit, sepa_active, sepa_iban, sepa_iban_account_name, sepa_bic, sepa_mandate_id, sepa_mandate_date, sepa_sequence_type, si_identifier_type, si_identifier, invoice_workflow_id, estimate_workflow_id, archived, created_at, updated_at, sort_name FROM contacts WHERE administration_id = $1 AND id = ANY($2::bigint[]) ORDER BY id
+`
+
+type ContactsByIDsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) ContactsByIDs(ctx context.Context, arg ContactsByIDsParams) ([]Contact, error) {
+	rows, err := q.db.Query(ctx, contactsByIDs, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Contact
+	for rows.Next() {
+		var i Contact
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.CompanyName,
+			&i.Firstname,
+			&i.Lastname,
+			&i.Address1,
+			&i.Address2,
+			&i.Zipcode,
+			&i.City,
+			&i.Country,
+			&i.Phone,
+			&i.CustomerID,
+			&i.TaxNumber,
+			&i.ChamberOfCommerce,
+			&i.BankAccount,
+			&i.DeliveryMethod,
+			&i.SendInvoicesToAttention,
+			&i.SendInvoicesToEmail,
+			&i.SendEstimatesToAttention,
+			&i.SendEstimatesToEmail,
+			&i.EmailUbl,
+			&i.DirectDebit,
+			&i.SepaActive,
+			&i.SepaIban,
+			&i.SepaIbanAccountName,
+			&i.SepaBic,
+			&i.SepaMandateID,
+			&i.SepaMandateDate,
+			&i.SepaSequenceType,
+			&i.SiIdentifierType,
+			&i.SiIdentifier,
+			&i.InvoiceWorkflowID,
+			&i.EstimateWorkflowID,
+			&i.Archived,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SortName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countUnprocessedFinancialMutations = `-- name: CountUnprocessedFinancialMutations :one
 SELECT count(*)::int FROM financial_mutations m
 JOIN financial_accounts a ON a.id = m.financial_account_id
@@ -374,6 +633,23 @@ func (q *Queries) CustomFieldByID(ctx context.Context, arg CustomFieldByIDParams
 		&i.Position,
 	)
 	return i, err
+}
+
+const customerIDTaken = `-- name: CustomerIDTaken :one
+SELECT EXISTS (SELECT 1 FROM contacts WHERE administration_id = $1 AND customer_id = $2 AND id <> $3)
+`
+
+type CustomerIDTakenParams struct {
+	AdministrationID int64
+	CustomerID       string
+	ID               int64
+}
+
+func (q *Queries) CustomerIDTaken(ctx context.Context, arg CustomerIDTakenParams) (bool, error) {
+	row := q.db.QueryRow(ctx, customerIDTaken, arg.AdministrationID, arg.CustomerID, arg.ID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const defaultIdentity = `-- name: DefaultIdentity :one
@@ -442,6 +718,44 @@ type DeleteConnectionParams struct {
 
 func (q *Queries) DeleteConnection(ctx context.Context, arg DeleteConnectionParams) error {
 	_, err := q.db.Exec(ctx, deleteConnection, arg.AdministrationID, arg.ID)
+	return err
+}
+
+const deleteContact = `-- name: DeleteContact :exec
+DELETE FROM contacts WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteContactParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteContact(ctx context.Context, arg DeleteContactParams) error {
+	_, err := q.db.Exec(ctx, deleteContact, arg.AdministrationID, arg.ID)
+	return err
+}
+
+const deleteContactCustomFieldValues = `-- name: DeleteContactCustomFieldValues :exec
+DELETE FROM contact_custom_field_values WHERE contact_id = $1
+`
+
+func (q *Queries) DeleteContactCustomFieldValues(ctx context.Context, contactID int64) error {
+	_, err := q.db.Exec(ctx, deleteContactCustomFieldValues, contactID)
+	return err
+}
+
+const deleteContactPerson = `-- name: DeleteContactPerson :exec
+DELETE FROM contact_people WHERE administration_id = $1 AND contact_id = $2 AND id = $3
+`
+
+type DeleteContactPersonParams struct {
+	AdministrationID int64
+	ContactID        int64
+	ID               int64
+}
+
+func (q *Queries) DeleteContactPerson(ctx context.Context, arg DeleteContactPersonParams) error {
+	_, err := q.db.Exec(ctx, deleteContactPerson, arg.AdministrationID, arg.ContactID, arg.ID)
 	return err
 }
 
@@ -599,6 +913,35 @@ type DeleteMemberParams struct {
 
 func (q *Queries) DeleteMember(ctx context.Context, arg DeleteMemberParams) error {
 	_, err := q.db.Exec(ctx, deleteMember, arg.AdministrationID, arg.UserID)
+	return err
+}
+
+const deleteNote = `-- name: DeleteNote :exec
+DELETE FROM notes WHERE administration_id = $1 AND entity_id = $2 AND id = $3
+`
+
+type DeleteNoteParams struct {
+	AdministrationID int64
+	EntityID         int64
+	ID               int64
+}
+
+func (q *Queries) DeleteNote(ctx context.Context, arg DeleteNoteParams) error {
+	_, err := q.db.Exec(ctx, deleteNote, arg.AdministrationID, arg.EntityID, arg.ID)
+	return err
+}
+
+const deleteNotesOf = `-- name: DeleteNotesOf :exec
+DELETE FROM notes WHERE administration_id = $1 AND entity_id = $2
+`
+
+type DeleteNotesOfParams struct {
+	AdministrationID int64
+	EntityID         int64
+}
+
+func (q *Queries) DeleteNotesOf(ctx context.Context, arg DeleteNotesOfParams) error {
+	_, err := q.db.Exec(ctx, deleteNotesOf, arg.AdministrationID, arg.EntityID)
 	return err
 }
 
@@ -1160,6 +1503,113 @@ func (q *Queries) InsertConnection(ctx context.Context, arg InsertConnectionPara
 	return err
 }
 
+const insertContact = `-- name: InsertContact :exec
+INSERT INTO contacts (
+    id, administration_id, company_name, firstname, lastname, address1, address2, zipcode, city, country, phone, customer_id,
+    tax_number, chamber_of_commerce, bank_account, delivery_method, send_invoices_to_attention, send_invoices_to_email,
+    send_estimates_to_attention, send_estimates_to_email, email_ubl, direct_debit, sepa_active, sepa_iban, sepa_iban_account_name,
+    sepa_bic, sepa_mandate_id, sepa_mandate_date, sepa_sequence_type, si_identifier_type, si_identifier, invoice_workflow_id,
+    estimate_workflow_id, archived, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26,
+    $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
+`
+
+type InsertContactParams struct {
+	ID                       int64
+	AdministrationID         int64
+	CompanyName              string
+	Firstname                string
+	Lastname                 string
+	Address1                 string
+	Address2                 string
+	Zipcode                  string
+	City                     string
+	Country                  string
+	Phone                    string
+	CustomerID               string
+	TaxNumber                string
+	ChamberOfCommerce        string
+	BankAccount              string
+	DeliveryMethod           string
+	SendInvoicesToAttention  string
+	SendInvoicesToEmail      string
+	SendEstimatesToAttention string
+	SendEstimatesToEmail     string
+	EmailUbl                 bool
+	DirectDebit              bool
+	SepaActive               bool
+	SepaIban                 string
+	SepaIbanAccountName      string
+	SepaBic                  string
+	SepaMandateID            string
+	SepaMandateDate          pgtype.Date
+	SepaSequenceType         string
+	SiIdentifierType         string
+	SiIdentifier             string
+	InvoiceWorkflowID        pgtype.Int8
+	EstimateWorkflowID       pgtype.Int8
+	Archived                 bool
+	CreatedAt                pgtype.Timestamptz
+	UpdatedAt                pgtype.Timestamptz
+}
+
+func (q *Queries) InsertContact(ctx context.Context, arg InsertContactParams) error {
+	_, err := q.db.Exec(ctx, insertContact,
+		arg.ID,
+		arg.AdministrationID,
+		arg.CompanyName,
+		arg.Firstname,
+		arg.Lastname,
+		arg.Address1,
+		arg.Address2,
+		arg.Zipcode,
+		arg.City,
+		arg.Country,
+		arg.Phone,
+		arg.CustomerID,
+		arg.TaxNumber,
+		arg.ChamberOfCommerce,
+		arg.BankAccount,
+		arg.DeliveryMethod,
+		arg.SendInvoicesToAttention,
+		arg.SendInvoicesToEmail,
+		arg.SendEstimatesToAttention,
+		arg.SendEstimatesToEmail,
+		arg.EmailUbl,
+		arg.DirectDebit,
+		arg.SepaActive,
+		arg.SepaIban,
+		arg.SepaIbanAccountName,
+		arg.SepaBic,
+		arg.SepaMandateID,
+		arg.SepaMandateDate,
+		arg.SepaSequenceType,
+		arg.SiIdentifierType,
+		arg.SiIdentifier,
+		arg.InvoiceWorkflowID,
+		arg.EstimateWorkflowID,
+		arg.Archived,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const insertContactCustomFieldValue = `-- name: InsertContactCustomFieldValue :exec
+INSERT INTO contact_custom_field_values (contact_id, custom_field_id, value) VALUES ($1, $2, $3)
+`
+
+type InsertContactCustomFieldValueParams struct {
+	ContactID     int64
+	CustomFieldID int64
+	Value         string
+}
+
+func (q *Queries) InsertContactCustomFieldValue(ctx context.Context, arg InsertContactCustomFieldValueParams) error {
+	_, err := q.db.Exec(ctx, insertContactCustomFieldValue, arg.ContactID, arg.CustomFieldID, arg.Value)
+	return err
+}
+
 const insertCustomField = `-- name: InsertCustomField :exec
 INSERT INTO custom_fields (id, administration_id, name, source, position, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
@@ -1594,6 +2044,44 @@ func (q *Queries) InsertMember(ctx context.Context, arg InsertMemberParams) erro
 	return err
 }
 
+const insertNote = `-- name: InsertNote :exec
+INSERT INTO notes (id, administration_id, entity_id, entity_type, user_id, assignee_id, todo, note, completed_at, completed_by_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+`
+
+type InsertNoteParams struct {
+	ID               int64
+	AdministrationID int64
+	EntityID         int64
+	EntityType       string
+	UserID           pgtype.Int8
+	AssigneeID       pgtype.Int8
+	Todo             bool
+	Note             string
+	CompletedAt      pgtype.Timestamptz
+	CompletedByID    pgtype.Int8
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertNote(ctx context.Context, arg InsertNoteParams) error {
+	_, err := q.db.Exec(ctx, insertNote,
+		arg.ID,
+		arg.AdministrationID,
+		arg.EntityID,
+		arg.EntityType,
+		arg.UserID,
+		arg.AssigneeID,
+		arg.Todo,
+		arg.Note,
+		arg.CompletedAt,
+		arg.CompletedByID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const insertRecoveryCode = `-- name: InsertRecoveryCode :exec
 INSERT INTO recovery_codes (user_id, code_hash) VALUES ($1, $2)
 `
@@ -1965,6 +2453,22 @@ func (q *Queries) InvoiceSettings(ctx context.Context, id int64) (InvoiceSetting
 	return i, err
 }
 
+const isMember = `-- name: IsMember :one
+SELECT EXISTS (SELECT 1 FROM administration_members WHERE administration_id = $1 AND user_id = $2)
+`
+
+type IsMemberParams struct {
+	AdministrationID int64
+	UserID           int64
+}
+
+func (q *Queries) IsMember(ctx context.Context, arg IsMemberParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isMember, arg.AdministrationID, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const leaseDueDeliveries = `-- name: LeaseDueDeliveries :many
 UPDATE webhook_deliveries d SET next_attempt_at = $1
 FROM webhooks w
@@ -2219,6 +2723,143 @@ func (q *Queries) ListConnections(ctx context.Context, administrationID int64) (
 			&i.CreatedAt,
 			&i.LastUsedAt,
 			&i.GrantedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listContacts = `-- name: ListContacts :many
+SELECT c.id, c.administration_id, c.company_name, c.firstname, c.lastname, c.address1, c.address2, c.zipcode, c.city, c.country, c.phone, c.customer_id, c.tax_number, c.chamber_of_commerce, c.bank_account, c.delivery_method, c.send_invoices_to_attention, c.send_invoices_to_email, c.send_estimates_to_attention, c.send_estimates_to_email, c.email_ubl, c.direct_debit, c.sepa_active, c.sepa_iban, c.sepa_iban_account_name, c.sepa_bic, c.sepa_mandate_id, c.sepa_mandate_date, c.sepa_sequence_type, c.si_identifier_type, c.si_identifier, c.invoice_workflow_id, c.estimate_workflow_id, c.archived, c.created_at, c.updated_at, c.sort_name, count(*) OVER () AS total
+FROM contacts c
+WHERE c.administration_id = $1
+  AND ($2::boolean OR NOT c.archived)
+  AND ($3::timestamptz IS NULL OR c.created_at > $3)
+  AND ($4::timestamptz IS NULL OR c.updated_at > $4)
+  AND ($5::text = '' OR lower(c.firstname) = lower($5))
+  AND ($6::text = '' OR lower(c.lastname) = lower($6))
+  AND ($7::bigint IS NULL OR c.invoice_workflow_id = $7)
+  AND ($8::bigint IS NULL OR c.estimate_workflow_id = $8)
+  AND ($9::text = '' OR ($9 = 'company') = (c.company_name <> ''))
+  AND ($10::text = '' OR c.delivery_method = $10)
+  AND ($11::text <> 'trusted')
+  AND ($12::text = '' OR ($12 = 'manual' AND c.sepa_active) OR ($12 = 'none' AND NOT c.sepa_active))
+  AND ($13::text = '' OR lower(CASE $13
+      WHEN 'customer_id' THEN c.customer_id WHEN 'company_name' THEN c.company_name WHEN 'firstname' THEN c.firstname
+      WHEN 'lastname' THEN c.lastname WHEN 'email' THEN c.send_invoices_to_email WHEN 'phone' THEN c.phone
+      WHEN 'tax_number' THEN c.tax_number WHEN 'chamber_of_commerce' THEN c.chamber_of_commerce WHEN 'bank_account' THEN c.bank_account
+      WHEN 'sepa_iban' THEN c.sepa_iban WHEN 'zipcode' THEN c.zipcode WHEN 'city' THEN c.city END) = lower($14::text))
+  AND (NOT $15::boolean OR EXISTS (
+      SELECT 1 FROM notes n WHERE n.administration_id = c.administration_id AND n.entity_id = c.id AND n.todo AND n.completed_at IS NULL))
+  AND ($16::text = '' OR concat_ws(' ', c.company_name, c.firstname, c.lastname, btrim(c.firstname || ' ' || c.lastname),
+        c.send_invoices_to_email, c.send_estimates_to_email, c.phone, c.customer_id, c.tax_number, c.chamber_of_commerce,
+        c.bank_account, c.sepa_iban, c.address1, c.address2, c.zipcode, c.city) ILIKE '%' || $16 || '%'
+    OR EXISTS (SELECT 1 FROM contact_people p WHERE p.contact_id = c.id
+        AND concat_ws(' ', p.firstname, p.lastname, btrim(p.firstname || ' ' || p.lastname), p.email, p.phone) ILIKE '%' || $16 || '%'))
+ORDER BY c.sort_name, c.id
+LIMIT $18 OFFSET $17
+`
+
+type ListContactsParams struct {
+	AdministrationID   int64
+	IncludeArchived    bool
+	CreatedAfter       pgtype.Timestamptz
+	UpdatedAfter       pgtype.Timestamptz
+	FirstName          string
+	LastName           string
+	InvoiceWorkflowID  pgtype.Int8
+	EstimateWorkflowID pgtype.Int8
+	ContactType        string
+	DeliveryMethod     string
+	Trusted            string
+	Mandate            string
+	Field              string
+	Value              string
+	OpenTodos          bool
+	Search             string
+	Skip               int32
+	MaxRows            pgtype.Int4
+}
+
+type ListContactsRow struct {
+	Contact Contact
+	Total   int64
+}
+
+// Optional terms are skipped when their parameter is null or empty. search
+// arrives with LIKE wildcards escaped.
+func (q *Queries) ListContacts(ctx context.Context, arg ListContactsParams) ([]ListContactsRow, error) {
+	rows, err := q.db.Query(ctx, listContacts,
+		arg.AdministrationID,
+		arg.IncludeArchived,
+		arg.CreatedAfter,
+		arg.UpdatedAfter,
+		arg.FirstName,
+		arg.LastName,
+		arg.InvoiceWorkflowID,
+		arg.EstimateWorkflowID,
+		arg.ContactType,
+		arg.DeliveryMethod,
+		arg.Trusted,
+		arg.Mandate,
+		arg.Field,
+		arg.Value,
+		arg.OpenTodos,
+		arg.Search,
+		arg.Skip,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListContactsRow
+	for rows.Next() {
+		var i ListContactsRow
+		if err := rows.Scan(
+			&i.Contact.ID,
+			&i.Contact.AdministrationID,
+			&i.Contact.CompanyName,
+			&i.Contact.Firstname,
+			&i.Contact.Lastname,
+			&i.Contact.Address1,
+			&i.Contact.Address2,
+			&i.Contact.Zipcode,
+			&i.Contact.City,
+			&i.Contact.Country,
+			&i.Contact.Phone,
+			&i.Contact.CustomerID,
+			&i.Contact.TaxNumber,
+			&i.Contact.ChamberOfCommerce,
+			&i.Contact.BankAccount,
+			&i.Contact.DeliveryMethod,
+			&i.Contact.SendInvoicesToAttention,
+			&i.Contact.SendInvoicesToEmail,
+			&i.Contact.SendEstimatesToAttention,
+			&i.Contact.SendEstimatesToEmail,
+			&i.Contact.EmailUbl,
+			&i.Contact.DirectDebit,
+			&i.Contact.SepaActive,
+			&i.Contact.SepaIban,
+			&i.Contact.SepaIbanAccountName,
+			&i.Contact.SepaBic,
+			&i.Contact.SepaMandateID,
+			&i.Contact.SepaMandateDate,
+			&i.Contact.SepaSequenceType,
+			&i.Contact.SiIdentifierType,
+			&i.Contact.SiIdentifier,
+			&i.Contact.InvoiceWorkflowID,
+			&i.Contact.EstimateWorkflowID,
+			&i.Contact.Archived,
+			&i.Contact.CreatedAt,
+			&i.Contact.UpdatedAt,
+			&i.Contact.SortName,
+			&i.Total,
 		); err != nil {
 			return nil, err
 		}
@@ -2901,6 +3542,17 @@ func (q *Queries) MarkInvitationAccepted(ctx context.Context, arg MarkInvitation
 	return result.RowsAffected(), nil
 }
 
+const maxCustomerNumber = `-- name: MaxCustomerNumber :one
+SELECT coalesce(max(customer_id::bigint), 0)::bigint FROM contacts WHERE administration_id = $1 AND customer_id ~ '^[0-9]{1,18}$'
+`
+
+func (q *Queries) MaxCustomerNumber(ctx context.Context, administrationID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, maxCustomerNumber, administrationID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const memberByUser = `-- name: MemberByUser :one
 SELECT u.id, u.name, u.email, m.user_type, m.permissions, m.active, m.created_at, m.updated_at,
        EXISTS (SELECT 1 FROM user_identities i WHERE i.user_id = u.id) AS email_validated
@@ -2951,6 +3603,48 @@ WHERE d.identity_id = $1 AND i.administration_id = d.administration_id AND i.is_
 func (q *Queries) MoveDocumentStylesToDefaultIdentity(ctx context.Context, identityID int64) error {
 	_, err := q.db.Exec(ctx, moveDocumentStylesToDefaultIdentity, identityID)
 	return err
+}
+
+const notesOf = `-- name: NotesOf :many
+SELECT id, administration_id, entity_id, entity_type, user_id, assignee_id, todo, note, completed_at, completed_by_id, created_at, updated_at FROM notes WHERE administration_id = $1 AND entity_id = ANY($2::bigint[]) ORDER BY created_at, id
+`
+
+type NotesOfParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) NotesOf(ctx context.Context, arg NotesOfParams) ([]Note, error) {
+	rows, err := q.db.Query(ctx, notesOf, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Note
+	for rows.Next() {
+		var i Note
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.EntityID,
+			&i.EntityType,
+			&i.UserID,
+			&i.AssigneeID,
+			&i.Todo,
+			&i.Note,
+			&i.CompletedAt,
+			&i.CompletedByID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const recentlyProcessedFinancialMutations = `-- name: RecentlyProcessedFinancialMutations :many
@@ -3281,6 +3975,21 @@ func (q *Queries) TaxRateByID(ctx context.Context, arg TaxRateByIDParams) (TaxRa
 	return i, err
 }
 
+const touchContact = `-- name: TouchContact :exec
+UPDATE contacts SET updated_at = $3 WHERE administration_id = $1 AND id = $2
+`
+
+type TouchContactParams struct {
+	AdministrationID int64
+	ID               int64
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) TouchContact(ctx context.Context, arg TouchContactParams) error {
+	_, err := q.db.Exec(ctx, touchContact, arg.AdministrationID, arg.ID, arg.UpdatedAt)
+	return err
+}
+
 const updateAdministration = `-- name: UpdateAdministration :exec
 UPDATE administrations
 SET name = $2, language = $3, currency = $4, time_zone = $5, small_business_scheme = $6,
@@ -3378,6 +4087,96 @@ func (q *Queries) UpdateBookkeepingSettings(ctx context.Context, arg UpdateBookk
 		arg.IcpDeclarationPeriod,
 		arg.ChartScheme,
 		arg.PeriodLockedUntil,
+	)
+	return err
+}
+
+const updateContact = `-- name: UpdateContact :exec
+UPDATE contacts
+SET company_name = $3, firstname = $4, lastname = $5, address1 = $6, address2 = $7, zipcode = $8, city = $9, country = $10, phone = $11,
+    customer_id = $12, tax_number = $13, chamber_of_commerce = $14, bank_account = $15, delivery_method = $16,
+    send_invoices_to_attention = $17, send_invoices_to_email = $18, send_estimates_to_attention = $19, send_estimates_to_email = $20,
+    email_ubl = $21, direct_debit = $22, sepa_active = $23, sepa_iban = $24, sepa_iban_account_name = $25, sepa_bic = $26,
+    sepa_mandate_id = $27, sepa_mandate_date = $28, sepa_sequence_type = $29, si_identifier_type = $30, si_identifier = $31,
+    invoice_workflow_id = $32, estimate_workflow_id = $33, archived = $34, updated_at = $35
+WHERE administration_id = $1 AND id = $2
+`
+
+type UpdateContactParams struct {
+	AdministrationID         int64
+	ID                       int64
+	CompanyName              string
+	Firstname                string
+	Lastname                 string
+	Address1                 string
+	Address2                 string
+	Zipcode                  string
+	City                     string
+	Country                  string
+	Phone                    string
+	CustomerID               string
+	TaxNumber                string
+	ChamberOfCommerce        string
+	BankAccount              string
+	DeliveryMethod           string
+	SendInvoicesToAttention  string
+	SendInvoicesToEmail      string
+	SendEstimatesToAttention string
+	SendEstimatesToEmail     string
+	EmailUbl                 bool
+	DirectDebit              bool
+	SepaActive               bool
+	SepaIban                 string
+	SepaIbanAccountName      string
+	SepaBic                  string
+	SepaMandateID            string
+	SepaMandateDate          pgtype.Date
+	SepaSequenceType         string
+	SiIdentifierType         string
+	SiIdentifier             string
+	InvoiceWorkflowID        pgtype.Int8
+	EstimateWorkflowID       pgtype.Int8
+	Archived                 bool
+	UpdatedAt                pgtype.Timestamptz
+}
+
+func (q *Queries) UpdateContact(ctx context.Context, arg UpdateContactParams) error {
+	_, err := q.db.Exec(ctx, updateContact,
+		arg.AdministrationID,
+		arg.ID,
+		arg.CompanyName,
+		arg.Firstname,
+		arg.Lastname,
+		arg.Address1,
+		arg.Address2,
+		arg.Zipcode,
+		arg.City,
+		arg.Country,
+		arg.Phone,
+		arg.CustomerID,
+		arg.TaxNumber,
+		arg.ChamberOfCommerce,
+		arg.BankAccount,
+		arg.DeliveryMethod,
+		arg.SendInvoicesToAttention,
+		arg.SendInvoicesToEmail,
+		arg.SendEstimatesToAttention,
+		arg.SendEstimatesToEmail,
+		arg.EmailUbl,
+		arg.DirectDebit,
+		arg.SepaActive,
+		arg.SepaIban,
+		arg.SepaIbanAccountName,
+		arg.SepaBic,
+		arg.SepaMandateID,
+		arg.SepaMandateDate,
+		arg.SepaSequenceType,
+		arg.SiIdentifierType,
+		arg.SiIdentifier,
+		arg.InvoiceWorkflowID,
+		arg.EstimateWorkflowID,
+		arg.Archived,
+		arg.UpdatedAt,
 	)
 	return err
 }
@@ -3812,6 +4611,42 @@ func (q *Queries) UpdateWorkflow(ctx context.Context, arg UpdateWorkflowParams) 
 		arg.Active,
 		arg.PricesAreInclTax,
 		arg.ShowQrCode,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const upsertContactPerson = `-- name: UpsertContactPerson :exec
+INSERT INTO contact_people (id, administration_id, contact_id, firstname, lastname, phone, email, department, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+ON CONFLICT (id) DO UPDATE SET firstname = EXCLUDED.firstname, lastname = EXCLUDED.lastname, phone = EXCLUDED.phone,
+    email = EXCLUDED.email, department = EXCLUDED.department, updated_at = EXCLUDED.updated_at
+`
+
+type UpsertContactPersonParams struct {
+	ID               int64
+	AdministrationID int64
+	ContactID        int64
+	Firstname        string
+	Lastname         string
+	Phone            string
+	Email            string
+	Department       string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertContactPerson(ctx context.Context, arg UpsertContactPersonParams) error {
+	_, err := q.db.Exec(ctx, upsertContactPerson,
+		arg.ID,
+		arg.AdministrationID,
+		arg.ContactID,
+		arg.Firstname,
+		arg.Lastname,
+		arg.Phone,
+		arg.Email,
+		arg.Department,
+		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
 	return err
