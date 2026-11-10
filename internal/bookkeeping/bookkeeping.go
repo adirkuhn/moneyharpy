@@ -25,6 +25,9 @@ var (
 	ErrSystemAccount = errors.New("system ledger accounts cannot be deleted or change type")
 	// ErrHasChildren reports a category with active sub-categories.
 	ErrHasChildren = errors.New("ledger account has active child ledger accounts")
+	// ErrInUse reports a category that bookings, rules or financial accounts
+	// still use.
+	ErrInUse = errors.New("ledger account is in use")
 )
 
 // Periods a declaration can cover.

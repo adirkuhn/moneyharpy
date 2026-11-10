@@ -146,7 +146,7 @@ func (s *server) crossOriginProtection() func(http.Handler) http.Handler {
 func limitBody(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		limit := int64(maxBodyBytes)
-		if r.Method == http.MethodPut && isFileUpload(r.URL.Path) {
+		if isFileUpload(r.Method, r.URL.Path) {
 			limit = maxUploadBytes
 		}
 		r.Body = http.MaxBytesReader(w, r.Body, limit)
@@ -248,6 +248,17 @@ func (s *server) setSession(w http.ResponseWriter, token string, maxAge time.Dur
 }
 
 // isFileUpload reports whether path receives a document style file.
-func isFileUpload(path string) bool {
-	return strings.Contains(path, "/document_styles/") && (strings.HasSuffix(path, "/logo") || strings.HasSuffix(path, "/background"))
+// isFileUpload reports requests that carry a file or a whole bank
+// statement, which may be larger than other bodies.
+func isFileUpload(method, path string) bool {
+	path = strings.TrimSuffix(path, ".json")
+	switch method {
+	case http.MethodPut:
+		return strings.Contains(path, "/document_styles/") && (strings.HasSuffix(path, "/logo") || strings.HasSuffix(path, "/background"))
+	case http.MethodPost:
+		return strings.Contains(path, "/financial_accounts/") && strings.HasSuffix(path, "/import") || strings.HasSuffix(path, "/financial_statements")
+	case http.MethodPatch:
+		return strings.Contains(path, "/financial_statements/")
+	}
+	return false
 }

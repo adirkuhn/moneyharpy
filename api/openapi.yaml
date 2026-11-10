@@ -38,6 +38,16 @@ tags:
     description: VAT rates and the VAT return boxes they count in. Compatible with the Moneybird API.
   - name: Ledger accounts
     description: Categories the books are kept in, mapped to a chart scheme such as RGS. Compatible with the Moneybird API.
+  - name: Bank
+    description: Automatic booking and other bank preferences. MoneyHarpy extension.
+  - name: Financial accounts
+    description: Bank, cash, credit card and payment service accounts, and importing statement files. Compatible with the Moneybird API.
+  - name: Financial statements
+    description: Groups of transactions as they came in. Compatible with the Moneybird API.
+  - name: Financial mutations
+    description: Transactions and booking them on categories. Compatible with the Moneybird API.
+  - name: Booking rules
+    description: Rules that book matching transactions automatically. MoneyHarpy extension.
   - name: Custom fields
     description: Extra fields on invoices, contacts, estimates and identities. Compatible with the Moneybird API.
   - name: Onboarding
@@ -1434,6 +1444,706 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/bank_settings:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getBankSettings
+      summary: Get bank settings
+      description: >-
+        MoneyHarpy extension.
+      tags: [Bank]
+      responses:
+        '200':
+          description: The settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateBankSettings
+      summary: Update bank settings
+      description: >-
+        MoneyHarpy extension.
+      tags: [Bank]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankSettingsRequest'
+      responses:
+        '200':
+          description: The updated settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_accounts:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listFinancialAccounts
+      summary: Retrieve financial accounts
+      description: >-
+        A new administration starts with a cash account.
+      tags: [Financial accounts]
+      responses:
+        '200':
+          description: The financial accounts in their set order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinancialAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createFinancialAccount
+      summary: Create a financial account
+      description: >-
+        MoneyHarpy extension. Moneybird adds accounts in its web app only. The account gets its own category
+        under the financial accounts category.
+      tags: [Financial accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinancialAccountRequest'
+      responses:
+        '201':
+          description: The created financial account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_accounts/order:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    put:
+      operationId: reorderFinancialAccounts
+      summary: Order the financial accounts
+      description: >-
+        MoneyHarpy extension. List every account once, in the new order.
+      tags: [Financial accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdsRequest'
+      responses:
+        '204':
+          description: Reordered
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_accounts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getFinancialAccount
+      summary: Retrieve a financial account
+      description: >-
+        MoneyHarpy extension.
+      tags: [Financial accounts]
+      responses:
+        '200':
+          description: The financial account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateFinancialAccount
+      summary: Update a financial account
+      description: >-
+        MoneyHarpy extension. Omitted fields stay unchanged. Accounts are deactivated, not deleted.
+      tags: [Financial accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinancialAccountRequest'
+      responses:
+        '200':
+          description: The updated financial account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_accounts/{id}/import:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: importFinancialStatement
+      summary: Import a statement file
+      description: >-
+        MoneyHarpy extension. Send a CAMT (052, 053 or 054) or MT940 file of at most 10 MB as the body.
+        Transactions the account has already are skipped, and so are transactions in the locked period. With
+        automatic booking on, the booking rules book what they match.
+      tags: [Financial accounts]
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: What the import did
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_statements:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: createFinancialStatement
+      summary: Create a financial statement
+      description: >-
+        Provided transactions are grouped in the statement. Transactions with an
+        account_servicer_transaction_id the account has already are skipped. financial_mutations_attributes
+        is an array; MoneyHarpy does not take the keyed-object form. manual is a MoneyHarpy extension that
+        marks transactions typed in by hand.
+      tags: [Financial statements]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinancialStatementRequest'
+      responses:
+        '201':
+          description: The created statement with the transactions that were new
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialStatement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_statements/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getFinancialStatement
+      summary: Retrieve a financial statement
+      description: >-
+        MoneyHarpy extension.
+      tags: [Financial statements]
+      responses:
+        '200':
+          description: The statement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialStatement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateFinancialStatement
+      summary: Update a financial statement
+      description: >-
+        Omitted fields stay unchanged. Transactions with an id are changed, or removed with _destroy; others
+        are added. Booked transactions cannot change.
+      tags: [Financial statements]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinancialStatementRequest'
+      responses:
+        '200':
+          description: The updated statement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialStatement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteFinancialStatement
+      summary: Delete a financial statement
+      description: >-
+        Removes the statement and its transactions, unless one of them is booked.
+      tags: [Financial statements]
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_mutations:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listFinancialMutations
+      summary: Retrieve financial mutations
+      tags: [Financial mutations]
+      parameters:
+        - name: filter
+          in: query
+          required: false
+          description: >-
+            Comma-separated key:value terms: period (this_week, prev_month, this_quarter, next_year and so on, or a range
+            like 202401..202403 or 20240101..20240131), state (all, unprocessed, processed, auto_booked), mutation_type
+            (all, debit, credit), financial_account_id, amount_from and amount_to. Join several states or types with a pipe.
+            Without a filter, the period is this year.
+          schema:
+            type: string
+            maxLength: 1000
+      responses:
+        '200':
+          description: The transactions, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinancialMutation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_mutations/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listFinancialMutationVersions
+      summary: List the ids and versions of all financial mutations
+      tags: [Financial mutations]
+      responses:
+        '200':
+          description: Ids and versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchFinancialMutations
+      summary: Fetch financial mutations by id
+      description: >-
+        At most 100 ids.
+      tags: [Financial mutations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The transactions; unknown ids are left out
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinancialMutation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_mutations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getFinancialMutation
+      summary: Retrieve a financial mutation
+      tags: [Financial mutations]
+      responses:
+        '200':
+          description: The transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialMutation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_mutations/{id}/link_booking:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: linkFinancialMutationBooking
+      summary: Link a booking to a financial mutation
+      description: >-
+        MoneyHarpy books on categories (LedgerAccount) so far; other booking types answer 422 until invoices
+        and documents exist. price_base is the amount; positive books in the direction of the transaction,
+        negative against it. Without it, the open amount is booked. Split a transaction with one request per
+        part.
+      tags: [Financial mutations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkBookingRequest'
+      responses:
+        '200':
+          description: The transaction with its bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialMutation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_mutations/{id}/unlink_booking:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    delete:
+      operationId: unlinkFinancialMutationBooking
+      summary: Unlink a booking from a financial mutation
+      description: >-
+        booking_type LedgerAccountBooking removes a booking on a category. Payment answers 422 until
+        invoices exist.
+      tags: [Financial mutations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlinkBookingRequest'
+      responses:
+        '200':
+          description: The transaction with its remaining bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialMutation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/bank_balance:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getBankBalance
+      summary: Bank balance report
+      description: >-
+        The sum of every financial account's transactions. Accounts with a zero balance are left out.
+      tags: [Financial mutations]
+      responses:
+        '200':
+          description: The balance of every financial account with transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bank_balance_amounts'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/booking_rules:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listBookingRules
+      summary: Retrieve booking rules
+      description: >-
+        MoneyHarpy extension.
+      tags: [Booking rules]
+      responses:
+        '200':
+          description: The rules in the order they are tried
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createBookingRule
+      summary: Create a booking rule
+      description: >-
+        MoneyHarpy extension. The rule is tried last.
+      tags: [Booking rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRuleRequest'
+      responses:
+        '201':
+          description: The created rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/booking_rules/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getBookingRule
+      summary: Retrieve a booking rule
+      description: >-
+        MoneyHarpy extension.
+      tags: [Booking rules]
+      responses:
+        '200':
+          description: The rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateBookingRule
+      summary: Update a booking rule
+      description: >-
+        MoneyHarpy extension. Omitted fields stay unchanged.
+      tags: [Booking rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRuleRequest'
+      responses:
+        '200':
+          description: The updated rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteBookingRule
+      summary: Delete a booking rule
+      description: >-
+        MoneyHarpy extension. Bookings the rule made stay.
+      tags: [Booking rules]
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /api/onboarding/options:
@@ -2973,6 +3683,383 @@ components:
                 $ref: '#/components/schemas/AccountType'
               account_id:
                 type: string
+    Money:
+      description: An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+      oneOf:
+        - type: string
+          pattern: '^[-+]?[0-9]*[,.]?[0-9]{0,2}$'
+          maxLength: 16
+        - type: number
+          minimum: -1000000000
+          maximum: 1000000000
+    FinancialAccountType:
+      type: string
+      enum: [BankAccount, CashAccount, CreditCardAccount, PaymentServiceAccount, CustomAccount]
+    BankSettings:
+      type: object
+      description: MoneyHarpy extension.
+      required: [automatic_booking]
+      properties:
+        automatic_booking:
+          type: boolean
+          description: Book new transactions that match a booking rule.
+    BankSettingsRequest:
+      type: object
+      required: [bank_settings]
+      additionalProperties: false
+      properties:
+        bank_settings:
+          type: object
+          additionalProperties: false
+          properties:
+            automatic_booking:
+              type: boolean
+    FinancialAccount:
+      description: A Moneybird financial account with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/financial_account_response'
+        - type: object
+          required: [uri, position, ledger_account_id, last_import_at]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            position:
+              type: integer
+              description: MoneyHarpy extension. Order among the accounts, from 1.
+            ledger_account_id:
+              $ref: '#/components/schemas/Identifier'
+            last_import_at:
+              type: string
+              format: date-time
+              nullable: true
+              description: MoneyHarpy extension. When transactions last came in.
+    FinancialAccountRequest:
+      type: object
+      required: [financial_account]
+      additionalProperties: false
+      properties:
+        financial_account:
+          type: object
+          additionalProperties: false
+          properties:
+            type:
+              $ref: '#/components/schemas/FinancialAccountType'
+            name:
+              type: string
+              maxLength: 255
+            identifier:
+              type: string
+              maxLength: 64
+              description: The account number, such as an IBAN, or a card's last digits.
+            currency:
+              type: string
+              maxLength: 3
+            active:
+              type: boolean
+    IdsRequest:
+      type: object
+      required: [ids]
+      additionalProperties: false
+      properties:
+        ids:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/Identifier'
+    LedgerAccountBooking:
+      description: A booking of (part of) a transaction on a category.
+      allOf:
+        - $ref: '#/components/schemas/ledger_account_booking_response'
+        - type: object
+          required: [booking_rule_id]
+          properties:
+            booking_rule_id:
+              allOf:
+                - $ref: '#/components/schemas/Identifier'
+              nullable: true
+              description: MoneyHarpy extension. The rule that made the booking.
+    FinancialMutation:
+      description: A Moneybird financial mutation with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/financial_mutation_response'
+        - type: object
+          required: [uri, ledger_account_bookings, valutation_date]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            valutation_date:
+              type: string
+              format: date
+              nullable: true
+              description: MoneyHarpy extension. When the money was credited or debited.
+            ledger_account_bookings:
+              type: array
+              items:
+                $ref: '#/components/schemas/LedgerAccountBooking'
+    FinancialStatement:
+      description: A Moneybird financial statement with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/financial_statement_response'
+        - type: object
+          required: [uri, administration_id, financial_mutations]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            administration_id:
+              $ref: '#/components/schemas/Identifier'
+            financial_mutations:
+              type: array
+              items:
+                $ref: '#/components/schemas/FinancialMutation'
+    FinancialMutationInput:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          oneOf:
+            - $ref: '#/components/schemas/Identifier'
+            - type: integer
+          description: An existing transaction to change or remove; omit to add one.
+        _destroy:
+          type: boolean
+        date:
+          type: string
+          format: date
+        valutation_date:
+          type: string
+          format: date
+        message:
+          type: string
+          maxLength: 5000
+        amount:
+          $ref: '#/components/schemas/Money'
+        code:
+          type: string
+          maxLength: 64
+        contra_account_name:
+          type: string
+          maxLength: 255
+        contra_account_number:
+          type: string
+          maxLength: 64
+        batch_reference:
+          type: string
+          maxLength: 255
+        offset:
+          type: integer
+        account_servicer_transaction_id:
+          type: string
+          maxLength: 255
+    FinancialStatementRequest:
+      type: object
+      required: [financial_statement]
+      additionalProperties: false
+      properties:
+        financial_statement:
+          type: object
+          additionalProperties: false
+          properties:
+            financial_account_id:
+              oneOf:
+                - $ref: '#/components/schemas/Identifier'
+                - type: integer
+            reference:
+              type: string
+              maxLength: 255
+            official_date:
+              type: string
+              format: date
+            official_balance:
+              $ref: '#/components/schemas/Money'
+            importer_key:
+              type: string
+              maxLength: 255
+            manual:
+              type: boolean
+              description: MoneyHarpy extension. The transactions were typed in by hand.
+            financial_mutations_attributes:
+              type: array
+              maxItems: 10000
+              items:
+                $ref: '#/components/schemas/FinancialMutationInput'
+    SynchronizationItem:
+      type: object
+      required: [id, version]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        version:
+          type: integer
+    SynchronizationRequest:
+      type: object
+      required: [ids]
+      additionalProperties: false
+      properties:
+        ids:
+          type: array
+          maxItems: 100
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/Identifier'
+              - type: integer
+    LinkBookingRequest:
+      type: object
+      required: [booking_type]
+      additionalProperties: false
+      properties:
+        booking_type:
+          type: string
+          enum: [SalesInvoice, Document, LedgerAccount, PaymentTransactionBatch, PurchaseTransaction, NewPurchaseInvoice, NewReceipt, PaymentTransaction, PurchaseTransactionBatch, ExternalSalesInvoice, Payment, VatDocument]
+        booking_id:
+          oneOf:
+            - $ref: '#/components/schemas/Identifier'
+            - type: integer
+        price_base:
+          $ref: '#/components/schemas/Money'
+        price:
+          $ref: '#/components/schemas/Money'
+        description:
+          type: string
+          maxLength: 1000
+        project_id:
+          oneOf:
+            - $ref: '#/components/schemas/Identifier'
+            - type: integer
+        payment_batch_identifier:
+          type: string
+        mark_open_sepa_transaction_as_paid:
+          oneOf:
+            - type: boolean
+            - type: string
+    UnlinkBookingRequest:
+      type: object
+      required: [booking_type, booking_id]
+      additionalProperties: false
+      properties:
+        booking_type:
+          type: string
+          enum: [Payment, LedgerAccountBooking]
+        booking_id:
+          oneOf:
+            - $ref: '#/components/schemas/Identifier'
+            - type: integer
+    ImportResult:
+      type: object
+      description: MoneyHarpy extension.
+      required: [format, imported, duplicates, locked, auto_booked, financial_statements]
+      properties:
+        format:
+          type: string
+          enum: [camt, mt940]
+        imported:
+          type: integer
+          description: New transactions.
+        duplicates:
+          type: integer
+          description: Transactions the account had already.
+        locked:
+          type: integer
+          description: Transactions skipped because they fall in the locked period.
+        auto_booked:
+          type: integer
+          description: New transactions a booking rule booked.
+        financial_statements:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinancialStatement'
+    RuleCondition:
+      type: object
+      required: [field, operator, value]
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+          enum: [message, contra_account_name, contra_account_number, amount]
+        operator:
+          type: string
+          enum: [contains, equals, starts_with, ends_with, greater_than, less_than]
+          description: Text fields take contains, equals, starts_with or ends_with, ignoring case; amount takes equals, greater_than or less_than, without sign.
+        value:
+          type: string
+          maxLength: 255
+    BookingRule:
+      type: object
+      description: MoneyHarpy extension. Books matching transactions on a category.
+      required: [id, administration_id, name, active, position, match_all, direction, financial_account_id, conditions, ledger_account_id, description, uri, created_at, updated_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        active:
+          type: boolean
+        position:
+          type: integer
+        match_all:
+          type: boolean
+          description: Every condition must match; otherwise one is enough.
+        direction:
+          type: string
+          enum: [any, debit, credit]
+        financial_account_id:
+          allOf:
+            - $ref: '#/components/schemas/Identifier'
+          nullable: true
+          description: Only transactions of this account; null for every account.
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleCondition'
+        ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        description:
+          type: string
+        uri:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    BookingRuleRequest:
+      type: object
+      required: [booking_rule]
+      additionalProperties: false
+      properties:
+        booking_rule:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+            active:
+              type: boolean
+            match_all:
+              type: boolean
+            direction:
+              type: string
+              enum: [any, debit, credit]
+            financial_account_id:
+              type: string
+              pattern: '^[0-9]{0,19}$'
+              description: Empty for every account.
+            conditions:
+              type: array
+              maxItems: 10
+              items:
+                $ref: '#/components/schemas/RuleCondition'
+            ledger_account_id:
+              $ref: '#/components/schemas/Identifier'
+            description:
+              type: string
+              maxLength: 1000
     DocumentStyleLine:
       type: object
       required:

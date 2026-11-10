@@ -33,6 +33,14 @@ const parts: Partial<Record<Section, { id: string; label: string }[]>> = {
     { id: 'locked-period', label: 'bookkeeping.parts.lock' },
     { id: 'export', label: 'bookkeeping.parts.export' },
   ],
+  bank: [
+    { id: 'accounts', label: 'bank.parts.accounts' },
+    { id: 'bank-connections', label: 'bank.parts.connections' },
+    { id: 'automatic-booking', label: 'bank.parts.automatic' },
+    { id: 'booking-rules', label: 'bank.parts.rules' },
+    { id: 'payment-cards', label: 'bank.parts.cards' },
+    { id: 'smart-transfers', label: 'bank.parts.transfers' },
+  ],
 }
 
 /** Pages outside /settings and the section they belong to. */
@@ -44,6 +52,8 @@ const pageSections: Record<string, Section> = {
   tax_rates: 'bookkeeping',
   ledger_accounts: 'bookkeeping',
   ledger_account_templates: 'bookkeeping',
+  financial_accounts: 'bank',
+  booking_rules: 'bank',
 }
 
 /**

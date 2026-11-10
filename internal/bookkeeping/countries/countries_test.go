@@ -68,6 +68,13 @@ func TestSeedsAreConsistent(t *testing.T) {
 				}
 				checkAccounts(t, s, tpl.Accounts, own)
 			}
+			for kind, code := range s.FinancialAccounts {
+				if scheme, ok := taxonomy.Lookup(s.Scheme); !ok {
+					t.Errorf("%s: code %s without a scheme", kind, code)
+				} else if it, ok := scheme.Item(code); !ok || it.Side() != taxonomy.BalanceSheet {
+					t.Errorf("%s: %s is not a balance sheet code of %s", kind, code, s.Scheme)
+				}
+			}
 			boxes := map[string]bool{}
 			for _, b := range s.Boxes {
 				boxes[b.Code] = true

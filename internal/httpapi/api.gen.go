@@ -75,6 +75,48 @@ func (e AdministrationAccess) Valid() bool {
 	}
 }
 
+// Defines values for BookingRuleDirection.
+const (
+	BookingRuleDirectionAny    BookingRuleDirection = "any"
+	BookingRuleDirectionCredit BookingRuleDirection = "credit"
+	BookingRuleDirectionDebit  BookingRuleDirection = "debit"
+)
+
+// Valid indicates whether the value is a known member of the BookingRuleDirection enum.
+func (e BookingRuleDirection) Valid() bool {
+	switch e {
+	case BookingRuleDirectionAny:
+		return true
+	case BookingRuleDirectionCredit:
+		return true
+	case BookingRuleDirectionDebit:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BookingRuleRequestBookingRuleDirection.
+const (
+	BookingRuleRequestBookingRuleDirectionAny    BookingRuleRequestBookingRuleDirection = "any"
+	BookingRuleRequestBookingRuleDirectionCredit BookingRuleRequestBookingRuleDirection = "credit"
+	BookingRuleRequestBookingRuleDirectionDebit  BookingRuleRequestBookingRuleDirection = "debit"
+)
+
+// Valid indicates whether the value is a known member of the BookingRuleRequestBookingRuleDirection enum.
+func (e BookingRuleRequestBookingRuleDirection) Valid() bool {
+	switch e {
+	case BookingRuleRequestBookingRuleDirectionAny:
+		return true
+	case BookingRuleRequestBookingRuleDirectionCredit:
+		return true
+	case BookingRuleRequestBookingRuleDirectionDebit:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CustomFieldSource.
 const (
 	CustomFieldSourceContact      CustomFieldSource = "contact"
@@ -261,6 +303,93 @@ func (e DocumentType) Valid() bool {
 	}
 }
 
+// Defines values for FinancialAccountType.
+const (
+	BankAccount           FinancialAccountType = "BankAccount"
+	CashAccount           FinancialAccountType = "CashAccount"
+	CreditCardAccount     FinancialAccountType = "CreditCardAccount"
+	CustomAccount         FinancialAccountType = "CustomAccount"
+	PaymentServiceAccount FinancialAccountType = "PaymentServiceAccount"
+)
+
+// Valid indicates whether the value is a known member of the FinancialAccountType enum.
+func (e FinancialAccountType) Valid() bool {
+	switch e {
+	case BankAccount:
+		return true
+	case CashAccount:
+		return true
+	case CreditCardAccount:
+		return true
+	case CustomAccount:
+		return true
+	case PaymentServiceAccount:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialMutationSettlementState.
+const (
+	FinancialMutationSettlementStateAuthorised FinancialMutationSettlementState = "authorised"
+	FinancialMutationSettlementStateCancelled  FinancialMutationSettlementState = "cancelled"
+	FinancialMutationSettlementStateCaptured   FinancialMutationSettlementState = "captured"
+	FinancialMutationSettlementStateError      FinancialMutationSettlementState = "error"
+	FinancialMutationSettlementStateExpired    FinancialMutationSettlementState = "expired"
+	FinancialMutationSettlementStateFailed     FinancialMutationSettlementState = "failed"
+	FinancialMutationSettlementStatePending    FinancialMutationSettlementState = "pending"
+	FinancialMutationSettlementStateRefused    FinancialMutationSettlementState = "refused"
+	FinancialMutationSettlementStateReturned   FinancialMutationSettlementState = "returned"
+	FinancialMutationSettlementStateSettled    FinancialMutationSettlementState = "settled"
+)
+
+// Valid indicates whether the value is a known member of the FinancialMutationSettlementState enum.
+func (e FinancialMutationSettlementState) Valid() bool {
+	switch e {
+	case FinancialMutationSettlementStateAuthorised:
+		return true
+	case FinancialMutationSettlementStateCancelled:
+		return true
+	case FinancialMutationSettlementStateCaptured:
+		return true
+	case FinancialMutationSettlementStateError:
+		return true
+	case FinancialMutationSettlementStateExpired:
+		return true
+	case FinancialMutationSettlementStateFailed:
+		return true
+	case FinancialMutationSettlementStatePending:
+		return true
+	case FinancialMutationSettlementStateRefused:
+		return true
+	case FinancialMutationSettlementStateReturned:
+		return true
+	case FinancialMutationSettlementStateSettled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialMutationState.
+const (
+	FinancialMutationStateProcessed   FinancialMutationState = "processed"
+	FinancialMutationStateUnprocessed FinancialMutationState = "unprocessed"
+)
+
+// Valid indicates whether the value is a known member of the FinancialMutationState enum.
+func (e FinancialMutationState) Valid() bool {
+	switch e {
+	case FinancialMutationStateProcessed:
+		return true
+	case FinancialMutationStateUnprocessed:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IdentityRequestIdentityTaxNumberAbsenceReason.
 const (
 	IdentityRequestIdentityTaxNumberAbsenceReasonBelowTaxThreshold IdentityRequestIdentityTaxNumberAbsenceReason = "below_tax_threshold"
@@ -276,6 +405,24 @@ func (e IdentityRequestIdentityTaxNumberAbsenceReason) Valid() bool {
 	case IdentityRequestIdentityTaxNumberAbsenceReasonEmpty:
 		return true
 	case IdentityRequestIdentityTaxNumberAbsenceReasonIndustryExemption:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ImportResultFormat.
+const (
+	Camt  ImportResultFormat = "camt"
+	Mt940 ImportResultFormat = "mt940"
+)
+
+// Valid indicates whether the value is a known member of the ImportResultFormat enum.
+func (e ImportResultFormat) Valid() bool {
+	switch e {
+	case Camt:
+		return true
+	case Mt940:
 		return true
 	default:
 		return false
@@ -378,6 +525,108 @@ func (e LedgerAccountAllowedDocumentTypes) Valid() bool {
 	}
 }
 
+// Defines values for LinkBookingRequestBookingType.
+const (
+	LinkBookingRequestBookingTypeDocument                 LinkBookingRequestBookingType = "Document"
+	LinkBookingRequestBookingTypeExternalSalesInvoice     LinkBookingRequestBookingType = "ExternalSalesInvoice"
+	LinkBookingRequestBookingTypeLedgerAccount            LinkBookingRequestBookingType = "LedgerAccount"
+	LinkBookingRequestBookingTypeNewPurchaseInvoice       LinkBookingRequestBookingType = "NewPurchaseInvoice"
+	LinkBookingRequestBookingTypeNewReceipt               LinkBookingRequestBookingType = "NewReceipt"
+	LinkBookingRequestBookingTypePayment                  LinkBookingRequestBookingType = "Payment"
+	LinkBookingRequestBookingTypePaymentTransaction       LinkBookingRequestBookingType = "PaymentTransaction"
+	LinkBookingRequestBookingTypePaymentTransactionBatch  LinkBookingRequestBookingType = "PaymentTransactionBatch"
+	LinkBookingRequestBookingTypePurchaseTransaction      LinkBookingRequestBookingType = "PurchaseTransaction"
+	LinkBookingRequestBookingTypePurchaseTransactionBatch LinkBookingRequestBookingType = "PurchaseTransactionBatch"
+	LinkBookingRequestBookingTypeSalesInvoice             LinkBookingRequestBookingType = "SalesInvoice"
+	LinkBookingRequestBookingTypeVatDocument              LinkBookingRequestBookingType = "VatDocument"
+)
+
+// Valid indicates whether the value is a known member of the LinkBookingRequestBookingType enum.
+func (e LinkBookingRequestBookingType) Valid() bool {
+	switch e {
+	case LinkBookingRequestBookingTypeDocument:
+		return true
+	case LinkBookingRequestBookingTypeExternalSalesInvoice:
+		return true
+	case LinkBookingRequestBookingTypeLedgerAccount:
+		return true
+	case LinkBookingRequestBookingTypeNewPurchaseInvoice:
+		return true
+	case LinkBookingRequestBookingTypeNewReceipt:
+		return true
+	case LinkBookingRequestBookingTypePayment:
+		return true
+	case LinkBookingRequestBookingTypePaymentTransaction:
+		return true
+	case LinkBookingRequestBookingTypePaymentTransactionBatch:
+		return true
+	case LinkBookingRequestBookingTypePurchaseTransaction:
+		return true
+	case LinkBookingRequestBookingTypePurchaseTransactionBatch:
+		return true
+	case LinkBookingRequestBookingTypeSalesInvoice:
+		return true
+	case LinkBookingRequestBookingTypeVatDocument:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RuleConditionField.
+const (
+	Amount              RuleConditionField = "amount"
+	ContraAccountName   RuleConditionField = "contra_account_name"
+	ContraAccountNumber RuleConditionField = "contra_account_number"
+	Message             RuleConditionField = "message"
+)
+
+// Valid indicates whether the value is a known member of the RuleConditionField enum.
+func (e RuleConditionField) Valid() bool {
+	switch e {
+	case Amount:
+		return true
+	case ContraAccountName:
+		return true
+	case ContraAccountNumber:
+		return true
+	case Message:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RuleConditionOperator.
+const (
+	Contains    RuleConditionOperator = "contains"
+	EndsWith    RuleConditionOperator = "ends_with"
+	Equals      RuleConditionOperator = "equals"
+	GreaterThan RuleConditionOperator = "greater_than"
+	LessThan    RuleConditionOperator = "less_than"
+	StartsWith  RuleConditionOperator = "starts_with"
+)
+
+// Valid indicates whether the value is a known member of the RuleConditionOperator enum.
+func (e RuleConditionOperator) Valid() bool {
+	switch e {
+	case Contains:
+		return true
+	case EndsWith:
+		return true
+	case Equals:
+		return true
+	case GreaterThan:
+		return true
+	case LessThan:
+		return true
+	case StartsWith:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TaxNumberAbsenceReason.
 const (
 	TaxNumberAbsenceReasonBelowTaxThreshold TaxNumberAbsenceReason = "below_tax_threshold"
@@ -450,6 +699,24 @@ func (e TaxonomyItemSide) Valid() bool {
 	case BalanceSheet:
 		return true
 	case ProfitAndLoss:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UnlinkBookingRequestBookingType.
+const (
+	UnlinkBookingRequestBookingTypeLedgerAccountBooking UnlinkBookingRequestBookingType = "LedgerAccountBooking"
+	UnlinkBookingRequestBookingTypePayment              UnlinkBookingRequestBookingType = "Payment"
+)
+
+// Valid indicates whether the value is a known member of the UnlinkBookingRequestBookingType enum.
+func (e UnlinkBookingRequestBookingType) Valid() bool {
+	switch e {
+	case UnlinkBookingRequestBookingTypeLedgerAccountBooking:
+		return true
+	case UnlinkBookingRequestBookingTypePayment:
 		return true
 	default:
 		return false
@@ -546,6 +813,66 @@ func (e DocumentStyleResponsePaperSize) Valid() bool {
 	case DocumentStyleResponsePaperSizeA4:
 		return true
 	case DocumentStyleResponsePaperSizeLetter:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialMutationResponseSettlementState.
+const (
+	FinancialMutationResponseSettlementStateAuthorised FinancialMutationResponseSettlementState = "authorised"
+	FinancialMutationResponseSettlementStateCancelled  FinancialMutationResponseSettlementState = "cancelled"
+	FinancialMutationResponseSettlementStateCaptured   FinancialMutationResponseSettlementState = "captured"
+	FinancialMutationResponseSettlementStateError      FinancialMutationResponseSettlementState = "error"
+	FinancialMutationResponseSettlementStateExpired    FinancialMutationResponseSettlementState = "expired"
+	FinancialMutationResponseSettlementStateFailed     FinancialMutationResponseSettlementState = "failed"
+	FinancialMutationResponseSettlementStatePending    FinancialMutationResponseSettlementState = "pending"
+	FinancialMutationResponseSettlementStateRefused    FinancialMutationResponseSettlementState = "refused"
+	FinancialMutationResponseSettlementStateReturned   FinancialMutationResponseSettlementState = "returned"
+	FinancialMutationResponseSettlementStateSettled    FinancialMutationResponseSettlementState = "settled"
+)
+
+// Valid indicates whether the value is a known member of the FinancialMutationResponseSettlementState enum.
+func (e FinancialMutationResponseSettlementState) Valid() bool {
+	switch e {
+	case FinancialMutationResponseSettlementStateAuthorised:
+		return true
+	case FinancialMutationResponseSettlementStateCancelled:
+		return true
+	case FinancialMutationResponseSettlementStateCaptured:
+		return true
+	case FinancialMutationResponseSettlementStateError:
+		return true
+	case FinancialMutationResponseSettlementStateExpired:
+		return true
+	case FinancialMutationResponseSettlementStateFailed:
+		return true
+	case FinancialMutationResponseSettlementStatePending:
+		return true
+	case FinancialMutationResponseSettlementStateRefused:
+		return true
+	case FinancialMutationResponseSettlementStateReturned:
+		return true
+	case FinancialMutationResponseSettlementStateSettled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialMutationResponseState.
+const (
+	FinancialMutationResponseStateProcessed   FinancialMutationResponseState = "processed"
+	FinancialMutationResponseStateUnprocessed FinancialMutationResponseState = "unprocessed"
+)
+
+// Valid indicates whether the value is a known member of the FinancialMutationResponseState enum.
+func (e FinancialMutationResponseState) Valid() bool {
+	switch e {
+	case FinancialMutationResponseStateProcessed:
+		return true
+	case FinancialMutationResponseStateUnprocessed:
 		return true
 	default:
 		return false
@@ -900,6 +1227,30 @@ func (e NoteResponseTodoType) Valid() bool {
 	}
 }
 
+// Defines values for PaymentResponseInvoiceType.
+const (
+	PaymentResponseInvoiceTypeDocument             PaymentResponseInvoiceType = "Document"
+	PaymentResponseInvoiceTypeExternalSalesInvoice PaymentResponseInvoiceType = "ExternalSalesInvoice"
+	PaymentResponseInvoiceTypeSalesInvoice         PaymentResponseInvoiceType = "SalesInvoice"
+	PaymentResponseInvoiceTypeVatDocument          PaymentResponseInvoiceType = "VatDocument"
+)
+
+// Valid indicates whether the value is a known member of the PaymentResponseInvoiceType enum.
+func (e PaymentResponseInvoiceType) Valid() bool {
+	switch e {
+	case PaymentResponseInvoiceTypeDocument:
+		return true
+	case PaymentResponseInvoiceTypeExternalSalesInvoice:
+		return true
+	case PaymentResponseInvoiceTypeSalesInvoice:
+		return true
+	case PaymentResponseInvoiceTypeVatDocument:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TaxRateResponseTaxRateType.
 const (
 	TaxRateResponseTaxRateTypeGeneralJournalDocument TaxRateResponseTaxRateType = "general_journal_document"
@@ -1033,6 +1384,79 @@ type AuthProviders struct {
 	PasswordReset    bool `json:"password_reset"`
 	RegistrationOpen bool `json:"registration_open"`
 }
+
+// BankSettings MoneyHarpy extension.
+type BankSettings struct {
+	// AutomaticBooking Book new transactions that match a booking rule.
+	AutomaticBooking bool `json:"automatic_booking"`
+}
+
+// BankSettingsRequest defines model for BankSettingsRequest.
+type BankSettingsRequest struct {
+	BankSettings struct {
+		AutomaticBooking *bool `json:"automatic_booking,omitempty"`
+	} `json:"bank_settings"`
+}
+
+// BookingRule MoneyHarpy extension. Books matching transactions on a category.
+type BookingRule struct {
+	Active bool `json:"active"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId Identifier           `json:"administration_id"`
+	Conditions       []RuleCondition      `json:"conditions"`
+	CreatedAt        time.Time            `json:"created_at"`
+	Description      string               `json:"description"`
+	Direction        BookingRuleDirection `json:"direction"`
+
+	// FinancialAccountId Only transactions of this account; null for every account.
+	FinancialAccountId *Identifier `json:"financial_account_id"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id Identifier `json:"id"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	LedgerAccountId Identifier `json:"ledger_account_id"`
+
+	// MatchAll Every condition must match; otherwise one is enough.
+	MatchAll  bool      `json:"match_all"`
+	Name      string    `json:"name"`
+	Position  int       `json:"position"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Uri       string    `json:"uri"`
+}
+
+// BookingRuleDirection defines model for BookingRule.Direction.
+type BookingRuleDirection string
+
+// BookingRuleRequest defines model for BookingRuleRequest.
+type BookingRuleRequest struct {
+	BookingRule struct {
+		Active      *bool                                   `json:"active,omitempty"`
+		Conditions  *[]RuleCondition                        `json:"conditions,omitempty"`
+		Description *string                                 `json:"description,omitempty"`
+		Direction   *BookingRuleRequestBookingRuleDirection `json:"direction,omitempty"`
+
+		// FinancialAccountId Empty for every account.
+		FinancialAccountId *string `json:"financial_account_id,omitempty"`
+
+		// LedgerAccountId A unique record identifier. Parse as a string.
+		//
+		// Example: 416072101932303822
+		LedgerAccountId *Identifier `json:"ledger_account_id,omitempty"`
+		MatchAll        *bool       `json:"match_all,omitempty"`
+		Name            *string     `json:"name,omitempty"`
+	} `json:"booking_rule"`
+}
+
+// BookingRuleRequestBookingRuleDirection defines model for BookingRuleRequest.BookingRule.Direction.
+type BookingRuleRequestBookingRuleDirection string
 
 // BookkeepingSettings MoneyHarpy extension.
 type BookkeepingSettings struct {
@@ -1377,6 +1801,208 @@ type Error struct {
 	Symbolic *map[string]interface{} `json:"symbolic,omitempty"`
 }
 
+// FinancialAccount A Moneybird financial account with MoneyHarpy extensions.
+type FinancialAccount struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Currency Moneybird-compatible currency.
+	Currency *Currency `json:"currency,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id         *Identifier `json:"id,omitempty"`
+	Identifier *string     `json:"identifier,omitempty"`
+
+	// LastImportAt MoneyHarpy extension. When transactions last came in.
+	LastImportAt *time.Time `json:"last_import_at"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	LedgerAccountId  Identifier `json:"ledger_account_id"`
+	MoneybirdAccount *bool      `json:"moneybird_account,omitempty"`
+	Name             *string    `json:"name,omitempty"`
+
+	// Position MoneyHarpy extension. Order among the accounts, from 1.
+	Position int     `json:"position"`
+	Provider *string `json:"provider,omitempty"`
+	Type     *string `json:"type,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// FinancialAccountRequest defines model for FinancialAccountRequest.
+type FinancialAccountRequest struct {
+	FinancialAccount struct {
+		Active   *bool   `json:"active,omitempty"`
+		Currency *string `json:"currency,omitempty"`
+
+		// Identifier The account number, such as an IBAN, or a card's last digits.
+		Identifier *string               `json:"identifier,omitempty"`
+		Name       *string               `json:"name,omitempty"`
+		Type       *FinancialAccountType `json:"type,omitempty"`
+	} `json:"financial_account"`
+}
+
+// FinancialAccountType defines model for FinancialAccountType.
+type FinancialAccountType string
+
+// FinancialMutation A Moneybird financial mutation with MoneyHarpy extensions.
+type FinancialMutation struct {
+	AccountServicerTransactionId *string `json:"account_servicer_transaction_id,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId    *Identifier `json:"administration_id,omitempty"`
+	Amount              *string     `json:"amount,omitempty"`
+	AmountOpen          *string     `json:"amount_open,omitempty"`
+	BatchReference      *string     `json:"batch_reference,omitempty"`
+	Code                *string     `json:"code,omitempty"`
+	ContraAccountName   *string     `json:"contra_account_name,omitempty"`
+	ContraAccountNumber *string     `json:"contra_account_number,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Currency Moneybird-compatible currency.
+	Currency *Currency           `json:"currency,omitempty"`
+	Date     *openapi_types.Date `json:"date,omitempty"`
+
+	// FinancialAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	FinancialAccountId *Identifier `json:"financial_account_id,omitempty"`
+
+	// FinancialStatementId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	FinancialStatementId *Identifier `json:"financial_statement_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id                    *Identifier                       `json:"id,omitempty"`
+	LedgerAccountBookings []LedgerAccountBooking            `json:"ledger_account_bookings"`
+	Message               *string                           `json:"message,omitempty"`
+	OriginalAmount        *string                           `json:"original_amount,omitempty"`
+	Payments              *[]PaymentResponse                `json:"payments,omitempty"`
+	ProcessedAt           *time.Time                        `json:"processed_at,omitempty"`
+	SepaFields            *map[string]interface{}           `json:"sepa_fields,omitempty"`
+	SettlementState       *FinancialMutationSettlementState `json:"settlement_state,omitempty"`
+	State                 *FinancialMutationState           `json:"state,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+
+	// ValutationDate MoneyHarpy extension. When the money was credited or debited.
+	ValutationDate *openapi_types.Date `json:"valutation_date"`
+
+	// Version Moneybird-compatible version.
+	Version *Version `json:"version,omitempty"`
+}
+
+// FinancialMutationSettlementState defines model for FinancialMutation.SettlementState.
+type FinancialMutationSettlementState string
+
+// FinancialMutationState defines model for FinancialMutation.State.
+type FinancialMutationState string
+
+// FinancialMutationInput defines model for FinancialMutationInput.
+type FinancialMutationInput struct {
+	UnderscoreDestroy            *bool   `json:"_destroy,omitempty"`
+	AccountServicerTransactionId *string `json:"account_servicer_transaction_id,omitempty"`
+
+	// Amount An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	Amount              *Money              `json:"amount,omitempty"`
+	BatchReference      *string             `json:"batch_reference,omitempty"`
+	Code                *string             `json:"code,omitempty"`
+	ContraAccountName   *string             `json:"contra_account_name,omitempty"`
+	ContraAccountNumber *string             `json:"contra_account_number,omitempty"`
+	Date                *openapi_types.Date `json:"date,omitempty"`
+
+	// Id An existing transaction to change or remove; omit to add one.
+	Id             *FinancialMutationInput_Id `json:"id,omitempty"`
+	Message        *string                    `json:"message,omitempty"`
+	Offset         *int                       `json:"offset,omitempty"`
+	ValutationDate *openapi_types.Date        `json:"valutation_date,omitempty"`
+}
+
+// FinancialMutationInputId1 defines model for FinancialMutationInput.Id.1.
+type FinancialMutationInputId1 = int
+
+// FinancialMutationInput_Id An existing transaction to change or remove; omit to add one.
+type FinancialMutationInput_Id struct {
+	union json.RawMessage
+}
+
+// FinancialStatement A Moneybird financial statement with MoneyHarpy extensions.
+type FinancialStatement struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId Identifier `json:"administration_id"`
+
+	// FinancialAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	FinancialAccountId *Identifier         `json:"financial_account_id,omitempty"`
+	FinancialMutations []FinancialMutation `json:"financial_mutations"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id              *Identifier         `json:"id,omitempty"`
+	ImporterService *string             `json:"importer_service,omitempty"`
+	OfficialBalance *string             `json:"official_balance,omitempty"`
+	OfficialDate    *openapi_types.Date `json:"official_date,omitempty"`
+	Reference       *string             `json:"reference,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// FinancialStatementRequest defines model for FinancialStatementRequest.
+type FinancialStatementRequest struct {
+	FinancialStatement struct {
+		FinancialAccountId           *FinancialStatementRequest_FinancialStatement_FinancialAccountId `json:"financial_account_id,omitempty"`
+		FinancialMutationsAttributes *[]FinancialMutationInput                                        `json:"financial_mutations_attributes,omitempty"`
+		ImporterKey                  *string                                                          `json:"importer_key,omitempty"`
+
+		// Manual MoneyHarpy extension. The transactions were typed in by hand.
+		Manual *bool `json:"manual,omitempty"`
+
+		// OfficialBalance An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+		OfficialBalance *Money              `json:"official_balance,omitempty"`
+		OfficialDate    *openapi_types.Date `json:"official_date,omitempty"`
+		Reference       *string             `json:"reference,omitempty"`
+	} `json:"financial_statement"`
+}
+
+// FinancialStatementRequestFinancialStatementFinancialAccountId1 defines model for FinancialStatementRequest.FinancialStatement.FinancialAccountId.1.
+type FinancialStatementRequestFinancialStatementFinancialAccountId1 = int
+
+// FinancialStatementRequest_FinancialStatement_FinancialAccountId defines model for FinancialStatementRequest.FinancialStatement.FinancialAccountId.
+type FinancialStatementRequest_FinancialStatement_FinancialAccountId struct {
+	union json.RawMessage
+}
+
 // Identifier A unique record identifier. Parse as a string.
 //
 // Example: 416072101932303822
@@ -1460,6 +2086,31 @@ type IdentityRequest struct {
 
 // IdentityRequestIdentityTaxNumberAbsenceReason MoneyHarpy extension. Empty clears it. Ignored while a VAT number is set.
 type IdentityRequestIdentityTaxNumberAbsenceReason string
+
+// IdsRequest defines model for IdsRequest.
+type IdsRequest struct {
+	Ids []Identifier `json:"ids"`
+}
+
+// ImportResult MoneyHarpy extension.
+type ImportResult struct {
+	// AutoBooked New transactions a booking rule booked.
+	AutoBooked int `json:"auto_booked"`
+
+	// Duplicates Transactions the account had already.
+	Duplicates          int                  `json:"duplicates"`
+	FinancialStatements []FinancialStatement `json:"financial_statements"`
+	Format              ImportResultFormat   `json:"format"`
+
+	// Imported New transactions.
+	Imported int `json:"imported"`
+
+	// Locked Transactions skipped because they fall in the locked period.
+	Locked int `json:"locked"`
+}
+
+// ImportResultFormat defines model for ImportResult.Format.
+type ImportResultFormat string
 
 // InstanceSettings defines model for InstanceSettings.
 type InstanceSettings struct {
@@ -1604,6 +2255,43 @@ type LedgerAccount_TaxonomyItem struct {
 	union json.RawMessage
 }
 
+// LedgerAccountBooking A booking of (part of) a transaction on a category.
+type LedgerAccountBooking struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// BookingRuleId MoneyHarpy extension. The rule that made the booking.
+	BookingRuleId *Identifier `json:"booking_rule_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp `json:"created_at,omitempty"`
+	Description *string    `json:"description,omitempty"`
+
+	// FinancialMutationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	FinancialMutationId *Identifier `json:"financial_mutation_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id *Identifier `json:"id,omitempty"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	LedgerAccountId *Identifier `json:"ledger_account_id,omitempty"`
+	Price           *string     `json:"price,omitempty"`
+
+	// ProjectId Moneybird-compatible identifier_nullable.
+	ProjectId *IdentifierNullable `json:"project_id,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
 // LedgerAccountRequest defines model for LedgerAccountRequest.
 type LedgerAccountRequest struct {
 	LedgerAccount struct {
@@ -1650,11 +2338,68 @@ type LedgerAccountTemplate struct {
 	Name string `json:"name"`
 }
 
+// LinkBookingRequest defines model for LinkBookingRequest.
+type LinkBookingRequest struct {
+	BookingId                     *LinkBookingRequest_BookingId                     `json:"booking_id,omitempty"`
+	BookingType                   LinkBookingRequestBookingType                     `json:"booking_type"`
+	Description                   *string                                           `json:"description,omitempty"`
+	MarkOpenSepaTransactionAsPaid *LinkBookingRequest_MarkOpenSepaTransactionAsPaid `json:"mark_open_sepa_transaction_as_paid,omitempty"`
+	PaymentBatchIdentifier        *string                                           `json:"payment_batch_identifier,omitempty"`
+
+	// Price An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	Price *Money `json:"price,omitempty"`
+
+	// PriceBase An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	PriceBase *Money                        `json:"price_base,omitempty"`
+	ProjectId *LinkBookingRequest_ProjectId `json:"project_id,omitempty"`
+}
+
+// LinkBookingRequestBookingId1 defines model for LinkBookingRequest.BookingId.1.
+type LinkBookingRequestBookingId1 = int
+
+// LinkBookingRequest_BookingId defines model for LinkBookingRequest.BookingId.
+type LinkBookingRequest_BookingId struct {
+	union json.RawMessage
+}
+
+// LinkBookingRequestBookingType defines model for LinkBookingRequest.BookingType.
+type LinkBookingRequestBookingType string
+
+// LinkBookingRequestMarkOpenSepaTransactionAsPaid0 defines model for LinkBookingRequest.MarkOpenSepaTransactionAsPaid.0.
+type LinkBookingRequestMarkOpenSepaTransactionAsPaid0 = bool
+
+// LinkBookingRequestMarkOpenSepaTransactionAsPaid1 defines model for LinkBookingRequest.MarkOpenSepaTransactionAsPaid.1.
+type LinkBookingRequestMarkOpenSepaTransactionAsPaid1 = string
+
+// LinkBookingRequest_MarkOpenSepaTransactionAsPaid defines model for LinkBookingRequest.MarkOpenSepaTransactionAsPaid.
+type LinkBookingRequest_MarkOpenSepaTransactionAsPaid struct {
+	union json.RawMessage
+}
+
+// LinkBookingRequestProjectId1 defines model for LinkBookingRequest.ProjectId.1.
+type LinkBookingRequestProjectId1 = int
+
+// LinkBookingRequest_ProjectId defines model for LinkBookingRequest.ProjectId.
+type LinkBookingRequest_ProjectId struct {
+	union json.RawMessage
+}
+
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+// Money An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+type Money struct {
+	union json.RawMessage
+}
+
+// Money0 defines model for Money.0.
+type Money0 = string
+
+// Money1 defines model for Money.1.
+type Money1 = float32
 
 // OnboardingOptions defines model for OnboardingOptions.
 type OnboardingOptions struct {
@@ -1705,6 +2450,43 @@ type ResourceLocation struct {
 
 	// Uri Example: /416072101932303822
 	Uri string `json:"uri"`
+}
+
+// RuleCondition defines model for RuleCondition.
+type RuleCondition struct {
+	Field RuleConditionField `json:"field"`
+
+	// Operator Text fields take contains, equals, starts_with or ends_with, ignoring case; amount takes equals, greater_than or less_than, without sign.
+	Operator RuleConditionOperator `json:"operator"`
+	Value    string                `json:"value"`
+}
+
+// RuleConditionField defines model for RuleCondition.Field.
+type RuleConditionField string
+
+// RuleConditionOperator Text fields take contains, equals, starts_with or ends_with, ignoring case; amount takes equals, greater_than or less_than, without sign.
+type RuleConditionOperator string
+
+// SynchronizationItem defines model for SynchronizationItem.
+type SynchronizationItem struct {
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id      Identifier `json:"id"`
+	Version int        `json:"version"`
+}
+
+// SynchronizationRequest defines model for SynchronizationRequest.
+type SynchronizationRequest struct {
+	Ids []SynchronizationRequest_Ids_Item `json:"ids"`
+}
+
+// SynchronizationRequestIds1 defines model for SynchronizationRequest.Ids.1.
+type SynchronizationRequestIds1 = int
+
+// SynchronizationRequest_Ids_Item defines model for SynchronizationRequest.ids.Item.
+type SynchronizationRequest_Ids_Item struct {
+	union json.RawMessage
 }
 
 // TaxNumberAbsenceReason defines model for TaxNumberAbsenceReason.
@@ -1802,6 +2584,23 @@ type TaxonomyItem struct {
 
 // TaxonomyItemSide MoneyHarpy extension.
 type TaxonomyItemSide string
+
+// UnlinkBookingRequest defines model for UnlinkBookingRequest.
+type UnlinkBookingRequest struct {
+	BookingId   UnlinkBookingRequest_BookingId  `json:"booking_id"`
+	BookingType UnlinkBookingRequestBookingType `json:"booking_type"`
+}
+
+// UnlinkBookingRequestBookingId1 defines model for UnlinkBookingRequest.BookingId.1.
+type UnlinkBookingRequestBookingId1 = int
+
+// UnlinkBookingRequest_BookingId defines model for UnlinkBookingRequest.BookingId.
+type UnlinkBookingRequest_BookingId struct {
+	union json.RawMessage
+}
+
+// UnlinkBookingRequestBookingType defines model for UnlinkBookingRequest.BookingType.
+type UnlinkBookingRequestBookingType string
 
 // UpdateAdministrationRequest defines model for UpdateAdministrationRequest.
 type UpdateAdministrationRequest struct {
@@ -1933,6 +2732,24 @@ type WorkflowRequest struct {
 
 // WorkflowRequestWorkflowType Required when creating; ignored when updating.
 type WorkflowRequestWorkflowType string
+
+// BankBalanceAmounts Moneybird-compatible bank_balance_amounts.
+type BankBalanceAmounts struct {
+	FinancialAccounts *[]struct {
+		Balance string `json:"balance"`
+
+		// FinancialAccountId A unique record identifier. Parse as a string.
+		//
+		// Example: 416072101932303822
+		FinancialAccountId Identifier `json:"financial_account_id"`
+		Name               string     `json:"name"`
+		Type               string     `json:"type"`
+	} `json:"financial_accounts,omitempty"`
+	Total *string `json:"total,omitempty"`
+}
+
+// Currency Moneybird-compatible currency.
+type Currency = string
 
 // DocumentStyleResponse Moneybird-compatible document_style_response.
 type DocumentStyleResponse struct {
@@ -2076,6 +2893,111 @@ type EventResponse_AdministrationId struct {
 	union json.RawMessage
 }
 
+// FinancialAccountResponse Moneybird-compatible financial_account_response.
+type FinancialAccountResponse struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Currency Moneybird-compatible currency.
+	Currency *Currency `json:"currency,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id               *Identifier `json:"id,omitempty"`
+	Identifier       *string     `json:"identifier,omitempty"`
+	MoneybirdAccount *bool       `json:"moneybird_account,omitempty"`
+	Name             *string     `json:"name,omitempty"`
+	Provider         *string     `json:"provider,omitempty"`
+	Type             *string     `json:"type,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// FinancialMutationResponse Moneybird-compatible financial_mutation_response.
+type FinancialMutationResponse struct {
+	AccountServicerTransactionId *string `json:"account_servicer_transaction_id,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId    *Identifier `json:"administration_id,omitempty"`
+	Amount              *string     `json:"amount,omitempty"`
+	AmountOpen          *string     `json:"amount_open,omitempty"`
+	BatchReference      *string     `json:"batch_reference,omitempty"`
+	Code                *string     `json:"code,omitempty"`
+	ContraAccountName   *string     `json:"contra_account_name,omitempty"`
+	ContraAccountNumber *string     `json:"contra_account_number,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Currency Moneybird-compatible currency.
+	Currency *Currency           `json:"currency,omitempty"`
+	Date     *openapi_types.Date `json:"date,omitempty"`
+
+	// FinancialAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	FinancialAccountId *Identifier `json:"financial_account_id,omitempty"`
+
+	// FinancialStatementId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	FinancialStatementId *Identifier `json:"financial_statement_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id                    *Identifier                               `json:"id,omitempty"`
+	LedgerAccountBookings *[]LedgerAccountBookingResponse           `json:"ledger_account_bookings,omitempty"`
+	Message               *string                                   `json:"message,omitempty"`
+	OriginalAmount        *string                                   `json:"original_amount,omitempty"`
+	Payments              *[]PaymentResponse                        `json:"payments,omitempty"`
+	ProcessedAt           *time.Time                                `json:"processed_at,omitempty"`
+	SepaFields            *map[string]interface{}                   `json:"sepa_fields,omitempty"`
+	SettlementState       *FinancialMutationResponseSettlementState `json:"settlement_state,omitempty"`
+	State                 *FinancialMutationResponseState           `json:"state,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Version Moneybird-compatible version.
+	Version *Version `json:"version,omitempty"`
+}
+
+// FinancialMutationResponseSettlementState defines model for FinancialMutationResponse.SettlementState.
+type FinancialMutationResponseSettlementState string
+
+// FinancialMutationResponseState defines model for FinancialMutationResponse.State.
+type FinancialMutationResponseState string
+
+// FinancialStatementResponse Moneybird-compatible financial_statement_response.
+type FinancialStatementResponse struct {
+	// FinancialAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	FinancialAccountId *Identifier                  `json:"financial_account_id,omitempty"`
+	FinancialMutations *[]FinancialMutationResponse `json:"financial_mutations,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id              *Identifier         `json:"id,omitempty"`
+	ImporterService *string             `json:"importer_service,omitempty"`
+	OfficialBalance *string             `json:"official_balance,omitempty"`
+	OfficialDate    *openapi_types.Date `json:"official_date,omitempty"`
+	Reference       *string             `json:"reference,omitempty"`
+}
+
 // IdentifierNullable Moneybird-compatible identifier_nullable.
 type IdentifierNullable struct {
 	union json.RawMessage
@@ -2086,6 +3008,40 @@ type IdentifierNullable0 = string
 
 // IdentifierNullable1 defines model for IdentifierNullable.1.
 type IdentifierNullable1 = int
+
+// LedgerAccountBookingResponse Moneybird-compatible ledger_account_booking_response.
+type LedgerAccountBookingResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp `json:"created_at,omitempty"`
+	Description *string    `json:"description,omitempty"`
+
+	// FinancialMutationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	FinancialMutationId *Identifier `json:"financial_mutation_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id *Identifier `json:"id,omitempty"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	LedgerAccountId *Identifier `json:"ledger_account_id,omitempty"`
+	Price           *string     `json:"price,omitempty"`
+
+	// ProjectId Moneybird-compatible identifier_nullable.
+	ProjectId *IdentifierNullable `json:"project_id,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
 
 // LedgerAccountResponse Moneybird-compatible ledger_account_response.
 type LedgerAccountResponse struct {
@@ -2194,6 +3150,66 @@ type Number0 = string
 // Number1 defines model for Number.1.
 type Number1 = float32
 
+// PaymentResponse Moneybird-compatible payment_response.
+type PaymentResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// CreditInvoiceId Moneybird-compatible identifier_nullable.
+	CreditInvoiceId *IdentifierNullable `json:"credit_invoice_id,omitempty"`
+
+	// FinancialAccountId Moneybird-compatible identifier_nullable.
+	FinancialAccountId *IdentifierNullable `json:"financial_account_id,omitempty"`
+
+	// FinancialMutationId Moneybird-compatible identifier_nullable.
+	FinancialMutationId *IdentifierNullable `json:"financial_mutation_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id *Identifier `json:"id,omitempty"`
+
+	// InvoiceId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	InvoiceId   *Identifier                 `json:"invoice_id,omitempty"`
+	InvoiceType *PaymentResponseInvoiceType `json:"invoice_type,omitempty"`
+
+	// LedgerAccountId Moneybird-compatible identifier_nullable.
+	LedgerAccountId *IdentifierNullable `json:"ledger_account_id,omitempty"`
+
+	// LinkedPaymentId Moneybird-compatible identifier_nullable.
+	LinkedPaymentId     *IdentifierNullable `json:"linked_payment_id,omitempty"`
+	ManualPaymentAction *string             `json:"manual_payment_action,omitempty"`
+	PaymentDate         *openapi_types.Date `json:"payment_date,omitempty"`
+
+	// PaymentTransactionId Moneybird-compatible identifier_nullable.
+	PaymentTransactionId *IdentifierNullable `json:"payment_transaction_id,omitempty"`
+
+	// Price Moneybird-compatible number.
+	Price *Number `json:"price,omitempty"`
+
+	// PriceBase Moneybird-compatible number.
+	PriceBase             *Number `json:"price_base,omitempty"`
+	TransactionIdentifier *string `json:"transaction_identifier,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// UserId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	UserId *Identifier `json:"user_id,omitempty"`
+}
+
+// PaymentResponseInvoiceType defines model for PaymentResponse.InvoiceType.
+type PaymentResponseInvoiceType string
+
 // TaskListTaskResponse Moneybird-compatible task_list_task_response.
 type TaskListTaskResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -2271,6 +3287,9 @@ type TaxonomyItemResponse struct {
 
 // Timestamp Moneybird-compatible timestamp.
 type Timestamp = time.Time
+
+// Version Moneybird-compatible version.
+type Version = int
 
 // WorkflowResponse Moneybird-compatible workflow_response.
 type WorkflowResponse struct {
@@ -2388,6 +3407,12 @@ type CompanySearchParams struct {
 	Query   string `form:"query" json:"query"`
 }
 
+// ListFinancialMutationsParams defines parameters for ListFinancialMutations.
+type ListFinancialMutationsParams struct {
+	// Filter Comma-separated key:value terms: period (this_week, prev_month, this_quarter, next_year and so on, or a range like 202401..202403 or 20240101..20240131), state (all, unprocessed, processed, auto_booked), mutation_type (all, debit, credit), financial_account_id, amount_from and amount_to. Join several states or types with a pipe. Without a filter, the period is this year.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
 // ListTaxRatesParams defines parameters for ListTaxRates.
 type ListTaxRatesParams struct {
 	// Filter Comma-separated key:value pairs. Keys are name, partial_name, percentage, tax_rate_type, country, show_tax, active, created_after and updated_after, for example tax_rate_type:sales_invoice,active:true.
@@ -2427,6 +3452,15 @@ type CreateAdministrationJSONRequestBody = CreateAdministrationRequest
 // UpdateAdministrationJSONRequestBody defines body for UpdateAdministration for application/json ContentType.
 type UpdateAdministrationJSONRequestBody = UpdateAdministrationRequest
 
+// UpdateBankSettingsJSONRequestBody defines body for UpdateBankSettings for application/json ContentType.
+type UpdateBankSettingsJSONRequestBody = BankSettingsRequest
+
+// CreateBookingRuleJSONRequestBody defines body for CreateBookingRule for application/json ContentType.
+type CreateBookingRuleJSONRequestBody = BookingRuleRequest
+
+// UpdateBookingRuleJSONRequestBody defines body for UpdateBookingRule for application/json ContentType.
+type UpdateBookingRuleJSONRequestBody = BookingRuleRequest
+
 // UpdateBookkeepingSettingsJSONRequestBody defines body for UpdateBookkeepingSettings for application/json ContentType.
 type UpdateBookkeepingSettingsJSONRequestBody = BookkeepingSettingsRequest
 
@@ -2444,6 +3478,30 @@ type CreateDocumentStyleJSONRequestBody = DocumentStyleRequest
 
 // UpdateDocumentStyleJSONRequestBody defines body for UpdateDocumentStyle for application/json ContentType.
 type UpdateDocumentStyleJSONRequestBody = DocumentStyleRequest
+
+// CreateFinancialAccountJSONRequestBody defines body for CreateFinancialAccount for application/json ContentType.
+type CreateFinancialAccountJSONRequestBody = FinancialAccountRequest
+
+// ReorderFinancialAccountsJSONRequestBody defines body for ReorderFinancialAccounts for application/json ContentType.
+type ReorderFinancialAccountsJSONRequestBody = IdsRequest
+
+// UpdateFinancialAccountJSONRequestBody defines body for UpdateFinancialAccount for application/json ContentType.
+type UpdateFinancialAccountJSONRequestBody = FinancialAccountRequest
+
+// FetchFinancialMutationsJSONRequestBody defines body for FetchFinancialMutations for application/json ContentType.
+type FetchFinancialMutationsJSONRequestBody = SynchronizationRequest
+
+// LinkFinancialMutationBookingJSONRequestBody defines body for LinkFinancialMutationBooking for application/json ContentType.
+type LinkFinancialMutationBookingJSONRequestBody = LinkBookingRequest
+
+// UnlinkFinancialMutationBookingJSONRequestBody defines body for UnlinkFinancialMutationBooking for application/json ContentType.
+type UnlinkFinancialMutationBookingJSONRequestBody = UnlinkBookingRequest
+
+// CreateFinancialStatementJSONRequestBody defines body for CreateFinancialStatement for application/json ContentType.
+type CreateFinancialStatementJSONRequestBody = FinancialStatementRequest
+
+// UpdateFinancialStatementJSONRequestBody defines body for UpdateFinancialStatement for application/json ContentType.
+type UpdateFinancialStatementJSONRequestBody = FinancialStatementRequest
 
 // CreateIdentityJSONRequestBody defines body for CreateIdentity for application/json ContentType.
 type CreateIdentityJSONRequestBody = IdentityRequest
@@ -2853,6 +3911,130 @@ func (t *DocumentStyle_InvoiceSenderAddress_AdditionalProperties) UnmarshalJSON(
 	return err
 }
 
+// AsIdentifier returns the union data inside the FinancialMutationInput_Id as a Identifier
+func (t FinancialMutationInput_Id) AsIdentifier() (Identifier, error) {
+	var body Identifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentifier overwrites any union data inside the FinancialMutationInput_Id as the provided Identifier
+func (t *FinancialMutationInput_Id) FromIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentifier performs a merge with any union data inside the FinancialMutationInput_Id, using the provided Identifier
+func (t *FinancialMutationInput_Id) MergeIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFinancialMutationInputId1 returns the union data inside the FinancialMutationInput_Id as a FinancialMutationInputId1
+func (t FinancialMutationInput_Id) AsFinancialMutationInputId1() (FinancialMutationInputId1, error) {
+	var body FinancialMutationInputId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFinancialMutationInputId1 overwrites any union data inside the FinancialMutationInput_Id as the provided FinancialMutationInputId1
+func (t *FinancialMutationInput_Id) FromFinancialMutationInputId1(v FinancialMutationInputId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFinancialMutationInputId1 performs a merge with any union data inside the FinancialMutationInput_Id, using the provided FinancialMutationInputId1
+func (t *FinancialMutationInput_Id) MergeFinancialMutationInputId1(v FinancialMutationInputId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t FinancialMutationInput_Id) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *FinancialMutationInput_Id) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsIdentifier returns the union data inside the FinancialStatementRequest_FinancialStatement_FinancialAccountId as a Identifier
+func (t FinancialStatementRequest_FinancialStatement_FinancialAccountId) AsIdentifier() (Identifier, error) {
+	var body Identifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentifier overwrites any union data inside the FinancialStatementRequest_FinancialStatement_FinancialAccountId as the provided Identifier
+func (t *FinancialStatementRequest_FinancialStatement_FinancialAccountId) FromIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentifier performs a merge with any union data inside the FinancialStatementRequest_FinancialStatement_FinancialAccountId, using the provided Identifier
+func (t *FinancialStatementRequest_FinancialStatement_FinancialAccountId) MergeIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFinancialStatementRequestFinancialStatementFinancialAccountId1 returns the union data inside the FinancialStatementRequest_FinancialStatement_FinancialAccountId as a FinancialStatementRequestFinancialStatementFinancialAccountId1
+func (t FinancialStatementRequest_FinancialStatement_FinancialAccountId) AsFinancialStatementRequestFinancialStatementFinancialAccountId1() (FinancialStatementRequestFinancialStatementFinancialAccountId1, error) {
+	var body FinancialStatementRequestFinancialStatementFinancialAccountId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFinancialStatementRequestFinancialStatementFinancialAccountId1 overwrites any union data inside the FinancialStatementRequest_FinancialStatement_FinancialAccountId as the provided FinancialStatementRequestFinancialStatementFinancialAccountId1
+func (t *FinancialStatementRequest_FinancialStatement_FinancialAccountId) FromFinancialStatementRequestFinancialStatementFinancialAccountId1(v FinancialStatementRequestFinancialStatementFinancialAccountId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFinancialStatementRequestFinancialStatementFinancialAccountId1 performs a merge with any union data inside the FinancialStatementRequest_FinancialStatement_FinancialAccountId, using the provided FinancialStatementRequestFinancialStatementFinancialAccountId1
+func (t *FinancialStatementRequest_FinancialStatement_FinancialAccountId) MergeFinancialStatementRequestFinancialStatementFinancialAccountId1(v FinancialStatementRequestFinancialStatementFinancialAccountId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t FinancialStatementRequest_FinancialStatement_FinancialAccountId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *FinancialStatementRequest_FinancialStatement_FinancialAccountId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsTaxonomyItemResponse returns the union data inside the LedgerAccount_TaxonomyItem as a TaxonomyItemResponse
 func (t LedgerAccount_TaxonomyItem) AsTaxonomyItemResponse() (TaxonomyItemResponse, error) {
 	var body TaxonomyItemResponse
@@ -2889,6 +4071,316 @@ func (t *LedgerAccount_TaxonomyItem) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsIdentifier returns the union data inside the LinkBookingRequest_BookingId as a Identifier
+func (t LinkBookingRequest_BookingId) AsIdentifier() (Identifier, error) {
+	var body Identifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentifier overwrites any union data inside the LinkBookingRequest_BookingId as the provided Identifier
+func (t *LinkBookingRequest_BookingId) FromIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentifier performs a merge with any union data inside the LinkBookingRequest_BookingId, using the provided Identifier
+func (t *LinkBookingRequest_BookingId) MergeIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsLinkBookingRequestBookingId1 returns the union data inside the LinkBookingRequest_BookingId as a LinkBookingRequestBookingId1
+func (t LinkBookingRequest_BookingId) AsLinkBookingRequestBookingId1() (LinkBookingRequestBookingId1, error) {
+	var body LinkBookingRequestBookingId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromLinkBookingRequestBookingId1 overwrites any union data inside the LinkBookingRequest_BookingId as the provided LinkBookingRequestBookingId1
+func (t *LinkBookingRequest_BookingId) FromLinkBookingRequestBookingId1(v LinkBookingRequestBookingId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeLinkBookingRequestBookingId1 performs a merge with any union data inside the LinkBookingRequest_BookingId, using the provided LinkBookingRequestBookingId1
+func (t *LinkBookingRequest_BookingId) MergeLinkBookingRequestBookingId1(v LinkBookingRequestBookingId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t LinkBookingRequest_BookingId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *LinkBookingRequest_BookingId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsLinkBookingRequestMarkOpenSepaTransactionAsPaid0 returns the union data inside the LinkBookingRequest_MarkOpenSepaTransactionAsPaid as a LinkBookingRequestMarkOpenSepaTransactionAsPaid0
+func (t LinkBookingRequest_MarkOpenSepaTransactionAsPaid) AsLinkBookingRequestMarkOpenSepaTransactionAsPaid0() (LinkBookingRequestMarkOpenSepaTransactionAsPaid0, error) {
+	var body LinkBookingRequestMarkOpenSepaTransactionAsPaid0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromLinkBookingRequestMarkOpenSepaTransactionAsPaid0 overwrites any union data inside the LinkBookingRequest_MarkOpenSepaTransactionAsPaid as the provided LinkBookingRequestMarkOpenSepaTransactionAsPaid0
+func (t *LinkBookingRequest_MarkOpenSepaTransactionAsPaid) FromLinkBookingRequestMarkOpenSepaTransactionAsPaid0(v LinkBookingRequestMarkOpenSepaTransactionAsPaid0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeLinkBookingRequestMarkOpenSepaTransactionAsPaid0 performs a merge with any union data inside the LinkBookingRequest_MarkOpenSepaTransactionAsPaid, using the provided LinkBookingRequestMarkOpenSepaTransactionAsPaid0
+func (t *LinkBookingRequest_MarkOpenSepaTransactionAsPaid) MergeLinkBookingRequestMarkOpenSepaTransactionAsPaid0(v LinkBookingRequestMarkOpenSepaTransactionAsPaid0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsLinkBookingRequestMarkOpenSepaTransactionAsPaid1 returns the union data inside the LinkBookingRequest_MarkOpenSepaTransactionAsPaid as a LinkBookingRequestMarkOpenSepaTransactionAsPaid1
+func (t LinkBookingRequest_MarkOpenSepaTransactionAsPaid) AsLinkBookingRequestMarkOpenSepaTransactionAsPaid1() (LinkBookingRequestMarkOpenSepaTransactionAsPaid1, error) {
+	var body LinkBookingRequestMarkOpenSepaTransactionAsPaid1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromLinkBookingRequestMarkOpenSepaTransactionAsPaid1 overwrites any union data inside the LinkBookingRequest_MarkOpenSepaTransactionAsPaid as the provided LinkBookingRequestMarkOpenSepaTransactionAsPaid1
+func (t *LinkBookingRequest_MarkOpenSepaTransactionAsPaid) FromLinkBookingRequestMarkOpenSepaTransactionAsPaid1(v LinkBookingRequestMarkOpenSepaTransactionAsPaid1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeLinkBookingRequestMarkOpenSepaTransactionAsPaid1 performs a merge with any union data inside the LinkBookingRequest_MarkOpenSepaTransactionAsPaid, using the provided LinkBookingRequestMarkOpenSepaTransactionAsPaid1
+func (t *LinkBookingRequest_MarkOpenSepaTransactionAsPaid) MergeLinkBookingRequestMarkOpenSepaTransactionAsPaid1(v LinkBookingRequestMarkOpenSepaTransactionAsPaid1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t LinkBookingRequest_MarkOpenSepaTransactionAsPaid) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *LinkBookingRequest_MarkOpenSepaTransactionAsPaid) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsIdentifier returns the union data inside the LinkBookingRequest_ProjectId as a Identifier
+func (t LinkBookingRequest_ProjectId) AsIdentifier() (Identifier, error) {
+	var body Identifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentifier overwrites any union data inside the LinkBookingRequest_ProjectId as the provided Identifier
+func (t *LinkBookingRequest_ProjectId) FromIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentifier performs a merge with any union data inside the LinkBookingRequest_ProjectId, using the provided Identifier
+func (t *LinkBookingRequest_ProjectId) MergeIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsLinkBookingRequestProjectId1 returns the union data inside the LinkBookingRequest_ProjectId as a LinkBookingRequestProjectId1
+func (t LinkBookingRequest_ProjectId) AsLinkBookingRequestProjectId1() (LinkBookingRequestProjectId1, error) {
+	var body LinkBookingRequestProjectId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromLinkBookingRequestProjectId1 overwrites any union data inside the LinkBookingRequest_ProjectId as the provided LinkBookingRequestProjectId1
+func (t *LinkBookingRequest_ProjectId) FromLinkBookingRequestProjectId1(v LinkBookingRequestProjectId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeLinkBookingRequestProjectId1 performs a merge with any union data inside the LinkBookingRequest_ProjectId, using the provided LinkBookingRequestProjectId1
+func (t *LinkBookingRequest_ProjectId) MergeLinkBookingRequestProjectId1(v LinkBookingRequestProjectId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t LinkBookingRequest_ProjectId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *LinkBookingRequest_ProjectId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsMoney0 returns the union data inside the Money as a Money0
+func (t Money) AsMoney0() (Money0, error) {
+	var body Money0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMoney0 overwrites any union data inside the Money as the provided Money0
+func (t *Money) FromMoney0(v Money0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMoney0 performs a merge with any union data inside the Money, using the provided Money0
+func (t *Money) MergeMoney0(v Money0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsMoney1 returns the union data inside the Money as a Money1
+func (t Money) AsMoney1() (Money1, error) {
+	var body Money1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMoney1 overwrites any union data inside the Money as the provided Money1
+func (t *Money) FromMoney1(v Money1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMoney1 performs a merge with any union data inside the Money, using the provided Money1
+func (t *Money) MergeMoney1(v Money1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Money) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Money) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsIdentifier returns the union data inside the SynchronizationRequest_Ids_Item as a Identifier
+func (t SynchronizationRequest_Ids_Item) AsIdentifier() (Identifier, error) {
+	var body Identifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentifier overwrites any union data inside the SynchronizationRequest_Ids_Item as the provided Identifier
+func (t *SynchronizationRequest_Ids_Item) FromIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentifier performs a merge with any union data inside the SynchronizationRequest_Ids_Item, using the provided Identifier
+func (t *SynchronizationRequest_Ids_Item) MergeIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSynchronizationRequestIds1 returns the union data inside the SynchronizationRequest_Ids_Item as a SynchronizationRequestIds1
+func (t SynchronizationRequest_Ids_Item) AsSynchronizationRequestIds1() (SynchronizationRequestIds1, error) {
+	var body SynchronizationRequestIds1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSynchronizationRequestIds1 overwrites any union data inside the SynchronizationRequest_Ids_Item as the provided SynchronizationRequestIds1
+func (t *SynchronizationRequest_Ids_Item) FromSynchronizationRequestIds1(v SynchronizationRequestIds1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSynchronizationRequestIds1 performs a merge with any union data inside the SynchronizationRequest_Ids_Item, using the provided SynchronizationRequestIds1
+func (t *SynchronizationRequest_Ids_Item) MergeSynchronizationRequestIds1(v SynchronizationRequestIds1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t SynchronizationRequest_Ids_Item) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *SynchronizationRequest_Ids_Item) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsNumber returns the union data inside the TaxRate_Percentage as a Number
 func (t TaxRate_Percentage) AsNumber() (Number, error) {
 	var body Number
@@ -2921,6 +4413,68 @@ func (t TaxRate_Percentage) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TaxRate_Percentage) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsIdentifier returns the union data inside the UnlinkBookingRequest_BookingId as a Identifier
+func (t UnlinkBookingRequest_BookingId) AsIdentifier() (Identifier, error) {
+	var body Identifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentifier overwrites any union data inside the UnlinkBookingRequest_BookingId as the provided Identifier
+func (t *UnlinkBookingRequest_BookingId) FromIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentifier performs a merge with any union data inside the UnlinkBookingRequest_BookingId, using the provided Identifier
+func (t *UnlinkBookingRequest_BookingId) MergeIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsUnlinkBookingRequestBookingId1 returns the union data inside the UnlinkBookingRequest_BookingId as a UnlinkBookingRequestBookingId1
+func (t UnlinkBookingRequest_BookingId) AsUnlinkBookingRequestBookingId1() (UnlinkBookingRequestBookingId1, error) {
+	var body UnlinkBookingRequestBookingId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUnlinkBookingRequestBookingId1 overwrites any union data inside the UnlinkBookingRequest_BookingId as the provided UnlinkBookingRequestBookingId1
+func (t *UnlinkBookingRequest_BookingId) FromUnlinkBookingRequestBookingId1(v UnlinkBookingRequestBookingId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUnlinkBookingRequestBookingId1 performs a merge with any union data inside the UnlinkBookingRequest_BookingId, using the provided UnlinkBookingRequestBookingId1
+func (t *UnlinkBookingRequest_BookingId) MergeUnlinkBookingRequestBookingId1(v UnlinkBookingRequestBookingId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t UnlinkBookingRequest_BookingId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *UnlinkBookingRequest_BookingId) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -3677,6 +5231,27 @@ type ServerInterface interface {
 	// FavoriteAdministration Mark an administration as favorite
 	// (PUT /api/v2/administrations/{id}/favorite)
 	FavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id)
+	// GetBankSettings Get bank settings
+	// (GET /api/v2/{administration_id}/bank_settings)
+	GetBankSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// UpdateBankSettings Update bank settings
+	// (PATCH /api/v2/{administration_id}/bank_settings)
+	UpdateBankSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListBookingRules Retrieve booking rules
+	// (GET /api/v2/{administration_id}/booking_rules)
+	ListBookingRules(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateBookingRule Create a booking rule
+	// (POST /api/v2/{administration_id}/booking_rules)
+	CreateBookingRule(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteBookingRule Delete a booking rule
+	// (DELETE /api/v2/{administration_id}/booking_rules/{id})
+	DeleteBookingRule(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetBookingRule Retrieve a booking rule
+	// (GET /api/v2/{administration_id}/booking_rules/{id})
+	GetBookingRule(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateBookingRule Update a booking rule
+	// (PATCH /api/v2/{administration_id}/booking_rules/{id})
+	UpdateBookingRule(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// GetBookkeepingSettings Get bookkeeping settings
 	// (GET /api/v2/{administration_id}/bookkeeping_settings)
 	GetBookkeepingSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -3725,6 +5300,54 @@ type ServerInterface interface {
 	// UploadDocumentStyleFile Upload a logo or background
 	// (PUT /api/v2/{administration_id}/document_styles/{id}/{file})
 	UploadDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string)
+	// ListFinancialAccounts Retrieve financial accounts
+	// (GET /api/v2/{administration_id}/financial_accounts)
+	ListFinancialAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateFinancialAccount Create a financial account
+	// (POST /api/v2/{administration_id}/financial_accounts)
+	CreateFinancialAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ReorderFinancialAccounts Order the financial accounts
+	// (PUT /api/v2/{administration_id}/financial_accounts/order)
+	ReorderFinancialAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetFinancialAccount Retrieve a financial account
+	// (GET /api/v2/{administration_id}/financial_accounts/{id})
+	GetFinancialAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateFinancialAccount Update a financial account
+	// (PATCH /api/v2/{administration_id}/financial_accounts/{id})
+	UpdateFinancialAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ImportFinancialStatement Import a statement file
+	// (POST /api/v2/{administration_id}/financial_accounts/{id}/import)
+	ImportFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListFinancialMutations Retrieve financial mutations
+	// (GET /api/v2/{administration_id}/financial_mutations)
+	ListFinancialMutations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListFinancialMutationsParams)
+	// ListFinancialMutationVersions List the ids and versions of all financial mutations
+	// (GET /api/v2/{administration_id}/financial_mutations/synchronization)
+	ListFinancialMutationVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// FetchFinancialMutations Fetch financial mutations by id
+	// (POST /api/v2/{administration_id}/financial_mutations/synchronization)
+	FetchFinancialMutations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetFinancialMutation Retrieve a financial mutation
+	// (GET /api/v2/{administration_id}/financial_mutations/{id})
+	GetFinancialMutation(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// LinkFinancialMutationBooking Link a booking to a financial mutation
+	// (PATCH /api/v2/{administration_id}/financial_mutations/{id}/link_booking)
+	LinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UnlinkFinancialMutationBooking Unlink a booking from a financial mutation
+	// (DELETE /api/v2/{administration_id}/financial_mutations/{id}/unlink_booking)
+	UnlinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateFinancialStatement Create a financial statement
+	// (POST /api/v2/{administration_id}/financial_statements)
+	CreateFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteFinancialStatement Delete a financial statement
+	// (DELETE /api/v2/{administration_id}/financial_statements/{id})
+	DeleteFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetFinancialStatement Retrieve a financial statement
+	// (GET /api/v2/{administration_id}/financial_statements/{id})
+	GetFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateFinancialStatement Update a financial statement
+	// (PATCH /api/v2/{administration_id}/financial_statements/{id})
+	UpdateFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListIdentities Retrieve identities
 	// (GET /api/v2/{administration_id}/identities)
 	ListIdentities(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -3776,6 +5399,9 @@ type ServerInterface interface {
 	// UpdateLedgerAccount Update a ledger account
 	// (PATCH /api/v2/{administration_id}/ledger_accounts/{id})
 	UpdateLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetBankBalance Bank balance report
+	// (GET /api/v2/{administration_id}/reports/bank_balance)
+	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// ListTaxRates Retrieve tax rates
 	// (GET /api/v2/{administration_id}/tax_rates)
 	ListTaxRates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTaxRatesParams)
@@ -3983,6 +5609,48 @@ func (_ Unimplemented) FavoriteAdministration(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetBankSettings Get bank settings
+// (GET /api/v2/{administration_id}/bank_settings)
+func (_ Unimplemented) GetBankSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateBankSettings Update bank settings
+// (PATCH /api/v2/{administration_id}/bank_settings)
+func (_ Unimplemented) UpdateBankSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListBookingRules Retrieve booking rules
+// (GET /api/v2/{administration_id}/booking_rules)
+func (_ Unimplemented) ListBookingRules(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateBookingRule Create a booking rule
+// (POST /api/v2/{administration_id}/booking_rules)
+func (_ Unimplemented) CreateBookingRule(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteBookingRule Delete a booking rule
+// (DELETE /api/v2/{administration_id}/booking_rules/{id})
+func (_ Unimplemented) DeleteBookingRule(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetBookingRule Retrieve a booking rule
+// (GET /api/v2/{administration_id}/booking_rules/{id})
+func (_ Unimplemented) GetBookingRule(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateBookingRule Update a booking rule
+// (PATCH /api/v2/{administration_id}/booking_rules/{id})
+func (_ Unimplemented) UpdateBookingRule(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetBookkeepingSettings Get bookkeeping settings
 // (GET /api/v2/{administration_id}/bookkeeping_settings)
 func (_ Unimplemented) GetBookkeepingSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
@@ -4076,6 +5744,102 @@ func (_ Unimplemented) GetDocumentStyleFile(w http.ResponseWriter, r *http.Reque
 // UploadDocumentStyleFile Upload a logo or background
 // (PUT /api/v2/{administration_id}/document_styles/{id}/{file})
 func (_ Unimplemented) UploadDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListFinancialAccounts Retrieve financial accounts
+// (GET /api/v2/{administration_id}/financial_accounts)
+func (_ Unimplemented) ListFinancialAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateFinancialAccount Create a financial account
+// (POST /api/v2/{administration_id}/financial_accounts)
+func (_ Unimplemented) CreateFinancialAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ReorderFinancialAccounts Order the financial accounts
+// (PUT /api/v2/{administration_id}/financial_accounts/order)
+func (_ Unimplemented) ReorderFinancialAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetFinancialAccount Retrieve a financial account
+// (GET /api/v2/{administration_id}/financial_accounts/{id})
+func (_ Unimplemented) GetFinancialAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateFinancialAccount Update a financial account
+// (PATCH /api/v2/{administration_id}/financial_accounts/{id})
+func (_ Unimplemented) UpdateFinancialAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ImportFinancialStatement Import a statement file
+// (POST /api/v2/{administration_id}/financial_accounts/{id}/import)
+func (_ Unimplemented) ImportFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListFinancialMutations Retrieve financial mutations
+// (GET /api/v2/{administration_id}/financial_mutations)
+func (_ Unimplemented) ListFinancialMutations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListFinancialMutationsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListFinancialMutationVersions List the ids and versions of all financial mutations
+// (GET /api/v2/{administration_id}/financial_mutations/synchronization)
+func (_ Unimplemented) ListFinancialMutationVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchFinancialMutations Fetch financial mutations by id
+// (POST /api/v2/{administration_id}/financial_mutations/synchronization)
+func (_ Unimplemented) FetchFinancialMutations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetFinancialMutation Retrieve a financial mutation
+// (GET /api/v2/{administration_id}/financial_mutations/{id})
+func (_ Unimplemented) GetFinancialMutation(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// LinkFinancialMutationBooking Link a booking to a financial mutation
+// (PATCH /api/v2/{administration_id}/financial_mutations/{id}/link_booking)
+func (_ Unimplemented) LinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UnlinkFinancialMutationBooking Unlink a booking from a financial mutation
+// (DELETE /api/v2/{administration_id}/financial_mutations/{id}/unlink_booking)
+func (_ Unimplemented) UnlinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateFinancialStatement Create a financial statement
+// (POST /api/v2/{administration_id}/financial_statements)
+func (_ Unimplemented) CreateFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteFinancialStatement Delete a financial statement
+// (DELETE /api/v2/{administration_id}/financial_statements/{id})
+func (_ Unimplemented) DeleteFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetFinancialStatement Retrieve a financial statement
+// (GET /api/v2/{administration_id}/financial_statements/{id})
+func (_ Unimplemented) GetFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateFinancialStatement Update a financial statement
+// (PATCH /api/v2/{administration_id}/financial_statements/{id})
+func (_ Unimplemented) UpdateFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4178,6 +5942,12 @@ func (_ Unimplemented) GetLedgerAccount(w http.ResponseWriter, r *http.Request, 
 // UpdateLedgerAccount Update a ledger account
 // (PATCH /api/v2/{administration_id}/ledger_accounts/{id})
 func (_ Unimplemented) UpdateLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetBankBalance Bank balance report
+// (GET /api/v2/{administration_id}/reports/bank_balance)
+func (_ Unimplemented) GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4870,6 +6640,215 @@ func (siw *ServerInterfaceWrapper) FavoriteAdministration(w http.ResponseWriter,
 	handler.ServeHTTP(w, r)
 }
 
+// GetBankSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetBankSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBankSettings(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateBankSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateBankSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateBankSettings(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListBookingRules operation middleware
+func (siw *ServerInterfaceWrapper) ListBookingRules(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListBookingRules(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateBookingRule operation middleware
+func (siw *ServerInterfaceWrapper) CreateBookingRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateBookingRule(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteBookingRule operation middleware
+func (siw *ServerInterfaceWrapper) DeleteBookingRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteBookingRule(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBookingRule operation middleware
+func (siw *ServerInterfaceWrapper) GetBookingRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBookingRule(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateBookingRule operation middleware
+func (siw *ServerInterfaceWrapper) UpdateBookingRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateBookingRule(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetBookkeepingSettings operation middleware
 func (siw *ServerInterfaceWrapper) GetBookkeepingSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -5394,6 +7373,519 @@ func (siw *ServerInterfaceWrapper) UploadDocumentStyleFile(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ListFinancialAccounts operation middleware
+func (siw *ServerInterfaceWrapper) ListFinancialAccounts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFinancialAccounts(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateFinancialAccount operation middleware
+func (siw *ServerInterfaceWrapper) CreateFinancialAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateFinancialAccount(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReorderFinancialAccounts operation middleware
+func (siw *ServerInterfaceWrapper) ReorderFinancialAccounts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReorderFinancialAccounts(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFinancialAccount operation middleware
+func (siw *ServerInterfaceWrapper) GetFinancialAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFinancialAccount(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateFinancialAccount operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFinancialAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateFinancialAccount(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImportFinancialStatement operation middleware
+func (siw *ServerInterfaceWrapper) ImportFinancialStatement(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportFinancialStatement(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFinancialMutations operation middleware
+func (siw *ServerInterfaceWrapper) ListFinancialMutations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListFinancialMutationsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFinancialMutations(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFinancialMutationVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListFinancialMutationVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFinancialMutationVersions(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchFinancialMutations operation middleware
+func (siw *ServerInterfaceWrapper) FetchFinancialMutations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchFinancialMutations(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFinancialMutation operation middleware
+func (siw *ServerInterfaceWrapper) GetFinancialMutation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFinancialMutation(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// LinkFinancialMutationBooking operation middleware
+func (siw *ServerInterfaceWrapper) LinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LinkFinancialMutationBooking(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnlinkFinancialMutationBooking operation middleware
+func (siw *ServerInterfaceWrapper) UnlinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnlinkFinancialMutationBooking(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateFinancialStatement operation middleware
+func (siw *ServerInterfaceWrapper) CreateFinancialStatement(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateFinancialStatement(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteFinancialStatement operation middleware
+func (siw *ServerInterfaceWrapper) DeleteFinancialStatement(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteFinancialStatement(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFinancialStatement operation middleware
+func (siw *ServerInterfaceWrapper) GetFinancialStatement(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFinancialStatement(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateFinancialStatement operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFinancialStatement(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateFinancialStatement(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListIdentities operation middleware
 func (siw *ServerInterfaceWrapper) ListIdentities(w http.ResponseWriter, r *http.Request) {
 
@@ -5890,6 +8382,32 @@ func (siw *ServerInterfaceWrapper) UpdateLedgerAccount(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateLedgerAccount(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBankBalance operation middleware
+func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBankBalance(w, r, administrationId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6550,6 +9068,78 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/taxonomy_items", wrapper.SearchTaxonomyItems)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/bank_settings", wrapper.GetBankSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/bank_settings", wrapper.UpdateBankSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/financial_accounts", wrapper.ListFinancialAccounts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/financial_accounts", wrapper.CreateFinancialAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v2/{administration_id}/financial_accounts/order", wrapper.ReorderFinancialAccounts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/financial_accounts/{id}", wrapper.GetFinancialAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/financial_accounts/{id}", wrapper.UpdateFinancialAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/financial_accounts/{id}/import", wrapper.ImportFinancialStatement)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/financial_statements", wrapper.CreateFinancialStatement)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/financial_statements/{id}", wrapper.DeleteFinancialStatement)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/financial_statements/{id}", wrapper.GetFinancialStatement)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/financial_statements/{id}", wrapper.UpdateFinancialStatement)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/financial_mutations", wrapper.ListFinancialMutations)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/financial_mutations/synchronization", wrapper.ListFinancialMutationVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/financial_mutations/synchronization", wrapper.FetchFinancialMutations)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/financial_mutations/{id}", wrapper.GetFinancialMutation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/financial_mutations/{id}/link_booking", wrapper.LinkFinancialMutationBooking)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/financial_mutations/{id}/unlink_booking", wrapper.UnlinkFinancialMutationBooking)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/bank_balance", wrapper.GetBankBalance)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/booking_rules", wrapper.ListBookingRules)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/booking_rules", wrapper.CreateBookingRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/booking_rules/{id}", wrapper.DeleteBookingRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/booking_rules/{id}", wrapper.GetBookingRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/booking_rules/{id}", wrapper.UpdateBookingRule)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/onboarding/options", wrapper.OnboardingOptions)

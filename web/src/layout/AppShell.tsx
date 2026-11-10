@@ -22,6 +22,7 @@ export function AppShell() {
             <Logo variant="mark" className="brand__mark" decorative />
           </Link>
           <AdministrationSwitcher />
+          <AdministrationSections />
         </div>
         <div className="topnav__search" role="search">
           <SearchIcon />
@@ -65,6 +66,27 @@ function AdministrationSwitcher() {
         </ul>
       </nav>
     </Menu>
+  )
+}
+
+/** Links to the parts of the open administration. */
+function AdministrationSections() {
+  const { t } = useTranslation()
+  const nested = useMatch('/:id/*')
+  const home = useMatch('/:id')
+  const id = home?.params.id ?? nested?.params.id ?? ''
+  if (!/^\d{1,19}$/.test(id)) {
+    return null
+  }
+  const section = nested?.params['*']?.split('/')[0] ?? ''
+  const link = (to: string, label: string, active: boolean) => (
+    <Link className="topnav__btn topnav__section" to={`/${id}/${to}`} aria-current={active ? 'page' : undefined}>{label}</Link>
+  )
+  return (
+    <div className="topnav__sections">
+      {link('financial_mutations', t('nav.bank'), section === 'financial_mutations')}
+      {link('settings', t('nav.settings'), section === 'settings')}
+    </div>
   )
 }
 

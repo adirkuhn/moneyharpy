@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { expect, type Page, request as playwrightRequest, test } from '@playwright/test'
 
 const password = 'correct horse battery'
@@ -379,4 +381,54 @@ test('bookkeeping starts from the Dutch standard and is adjusted in settings', a
   const hosting = accounts.find((a: { name: string }) => a.name === 'Hosting')
   expect(hosting.taxonomy_item.code).toBe('WBedKanSof')
   expect(accounts.map((a: { name: string }) => a.name)).toContain('Company car fuel')
+})
+
+test('bank statements are imported, booked by rules and by hand', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Bank Co')
+  const uri = new URL(page.url()).pathname
+  await page.goto(`${uri}/settings/bank`)
+  await expect(page.getByRole('heading', { name: 'Bank', level: 1 })).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Financial accounts' }).getByRole('link', { name: 'Cash' })).toBeVisible()
+
+  const optionValue = async (label: string, text: string) =>
+    (await page.getByLabel(label, { exact: true }).locator('option', { hasText: text }).first().getAttribute('value')) ?? ''
+
+  await page.getByRole('region', { name: 'Booking rules' }).getByRole('link', { name: 'Add' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Hosting')
+  await page.getByLabel('Value').fill('hosting')
+  await page.getByLabel('Category').selectOption(await optionValue('Category', 'Software'))
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByRole('table', { name: 'Booking rules' }).getByRole('link', { name: 'Hosting' })).toBeVisible()
+
+  await page.getByRole('region', { name: 'Accounts' }).getByRole('link', { name: 'Add' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Main bank')
+  await page.getByLabel('Account number').fill('NL91 ABNA 0417 1643 00')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByRole('heading', { name: 'Main bank', level: 1 })).toBeVisible()
+  // The example statement, dated today so it falls in this year's transactions.
+  const today = new Date().toISOString().slice(0, 10)
+  const camt = readFileSync(join(__dirname, '../../internal/bankfile/testdata/camt053.xml'), 'utf8').replace(/2026-1[01]-\d\d/g, today)
+  await page.getByLabel('Choose file').setInputFiles({ name: 'statement.xml', mimeType: 'text/xml', buffer: Buffer.from(camt) })
+  await expect(page.getByRole('status')).toContainText('2 new transactions.')
+  await expect(page.getByRole('status')).toContainText('1 booked by a rule.')
+
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Bank' }).click()
+  await page.getByRole('group', { name: 'State' }).getByText('All', { exact: true }).click()
+  const table = page.getByRole('table', { name: 'Transactions' })
+  await expect(table.getByRole('link', { name: 'Hosting Company' })).toBeVisible()
+  await table.getByRole('link', { name: 'Example Client B.V.' }).click()
+
+  const form = page.getByRole('form', { name: 'Book' })
+  await form.getByLabel('Category').selectOption(await optionValue('Category', 'Revenue'))
+  await form.getByLabel('Amount').fill('600')
+  await form.getByRole('button', { name: 'Book' }).click()
+  await expect(page.getByRole('table', { name: 'Bookings' }).getByText('Revenue')).toBeVisible()
+  await page.getByRole('form', { name: 'Book' }).getByLabel('Category').selectOption(await optionValue('Category', 'Revenue'))
+  await page.getByRole('form', { name: 'Book' }).getByRole('button', { name: 'Book' }).click()
+  await expect(page.getByRole('form', { name: 'Book' })).toBeHidden()
+
+  const id = uri.slice(1)
+  const balance = await (await page.request.get(`/api/v2/${id}/reports/bank_balance`)).json()
+  expect(balance.total).toBe('974.5')
 })
