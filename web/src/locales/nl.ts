@@ -18,7 +18,7 @@ export const nl: Messages = {
     editTitle: 'Kies een nieuw wachtwoord', new: 'Nieuw wachtwoord', save: 'Nieuw wachtwoord opslaan', badLink: 'Deze link is ongeldig of verlopen', newLink: 'Nieuwe link aanvragen',
   },
   nav: {
-    bank: 'Bank', settings: 'Instellingen',
+    overview: 'Overzicht', bank: 'Bank', settings: 'Instellingen',
     search: 'Zoeken', searchSoon: 'Zoeken is nog niet beschikbaar.',
     main: 'Hoofdmenu', home: 'MoneyHarpy home', notifications: 'Meldingen', noNotifications: 'Je hebt geen meldingen.', select: 'Kies administratie', yours: 'Jouw administraties',
     all: 'Alle administraties', new: 'Nieuwe administratie', account: 'Gebruikersaccount', instance: 'Instellingen van deze installatie', docs: 'API-documentatie', signOut: 'Uitloggen',
@@ -27,7 +27,19 @@ export const nl: Messages = {
   administrations: {
     title: 'Kies een administratie', add: 'Administratie toevoegen', list: 'Administraties', loadError: 'De administraties konden niet worden geladen. Herlaad de pagina om het opnieuw te proberen.',
     empty: 'Voeg je eerste administratie toe om te beginnen met boekhouden.', favorite: 'Markeer {{name}} als favoriet', unfavorite: 'Verwijder {{name}} uit favorieten', settingsFor: 'Instellingen van {{name}}',
-    homeEmpty: 'Facturen, contacten en offertes van deze administratie komen hier te staan.', settings: 'Instellingen van {{name}}', language: 'Taal', currency: 'Valuta', country: 'Land', timeZone: 'Tijdzone', starts: 'Boekhouding start op',
+    settings: 'Instellingen van {{name}}', language: 'Taal', currency: 'Valuta', country: 'Land', timeZone: 'Tijdzone', starts: 'Boekhouding start op',
+  },
+  overview: {
+    title: 'Overzicht', morning: 'Goedemorgen {{name}}!', afternoon: 'Goedemiddag {{name}}!', evening: 'Goedenavond {{name}}!',
+    add: 'Toevoegen', addMenu: 'Toevoegen aan deze administratie', addAccount: 'Financiële rekening', addRule: 'Boekingsregel', addCategory: 'Categorie',
+    summary: 'Samenvatting', bank: 'Bank', balance: 'Saldo', toLink: 'Te koppelen',
+    salesInvoices: 'Verkoopfacturen en externe facturen', toReceive: 'Te ontvangen', toRemind: 'Te herinneren',
+    incoming: 'Inkomend', toPay: 'Te betalen', toProcess: 'Te verwerken',
+    later: 'Nog niet beschikbaar', laterHint: 'Verschijnt hier zodra dit deel van MoneyHarpy klaar is.',
+    recent: 'Recent verwerkt', noRecent: 'Nog niets verwerkt. Geboekte transacties verschijnen hier.',
+    nothing: 'Je hebt geen toegang tot de onderdelen van deze administratie die hier staan. Vraag een eigenaar om rechten.',
+    types: { financial_mutation: 'Transactie' }, states: { processed: 'Geboekt' },
+    loadError: 'Het overzicht kon niet worden geladen. Laad de pagina opnieuw om het nog eens te proberen.',
   },
   onboarding: {
     welcome: 'Welkom {{name}}', subtitle: 'In een paar stappen maken we je financiële administratie aan.',
@@ -160,7 +172,7 @@ export const nl: Messages = {
     addCondition: 'Voorwaarde toevoegen', removeCondition: 'Voorwaarde {{n}} verwijderen', then: 'Dan', category: 'Categorie', chooseCategory: 'Kies een categorie',
     transactions: 'Transacties', transactionsSubtitle: 'Boek wat binnenkwam en uitging op je categorieën.', filters: 'Transacties filteren', state: 'Status',
     states: { unprocessed: 'Te boeken', processed: 'Geboekt', all: 'Alle' }, account: 'Rekening', period: 'Periode',
-    periods: { this_month: 'Deze maand', prev_month: 'Vorige maand', this_quarter: 'Dit kwartaal', prev_quarter: 'Vorig kwartaal', this_year: 'Dit jaar', prev_year: 'Vorig jaar' },
+    periods: { this_month: 'Deze maand', prev_month: 'Vorige maand', this_quarter: 'Dit kwartaal', prev_quarter: 'Vorig kwartaal', this_year: 'Dit jaar', prev_year: 'Vorig jaar', all: 'Alle periodes' },
     nothingToBook: 'Niets te boeken in deze periode.', noTransactions: 'Geen transacties in deze periode. Importeer een afschriftbestand bij een rekening in de bankinstellingen.',
     open: 'Open', booked: 'Geboekt', noDescription: 'Geen omschrijving', transaction: 'Transactie', toTransactions: 'Naar Transacties',
     bookings: 'Boekingen', bookingsSubtitle: 'De categorieën waarop deze transactie is geboekt.', noBookings: 'Nog niet geboekt.', byRule: 'Geboekt door een regel',

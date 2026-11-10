@@ -339,6 +339,19 @@ func (q *Queries) ConsumeResetToken(ctx context.Context, arg ConsumeResetTokenPa
 	return user_id, err
 }
 
+const countUnprocessedFinancialMutations = `-- name: CountUnprocessedFinancialMutations :one
+SELECT count(*)::int FROM financial_mutations m
+JOIN financial_accounts a ON a.id = m.financial_account_id
+WHERE m.administration_id = $1 AND m.state = 'unprocessed' AND a.active
+`
+
+func (q *Queries) CountUnprocessedFinancialMutations(ctx context.Context, administrationID int64) (int32, error) {
+	row := q.db.QueryRow(ctx, countUnprocessedFinancialMutations, administrationID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const customFieldByID = `-- name: CustomFieldByID :one
 SELECT id, administration_id, name, source, created_at, updated_at, position FROM custom_fields WHERE administration_id = $1 AND id = $2
 `
@@ -2938,6 +2951,59 @@ WHERE d.identity_id = $1 AND i.administration_id = d.administration_id AND i.is_
 func (q *Queries) MoveDocumentStylesToDefaultIdentity(ctx context.Context, identityID int64) error {
 	_, err := q.db.Exec(ctx, moveDocumentStylesToDefaultIdentity, identityID)
 	return err
+}
+
+const recentlyProcessedFinancialMutations = `-- name: RecentlyProcessedFinancialMutations :many
+SELECT id, administration_id, financial_account_id, financial_statement_id, date, valutation_date, message, amount, currency, code, contra_account_name, contra_account_number, batch_reference, transaction_id, fingerprint, position, state, processed_at, created_at, updated_at FROM financial_mutations
+WHERE administration_id = $1 AND state = 'processed' AND processed_at IS NOT NULL
+ORDER BY processed_at DESC, id DESC
+LIMIT $2
+`
+
+type RecentlyProcessedFinancialMutationsParams struct {
+	AdministrationID int64
+	MaxRows          int32
+}
+
+func (q *Queries) RecentlyProcessedFinancialMutations(ctx context.Context, arg RecentlyProcessedFinancialMutationsParams) ([]FinancialMutation, error) {
+	rows, err := q.db.Query(ctx, recentlyProcessedFinancialMutations, arg.AdministrationID, arg.MaxRows)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FinancialMutation
+	for rows.Next() {
+		var i FinancialMutation
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.FinancialAccountID,
+			&i.FinancialStatementID,
+			&i.Date,
+			&i.ValutationDate,
+			&i.Message,
+			&i.Amount,
+			&i.Currency,
+			&i.Code,
+			&i.ContraAccountName,
+			&i.ContraAccountNumber,
+			&i.BatchReference,
+			&i.TransactionID,
+			&i.Fingerprint,
+			&i.Position,
+			&i.State,
+			&i.ProcessedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const requiresTwoFactor = `-- name: RequiresTwoFactor :one

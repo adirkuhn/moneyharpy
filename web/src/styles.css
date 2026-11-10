@@ -117,6 +117,12 @@ main:focus { outline: none; }
 }
 .topnav__left, .topnav__right { display: flex; flex: 1 1 0; align-items: center; gap: 0.5rem; min-width: 0; }
 .topnav__right { flex: 0 1 auto; }
+/* The left side keeps its links whole; the search box gives way instead. */
+.topnav__left { flex: 1 0 auto; }
+@media (min-width: 40.0625rem) {
+  .topnav__left > .menu .topnav__btn { max-width: 16rem; }
+  .topnav__left > .menu .topnav__label { display: block; white-space: nowrap; }
+}
 .brand { flex: none; }
 .topnav__right { justify-content: flex-end; }
 .topnav__search { display: flex; flex: 0 1 25rem; min-width: 10rem; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 0.75rem; border-radius: 8px; background: var(--bg); color: var(--muted); }
@@ -637,7 +643,7 @@ textarea { min-height: 4.5rem; padding: 0.5rem 0.625rem; resize: vertical; }
 
 /* The top bar follows its own width too: search goes first, then the wordmark. */
 .topnav { container: topbar / inline-size; }
-@container topbar (max-width: 64rem) {
+@container topbar (max-width: 72rem) {
   .topnav__search { display: none; }
 }
 @container topbar (max-width: 40rem) {
@@ -702,3 +708,34 @@ textarea { min-height: 4.5rem; padding: 0.5rem 0.625rem; resize: vertical; }
 .code-block { margin: 0 0 1rem; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow-x: auto; font-size: 0.875rem; white-space: pre; }
 .tag-list { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0 0 1rem; padding: 0; list-style: none; }
 .tag-list code { padding: 0.125rem 0.5rem; border: 1px solid var(--line); border-radius: 999px; font-size: 0.875rem; }
+
+/* Overview: one block per part of the books, then what was processed last. */
+.overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.overview__block { display: grid; align-content: start; gap: 0.5rem; }
+.overview__title { margin: 0 0 0.25rem; font-size: 0.9375rem; font-weight: 600; color: var(--muted); }
+.tile { display: grid; grid-template-columns: auto 1fr; grid-template-areas: 'icon title' 'icon detail'; column-gap: 0.75rem; align-items: center; padding: 0.875rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); text-decoration: none; }
+a.tile:hover { background: var(--row-hover); }
+a.tile:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.tile__icon { grid-area: icon; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 50%; background: var(--bg); color: var(--link); }
+.tile__icon--urgent { color: var(--danger); }
+.tile__title { grid-area: title; font-size: 0.875rem; color: var(--muted); }
+.tile__detail { grid-area: detail; font-size: 1.25rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.tile--later { border-style: dashed; background: transparent; }
+.tile--later .tile__icon { color: var(--muted); }
+.tile--later .tile__detail { font-size: 0.9375rem; font-weight: 500; color: var(--muted); }
+.recent__heading { margin: 0 0 0.75rem; font-size: 1.125rem; }
+.recent__list { margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.recent__list li + li { border-top: 1px solid var(--line); }
+.recent__row { display: grid; grid-template-columns: auto 1fr auto auto; grid-template-areas: 'kind title state amount' 'kind description description date'; column-gap: 0.75rem; row-gap: 0.125rem; align-items: center; padding: 0.75rem 1rem; color: var(--text); text-decoration: none; }
+.recent__row:hover { background: var(--row-hover); }
+.recent__row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.recent__kind { grid-area: kind; color: var(--muted); }
+.recent__title { grid-area: title; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent__state { grid-area: state; padding: 0.0625rem 0.5rem; border-radius: 999px; background: var(--bg); color: var(--muted); font-size: 0.75rem; font-weight: 600; }
+.recent__description { grid-area: description; overflow: hidden; color: var(--muted); font-size: 0.875rem; text-overflow: ellipsis; white-space: nowrap; }
+.recent__amount { grid-area: amount; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.recent__date { grid-area: date; color: var(--muted); font-size: 0.875rem; text-align: right; }
+@media (max-width: 40rem) {
+  .recent__row { grid-template-columns: auto 1fr auto; grid-template-areas: 'kind title amount' 'kind description date' 'kind state state'; }
+  .recent__state { justify-self: start; }
+}

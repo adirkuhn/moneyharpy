@@ -30,6 +30,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
+	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/postgres/postgrestest"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
@@ -231,6 +232,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	h.hooks = webhooks.NewService(admins, postgres.NewWebhookStore(pool, settings.NewCipher("test-secret")), hookclient.New(), settle, ids, time.Now)
 	invoices := invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now)
 	people := identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), mailer, settings.NewCipher("test-secret"), time.Now)
+	bank := banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
@@ -238,7 +240,8 @@ func newHarness(t *testing.T, opts options) *harness {
 		Connections:     connections.NewService(admins, postgres.NewConnectionStore(pool), ids, time.Now),
 		Webhooks:        h.hooks,
 		Bookkeeping:     books,
-		Banking:         banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now),
+		Banking:         bank,
+		Overview:        overview.NewService(admins, bank),
 		Storage:         files,
 		Identity:        people,
 		Settings:        settle,

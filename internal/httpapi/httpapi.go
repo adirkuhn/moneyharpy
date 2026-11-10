@@ -22,6 +22,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
+	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
@@ -76,6 +77,7 @@ type Deps struct {
 	Invoicing       *invoicing.Service
 	Bookkeeping     *bookkeeping.Service
 	Banking         *banking.Service
+	Overview        *overview.Service
 	Membership      *membership.Service
 	Connections     *connections.Service
 	Webhooks        *webhooks.Service

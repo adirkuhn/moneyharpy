@@ -93,6 +93,11 @@ type Store interface {
 
 	// Balances returns the sum of every account's mutations.
 	Balances(ctx context.Context, admin resource.ID) (map[resource.ID]Amount, error)
+	// CountUnprocessed counts the unprocessed transactions of active accounts.
+	CountUnprocessed(ctx context.Context, admin resource.ID) (int, error)
+	// RecentlyProcessed returns up to limit processed transactions, the
+	// most recently processed first.
+	RecentlyProcessed(ctx context.Context, admin resource.ID, limit int) ([]Mutation, error)
 }
 
 // Service implements the banking use cases.

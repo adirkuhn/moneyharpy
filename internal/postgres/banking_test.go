@@ -155,3 +155,48 @@ func TestBankingStatementRoundTrip(t *testing.T) {
 		t.Errorf("mutation of deleted statement error = %v", err)
 	}
 }
+
+func TestBankingSummary(t *testing.T) {
+	ctx := context.Background()
+	svc, books, _, admin, owner := bankingService(t)
+	acc, err := svc.CreateAccount(ctx, admin, owner, banking.AccountChanges{Name: ptr("Main bank"), Identifier: ptr("NL91ABNA0417164300")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	software := categoryByKey(t, books, admin, owner, "software")
+	if _, err := svc.CreateRule(ctx, admin, owner, banking.RuleChanges{
+		Name: ptr("Hosting"), LedgerAccountID: &software, Direction: ptr("debit"),
+		Conditions: &[]banking.Condition{{Field: "contra_account_name", Operator: "contains", Value: "hosting"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile("../bankfile/testdata/camt053.xml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Import(ctx, admin, acc.ID, owner, data); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := svc.Summary(ctx, admin, owner, 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Unprocessed != 1 || got.Balance != 97450 || got.Currency != "EUR" {
+		t.Errorf("summary = %+v", got)
+	}
+	if len(got.RecentlyProcessed) != 1 || got.RecentlyProcessed[0].State != banking.Processed || len(got.RecentlyProcessed[0].Bookings) != 1 {
+		t.Errorf("recently processed = %+v", got.RecentlyProcessed)
+	}
+	if none, _ := svc.Summary(ctx, admin, owner, 0); len(none.RecentlyProcessed) != 0 {
+		t.Errorf("limit 0 returned %d", len(none.RecentlyProcessed))
+	}
+
+	// Inactive accounts have nothing left to link.
+	if _, err := svc.UpdateAccount(ctx, admin, acc.ID, owner, banking.AccountChanges{Active: ptr(false)}); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ = svc.Summary(ctx, admin, owner, 25); got.Unprocessed != 0 {
+		t.Errorf("unprocessed after deactivating = %d", got.Unprocessed)
+	}
+}
