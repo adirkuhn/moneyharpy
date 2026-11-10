@@ -10,9 +10,18 @@ services:
       TRUST_PROXY_HEADERS: "true"
     ports:
       - "18080:8080"
+    volumes:
+      - uploads-data:/data/uploads
     depends_on:
       db:
         condition: service_healthy
+  storage:
+    image: chrislusf/seaweedfs:4.52
+    command: ["server", "-s3", "-s3.port=8333", "-dir=/data", "-s3.config=/etc/seaweedfs/s3.json"]
+    volumes:
+      - ../internal/objectstore/testdata/s3.json:/etc/seaweedfs/s3.json:ro
+    tmpfs:
+      - /data
   mailpit:
     image: axllent/mailpit:v1.27
     ports:
@@ -30,3 +39,6 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+
+volumes:
+  uploads-data:

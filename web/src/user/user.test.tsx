@@ -40,7 +40,7 @@ describe('API tokens', () => {
 })
 
 describe('instance settings', () => {
-  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '' }
+  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false }
 
   it('is closed to regular users', async () => {
     server.use(signedIn(), listing([]))
@@ -63,7 +63,7 @@ describe('instance settings', () => {
     await userEvent.click(await screen.findByLabelText('Allow new users to register'))
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() =>
-      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls' }),
+      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false }),
     )
     expect(await screen.findByRole('status')).toHaveTextContent('Settings saved')
   })
@@ -137,6 +137,30 @@ describe('instance settings', () => {
         smtp_password: 'pw', smtp_from: 'books@example.com', smtp_security: 'tls',
       }),
     )
+  })
+
+  it('configures file storage and checks it', async () => {
+    let sent: unknown
+    const saved = { ...current, storage_enabled: true, storage_endpoint: 'http://storage:8333', storage_bucket: 'files', storage_access_key: 'k', storage_secret_key_set: true }
+    server.use(
+      signedIn({ ...user, instance_admin: true }),
+      listing([]),
+      http.get('*/api/instance/settings', () => HttpResponse.json(saved)),
+      http.patch('*/api/instance/settings', async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json(saved)
+      }),
+      http.post('*/api/instance/settings/test_storage', () => new HttpResponse(null, { status: 204 })),
+    )
+    renderAt('/instance/settings')
+    const endpoint = await screen.findByLabelText('Endpoint')
+    await userEvent.clear(endpoint)
+    await userEvent.type(endpoint, 'https://s3.example.com')
+    await userEvent.type(screen.getByLabelText('Secret key'), 'secret')
+    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+    await waitFor(() => expect(sent).toMatchObject({ storage_enabled: true, storage_endpoint: 'https://s3.example.com', storage_bucket: 'files', storage_secret_key: 'secret', storage_path_style: false }))
+    await userEvent.click(screen.getByRole('button', { name: 'Test storage' }))
+    expect(await screen.findByText('The storage works')).toBeInTheDocument()
   })
 
   describe('sending a test email', () => {

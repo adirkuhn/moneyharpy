@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"testing/fstest"
@@ -23,6 +24,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
+	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/postgres/postgrestest"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
@@ -134,6 +136,39 @@ func (m *fakeMailer) SendTest(_ context.Context, to string) error {
 	return m.testErr
 }
 
+// fakeFiles is an in-memory file store.
+type fakeFiles struct {
+	mu       sync.Mutex
+	data     map[string][]byte
+	checkErr error
+}
+
+func (f *fakeFiles) Put(_ context.Context, key, _ string, data []byte) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.data[key] = data
+	return nil
+}
+
+func (f *fakeFiles) Open(_ context.Context, key string) (io.ReadCloser, string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	data, ok := f.data[key]
+	if !ok {
+		return nil, "", invoicing.ErrFileNotFound
+	}
+	return io.NopCloser(bytes.NewReader(data)), "", nil
+}
+
+func (f *fakeFiles) Delete(_ context.Context, key string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	delete(f.data, key)
+	return nil
+}
+
+func (f *fakeFiles) Check(context.Context) error { return f.checkErr }
+
 type options struct {
 	pool       *pgxpool.Pool
 	apiLimiter *ratelimit.Limiter
@@ -146,6 +181,7 @@ type harness struct {
 	lm2    *fakeLM2
 	lookup *fakeLookups
 	mailer *fakeMailer
+	files  *fakeFiles
 	settle *settings.Service
 }
 
@@ -167,13 +203,17 @@ func newHarness(t *testing.T, opts options) *harness {
 	lookup := &fakeLookups{}
 	mailer := &fakeMailer{resets: make(chan sentMail, 8)}
 
-	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, settle: settle}
+	files := &fakeFiles{data: map[string][]byte{}}
+	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle}
 	h.server = httptest.NewUnstartedServer(nil)
 	h.server.Start()
 	t.Cleanup(h.server.Close)
 
+	admins := administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
-		Administrations: administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now),
+		Administrations: admins,
+		Invoicing:       invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now),
+		Storage:         files,
 		Identity:        identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), mailer, time.Now),
 		Settings:        settle,
 		Resources:       postgres.NewResourceLocator(pool),
@@ -1196,4 +1236,197 @@ func TestServesContractAndWebApp(t *testing.T) {
 	if string(asset.body) != "js" {
 		t.Errorf("GET /assets/app.js = %q, want the asset", asset.body)
 	}
+}
+
+func TestStorageSettingsAndCheck(t *testing.T) {
+	ctx := context.Background()
+	pool, cleanup, err := postgrestest.Start(ctx)
+	if err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	defer cleanup()
+	h := newHarness(t, options{pool: pool})
+	admin, member := h.client(), h.client()
+	admin.register()
+	member.register()
+
+	const secret = "storage-secret-value"
+	r := admin.do(http.MethodPatch, "/api/instance/settings", map[string]any{
+		"storage_enabled": true, "storage_endpoint": "http://storage:8333", "storage_region": "us-east-1",
+		"storage_bucket": "moneyharpy", "storage_access_key": "key", "storage_secret_key": secret, "storage_path_style": true,
+	})
+	wantStatus(t, r, http.StatusOK)
+	if bytes.Contains(r.body, []byte(secret)) {
+		t.Error("settings response contains the secret key")
+	}
+	got := decode[httpapi.InstanceSettings](t, r)
+	if !got.StorageEnabled || got.StorageEndpoint != "http://storage:8333" || got.StorageBucket != "moneyharpy" || !got.StorageSecretKeySet || !got.StoragePathStyle {
+		t.Errorf("settings = %+v", got)
+	}
+
+	const path = "/api/instance/settings/test_storage"
+	wantStatus(t, member.do(http.MethodPost, path, nil), http.StatusForbidden)
+	wantStatus(t, admin.do(http.MethodPost, path, nil), http.StatusNoContent)
+	h.files.checkErr = errors.New("The access key ID you provided does not exist")
+	r = admin.do(http.MethodPost, path, nil)
+	wantStatus(t, r, http.StatusBadGateway)
+	if !bytes.Contains(r.body, []byte("access key ID")) {
+		t.Errorf("body = %s, want the storage's reason for the admin", r.body)
+	}
+}
+
+func TestInvoiceSettings(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, stranger := h.client(), h.client()
+	owner.register()
+	stranger.register()
+	a := owner.createAdministration("Harpy")
+	path := "/api/v2/" + a.Id + "/invoice_settings"
+
+	got := decode[httpapi.InvoiceSettings](t, owner.do(http.MethodGet, path, nil))
+	if got.InvoiceIdTemplate != "{year}-{id}" || got.InvoiceSequenceId != "0001" || got.InvoiceIdExample != time.Now().Format("2006")+"-0001" {
+		t.Errorf("settings = %+v", got)
+	}
+	r := owner.do(http.MethodPatch, path, map[string]any{"invoice_settings": map[string]any{
+		"invoice_id_template": "F{id}", "invoice_sequence_id": "1462", "invoice_bcc_email_address": "a@example.com",
+		"invoice_reminders_bcc_enabled": true, "payments_without_proof": false,
+	}})
+	wantStatus(t, r, http.StatusOK)
+	if got = decode[httpapi.InvoiceSettings](t, r); got.InvoiceIdExample != "F1462" || !got.InvoiceRemindersBccEnabled || got.PaymentsWithoutProof {
+		t.Errorf("updated = %+v", got)
+	}
+	r = owner.do(http.MethodPatch, path, map[string]any{"invoice_settings": map[string]any{"invoice_id_template": "{year}"}})
+	wantStatus(t, r, http.StatusUnprocessableEntity)
+	if !bytes.Contains(r.body, []byte("invoice_id_template")) {
+		t.Errorf("body = %s", r.body)
+	}
+	wantStatus(t, stranger.do(http.MethodGet, path, nil), http.StatusNotFound)
+}
+
+func TestWorkflows(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, stranger := h.client(), h.client()
+	owner.register()
+	stranger.register()
+	a := owner.createAdministration("Harpy")
+	base := "/api/v2/" + a.Id + "/workflows"
+
+	list := decode[[]httpapi.Workflow](t, owner.do(http.MethodGet, base+".json", nil))
+	if len(list) != 2 || *list[1].Type != "InvoiceWorkflow" || !*list[1].Default || len(*list[1].Steps) != 3 {
+		t.Fatalf("list = %+v", list)
+	}
+	r := owner.do(http.MethodPost, base, map[string]any{"workflow": map[string]any{
+		"type": "InvoiceWorkflow", "name": "Export", "currency": "USD", "language": "en",
+		"steps_attributes": []map[string]any{{"due_interval": 30}, {"reminder_delay": 10, "reminder_text": "Pay", "reminder_auto_send": true}},
+	}})
+	wantStatus(t, r, http.StatusCreated)
+	w := decode[httpapi.Workflow](t, r)
+	if *w.Name != "Export" || *w.Default || w.Uri != "/"+a.Id+"/workflows/"+*w.Id || len(*w.Steps) != 2 {
+		t.Errorf("created = %+v", w)
+	}
+	r = owner.do(http.MethodPatch, base+"/"+*w.Id, map[string]any{"workflow": map[string]any{"default": true, "prices_are_incl_tax": true}})
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[httpapi.Workflow](t, r); !*got.Default || !*got.PricesAreInclTax {
+		t.Errorf("updated = %+v", got)
+	}
+	wantStatus(t, owner.do(http.MethodDelete, base+"/"+*w.Id, nil), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodDelete, base+"/"+*list[1].Id, nil), http.StatusNoContent)
+	wantStatus(t, owner.do(http.MethodPost, base, map[string]any{"workflow": map[string]any{"type": "InvoiceWorkflow", "name": ""}}), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPost, base, map[string]any{"workflow": map[string]any{"type": "PurchaseWorkflow"}}), http.StatusBadRequest)
+	wantStatus(t, stranger.do(http.MethodGet, base, nil), http.StatusNotFound)
+	wantStatus(t, stranger.do(http.MethodGet, base+"/"+*w.Id, nil), http.StatusNotFound)
+}
+
+var pngBytes = append([]byte("\x89PNG\r\n\x1a\n"), make([]byte, 64)...)
+
+func TestDocumentStyles(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, stranger := h.client(), h.client()
+	owner.register()
+	stranger.register()
+	a := owner.createAdministration("Harpy")
+	base := "/api/v2/" + a.Id + "/document_styles"
+
+	list := decode[[]httpapi.DocumentStyle](t, owner.do(http.MethodGet, base, nil))
+	if len(list) != 1 || !*list[0].Default || *list[0].PaperSize != "A4" {
+		t.Fatalf("list = %+v", list)
+	}
+	r := owner.do(http.MethodPost, base, map[string]any{"document_style": map[string]any{
+		"name": "The Best", "paper_size": "letter", "font_size": 11,
+		"invoice_sender_address": []map[string]any{{"field": "company_name", "bold": true}, {"field": "tax_number", "label": true}},
+	}})
+	wantStatus(t, r, http.StatusCreated)
+	var created map[string]any
+	if err := json.Unmarshal(r.body, &created); err != nil {
+		t.Fatal(err)
+	}
+	id := created["id"].(string)
+	want := []any{map[string]any{"field": "company_name", "bold": true}, map[string]any{"field": "tax_number", "label": true}}
+	if diff := cmp.Diff(want, created["invoice_sender_address"]); diff != "" {
+		t.Errorf("invoice_sender_address diff (-want +got):\n%s", diff)
+	}
+	if created["uri"] != "/"+a.Id+"/document_styles/"+id || created["logo_hash"] != nil {
+		t.Errorf("created = %v", created)
+	}
+
+	logo := base + "/" + id + "/logo"
+	r = owner.do(http.MethodPut, logo, string(pngBytes), [2]string{"Content-Type", "image/png"})
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[httpapi.DocumentStyle](t, r); got.LogoHash == nil || len(*got.LogoHash) != 64 {
+		t.Errorf("logo_hash = %v", got.LogoHash)
+	}
+	r = owner.do(http.MethodGet, logo, nil)
+	wantStatus(t, r, http.StatusOK)
+	if !bytes.Equal(r.body, pngBytes) || r.header.Get("Content-Type") != "image/png" {
+		t.Errorf("logo = %d bytes, %s", len(r.body), r.header.Get("Content-Type"))
+	}
+	wantStatus(t, stranger.do(http.MethodGet, logo, nil), http.StatusNotFound)
+	wantStatus(t, owner.do(http.MethodPut, logo, "%PDF-1.7", [2]string{"Content-Type", "application/pdf"}), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPut, logo, "<svg/>", [2]string{"Content-Type", "image/svg+xml"}), http.StatusBadRequest)
+	r = owner.do(http.MethodDelete, logo, nil)
+	wantStatus(t, r, http.StatusOK)
+	wantStatus(t, owner.do(http.MethodGet, logo, nil), http.StatusNotFound)
+
+	// A file lost from storage is reported as missing, not as a failure.
+	wantStatus(t, owner.do(http.MethodPut, logo, string(pngBytes), [2]string{"Content-Type", "image/png"}), http.StatusOK)
+	h.files.mu.Lock()
+	clear(h.files.data)
+	h.files.mu.Unlock()
+	wantStatus(t, owner.do(http.MethodGet, logo, nil), http.StatusNotFound)
+
+	wantStatus(t, owner.do(http.MethodPatch, base+"/"+id, map[string]any{"document_style": map[string]any{"font_size": 40}}), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodDelete, base+"/"+*list[0].Id, nil), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodDelete, base+"/"+id, nil), http.StatusNoContent)
+	wantStatus(t, stranger.do(http.MethodGet, base, nil), http.StatusNotFound)
+}
+
+func TestCustomFieldEditing(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, stranger := h.client(), h.client()
+	owner.register()
+	stranger.register()
+	a := owner.createAdministration("Harpy")
+	base := "/api/v2/" + a.Id + "/custom_fields"
+	create := func(name string) httpapi.CustomField {
+		return decode[httpapi.CustomField](t, owner.do(http.MethodPost, base, map[string]any{"custom_field": map[string]string{"name": name, "source": "identity"}}))
+	}
+	first, second := create("First"), create("Second")
+
+	r := owner.do(http.MethodPatch, base+"/"+first.Id, map[string]any{"custom_field": map[string]string{"name": "Slogan"}})
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[httpapi.CustomField](t, r); got.Name != "Slogan" {
+		t.Errorf("renamed = %+v", got)
+	}
+	order := func(ids ...string) map[string]any {
+		return map[string]any{"custom_fields_order": map[string]any{"source": "identity", "ids": ids}}
+	}
+	wantStatus(t, owner.do(http.MethodPut, base+"/order", order(second.Id, first.Id)), http.StatusNoContent)
+	list := decode[[]httpapi.CustomField](t, owner.do(http.MethodGet, base, nil))
+	if len(list) != 2 || list[0].Id != second.Id {
+		t.Errorf("order = %+v", list)
+	}
+	wantStatus(t, owner.do(http.MethodPut, base+"/order", order(first.Id)), http.StatusUnprocessableEntity)
+	wantStatus(t, stranger.do(http.MethodDelete, base+"/"+first.Id, nil), http.StatusNotFound)
+	wantStatus(t, owner.do(http.MethodDelete, base+"/"+first.Id, nil), http.StatusNoContent)
+	wantStatus(t, owner.do(http.MethodGet, base+"/"+first.Id, nil), http.StatusNotFound)
 }

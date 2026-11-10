@@ -4,6 +4,7 @@
 package httpapi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -49,6 +50,120 @@ func (e CustomFieldSource) Valid() bool {
 	case CustomFieldSourceIdentity:
 		return true
 	case CustomFieldSourceSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleAddressPosition.
+const (
+	DocumentStyleAddressPositionLeft  DocumentStyleAddressPosition = "left"
+	DocumentStyleAddressPositionRight DocumentStyleAddressPosition = "right"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleAddressPosition enum.
+func (e DocumentStyleAddressPosition) Valid() bool {
+	switch e {
+	case DocumentStyleAddressPositionLeft:
+		return true
+	case DocumentStyleAddressPositionRight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleLogoPosition.
+const (
+	DocumentStyleLogoPositionCenter DocumentStyleLogoPosition = "center"
+	DocumentStyleLogoPositionLeft   DocumentStyleLogoPosition = "left"
+	DocumentStyleLogoPositionRight  DocumentStyleLogoPosition = "right"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleLogoPosition enum.
+func (e DocumentStyleLogoPosition) Valid() bool {
+	switch e {
+	case DocumentStyleLogoPositionCenter:
+		return true
+	case DocumentStyleLogoPositionLeft:
+		return true
+	case DocumentStyleLogoPositionRight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStylePaperSize.
+const (
+	DocumentStylePaperSizeA4     DocumentStylePaperSize = "A4"
+	DocumentStylePaperSizeLetter DocumentStylePaperSize = "letter"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStylePaperSize enum.
+func (e DocumentStylePaperSize) Valid() bool {
+	switch e {
+	case DocumentStylePaperSizeA4:
+		return true
+	case DocumentStylePaperSizeLetter:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleRequestDocumentStyleAddressPosition.
+const (
+	DocumentStyleRequestDocumentStyleAddressPositionLeft  DocumentStyleRequestDocumentStyleAddressPosition = "left"
+	DocumentStyleRequestDocumentStyleAddressPositionRight DocumentStyleRequestDocumentStyleAddressPosition = "right"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleRequestDocumentStyleAddressPosition enum.
+func (e DocumentStyleRequestDocumentStyleAddressPosition) Valid() bool {
+	switch e {
+	case DocumentStyleRequestDocumentStyleAddressPositionLeft:
+		return true
+	case DocumentStyleRequestDocumentStyleAddressPositionRight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleRequestDocumentStyleLogoPosition.
+const (
+	DocumentStyleRequestDocumentStyleLogoPositionCenter DocumentStyleRequestDocumentStyleLogoPosition = "center"
+	DocumentStyleRequestDocumentStyleLogoPositionLeft   DocumentStyleRequestDocumentStyleLogoPosition = "left"
+	DocumentStyleRequestDocumentStyleLogoPositionRight  DocumentStyleRequestDocumentStyleLogoPosition = "right"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleRequestDocumentStyleLogoPosition enum.
+func (e DocumentStyleRequestDocumentStyleLogoPosition) Valid() bool {
+	switch e {
+	case DocumentStyleRequestDocumentStyleLogoPositionCenter:
+		return true
+	case DocumentStyleRequestDocumentStyleLogoPositionLeft:
+		return true
+	case DocumentStyleRequestDocumentStyleLogoPositionRight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleRequestDocumentStylePaperSize.
+const (
+	DocumentStyleRequestDocumentStylePaperSizeA4     DocumentStyleRequestDocumentStylePaperSize = "A4"
+	DocumentStyleRequestDocumentStylePaperSizeLetter DocumentStyleRequestDocumentStylePaperSize = "letter"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleRequestDocumentStylePaperSize enum.
+func (e DocumentStyleRequestDocumentStylePaperSize) Valid() bool {
+	switch e {
+	case DocumentStyleRequestDocumentStylePaperSizeA4:
+		return true
+	case DocumentStyleRequestDocumentStylePaperSizeLetter:
 		return true
 	default:
 		return false
@@ -130,6 +245,378 @@ func (e UpdateInstanceSettingsRequestSmtpSecurity) Valid() bool {
 	case Starttls:
 		return true
 	case Tls:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WorkflowRequestWorkflowType.
+const (
+	EstimateWorkflow WorkflowRequestWorkflowType = "EstimateWorkflow"
+	InvoiceWorkflow  WorkflowRequestWorkflowType = "InvoiceWorkflow"
+)
+
+// Valid indicates whether the value is a known member of the WorkflowRequestWorkflowType enum.
+func (e WorkflowRequestWorkflowType) Valid() bool {
+	switch e {
+	case EstimateWorkflow:
+		return true
+	case InvoiceWorkflow:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleResponseAddressPosition.
+const (
+	DocumentStyleResponseAddressPositionLeft  DocumentStyleResponseAddressPosition = "left"
+	DocumentStyleResponseAddressPositionRight DocumentStyleResponseAddressPosition = "right"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleResponseAddressPosition enum.
+func (e DocumentStyleResponseAddressPosition) Valid() bool {
+	switch e {
+	case DocumentStyleResponseAddressPositionLeft:
+		return true
+	case DocumentStyleResponseAddressPositionRight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleResponseLogoPosition.
+const (
+	DocumentStyleResponseLogoPositionCenter DocumentStyleResponseLogoPosition = "center"
+	DocumentStyleResponseLogoPositionLeft   DocumentStyleResponseLogoPosition = "left"
+	DocumentStyleResponseLogoPositionRight  DocumentStyleResponseLogoPosition = "right"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleResponseLogoPosition enum.
+func (e DocumentStyleResponseLogoPosition) Valid() bool {
+	switch e {
+	case DocumentStyleResponseLogoPositionCenter:
+		return true
+	case DocumentStyleResponseLogoPositionLeft:
+		return true
+	case DocumentStyleResponseLogoPositionRight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleResponsePaperSize.
+const (
+	DocumentStyleResponsePaperSizeA4     DocumentStyleResponsePaperSize = "A4"
+	DocumentStyleResponsePaperSizeLetter DocumentStyleResponsePaperSize = "letter"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleResponsePaperSize enum.
+func (e DocumentStyleResponsePaperSize) Valid() bool {
+	switch e {
+	case DocumentStyleResponsePaperSizeA4:
+		return true
+	case DocumentStyleResponsePaperSizeLetter:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for NoteResponseTodoType.
+const (
+	AdyenVerificationError                               NoteResponseTodoType = "adyen_verification_error"
+	AuditfileReady                                       NoteResponseTodoType = "auditfile_ready"
+	ContactEmailBlocked                                  NoteResponseTodoType = "contact_email_blocked"
+	ContactEmailDeliveryFailed                           NoteResponseTodoType = "contact_email_delivery_failed"
+	ContactEmailInvalidAddress                           NoteResponseTodoType = "contact_email_invalid_address"
+	ContactEmailInvalidAttachment                        NoteResponseTodoType = "contact_email_invalid_attachment"
+	ContactEmailMarkedAsSpam                             NoteResponseTodoType = "contact_email_marked_as_spam"
+	ContactEmailNotPresent                               NoteResponseTodoType = "contact_email_not_present"
+	ContactEmailPayloadTooLarge                          NoteResponseTodoType = "contact_email_payload_too_large"
+	ContactEmailPreviouslyBounced                        NoteResponseTodoType = "contact_email_previously_bounced"
+	ContactEmailSenderLimit                              NoteResponseTodoType = "contact_email_sender_limit"
+	DocumentPaymentNotLinkedToFinancialMutation          NoteResponseTodoType = "document_payment_not_linked_to_financial_mutation"
+	EmailDomainInvalidated                               NoteResponseTodoType = "email_domain_invalidated"
+	EstimateDue                                          NoteResponseTodoType = "estimate_due"
+	EstimateEmailBlocked                                 NoteResponseTodoType = "estimate_email_blocked"
+	EstimateEmailDeliveryFailed                          NoteResponseTodoType = "estimate_email_delivery_failed"
+	EstimateEmailInvalidAddress                          NoteResponseTodoType = "estimate_email_invalid_address"
+	EstimateEmailInvalidAttachment                       NoteResponseTodoType = "estimate_email_invalid_attachment"
+	EstimateEmailMarkedAsSpam                            NoteResponseTodoType = "estimate_email_marked_as_spam"
+	EstimateEmailPayloadTooLarge                         NoteResponseTodoType = "estimate_email_payload_too_large"
+	EstimateEmailPreviouslyBounced                       NoteResponseTodoType = "estimate_email_previously_bounced"
+	EstimateEmailSenderLimit                             NoteResponseTodoType = "estimate_email_sender_limit"
+	EstimateUnprintable                                  NoteResponseTodoType = "estimate_unprintable"
+	ExportContactsReady                                  NoteResponseTodoType = "export_contacts_ready"
+	ExportDocumentsReady                                 NoteResponseTodoType = "export_documents_ready"
+	ExportEstimatesReady                                 NoteResponseTodoType = "export_estimates_ready"
+	ExportSalesInvoicesReady                             NoteResponseTodoType = "export_sales_invoices_ready"
+	ExternalSalesInvoiceInvalidUbl                       NoteResponseTodoType = "external_sales_invoice_invalid_ubl"
+	FinancialMutationFailed                              NoteResponseTodoType = "financial_mutation_failed"
+	FinancialMutationPaymentLocked                       NoteResponseTodoType = "financial_mutation_payment_locked"
+	FinancialMutationsNotUpdated                         NoteResponseTodoType = "financial_mutations_not_updated"
+	GatewayConnectionTerminated                          NoteResponseTodoType = "gateway_connection_terminated"
+	GeneralDocumentDue                                   NoteResponseTodoType = "general_document_due"
+	GeneralDocumentReminder                              NoteResponseTodoType = "general_document_reminder"
+	ImportContactsReady                                  NoteResponseTodoType = "import_contacts_ready"
+	ImportFinancialStatementFinished                     NoteResponseTodoType = "import_financial_statement_finished"
+	LedgerAccountReportExportReady                       NoteResponseTodoType = "ledger_account_report_export_ready"
+	MollieCredentialNeedsReconnect                       NoteResponseTodoType = "mollie_credential_needs_reconnect"
+	NewDocumentAwaitingProcessing                        NoteResponseTodoType = "new_document_awaiting_processing"
+	NewFinancialMutationAwaitingProcessing               NoteResponseTodoType = "new_financial_mutation_awaiting_processing"
+	PaymentTransactionNoPositivePayment                  NoteResponseTodoType = "payment_transaction_no_positive_payment"
+	PontoFinancialInstitutionDeprecated                  NoteResponseTodoType = "ponto_financial_institution_deprecated"
+	PontoOrganizationNotActivated                        NoteResponseTodoType = "ponto_organization_not_activated"
+	PurchaseInvoiceDue                                   NoteResponseTodoType = "purchase_invoice_due"
+	PurchaseInvoiceInvalidUbl                            NoteResponseTodoType = "purchase_invoice_invalid_ubl"
+	PurchaseInvoiceReceivedSimplerinvoicing              NoteResponseTodoType = "purchase_invoice_received_simplerinvoicing"
+	PurchaseTransactionExpired                           NoteResponseTodoType = "purchase_transaction_expired"
+	RecurringDocumentStoppedByContactDelete              NoteResponseTodoType = "recurring_document_stopped_by_contact_delete"
+	RecurringSalesInvoiceAutoSendFailed                  NoteResponseTodoType = "recurring_sales_invoice_auto_send_failed"
+	RecurringSalesInvoiceAutoSendSkippedImportWizard     NoteResponseTodoType = "recurring_sales_invoice_auto_send_skipped_import_wizard"
+	RecurringSalesInvoiceCreateInvoiceFailed             NoteResponseTodoType = "recurring_sales_invoice_create_invoice_failed"
+	RecurringSalesInvoiceFailedDeletedContact            NoteResponseTodoType = "recurring_sales_invoice_failed_deleted_contact"
+	SalesInvoiceAwaitingPaymentBatch                     NoteResponseTodoType = "sales_invoice_awaiting_payment_batch"
+	SalesInvoiceBecomingDue                              NoteResponseTodoType = "sales_invoice_becoming_due"
+	SalesInvoiceCollectingFailed                         NoteResponseTodoType = "sales_invoice_collecting_failed"
+	SalesInvoiceCollectingFailedInvalidCurrency          NoteResponseTodoType = "sales_invoice_collecting_failed_invalid_currency"
+	SalesInvoiceCollectingFailedMissingSubscription      NoteResponseTodoType = "sales_invoice_collecting_failed_missing_subscription"
+	SalesInvoiceCollectingFailedMonthlyLimitExceeded     NoteResponseTodoType = "sales_invoice_collecting_failed_monthly_limit_exceeded"
+	SalesInvoiceCollectingFailedNoMandate                NoteResponseTodoType = "sales_invoice_collecting_failed_no_mandate"
+	SalesInvoiceDue                                      NoteResponseTodoType = "sales_invoice_due"
+	SalesInvoiceEmailBlocked                             NoteResponseTodoType = "sales_invoice_email_blocked"
+	SalesInvoiceEmailDeliveryFailed                      NoteResponseTodoType = "sales_invoice_email_delivery_failed"
+	SalesInvoiceEmailInvalidAddress                      NoteResponseTodoType = "sales_invoice_email_invalid_address"
+	SalesInvoiceEmailInvalidAttachment                   NoteResponseTodoType = "sales_invoice_email_invalid_attachment"
+	SalesInvoiceEmailMarkedAsSpam                        NoteResponseTodoType = "sales_invoice_email_marked_as_spam"
+	SalesInvoiceEmailPayloadTooLarge                     NoteResponseTodoType = "sales_invoice_email_payload_too_large"
+	SalesInvoiceEmailPreviouslyBounced                   NoteResponseTodoType = "sales_invoice_email_previously_bounced"
+	SalesInvoiceEmailSenderLimit                         NoteResponseTodoType = "sales_invoice_email_sender_limit"
+	SalesInvoicePaymentEmailMissingSenderEmail           NoteResponseTodoType = "sales_invoice_payment_email_missing_sender_email"
+	SalesInvoicePaymentNotLinkedToFinancialMutation      NoteResponseTodoType = "sales_invoice_payment_not_linked_to_financial_mutation"
+	SalesInvoiceReminderSendingFailed                    NoteResponseTodoType = "sales_invoice_reminder_sending_failed"
+	SalesInvoiceScheduledSendingFailed                   NoteResponseTodoType = "sales_invoice_scheduled_sending_failed"
+	SalesInvoiceSchedulingFailedDueToCollectionMethod    NoteResponseTodoType = "sales_invoice_scheduling_failed_due_to_collection_method"
+	SalesInvoiceSchedulingFailedDueToDeliveryInformation NoteResponseTodoType = "sales_invoice_scheduling_failed_due_to_delivery_information"
+	SalesInvoiceSchedulingFailedDueToPaymentInformation  NoteResponseTodoType = "sales_invoice_scheduling_failed_due_to_payment_information"
+	SalesInvoiceSchedulingFailedDueToSendingAddress      NoteResponseTodoType = "sales_invoice_scheduling_failed_due_to_sending_address"
+	SalesInvoiceSiDeliveryFailedContactUnreachable       NoteResponseTodoType = "sales_invoice_si_delivery_failed_contact_unreachable"
+	SalesInvoiceSiDeliveryFailedDeactivated              NoteResponseTodoType = "sales_invoice_si_delivery_failed_deactivated"
+	SalesInvoiceSiDeliveryFailedIdentityUnverified       NoteResponseTodoType = "sales_invoice_si_delivery_failed_identity_unverified"
+	SalesInvoiceSiDeliveryFailedInvalidSender            NoteResponseTodoType = "sales_invoice_si_delivery_failed_invalid_sender"
+	SalesInvoiceSiDeliveryFailedLengthExceeded           NoteResponseTodoType = "sales_invoice_si_delivery_failed_length_exceeded"
+	SalesInvoiceSiDeliveryFailedUblValidationFailed      NoteResponseTodoType = "sales_invoice_si_delivery_failed_ubl_validation_failed"
+	SalesInvoiceSimplerinvoicingDeliveryError            NoteResponseTodoType = "sales_invoice_simplerinvoicing_delivery_error"
+	SalesInvoiceSimplerinvoicingDeliveryFailedUnroutable NoteResponseTodoType = "sales_invoice_simplerinvoicing_delivery_failed_unroutable"
+	SalesInvoiceTaxNumberInvalid                         NoteResponseTodoType = "sales_invoice_tax_number_invalid"
+	SalesInvoiceUnprintable                              NoteResponseTodoType = "sales_invoice_unprintable"
+	SalesInvoiceWithdrawalRequested                      NoteResponseTodoType = "sales_invoice_withdrawal_requested"
+)
+
+// Valid indicates whether the value is a known member of the NoteResponseTodoType enum.
+func (e NoteResponseTodoType) Valid() bool {
+	switch e {
+	case AdyenVerificationError:
+		return true
+	case AuditfileReady:
+		return true
+	case ContactEmailBlocked:
+		return true
+	case ContactEmailDeliveryFailed:
+		return true
+	case ContactEmailInvalidAddress:
+		return true
+	case ContactEmailInvalidAttachment:
+		return true
+	case ContactEmailMarkedAsSpam:
+		return true
+	case ContactEmailNotPresent:
+		return true
+	case ContactEmailPayloadTooLarge:
+		return true
+	case ContactEmailPreviouslyBounced:
+		return true
+	case ContactEmailSenderLimit:
+		return true
+	case DocumentPaymentNotLinkedToFinancialMutation:
+		return true
+	case EmailDomainInvalidated:
+		return true
+	case EstimateDue:
+		return true
+	case EstimateEmailBlocked:
+		return true
+	case EstimateEmailDeliveryFailed:
+		return true
+	case EstimateEmailInvalidAddress:
+		return true
+	case EstimateEmailInvalidAttachment:
+		return true
+	case EstimateEmailMarkedAsSpam:
+		return true
+	case EstimateEmailPayloadTooLarge:
+		return true
+	case EstimateEmailPreviouslyBounced:
+		return true
+	case EstimateEmailSenderLimit:
+		return true
+	case EstimateUnprintable:
+		return true
+	case ExportContactsReady:
+		return true
+	case ExportDocumentsReady:
+		return true
+	case ExportEstimatesReady:
+		return true
+	case ExportSalesInvoicesReady:
+		return true
+	case ExternalSalesInvoiceInvalidUbl:
+		return true
+	case FinancialMutationFailed:
+		return true
+	case FinancialMutationPaymentLocked:
+		return true
+	case FinancialMutationsNotUpdated:
+		return true
+	case GatewayConnectionTerminated:
+		return true
+	case GeneralDocumentDue:
+		return true
+	case GeneralDocumentReminder:
+		return true
+	case ImportContactsReady:
+		return true
+	case ImportFinancialStatementFinished:
+		return true
+	case LedgerAccountReportExportReady:
+		return true
+	case MollieCredentialNeedsReconnect:
+		return true
+	case NewDocumentAwaitingProcessing:
+		return true
+	case NewFinancialMutationAwaitingProcessing:
+		return true
+	case PaymentTransactionNoPositivePayment:
+		return true
+	case PontoFinancialInstitutionDeprecated:
+		return true
+	case PontoOrganizationNotActivated:
+		return true
+	case PurchaseInvoiceDue:
+		return true
+	case PurchaseInvoiceInvalidUbl:
+		return true
+	case PurchaseInvoiceReceivedSimplerinvoicing:
+		return true
+	case PurchaseTransactionExpired:
+		return true
+	case RecurringDocumentStoppedByContactDelete:
+		return true
+	case RecurringSalesInvoiceAutoSendFailed:
+		return true
+	case RecurringSalesInvoiceAutoSendSkippedImportWizard:
+		return true
+	case RecurringSalesInvoiceCreateInvoiceFailed:
+		return true
+	case RecurringSalesInvoiceFailedDeletedContact:
+		return true
+	case SalesInvoiceAwaitingPaymentBatch:
+		return true
+	case SalesInvoiceBecomingDue:
+		return true
+	case SalesInvoiceCollectingFailed:
+		return true
+	case SalesInvoiceCollectingFailedInvalidCurrency:
+		return true
+	case SalesInvoiceCollectingFailedMissingSubscription:
+		return true
+	case SalesInvoiceCollectingFailedMonthlyLimitExceeded:
+		return true
+	case SalesInvoiceCollectingFailedNoMandate:
+		return true
+	case SalesInvoiceDue:
+		return true
+	case SalesInvoiceEmailBlocked:
+		return true
+	case SalesInvoiceEmailDeliveryFailed:
+		return true
+	case SalesInvoiceEmailInvalidAddress:
+		return true
+	case SalesInvoiceEmailInvalidAttachment:
+		return true
+	case SalesInvoiceEmailMarkedAsSpam:
+		return true
+	case SalesInvoiceEmailPayloadTooLarge:
+		return true
+	case SalesInvoiceEmailPreviouslyBounced:
+		return true
+	case SalesInvoiceEmailSenderLimit:
+		return true
+	case SalesInvoicePaymentEmailMissingSenderEmail:
+		return true
+	case SalesInvoicePaymentNotLinkedToFinancialMutation:
+		return true
+	case SalesInvoiceReminderSendingFailed:
+		return true
+	case SalesInvoiceScheduledSendingFailed:
+		return true
+	case SalesInvoiceSchedulingFailedDueToCollectionMethod:
+		return true
+	case SalesInvoiceSchedulingFailedDueToDeliveryInformation:
+		return true
+	case SalesInvoiceSchedulingFailedDueToPaymentInformation:
+		return true
+	case SalesInvoiceSchedulingFailedDueToSendingAddress:
+		return true
+	case SalesInvoiceSiDeliveryFailedContactUnreachable:
+		return true
+	case SalesInvoiceSiDeliveryFailedDeactivated:
+		return true
+	case SalesInvoiceSiDeliveryFailedIdentityUnverified:
+		return true
+	case SalesInvoiceSiDeliveryFailedInvalidSender:
+		return true
+	case SalesInvoiceSiDeliveryFailedLengthExceeded:
+		return true
+	case SalesInvoiceSiDeliveryFailedUblValidationFailed:
+		return true
+	case SalesInvoiceSimplerinvoicingDeliveryError:
+		return true
+	case SalesInvoiceSimplerinvoicingDeliveryFailedUnroutable:
+		return true
+	case SalesInvoiceTaxNumberInvalid:
+		return true
+	case SalesInvoiceUnprintable:
+		return true
+	case SalesInvoiceWithdrawalRequested:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WorkflowStepResponseAction.
+const (
+	CancelSubscription         WorkflowStepResponseAction = "cancel_subscription"
+	ReactivateMoneybirdAccount WorkflowStepResponseAction = "reactivate_moneybird_account"
+	SuspendMoneybirdAccount    WorkflowStepResponseAction = "suspend_moneybird_account"
+	WarnMoneybirdAccount       WorkflowStepResponseAction = "warn_moneybird_account"
+)
+
+// Valid indicates whether the value is a known member of the WorkflowStepResponseAction enum.
+func (e WorkflowStepResponseAction) Valid() bool {
+	switch e {
+	case CancelSubscription:
+		return true
+	case ReactivateMoneybirdAccount:
+		return true
+	case SuspendMoneybirdAccount:
+		return true
+	case WarnMoneybirdAccount:
 		return true
 	default:
 		return false
@@ -302,6 +789,16 @@ type CustomField struct {
 	Uri string `json:"uri"`
 }
 
+// CustomFieldOrderRequest defines model for CustomFieldOrderRequest.
+type CustomFieldOrderRequest struct {
+	CustomFieldsOrder struct {
+		Ids []Identifier `json:"ids"`
+
+		// Source The kind of record the field belongs to.
+		Source CustomFieldSource `json:"source"`
+	} `json:"custom_fields_order"`
+}
+
 // CustomFieldRequest defines model for CustomFieldRequest.
 type CustomFieldRequest struct {
 	CustomField struct {
@@ -315,6 +812,13 @@ type CustomFieldRequest struct {
 // CustomFieldSource The kind of record the field belongs to.
 type CustomFieldSource string
 
+// CustomFieldUpdateRequest defines model for CustomFieldUpdateRequest.
+type CustomFieldUpdateRequest struct {
+	CustomField struct {
+		Name *string `json:"name,omitempty"`
+	} `json:"custom_field"`
+}
+
 // CustomFieldValue defines model for CustomFieldValue.
 type CustomFieldValue struct {
 	// Id A unique record identifier. Parse as a string.
@@ -324,6 +828,174 @@ type CustomFieldValue struct {
 	Name  string     `json:"name"`
 	Value string     `json:"value"`
 }
+
+// DocumentStyle A Moneybird document style with MoneyHarpy extensions.
+type DocumentStyle struct {
+	AddressPosition *DocumentStyleAddressPosition `json:"address_position,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId      *Identifier                                                            `json:"administration_id,omitempty"`
+	BackgroundHash        *string                                                                `json:"background_hash,omitempty"`
+	CreatedAt             *time.Time                                                             `json:"created_at,omitempty"`
+	CustomCss             *string                                                                `json:"custom_css,omitempty"`
+	Default               *bool                                                                  `json:"default,omitempty"`
+	EstimateMetadataLeft  *[]map[string]DocumentStyle_EstimateMetadataLeft_AdditionalProperties  `json:"estimate_metadata_left,omitempty"`
+	EstimateMetadataRight *[]map[string]DocumentStyle_EstimateMetadataRight_AdditionalProperties `json:"estimate_metadata_right,omitempty"`
+	EstimateSenderAddress *[]map[string]DocumentStyle_EstimateSenderAddress_AdditionalProperties `json:"estimate_sender_address,omitempty"`
+	FontFamily            *string                                                                `json:"font_family,omitempty"`
+	FontSize              *int                                                                   `json:"font_size,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id *Identifier `json:"id,omitempty"`
+
+	// IdentityId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	IdentityId             *Identifier                                                           `json:"identity_id,omitempty"`
+	InvoiceMetadataLeft    *[]map[string]DocumentStyle_InvoiceMetadataLeft_AdditionalProperties  `json:"invoice_metadata_left,omitempty"`
+	InvoiceMetadataRight   *[]map[string]DocumentStyle_InvoiceMetadataRight_AdditionalProperties `json:"invoice_metadata_right,omitempty"`
+	InvoiceSenderAddress   *[]map[string]DocumentStyle_InvoiceSenderAddress_AdditionalProperties `json:"invoice_sender_address,omitempty"`
+	LogoContainerFullWidth *bool                                                                 `json:"logo_container_full_width,omitempty"`
+	LogoDisplayWidth       *int                                                                  `json:"logo_display_width,omitempty"`
+	LogoHash               *string                                                               `json:"logo_hash,omitempty"`
+	LogoPosition           *DocumentStyleLogoPosition                                            `json:"logo_position,omitempty"`
+	Name                   *string                                                               `json:"name,omitempty"`
+	PaperSize              *DocumentStylePaperSize                                               `json:"paper_size,omitempty"`
+	PrintOnStationery      *bool                                                                 `json:"print_on_stationery,omitempty"`
+	UpdatedAt              *time.Time                                                            `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// DocumentStyleAddressPosition defines model for DocumentStyle.AddressPosition.
+type DocumentStyleAddressPosition string
+
+// DocumentStyleEstimateMetadataLeft0 defines model for DocumentStyle.EstimateMetadataLeft.0.
+type DocumentStyleEstimateMetadataLeft0 = string
+
+// DocumentStyleEstimateMetadataLeft1 defines model for DocumentStyle.EstimateMetadataLeft.1.
+type DocumentStyleEstimateMetadataLeft1 = bool
+
+// DocumentStyle_EstimateMetadataLeft_AdditionalProperties defines model for DocumentStyle.estimate_metadata_left.AdditionalProperties.
+type DocumentStyle_EstimateMetadataLeft_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleEstimateMetadataRight0 defines model for DocumentStyle.EstimateMetadataRight.0.
+type DocumentStyleEstimateMetadataRight0 = string
+
+// DocumentStyleEstimateMetadataRight1 defines model for DocumentStyle.EstimateMetadataRight.1.
+type DocumentStyleEstimateMetadataRight1 = bool
+
+// DocumentStyle_EstimateMetadataRight_AdditionalProperties defines model for DocumentStyle.estimate_metadata_right.AdditionalProperties.
+type DocumentStyle_EstimateMetadataRight_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleEstimateSenderAddress0 defines model for DocumentStyle.EstimateSenderAddress.0.
+type DocumentStyleEstimateSenderAddress0 = string
+
+// DocumentStyleEstimateSenderAddress1 defines model for DocumentStyle.EstimateSenderAddress.1.
+type DocumentStyleEstimateSenderAddress1 = bool
+
+// DocumentStyle_EstimateSenderAddress_AdditionalProperties defines model for DocumentStyle.estimate_sender_address.AdditionalProperties.
+type DocumentStyle_EstimateSenderAddress_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleInvoiceMetadataLeft0 defines model for DocumentStyle.InvoiceMetadataLeft.0.
+type DocumentStyleInvoiceMetadataLeft0 = string
+
+// DocumentStyleInvoiceMetadataLeft1 defines model for DocumentStyle.InvoiceMetadataLeft.1.
+type DocumentStyleInvoiceMetadataLeft1 = bool
+
+// DocumentStyle_InvoiceMetadataLeft_AdditionalProperties defines model for DocumentStyle.invoice_metadata_left.AdditionalProperties.
+type DocumentStyle_InvoiceMetadataLeft_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleInvoiceMetadataRight0 defines model for DocumentStyle.InvoiceMetadataRight.0.
+type DocumentStyleInvoiceMetadataRight0 = string
+
+// DocumentStyleInvoiceMetadataRight1 defines model for DocumentStyle.InvoiceMetadataRight.1.
+type DocumentStyleInvoiceMetadataRight1 = bool
+
+// DocumentStyle_InvoiceMetadataRight_AdditionalProperties defines model for DocumentStyle.invoice_metadata_right.AdditionalProperties.
+type DocumentStyle_InvoiceMetadataRight_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleInvoiceSenderAddress0 defines model for DocumentStyle.InvoiceSenderAddress.0.
+type DocumentStyleInvoiceSenderAddress0 = string
+
+// DocumentStyleInvoiceSenderAddress1 defines model for DocumentStyle.InvoiceSenderAddress.1.
+type DocumentStyleInvoiceSenderAddress1 = bool
+
+// DocumentStyle_InvoiceSenderAddress_AdditionalProperties defines model for DocumentStyle.invoice_sender_address.AdditionalProperties.
+type DocumentStyle_InvoiceSenderAddress_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleLogoPosition defines model for DocumentStyle.LogoPosition.
+type DocumentStyleLogoPosition string
+
+// DocumentStylePaperSize defines model for DocumentStyle.PaperSize.
+type DocumentStylePaperSize string
+
+// DocumentStyleLine One entry of a block on a document. bold prints it bold; label prints its name before it.
+type DocumentStyleLine struct {
+	Bold  *bool  `json:"bold,omitempty"`
+	Field string `json:"field"`
+	Label *bool  `json:"label,omitempty"`
+}
+
+// DocumentStyleRequest defines model for DocumentStyleRequest.
+type DocumentStyleRequest struct {
+	DocumentStyle struct {
+		AddressPosition       *DocumentStyleRequestDocumentStyleAddressPosition `json:"address_position,omitempty"`
+		CustomCss             *string                                           `json:"custom_css,omitempty"`
+		Default               *bool                                             `json:"default,omitempty"`
+		EstimateMetadataLeft  *[]DocumentStyleLine                              `json:"estimate_metadata_left,omitempty"`
+		EstimateMetadataRight *[]DocumentStyleLine                              `json:"estimate_metadata_right,omitempty"`
+		EstimateSenderAddress *[]DocumentStyleLine                              `json:"estimate_sender_address,omitempty"`
+		FontFamily            *string                                           `json:"font_family,omitempty"`
+
+		// FontSize 8 to 14 points.
+		FontSize *int `json:"font_size,omitempty"`
+
+		// IdentityId A unique record identifier. Parse as a string.
+		//
+		// Example: 416072101932303822
+		IdentityId             *Identifier          `json:"identity_id,omitempty"`
+		InvoiceMetadataLeft    *[]DocumentStyleLine `json:"invoice_metadata_left,omitempty"`
+		InvoiceMetadataRight   *[]DocumentStyleLine `json:"invoice_metadata_right,omitempty"`
+		InvoiceSenderAddress   *[]DocumentStyleLine `json:"invoice_sender_address,omitempty"`
+		LogoContainerFullWidth *bool                `json:"logo_container_full_width,omitempty"`
+
+		// LogoDisplayWidth Logo width in percent of the available space, 10 to 100.
+		LogoDisplayWidth *int                                           `json:"logo_display_width,omitempty"`
+		LogoPosition     *DocumentStyleRequestDocumentStyleLogoPosition `json:"logo_position,omitempty"`
+		Name             *string                                        `json:"name,omitempty"`
+		PaperSize        *DocumentStyleRequestDocumentStylePaperSize    `json:"paper_size,omitempty"`
+
+		// PrintOnStationery Leave the background out of PDFs because you print on pre-printed paper.
+		PrintOnStationery *bool `json:"print_on_stationery,omitempty"`
+	} `json:"document_style"`
+}
+
+// DocumentStyleRequestDocumentStyleAddressPosition defines model for DocumentStyleRequest.DocumentStyle.AddressPosition.
+type DocumentStyleRequestDocumentStyleAddressPosition string
+
+// DocumentStyleRequestDocumentStyleLogoPosition defines model for DocumentStyleRequest.DocumentStyle.LogoPosition.
+type DocumentStyleRequestDocumentStyleLogoPosition string
+
+// DocumentStyleRequestDocumentStylePaperSize defines model for DocumentStyleRequest.DocumentStyle.PaperSize.
+type DocumentStyleRequestDocumentStylePaperSize string
 
 // Error defines model for Error.
 type Error struct {
@@ -434,6 +1106,70 @@ type InstanceSettings struct {
 	SmtpPort              int    `json:"smtp_port"`
 	SmtpSecurity          string `json:"smtp_security"`
 	SmtpUsername          string `json:"smtp_username"`
+	StorageAccessKey      string `json:"storage_access_key"`
+	StorageBucket         string `json:"storage_bucket"`
+
+	// StorageEnabled Whether uploads, such as logos, go to S3-compatible storage.
+	StorageEnabled bool `json:"storage_enabled"`
+
+	// StorageEndpoint Example: https://s3.eu-west-1.amazonaws.com
+	StorageEndpoint string `json:"storage_endpoint"`
+
+	// StoragePathStyle Address buckets as endpoint/bucket, which most self-hosted services need.
+	StoragePathStyle    bool   `json:"storage_path_style"`
+	StorageRegion       string `json:"storage_region"`
+	StorageSecretKeySet bool   `json:"storage_secret_key_set"`
+}
+
+// InvoiceSettings MoneyHarpy extension.
+type InvoiceSettings struct {
+	// DefaultEmailUbl Attach a UBL file to invoices emailed to new contacts.
+	DefaultEmailUbl         bool   `json:"default_email_ubl"`
+	EstimateBccEmailAddress string `json:"estimate_bcc_email_address"`
+	EstimateIdExample       string `json:"estimate_id_example"`
+	EstimateIdTemplate      string `json:"estimate_id_template"`
+	EstimateSequenceId      string `json:"estimate_sequence_id"`
+
+	// InvoiceBccEmailAddress Addresses, separated by commas, that get a copy of every invoice.
+	InvoiceBccEmailAddress string `json:"invoice_bcc_email_address"`
+
+	// InvoiceIdExample The next invoice number if it were made today.
+	//
+	// Example: 2026-0001
+	InvoiceIdExample string `json:"invoice_id_example"`
+
+	// InvoiceIdTemplate How invoice numbers are built, with tags such as {year} and the required {id}.
+	//
+	// Example: {year}-{id}
+	InvoiceIdTemplate string `json:"invoice_id_template"`
+
+	// InvoiceRemindersBccEnabled Also copy payment reminders to the invoice addresses.
+	InvoiceRemindersBccEnabled bool `json:"invoice_reminders_bcc_enabled"`
+
+	// InvoiceSequenceId The next sequence number. Leading zeros are kept.
+	//
+	// Example: 0001
+	InvoiceSequenceId    string `json:"invoice_sequence_id"`
+	OrderBccEmailAddress string `json:"order_bcc_email_address"`
+
+	// PaymentsWithoutProof Allow marking invoices paid without a bank transaction.
+	PaymentsWithoutProof bool `json:"payments_without_proof"`
+}
+
+// InvoiceSettingsRequest defines model for InvoiceSettingsRequest.
+type InvoiceSettingsRequest struct {
+	InvoiceSettings struct {
+		DefaultEmailUbl            *bool   `json:"default_email_ubl,omitempty"`
+		EstimateBccEmailAddress    *string `json:"estimate_bcc_email_address,omitempty"`
+		EstimateIdTemplate         *string `json:"estimate_id_template,omitempty"`
+		EstimateSequenceId         *string `json:"estimate_sequence_id,omitempty"`
+		InvoiceBccEmailAddress     *string `json:"invoice_bcc_email_address,omitempty"`
+		InvoiceIdTemplate          *string `json:"invoice_id_template,omitempty"`
+		InvoiceRemindersBccEnabled *bool   `json:"invoice_reminders_bcc_enabled,omitempty"`
+		InvoiceSequenceId          *string `json:"invoice_sequence_id,omitempty"`
+		OrderBccEmailAddress       *string `json:"order_bcc_email_address,omitempty"`
+		PaymentsWithoutProof       *bool   `json:"payments_without_proof,omitempty"`
+	} `json:"invoice_settings"`
 }
 
 // Language The language code used in the administration
@@ -545,6 +1281,13 @@ type UpdateInstanceSettingsRequest struct {
 	SmtpPort         *int                                       `json:"smtp_port,omitempty"`
 	SmtpSecurity     *UpdateInstanceSettingsRequestSmtpSecurity `json:"smtp_security,omitempty"`
 	SmtpUsername     *string                                    `json:"smtp_username,omitempty"`
+	StorageAccessKey *string                                    `json:"storage_access_key,omitempty"`
+	StorageBucket    *string                                    `json:"storage_bucket,omitempty"`
+	StorageEnabled   *bool                                      `json:"storage_enabled,omitempty"`
+	StorageEndpoint  *string                                    `json:"storage_endpoint,omitempty"`
+	StoragePathStyle *bool                                      `json:"storage_path_style,omitempty"`
+	StorageRegion    *string                                    `json:"storage_region,omitempty"`
+	StorageSecretKey *string                                    `json:"storage_secret_key,omitempty"`
 }
 
 // UpdateInstanceSettingsRequestSmtpSecurity defines model for UpdateInstanceSettingsRequest.SmtpSecurity.
@@ -555,6 +1298,379 @@ type ValidationError struct {
 	// Error Messages per invalid attribute.
 	Error map[string][]string `json:"error"`
 }
+
+// Workflow A Moneybird workflow with MoneyHarpy extensions.
+type Workflow struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+	CollectionMethod *string     `json:"collection_method,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+	Currency  *string    `json:"currency,omitempty"`
+	Default   *bool      `json:"default,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id                  *Identifier             `json:"id,omitempty"`
+	Language            *string                 `json:"language,omitempty"`
+	Name                *string                 `json:"name,omitempty"`
+	NumberOfCollections *int                    `json:"number_of_collections,omitempty"`
+	PaymentMethods      *[]string               `json:"payment_methods,omitempty"`
+	PricesAreInclTax    *bool                   `json:"prices_are_incl_tax,omitempty"`
+	ShowQrCode          *bool                   `json:"show_qr_code,omitempty"`
+	Steps               *[]WorkflowStepResponse `json:"steps,omitempty"`
+	Type                *string                 `json:"type,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// WorkflowRequest defines model for WorkflowRequest.
+type WorkflowRequest struct {
+	Workflow struct {
+		Active   *bool   `json:"active,omitempty"`
+		Currency *string `json:"currency,omitempty"`
+		Default  *bool   `json:"default,omitempty"`
+
+		// Language The language code used in the administration
+		Language         *Language `json:"language,omitempty"`
+		Name             *string   `json:"name,omitempty"`
+		PricesAreInclTax *bool     `json:"prices_are_incl_tax,omitempty"`
+		ShowQrCode       *bool     `json:"show_qr_code,omitempty"`
+
+		// StepsAttributes The payment term or validity first, then the reminders.
+		StepsAttributes *[]struct {
+			// DueInterval Days until payment is due, or until an estimate expires. First step only.
+			DueInterval      *int  `json:"due_interval,omitempty"`
+			ReminderAutoSend *bool `json:"reminder_auto_send,omitempty"`
+
+			// ReminderDelay Days after the previous stage that this reminder is due.
+			ReminderDelay *int    `json:"reminder_delay,omitempty"`
+			ReminderText  *string `json:"reminder_text,omitempty"`
+		} `json:"steps_attributes,omitempty"`
+
+		// Type Required when creating; ignored when updating.
+		Type *WorkflowRequestWorkflowType `json:"type,omitempty"`
+	} `json:"workflow"`
+}
+
+// WorkflowRequestWorkflowType Required when creating; ignored when updating.
+type WorkflowRequestWorkflowType string
+
+// DocumentStyleResponse Moneybird-compatible document_style_response.
+type DocumentStyleResponse struct {
+	AddressPosition *DocumentStyleResponseAddressPosition `json:"address_position,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId      *Identifier                                                                    `json:"administration_id,omitempty"`
+	BackgroundHash        *string                                                                        `json:"background_hash,omitempty"`
+	CreatedAt             *time.Time                                                                     `json:"created_at,omitempty"`
+	CustomCss             *string                                                                        `json:"custom_css,omitempty"`
+	Default               *bool                                                                          `json:"default,omitempty"`
+	EstimateMetadataLeft  *[]map[string]DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties  `json:"estimate_metadata_left,omitempty"`
+	EstimateMetadataRight *[]map[string]DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties `json:"estimate_metadata_right,omitempty"`
+	EstimateSenderAddress *[]map[string]DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties `json:"estimate_sender_address,omitempty"`
+	FontFamily            *string                                                                        `json:"font_family,omitempty"`
+	FontSize              *int                                                                           `json:"font_size,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id *Identifier `json:"id,omitempty"`
+
+	// IdentityId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	IdentityId             *Identifier                                                                   `json:"identity_id,omitempty"`
+	InvoiceMetadataLeft    *[]map[string]DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties  `json:"invoice_metadata_left,omitempty"`
+	InvoiceMetadataRight   *[]map[string]DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties `json:"invoice_metadata_right,omitempty"`
+	InvoiceSenderAddress   *[]map[string]DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties `json:"invoice_sender_address,omitempty"`
+	LogoContainerFullWidth *bool                                                                         `json:"logo_container_full_width,omitempty"`
+	LogoDisplayWidth       *int                                                                          `json:"logo_display_width,omitempty"`
+	LogoHash               *string                                                                       `json:"logo_hash,omitempty"`
+	LogoPosition           *DocumentStyleResponseLogoPosition                                            `json:"logo_position,omitempty"`
+	Name                   *string                                                                       `json:"name,omitempty"`
+	PaperSize              *DocumentStyleResponsePaperSize                                               `json:"paper_size,omitempty"`
+	PrintOnStationery      *bool                                                                         `json:"print_on_stationery,omitempty"`
+	UpdatedAt              *time.Time                                                                    `json:"updated_at,omitempty"`
+}
+
+// DocumentStyleResponseAddressPosition defines model for DocumentStyleResponse.AddressPosition.
+type DocumentStyleResponseAddressPosition string
+
+// DocumentStyleResponseEstimateMetadataLeft0 defines model for DocumentStyleResponse.EstimateMetadataLeft.0.
+type DocumentStyleResponseEstimateMetadataLeft0 = string
+
+// DocumentStyleResponseEstimateMetadataLeft1 defines model for DocumentStyleResponse.EstimateMetadataLeft.1.
+type DocumentStyleResponseEstimateMetadataLeft1 = bool
+
+// DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties defines model for document_style_response.estimate_metadata_left.AdditionalProperties.
+type DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleResponseEstimateMetadataRight0 defines model for DocumentStyleResponse.EstimateMetadataRight.0.
+type DocumentStyleResponseEstimateMetadataRight0 = string
+
+// DocumentStyleResponseEstimateMetadataRight1 defines model for DocumentStyleResponse.EstimateMetadataRight.1.
+type DocumentStyleResponseEstimateMetadataRight1 = bool
+
+// DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties defines model for document_style_response.estimate_metadata_right.AdditionalProperties.
+type DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleResponseEstimateSenderAddress0 defines model for DocumentStyleResponse.EstimateSenderAddress.0.
+type DocumentStyleResponseEstimateSenderAddress0 = string
+
+// DocumentStyleResponseEstimateSenderAddress1 defines model for DocumentStyleResponse.EstimateSenderAddress.1.
+type DocumentStyleResponseEstimateSenderAddress1 = bool
+
+// DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties defines model for document_style_response.estimate_sender_address.AdditionalProperties.
+type DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleResponseInvoiceMetadataLeft0 defines model for DocumentStyleResponse.InvoiceMetadataLeft.0.
+type DocumentStyleResponseInvoiceMetadataLeft0 = string
+
+// DocumentStyleResponseInvoiceMetadataLeft1 defines model for DocumentStyleResponse.InvoiceMetadataLeft.1.
+type DocumentStyleResponseInvoiceMetadataLeft1 = bool
+
+// DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties defines model for document_style_response.invoice_metadata_left.AdditionalProperties.
+type DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleResponseInvoiceMetadataRight0 defines model for DocumentStyleResponse.InvoiceMetadataRight.0.
+type DocumentStyleResponseInvoiceMetadataRight0 = string
+
+// DocumentStyleResponseInvoiceMetadataRight1 defines model for DocumentStyleResponse.InvoiceMetadataRight.1.
+type DocumentStyleResponseInvoiceMetadataRight1 = bool
+
+// DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties defines model for document_style_response.invoice_metadata_right.AdditionalProperties.
+type DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleResponseInvoiceSenderAddress0 defines model for DocumentStyleResponse.InvoiceSenderAddress.0.
+type DocumentStyleResponseInvoiceSenderAddress0 = string
+
+// DocumentStyleResponseInvoiceSenderAddress1 defines model for DocumentStyleResponse.InvoiceSenderAddress.1.
+type DocumentStyleResponseInvoiceSenderAddress1 = bool
+
+// DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties defines model for document_style_response.invoice_sender_address.AdditionalProperties.
+type DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// DocumentStyleResponseLogoPosition defines model for DocumentStyleResponse.LogoPosition.
+type DocumentStyleResponseLogoPosition string
+
+// DocumentStyleResponsePaperSize defines model for DocumentStyleResponse.PaperSize.
+type DocumentStyleResponsePaperSize string
+
+// EventResponse Moneybird-compatible event_response.
+type EventResponse struct {
+	Action           *string                         `json:"action,omitempty"`
+	AdministrationId *EventResponse_AdministrationId `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp              `json:"created_at,omitempty"`
+	Data      *map[string]interface{} `json:"data,omitempty"`
+
+	// LinkEntityId Moneybird-compatible identifier_nullable.
+	LinkEntityId   *IdentifierNullable `json:"link_entity_id,omitempty"`
+	LinkEntityType *string             `json:"link_entity_type,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// UserId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	UserId *Identifier `json:"user_id,omitempty"`
+}
+
+// EventResponse_AdministrationId defines model for EventResponse.AdministrationId.
+type EventResponse_AdministrationId struct {
+	union json.RawMessage
+}
+
+// IdentifierNullable Moneybird-compatible identifier_nullable.
+type IdentifierNullable struct {
+	union json.RawMessage
+}
+
+// IdentifierNullable0 defines model for IdentifierNullable.0.
+type IdentifierNullable0 = string
+
+// IdentifierNullable1 defines model for IdentifierNullable.1.
+type IdentifierNullable1 = int
+
+// NoteResponse Moneybird-compatible note_response.
+type NoteResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// AssigneeId Moneybird-compatible identifier_nullable.
+	AssigneeId  *IdentifierNullable `json:"assignee_id,omitempty"`
+	CompletedAt *time.Time          `json:"completed_at,omitempty"`
+
+	// CompletedById Moneybird-compatible identifier_nullable.
+	CompletedById *IdentifierNullable `json:"completed_by_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp              `json:"created_at,omitempty"`
+	Data      *map[string]interface{} `json:"data,omitempty"`
+
+	// EntityId Moneybird-compatible identifier_nullable.
+	EntityId   *IdentifierNullable `json:"entity_id,omitempty"`
+	EntityType *string             `json:"entity_type,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id       *Identifier           `json:"id,omitempty"`
+	Note     *string               `json:"note,omitempty"`
+	Todo     *NoteResponse_Todo    `json:"todo,omitempty"`
+	TodoType *NoteResponseTodoType `json:"todo_type,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// UserId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	UserId *Identifier `json:"user_id,omitempty"`
+}
+
+// NoteResponseTodo0 defines model for NoteResponse.Todo.0.
+type NoteResponseTodo0 = bool
+
+// NoteResponseTodo1 defines model for NoteResponse.Todo.1.
+type NoteResponseTodo1 = string
+
+// NoteResponse_Todo defines model for NoteResponse.Todo.
+type NoteResponse_Todo struct {
+	union json.RawMessage
+}
+
+// NoteResponseTodoType defines model for NoteResponse.TodoType.
+type NoteResponseTodoType string
+
+// TaskListTaskResponse Moneybird-compatible task_list_task_response.
+type TaskListTaskResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// AssigneeId Moneybird-compatible identifier_nullable.
+	AssigneeId  *IdentifierNullable `json:"assignee_id,omitempty"`
+	CompletedAt *time.Time          `json:"completed_at,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp       `json:"created_at,omitempty"`
+	Description *string          `json:"description,omitempty"`
+	Events      *[]EventResponse `json:"events,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id    *Identifier     `json:"id,omitempty"`
+	Name  *string         `json:"name,omitempty"`
+	Notes *[]NoteResponse `json:"notes,omitempty"`
+
+	// ParentTaskId Moneybird-compatible identifier_nullable.
+	ParentTaskId *IdentifierNullable     `json:"parent_task_id,omitempty"`
+	ReportType   *string                 `json:"report_type,omitempty"`
+	RowOrder     *int                    `json:"row_order,omitempty"`
+	Subtasks     *[]TaskListTaskResponse `json:"subtasks,omitempty"`
+
+	// TaskListsGroupId Moneybird-compatible identifier_nullable.
+	TaskListsGroupId *IdentifierNullable `json:"task_lists_group_id,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// Timestamp Moneybird-compatible timestamp.
+type Timestamp = time.Time
+
+// WorkflowResponse Moneybird-compatible workflow_response.
+type WorkflowResponse struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+	CollectionMethod *string     `json:"collection_method,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+	Currency  *string    `json:"currency,omitempty"`
+	Default   *bool      `json:"default,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id                  *Identifier             `json:"id,omitempty"`
+	Language            *string                 `json:"language,omitempty"`
+	Name                *string                 `json:"name,omitempty"`
+	NumberOfCollections *int                    `json:"number_of_collections,omitempty"`
+	PaymentMethods      *[]string               `json:"payment_methods,omitempty"`
+	PricesAreInclTax    *bool                   `json:"prices_are_incl_tax,omitempty"`
+	ShowQrCode          *bool                   `json:"show_qr_code,omitempty"`
+	Steps               *[]WorkflowStepResponse `json:"steps,omitempty"`
+	Type                *string                 `json:"type,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// WorkflowStepResponse Moneybird-compatible workflow_step_response.
+type WorkflowStepResponse struct {
+	Action *WorkflowStepResponseAction `json:"action,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp `json:"created_at,omitempty"`
+	DueInterval *int       `json:"due_interval,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 416072101932303822
+	Id               *Identifier `json:"id,omitempty"`
+	ReminderAutoSend *bool       `json:"reminder_auto_send,omitempty"`
+	ReminderDelay    *int        `json:"reminder_delay,omitempty"`
+	ReminderText     *string     `json:"reminder_text,omitempty"`
+	StepOrder        *int        `json:"step_order,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// WorkflowStepResponseAction defines model for WorkflowStepResponse.Action.
+type WorkflowStepResponseAction string
 
 // AdministrationId A unique record identifier. Parse as a string.
 //
@@ -638,6 +1754,18 @@ type UpdateAdministrationJSONRequestBody = UpdateAdministrationRequest
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldRequest
 
+// ReorderCustomFieldsJSONRequestBody defines body for ReorderCustomFields for application/json ContentType.
+type ReorderCustomFieldsJSONRequestBody = CustomFieldOrderRequest
+
+// UpdateCustomFieldJSONRequestBody defines body for UpdateCustomField for application/json ContentType.
+type UpdateCustomFieldJSONRequestBody = CustomFieldUpdateRequest
+
+// CreateDocumentStyleJSONRequestBody defines body for CreateDocumentStyle for application/json ContentType.
+type CreateDocumentStyleJSONRequestBody = DocumentStyleRequest
+
+// UpdateDocumentStyleJSONRequestBody defines body for UpdateDocumentStyle for application/json ContentType.
+type UpdateDocumentStyleJSONRequestBody = DocumentStyleRequest
+
 // CreateIdentityJSONRequestBody defines body for CreateIdentity for application/json ContentType.
 type CreateIdentityJSONRequestBody = IdentityRequest
 
@@ -646,6 +1774,919 @@ type UpdateDefaultIdentityJSONRequestBody = IdentityRequest
 
 // UpdateIdentityJSONRequestBody defines body for UpdateIdentity for application/json ContentType.
 type UpdateIdentityJSONRequestBody = IdentityRequest
+
+// UpdateInvoiceSettingsJSONRequestBody defines body for UpdateInvoiceSettings for application/json ContentType.
+type UpdateInvoiceSettingsJSONRequestBody = InvoiceSettingsRequest
+
+// CreateWorkflowJSONRequestBody defines body for CreateWorkflow for application/json ContentType.
+type CreateWorkflowJSONRequestBody = WorkflowRequest
+
+// UpdateWorkflowJSONRequestBody defines body for UpdateWorkflow for application/json ContentType.
+type UpdateWorkflowJSONRequestBody = WorkflowRequest
+
+// AsDocumentStyleEstimateMetadataLeft0 returns the union data inside the DocumentStyle_EstimateMetadataLeft_AdditionalProperties as a DocumentStyleEstimateMetadataLeft0
+func (t DocumentStyle_EstimateMetadataLeft_AdditionalProperties) AsDocumentStyleEstimateMetadataLeft0() (DocumentStyleEstimateMetadataLeft0, error) {
+	var body DocumentStyleEstimateMetadataLeft0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleEstimateMetadataLeft0 overwrites any union data inside the DocumentStyle_EstimateMetadataLeft_AdditionalProperties as the provided DocumentStyleEstimateMetadataLeft0
+func (t *DocumentStyle_EstimateMetadataLeft_AdditionalProperties) FromDocumentStyleEstimateMetadataLeft0(v DocumentStyleEstimateMetadataLeft0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleEstimateMetadataLeft0 performs a merge with any union data inside the DocumentStyle_EstimateMetadataLeft_AdditionalProperties, using the provided DocumentStyleEstimateMetadataLeft0
+func (t *DocumentStyle_EstimateMetadataLeft_AdditionalProperties) MergeDocumentStyleEstimateMetadataLeft0(v DocumentStyleEstimateMetadataLeft0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleEstimateMetadataLeft1 returns the union data inside the DocumentStyle_EstimateMetadataLeft_AdditionalProperties as a DocumentStyleEstimateMetadataLeft1
+func (t DocumentStyle_EstimateMetadataLeft_AdditionalProperties) AsDocumentStyleEstimateMetadataLeft1() (DocumentStyleEstimateMetadataLeft1, error) {
+	var body DocumentStyleEstimateMetadataLeft1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleEstimateMetadataLeft1 overwrites any union data inside the DocumentStyle_EstimateMetadataLeft_AdditionalProperties as the provided DocumentStyleEstimateMetadataLeft1
+func (t *DocumentStyle_EstimateMetadataLeft_AdditionalProperties) FromDocumentStyleEstimateMetadataLeft1(v DocumentStyleEstimateMetadataLeft1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleEstimateMetadataLeft1 performs a merge with any union data inside the DocumentStyle_EstimateMetadataLeft_AdditionalProperties, using the provided DocumentStyleEstimateMetadataLeft1
+func (t *DocumentStyle_EstimateMetadataLeft_AdditionalProperties) MergeDocumentStyleEstimateMetadataLeft1(v DocumentStyleEstimateMetadataLeft1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyle_EstimateMetadataLeft_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyle_EstimateMetadataLeft_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleEstimateMetadataRight0 returns the union data inside the DocumentStyle_EstimateMetadataRight_AdditionalProperties as a DocumentStyleEstimateMetadataRight0
+func (t DocumentStyle_EstimateMetadataRight_AdditionalProperties) AsDocumentStyleEstimateMetadataRight0() (DocumentStyleEstimateMetadataRight0, error) {
+	var body DocumentStyleEstimateMetadataRight0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleEstimateMetadataRight0 overwrites any union data inside the DocumentStyle_EstimateMetadataRight_AdditionalProperties as the provided DocumentStyleEstimateMetadataRight0
+func (t *DocumentStyle_EstimateMetadataRight_AdditionalProperties) FromDocumentStyleEstimateMetadataRight0(v DocumentStyleEstimateMetadataRight0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleEstimateMetadataRight0 performs a merge with any union data inside the DocumentStyle_EstimateMetadataRight_AdditionalProperties, using the provided DocumentStyleEstimateMetadataRight0
+func (t *DocumentStyle_EstimateMetadataRight_AdditionalProperties) MergeDocumentStyleEstimateMetadataRight0(v DocumentStyleEstimateMetadataRight0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleEstimateMetadataRight1 returns the union data inside the DocumentStyle_EstimateMetadataRight_AdditionalProperties as a DocumentStyleEstimateMetadataRight1
+func (t DocumentStyle_EstimateMetadataRight_AdditionalProperties) AsDocumentStyleEstimateMetadataRight1() (DocumentStyleEstimateMetadataRight1, error) {
+	var body DocumentStyleEstimateMetadataRight1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleEstimateMetadataRight1 overwrites any union data inside the DocumentStyle_EstimateMetadataRight_AdditionalProperties as the provided DocumentStyleEstimateMetadataRight1
+func (t *DocumentStyle_EstimateMetadataRight_AdditionalProperties) FromDocumentStyleEstimateMetadataRight1(v DocumentStyleEstimateMetadataRight1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleEstimateMetadataRight1 performs a merge with any union data inside the DocumentStyle_EstimateMetadataRight_AdditionalProperties, using the provided DocumentStyleEstimateMetadataRight1
+func (t *DocumentStyle_EstimateMetadataRight_AdditionalProperties) MergeDocumentStyleEstimateMetadataRight1(v DocumentStyleEstimateMetadataRight1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyle_EstimateMetadataRight_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyle_EstimateMetadataRight_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleEstimateSenderAddress0 returns the union data inside the DocumentStyle_EstimateSenderAddress_AdditionalProperties as a DocumentStyleEstimateSenderAddress0
+func (t DocumentStyle_EstimateSenderAddress_AdditionalProperties) AsDocumentStyleEstimateSenderAddress0() (DocumentStyleEstimateSenderAddress0, error) {
+	var body DocumentStyleEstimateSenderAddress0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleEstimateSenderAddress0 overwrites any union data inside the DocumentStyle_EstimateSenderAddress_AdditionalProperties as the provided DocumentStyleEstimateSenderAddress0
+func (t *DocumentStyle_EstimateSenderAddress_AdditionalProperties) FromDocumentStyleEstimateSenderAddress0(v DocumentStyleEstimateSenderAddress0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleEstimateSenderAddress0 performs a merge with any union data inside the DocumentStyle_EstimateSenderAddress_AdditionalProperties, using the provided DocumentStyleEstimateSenderAddress0
+func (t *DocumentStyle_EstimateSenderAddress_AdditionalProperties) MergeDocumentStyleEstimateSenderAddress0(v DocumentStyleEstimateSenderAddress0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleEstimateSenderAddress1 returns the union data inside the DocumentStyle_EstimateSenderAddress_AdditionalProperties as a DocumentStyleEstimateSenderAddress1
+func (t DocumentStyle_EstimateSenderAddress_AdditionalProperties) AsDocumentStyleEstimateSenderAddress1() (DocumentStyleEstimateSenderAddress1, error) {
+	var body DocumentStyleEstimateSenderAddress1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleEstimateSenderAddress1 overwrites any union data inside the DocumentStyle_EstimateSenderAddress_AdditionalProperties as the provided DocumentStyleEstimateSenderAddress1
+func (t *DocumentStyle_EstimateSenderAddress_AdditionalProperties) FromDocumentStyleEstimateSenderAddress1(v DocumentStyleEstimateSenderAddress1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleEstimateSenderAddress1 performs a merge with any union data inside the DocumentStyle_EstimateSenderAddress_AdditionalProperties, using the provided DocumentStyleEstimateSenderAddress1
+func (t *DocumentStyle_EstimateSenderAddress_AdditionalProperties) MergeDocumentStyleEstimateSenderAddress1(v DocumentStyleEstimateSenderAddress1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyle_EstimateSenderAddress_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyle_EstimateSenderAddress_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleInvoiceMetadataLeft0 returns the union data inside the DocumentStyle_InvoiceMetadataLeft_AdditionalProperties as a DocumentStyleInvoiceMetadataLeft0
+func (t DocumentStyle_InvoiceMetadataLeft_AdditionalProperties) AsDocumentStyleInvoiceMetadataLeft0() (DocumentStyleInvoiceMetadataLeft0, error) {
+	var body DocumentStyleInvoiceMetadataLeft0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleInvoiceMetadataLeft0 overwrites any union data inside the DocumentStyle_InvoiceMetadataLeft_AdditionalProperties as the provided DocumentStyleInvoiceMetadataLeft0
+func (t *DocumentStyle_InvoiceMetadataLeft_AdditionalProperties) FromDocumentStyleInvoiceMetadataLeft0(v DocumentStyleInvoiceMetadataLeft0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleInvoiceMetadataLeft0 performs a merge with any union data inside the DocumentStyle_InvoiceMetadataLeft_AdditionalProperties, using the provided DocumentStyleInvoiceMetadataLeft0
+func (t *DocumentStyle_InvoiceMetadataLeft_AdditionalProperties) MergeDocumentStyleInvoiceMetadataLeft0(v DocumentStyleInvoiceMetadataLeft0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleInvoiceMetadataLeft1 returns the union data inside the DocumentStyle_InvoiceMetadataLeft_AdditionalProperties as a DocumentStyleInvoiceMetadataLeft1
+func (t DocumentStyle_InvoiceMetadataLeft_AdditionalProperties) AsDocumentStyleInvoiceMetadataLeft1() (DocumentStyleInvoiceMetadataLeft1, error) {
+	var body DocumentStyleInvoiceMetadataLeft1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleInvoiceMetadataLeft1 overwrites any union data inside the DocumentStyle_InvoiceMetadataLeft_AdditionalProperties as the provided DocumentStyleInvoiceMetadataLeft1
+func (t *DocumentStyle_InvoiceMetadataLeft_AdditionalProperties) FromDocumentStyleInvoiceMetadataLeft1(v DocumentStyleInvoiceMetadataLeft1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleInvoiceMetadataLeft1 performs a merge with any union data inside the DocumentStyle_InvoiceMetadataLeft_AdditionalProperties, using the provided DocumentStyleInvoiceMetadataLeft1
+func (t *DocumentStyle_InvoiceMetadataLeft_AdditionalProperties) MergeDocumentStyleInvoiceMetadataLeft1(v DocumentStyleInvoiceMetadataLeft1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyle_InvoiceMetadataLeft_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyle_InvoiceMetadataLeft_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleInvoiceMetadataRight0 returns the union data inside the DocumentStyle_InvoiceMetadataRight_AdditionalProperties as a DocumentStyleInvoiceMetadataRight0
+func (t DocumentStyle_InvoiceMetadataRight_AdditionalProperties) AsDocumentStyleInvoiceMetadataRight0() (DocumentStyleInvoiceMetadataRight0, error) {
+	var body DocumentStyleInvoiceMetadataRight0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleInvoiceMetadataRight0 overwrites any union data inside the DocumentStyle_InvoiceMetadataRight_AdditionalProperties as the provided DocumentStyleInvoiceMetadataRight0
+func (t *DocumentStyle_InvoiceMetadataRight_AdditionalProperties) FromDocumentStyleInvoiceMetadataRight0(v DocumentStyleInvoiceMetadataRight0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleInvoiceMetadataRight0 performs a merge with any union data inside the DocumentStyle_InvoiceMetadataRight_AdditionalProperties, using the provided DocumentStyleInvoiceMetadataRight0
+func (t *DocumentStyle_InvoiceMetadataRight_AdditionalProperties) MergeDocumentStyleInvoiceMetadataRight0(v DocumentStyleInvoiceMetadataRight0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleInvoiceMetadataRight1 returns the union data inside the DocumentStyle_InvoiceMetadataRight_AdditionalProperties as a DocumentStyleInvoiceMetadataRight1
+func (t DocumentStyle_InvoiceMetadataRight_AdditionalProperties) AsDocumentStyleInvoiceMetadataRight1() (DocumentStyleInvoiceMetadataRight1, error) {
+	var body DocumentStyleInvoiceMetadataRight1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleInvoiceMetadataRight1 overwrites any union data inside the DocumentStyle_InvoiceMetadataRight_AdditionalProperties as the provided DocumentStyleInvoiceMetadataRight1
+func (t *DocumentStyle_InvoiceMetadataRight_AdditionalProperties) FromDocumentStyleInvoiceMetadataRight1(v DocumentStyleInvoiceMetadataRight1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleInvoiceMetadataRight1 performs a merge with any union data inside the DocumentStyle_InvoiceMetadataRight_AdditionalProperties, using the provided DocumentStyleInvoiceMetadataRight1
+func (t *DocumentStyle_InvoiceMetadataRight_AdditionalProperties) MergeDocumentStyleInvoiceMetadataRight1(v DocumentStyleInvoiceMetadataRight1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyle_InvoiceMetadataRight_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyle_InvoiceMetadataRight_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleInvoiceSenderAddress0 returns the union data inside the DocumentStyle_InvoiceSenderAddress_AdditionalProperties as a DocumentStyleInvoiceSenderAddress0
+func (t DocumentStyle_InvoiceSenderAddress_AdditionalProperties) AsDocumentStyleInvoiceSenderAddress0() (DocumentStyleInvoiceSenderAddress0, error) {
+	var body DocumentStyleInvoiceSenderAddress0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleInvoiceSenderAddress0 overwrites any union data inside the DocumentStyle_InvoiceSenderAddress_AdditionalProperties as the provided DocumentStyleInvoiceSenderAddress0
+func (t *DocumentStyle_InvoiceSenderAddress_AdditionalProperties) FromDocumentStyleInvoiceSenderAddress0(v DocumentStyleInvoiceSenderAddress0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleInvoiceSenderAddress0 performs a merge with any union data inside the DocumentStyle_InvoiceSenderAddress_AdditionalProperties, using the provided DocumentStyleInvoiceSenderAddress0
+func (t *DocumentStyle_InvoiceSenderAddress_AdditionalProperties) MergeDocumentStyleInvoiceSenderAddress0(v DocumentStyleInvoiceSenderAddress0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleInvoiceSenderAddress1 returns the union data inside the DocumentStyle_InvoiceSenderAddress_AdditionalProperties as a DocumentStyleInvoiceSenderAddress1
+func (t DocumentStyle_InvoiceSenderAddress_AdditionalProperties) AsDocumentStyleInvoiceSenderAddress1() (DocumentStyleInvoiceSenderAddress1, error) {
+	var body DocumentStyleInvoiceSenderAddress1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleInvoiceSenderAddress1 overwrites any union data inside the DocumentStyle_InvoiceSenderAddress_AdditionalProperties as the provided DocumentStyleInvoiceSenderAddress1
+func (t *DocumentStyle_InvoiceSenderAddress_AdditionalProperties) FromDocumentStyleInvoiceSenderAddress1(v DocumentStyleInvoiceSenderAddress1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleInvoiceSenderAddress1 performs a merge with any union data inside the DocumentStyle_InvoiceSenderAddress_AdditionalProperties, using the provided DocumentStyleInvoiceSenderAddress1
+func (t *DocumentStyle_InvoiceSenderAddress_AdditionalProperties) MergeDocumentStyleInvoiceSenderAddress1(v DocumentStyleInvoiceSenderAddress1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyle_InvoiceSenderAddress_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyle_InvoiceSenderAddress_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleResponseEstimateMetadataLeft0 returns the union data inside the DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties as a DocumentStyleResponseEstimateMetadataLeft0
+func (t DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties) AsDocumentStyleResponseEstimateMetadataLeft0() (DocumentStyleResponseEstimateMetadataLeft0, error) {
+	var body DocumentStyleResponseEstimateMetadataLeft0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseEstimateMetadataLeft0 overwrites any union data inside the DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties as the provided DocumentStyleResponseEstimateMetadataLeft0
+func (t *DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties) FromDocumentStyleResponseEstimateMetadataLeft0(v DocumentStyleResponseEstimateMetadataLeft0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseEstimateMetadataLeft0 performs a merge with any union data inside the DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties, using the provided DocumentStyleResponseEstimateMetadataLeft0
+func (t *DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties) MergeDocumentStyleResponseEstimateMetadataLeft0(v DocumentStyleResponseEstimateMetadataLeft0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleResponseEstimateMetadataLeft1 returns the union data inside the DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties as a DocumentStyleResponseEstimateMetadataLeft1
+func (t DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties) AsDocumentStyleResponseEstimateMetadataLeft1() (DocumentStyleResponseEstimateMetadataLeft1, error) {
+	var body DocumentStyleResponseEstimateMetadataLeft1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseEstimateMetadataLeft1 overwrites any union data inside the DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties as the provided DocumentStyleResponseEstimateMetadataLeft1
+func (t *DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties) FromDocumentStyleResponseEstimateMetadataLeft1(v DocumentStyleResponseEstimateMetadataLeft1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseEstimateMetadataLeft1 performs a merge with any union data inside the DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties, using the provided DocumentStyleResponseEstimateMetadataLeft1
+func (t *DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties) MergeDocumentStyleResponseEstimateMetadataLeft1(v DocumentStyleResponseEstimateMetadataLeft1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyleResponse_EstimateMetadataLeft_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleResponseEstimateMetadataRight0 returns the union data inside the DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties as a DocumentStyleResponseEstimateMetadataRight0
+func (t DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties) AsDocumentStyleResponseEstimateMetadataRight0() (DocumentStyleResponseEstimateMetadataRight0, error) {
+	var body DocumentStyleResponseEstimateMetadataRight0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseEstimateMetadataRight0 overwrites any union data inside the DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties as the provided DocumentStyleResponseEstimateMetadataRight0
+func (t *DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties) FromDocumentStyleResponseEstimateMetadataRight0(v DocumentStyleResponseEstimateMetadataRight0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseEstimateMetadataRight0 performs a merge with any union data inside the DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties, using the provided DocumentStyleResponseEstimateMetadataRight0
+func (t *DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties) MergeDocumentStyleResponseEstimateMetadataRight0(v DocumentStyleResponseEstimateMetadataRight0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleResponseEstimateMetadataRight1 returns the union data inside the DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties as a DocumentStyleResponseEstimateMetadataRight1
+func (t DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties) AsDocumentStyleResponseEstimateMetadataRight1() (DocumentStyleResponseEstimateMetadataRight1, error) {
+	var body DocumentStyleResponseEstimateMetadataRight1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseEstimateMetadataRight1 overwrites any union data inside the DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties as the provided DocumentStyleResponseEstimateMetadataRight1
+func (t *DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties) FromDocumentStyleResponseEstimateMetadataRight1(v DocumentStyleResponseEstimateMetadataRight1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseEstimateMetadataRight1 performs a merge with any union data inside the DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties, using the provided DocumentStyleResponseEstimateMetadataRight1
+func (t *DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties) MergeDocumentStyleResponseEstimateMetadataRight1(v DocumentStyleResponseEstimateMetadataRight1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyleResponse_EstimateMetadataRight_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleResponseEstimateSenderAddress0 returns the union data inside the DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties as a DocumentStyleResponseEstimateSenderAddress0
+func (t DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties) AsDocumentStyleResponseEstimateSenderAddress0() (DocumentStyleResponseEstimateSenderAddress0, error) {
+	var body DocumentStyleResponseEstimateSenderAddress0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseEstimateSenderAddress0 overwrites any union data inside the DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties as the provided DocumentStyleResponseEstimateSenderAddress0
+func (t *DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties) FromDocumentStyleResponseEstimateSenderAddress0(v DocumentStyleResponseEstimateSenderAddress0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseEstimateSenderAddress0 performs a merge with any union data inside the DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties, using the provided DocumentStyleResponseEstimateSenderAddress0
+func (t *DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties) MergeDocumentStyleResponseEstimateSenderAddress0(v DocumentStyleResponseEstimateSenderAddress0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleResponseEstimateSenderAddress1 returns the union data inside the DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties as a DocumentStyleResponseEstimateSenderAddress1
+func (t DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties) AsDocumentStyleResponseEstimateSenderAddress1() (DocumentStyleResponseEstimateSenderAddress1, error) {
+	var body DocumentStyleResponseEstimateSenderAddress1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseEstimateSenderAddress1 overwrites any union data inside the DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties as the provided DocumentStyleResponseEstimateSenderAddress1
+func (t *DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties) FromDocumentStyleResponseEstimateSenderAddress1(v DocumentStyleResponseEstimateSenderAddress1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseEstimateSenderAddress1 performs a merge with any union data inside the DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties, using the provided DocumentStyleResponseEstimateSenderAddress1
+func (t *DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties) MergeDocumentStyleResponseEstimateSenderAddress1(v DocumentStyleResponseEstimateSenderAddress1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyleResponse_EstimateSenderAddress_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleResponseInvoiceMetadataLeft0 returns the union data inside the DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties as a DocumentStyleResponseInvoiceMetadataLeft0
+func (t DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties) AsDocumentStyleResponseInvoiceMetadataLeft0() (DocumentStyleResponseInvoiceMetadataLeft0, error) {
+	var body DocumentStyleResponseInvoiceMetadataLeft0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseInvoiceMetadataLeft0 overwrites any union data inside the DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties as the provided DocumentStyleResponseInvoiceMetadataLeft0
+func (t *DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties) FromDocumentStyleResponseInvoiceMetadataLeft0(v DocumentStyleResponseInvoiceMetadataLeft0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseInvoiceMetadataLeft0 performs a merge with any union data inside the DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties, using the provided DocumentStyleResponseInvoiceMetadataLeft0
+func (t *DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties) MergeDocumentStyleResponseInvoiceMetadataLeft0(v DocumentStyleResponseInvoiceMetadataLeft0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleResponseInvoiceMetadataLeft1 returns the union data inside the DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties as a DocumentStyleResponseInvoiceMetadataLeft1
+func (t DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties) AsDocumentStyleResponseInvoiceMetadataLeft1() (DocumentStyleResponseInvoiceMetadataLeft1, error) {
+	var body DocumentStyleResponseInvoiceMetadataLeft1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseInvoiceMetadataLeft1 overwrites any union data inside the DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties as the provided DocumentStyleResponseInvoiceMetadataLeft1
+func (t *DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties) FromDocumentStyleResponseInvoiceMetadataLeft1(v DocumentStyleResponseInvoiceMetadataLeft1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseInvoiceMetadataLeft1 performs a merge with any union data inside the DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties, using the provided DocumentStyleResponseInvoiceMetadataLeft1
+func (t *DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties) MergeDocumentStyleResponseInvoiceMetadataLeft1(v DocumentStyleResponseInvoiceMetadataLeft1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleResponseInvoiceMetadataRight0 returns the union data inside the DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties as a DocumentStyleResponseInvoiceMetadataRight0
+func (t DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties) AsDocumentStyleResponseInvoiceMetadataRight0() (DocumentStyleResponseInvoiceMetadataRight0, error) {
+	var body DocumentStyleResponseInvoiceMetadataRight0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseInvoiceMetadataRight0 overwrites any union data inside the DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties as the provided DocumentStyleResponseInvoiceMetadataRight0
+func (t *DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties) FromDocumentStyleResponseInvoiceMetadataRight0(v DocumentStyleResponseInvoiceMetadataRight0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseInvoiceMetadataRight0 performs a merge with any union data inside the DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties, using the provided DocumentStyleResponseInvoiceMetadataRight0
+func (t *DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties) MergeDocumentStyleResponseInvoiceMetadataRight0(v DocumentStyleResponseInvoiceMetadataRight0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleResponseInvoiceMetadataRight1 returns the union data inside the DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties as a DocumentStyleResponseInvoiceMetadataRight1
+func (t DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties) AsDocumentStyleResponseInvoiceMetadataRight1() (DocumentStyleResponseInvoiceMetadataRight1, error) {
+	var body DocumentStyleResponseInvoiceMetadataRight1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseInvoiceMetadataRight1 overwrites any union data inside the DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties as the provided DocumentStyleResponseInvoiceMetadataRight1
+func (t *DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties) FromDocumentStyleResponseInvoiceMetadataRight1(v DocumentStyleResponseInvoiceMetadataRight1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseInvoiceMetadataRight1 performs a merge with any union data inside the DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties, using the provided DocumentStyleResponseInvoiceMetadataRight1
+func (t *DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties) MergeDocumentStyleResponseInvoiceMetadataRight1(v DocumentStyleResponseInvoiceMetadataRight1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDocumentStyleResponseInvoiceSenderAddress0 returns the union data inside the DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties as a DocumentStyleResponseInvoiceSenderAddress0
+func (t DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties) AsDocumentStyleResponseInvoiceSenderAddress0() (DocumentStyleResponseInvoiceSenderAddress0, error) {
+	var body DocumentStyleResponseInvoiceSenderAddress0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseInvoiceSenderAddress0 overwrites any union data inside the DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties as the provided DocumentStyleResponseInvoiceSenderAddress0
+func (t *DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties) FromDocumentStyleResponseInvoiceSenderAddress0(v DocumentStyleResponseInvoiceSenderAddress0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseInvoiceSenderAddress0 performs a merge with any union data inside the DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties, using the provided DocumentStyleResponseInvoiceSenderAddress0
+func (t *DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties) MergeDocumentStyleResponseInvoiceSenderAddress0(v DocumentStyleResponseInvoiceSenderAddress0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDocumentStyleResponseInvoiceSenderAddress1 returns the union data inside the DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties as a DocumentStyleResponseInvoiceSenderAddress1
+func (t DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties) AsDocumentStyleResponseInvoiceSenderAddress1() (DocumentStyleResponseInvoiceSenderAddress1, error) {
+	var body DocumentStyleResponseInvoiceSenderAddress1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDocumentStyleResponseInvoiceSenderAddress1 overwrites any union data inside the DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties as the provided DocumentStyleResponseInvoiceSenderAddress1
+func (t *DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties) FromDocumentStyleResponseInvoiceSenderAddress1(v DocumentStyleResponseInvoiceSenderAddress1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDocumentStyleResponseInvoiceSenderAddress1 performs a merge with any union data inside the DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties, using the provided DocumentStyleResponseInvoiceSenderAddress1
+func (t *DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties) MergeDocumentStyleResponseInvoiceSenderAddress1(v DocumentStyleResponseInvoiceSenderAddress1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsIdentifier returns the union data inside the EventResponse_AdministrationId as a Identifier
+func (t EventResponse_AdministrationId) AsIdentifier() (Identifier, error) {
+	var body Identifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentifier overwrites any union data inside the EventResponse_AdministrationId as the provided Identifier
+func (t *EventResponse_AdministrationId) FromIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentifier performs a merge with any union data inside the EventResponse_AdministrationId, using the provided Identifier
+func (t *EventResponse_AdministrationId) MergeIdentifier(v Identifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t EventResponse_AdministrationId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *EventResponse_AdministrationId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsIdentifierNullable0 returns the union data inside the IdentifierNullable as a IdentifierNullable0
+func (t IdentifierNullable) AsIdentifierNullable0() (IdentifierNullable0, error) {
+	var body IdentifierNullable0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentifierNullable0 overwrites any union data inside the IdentifierNullable as the provided IdentifierNullable0
+func (t *IdentifierNullable) FromIdentifierNullable0(v IdentifierNullable0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentifierNullable0 performs a merge with any union data inside the IdentifierNullable, using the provided IdentifierNullable0
+func (t *IdentifierNullable) MergeIdentifierNullable0(v IdentifierNullable0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsIdentifierNullable1 returns the union data inside the IdentifierNullable as a IdentifierNullable1
+func (t IdentifierNullable) AsIdentifierNullable1() (IdentifierNullable1, error) {
+	var body IdentifierNullable1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentifierNullable1 overwrites any union data inside the IdentifierNullable as the provided IdentifierNullable1
+func (t *IdentifierNullable) FromIdentifierNullable1(v IdentifierNullable1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentifierNullable1 performs a merge with any union data inside the IdentifierNullable, using the provided IdentifierNullable1
+func (t *IdentifierNullable) MergeIdentifierNullable1(v IdentifierNullable1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t IdentifierNullable) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *IdentifierNullable) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsNoteResponseTodo0 returns the union data inside the NoteResponse_Todo as a NoteResponseTodo0
+func (t NoteResponse_Todo) AsNoteResponseTodo0() (NoteResponseTodo0, error) {
+	var body NoteResponseTodo0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNoteResponseTodo0 overwrites any union data inside the NoteResponse_Todo as the provided NoteResponseTodo0
+func (t *NoteResponse_Todo) FromNoteResponseTodo0(v NoteResponseTodo0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNoteResponseTodo0 performs a merge with any union data inside the NoteResponse_Todo, using the provided NoteResponseTodo0
+func (t *NoteResponse_Todo) MergeNoteResponseTodo0(v NoteResponseTodo0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNoteResponseTodo1 returns the union data inside the NoteResponse_Todo as a NoteResponseTodo1
+func (t NoteResponse_Todo) AsNoteResponseTodo1() (NoteResponseTodo1, error) {
+	var body NoteResponseTodo1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNoteResponseTodo1 overwrites any union data inside the NoteResponse_Todo as the provided NoteResponseTodo1
+func (t *NoteResponse_Todo) FromNoteResponseTodo1(v NoteResponseTodo1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNoteResponseTodo1 performs a merge with any union data inside the NoteResponse_Todo, using the provided NoteResponseTodo1
+func (t *NoteResponse_Todo) MergeNoteResponseTodo1(v NoteResponseTodo1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t NoteResponse_Todo) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *NoteResponse_Todo) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -691,6 +2732,9 @@ type ServerInterface interface {
 	// SendTestEmail Send a test email to yourself using the saved mail settings
 	// (POST /api/instance/settings/test_email)
 	SendTestEmail(w http.ResponseWriter, r *http.Request)
+	// TestStorage Check the saved file storage settings
+	// (POST /api/instance/settings/test_storage)
+	TestStorage(w http.ResponseWriter, r *http.Request)
 	// AddressLookup Find a Dutch address by zipcode and house number
 	// (GET /api/onboarding/address_lookup)
 	AddressLookup(w http.ResponseWriter, r *http.Request, params AddressLookupParams)
@@ -736,6 +2780,42 @@ type ServerInterface interface {
 	// CreateCustomField Create a custom field
 	// (POST /api/v2/{administration_id}/custom_fields)
 	CreateCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ReorderCustomFields Order the custom fields of one source
+	// (PUT /api/v2/{administration_id}/custom_fields/order)
+	ReorderCustomFields(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteCustomField Delete a custom field
+	// (DELETE /api/v2/{administration_id}/custom_fields/{id})
+	DeleteCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetCustomField Retrieve a custom field
+	// (GET /api/v2/{administration_id}/custom_fields/{id})
+	GetCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateCustomField Rename a custom field
+	// (PATCH /api/v2/{administration_id}/custom_fields/{id})
+	UpdateCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListDocumentStyles Retrieve document styles
+	// (GET /api/v2/{administration_id}/document_styles)
+	ListDocumentStyles(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateDocumentStyle Create a document style
+	// (POST /api/v2/{administration_id}/document_styles)
+	CreateDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteDocumentStyle Delete a document style
+	// (DELETE /api/v2/{administration_id}/document_styles/{id})
+	DeleteDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetDocumentStyle Retrieve a document style
+	// (GET /api/v2/{administration_id}/document_styles/{id})
+	GetDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateDocumentStyle Update a document style
+	// (PATCH /api/v2/{administration_id}/document_styles/{id})
+	UpdateDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// RemoveDocumentStyleFile Remove a logo or background
+	// (DELETE /api/v2/{administration_id}/document_styles/{id}/{file})
+	RemoveDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string)
+	// GetDocumentStyleFile Download a document style's logo or background
+	// (GET /api/v2/{administration_id}/document_styles/{id}/{file})
+	GetDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string)
+	// UploadDocumentStyleFile Upload a logo or background
+	// (PUT /api/v2/{administration_id}/document_styles/{id}/{file})
+	UploadDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string)
 	// ListIdentities Retrieve identities
 	// (GET /api/v2/{administration_id}/identities)
 	ListIdentities(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -757,6 +2837,27 @@ type ServerInterface interface {
 	// UpdateIdentity Update an identity
 	// (PATCH /api/v2/{administration_id}/identities/{id})
 	UpdateIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetInvoiceSettings Get invoice and estimate settings
+	// (GET /api/v2/{administration_id}/invoice_settings)
+	GetInvoiceSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// UpdateInvoiceSettings Update invoice and estimate settings
+	// (PATCH /api/v2/{administration_id}/invoice_settings)
+	UpdateInvoiceSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListWorkflows Retrieve workflows
+	// (GET /api/v2/{administration_id}/workflows)
+	ListWorkflows(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateWorkflow Create a workflow
+	// (POST /api/v2/{administration_id}/workflows)
+	CreateWorkflow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteWorkflow Delete a workflow
+	// (DELETE /api/v2/{administration_id}/workflows/{id})
+	DeleteWorkflow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetWorkflow Retrieve a workflow
+	// (GET /api/v2/{administration_id}/workflows/{id})
+	GetWorkflow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateWorkflow Update a workflow
+	// (PATCH /api/v2/{administration_id}/workflows/{id})
+	UpdateWorkflow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -844,6 +2945,12 @@ func (_ Unimplemented) UpdateInstanceSettings(w http.ResponseWriter, r *http.Req
 // SendTestEmail Send a test email to yourself using the saved mail settings
 // (POST /api/instance/settings/test_email)
 func (_ Unimplemented) SendTestEmail(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// TestStorage Check the saved file storage settings
+// (POST /api/instance/settings/test_storage)
+func (_ Unimplemented) TestStorage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -937,6 +3044,78 @@ func (_ Unimplemented) CreateCustomField(w http.ResponseWriter, r *http.Request,
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ReorderCustomFields Order the custom fields of one source
+// (PUT /api/v2/{administration_id}/custom_fields/order)
+func (_ Unimplemented) ReorderCustomFields(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteCustomField Delete a custom field
+// (DELETE /api/v2/{administration_id}/custom_fields/{id})
+func (_ Unimplemented) DeleteCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCustomField Retrieve a custom field
+// (GET /api/v2/{administration_id}/custom_fields/{id})
+func (_ Unimplemented) GetCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateCustomField Rename a custom field
+// (PATCH /api/v2/{administration_id}/custom_fields/{id})
+func (_ Unimplemented) UpdateCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListDocumentStyles Retrieve document styles
+// (GET /api/v2/{administration_id}/document_styles)
+func (_ Unimplemented) ListDocumentStyles(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateDocumentStyle Create a document style
+// (POST /api/v2/{administration_id}/document_styles)
+func (_ Unimplemented) CreateDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteDocumentStyle Delete a document style
+// (DELETE /api/v2/{administration_id}/document_styles/{id})
+func (_ Unimplemented) DeleteDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDocumentStyle Retrieve a document style
+// (GET /api/v2/{administration_id}/document_styles/{id})
+func (_ Unimplemented) GetDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateDocumentStyle Update a document style
+// (PATCH /api/v2/{administration_id}/document_styles/{id})
+func (_ Unimplemented) UpdateDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RemoveDocumentStyleFile Remove a logo or background
+// (DELETE /api/v2/{administration_id}/document_styles/{id}/{file})
+func (_ Unimplemented) RemoveDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDocumentStyleFile Download a document style's logo or background
+// (GET /api/v2/{administration_id}/document_styles/{id}/{file})
+func (_ Unimplemented) GetDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UploadDocumentStyleFile Upload a logo or background
+// (PUT /api/v2/{administration_id}/document_styles/{id}/{file})
+func (_ Unimplemented) UploadDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListIdentities Retrieve identities
 // (GET /api/v2/{administration_id}/identities)
 func (_ Unimplemented) ListIdentities(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
@@ -976,6 +3155,48 @@ func (_ Unimplemented) GetIdentity(w http.ResponseWriter, r *http.Request, admin
 // UpdateIdentity Update an identity
 // (PATCH /api/v2/{administration_id}/identities/{id})
 func (_ Unimplemented) UpdateIdentity(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetInvoiceSettings Get invoice and estimate settings
+// (GET /api/v2/{administration_id}/invoice_settings)
+func (_ Unimplemented) GetInvoiceSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateInvoiceSettings Update invoice and estimate settings
+// (PATCH /api/v2/{administration_id}/invoice_settings)
+func (_ Unimplemented) UpdateInvoiceSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListWorkflows Retrieve workflows
+// (GET /api/v2/{administration_id}/workflows)
+func (_ Unimplemented) ListWorkflows(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateWorkflow Create a workflow
+// (POST /api/v2/{administration_id}/workflows)
+func (_ Unimplemented) CreateWorkflow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteWorkflow Delete a workflow
+// (DELETE /api/v2/{administration_id}/workflows/{id})
+func (_ Unimplemented) DeleteWorkflow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetWorkflow Retrieve a workflow
+// (GET /api/v2/{administration_id}/workflows/{id})
+func (_ Unimplemented) GetWorkflow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateWorkflow Update a workflow
+// (PATCH /api/v2/{administration_id}/workflows/{id})
+func (_ Unimplemented) UpdateWorkflow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1261,6 +3482,20 @@ func (siw *ServerInterfaceWrapper) SendTestEmail(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SendTestEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestStorage operation middleware
+func (siw *ServerInterfaceWrapper) TestStorage(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestStorage(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1640,6 +3875,426 @@ func (siw *ServerInterfaceWrapper) CreateCustomField(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ReorderCustomFields operation middleware
+func (siw *ServerInterfaceWrapper) ReorderCustomFields(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReorderCustomFields(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteCustomField operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCustomField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteCustomField(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCustomField operation middleware
+func (siw *ServerInterfaceWrapper) GetCustomField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCustomField(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateCustomField operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCustomField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateCustomField(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDocumentStyles operation middleware
+func (siw *ServerInterfaceWrapper) ListDocumentStyles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDocumentStyles(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateDocumentStyle operation middleware
+func (siw *ServerInterfaceWrapper) CreateDocumentStyle(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDocumentStyle(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDocumentStyle operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDocumentStyle(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDocumentStyle(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDocumentStyle operation middleware
+func (siw *ServerInterfaceWrapper) GetDocumentStyle(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDocumentStyle(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateDocumentStyle operation middleware
+func (siw *ServerInterfaceWrapper) UpdateDocumentStyle(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateDocumentStyle(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveDocumentStyleFile operation middleware
+func (siw *ServerInterfaceWrapper) RemoveDocumentStyleFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "file" -------------
+	var file string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "file", chi.URLParam(r, "file"), &file, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "file", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveDocumentStyleFile(w, r, administrationId, id, file)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDocumentStyleFile operation middleware
+func (siw *ServerInterfaceWrapper) GetDocumentStyleFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "file" -------------
+	var file string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "file", chi.URLParam(r, "file"), &file, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "file", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDocumentStyleFile(w, r, administrationId, id, file)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UploadDocumentStyleFile operation middleware
+func (siw *ServerInterfaceWrapper) UploadDocumentStyleFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "file" -------------
+	var file string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "file", chi.URLParam(r, "file"), &file, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "file", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UploadDocumentStyleFile(w, r, administrationId, id, file)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListIdentities operation middleware
 func (siw *ServerInterfaceWrapper) ListIdentities(w http.ResponseWriter, r *http.Request) {
 
@@ -1849,6 +4504,215 @@ func (siw *ServerInterfaceWrapper) UpdateIdentity(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// GetInvoiceSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetInvoiceSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInvoiceSettings(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateInvoiceSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateInvoiceSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateInvoiceSettings(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWorkflows operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkflows(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWorkflows(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWorkflow operation middleware
+func (siw *ServerInterfaceWrapper) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWorkflow(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteWorkflow operation middleware
+func (siw *ServerInterfaceWrapper) DeleteWorkflow(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteWorkflow(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkflow operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkflow(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkflow(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateWorkflow operation middleware
+func (siw *ServerInterfaceWrapper) UpdateWorkflow(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateWorkflow(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -1987,6 +4851,63 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/custom_fields", wrapper.CreateCustomField)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/invoice_settings", wrapper.GetInvoiceSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/invoice_settings", wrapper.UpdateInvoiceSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/workflows", wrapper.ListWorkflows)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/workflows", wrapper.CreateWorkflow)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/workflows/{id}", wrapper.DeleteWorkflow)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/workflows/{id}", wrapper.GetWorkflow)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/workflows/{id}", wrapper.UpdateWorkflow)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/document_styles", wrapper.ListDocumentStyles)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/document_styles", wrapper.CreateDocumentStyle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}", wrapper.DeleteDocumentStyle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}", wrapper.GetDocumentStyle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}", wrapper.UpdateDocumentStyle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}/{file}", wrapper.RemoveDocumentStyleFile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}/{file}", wrapper.GetDocumentStyleFile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}/{file}", wrapper.UploadDocumentStyleFile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v2/{administration_id}/custom_fields/order", wrapper.ReorderCustomFields)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/custom_fields/{id}", wrapper.DeleteCustomField)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/custom_fields/{id}", wrapper.GetCustomField)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/custom_fields/{id}", wrapper.UpdateCustomField)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/identities", wrapper.ListIdentities)
 	})
 	r.Group(func(r chi.Router) {
@@ -2063,6 +4984,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/instance/settings/test_email", wrapper.SendTestEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/instance/settings/test_storage", wrapper.TestStorage)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/instance/settings", wrapper.InstanceSettings)

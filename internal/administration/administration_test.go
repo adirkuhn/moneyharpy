@@ -124,6 +124,29 @@ func (s *memStore) CreateCustomField(_ context.Context, f CustomField) error {
 	return nil
 }
 
+func (s *memStore) CustomField(_ context.Context, admin, id resource.ID) (CustomField, error) {
+	for _, f := range s.fields {
+		if f.AdministrationID == admin && f.ID == id {
+			return f, nil
+		}
+	}
+	return CustomField{}, ErrCustomFieldNotFound
+}
+
+func (s *memStore) UpdateCustomField(_ context.Context, f CustomField) error {
+	for i := range s.fields {
+		if s.fields[i].ID == f.ID {
+			s.fields[i] = f
+		}
+	}
+	return nil
+}
+
+func (s *memStore) DeleteCustomField(_ context.Context, admin, id resource.ID) error {
+	s.fields = slices.DeleteFunc(s.fields, func(f CustomField) bool { return f.AdministrationID == admin && f.ID == id })
+	return nil
+}
+
 func newService(s Store) *Service {
 	return NewService(s, resource.NewGenerator(1), func() time.Time {
 		return time.Date(2026, 3, 4, 5, 0, 0, 0, time.UTC)
@@ -609,5 +632,61 @@ func TestIdentityCustomFieldValues(t *testing.T) {
 		if !errors.As(err, &verr) || verr.Fields["custom_fields"] == nil {
 			t.Errorf("UpdateDefaultIdentity(field %v) error = %v, want custom_fields error", id, err)
 		}
+	}
+}
+
+func TestCustomFieldEditingAndOrder(t *testing.T) {
+	svc := newService(newMemStore())
+	ctx := context.Background()
+	a := newAdministration(t, svc)
+	create := func(name string, source Source) CustomField {
+		t.Helper()
+		f, err := svc.CreateCustomField(ctx, a.ID, 1, NewCustomField{Name: name, Source: source})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return f
+	}
+	first, second, contact := create("First", SourceIdentity), create("Second", SourceIdentity), create("Ref", SourceContact)
+	if first.Position != 1 || second.Position != 2 || contact.Position != 1 {
+		t.Errorf("positions = %d, %d, %d; want 1, 2 and 1 per source", first.Position, second.Position, contact.Position)
+	}
+
+	renamed, err := svc.UpdateCustomField(ctx, a.ID, first.ID, 1, CustomFieldChanges{Name: ptr(" Slogan ")})
+	if err != nil || renamed.Name != "Slogan" {
+		t.Errorf("UpdateCustomField() = %+v, %v", renamed, err)
+	}
+	if _, err := svc.UpdateCustomField(ctx, a.ID, first.ID, 1, CustomFieldChanges{Name: ptr(" ")}); err == nil {
+		t.Error("UpdateCustomField(blank name) error = nil")
+	}
+
+	if err := svc.ReorderCustomFields(ctx, a.ID, 1, SourceIdentity, []resource.ID{second.ID, first.ID}); err != nil {
+		t.Fatal(err)
+	}
+	list, _ := svc.CustomFields(ctx, a.ID, 1)
+	var order []resource.ID
+	for _, f := range list {
+		if f.Source == SourceIdentity {
+			order = append(order, f.ID)
+		}
+	}
+	if !slices.Equal(order, []resource.ID{second.ID, first.ID}) {
+		t.Errorf("identity fields order = %v, want %v", order, []resource.ID{second.ID, first.ID})
+	}
+	if err := svc.ReorderCustomFields(ctx, a.ID, 1, SourceIdentity, []resource.ID{second.ID}); err == nil {
+		t.Error("ReorderCustomFields() leaving a field out error = nil")
+	}
+	if err := svc.ReorderCustomFields(ctx, a.ID, 1, SourceIdentity, []resource.ID{second.ID, contact.ID}); err == nil {
+		t.Error("ReorderCustomFields() with a field of another source error = nil")
+	}
+
+	if err := svc.DeleteCustomField(ctx, a.ID, contact.ID, 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.CustomField(ctx, a.ID, contact.ID, 1); !errors.Is(err, ErrCustomFieldNotFound) {
+		t.Errorf("CustomField() after delete error = %v", err)
+	}
+	if err := svc.DeleteCustomField(ctx, a.ID, first.ID, 2); !errors.Is(err, ErrNotFound) {
+		t.Errorf("DeleteCustomField() by stranger error = %v", err)
 	}
 }

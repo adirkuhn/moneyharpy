@@ -787,6 +787,13 @@ func toInstanceSettings(inst settings.Instance) InstanceSettings {
 		SmtpPasswordSet:       inst.SMTP.Password != "",
 		SmtpFrom:              inst.SMTP.From,
 		SmtpSecurity:          inst.SMTP.Security,
+		StorageEnabled:        inst.Storage.Enabled,
+		StorageEndpoint:       inst.Storage.Endpoint,
+		StorageRegion:         inst.Storage.Region,
+		StorageBucket:         inst.Storage.Bucket,
+		StorageAccessKey:      inst.Storage.AccessKey,
+		StorageSecretKeySet:   inst.Storage.SecretKey != "",
+		StoragePathStyle:      inst.Storage.PathStyle,
 	}
 }
 
@@ -853,6 +860,14 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 		SMTPPassword: body.SmtpPassword,
 		SMTPFrom:     body.SmtpFrom,
 		SMTPSecurity: (*string)(body.SmtpSecurity),
+
+		StorageEnabled:   body.StorageEnabled,
+		StorageEndpoint:  body.StorageEndpoint,
+		StorageRegion:    body.StorageRegion,
+		StorageBucket:    body.StorageBucket,
+		StorageAccessKey: body.StorageAccessKey,
+		StorageSecretKey: body.StorageSecretKey,
+		StoragePathStyle: body.StoragePathStyle,
 	})
 	if err != nil {
 		s.fail(w, r, err)

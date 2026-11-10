@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "test",
+      "credentials": [{ "accessKey": "s3-test", "secretKey": "s3-test-secret" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}
