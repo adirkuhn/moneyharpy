@@ -147,8 +147,23 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 	"createBookingRule":              func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_created") },
 	"updateBookingRule":              func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_updated") },
 	"deleteBookingRule":              func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_destroyed") },
-	"createUserInvitation":           func(c change) []webhooks.Event { return c.one("UserInvitation", "user_invited") },
-	"removeUser":                     func(c change) []webhooks.Event { return c.one("User", "user_removed") },
+	"createContact":                  func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
+	"updateContact": func(c change) []webhooks.Event {
+		switch c.nested("contact")["archived"] {
+		case true:
+			return c.one("Contact", "contact_archived")
+		case false:
+			return c.one("Contact", "contact_activated")
+		}
+		return c.one("Contact", "contact_changed")
+	},
+	"archiveContact":       func(c change) []webhooks.Event { return c.one("Contact", "contact_archived") },
+	"deleteContact":        func(c change) []webhooks.Event { return c.one("Contact", "contact_destroyed") },
+	"createContactPerson":  func(c change) []webhooks.Event { return c.one("ContactPerson", "contact_person_created") },
+	"updateContactPerson":  func(c change) []webhooks.Event { return c.one("ContactPerson", "contact_person_updated") },
+	"deleteContactPerson":  func(c change) []webhooks.Event { return c.one("ContactPerson", "contact_person_destroyed") },
+	"createUserInvitation": func(c change) []webhooks.Event { return c.one("UserInvitation", "user_invited") },
+	"removeUser":           func(c change) []webhooks.Event { return c.one("User", "user_removed") },
 	"createConnection": func(c change) []webhooks.Event {
 		// The token itself never travels in an event.
 		delete(c.responseMap, "token")

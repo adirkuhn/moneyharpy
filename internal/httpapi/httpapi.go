@@ -19,6 +19,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
+	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
@@ -78,6 +79,7 @@ type Deps struct {
 	Bookkeeping     *bookkeeping.Service
 	Banking         *banking.Service
 	Overview        *overview.Service
+	Contacts        *contacts.Service
 	Membership      *membership.Service
 	Connections     *connections.Service
 	Webhooks        *webhooks.Service
@@ -193,6 +195,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This category is used by transactions or booking rules; keep it deactivated instead"}}))
 	case errors.Is(err, banking.ErrBookingUnavailable):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet; only categories (LedgerAccount) can be booked so far"}}))
+	case errors.Is(err, contacts.ErrInUse):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Documents refer to this contact; archive it instead"}}))
 	case errors.Is(err, banking.ErrStatementBooked):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Remove the bookings of this statement's transactions first"}}))
 	case errors.Is(err, connections.ErrForbidden):
@@ -238,6 +242,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		errors.Is(err, resource.ErrNotFound),
 		bookkeeping.IsNotFound(err),
 		banking.IsNotFound(err),
+		contacts.IsNotFound(err),
 		errors.Is(err, membership.ErrUserNotFound),
 		errors.Is(err, connections.ErrNotFound),
 		errors.Is(err, webhooks.ErrNotFound),

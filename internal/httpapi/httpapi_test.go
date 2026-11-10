@@ -25,6 +25,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
+	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
@@ -242,6 +243,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Bookkeeping:     books,
 		Banking:         bank,
 		Overview:        overview.NewService(admins, bank),
+		Contacts:        contacts.NewService(admins, invoices, admins, nil, postgres.NewContactStore(pool), ids, time.Now),
 		Storage:         files,
 		Identity:        people,
 		Settings:        settle,

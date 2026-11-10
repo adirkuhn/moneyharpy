@@ -1,7 +1,7 @@
 import type { Messages } from './en'
 
 export const nl: Messages = {
-  common: { loading: 'Laden…', language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt' },
+  common: { loading: 'Laden…', language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt', pagination: 'Paginering', page: 'Pagina {{n}}', previousPage: 'Vorige pagina', nextPage: 'Volgende pagina' },
   login: {
     title: 'Inloggen', email: 'E-mailadres', password: 'Wachtwoord', submit: 'Inloggen bij MoneyHarpy', or: 'of', forgot: 'Wachtwoord vergeten?', noAccount: 'Geen account?', passwordChanged: 'Wachtwoord gewijzigd. Log in met je nieuwe wachtwoord.', google: 'Doorgaan met Google', lm2: 'Doorgaan met LM2',
     unreachable: 'MoneyHarpy is niet bereikbaar. Herlaad de pagina om het opnieuw te proberen.',
@@ -21,6 +21,28 @@ export const nl: Messages = {
     search: 'Zoeken', searchSoon: 'Zoeken is nog niet beschikbaar.',
     main: 'Hoofdmenu', home: 'MoneyHarpy home', notifications: 'Meldingen', noNotifications: 'Je hebt geen meldingen.', select: 'Kies administratie', yours: 'Jouw administraties',
     all: 'Alle administraties', new: 'Nieuwe administratie', account: 'Gebruikersaccount', instance: 'Instellingen van deze installatie', docs: 'API-documentatie', signOut: 'Uitloggen',
+  },
+  contacts: {
+    title: 'Contacten', new: 'Nieuw contact', newTitle: 'Nieuw contact', editTitle: '{{name}} bewerken', back: 'Terug naar contacten', edit: 'Bewerken', save: 'Contact opslaan',
+    filters: 'Contactfilters', search: 'Contacten zoeken', kind: 'Soort', kinds: { all: 'Alle contacten', company: 'Bedrijven', private_individual: 'Particulieren' },
+    showArchived: 'Gearchiveerde contacten tonen', archived: 'Gearchiveerd', loadError: 'De contacten konden niet worden geladen. Laad de pagina opnieuw.',
+    empty: 'Nog geen contacten. Voeg je eerste klant of leverancier toe.', noMatches: 'Geen contacten gevonden. Probeer een andere zoekterm of filter.',
+    numberShort: 'Nr.', customerId: 'Klantnummer', nextNumber: 'Volgend nummer', number: 'Klant {{id}}', name: 'Naam', email: 'E-mail', city: 'Plaats',
+    companyName: 'Bedrijfsnaam', firstname: 'Voornaam', lastname: 'Achternaam', addressTitle: 'Adres en telefoon', address: 'Adres', address2: 'Adresregel 2',
+    zipcode: 'Postcode', country: 'Land', phone: 'Telefoon', invoicingTitle: 'Facturen en offertes', deliveryMethod: 'Facturen versturen via',
+    delivery: { Email: 'E-mail', Post: 'Post', Manual: 'Zelf', Peppol: 'Peppol e-factuur', Simplerinvoicing: 'Simplerinvoicing e-factuur' },
+    invoiceEmail: 'E-mail voor facturen', emailHelp: 'Scheid meer adressen met komma\'s.', attention: 'Ter attentie van', estimateEmail: 'E-mail voor offertes',
+    estimateAttention: 'Offertes ter attentie van', emailUBL: 'Factuur als UBL-bestand meesturen', siIdentifierType: 'Identificatieschema',
+    siTypeHelp: 'Zoals 0106 voor een KVK-nummer.', siIdentifier: 'E-factuuridentificatie', invoiceWorkflow: 'Factuurworkflow',
+    estimateWorkflow: 'Offerteworkflow', defaultWorkflow: 'Standaard van de administratie', companyTitle: 'Bedrijfsgegevens', taxNumber: 'Btw-nummer',
+    chamberOfCommerce: 'KVK-nummer', bankAccount: 'Bankrekening', mandateTitle: 'Automatische incasso', mandateOn: 'Incasseren met een SEPA-machtiging',
+    iban: 'IBAN', accountName: 'Rekeninghouder', bic: 'BIC', mandateId: 'Machtigingskenmerk', mandateDate: 'Datum machtiging', sequenceType: 'Soort incasso',
+    sequence: { RCUR: 'Doorlopend', FRST: 'Eerste van een reeks', OOFF: 'Eenmalig', FNAL: 'Laatste van een reeks' }, mandate: 'Incassomachtiging',
+    customFields: 'Extra velden', archive: 'Archiveren', restore: 'Terugzetten', delete: 'Verwijderen', confirmDelete: 'Definitief verwijderen',
+    archivedNotice: 'Dit contact is gearchiveerd. Het staat niet meer in lijsten.', people: 'Contactpersonen', addPerson: 'Contactpersoon toevoegen',
+    noPeople: 'Nog geen contactpersonen.', department: 'Afdeling', savePerson: 'Contactpersoon opslaan', deletePerson: '{{name}} verwijderen',
+    confirmDeletePerson: 'Bevestig verwijderen {{name}}', remove: 'Verwijderen', confirmRemove: 'Bevestig verwijderen', notes: 'Notities', newNote: 'Nieuwe notitie',
+    isTodo: 'Dit is een taak', addNote: 'Notitie toevoegen', todo: 'Te doen', done: 'Klaar', deleteNote: 'Notitie verwijderen', confirmDeleteNote: 'Bevestig verwijderen notitie',
   },
   sidenav: {
     label: 'Administratiemenu', menu: 'Menu', collapse: 'Menu inklappen', expand: 'Menu uitklappen', collapseShort: 'Inklappen', later: 'Nog niet beschikbaar',

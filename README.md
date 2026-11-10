@@ -97,6 +97,19 @@ bank block holds the balance and the transactions left to link; the boxes for
 sales invoices and incoming documents are in place and fill in once those
 parts exist.
 
+## Contacts
+
+Customers and suppliers live at `/{id}/contacts`, with Moneybird's contacts
+API under `/api/v2/{administration_id}/contacts`: create, update, archive and
+delete, search and paged lists (`page`, `per_page`, a `Link` header and
+`X-Total-Count`), the `filter` grammar, synchronization, lookup by customer
+id, likely duplicates, contact people and notes or to-dos. A new contact
+without a customer id gets the next number. Delivery by Peppol or
+Simplerinvoicing needs the contact's e-invoicing identifier, and a direct
+debit mandate needs its IBAN, holder, reference and date. Members with the
+sales invoices, documents or estimates permission work with contacts. A
+contact that documents refer to cannot be deleted; archive it instead.
+
 ## Users and permissions
 
 Each user of an administration is an owner, employee or accountant, with
