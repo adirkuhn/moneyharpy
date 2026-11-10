@@ -1,4 +1,4 @@
-package banking
+package money
 
 import (
 	"testing"

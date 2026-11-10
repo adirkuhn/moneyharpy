@@ -22,6 +22,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/api"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
@@ -30,7 +31,9 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
+	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
+	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/postgres/postgrestest"
@@ -234,6 +237,11 @@ func newHarness(t *testing.T, opts options) *harness {
 	invoices := invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now)
 	people := identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), mailer, settings.NewCipher("test-secret"), time.Now)
 	bank := banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now)
+	noteService := notes.NewService(postgres.NewNoteStore(pool), ids, time.Now)
+	journalStore := postgres.NewJournalStore(pool)
+	contactService := contacts.NewService(admins, invoices, admins, journalStore, noteService, postgres.NewContactStore(pool), ids, time.Now)
+	ledger := journal.NewService(admins, books, contactService, journalStore, journalStore, noteService,
+		attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now), ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
@@ -243,7 +251,8 @@ func newHarness(t *testing.T, opts options) *harness {
 		Bookkeeping:     books,
 		Banking:         bank,
 		Overview:        overview.NewService(admins, bank),
-		Contacts:        contacts.NewService(admins, invoices, admins, nil, postgres.NewContactStore(pool), ids, time.Now),
+		Journal:         ledger,
+		Contacts:        contactService,
 		Storage:         files,
 		Identity:        people,
 		Settings:        settle,

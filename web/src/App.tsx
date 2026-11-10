@@ -47,6 +47,10 @@ import { StartPage } from './overview/StartPage'
 import { ContactFormPage } from './contacts/ContactFormPage'
 import { ContactPage } from './contacts/ContactPage'
 import { ContactsPage } from './contacts/ContactsPage'
+import { JournalDocumentPage } from './journal/JournalDocumentPage'
+import { JournalDocumentsPage } from './journal/JournalDocumentsPage'
+import { LedgerEntriesPage } from './journal/LedgerEntriesPage'
+import { TrialBalancePage } from './journal/TrialBalancePage'
 
 export function AppRoutes() {
   return (
@@ -77,6 +81,11 @@ export function AppRoutes() {
           <Route path="/:administrationId/contacts/new" element={<ContactFormPage />} />
           <Route path="/:administrationId/contacts/:contactId" element={<ContactPage />} />
           <Route path="/:administrationId/contacts/:contactId/edit" element={<ContactFormPage />} />
+          <Route path="/:administrationId/report/general_ledger" element={<TrialBalancePage />} />
+          <Route path="/:administrationId/report/journal_entries" element={<LedgerEntriesPage />} />
+          <Route path="/:administrationId/documents/general_journal_documents" element={<JournalDocumentsPage />} />
+          <Route path="/:administrationId/documents/general_journal_documents/new" element={<JournalDocumentPage />} />
+          <Route path="/:administrationId/documents/general_journal_documents/:documentId" element={<JournalDocumentPage />} />
         </Route>
         <Route path="/:administrationId/settings" element={<SettingsLayout />}>
           <Route index element={<Navigate to="company" replace />} />

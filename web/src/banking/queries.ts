@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, unwrap } from '../api/client'
 import type { components } from '../api/schema'
-import { balanceSheetTypes, type LedgerAccount, profitAndLossTypes, tree } from '../bookkeeping/queries'
+import { balanceSheetTypes, type DocumentType, type LedgerAccount, profitAndLossTypes, tree } from '../bookkeeping/queries'
 
 export type FinancialAccount = components['schemas']['FinancialAccount']
 export type FinancialAccountChanges = components['schemas']['FinancialAccountRequest']['financial_account']
@@ -166,8 +166,10 @@ export function useDeleteBookingRule(administrationId: string) {
 }
 
 /** The categories transactions can be booked on, grouped by type and nested. */
-export function bookable(accounts: LedgerAccount[]) {
-  const usable = accounts.filter((a) => a.active && a.allowed_document_types?.includes('financial_mutation'))
+export function bookable(accounts: LedgerAccount[], documentType: DocumentType = 'financial_mutation') {
+  // Invoices settle the debtors and creditors; journal entries cannot.
+  const settled = documentType === 'general_journal_document' ? ['accounts_receivable', 'accounts_payable'] : []
+  const usable = accounts.filter((a) => a.active && a.allowed_document_types?.includes(documentType) && !settled.includes(a.system_role ?? ''))
   return [...profitAndLossTypes, ...balanceSheetTypes]
     .map((type) => ({ type, rows: tree(usable.filter((a) => a.account_type === type)) }))
     .filter((g) => g.rows.length > 0)

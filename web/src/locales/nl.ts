@@ -44,6 +44,19 @@ export const nl: Messages = {
     confirmDeletePerson: 'Bevestig verwijderen {{name}}', remove: 'Verwijderen', confirmRemove: 'Bevestig verwijderen', notes: 'Notities', newNote: 'Nieuwe notitie',
     isTodo: 'Dit is een taak', addNote: 'Notitie toevoegen', todo: 'Te doen', done: 'Klaar', deleteNote: 'Notitie verwijderen', confirmDeleteNote: 'Bevestig verwijderen notitie',
   },
+  journal: {
+    trialBalance: 'Proef- en saldibalans', trialBalanceSubtitle: 'Elke categorie met het beginsaldo, de debet- en creditboekingen en het eindsaldo van de periode.',
+    filters: 'Rapportfilters', period: 'Periode', periods: { this_month: 'Deze maand', prev_month: 'Vorige maand', this_quarter: 'Dit kwartaal', prev_quarter: 'Vorig kwartaal', this_year: 'Dit jaar', prev_year: 'Vorig jaar' },
+    category: 'Categorie', startBalance: 'Beginsaldo', debit: 'Debet', credit: 'Credit', endBalance: 'Eindsaldo', total: 'Totaal',
+    nothingBooked: 'In deze periode is niets geboekt.', loadError: 'Het rapport kon niet worden geladen. Laad de pagina opnieuw.',
+    bookings: 'Boekingen', bookingsSubtitle: 'Alle boekingen op deze categorie in de periode.', backToTrialBalance: 'Terug naar de proef- en saldibalans',
+    noBookings: 'Geen boekingen op deze categorie in deze periode.', date: 'Datum', description: 'Omschrijving', document: 'Document',
+    documentTypes: { FinancialMutation: 'Banktransactie', GeneralJournalDocument: 'Memoriaalboeking', SalesInvoice: 'Verkoopfactuur', ExternalSalesInvoice: 'Externe factuur', Payment: 'Betaling' },
+    entries: 'Memoriaalboekingen', entriesSubtitle: 'Boekingen met de hand, zoals correcties en het afsluiten van een jaar.', newEntry: 'Nieuwe memoriaalboeking',
+    noEntries: 'Geen memoriaalboekingen in deze periode.', reference: 'Referentie', amount: 'Bedrag', entrySubtitle: 'Debet en credit moeten gelijk zijn. Facturen boeken op debiteuren en crediteuren.',
+    backToEntries: 'Terug naar memoriaalboekingen', rows: 'Regels', actions: 'Acties', remove: 'Verwijderen', removeRow: 'Regel {{n}} verwijderen', addRow: 'Regel toevoegen',
+    balanced: 'Debet en credit zijn gelijk.', difference: 'Verschil: {{amount}}', save: 'Memoriaalboeking opslaan', delete: 'Verwijderen', confirmDelete: 'Definitief verwijderen',
+  },
   sidenav: {
     label: 'Administratiemenu', menu: 'Menu', collapse: 'Menu inklappen', expand: 'Menu uitklappen', collapseShort: 'Inklappen', later: 'Nog niet beschikbaar',
     items: {
@@ -54,7 +67,7 @@ export const nl: Messages = {
       reports: 'Rapportages', reportsOverview: 'Overzicht', profitLoss: 'Winst-en-verliesrekening', balanceSheet: 'Balans', assetsReport: 'Activarapport',
       vatSummary: 'Btw-overzicht', cashFlow: 'Kasstroomoverzicht', debtors: 'Debiteurenoverzicht', creditors: 'Crediteurenoverzicht',
       debtorsAging: 'Ouderdomsanalyse debiteuren', creditorsAging: 'Ouderdomsanalyse crediteuren', revenueByContact: 'Omzet per contact', expensesByContact: 'Kosten per contact',
-      revenueByProject: 'Omzet per project', expensesByProject: 'Kosten per project', trialBalance: 'Proef- en saldibalans', auditReport: 'Controlerapport', events: 'Gebeurtenissen',
+      revenueByProject: 'Omzet per project', expensesByProject: 'Kosten per project', journalEntries: 'Memoriaalboekingen', trialBalance: 'Proef- en saldibalans', auditReport: 'Controlerapport', events: 'Gebeurtenissen',
       products: 'Producten', productsOverview: 'Overzicht', onlineSales: 'Online verkopen',
       assets: 'Activa', projects: 'Projecten', tasks: 'Takenlijsten', taskLists: 'Takenlijsten', taskTemplates: 'Sjablonen', settings: 'Instellingen',
     },

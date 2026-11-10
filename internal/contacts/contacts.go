@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -136,22 +137,8 @@ type Person struct {
 // Version changes whenever the person changes.
 func (p Person) Version() int64 { return p.UpdatedAt.Unix() }
 
-// Note is a remark or a to-do on a record. Notes are kept per entity, so
-// invoices and other records can carry them too.
-type Note struct {
-	ID               resource.ID
-	AdministrationID resource.ID
-	EntityID         resource.ID
-	EntityType       string
-	UserID           resource.ID
-	AssigneeID       *resource.ID
-	Todo             bool
-	Note             string
-	CompletedAt      *time.Time
-	CompletedByID    *resource.ID
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-}
+// Note is a remark or a to-do on a contact; see notes.Note.
+type Note = notes.Note
 
 // Version is a contact's id with its version, for synchronization.
 type Version struct {
@@ -207,10 +194,8 @@ type Store interface {
 	SavePerson(ctx context.Context, p Person) error
 	DeletePerson(ctx context.Context, admin, contact, id resource.ID, at time.Time) error
 
-	// CreateNote stores a note and stamps the contact.
-	CreateNote(ctx context.Context, n Note) error
-	DeleteNote(ctx context.Context, admin, entity, id resource.ID, at time.Time) error
-	IsMember(ctx context.Context, admin, user resource.ID) (bool, error)
+	// TouchContact stamps a contact changed, such as when a note is added.
+	TouchContact(ctx context.Context, admin, id resource.ID, at time.Time) error
 }
 
 // Service implements the contact use cases.
@@ -219,6 +204,7 @@ type Service struct {
 	workflows  Workflows
 	fields     CustomFields
 	references References
+	notes      *notes.Service
 	store      Store
 	ids        *resource.Generator
 	now        func() time.Time
@@ -226,8 +212,8 @@ type Service struct {
 
 // NewService returns a Service. References may be nil while no document
 // can refer to contacts.
-func NewService(admins Administrations, workflows Workflows, fields CustomFields, references References, store Store, ids *resource.Generator, now func() time.Time) *Service {
-	return &Service{admins: admins, workflows: workflows, fields: fields, references: references, store: store, ids: ids, now: now}
+func NewService(admins Administrations, workflows Workflows, fields CustomFields, references References, notes *notes.Service, store Store, ids *resource.Generator, now func() time.Time) *Service {
+	return &Service{admins: admins, workflows: workflows, fields: fields, references: references, notes: notes, store: store, ids: ids, now: now}
 }
 
 // MaxPerPage caps a page, as at Moneybird.
@@ -260,6 +246,9 @@ func (s *Service) List(ctx context.Context, admin, user resource.ID, q Query) (P
 	if err != nil {
 		return Page{}, fmt.Errorf("list contacts: %w", err)
 	}
+	if list, err = s.withNotes(ctx, admin, list); err != nil {
+		return Page{}, err
+	}
 	return Page{Contacts: list, Total: total, Page: q.Page, PerPage: q.PerPage}, nil
 }
 
@@ -268,7 +257,45 @@ func (s *Service) Contact(ctx context.Context, admin, id, user resource.ID) (Con
 	if _, err := s.admins.Get(ctx, admin, user); err != nil {
 		return Contact{}, err
 	}
-	return s.store.Contact(ctx, admin, id)
+	return s.one(ctx, admin, func() (Contact, error) { return s.store.Contact(ctx, admin, id) })
+}
+
+func (s *Service) one(ctx context.Context, admin resource.ID, load func() (Contact, error)) (Contact, error) {
+	c, err := load()
+	if err != nil {
+		return Contact{}, err
+	}
+	list, err := s.withNotes(ctx, admin, []Contact{c})
+	if err != nil {
+		return Contact{}, err
+	}
+	return list[0], nil
+}
+
+// withNotes adds each contact's notes.
+func (s *Service) withNotes(ctx context.Context, admin resource.ID, list []Contact) ([]Contact, error) {
+	ids := make([]resource.ID, len(list))
+	for i, c := range list {
+		ids[i] = c.ID
+	}
+	byContact, err := s.notes.Of(ctx, admin, NoteEntityType, ids)
+	if err != nil {
+		return nil, err
+	}
+	for i := range list {
+		list[i].Notes = byContact[list[i].ID]
+	}
+	return list, nil
+}
+
+// ContactExists returns an error unless the contact is the administration's,
+// for records that refer to one.
+func (s *Service) ContactExists(ctx context.Context, admin, id, user resource.ID) error {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return err
+	}
+	_, err := s.store.Contact(ctx, admin, id)
+	return err
 }
 
 // ContactByCustomerID returns the contact with a customer id.
@@ -276,7 +303,7 @@ func (s *Service) ContactByCustomerID(ctx context.Context, admin, user resource.
 	if _, err := s.admins.Get(ctx, admin, user); err != nil {
 		return Contact{}, err
 	}
-	return s.store.ContactByCustomerID(ctx, admin, customerID)
+	return s.one(ctx, admin, func() (Contact, error) { return s.store.ContactByCustomerID(ctx, admin, customerID) })
 }
 
 // ContactsByID returns the contacts with these ids, for synchronization.
@@ -289,7 +316,11 @@ func (s *Service) ContactsByID(ctx context.Context, admin, user resource.ID, ids
 		verr.Add("ids", fmt.Sprintf("can hold at most %d ids", MaxFetch))
 		return nil, &verr
 	}
-	return s.store.ContactsByID(ctx, admin, ids)
+	list, err := s.store.ContactsByID(ctx, admin, ids)
+	if err != nil {
+		return nil, err
+	}
+	return s.withNotes(ctx, admin, list)
 }
 
 // Versions lists the ids and versions of the contacts the query selects.
