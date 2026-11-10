@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useMatch, useNavigate } from 'react-router-dom'
 import { useAdministration, useAdministrations } from '../administrations/queries'
-import { can } from '../management/queries'
 import { useCurrentUser, useLogout } from '../auth/queries'
+import { useAdministrationId } from './administrationId'
+import { MenuToggle, SidenavProvider } from './Sidenav'
 import { BellIcon, SearchIcon } from './icons'
 import { LanguageSelect } from './LanguageSelect'
 import { Logo } from './Logo'
@@ -15,13 +16,13 @@ import { saveTheme, storedTheme, type Theme } from './theme'
 export function AppShell() {
   const { t } = useTranslation()
   return (
-    <>
+    <SidenavProvider>
       <a className="skip-link" href="#main">{t('common.skip')}</a>
       <nav className="topnav" aria-label={t('nav.main')}>
         <div className="topnav__left">
+          <MenuToggle />
           <HomeLink />
           <AdministrationSwitcher />
-          <AdministrationSections />
         </div>
         <div className="topnav__search" role="search">
           <SearchIcon />
@@ -39,7 +40,7 @@ export function AppShell() {
       <main id="main" tabIndex={-1}>
         <Outlet />
       </main>
-    </>
+    </SidenavProvider>
   )
 }
 
@@ -83,37 +84,6 @@ function AdministrationSwitcher() {
       </nav>
     </Menu>
   )
-}
-
-/** Links to the parts of the open administration. */
-function AdministrationSections() {
-  const { t } = useTranslation()
-  const id = useAdministrationId()
-  const administration = useAdministration(id)
-  const nested = useMatch('/:id/*')
-  if (!id) {
-    return null
-  }
-  const section = nested?.params['*']?.split('/')[0] ?? ''
-  const bank = can(administration.data, 'bank')
-  const link = (to: string, label: string, active: boolean) => (
-    <Link className="topnav__btn topnav__section" to={`/${id}/${to}`} aria-current={active ? 'page' : undefined}>{label}</Link>
-  )
-  return (
-    <div className="topnav__sections">
-      {link('feed', t('nav.overview'), section === 'feed')}
-      {bank && link('financial_mutations', t('nav.bank'), section === 'financial_mutations')}
-      {link('settings', t('nav.settings'), section === 'settings')}
-    </div>
-  )
-}
-
-/** The open administration's id, if the address is inside one. */
-function useAdministrationId() {
-  const nested = useMatch('/:id/*')
-  const home = useMatch('/:id')
-  const id = home?.params.id ?? nested?.params.id ?? ''
-  return /^\d{1,19}$/.test(id) ? id : ''
 }
 
 /** Tells a user without two-step verification that this administration needs it. */
