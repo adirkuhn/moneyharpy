@@ -526,3 +526,64 @@ SELECT id, name, support_access_until FROM administrations WHERE support_access_
 
 -- name: DeleteAdministration :exec
 DELETE FROM administrations WHERE id = $1;
+
+-- name: ListConnections :many
+SELECT c.*, u.name AS granted_by FROM connections c JOIN users u ON u.id = c.user_id WHERE c.administration_id = $1;
+
+-- name: ConnectionByID :one
+SELECT c.*, u.name AS granted_by FROM connections c JOIN users u ON u.id = c.user_id WHERE c.administration_id = $1 AND c.id = $2;
+
+-- name: InsertConnection :exec
+INSERT INTO connections (id, administration_id, user_id, kind, name, scopes, read_only, token_hash, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+
+-- name: DeleteConnection :exec
+DELETE FROM connections WHERE administration_id = $1 AND id = $2;
+
+-- name: UseConnection :one
+-- A connection works while the user it acts for may open the administration.
+UPDATE connections c SET last_used_at = $2
+FROM users u, administration_members m
+WHERE c.token_hash = $1 AND u.id = c.user_id AND m.administration_id = c.administration_id AND m.user_id = c.user_id AND m.active
+RETURNING c.id, c.administration_id, c.user_id, c.kind, c.name, c.scopes, c.read_only, c.created_at, c.last_used_at, u.name AS granted_by, u.email;
+
+-- name: UsersMayConnect :one
+SELECT users_may_connect FROM administrations WHERE id = $1;
+
+-- name: SetUsersMayConnect :exec
+UPDATE administrations SET users_may_connect = $2 WHERE id = $1;
+
+-- name: ListWebhooks :many
+SELECT * FROM webhooks WHERE administration_id = $1 ORDER BY created_at, id;
+
+-- name: WebhookByID :one
+SELECT * FROM webhooks WHERE administration_id = $1 AND id = $2;
+
+-- name: InsertWebhook :exec
+INSERT INTO webhooks (id, administration_id, url, enabled_events, token, secret_sealed, connection_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+
+-- name: DeleteWebhook :exec
+DELETE FROM webhooks WHERE administration_id = $1 AND id = $2;
+
+-- name: SetWebhookDeactivated :exec
+UPDATE webhooks SET deactivated_at = $3, updated_at = now() WHERE administration_id = $1 AND id = $2;
+
+-- name: InsertWebhookDelivery :exec
+INSERT INTO webhook_deliveries (id, webhook_id, idempotency_key, payload, next_attempt_at, created_at) VALUES ($1, $2, $3, $4, $5, $6);
+
+-- name: LeaseDueDeliveries :many
+UPDATE webhook_deliveries d SET next_attempt_at = @lease
+FROM webhooks w
+WHERE w.id = d.webhook_id AND d.id IN (
+    SELECT x.id FROM webhook_deliveries x JOIN webhooks y ON y.id = x.webhook_id
+    WHERE x.next_attempt_at <= @now AND y.deactivated_at IS NULL
+    ORDER BY x.next_attempt_at LIMIT @max_count FOR UPDATE OF x SKIP LOCKED
+)
+RETURNING d.id, d.webhook_id, d.idempotency_key, d.payload, d.attempts, d.created_at, w.url, w.secret_sealed;
+
+-- name: SaveDeliveryAttempt :exec
+UPDATE webhook_deliveries SET attempts = $2, next_attempt_at = $3, delivered_at = $4, last_status = $5, last_error = $6 WHERE id = $1;
+
+-- name: SaveWebhookResponse :exec
+UPDATE webhooks SET last_http_status = $2, last_http_body = $3 WHERE id = $1;

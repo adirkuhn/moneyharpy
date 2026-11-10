@@ -1,0 +1,46 @@
+package webhooks
+
+import (
+	"slices"
+	"strings"
+)
+
+// Events are the Moneybird webhook events MoneyHarpy sends, with
+// Moneybird's names. Others follow as their features arrive.
+var Events = []string{
+	"administration_details_edited", "administration_update_period_locked_until",
+	"administration_automatic_bookers_activated", "administration_automatic_bookers_deactivated",
+	"identity_created", "identity_updated", "identity_destroyed", "default_identity_updated",
+	"workflow_created", "workflow_updated", "workflow_deactivated", "workflow_destroyed",
+	"document_style_created", "document_style_updated", "document_style_destroyed",
+	"tax_rate_created", "tax_rate_updated", "tax_rate_activated", "tax_rate_deactivated",
+	"ledger_account_created", "ledger_account_updated", "ledger_account_activated", "ledger_account_deactivated", "ledger_account_destroyed",
+	"ledger_account_booking_created", "ledger_account_booking_destroyed",
+	"financial_account_created", "financial_account_renamed", "financial_account_activated", "financial_account_deactivated",
+	"financial_statement_created", "financial_statement_updated", "financial_statement_destroyed",
+	"booking_rule_created", "booking_rule_updated", "booking_rule_destroyed",
+	"user_invited", "user_removed",
+	"access_token_created", "access_token_revoked",
+}
+
+// Groups are the prefixes people can subscribe to, as at Moneybird: a group
+// matches every event starting with it.
+var Groups = []string{
+	"administration", "identity", "default_identity", "workflow", "document_style", "tax_rate", "ledger_account",
+	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "user", "access_token",
+}
+
+// known reports whether a subscription names an event or a group.
+func known(name string) bool { return slices.Contains(Events, name) || slices.Contains(Groups, name) }
+
+// subscribed reports whether a webhook with these subscriptions gets the
+// event. Without subscriptions, Moneybird sends its legacy sales invoice
+// events, which MoneyHarpy has none of yet.
+func subscribed(enabled []string, event string) bool {
+	for _, e := range enabled {
+		if e == event || strings.HasPrefix(event, e+"_") {
+			return true
+		}
+	}
+	return false
+}

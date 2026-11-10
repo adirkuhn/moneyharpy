@@ -18,12 +18,14 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
+	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
+	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/go-chi/chi/v5"
@@ -75,6 +77,8 @@ type Deps struct {
 	Bookkeeping     *bookkeeping.Service
 	Banking         *banking.Service
 	Membership      *membership.Service
+	Connections     *connections.Service
+	Webhooks        *webhooks.Service
 	Storage         StorageChecker
 	Identity        *identity.Service
 	Settings        *settings.Service
@@ -130,10 +134,11 @@ func NewHandler(d Deps) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.tools = buildTools(spec, rules)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID, s.recoverPanics, securityHeaders)
-	r.Use(s.negotiateFormat, s.throttle, s.crossOriginProtection(), limitBody, s.authenticate)
+	r.Use(s.negotiateFormat, s.throttle, s.crossOriginProtection(), limitBody, s.authenticate, s.limitGrants)
 	r.Use(validator.OapiRequestValidatorWithOptions(spec, &validator.Options{
 		SilenceServersWarning: true,
 		Skipper:               func(r *http.Request) bool { return !inContract(r.URL.Path) },
@@ -141,9 +146,10 @@ func NewHandler(d Deps) (http.Handler, error) {
 		Options: openapi3filter.Options{
 			AuthenticationFunc: requireUser,
 		},
-	}), authorize)
+	}), authorize, s.recordEvents)
 
-	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	// Any method, so the health check can also stand in as a test webhook receiver.
+	r.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	r.Get("/api/openapi.yaml", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml")
 		// The client went away if this fails; there is nobody left to tell.
@@ -151,6 +157,7 @@ func NewHandler(d Deps) (http.Handler, error) {
 	})
 	r.NotFound(s.serveWeb)
 	HandlerFromMux(s, r)
+	s.root = r
 	return r, nil
 }
 
@@ -162,6 +169,9 @@ func inContract(path string) bool {
 type server struct {
 	deps          Deps
 	secureCookies bool
+	// root is the whole handler, for running MCP tools as API requests.
+	root  http.Handler
+	tools []operationTool
 }
 
 func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
@@ -183,6 +193,10 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet; only categories (LedgerAccount) can be booked so far"}}))
 	case errors.Is(err, banking.ErrStatementBooked):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Remove the bookings of this statement's transactions first"}}))
+	case errors.Is(err, connections.ErrForbidden):
+		writeError(w, http.StatusForbidden, "Only owners can create connections here, unless they let users connect")
+	case errors.Is(err, webhooks.ErrForbidden):
+		writeError(w, http.StatusForbidden, "Your user has no permission for this")
 	case errors.Is(err, errNeedsTwoFactor):
 		writeError(w, http.StatusForbidden, "This administration requires two-step verification. Turn it on for your account first.")
 	case errors.Is(err, errNoPermission), errors.Is(err, membership.ErrForbidden):
@@ -223,6 +237,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		bookkeeping.IsNotFound(err),
 		banking.IsNotFound(err),
 		errors.Is(err, membership.ErrUserNotFound),
+		errors.Is(err, connections.ErrNotFound),
+		errors.Is(err, webhooks.ErrNotFound),
 		errors.Is(err, membership.ErrInvitationNotFound),
 		errors.Is(err, administration.ErrLookupUnavailable),
 		errors.Is(err, administration.ErrAddressUnknown),

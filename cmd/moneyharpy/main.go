@@ -17,8 +17,10 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
+	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/diskstore"
 	"github.com/adirkuhn/moneyharpy/internal/google"
+	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
@@ -33,6 +35,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
 	"github.com/adirkuhn/moneyharpy/internal/uploads"
+	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/adirkuhn/moneyharpy/web"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -104,6 +107,7 @@ func run(logger *slog.Logger) error {
 	files := uploads.New(s3, diskstore.New(cfg.uploadsDir))
 	admins := administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now)
 	invoices := invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now)
+	hooks := webhooks.NewService(admins, postgres.NewWebhookStore(pool, cipher), hookclient.New(), instance, ids, time.Now)
 	people := identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, cipher, time.Now)
 	books := bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
@@ -114,6 +118,8 @@ func run(logger *slog.Logger) error {
 		Storage:           s3,
 		Identity:          people,
 		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
+		Connections:       connections.NewService(admins, postgres.NewConnectionStore(pool), ids, time.Now),
+		Webhooks:          hooks,
 		Settings:          instance,
 		Resources:         postgres.NewResourceLocator(pool),
 		Google:            google.New(instance, cfg.baseURL, google.Issuer),
@@ -142,6 +148,8 @@ func run(logger *slog.Logger) error {
 		WriteTimeout:      60 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 	}
+	go hooks.Run(ctx, 5*time.Second, func(err error) { logger.Error("deliver webhooks", "error", err) })
+
 	errs := make(chan error, 1)
 	go func() { errs <- srv.ListenAndServe() }()
 	logger.Info("listening", "addr", cfg.addr, "base_url", cfg.baseURL)

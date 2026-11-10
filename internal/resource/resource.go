@@ -100,6 +100,7 @@ const (
 	TypeFinancialStatement Type = "financial_statements"
 	TypeFinancialMutation  Type = "financial_mutations"
 	TypeBookingRule        Type = "booking_rules"
+	TypeWebhook            Type = "webhooks"
 )
 
 // Ref locates one resource.

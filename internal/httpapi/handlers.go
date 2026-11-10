@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -89,6 +90,10 @@ func (s *server) ListAdministrations(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
+	if g, ok := grantFrom(r.Context()); ok {
+		// A connection sees only its own administration.
+		listed = slices.DeleteFunc(listed, func(l administration.Listed) bool { return l.ID != g.AdministrationID })
+	}
 	out := make([]Administration, len(listed))
 	for i, l := range listed {
 		out[i] = toAdministration(l)
@@ -98,6 +103,10 @@ func (s *server) ListAdministrations(w http.ResponseWriter, r *http.Request) {
 
 // CreateAdministration implements ServerInterface.
 func (s *server) CreateAdministration(w http.ResponseWriter, r *http.Request) {
+	if _, ok := grantFrom(r.Context()); ok {
+		writeError(w, http.StatusForbidden, "Connection tokens cannot create administrations")
+		return
+	}
 	body, ok := decodeBody[CreateAdministrationRequest](w, r)
 	if !ok {
 		return
@@ -799,6 +808,7 @@ func toInstanceSettings(inst settings.Instance) InstanceSettings {
 		KvkEnabled:            inst.KVK.Enabled,
 		KvkApiKeySet:          inst.KVK.APIKey != "",
 		AddressLookupEnabled:  inst.AddressLookupEnabled,
+		WebhooksAllowLocal:    inst.WebhooksAllowLocal,
 		SmtpEnabled:           inst.SMTP.Enabled,
 		SmtpHost:              inst.SMTP.Host,
 		SmtpPort:              inst.SMTP.Port,
@@ -871,6 +881,7 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 		KVKEnabled:           body.KvkEnabled,
 		KVKAPIKey:            body.KvkApiKey,
 		AddressLookupEnabled: body.AddressLookupEnabled,
+		WebhooksAllowLocal:   body.WebhooksAllowLocal,
 
 		SMTPEnabled:  body.SmtpEnabled,
 		SMTPHost:     body.SmtpHost,

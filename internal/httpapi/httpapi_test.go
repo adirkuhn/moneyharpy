@@ -24,6 +24,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
+	"github.com/adirkuhn/moneyharpy/internal/connections"
+	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
@@ -33,6 +35,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
+	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
@@ -196,6 +199,7 @@ type harness struct {
 	mailer *fakeMailer
 	files  *fakeFiles
 	settle *settings.Service
+	hooks  *webhooks.Service
 }
 
 func newHarness(t *testing.T, opts options) *harness {
@@ -224,12 +228,15 @@ func newHarness(t *testing.T, opts options) *harness {
 
 	admins := administration.NewService(postgres.NewAdministrationStore(pool), ids, time.Now)
 	books := bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now)
+	h.hooks = webhooks.NewService(admins, postgres.NewWebhookStore(pool, settings.NewCipher("test-secret")), hookclient.New(), settle, ids, time.Now)
 	invoices := invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now)
 	people := identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), mailer, settings.NewCipher("test-secret"), time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
 		Membership:      membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
+		Connections:     connections.NewService(admins, postgres.NewConnectionStore(pool), ids, time.Now),
+		Webhooks:        h.hooks,
 		Bookkeeping:     books,
 		Banking:         banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now),
 		Storage:         files,

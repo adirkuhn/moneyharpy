@@ -50,6 +50,10 @@ tags:
     description: Rules that book matching transactions automatically. MoneyHarpy extension.
   - name: Management
     description: Users, invitations, permissions, security and deleting an administration. Users is compatible with the Moneybird API; the rest is a MoneyHarpy extension.
+  - name: Integrations
+    description: API tokens and AI connections (MCP) for one administration, and who may create them. MoneyHarpy extension.
+  - name: Webhooks
+    description: Notifications sent to other systems when things change. Compatible with the Moneybird API.
   - name: Custom fields
     description: Extra fields on invoices, contacts, estimates and identities. Compatible with the Moneybird API.
   - name: Onboarding
@@ -73,6 +77,8 @@ paths:
       description: Lists all administrations the current user has access to.
       tags: [Administrations]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: A list of administrations
           content:
@@ -2621,6 +2627,8 @@ paths:
       tags: [Management]
       security: []
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The invitation
           content:
@@ -2727,6 +2735,8 @@ paths:
       summary: Two-step verification of your account
       tags: [User]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The status
           content:
@@ -2839,12 +2849,371 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/connection_settings:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getConnectionSettings
+      summary: Who can connect
+      description: MoneyHarpy extension.
+      tags: [Integrations]
+      x-permissions: []
+      responses:
+        '200':
+          description: The settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateConnectionSettings
+      summary: Change who can connect
+      description: MoneyHarpy extension. Owners only.
+      tags: [Integrations]
+      x-permissions: [ownership]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionSettings'
+      responses:
+        '200':
+          description: The settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/connections:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listConnections
+      summary: External applications and AI connections
+      description: MoneyHarpy extension. Newest first.
+      tags: [Integrations]
+      x-permissions: []
+      responses:
+        '200':
+          description: The connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Connection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createConnection
+      summary: Create an API token or AI connection
+      description: >-
+        MoneyHarpy extension. The token acts for you in this administration only, limited to its scopes and, if
+        read_only, to reading. It is shown only in this response. Owners may always connect; others when
+        users_may_connect is on. Connection tokens cannot create connections.
+      tags: [Integrations]
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionRequest'
+      responses:
+        '201':
+          description: The connection with its token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedConnection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/connections/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    delete:
+      operationId: revokeConnection
+      summary: Revoke a connection
+      description: MoneyHarpy extension. Owners revoke any connection, others their own. Webhooks the connection made are deleted with it.
+      tags: [Integrations]
+      x-permissions: []
+      responses:
+        '204':
+          description: Revoked
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/webhooks:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listWebhooks
+      summary: List all webhooks
+      tags: [Webhooks]
+      x-permissions: [settings]
+      responses:
+        '200':
+          description: The webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Webhook'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createWebhook
+      summary: Create a webhook
+      description: >-
+        The URL must answer a signed test delivery with 200 and use https, unless the instance allows local webhooks.
+        enabled_events takes event names and groups; a group matches every event starting with it. Without events,
+        Moneybird sends its legacy sales invoice events, which MoneyHarpy has none of yet. The secret, used for the
+        Moneybird-Signature header, is returned only here.
+      tags: [Webhooks]
+      x-permissions: [settings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookRequest'
+      responses:
+        '201':
+          description: The webhook with its secret
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/webhooks/events:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listWebhookEvents
+      summary: The events webhooks can subscribe to
+      description: MoneyHarpy extension.
+      tags: [Webhooks]
+      x-permissions: [settings]
+      responses:
+        '200':
+          description: Events and groups
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookEvents'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/webhooks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getWebhook
+      summary: Retrieve a webhook
+      description: MoneyHarpy extension.
+      tags: [Webhooks]
+      x-permissions: [settings]
+      responses:
+        '200':
+          description: The webhook
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteWebhook
+      summary: Delete a webhook
+      tags: [Webhooks]
+      x-permissions: [settings]
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/webhooks/{id}/activate:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: activateWebhook
+      summary: Activate a webhook
+      tags: [Webhooks]
+      x-permissions: [settings]
+      responses:
+        '200':
+          description: The webhook
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/webhooks/{id}/deactivate:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: deactivateWebhook
+      summary: Deactivate a webhook
+      tags: [Webhooks]
+      x-permissions: [settings]
+      responses:
+        '200':
+          description: The webhook
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/mcp:
+    post:
+      operationId: mcp
+      summary: Model Context Protocol endpoint
+      description: >-
+        MCP over streamable HTTP for AI connections, stateless: one JSON-RPC 2.0 message per request, answered with
+        JSON. Sign in with an AI connection token as bearer. Supports initialize, ping, tools/list and tools/call; the
+        tools are this API's operations the connection may use, run with its rights.
+      tags: [Integrations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JsonRpcMessage'
+      responses:
+        '200':
+          description: The JSON-RPC answer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonRpcResponse'
+        '202':
+          description: A notification was received
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/onboarding/options:
     get:
       operationId: onboardingOptions
       summary: List what can be chosen when adding an administration
       tags: [Onboarding]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The options
           content:
@@ -2874,6 +3243,8 @@ paths:
             minLength: 2
             maxLength: 255
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Matching companies. Address parts the register does not return are empty.
           content:
@@ -2909,6 +3280,8 @@ paths:
             type: string
             maxLength: 16
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The address
           content:
@@ -2932,6 +3305,8 @@ paths:
       description: Returns the canonical URI of any resource the user can access. Backs `/r/{id}` permalinks.
       tags: [Resources]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Where the resource lives
           content:
@@ -2951,6 +3326,8 @@ paths:
       tags: [Authentication]
       security: []
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: Enabled sign-in methods
           content:
@@ -3090,6 +3467,8 @@ paths:
       summary: Get the signed-in user
       tags: [Authentication]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The signed-in user
           content:
@@ -3105,6 +3484,8 @@ paths:
       tags: [Authentication]
       security: []
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '302':
           description: Redirect to Google
           headers:
@@ -3133,6 +3514,8 @@ paths:
           schema:
             type: string
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '302':
           description: Redirect into the application
           headers:
@@ -3146,6 +3529,8 @@ paths:
       tags: [Authentication]
       security: []
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '302':
           description: Redirect to the LM2 login page
           headers:
@@ -3177,6 +3562,8 @@ paths:
           schema:
             type: string
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '302':
           description: Redirect into the application
           headers:
@@ -3189,6 +3576,8 @@ paths:
       summary: List personal API tokens
       tags: [User]
       responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '200':
           description: The tokens, without their secrets
           content:
@@ -3940,7 +4329,7 @@ components:
           maxLength: 255
     InstanceSettings:
       type: object
-      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security, storage_enabled, storage_endpoint, storage_region, storage_bucket, storage_access_key, storage_secret_key_set, storage_path_style]
+      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security, storage_enabled, storage_endpoint, storage_region, storage_bucket, storage_access_key, storage_secret_key_set, storage_path_style, webhooks_allow_local]
       properties:
         registration_open:
           type: boolean
@@ -3993,6 +4382,9 @@ components:
         storage_path_style:
           type: boolean
           description: Address buckets as endpoint/bucket, which most self-hosted services need.
+        webhooks_allow_local:
+          type: boolean
+          description: Let webhooks reach plain HTTP and private or loopback addresses, for development.
     UpdateInstanceSettingsRequest:
       type: object
       additionalProperties: false
@@ -4061,6 +4453,9 @@ components:
           maxLength: 1024
         storage_path_style:
           type: boolean
+        webhooks_allow_local:
+          type: boolean
+          description: Let webhooks reach plain HTTP and private or loopback addresses, for development.
     Workflow:
       description: A Moneybird workflow with MoneyHarpy extensions.
       allOf:
@@ -4972,6 +5367,159 @@ components:
         two_factor_required:
           type: boolean
           enum: [true]
+    ConnectionSettings:
+      type: object
+      required: [users_may_connect]
+      additionalProperties: false
+      properties:
+        users_may_connect:
+          type: boolean
+          description: Users other than owners may create API tokens and AI connections.
+    Connection:
+      type: object
+      description: MoneyHarpy extension. An API token or AI connection.
+      required: [id, kind, name, scopes, read_only, granted_by, created_at, last_used_at, mine]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        kind:
+          type: string
+          enum: [api, ai]
+        name:
+          type: string
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Scope'
+        read_only:
+          type: boolean
+        granted_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        mine:
+          type: boolean
+          description: You made it, so you may revoke it.
+    CreatedConnection:
+      allOf:
+        - $ref: '#/components/schemas/Connection'
+        - type: object
+          required: [token]
+          properties:
+            token:
+              type: string
+              description: Shown only now. Send it as a bearer token.
+            mcp_url:
+              type: string
+              description: For AI connections, the address to give the assistant.
+    Scope:
+      type: string
+      enum: [sales_invoices, documents, estimates, bank, time_entries, settings]
+    ConnectionRequest:
+      type: object
+      required: [connection]
+      additionalProperties: false
+      properties:
+        connection:
+          type: object
+          required: [kind, name, scopes]
+          additionalProperties: false
+          properties:
+            kind:
+              type: string
+              enum: [api, ai]
+            name:
+              type: string
+              maxLength: 255
+            scopes:
+              type: array
+              maxItems: 6
+              items:
+                $ref: '#/components/schemas/Scope'
+            read_only:
+              type: boolean
+    Webhook:
+      description: A Moneybird webhook with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/webhook_response'
+        - type: object
+          required: [uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    WebhookRequest:
+      type: object
+      required: [url]
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          maxLength: 2000
+        enabled_events:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 100
+    WebhookEvents:
+      type: object
+      required: [events, groups]
+      properties:
+        events:
+          type: array
+          items:
+            type: string
+        groups:
+          type: array
+          items:
+            type: string
+    JsonRpcMessage:
+      type: object
+      description: A JSON-RPC 2.0 request or notification.
+      required: [jsonrpc, method]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ['2.0']
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+          nullable: true
+        method:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+    JsonRpcResponse:
+      type: object
+      required: [jsonrpc, id]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ['2.0']
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+          nullable: true
+        result:
+          type: object
+          additionalProperties: true
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
     DocumentStyleLine:
       type: object
       required:

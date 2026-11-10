@@ -35,6 +35,13 @@ const parts: Partial<Record<Section, { id: string; label: string }[]>> = {
     { id: 'locked-period', label: 'bookkeeping.parts.lock' },
     { id: 'export', label: 'bookkeeping.parts.export' },
   ],
+  connections: [
+    { id: 'available-connections', label: 'integrations.parts.available' },
+    { id: 'who-can-connect', label: 'integrations.parts.who' },
+    { id: 'external-applications', label: 'integrations.parts.apps' },
+    { id: 'ai-connections', label: 'integrations.parts.ai' },
+    { id: 'webhooks', label: 'integrations.parts.webhooks' },
+  ],
   administration: [
     { id: 'administration-details', label: 'management.parts.details' },
     { id: 'users', label: 'management.parts.users' },
@@ -63,6 +70,8 @@ const pageSections: Record<string, Section> = {
   ledger_account_templates: 'bookkeeping',
   financial_accounts: 'bank',
   booking_rules: 'bank',
+  connections: 'connections',
+  webhooks: 'connections',
   users: 'administration',
   user_invitations: 'administration',
   support_access: 'administration',
@@ -70,8 +79,8 @@ const pageSections: Record<string, Section> = {
   delete: 'administration',
 }
 
-/** Every section but Management works on the administration's settings. */
-const sectionNeedsSettings = (section: Section) => section !== 'administration'
+/** Every section but Management and Integrations works on the administration's settings. */
+const sectionNeedsSettings = (section: Section) => section !== 'administration' && section !== 'connections'
 
 /**
  * The settings area of one administration: a section menu beside the page.
