@@ -1943,7 +1943,7 @@ export interface components {
     schemas: {
         /**
          * @description A unique record identifier. Parse as a string.
-         * @example 416072101932303822
+         * @example 123456789012345678
          */
         Identifier: string;
         Error: {
@@ -1992,7 +1992,7 @@ export interface components {
             favorite: boolean;
             /**
              * @description MoneyHarpy extension. Canonical path of this resource.
-             * @example /416072101932303822
+             * @example /123456789012345678
              */
             uri: string;
             /** @description MoneyHarpy extension. Registered for the Dutch small business scheme (KOR). */
@@ -2171,7 +2171,7 @@ export interface components {
             id: components["schemas"]["Identifier"];
             /** @example administrations */
             type: string;
-            /** @example /416072101932303822 */
+            /** @example /123456789012345678 */
             uri: string;
         };
         AuthProviders: {

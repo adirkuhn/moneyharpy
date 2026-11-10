@@ -54,7 +54,7 @@ func TestParseID(t *testing.T) {
 		want    ID
 		wantErr bool
 	}{
-		{name: "large integer", in: "416072101932303822", want: 416072101932303822},
+		{name: "large integer", in: "123456789012345678", want: 123456789012345678},
 		{name: "empty", in: "", wantErr: true},
 		{name: "letters", in: "abc", wantErr: true},
 		{name: "negative", in: "-5", wantErr: true},
