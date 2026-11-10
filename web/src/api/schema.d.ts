@@ -220,6 +220,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/lm2/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Start signing in with LM2 */
+        get: operations["lm2Start"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/lm2/callback/{state}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Finish signing in with LM2
+         * @description The state is in the path because LM2 appends its own query string to the redirect address.
+         */
+        get: operations["lm2Callback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user/tokens": {
         parameters: {
             query?: never;
@@ -361,6 +398,7 @@ export interface components {
         AuthProviders: {
             registration_open: boolean;
             google: boolean;
+            lm2: boolean;
         };
         RegisterRequest: {
             email: string;
@@ -395,12 +433,20 @@ export interface components {
             google_enabled: boolean;
             google_client_id: string;
             google_client_secret_set: boolean;
+            lm2_enabled: boolean;
+            lm2_url: string;
+            lm2_app: string;
         };
         UpdateInstanceSettingsRequest: {
             registration_open?: boolean;
             google_enabled?: boolean;
             google_client_id?: string;
             google_client_secret?: string;
+            lm2_enabled?: boolean;
+            /** @description Public address of the LM2 installation. */
+            lm2_url?: string;
+            /** @description The name this installation is registered under in LM2. */
+            lm2_app?: string;
         };
     };
     responses: {
@@ -779,6 +825,51 @@ export interface operations {
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect into the application */
+            302: {
+                headers: {
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    lm2Start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to the LM2 login page */
+            302: {
+                headers: {
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    lm2Callback: {
+        parameters: {
+            query?: {
+                token?: string;
+                /** @description Sent by LM2. MoneyHarpy ignores and never stores it. */
+                refresh_token?: string;
+            };
+            header?: never;
+            path: {
+                state: string;
+            };
             cookie?: never;
         };
         requestBody?: never;

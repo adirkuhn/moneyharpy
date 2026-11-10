@@ -120,3 +120,46 @@ func TestCipherRejectsWrongKey(t *testing.T) {
 		t.Errorf("Open() = %q, want %q", got, "value")
 	}
 }
+
+func TestUpdateStoresLM2AndTrimsURL(t *testing.T) {
+	s, _ := newService(t)
+	ctx := context.Background()
+	if _, err := s.Update(ctx, Update{LM2Enabled: ptr(true), LM2URL: ptr("https://lm.example.com/"), LM2App: ptr("moneyharpy")}); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	got, err := s.Instance(ctx)
+	if err != nil {
+		t.Fatalf("Instance() error = %v", err)
+	}
+	want := LM2{Enabled: true, URL: "https://lm.example.com", App: "moneyharpy"}
+	if diff := cmp.Diff(want, got.LM2); diff != "" {
+		t.Errorf("Instance().LM2 diff (-want +got):\n%s", diff)
+	}
+}
+
+func TestLM2Validation(t *testing.T) {
+	tests := []struct {
+		name  string
+		in    Update
+		field string
+	}{
+		{name: "enabled without url", in: Update{LM2Enabled: ptr(true), LM2App: ptr("a")}, field: "lm2_url"},
+		{name: "enabled without app", in: Update{LM2Enabled: ptr(true), LM2URL: ptr("https://x.nl")}, field: "lm2_app"},
+		{name: "relative url", in: Update{LM2URL: ptr("x.nl")}, field: "lm2_url"},
+		{name: "other scheme", in: Update{LM2URL: ptr("ftp://x.nl")}, field: "lm2_url"},
+		{name: "url with query", in: Update{LM2URL: ptr("https://x.nl?a=1")}, field: "lm2_url"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, _ := newService(t)
+			_, err := s.Update(context.Background(), tt.in)
+			var verr *resource.ValidationError
+			if !errors.As(err, &verr) {
+				t.Fatalf("Update() error = %v, want *resource.ValidationError", err)
+			}
+			if _, ok := verr.Fields[tt.field]; !ok {
+				t.Errorf("Update() fields = %v, want key %q", verr.Fields, tt.field)
+			}
+		})
+	}
+}

@@ -23,6 +23,12 @@ Behind one reverse proxy that appends to `X-Forwarded-For`, also set `TRUST_PROX
 
 Create an OAuth client in Google Cloud with the redirect URI `<BASE_URL>/api/auth/google/callback`, then enter its ID and secret under **Instance settings**.
 
+### LM2 login
+
+In LM2, add this installation to `APP_REDIRECT_ALLOWLIST`, for example `moneyharpy=https://books.example.com`. Then enter the LM2 address and that app name under **Instance settings**.
+
+MoneyHarpy never holds LM2's signing key: it asks LM2 who a token belongs to. A LM2 user whose email matches an existing MoneyHarpy account is refused rather than linked, because LM2 does not confirm addresses.
+
 ## API
 
 The contract is [`api/openapi.yaml`](api/openapi.yaml). A running instance renders it at `/docs/api/`.

@@ -38,6 +38,12 @@ type GoogleClient interface {
 	Exchange(ctx context.Context, code, nonce string) (identity.External, error)
 }
 
+// LM2Client signs users in through an Akantio LM2 installation.
+type LM2Client interface {
+	LoginURL(ctx context.Context, state string) (string, error)
+	Identify(ctx context.Context, token string) (identity.External, error)
+}
+
 // Deps are the collaborators of the HTTP layer.
 type Deps struct {
 	Administrations *administration.Service
@@ -45,6 +51,7 @@ type Deps struct {
 	Settings        *settings.Service
 	Resources       ResourceLocator
 	Google          GoogleClient
+	LM2             LM2Client
 	// BaseURL is the public origin of this installation.
 	BaseURL string
 	Logger  *slog.Logger

@@ -18,6 +18,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/google"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
+	"github.com/adirkuhn/moneyharpy/internal/lm2"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -88,6 +89,7 @@ func run(logger *slog.Logger) error {
 		Settings:          instance,
 		Resources:         postgres.NewResourceLocator(pool),
 		Google:            google.New(instance, cfg.baseURL, google.Issuer),
+		LM2:               lm2.New(instance, cfg.baseURL, &http.Client{Timeout: 10 * time.Second}),
 		BaseURL:           cfg.baseURL,
 		Logger:            logger,
 		Web:               web.Dist(),

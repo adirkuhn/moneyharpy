@@ -6,7 +6,12 @@ import { useCurrentUser } from '../auth/queries'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 
-const labels = { google_client_id: 'Google client ID', google_client_secret: 'Google client secret' }
+const labels = {
+  google_client_id: 'Google client ID',
+  google_client_secret: 'Google client secret',
+  lm2_url: 'LM2 address',
+  lm2_app: 'App name in LM2',
+}
 
 export function InstanceSettingsPage() {
   const me = useCurrentUser()
@@ -47,6 +52,9 @@ function SettingsForm() {
       registration_open: form.registration_open,
       google_enabled: form.google_enabled,
       google_client_id: form.google_client_id,
+      lm2_enabled: form.lm2_enabled,
+      lm2_url: form.lm2_url,
+      lm2_app: form.lm2_app,
       ...(secret ? { google_client_secret: secret } : {}),
     })
   }
@@ -74,6 +82,13 @@ function SettingsForm() {
           value={secret}
           onChange={(e) => setSecret(e.target.value)}
         />
+        <h2>LM2 login</h2>
+        <label className="check">
+          <input type="checkbox" checked={form.lm2_enabled} onChange={(e) => setForm({ ...form, lm2_enabled: e.target.checked })} />
+          <span>Let users continue with LM2</span>
+        </label>
+        <Field label="LM2 address" type="url" placeholder="https://lm.example.com" value={form.lm2_url} onChange={(e) => setForm({ ...form, lm2_url: e.target.value })} />
+        <Field label="App name in LM2" value={form.lm2_app} onChange={(e) => setForm({ ...form, lm2_app: e.target.value })} />
         <button className="btn btn--primary" disabled={save.isPending}>Save settings</button>
       </form>
     </Page>

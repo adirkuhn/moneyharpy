@@ -112,6 +112,7 @@ type ApiToken struct {
 // AuthProviders defines model for AuthProviders.
 type AuthProviders struct {
 	Google           bool `json:"google"`
+	Lm2              bool `json:"lm2"`
 	RegistrationOpen bool `json:"registration_open"`
 }
 
@@ -175,6 +176,9 @@ type InstanceSettings struct {
 	GoogleClientId        string `json:"google_client_id"`
 	GoogleClientSecretSet bool   `json:"google_client_secret_set"`
 	GoogleEnabled         bool   `json:"google_enabled"`
+	Lm2App                string `json:"lm2_app"`
+	Lm2Enabled            bool   `json:"lm2_enabled"`
+	Lm2Url                string `json:"lm2_url"`
 	RegistrationOpen      bool   `json:"registration_open"`
 }
 
@@ -213,7 +217,14 @@ type UpdateInstanceSettingsRequest struct {
 	GoogleClientId     *string `json:"google_client_id,omitempty"`
 	GoogleClientSecret *string `json:"google_client_secret,omitempty"`
 	GoogleEnabled      *bool   `json:"google_enabled,omitempty"`
-	RegistrationOpen   *bool   `json:"registration_open,omitempty"`
+
+	// Lm2App The name this installation is registered under in LM2.
+	Lm2App     *string `json:"lm2_app,omitempty"`
+	Lm2Enabled *bool   `json:"lm2_enabled,omitempty"`
+
+	// Lm2Url Public address of the LM2 installation.
+	Lm2Url           *string `json:"lm2_url,omitempty"`
+	RegistrationOpen *bool   `json:"registration_open,omitempty"`
 }
 
 // ValidationError defines model for ValidationError.
@@ -252,6 +263,14 @@ type GoogleCallbackParams struct {
 	Error *string `form:"error,omitempty" json:"error,omitempty"`
 }
 
+// Lm2CallbackParams defines parameters for Lm2Callback.
+type Lm2CallbackParams struct {
+	Token *string `form:"token,omitempty" json:"token,omitempty"`
+
+	// RefreshToken Sent by LM2. MoneyHarpy ignores and never stores it.
+	RefreshToken *string `form:"refresh_token,omitempty" json:"refresh_token,omitempty"`
+}
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
@@ -275,6 +294,12 @@ type ServerInterface interface {
 	// GoogleStart Start signing in with Google
 	// (GET /api/auth/google/start)
 	GoogleStart(w http.ResponseWriter, r *http.Request)
+	// Lm2Callback Finish signing in with LM2
+	// (GET /api/auth/lm2/callback/{state})
+	Lm2Callback(w http.ResponseWriter, r *http.Request, state string, params Lm2CallbackParams)
+	// Lm2Start Start signing in with LM2
+	// (GET /api/auth/lm2/start)
+	Lm2Start(w http.ResponseWriter, r *http.Request)
 	// Login Sign in with email and password
 	// (POST /api/auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -338,6 +363,18 @@ func (_ Unimplemented) GoogleCallback(w http.ResponseWriter, r *http.Request, pa
 // GoogleStart Start signing in with Google
 // (GET /api/auth/google/start)
 func (_ Unimplemented) GoogleStart(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Lm2Callback Finish signing in with LM2
+// (GET /api/auth/lm2/callback/{state})
+func (_ Unimplemented) Lm2Callback(w http.ResponseWriter, r *http.Request, state string, params Lm2CallbackParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Lm2Start Start signing in with LM2
+// (GET /api/auth/lm2/start)
+func (_ Unimplemented) Lm2Start(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -510,6 +547,75 @@ func (siw *ServerInterfaceWrapper) GoogleStart(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GoogleStart(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Lm2Callback operation middleware
+func (siw *ServerInterfaceWrapper) Lm2Callback(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "state" -------------
+	var state string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "state", chi.URLParam(r, "state"), &state, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "state", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params Lm2CallbackParams
+
+	// ------------- Optional query parameter "token" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "token", r.URL.Query(), &params.Token, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "token"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "refresh_token" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "refresh_token", r.URL.Query(), &params.RefreshToken, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "refresh_token"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "refresh_token", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Lm2Callback(w, r, state, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Lm2Start operation middleware
+func (siw *ServerInterfaceWrapper) Lm2Start(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Lm2Start(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -954,6 +1060,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/auth/google/callback", wrapper.GoogleCallback)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/auth/lm2/start", wrapper.Lm2Start)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/auth/lm2/callback/{state}", wrapper.Lm2Callback)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/user/tokens", wrapper.ListTokens)
