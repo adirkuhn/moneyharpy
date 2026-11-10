@@ -45,10 +45,10 @@ export function AppRoutes() {
           <Route path="administration" element={<ManagementSettingsPage />} />
           <Route path=":section" element={<PlaceholderSettingsPage />} />
         </Route>
-        <Route path="/:administrationId/custom_fields" element={<SettingsLayout nav={false} />}>
+        <Route path="/:administrationId/custom_fields" element={<SettingsLayout />}>
           <Route path="new" element={<CustomFieldFormPage />} />
         </Route>
-        <Route path="/:administrationId/identities" element={<SettingsLayout nav={false} />}>
+        <Route path="/:administrationId/identities" element={<SettingsLayout />}>
           <Route path="new" element={<IdentityFormPage mode="new" />} />
           <Route path="edit_default" element={<IdentityFormPage mode="default" />} />
           <Route path=":identityId" element={<Navigate to="edit" replace />} />

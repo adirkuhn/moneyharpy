@@ -1,4 +1,4 @@
-import '@fontsource-variable/schibsted-grotesk'
+import '@fontsource-variable/inter'
 import './styles.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'

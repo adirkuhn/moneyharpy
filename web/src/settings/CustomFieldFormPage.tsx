@@ -37,7 +37,7 @@ export function CustomFieldFormPage() {
   }
 
   return (
-    <Page title={t('customField.title')} back={{ to: back, label: t('settings.back') }}>
+    <Page title={t('customField.title')} back={{ to: back, label: t('customField.back') }}>
       <form className="form-sheet" onSubmit={submit} noValidate>
         <Problems messages={errors.general} />
         <FormSection>

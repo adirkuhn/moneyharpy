@@ -4,6 +4,7 @@ import { ApiError } from '../api/client'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { useAdministration } from './queries'
+import { Loading } from '../layout/Loading'
 
 function useRouteAdministration() {
   const { administrationId = '' } = useParams()
@@ -18,7 +19,7 @@ export function AdministrationHomePage() {
     return <NotFoundPage />
   }
   if (!query.data) {
-    return null
+    return <Loading />
   }
   return (
     <Page title={query.data.name}>

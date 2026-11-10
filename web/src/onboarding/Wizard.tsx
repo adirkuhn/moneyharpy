@@ -1,5 +1,6 @@
 import type { FormEventHandler, ReactNode } from 'react'
 import { Mark } from '../layout/icons'
+import { Logo } from '../layout/Logo'
 import { LanguageSelect } from '../layout/LanguageSelect'
 
 type Props = {
@@ -26,7 +27,7 @@ export function Wizard({ title, subtitle, art, languageSwitch = true, onSubmit, 
         {children && <div className="wizard__body">{children}</div>}
         <footer className="wizard__footer">{footer}</footer>
       </form>
-      <p className="wizard__brand"><Mark className="brand__mark" />MoneyHarpy</p>
+      <p className="wizard__brand"><Logo /></p>
     </main>
   )
 }

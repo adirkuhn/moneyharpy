@@ -10,6 +10,7 @@ import { Page } from '../layout/Page'
 import { useOnboardingOptions } from '../onboarding/queries'
 import { SearchableSelect } from '../onboarding/SearchableSelect'
 import { countryName } from './format'
+import { Loading } from '../layout/Loading'
 import {
   type AdministrationChanges,
   type CustomField,
@@ -63,7 +64,7 @@ export function IdentityFormPage({ mode }: { mode: Mode }) {
     return <NotFoundPage />
   }
   if ((mode !== 'new' && !existing.data) || !administration.data || !customFields.data) {
-    return null
+    return <Loading />
   }
   return (
     <IdentityForm

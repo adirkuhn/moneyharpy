@@ -7,6 +7,22 @@ import { administration, listing, server, signedIn, user } from '../test/server'
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 
 describe('top navigation', () => {
+  it('shows the MoneyHarpy logo as the home link', async () => {
+    server.use(signedIn(), listing([]))
+    renderAt('/administrations')
+    const home = await screen.findByRole('link', { name: 'MoneyHarpy home' })
+    expect(home).toHaveAttribute('href', '/administrations')
+    expect(within(home).getByRole('img', { name: 'MoneyHarpy' })).toBeInTheDocument()
+  })
+
+  it('reserves a place for search until it exists', async () => {
+    server.use(signedIn(), listing([]))
+    renderAt('/administrations')
+    const search = await screen.findByRole('searchbox', { name: 'Search' })
+    expect(search).toBeDisabled()
+    expect(search).toHaveAccessibleDescription('Search is not available yet.')
+  })
+
   it('switches between administrations', async () => {
     server.use(signedIn(), listing([harpy]))
     renderAt('/administrations')

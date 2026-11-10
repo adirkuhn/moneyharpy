@@ -1,19 +1,30 @@
 import { useTranslation } from 'react-i18next'
-import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
+import { Link, Outlet, useLocation, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
+import { ArrowLeftIcon, SectionIcon } from '../layout/icons'
 import { NotFoundPage } from '../layout/NotFoundPage'
+import { Loading } from '../layout/Loading'
 
 export const sections = ['company', 'invoices_and_estimates', 'bookkeeping', 'bank', 'administration', 'connections'] as const
 export type Section = (typeof sections)[number]
 
+/** The pages of a section, shown under it in the menu while it is open. */
+const parts: Partial<Record<Section, { id: string; label: string }[]>> = {
+  company: [
+    { id: 'company-details', label: 'settings.details' },
+    { id: 'sender-addresses', label: 'settings.senders' },
+  ],
+}
+
 /**
  * The settings area of one administration: a section menu beside the page.
- * Edit pages leave the menu out and lead back with their own button.
+ * Pages outside /settings, such as the identity forms, belong to Company.
  */
-export function SettingsLayout({ nav = true }: { nav?: boolean }) {
+export function SettingsLayout() {
   const { t } = useTranslation()
   const { administrationId = '' } = useParams()
+  const { pathname } = useLocation()
   const valid = /^\d{1,19}$/.test(administrationId)
   const administration = useAdministration(administrationId)
 
@@ -21,30 +32,41 @@ export function SettingsLayout({ nav = true }: { nav?: boolean }) {
     return <NotFoundPage />
   }
   if (!administration.data) {
-    return null
-  }
-  if (!nav) {
-    return (
-      <div className="settings settings--page">
-        <div className="settings__page">
-          <Outlet />
-        </div>
-      </div>
-    )
+    return <Loading />
   }
   const base = `/${administrationId}`
+  const [, , area, page] = pathname.split('/')
+  const current: Section = area === 'settings' && sections.includes(page as Section) ? (page as Section) : 'company'
+  const onSectionPage = area === 'settings' && page === current
 
   return (
     <div className="settings">
       <nav className="settings__nav" aria-label={t('settings.title')}>
-        <Link className="settings__back" to={base}>{t('settings.back')}</Link>
+        <Link className="settings__back" to={base}>
+          <ArrowLeftIcon />
+          {t('settings.back')}
+        </Link>
         <p className="settings__heading">{t('settings.title')}</p>
         <ul>
           {sections.map((section) => (
             <li key={section}>
-              <NavLink to={`${base}/settings/${section}`} className={({ isActive }) => (isActive ? 'is-active' : undefined)}>
+              <Link
+                to={`${base}/settings/${section}`}
+                className={section === current ? 'is-active' : undefined}
+                aria-current={section === current ? (onSectionPage ? 'page' : 'true') : undefined}
+              >
+                <SectionIcon section={section} />
                 {t(`settings.sections.${section}`)}
-              </NavLink>
+              </Link>
+              {section === current && parts[section] && (
+                <ul className="settings__parts">
+                  {parts[section].map((part) => (
+                    <li key={part.id}>
+                      <Link to={`${base}/settings/${section}#${part.id}`}>{t(part.label)}</Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
