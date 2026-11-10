@@ -945,6 +945,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get the administration's overview
+         * @description MoneyHarpy extension. What the home page shows: balances and work waiting in each part of the books, and the records processed last. Each block is present only for members, and connection tokens, with its permission.
+         */
+        get: operations["getOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/booking_rules": {
         parameters: {
             query?: never;
@@ -1921,7 +1943,7 @@ export interface components {
     schemas: {
         /**
          * @description A unique record identifier. Parse as a string.
-         * @example 416072101932303822
+         * @example 123456789012345678
          */
         Identifier: string;
         Error: {
@@ -1970,7 +1992,7 @@ export interface components {
             favorite: boolean;
             /**
              * @description MoneyHarpy extension. Canonical path of this resource.
-             * @example /416072101932303822
+             * @example /123456789012345678
              */
             uri: string;
             /** @description MoneyHarpy extension. Registered for the Dutch small business scheme (KOR). */
@@ -2149,7 +2171,7 @@ export interface components {
             id: components["schemas"]["Identifier"];
             /** @example administrations */
             type: string;
-            /** @example /416072101932303822 */
+            /** @example /123456789012345678 */
             uri: string;
         };
         AuthProviders: {
@@ -2567,6 +2589,44 @@ export interface components {
              */
             operator: "contains" | "equals" | "starts_with" | "ends_with" | "greater_than" | "less_than";
             value: string;
+        };
+        /** @description MoneyHarpy extension. An administration's home page. */
+        Overview: {
+            bank?: components["schemas"]["OverviewBank"];
+            /** @description The records processed last, newest first, at most 25. */
+            recently_processed: components["schemas"]["OverviewItem"][];
+        };
+        /** @description Present only with the bank permission. */
+        OverviewBank: {
+            /**
+             * @description The sum of every financial account's balance.
+             * @example 1250.0
+             */
+            balance: string;
+            /** @example EUR */
+            currency: string;
+            /** @description Transactions of active accounts still to link. */
+            unprocessed_count: number;
+        };
+        /** @description One recently processed record. */
+        OverviewItem: {
+            /**
+             * @description What kind of record this is; more kinds join as MoneyHarpy grows.
+             * @enum {string}
+             */
+            type: "financial_mutation";
+            id: components["schemas"]["Identifier"];
+            uri: string;
+            title: string;
+            description: string;
+            /** @description Positive for money in, negative for money out. */
+            amount: string;
+            currency: string;
+            /** Format: date */
+            date: string;
+            state: string;
+            /** Format: date-time */
+            processed_at: string;
         };
         /** @description MoneyHarpy extension. Books matching transactions on a category. */
         BookingRule: {
@@ -6410,6 +6470,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["bank_balance_amounts"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getOverview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The overview */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Overview"];
                 };
             };
             400: components["responses"]["BadRequest"];

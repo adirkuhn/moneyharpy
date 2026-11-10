@@ -435,6 +435,21 @@ func (s *BankingStore) Balances(ctx context.Context, admin resource.ID) (map[res
 	return out, nil
 }
 
+// CountUnprocessed implements banking.Store.
+func (s *BankingStore) CountUnprocessed(ctx context.Context, admin resource.ID) (int, error) {
+	n, err := s.q.CountUnprocessedFinancialMutations(ctx, int64(admin))
+	return int(n), err
+}
+
+// RecentlyProcessed implements banking.Store.
+func (s *BankingStore) RecentlyProcessed(ctx context.Context, admin resource.ID, limit int) ([]banking.Mutation, error) {
+	rows, err := s.q.RecentlyProcessedFinancialMutations(ctx, sqlc.RecentlyProcessedFinancialMutationsParams{AdministrationID: int64(admin), MaxRows: int32(min(max(limit, 0), 100))})
+	if err != nil {
+		return nil, err
+	}
+	return s.withBookings(ctx, admin, rows)
+}
+
 // Rules implements banking.Store.
 func (s *BankingStore) Rules(ctx context.Context, admin resource.ID) ([]banking.Rule, error) {
 	rows, err := s.q.ListBookingRules(ctx, int64(admin))

@@ -409,3 +409,36 @@ func (s *Service) Balances(ctx context.Context, admin, user resource.ID) ([]Bala
 	}
 	return out, total, nil
 }
+
+// Summary is what the overview shows of the bank.
+type Summary struct {
+	// Balance is the sum of every financial account's balance.
+	Balance  Amount
+	Currency string
+	// Unprocessed counts the transactions of active accounts still to link.
+	Unprocessed int
+	// RecentlyProcessed are the latest processed transactions, newest first.
+	RecentlyProcessed []Mutation
+}
+
+// Summary returns the bank's balance, what is left to link and up to recent
+// recently processed transactions.
+func (s *Service) Summary(ctx context.Context, admin, user resource.ID, recent int) (Summary, error) {
+	a, err := s.ensure(ctx, admin, user)
+	if err != nil {
+		return Summary{}, err
+	}
+	_, total, err := s.Balances(ctx, admin, user)
+	if err != nil {
+		return Summary{}, err
+	}
+	n, err := s.store.CountUnprocessed(ctx, admin)
+	if err != nil {
+		return Summary{}, fmt.Errorf("count unprocessed: %w", err)
+	}
+	list, err := s.store.RecentlyProcessed(ctx, admin, recent)
+	if err != nil {
+		return Summary{}, fmt.Errorf("recently processed: %w", err)
+	}
+	return Summary{Balance: total, Currency: a.Currency, Unprocessed: n, RecentlyProcessed: list}, nil
+}

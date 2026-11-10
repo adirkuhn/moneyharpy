@@ -9,6 +9,7 @@ import { LanguageSelect } from './LanguageSelect'
 import { Logo } from './Logo'
 import { Menu } from './Menu'
 import { createPath } from '../onboarding/queries'
+import { lastAdministration } from '../overview/queries'
 import { saveTheme, storedTheme, type Theme } from './theme'
 
 export function AppShell() {
@@ -18,10 +19,7 @@ export function AppShell() {
       <a className="skip-link" href="#main">{t('common.skip')}</a>
       <nav className="topnav" aria-label={t('nav.main')}>
         <div className="topnav__left">
-          <Link className="brand" to="/administrations" aria-label={t('nav.home')}>
-            <Logo className="brand__full" />
-            <Logo variant="mark" className="brand__mark" decorative />
-          </Link>
+          <HomeLink />
           <AdministrationSwitcher />
           <AdministrationSections />
         </div>
@@ -42,6 +40,22 @@ export function AppShell() {
         <Outlet />
       </main>
     </>
+  )
+}
+
+/** The logo leads to the open administration's overview, or the one opened last. */
+function HomeLink() {
+  const { t } = useTranslation()
+  const id = useAdministrationId()
+  const administrations = useAdministrations()
+  const last = lastAdministration()
+  const known = last && administrations.data?.some((a) => a.id === last)
+  const to = id ? `/${id}` : known ? `/${last}` : '/administrations'
+  return (
+    <Link className="brand" to={to} aria-label={t('nav.home')}>
+      <Logo className="brand__full" />
+      <Logo variant="mark" className="brand__mark" decorative />
+    </Link>
   )
 }
 
@@ -87,6 +101,7 @@ function AdministrationSections() {
   )
   return (
     <div className="topnav__sections">
+      {link('feed', t('nav.overview'), section === 'feed')}
       {bank && link('financial_mutations', t('nav.bank'), section === 'financial_mutations')}
       {link('settings', t('nav.settings'), section === 'settings')}
     </div>

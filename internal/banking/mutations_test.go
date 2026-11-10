@@ -120,3 +120,26 @@ func TestSynchronizationAndBalances(t *testing.T) {
 		t.Errorf("balances = %+v, total %s, %v", balances, total, err)
 	}
 }
+
+func TestSummaryCountsWhatIsLeftToLink(t *testing.T) {
+	svc, _, _ := newTestService()
+	ctx := context.Background()
+	acc := bank(t, svc)
+	ms := transactions(t, svc, acc, "10", "-2.5", "4")
+	if _, err := svc.LinkBooking(ctx, adminID, ms[1].ID, owner, Link{Type: "LedgerAccount", BookingID: ptr(rentCategory)}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := svc.Summary(ctx, adminID, owner, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Balance != 1150 || got.Currency != "EUR" || got.Unprocessed != 2 {
+		t.Errorf("summary = %+v", got)
+	}
+	if len(got.RecentlyProcessed) != 1 || got.RecentlyProcessed[0].ID != ms[1].ID {
+		t.Errorf("recently processed = %+v", got.RecentlyProcessed)
+	}
+	if _, err := svc.Summary(ctx, adminID, stranger, 10); err == nil {
+		t.Error("a stranger got a summary")
+	}
+}

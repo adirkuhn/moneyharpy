@@ -29,6 +29,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/mail"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/objectstore"
+	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/pdok"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
@@ -110,11 +111,13 @@ func run(logger *slog.Logger) error {
 	hooks := webhooks.NewService(admins, postgres.NewWebhookStore(pool, cipher), hookclient.New(), instance, ids, time.Now)
 	people := identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, cipher, time.Now)
 	books := bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now)
+	bank := banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
 		Bookkeeping:       books,
-		Banking:           banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now),
+		Banking:           bank,
+		Overview:          overview.NewService(admins, bank),
 		Storage:           s3,
 		Identity:          people,
 		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),

@@ -86,6 +86,17 @@ Changes are test-driven. Go code follows the [Google Go style guide](https://goo
 
 To change the API, edit the contract first. Requests are validated against it at runtime, and backend tests fail on any response it does not describe.
 
+## Overview
+
+Opening an administration lands on its overview at `/{id}/feed`, and the
+logo leads back to it: to the open administration, or else the one opened
+last in this browser. `GET /api/v2/{administration_id}/overview` (a
+MoneyHarpy extension) returns one block per part of the books the member,
+and a connection token, may see, plus the records processed last. Today the
+bank block holds the balance and the transactions left to link; the boxes for
+sales invoices and incoming documents are in place and fill in once those
+parts exist.
+
 ## Users and permissions
 
 Each user of an administration is an owner, employee or accountant, with

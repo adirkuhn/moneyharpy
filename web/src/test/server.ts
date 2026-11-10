@@ -13,7 +13,7 @@ export const user: components['schemas']['CurrentUser'] = {
 }
 
 export function administration(over: Partial<Administration> = {}): Administration {
-  const id = over.id ?? '416072101932303822'
+  const id = over.id ?? '123456789012345678'
   return {
     id,
     name: 'Harpy B.V.',
