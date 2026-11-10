@@ -73,7 +73,13 @@ async function addAdministration(page: Page, name: string) {
   await expect(page.getByRole('heading', { name: 'What do you want to start with?' })).toBeVisible()
   await page.getByRole('radio', { name: /open my administration/ }).check()
   await page.getByRole('button', { name: 'Get started' }).click()
-  await expect(page.getByRole('heading', { name })).toBeVisible()
+  await expect(page).toHaveURL(/\/\d+\/feed$/)
+  await expect(page.getByRole('button', { name, exact: true })).toBeVisible()
+}
+
+/** The open administration's URI, such as /123, from its overview at /123/feed. */
+function administrationUri(page: Page) {
+  return new URL(page.url()).pathname.replace(/\/feed$/, '')
 }
 
 test('visitors must sign in', async ({ page }) => {
@@ -84,7 +90,7 @@ test('visitors must sign in', async ({ page }) => {
 test('a user manages administrations and opens them by URI', async ({ page }) => {
   await register(page)
   await addAdministration(page, 'Harpy B.V.')
-  const uri = new URL(page.url()).pathname
+  const uri = administrationUri(page)
   expect(uri).toMatch(/^\/\d+$/)
   await addAdministration(page, 'Zeta Holding')
 
@@ -99,9 +105,10 @@ test('a user manages administrations and opens them by URI', async ({ page }) =>
   await expect(rows.first()).toContainText('Zeta Holding')
 
   await page.goto(uri)
-  await expect(page.getByRole('heading', { name: 'Harpy B.V.' })).toBeVisible()
+  await expect(page).toHaveURL(new RegExp(`${uri}/feed$`))
+  await expect(page.getByRole('heading', { name: /^Good (morning|afternoon|evening) Ann!$/ })).toBeVisible()
   await page.goto(`/r${uri}`)
-  await expect(page).toHaveURL(new RegExp(`${uri}$`))
+  await expect(page).toHaveURL(new RegExp(`${uri}/feed$`))
   await page.goto(`${uri}/settings`)
   await expect(page).toHaveURL(new RegExp(`${uri}/settings/company$`))
   await expect(page.getByRole('heading', { name: 'Company', exact: true })).toBeVisible()
@@ -126,9 +133,9 @@ test('adding an administration walks through the wizard', async ({ page }) => {
   await expect(page).toHaveURL(/\/\d+\/onboarding\/first_action\/new/)
   await page.getByRole('radio', { name: /send an invoice/ }).check()
   await page.getByRole('button', { name: 'Get started' }).click()
-  await expect(page.getByRole('heading', { name: 'Wizard Co' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Wizard Co', exact: true })).toBeVisible()
 
-  const id = new URL(page.url()).pathname.slice(1)
+  const id = administrationUri(page).slice(1)
   const administration = await (await page.request.get(`/api/v2/administrations/${id}`)).json()
   expect(administration).toMatchObject({ currency: 'USD', country: 'NL' })
   const company = await (await page.request.get(`/api/v2/${id}/identities/default.json`)).json()
@@ -138,7 +145,7 @@ test('adding an administration walks through the wizard', async ({ page }) => {
 test('company details and sender addresses are managed in settings', async ({ page }) => {
   await register(page)
   await addAdministration(page, 'Settings Co')
-  const uri = new URL(page.url()).pathname
+  const uri = administrationUri(page)
 
   await page.goto('/administrations')
   await page.getByRole('link', { name: 'Settings for Settings Co' }).click()
@@ -241,7 +248,7 @@ test('a forgotten password can be replaced through email', async ({ page }) => {
 test('another user cannot open an administration by URI', async ({ browser, page }) => {
   await register(page)
   await addAdministration(page, 'Private Co')
-  const uri = new URL(page.url()).pathname
+  const uri = administrationUri(page)
 
   const other = await (await browser.newContext()).newPage()
   await register(other, 'Bob')
@@ -302,7 +309,7 @@ const tinyPNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUl
 test('invoices and estimates are set up in settings', async ({ page }) => {
   await register(page)
   await addAdministration(page, 'Invoice Co')
-  const uri = new URL(page.url()).pathname
+  const uri = administrationUri(page)
   await page.goto(`${uri}/settings/company`)
   await page.getByRole('navigation', { name: 'Settings' }).getByRole('link', { name: 'Invoices and estimates' }).click()
   await expect(page.getByRole('heading', { name: 'Invoices and estimates', level: 1 })).toBeVisible()
@@ -348,7 +355,7 @@ test('invoices and estimates are set up in settings', async ({ page }) => {
 test('bookkeeping starts from the Dutch standard and is adjusted in settings', async ({ page }) => {
   await register(page)
   await addAdministration(page, 'Books Co')
-  const uri = new URL(page.url()).pathname
+  const uri = administrationUri(page)
   await page.goto(`${uri}/settings/company`)
   await page.getByRole('navigation', { name: 'Settings' }).getByRole('link', { name: 'Bookkeeping' }).click()
   await expect(page.getByRole('heading', { name: 'Bookkeeping', level: 1 })).toBeVisible()
@@ -392,7 +399,7 @@ test('bookkeeping starts from the Dutch standard and is adjusted in settings', a
 test('bank statements are imported, booked by rules and by hand', async ({ page }) => {
   await register(page)
   await addAdministration(page, 'Bank Co')
-  const uri = new URL(page.url()).pathname
+  const uri = administrationUri(page)
   await page.goto(`${uri}/settings/bank`)
   await expect(page.getByRole('heading', { name: 'Bank', level: 1 })).toBeVisible()
   await expect(page.getByRole('table', { name: 'Financial accounts' }).getByRole('link', { name: 'Cash' })).toBeVisible()
@@ -437,6 +444,23 @@ test('bank statements are imported, booked by rules and by hand', async ({ page 
   const id = uri.slice(1)
   const balance = await (await page.request.get(`/api/v2/${id}/reports/bank_balance`)).json()
   expect(balance.total).toBe('974.5')
+
+  // The overview sums it up, and the logo leads back to it from anywhere.
+  await page.getByRole('link', { name: 'MoneyHarpy home' }).click()
+  await expect(page).toHaveURL(new RegExp(`${uri}/feed$`))
+  const bank = page.getByRole('region', { name: 'Bank' })
+  await expect(bank.getByRole('link', { name: /Balance\s*€974\.50/ })).toBeVisible()
+  await expect(bank.getByRole('link', { name: /To link\s*0/ })).toBeVisible()
+  const recent = page.getByRole('region', { name: 'Recently processed' })
+  await expect(recent.getByRole('link')).toHaveCount(2)
+  await expect(recent.getByRole('link', { name: /Example Client B\.V\./ })).toContainText('Booked')
+  await expect(page.getByRole('region', { name: 'Incoming' })).toContainText('Not available yet')
+
+  await page.goto('/user')
+  await page.getByRole('link', { name: 'MoneyHarpy home' }).click()
+  await expect(page).toHaveURL(new RegExp(`${uri}/feed$`))
+  await page.goto('/')
+  await expect(page).toHaveURL(new RegExp(`${uri}/feed$`))
 })
 
 
@@ -458,7 +482,7 @@ function totp(secret: string, at = Date.now()): string {
 test('owners invite users with limited rights and require two-step verification', async ({ browser, page }) => {
   const ownerEmail = await register(page)
   await addAdministration(page, 'Team Co')
-  const uri = new URL(page.url()).pathname
+  const uri = administrationUri(page)
   await page.goto(`${uri}/settings/administration`)
   await expect(page.getByRole('heading', { name: 'Management', level: 1 })).toBeVisible()
 
@@ -529,7 +553,7 @@ test('owners invite users with limited rights and require two-step verification'
 test('external applications, AI assistants and webhooks connect to one administration', async ({ page }) => {
   await register(page)
   await addAdministration(page, 'Connect Co')
-  const uri = new URL(page.url()).pathname
+  const uri = administrationUri(page)
   const api = `/api/v2${uri}`
   await page.goto(`${uri}/settings/connections`)
   await expect(page.getByRole('heading', { name: 'Integrations', level: 1 })).toBeVisible()

@@ -58,9 +58,15 @@ describe('selecting an administration', () => {
 
 describe('opening resources by URI', () => {
   it('opens an administration directly', async () => {
-    server.use(signedIn(), listing([harpy]), http.get('*/api/v2/administrations/11', () => HttpResponse.json(harpy)))
+    server.use(
+      signedIn(),
+      listing([harpy]),
+      http.get('*/api/v2/administrations/11', () => HttpResponse.json(harpy)),
+      http.get('*/api/v2/11/overview', () => HttpResponse.json({ recently_processed: [] })),
+    )
     renderAt('/11')
-    expect(await screen.findByRole('heading', { name: 'Harpy B.V.' })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Recently processed' })).toBeInTheDocument()
+    expect(screen.getByTestId('path')).toHaveTextContent('/11/feed')
   })
 
   it('reports an administration the user cannot open', async () => {

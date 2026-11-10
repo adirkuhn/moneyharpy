@@ -234,6 +234,27 @@ func (m *memStore) Balances(context.Context, resource.ID) (map[resource.ID]Amoun
 	return out, nil
 }
 
+func (m *memStore) CountUnprocessed(_ context.Context, _ resource.ID) (int, error) {
+	n := 0
+	for _, mu := range m.mutations {
+		if mu.State == Unprocessed && m.accounts[mu.AccountID].Active {
+			n++
+		}
+	}
+	return n, nil
+}
+
+func (m *memStore) RecentlyProcessed(_ context.Context, _ resource.ID, limit int) ([]Mutation, error) {
+	var out []Mutation
+	for _, mu := range m.mutations {
+		if mu.State == Processed {
+			out = append(out, mu)
+		}
+	}
+	slices.SortFunc(out, func(a, b Mutation) int { return b.ProcessedAt.Compare(*a.ProcessedAt) })
+	return out[:min(limit, len(out))], nil
+}
+
 var now = time.Date(2026, 11, 10, 9, 0, 0, 0, time.UTC)
 
 func newTestService() (*Service, *memStore, *fakeLedger) {

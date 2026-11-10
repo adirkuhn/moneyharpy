@@ -41,6 +41,8 @@ import { TaxRateFormPage } from './bookkeeping/TaxRateFormPage'
 import { TemplatesPage } from './bookkeeping/TemplatesPage'
 import { SettingsLayout } from './settings/SettingsLayout'
 import { UserPage } from './user/UserPage'
+import { OverviewPage } from './overview/OverviewPage'
+import { StartPage } from './overview/StartPage'
 
 export function AppRoutes() {
   return (
@@ -57,12 +59,13 @@ export function AppRoutes() {
         <Route path="/:administrationId/onboarding/first_action/new" element={<FirstActionPage />} />
       </Route>
       <Route element={<RequireAuth><AppShell /></RequireAuth>}>
-        <Route path="/" element={<Navigate to="/administrations" replace />} />
+        <Route path="/" element={<StartPage />} />
         <Route path="/administrations" element={<AdministrationsPage />} />
         <Route path="/user" element={<UserPage />} />
         <Route path="/instance/settings" element={<InstanceSettingsPage />} />
         <Route path="/r/:id" element={<PermalinkPage />} />
         <Route path="/:administrationId" element={<AdministrationHomePage />} />
+        <Route path="/:administrationId/feed" element={<OverviewPage />} />
         <Route path="/:administrationId/settings" element={<SettingsLayout />}>
           <Route index element={<Navigate to="company" replace />} />
           <Route path="company" element={<CompanySettingsPage />} />

@@ -684,6 +684,21 @@ func (e LinkBookingRequestBookingType) Valid() bool {
 	}
 }
 
+// Defines values for OverviewItemType.
+const (
+	OverviewItemTypeFinancialMutation OverviewItemType = "financial_mutation"
+)
+
+// Valid indicates whether the value is a known member of the OverviewItemType enum.
+func (e OverviewItemType) Valid() bool {
+	switch e {
+	case OverviewItemTypeFinancialMutation:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Permission.
 const (
 	PermissionBank          Permission = "bank"
@@ -1685,7 +1700,7 @@ type Administration struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id Identifier `json:"id"`
 
 	// Language The language code used in the administration
@@ -1716,7 +1731,7 @@ type Administration struct {
 
 	// Uri MoneyHarpy extension. Canonical path of this resource.
 	//
-	// Example: /416072101932303822
+	// Example: /123456789012345678
 	Uri string `json:"uri"`
 
 	// UserType MoneyHarpy extension. Your role; support is an instance admin let in through support access.
@@ -1735,7 +1750,7 @@ type ApiToken struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id   Identifier `json:"id"`
 	Name string     `json:"name"`
 }
@@ -1767,7 +1782,7 @@ type BookingRule struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId Identifier           `json:"administration_id"`
 	Conditions       []RuleCondition      `json:"conditions"`
 	CreatedAt        time.Time            `json:"created_at"`
@@ -1779,12 +1794,12 @@ type BookingRule struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id Identifier `json:"id"`
 
 	// LedgerAccountId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	LedgerAccountId Identifier `json:"ledger_account_id"`
 
 	// MatchAll Every condition must match; otherwise one is enough.
@@ -1811,7 +1826,7 @@ type BookingRuleRequest struct {
 
 		// LedgerAccountId A unique record identifier. Parse as a string.
 		//
-		// Example: 416072101932303822
+		// Example: 123456789012345678
 		LedgerAccountId *Identifier `json:"ledger_account_id,omitempty"`
 		MatchAll        *bool       `json:"match_all,omitempty"`
 		Name            *string     `json:"name,omitempty"`
@@ -1880,7 +1895,7 @@ type Connection struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id         Identifier     `json:"id"`
 	Kind       ConnectionKind `json:"kind"`
 	LastUsedAt *time.Time     `json:"last_used_at"`
@@ -1943,7 +1958,7 @@ type CreatedApiToken struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id   Identifier `json:"id"`
 	Name string     `json:"name"`
 
@@ -1958,7 +1973,7 @@ type CreatedConnection struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id         Identifier            `json:"id"`
 	Kind       CreatedConnectionKind `json:"kind"`
 	LastUsedAt *time.Time            `json:"last_used_at"`
@@ -1993,7 +2008,7 @@ type CreatedUserInvitation struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id          Identifier   `json:"id"`
 	Permissions []Permission `json:"permissions"`
 	UserType    UserType     `json:"user_type"`
@@ -2005,7 +2020,7 @@ type CurrentUser struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id               Identifier `json:"id"`
 	InstanceAdmin    bool       `json:"instance_admin"`
 	Name             string     `json:"name"`
@@ -2016,12 +2031,12 @@ type CurrentUser struct {
 type CustomField struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId Identifier `json:"administration_id"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id Identifier `json:"id"`
 
 	// Name Example: Slogan
@@ -2068,7 +2083,7 @@ type CustomFieldUpdateRequest struct {
 type CustomFieldValue struct {
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id    Identifier `json:"id"`
 	Name  string     `json:"name"`
 	Value string     `json:"value"`
@@ -2089,7 +2104,7 @@ type DocumentStyle struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId      *Identifier                                                            `json:"administration_id,omitempty"`
 	BackgroundHash        *string                                                                `json:"background_hash,omitempty"`
 	CreatedAt             *time.Time                                                             `json:"created_at,omitempty"`
@@ -2103,12 +2118,12 @@ type DocumentStyle struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id *Identifier `json:"id,omitempty"`
 
 	// IdentityId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	IdentityId             *Identifier                                                           `json:"identity_id,omitempty"`
 	InvoiceMetadataLeft    *[]map[string]DocumentStyle_InvoiceMetadataLeft_AdditionalProperties  `json:"invoice_metadata_left,omitempty"`
 	InvoiceMetadataRight   *[]map[string]DocumentStyle_InvoiceMetadataRight_AdditionalProperties `json:"invoice_metadata_right,omitempty"`
@@ -2224,7 +2239,7 @@ type DocumentStyleRequest struct {
 
 		// IdentityId A unique record identifier. Parse as a string.
 		//
-		// Example: 416072101932303822
+		// Example: 123456789012345678
 		IdentityId             *Identifier          `json:"identity_id,omitempty"`
 		InvoiceMetadataLeft    *[]DocumentStyleLine `json:"invoice_metadata_left,omitempty"`
 		InvoiceMetadataRight   *[]DocumentStyleLine `json:"invoice_metadata_right,omitempty"`
@@ -2266,7 +2281,7 @@ type FinancialAccount struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 
 	// CreatedAt Moneybird-compatible timestamp.
@@ -2277,7 +2292,7 @@ type FinancialAccount struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id         *Identifier `json:"id,omitempty"`
 	Identifier *string     `json:"identifier,omitempty"`
 
@@ -2286,7 +2301,7 @@ type FinancialAccount struct {
 
 	// LedgerAccountId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	LedgerAccountId  Identifier `json:"ledger_account_id"`
 	MoneybirdAccount *bool      `json:"moneybird_account,omitempty"`
 	Name             *string    `json:"name,omitempty"`
@@ -2325,7 +2340,7 @@ type FinancialMutation struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId    *Identifier `json:"administration_id,omitempty"`
 	Amount              *string     `json:"amount,omitempty"`
 	AmountOpen          *string     `json:"amount_open,omitempty"`
@@ -2343,17 +2358,17 @@ type FinancialMutation struct {
 
 	// FinancialAccountId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	FinancialAccountId *Identifier `json:"financial_account_id,omitempty"`
 
 	// FinancialStatementId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	FinancialStatementId *Identifier `json:"financial_statement_id,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id                    *Identifier                       `json:"id,omitempty"`
 	LedgerAccountBookings []LedgerAccountBooking            `json:"ledger_account_bookings"`
 	Message               *string                           `json:"message,omitempty"`
@@ -2415,18 +2430,18 @@ type FinancialMutationInput_Id struct {
 type FinancialStatement struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId Identifier `json:"administration_id"`
 
 	// FinancialAccountId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	FinancialAccountId *Identifier         `json:"financial_account_id,omitempty"`
 	FinancialMutations []FinancialMutation `json:"financial_mutations"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id              *Identifier         `json:"id,omitempty"`
 	ImporterService *string             `json:"importer_service,omitempty"`
 	OfficialBalance *string             `json:"official_balance,omitempty"`
@@ -2464,7 +2479,7 @@ type FinancialStatementRequest_FinancialStatement_FinancialAccountId struct {
 
 // Identifier A unique record identifier. Parse as a string.
 //
-// Example: 416072101932303822
+// Example: 123456789012345678
 type Identifier = string
 
 // Identity defines model for Identity.
@@ -2474,7 +2489,7 @@ type Identity struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId  Identifier `json:"administration_id"`
 	BankAccountBic    *string    `json:"bank_account_bic"`
 	BankAccountName   *string    `json:"bank_account_name"`
@@ -2494,7 +2509,7 @@ type Identity struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id Identifier `json:"id"`
 
 	// LegalEntityType MoneyHarpy extension.
@@ -2528,7 +2543,7 @@ type IdentityRequest struct {
 		CustomFieldsAttributes *[]struct {
 			// Id A unique record identifier. Parse as a string.
 			//
-			// Example: 416072101932303822
+			// Example: 123456789012345678
 			Id    Identifier `json:"id"`
 			Value string     `json:"value"`
 		} `json:"custom_fields_attributes,omitempty"`
@@ -2728,7 +2743,7 @@ type LedgerAccount struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId     *Identifier                          `json:"administration_id,omitempty"`
 	AllowedDocumentTypes *[]LedgerAccountAllowedDocumentTypes `json:"allowed_document_types,omitempty"`
 
@@ -2743,7 +2758,7 @@ type LedgerAccount struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id   *Identifier `json:"id,omitempty"`
 	Name *string     `json:"name,omitempty"`
 
@@ -2779,7 +2794,7 @@ type LedgerAccount_TaxonomyItem struct {
 type LedgerAccountBooking struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 
 	// BookingRuleId MoneyHarpy extension. The rule that made the booking.
@@ -2791,17 +2806,17 @@ type LedgerAccountBooking struct {
 
 	// FinancialMutationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	FinancialMutationId *Identifier `json:"financial_mutation_id,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id *Identifier `json:"id,omitempty"`
 
 	// LedgerAccountId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	LedgerAccountId *Identifier `json:"ledger_account_id,omitempty"`
 	Price           *string     `json:"price,omitempty"`
 
@@ -2838,7 +2853,7 @@ type LedgerAccountSchemeRequest struct {
 	LedgerAccounts []struct {
 		// Id A unique record identifier. Parse as a string.
 		//
-		// Example: 416072101932303822
+		// Example: 123456789012345678
 		Id      Identifier `json:"id"`
 		RgsCode string     `json:"rgs_code"`
 	} `json:"ledger_accounts"`
@@ -2937,6 +2952,53 @@ type OnboardingOptions struct {
 	PopularCurrencies []string `json:"popular_currencies"`
 }
 
+// Overview MoneyHarpy extension. An administration's home page.
+type Overview struct {
+	// Bank Present only with the bank permission.
+	Bank *OverviewBank `json:"bank,omitempty"`
+
+	// RecentlyProcessed The records processed last, newest first, at most 25.
+	RecentlyProcessed []OverviewItem `json:"recently_processed"`
+}
+
+// OverviewBank Present only with the bank permission.
+type OverviewBank struct {
+	// Balance The sum of every financial account's balance.
+	//
+	// Example: 1250.0
+	Balance string `json:"balance"`
+
+	// Currency Example: EUR
+	Currency string `json:"currency"`
+
+	// UnprocessedCount Transactions of active accounts still to link.
+	UnprocessedCount int `json:"unprocessed_count"`
+}
+
+// OverviewItem One recently processed record.
+type OverviewItem struct {
+	// Amount Positive for money in, negative for money out.
+	Amount      string             `json:"amount"`
+	Currency    string             `json:"currency"`
+	Date        openapi_types.Date `json:"date"`
+	Description string             `json:"description"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id          Identifier `json:"id"`
+	ProcessedAt time.Time  `json:"processed_at"`
+	State       string     `json:"state"`
+	Title       string     `json:"title"`
+
+	// Type What kind of record this is; more kinds join as MoneyHarpy grows.
+	Type OverviewItemType `json:"type"`
+	Uri  string           `json:"uri"`
+}
+
+// OverviewItemType What kind of record this is; more kinds join as MoneyHarpy grows.
+type OverviewItemType string
+
 // PasswordResetConfirmation defines model for PasswordResetConfirmation.
 type PasswordResetConfirmation struct {
 	Password string `json:"password"`
@@ -2973,13 +3035,13 @@ type RegisterRequest struct {
 type ResourceLocation struct {
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id Identifier `json:"id"`
 
 	// Type Example: administrations
 	Type string `json:"type"`
 
-	// Uri Example: /416072101932303822
+	// Uri Example: /123456789012345678
 	Uri string `json:"uri"`
 }
 
@@ -3010,7 +3072,7 @@ type SupportAccess struct {
 type SupportGrant struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId Identifier `json:"administration_id"`
 	Name             string     `json:"name"`
 	Until            time.Time  `json:"until"`
@@ -3021,7 +3083,7 @@ type SupportGrant struct {
 type SynchronizationItem struct {
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id      Identifier `json:"id"`
 	Version int        `json:"version"`
 }
@@ -3048,14 +3110,14 @@ type TaxRate struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 	Country          *string     `json:"country,omitempty"`
 	CreatedAt        *time.Time  `json:"created_at,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id         *Identifier         `json:"id,omitempty"`
 	Name       *string             `json:"name,omitempty"`
 	Percentage *TaxRate_Percentage `json:"percentage,omitempty"`
@@ -3262,7 +3324,7 @@ type User struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id          *Identifier        `json:"id,omitempty"`
 	Language    *string            `json:"language,omitempty"`
 	Name        *string            `json:"name,omitempty"`
@@ -3289,7 +3351,7 @@ type UserInvitation struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id          Identifier   `json:"id"`
 	Permissions []Permission `json:"permissions"`
 	UserType    UserType     `json:"user_type"`
@@ -3328,14 +3390,14 @@ type ValidationError struct {
 type Webhook struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier            `json:"administration_id,omitempty"`
 	DeactivatedAt    *Webhook_DeactivatedAt `json:"deactivated_at,omitempty"`
 	EnabledEvents    *[]string              `json:"enabled_events,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id             *Identifier             `json:"id,omitempty"`
 	LastHttpBody   *string                 `json:"last_http_body,omitempty"`
 	LastHttpStatus *Webhook_LastHttpStatus `json:"last_http_status,omitempty"`
@@ -3381,7 +3443,7 @@ type Workflow struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 	CollectionMethod *string     `json:"collection_method,omitempty"`
 
@@ -3392,7 +3454,7 @@ type Workflow struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id                  *Identifier             `json:"id,omitempty"`
 	Language            *string                 `json:"language,omitempty"`
 	Name                *string                 `json:"name,omitempty"`
@@ -3449,7 +3511,7 @@ type BankBalanceAmounts struct {
 
 		// FinancialAccountId A unique record identifier. Parse as a string.
 		//
-		// Example: 416072101932303822
+		// Example: 123456789012345678
 		FinancialAccountId Identifier `json:"financial_account_id"`
 		Name               string     `json:"name"`
 		Type               string     `json:"type"`
@@ -3464,7 +3526,7 @@ type BaseUserResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id   *Identifier `json:"id,omitempty"`
 	Name *string     `json:"name,omitempty"`
 
@@ -3481,7 +3543,7 @@ type DocumentStyleResponse struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId      *Identifier                                                                    `json:"administration_id,omitempty"`
 	BackgroundHash        *string                                                                        `json:"background_hash,omitempty"`
 	CreatedAt             *time.Time                                                                     `json:"created_at,omitempty"`
@@ -3495,12 +3557,12 @@ type DocumentStyleResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id *Identifier `json:"id,omitempty"`
 
 	// IdentityId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	IdentityId             *Identifier                                                                   `json:"identity_id,omitempty"`
 	InvoiceMetadataLeft    *[]map[string]DocumentStyleResponse_InvoiceMetadataLeft_AdditionalProperties  `json:"invoice_metadata_left,omitempty"`
 	InvoiceMetadataRight   *[]map[string]DocumentStyleResponse_InvoiceMetadataRight_AdditionalProperties `json:"invoice_metadata_right,omitempty"`
@@ -3608,7 +3670,7 @@ type EventResponse struct {
 
 	// UserId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	UserId *Identifier `json:"user_id,omitempty"`
 }
 
@@ -3626,7 +3688,7 @@ type ExtendedUserResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id          *Identifier                        `json:"id,omitempty"`
 	Language    *string                            `json:"language,omitempty"`
 	Name        *string                            `json:"name,omitempty"`
@@ -3650,7 +3712,7 @@ type FinancialAccountResponse struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 
 	// CreatedAt Moneybird-compatible timestamp.
@@ -3661,7 +3723,7 @@ type FinancialAccountResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id               *Identifier `json:"id,omitempty"`
 	Identifier       *string     `json:"identifier,omitempty"`
 	MoneybirdAccount *bool       `json:"moneybird_account,omitempty"`
@@ -3679,7 +3741,7 @@ type FinancialMutationResponse struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId    *Identifier `json:"administration_id,omitempty"`
 	Amount              *string     `json:"amount,omitempty"`
 	AmountOpen          *string     `json:"amount_open,omitempty"`
@@ -3697,17 +3759,17 @@ type FinancialMutationResponse struct {
 
 	// FinancialAccountId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	FinancialAccountId *Identifier `json:"financial_account_id,omitempty"`
 
 	// FinancialStatementId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	FinancialStatementId *Identifier `json:"financial_statement_id,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id                    *Identifier                               `json:"id,omitempty"`
 	LedgerAccountBookings *[]LedgerAccountBookingResponse           `json:"ledger_account_bookings,omitempty"`
 	Message               *string                                   `json:"message,omitempty"`
@@ -3735,13 +3797,13 @@ type FinancialMutationResponseState string
 type FinancialStatementResponse struct {
 	// FinancialAccountId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	FinancialAccountId *Identifier                  `json:"financial_account_id,omitempty"`
 	FinancialMutations *[]FinancialMutationResponse `json:"financial_mutations,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id              *Identifier         `json:"id,omitempty"`
 	ImporterService *string             `json:"importer_service,omitempty"`
 	OfficialBalance *string             `json:"official_balance,omitempty"`
@@ -3764,7 +3826,7 @@ type IdentifierNullable1 = int
 type LedgerAccountBookingResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 
 	// CreatedAt Moneybird-compatible timestamp.
@@ -3773,17 +3835,17 @@ type LedgerAccountBookingResponse struct {
 
 	// FinancialMutationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	FinancialMutationId *Identifier `json:"financial_mutation_id,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id *Identifier `json:"id,omitempty"`
 
 	// LedgerAccountId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	LedgerAccountId *Identifier `json:"ledger_account_id,omitempty"`
 	Price           *string     `json:"price,omitempty"`
 
@@ -3802,7 +3864,7 @@ type LedgerAccountResponse struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId     *Identifier                                  `json:"administration_id,omitempty"`
 	AllowedDocumentTypes *[]LedgerAccountResponseAllowedDocumentTypes `json:"allowed_document_types,omitempty"`
 
@@ -3814,7 +3876,7 @@ type LedgerAccountResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id   *Identifier `json:"id,omitempty"`
 	Name *string     `json:"name,omitempty"`
 
@@ -3841,7 +3903,7 @@ type LedgerAccountResponse_TaxonomyItem struct {
 type NoteResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 
 	// AssigneeId Moneybird-compatible identifier_nullable.
@@ -3861,7 +3923,7 @@ type NoteResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id       *Identifier           `json:"id,omitempty"`
 	Note     *string               `json:"note,omitempty"`
 	Todo     *NoteResponse_Todo    `json:"todo,omitempty"`
@@ -3872,7 +3934,7 @@ type NoteResponse struct {
 
 	// UserId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	UserId *Identifier `json:"user_id,omitempty"`
 }
 
@@ -3905,7 +3967,7 @@ type Number1 = float32
 type PaymentResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 
 	// CreatedAt Moneybird-compatible timestamp.
@@ -3922,12 +3984,12 @@ type PaymentResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id *Identifier `json:"id,omitempty"`
 
 	// InvoiceId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	InvoiceId   *Identifier                 `json:"invoice_id,omitempty"`
 	InvoiceType *PaymentResponseInvoiceType `json:"invoice_type,omitempty"`
 
@@ -3954,7 +4016,7 @@ type PaymentResponse struct {
 
 	// UserId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	UserId *Identifier `json:"user_id,omitempty"`
 }
 
@@ -3965,7 +4027,7 @@ type PaymentResponseInvoiceType string
 type TaskListTaskResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 
 	// AssigneeId Moneybird-compatible identifier_nullable.
@@ -3979,7 +4041,7 @@ type TaskListTaskResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id    *Identifier     `json:"id,omitempty"`
 	Name  *string         `json:"name,omitempty"`
 	Notes *[]NoteResponse `json:"notes,omitempty"`
@@ -4003,14 +4065,14 @@ type TaxRateResponse struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 	Country          *string     `json:"country,omitempty"`
 	CreatedAt        *time.Time  `json:"created_at,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id          *Identifier                 `json:"id,omitempty"`
 	Name        *string                     `json:"name,omitempty"`
 	Percentage  *TaxRateResponse_Percentage `json:"percentage,omitempty"`
@@ -4046,14 +4108,14 @@ type Version = int
 type WebhookResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier                    `json:"administration_id,omitempty"`
 	DeactivatedAt    *WebhookResponse_DeactivatedAt `json:"deactivated_at,omitempty"`
 	EnabledEvents    *[]string                      `json:"enabled_events,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id             *Identifier                     `json:"id,omitempty"`
 	LastHttpBody   *string                         `json:"last_http_body,omitempty"`
 	LastHttpStatus *WebhookResponse_LastHttpStatus `json:"last_http_status,omitempty"`
@@ -4084,7 +4146,7 @@ type WorkflowResponse struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 	CollectionMethod *string     `json:"collection_method,omitempty"`
 
@@ -4095,7 +4157,7 @@ type WorkflowResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id                  *Identifier             `json:"id,omitempty"`
 	Language            *string                 `json:"language,omitempty"`
 	Name                *string                 `json:"name,omitempty"`
@@ -4116,7 +4178,7 @@ type WorkflowStepResponse struct {
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
 
 	// CreatedAt Moneybird-compatible timestamp.
@@ -4125,7 +4187,7 @@ type WorkflowStepResponse struct {
 
 	// Id A unique record identifier. Parse as a string.
 	//
-	// Example: 416072101932303822
+	// Example: 123456789012345678
 	Id               *Identifier `json:"id,omitempty"`
 	ReminderAutoSend *bool       `json:"reminder_auto_send,omitempty"`
 	ReminderDelay    *int        `json:"reminder_delay,omitempty"`
@@ -4141,12 +4203,12 @@ type WorkflowStepResponseAction string
 
 // AdministrationId A unique record identifier. Parse as a string.
 //
-// Example: 416072101932303822
+// Example: 123456789012345678
 type AdministrationId = Identifier
 
 // Id A unique record identifier. Parse as a string.
 //
-// Example: 416072101932303822
+// Example: 123456789012345678
 type Id = Identifier
 
 // BadRequest defines model for BadRequest.
@@ -6602,6 +6664,9 @@ type ServerInterface interface {
 	// LeaveAdministration Leave the administration
 	// (DELETE /api/v2/{administration_id}/membership)
 	LeaveAdministration(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetOverview Get the administration's overview
+	// (GET /api/v2/{administration_id}/overview)
+	GetOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// GetBankBalance Bank balance report
 	// (GET /api/v2/{administration_id}/reports/bank_balance)
 	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -7295,6 +7360,12 @@ func (_ Unimplemented) UpdateLedgerAccount(w http.ResponseWriter, r *http.Reques
 // LeaveAdministration Leave the administration
 // (DELETE /api/v2/{administration_id}/membership)
 func (_ Unimplemented) LeaveAdministration(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetOverview Get the administration's overview
+// (GET /api/v2/{administration_id}/overview)
+func (_ Unimplemented) GetOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -10195,6 +10266,32 @@ func (siw *ServerInterfaceWrapper) LeaveAdministration(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// GetOverview operation middleware
+func (siw *ServerInterfaceWrapper) GetOverview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOverview(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetBankBalance operation middleware
 func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http.Request) {
 
@@ -11459,6 +11556,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/bank_balance", wrapper.GetBankBalance)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/overview", wrapper.GetOverview)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/booking_rules", wrapper.ListBookingRules)

@@ -587,3 +587,14 @@ UPDATE webhook_deliveries SET attempts = $2, next_attempt_at = $3, delivered_at 
 
 -- name: SaveWebhookResponse :exec
 UPDATE webhooks SET last_http_status = $2, last_http_body = $3 WHERE id = $1;
+
+-- name: CountUnprocessedFinancialMutations :one
+SELECT count(*)::int FROM financial_mutations m
+JOIN financial_accounts a ON a.id = m.financial_account_id
+WHERE m.administration_id = $1 AND m.state = 'unprocessed' AND a.active;
+
+-- name: RecentlyProcessedFinancialMutations :many
+SELECT * FROM financial_mutations
+WHERE administration_id = @administration_id AND state = 'processed' AND processed_at IS NOT NULL
+ORDER BY processed_at DESC, id DESC
+LIMIT @max_rows;

@@ -46,6 +46,8 @@ tags:
     description: Groups of transactions as they came in. Compatible with the Moneybird API.
   - name: Financial mutations
     description: Transactions and booking them on categories. Compatible with the Moneybird API.
+  - name: Overview
+    description: An administration's home page. MoneyHarpy extension.
   - name: Booking rules
     description: Rules that book matching transactions automatically. MoneyHarpy extension.
   - name: Management
@@ -2141,6 +2143,34 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/overview:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getOverview
+      x-permissions: []
+      summary: Get the administration's overview
+      description: >-
+        MoneyHarpy extension. What the home page shows: balances and work waiting in each part of the books, and the
+        records processed last. Each block is present only for members, and connection tokens, with its permission.
+      tags: [Overview]
+      responses:
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '200':
+          description: The overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Overview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/booking_rules:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -3797,7 +3827,7 @@ components:
       type: string
       pattern: '^[0-9]{1,19}$'
       description: A unique record identifier. Parse as a string.
-      example: '416072101932303822'
+      example: '123456789012345678'
     Error:
       type: object
       required: [error]
@@ -3862,7 +3892,7 @@ components:
         uri:
           type: string
           description: MoneyHarpy extension. Canonical path of this resource.
-          example: /416072101932303822
+          example: /123456789012345678
         small_business_scheme:
           type: boolean
           description: MoneyHarpy extension. Registered for the Dutch small business scheme (KOR).
@@ -4222,7 +4252,7 @@ components:
           example: administrations
         uri:
           type: string
-          example: /416072101932303822
+          example: /123456789012345678
     AuthProviders:
       type: object
       required: [registration_open, google, lm2, password_reset]
@@ -5106,6 +5136,64 @@ components:
         value:
           type: string
           maxLength: 255
+    Overview:
+      type: object
+      description: MoneyHarpy extension. An administration's home page.
+      required: [recently_processed]
+      properties:
+        bank:
+          $ref: '#/components/schemas/OverviewBank'
+        recently_processed:
+          type: array
+          description: The records processed last, newest first, at most 25.
+          items:
+            $ref: '#/components/schemas/OverviewItem'
+    OverviewBank:
+      type: object
+      description: Present only with the bank permission.
+      required: [balance, currency, unprocessed_count]
+      properties:
+        balance:
+          type: string
+          description: The sum of every financial account's balance.
+          example: '1250.0'
+        currency:
+          type: string
+          example: EUR
+        unprocessed_count:
+          type: integer
+          minimum: 0
+          description: Transactions of active accounts still to link.
+    OverviewItem:
+      type: object
+      description: One recently processed record.
+      required: [type, id, uri, title, description, amount, currency, date, state, processed_at]
+      properties:
+        type:
+          type: string
+          enum: [financial_mutation]
+          description: What kind of record this is; more kinds join as MoneyHarpy grows.
+        id:
+          $ref: '#/components/schemas/Identifier'
+        uri:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        amount:
+          type: string
+          description: Positive for money in, negative for money out.
+        currency:
+          type: string
+        date:
+          type: string
+          format: date
+        state:
+          type: string
+        processed_at:
+          type: string
+          format: date-time
     BookingRule:
       type: object
       description: MoneyHarpy extension. Books matching transactions on a category.

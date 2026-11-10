@@ -246,7 +246,7 @@ describe('choosing what to do first', () => {
     expect(start).toBeDisabled()
     await userEvent.click(screen.getByRole('radio', { name: /open my administration/ }))
     await userEvent.click(start)
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/33$/))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/33\/feed$/))
   })
 })
 
