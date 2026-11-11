@@ -2277,6 +2277,144 @@ export interface paths {
         patch: operations["markExternalSalesInvoiceAsUncollectible"];
         trace?: never;
     };
+    "/api/v2/{administration_id}/recurring_sales_invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all recurring sales invoices
+         * @description The next invoice to make first. Filter terms: state (active, inactive or, as an extension, all; active unless given), frequency (all, day, week, month, quarter, year), auto_send (true, false or null), contact_id and workflow_id; include_subscriptions is accepted. Paged with a Link header and X-Total-Count.
+         */
+        get: operations["listRecurringSalesInvoices"];
+        put?: never;
+        /**
+         * Create a recurring sales invoice
+         * @description A template that makes a draft sales invoice on invoice_date (today unless given, not in the past) and every frequency frequency_types after it (every month unless given), until last_date or desired_count invoices; with auto_send each is sent too, the way the contact receives invoices. Months, quarters and years keep the day of the first date, or the month's last day when the month is shorter. {period} in a line's description becomes the period the invoice covers, and lines with a period get that period. Workflow, document style and identity default like a new invoice's.
+         */
+        post: operations["createRecurringSalesInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/recurring_sales_invoices/synchronization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /** List all ids and versions */
+        get: operations["listRecurringSalesInvoiceVersions"];
+        put?: never;
+        /** Fetch recurring sales invoices with given ids */
+        post: operations["fetchRecurringSalesInvoices"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/recurring_sales_invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get a recurring sales invoice */
+        get: operations["getRecurringSalesInvoice"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete or deactivate a recurring sales invoice
+         * @description One that made no invoices yet is deleted. One that did is deactivated instead and kept, with the header X-Kept-As: deactivated; once deactivated it cannot be removed.
+         */
+        delete: operations["deleteRecurringSalesInvoice"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a recurring sales invoice
+         * @description Lines with an id change, lines with _destroy go, lines without an id are added; invoices already made stay as they are. A new invoice_date, frequency or frequency_type restarts the schedule from the next invoice date; invoice_date must not lie in the past.
+         */
+        patch: operations["updateRecurringSalesInvoice"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Deactivate a recurring sales invoice
+         * @description Stops it from making invoices, for good; the recurring invoice and the invoices it made are kept. Not when it is deactivated already.
+         */
+        patch: operations["deactivateRecurringSalesInvoice"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add note to a recurring sales invoice */
+        post: operations["createRecurringSalesInvoiceNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a note from a recurring sales invoice */
+        delete: operations["deleteRecurringSalesInvoiceNote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/booking_rules": {
         parameters: {
             query?: never;
@@ -4164,6 +4302,61 @@ export interface components {
                 };
             };
         };
+        /** @description A Moneybird recurring sales invoice with MoneyHarpy extensions. */
+        RecurringSalesInvoice: components["schemas"]["recurring_sales_invoice_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            document_style_id?: components["schemas"]["Identifier"];
+            identity_id?: components["schemas"]["Identifier"];
+            /** @description MoneyHarpy extension. Accepted and kept; MoneyHarpy does not merge invoices yet. */
+            mergeable?: boolean;
+            /** @description MoneyHarpy extension. How many invoices it made. */
+            invoices_created?: number;
+            /** @description MoneyHarpy extension. The VAT of all lines. */
+            total_tax?: string;
+            /** @description MoneyHarpy extension. The discount on all lines. */
+            total_discount?: string;
+        };
+        RecurringSalesInvoiceRequest: {
+            recurring_sales_invoice: {
+                contact_id?: components["schemas"]["FlexibleIdentifier"];
+                contact_person_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description Accepted for compatibility; every invoice shows the contact as it is when the invoice is made. */
+                update_contact?: components["schemas"]["FlexibleBoolean"];
+                document_style_id?: components["schemas"]["FlexibleIdentifier"];
+                workflow_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description MoneyHarpy extension. */
+                identity_id?: components["schemas"]["FlexibleIdentifier"];
+                reference?: string;
+                /**
+                 * Format: date
+                 * @description The date of the next invoice, yyyy-mm-dd; not in the past.
+                 */
+                invoice_date?: string;
+                currency?: string;
+                first_due_interval?: number | string;
+                prices_are_incl_tax?: components["schemas"]["FlexibleBoolean"];
+                payment_conditions?: string;
+                /** @description A percentage, such as "10" or "2.5"; empty for none. */
+                discount?: string | number;
+                /** @enum {string} */
+                frequency_type?: "day" | "week" | "month" | "quarter" | "year";
+                /** @description How many frequency_types lie between two invoices. */
+                frequency?: number | string;
+                has_desired_count?: components["schemas"]["FlexibleBoolean"];
+                /** @description With has_desired_count, the number of invoices to make in all; it sets last_date. */
+                desired_count?: number | string;
+                /** @description MoneyHarpy extension. The last day an invoice may be made on, yyyy-mm-dd; empty for no end. */
+                last_date?: string;
+                auto_send?: components["schemas"]["FlexibleBoolean"];
+                mergeable?: components["schemas"]["FlexibleBoolean"];
+                /** @description An array of lines, or an object of lines keyed by position. */
+                details_attributes?: components["schemas"]["SalesInvoiceDetailInput"][] | {
+                    [key: string]: components["schemas"]["SalesInvoiceDetailInput"];
+                };
+                custom_fields_attributes?: components["schemas"]["custom_fields_attributes"];
+            };
+        };
         SalesInvoiceDetailInput: {
             id?: components["schemas"]["FlexibleIdentifier"];
             description?: string;
@@ -5995,6 +6188,19 @@ export interface components {
             };
             content: {
                 "application/json": components["schemas"]["ExternalSalesInvoice"][];
+            };
+        };
+        /** @description A page of recurring sales invoices */
+        RecurringSalesInvoicePage: {
+            headers: {
+                /** @description RFC 8288 links to the first, prev, next and last pages. */
+                Link?: string;
+                /** @description The number of recurring invoices selected in all. MoneyHarpy extension. */
+                "X-Total-Count"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["RecurringSalesInvoice"][];
             };
         };
         /** @description A page of journal entries */
@@ -10509,6 +10715,305 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listRecurringSalesInvoices: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["RecurringSalesInvoicePage"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createRecurringSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecurringSalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description The created recurring invoice */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringSalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listRecurringSalesInvoiceVersions: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ids and versions of the recurring invoices the filter selects */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SynchronizationItem"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    fetchRecurringSalesInvoices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SynchronizationRequest"];
+            };
+        };
+        responses: {
+            /** @description The recurring invoices with these ids */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringSalesInvoice"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getRecurringSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The recurring sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringSalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteRecurringSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The recurring invoice is deleted, or deactivated */
+            204: {
+                headers: {
+                    /** @description deactivated when the recurring invoice was kept. */
+                    "X-Kept-As"?: "deactivated";
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateRecurringSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecurringSalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description The recurring sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringSalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deactivateRecurringSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The deactivated recurring invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringSalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createRecurringSalesInvoiceNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteRequest"];
+            };
+        };
+        responses: {
+            /** @description The created note */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["note_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteRecurringSalesInvoiceNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The note is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };

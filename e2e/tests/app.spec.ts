@@ -874,3 +874,62 @@ test('an external invoice is uploaded, filled in, booked and paid by a bank tran
   await page.goto(`${uri}/external_sales_invoices`)
   await expect(page.getByRole('table', { name: 'External invoices' }).getByRole('link', { name: 'WEB-1001' })).toBeVisible()
 })
+
+test('a draft invoice is made recurring, scheduled and deactivated', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Subscription Co')
+  const uri = administrationUri(page)
+  const api = `/api/v2${uri}`
+  const contact = await (await page.request.post(`${api}/contacts`, { data: { contact: { company_name: 'Example Shop B.V.', send_invoices_to_email: unique() } } })).json()
+  const rates = await (await page.request.get(`${api}/tax_rates`)).json()
+  const vat21 = rates.find((r: { tax_rate_type: string; percentage: string }) => r.tax_rate_type === 'sales_invoice' && r.percentage.startsWith('21')).id
+  const created = await page.request.post(`${api}/sales_invoices`, { data: { sales_invoice: {
+    contact_id: contact.id, reference: 'Contract 7', details_attributes: [{ description: 'Hosting', amount: '1', price: '100', tax_rate_id: vat21 }],
+  } } })
+  expect(created.status()).toBe(201)
+  const draft = (await created.json()).id as string
+
+  const menu = page.getByRole('navigation', { name: 'Administration menu' })
+  await menu.getByRole('button', { name: 'Invoices' }).click()
+  await menu.getByRole('link', { name: 'Recurring invoices' }).click()
+  await expect(page.getByText(/No recurring invoices yet/)).toBeVisible()
+
+  // The draft is the template: its contact, reference and lines are copied.
+  await page.goto(`${uri}/sales_invoices/${draft}`)
+  await page.getByRole('link', { name: 'Make recurring' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'New recurring invoice' })).toBeVisible()
+  const form = page.getByRole('form', { name: 'Recurring invoice' })
+  await expect(form.getByLabel('Reference')).toHaveValue('Contract 7')
+  const next = new Date()
+  next.setMonth(next.getMonth() + 1, 1)
+  const first = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-01`
+  await form.getByLabel('First invoice on').fill(first)
+  await form.getByLabel('Every', { exact: true }).fill('3')
+  await form.getByLabel('Description').fill('Hosting {period}')
+  await form.getByLabel('Send each invoice automatically').check()
+  await expect(form.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText('€121.00')
+  await form.getByRole('button', { name: 'Save recurring invoice' }).click()
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Example Shop B.V.' })).toBeVisible()
+  await expect(page).toHaveURL(/\/recurring_sales_invoices\/\d+$/)
+  const details = page.locator('dl.details')
+  await expect(details).toContainText('Every 3 months')
+  await expect(details).toContainText('Yes')
+  await expect(page.getByText('No invoices made yet.')).toBeVisible()
+
+  await page.getByRole('link', { name: 'Back to recurring invoices' }).click()
+  const table = page.getByRole('table', { name: 'Recurring invoices' })
+  await expect(table.getByRole('row')).toHaveCount(2)
+  await expect(table.getByRole('row').nth(1)).toContainText('Every 3 months')
+  await expect(table.getByRole('row').nth(1)).toContainText('€121.00')
+
+  await table.getByRole('link', { name: 'Example Shop B.V.' }).click()
+  await page.getByRole('button', { name: 'Deactivate' }).click()
+  await expect(page.getByText('This recurring invoice is deactivated and makes no more invoices.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Save recurring invoice' })).toBeHidden()
+
+  await page.getByRole('link', { name: 'Back to recurring invoices' }).click()
+  await expect(page.getByText(/No recurring invoices yet/)).toBeVisible()
+  await page.getByLabel('Status').selectOption('inactive')
+  await expect(page.getByRole('table', { name: 'Recurring invoices' }).getByRole('row')).toHaveCount(2)
+})

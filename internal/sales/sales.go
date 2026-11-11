@@ -2,7 +2,8 @@
 // lines, sending them (numbering, the PDF, email and e-invoice), the
 // bookings they post, credit invoices, and the notes and files on them,
 // after Moneybird's sales invoices. External sales invoices, made in other
-// software, are booked and paid the same way.
+// software, are booked and paid the same way; recurring sales invoices make
+// sales invoices on a schedule.
 package sales
 
 import (
@@ -284,10 +285,11 @@ type Bank interface {
 	AccountLedger(ctx context.Context, admin, account, user resource.ID) (resource.ID, error)
 }
 
-// Notifier tells about what happened to invoices, such as a state change,
-// for webhooks. It may be nil.
+// Notifier tells about what happened to invoices, such as a state change
+// or an invoice a recurring invoice made, for webhooks. It may be nil.
 type Notifier interface {
 	Notify(ctx context.Context, admin resource.ID, action string, inv Invoice)
+	NotifyRecurring(ctx context.Context, admin resource.ID, action string, r Recurring)
 }
 
 // Notes keeps notes on invoices.
@@ -337,6 +339,17 @@ type Store interface {
 	DeleteExternalInvoice(ctx context.Context, admin, id resource.ID) error
 	TouchExternalInvoice(ctx context.Context, admin, id resource.ID, at time.Time) error
 
+	// RecurringInvoices lists recurring invoices, the next to make first.
+	RecurringInvoices(ctx context.Context, admin resource.ID, q RecurringQuery) ([]Recurring, int, error)
+	RecurringInvoice(ctx context.Context, admin, id resource.ID) (Recurring, error)
+	RecurringInvoicesByID(ctx context.Context, admin resource.ID, ids []resource.ID) ([]Recurring, error)
+	SaveRecurring(ctx context.Context, r Recurring, created bool) error
+	DeleteRecurring(ctx context.Context, admin, id resource.ID) error
+	TouchRecurring(ctx context.Context, admin, id resource.ID, at time.Time) error
+	// SaveGenerated stores, at once, a new draft invoice a recurring
+	// invoice made and the recurring invoice moved on to its next date.
+	SaveGenerated(ctx context.Context, inv Invoice, r Recurring) error
+
 	// Payment returns one payment.
 	Payment(ctx context.Context, admin, id resource.ID) (Payment, error)
 	// SavePayments stores, at once, invoices with what they post (nil
@@ -346,7 +359,8 @@ type Store interface {
 	// Receivables sums up the invoices still to be paid.
 	Receivables(ctx context.Context, admin resource.ID, today time.Time) (Receivables, error)
 	// Workload lists the administrations with sent or scheduled invoices,
-	// sales or external, each with an owner to act as.
+	// sales or external, or active recurring invoices, each with an owner to
+	// act as.
 	Workload(ctx context.Context) ([]Workload, error)
 	// Lock keeps other instances from working on the administration until
 	// release is called; ok is false when another holds it.

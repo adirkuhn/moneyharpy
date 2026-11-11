@@ -199,6 +199,38 @@ payments post. The overview counts open external invoices as to receive, and
 the transaction page offers them for linking. The email-in address that
 Moneybird offers for forwarding invoices is not available yet.
 
+## Recurring sales invoices
+
+Recurring invoices live at `/{id}/recurring_sales_invoices`, with Moneybird's
+recurring sales invoices API under
+`/api/v2/{administration_id}/recurring_sales_invoices`. A recurring invoice is
+a template: a contact, invoice settings and lines like a sales invoice's, and
+a schedule. It makes its first invoice on `invoice_date` (today unless given,
+never in the past) and one every `frequency` days, weeks, months, quarters or
+years (`frequency_type`) after it. Months, quarters and years keep the first
+day, or the month's last day when the month is shorter: 31 January, 28
+February, 31 March. It ends after `last_date` (MoneyHarpy extension) or, as
+at Moneybird, after `desired_count` invoices with `has_desired_count`; the
+response shows the end as `last_date`. A new `invoice_date`, `frequency` or
+`frequency_type` restarts the schedule from the next invoice date. "Make
+recurring" on a draft invoice copies it into a new recurring invoice.
+
+Every minute the background job, under the same per-administration lock as
+the other sales work, makes the invoices that are due: a draft sales invoice
+with `recurring_sales_invoice_id` set, dated on the schedule, with `{period}`
+in line descriptions replaced by the period it covers (lines with a `period`
+get that period). Each invoice is stored in one transaction with the
+recurring invoice moved on to its next date, so a round never makes an
+invoice twice, and a job that was down catches up on every date it missed.
+With `auto_send` the invoice is then sent the way the contact receives
+invoices, acting as the administration's owner; when that fails it stays a
+draft and the error is logged. `deactivate` stops a recurring invoice for
+good; `DELETE` removes one that made no invoices and deactivates the others
+(answering `X-Kept-As: deactivated`). Contacts with recurring invoices cannot
+be deleted. Webhooks tell `recurring_sales_invoice_created`, `_updated`,
+`_deactivated`, `_destroyed` and `_invoice_created`. Subscriptions and
+merging invoices (`mergeable`, accepted and kept) are not available yet.
+
 ## Users and permissions
 
 Each user of an administration is an owner, employee or accountant, with
