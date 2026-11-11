@@ -14,6 +14,7 @@ import (
 	"io"
 	"math/big"
 	"mime"
+	"mime/multipart"
 	"mime/quotedprintable"
 	"net"
 	stdmail "net/mail"
@@ -304,5 +305,47 @@ func TestDisabled(t *testing.T) {
 	c := New(staticSettings{}, "https://harpy.test")
 	if err := c.SendTest(context.Background(), "a@b.nl"); !errors.Is(err, ErrDisabled) {
 		t.Errorf("SendTest() error = %v, want ErrDisabled", err)
+	}
+}
+
+func TestDocumentMailCarriesFiles(t *testing.T) {
+	cert, _ := testCert(t)
+	srv := startServer(t, false, false, cert)
+	err := client(srv.port(), "none", "", nil).SendDocument(context.Background(), Document{
+		To: []string{"billing@example.com", "boss@example.com"}, BCC: []string{"copy@example.com"}, ReplyTo: "books@example.com",
+		FromName: "Harpy B.V.", Subject: "Invoice 2026-0001", Body: "Dear customer,\nSee attached.",
+		Files: []Attachment{{Name: "invoice-2026-0001.pdf", ContentType: "application/pdf", Data: []byte("%PDF-1.4 test")}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.wait(t)
+	msg, err := stdmail.ReadMessage(strings.NewReader(srv.data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if msg.Header.Get("Cc") != "boss@example.com" || msg.Header.Get("Reply-To") != "books@example.com" || !strings.Contains(msg.Header.Get("From"), "Harpy B.V.") {
+		t.Errorf("headers = %v", msg.Header)
+	}
+	if strings.Contains(srv.data, "copy@example.com") {
+		t.Error("blind copy shows in the message")
+	}
+	if len(srv.rcpt) != 3 {
+		t.Errorf("rcpt = %v", srv.rcpt)
+	}
+	_, params, _ := mime.ParseMediaType(msg.Header.Get("Content-Type"))
+	parts := multipart.NewReader(msg.Body, params["boundary"])
+	text, _ := parts.NextPart()
+	body, _ := io.ReadAll(quotedprintable.NewReader(text))
+	if !strings.Contains(string(body), "See attached.") {
+		t.Errorf("body = %q", body)
+	}
+	file, err := parts.NextPart()
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, _ := io.ReadAll(base64.NewDecoder(base64.StdEncoding, file))
+	if file.FileName() != "invoice-2026-0001.pdf" || string(data) != "%PDF-1.4 test" {
+		t.Errorf("file = %s %q", file.FileName(), data)
 	}
 }

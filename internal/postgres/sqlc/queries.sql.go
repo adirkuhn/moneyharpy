@@ -549,6 +549,22 @@ func (q *Queries) ContactInJournal(ctx context.Context, arg ContactInJournalPara
 	return exists, err
 }
 
+const contactOnSalesInvoice = `-- name: ContactOnSalesInvoice :one
+SELECT EXISTS (SELECT 1 FROM sales_invoices WHERE administration_id = $1 AND contact_id = $2)
+`
+
+type ContactOnSalesInvoiceParams struct {
+	AdministrationID int64
+	ContactID        int64
+}
+
+func (q *Queries) ContactOnSalesInvoice(ctx context.Context, arg ContactOnSalesInvoiceParams) (bool, error) {
+	row := q.db.QueryRow(ctx, contactOnSalesInvoice, arg.AdministrationID, arg.ContactID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const contactPeopleOf = `-- name: ContactPeopleOf :many
 SELECT id, administration_id, contact_id, firstname, lastname, phone, email, department, created_at, updated_at FROM contact_people WHERE administration_id = $1 AND contact_id = ANY($2::bigint[]) ORDER BY created_at, id
 `
@@ -1093,6 +1109,38 @@ DELETE FROM resources WHERE id = ANY($1::bigint[])
 
 func (q *Queries) DeleteResources(ctx context.Context, ids []int64) error {
 	_, err := q.db.Exec(ctx, deleteResources, ids)
+	return err
+}
+
+const deleteSalesInvoice = `-- name: DeleteSalesInvoice :exec
+DELETE FROM sales_invoices WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteSalesInvoiceParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteSalesInvoice(ctx context.Context, arg DeleteSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, deleteSalesInvoice, arg.AdministrationID, arg.ID)
+	return err
+}
+
+const deleteSalesInvoiceCustomFieldValues = `-- name: DeleteSalesInvoiceCustomFieldValues :exec
+DELETE FROM sales_invoice_custom_field_values WHERE sales_invoice_id = $1
+`
+
+func (q *Queries) DeleteSalesInvoiceCustomFieldValues(ctx context.Context, salesInvoiceID int64) error {
+	_, err := q.db.Exec(ctx, deleteSalesInvoiceCustomFieldValues, salesInvoiceID)
+	return err
+}
+
+const deleteSalesInvoiceDetails = `-- name: DeleteSalesInvoiceDetails :exec
+DELETE FROM sales_invoice_details WHERE sales_invoice_id = $1
+`
+
+func (q *Queries) DeleteSalesInvoiceDetails(ctx context.Context, salesInvoiceID int64) error {
+	_, err := q.db.Exec(ctx, deleteSalesInvoiceDetails, salesInvoiceID)
 	return err
 }
 
@@ -2393,6 +2441,72 @@ func (q *Queries) InsertResource(ctx context.Context, arg InsertResourceParams) 
 	return err
 }
 
+const insertSalesInvoiceCustomFieldValue = `-- name: InsertSalesInvoiceCustomFieldValue :exec
+INSERT INTO sales_invoice_custom_field_values (sales_invoice_id, custom_field_id, value) VALUES ($1, $2, $3)
+`
+
+type InsertSalesInvoiceCustomFieldValueParams struct {
+	SalesInvoiceID int64
+	CustomFieldID  int64
+	Value          string
+}
+
+func (q *Queries) InsertSalesInvoiceCustomFieldValue(ctx context.Context, arg InsertSalesInvoiceCustomFieldValueParams) error {
+	_, err := q.db.Exec(ctx, insertSalesInvoiceCustomFieldValue, arg.SalesInvoiceID, arg.CustomFieldID, arg.Value)
+	return err
+}
+
+const insertSalesInvoiceDetail = `-- name: InsertSalesInvoiceDetail :exec
+INSERT INTO sales_invoice_details (id, administration_id, sales_invoice_id, description, period, price, amount, quantity, tax_rate_id,
+    ledger_account_id, project_id, product_id, row_order, is_optional, is_selected, line_base, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+`
+
+type InsertSalesInvoiceDetailParams struct {
+	ID               int64
+	AdministrationID int64
+	SalesInvoiceID   int64
+	Description      string
+	Period           string
+	Price            int64
+	Amount           string
+	Quantity         int64
+	TaxRateID        int64
+	LedgerAccountID  pgtype.Int8
+	ProjectID        pgtype.Int8
+	ProductID        pgtype.Int8
+	RowOrder         int32
+	IsOptional       bool
+	IsSelected       bool
+	LineBase         int64
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) InsertSalesInvoiceDetail(ctx context.Context, arg InsertSalesInvoiceDetailParams) error {
+	_, err := q.db.Exec(ctx, insertSalesInvoiceDetail,
+		arg.ID,
+		arg.AdministrationID,
+		arg.SalesInvoiceID,
+		arg.Description,
+		arg.Period,
+		arg.Price,
+		arg.Amount,
+		arg.Quantity,
+		arg.TaxRateID,
+		arg.LedgerAccountID,
+		arg.ProjectID,
+		arg.ProductID,
+		arg.RowOrder,
+		arg.IsOptional,
+		arg.IsSelected,
+		arg.LineBase,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const insertSession = `-- name: InsertSession :exec
 INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)
 `
@@ -2565,25 +2679,27 @@ func (q *Queries) InsertWebhookDelivery(ctx context.Context, arg InsertWebhookDe
 
 const insertWorkflow = `-- name: InsertWorkflow :one
 INSERT INTO workflows (id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax,
-                       show_qr_code, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                       show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 ON CONFLICT (administration_id, type) WHERE is_default DO NOTHING
 RETURNING id
 `
 
 type InsertWorkflowParams struct {
-	ID               int64
-	AdministrationID int64
-	Type             string
-	Name             string
-	IsDefault        bool
-	Currency         string
-	Language         string
-	Active           bool
-	PricesAreInclTax bool
-	ShowQrCode       bool
-	CreatedAt        pgtype.Timestamptz
-	UpdatedAt        pgtype.Timestamptz
+	ID                  int64
+	AdministrationID    int64
+	Type                string
+	Name                string
+	IsDefault           bool
+	Currency            string
+	Language            string
+	Active              bool
+	PricesAreInclTax    bool
+	ShowQrCode          bool
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+	InvoiceEmailSubject string
+	InvoiceEmailBody    string
 }
 
 func (q *Queries) InsertWorkflow(ctx context.Context, arg InsertWorkflowParams) (int64, error) {
@@ -2600,6 +2716,8 @@ func (q *Queries) InsertWorkflow(ctx context.Context, arg InsertWorkflowParams) 
 		arg.ShowQrCode,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.InvoiceEmailSubject,
+		arg.InvoiceEmailBody,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -3803,6 +3921,125 @@ func (q *Queries) ListOpenInvitations(ctx context.Context, administrationID int6
 	return items, nil
 }
 
+const listSalesInvoices = `-- name: ListSalesInvoices :many
+SELECT i.id, i.administration_id, i.contact_id, i.contact_person_id, i.identity_id, i.document_style_id, i.workflow_id, i.draft_id, i.invoice_id, i.sequence_id, i.reference, i.language, i.currency, i.prices_are_incl_tax, i.payment_conditions, i.discount, i.invoice_date, i.due_date, i.first_due_interval, i.state, i.paused, i.payment_reference, i.sent_at, i.paid_at, i.marked_dubious_on, i.marked_uncollectible_on, i.reminder_count, i.original_id, i.recurring_sales_invoice_id, i.delivery, i.total_excl_tax, i.total_tax, i.total_incl_tax, i.total_discount, i.tax_totals, i.created_at, i.updated_at, count(*) OVER () AS total
+FROM sales_invoices i
+WHERE i.administration_id = $1
+  AND (cardinality($2::text[]) = 0 OR
+       (CASE WHEN i.state = 'open' AND i.due_date < $3::date THEN 'late' ELSE i.state END) = ANY($2::text[]))
+  AND ($4::date IS NULL OR coalesce(i.invoice_date, i.created_at::date) >= $4)
+  AND ($5::date IS NULL OR coalesce(i.invoice_date, i.created_at::date) <= $5)
+  AND (cardinality($6::text[]) = 0 OR i.reference = ANY($6::text[]))
+  AND ($7::bigint IS NULL OR i.contact_id = $7)
+  AND ($8::bigint IS NULL OR i.recurring_sales_invoice_id = $8)
+  AND ($9::bigint IS NULL OR i.workflow_id = $9)
+  AND ($10::timestamptz IS NULL OR i.created_at > $10)
+  AND ($11::timestamptz IS NULL OR i.updated_at > $11)
+ORDER BY CASE WHEN $12::boolean THEN coalesce(i.invoice_date, i.created_at::date) END ASC,
+         CASE WHEN NOT $12::boolean THEN coalesce(i.invoice_date, i.created_at::date) END DESC,
+         CASE WHEN $12::boolean THEN i.id END ASC,
+         CASE WHEN NOT $12::boolean THEN i.id END DESC
+LIMIT $14 OFFSET $13
+`
+
+type ListSalesInvoicesParams struct {
+	AdministrationID int64
+	States           []string
+	Today            pgtype.Date
+	FromDate         pgtype.Date
+	ToDate           pgtype.Date
+	Refs             []string
+	ContactID        pgtype.Int8
+	RecurringID      pgtype.Int8
+	WorkflowID       pgtype.Int8
+	CreatedAfter     pgtype.Timestamptz
+	UpdatedAfter     pgtype.Timestamptz
+	Ascending        bool
+	Skip             int32
+	MaxRows          pgtype.Int4
+}
+
+type ListSalesInvoicesRow struct {
+	SalesInvoice SalesInvoice
+	Total        int64
+}
+
+// Late is worked out from the due date: open invoices past it count as
+// late, not open. Drafts without an invoice date match on their creation.
+func (q *Queries) ListSalesInvoices(ctx context.Context, arg ListSalesInvoicesParams) ([]ListSalesInvoicesRow, error) {
+	rows, err := q.db.Query(ctx, listSalesInvoices,
+		arg.AdministrationID,
+		arg.States,
+		arg.Today,
+		arg.FromDate,
+		arg.ToDate,
+		arg.Refs,
+		arg.ContactID,
+		arg.RecurringID,
+		arg.WorkflowID,
+		arg.CreatedAfter,
+		arg.UpdatedAfter,
+		arg.Ascending,
+		arg.Skip,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSalesInvoicesRow
+	for rows.Next() {
+		var i ListSalesInvoicesRow
+		if err := rows.Scan(
+			&i.SalesInvoice.ID,
+			&i.SalesInvoice.AdministrationID,
+			&i.SalesInvoice.ContactID,
+			&i.SalesInvoice.ContactPersonID,
+			&i.SalesInvoice.IdentityID,
+			&i.SalesInvoice.DocumentStyleID,
+			&i.SalesInvoice.WorkflowID,
+			&i.SalesInvoice.DraftID,
+			&i.SalesInvoice.InvoiceID,
+			&i.SalesInvoice.SequenceID,
+			&i.SalesInvoice.Reference,
+			&i.SalesInvoice.Language,
+			&i.SalesInvoice.Currency,
+			&i.SalesInvoice.PricesAreInclTax,
+			&i.SalesInvoice.PaymentConditions,
+			&i.SalesInvoice.Discount,
+			&i.SalesInvoice.InvoiceDate,
+			&i.SalesInvoice.DueDate,
+			&i.SalesInvoice.FirstDueInterval,
+			&i.SalesInvoice.State,
+			&i.SalesInvoice.Paused,
+			&i.SalesInvoice.PaymentReference,
+			&i.SalesInvoice.SentAt,
+			&i.SalesInvoice.PaidAt,
+			&i.SalesInvoice.MarkedDubiousOn,
+			&i.SalesInvoice.MarkedUncollectibleOn,
+			&i.SalesInvoice.ReminderCount,
+			&i.SalesInvoice.OriginalID,
+			&i.SalesInvoice.RecurringSalesInvoiceID,
+			&i.SalesInvoice.Delivery,
+			&i.SalesInvoice.TotalExclTax,
+			&i.SalesInvoice.TotalTax,
+			&i.SalesInvoice.TotalInclTax,
+			&i.SalesInvoice.TotalDiscount,
+			&i.SalesInvoice.TaxTotals,
+			&i.SalesInvoice.CreatedAt,
+			&i.SalesInvoice.UpdatedAt,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTaxRates = `-- name: ListTaxRates :many
 SELECT id, administration_id, name, percentage::text AS percentage, tax_rate_type, show_tax, active, country, report_boxes, position, created_at, updated_at
 FROM tax_rates WHERE administration_id = $1 ORDER BY tax_rate_type, position, id
@@ -3966,7 +4203,7 @@ func (q *Queries) ListWorkflowSteps(ctx context.Context, administrationID int64)
 }
 
 const listWorkflows = `-- name: ListWorkflows :many
-SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at FROM workflows WHERE administration_id = $1 ORDER BY id
+SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body FROM workflows WHERE administration_id = $1 ORDER BY id
 `
 
 func (q *Queries) ListWorkflows(ctx context.Context, administrationID int64) ([]Workflow, error) {
@@ -3991,6 +4228,8 @@ func (q *Queries) ListWorkflows(ctx context.Context, administrationID int64) ([]
 			&i.ShowQrCode,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.InvoiceEmailSubject,
+			&i.InvoiceEmailBody,
 		); err != nil {
 			return nil, err
 		}
@@ -4038,6 +4277,17 @@ SELECT pg_advisory_xact_lock(727001)
 func (q *Queries) LockFirstUser(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, lockFirstUser)
 	return err
+}
+
+const lockInvoiceSequence = `-- name: LockInvoiceSequence :one
+SELECT invoice_sequence_id FROM administrations WHERE id = $1 FOR UPDATE
+`
+
+func (q *Queries) LockInvoiceSequence(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRow(ctx, lockInvoiceSequence, id)
+	var invoice_sequence_id string
+	err := row.Scan(&invoice_sequence_id)
+	return invoice_sequence_id, err
 }
 
 const markBankSeeded = `-- name: MarkBankSeeded :execrows
@@ -4150,6 +4400,17 @@ func (q *Queries) MoveDocumentStylesToDefaultIdentity(ctx context.Context, ident
 	return err
 }
 
+const nextSalesInvoiceDraftID = `-- name: NextSalesInvoiceDraftID :one
+SELECT coalesce(max(draft_id), 0)::integer + 1 FROM sales_invoices WHERE administration_id = $1
+`
+
+func (q *Queries) NextSalesInvoiceDraftID(ctx context.Context, administrationID int64) (int32, error) {
+	row := q.db.QueryRow(ctx, nextSalesInvoiceDraftID, administrationID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const notesOf = `-- name: NotesOf :many
 SELECT id, administration_id, entity_id, entity_type, user_id, assignee_id, todo, note, completed_at, completed_by_id, created_at, updated_at FROM notes WHERE administration_id = $1 AND entity_id = ANY($2::bigint[]) ORDER BY created_at, id
 `
@@ -4259,6 +4520,344 @@ func (q *Queries) RequiresTwoFactor(ctx context.Context, userID int64) (bool, er
 	return exists, err
 }
 
+const salesInvoiceByID = `-- name: SalesInvoiceByID :one
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM sales_invoices WHERE administration_id = $1 AND id = $2
+`
+
+type SalesInvoiceByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) SalesInvoiceByID(ctx context.Context, arg SalesInvoiceByIDParams) (SalesInvoice, error) {
+	row := q.db.QueryRow(ctx, salesInvoiceByID, arg.AdministrationID, arg.ID)
+	var i SalesInvoice
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.ContactID,
+		&i.ContactPersonID,
+		&i.IdentityID,
+		&i.DocumentStyleID,
+		&i.WorkflowID,
+		&i.DraftID,
+		&i.InvoiceID,
+		&i.SequenceID,
+		&i.Reference,
+		&i.Language,
+		&i.Currency,
+		&i.PricesAreInclTax,
+		&i.PaymentConditions,
+		&i.Discount,
+		&i.InvoiceDate,
+		&i.DueDate,
+		&i.FirstDueInterval,
+		&i.State,
+		&i.Paused,
+		&i.PaymentReference,
+		&i.SentAt,
+		&i.PaidAt,
+		&i.MarkedDubiousOn,
+		&i.MarkedUncollectibleOn,
+		&i.ReminderCount,
+		&i.OriginalID,
+		&i.RecurringSalesInvoiceID,
+		&i.Delivery,
+		&i.TotalExclTax,
+		&i.TotalTax,
+		&i.TotalInclTax,
+		&i.TotalDiscount,
+		&i.TaxTotals,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const salesInvoiceByNumber = `-- name: SalesInvoiceByNumber :one
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM sales_invoices WHERE administration_id = $1 AND invoice_id = $2 AND invoice_id <> ''
+`
+
+type SalesInvoiceByNumberParams struct {
+	AdministrationID int64
+	InvoiceID        string
+}
+
+func (q *Queries) SalesInvoiceByNumber(ctx context.Context, arg SalesInvoiceByNumberParams) (SalesInvoice, error) {
+	row := q.db.QueryRow(ctx, salesInvoiceByNumber, arg.AdministrationID, arg.InvoiceID)
+	var i SalesInvoice
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.ContactID,
+		&i.ContactPersonID,
+		&i.IdentityID,
+		&i.DocumentStyleID,
+		&i.WorkflowID,
+		&i.DraftID,
+		&i.InvoiceID,
+		&i.SequenceID,
+		&i.Reference,
+		&i.Language,
+		&i.Currency,
+		&i.PricesAreInclTax,
+		&i.PaymentConditions,
+		&i.Discount,
+		&i.InvoiceDate,
+		&i.DueDate,
+		&i.FirstDueInterval,
+		&i.State,
+		&i.Paused,
+		&i.PaymentReference,
+		&i.SentAt,
+		&i.PaidAt,
+		&i.MarkedDubiousOn,
+		&i.MarkedUncollectibleOn,
+		&i.ReminderCount,
+		&i.OriginalID,
+		&i.RecurringSalesInvoiceID,
+		&i.Delivery,
+		&i.TotalExclTax,
+		&i.TotalTax,
+		&i.TotalInclTax,
+		&i.TotalDiscount,
+		&i.TaxTotals,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const salesInvoiceByReference = `-- name: SalesInvoiceByReference :one
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM sales_invoices WHERE administration_id = $1 AND reference = $2 ORDER BY created_at DESC LIMIT 1
+`
+
+type SalesInvoiceByReferenceParams struct {
+	AdministrationID int64
+	Reference        string
+}
+
+func (q *Queries) SalesInvoiceByReference(ctx context.Context, arg SalesInvoiceByReferenceParams) (SalesInvoice, error) {
+	row := q.db.QueryRow(ctx, salesInvoiceByReference, arg.AdministrationID, arg.Reference)
+	var i SalesInvoice
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.ContactID,
+		&i.ContactPersonID,
+		&i.IdentityID,
+		&i.DocumentStyleID,
+		&i.WorkflowID,
+		&i.DraftID,
+		&i.InvoiceID,
+		&i.SequenceID,
+		&i.Reference,
+		&i.Language,
+		&i.Currency,
+		&i.PricesAreInclTax,
+		&i.PaymentConditions,
+		&i.Discount,
+		&i.InvoiceDate,
+		&i.DueDate,
+		&i.FirstDueInterval,
+		&i.State,
+		&i.Paused,
+		&i.PaymentReference,
+		&i.SentAt,
+		&i.PaidAt,
+		&i.MarkedDubiousOn,
+		&i.MarkedUncollectibleOn,
+		&i.ReminderCount,
+		&i.OriginalID,
+		&i.RecurringSalesInvoiceID,
+		&i.Delivery,
+		&i.TotalExclTax,
+		&i.TotalTax,
+		&i.TotalInclTax,
+		&i.TotalDiscount,
+		&i.TaxTotals,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const salesInvoiceCustomFieldValuesOf = `-- name: SalesInvoiceCustomFieldValuesOf :many
+SELECT v.sales_invoice_id, f.id, f.name, v.value
+FROM sales_invoice_custom_field_values v JOIN custom_fields f ON f.id = v.custom_field_id
+WHERE f.administration_id = $1 AND v.sales_invoice_id = ANY($2::bigint[])
+ORDER BY f.position, f.id
+`
+
+type SalesInvoiceCustomFieldValuesOfParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+type SalesInvoiceCustomFieldValuesOfRow struct {
+	SalesInvoiceID int64
+	ID             int64
+	Name           string
+	Value          string
+}
+
+func (q *Queries) SalesInvoiceCustomFieldValuesOf(ctx context.Context, arg SalesInvoiceCustomFieldValuesOfParams) ([]SalesInvoiceCustomFieldValuesOfRow, error) {
+	rows, err := q.db.Query(ctx, salesInvoiceCustomFieldValuesOf, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SalesInvoiceCustomFieldValuesOfRow
+	for rows.Next() {
+		var i SalesInvoiceCustomFieldValuesOfRow
+		if err := rows.Scan(
+			&i.SalesInvoiceID,
+			&i.ID,
+			&i.Name,
+			&i.Value,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const salesInvoiceDetailsOf = `-- name: SalesInvoiceDetailsOf :many
+SELECT id, administration_id, sales_invoice_id, description, period, price, amount, quantity, tax_rate_id, ledger_account_id, project_id, product_id, row_order, is_optional, is_selected, line_base, created_at, updated_at FROM sales_invoice_details WHERE administration_id = $1 AND sales_invoice_id = ANY($2::bigint[]) ORDER BY row_order, id
+`
+
+type SalesInvoiceDetailsOfParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) SalesInvoiceDetailsOf(ctx context.Context, arg SalesInvoiceDetailsOfParams) ([]SalesInvoiceDetail, error) {
+	rows, err := q.db.Query(ctx, salesInvoiceDetailsOf, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SalesInvoiceDetail
+	for rows.Next() {
+		var i SalesInvoiceDetail
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.SalesInvoiceID,
+			&i.Description,
+			&i.Period,
+			&i.Price,
+			&i.Amount,
+			&i.Quantity,
+			&i.TaxRateID,
+			&i.LedgerAccountID,
+			&i.ProjectID,
+			&i.ProductID,
+			&i.RowOrder,
+			&i.IsOptional,
+			&i.IsSelected,
+			&i.LineBase,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const salesInvoiceNumberTaken = `-- name: SalesInvoiceNumberTaken :one
+SELECT EXISTS (SELECT 1 FROM sales_invoices WHERE administration_id = $1 AND invoice_id = $2 AND id <> $3)
+`
+
+type SalesInvoiceNumberTakenParams struct {
+	AdministrationID int64
+	InvoiceID        string
+	ID               int64
+}
+
+func (q *Queries) SalesInvoiceNumberTaken(ctx context.Context, arg SalesInvoiceNumberTakenParams) (bool, error) {
+	row := q.db.QueryRow(ctx, salesInvoiceNumberTaken, arg.AdministrationID, arg.InvoiceID, arg.ID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const salesInvoicesByIDs = `-- name: SalesInvoicesByIDs :many
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM sales_invoices WHERE administration_id = $1 AND id = ANY($2::bigint[]) ORDER BY id
+`
+
+type SalesInvoicesByIDsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) SalesInvoicesByIDs(ctx context.Context, arg SalesInvoicesByIDsParams) ([]SalesInvoice, error) {
+	rows, err := q.db.Query(ctx, salesInvoicesByIDs, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SalesInvoice
+	for rows.Next() {
+		var i SalesInvoice
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.ContactID,
+			&i.ContactPersonID,
+			&i.IdentityID,
+			&i.DocumentStyleID,
+			&i.WorkflowID,
+			&i.DraftID,
+			&i.InvoiceID,
+			&i.SequenceID,
+			&i.Reference,
+			&i.Language,
+			&i.Currency,
+			&i.PricesAreInclTax,
+			&i.PaymentConditions,
+			&i.Discount,
+			&i.InvoiceDate,
+			&i.DueDate,
+			&i.FirstDueInterval,
+			&i.State,
+			&i.Paused,
+			&i.PaymentReference,
+			&i.SentAt,
+			&i.PaidAt,
+			&i.MarkedDubiousOn,
+			&i.MarkedUncollectibleOn,
+			&i.ReminderCount,
+			&i.OriginalID,
+			&i.RecurringSalesInvoiceID,
+			&i.Delivery,
+			&i.TotalExclTax,
+			&i.TotalTax,
+			&i.TotalInclTax,
+			&i.TotalDiscount,
+			&i.TaxTotals,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const saveDeliveryAttempt = `-- name: SaveDeliveryAttempt :exec
 UPDATE webhook_deliveries SET attempts = $2, next_attempt_at = $3, delivered_at = $4, last_status = $5, last_error = $6 WHERE id = $1
 `
@@ -4344,6 +4943,20 @@ func (q *Queries) SetFavorite(ctx context.Context, arg SetFavoriteParams) (int64
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const setInvoiceSequence = `-- name: SetInvoiceSequence :exec
+UPDATE administrations SET invoice_sequence_id = $2 WHERE id = $1
+`
+
+type SetInvoiceSequenceParams struct {
+	ID                int64
+	InvoiceSequenceID string
+}
+
+func (q *Queries) SetInvoiceSequence(ctx context.Context, arg SetInvoiceSequenceParams) error {
+	_, err := q.db.Exec(ctx, setInvoiceSequence, arg.ID, arg.InvoiceSequenceID)
+	return err
 }
 
 const setRequireTwoFactor = `-- name: SetRequireTwoFactor :exec
@@ -4547,6 +5160,21 @@ type TouchGeneralJournalDocumentParams struct {
 
 func (q *Queries) TouchGeneralJournalDocument(ctx context.Context, arg TouchGeneralJournalDocumentParams) error {
 	_, err := q.db.Exec(ctx, touchGeneralJournalDocument, arg.AdministrationID, arg.ID, arg.UpdatedAt)
+	return err
+}
+
+const touchSalesInvoice = `-- name: TouchSalesInvoice :exec
+UPDATE sales_invoices SET updated_at = $3 WHERE administration_id = $1 AND id = $2
+`
+
+type TouchSalesInvoiceParams struct {
+	AdministrationID int64
+	ID               int64
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) TouchSalesInvoice(ctx context.Context, arg TouchSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, touchSalesInvoice, arg.AdministrationID, arg.ID, arg.UpdatedAt)
 	return err
 }
 
@@ -5169,21 +5797,23 @@ func (q *Queries) UpdateTaxRate(ctx context.Context, arg UpdateTaxRateParams) er
 const updateWorkflow = `-- name: UpdateWorkflow :exec
 UPDATE workflows
 SET name = $3, is_default = $4, currency = $5, language = $6, active = $7, prices_are_incl_tax = $8,
-    show_qr_code = $9, updated_at = $10
+    show_qr_code = $9, updated_at = $10, invoice_email_subject = $11, invoice_email_body = $12
 WHERE administration_id = $1 AND id = $2
 `
 
 type UpdateWorkflowParams struct {
-	AdministrationID int64
-	ID               int64
-	Name             string
-	IsDefault        bool
-	Currency         string
-	Language         string
-	Active           bool
-	PricesAreInclTax bool
-	ShowQrCode       bool
-	UpdatedAt        pgtype.Timestamptz
+	AdministrationID    int64
+	ID                  int64
+	Name                string
+	IsDefault           bool
+	Currency            string
+	Language            string
+	Active              bool
+	PricesAreInclTax    bool
+	ShowQrCode          bool
+	UpdatedAt           pgtype.Timestamptz
+	InvoiceEmailSubject string
+	InvoiceEmailBody    string
 }
 
 func (q *Queries) UpdateWorkflow(ctx context.Context, arg UpdateWorkflowParams) error {
@@ -5198,6 +5828,8 @@ func (q *Queries) UpdateWorkflow(ctx context.Context, arg UpdateWorkflowParams) 
 		arg.PricesAreInclTax,
 		arg.ShowQrCode,
 		arg.UpdatedAt,
+		arg.InvoiceEmailSubject,
+		arg.InvoiceEmailBody,
 	)
 	return err
 }
@@ -5268,6 +5900,111 @@ func (q *Queries) UpsertInvitedMember(ctx context.Context, arg UpsertInvitedMemb
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const upsertSalesInvoice = `-- name: UpsertSalesInvoice :exec
+INSERT INTO sales_invoices (
+    id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id,
+    reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state,
+    paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id,
+    recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
+    $29, $30, $31, $32, $33, $34, $35, $36, $37)
+ON CONFLICT (id) DO UPDATE SET
+    contact_id = EXCLUDED.contact_id, contact_person_id = EXCLUDED.contact_person_id, identity_id = EXCLUDED.identity_id,
+    document_style_id = EXCLUDED.document_style_id, workflow_id = EXCLUDED.workflow_id, invoice_id = EXCLUDED.invoice_id,
+    sequence_id = EXCLUDED.sequence_id, reference = EXCLUDED.reference, language = EXCLUDED.language, currency = EXCLUDED.currency,
+    prices_are_incl_tax = EXCLUDED.prices_are_incl_tax, payment_conditions = EXCLUDED.payment_conditions, discount = EXCLUDED.discount,
+    invoice_date = EXCLUDED.invoice_date, due_date = EXCLUDED.due_date, first_due_interval = EXCLUDED.first_due_interval,
+    state = EXCLUDED.state, paused = EXCLUDED.paused, payment_reference = EXCLUDED.payment_reference, sent_at = EXCLUDED.sent_at,
+    paid_at = EXCLUDED.paid_at, marked_dubious_on = EXCLUDED.marked_dubious_on, marked_uncollectible_on = EXCLUDED.marked_uncollectible_on,
+    reminder_count = EXCLUDED.reminder_count, original_id = EXCLUDED.original_id, recurring_sales_invoice_id = EXCLUDED.recurring_sales_invoice_id,
+    delivery = EXCLUDED.delivery, total_excl_tax = EXCLUDED.total_excl_tax, total_tax = EXCLUDED.total_tax,
+    total_incl_tax = EXCLUDED.total_incl_tax, total_discount = EXCLUDED.total_discount, tax_totals = EXCLUDED.tax_totals,
+    updated_at = EXCLUDED.updated_at
+`
+
+type UpsertSalesInvoiceParams struct {
+	ID                      int64
+	AdministrationID        int64
+	ContactID               int64
+	ContactPersonID         pgtype.Int8
+	IdentityID              int64
+	DocumentStyleID         int64
+	WorkflowID              int64
+	DraftID                 int32
+	InvoiceID               string
+	SequenceID              string
+	Reference               string
+	Language                string
+	Currency                string
+	PricesAreInclTax        bool
+	PaymentConditions       string
+	Discount                int32
+	InvoiceDate             pgtype.Date
+	DueDate                 pgtype.Date
+	FirstDueInterval        int32
+	State                   string
+	Paused                  bool
+	PaymentReference        string
+	SentAt                  pgtype.Timestamptz
+	PaidAt                  pgtype.Timestamptz
+	MarkedDubiousOn         pgtype.Date
+	MarkedUncollectibleOn   pgtype.Date
+	ReminderCount           int32
+	OriginalID              pgtype.Int8
+	RecurringSalesInvoiceID pgtype.Int8
+	Delivery                []byte
+	TotalExclTax            int64
+	TotalTax                int64
+	TotalInclTax            int64
+	TotalDiscount           int64
+	TaxTotals               []byte
+	CreatedAt               pgtype.Timestamptz
+	UpdatedAt               pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertSalesInvoice(ctx context.Context, arg UpsertSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, upsertSalesInvoice,
+		arg.ID,
+		arg.AdministrationID,
+		arg.ContactID,
+		arg.ContactPersonID,
+		arg.IdentityID,
+		arg.DocumentStyleID,
+		arg.WorkflowID,
+		arg.DraftID,
+		arg.InvoiceID,
+		arg.SequenceID,
+		arg.Reference,
+		arg.Language,
+		arg.Currency,
+		arg.PricesAreInclTax,
+		arg.PaymentConditions,
+		arg.Discount,
+		arg.InvoiceDate,
+		arg.DueDate,
+		arg.FirstDueInterval,
+		arg.State,
+		arg.Paused,
+		arg.PaymentReference,
+		arg.SentAt,
+		arg.PaidAt,
+		arg.MarkedDubiousOn,
+		arg.MarkedUncollectibleOn,
+		arg.ReminderCount,
+		arg.OriginalID,
+		arg.RecurringSalesInvoiceID,
+		arg.Delivery,
+		arg.TotalExclTax,
+		arg.TotalTax,
+		arg.TotalInclTax,
+		arg.TotalDiscount,
+		arg.TaxTotals,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
 }
 
 const useConnection = `-- name: UseConnection :one
@@ -5521,7 +6258,7 @@ func (q *Queries) WebhookByID(ctx context.Context, arg WebhookByIDParams) (Webho
 }
 
 const workflowByID = `-- name: WorkflowByID :one
-SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at FROM workflows WHERE administration_id = $1 AND id = $2
+SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body FROM workflows WHERE administration_id = $1 AND id = $2
 `
 
 type WorkflowByIDParams struct {
@@ -5545,6 +6282,8 @@ func (q *Queries) WorkflowByID(ctx context.Context, arg WorkflowByIDParams) (Wor
 		&i.ShowQrCode,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.InvoiceEmailSubject,
+		&i.InvoiceEmailBody,
 	)
 	return i, err
 }

@@ -199,8 +199,8 @@ ORDER BY s.workflow_id, s.step_order;
 
 -- name: InsertWorkflow :one
 INSERT INTO workflows (id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax,
-                       show_qr_code, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                       show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 ON CONFLICT (administration_id, type) WHERE is_default DO NOTHING
 RETURNING id;
 
@@ -210,7 +210,7 @@ UPDATE workflows SET is_default = false WHERE administration_id = $1 AND type = 
 -- name: UpdateWorkflow :exec
 UPDATE workflows
 SET name = $3, is_default = $4, currency = $5, language = $6, active = $7, prices_are_incl_tax = $8,
-    show_qr_code = $9, updated_at = $10
+    show_qr_code = $9, updated_at = $10, invoice_email_subject = $11, invoice_email_body = $12
 WHERE administration_id = $1 AND id = $2;
 
 -- name: DeleteWorkflow :execrows
@@ -804,3 +804,102 @@ DELETE FROM attachments WHERE administration_id = $1 AND id = $2;
 SELECT * FROM attachments
 WHERE administration_id = @administration_id AND entity_type = @entity_type AND entity_id = ANY(@ids::bigint[])
 ORDER BY created_at, id;
+
+-- name: ListSalesInvoices :many
+-- Late is worked out from the due date: open invoices past it count as
+-- late, not open. Drafts without an invoice date match on their creation.
+SELECT sqlc.embed(i), count(*) OVER () AS total
+FROM sales_invoices i
+WHERE i.administration_id = @administration_id
+  AND (cardinality(@states::text[]) = 0 OR
+       (CASE WHEN i.state = 'open' AND i.due_date < @today::date THEN 'late' ELSE i.state END) = ANY(@states::text[]))
+  AND (sqlc.narg(from_date)::date IS NULL OR coalesce(i.invoice_date, i.created_at::date) >= sqlc.narg(from_date))
+  AND (sqlc.narg(to_date)::date IS NULL OR coalesce(i.invoice_date, i.created_at::date) <= sqlc.narg(to_date))
+  AND (cardinality(@refs::text[]) = 0 OR i.reference = ANY(@refs::text[]))
+  AND (sqlc.narg(contact_id)::bigint IS NULL OR i.contact_id = sqlc.narg(contact_id))
+  AND (sqlc.narg(recurring_id)::bigint IS NULL OR i.recurring_sales_invoice_id = sqlc.narg(recurring_id))
+  AND (sqlc.narg(workflow_id)::bigint IS NULL OR i.workflow_id = sqlc.narg(workflow_id))
+  AND (sqlc.narg(created_after)::timestamptz IS NULL OR i.created_at > sqlc.narg(created_after))
+  AND (sqlc.narg(updated_after)::timestamptz IS NULL OR i.updated_at > sqlc.narg(updated_after))
+ORDER BY CASE WHEN @ascending::boolean THEN coalesce(i.invoice_date, i.created_at::date) END ASC,
+         CASE WHEN NOT @ascending::boolean THEN coalesce(i.invoice_date, i.created_at::date) END DESC,
+         CASE WHEN @ascending::boolean THEN i.id END ASC,
+         CASE WHEN NOT @ascending::boolean THEN i.id END DESC
+LIMIT sqlc.narg(max_rows) OFFSET @skip;
+
+-- name: SalesInvoiceByID :one
+SELECT * FROM sales_invoices WHERE administration_id = $1 AND id = $2;
+
+-- name: SalesInvoicesByIDs :many
+SELECT * FROM sales_invoices WHERE administration_id = @administration_id AND id = ANY(@ids::bigint[]) ORDER BY id;
+
+-- name: SalesInvoiceByNumber :one
+SELECT * FROM sales_invoices WHERE administration_id = $1 AND invoice_id = $2 AND invoice_id <> '';
+
+-- name: SalesInvoiceByReference :one
+SELECT * FROM sales_invoices WHERE administration_id = $1 AND reference = $2 ORDER BY created_at DESC LIMIT 1;
+
+-- name: NextSalesInvoiceDraftID :one
+SELECT coalesce(max(draft_id), 0)::integer + 1 FROM sales_invoices WHERE administration_id = $1;
+
+-- name: SalesInvoiceNumberTaken :one
+SELECT EXISTS (SELECT 1 FROM sales_invoices WHERE administration_id = $1 AND invoice_id = $2 AND id <> $3);
+
+-- name: LockInvoiceSequence :one
+SELECT invoice_sequence_id FROM administrations WHERE id = $1 FOR UPDATE;
+
+-- name: SetInvoiceSequence :exec
+UPDATE administrations SET invoice_sequence_id = $2 WHERE id = $1;
+
+-- name: UpsertSalesInvoice :exec
+INSERT INTO sales_invoices (
+    id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id,
+    reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state,
+    paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id,
+    recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
+    $29, $30, $31, $32, $33, $34, $35, $36, $37)
+ON CONFLICT (id) DO UPDATE SET
+    contact_id = EXCLUDED.contact_id, contact_person_id = EXCLUDED.contact_person_id, identity_id = EXCLUDED.identity_id,
+    document_style_id = EXCLUDED.document_style_id, workflow_id = EXCLUDED.workflow_id, invoice_id = EXCLUDED.invoice_id,
+    sequence_id = EXCLUDED.sequence_id, reference = EXCLUDED.reference, language = EXCLUDED.language, currency = EXCLUDED.currency,
+    prices_are_incl_tax = EXCLUDED.prices_are_incl_tax, payment_conditions = EXCLUDED.payment_conditions, discount = EXCLUDED.discount,
+    invoice_date = EXCLUDED.invoice_date, due_date = EXCLUDED.due_date, first_due_interval = EXCLUDED.first_due_interval,
+    state = EXCLUDED.state, paused = EXCLUDED.paused, payment_reference = EXCLUDED.payment_reference, sent_at = EXCLUDED.sent_at,
+    paid_at = EXCLUDED.paid_at, marked_dubious_on = EXCLUDED.marked_dubious_on, marked_uncollectible_on = EXCLUDED.marked_uncollectible_on,
+    reminder_count = EXCLUDED.reminder_count, original_id = EXCLUDED.original_id, recurring_sales_invoice_id = EXCLUDED.recurring_sales_invoice_id,
+    delivery = EXCLUDED.delivery, total_excl_tax = EXCLUDED.total_excl_tax, total_tax = EXCLUDED.total_tax,
+    total_incl_tax = EXCLUDED.total_incl_tax, total_discount = EXCLUDED.total_discount, tax_totals = EXCLUDED.tax_totals,
+    updated_at = EXCLUDED.updated_at;
+
+-- name: TouchSalesInvoice :exec
+UPDATE sales_invoices SET updated_at = $3 WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteSalesInvoice :exec
+DELETE FROM sales_invoices WHERE administration_id = $1 AND id = $2;
+
+-- name: SalesInvoiceDetailsOf :many
+SELECT * FROM sales_invoice_details WHERE administration_id = @administration_id AND sales_invoice_id = ANY(@ids::bigint[]) ORDER BY row_order, id;
+
+-- name: DeleteSalesInvoiceDetails :exec
+DELETE FROM sales_invoice_details WHERE sales_invoice_id = $1;
+
+-- name: InsertSalesInvoiceDetail :exec
+INSERT INTO sales_invoice_details (id, administration_id, sales_invoice_id, description, period, price, amount, quantity, tax_rate_id,
+    ledger_account_id, project_id, product_id, row_order, is_optional, is_selected, line_base, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18);
+
+-- name: SalesInvoiceCustomFieldValuesOf :many
+SELECT v.sales_invoice_id, f.id, f.name, v.value
+FROM sales_invoice_custom_field_values v JOIN custom_fields f ON f.id = v.custom_field_id
+WHERE f.administration_id = @administration_id AND v.sales_invoice_id = ANY(@ids::bigint[])
+ORDER BY f.position, f.id;
+
+-- name: DeleteSalesInvoiceCustomFieldValues :exec
+DELETE FROM sales_invoice_custom_field_values WHERE sales_invoice_id = $1;
+
+-- name: InsertSalesInvoiceCustomFieldValue :exec
+INSERT INTO sales_invoice_custom_field_values (sales_invoice_id, custom_field_id, value) VALUES ($1, $2, $3);
+
+-- name: ContactOnSalesInvoice :one
+SELECT EXISTS (SELECT 1 FROM sales_invoices WHERE administration_id = $1 AND contact_id = $2);

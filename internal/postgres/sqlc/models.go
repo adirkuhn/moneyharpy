@@ -408,6 +408,73 @@ type Resource struct {
 	AdministrationID int64
 }
 
+type SalesInvoice struct {
+	ID                      int64
+	AdministrationID        int64
+	ContactID               int64
+	ContactPersonID         pgtype.Int8
+	IdentityID              int64
+	DocumentStyleID         int64
+	WorkflowID              int64
+	DraftID                 int32
+	InvoiceID               string
+	SequenceID              string
+	Reference               string
+	Language                string
+	Currency                string
+	PricesAreInclTax        bool
+	PaymentConditions       string
+	Discount                int32
+	InvoiceDate             pgtype.Date
+	DueDate                 pgtype.Date
+	FirstDueInterval        int32
+	State                   string
+	Paused                  bool
+	PaymentReference        string
+	SentAt                  pgtype.Timestamptz
+	PaidAt                  pgtype.Timestamptz
+	MarkedDubiousOn         pgtype.Date
+	MarkedUncollectibleOn   pgtype.Date
+	ReminderCount           int32
+	OriginalID              pgtype.Int8
+	RecurringSalesInvoiceID pgtype.Int8
+	Delivery                []byte
+	TotalExclTax            int64
+	TotalTax                int64
+	TotalInclTax            int64
+	TotalDiscount           int64
+	TaxTotals               []byte
+	CreatedAt               pgtype.Timestamptz
+	UpdatedAt               pgtype.Timestamptz
+}
+
+type SalesInvoiceCustomFieldValue struct {
+	SalesInvoiceID int64
+	CustomFieldID  int64
+	Value          string
+}
+
+type SalesInvoiceDetail struct {
+	ID               int64
+	AdministrationID int64
+	SalesInvoiceID   int64
+	Description      string
+	Period           string
+	Price            int64
+	Amount           string
+	Quantity         int64
+	TaxRateID        int64
+	LedgerAccountID  pgtype.Int8
+	ProjectID        pgtype.Int8
+	ProductID        pgtype.Int8
+	RowOrder         int32
+	IsOptional       bool
+	IsSelected       bool
+	LineBase         int64
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type Session struct {
 	TokenHash string
 	UserID    int64
@@ -496,18 +563,20 @@ type WebhookDelivery struct {
 }
 
 type Workflow struct {
-	ID               int64
-	AdministrationID int64
-	Type             string
-	Name             string
-	IsDefault        bool
-	Currency         string
-	Language         string
-	Active           bool
-	PricesAreInclTax bool
-	ShowQrCode       bool
-	CreatedAt        pgtype.Timestamptz
-	UpdatedAt        pgtype.Timestamptz
+	ID                  int64
+	AdministrationID    int64
+	Type                string
+	Name                string
+	IsDefault           bool
+	Currency            string
+	Language            string
+	Active              bool
+	PricesAreInclTax    bool
+	ShowQrCode          bool
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+	InvoiceEmailSubject string
+	InvoiceEmailBody    string
 }
 
 type WorkflowStep struct {
