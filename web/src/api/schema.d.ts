@@ -3239,6 +3239,404 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/reports/profit_loss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Profit and loss report
+         * @description The profit and loss categories with bookings in the period, from the journal; nested categories are flat. Revenue and other income and expenses are credit minus debit, direct costs and expenses debit minus credit. With project_id only the bookings on that project count. Also needs the sales_invoices permission. The period holds at most 12 months.
+         */
+        get: operations["getProfitLossReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/balance_sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Balance sheet report
+         * @description The balance sheet categories with a balance at the end of the period, each top category with its sub-categories as children. A current asset with a credit balance shows with the current liabilities, and the other way round. MoneyHarpy closes no years yet, so the results of every year show as open years.
+         */
+        get: operations["getBalanceSheetReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/cash_flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Cash flow report
+         * @description What bank transactions in the period booked against the financial accounts, per category: cash received positive, cash paid negative; and the financial accounts' balance at the period's start and end.
+         */
+        get: operations["getCashFlowReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/creditors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Creditors report
+         * @description The balance of each creditor (contact) on the creditors category at the end of the period, the largest first; contact_id null is the bookings without a contact. With granularity, periods gives the balances of the page's creditors at the end of each part.
+         */
+        get: operations["getCreditorsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/creditors_aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Creditors aging report
+         * @description Per creditor, what booked purchase invoices and receipts still had open at the end of period_until, by their age from the document date: 0 to 30 days, 30 to 60 days, older, and the total. Bucket names are in the administration's language.
+         */
+        get: operations["getCreditorsAgingReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/debtors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Debtors report
+         * @description The balance of each debtor (contact) on the debtors category at the end of the period, the largest first; contact_id null is the bookings without a contact. With granularity, periods gives the balances of the page's debtors at the end of each part.
+         */
+        get: operations["getDebtorsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/debtors_aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Debtors aging report
+         * @description Per debtor, what booked sales invoices and external sales invoices still had open at the end of period_until, by their age from the invoice date: 0 to 30 days, 30 to 60 days, older, and the total. Bucket names are in the administration's language.
+         */
+        get: operations["getDebtorsAgingReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/expenses_by_contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Expenses by contact report
+         * @description The direct costs and expenses booked per contact in the period (debit minus credit), the bookings without a contact first, then the largest. With granularity, periods splits the amounts of the page's contacts per part, listing those with bookings in it.
+         */
+        get: operations["getExpensesByContactReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/expenses_by_project": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Expenses by project report
+         * @description The direct costs and expenses booked per project in the period (debit minus credit), the bookings without a project first, then the largest. With granularity, periods splits the amounts of the page's projects per part, listing those with bookings in it.
+         */
+        get: operations["getExpensesByProjectReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/export/auditfile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export an auditfile
+         * @description Makes the year's auditfile (XAF) and adds it to the downloads as auditfile; MoneyHarpy makes it at once and writes the XAF 3.2 format for both versions. Every ledger account needs an account id of its own, and the year needs journal entries. Also needs the documents, estimates, sales_invoices and settings permissions.
+         */
+        post: operations["exportAuditfile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/export/brugstaat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export a brugstaat
+         * @description Makes the year's RGS brugstaat (XML: per category with a balance or bookings its RGS code and reference number, its balance at the start, debits, credits and balance at the end) and adds it to the downloads as brugstaat. Every active category needs a code of the administration's RGS scheme. Also needs the documents and sales_invoices permissions.
+         */
+        post: operations["exportBrugstaat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/export/ledger_accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export the ledger accounts
+         * @description Makes the year's ledger cards (grootboekkaarten) as an Excel workbook: per category its balance at the start of the year, every booking and its balance at the end; and adds it to the downloads as export_ledger_account_report. The year needs journal entries. Also needs the sales_invoices permission.
+         */
+        post: operations["exportLedgerAccounts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/ledger_accounts/{ledger_account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                ledger_account_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Ledger account report
+         * @deprecated
+         * @description The journal entries on a ledger account in the period, the newest first. Deprecated at Moneybird in favour of the journal entries report. Also needs the sales_invoices permission.
+         */
+        get: operations["getLedgerAccountReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/revenue_by_contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Revenue by contact report
+         * @description The revenue booked per contact in the period (credit minus debit), the bookings without a contact first, then the largest. With granularity, periods splits the amounts of the page's contacts per part, listing those with bookings in it.
+         */
+        get: operations["getRevenueByContactReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/revenue_by_project": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Revenue by project report
+         * @description The revenue booked per project in the period (credit minus debit), the bookings without a project first, then the largest. With granularity, periods splits the amounts of the page's projects per part, listing those with bookings in it.
+         */
+        get: operations["getRevenueByProjectReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Subscriptions report
+         * @description The subscription figures of the last month of the period: what the subscriptions running at its end bill per month excluding VAT, twelve times that, the percentage of the subscriptions running at its start that ended in it, and the monthly revenue per customer divided by that churn rate.
+         */
+        get: operations["getSubscriptionsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/tax": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Tax report
+         * @description Per VAT rate with an amount in the period: what it was charged on and the VAT, from what invoices, receipts and other documents booked; sales rates on payable VAT, purchase rates on receivable VAT. Also needs the sales_invoices permission.
+         */
+        get: operations["getTaxReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/working_capital": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Working capital report
+         * @description Current assets less current liabilities at the end of the period: the financial accounts' balance (zero when negative), the other current assets, and the current liabilities including a negative bank balance.
+         */
+        get: operations["getWorkingCapitalReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/sales_invoices": {
         parameters: {
             query?: never;
@@ -7322,6 +7720,126 @@ export interface components {
         };
         GeneralLedgerReport: components["schemas"]["GeneralLedgerPeriod"] & {
             periods?: components["schemas"]["GeneralLedgerPeriod"][];
+        };
+        ReportPart: {
+            /** @description The part of the report's period, as 202501..202503. */
+            period: string;
+        };
+        /** @description The profit and loss report. */
+        ProfitLossReport: components["schemas"]["profit_loss_amounts"] & {
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: (components["schemas"]["ReportPart"] & components["schemas"]["profit_loss_amounts"])[];
+        };
+        /** @description The cash flow report. */
+        CashFlowReport: components["schemas"]["cash_flow_amounts"] & {
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: (components["schemas"]["ReportPart"] & components["schemas"]["cash_flow_amounts"])[];
+        };
+        /** @description The tax report. */
+        TaxReport: components["schemas"]["tax_report_amounts"] & {
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: (components["schemas"]["ReportPart"] & components["schemas"]["tax_report_amounts"])[];
+        };
+        /** @description The working capital report. */
+        WorkingCapitalReport: components["schemas"]["working_capital_amounts"] & {
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: (components["schemas"]["ReportPart"] & components["schemas"]["working_capital_amounts"])[];
+        };
+        BalanceSheetAmounts: {
+            debit: components["schemas"]["balance_sheet_debit"];
+            credit: components["schemas"]["balance_sheet_credit"];
+        };
+        /** @description The balance sheet report. */
+        BalanceSheetReport: components["schemas"]["BalanceSheetAmounts"] & {
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: (components["schemas"]["ReportPart"] & components["schemas"]["BalanceSheetAmounts"])[];
+        };
+        /** @description The debtors report. */
+        DebtorsReport: {
+            debtors: components["schemas"]["debtors_report_item"][];
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: {
+                /** @description The part of the period, as 202501..202503. */
+                period: string;
+                debtors: components["schemas"]["debtors_report_item"][];
+            }[];
+        };
+        /** @description The creditors report. */
+        CreditorsReport: {
+            creditors: components["schemas"]["creditors_report_item"][];
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: {
+                /** @description The part of the period, as 202501..202503. */
+                period: string;
+                creditors: components["schemas"]["creditors_report_item"][];
+            }[];
+        };
+        /** @description The revenue by contact report. */
+        RevenueByContactReport: {
+            revenue_by_contact: components["schemas"]["contact_report_item"][];
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: {
+                /** @description The part of the period, as 202501..202503. */
+                period: string;
+                revenue_by_contact: components["schemas"]["contact_report_item"][];
+            }[];
+        };
+        /** @description The expenses by contact report. */
+        ExpensesByContactReport: {
+            expenses_by_contact: components["schemas"]["contact_report_item"][];
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: {
+                /** @description The part of the period, as 202501..202503. */
+                period: string;
+                expenses_by_contact: components["schemas"]["contact_report_item"][];
+            }[];
+        };
+        /** @description The revenue by project report. */
+        RevenueByProjectReport: {
+            revenue_by_project: components["schemas"]["project_report_item"][];
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: {
+                /** @description The part of the period, as 202501..202503. */
+                period: string;
+                revenue_by_project: components["schemas"]["project_report_item"][];
+            }[];
+        };
+        /** @description The expenses by project report. */
+        ExpensesByProjectReport: {
+            expenses_by_project: components["schemas"]["project_report_item"][];
+            /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+            periods?: {
+                /** @description The part of the period, as 202501..202503. */
+                period: string;
+                expenses_by_project: components["schemas"]["project_report_item"][];
+            }[];
+        };
+        /** @description The debtors aging report. */
+        DebtorsAgingReport: {
+            debtors: components["schemas"]["aging_report_item"][];
+        };
+        /** @description The creditors aging report. */
+        CreditorsAgingReport: {
+            creditors: components["schemas"]["aging_report_item"][];
+        };
+        SubscriptionsReport: {
+            monthly_recurring_revenue: string;
+            annual_run_rate: string;
+            churn_rate: string;
+            lifetime_value: string;
+        };
+        ExportYearRequest: {
+            /** @description The year to export, as 2024. */
+            year: string;
+        };
+        AuditfileExportRequest: {
+            /** @description The year to export, as 2024. */
+            year: string;
+            /**
+             * @description The XAF version; 3.2 unless given. MoneyHarpy writes 3.2 for both.
+             * @enum {string}
+             */
+            version?: "3.2" | "4.0";
         };
         /** @description A Moneybird sales invoice with MoneyHarpy extensions. */
         SalesInvoice: components["schemas"]["sales_invoice_response"] & {
@@ -16164,6 +16682,646 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getProfitLossReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+                /** @description Only the bookings on this project. */
+                project_id?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfitLossReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getBalanceSheetReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceSheetReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getCashFlowReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+                /** @description Only this financial account. */
+                financial_account_id?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getCreditorsReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 100 unless given, at most 100. */
+                per_page?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of records in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditorsReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getCreditorsAgingReport: {
+        parameters: {
+            query?: {
+                /** @description The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today. */
+                period_until?: string;
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 100 unless given, at most 100. */
+                per_page?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of records in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditorsAgingReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getDebtorsReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 100 unless given, at most 100. */
+                per_page?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of records in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtorsReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getDebtorsAgingReport: {
+        parameters: {
+            query?: {
+                /** @description The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today. */
+                period_until?: string;
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 100 unless given, at most 100. */
+                per_page?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of records in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtorsAgingReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getExpensesByContactReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+                /** @description Only the amounts of this contact. */
+                contact_id?: string;
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 100 unless given, at most 100. */
+                per_page?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of records in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpensesByContactReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getExpensesByProjectReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 100 unless given, at most 100. */
+                per_page?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of records in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpensesByProjectReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    exportAuditfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuditfileExportRequest"];
+            };
+        };
+        responses: {
+            /** @description The file is in the downloads */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    exportBrugstaat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExportYearRequest"];
+            };
+        };
+        responses: {
+            /** @description The file is in the downloads */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    exportLedgerAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExportYearRequest"];
+            };
+        };
+        responses: {
+            /** @description The file is in the downloads */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getLedgerAccountReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 100 unless given, at most 100. */
+                per_page?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                ledger_account_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The entries */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of records in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntry"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getRevenueByContactReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+                /** @description Only the amounts of this contact. */
+                contact_id?: string;
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 100 unless given, at most 100. */
+                per_page?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of records in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevenueByContactReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getRevenueByProjectReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 100 unless given, at most 100. */
+                per_page?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of records in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevenueByProjectReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getSubscriptionsReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionsReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getTaxReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getWorkingCapitalReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end. */
+                granularity?: "month" | "quarter" | "year";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkingCapitalReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };
