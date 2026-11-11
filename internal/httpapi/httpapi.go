@@ -20,6 +20,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/downloads"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
@@ -31,6 +32,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
+	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -88,6 +90,8 @@ type Deps struct {
 	Sales           *sales.Service
 	Products        *products.Service
 	Projects        *projects.Service
+	Subscriptions   *subscriptions.Service
+	Downloads       *downloads.Service
 	Membership      *membership.Service
 	Connections     *connections.Service
 	Webhooks        *webhooks.Service
@@ -264,6 +268,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		sales.IsNotFound(err),
 		errors.Is(err, products.ErrNotFound),
 		errors.Is(err, projects.ErrNotFound),
+		errors.Is(err, subscriptions.ErrNotFound),
+		errors.Is(err, downloads.ErrNotFound),
 		errors.Is(err, membership.ErrUserNotFound),
 		errors.Is(err, connections.ErrNotFound),
 		errors.Is(err, webhooks.ErrNotFound),

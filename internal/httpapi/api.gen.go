@@ -1422,6 +1422,60 @@ func (e SendSalesInvoiceRequestSalesInvoiceSendingDeliveryMethod) Valid() bool {
 	}
 }
 
+// Defines values for SubscriptionFrequencyType.
+const (
+	SubscriptionFrequencyTypeDay     SubscriptionFrequencyType = "day"
+	SubscriptionFrequencyTypeMonth   SubscriptionFrequencyType = "month"
+	SubscriptionFrequencyTypeQuarter SubscriptionFrequencyType = "quarter"
+	SubscriptionFrequencyTypeWeek    SubscriptionFrequencyType = "week"
+	SubscriptionFrequencyTypeYear    SubscriptionFrequencyType = "year"
+)
+
+// Valid indicates whether the value is a known member of the SubscriptionFrequencyType enum.
+func (e SubscriptionFrequencyType) Valid() bool {
+	switch e {
+	case SubscriptionFrequencyTypeDay:
+		return true
+	case SubscriptionFrequencyTypeMonth:
+		return true
+	case SubscriptionFrequencyTypeQuarter:
+		return true
+	case SubscriptionFrequencyTypeWeek:
+		return true
+	case SubscriptionFrequencyTypeYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubscriptionCreateRequestSubscriptionFrequencyType.
+const (
+	SubscriptionCreateRequestSubscriptionFrequencyTypeDay     SubscriptionCreateRequestSubscriptionFrequencyType = "day"
+	SubscriptionCreateRequestSubscriptionFrequencyTypeMonth   SubscriptionCreateRequestSubscriptionFrequencyType = "month"
+	SubscriptionCreateRequestSubscriptionFrequencyTypeQuarter SubscriptionCreateRequestSubscriptionFrequencyType = "quarter"
+	SubscriptionCreateRequestSubscriptionFrequencyTypeWeek    SubscriptionCreateRequestSubscriptionFrequencyType = "week"
+	SubscriptionCreateRequestSubscriptionFrequencyTypeYear    SubscriptionCreateRequestSubscriptionFrequencyType = "year"
+)
+
+// Valid indicates whether the value is a known member of the SubscriptionCreateRequestSubscriptionFrequencyType enum.
+func (e SubscriptionCreateRequestSubscriptionFrequencyType) Valid() bool {
+	switch e {
+	case SubscriptionCreateRequestSubscriptionFrequencyTypeDay:
+		return true
+	case SubscriptionCreateRequestSubscriptionFrequencyTypeMonth:
+		return true
+	case SubscriptionCreateRequestSubscriptionFrequencyTypeQuarter:
+		return true
+	case SubscriptionCreateRequestSubscriptionFrequencyTypeWeek:
+		return true
+	case SubscriptionCreateRequestSubscriptionFrequencyTypeYear:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TaxNumberAbsenceReason.
 const (
 	TaxNumberAbsenceReasonBelowTaxThreshold TaxNumberAbsenceReason = "below_tax_threshold"
@@ -2862,6 +2916,24 @@ func (e GetContactParamsIncludeArchived) Valid() bool {
 	}
 }
 
+// Defines values for ListContactAdditionalChargesParamsIncludeBilled.
+const (
+	ListContactAdditionalChargesParamsIncludeBilledFalse ListContactAdditionalChargesParamsIncludeBilled = "false"
+	ListContactAdditionalChargesParamsIncludeBilledTrue  ListContactAdditionalChargesParamsIncludeBilled = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListContactAdditionalChargesParamsIncludeBilled enum.
+func (e ListContactAdditionalChargesParamsIncludeBilled) Valid() bool {
+	switch e {
+	case ListContactAdditionalChargesParamsIncludeBilledFalse:
+		return true
+	case ListContactAdditionalChargesParamsIncludeBilledTrue:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListGeneralJournalDocumentsParamsSort.
 const (
 	ListGeneralJournalDocumentsParamsSortDateAsc  ListGeneralJournalDocumentsParamsSort = "date_asc"
@@ -2892,6 +2964,42 @@ func (e ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments) Vali
 	case ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsFalse:
 		return true
 	case ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListDownloadsParamsDownloaded.
+const (
+	ListDownloadsParamsDownloadedFalse ListDownloadsParamsDownloaded = "false"
+	ListDownloadsParamsDownloadedTrue  ListDownloadsParamsDownloaded = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListDownloadsParamsDownloaded enum.
+func (e ListDownloadsParamsDownloaded) Valid() bool {
+	switch e {
+	case ListDownloadsParamsDownloadedFalse:
+		return true
+	case ListDownloadsParamsDownloadedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListDownloadsParamsFailed.
+const (
+	ListDownloadsParamsFailedFalse ListDownloadsParamsFailed = "false"
+	ListDownloadsParamsFailedTrue  ListDownloadsParamsFailed = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListDownloadsParamsFailed enum.
+func (e ListDownloadsParamsFailed) Valid() bool {
+	switch e {
+	case ListDownloadsParamsFailedFalse:
+		return true
+	case ListDownloadsParamsFailedTrue:
 		return true
 	default:
 		return false
@@ -3060,8 +3168,91 @@ func (e ListSalesInvoicesParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for ListSubscriptionAdditionalChargesParamsIncludeBilled.
+const (
+	ListSubscriptionAdditionalChargesParamsIncludeBilledFalse ListSubscriptionAdditionalChargesParamsIncludeBilled = "false"
+	ListSubscriptionAdditionalChargesParamsIncludeBilledTrue  ListSubscriptionAdditionalChargesParamsIncludeBilled = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListSubscriptionAdditionalChargesParamsIncludeBilled enum.
+func (e ListSubscriptionAdditionalChargesParamsIncludeBilled) Valid() bool {
+	switch e {
+	case ListSubscriptionAdditionalChargesParamsIncludeBilledFalse:
+		return true
+	case ListSubscriptionAdditionalChargesParamsIncludeBilledTrue:
+		return true
+	default:
+		return false
+	}
+}
+
 // AccountType defines model for AccountType.
 type AccountType string
+
+// AdditionalCharge A Moneybird additional charge with MoneyHarpy extensions.
+type AdditionalCharge struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier `json:"administration_id"`
+	Amount           *string    `json:"amount"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId   *IdentifierNullable `json:"contact_id,omitempty"`
+	Description string              `json:"description"`
+
+	// DetailId Moneybird-compatible identifier_nullable.
+	DetailId *IdentifierNullable `json:"detail_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// Identifier MoneyHarpy extension. Your own reference for the charge, as given.
+	Identifier *string `json:"identifier,omitempty"`
+	Period     string  `json:"period"`
+	Price      string  `json:"price"`
+
+	// ProductId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ProductId Identifier `json:"product_id"`
+
+	// SalesInvoiceId Moneybird-compatible identifier_nullable.
+	SalesInvoiceId *IdentifierNullable `json:"sales_invoice_id,omitempty"`
+
+	// SubscriptionId Moneybird-compatible identifier_nullable.
+	SubscriptionId *IdentifierNullable `json:"subscription_id,omitempty"`
+}
+
+// AdditionalChargeRequest defines model for AdditionalChargeRequest.
+type AdditionalChargeRequest struct {
+	// Amount The quantity on the invoice line, such as 1 or "5 x".
+	Amount      AdditionalChargeRequest_Amount `json:"amount"`
+	Description string                         `json:"description"`
+	Identifier  *string                        `json:"identifier,omitempty"`
+
+	// Period The period the charge applies to, such as 20250101..20250131, 202501..202503 or this_month; kept as whole months.
+	Period string `json:"period"`
+
+	// Price An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	Price *Money `json:"price,omitempty"`
+
+	// ProductId An id as a string or a number; an empty string clears it.
+	ProductId FlexibleIdentifier `json:"product_id"`
+}
+
+// AdditionalChargeRequestAmount0 defines model for AdditionalChargeRequest.Amount.0.
+type AdditionalChargeRequestAmount0 = string
+
+// AdditionalChargeRequestAmount1 defines model for AdditionalChargeRequest.Amount.1.
+type AdditionalChargeRequestAmount1 = int
+
+// AdditionalChargeRequest_Amount The quantity on the invoice line, such as 1 or "5 x".
+type AdditionalChargeRequest_Amount struct {
+	union json.RawMessage
+}
 
 // AddressMatch defines model for AddressMatch.
 type AddressMatch struct {
@@ -3841,6 +4032,32 @@ type DocumentStyleRequestDocumentStylePaperSize string
 
 // DocumentType defines model for DocumentType.
 type DocumentType string
+
+// Download A Moneybird download with MoneyHarpy extensions.
+type Download struct {
+	ContentType string `json:"content_type"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt    Timestamp `json:"created_at"`
+	DownloadType string    `json:"download_type"`
+	Downloaded   bool      `json:"downloaded"`
+	Failed       bool      `json:"failed"`
+	Filename     string    `json:"filename"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// Size MoneyHarpy extension. The file's size in bytes.
+	Size *int `json:"size,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt Timestamp `json:"updated_at"`
+
+	// UserId Moneybird-compatible identifier_nullable.
+	UserId *IdentifierNullable `json:"user_id,omitempty"`
+}
 
 // EmptyRequest defines model for EmptyRequest.
 type EmptyRequest = map[string]interface{}
@@ -4808,6 +5025,19 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// MandateRequest defines model for MandateRequest.
+type MandateRequest struct {
+	MandateRequest *struct {
+		EmailMessage *string `json:"email_message,omitempty"`
+
+		// IdentityId An id as a string or a number; an empty string clears it.
+		IdentityId *FlexibleIdentifier `json:"identity_id,omitempty"`
+
+		// WorkflowId An id as a string or a number; an empty string clears it.
+		WorkflowId *FlexibleIdentifier `json:"workflow_id,omitempty"`
+	} `json:"mandate_request,omitempty"`
+}
+
 // MarkDubiousRequest defines model for MarkDubiousRequest.
 type MarkDubiousRequest struct {
 	DubiousDate *openapi_types.Date `json:"dubious_date,omitempty"`
@@ -4859,6 +5089,28 @@ type OnboardingOptions struct {
 	// Currencies ISO 4217 codes.
 	Currencies        []string `json:"currencies"`
 	PopularCurrencies []string `json:"popular_currencies"`
+}
+
+// OneOffSalesInvoiceRequest defines model for OneOffSalesInvoiceRequest.
+type OneOffSalesInvoiceRequest struct {
+	SalesInvoice *struct {
+		// DetailsAttributes An array of lines, or an object of lines keyed by position.
+		DetailsAttributes *OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes `json:"details_attributes,omitempty"`
+
+		// InvoiceDate Date to schedule the invoice for; the date of the next subscription invoice unless given.
+		InvoiceDate *openapi_types.Date `json:"invoice_date,omitempty"`
+	} `json:"sales_invoice,omitempty"`
+}
+
+// OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0 defines model for OneOffSalesInvoiceRequest.SalesInvoice.DetailsAttributes.0.
+type OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0 = []SalesInvoiceDetailInput
+
+// OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1 defines model for OneOffSalesInvoiceRequest.SalesInvoice.DetailsAttributes.1.
+type OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1 map[string]SalesInvoiceDetailInput
+
+// OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes An array of lines, or an object of lines keyed by position.
+type OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes struct {
+	union json.RawMessage
 }
 
 // Overview MoneyHarpy extension. An administration's home page.
@@ -5788,6 +6040,157 @@ type SendSalesInvoiceRequest struct {
 // SendSalesInvoiceRequestSalesInvoiceSendingDeliveryMethod defines model for SendSalesInvoiceRequest.SalesInvoiceSending.DeliveryMethod.
 type SendSalesInvoiceRequestSalesInvoiceSendingDeliveryMethod string
 
+// Subscription A Moneybird subscription with MoneyHarpy extensions.
+type Subscription struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier `json:"administration_id"`
+	CancelledAt      *time.Time `json:"cancelled_at,omitempty"`
+
+	// Contact Moneybird-compatible simple_contact_response.
+	Contact *SimpleContactResponse `json:"contact,omitempty"`
+
+	// ContactId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ContactId     Identifier                  `json:"contact_id"`
+	ContactPerson *Subscription_ContactPerson `json:"contact_person,omitempty"`
+
+	// ContactPersonId Moneybird-compatible identifier_nullable.
+	ContactPersonId *IdentifierNullable        `json:"contact_person_id,omitempty"`
+	EndDate         *openapi_types.Date        `json:"end_date,omitempty"`
+	Frequency       *int                       `json:"frequency"`
+	FrequencyType   *SubscriptionFrequencyType `json:"frequency_type"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// Product Moneybird-compatible product_response.
+	Product *ProductResponse `json:"product,omitempty"`
+
+	// ProductId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ProductId Identifier `json:"product_id"`
+
+	// RecurringSalesInvoiceId Moneybird-compatible identifier_nullable.
+	RecurringSalesInvoiceId *IdentifierNullable           `json:"recurring_sales_invoice_id"`
+	Reference               *string                       `json:"reference,omitempty"`
+	StartDate               openapi_types.Date            `json:"start_date"`
+	SubscriptionProducts    []SubscriptionProductResponse `json:"subscription_products"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// Subscription_ContactPerson defines model for Subscription.ContactPerson.
+type Subscription_ContactPerson struct {
+	union json.RawMessage
+}
+
+// SubscriptionFrequencyType defines model for Subscription.FrequencyType.
+type SubscriptionFrequencyType string
+
+// SubscriptionCancelRequest defines model for SubscriptionCancelRequest.
+type SubscriptionCancelRequest struct {
+	Subscription *struct {
+		EndDate *openapi_types.Date `json:"end_date,omitempty"`
+	} `json:"subscription,omitempty"`
+}
+
+// SubscriptionCreateRequest defines model for SubscriptionCreateRequest.
+type SubscriptionCreateRequest struct {
+	Subscription struct {
+		// Amount Quantity of the product billed each period, such as "1" or "5 x"; 1 x unless given.
+		Amount *string `json:"amount,omitempty"`
+
+		// ContactId An id as a string or a number; an empty string clears it.
+		ContactId FlexibleIdentifier `json:"contact_id"`
+
+		// ContactPersonId An id as a string or a number; an empty string clears it.
+		ContactPersonId *FlexibleIdentifier `json:"contact_person_id,omitempty"`
+
+		// Discount A percentage; both a decimal and a string '10,95' are accepted.
+		Discount *SubscriptionCreateRequest_Subscription_Discount `json:"discount,omitempty"`
+
+		// DocumentStyleId An id as a string or a number; an empty string clears it.
+		DocumentStyleId *FlexibleIdentifier `json:"document_style_id,omitempty"`
+		EndDate         *openapi_types.Date `json:"end_date,omitempty"`
+
+		// Frequency Periods between invoices with frequency_type; must fit the product's. The product's unless given.
+		Frequency     *int                                                `json:"frequency,omitempty"`
+		FrequencyType *SubscriptionCreateRequestSubscriptionFrequencyType `json:"frequency_type,omitempty"`
+
+		// Mergeable A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		Mergeable *FlexibleBoolean `json:"mergeable,omitempty"`
+
+		// PricesAreInclTax A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		PricesAreInclTax *FlexibleBoolean `json:"prices_are_incl_tax,omitempty"`
+
+		// ProductId An id as a string or a number; an empty string clears it.
+		ProductId FlexibleIdentifier `json:"product_id"`
+		Reference *string            `json:"reference,omitempty"`
+		StartDate openapi_types.Date `json:"start_date"`
+	} `json:"subscription"`
+}
+
+// SubscriptionCreateRequestSubscriptionDiscount0 defines model for SubscriptionCreateRequest.Subscription.Discount.0.
+type SubscriptionCreateRequestSubscriptionDiscount0 = string
+
+// SubscriptionCreateRequestSubscriptionDiscount1 defines model for SubscriptionCreateRequest.Subscription.Discount.1.
+type SubscriptionCreateRequestSubscriptionDiscount1 = float32
+
+// SubscriptionCreateRequest_Subscription_Discount A percentage; both a decimal and a string '10,95' are accepted.
+type SubscriptionCreateRequest_Subscription_Discount struct {
+	union json.RawMessage
+}
+
+// SubscriptionCreateRequestSubscriptionFrequencyType defines model for SubscriptionCreateRequest.Subscription.FrequencyType.
+type SubscriptionCreateRequestSubscriptionFrequencyType string
+
+// SubscriptionUpdateRequest defines model for SubscriptionUpdateRequest.
+type SubscriptionUpdateRequest struct {
+	Subscription struct {
+		Amount *string `json:"amount,omitempty"`
+
+		// ContactPersonId An id as a string or a number; an empty string clears it.
+		ContactPersonId *FlexibleIdentifier `json:"contact_person_id,omitempty"`
+
+		// Discount A percentage; both a decimal and a string '10,95' are accepted.
+		Discount *SubscriptionUpdateRequest_Subscription_Discount `json:"discount,omitempty"`
+
+		// DocumentStyleId An id as a string or a number; an empty string clears it.
+		DocumentStyleId *FlexibleIdentifier `json:"document_style_id,omitempty"`
+
+		// Mergeable A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		Mergeable *FlexibleBoolean `json:"mergeable,omitempty"`
+
+		// PricesAreInclTax A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		PricesAreInclTax *FlexibleBoolean `json:"prices_are_incl_tax,omitempty"`
+
+		// ProductId An id as a string or a number; an empty string clears it.
+		ProductId *FlexibleIdentifier `json:"product_id,omitempty"`
+		Reference *string             `json:"reference,omitempty"`
+
+		// StartDate When the new product, amount or discount starts; today unless given.
+		StartDate *openapi_types.Date `json:"start_date,omitempty"`
+	} `json:"subscription"`
+}
+
+// SubscriptionUpdateRequestSubscriptionDiscount0 defines model for SubscriptionUpdateRequest.Subscription.Discount.0.
+type SubscriptionUpdateRequestSubscriptionDiscount0 = string
+
+// SubscriptionUpdateRequestSubscriptionDiscount1 defines model for SubscriptionUpdateRequest.Subscription.Discount.1.
+type SubscriptionUpdateRequestSubscriptionDiscount1 = float32
+
+// SubscriptionUpdateRequest_Subscription_Discount A percentage; both a decimal and a string '10,95' are accepted.
+type SubscriptionUpdateRequest_Subscription_Discount struct {
+	union json.RawMessage
+}
+
 // SupportAccess defines model for SupportAccess.
 type SupportAccess struct {
 	Until *time.Time `json:"until"`
@@ -6680,6 +7083,29 @@ type DocumentStyleResponseLogoPosition string
 // DocumentStyleResponsePaperSize defines model for DocumentStyleResponse.PaperSize.
 type DocumentStyleResponsePaperSize string
 
+// DownloadResponse Moneybird-compatible download_response.
+type DownloadResponse struct {
+	ContentType *string `json:"content_type,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt    *Timestamp `json:"created_at,omitempty"`
+	DownloadType *string    `json:"download_type,omitempty"`
+	Downloaded   *bool      `json:"downloaded,omitempty"`
+	Failed       *bool      `json:"failed,omitempty"`
+	Filename     *string    `json:"filename,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// UserId Moneybird-compatible identifier_nullable.
+	UserId *IdentifierNullable `json:"user_id,omitempty"`
+}
+
 // EventResponse Moneybird-compatible event_response.
 type EventResponse struct {
 	Action           *string                         `json:"action,omitempty"`
@@ -7273,6 +7699,22 @@ type ProjectResponse struct {
 // ProjectResponseState defines model for ProjectResponse.State.
 type ProjectResponseState string
 
+// RecurringContractResponse Moneybird-compatible recurring_contract_response.
+type RecurringContractResponse struct {
+	Bank            *string `json:"bank,omitempty"`
+	Bic             *string `json:"bic,omitempty"`
+	CardExpiryMonth *string `json:"card_expiry_month,omitempty"`
+	CardExpiryYear  *string `json:"card_expiry_year,omitempty"`
+	CardFinalDigits *string `json:"card_final_digits,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt       *Timestamp `json:"created_at,omitempty"`
+	Iban            *string    `json:"iban,omitempty"`
+	IbanAccountName *string    `json:"iban_account_name,omitempty"`
+	SepaMandate     *bool      `json:"sepa_mandate,omitempty"`
+	Type            *string    `json:"type,omitempty"`
+}
+
 // RecurringSalesInvoiceResponse Moneybird-compatible recurring_sales_invoice_response.
 type RecurringSalesInvoiceResponse struct {
 	Active *bool `json:"active,omitempty"`
@@ -7533,6 +7975,37 @@ type SimpleContactResponseDeliveryMethod string
 // SimpleContactResponseSepaSequenceType defines model for SimpleContactResponse.SepaSequenceType.
 type SimpleContactResponseSepaSequenceType string
 
+// SubscriptionAdditionalChargeResponse Moneybird-compatible subscription_additional_charge_response.
+type SubscriptionAdditionalChargeResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+	Amount           *string     `json:"amount,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId   *IdentifierNullable `json:"contact_id,omitempty"`
+	Description *string             `json:"description,omitempty"`
+
+	// DetailId Moneybird-compatible identifier_nullable.
+	DetailId *IdentifierNullable `json:"detail_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id     *Identifier `json:"id,omitempty"`
+	Period *string     `json:"period,omitempty"`
+	Price  *string     `json:"price,omitempty"`
+
+	// ProductId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ProductId *Identifier `json:"product_id,omitempty"`
+
+	// SubscriptionId Moneybird-compatible identifier_nullable.
+	SubscriptionId *IdentifierNullable `json:"subscription_id,omitempty"`
+}
+
 // SubscriptionProductResponse Moneybird-compatible subscription_product_response.
 type SubscriptionProductResponse struct {
 	Amount   *string             `json:"amount,omitempty"`
@@ -7599,6 +8072,32 @@ type SubscriptionResponse_ContactPerson struct {
 
 // SubscriptionResponseFrequencyType defines model for SubscriptionResponse.FrequencyType.
 type SubscriptionResponseFrequencyType string
+
+// SubscriptionTemplateResponse Moneybird-compatible subscription_template_response.
+type SubscriptionTemplateResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+	ContactCanUpdate *bool       `json:"contact_can_update,omitempty"`
+
+	// DocumentStyleId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DocumentStyleId *Identifier `json:"document_style_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id        *Identifier        `json:"id,omitempty"`
+	Mergeable *bool              `json:"mergeable,omitempty"`
+	Products  *[]ProductResponse `json:"products,omitempty"`
+
+	// WorkflowId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	WorkflowId *Identifier `json:"workflow_id,omitempty"`
+}
 
 // TaskListTaskResponse Moneybird-compatible task_list_task_response.
 type TaskListTaskResponse struct {
@@ -7697,6 +8196,14 @@ type TaxonomyItemResponse struct {
 
 // Timestamp Moneybird-compatible timestamp.
 type Timestamp = time.Time
+
+// VerificationResponse Moneybird-compatible verification_response.
+type VerificationResponse struct {
+	BankAccountNumbers      *[]string `json:"bank_account_numbers,omitempty"`
+	ChamberOfCommerceNumber *string   `json:"chamber_of_commerce_number,omitempty"`
+	Emails                  *[]string `json:"emails,omitempty"`
+	TaxNumber               *string   `json:"tax_number,omitempty"`
+}
 
 // Version Moneybird-compatible version.
 type Version = int
@@ -7985,6 +8492,70 @@ type ListContactVersionsParams struct {
 // ListContactVersionsParamsIncludeArchived defines parameters for ListContactVersions.
 type ListContactVersionsParamsIncludeArchived string
 
+// DeleteContactPaymentsMandate403JSONResponseBody0 defines parameters for DeleteContactPaymentsMandate.
+type DeleteContactPaymentsMandate403JSONResponseBody0 = int
+
+// DeleteContactPaymentsMandate403JSONResponseBody defines parameters for DeleteContactPaymentsMandate.
+type DeleteContactPaymentsMandate403JSONResponseBody struct {
+	union json.RawMessage
+}
+
+// DeleteContactPaymentsMandate404JSONResponseBody0 defines parameters for DeleteContactPaymentsMandate.
+type DeleteContactPaymentsMandate404JSONResponseBody0 = int
+
+// DeleteContactPaymentsMandate404JSONResponseBody defines parameters for DeleteContactPaymentsMandate.
+type DeleteContactPaymentsMandate404JSONResponseBody struct {
+	union json.RawMessage
+}
+
+// GetContactPaymentsMandate403JSONResponseBody0 defines parameters for GetContactPaymentsMandate.
+type GetContactPaymentsMandate403JSONResponseBody0 = int
+
+// GetContactPaymentsMandate403JSONResponseBody defines parameters for GetContactPaymentsMandate.
+type GetContactPaymentsMandate403JSONResponseBody struct {
+	union json.RawMessage
+}
+
+// GetContactPaymentsMandate404JSONResponseBody0 defines parameters for GetContactPaymentsMandate.
+type GetContactPaymentsMandate404JSONResponseBody0 = int
+
+// GetContactPaymentsMandate404JSONResponseBody defines parameters for GetContactPaymentsMandate.
+type GetContactPaymentsMandate404JSONResponseBody struct {
+	union json.RawMessage
+}
+
+// RequestContactPaymentsMandate403JSONResponseBody0 defines parameters for RequestContactPaymentsMandate.
+type RequestContactPaymentsMandate403JSONResponseBody0 = int
+
+// RequestContactPaymentsMandate403JSONResponseBody defines parameters for RequestContactPaymentsMandate.
+type RequestContactPaymentsMandate403JSONResponseBody struct {
+	union json.RawMessage
+}
+
+// RequestContactPaymentsMandate404JSONResponseBody0 defines parameters for RequestContactPaymentsMandate.
+type RequestContactPaymentsMandate404JSONResponseBody0 = int
+
+// RequestContactPaymentsMandate404JSONResponseBody defines parameters for RequestContactPaymentsMandate.
+type RequestContactPaymentsMandate404JSONResponseBody struct {
+	union json.RawMessage
+}
+
+// RequestContactPaymentsMandateURL403JSONResponseBody0 defines parameters for RequestContactPaymentsMandateURL.
+type RequestContactPaymentsMandateURL403JSONResponseBody0 = int
+
+// RequestContactPaymentsMandateURL403JSONResponseBody defines parameters for RequestContactPaymentsMandateURL.
+type RequestContactPaymentsMandateURL403JSONResponseBody struct {
+	union json.RawMessage
+}
+
+// RequestContactPaymentsMandateURL404JSONResponseBody0 defines parameters for RequestContactPaymentsMandateURL.
+type RequestContactPaymentsMandateURL404JSONResponseBody0 = int
+
+// RequestContactPaymentsMandateURL404JSONResponseBody defines parameters for RequestContactPaymentsMandateURL.
+type RequestContactPaymentsMandateURL404JSONResponseBody struct {
+	union json.RawMessage
+}
+
 // GetContactParams defines parameters for GetContact.
 type GetContactParams struct {
 	// IncludeArchived Include archived records.
@@ -7993,6 +8564,15 @@ type GetContactParams struct {
 
 // GetContactParamsIncludeArchived defines parameters for GetContact.
 type GetContactParamsIncludeArchived string
+
+// ListContactAdditionalChargesParams defines parameters for ListContactAdditionalCharges.
+type ListContactAdditionalChargesParams struct {
+	// IncludeBilled true includes the charges that were billed already; false unless given.
+	IncludeBilled *ListContactAdditionalChargesParamsIncludeBilled `form:"include_billed,omitempty" json:"include_billed,omitempty"`
+}
+
+// ListContactAdditionalChargesParamsIncludeBilled defines parameters for ListContactAdditionalCharges.
+type ListContactAdditionalChargesParamsIncludeBilled string
 
 // ListGeneralJournalDocumentsParams defines parameters for ListGeneralJournalDocuments.
 type ListGeneralJournalDocumentsParams struct {
@@ -8029,6 +8609,26 @@ type ListGeneralJournalDocumentVersionsParams struct {
 type CreateGeneralJournalDocumentAttachmentMultipartBody struct {
 	File openapi_types.File `json:"file"`
 }
+
+// ListDownloadsParams defines parameters for ListDownloads.
+type ListDownloadsParams struct {
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// DownloadType Only downloads of this type, such as auditfile, brugstaat or export_ledger_account_report.
+	DownloadType *string                        `form:"download_type,omitempty" json:"download_type,omitempty"`
+	Downloaded   *ListDownloadsParamsDownloaded `form:"downloaded,omitempty" json:"downloaded,omitempty"`
+	Failed       *ListDownloadsParamsFailed     `form:"failed,omitempty" json:"failed,omitempty"`
+}
+
+// ListDownloadsParamsDownloaded defines parameters for ListDownloads.
+type ListDownloadsParamsDownloaded string
+
+// ListDownloadsParamsFailed defines parameters for ListDownloads.
+type ListDownloadsParamsFailed string
 
 // ListExternalSalesInvoicesParams defines parameters for ListExternalSalesInvoices.
 type ListExternalSalesInvoicesParams struct {
@@ -8224,6 +8824,47 @@ type DownloadSalesInvoicePdfParams struct {
 	Media *Media `form:"media,omitempty" json:"media,omitempty"`
 }
 
+// ListSubscriptionTemplatesParams defines parameters for ListSubscriptionTemplates.
+type ListSubscriptionTemplatesParams struct {
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetSubscriptionTemplateCheckoutIdentifierParams defines parameters for GetSubscriptionTemplateCheckoutIdentifier.
+type GetSubscriptionTemplateCheckoutIdentifierParams struct {
+	ContactId *Identifier `form:"contact_id,omitempty" json:"contact_id,omitempty"`
+
+	// StartDate yyyy-mm-dd.
+	StartDate *string     `form:"start_date,omitempty" json:"start_date,omitempty"`
+	ProductId *Identifier `form:"product_id,omitempty" json:"product_id,omitempty"`
+}
+
+// CreateSubscriptionTemplateSalesLinkParams defines parameters for CreateSubscriptionTemplateSalesLink.
+type CreateSubscriptionTemplateSalesLinkParams struct {
+	ContactId *Identifier `form:"contact_id,omitempty" json:"contact_id,omitempty"`
+
+	// StartDate yyyy-mm-dd.
+	StartDate *string     `form:"start_date,omitempty" json:"start_date,omitempty"`
+	ProductId *Identifier `form:"product_id,omitempty" json:"product_id,omitempty"`
+}
+
+// ListSubscriptionsParams defines parameters for ListSubscriptions.
+type ListSubscriptionsParams struct {
+	ContactId Identifier `form:"contact_id" json:"contact_id"`
+}
+
+// ListSubscriptionAdditionalChargesParams defines parameters for ListSubscriptionAdditionalCharges.
+type ListSubscriptionAdditionalChargesParams struct {
+	// IncludeBilled true includes the charges that were billed already; false unless given.
+	IncludeBilled *ListSubscriptionAdditionalChargesParamsIncludeBilled `form:"include_billed,omitempty" json:"include_billed,omitempty"`
+}
+
+// ListSubscriptionAdditionalChargesParamsIncludeBilled defines parameters for ListSubscriptionAdditionalCharges.
+type ListSubscriptionAdditionalChargesParamsIncludeBilled string
+
 // ListTaxRatesParams defines parameters for ListTaxRates.
 type ListTaxRatesParams struct {
 	// Filter Comma-separated key:value pairs. Keys are name, partial_name, percentage, tax_rate_type, country, show_tax, active, created_after and updated_after, for example tax_rate_type:sales_invoice,active:true.
@@ -8326,11 +8967,20 @@ type CreateContactPersonJSONRequestBody = ContactPersonRequest
 // UpdateContactPersonJSONRequestBody defines body for UpdateContactPerson for application/json ContentType.
 type UpdateContactPersonJSONRequestBody = ContactPersonRequest
 
+// RequestContactPaymentsMandateJSONRequestBody defines body for RequestContactPaymentsMandate for application/json ContentType.
+type RequestContactPaymentsMandateJSONRequestBody = MandateRequest
+
+// RequestContactPaymentsMandateURLJSONRequestBody defines body for RequestContactPaymentsMandateURL for application/json ContentType.
+type RequestContactPaymentsMandateURLJSONRequestBody = MandateRequest
+
 // CreateContactNoteJSONRequestBody defines body for CreateContactNote for application/json ContentType.
 type CreateContactNoteJSONRequestBody = NoteRequest
 
 // UpdateContactJSONRequestBody defines body for UpdateContact for application/json ContentType.
 type UpdateContactJSONRequestBody = ContactRequest
+
+// CreateContactAdditionalChargeJSONRequestBody defines body for CreateContactAdditionalCharge for application/json ContentType.
+type CreateContactAdditionalChargeJSONRequestBody = AdditionalChargeRequest
 
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldRequest
@@ -8499,6 +9149,21 @@ type SettleSalesCreditInvoiceJSONRequestBody = EmptyRequest
 // SendSalesInvoiceJSONRequestBody defines body for SendSalesInvoice for application/json ContentType.
 type SendSalesInvoiceJSONRequestBody = SendSalesInvoiceRequest
 
+// CreateSubscriptionJSONRequestBody defines body for CreateSubscription for application/json ContentType.
+type CreateSubscriptionJSONRequestBody = SubscriptionCreateRequest
+
+// CancelSubscriptionJSONRequestBody defines body for CancelSubscription for application/json ContentType.
+type CancelSubscriptionJSONRequestBody = SubscriptionCancelRequest
+
+// UpdateSubscriptionJSONRequestBody defines body for UpdateSubscription for application/json ContentType.
+type UpdateSubscriptionJSONRequestBody = SubscriptionUpdateRequest
+
+// CreateSubscriptionAdditionalChargeJSONRequestBody defines body for CreateSubscriptionAdditionalCharge for application/json ContentType.
+type CreateSubscriptionAdditionalChargeJSONRequestBody = AdditionalChargeRequest
+
+// CreateSubscriptionOneOffSalesInvoiceJSONRequestBody defines body for CreateSubscriptionOneOffSalesInvoice for application/json ContentType.
+type CreateSubscriptionOneOffSalesInvoiceJSONRequestBody = OneOffSalesInvoiceRequest
+
 // UpdateSupportAccessJSONRequestBody defines body for UpdateSupportAccess for application/json ContentType.
 type UpdateSupportAccessJSONRequestBody = SupportAccess
 
@@ -8525,6 +9190,68 @@ type CreateWorkflowJSONRequestBody = WorkflowRequest
 
 // UpdateWorkflowJSONRequestBody defines body for UpdateWorkflow for application/json ContentType.
 type UpdateWorkflowJSONRequestBody = WorkflowRequest
+
+// AsAdditionalChargeRequestAmount0 returns the union data inside the AdditionalChargeRequest_Amount as a AdditionalChargeRequestAmount0
+func (t AdditionalChargeRequest_Amount) AsAdditionalChargeRequestAmount0() (AdditionalChargeRequestAmount0, error) {
+	var body AdditionalChargeRequestAmount0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAdditionalChargeRequestAmount0 overwrites any union data inside the AdditionalChargeRequest_Amount as the provided AdditionalChargeRequestAmount0
+func (t *AdditionalChargeRequest_Amount) FromAdditionalChargeRequestAmount0(v AdditionalChargeRequestAmount0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAdditionalChargeRequestAmount0 performs a merge with any union data inside the AdditionalChargeRequest_Amount, using the provided AdditionalChargeRequestAmount0
+func (t *AdditionalChargeRequest_Amount) MergeAdditionalChargeRequestAmount0(v AdditionalChargeRequestAmount0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAdditionalChargeRequestAmount1 returns the union data inside the AdditionalChargeRequest_Amount as a AdditionalChargeRequestAmount1
+func (t AdditionalChargeRequest_Amount) AsAdditionalChargeRequestAmount1() (AdditionalChargeRequestAmount1, error) {
+	var body AdditionalChargeRequestAmount1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAdditionalChargeRequestAmount1 overwrites any union data inside the AdditionalChargeRequest_Amount as the provided AdditionalChargeRequestAmount1
+func (t *AdditionalChargeRequest_Amount) FromAdditionalChargeRequestAmount1(v AdditionalChargeRequestAmount1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAdditionalChargeRequestAmount1 performs a merge with any union data inside the AdditionalChargeRequest_Amount, using the provided AdditionalChargeRequestAmount1
+func (t *AdditionalChargeRequest_Amount) MergeAdditionalChargeRequestAmount1(v AdditionalChargeRequestAmount1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t AdditionalChargeRequest_Amount) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *AdditionalChargeRequest_Amount) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // AsDocumentStyleEstimateMetadataLeft0 returns the union data inside the DocumentStyle_EstimateMetadataLeft_AdditionalProperties as a DocumentStyleEstimateMetadataLeft0
 func (t DocumentStyle_EstimateMetadataLeft_AdditionalProperties) AsDocumentStyleEstimateMetadataLeft0() (DocumentStyleEstimateMetadataLeft0, error) {
@@ -9776,6 +10503,68 @@ func (t *Money) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0 returns the union data inside the OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes as a OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0
+func (t OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes) AsOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0() (OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0, error) {
+	var body OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0 overwrites any union data inside the OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes as the provided OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0
+func (t *OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes) FromOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0(v OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0 performs a merge with any union data inside the OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes, using the provided OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0
+func (t *OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes) MergeOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0(v OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1 returns the union data inside the OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes as a OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1
+func (t OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes) AsOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1() (OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1, error) {
+	var body OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1 overwrites any union data inside the OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes as the provided OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1
+func (t *OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes) FromOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1(v OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1 performs a merge with any union data inside the OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes, using the provided OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1
+func (t *OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes) MergeOneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1(v OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsProductRequestProductFrequency0 returns the union data inside the ProductRequest_Product_Frequency as a ProductRequestProductFrequency0
 func (t ProductRequest_Product_Frequency) AsProductRequestProductFrequency0() (ProductRequestProductFrequency0, error) {
 	var body ProductRequestProductFrequency0
@@ -10686,6 +11475,166 @@ func (t SalesInvoiceRequest_SalesInvoice_FirstDueInterval) MarshalJSON() ([]byte
 }
 
 func (t *SalesInvoiceRequest_SalesInvoice_FirstDueInterval) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsContactPersonResponse returns the union data inside the Subscription_ContactPerson as a ContactPersonResponse
+func (t Subscription_ContactPerson) AsContactPersonResponse() (ContactPersonResponse, error) {
+	var body ContactPersonResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromContactPersonResponse overwrites any union data inside the Subscription_ContactPerson as the provided ContactPersonResponse
+func (t *Subscription_ContactPerson) FromContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeContactPersonResponse performs a merge with any union data inside the Subscription_ContactPerson, using the provided ContactPersonResponse
+func (t *Subscription_ContactPerson) MergeContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Subscription_ContactPerson) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Subscription_ContactPerson) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSubscriptionCreateRequestSubscriptionDiscount0 returns the union data inside the SubscriptionCreateRequest_Subscription_Discount as a SubscriptionCreateRequestSubscriptionDiscount0
+func (t SubscriptionCreateRequest_Subscription_Discount) AsSubscriptionCreateRequestSubscriptionDiscount0() (SubscriptionCreateRequestSubscriptionDiscount0, error) {
+	var body SubscriptionCreateRequestSubscriptionDiscount0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSubscriptionCreateRequestSubscriptionDiscount0 overwrites any union data inside the SubscriptionCreateRequest_Subscription_Discount as the provided SubscriptionCreateRequestSubscriptionDiscount0
+func (t *SubscriptionCreateRequest_Subscription_Discount) FromSubscriptionCreateRequestSubscriptionDiscount0(v SubscriptionCreateRequestSubscriptionDiscount0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSubscriptionCreateRequestSubscriptionDiscount0 performs a merge with any union data inside the SubscriptionCreateRequest_Subscription_Discount, using the provided SubscriptionCreateRequestSubscriptionDiscount0
+func (t *SubscriptionCreateRequest_Subscription_Discount) MergeSubscriptionCreateRequestSubscriptionDiscount0(v SubscriptionCreateRequestSubscriptionDiscount0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSubscriptionCreateRequestSubscriptionDiscount1 returns the union data inside the SubscriptionCreateRequest_Subscription_Discount as a SubscriptionCreateRequestSubscriptionDiscount1
+func (t SubscriptionCreateRequest_Subscription_Discount) AsSubscriptionCreateRequestSubscriptionDiscount1() (SubscriptionCreateRequestSubscriptionDiscount1, error) {
+	var body SubscriptionCreateRequestSubscriptionDiscount1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSubscriptionCreateRequestSubscriptionDiscount1 overwrites any union data inside the SubscriptionCreateRequest_Subscription_Discount as the provided SubscriptionCreateRequestSubscriptionDiscount1
+func (t *SubscriptionCreateRequest_Subscription_Discount) FromSubscriptionCreateRequestSubscriptionDiscount1(v SubscriptionCreateRequestSubscriptionDiscount1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSubscriptionCreateRequestSubscriptionDiscount1 performs a merge with any union data inside the SubscriptionCreateRequest_Subscription_Discount, using the provided SubscriptionCreateRequestSubscriptionDiscount1
+func (t *SubscriptionCreateRequest_Subscription_Discount) MergeSubscriptionCreateRequestSubscriptionDiscount1(v SubscriptionCreateRequestSubscriptionDiscount1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t SubscriptionCreateRequest_Subscription_Discount) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *SubscriptionCreateRequest_Subscription_Discount) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSubscriptionUpdateRequestSubscriptionDiscount0 returns the union data inside the SubscriptionUpdateRequest_Subscription_Discount as a SubscriptionUpdateRequestSubscriptionDiscount0
+func (t SubscriptionUpdateRequest_Subscription_Discount) AsSubscriptionUpdateRequestSubscriptionDiscount0() (SubscriptionUpdateRequestSubscriptionDiscount0, error) {
+	var body SubscriptionUpdateRequestSubscriptionDiscount0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSubscriptionUpdateRequestSubscriptionDiscount0 overwrites any union data inside the SubscriptionUpdateRequest_Subscription_Discount as the provided SubscriptionUpdateRequestSubscriptionDiscount0
+func (t *SubscriptionUpdateRequest_Subscription_Discount) FromSubscriptionUpdateRequestSubscriptionDiscount0(v SubscriptionUpdateRequestSubscriptionDiscount0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSubscriptionUpdateRequestSubscriptionDiscount0 performs a merge with any union data inside the SubscriptionUpdateRequest_Subscription_Discount, using the provided SubscriptionUpdateRequestSubscriptionDiscount0
+func (t *SubscriptionUpdateRequest_Subscription_Discount) MergeSubscriptionUpdateRequestSubscriptionDiscount0(v SubscriptionUpdateRequestSubscriptionDiscount0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSubscriptionUpdateRequestSubscriptionDiscount1 returns the union data inside the SubscriptionUpdateRequest_Subscription_Discount as a SubscriptionUpdateRequestSubscriptionDiscount1
+func (t SubscriptionUpdateRequest_Subscription_Discount) AsSubscriptionUpdateRequestSubscriptionDiscount1() (SubscriptionUpdateRequestSubscriptionDiscount1, error) {
+	var body SubscriptionUpdateRequestSubscriptionDiscount1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSubscriptionUpdateRequestSubscriptionDiscount1 overwrites any union data inside the SubscriptionUpdateRequest_Subscription_Discount as the provided SubscriptionUpdateRequestSubscriptionDiscount1
+func (t *SubscriptionUpdateRequest_Subscription_Discount) FromSubscriptionUpdateRequestSubscriptionDiscount1(v SubscriptionUpdateRequestSubscriptionDiscount1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSubscriptionUpdateRequestSubscriptionDiscount1 performs a merge with any union data inside the SubscriptionUpdateRequest_Subscription_Discount, using the provided SubscriptionUpdateRequestSubscriptionDiscount1
+func (t *SubscriptionUpdateRequest_Subscription_Discount) MergeSubscriptionUpdateRequestSubscriptionDiscount1(v SubscriptionUpdateRequestSubscriptionDiscount1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t SubscriptionUpdateRequest_Subscription_Discount) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *SubscriptionUpdateRequest_Subscription_Discount) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -11954,6 +12903,502 @@ func (t *WebhookResponse_LastHttpStatus) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsDeleteContactPaymentsMandate403JSONResponseBody0 returns the union data inside the DeleteContactPaymentsMandate403JSONResponseBody as a DeleteContactPaymentsMandate403JSONResponseBody0
+func (t DeleteContactPaymentsMandate403JSONResponseBody) AsDeleteContactPaymentsMandate403JSONResponseBody0() (DeleteContactPaymentsMandate403JSONResponseBody0, error) {
+	var body DeleteContactPaymentsMandate403JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDeleteContactPaymentsMandate403JSONResponseBody0 overwrites any union data inside the DeleteContactPaymentsMandate403JSONResponseBody as the provided DeleteContactPaymentsMandate403JSONResponseBody0
+func (t *DeleteContactPaymentsMandate403JSONResponseBody) FromDeleteContactPaymentsMandate403JSONResponseBody0(v DeleteContactPaymentsMandate403JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDeleteContactPaymentsMandate403JSONResponseBody0 performs a merge with any union data inside the DeleteContactPaymentsMandate403JSONResponseBody, using the provided DeleteContactPaymentsMandate403JSONResponseBody0
+func (t *DeleteContactPaymentsMandate403JSONResponseBody) MergeDeleteContactPaymentsMandate403JSONResponseBody0(v DeleteContactPaymentsMandate403JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsError returns the union data inside the DeleteContactPaymentsMandate403JSONResponseBody as a Error
+func (t DeleteContactPaymentsMandate403JSONResponseBody) AsError() (Error, error) {
+	var body Error
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromError overwrites any union data inside the DeleteContactPaymentsMandate403JSONResponseBody as the provided Error
+func (t *DeleteContactPaymentsMandate403JSONResponseBody) FromError(v Error) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeError performs a merge with any union data inside the DeleteContactPaymentsMandate403JSONResponseBody, using the provided Error
+func (t *DeleteContactPaymentsMandate403JSONResponseBody) MergeError(v Error) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DeleteContactPaymentsMandate403JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DeleteContactPaymentsMandate403JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDeleteContactPaymentsMandate404JSONResponseBody0 returns the union data inside the DeleteContactPaymentsMandate404JSONResponseBody as a DeleteContactPaymentsMandate404JSONResponseBody0
+func (t DeleteContactPaymentsMandate404JSONResponseBody) AsDeleteContactPaymentsMandate404JSONResponseBody0() (DeleteContactPaymentsMandate404JSONResponseBody0, error) {
+	var body DeleteContactPaymentsMandate404JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDeleteContactPaymentsMandate404JSONResponseBody0 overwrites any union data inside the DeleteContactPaymentsMandate404JSONResponseBody as the provided DeleteContactPaymentsMandate404JSONResponseBody0
+func (t *DeleteContactPaymentsMandate404JSONResponseBody) FromDeleteContactPaymentsMandate404JSONResponseBody0(v DeleteContactPaymentsMandate404JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDeleteContactPaymentsMandate404JSONResponseBody0 performs a merge with any union data inside the DeleteContactPaymentsMandate404JSONResponseBody, using the provided DeleteContactPaymentsMandate404JSONResponseBody0
+func (t *DeleteContactPaymentsMandate404JSONResponseBody) MergeDeleteContactPaymentsMandate404JSONResponseBody0(v DeleteContactPaymentsMandate404JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsError returns the union data inside the DeleteContactPaymentsMandate404JSONResponseBody as a Error
+func (t DeleteContactPaymentsMandate404JSONResponseBody) AsError() (Error, error) {
+	var body Error
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromError overwrites any union data inside the DeleteContactPaymentsMandate404JSONResponseBody as the provided Error
+func (t *DeleteContactPaymentsMandate404JSONResponseBody) FromError(v Error) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeError performs a merge with any union data inside the DeleteContactPaymentsMandate404JSONResponseBody, using the provided Error
+func (t *DeleteContactPaymentsMandate404JSONResponseBody) MergeError(v Error) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DeleteContactPaymentsMandate404JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DeleteContactPaymentsMandate404JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsGetContactPaymentsMandate403JSONResponseBody0 returns the union data inside the GetContactPaymentsMandate403JSONResponseBody as a GetContactPaymentsMandate403JSONResponseBody0
+func (t GetContactPaymentsMandate403JSONResponseBody) AsGetContactPaymentsMandate403JSONResponseBody0() (GetContactPaymentsMandate403JSONResponseBody0, error) {
+	var body GetContactPaymentsMandate403JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGetContactPaymentsMandate403JSONResponseBody0 overwrites any union data inside the GetContactPaymentsMandate403JSONResponseBody as the provided GetContactPaymentsMandate403JSONResponseBody0
+func (t *GetContactPaymentsMandate403JSONResponseBody) FromGetContactPaymentsMandate403JSONResponseBody0(v GetContactPaymentsMandate403JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGetContactPaymentsMandate403JSONResponseBody0 performs a merge with any union data inside the GetContactPaymentsMandate403JSONResponseBody, using the provided GetContactPaymentsMandate403JSONResponseBody0
+func (t *GetContactPaymentsMandate403JSONResponseBody) MergeGetContactPaymentsMandate403JSONResponseBody0(v GetContactPaymentsMandate403JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsError returns the union data inside the GetContactPaymentsMandate403JSONResponseBody as a Error
+func (t GetContactPaymentsMandate403JSONResponseBody) AsError() (Error, error) {
+	var body Error
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromError overwrites any union data inside the GetContactPaymentsMandate403JSONResponseBody as the provided Error
+func (t *GetContactPaymentsMandate403JSONResponseBody) FromError(v Error) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeError performs a merge with any union data inside the GetContactPaymentsMandate403JSONResponseBody, using the provided Error
+func (t *GetContactPaymentsMandate403JSONResponseBody) MergeError(v Error) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GetContactPaymentsMandate403JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GetContactPaymentsMandate403JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsGetContactPaymentsMandate404JSONResponseBody0 returns the union data inside the GetContactPaymentsMandate404JSONResponseBody as a GetContactPaymentsMandate404JSONResponseBody0
+func (t GetContactPaymentsMandate404JSONResponseBody) AsGetContactPaymentsMandate404JSONResponseBody0() (GetContactPaymentsMandate404JSONResponseBody0, error) {
+	var body GetContactPaymentsMandate404JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGetContactPaymentsMandate404JSONResponseBody0 overwrites any union data inside the GetContactPaymentsMandate404JSONResponseBody as the provided GetContactPaymentsMandate404JSONResponseBody0
+func (t *GetContactPaymentsMandate404JSONResponseBody) FromGetContactPaymentsMandate404JSONResponseBody0(v GetContactPaymentsMandate404JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGetContactPaymentsMandate404JSONResponseBody0 performs a merge with any union data inside the GetContactPaymentsMandate404JSONResponseBody, using the provided GetContactPaymentsMandate404JSONResponseBody0
+func (t *GetContactPaymentsMandate404JSONResponseBody) MergeGetContactPaymentsMandate404JSONResponseBody0(v GetContactPaymentsMandate404JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsError returns the union data inside the GetContactPaymentsMandate404JSONResponseBody as a Error
+func (t GetContactPaymentsMandate404JSONResponseBody) AsError() (Error, error) {
+	var body Error
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromError overwrites any union data inside the GetContactPaymentsMandate404JSONResponseBody as the provided Error
+func (t *GetContactPaymentsMandate404JSONResponseBody) FromError(v Error) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeError performs a merge with any union data inside the GetContactPaymentsMandate404JSONResponseBody, using the provided Error
+func (t *GetContactPaymentsMandate404JSONResponseBody) MergeError(v Error) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GetContactPaymentsMandate404JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GetContactPaymentsMandate404JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRequestContactPaymentsMandate403JSONResponseBody0 returns the union data inside the RequestContactPaymentsMandate403JSONResponseBody as a RequestContactPaymentsMandate403JSONResponseBody0
+func (t RequestContactPaymentsMandate403JSONResponseBody) AsRequestContactPaymentsMandate403JSONResponseBody0() (RequestContactPaymentsMandate403JSONResponseBody0, error) {
+	var body RequestContactPaymentsMandate403JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRequestContactPaymentsMandate403JSONResponseBody0 overwrites any union data inside the RequestContactPaymentsMandate403JSONResponseBody as the provided RequestContactPaymentsMandate403JSONResponseBody0
+func (t *RequestContactPaymentsMandate403JSONResponseBody) FromRequestContactPaymentsMandate403JSONResponseBody0(v RequestContactPaymentsMandate403JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRequestContactPaymentsMandate403JSONResponseBody0 performs a merge with any union data inside the RequestContactPaymentsMandate403JSONResponseBody, using the provided RequestContactPaymentsMandate403JSONResponseBody0
+func (t *RequestContactPaymentsMandate403JSONResponseBody) MergeRequestContactPaymentsMandate403JSONResponseBody0(v RequestContactPaymentsMandate403JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsError returns the union data inside the RequestContactPaymentsMandate403JSONResponseBody as a Error
+func (t RequestContactPaymentsMandate403JSONResponseBody) AsError() (Error, error) {
+	var body Error
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromError overwrites any union data inside the RequestContactPaymentsMandate403JSONResponseBody as the provided Error
+func (t *RequestContactPaymentsMandate403JSONResponseBody) FromError(v Error) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeError performs a merge with any union data inside the RequestContactPaymentsMandate403JSONResponseBody, using the provided Error
+func (t *RequestContactPaymentsMandate403JSONResponseBody) MergeError(v Error) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RequestContactPaymentsMandate403JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RequestContactPaymentsMandate403JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRequestContactPaymentsMandate404JSONResponseBody0 returns the union data inside the RequestContactPaymentsMandate404JSONResponseBody as a RequestContactPaymentsMandate404JSONResponseBody0
+func (t RequestContactPaymentsMandate404JSONResponseBody) AsRequestContactPaymentsMandate404JSONResponseBody0() (RequestContactPaymentsMandate404JSONResponseBody0, error) {
+	var body RequestContactPaymentsMandate404JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRequestContactPaymentsMandate404JSONResponseBody0 overwrites any union data inside the RequestContactPaymentsMandate404JSONResponseBody as the provided RequestContactPaymentsMandate404JSONResponseBody0
+func (t *RequestContactPaymentsMandate404JSONResponseBody) FromRequestContactPaymentsMandate404JSONResponseBody0(v RequestContactPaymentsMandate404JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRequestContactPaymentsMandate404JSONResponseBody0 performs a merge with any union data inside the RequestContactPaymentsMandate404JSONResponseBody, using the provided RequestContactPaymentsMandate404JSONResponseBody0
+func (t *RequestContactPaymentsMandate404JSONResponseBody) MergeRequestContactPaymentsMandate404JSONResponseBody0(v RequestContactPaymentsMandate404JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsError returns the union data inside the RequestContactPaymentsMandate404JSONResponseBody as a Error
+func (t RequestContactPaymentsMandate404JSONResponseBody) AsError() (Error, error) {
+	var body Error
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromError overwrites any union data inside the RequestContactPaymentsMandate404JSONResponseBody as the provided Error
+func (t *RequestContactPaymentsMandate404JSONResponseBody) FromError(v Error) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeError performs a merge with any union data inside the RequestContactPaymentsMandate404JSONResponseBody, using the provided Error
+func (t *RequestContactPaymentsMandate404JSONResponseBody) MergeError(v Error) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RequestContactPaymentsMandate404JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RequestContactPaymentsMandate404JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRequestContactPaymentsMandateURL403JSONResponseBody0 returns the union data inside the RequestContactPaymentsMandateURL403JSONResponseBody as a RequestContactPaymentsMandateURL403JSONResponseBody0
+func (t RequestContactPaymentsMandateURL403JSONResponseBody) AsRequestContactPaymentsMandateURL403JSONResponseBody0() (RequestContactPaymentsMandateURL403JSONResponseBody0, error) {
+	var body RequestContactPaymentsMandateURL403JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRequestContactPaymentsMandateURL403JSONResponseBody0 overwrites any union data inside the RequestContactPaymentsMandateURL403JSONResponseBody as the provided RequestContactPaymentsMandateURL403JSONResponseBody0
+func (t *RequestContactPaymentsMandateURL403JSONResponseBody) FromRequestContactPaymentsMandateURL403JSONResponseBody0(v RequestContactPaymentsMandateURL403JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRequestContactPaymentsMandateURL403JSONResponseBody0 performs a merge with any union data inside the RequestContactPaymentsMandateURL403JSONResponseBody, using the provided RequestContactPaymentsMandateURL403JSONResponseBody0
+func (t *RequestContactPaymentsMandateURL403JSONResponseBody) MergeRequestContactPaymentsMandateURL403JSONResponseBody0(v RequestContactPaymentsMandateURL403JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsError returns the union data inside the RequestContactPaymentsMandateURL403JSONResponseBody as a Error
+func (t RequestContactPaymentsMandateURL403JSONResponseBody) AsError() (Error, error) {
+	var body Error
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromError overwrites any union data inside the RequestContactPaymentsMandateURL403JSONResponseBody as the provided Error
+func (t *RequestContactPaymentsMandateURL403JSONResponseBody) FromError(v Error) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeError performs a merge with any union data inside the RequestContactPaymentsMandateURL403JSONResponseBody, using the provided Error
+func (t *RequestContactPaymentsMandateURL403JSONResponseBody) MergeError(v Error) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RequestContactPaymentsMandateURL403JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RequestContactPaymentsMandateURL403JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRequestContactPaymentsMandateURL404JSONResponseBody0 returns the union data inside the RequestContactPaymentsMandateURL404JSONResponseBody as a RequestContactPaymentsMandateURL404JSONResponseBody0
+func (t RequestContactPaymentsMandateURL404JSONResponseBody) AsRequestContactPaymentsMandateURL404JSONResponseBody0() (RequestContactPaymentsMandateURL404JSONResponseBody0, error) {
+	var body RequestContactPaymentsMandateURL404JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRequestContactPaymentsMandateURL404JSONResponseBody0 overwrites any union data inside the RequestContactPaymentsMandateURL404JSONResponseBody as the provided RequestContactPaymentsMandateURL404JSONResponseBody0
+func (t *RequestContactPaymentsMandateURL404JSONResponseBody) FromRequestContactPaymentsMandateURL404JSONResponseBody0(v RequestContactPaymentsMandateURL404JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRequestContactPaymentsMandateURL404JSONResponseBody0 performs a merge with any union data inside the RequestContactPaymentsMandateURL404JSONResponseBody, using the provided RequestContactPaymentsMandateURL404JSONResponseBody0
+func (t *RequestContactPaymentsMandateURL404JSONResponseBody) MergeRequestContactPaymentsMandateURL404JSONResponseBody0(v RequestContactPaymentsMandateURL404JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsError returns the union data inside the RequestContactPaymentsMandateURL404JSONResponseBody as a Error
+func (t RequestContactPaymentsMandateURL404JSONResponseBody) AsError() (Error, error) {
+	var body Error
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromError overwrites any union data inside the RequestContactPaymentsMandateURL404JSONResponseBody as the provided Error
+func (t *RequestContactPaymentsMandateURL404JSONResponseBody) FromError(v Error) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeError performs a merge with any union data inside the RequestContactPaymentsMandateURL404JSONResponseBody, using the provided Error
+func (t *RequestContactPaymentsMandateURL404JSONResponseBody) MergeError(v Error) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RequestContactPaymentsMandateURL404JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RequestContactPaymentsMandateURL404JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// GoogleCallback Finish signing in with Google
@@ -12151,6 +13596,18 @@ type ServerInterface interface {
 	// UpdateContactPerson Update a contact person
 	// (PATCH /api/v2/{administration_id}/contacts/{contact_id}/contact_people/{id})
 	UpdateContactPerson(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id)
+	// DeleteContactPaymentsMandate Delete a stored Moneybird Payments mandate
+	// (DELETE /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate)
+	DeleteContactPaymentsMandate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId)
+	// GetContactPaymentsMandate Get Moneybird Payments mandate
+	// (GET /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate)
+	GetContactPaymentsMandate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId)
+	// RequestContactPaymentsMandate Request a new Moneybird Payments mandate
+	// (POST /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate)
+	RequestContactPaymentsMandate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId)
+	// RequestContactPaymentsMandateURL Request an URL for setting up a Moneybird Payments mandate
+	// (POST /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate/url)
+	RequestContactPaymentsMandateURL(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId)
 	// CreateContactNote Add note to a contact
 	// (POST /api/v2/{administration_id}/contacts/{contact_id}/notes)
 	CreateContactNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId)
@@ -12166,6 +13623,12 @@ type ServerInterface interface {
 	// UpdateContact Update a contact
 	// (PATCH /api/v2/{administration_id}/contacts/{id})
 	UpdateContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListContactAdditionalCharges Get additional charges of a contact
+	// (GET /api/v2/{administration_id}/contacts/{id}/additional_charges)
+	ListContactAdditionalCharges(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params ListContactAdditionalChargesParams)
+	// CreateContactAdditionalCharge Create an additional charge to be invoiced at start of next period
+	// (POST /api/v2/{administration_id}/contacts/{id}/additional_charges)
+	CreateContactAdditionalCharge(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ArchiveContact Archive a contact
 	// (PATCH /api/v2/{administration_id}/contacts/{id}/archive)
 	ArchiveContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -12187,6 +13650,15 @@ type ServerInterface interface {
 	// UpdateCustomField Rename a custom field
 	// (PATCH /api/v2/{administration_id}/custom_fields/{id})
 	UpdateCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetCustomerContactPortalLink Get a temporary link to the customer contact portal
+	// (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id})
+	GetCustomerContactPortalLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId)
+	// GetCustomerContactPortalInvoicesLink Get a temporary link to the invoices in the customer contact portal
+	// (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id}/invoices)
+	GetCustomerContactPortalInvoicesLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId)
+	// GetCustomerContactPortalSubscriptionLink Get a temporary link to the subscriptions in the customer contact portal
+	// (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id}/subscriptions/{id})
+	GetCustomerContactPortalSubscriptionLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id)
 	// ListDocumentStyles Retrieve document styles
 	// (GET /api/v2/{administration_id}/document_styles)
 	ListDocumentStyles(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -12247,6 +13719,12 @@ type ServerInterface interface {
 	// DeleteGeneralJournalDocumentNote Delete a note from a journal entry
 	// (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id})
 	DeleteGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
+	// ListDownloads List all downloads
+	// (GET /api/v2/{administration_id}/downloads)
+	ListDownloads(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListDownloadsParams)
+	// DownloadDownload Download a file
+	// (POST /api/v2/{administration_id}/downloads/{id}/download)
+	DownloadDownload(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListExternalSalesInvoices List all external sales invoices
 	// (GET /api/v2/{administration_id}/external_sales_invoices)
 	ListExternalSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListExternalSalesInvoicesParams)
@@ -12570,6 +14048,41 @@ type ServerInterface interface {
 	// SendSalesInvoice Send a sales invoice
 	// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/send_invoice)
 	SendSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListSubscriptionTemplates List all subscription templates
+	// (GET /api/v2/{administration_id}/subscription_templates)
+	ListSubscriptionTemplates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListSubscriptionTemplatesParams)
+	// GetSubscriptionTemplateCheckoutIdentifier Create online sales link [Deprecated]
+	// (GET /api/v2/{administration_id}/subscription_templates/{id}/checkout_identifier)
+	//
+	// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	GetSubscriptionTemplateCheckoutIdentifier(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params GetSubscriptionTemplateCheckoutIdentifierParams)
+	// CreateSubscriptionTemplateSalesLink Create online sales link
+	// (POST /api/v2/{administration_id}/subscription_templates/{id}/sales_link)
+	CreateSubscriptionTemplateSalesLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params CreateSubscriptionTemplateSalesLinkParams)
+	// ListSubscriptions List subscriptions of a contact
+	// (GET /api/v2/{administration_id}/subscriptions)
+	ListSubscriptions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListSubscriptionsParams)
+	// CreateSubscription Create a new subscription
+	// (POST /api/v2/{administration_id}/subscriptions)
+	CreateSubscription(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CancelSubscription Cancel a subscription
+	// (DELETE /api/v2/{administration_id}/subscriptions/{id})
+	CancelSubscription(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetSubscription Get subscription
+	// (GET /api/v2/{administration_id}/subscriptions/{id})
+	GetSubscription(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateSubscription Update a subscription
+	// (PATCH /api/v2/{administration_id}/subscriptions/{id})
+	UpdateSubscription(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListSubscriptionAdditionalCharges Get additional charges of a subscription
+	// (GET /api/v2/{administration_id}/subscriptions/{id}/additional_charges)
+	ListSubscriptionAdditionalCharges(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params ListSubscriptionAdditionalChargesParams)
+	// CreateSubscriptionAdditionalCharge Create an additional charge to be invoiced together with the subscription
+	// (POST /api/v2/{administration_id}/subscriptions/{id}/additional_charges)
+	CreateSubscriptionAdditionalCharge(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateSubscriptionOneOffSalesInvoice Create and schedule an invoice to be sent together with the subscription
+	// (POST /api/v2/{administration_id}/subscriptions/{id}/create_and_schedule_one_off_sales_invoice)
+	CreateSubscriptionOneOffSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// UpdateSupportAccess Let the instance admins in
 	// (PUT /api/v2/{administration_id}/support_access)
 	UpdateSupportAccess(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -12612,6 +14125,9 @@ type ServerInterface interface {
 	// UpdateUser Change a user's access
 	// (PATCH /api/v2/{administration_id}/users/{id})
 	UpdateUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetVerifications Retrieve verifications
+	// (GET /api/v2/{administration_id}/verifications)
+	GetVerifications(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// ListWebhooks List all webhooks
 	// (GET /api/v2/{administration_id}/webhooks)
 	ListWebhooks(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -13044,6 +14560,30 @@ func (_ Unimplemented) UpdateContactPerson(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// DeleteContactPaymentsMandate Delete a stored Moneybird Payments mandate
+// (DELETE /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate)
+func (_ Unimplemented) DeleteContactPaymentsMandate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetContactPaymentsMandate Get Moneybird Payments mandate
+// (GET /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate)
+func (_ Unimplemented) GetContactPaymentsMandate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RequestContactPaymentsMandate Request a new Moneybird Payments mandate
+// (POST /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate)
+func (_ Unimplemented) RequestContactPaymentsMandate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RequestContactPaymentsMandateURL Request an URL for setting up a Moneybird Payments mandate
+// (POST /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate/url)
+func (_ Unimplemented) RequestContactPaymentsMandateURL(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // CreateContactNote Add note to a contact
 // (POST /api/v2/{administration_id}/contacts/{contact_id}/notes)
 func (_ Unimplemented) CreateContactNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId) {
@@ -13071,6 +14611,18 @@ func (_ Unimplemented) GetContact(w http.ResponseWriter, r *http.Request, admini
 // UpdateContact Update a contact
 // (PATCH /api/v2/{administration_id}/contacts/{id})
 func (_ Unimplemented) UpdateContact(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListContactAdditionalCharges Get additional charges of a contact
+// (GET /api/v2/{administration_id}/contacts/{id}/additional_charges)
+func (_ Unimplemented) ListContactAdditionalCharges(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params ListContactAdditionalChargesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateContactAdditionalCharge Create an additional charge to be invoiced at start of next period
+// (POST /api/v2/{administration_id}/contacts/{id}/additional_charges)
+func (_ Unimplemented) CreateContactAdditionalCharge(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -13113,6 +14665,24 @@ func (_ Unimplemented) GetCustomField(w http.ResponseWriter, r *http.Request, ad
 // UpdateCustomField Rename a custom field
 // (PATCH /api/v2/{administration_id}/custom_fields/{id})
 func (_ Unimplemented) UpdateCustomField(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCustomerContactPortalLink Get a temporary link to the customer contact portal
+// (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id})
+func (_ Unimplemented) GetCustomerContactPortalLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCustomerContactPortalInvoicesLink Get a temporary link to the invoices in the customer contact portal
+// (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id}/invoices)
+func (_ Unimplemented) GetCustomerContactPortalInvoicesLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCustomerContactPortalSubscriptionLink Get a temporary link to the subscriptions in the customer contact portal
+// (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id}/subscriptions/{id})
+func (_ Unimplemented) GetCustomerContactPortalSubscriptionLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -13233,6 +14803,18 @@ func (_ Unimplemented) CreateGeneralJournalDocumentNote(w http.ResponseWriter, r
 // DeleteGeneralJournalDocumentNote Delete a note from a journal entry
 // (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id})
 func (_ Unimplemented) DeleteGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListDownloads List all downloads
+// (GET /api/v2/{administration_id}/downloads)
+func (_ Unimplemented) ListDownloads(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListDownloadsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadDownload Download a file
+// (POST /api/v2/{administration_id}/downloads/{id}/download)
+func (_ Unimplemented) DownloadDownload(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -13880,6 +15462,74 @@ func (_ Unimplemented) SendSalesInvoice(w http.ResponseWriter, r *http.Request, 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListSubscriptionTemplates List all subscription templates
+// (GET /api/v2/{administration_id}/subscription_templates)
+func (_ Unimplemented) ListSubscriptionTemplates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListSubscriptionTemplatesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetSubscriptionTemplateCheckoutIdentifier Create online sales link [Deprecated]
+// (GET /api/v2/{administration_id}/subscription_templates/{id}/checkout_identifier)
+//
+// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+func (_ Unimplemented) GetSubscriptionTemplateCheckoutIdentifier(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params GetSubscriptionTemplateCheckoutIdentifierParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateSubscriptionTemplateSalesLink Create online sales link
+// (POST /api/v2/{administration_id}/subscription_templates/{id}/sales_link)
+func (_ Unimplemented) CreateSubscriptionTemplateSalesLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params CreateSubscriptionTemplateSalesLinkParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListSubscriptions List subscriptions of a contact
+// (GET /api/v2/{administration_id}/subscriptions)
+func (_ Unimplemented) ListSubscriptions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListSubscriptionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateSubscription Create a new subscription
+// (POST /api/v2/{administration_id}/subscriptions)
+func (_ Unimplemented) CreateSubscription(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CancelSubscription Cancel a subscription
+// (DELETE /api/v2/{administration_id}/subscriptions/{id})
+func (_ Unimplemented) CancelSubscription(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetSubscription Get subscription
+// (GET /api/v2/{administration_id}/subscriptions/{id})
+func (_ Unimplemented) GetSubscription(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateSubscription Update a subscription
+// (PATCH /api/v2/{administration_id}/subscriptions/{id})
+func (_ Unimplemented) UpdateSubscription(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListSubscriptionAdditionalCharges Get additional charges of a subscription
+// (GET /api/v2/{administration_id}/subscriptions/{id}/additional_charges)
+func (_ Unimplemented) ListSubscriptionAdditionalCharges(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params ListSubscriptionAdditionalChargesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateSubscriptionAdditionalCharge Create an additional charge to be invoiced together with the subscription
+// (POST /api/v2/{administration_id}/subscriptions/{id}/additional_charges)
+func (_ Unimplemented) CreateSubscriptionAdditionalCharge(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateSubscriptionOneOffSalesInvoice Create and schedule an invoice to be sent together with the subscription
+// (POST /api/v2/{administration_id}/subscriptions/{id}/create_and_schedule_one_off_sales_invoice)
+func (_ Unimplemented) CreateSubscriptionOneOffSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // UpdateSupportAccess Let the instance admins in
 // (PUT /api/v2/{administration_id}/support_access)
 func (_ Unimplemented) UpdateSupportAccess(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
@@ -13961,6 +15611,12 @@ func (_ Unimplemented) GetUser(w http.ResponseWriter, r *http.Request, administr
 // UpdateUser Change a user's access
 // (PATCH /api/v2/{administration_id}/users/{id})
 func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetVerifications Retrieve verifications
+// (GET /api/v2/{administration_id}/verifications)
+func (_ Unimplemented) GetVerifications(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -15853,6 +17509,146 @@ func (siw *ServerInterfaceWrapper) UpdateContactPerson(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteContactPaymentsMandate operation middleware
+func (siw *ServerInterfaceWrapper) DeleteContactPaymentsMandate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteContactPaymentsMandate(w, r, administrationId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetContactPaymentsMandate operation middleware
+func (siw *ServerInterfaceWrapper) GetContactPaymentsMandate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetContactPaymentsMandate(w, r, administrationId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequestContactPaymentsMandate operation middleware
+func (siw *ServerInterfaceWrapper) RequestContactPaymentsMandate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestContactPaymentsMandate(w, r, administrationId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequestContactPaymentsMandateURL operation middleware
+func (siw *ServerInterfaceWrapper) RequestContactPaymentsMandateURL(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestContactPaymentsMandateURL(w, r, administrationId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateContactNote operation middleware
 func (siw *ServerInterfaceWrapper) CreateContactNote(w http.ResponseWriter, r *http.Request) {
 
@@ -16044,6 +17840,92 @@ func (siw *ServerInterfaceWrapper) UpdateContact(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateContact(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListContactAdditionalCharges operation middleware
+func (siw *ServerInterfaceWrapper) ListContactAdditionalCharges(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListContactAdditionalChargesParams
+
+	// ------------- Optional query parameter "include_billed" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_billed", r.URL.Query(), &params.IncludeBilled, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_billed"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_billed", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListContactAdditionalCharges(w, r, administrationId, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateContactAdditionalCharge operation middleware
+func (siw *ServerInterfaceWrapper) CreateContactAdditionalCharge(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateContactAdditionalCharge(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -16262,6 +18144,120 @@ func (siw *ServerInterfaceWrapper) UpdateCustomField(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateCustomField(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCustomerContactPortalLink operation middleware
+func (siw *ServerInterfaceWrapper) GetCustomerContactPortalLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCustomerContactPortalLink(w, r, administrationId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCustomerContactPortalInvoicesLink operation middleware
+func (siw *ServerInterfaceWrapper) GetCustomerContactPortalInvoicesLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCustomerContactPortalInvoicesLink(w, r, administrationId, contactId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCustomerContactPortalSubscriptionLink operation middleware
+func (siw *ServerInterfaceWrapper) GetCustomerContactPortalSubscriptionLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contact_id" -------------
+	var contactId ContactId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contact_id", chi.URLParam(r, "contact_id"), &contactId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCustomerContactPortalSubscriptionLink(w, r, administrationId, contactId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -17059,6 +19055,135 @@ func (siw *ServerInterfaceWrapper) DeleteGeneralJournalDocumentNote(w http.Respo
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteGeneralJournalDocumentNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDownloads operation middleware
+func (siw *ServerInterfaceWrapper) ListDownloads(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListDownloadsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "download_type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "download_type", r.URL.Query(), &params.DownloadType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "download_type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "download_type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "downloaded" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "downloaded", r.URL.Query(), &params.Downloaded, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "downloaded"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "downloaded", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "failed" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "failed", r.URL.Query(), &params.Failed, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "failed"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "failed", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDownloads(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadDownload operation middleware
+func (siw *ServerInterfaceWrapper) DownloadDownload(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadDownload(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -21093,6 +23218,509 @@ func (siw *ServerInterfaceWrapper) SendSalesInvoice(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// ListSubscriptionTemplates operation middleware
+func (siw *ServerInterfaceWrapper) ListSubscriptionTemplates(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListSubscriptionTemplatesParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSubscriptionTemplates(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSubscriptionTemplateCheckoutIdentifier operation middleware
+func (siw *ServerInterfaceWrapper) GetSubscriptionTemplateCheckoutIdentifier(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetSubscriptionTemplateCheckoutIdentifierParams
+
+	// ------------- Optional query parameter "contact_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_id", r.URL.Query(), &params.ContactId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "start_date" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "start_date", r.URL.Query(), &params.StartDate, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "start_date"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "start_date", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "product_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "product_id", r.URL.Query(), &params.ProductId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "product_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSubscriptionTemplateCheckoutIdentifier(w, r, administrationId, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSubscriptionTemplateSalesLink operation middleware
+func (siw *ServerInterfaceWrapper) CreateSubscriptionTemplateSalesLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateSubscriptionTemplateSalesLinkParams
+
+	// ------------- Optional query parameter "contact_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_id", r.URL.Query(), &params.ContactId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "start_date" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "start_date", r.URL.Query(), &params.StartDate, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "start_date"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "start_date", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "product_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "product_id", r.URL.Query(), &params.ProductId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "product_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "product_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSubscriptionTemplateSalesLink(w, r, administrationId, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSubscriptions operation middleware
+func (siw *ServerInterfaceWrapper) ListSubscriptions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListSubscriptionsParams
+
+	// ------------- Required query parameter "contact_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "contact_id", r.URL.Query(), &params.ContactId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSubscriptions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSubscription operation middleware
+func (siw *ServerInterfaceWrapper) CreateSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSubscription(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CancelSubscription operation middleware
+func (siw *ServerInterfaceWrapper) CancelSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CancelSubscription(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSubscription operation middleware
+func (siw *ServerInterfaceWrapper) GetSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSubscription(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSubscription operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSubscription(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSubscriptionAdditionalCharges operation middleware
+func (siw *ServerInterfaceWrapper) ListSubscriptionAdditionalCharges(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListSubscriptionAdditionalChargesParams
+
+	// ------------- Optional query parameter "include_billed" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_billed", r.URL.Query(), &params.IncludeBilled, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_billed"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_billed", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSubscriptionAdditionalCharges(w, r, administrationId, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSubscriptionAdditionalCharge operation middleware
+func (siw *ServerInterfaceWrapper) CreateSubscriptionAdditionalCharge(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSubscriptionAdditionalCharge(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSubscriptionOneOffSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) CreateSubscriptionOneOffSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSubscriptionOneOffSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // UpdateSupportAccess operation middleware
 func (siw *ServerInterfaceWrapper) UpdateSupportAccess(w http.ResponseWriter, r *http.Request) {
 
@@ -21628,6 +24256,32 @@ func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateUser(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetVerifications operation middleware
+func (siw *ServerInterfaceWrapper) GetVerifications(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetVerifications(w, r, administrationId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -22631,6 +25285,75 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes/{note_id}", wrapper.DeleteRecurringSalesInvoiceNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/subscriptions", wrapper.ListSubscriptions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/subscriptions", wrapper.CreateSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/subscriptions/{id}", wrapper.CancelSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/subscriptions/{id}", wrapper.GetSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/subscriptions/{id}", wrapper.UpdateSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/subscriptions/{id}/additional_charges", wrapper.ListSubscriptionAdditionalCharges)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/subscriptions/{id}/additional_charges", wrapper.CreateSubscriptionAdditionalCharge)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/subscriptions/{id}/create_and_schedule_one_off_sales_invoice", wrapper.CreateSubscriptionOneOffSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/subscription_templates", wrapper.ListSubscriptionTemplates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/subscription_templates/{id}/checkout_identifier", wrapper.GetSubscriptionTemplateCheckoutIdentifier)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/subscription_templates/{id}/sales_link", wrapper.CreateSubscriptionTemplateSalesLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/{id}/additional_charges", wrapper.ListContactAdditionalCharges)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/contacts/{id}/additional_charges", wrapper.CreateContactAdditionalCharge)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate", wrapper.DeleteContactPaymentsMandate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate", wrapper.GetContactPaymentsMandate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate", wrapper.RequestContactPaymentsMandate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate/url", wrapper.RequestContactPaymentsMandateURL)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/customer_contact_portal/{contact_id}", wrapper.GetCustomerContactPortalLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/customer_contact_portal/{contact_id}/invoices", wrapper.GetCustomerContactPortalInvoicesLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/customer_contact_portal/{contact_id}/subscriptions/{id}", wrapper.GetCustomerContactPortalSubscriptionLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/verifications", wrapper.GetVerifications)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/downloads", wrapper.ListDownloads)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/downloads/{id}/download", wrapper.DownloadDownload)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/booking_rules", wrapper.ListBookingRules)

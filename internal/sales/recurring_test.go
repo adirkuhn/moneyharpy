@@ -370,3 +370,29 @@ func countOf(list []string, s string) int {
 	}
 	return n
 }
+
+// addingHook adds a line to every invoice a recurring invoice makes.
+type addingHook struct {
+	svc   *Service
+	calls int
+}
+
+func (a *addingHook) Generated(ctx context.Context, admin, user resource.ID, inv Invoice, _ Recurring) (Invoice, error) {
+	a.calls++
+	return a.svc.Update(ctx, admin, inv.ID, user, Changes{Details: []DetailInput{line("5", "1", vat21, 0)}})
+}
+
+func TestRecurringHookCompletesTheInvoiceBeforeItIsSent(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	hook := &addingHook{svc: h.svc}
+	h.svc.UseRecurringHook(hook)
+	r := recurring(t, h, "2026-11-11", RecurringChanges{AutoSend: ptr(true)})
+	if err := h.svc.Work(ctx); err != nil {
+		t.Fatal(err)
+	}
+	made := h.store.fromRecurring(r.ID)
+	if hook.calls != 1 || len(made) != 1 || made[0].State != Open || len(made[0].Lines) != 2 || made[0].Totals.InclTax != 12705 {
+		t.Fatalf("calls %d, made = %+v", hook.calls, made)
+	}
+}

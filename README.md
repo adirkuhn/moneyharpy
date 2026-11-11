@@ -243,8 +243,60 @@ draft and the error is logged. `deactivate` stops a recurring invoice for
 good; `DELETE` removes one that made no invoices and deactivates the others
 (answering `X-Kept-As: deactivated`). Deleting a contact with recurring invoices
 archives it instead. Webhooks tell `recurring_sales_invoice_created`, `_updated`,
-`_deactivated`, `_destroyed` and `_invoice_created`. Subscriptions and
-merging invoices (`mergeable`, accepted and kept) are not available yet.
+`_deactivated`, `_destroyed` and `_invoice_created`. Subscriptions (below)
+bill through recurring invoices; merging invoices (`mergeable`, accepted and
+kept) is not available yet.
+
+## Subscriptions
+
+Moneybird's subscriptions API lives under
+`/api/v2/{administration_id}/subscriptions` (there is no page for it in the
+app yet). A subscription bills a contact for a product with a frequency and a
+VAT rate: creating one makes a recurring sales invoice
+(`recurring_sales_invoice_id`) with the product as its line, the `amount`
+and the `discount`, which bills each period in advance and sends its invoices
+itself. The first invoice goes out on `start_date`, but no sooner than
+tomorrow. A `frequency` and `frequency_type` other than the product's must fit
+it: a monthly product can be billed every quarter or year, at the price times
+the months. `PATCH` with a new `product_id`, `amount` or `discount` starts a
+new entry in `subscription_products` from `start_date` (today unless given);
+when that falls within a period already billed, the price difference for the
+rest of the period goes on a one-off invoice that is merged into the next
+subscription invoice. `DELETE` cancels on `end_date` (today unless given):
+the recurring invoice makes no invoice from then on. A cancelled subscription
+answers `400` to further changes.
+
+Additional charges (`POST .../subscriptions/{id}/additional_charges`) are added
+as lines to the subscription's next invoice when the background job makes it.
+A contact's charges (`/contacts/{id}/additional_charges`) are billed once the
+month they were added in is over: one invoice per contact, dated the first of
+the month and sent at once, by a background job with its own lock. Periods
+such as `20250101..20250131` or `this_month` are kept as whole months
+(`202501..202501`); `include_billed=true` lists billed charges too, with the
+line that billed them (`detail_id`). `create_and_schedule_one_off_sales_invoice`
+schedules an invoice for the next subscription invoice date (or
+`invoice_date`); when the subscription's invoice is made on or after it, its
+lines are merged in and the scheduled invoice is removed. Webhooks tell
+`subscription_created`, `_edited` (reference, contact person and the like),
+`_updated` (product, amount or discount), `_cancelled` and
+`sales_invoice_created_based_on_subscription`.
+
+What needs Moneybird Payments answers as Moneybird does when it is not
+enabled: `subscription_templates` is an empty list and its `sales_link` and
+`checkout_identifier` answer `404` for the template; the contact's
+`moneybird_payments_mandate` answers `404` (no mandate) to `GET` and `403` to
+the rest, with the status as body. The customer contact portal links open the
+contact, or its sales invoices, in MoneyHarpy for its users, since there is no
+portal for customers; a subscription link answers `404`, as Moneybird does
+for subscriptions without a template. `verifications` answers `{}`: nothing
+is verified yet.
+
+`/api/v2/{administration_id}/downloads` lists the files exports made (25 a
+page, filters `download_type`, `downloaded` and `failed`), only of the types
+the user may open; `POST .../downloads/{id}/download` redirects to a link
+valid for 30 seconds and marks it downloaded, or answers `401` without the
+type's permission. Exports register their file with `downloads.Service.Add`
+(and new types with `downloads.RegisterType`).
 
 ## Products
 
