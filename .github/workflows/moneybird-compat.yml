@@ -1,7 +1,10 @@
 name: Moneybird compatibility
 
 # Compares the contract with Moneybird's published API description, so a
-# change on their side shows up here instead of in a client's integration.
+# change on their side shows up here instead of in a client's integration:
+# every operation, query parameter, status code, request field and response
+# field of Moneybird's must be in the contract, and the mirrored schemas must
+# match. Runs daily and on every pull request.
 on:
   pull_request:
   schedule:
@@ -14,10 +17,26 @@ permissions:
 jobs:
   compare:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - name: Contract matches Moneybird's schemas
-        run: go test -tags moneybird ./cmd/mbschemas
+      - name: Contract covers Moneybird's API
+        run: go test -tags moneybird -v ./cmd/mbschemas 2>&1 | tee compat.log; exit ${PIPESTATUS[0]}
+        shell: bash
+      # A failing daily run is easy to miss, so it opens an issue, or
+      # comments on the one still open.
+      - name: Report a change on Moneybird's side
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Moneybird's API changed"
+          { echo "The daily comparison with Moneybird's API description failed: $RUN_URL"; echo; echo '```'; grep -E '^\s+compat_test.go|--- FAIL|mbschemas' compat.log | head -100; echo '```'; } > body.md
+          issue=$(gh issue list --state open --search "\"$title\" in:title" --json number -q '.[0].number')
+          if [ -n "$issue" ]; then gh issue comment "$issue" --body-file body.md; else gh issue create --title "$title" --body-file body.md; fi
