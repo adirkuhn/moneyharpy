@@ -725,10 +725,15 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   await expect(page.getByText('No invoices yet. Create your first invoice.')).toBeVisible()
 
   await page.getByRole('link', { name: 'New invoice' }).click()
-  await page.getByRole('combobox', { name: 'Contact' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Add invoice' })).toBeVisible()
+  // The invoice is edited as its document: pick the contact in the address block, then open the lines.
+  const paper = page.getByRole('document', { name: 'Invoice preview' })
+  await paper.getByRole('combobox', { name: 'Contact' }).click()
   await page.getByRole('searchbox', { name: 'Find a contact' }).fill('Example')
   await page.getByRole('option', { name: 'Example Shop B.V.' }).click()
+  await expect(paper.getByRole('combobox', { name: 'Contact' })).toContainText('Example Shop B.V.')
   await page.getByLabel('Reference').fill('Order 12')
+  await paper.getByRole('button', { name: '2. Add invoice details' }).click()
   const rows = page.getByRole('table', { name: 'Lines' }).getByRole('row')
   const vat21 = async (row: number) =>
     (await rows.nth(row).getByLabel('VAT rate').locator('option', { hasText: '21%' }).first().getAttribute('value')) ?? ''
@@ -740,8 +745,9 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   await rows.nth(2).getByLabel('Description').fill('Travel costs')
   await rows.nth(2).getByLabel('Price').fill('50')
   await rows.nth(2).getByLabel('VAT rate').selectOption(await vat21(2))
-  const totals = page.getByRole('table', { name: 'Totals' })
-  await expect(totals.getByRole('row', { name: /^Total/ })).toContainText('€302.50')
+  // The totals are printed in the document's language, which follows the workflow.
+  const totals = paper.getByRole('table', { name: 'Totals' })
+  await expect(totals.getByRole('row', { name: /^(Total|Totaal)\b/ })).toContainText(/302[.,]50/)
   await page.getByRole('button', { name: 'Save invoice' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Draft #1' })).toBeVisible()
 

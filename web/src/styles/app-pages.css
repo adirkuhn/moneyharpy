@@ -171,3 +171,150 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
 .task-list__description { margin: 0.125rem 0 0 1.625rem; color: var(--muted); font-size: 0.8125rem; }
 .task-list:empty { display: none; }
 .task-list__add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.5rem 1rem; margin-top: 0.75rem; }
+
+/*
+ * The invoice editor, after Moneybird's "Add invoice": the invoice drawn as
+ * a sheet of paper whose parts turn into controls when clicked.
+ */
+.invoice-editor { margin: 0 auto; }
+.invoice-editor > .problems { margin-bottom: 1rem; }
+.invoice-editor__settings { margin-top: 1.5rem; }
+
+/* "Select layout": the document styles side by side, each with a small sheet. */
+.layout-picker { margin: 0 0 1rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.layout-picker__title { margin: 0 0 0.75rem; font-size: 0.875rem; }
+.layout-picker__list { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.layout-picker__style { display: grid; justify-items: center; gap: 0.5rem; padding: 0.5rem; border: 1px solid transparent; border-radius: 8px; background: none; color: var(--text); font: inherit; cursor: pointer; }
+.layout-picker__style:hover { background: var(--row-hover); }
+.layout-picker__style[aria-pressed='true'] { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+.layout-picker__preview {
+  position: relative; display: block; width: 5.5rem; height: 7.75rem; border: 1px solid var(--line); border-radius: 3px; background: var(--white);
+  box-shadow: 0 1px 3px rgb(9 38 83 / 0.12);
+}
+.layout-picker__preview > span, .layout-picker__preview > img { position: absolute; display: block; }
+.layout-picker__logo { top: 0.5rem; left: 0.5rem; width: 1.5rem; height: 0.75rem; border-radius: 2px; background: #d9e1ed; object-fit: contain; }
+.layout-picker__logo--center { left: calc(50% - 0.75rem); }
+.layout-picker__logo--right { right: 0.5rem; left: auto; }
+.layout-picker__sender { top: 0.5rem; right: 0.5rem; width: 1.75rem; height: 1.5rem; background: repeating-linear-gradient(#d9e1ed 0 2px, transparent 2px 5px); }
+.layout-picker__logo--right ~ .layout-picker__sender { top: 1.5rem; }
+.layout-picker__recipient { top: 2.375rem; left: 0.5rem; width: 1.75rem; height: 1rem; background: repeating-linear-gradient(#d9e1ed 0 2px, transparent 2px 5px); }
+.layout-picker__preview--right .layout-picker__recipient { right: 0.5rem; left: auto; }
+.layout-picker__title-bar { top: 4rem; left: 0.5rem; width: 2rem; height: 0.3125rem; background: var(--navy); opacity: 0.6; }
+.layout-picker__rows { top: 4.875rem; right: 0.5rem; left: 0.5rem; height: 1.75rem; background: repeating-linear-gradient(#d9e1ed 0 1px, transparent 1px 6px); }
+.layout-picker__name { font-size: 0.8125rem; }
+
+/* The sheet. */
+.invoice-paper {
+  position: relative; padding: 3.5rem 3.125rem 3rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  color: var(--text); font-size: 0.8125rem; line-height: 1.4;
+}
+.invoice-paper__bold { font-weight: 700; }
+.invoice-paper__line { display: block; }
+.invoice-paper__draft { color: var(--muted); font-style: normal; }
+.invoice-paper__placeholder { color: var(--muted); font-style: italic; }
+
+.invoice-paper__header {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 15rem); grid-template-areas: 'logo sender' 'recipient sender'; grid-template-rows: auto 1fr;
+  column-gap: 2rem;
+}
+.invoice-paper__header--right { grid-template-areas: 'logo sender' '. recipient'; }
+.invoice-paper__logo { grid-area: logo; min-height: 8.5rem; }
+.invoice-paper__logo img { display: block; max-width: 100%; max-height: 8rem; object-fit: contain; }
+.invoice-paper__logo--center img { margin-inline: auto; }
+.invoice-paper__logo--right img { margin-left: auto; }
+.invoice-paper__sender { grid-area: sender; align-self: start; margin: 0; padding: 0; list-style: none; overflow-wrap: anywhere; }
+.invoice-paper__newline { height: 1.4em; }
+.invoice-paper__recipient { grid-area: recipient; align-self: start; margin-top: -0.5rem; padding-left: 2.25rem; }
+.invoice-paper__recipient .picker { display: inline-block; min-width: 10rem; max-width: 100%; }
+.invoice-paper__recipient .picker__panel { min-width: 18rem; }
+
+/* The steps Moneybird labels the empty document with. */
+.invoice-paper__step {
+  display: block; width: fit-content; min-width: 9.5rem; margin-bottom: 0.25rem; padding: 0.0625rem 0.375rem; border: 0; border-radius: 2px;
+  background: var(--blue); color: var(--white); font: inherit; text-align: left; cursor: pointer;
+}
+
+.invoice-paper__recipient-button {
+  position: relative; display: block; width: 100%; padding: 0.25rem 0.5rem 0.25rem 0.875rem; border: 0; border-left: 1px solid var(--text); border-radius: 0;
+  background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.invoice-paper__recipient-button.is-empty .invoice-paper__step { margin-left: -0.875rem; }
+.invoice-paper__recipient-button:hover, .invoice-paper__recipient-button[aria-expanded='true'] { background: var(--row-hover); }
+.invoice-paper__recipient-button.is-invalid { box-shadow: inset 0 0 0 1px var(--danger); }
+.invoice-paper__recipient-text.is-placeholder { color: var(--muted); }
+.invoice-paper__edit {
+  position: absolute; top: 1.625rem; left: -0.6875rem; display: inline-flex; justify-content: center; align-items: center; width: 1.375rem; height: 1.375rem;
+  border-radius: 3px; background: var(--blue); color: var(--white); font-size: 0.75rem;
+}
+.invoice-paper__recipient-button:not(.is-empty) .invoice-paper__edit { top: 0.25rem; opacity: 0; }
+.invoice-paper__recipient-button:not(.is-empty):is(:hover, :focus-visible) .invoice-paper__edit { opacity: 1; }
+
+/* Title, contact and dates. */
+.invoice-paper__heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 1rem 2rem; margin-top: 5.5rem; }
+.invoice-paper__title { margin: 0; font-size: 1.75em; font-weight: 400; line-height: 1.2; }
+.invoice-paper__contact { margin: 0.5rem 0 0; color: var(--muted); }
+.invoice-paper__dates { display: grid; min-width: 15rem; }
+.invoice-paper__date { display: grid; grid-template-columns: 8.125rem auto; text-align: left; }
+
+/* A part of the sheet that turns into its control when clicked. */
+.in-place { position: relative; }
+.in-place__button {
+  position: relative; display: block; width: calc(100% + 0.5rem); margin: -0.125rem -0.25rem; padding: 0.125rem 0.25rem; border: 0; border-radius: 4px;
+  background: none; color: inherit; font: inherit; text-align: inherit; cursor: pointer;
+}
+.in-place__button:hover { background: var(--row-hover); box-shadow: inset 0 0 0 1px var(--blue); }
+.in-place__button.is-invalid { box-shadow: inset 0 0 0 1px var(--danger); }
+.in-place__indicator {
+  position: absolute; top: 0.125rem; left: -1.5rem; display: inline-flex; justify-content: center; align-items: center; width: 1.25rem; height: 1.25rem;
+  border-radius: 3px; background: var(--blue); color: var(--white); font-size: 0.75rem; opacity: 0;
+}
+.in-place__button:is(:hover, :focus-visible) .in-place__indicator { opacity: 1; }
+.in-place--editing input, .in-place--editing textarea { width: 100%; }
+.in-place .form-input__message { margin: 0.25rem 0 0; }
+
+/* The lines as printed, then as edited. */
+.invoice-paper__details { margin-top: 4.5rem; }
+.invoice-paper__details-view { position: relative; cursor: pointer; }
+.invoice-paper__details-view:hover .invoice-paper__lines tbody { background: var(--row-hover); }
+.invoice-paper__details-view > .invoice-paper__step { position: absolute; bottom: 100%; left: 0; }
+.invoice-paper__edit-details {
+  position: absolute; top: 2rem; left: -1.75rem; display: inline-flex; justify-content: center; align-items: center; width: 1.375rem; height: 1.375rem;
+  padding: 0; border: 0; border-radius: 3px; background: var(--blue); color: var(--white); font-size: 0.75rem; cursor: pointer; opacity: 0;
+}
+.invoice-paper__details-view:hover .invoice-paper__edit-details, .invoice-paper__edit-details:focus-visible { opacity: 1; }
+.invoice-paper__lines { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.invoice-paper__lines th { padding: 0.375rem 0.3125rem; border-bottom: 1px solid var(--text); color: var(--muted); font-weight: 650; text-align: left; }
+.invoice-paper__lines td { padding: 0.375rem 0.3125rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.invoice-paper__lines tbody tr:last-child td { border-bottom-color: var(--text); }
+.invoice-paper__lines .is-placeholder td { color: var(--muted); }
+.invoice-paper__quantity { width: 3.5rem; white-space: nowrap; }
+.invoice-paper__description { white-space: pre-wrap; overflow-wrap: anywhere; }
+.invoice-paper__lines .invoice-paper__money { width: 6rem; text-align: right; white-space: nowrap; }
+.invoice-paper__lines-editor { margin-inline: -1rem; }
+.invoice-paper__lines-editor .invoice-lines { margin-top: 0; }
+.invoice-paper__lines-editor .invoice-lines__description { min-width: 14rem; }
+.invoice-paper__lines-editor .invoice-lines__category { width: 10rem; }
+.invoice-paper__done { margin-left: 0.75rem; }
+.invoice-paper .invoice-totals { width: min(100%, 14.5rem); margin: 0.5rem 4.375rem 0 auto; }
+.invoice-paper .invoice-totals th { padding-right: 1.5rem; color: var(--muted); font-weight: 650; text-align: right; }
+.invoice-paper .invoice-totals__strong th, .invoice-paper .invoice-totals__strong td { border-top-width: 1px; border-top-color: var(--text); }
+
+/* Payment conditions. */
+.invoice-paper__footer { margin-top: 3.5rem; padding-top: 0.75rem; border-top: 1px solid var(--text); }
+.invoice-paper__conditions { white-space: pre-wrap; }
+.invoice-paper__pay { margin: 0.5rem 0 0; }
+
+@media (max-width: 44rem) {
+  .invoice-paper { padding: 1.5rem 1rem 2rem; }
+  .invoice-paper__header, .invoice-paper__header--right { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'logo' 'sender' 'recipient'; row-gap: 1.5rem; }
+  .invoice-paper__logo { min-height: 0; }
+  .invoice-paper__recipient { margin-top: 0; padding-left: 1rem; }
+  .invoice-paper__heading, .invoice-paper__details { margin-top: 2.5rem; }
+  .invoice-paper .invoice-totals { margin-right: 0; }
+  .invoice-paper__lines-editor { margin-inline: 0; }
+}
+
+@media (forced-colors: active) {
+  .invoice-paper__step, .invoice-paper__edit, .in-place__indicator, .invoice-paper__edit-details { border: 1px solid CanvasText; }
+  .layout-picker__style[aria-pressed='true'] { outline: 2px solid Highlight; }
+}

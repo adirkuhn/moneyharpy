@@ -1,8 +1,8 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, unwrap } from '../api/client'
-import { FormRow } from '../forms/Form'
+import { type ControlProps, FormRow } from '../forms/Form'
 import { CaretIcon } from '../layout/icons'
 import { type Contact, contactName } from '../contacts/queries'
 
@@ -36,6 +36,33 @@ function useContactSearch(administrationId: string, query: string, enabled: bool
 /** Picks a contact by searching all of them, like the searchable selects elsewhere. */
 export function ContactPicker({ administrationId, label, value, onChange, errors, action }: Props) {
   const { t } = useTranslation()
+  return (
+    <FormRow label={label} errors={errors} action={action}>
+      {({ labelId, ...control }) => (
+        <ContactCombobox administrationId={administrationId} labelledBy={labelId} control={control} onChange={onChange}>
+          <span className="picker__value">{value || t('invoices.chooseContact')}</span>
+          <CaretIcon />
+        </ContactCombobox>
+      )}
+    </FormRow>
+  )
+}
+
+type ComboboxProps = {
+  administrationId: string
+  /** Names the combobox by the id of its label, or by label itself when it has none on screen. */
+  labelledBy?: string
+  label?: string
+  control: ControlProps
+  onChange: (contact: Contact) => void
+  className?: string
+  /** What the button shows, such as the chosen contact. */
+  children: ReactNode
+}
+
+/** The button that opens the contact search, and the search; its look is up to the caller. */
+export function ContactCombobox({ administrationId, labelledBy, label, control, onChange, className = 'picker__button', children }: ComboboxProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
@@ -43,6 +70,7 @@ export function ContactPicker({ administrationId, label, value, onChange, errors
   const button = useRef<HTMLButtonElement>(null)
   const found = useContactSearch(administrationId, query, open)
   const options = found.data ?? []
+  const { id } = control
 
   useEffect(() => {
     if (!open) {
@@ -84,53 +112,48 @@ export function ContactPicker({ administrationId, label, value, onChange, errors
       close()
     }
   }
+  const naming = labelledBy ? { 'aria-labelledby': labelledBy } : { 'aria-label': label }
 
   return (
-    <FormRow label={label} errors={errors} action={action}>
-      {({ id, labelId, ...described }) => (
-        <div className="picker" ref={root}>
-          <button
-            ref={button}
-            id={id}
-            type="button"
-            role="combobox"
-            className="picker__button"
-            aria-labelledby={labelId}
-            aria-expanded={open}
-            aria-haspopup="listbox"
-            aria-controls={`${id}-list`}
-            {...described}
-            onClick={() => setOpen(!open)}
-          >
-            <span className="picker__value">{value || t('invoices.chooseContact')}</span>
-            <CaretIcon />
-          </button>
-          {open && (
-            <div className="picker__panel">
-              <input
-                type="search"
-                aria-label={t('invoices.findContact')}
-                placeholder={t('invoices.findContact')}
-                autoFocus
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value)
-                  setActive(0)
-                }}
-                onKeyDown={onKeyDown}
-              />
-              <ul id={`${id}-list`} role="listbox" aria-labelledby={labelId}>
-                {options.map((c, index) => (
-                  <li key={c.id} role="option" aria-selected={index === active} className={index === active ? 'is-active' : ''} onClick={() => pick(c)}>
-                    {contactName(c)}
-                  </li>
-                ))}
-              </ul>
-              {found.data && options.length === 0 && <p className="picker__empty">{t('invoices.noContacts')}</p>}
-            </div>
-          )}
+    <div className="picker" ref={root}>
+      <button
+        ref={button}
+        type="button"
+        role="combobox"
+        className={className}
+        {...naming}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-controls={`${id}-list`}
+        {...control}
+        onClick={() => setOpen(!open)}
+      >
+        {children}
+      </button>
+      {open && (
+        <div className="picker__panel">
+          <input
+            type="search"
+            aria-label={t('invoices.findContact')}
+            placeholder={t('invoices.findContact')}
+            autoFocus
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setActive(0)
+            }}
+            onKeyDown={onKeyDown}
+          />
+          <ul id={`${id}-list`} role="listbox" {...naming}>
+            {options.map((c, index) => (
+              <li key={c.id} role="option" aria-selected={index === active} className={index === active ? 'is-active' : ''} onClick={() => pick(c)}>
+                {contactName(c)}
+              </li>
+            ))}
+          </ul>
+          {found.data && options.length === 0 && <p className="picker__empty">{t('invoices.noContacts')}</p>}
         </div>
       )}
-    </FormRow>
+    </div>
   )
 }
