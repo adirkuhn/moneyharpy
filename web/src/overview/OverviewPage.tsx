@@ -5,7 +5,7 @@ import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { useCurrentUser } from '../auth/queries'
 import { formatAmount } from '../banking/queries'
-import { TileIcon } from '../layout/icons'
+import { ListIcon, TileIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Menu } from '../layout/Menu'
 import { NotFoundPage } from '../layout/NotFoundPage'
@@ -50,7 +50,7 @@ export function OverviewPage() {
     <Page
       title={greeting}
       actions={(sales || documents || settings) && (
-        <Menu label={t('overview.add')} buttonClassName="btn btn--accent">
+        <Menu label={<><ListIcon kind="plus" />{t('overview.add')}</>} buttonClassName="btn btn--accent">
           <nav aria-label={t('overview.addMenu')}>
             {(sales || documents) && (
               <ul className="menu__list">
