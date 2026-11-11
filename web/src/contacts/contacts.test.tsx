@@ -210,7 +210,7 @@ describe('a contact', () => {
 
   it("shows a company in Moneybird's contact card", async () => {
     server.use(...loaded())
-    server.use(http.get('*/api/v2/11/contacts/901', () => HttpResponse.json(contact({ chamber_of_commerce: '12345678', phone: null }))))
+    server.use(http.get('*/api/v2/11/contacts/901', () => HttpResponse.json(contact({ chamber_of_commerce: '12345678', tax_number: 'NL000099998B57', phone: null }))))
     renderAt('/11/contacts/901')
     expect(await screen.findByRole('heading', { level: 1, name: 'Contact' })).toBeInTheDocument()
     const card = await screen.findByRole('region', { name: 'Example Shop B.V.' })
@@ -220,7 +220,10 @@ describe('a contact', () => {
     expect(within(card).getByRole('link', { name: 'View the Dutch Chamber of Commerce page of this company' })).toHaveAttribute('href', expect.stringContaining('12345678'))
     expect(within(card).queryByRole('link', { name: 'Call this contact' })).toBeNull()
     const facts = within(card).getAllByRole('term').map((dt) => dt.textContent)
-    expect(facts).toEqual(['Email address', 'Address', 'Netherlands Chamber of Commerce KVK number'])
+    expect(facts).toEqual(['Email address', 'Address', 'Netherlands Chamber of Commerce KVK number', 'VAT number'])
+    expect(within(card).getByText('NL000099998B57')).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Copy VAT number' })).toBeInTheDocument()
+    expect(within(card).queryByText(/Additional information may be available/)).toBeNull()
     expect(within(card).getByText('billing@example.com')).toBeInTheDocument()
     expect(within(card).getByText('Dam 1')).toBeInTheDocument()
     expect(within(card).getByText('1012JS Amsterdam')).toBeInTheDocument()
@@ -233,6 +236,14 @@ describe('a contact', () => {
     expect(screen.getByRole('button', { name: 'Add' })).toBeInTheDocument()
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Feed', 'Details', 'Tasks and notes'])
     expect(screen.getByRole('tab', { name: 'Feed' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('suggests the Dutch Chamber of Commerce for a Dutch company without a KVK number', async () => {
+    server.use(...loaded([contact(), ann], [], { companySearch: true }))
+    renderAt('/11/contacts/901')
+    const card = await screen.findByRole('region', { name: 'Example Shop B.V.' })
+    expect(await within(card).findByText(/Additional information may be available for this contact\./)).toBeInTheDocument()
+    expect(within(card).getByRole('link', { name: 'Add information from the Dutch Chamber of Commerce' })).toHaveAttribute('href', '/11/contacts/901/edit')
   })
 
   it('offers to call, email and find a private person', async () => {
@@ -278,10 +289,10 @@ describe('a contact', () => {
     expect(rows.map((l) => l.getAttribute('href'))).toEqual(['/11/sales_invoices/501', '/11/documents/receipts/601', '/11/documents/receipts/602'])
     expect(rows[0]).toHaveTextContent('Example Shop B.V. · 2026-0001 · Project X')
     expect(rows[0]).toHaveTextContent('Design work · Hosting')
-    expect(rows[0]).toHaveTextContent('+€121.00')
+    expect(rows[0]).toHaveTextContent('€+121.00')
     expect(rows[0]).toHaveTextContent('Paid')
     expect(rows[0]).toHaveTextContent('Oct 2')
-    expect(rows[1]).toHaveTextContent('-€25.10')
+    expect(rows[1]).toHaveTextContent('€-25.10')
     expect(rows[2]).toHaveTextContent('Aug 3, 2025')
   })
 
