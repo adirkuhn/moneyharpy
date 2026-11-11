@@ -138,6 +138,36 @@ export function useUnlinkBooking(administrationId: string, id: string) {
   })
 }
 
+/** Pays a sales invoice with what the transaction has open, or the amount given in its direction. */
+export function useLinkInvoice(administrationId: string, id: string) {
+  const client = useQueryClient()
+  const saved = useMutationSaved(administrationId, id)
+  return useMutation({
+    mutationFn: (body: { booking_id: string; price_base?: string }) =>
+      unwrap(api.PATCH('/api/v2/{administration_id}/financial_mutations/{id}/link_booking', { ...one(administrationId, id), body: { booking_type: 'SalesInvoice', ...body } })),
+    onSuccess: saved.onSuccess,
+    onSettled: () => {
+      void saved.onSettled()
+      void client.invalidateQueries({ queryKey: ['sales-invoices', administrationId] })
+      void client.invalidateQueries({ queryKey: ['sales-invoice', administrationId] })
+    },
+  })
+}
+
+export function useUnlinkPayment(administrationId: string, id: string) {
+  const client = useQueryClient()
+  const saved = useMutationSaved(administrationId, id)
+  return useMutation({
+    mutationFn: (paymentId: string) =>
+      unwrap(api.DELETE('/api/v2/{administration_id}/financial_mutations/{id}/unlink_booking', { ...one(administrationId, id), body: { booking_type: 'Payment', booking_id: paymentId } })),
+    onSuccess: saved.onSuccess,
+    onSettled: () => {
+      void saved.onSettled()
+      void client.invalidateQueries({ queryKey: ['sales-invoice', administrationId] })
+    },
+  })
+}
+
 export function useBookingRules(administrationId: string) {
   return useQuery({
     queryKey: ['booking-rules', administrationId],

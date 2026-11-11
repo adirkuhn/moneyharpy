@@ -855,6 +855,21 @@ func (e LinkBookingRequestBookingType) Valid() bool {
 	}
 }
 
+// Defines values for MarkUncollectibleRequestBookMethod.
+const (
+	MarkUncollectibleRequestBookMethodRevenue MarkUncollectibleRequestBookMethod = "revenue"
+)
+
+// Valid indicates whether the value is a known member of the MarkUncollectibleRequestBookMethod enum.
+func (e MarkUncollectibleRequestBookMethod) Valid() bool {
+	switch e {
+	case MarkUncollectibleRequestBookMethodRevenue:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for OverviewItemType.
 const (
 	OverviewItemTypeFinancialMutation OverviewItemType = "financial_mutation"
@@ -864,6 +879,63 @@ const (
 func (e OverviewItemType) Valid() bool {
 	switch e {
 	case OverviewItemTypeFinancialMutation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaymentInvoiceType.
+const (
+	PaymentInvoiceTypeDocument             PaymentInvoiceType = "Document"
+	PaymentInvoiceTypeExternalSalesInvoice PaymentInvoiceType = "ExternalSalesInvoice"
+	PaymentInvoiceTypeSalesInvoice         PaymentInvoiceType = "SalesInvoice"
+	PaymentInvoiceTypeVatDocument          PaymentInvoiceType = "VatDocument"
+)
+
+// Valid indicates whether the value is a known member of the PaymentInvoiceType enum.
+func (e PaymentInvoiceType) Valid() bool {
+	switch e {
+	case PaymentInvoiceTypeDocument:
+		return true
+	case PaymentInvoiceTypeExternalSalesInvoice:
+		return true
+	case PaymentInvoiceTypeSalesInvoice:
+		return true
+	case PaymentInvoiceTypeVatDocument:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PaymentRequestPaymentManualPaymentAction.
+const (
+	BalanceSettlement   PaymentRequestPaymentManualPaymentAction = "balance_settlement"
+	BankTransfer        PaymentRequestPaymentManualPaymentAction = "bank_transfer"
+	CashPayment         PaymentRequestPaymentManualPaymentAction = "cash_payment"
+	InvoicesSettlement  PaymentRequestPaymentManualPaymentAction = "invoices_settlement"
+	PaymentWithoutProof PaymentRequestPaymentManualPaymentAction = "payment_without_proof"
+	PrivatePayment      PaymentRequestPaymentManualPaymentAction = "private_payment"
+	RoundingError       PaymentRequestPaymentManualPaymentAction = "rounding_error"
+)
+
+// Valid indicates whether the value is a known member of the PaymentRequestPaymentManualPaymentAction enum.
+func (e PaymentRequestPaymentManualPaymentAction) Valid() bool {
+	switch e {
+	case BalanceSettlement:
+		return true
+	case BankTransfer:
+		return true
+	case CashPayment:
+		return true
+	case InvoicesSettlement:
+		return true
+	case PaymentWithoutProof:
+		return true
+	case PrivatePayment:
+		return true
+	case RoundingError:
 		return true
 	default:
 		return false
@@ -1017,6 +1089,24 @@ func (e Scope) Valid() bool {
 	case ScopeSettings:
 		return true
 	case ScopeTimeEntries:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SendRemindersRequestSalesInvoiceRemindersDeliveryMethod.
+const (
+	SendRemindersRequestSalesInvoiceRemindersDeliveryMethodEmail  SendRemindersRequestSalesInvoiceRemindersDeliveryMethod = "Email"
+	SendRemindersRequestSalesInvoiceRemindersDeliveryMethodManual SendRemindersRequestSalesInvoiceRemindersDeliveryMethod = "Manual"
+)
+
+// Valid indicates whether the value is a known member of the SendRemindersRequestSalesInvoiceRemindersDeliveryMethod enum.
+func (e SendRemindersRequestSalesInvoiceRemindersDeliveryMethod) Valid() bool {
+	switch e {
+	case SendRemindersRequestSalesInvoiceRemindersDeliveryMethodEmail:
+		return true
+	case SendRemindersRequestSalesInvoiceRemindersDeliveryMethodManual:
 		return true
 	default:
 		return false
@@ -3227,6 +3317,9 @@ type DocumentStyleRequestDocumentStylePaperSize string
 // DocumentType defines model for DocumentType.
 type DocumentType string
 
+// EmptyRequest defines model for EmptyRequest.
+type EmptyRequest = map[string]interface{}
+
 // Error defines model for Error.
 type Error struct {
 	Error    string                  `json:"error"`
@@ -4080,6 +4173,20 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// MarkDubiousRequest defines model for MarkDubiousRequest.
+type MarkDubiousRequest struct {
+	DubiousDate *openapi_types.Date `json:"dubious_date,omitempty"`
+}
+
+// MarkUncollectibleRequest defines model for MarkUncollectibleRequest.
+type MarkUncollectibleRequest struct {
+	BookMethod        *MarkUncollectibleRequestBookMethod `json:"book_method,omitempty"`
+	UncollectibleDate *openapi_types.Date                 `json:"uncollectible_date,omitempty"`
+}
+
+// MarkUncollectibleRequestBookMethod defines model for MarkUncollectibleRequest.BookMethod.
+type MarkUncollectibleRequestBookMethod string
+
 // Money An amount of money, such as "10.95" or "-3,5". A number is accepted too.
 type Money struct {
 	union json.RawMessage
@@ -4126,6 +4233,9 @@ type Overview struct {
 
 	// RecentlyProcessed The records processed last, newest first, at most 25.
 	RecentlyProcessed []OverviewItem `json:"recently_processed"`
+
+	// Sales Present only with the sales invoices permission.
+	Sales *OverviewSales `json:"sales,omitempty"`
 }
 
 // OverviewBank Present only with the bank permission.
@@ -4166,6 +4276,27 @@ type OverviewItem struct {
 // OverviewItemType What kind of record this is; more kinds join as MoneyHarpy grows.
 type OverviewItemType string
 
+// OverviewSales Present only with the sales invoices permission.
+type OverviewSales struct {
+	// Currency Example: EUR
+	Currency string `json:"currency"`
+
+	// ToReceive Sent invoices still to be paid; to_remind holds those past their due date and not paused.
+	ToReceive OverviewTally `json:"to_receive"`
+
+	// ToRemind Sent invoices still to be paid; to_remind holds those past their due date and not paused.
+	ToRemind OverviewTally `json:"to_remind"`
+}
+
+// OverviewTally Sent invoices still to be paid; to_remind holds those past their due date and not paused.
+type OverviewTally struct {
+	// Amount What they have unpaid.
+	//
+	// Example: 1210.0
+	Amount string `json:"amount"`
+	Count  int    `json:"count"`
+}
+
 // PasswordResetConfirmation defines model for PasswordResetConfirmation.
 type PasswordResetConfirmation struct {
 	Password string `json:"password"`
@@ -4179,6 +4310,97 @@ type PasswordResetRequest struct {
 	// Language The language code used in the administration
 	Language *Language `json:"language,omitempty"`
 }
+
+// Payment A Moneybird payment.
+type Payment struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier `json:"administration_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt Timestamp `json:"created_at"`
+
+	// CreditInvoiceId Moneybird-compatible identifier_nullable.
+	CreditInvoiceId *IdentifierNullable `json:"credit_invoice_id,omitempty"`
+
+	// FinancialAccountId Moneybird-compatible identifier_nullable.
+	FinancialAccountId *IdentifierNullable `json:"financial_account_id,omitempty"`
+
+	// FinancialMutationId Moneybird-compatible identifier_nullable.
+	FinancialMutationId *IdentifierNullable `json:"financial_mutation_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// InvoiceId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	InvoiceId   Identifier         `json:"invoice_id"`
+	InvoiceType PaymentInvoiceType `json:"invoice_type"`
+
+	// LedgerAccountId Moneybird-compatible identifier_nullable.
+	LedgerAccountId *IdentifierNullable `json:"ledger_account_id,omitempty"`
+
+	// LinkedPaymentId Moneybird-compatible identifier_nullable.
+	LinkedPaymentId     *IdentifierNullable `json:"linked_payment_id,omitempty"`
+	ManualPaymentAction *string             `json:"manual_payment_action,omitempty"`
+	PaymentDate         openapi_types.Date  `json:"payment_date"`
+
+	// PaymentTransactionId Moneybird-compatible identifier_nullable.
+	PaymentTransactionId *IdentifierNullable `json:"payment_transaction_id,omitempty"`
+
+	// Price Moneybird-compatible number.
+	Price *Number `json:"price"`
+
+	// PriceBase Moneybird-compatible number.
+	PriceBase             *Number `json:"price_base"`
+	TransactionIdentifier *string `json:"transaction_identifier,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt Timestamp `json:"updated_at"`
+
+	// UserId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	UserId *Identifier `json:"user_id,omitempty"`
+}
+
+// PaymentInvoiceType defines model for Payment.InvoiceType.
+type PaymentInvoiceType string
+
+// PaymentRequest defines model for PaymentRequest.
+type PaymentRequest struct {
+	Payment struct {
+		// FinancialAccountId An id as a string or a number; an empty string clears it.
+		FinancialAccountId *FlexibleIdentifier `json:"financial_account_id,omitempty"`
+
+		// FinancialMutationId An id as a string or a number; an empty string clears it.
+		FinancialMutationId *FlexibleIdentifier `json:"financial_mutation_id,omitempty"`
+
+		// InvoiceId An id as a string or a number; an empty string clears it.
+		InvoiceId *FlexibleIdentifier `json:"invoice_id,omitempty"`
+
+		// LedgerAccountId An id as a string or a number; an empty string clears it.
+		LedgerAccountId     *FlexibleIdentifier                       `json:"ledger_account_id,omitempty"`
+		ManualPaymentAction *PaymentRequestPaymentManualPaymentAction `json:"manual_payment_action,omitempty"`
+
+		// PaymentDate yyyy-mm-dd; a time after it is ignored.
+		PaymentDate string `json:"payment_date"`
+
+		// Price An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+		Price Money `json:"price"`
+
+		// PriceBase An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+		PriceBase             *Money  `json:"price_base,omitempty"`
+		TransactionIdentifier *string `json:"transaction_identifier,omitempty"`
+	} `json:"payment"`
+}
+
+// PaymentRequestPaymentManualPaymentAction defines model for PaymentRequest.Payment.ManualPaymentAction.
+type PaymentRequestPaymentManualPaymentAction string
 
 // Permission Opens the API resources of the scope with the same name; ownership opens managing the administration: its users, security and deletion.
 type Permission string
@@ -4498,6 +4720,30 @@ type SalesInvoiceRequest_SalesInvoice_FirstDueInterval struct {
 
 // Scope defines model for Scope.
 type Scope string
+
+// SendRemindersRequest defines model for SendRemindersRequest.
+type SendRemindersRequest struct {
+	SalesInvoiceReminders []struct {
+		// ContactId An id as a string or a number; an empty string clears it.
+		ContactId      FlexibleIdentifier                                       `json:"contact_id"`
+		DeliveryMethod *SendRemindersRequestSalesInvoiceRemindersDeliveryMethod `json:"delivery_method,omitempty"`
+
+		// DocumentStyleId An id as a string or a number; an empty string clears it.
+		DocumentStyleId FlexibleIdentifier `json:"document_style_id"`
+		EmailAddress    *string            `json:"email_address,omitempty"`
+
+		// IdentityId An id as a string or a number; an empty string clears it.
+		IdentityId      FlexibleIdentifier   `json:"identity_id"`
+		ReminderText    *string              `json:"reminder_text,omitempty"`
+		SalesInvoiceIds []FlexibleIdentifier `json:"sales_invoice_ids"`
+
+		// WorkflowId An id as a string or a number; an empty string clears it.
+		WorkflowId FlexibleIdentifier `json:"workflow_id"`
+	} `json:"sales_invoice_reminders"`
+}
+
+// SendRemindersRequestSalesInvoiceRemindersDeliveryMethod defines model for SendRemindersRequest.SalesInvoiceReminders.DeliveryMethod.
+type SendRemindersRequestSalesInvoiceRemindersDeliveryMethod string
 
 // SendSalesInvoiceRequest defines model for SendSalesInvoiceRequest.
 type SendSalesInvoiceRequest struct {
@@ -6725,6 +6971,9 @@ type UpdateLedgerAccountJSONRequestBody = LedgerAccountRequest
 // CreateSalesInvoiceJSONRequestBody defines body for CreateSalesInvoice for application/json ContentType.
 type CreateSalesInvoiceJSONRequestBody = SalesInvoiceRequest
 
+// SendSalesInvoiceRemindersJSONRequestBody defines body for SendSalesInvoiceReminders for application/json ContentType.
+type SendSalesInvoiceRemindersJSONRequestBody = SendRemindersRequest
+
 // FetchSalesInvoicesJSONRequestBody defines body for FetchSalesInvoices for application/json ContentType.
 type FetchSalesInvoicesJSONRequestBody = SynchronizationRequest
 
@@ -6737,8 +6986,25 @@ type CreateSalesInvoiceAttachmentMultipartRequestBody CreateSalesInvoiceAttachme
 // DuplicateCreditSalesInvoiceJSONRequestBody defines body for DuplicateCreditSalesInvoice for application/json ContentType.
 type DuplicateCreditSalesInvoiceJSONRequestBody = CreditInvoiceRequest
 
+// MarkSalesInvoiceAsDubiousJSONRequestBody defines body for MarkSalesInvoiceAsDubious for application/json ContentType.
+type MarkSalesInvoiceAsDubiousJSONRequestBody = MarkDubiousRequest
+
+// MarkSalesInvoiceAsUncollectibleJSONRequestBody defines body for MarkSalesInvoiceAsUncollectible for application/json ContentType.
+type MarkSalesInvoiceAsUncollectibleJSONRequestBody = MarkUncollectibleRequest
+
 // CreateSalesInvoiceNoteJSONRequestBody defines body for CreateSalesInvoiceNote for application/json ContentType.
 type CreateSalesInvoiceNoteJSONRequestBody = NoteRequest
+
+// CreateSalesInvoicePaymentJSONRequestBody defines body for CreateSalesInvoicePayment for application/json ContentType.
+type CreateSalesInvoicePaymentJSONRequestBody = PaymentRequest
+
+// RegisterSalesInvoicePaymentJSONRequestBody defines body for RegisterSalesInvoicePayment for application/json ContentType.
+//
+// Deprecated: this type has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+type RegisterSalesInvoicePaymentJSONRequestBody = PaymentRequest
+
+// SettleSalesCreditInvoiceJSONRequestBody defines body for SettleSalesCreditInvoice for application/json ContentType.
+type SettleSalesCreditInvoiceJSONRequestBody = EmptyRequest
 
 // SendSalesInvoiceJSONRequestBody defines body for SendSalesInvoice for application/json ContentType.
 type SendSalesInvoiceJSONRequestBody = SendSalesInvoiceRequest
@@ -9807,6 +10073,9 @@ type ServerInterface interface {
 	// GetSalesInvoiceByReference Find a sales invoice by reference
 	// (GET /api/v2/{administration_id}/sales_invoices/find_by_reference/{reference})
 	GetSalesInvoiceByReference(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, reference string)
+	// SendSalesInvoiceReminders Send reminders
+	// (POST /api/v2/{administration_id}/sales_invoices/send_reminders)
+	SendSalesInvoiceReminders(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// ListSalesInvoiceVersions List all ids and versions
 	// (GET /api/v2/{administration_id}/sales_invoices/synchronization)
 	ListSalesInvoiceVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListSalesInvoiceVersionsParams)
@@ -9843,6 +10112,12 @@ type ServerInterface interface {
 	// DuplicateCreditSalesInvoice Create a credit invoice
 	// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/duplicate_creditinvoice)
 	DuplicateCreditSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// MarkSalesInvoiceAsDubious Mark as dubious
+	// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/mark_as_dubious)
+	MarkSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// MarkSalesInvoiceAsUncollectible Mark as uncollectible
+	// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/mark_as_uncollectible)
+	MarkSalesInvoiceAsUncollectible(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// CreateSalesInvoiceNote Add note to a sales invoice
 	// (POST /api/v2/{administration_id}/sales_invoices/{id}/notes)
 	CreateSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -9852,6 +10127,20 @@ type ServerInterface interface {
 	// PauseSalesInvoice Pause a sales invoice
 	// (POST /api/v2/{administration_id}/sales_invoices/{id}/pause)
 	PauseSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateSalesInvoicePayment Create a payment
+	// (POST /api/v2/{administration_id}/sales_invoices/{id}/payments)
+	CreateSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteSalesInvoicePayment Delete a payment
+	// (DELETE /api/v2/{administration_id}/sales_invoices/{id}/payments/{payment_id})
+	DeleteSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, paymentId Identifier)
+	// RegisterSalesInvoicePayment Register a payment
+	// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/register_payment)
+	//
+	// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	RegisterSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// SettleSalesCreditInvoice Register a payment for a credit invoice
+	// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/register_payment_creditinvoice)
+	SettleSalesCreditInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ResumeSalesInvoice Resume a sales invoice
 	// (POST /api/v2/{administration_id}/sales_invoices/{id}/resume)
 	ResumeSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -10776,6 +11065,12 @@ func (_ Unimplemented) GetSalesInvoiceByReference(w http.ResponseWriter, r *http
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// SendSalesInvoiceReminders Send reminders
+// (POST /api/v2/{administration_id}/sales_invoices/send_reminders)
+func (_ Unimplemented) SendSalesInvoiceReminders(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListSalesInvoiceVersions List all ids and versions
 // (GET /api/v2/{administration_id}/sales_invoices/synchronization)
 func (_ Unimplemented) ListSalesInvoiceVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListSalesInvoiceVersionsParams) {
@@ -10848,6 +11143,18 @@ func (_ Unimplemented) DuplicateCreditSalesInvoice(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// MarkSalesInvoiceAsDubious Mark as dubious
+// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/mark_as_dubious)
+func (_ Unimplemented) MarkSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// MarkSalesInvoiceAsUncollectible Mark as uncollectible
+// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/mark_as_uncollectible)
+func (_ Unimplemented) MarkSalesInvoiceAsUncollectible(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // CreateSalesInvoiceNote Add note to a sales invoice
 // (POST /api/v2/{administration_id}/sales_invoices/{id}/notes)
 func (_ Unimplemented) CreateSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
@@ -10863,6 +11170,32 @@ func (_ Unimplemented) DeleteSalesInvoiceNote(w http.ResponseWriter, r *http.Req
 // PauseSalesInvoice Pause a sales invoice
 // (POST /api/v2/{administration_id}/sales_invoices/{id}/pause)
 func (_ Unimplemented) PauseSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateSalesInvoicePayment Create a payment
+// (POST /api/v2/{administration_id}/sales_invoices/{id}/payments)
+func (_ Unimplemented) CreateSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteSalesInvoicePayment Delete a payment
+// (DELETE /api/v2/{administration_id}/sales_invoices/{id}/payments/{payment_id})
+func (_ Unimplemented) DeleteSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, paymentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RegisterSalesInvoicePayment Register a payment
+// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/register_payment)
+//
+// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+func (_ Unimplemented) RegisterSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SettleSalesCreditInvoice Register a payment for a credit invoice
+// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/register_payment_creditinvoice)
+func (_ Unimplemented) SettleSalesCreditInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -15501,6 +15834,32 @@ func (siw *ServerInterfaceWrapper) GetSalesInvoiceByReference(w http.ResponseWri
 	handler.ServeHTTP(w, r)
 }
 
+// SendSalesInvoiceReminders operation middleware
+func (siw *ServerInterfaceWrapper) SendSalesInvoiceReminders(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SendSalesInvoiceReminders(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSalesInvoiceVersions operation middleware
 func (siw *ServerInterfaceWrapper) ListSalesInvoiceVersions(w http.ResponseWriter, r *http.Request) {
 
@@ -15937,6 +16296,76 @@ func (siw *ServerInterfaceWrapper) DuplicateCreditSalesInvoice(w http.ResponseWr
 	handler.ServeHTTP(w, r)
 }
 
+// MarkSalesInvoiceAsDubious operation middleware
+func (siw *ServerInterfaceWrapper) MarkSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MarkSalesInvoiceAsDubious(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MarkSalesInvoiceAsUncollectible operation middleware
+func (siw *ServerInterfaceWrapper) MarkSalesInvoiceAsUncollectible(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MarkSalesInvoiceAsUncollectible(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateSalesInvoiceNote operation middleware
 func (siw *ServerInterfaceWrapper) CreateSalesInvoiceNote(w http.ResponseWriter, r *http.Request) {
 
@@ -16042,6 +16471,155 @@ func (siw *ServerInterfaceWrapper) PauseSalesInvoice(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PauseSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSalesInvoicePayment operation middleware
+func (siw *ServerInterfaceWrapper) CreateSalesInvoicePayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSalesInvoicePayment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteSalesInvoicePayment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSalesInvoicePayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "payment_id" -------------
+	var paymentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "payment_id", chi.URLParam(r, "payment_id"), &paymentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "payment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSalesInvoicePayment(w, r, administrationId, id, paymentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RegisterSalesInvoicePayment operation middleware
+func (siw *ServerInterfaceWrapper) RegisterSalesInvoicePayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RegisterSalesInvoicePayment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SettleSalesCreditInvoice operation middleware
+func (siw *ServerInterfaceWrapper) SettleSalesCreditInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SettleSalesCreditInvoice(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -17483,6 +18061,27 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/notes/{note_id}", wrapper.DeleteSalesInvoiceNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/send_reminders", wrapper.SendSalesInvoiceReminders)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/payments", wrapper.CreateSalesInvoicePayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/payments/{payment_id}", wrapper.DeleteSalesInvoicePayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/register_payment", wrapper.RegisterSalesInvoicePayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/register_payment_creditinvoice", wrapper.SettleSalesCreditInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/mark_as_dubious", wrapper.MarkSalesInvoiceAsDubious)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/mark_as_uncollectible", wrapper.MarkSalesInvoiceAsUncollectible)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/attachments", wrapper.CreateSalesInvoiceAttachment)

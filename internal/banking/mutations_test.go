@@ -44,7 +44,10 @@ func TestBookingRefusals(t *testing.T) {
 	acc := bank(t, svc)
 	m := transactions(t, svc, acc, "10")[0]
 	if _, err := svc.LinkBooking(ctx, adminID, m.ID, owner, Link{Type: "SalesInvoice", BookingID: ptr(rentCategory)}); !errors.Is(err, ErrBookingUnavailable) {
-		t.Errorf("SalesInvoice error = %v", err)
+		t.Errorf("SalesInvoice without invoices error = %v", err)
+	}
+	if _, err := svc.LinkBooking(ctx, adminID, m.ID, owner, Link{Type: "ExternalSalesInvoice", BookingID: ptr(rentCategory)}); !errors.Is(err, ErrBookingUnavailable) {
+		t.Errorf("ExternalSalesInvoice error = %v", err)
 	}
 	if _, err := svc.LinkBooking(ctx, adminID, m.ID, owner, Link{Type: "Nope"}); fieldsOf(t, err)["booking_type"] == nil {
 		t.Error("accepted an unknown booking type")
@@ -141,5 +144,62 @@ func TestSummaryCountsWhatIsLeftToLink(t *testing.T) {
 	}
 	if _, err := svc.Summary(ctx, adminID, stranger, 10); err == nil {
 		t.Error("a stranger got a summary")
+	}
+}
+
+func TestLinkingInvoicePayments(t *testing.T) {
+	svc, store, ledger := newTestService()
+	invoices := &fakeInvoices{store: store, unpaid: map[resource.ID]Amount{9001: 6000, 9002: 10000}}
+	svc.UseInvoices(invoices)
+	ctx := context.Background()
+	acc := bank(t, svc)
+	m := transactions(t, svc, acc, "100")[0]
+	got, err := svc.LinkBooking(ctx, adminID, m.ID, owner, Link{Type: "SalesInvoice", BookingID: ptr(resourceID(9001))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The invoice had 60.00 unpaid; 40.00 stays open.
+	if got.Open() != 4000 || got.State != Unprocessed || len(got.Payments) != 1 {
+		t.Errorf("after first invoice: open %s, %s", got.Open(), got.State)
+	}
+	id, err := svc.LinkInvoicePayment(ctx, adminID, m.ID, owner, 9002, nil)
+	if err != nil || id == 0 {
+		t.Fatalf("link = %d, %v", id, err)
+	}
+	got, _ = svc.Mutation(ctx, adminID, m.ID, owner)
+	if got.Open() != 0 || got.State != Processed {
+		t.Errorf("after second invoice: open %s, %s", got.Open(), got.State)
+	}
+	if _, err := svc.LinkBooking(ctx, adminID, m.ID, owner, Link{Type: "SalesInvoice", BookingID: ptr(resourceID(9001))}); fieldsOf(t, err)["price_base"] == nil {
+		t.Error("linked a transaction with nothing open")
+	}
+	if err := svc.DeleteStatement(ctx, adminID, m.StatementID, owner); !errors.Is(err, ErrStatementBooked) {
+		t.Errorf("deleted a statement paying invoices: %v", err)
+	}
+	if _, err := svc.UnlinkBooking(ctx, adminID, m.ID, owner, "Payment", 1); !errors.Is(err, ErrBookingNotFound) {
+		t.Errorf("unlink unknown payment = %v", err)
+	}
+	ledger.locked = "2026-11-30"
+	if _, err := svc.UnlinkBooking(ctx, adminID, m.ID, owner, "Payment", id); fieldsOf(t, err)["date"] == nil {
+		t.Error("unlinked in the locked period")
+	}
+	ledger.locked = ""
+	if err := svc.UnlinkPayment(ctx, adminID, m.ID, owner, id); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = svc.Mutation(ctx, adminID, m.ID, owner)
+	if got.Open() != 4000 || got.State != Unprocessed || invoices.unpaid[9002] != 10000 {
+		t.Errorf("after unlink: open %s, %s", got.Open(), got.State)
+	}
+	// An outgoing transaction pays back a credit invoice: the price is in
+	// the transaction's direction, the payment signed like the invoice.
+	out := transactions(t, svc, acc, "-25")[0]
+	invoices.unpaid[9003] = -2500
+	got, err = svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: "SalesInvoice", BookingID: ptr(resourceID(9003)), Price: ptr("25")})
+	if err != nil || got.State != Processed || got.Payments[0].Price != -2500 {
+		t.Errorf("credit = %+v, %v", got, err)
+	}
+	if ledgerID, err := svc.AccountLedger(ctx, adminID, acc.ID, owner); err != nil || ledgerID != acc.LedgerAccountID {
+		t.Errorf("account ledger = %d, %v", ledgerID, err)
 	}
 }

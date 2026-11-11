@@ -1,17 +1,21 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { useLedgerAccounts } from '../bookkeeping/queries'
+import { contactName } from '../contacts/queries'
 import { FormSection, formErrors, TextInput } from '../forms/Form'
+import { invoiceTitle, type SalesInvoice, unpaidStates, useSalesInvoice, useSalesInvoices } from '../invoices/queries'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { Block } from '../settings/Block'
 import { CategorySelect } from './CategorySelect'
-import { type Booking, formatAmount, type Mutation, useFinancialAccounts, useLinkBooking, useMutationOne, useUnlinkBooking } from './queries'
+import {
+  type Booking, formatAmount, type Mutation, useFinancialAccounts, useLinkBooking, useLinkInvoice, useMutationOne, useUnlinkBooking, useUnlinkPayment,
+} from './queries'
 
 /** One transaction: its details, its bookings and a form to book what is open. */
 export function TransactionPage() {
@@ -84,6 +88,8 @@ function Transaction({ administrationId, mutation: m }: { administrationId: stri
         )}
       </Block>
 
+      <InvoicePayments administrationId={administrationId} mutation={m} />
+      {open !== 0 && <LinkInvoiceForm key={`invoice-${m.amount_open}`} administrationId={administrationId} mutation={m} />}
       {open !== 0 && <BookForm key={m.amount_open} administrationId={administrationId} mutation={m} />}
     </Page>
   )
@@ -114,6 +120,99 @@ function BookForm({ administrationId, mutation: m }: { administrationId: string;
         </FormSection>
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={link.isPending || !form.booking_id}>{t('bank.bookButton')}</button>
+        </div>
+      </form>
+    </Block>
+  )
+}
+
+/** The sales invoices the transaction pays, which can be unlinked again. */
+function InvoicePayments({ administrationId, mutation: m }: { administrationId: string; mutation: Mutation }) {
+  const { t } = useTranslation()
+  const unlink = useUnlinkPayment(administrationId, m.id ?? '')
+  const payments = m.payments ?? []
+  if (payments.length === 0) {
+    return null
+  }
+  return (
+    <Block id="invoice-payments" title={t('bank.invoicePayments')} subtitle={t('bank.invoicePaymentsSubtitle')}>
+      <Problems messages={formErrors(unlink.error, {}).general} />
+      <table className="data-table" aria-label={t('bank.invoicePayments')}>
+        <thead>
+          <tr>
+            <th scope="col">{t('bank.invoice')}</th>
+            <th scope="col" className="transactions__amount">{t('bank.amount')}</th>
+            <th scope="col"><span className="sr-only">{t('bookkeeping.actions')}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {payments.map((p) => (
+            <PaymentRow key={p.id} administrationId={administrationId} payment={p} currency={m.currency ?? 'EUR'} disabled={unlink.isPending} onUnlink={() => unlink.mutate(p.id ?? '')} />
+          ))}
+        </tbody>
+      </table>
+    </Block>
+  )
+}
+
+type PaymentRowProps = { administrationId: string; payment: NonNullable<Mutation['payments']>[number]; currency: string; disabled: boolean; onUnlink: () => void }
+
+function PaymentRow({ administrationId, payment: p, currency, disabled, onUnlink }: PaymentRowProps) {
+  const { t, i18n } = useTranslation()
+  const invoice = useSalesInvoice(administrationId, p.invoice_id ?? '')
+  const name = invoice.data ? invoiceTitle(invoice.data, t) : t('bank.salesInvoice')
+  return (
+    <tr>
+      <td><Link to={`/${administrationId}/sales_invoices/${p.invoice_id}`}>{name}</Link></td>
+      <td className="transactions__amount">{formatAmount(p.price, currency, i18n.language)}</td>
+      <td className="data-table__actions">
+        <button type="button" className="btn btn--secondary btn--small" disabled={disabled} aria-label={t('bank.unlinkInvoice', { id: name })} onClick={onUnlink}>
+          {t('bank.removeBooking')}
+        </button>
+      </td>
+    </tr>
+  )
+}
+
+/** Pays an open sales invoice with the transaction, found by its number, reference or contact. */
+function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: string; mutation: Mutation }) {
+  const { t, i18n } = useTranslation()
+  const id = useId()
+  const link = useLinkInvoice(administrationId, m.id ?? '')
+  const invoices = useSalesInvoices(administrationId, `state:${unpaidStates}`, 1)
+  const [search, setSearch] = useState('')
+  const [chosen, setChosen] = useState('')
+  const errors = formErrors(link.error, { booking_id: t('bank.invoice'), price_base: t('bank.amount'), date: t('bank.date') })
+  const term = search.trim().toLowerCase()
+  const matches = (invoices.data?.invoices ?? []).filter((inv: SalesInvoice) =>
+    !term || [inv.invoice_id, inv.reference, inv.contact ? contactName(inv.contact) : ''].some((v) => (v ?? '').toLowerCase().includes(term)),
+  )
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    link.mutate({ booking_id: chosen })
+  }
+  return (
+    <Block id="link-invoice" title={t('bank.linkInvoice')} subtitle={t('bank.linkInvoiceSubtitle')}>
+      <form className="form-sheet form-sheet--block" onSubmit={submit} noValidate aria-label={t('bank.linkInvoice')}>
+        <Problems messages={[...errors.general, ...(errors.field('booking_id') ?? []), ...(errors.field('price_base') ?? []), ...(errors.field('date') ?? [])]} />
+        <TextInput label={t('bank.findInvoice')} type="search" maxLength={100} help={t('bank.findInvoiceHelp')} value={search} onChange={(e) => setSearch(e.target.value)} />
+        {invoices.data && matches.length === 0 ? (
+          <p className="empty">{t('bank.noOpenInvoices')}</p>
+        ) : (
+          <fieldset className="invoice-choice">
+            <legend className="sr-only">{t('bank.invoice')}</legend>
+            {matches.slice(0, 10).map((inv) => (
+              <label key={inv.id} className="invoice-choice__row" htmlFor={`${id}-${inv.id}`}>
+                <input id={`${id}-${inv.id}`} type="radio" name={`${id}-invoice`} value={inv.id} checked={chosen === inv.id} onChange={() => setChosen(inv.id ?? '')} />
+                <span>{invoiceTitle(inv, t)}</span>
+                <span>{inv.contact ? contactName(inv.contact) : ''}</span>
+                <span className="transactions__amount">{formatAmount(inv.total_unpaid, inv.currency ?? 'EUR', i18n.language)}</span>
+              </label>
+            ))}
+          </fieldset>
+        )}
+        <div className="form-sheet__actions">
+          <button className="btn btn--primary" disabled={link.isPending || !chosen}>{t('bank.linkInvoiceButton')}</button>
         </div>
       </form>
     </Block>

@@ -116,6 +116,21 @@ func (s *server) authorize(spec *openapi3.T, rules map[string][]administration.P
 	}, nil
 }
 
+// requireAlso checks a permission an operation needs only for some requests,
+// beyond the ones its x-permissions declare, for the connection and the user.
+// It answers the request and reports false when the permission is missing.
+func (s *server) requireAlso(w http.ResponseWriter, r *http.Request, admin resource.ID, perm administration.Permission) bool {
+	if g, ok := grantFrom(r.Context()); ok && !g.Allows(perm) {
+		writeError(w, http.StatusForbidden, "This connection has no scope for this")
+		return false
+	}
+	if err := s.allowed(r.Context(), admin, user(r).ID, []administration.Permission{perm}); err != nil {
+		s.fail(w, r, err)
+		return false
+	}
+	return true
+}
+
 var (
 	errNoPermission   = errors.New("no permission")
 	errNeedsTwoFactor = errors.New("administration requires two-step verification")

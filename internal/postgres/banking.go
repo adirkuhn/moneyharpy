@@ -409,10 +409,27 @@ func (s *BankingStore) withBookings(ctx context.Context, admin resource.ID, rows
 		}
 		byMutation[b.FinancialMutationID] = append(byMutation[b.FinancialMutationID], bk)
 	}
+	payments, err := s.q.PaymentsOfMutations(ctx, sqlc.PaymentsOfMutationsParams{AdministrationID: int64(admin), Ids: ids})
+	if err != nil {
+		return nil, err
+	}
+	paid := map[int64][]banking.PaymentLink{}
+	for _, p := range payments {
+		link := banking.PaymentLink{
+			ID: resource.ID(p.ID), InvoiceType: p.InvoiceType, InvoiceID: resource.ID(p.InvoiceID), Price: banking.Amount(p.Price),
+			PriceBase: banking.Amount(p.PriceBase), PaymentDate: *dateOf(p.PaymentDate), ManualPaymentAction: p.ManualPaymentAction,
+			TransactionIdentifier: p.TransactionIdentifier, CreatedAt: p.CreatedAt.Time, UpdatedAt: p.UpdatedAt.Time,
+		}
+		if p.UserID.Valid {
+			link.UserID = resource.ID(p.UserID.Int64)
+		}
+		paid[p.FinancialMutationID.Int64] = append(paid[p.FinancialMutationID.Int64], link)
+	}
 	out := make([]banking.Mutation, len(rows))
 	for i, r := range rows {
 		out[i] = banking.Mutation{
-			ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), AccountID: resource.ID(r.FinancialAccountID),
+			Payments: paid[r.ID],
+			ID:       resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), AccountID: resource.ID(r.FinancialAccountID),
 			StatementID: resource.ID(r.FinancialStatementID), Date: *dateOf(r.Date), ValueDate: dateOf(r.ValutationDate), Message: r.Message,
 			Amount: banking.Amount(r.Amount), Currency: r.Currency, Code: r.Code, ContraName: r.ContraAccountName, ContraAccount: r.ContraAccountNumber,
 			BatchReference: r.BatchReference, TransactionID: r.TransactionID, Fingerprint: r.Fingerprint, Offset: int(r.Position), State: r.State,

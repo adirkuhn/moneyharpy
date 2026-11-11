@@ -193,7 +193,7 @@ func (s *Service) UpdateStatement(ctx context.Context, admin, id, user resource.
 		case !ok:
 			verr.Add(field, "is not a transaction of this statement")
 			continue
-		case len(m.Bookings) > 0:
+		case m.Booked():
 			verr.Add(field, "is booked; remove its bookings first")
 			continue
 		case locked != nil && !m.Date.After(*locked):
@@ -232,7 +232,7 @@ func (s *Service) DeleteStatement(ctx context.Context, admin, id, user resource.
 		return err
 	}
 	for _, m := range st.Mutations {
-		if len(m.Bookings) > 0 {
+		if m.Booked() {
 			return ErrStatementBooked
 		}
 	}

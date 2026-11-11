@@ -11,7 +11,8 @@ import { Menu } from '../layout/Menu'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { can } from '../management/queries'
-import { type OverviewItem, partOfDay, rememberAdministration, useOverview } from './queries'
+import { overdueStates, unpaidStates } from '../invoices/queries'
+import { type OverviewItem, type OverviewTally, partOfDay, rememberAdministration, useOverview } from './queries'
 
 /** The administration's home page: what waits in each part of the books and what was processed last. */
 export function OverviewPage() {
@@ -38,6 +39,7 @@ export function OverviewPage() {
   const firstName = me.data?.name.trim().split(/\s+/)[0] ?? ''
   const greeting = t(`overview.${partOfDay(new Date(), a.time_zone)}`, { name: firstName })
   const money = (amount: string) => formatAmount(amount, a.currency, i18n.language)
+  const tally = (v: OverviewTally | undefined) => v && t('overview.tally', { count: v.count, amount: money(v.amount) })
   const bank = can(a, 'bank')
   const sales = can(a, 'sales_invoices')
   const documents = can(a, 'documents')
@@ -70,8 +72,8 @@ export function OverviewPage() {
         )}
         {sales && (
           <Block title={t('overview.salesInvoices')}>
-            <Later icon="in" title={t('overview.toReceive')} />
-            <Later icon="attention" title={t('overview.toRemind')} />
+            <Tile icon="in" title={t('overview.toReceive')} to={`${base}/sales_invoices?filter=${encodeURIComponent(`state:${unpaidStates}`)}`} detail={tally(overview.data?.sales?.to_receive)} />
+            <Tile icon="attention" urgent title={t('overview.toRemind')} to={`${base}/sales_invoices?filter=${encodeURIComponent(`state:${overdueStates}`)}`} detail={tally(overview.data?.sales?.to_remind)} />
           </Block>
         )}
         {documents && (

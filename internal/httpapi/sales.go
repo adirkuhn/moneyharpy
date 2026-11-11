@@ -81,7 +81,7 @@ type salesInvoiceJSON struct {
 	PublicViewCodeExpiresAt *time.Time             `json:"public_view_code_expires_at"`
 	Version                 int64                  `json:"version"`
 	Details                 []salesDetailJSON      `json:"details"`
-	Payments                []any                  `json:"payments"`
+	Payments                []paymentJSON          `json:"payments"`
 	TotalPaid               string                 `json:"total_paid"`
 	TotalUnpaid             string                 `json:"total_unpaid"`
 	TotalUnpaidBase         string                 `json:"total_unpaid_base"`
@@ -159,12 +159,13 @@ func (s *server) toSalesInvoice(inv sales.Invoice, contact *contacts.Contact, to
 		DueDate: due.Format(time.DateOnly), PaymentConditions: nz(inv.PaymentConditions), PaymentReference: nz(inv.PaymentReference),
 		Reference: nz(inv.Reference), Language: inv.Language, Currency: inv.Currency, Discount: percentText(inv.Discount),
 		OriginalSalesInvoiceID: idString(inv.OriginalID), Paused: inv.Paused, PaidAt: date(inv.PaidAt), SentAt: date(inv.SentAt),
-		CreatedAt: inv.CreatedAt, UpdatedAt: inv.UpdatedAt, Version: inv.Version(), Details: []salesDetailJSON{}, Payments: []any{},
+		CreatedAt: inv.CreatedAt, UpdatedAt: inv.UpdatedAt, Version: inv.Version(), Details: []salesDetailJSON{}, Payments: []paymentJSON{},
 		TotalPaid: paid.String(), TotalUnpaid: unpaid.String(), TotalUnpaidBase: unpaid.String(), PricesAreInclTax: inv.PricesAreInclTax,
 		TotalPriceExclTax: inv.Totals.ExclTax.String(), TotalPriceExclTaxBase: inv.Totals.ExclTax.String(), TotalPriceInclTax: inv.Totals.InclTax.String(),
 		TotalPriceInclTaxBase: inv.Totals.InclTax.String(), TotalDiscount: inv.Totals.Discount.String(), TotalTax: inv.Totals.Tax.String(),
 		MarkedDubiousOn: date(inv.MarkedDubiousOn), MarkedUncollectibleOn: date(inv.MarkedUncollectibleOn), ReminderCount: inv.ReminderCount,
-		URL: strings.TrimSuffix(s.deps.BaseURL, "/") + inv.Ref().URI(), CustomFields: []customFieldValueJSON{}, Notes: []noteJSON{},
+		NextReminder: date(inv.NextReminder),
+		URL:          strings.TrimSuffix(s.deps.BaseURL, "/") + inv.Ref().URI(), CustomFields: []customFieldValueJSON{}, Notes: []noteJSON{},
 		Attachments: []attachmentJSON{}, Events: []any{}, TaxTotals: []taxTotalJSON{}, TimeEntries: []any{}, FirstDueInterval: inv.FirstDueInterval,
 		URI: inv.Ref().URI(),
 	}
@@ -200,6 +201,9 @@ func (s *server) toSalesInvoice(inv sales.Invoice, contact *contacts.Contact, to
 			TotalPriceExclTaxWithDiscBs: base, TaxReportReference: []string{}, IsOptional: d.Optional, IsSelected: d.Selected,
 			CreatedAt: d.CreatedAt, UpdatedAt: d.UpdatedAt,
 		})
+	}
+	for _, p := range inv.Payments {
+		out.Payments = append(out.Payments, toPayment(p))
 	}
 	for _, r := range inv.Totals.ByRate {
 		out.TaxTotals = append(out.TaxTotals, taxTotalJSON{TaxRateID: r.TaxRateID.String(), TaxableAmount: r.Taxable.String(), TaxableAmountBase: r.Taxable.String(), TaxAmount: r.Tax.String(), TaxAmountBase: r.Tax.String()})

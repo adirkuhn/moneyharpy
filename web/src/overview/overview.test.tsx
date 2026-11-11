@@ -10,6 +10,7 @@ const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 
 const full: Overview = {
   bank: { balance: '1250.5', currency: 'EUR', unprocessed_count: 3 },
+  sales: { to_receive: { count: 3, amount: '363.0' }, to_remind: { count: 1, amount: '121.0' }, currency: 'EUR' },
   recently_processed: [
     {
       type: 'financial_mutation', id: '701', uri: '/11/financial_mutations/701', title: 'Hosting Company', description: 'Invoice 12',
@@ -51,17 +52,29 @@ describe('administration overview', () => {
     expect(within(bank).getByRole('link', { name: /To link\s*3/ })).toHaveAttribute('href', '/11/financial_mutations?state=unprocessed&period=all')
   })
 
-  it('keeps a place for invoices and incoming documents until they exist', async () => {
+  it('shows the invoices to receive and to remind, linking to them', async () => {
     open()
     renderAt('/11/feed')
     const sales = await screen.findByRole('region', { name: 'Sales invoices and external invoices' })
-    expect(within(sales).getByText('To receive')).toBeInTheDocument()
-    expect(within(sales).getByText('To remind')).toBeInTheDocument()
-    expect(within(sales).getAllByText('Not available yet')).toHaveLength(2)
-    expect(within(sales).queryByRole('link')).toBeNull()
+    expect(await within(sales).findByRole('link', { name: /To receive\s*€363.00 · 3 invoices/ })).toHaveAttribute('href', '/11/sales_invoices?filter=state%3Aopen%7Clate%7Creminded%7Cpending_payment')
+    expect(within(sales).getByRole('link', { name: /To remind\s*€121.00 · 1 invoice$/ })).toHaveAttribute('href', '/11/sales_invoices?filter=state%3Alate%7Creminded')
+    expect(within(sales).queryByText('Not available yet')).toBeNull()
     const incoming = screen.getByRole('region', { name: 'Incoming' })
     expect(within(incoming).getByText('To pay')).toBeInTheDocument()
-    expect(within(incoming).getByText('To process')).toBeInTheDocument()
+    expect(within(incoming).getAllByText('Not available yet')).toHaveLength(2)
+  })
+
+  it('opens the filtered invoice list from a tile', async () => {
+    const seen: URL[] = []
+    open()
+    server.use(http.get('*/api/v2/11/sales_invoices', ({ request }) => {
+      seen.push(new URL(request.url))
+      return HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })
+    }))
+    renderAt('/11/feed')
+    const sales = await screen.findByRole('region', { name: 'Sales invoices and external invoices' })
+    await userEvent.click(await within(sales).findByRole('link', { name: /To remind/ }))
+    await waitFor(() => expect(seen.at(-1)?.searchParams.get('filter')).toBe('state:late|reminded'))
   })
 
   it('lists what was processed last', async () => {

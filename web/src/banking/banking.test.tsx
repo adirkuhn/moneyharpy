@@ -45,6 +45,7 @@ const loaded = () => [
   http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([software, salesOnly])),
   http.get('*/api/v2/11/financial_mutations', () => HttpResponse.json([mutation(), mutation({ id: '702', amount: '1000.0', amount_open: '0.0', state: 'processed', contra_account_name: null, message: 'Invoice 1', uri: '/11/financial_mutations/702' })])),
   http.get('*/api/v2/11/financial_mutations/701', () => HttpResponse.json(mutation())),
+  http.get('*/api/v2/11/sales_invoices', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
 ]
 
 describe('bank settings', () => {
@@ -211,5 +212,53 @@ describe('transactions', () => {
     const bookings = await screen.findByRole('table', { name: 'Bookings' })
     expect(within(bookings).getByText('Software')).toBeInTheDocument()
     expect(within(bookings).getByRole('button', { name: 'Remove the booking on Software' })).toBeInTheDocument()
+  })
+
+  it('pays an open sales invoice with an incoming transaction and unlinks it', async () => {
+    let sent: unknown
+    let unlinked: unknown
+    const incoming = mutation({ amount: '242.0', amount_open: '242.0', contra_account_name: 'Example Shop B.V.', message: 'Invoice 2026-0001' })
+    const shop = { id: '801', company_name: 'Example Shop B.V.', firstname: null, lastname: null }
+    const invoice = (id: string, number: string, reference: string) => ({
+      id, administration_id: '11', contact_id: '801', contact: shop, invoice_id: number, reference, state: 'open', currency: 'EUR', total_unpaid: '242.0',
+      details: [], tax_totals: [], payments: [], notes: [], attachments: [], events: [], total_price_excl_tax: '200.0', total_price_incl_tax: '242.0', version: 1, uri: `/11/sales_invoices/${id}`,
+    })
+    const paid = {
+      ...incoming, amount_open: '0.0', state: 'processed' as const,
+      payments: [{ id: '991', administration_id: '11', invoice_type: 'SalesInvoice' as const, invoice_id: '901', price: '242.0', price_base: '242.0', payment_date: '2026-11-01', created_at: stamp, updated_at: stamp }],
+    }
+    let current: Mutation = incoming
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/financial_mutations/701', () => HttpResponse.json(current)),
+      http.get('*/api/v2/11/sales_invoices', () => HttpResponse.json([invoice('901', '2026-0001', 'Order 12'), invoice('902', '2026-0002', 'Order 13')], { headers: { 'X-Total-Count': '2' } })),
+      http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice('901', '2026-0001', 'Order 12'))),
+      http.patch('*/api/v2/11/financial_mutations/701/link_booking', async ({ request }) => {
+        sent = await request.json()
+        current = paid as Mutation
+        return HttpResponse.json(current)
+      }),
+      http.delete('*/api/v2/11/financial_mutations/701/unlink_booking', async ({ request }) => {
+        unlinked = await request.json()
+        current = incoming
+        return HttpResponse.json(current)
+      }),
+    )
+    renderAt('/11/financial_mutations/701')
+    const form = await screen.findByRole('form', { name: 'Link to an invoice' })
+    await userEvent.type(within(form).getByLabelText('Find an invoice'), 'order 13')
+    expect(await within(form).findByRole('radio', { name: /2026-0002/ })).toBeInTheDocument()
+    expect(within(form).queryByRole('radio', { name: /2026-0001/ })).toBeNull()
+    await userEvent.clear(within(form).getByLabelText('Find an invoice'))
+    await userEvent.type(within(form).getByLabelText('Find an invoice'), '0001')
+    await userEvent.click(await within(form).findByRole('radio', { name: /2026-0001/ }))
+    await userEvent.click(within(form).getByRole('button', { name: 'Link invoice' }))
+    await waitFor(() => expect(sent).toEqual({ booking_type: 'SalesInvoice', booking_id: '901' }))
+    const paidTable = await screen.findByRole('table', { name: 'Invoices paid' })
+    expect(await within(paidTable).findByRole('link', { name: '2026-0001' })).toHaveAttribute('href', '/11/sales_invoices/901')
+    expect(screen.queryByRole('form', { name: 'Link to an invoice' })).toBeNull()
+    await userEvent.click(within(paidTable).getByRole('button', { name: 'Unlink invoice 2026-0001' }))
+    await waitFor(() => expect(unlinked).toEqual({ booking_type: 'Payment', booking_id: '991' }))
+    expect(await screen.findByRole('form', { name: 'Link to an invoice' })).toBeInTheDocument()
   })
 })

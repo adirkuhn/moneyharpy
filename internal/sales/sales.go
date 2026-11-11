@@ -34,11 +34,13 @@ var (
 	// ErrDelivery reports an invoice that was sent but could not be
 	// delivered; it stays open and can be sent again.
 	ErrDelivery = errors.New("sales invoice could not be delivered")
+	// ErrPaymentNotFound reports a payment the invoice does not have.
+	ErrPaymentNotFound = errors.New("payment not found")
 )
 
 // IsNotFound reports whether err means a sales invoice resource is missing.
 func IsNotFound(err error) bool {
-	return errors.Is(err, ErrNotFound) || errors.Is(err, notes.ErrNotFound) || errors.Is(err, attachments.ErrNotFound)
+	return errors.Is(err, ErrNotFound) || errors.Is(err, ErrPaymentNotFound) || errors.Is(err, notes.ErrNotFound) || errors.Is(err, attachments.ErrNotFound)
 }
 
 // States, with Moneybird's names.
@@ -91,6 +93,9 @@ type Invoice struct {
 	MarkedDubiousOn       *time.Time
 	MarkedUncollectibleOn *time.Time
 	ReminderCount         int
+	// NextReminder is when the workflow's next reminder is due; it is
+	// worked out on reading and empty when no reminder follows.
+	NextReminder *time.Time
 	// OriginalID is the invoice a credit invoice credits.
 	OriginalID              *resource.ID
 	RecurringSalesInvoiceID *resource.ID
@@ -117,6 +122,9 @@ func (i Invoice) Version() int64 { return i.UpdatedAt.Unix() }
 
 // Sent reports an invoice that left draft, and is booked.
 func (i Invoice) Sent() bool { return i.State != Draft && i.State != Scheduled }
+
+// Unpaid is what is still to be paid.
+func (i Invoice) Unpaid() money.Amount { return i.Totals.InclTax - i.Paid() }
 
 // Paid is what payments settled.
 func (i Invoice) Paid() money.Amount {
@@ -156,12 +164,33 @@ type FieldValue struct {
 	Value   string
 }
 
-// Payment settles (part of) an invoice; registering them comes with the
-// payments of phase two.
+// Payment settles (part of) an invoice. A payment linked to a bank
+// transaction is posted by the transaction; any other posts its own
+// entries: the contra account against the debtors.
 type Payment struct {
-	ID          resource.ID
-	PaymentDate time.Time
-	Price       money.Amount
+	ID               resource.ID
+	AdministrationID resource.ID
+	// InvoiceType is SalesInvoice; external invoices join later.
+	InvoiceType         string
+	InvoiceID           resource.ID
+	FinancialAccountID  *resource.ID
+	FinancialMutationID *resource.ID
+	// LedgerAccountID is the contra account of a payment made by hand.
+	LedgerAccountID *resource.ID
+	// CreditInvoiceID is the credit invoice a settlement payment uses.
+	CreditInvoiceID *resource.ID
+	// LinkedPaymentID is the other half of a settlement between invoices.
+	LinkedPaymentID     *resource.ID
+	ManualPaymentAction string
+	// Price is signed like the invoice's amounts: a credit invoice's
+	// payments are negative.
+	Price                 money.Amount
+	PriceBase             money.Amount
+	PaymentDate           time.Time
+	TransactionIdentifier string
+	UserID                resource.ID
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
 }
 
 // Delivery is how an invoice is sent.
@@ -203,6 +232,26 @@ type Ledger interface {
 	SystemLedgerAccount(ctx context.Context, admin, user resource.ID, role string) (resource.ID, error)
 	TaxRate(ctx context.Context, admin, id, user resource.ID) (bookkeeping.TaxRate, error)
 	LockedUntil(ctx context.Context, admin, user resource.ID) (string, error)
+	SeedLedgerAccount(ctx context.Context, admin, user resource.ID, key string) (resource.ID, bool, error)
+	LedgerAccount(ctx context.Context, admin, id, user resource.ID) (bookkeeping.LedgerAccount, error)
+}
+
+// Bank links invoices to bank transactions. It calls back into the
+// service's RegisterBankPayment and RemoveBankPayment.
+type Bank interface {
+	// LinkInvoicePayment pays the invoice with (part of) the transaction;
+	// a nil price pays what both still have open. It returns the payment.
+	LinkInvoicePayment(ctx context.Context, admin, mutation, user, invoice resource.ID, price *money.Amount) (resource.ID, error)
+	// UnlinkPayment removes a payment from its transaction.
+	UnlinkPayment(ctx context.Context, admin, mutation, user, payment resource.ID) error
+	// AccountLedger returns the category a financial account's money is in.
+	AccountLedger(ctx context.Context, admin, account, user resource.ID) (resource.ID, error)
+}
+
+// Notifier tells about what happened to invoices, such as a state change,
+// for webhooks. It may be nil.
+type Notifier interface {
+	Notify(ctx context.Context, admin resource.ID, action string, inv Invoice)
 }
 
 // Notes keeps notes on invoices.
@@ -238,6 +287,47 @@ type Store interface {
 	DeleteInvoice(ctx context.Context, admin, id resource.ID) error
 	TouchInvoice(ctx context.Context, admin, id resource.ID, at time.Time) error
 	ContactInUse(ctx context.Context, admin, contact resource.ID) (bool, error)
+
+	// Payment returns one payment.
+	Payment(ctx context.Context, admin, id resource.ID) (Payment, error)
+	// SavePayments stores, at once, invoices with what they post (nil
+	// entries keep them), payments with theirs (replacing them) and the
+	// removal of payments with their entries.
+	SavePayments(ctx context.Context, c PaymentChange) error
+	// Receivables sums up the invoices still to be paid.
+	Receivables(ctx context.Context, admin resource.ID, today time.Time) (Receivables, error)
+	// Workload lists the administrations with sent or scheduled invoices,
+	// each with an owner to act as.
+	Workload(ctx context.Context) ([]Workload, error)
+	// Lock keeps other instances from working on the administration until
+	// release is called; ok is false when another holds it.
+	Lock(ctx context.Context, admin resource.ID) (release func(), ok bool, err error)
+}
+
+// PaymentChange is what a payment action stores at once.
+type PaymentChange struct {
+	Invoices []Posting
+	Payments []PaymentPosting
+	Removed  []resource.ID
+}
+
+// Posting is an invoice with what it posts; nil entries keep them.
+type Posting struct {
+	Invoice Invoice
+	Entries []journal.Entry
+}
+
+// PaymentPosting is a payment with what it posts.
+type PaymentPosting struct {
+	Payment Payment
+	Entries []journal.Entry
+}
+
+// Workload is an administration the background job works on, with the
+// user it acts as.
+type Workload struct {
+	AdministrationID resource.ID
+	UserID           resource.ID
 }
 
 // Renderer turns an invoice into its documents.
@@ -278,6 +368,8 @@ type Service struct {
 	store       Store
 	renderer    Renderer
 	mailer      Mailer
+	bank        Bank
+	notifier    Notifier
 	ids         *resource.Generator
 	now         func() time.Time
 }
@@ -293,15 +385,19 @@ type Deps struct {
 	Store           Store
 	Renderer        Renderer
 	Mailer          Mailer
-	IDs             *resource.Generator
-	Now             func() time.Time
+	// Bank may be nil; payments can then not be linked to transactions.
+	Bank Bank
+	// Notifier may be nil.
+	Notifier Notifier
+	IDs      *resource.Generator
+	Now      func() time.Time
 }
 
 // NewService returns a Service.
 func NewService(d Deps) *Service {
 	return &Service{
 		admins: d.Administrations, contacts: d.Contacts, invoicing: d.Invoicing, ledger: d.Ledger, notes: d.Notes,
-		attachments: d.Attachments, store: d.Store, renderer: d.Renderer, mailer: d.Mailer, ids: d.IDs, now: d.Now,
+		attachments: d.Attachments, store: d.Store, renderer: d.Renderer, mailer: d.Mailer, bank: d.Bank, notifier: d.Notifier, ids: d.IDs, now: d.Now,
 	}
 }
 
@@ -312,6 +408,13 @@ func (s *Service) today(a administration.Listed) time.Time {
 		now = now.In(loc)
 	}
 	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+// notify tells the notifier, if there is one.
+func (s *Service) notify(ctx context.Context, admin resource.ID, action string, inv Invoice) {
+	if s.notifier != nil {
+		s.notifier.Notify(ctx, admin, action, inv)
+	}
 }
 
 // effective is the state to show: an open invoice past its due date is late.

@@ -83,6 +83,38 @@ export const en = {
     attachments: 'Attachments', noAttachments: 'No attachments yet.', addAttachment: 'Add attachment', attachmentHelp: 'A PDF, image or text file of at most 10 MB.',
     uploading: 'Uploading…', attachmentTooLarge: 'This file is larger than 10 MB. Choose a smaller file.',
     removeAttachment: 'Remove {{name}}', confirmRemoveAttachment: 'Confirm remove {{name}}',
+    paidAt: 'Paid on', nextReminder: 'Next reminder', reminderCount: 'Reminders sent', markedDubiousOn: 'Marked dubious on', markedUncollectibleOn: 'Uncollectible since',
+    payments: {
+      title: 'Payments', none: 'No payments yet.', date: 'Payment date', method: 'Paid by', bankTransaction: 'Bank transaction',
+      actions: {
+        bank_transfer: 'Bank transfer', cash_payment: 'Cash', private_payment: 'Into a private account', payment_without_proof: 'Without proof',
+        rounding_error: 'Rounding difference', balance_settlement: 'Balance settlement', invoices_settlement: 'Settled with an invoice',
+      },
+      remove: 'Remove payment of {{date}}', confirmRemove: 'Confirm remove payment of {{date}}', unlink: 'Unlink',
+      settleCredit: 'Settle with the original invoice', settleCreditHelp: 'Books this credit invoice against the invoice it credits, so both are paid.',
+      register: 'Register payment', registerButton: 'Register payment', amountHelp: 'What was paid; at most what is unpaid.',
+    },
+    reminders: {
+      action: 'Send reminder', title: 'Send reminder', text: 'Reminder text', textPlaceholder: 'Leave empty to use the text of the workflow.',
+      textHelp: 'You can use {invoice_id}, {total}, {due_date}, {contact_name} and {invoices}, the list of open invoices.',
+      manualHint: 'The invoice is marked as reminded. Send the reminder yourself.', submit: 'Send reminder',
+    },
+    writeOff: {
+      dubious: 'Mark as dubious', uncollectible: 'Mark as uncollectible', dubiousTitle: 'Mark as dubious', uncollectibleTitle: 'Mark as uncollectible',
+      dubiousHint: 'What is open, excluding VAT, is reserved in the provision for doubtful debtors. If the invoice is paid after all, the provision is released.',
+      uncollectibleHint: 'What is open is written off for good and its VAT is reclaimed. This cannot be undone.',
+      dubiousSubmit: 'Mark as dubious', uncollectibleSubmit: 'Write off as uncollectible', date: 'Date', dubiousNotice: 'This invoice is marked as dubious.',
+    },
+    bulk: {
+      label: 'Selected invoices', selectAll: 'Select all invoices', select: 'Select {{name}}',
+      selected_one: '{{count}} selected', selected_other: '{{count}} selected',
+      pay: 'Register full payment ({{count}})', remind: 'Send reminders ({{count}})',
+      delete: 'Delete drafts ({{count}})', confirmDelete_one: 'Delete {{count}} draft permanently', confirmDelete_other: 'Delete {{count}} drafts permanently',
+      paid_one: 'Registered the payment of {{count}} invoice.', paid_other: 'Registered the payments of {{count}} invoices.',
+      reminded_one: 'Sent a reminder for {{count}} invoice.', reminded_other: 'Sent reminders for {{count}} invoices.',
+      deleted_one: 'Deleted {{count}} draft.', deleted_other: 'Deleted {{count}} drafts.',
+      failed: 'These could not be processed: {{names}}. Open them to see why.',
+    },
   },
   sidenav: {
     label: 'Administration menu', menu: 'Menu', collapse: 'Collapse menu', expand: 'Expand menu', collapseShort: 'Collapse', later: 'Not available yet',
@@ -116,6 +148,7 @@ export const en = {
     nothing: 'You have no access to the parts of this administration shown here. Ask an owner for permissions.',
     types: { financial_mutation: 'Transaction' }, states: { processed: 'Booked' },
     loadError: 'The overview could not be loaded. Reload the page to try again.',
+    tally_one: '{{amount}} · {{count}} invoice', tally_other: '{{amount}} · {{count}} invoices',
   },
   onboarding: {
     welcome: 'Welcome {{name}}', subtitle: 'In a few steps, we will create your financial administration.',
@@ -254,6 +287,10 @@ export const en = {
     bookings: 'Bookings', bookingsSubtitle: 'The categories this transaction is booked on.', noBookings: 'Not booked yet.', byRule: 'Booked by a rule',
     removeBooking: 'Remove', removeBookingOn: 'Remove the booking on {{name}}',
     book: 'Book', bookSubtitle: 'Book the open amount on a category, or part of it to split the transaction.', splitHelp: 'Book less to split the transaction over several categories.', bookButton: 'Book',
+    invoicePayments: 'Invoices paid', invoicePaymentsSubtitle: 'The sales invoices this transaction pays.', invoice: 'Invoice', salesInvoice: 'Sales invoice',
+    unlinkInvoice: 'Unlink invoice {{id}}', linkInvoice: 'Link to an invoice', linkInvoiceSubtitle: 'Pay an open sales invoice with this transaction.',
+    findInvoice: 'Find an invoice', findInvoiceHelp: 'Search by invoice number, reference or contact.', noOpenInvoices: 'No open invoices match.',
+    linkInvoiceButton: 'Link invoice',
   },
   management: {
     subtitle: 'Administration details, users, security and access.', back: 'To Management',

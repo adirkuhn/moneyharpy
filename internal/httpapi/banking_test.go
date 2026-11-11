@@ -158,7 +158,7 @@ func TestImportBookAndSynchronize(t *testing.T) {
 	if got.State != "processed" || len(got.Bookings) != 2 || got.Bookings[1].Price != "400.0" {
 		t.Errorf("after rest = %+v", got)
 	}
-	wantStatus(t, owner.do(http.MethodPatch, api+"/financial_mutations/"+m.ID+"/link_booking", map[string]any{"booking_type": "SalesInvoice", "booking_id": "1"}), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPatch, api+"/financial_mutations/"+m.ID+"/link_booking", map[string]any{"booking_type": "Document", "booking_id": "1"}), http.StatusUnprocessableEntity)
 	r = owner.do(http.MethodDelete, api+"/financial_mutations/"+m.ID+"/unlink_booking", map[string]any{"booking_type": "LedgerAccountBooking", "booking_id": got.Bookings[1].ID})
 	wantStatus(t, r, http.StatusOK)
 	if got := decode[mutation](t, r); got.State != "unprocessed" || len(got.Bookings) != 1 {
