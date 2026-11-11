@@ -1,0 +1,13 @@
+/* MoneyHarpy brand colours. */
+:root {
+  --md-primary-fg-color: #092653;
+  --md-primary-fg-color--light: #1678d3;
+  --md-primary-fg-color--dark: #092653;
+  --md-accent-fg-color: #13bdb5;
+}
+[data-md-color-scheme="default"] {
+  --md-typeset-a-color: #1678d3;
+}
+[data-md-color-scheme="slate"] {
+  --md-typeset-a-color: #13bdb5;
+}

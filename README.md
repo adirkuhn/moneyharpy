@@ -4,14 +4,27 @@ Open source bookkeeping with an API compatible with the Moneybird v2 API.
 
 Every entity has its own URI, so anything in the app can be linked to and opened directly.
 
+Documentation: <https://adirkuhn.github.io/moneyharpy/> · API reference: <https://adirkuhn.github.io/moneyharpy/api/>
+
 ## Run it
 
 Requires Docker.
 
 ```sh
 cp .env.example .env   # set POSTGRES_PASSWORD and SECRET_KEY
-docker compose up --build
+docker compose pull app && docker compose up -d
 ```
+
+This runs the published image `ghcr.io/adirkuhn/moneyharpy` for amd64 and arm64. Tags:
+
+| Tag | What |
+|---|---|
+| `latest` | The newest release |
+| `1.2.3`, `1.2`, `1` | A release, or the newest one in that line |
+| `main` | The newest commit on main |
+| `sha-<commit>` | One commit on main |
+
+Set `MONEYHARPY_IMAGE` in `.env` to use another tag, such as `ghcr.io/adirkuhn/moneyharpy:1.2`. To build from source instead, run `docker compose up --build`.
 
 Open <http://localhost:8080> and register. The first user becomes the instance administrator.
 
@@ -91,11 +104,20 @@ make generate   # after changing api/openapi.yaml or SQL queries
 make test       # backend, needs Docker
 make test-web   # frontend, run npm ci in web/ first
 make test-e2e   # whole stack, run npm ci in e2e/ first
+make docs       # documentation site into build/site, needs pip install -r docs/requirements.txt
 ```
 
 Changes are test-driven. Go code follows the [Google Go style guide](https://google.github.io/styleguide/go/guide).
 
 To change the API, edit the contract first. Requests are validated against it at runtime, and backend tests fail on any response it does not describe.
+
+### Releases
+
+Every push to main and every `v*` tag, once CI passes, publishes the image to `ghcr.io/adirkuhn/moneyharpy` and the documentation to GitHub Pages. To release, tag main:
+
+```sh
+git tag v1.2.3 && git push origin v1.2.3
+```
 
 ## Overview
 
