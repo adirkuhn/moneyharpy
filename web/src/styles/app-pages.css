@@ -38,6 +38,9 @@
 .confirm-panel { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem 1rem; margin: 0 0 1.5rem; padding: 0.875rem 1rem; border: 1px solid var(--danger); border-radius: 10px; background: var(--danger-bg); color: var(--danger-text); }
 .confirm-panel__message { margin: 0; font-weight: 600; }
 .confirm-panel__buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.confirm-panel__text { margin: 0.25rem 0 0; }
+/* Something that can be undone, such as archiving, is asked in calm colours. */
+.confirm-panel--calm { border-color: var(--blue); background: var(--row-hover); color: var(--text); }
 
 /* Actions in the ⋯ menu that act on the page rather than lead elsewhere. */
 .dropdown__action { width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
