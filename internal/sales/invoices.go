@@ -90,7 +90,7 @@ func (s *Service) defaults(ctx context.Context, a administration.Listed, user re
 		if err != nil {
 			return wrap("load workflows", err)
 		}
-		if i := slices.IndexFunc(flows, func(w invoicing.Workflow) bool { return w.Type == invoicing.InvoiceWorkflow && w.Default && w.Active }); i >= 0 {
+		if i := slices.IndexFunc(flows, func(w invoicing.Workflow) bool { return w.Type == workflowType(*inv) && w.Default && w.Active }); i >= 0 {
 			s.followWorkflow(inv, flows[i])
 		}
 	}
@@ -225,7 +225,7 @@ func (s *Service) apply(ctx context.Context, a administration.Listed, user resou
 	if c.WorkflowID != nil {
 		w, err := s.invoicing.Workflow(ctx, admin, *c.WorkflowID, user)
 		switch {
-		case err != nil || w.Type != invoicing.InvoiceWorkflow:
+		case err != nil || w.Type != workflowType(*inv):
 			verr.Add("workflow_id", "does not exist")
 		case !w.Active:
 			verr.Add("workflow_id", "is deactivated")
@@ -489,9 +489,13 @@ func (s *Service) applyCustomFields(ctx context.Context, admin, user resource.ID
 		verr.Add("custom_fields_attributes", "could not be checked")
 		return
 	}
+	source, kind := administration.SourceSalesInvoice, "sales invoices"
+	if inv.Type == EstimateEntityType {
+		source, kind = administration.SourceEstimate, "estimates"
+	}
 	names := map[resource.ID]string{}
 	for _, f := range fields {
-		if f.Source == administration.SourceSalesInvoice {
+		if f.Source == source {
 			names[f.ID] = f.Name
 		}
 	}
@@ -499,7 +503,7 @@ func (s *Service) applyCustomFields(ctx context.Context, admin, user resource.ID
 	for i, v := range values {
 		name, ok := names[v.FieldID]
 		if !ok {
-			verr.Add(fmt.Sprintf("custom_fields_attributes.%d", i), "is not a custom field for sales invoices")
+			verr.Add(fmt.Sprintf("custom_fields_attributes.%d", i), "is not a custom field for "+kind)
 			continue
 		}
 		current = slices.DeleteFunc(current, func(e FieldValue) bool { return e.FieldID == v.FieldID })

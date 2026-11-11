@@ -2159,6 +2159,321 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/estimates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all estimates
+         * @description Newest first. Filter terms: state (all, draft, open, late, accepted, rejected, billed, archived; several separated by |; all unless given), period (on the estimate date; this year when no filter is given), contact_id, workflow_id; reference (several separated by |), created_after and updated_after are MoneyHarpy extensions. Late estimates are open estimates past their due date. Paged with a Link header and X-Total-Count.
+         */
+        get: operations["listEstimates"];
+        put?: never;
+        /**
+         * Create a new estimate
+         * @description A draft, following the contact's estimate workflow, else the default one, and the default document style and identity unless given.
+         */
+        post: operations["createEstimate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/synchronization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /** List all ids and versions */
+        get: operations["listEstimateVersions"];
+        put?: never;
+        /** Fetch estimates with given ids */
+        post: operations["fetchEstimates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/find_by_estimate_id/{estimate_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        /** Find an estimate by estimate number */
+        get: operations["getEstimateByEstimateId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get an estimate */
+        get: operations["getEstimate"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an estimate
+         * @description In any state; invoices billed from it stay.
+         */
+        delete: operations["deleteEstimate"];
+        options?: never;
+        head?: never;
+        /**
+         * Update an estimate
+         * @description Lines with an id change, lines with _destroy go, lines without an id are added. A sent estimate gets a new due date when its date or validity changes. Billed and archived estimates cannot change (422).
+         */
+        patch: operations["updateEstimate"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/send_estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Send an estimate
+         * @description A draft gets its number from the estimate numbering, its date and due date, and becomes open; a sent estimate goes out again in its state. Email sends the PDF; Manual marks it sent. Empty fields take the previous sending's settings, then the contact's. Without lines the answer is 400. When the email fails the estimate stays sent (422), so it can be sent again.
+         */
+        patch: operations["sendEstimate"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/change_state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the state of an estimate
+         * @description Only changes the state, without sending or billing. A draft only leaves draft by being sent; open and late go to accepted, rejected, billed or archived; accepted to open, rejected, billed or archived; rejected to open, accepted or archived; billed to open, accepted or archived; archived back to open, accepted, rejected or billed. Other changes answer 400 with a symbolic error such as can_not_change_draft_to_open.
+         */
+        patch: operations["changeEstimateState"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/bill_estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Bill an estimate
+         * @description Makes a draft sales invoice of an open, late or accepted estimate, with original_estimate_id naming it, and marks the estimate billed. It follows the default invoice workflow and keeps the estimate's lines, language, currency and prices. Needs the sales_invoices permission too. Other states, or a contact that is gone, answer 400.
+         */
+        patch: operations["billEstimate"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/download_pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download the PDF
+         * @description Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
+         */
+        get: operations["downloadEstimatePdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/download_signed_pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download the signed PDF
+         * @description The PDF the contact signed online. MoneyHarpy has no online signing yet, so every estimate answers 422: it is not signed.
+         */
+        get: operations["downloadSignedEstimatePdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add note to an estimate */
+        post: operations["createEstimateNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a note from an estimate */
+        delete: operations["deleteEstimateNote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add attachment to an estimate
+         * @description A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+         */
+        post: operations["createEstimateAttachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an attachment from an estimate */
+        delete: operations["deleteEstimateAttachment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        /** Download an attachment */
+        get: operations["downloadEstimateAttachment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/external_sales_invoices": {
         parameters: {
             query?: never;
@@ -5114,7 +5429,7 @@ export interface components {
                 contact_person_id?: components["schemas"]["FlexibleIdentifier"];
                 /** @description Accepted for compatibility. */
                 update_contact?: components["schemas"]["FlexibleBoolean"];
-                /** @description Accepted for compatibility; MoneyHarpy has no estimates yet. */
+                /** @description Accepted for compatibility; bill an estimate to make an invoice that names it. */
                 original_estimate_id?: components["schemas"]["FlexibleIdentifier"];
                 document_style_id?: components["schemas"]["FlexibleIdentifier"];
                 workflow_id?: components["schemas"]["FlexibleIdentifier"];
@@ -5155,6 +5470,76 @@ export interface components {
                 invoice_date?: string;
             };
         };
+        /** @description A Moneybird estimate with MoneyHarpy extensions. */
+        Estimate: components["schemas"]["estimate_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            /** @description MoneyHarpy extension. Days from the estimate date to the due date. */
+            first_due_interval?: number;
+            /** @description MoneyHarpy extension. The VAT of all lines. */
+            total_tax?: string;
+            /** @description MoneyHarpy extension. The sales invoice the estimate was made from. */
+            original_sales_invoice_id?: components["schemas"]["Identifier"] | null;
+            /** @description MoneyHarpy extension. How the estimate was last sent. */
+            delivery_method?: string | null;
+        };
+        EstimateRequest: {
+            estimate: {
+                contact_id?: components["schemas"]["FlexibleIdentifier"];
+                contact_person_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description Accepted for compatibility; the PDF always shows the contact as it is. */
+                update_contact?: components["schemas"]["FlexibleBoolean"];
+                document_style_id?: components["schemas"]["FlexibleIdentifier"];
+                workflow_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description MoneyHarpy extension. */
+                identity_id?: components["schemas"]["FlexibleIdentifier"];
+                reference?: string;
+                /** @description yyyy-mm-dd; empty clears it on a draft, which then gets the day it is sent. */
+                estimate_date?: string;
+                /** @description Sets the {id} part of the number this estimate gets when sent. */
+                estimate_sequence_id?: string | number;
+                remove_estimate_sequence_id?: components["schemas"]["FlexibleBoolean"];
+                language?: string;
+                currency?: string;
+                prices_are_incl_tax?: components["schemas"]["FlexibleBoolean"];
+                show_tax?: components["schemas"]["FlexibleBoolean"];
+                /** @description Days from the estimate date until it expires. */
+                first_due_interval?: number | string;
+                pre_text?: string;
+                post_text?: string;
+                /** @description A percentage, such as "10" or "2.5"; empty for none. */
+                discount?: string | number;
+                original_sales_invoice_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description An array of lines, or an object of lines keyed by position. */
+                details_attributes?: components["schemas"]["SalesInvoiceDetailInput"][] | {
+                    [key: string]: components["schemas"]["SalesInvoiceDetailInput"];
+                };
+                custom_fields_attributes?: components["schemas"]["custom_fields_attributes"];
+            };
+        };
+        SendEstimateRequest: {
+            estimate_sending?: {
+                /** @enum {string} */
+                delivery_method?: "Email" | "Manual";
+                email_address?: string;
+                /** @description Replaces the workflow's email text; {estimate_id}, {estimate_date}, {due_date}, {total}, {contact_name}, {company_name} and {reference} work. */
+                email_message?: string;
+                sign_online?: components["schemas"]["FlexibleBoolean"];
+            };
+            /** @description Accepted for compatibility; MoneyHarpy has no online signing yet. */
+            sender?: components["schemas"]["FlexibleBoolean"];
+            /** @description Accepted for compatibility; MoneyHarpy has no online signing yet. */
+            signature_output?: string;
+            /** @description Accepted for compatibility; MoneyHarpy has no online signing yet. */
+            audit_trail?: string;
+            /** @description Accepted for compatibility; MoneyHarpy has no online signing yet. */
+            ip_address?: string;
+        };
+        ChangeEstimateStateRequest: {
+            /** @description accepted, rejected, open, late, billed or archived. */
+            state: string;
+        };
+        BillEstimateRequest: Record<string, never>;
         CreditInvoiceRequest: {
             detail_ids?: components["schemas"]["FlexibleIdentifier"][];
         };
@@ -6975,6 +7360,19 @@ export interface components {
             };
             content: {
                 "application/json": components["schemas"]["ExternalSalesInvoice"][];
+            };
+        };
+        /** @description A page of estimates */
+        EstimatePage: {
+            headers: {
+                /** @description RFC 8288 links to the first, prev, next and last pages. */
+                Link?: string;
+                /** @description The number of estimates selected in all. MoneyHarpy extension. */
+                "X-Total-Count"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Estimate"][];
             };
         };
         /** @description A page of recurring sales invoices */
@@ -11361,6 +11759,532 @@ export interface operations {
         };
     };
     downloadSalesInvoiceAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            302: components["responses"]["FileRedirect"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listEstimates: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["EstimatePage"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createEstimate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EstimateRequest"];
+            };
+        };
+        responses: {
+            /** @description The created draft */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Estimate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listEstimateVersions: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ids and versions of the estimates the filter selects */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SynchronizationItem"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    fetchEstimates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SynchronizationRequest"];
+            };
+        };
+        responses: {
+            /** @description The estimates with these ids, at most 100 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Estimate"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getEstimateByEstimateId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The estimate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Estimate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getEstimate: {
+        parameters: {
+            query?: {
+                /** @description Accepted for compatibility. */
+                includes?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The estimate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Estimate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteEstimate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The estimate is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateEstimate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EstimateRequest"];
+            };
+        };
+        responses: {
+            /** @description The estimate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Estimate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    sendEstimate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendEstimateRequest"];
+            };
+        };
+        responses: {
+            /** @description The estimate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Estimate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    changeEstimateState: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeEstimateStateRequest"];
+            };
+        };
+        responses: {
+            /** @description The estimate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Estimate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    billEstimate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BillEstimateRequest"];
+            };
+        };
+        responses: {
+            /** @description The draft sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadEstimatePdf: {
+        parameters: {
+            query?: {
+                /** @description stationery leaves out the sender's address and logo, for printing on paper that has them. */
+                media?: components["parameters"]["media"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            302: components["responses"]["FileRedirect"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadSignedEstimatePdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            302: components["responses"]["FileRedirect"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createEstimateNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteRequest"];
+            };
+        };
+        responses: {
+            /** @description The created note */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["note_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteEstimateNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The note is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createEstimateAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The attachment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["attachment_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteEstimateAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The attachment is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadEstimateAttachment: {
         parameters: {
             query?: never;
             header?: never;

@@ -247,6 +247,73 @@ type Download struct {
 	UpdatedAt        pgtype.Timestamptz
 }
 
+type Estimate struct {
+	ID                     int64
+	AdministrationID       int64
+	ContactID              int64
+	ContactPersonID        pgtype.Int8
+	IdentityID             int64
+	DocumentStyleID        int64
+	WorkflowID             int64
+	DraftID                int32
+	EstimateID             string
+	SequenceID             string
+	Reference              string
+	Language               string
+	Currency               string
+	PricesAreInclTax       bool
+	ShowTax                bool
+	SignOnline             bool
+	Discount               int32
+	EstimateDate           pgtype.Date
+	DueDate                pgtype.Date
+	FirstDueInterval       int32
+	PreText                string
+	PostText               string
+	State                  string
+	SentAt                 pgtype.Timestamptz
+	AcceptedAt             pgtype.Date
+	RejectedAt             pgtype.Date
+	ArchivedAt             pgtype.Date
+	OriginalEstimateID     pgtype.Int8
+	OriginalSalesInvoiceID pgtype.Int8
+	Delivery               []byte
+	TotalExclTax           int64
+	TotalTax               int64
+	TotalInclTax           int64
+	TotalDiscount          int64
+	TaxTotals              []byte
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+}
+
+type EstimateCustomFieldValue struct {
+	EstimateID    int64
+	CustomFieldID int64
+	Value         string
+}
+
+type EstimateDetail struct {
+	ID               int64
+	AdministrationID int64
+	EstimateID       int64
+	Description      string
+	Period           string
+	Price            int64
+	Amount           string
+	Quantity         int64
+	TaxRateID        int64
+	LedgerAccountID  pgtype.Int8
+	ProjectID        pgtype.Int8
+	ProductID        pgtype.Int8
+	RowOrder         int32
+	IsOptional       bool
+	IsSelected       bool
+	LineBase         int64
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type ExternalSalesInvoice struct {
 	ID                    int64
 	AdministrationID      int64
@@ -641,6 +708,7 @@ type SalesInvoice struct {
 	TaxTotals               []byte
 	CreatedAt               pgtype.Timestamptz
 	UpdatedAt               pgtype.Timestamptz
+	OriginalEstimateID      pgtype.Int8
 }
 
 type SalesInvoiceCustomFieldValue struct {

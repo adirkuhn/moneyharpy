@@ -119,3 +119,20 @@ func TestUBL(t *testing.T) {
 		t.Error("no endpoint scheme")
 	}
 }
+
+func TestEstimatePDF(t *testing.T) {
+	for _, tc := range []struct {
+		language, number, want string
+	}{{"nl", "Q2026-0001", "Offerte"}, {"en", "Q2026-0001", "Quote"}, {"en", "", "Draft quote"}} {
+		doc := document(t, tc.language)
+		doc.Invoice.InvoiceID = tc.number
+		doc.Estimate = &sales.Estimate{PreText: "Here is our quote.", PostText: "Please sign it.", ShowTax: false}
+		if got := title(doc, labelsFor(tc.language), true); got != tc.want {
+			t.Errorf("title = %q, want %q", got, tc.want)
+		}
+		data, err := New().PDF(doc)
+		if err != nil || !bytes.HasPrefix(data, []byte("%PDF-")) {
+			t.Errorf("%s: %v", tc.language, err)
+		}
+	}
+}
