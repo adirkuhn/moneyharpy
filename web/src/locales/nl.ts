@@ -141,7 +141,7 @@ export const nl: Messages = {
     },
     bulk: {
       label: 'Geselecteerde facturen', selectAll: 'Alle facturen selecteren', select: '{{name}} selecteren',
-      selected_one: '{{count}} geselecteerd', selected_other: '{{count}} geselecteerd',
+      selected_one: '{{count}} factuur geselecteerd:', selected_other: '{{count}} facturen geselecteerd:',
       pay: 'Volledige betaling registreren ({{count}})', remind: 'Herinneringen sturen ({{count}})',
       delete: 'Concepten verwijderen ({{count}})', confirmDelete_one: '{{count}} concept definitief verwijderen', confirmDelete_other: '{{count}} concepten definitief verwijderen',
       paid_one: 'Betaling van {{count}} factuur geregistreerd.', paid_other: 'Betalingen van {{count}} facturen geregistreerd.',

@@ -139,7 +139,7 @@ export const en = {
     },
     bulk: {
       label: 'Selected invoices', selectAll: 'Select all invoices', select: 'Select {{name}}',
-      selected_one: '{{count}} selected', selected_other: '{{count}} selected',
+      selected_one: '{{count}} invoice selected:', selected_other: '{{count}} invoices selected:',
       pay: 'Register full payment ({{count}})', remind: 'Send reminders ({{count}})',
       delete: 'Delete drafts ({{count}})', confirmDelete_one: 'Delete {{count}} draft permanently', confirmDelete_other: 'Delete {{count}} drafts permanently',
       paid_one: 'Registered the payment of {{count}} invoice.', paid_other: 'Registered the payments of {{count}} invoices.',

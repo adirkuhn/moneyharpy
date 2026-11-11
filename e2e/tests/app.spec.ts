@@ -777,6 +777,12 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   await page.getByRole('search', { name: 'Invoice filters' }).getByRole('link', { name: 'Unpaid invoices' }).click()
   await expect(page.getByRole('button', { name: 'Unpaid invoices' })).toBeVisible()
   await expect(page.getByRole('table', { name: 'Invoices' }).getByRole('row')).toHaveCount(2)
+  // Ticking a row brings up the bar of actions on the ticked invoices.
+  const tick = page.getByRole('table', { name: 'Invoices' }).getByRole('row').nth(1).getByRole('checkbox')
+  await tick.check()
+  await expect(page.getByRole('group', { name: 'Selected invoices' })).toContainText('1 invoice selected:')
+  await tick.uncheck()
+  await expect(page.getByRole('group', { name: 'Selected invoices' })).toHaveCount(0)
   // A click anywhere in a row opens the invoice.
   await page.getByRole('table', { name: 'Invoices' }).getByRole('row').nth(1).getByRole('cell').last().click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/\d/)
