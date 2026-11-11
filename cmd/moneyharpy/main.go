@@ -44,6 +44,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
+	"github.com/adirkuhn/moneyharpy/internal/reports"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
@@ -164,6 +165,8 @@ func run(logger *slog.Logger) error {
 	assetService := assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: hooks, Logger: logger}, ids, time.Now)
 	home := overview.NewService(admins, bank, invoiceService)
 	home.UseIncoming(documentService)
+	// Reports read the journal; their exports land in the downloads.
+	reportService := reports.NewService(admins, postgres.NewReportStore(pool), downloadService, books, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
@@ -179,6 +182,7 @@ func run(logger *slog.Logger) error {
 		Projects:          projectService,
 		Subscriptions:     subscriptionService,
 		Downloads:         downloadService,
+		Reports:           reportService,
 		TimeEntries:       timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now),
 		TaskLists:         tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
 		Storage:           s3,

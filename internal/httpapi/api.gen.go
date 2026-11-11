@@ -126,6 +126,24 @@ func (e AssetDisposalRequestReason) Valid() bool {
 	}
 }
 
+// Defines values for AuditfileExportRequestVersion.
+const (
+	N32 AuditfileExportRequestVersion = "3.2"
+	N40 AuditfileExportRequestVersion = "4.0"
+)
+
+// Valid indicates whether the value is a known member of the AuditfileExportRequestVersion enum.
+func (e AuditfileExportRequestVersion) Valid() bool {
+	switch e {
+	case N32:
+		return true
+	case N40:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for BookingRuleDirection.
 const (
 	BookingRuleDirectionAny    BookingRuleDirection = "any"
@@ -3942,6 +3960,27 @@ func (e ListProductsParamsForCheckout) Valid() bool {
 	}
 }
 
+// Defines values for GetBalanceSheetReportParamsGranularity.
+const (
+	GetBalanceSheetReportParamsGranularityMonth   GetBalanceSheetReportParamsGranularity = "month"
+	GetBalanceSheetReportParamsGranularityQuarter GetBalanceSheetReportParamsGranularity = "quarter"
+	GetBalanceSheetReportParamsGranularityYear    GetBalanceSheetReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetBalanceSheetReportParamsGranularity enum.
+func (e GetBalanceSheetReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetBalanceSheetReportParamsGranularityMonth:
+		return true
+	case GetBalanceSheetReportParamsGranularityQuarter:
+		return true
+	case GetBalanceSheetReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetBankBalanceParamsGranularity.
 const (
 	GetBankBalanceParamsGranularityMonth   GetBankBalanceParamsGranularity = "month"
@@ -3957,6 +3996,111 @@ func (e GetBankBalanceParamsGranularity) Valid() bool {
 	case GetBankBalanceParamsGranularityQuarter:
 		return true
 	case GetBankBalanceParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCashFlowReportParamsGranularity.
+const (
+	GetCashFlowReportParamsGranularityMonth   GetCashFlowReportParamsGranularity = "month"
+	GetCashFlowReportParamsGranularityQuarter GetCashFlowReportParamsGranularity = "quarter"
+	GetCashFlowReportParamsGranularityYear    GetCashFlowReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetCashFlowReportParamsGranularity enum.
+func (e GetCashFlowReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetCashFlowReportParamsGranularityMonth:
+		return true
+	case GetCashFlowReportParamsGranularityQuarter:
+		return true
+	case GetCashFlowReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCreditorsReportParamsGranularity.
+const (
+	GetCreditorsReportParamsGranularityMonth   GetCreditorsReportParamsGranularity = "month"
+	GetCreditorsReportParamsGranularityQuarter GetCreditorsReportParamsGranularity = "quarter"
+	GetCreditorsReportParamsGranularityYear    GetCreditorsReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetCreditorsReportParamsGranularity enum.
+func (e GetCreditorsReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetCreditorsReportParamsGranularityMonth:
+		return true
+	case GetCreditorsReportParamsGranularityQuarter:
+		return true
+	case GetCreditorsReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetDebtorsReportParamsGranularity.
+const (
+	GetDebtorsReportParamsGranularityMonth   GetDebtorsReportParamsGranularity = "month"
+	GetDebtorsReportParamsGranularityQuarter GetDebtorsReportParamsGranularity = "quarter"
+	GetDebtorsReportParamsGranularityYear    GetDebtorsReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetDebtorsReportParamsGranularity enum.
+func (e GetDebtorsReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetDebtorsReportParamsGranularityMonth:
+		return true
+	case GetDebtorsReportParamsGranularityQuarter:
+		return true
+	case GetDebtorsReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetExpensesByContactReportParamsGranularity.
+const (
+	GetExpensesByContactReportParamsGranularityMonth   GetExpensesByContactReportParamsGranularity = "month"
+	GetExpensesByContactReportParamsGranularityQuarter GetExpensesByContactReportParamsGranularity = "quarter"
+	GetExpensesByContactReportParamsGranularityYear    GetExpensesByContactReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetExpensesByContactReportParamsGranularity enum.
+func (e GetExpensesByContactReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetExpensesByContactReportParamsGranularityMonth:
+		return true
+	case GetExpensesByContactReportParamsGranularityQuarter:
+		return true
+	case GetExpensesByContactReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetExpensesByProjectReportParamsGranularity.
+const (
+	GetExpensesByProjectReportParamsGranularityMonth   GetExpensesByProjectReportParamsGranularity = "month"
+	GetExpensesByProjectReportParamsGranularityQuarter GetExpensesByProjectReportParamsGranularity = "quarter"
+	GetExpensesByProjectReportParamsGranularityYear    GetExpensesByProjectReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetExpensesByProjectReportParamsGranularity enum.
+func (e GetExpensesByProjectReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetExpensesByProjectReportParamsGranularityMonth:
+		return true
+	case GetExpensesByProjectReportParamsGranularityQuarter:
+		return true
+	case GetExpensesByProjectReportParamsGranularityYear:
 		return true
 	default:
 		return false
@@ -4026,6 +4170,111 @@ func (e GetJournalEntriesReportParamsAccountType) Valid() bool {
 	case GetJournalEntriesReportParamsAccountTypeRevenue:
 		return true
 	case GetJournalEntriesReportParamsAccountTypeTemporary:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetProfitLossReportParamsGranularity.
+const (
+	GetProfitLossReportParamsGranularityMonth   GetProfitLossReportParamsGranularity = "month"
+	GetProfitLossReportParamsGranularityQuarter GetProfitLossReportParamsGranularity = "quarter"
+	GetProfitLossReportParamsGranularityYear    GetProfitLossReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetProfitLossReportParamsGranularity enum.
+func (e GetProfitLossReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetProfitLossReportParamsGranularityMonth:
+		return true
+	case GetProfitLossReportParamsGranularityQuarter:
+		return true
+	case GetProfitLossReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetRevenueByContactReportParamsGranularity.
+const (
+	GetRevenueByContactReportParamsGranularityMonth   GetRevenueByContactReportParamsGranularity = "month"
+	GetRevenueByContactReportParamsGranularityQuarter GetRevenueByContactReportParamsGranularity = "quarter"
+	GetRevenueByContactReportParamsGranularityYear    GetRevenueByContactReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetRevenueByContactReportParamsGranularity enum.
+func (e GetRevenueByContactReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetRevenueByContactReportParamsGranularityMonth:
+		return true
+	case GetRevenueByContactReportParamsGranularityQuarter:
+		return true
+	case GetRevenueByContactReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetRevenueByProjectReportParamsGranularity.
+const (
+	GetRevenueByProjectReportParamsGranularityMonth   GetRevenueByProjectReportParamsGranularity = "month"
+	GetRevenueByProjectReportParamsGranularityQuarter GetRevenueByProjectReportParamsGranularity = "quarter"
+	GetRevenueByProjectReportParamsGranularityYear    GetRevenueByProjectReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetRevenueByProjectReportParamsGranularity enum.
+func (e GetRevenueByProjectReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetRevenueByProjectReportParamsGranularityMonth:
+		return true
+	case GetRevenueByProjectReportParamsGranularityQuarter:
+		return true
+	case GetRevenueByProjectReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetTaxReportParamsGranularity.
+const (
+	GetTaxReportParamsGranularityMonth   GetTaxReportParamsGranularity = "month"
+	GetTaxReportParamsGranularityQuarter GetTaxReportParamsGranularity = "quarter"
+	GetTaxReportParamsGranularityYear    GetTaxReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetTaxReportParamsGranularity enum.
+func (e GetTaxReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetTaxReportParamsGranularityMonth:
+		return true
+	case GetTaxReportParamsGranularityQuarter:
+		return true
+	case GetTaxReportParamsGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetWorkingCapitalReportParamsGranularity.
+const (
+	GetWorkingCapitalReportParamsGranularityMonth   GetWorkingCapitalReportParamsGranularity = "month"
+	GetWorkingCapitalReportParamsGranularityQuarter GetWorkingCapitalReportParamsGranularity = "quarter"
+	GetWorkingCapitalReportParamsGranularityYear    GetWorkingCapitalReportParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetWorkingCapitalReportParamsGranularity enum.
+func (e GetWorkingCapitalReportParamsGranularity) Valid() bool {
+	switch e {
+	case GetWorkingCapitalReportParamsGranularityMonth:
+		return true
+	case GetWorkingCapitalReportParamsGranularityQuarter:
+		return true
+	case GetWorkingCapitalReportParamsGranularityYear:
 		return true
 	default:
 		return false
@@ -4415,12 +4664,54 @@ type AssetsReportLine struct {
 	ValueNotInUse string `json:"value_not_in_use"`
 }
 
+// AuditfileExportRequest defines model for AuditfileExportRequest.
+type AuditfileExportRequest struct {
+	// Version The XAF version; 3.2 unless given. MoneyHarpy writes 3.2 for both.
+	Version *AuditfileExportRequestVersion `json:"version,omitempty"`
+
+	// Year The year to export, as 2024.
+	Year string `json:"year"`
+}
+
+// AuditfileExportRequestVersion The XAF version; 3.2 unless given. MoneyHarpy writes 3.2 for both.
+type AuditfileExportRequestVersion string
+
 // AuthProviders defines model for AuthProviders.
 type AuthProviders struct {
 	Google           bool `json:"google"`
 	Lm2              bool `json:"lm2"`
 	PasswordReset    bool `json:"password_reset"`
 	RegistrationOpen bool `json:"registration_open"`
+}
+
+// BalanceSheetAmounts defines model for BalanceSheetAmounts.
+type BalanceSheetAmounts struct {
+	// Credit Moneybird-compatible balance_sheet_credit.
+	Credit BalanceSheetCredit `json:"credit"`
+
+	// Debit Moneybird-compatible balance_sheet_debit.
+	Debit BalanceSheetDebit `json:"debit"`
+}
+
+// BalanceSheetReport The balance sheet report.
+type BalanceSheetReport struct {
+	// Credit Moneybird-compatible balance_sheet_credit.
+	Credit BalanceSheetCredit `json:"credit"`
+
+	// Debit Moneybird-compatible balance_sheet_debit.
+	Debit BalanceSheetDebit `json:"debit"`
+
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		// Credit Moneybird-compatible balance_sheet_credit.
+		Credit BalanceSheetCredit `json:"credit"`
+
+		// Debit Moneybird-compatible balance_sheet_debit.
+		Debit BalanceSheetDebit `json:"debit"`
+
+		// Period The part of the report's period, as 202501..202503.
+		Period string `json:"period"`
+	} `json:"periods,omitempty"`
 }
 
 // BankSettings MoneyHarpy extension.
@@ -4526,6 +4817,31 @@ type BookkeepingSettingsRequest struct {
 		PeriodLockedUntil  *string            `json:"period_locked_until,omitempty"`
 		VatDocumentsPeriod *DeclarationPeriod `json:"vat_documents_period,omitempty"`
 	} `json:"bookkeeping_settings"`
+}
+
+// CashFlowReport The cash flow report.
+type CashFlowReport struct {
+	// CashPaidByLedgerAccount Moneybird-compatible ledger_account_data.
+	CashPaidByLedgerAccount *LedgerAccountData `json:"cash_paid_by_ledger_account,omitempty"`
+
+	// CashReceivedByLedgerAccount Moneybird-compatible ledger_account_data.
+	CashReceivedByLedgerAccount *LedgerAccountData `json:"cash_received_by_ledger_account,omitempty"`
+	ClosingBalance              *string            `json:"closing_balance,omitempty"`
+	OpeningBalance              *string            `json:"opening_balance,omitempty"`
+
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		// CashPaidByLedgerAccount Moneybird-compatible ledger_account_data.
+		CashPaidByLedgerAccount *LedgerAccountData `json:"cash_paid_by_ledger_account,omitempty"`
+
+		// CashReceivedByLedgerAccount Moneybird-compatible ledger_account_data.
+		CashReceivedByLedgerAccount *LedgerAccountData `json:"cash_received_by_ledger_account,omitempty"`
+		ClosingBalance              *string            `json:"closing_balance,omitempty"`
+		OpeningBalance              *string            `json:"opening_balance,omitempty"`
+
+		// Period The part of the report's period, as 202501..202503.
+		Period string `json:"period"`
+	} `json:"periods,omitempty"`
 }
 
 // ChangeEstimateStateRequest defines model for ChangeEstimateStateRequest.
@@ -4855,6 +5171,24 @@ type CreditInvoiceRequest struct {
 	DetailIds *[]FlexibleIdentifier `json:"detail_ids,omitempty"`
 }
 
+// CreditorsAgingReport The creditors aging report.
+type CreditorsAgingReport struct {
+	Creditors []AgingReportItem `json:"creditors"`
+}
+
+// CreditorsReport The creditors report.
+type CreditorsReport struct {
+	Creditors []CreditorsReportItem `json:"creditors"`
+
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		Creditors []CreditorsReportItem `json:"creditors"`
+
+		// Period The part of the period, as 202501..202503.
+		Period string `json:"period"`
+	} `json:"periods,omitempty"`
+}
+
 // CurrentUser defines model for CurrentUser.
 type CurrentUser struct {
 	Email string `json:"email"`
@@ -4928,6 +5262,24 @@ type CustomFieldValue struct {
 	Id    Identifier `json:"id"`
 	Name  string     `json:"name"`
 	Value string     `json:"value"`
+}
+
+// DebtorsAgingReport The debtors aging report.
+type DebtorsAgingReport struct {
+	Debtors []AgingReportItem `json:"debtors"`
+}
+
+// DebtorsReport The debtors report.
+type DebtorsReport struct {
+	Debtors []DebtorsReportItem `json:"debtors"`
+
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		Debtors []DebtorsReportItem `json:"debtors"`
+
+		// Period The part of the period, as 202501..202503.
+		Period string `json:"period"`
+	} `json:"periods,omitempty"`
 }
 
 // DeclarationPeriod defines model for DeclarationPeriod.
@@ -5366,6 +5718,38 @@ type EstimateRequestEstimateFirstDueInterval1 = string
 // EstimateRequest_Estimate_FirstDueInterval Days from the estimate date until it expires.
 type EstimateRequest_Estimate_FirstDueInterval struct {
 	union json.RawMessage
+}
+
+// ExpensesByContactReport The expenses by contact report.
+type ExpensesByContactReport struct {
+	ExpensesByContact []ContactReportItem `json:"expenses_by_contact"`
+
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		ExpensesByContact []ContactReportItem `json:"expenses_by_contact"`
+
+		// Period The part of the period, as 202501..202503.
+		Period string `json:"period"`
+	} `json:"periods,omitempty"`
+}
+
+// ExpensesByProjectReport The expenses by project report.
+type ExpensesByProjectReport struct {
+	ExpensesByProject []ProjectReportItem `json:"expenses_by_project"`
+
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		ExpensesByProject []ProjectReportItem `json:"expenses_by_project"`
+
+		// Period The part of the period, as 202501..202503.
+		Period string `json:"period"`
+	} `json:"periods,omitempty"`
+}
+
+// ExportYearRequest defines model for ExportYearRequest.
+type ExportYearRequest struct {
+	// Year The year to export, as 2024.
+	Year string `json:"year"`
 }
 
 // ExternalSalesInvoice A Moneybird external sales invoice with MoneyHarpy extensions.
@@ -6825,6 +7209,49 @@ type ProductRequestProductProductType string
 // ProductRequestProductVatRateType defines model for ProductRequest.Product.VatRateType.
 type ProductRequestProductVatRateType string
 
+// ProfitLossReport The profit and loss report.
+type ProfitLossReport struct {
+	// DirectCostsByLedgerAccount Moneybird-compatible ledger_account_data.
+	DirectCostsByLedgerAccount *LedgerAccountData `json:"direct_costs_by_ledger_account,omitempty"`
+
+	// ExpensesByLedgerAccount Moneybird-compatible ledger_account_data.
+	ExpensesByLedgerAccount *LedgerAccountData `json:"expenses_by_ledger_account,omitempty"`
+	GrossProfit             *string            `json:"gross_profit,omitempty"`
+	NetProfit               *string            `json:"net_profit,omitempty"`
+	OperatingProfit         *string            `json:"operating_profit,omitempty"`
+
+	// OtherIncomeExpensesByLedgerAccount Moneybird-compatible ledger_account_data.
+	OtherIncomeExpensesByLedgerAccount *LedgerAccountData `json:"other_income_expenses_by_ledger_account,omitempty"`
+
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		// DirectCostsByLedgerAccount Moneybird-compatible ledger_account_data.
+		DirectCostsByLedgerAccount *LedgerAccountData `json:"direct_costs_by_ledger_account,omitempty"`
+
+		// ExpensesByLedgerAccount Moneybird-compatible ledger_account_data.
+		ExpensesByLedgerAccount *LedgerAccountData `json:"expenses_by_ledger_account,omitempty"`
+		GrossProfit             *string            `json:"gross_profit,omitempty"`
+		NetProfit               *string            `json:"net_profit,omitempty"`
+		OperatingProfit         *string            `json:"operating_profit,omitempty"`
+
+		// OtherIncomeExpensesByLedgerAccount Moneybird-compatible ledger_account_data.
+		OtherIncomeExpensesByLedgerAccount *LedgerAccountData `json:"other_income_expenses_by_ledger_account,omitempty"`
+
+		// Period The part of the report's period, as 202501..202503.
+		Period string `json:"period"`
+
+		// RevenueByLedgerAccount Moneybird-compatible ledger_account_data.
+		RevenueByLedgerAccount *LedgerAccountData `json:"revenue_by_ledger_account,omitempty"`
+		TotalExpenses          *string            `json:"total_expenses,omitempty"`
+		TotalRevenue           *string            `json:"total_revenue,omitempty"`
+	} `json:"periods,omitempty"`
+
+	// RevenueByLedgerAccount Moneybird-compatible ledger_account_data.
+	RevenueByLedgerAccount *LedgerAccountData `json:"revenue_by_ledger_account,omitempty"`
+	TotalExpenses          *string            `json:"total_expenses,omitempty"`
+	TotalRevenue           *string            `json:"total_revenue,omitempty"`
+}
+
 // Project A Moneybird project with MoneyHarpy extensions.
 type Project struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -7560,6 +7987,12 @@ type RegisterRequest struct {
 	Password        string  `json:"password"`
 }
 
+// ReportPart defines model for ReportPart.
+type ReportPart struct {
+	// Period The part of the report's period, as 202501..202503.
+	Period string `json:"period"`
+}
+
 // ResourceLocation defines model for ResourceLocation.
 type ResourceLocation struct {
 	// Id A unique record identifier. Parse as a string.
@@ -7572,6 +8005,28 @@ type ResourceLocation struct {
 
 	// Uri Example: /123456789012345678
 	Uri string `json:"uri"`
+}
+
+// RevenueByContactReport The revenue by contact report.
+type RevenueByContactReport struct {
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		// Period The part of the period, as 202501..202503.
+		Period           string              `json:"period"`
+		RevenueByContact []ContactReportItem `json:"revenue_by_contact"`
+	} `json:"periods,omitempty"`
+	RevenueByContact []ContactReportItem `json:"revenue_by_contact"`
+}
+
+// RevenueByProjectReport The revenue by project report.
+type RevenueByProjectReport struct {
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		// Period The part of the period, as 202501..202503.
+		Period           string              `json:"period"`
+		RevenueByProject []ProjectReportItem `json:"revenue_by_project"`
+	} `json:"periods,omitempty"`
+	RevenueByProject []ProjectReportItem `json:"revenue_by_project"`
 }
 
 // RuleCondition defines model for RuleCondition.
@@ -8087,6 +8542,14 @@ type SubscriptionUpdateRequest_Subscription_Discount struct {
 	union json.RawMessage
 }
 
+// SubscriptionsReport defines model for SubscriptionsReport.
+type SubscriptionsReport struct {
+	AnnualRunRate           string `json:"annual_run_rate"`
+	ChurnRate               string `json:"churn_rate"`
+	LifetimeValue           string `json:"lifetime_value"`
+	MonthlyRecurringRevenue string `json:"monthly_recurring_revenue"`
+}
+
 // SupportAccess defines model for SupportAccess.
 type SupportAccess struct {
 	Until *time.Time `json:"until"`
@@ -8396,6 +8859,41 @@ type TaxRateRequest struct {
 
 // TaxRateType defines model for TaxRateType.
 type TaxRateType string
+
+// TaxReport The tax report.
+type TaxReport struct {
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		// Period The part of the report's period, as 202501..202503.
+		Period   string `json:"period"`
+		TaxRates *[]struct {
+			Amount          *string `json:"amount,omitempty"`
+			Name            *string `json:"name,omitempty"`
+			Percentage      *string `json:"percentage,omitempty"`
+			ReportReference *string `json:"report_reference,omitempty"`
+			Tax             *string `json:"tax,omitempty"`
+
+			// TaxRateId A unique record identifier. Parse as a string.
+			//
+			// Example: 123456789012345678
+			TaxRateId *Identifier `json:"tax_rate_id,omitempty"`
+			Type      *string     `json:"type,omitempty"`
+		} `json:"tax_rates,omitempty"`
+	} `json:"periods,omitempty"`
+	TaxRates *[]struct {
+		Amount          *string `json:"amount,omitempty"`
+		Name            *string `json:"name,omitempty"`
+		Percentage      *string `json:"percentage,omitempty"`
+		ReportReference *string `json:"report_reference,omitempty"`
+		Tax             *string `json:"tax,omitempty"`
+
+		// TaxRateId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		TaxRateId *Identifier `json:"tax_rate_id,omitempty"`
+		Type      *string     `json:"type,omitempty"`
+	} `json:"tax_rates,omitempty"`
+}
 
 // TaxReportBox MoneyHarpy extension. One box of the country's VAT return.
 type TaxReportBox struct {
@@ -8921,6 +9419,37 @@ type WorkflowRequest struct {
 // WorkflowRequestWorkflowType Required when creating; ignored when updating.
 type WorkflowRequestWorkflowType string
 
+// WorkingCapitalReport The working capital report.
+type WorkingCapitalReport struct {
+	Bank *string `json:"bank,omitempty"`
+
+	// Periods Only with granularity. One item for each month, quarter or year in the period, oldest first.
+	Periods *[]struct {
+		Bank *string `json:"bank,omitempty"`
+
+		// Period The part of the report's period, as 202501..202503.
+		Period         string  `json:"period"`
+		ToPay          *string `json:"to_pay,omitempty"`
+		ToReceive      *string `json:"to_receive,omitempty"`
+		WorkingCapital *string `json:"working_capital,omitempty"`
+	} `json:"periods,omitempty"`
+	ToPay          *string `json:"to_pay,omitempty"`
+	ToReceive      *string `json:"to_receive,omitempty"`
+	WorkingCapital *string `json:"working_capital,omitempty"`
+}
+
+// AgingReportItem Moneybird-compatible aging_report_item.
+type AgingReportItem struct {
+	AgingBuckets *[]struct {
+		Amount *string `json:"amount,omitempty"`
+		Name   *string `json:"name,omitempty"`
+	} `json:"aging_buckets,omitempty"`
+	Amount *string `json:"amount,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id,omitempty"`
+}
+
 // AssetResponse Moneybird-compatible asset_response.
 type AssetResponse struct {
 	// CalculatedPurchaseValue Moneybird-compatible number.
@@ -8992,6 +9521,46 @@ type AttachmentResponse struct {
 
 // AttachmentResponseAttachableType defines model for AttachmentResponse.AttachableType.
 type AttachmentResponseAttachableType string
+
+// BalanceSheetCredit Moneybird-compatible balance_sheet_credit.
+type BalanceSheetCredit struct {
+	// CurrentLiabilities Moneybird-compatible balance_sheet_ledger_account.
+	CurrentLiabilities *BalanceSheetLedgerAccount `json:"current_liabilities,omitempty"`
+
+	// Equity Moneybird-compatible balance_sheet_ledger_account.
+	Equity *BalanceSheetLedgerAccount `json:"equity,omitempty"`
+
+	// NonCurrentLiabilities Moneybird-compatible balance_sheet_ledger_account.
+	NonCurrentLiabilities *BalanceSheetLedgerAccount `json:"non_current_liabilities,omitempty"`
+	OpenYears             *[]struct {
+		Value *string `json:"value,omitempty"`
+		Year  *string `json:"year,omitempty"`
+	} `json:"open_years,omitempty"`
+
+	// Provisions Moneybird-compatible balance_sheet_ledger_account.
+	Provisions *BalanceSheetLedgerAccount `json:"provisions,omitempty"`
+	Total      *string                    `json:"total,omitempty"`
+}
+
+// BalanceSheetDebit Moneybird-compatible balance_sheet_debit.
+type BalanceSheetDebit struct {
+	// CurrentAssets Moneybird-compatible balance_sheet_ledger_account.
+	CurrentAssets *BalanceSheetLedgerAccount `json:"current_assets,omitempty"`
+
+	// NonCurrentAssets Moneybird-compatible balance_sheet_ledger_account.
+	NonCurrentAssets *BalanceSheetLedgerAccount `json:"non_current_assets,omitempty"`
+	Total            *string                    `json:"total,omitempty"`
+}
+
+// BalanceSheetLedgerAccount Moneybird-compatible balance_sheet_ledger_account.
+type BalanceSheetLedgerAccount = []struct {
+	Children *[]struct {
+		LedgerAccountId *string `json:"ledger_account_id,omitempty"`
+		Value           *string `json:"value,omitempty"`
+	} `json:"children,omitempty"`
+	LedgerAccountId *string `json:"ledger_account_id,omitempty"`
+	Value           *string `json:"value,omitempty"`
+}
 
 // BankBalanceAmounts Moneybird-compatible bank_balance_amounts.
 type BankBalanceAmounts struct {
@@ -9103,6 +9672,17 @@ type BaseUserResponse struct {
 	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
 }
 
+// CashFlowAmounts Moneybird-compatible cash_flow_amounts.
+type CashFlowAmounts struct {
+	// CashPaidByLedgerAccount Moneybird-compatible ledger_account_data.
+	CashPaidByLedgerAccount *LedgerAccountData `json:"cash_paid_by_ledger_account,omitempty"`
+
+	// CashReceivedByLedgerAccount Moneybird-compatible ledger_account_data.
+	CashReceivedByLedgerAccount *LedgerAccountData `json:"cash_received_by_ledger_account,omitempty"`
+	ClosingBalance              *string            `json:"closing_balance,omitempty"`
+	OpeningBalance              *string            `json:"opening_balance,omitempty"`
+}
+
 // ContactPersonResponse Moneybird-compatible contact_person_response.
 type ContactPersonResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -9123,6 +9703,14 @@ type ContactPersonResponse struct {
 	Phone     *string             `json:"phone,omitempty"`
 	UpdatedAt *time.Time          `json:"updated_at,omitempty"`
 	Version   *int                `json:"version,omitempty"`
+}
+
+// ContactReportItem Moneybird-compatible contact_report_item.
+type ContactReportItem struct {
+	Amount string `json:"amount"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id"`
 }
 
 // ContactResponse Moneybird-compatible contact_response.
@@ -9206,6 +9794,14 @@ type ContactResponseDeliveryMethod string
 // ContactResponseSepaSequenceType defines model for ContactResponse.SepaSequenceType.
 type ContactResponseSepaSequenceType string
 
+// CreditorsReportItem Moneybird-compatible creditors_report_item.
+type CreditorsReportItem struct {
+	Amount string `json:"amount"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id"`
+}
+
 // Currency Moneybird-compatible currency.
 type Currency = string
 
@@ -9240,6 +9836,14 @@ type CustomFieldsAttributes1 = []struct {
 	// Example: 123456789012345678
 	Id    *Identifier `json:"id,omitempty"`
 	Value *string     `json:"value,omitempty"`
+}
+
+// DebtorsReportItem Moneybird-compatible debtors_report_item.
+type DebtorsReportItem struct {
+	Amount string `json:"amount"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id"`
 }
 
 // DetailResponse Moneybird-compatible detail_response.
@@ -9969,6 +10573,14 @@ type LedgerAccountBookingResponse struct {
 	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
 }
 
+// LedgerAccountData Moneybird-compatible ledger_account_data.
+type LedgerAccountData struct {
+	LedgerAccounts []struct {
+		LedgerAccountId string `json:"ledger_account_id"`
+		Value           string `json:"value"`
+	} `json:"ledger_accounts"`
+}
+
 // LedgerAccountResponse Moneybird-compatible ledger_account_response.
 type LedgerAccountResponse struct {
 	AccountId   *string                           `json:"account_id,omitempty"`
@@ -10223,6 +10835,34 @@ type ProductResponse struct {
 
 // ProductResponseFrequencyType defines model for ProductResponse.FrequencyType.
 type ProductResponseFrequencyType string
+
+// ProfitLossAmounts Moneybird-compatible profit_loss_amounts.
+type ProfitLossAmounts struct {
+	// DirectCostsByLedgerAccount Moneybird-compatible ledger_account_data.
+	DirectCostsByLedgerAccount *LedgerAccountData `json:"direct_costs_by_ledger_account,omitempty"`
+
+	// ExpensesByLedgerAccount Moneybird-compatible ledger_account_data.
+	ExpensesByLedgerAccount *LedgerAccountData `json:"expenses_by_ledger_account,omitempty"`
+	GrossProfit             *string            `json:"gross_profit,omitempty"`
+	NetProfit               *string            `json:"net_profit,omitempty"`
+	OperatingProfit         *string            `json:"operating_profit,omitempty"`
+
+	// OtherIncomeExpensesByLedgerAccount Moneybird-compatible ledger_account_data.
+	OtherIncomeExpensesByLedgerAccount *LedgerAccountData `json:"other_income_expenses_by_ledger_account,omitempty"`
+
+	// RevenueByLedgerAccount Moneybird-compatible ledger_account_data.
+	RevenueByLedgerAccount *LedgerAccountData `json:"revenue_by_ledger_account,omitempty"`
+	TotalExpenses          *string            `json:"total_expenses,omitempty"`
+	TotalRevenue           *string            `json:"total_revenue,omitempty"`
+}
+
+// ProjectReportItem Moneybird-compatible project_report_item.
+type ProjectReportItem struct {
+	Amount string `json:"amount"`
+
+	// ProjectId Moneybird-compatible identifier_nullable.
+	ProjectId *IdentifierNullable `json:"project_id"`
+}
 
 // ProjectResponse Moneybird-compatible project_response.
 type ProjectResponse struct {
@@ -11040,6 +11680,23 @@ type TaxRateResponse_Percentage struct {
 // TaxRateResponseTaxRateType defines model for TaxRateResponse.TaxRateType.
 type TaxRateResponseTaxRateType string
 
+// TaxReportAmounts Moneybird-compatible tax_report_amounts.
+type TaxReportAmounts struct {
+	TaxRates *[]struct {
+		Amount          *string `json:"amount,omitempty"`
+		Name            *string `json:"name,omitempty"`
+		Percentage      *string `json:"percentage,omitempty"`
+		ReportReference *string `json:"report_reference,omitempty"`
+		Tax             *string `json:"tax,omitempty"`
+
+		// TaxRateId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		TaxRateId *Identifier `json:"tax_rate_id,omitempty"`
+		Type      *string     `json:"type,omitempty"`
+	} `json:"tax_rates,omitempty"`
+}
+
 // TaxSubtotalResponse Moneybird-compatible tax_subtotal_response.
 type TaxSubtotalResponse struct {
 	// TaxAmount Moneybird-compatible number.
@@ -11311,6 +11968,14 @@ type WorkflowStepResponse struct {
 
 // WorkflowStepResponseAction defines model for WorkflowStepResponse.Action.
 type WorkflowStepResponseAction string
+
+// WorkingCapitalAmounts Moneybird-compatible working_capital_amounts.
+type WorkingCapitalAmounts struct {
+	Bank           *string `json:"bank,omitempty"`
+	ToPay          *string `json:"to_pay,omitempty"`
+	ToReceive      *string `json:"to_receive,omitempty"`
+	WorkingCapital *string `json:"working_capital,omitempty"`
+}
 
 // AdministrationId A unique record identifier. Parse as a string.
 //
@@ -11953,6 +12618,18 @@ type GetAssetsReportParams struct {
 	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
 }
 
+// GetBalanceSheetReportParams defines parameters for GetBalanceSheetReport.
+type GetBalanceSheetReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetBalanceSheetReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+}
+
+// GetBalanceSheetReportParamsGranularity defines parameters for GetBalanceSheetReport.
+type GetBalanceSheetReportParamsGranularity string
+
 // GetBankBalanceParams defines parameters for GetBankBalance.
 type GetBankBalanceParams struct {
 	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
@@ -11964,6 +12641,120 @@ type GetBankBalanceParams struct {
 
 // GetBankBalanceParamsGranularity defines parameters for GetBankBalance.
 type GetBankBalanceParamsGranularity string
+
+// GetCashFlowReportParams defines parameters for GetCashFlowReport.
+type GetCashFlowReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetCashFlowReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// FinancialAccountId Only this financial account.
+	FinancialAccountId *string `form:"financial_account_id,omitempty" json:"financial_account_id,omitempty"`
+}
+
+// GetCashFlowReportParamsGranularity defines parameters for GetCashFlowReport.
+type GetCashFlowReportParamsGranularity string
+
+// GetCreditorsReportParams defines parameters for GetCreditorsReport.
+type GetCreditorsReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetCreditorsReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 100 unless given, at most 100.
+	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetCreditorsReportParamsGranularity defines parameters for GetCreditorsReport.
+type GetCreditorsReportParamsGranularity string
+
+// GetCreditorsAgingReportParams defines parameters for GetCreditorsAgingReport.
+type GetCreditorsAgingReportParams struct {
+	// PeriodUntil The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today.
+	PeriodUntil *string `form:"period_until,omitempty" json:"period_until,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 100 unless given, at most 100.
+	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetDebtorsReportParams defines parameters for GetDebtorsReport.
+type GetDebtorsReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetDebtorsReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 100 unless given, at most 100.
+	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetDebtorsReportParamsGranularity defines parameters for GetDebtorsReport.
+type GetDebtorsReportParamsGranularity string
+
+// GetDebtorsAgingReportParams defines parameters for GetDebtorsAgingReport.
+type GetDebtorsAgingReportParams struct {
+	// PeriodUntil The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today.
+	PeriodUntil *string `form:"period_until,omitempty" json:"period_until,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 100 unless given, at most 100.
+	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetExpensesByContactReportParams defines parameters for GetExpensesByContactReport.
+type GetExpensesByContactReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetExpensesByContactReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// ContactId Only the amounts of this contact.
+	ContactId *string `form:"contact_id,omitempty" json:"contact_id,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 100 unless given, at most 100.
+	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetExpensesByContactReportParamsGranularity defines parameters for GetExpensesByContactReport.
+type GetExpensesByContactReportParamsGranularity string
+
+// GetExpensesByProjectReportParams defines parameters for GetExpensesByProjectReport.
+type GetExpensesByProjectReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetExpensesByProjectReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 100 unless given, at most 100.
+	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetExpensesByProjectReportParamsGranularity defines parameters for GetExpensesByProjectReport.
+type GetExpensesByProjectReportParamsGranularity string
 
 // GetGeneralLedgerReportParams defines parameters for GetGeneralLedgerReport.
 type GetGeneralLedgerReportParams struct {
@@ -11997,6 +12788,102 @@ type GetJournalEntriesReportParams struct {
 
 // GetJournalEntriesReportParamsAccountType defines parameters for GetJournalEntriesReport.
 type GetJournalEntriesReportParamsAccountType string
+
+// GetLedgerAccountReportParams defines parameters for GetLedgerAccountReport.
+type GetLedgerAccountReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 100 unless given, at most 100.
+	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetProfitLossReportParams defines parameters for GetProfitLossReport.
+type GetProfitLossReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetProfitLossReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// ProjectId Only the bookings on this project.
+	ProjectId *string `form:"project_id,omitempty" json:"project_id,omitempty"`
+}
+
+// GetProfitLossReportParamsGranularity defines parameters for GetProfitLossReport.
+type GetProfitLossReportParamsGranularity string
+
+// GetRevenueByContactReportParams defines parameters for GetRevenueByContactReport.
+type GetRevenueByContactReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetRevenueByContactReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// ContactId Only the amounts of this contact.
+	ContactId *string `form:"contact_id,omitempty" json:"contact_id,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 100 unless given, at most 100.
+	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetRevenueByContactReportParamsGranularity defines parameters for GetRevenueByContactReport.
+type GetRevenueByContactReportParamsGranularity string
+
+// GetRevenueByProjectReportParams defines parameters for GetRevenueByProjectReport.
+type GetRevenueByProjectReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetRevenueByProjectReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 100 unless given, at most 100.
+	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetRevenueByProjectReportParamsGranularity defines parameters for GetRevenueByProjectReport.
+type GetRevenueByProjectReportParamsGranularity string
+
+// GetSubscriptionsReportParams defines parameters for GetSubscriptionsReport.
+type GetSubscriptionsReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// GetTaxReportParams defines parameters for GetTaxReport.
+type GetTaxReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetTaxReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+}
+
+// GetTaxReportParamsGranularity defines parameters for GetTaxReport.
+type GetTaxReportParamsGranularity string
+
+// GetWorkingCapitalReportParams defines parameters for GetWorkingCapitalReport.
+type GetWorkingCapitalReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+	Granularity *GetWorkingCapitalReportParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+}
+
+// GetWorkingCapitalReportParamsGranularity defines parameters for GetWorkingCapitalReport.
+type GetWorkingCapitalReportParamsGranularity string
 
 // ListSalesInvoicesParams defines parameters for ListSalesInvoices.
 type ListSalesInvoicesParams struct {
@@ -12480,6 +13367,15 @@ type UpdateRecurringSalesInvoiceJSONRequestBody = RecurringSalesInvoiceRequest
 
 // CreateRecurringSalesInvoiceNoteJSONRequestBody defines body for CreateRecurringSalesInvoiceNote for application/json ContentType.
 type CreateRecurringSalesInvoiceNoteJSONRequestBody = NoteRequest
+
+// ExportAuditfileJSONRequestBody defines body for ExportAuditfile for application/json ContentType.
+type ExportAuditfileJSONRequestBody = AuditfileExportRequest
+
+// ExportBrugstaatJSONRequestBody defines body for ExportBrugstaat for application/json ContentType.
+type ExportBrugstaatJSONRequestBody = ExportYearRequest
+
+// ExportLedgerAccountsJSONRequestBody defines body for ExportLedgerAccounts for application/json ContentType.
+type ExportLedgerAccountsJSONRequestBody = ExportYearRequest
 
 // CreateSalesInvoiceJSONRequestBody defines body for CreateSalesInvoice for application/json ContentType.
 type CreateSalesInvoiceJSONRequestBody = SalesInvoiceRequest
@@ -19460,15 +20356,71 @@ type ServerInterface interface {
 	// GetAssetsReport Assets report
 	// (GET /api/v2/{administration_id}/reports/assets)
 	GetAssetsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetAssetsReportParams)
+	// GetBalanceSheetReport Balance sheet report
+	// (GET /api/v2/{administration_id}/reports/balance_sheet)
+	GetBalanceSheetReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetBalanceSheetReportParams)
 	// GetBankBalance Bank balance report
 	// (GET /api/v2/{administration_id}/reports/bank_balance)
 	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetBankBalanceParams)
+	// GetCashFlowReport Cash flow report
+	// (GET /api/v2/{administration_id}/reports/cash_flow)
+	GetCashFlowReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetCashFlowReportParams)
+	// GetCreditorsReport Creditors report
+	// (GET /api/v2/{administration_id}/reports/creditors)
+	GetCreditorsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetCreditorsReportParams)
+	// GetCreditorsAgingReport Creditors aging report
+	// (GET /api/v2/{administration_id}/reports/creditors_aging)
+	GetCreditorsAgingReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetCreditorsAgingReportParams)
+	// GetDebtorsReport Debtors report
+	// (GET /api/v2/{administration_id}/reports/debtors)
+	GetDebtorsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsReportParams)
+	// GetDebtorsAgingReport Debtors aging report
+	// (GET /api/v2/{administration_id}/reports/debtors_aging)
+	GetDebtorsAgingReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsAgingReportParams)
+	// GetExpensesByContactReport Expenses by contact report
+	// (GET /api/v2/{administration_id}/reports/expenses_by_contact)
+	GetExpensesByContactReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetExpensesByContactReportParams)
+	// GetExpensesByProjectReport Expenses by project report
+	// (GET /api/v2/{administration_id}/reports/expenses_by_project)
+	GetExpensesByProjectReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetExpensesByProjectReportParams)
+	// ExportAuditfile Export an auditfile
+	// (POST /api/v2/{administration_id}/reports/export/auditfile)
+	ExportAuditfile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ExportBrugstaat Export a brugstaat
+	// (POST /api/v2/{administration_id}/reports/export/brugstaat)
+	ExportBrugstaat(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ExportLedgerAccounts Export the ledger accounts
+	// (POST /api/v2/{administration_id}/reports/export/ledger_accounts)
+	ExportLedgerAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// GetGeneralLedgerReport Get general ledger report
 	// (GET /api/v2/{administration_id}/reports/general_ledger)
 	GetGeneralLedgerReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetGeneralLedgerReportParams)
 	// GetJournalEntriesReport Get journal entries report
 	// (GET /api/v2/{administration_id}/reports/journal_entries)
 	GetJournalEntriesReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetJournalEntriesReportParams)
+	// GetLedgerAccountReport Ledger account report
+	// (GET /api/v2/{administration_id}/reports/ledger_accounts/{ledger_account_id})
+	//
+	// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	GetLedgerAccountReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, ledgerAccountId Identifier, params GetLedgerAccountReportParams)
+	// GetProfitLossReport Profit and loss report
+	// (GET /api/v2/{administration_id}/reports/profit_loss)
+	GetProfitLossReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetProfitLossReportParams)
+	// GetRevenueByContactReport Revenue by contact report
+	// (GET /api/v2/{administration_id}/reports/revenue_by_contact)
+	GetRevenueByContactReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetRevenueByContactReportParams)
+	// GetRevenueByProjectReport Revenue by project report
+	// (GET /api/v2/{administration_id}/reports/revenue_by_project)
+	GetRevenueByProjectReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetRevenueByProjectReportParams)
+	// GetSubscriptionsReport Subscriptions report
+	// (GET /api/v2/{administration_id}/reports/subscriptions)
+	GetSubscriptionsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetSubscriptionsReportParams)
+	// GetTaxReport Tax report
+	// (GET /api/v2/{administration_id}/reports/tax)
+	GetTaxReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetTaxReportParams)
+	// GetWorkingCapitalReport Working capital report
+	// (GET /api/v2/{administration_id}/reports/working_capital)
+	GetWorkingCapitalReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetWorkingCapitalReportParams)
 	// RequireTwoFactor Require two-step verification
 	// (PUT /api/v2/{administration_id}/require_two_factor)
 	RequireTwoFactor(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -21459,9 +22411,75 @@ func (_ Unimplemented) GetAssetsReport(w http.ResponseWriter, r *http.Request, a
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetBalanceSheetReport Balance sheet report
+// (GET /api/v2/{administration_id}/reports/balance_sheet)
+func (_ Unimplemented) GetBalanceSheetReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetBalanceSheetReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetBankBalance Bank balance report
 // (GET /api/v2/{administration_id}/reports/bank_balance)
 func (_ Unimplemented) GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetBankBalanceParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCashFlowReport Cash flow report
+// (GET /api/v2/{administration_id}/reports/cash_flow)
+func (_ Unimplemented) GetCashFlowReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetCashFlowReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCreditorsReport Creditors report
+// (GET /api/v2/{administration_id}/reports/creditors)
+func (_ Unimplemented) GetCreditorsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetCreditorsReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCreditorsAgingReport Creditors aging report
+// (GET /api/v2/{administration_id}/reports/creditors_aging)
+func (_ Unimplemented) GetCreditorsAgingReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetCreditorsAgingReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDebtorsReport Debtors report
+// (GET /api/v2/{administration_id}/reports/debtors)
+func (_ Unimplemented) GetDebtorsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDebtorsAgingReport Debtors aging report
+// (GET /api/v2/{administration_id}/reports/debtors_aging)
+func (_ Unimplemented) GetDebtorsAgingReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsAgingReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetExpensesByContactReport Expenses by contact report
+// (GET /api/v2/{administration_id}/reports/expenses_by_contact)
+func (_ Unimplemented) GetExpensesByContactReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetExpensesByContactReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetExpensesByProjectReport Expenses by project report
+// (GET /api/v2/{administration_id}/reports/expenses_by_project)
+func (_ Unimplemented) GetExpensesByProjectReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetExpensesByProjectReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ExportAuditfile Export an auditfile
+// (POST /api/v2/{administration_id}/reports/export/auditfile)
+func (_ Unimplemented) ExportAuditfile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ExportBrugstaat Export a brugstaat
+// (POST /api/v2/{administration_id}/reports/export/brugstaat)
+func (_ Unimplemented) ExportBrugstaat(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ExportLedgerAccounts Export the ledger accounts
+// (POST /api/v2/{administration_id}/reports/export/ledger_accounts)
+func (_ Unimplemented) ExportLedgerAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -21474,6 +22492,50 @@ func (_ Unimplemented) GetGeneralLedgerReport(w http.ResponseWriter, r *http.Req
 // GetJournalEntriesReport Get journal entries report
 // (GET /api/v2/{administration_id}/reports/journal_entries)
 func (_ Unimplemented) GetJournalEntriesReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetJournalEntriesReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetLedgerAccountReport Ledger account report
+// (GET /api/v2/{administration_id}/reports/ledger_accounts/{ledger_account_id})
+//
+// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+func (_ Unimplemented) GetLedgerAccountReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, ledgerAccountId Identifier, params GetLedgerAccountReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetProfitLossReport Profit and loss report
+// (GET /api/v2/{administration_id}/reports/profit_loss)
+func (_ Unimplemented) GetProfitLossReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetProfitLossReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetRevenueByContactReport Revenue by contact report
+// (GET /api/v2/{administration_id}/reports/revenue_by_contact)
+func (_ Unimplemented) GetRevenueByContactReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetRevenueByContactReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetRevenueByProjectReport Revenue by project report
+// (GET /api/v2/{administration_id}/reports/revenue_by_project)
+func (_ Unimplemented) GetRevenueByProjectReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetRevenueByProjectReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetSubscriptionsReport Subscriptions report
+// (GET /api/v2/{administration_id}/reports/subscriptions)
+func (_ Unimplemented) GetSubscriptionsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetSubscriptionsReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTaxReport Tax report
+// (GET /api/v2/{administration_id}/reports/tax)
+func (_ Unimplemented) GetTaxReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetTaxReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetWorkingCapitalReport Working capital report
+// (GET /api/v2/{administration_id}/reports/working_capital)
+func (_ Unimplemented) GetWorkingCapitalReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetWorkingCapitalReportParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -32072,6 +33134,61 @@ func (siw *ServerInterfaceWrapper) GetAssetsReport(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetBalanceSheetReport operation middleware
+func (siw *ServerInterfaceWrapper) GetBalanceSheetReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetBalanceSheetReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBalanceSheetReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetBankBalance operation middleware
 func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http.Request) {
 
@@ -32118,6 +33235,625 @@ func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetBankBalance(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCashFlowReport operation middleware
+func (siw *ServerInterfaceWrapper) GetCashFlowReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCashFlowReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "financial_account_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "financial_account_id", r.URL.Query(), &params.FinancialAccountId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "financial_account_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "financial_account_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCashFlowReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCreditorsReport operation middleware
+func (siw *ServerInterfaceWrapper) GetCreditorsReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCreditorsReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCreditorsReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCreditorsAgingReport operation middleware
+func (siw *ServerInterfaceWrapper) GetCreditorsAgingReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCreditorsAgingReportParams
+
+	// ------------- Optional query parameter "period_until" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period_until", r.URL.Query(), &params.PeriodUntil, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period_until"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period_until", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCreditorsAgingReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDebtorsReport operation middleware
+func (siw *ServerInterfaceWrapper) GetDebtorsReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDebtorsReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDebtorsReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDebtorsAgingReport operation middleware
+func (siw *ServerInterfaceWrapper) GetDebtorsAgingReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDebtorsAgingReportParams
+
+	// ------------- Optional query parameter "period_until" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period_until", r.URL.Query(), &params.PeriodUntil, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period_until"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period_until", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDebtorsAgingReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetExpensesByContactReport operation middleware
+func (siw *ServerInterfaceWrapper) GetExpensesByContactReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetExpensesByContactReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contact_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_id", r.URL.Query(), &params.ContactId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetExpensesByContactReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetExpensesByProjectReport operation middleware
+func (siw *ServerInterfaceWrapper) GetExpensesByProjectReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetExpensesByProjectReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetExpensesByProjectReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportAuditfile operation middleware
+func (siw *ServerInterfaceWrapper) ExportAuditfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportAuditfile(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportBrugstaat operation middleware
+func (siw *ServerInterfaceWrapper) ExportBrugstaat(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportBrugstaat(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportLedgerAccounts operation middleware
+func (siw *ServerInterfaceWrapper) ExportLedgerAccounts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportLedgerAccounts(w, r, administrationId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -32293,6 +34029,478 @@ func (siw *ServerInterfaceWrapper) GetJournalEntriesReport(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetJournalEntriesReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLedgerAccountReport operation middleware
+func (siw *ServerInterfaceWrapper) GetLedgerAccountReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ledger_account_id" -------------
+	var ledgerAccountId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ledger_account_id", chi.URLParam(r, "ledger_account_id"), &ledgerAccountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ledger_account_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetLedgerAccountReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLedgerAccountReport(w, r, administrationId, ledgerAccountId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProfitLossReport operation middleware
+func (siw *ServerInterfaceWrapper) GetProfitLossReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetProfitLossReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "project_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "project_id", r.URL.Query(), &params.ProjectId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "project_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProfitLossReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRevenueByContactReport operation middleware
+func (siw *ServerInterfaceWrapper) GetRevenueByContactReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRevenueByContactReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contact_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_id", r.URL.Query(), &params.ContactId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRevenueByContactReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRevenueByProjectReport operation middleware
+func (siw *ServerInterfaceWrapper) GetRevenueByProjectReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRevenueByProjectReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRevenueByProjectReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSubscriptionsReport operation middleware
+func (siw *ServerInterfaceWrapper) GetSubscriptionsReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetSubscriptionsReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSubscriptionsReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTaxReport operation middleware
+func (siw *ServerInterfaceWrapper) GetTaxReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetTaxReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTaxReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkingCapitalReport operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkingCapitalReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetWorkingCapitalReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkingCapitalReport(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -36856,6 +39064,60 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/general_ledger", wrapper.GetGeneralLedgerReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/profit_loss", wrapper.GetProfitLossReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/balance_sheet", wrapper.GetBalanceSheetReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/cash_flow", wrapper.GetCashFlowReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/creditors", wrapper.GetCreditorsReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/creditors_aging", wrapper.GetCreditorsAgingReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/debtors", wrapper.GetDebtorsReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/debtors_aging", wrapper.GetDebtorsAgingReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/expenses_by_contact", wrapper.GetExpensesByContactReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/expenses_by_project", wrapper.GetExpensesByProjectReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/reports/export/auditfile", wrapper.ExportAuditfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/reports/export/brugstaat", wrapper.ExportBrugstaat)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/reports/export/ledger_accounts", wrapper.ExportLedgerAccounts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/ledger_accounts/{ledger_account_id}", wrapper.GetLedgerAccountReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/revenue_by_contact", wrapper.GetRevenueByContactReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/revenue_by_project", wrapper.GetRevenueByProjectReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/subscriptions", wrapper.GetSubscriptionsReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/tax", wrapper.GetTaxReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/working_capital", wrapper.GetWorkingCapitalReport)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/sales_invoices", wrapper.ListSalesInvoices)

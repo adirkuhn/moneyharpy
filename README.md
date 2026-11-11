@@ -140,6 +140,33 @@ a project (`project_id`); `new_filter` is accepted on the list and used
 instead of `filter`. Deleting one answers `200` with the status as its body,
 as at Moneybird.
 
+## Reports
+
+Moneybird's reports under `/api/v2/{administration_id}/reports` are worked
+out from the journal: `profit_loss` (optionally per `project_id`),
+`balance_sheet`, `cash_flow` (optionally per `financial_account_id`), `tax`,
+`working_capital`, `debtors`, `creditors`, `revenue_by_contact`,
+`expenses_by_contact`, `revenue_by_project`, `expenses_by_project` and the
+deprecated `ledger_accounts/{id}`. They take a `period` of whole months (at
+most 12; `Period is invalid` and `Period cannot exceed 12 months` answer
+`400`) and a `granularity` that adds `periods` per month, quarter or year.
+`debtors_aging` and `creditors_aging` age what open invoices and receipts
+had open at the end of `period_until` (today for a month still running) by
+their document date; `subscriptions` gives the monthly recurring revenue,
+annual run rate, churn and lifetime value of the period's last month.
+Operations that Moneybird gives several scopes need all of them. MoneyHarpy
+closes no years yet, so the balance sheet shows the result of every year as
+an open year.
+
+`POST /reports/export/auditfile` (XAF 3.2, also when 4.0 is asked),
+`/reports/export/brugstaat` (RGS brugstaat as XML) and
+`/reports/export/ledger_accounts` (ledger cards as an Excel workbook) make
+the year's file at once and add it to the downloads, where
+`POST /downloads/{id}/download` serves it; they answer `204`. The web app
+shows the profit and loss statement, balance sheet, VAT summary, cash flow,
+receivable and payable overviews, their aging and revenue and costs per
+contact under Reports.
+
 ## Sales invoices
 
 Invoices live at `/{id}/sales_invoices`, with Moneybird's sales invoices API
