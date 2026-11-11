@@ -298,3 +298,45 @@ func TestEmailTemplates(t *testing.T) {
 		t.Errorf("nl = %q", FormatMoney(-123450, "EUR", "nl"))
 	}
 }
+
+func TestStationeryLeavesTheSenderOut(t *testing.T) {
+	h := newHarness(t)
+	inv := draft(t, h, line("100", "1", vat21, revenue))
+	ctx := context.Background()
+	plain, _, err := h.svc.PackingSlip(ctx, adminID, inv.ID, owner, false)
+	if err != nil || string(plain) != "%PDF slip" {
+		t.Fatalf("plain = %q, %v", plain, err)
+	}
+	if got, _, _ := h.svc.PackingSlip(ctx, adminID, inv.ID, owner, true); string(got) != "%PDF slip stationery" {
+		t.Errorf("stationery = %q", got)
+	}
+}
+
+func TestLinesTakeTheirProductAndProject(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	inv := draft(t, h, DetailInput{ProductID: ptr(widget), ProjectID: ptr(falcon)}, DetailInput{ProductID: ptr(widget), Price: ptr("30"), Description: ptr("Own words")})
+	first, second := inv.Lines[0], inv.Lines[1]
+	if first.Description != "Widget, blue" || first.Price != 2500 || first.TaxRateID != vat21 || *first.LedgerAccountID != consulting || *first.ProductID != widget || *first.ProjectID != falcon {
+		t.Errorf("product line = %+v", first)
+	}
+	if second.Description != "Own words" || second.Price != 3000 || second.TaxRateID != vat21 {
+		t.Errorf("line with its own price = %+v", second)
+	}
+	// Naming the same product again keeps what the line says.
+	up, err := h.svc.Update(ctx, adminID, inv.ID, owner, Changes{Details: []DetailInput{{ID: &first.ID, ProductID: ptr(widget), ProjectID: ptr(resource.ID(0)), Price: ptr("26")}}})
+	if err != nil || up.Lines[0].Price != 2600 || up.Lines[0].ProjectID != nil || *up.Lines[0].ProductID != widget {
+		t.Fatalf("updated = %+v, %v", up.Lines, err)
+	}
+	_, err = h.svc.Create(ctx, adminID, owner, Changes{ContactID: ptr(customer), Details: []DetailInput{
+		{ProductID: ptr(retired), TaxRateID: ptr(vat21)}, {ProductID: ptr(resource.ID(5)), TaxRateID: ptr(vat21)},
+		{ProjectID: ptr(shelved), TaxRateID: ptr(vat21)}, {ProjectID: ptr(resource.ID(5)), TaxRateID: ptr(vat21)},
+	}})
+	f := fieldsOf(t, err)
+	for key, want := range map[string]string{"details_attributes.0.product_id": "is deactivated", "details_attributes.1.product_id": "does not exist",
+		"details_attributes.2.project_id": "is archived", "details_attributes.3.project_id": "does not exist"} {
+		if len(f[key]) != 1 || f[key][0] != want {
+			t.Errorf("%s = %v, want %s", key, f[key], want)
+		}
+	}
+}

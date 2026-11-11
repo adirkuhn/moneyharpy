@@ -2,6 +2,7 @@ package money
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -72,4 +73,61 @@ func ParsePeriod(s string, today time.Time) (Period, error) {
 		return Period{}, errPeriod
 	}
 	return p, nil
+}
+
+var monthPattern = regexp.MustCompile(`^\d{6}$`)
+
+// ParseReportPeriod reads a report period: a name such as this_month, a
+// month such as 202501 or a range of whole months. Empty means this month.
+func ParseReportPeriod(s string, today time.Time) (Period, error) {
+	s = strings.TrimSpace(s)
+	switch {
+	case s == "":
+		s = "this_month"
+	case monthPattern.MatchString(s):
+		s += ".." + s
+	}
+	p, err := ParsePeriod(s, today)
+	if err != nil {
+		return p, err
+	}
+	if p.From.Day() != 1 || p.To.AddDate(0, 0, 1).Day() != 1 {
+		return p, errors.New("must cover whole months")
+	}
+	return p, nil
+}
+
+// Months counts the calendar months the period touches.
+func (p Period) Months() int {
+	return (p.To.Year()-p.From.Year())*12 + int(p.To.Month()) - int(p.From.Month()) + 1
+}
+
+// Monthly formats a period of whole months as 202501..202503.
+func (p Period) Monthly() string { return p.From.Format("200601") + ".." + p.To.Format("200601") }
+
+// Granularities split a report into periods.
+var Granularities = []string{"month", "quarter", "year"}
+
+// ErrGranularity reports a granularity that is not month, quarter or year.
+var ErrGranularity = errors.New("is not one of month, quarter, year")
+
+// Split cuts the period into calendar months, quarters or years; the first
+// and the last part are cut off at the period's start and end.
+func (p Period) Split(granularity string) ([]Period, error) {
+	months := map[string]int{"month": 1, "quarter": 3, "year": 12}[granularity]
+	if months == 0 {
+		return nil, ErrGranularity
+	}
+	var out []Period
+	for from := p.From; !from.After(p.To); {
+		m := (int(from.Month())-1)/months*months + months
+		next := time.Date(from.Year(), time.Month(m+1), 1, 0, 0, 0, 0, time.UTC)
+		to := next.AddDate(0, 0, -1)
+		if to.After(p.To) {
+			to = p.To
+		}
+		out = append(out, Period{From: from, To: to})
+		from = next
+	}
+	return out, nil
 }

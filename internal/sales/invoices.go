@@ -346,6 +346,8 @@ func (s *Service) applyDetails(ctx context.Context, admin, user resource.ID, inv
 			lines = append(lines, Detail{ID: s.ids.Next(), Amount: "1", Quantity: 1000, Selected: true, RowOrder: len(lines) + 1, CreatedAt: now, UpdatedAt: now})
 			d = &lines[len(lines)-1]
 		}
+		s.applyProduct(ctx, admin, user, d, in, field, verr)
+		s.applyProject(ctx, admin, user, d, in, field, verr)
 		if in.Description != nil {
 			d.Description = strings.TrimSpace(*in.Description)
 		}
@@ -373,12 +375,6 @@ func (s *Service) applyDetails(ctx context.Context, admin, user resource.ID, inv
 		}
 		if in.LedgerAccountID != nil {
 			d.LedgerAccountID = optional(*in.LedgerAccountID)
-		}
-		if in.ProjectID != nil {
-			d.ProjectID = optional(*in.ProjectID)
-		}
-		if in.ProductID != nil {
-			d.ProductID = optional(*in.ProductID)
 		}
 		if in.RowOrder != nil {
 			d.RowOrder = *in.RowOrder
@@ -420,6 +416,64 @@ func (s *Service) applyDetails(ctx context.Context, admin, user resource.ID, inv
 	}
 	slices.SortStableFunc(lines, func(a, b Detail) int { return a.RowOrder - b.RowOrder })
 	inv.Lines = lines
+}
+
+// applyProduct sets the line's product. A line that names a new product
+// takes its description, price, VAT rate and category, except those the
+// input sets itself.
+func (s *Service) applyProduct(ctx context.Context, admin, user resource.ID, d *Detail, in DetailInput, field string, verr *resource.ValidationError) {
+	if in.ProductID == nil {
+		return
+	}
+	id := optional(*in.ProductID)
+	if id == nil || (d.ProductID != nil && *d.ProductID == *id) {
+		d.ProductID = id
+		return
+	}
+	p, err := s.products.Product(ctx, admin, *id, user)
+	switch {
+	case err != nil:
+		verr.Add(field+".product_id", "does not exist")
+		return
+	case !p.Active:
+		verr.Add(field+".product_id", "is deactivated")
+		return
+	}
+	d.ProductID = id
+	if in.Description == nil {
+		d.Description = p.LineDescription()
+	}
+	if in.Price == nil {
+		d.Price = p.Price
+	}
+	if in.TaxRateID == nil && p.TaxRateID != nil {
+		d.TaxRateID = *p.TaxRateID
+	}
+	if in.LedgerAccountID == nil {
+		ledger := p.LedgerAccountID
+		d.LedgerAccountID = &ledger
+	}
+}
+
+// applyProject books the line on a project, which must be active when
+// newly set.
+func (s *Service) applyProject(ctx context.Context, admin, user resource.ID, d *Detail, in DetailInput, field string, verr *resource.ValidationError) {
+	if in.ProjectID == nil {
+		return
+	}
+	id := optional(*in.ProjectID)
+	if id != nil && (d.ProjectID == nil || *d.ProjectID != *id) {
+		p, err := s.projects.Project(ctx, admin, *id, user)
+		switch {
+		case err != nil:
+			verr.Add(field+".project_id", "does not exist")
+			return
+		case !p.Active():
+			verr.Add(field+".project_id", "is archived")
+			return
+		}
+	}
+	d.ProjectID = id
 }
 
 func cmpString(a, b string) string {

@@ -107,6 +107,9 @@ const (
 	TypeSalesInvoice          Type = "sales_invoices"
 	TypeExternalSalesInvoice  Type = "external_sales_invoices"
 	TypeRecurringSalesInvoice Type = "recurring_sales_invoices"
+	// Catalog.
+	TypeProduct Type = "products"
+	TypeProject Type = "projects"
 	// Journal.
 	TypeGeneralJournalDocument Type = "documents/general_journal_documents"
 )

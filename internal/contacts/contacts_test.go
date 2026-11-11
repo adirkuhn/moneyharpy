@@ -263,16 +263,19 @@ func TestQueryMatches(t *testing.T) {
 	}
 }
 
-func TestDeleteRefusesContactsInUse(t *testing.T) {
+func TestDeleteArchivesContactsInUse(t *testing.T) {
 	s, store := newService()
 	used := create(t, s, Changes{CompanyName: ptr("Used")})
 	free := create(t, s, Changes{CompanyName: ptr("Free")})
 	s.references = fakeReferences{used: map[resource.ID]bool{used.ID: true}}
-	if err := s.Delete(context.Background(), adminID, used.ID, owner); !errors.Is(err, ErrInUse) {
-		t.Errorf("delete used = %v", err)
+	if kept, err := s.Delete(context.Background(), adminID, used.ID, owner); err != nil || !kept {
+		t.Errorf("delete used = %v, %v", kept, err)
 	}
-	if err := s.Delete(context.Background(), adminID, free.ID, owner); err != nil {
-		t.Errorf("delete free = %v", err)
+	if got, ok := store.contacts[used.ID]; !ok || !got.Archived {
+		t.Errorf("used contact = %+v, want it kept, archived", got)
+	}
+	if kept, err := s.Delete(context.Background(), adminID, free.ID, owner); err != nil || kept {
+		t.Errorf("delete free = %v, %v", kept, err)
 	}
 	if _, ok := store.contacts[free.ID]; ok {
 		t.Error("free contact still stored")

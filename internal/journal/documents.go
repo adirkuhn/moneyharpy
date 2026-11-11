@@ -91,8 +91,9 @@ type Row struct {
 type RowInput struct {
 	ID              *resource.ID
 	LedgerAccountID *resource.ID
-	// ContactID of zero removes the contact.
+	// ContactID of zero removes the contact, as ProjectID does the project.
 	ContactID     *resource.ID
+	ProjectID     *resource.ID
 	Debit, Credit *string
 	Description   *string
 	RowOrder      *int
@@ -481,6 +482,21 @@ func (s *Service) applyRows(ctx context.Context, admin, user resource.ID, d *Doc
 			if *in.ContactID != 0 {
 				id := *in.ContactID
 				r.ContactID = &id
+			}
+		}
+		if in.ProjectID != nil {
+			was := r.ProjectID
+			r.ProjectID = nil
+			if *in.ProjectID != 0 {
+				id := *in.ProjectID
+				r.ProjectID = &id
+				if was == nil || *was != id {
+					if p, err := s.projects.Project(ctx, admin, id, user); err != nil {
+						verr.Add(field+".project_id", "does not exist")
+					} else if !p.Active() {
+						verr.Add(field+".project_id", "is archived")
+					}
+				}
 			}
 		}
 		if in.Description != nil {

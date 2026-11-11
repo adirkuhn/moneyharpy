@@ -123,7 +123,7 @@ func TestContactsRoundTrip(t *testing.T) {
 	if err := svc.DeletePerson(ctx, admin, c.ID, p.ID, owner); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.Delete(ctx, admin, c.ID, owner); err != nil {
+	if _, err := svc.Delete(ctx, admin, c.ID, owner); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := svc.Contact(ctx, admin, c.ID, owner); !errors.Is(err, contacts.ErrNotFound) {

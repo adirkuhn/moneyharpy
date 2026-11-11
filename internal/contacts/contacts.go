@@ -20,8 +20,6 @@ var (
 	ErrNotFound       = errors.New("contact not found")
 	ErrPersonNotFound = errors.New("contact person not found")
 	ErrNoteNotFound   = errors.New("note not found")
-	// ErrInUse reports a contact that documents refer to; archive it instead.
-	ErrInUse = errors.New("contact is in use")
 )
 
 // IsNotFound reports whether err means a contact resource is missing.

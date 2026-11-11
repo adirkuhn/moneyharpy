@@ -1117,6 +1117,34 @@ func (q *Queries) DeletePayment(ctx context.Context, arg DeletePaymentParams) er
 	return err
 }
 
+const deleteProduct = `-- name: DeleteProduct :exec
+DELETE FROM products WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteProductParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) error {
+	_, err := q.db.Exec(ctx, deleteProduct, arg.AdministrationID, arg.ID)
+	return err
+}
+
+const deleteProject = `-- name: DeleteProject :exec
+DELETE FROM projects WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteProjectParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteProject(ctx context.Context, arg DeleteProjectParams) error {
+	_, err := q.db.Exec(ctx, deleteProject, arg.AdministrationID, arg.ID)
+	return err
+}
+
 const deleteRecoveryCodes = `-- name: DeleteRecoveryCodes :exec
 DELETE FROM recovery_codes WHERE user_id = $1
 `
@@ -1539,16 +1567,23 @@ func (q *Queries) FinancialAccountByID(ctx context.Context, arg FinancialAccount
 }
 
 const financialBalances = `-- name: FinancialBalances :many
-SELECT financial_account_id, sum(amount)::bigint AS balance FROM financial_mutations WHERE administration_id = $1 GROUP BY financial_account_id
+SELECT financial_account_id, sum(amount)::bigint AS balance FROM financial_mutations
+WHERE administration_id = $1 AND ($2::date IS NULL OR date <= $2::date)
+GROUP BY financial_account_id
 `
+
+type FinancialBalancesParams struct {
+	AdministrationID int64
+	Until            pgtype.Date
+}
 
 type FinancialBalancesRow struct {
 	FinancialAccountID int64
 	Balance            int64
 }
 
-func (q *Queries) FinancialBalances(ctx context.Context, administrationID int64) ([]FinancialBalancesRow, error) {
-	rows, err := q.db.Query(ctx, financialBalances, administrationID)
+func (q *Queries) FinancialBalances(ctx context.Context, arg FinancialBalancesParams) ([]FinancialBalancesRow, error) {
+	rows, err := q.db.Query(ctx, financialBalances, arg.AdministrationID, arg.Until)
 	if err != nil {
 		return nil, err
 	}
@@ -4339,6 +4374,142 @@ func (q *Queries) ListOpenInvitations(ctx context.Context, administrationID int6
 	return items, nil
 }
 
+const listProducts = `-- name: ListProducts :many
+SELECT p.id, p.administration_id, p.title, p.description, p.checkout_description, p.identifier, p.price, p.currency, p.frequency_count, p.frequency_type, p.tax_rate_id, p.ledger_account_id, p.document_style_id, p.workflow_id, p.product_type, p.vat_rate_type, p.checkout_type, p.max_amount_per_order, p.active, p.created_at, p.updated_at, count(*) OVER () AS total
+FROM products p
+WHERE p.administration_id = $1
+  AND ($2::boolean OR p.active)
+  AND ($3::text = '' OR p.currency = $3)
+  AND (NOT $4::boolean)
+  AND ($5::bigint IS NULL OR p.ledger_account_id = $5)
+  AND ($6::text = '' OR p.title ILIKE '%' || $6 || '%' OR p.description ILIKE '%' || $6 || '%' OR p.identifier ILIKE '%' || $6 || '%')
+ORDER BY lower(coalesce(nullif(p.title, ''), p.description)), p.id
+LIMIT $8 OFFSET $7
+`
+
+type ListProductsParams struct {
+	AdministrationID int64
+	IncludeInactive  bool
+	Currency         string
+	CheckoutOnly     bool
+	LedgerAccountID  pgtype.Int8
+	Search           string
+	Skip             int32
+	MaxRows          pgtype.Int4
+}
+
+type ListProductsRow struct {
+	Product Product
+	Total   int64
+}
+
+func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
+	rows, err := q.db.Query(ctx, listProducts,
+		arg.AdministrationID,
+		arg.IncludeInactive,
+		arg.Currency,
+		arg.CheckoutOnly,
+		arg.LedgerAccountID,
+		arg.Search,
+		arg.Skip,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListProductsRow
+	for rows.Next() {
+		var i ListProductsRow
+		if err := rows.Scan(
+			&i.Product.ID,
+			&i.Product.AdministrationID,
+			&i.Product.Title,
+			&i.Product.Description,
+			&i.Product.CheckoutDescription,
+			&i.Product.Identifier,
+			&i.Product.Price,
+			&i.Product.Currency,
+			&i.Product.FrequencyCount,
+			&i.Product.FrequencyType,
+			&i.Product.TaxRateID,
+			&i.Product.LedgerAccountID,
+			&i.Product.DocumentStyleID,
+			&i.Product.WorkflowID,
+			&i.Product.ProductType,
+			&i.Product.VatRateType,
+			&i.Product.CheckoutType,
+			&i.Product.MaxAmountPerOrder,
+			&i.Product.Active,
+			&i.Product.CreatedAt,
+			&i.Product.UpdatedAt,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProjects = `-- name: ListProjects :many
+SELECT p.id, p.administration_id, p.name, p.state, p.budget, p.created_at, p.updated_at, count(*) OVER () AS total
+FROM projects p
+WHERE p.administration_id = $1
+  AND (cardinality($2::text[]) = 0 OR p.state = ANY($2::text[]))
+ORDER BY lower(p.name), p.id
+LIMIT $4 OFFSET $3
+`
+
+type ListProjectsParams struct {
+	AdministrationID int64
+	States           []string
+	Skip             int32
+	MaxRows          pgtype.Int4
+}
+
+type ListProjectsRow struct {
+	Project Project
+	Total   int64
+}
+
+func (q *Queries) ListProjects(ctx context.Context, arg ListProjectsParams) ([]ListProjectsRow, error) {
+	rows, err := q.db.Query(ctx, listProjects,
+		arg.AdministrationID,
+		arg.States,
+		arg.Skip,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListProjectsRow
+	for rows.Next() {
+		var i ListProjectsRow
+		if err := rows.Scan(
+			&i.Project.ID,
+			&i.Project.AdministrationID,
+			&i.Project.Name,
+			&i.Project.State,
+			&i.Project.Budget,
+			&i.Project.CreatedAt,
+			&i.Project.UpdatedAt,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRecurringSalesInvoices = `-- name: ListRecurringSalesInvoices :many
 SELECT r.id, r.administration_id, r.contact_id, r.contact_person_id, r.identity_id, r.document_style_id, r.workflow_id, r.reference, r.language, r.currency, r.prices_are_incl_tax, r.payment_conditions, r.discount, r.first_due_interval, r.start_date, r.invoice_date, r.last_date, r.active, r.frequency_type, r.frequency_count, r.auto_send, r.auto_send_at, r.auto_send_user_id, r.mergeable, r.anchor_date, r.period_count, r.generated_count, r.total_excl_tax, r.total_tax, r.total_incl_tax, r.total_discount, r.tax_totals, r.created_at, r.updated_at, count(*) OVER () AS total
 FROM recurring_sales_invoices r
@@ -5156,6 +5327,179 @@ func (q *Queries) PaymentsOfMutations(ctx context.Context, arg PaymentsOfMutatio
 		return nil, err
 	}
 	return items, nil
+}
+
+const productByID = `-- name: ProductByID :one
+SELECT id, administration_id, title, description, checkout_description, identifier, price, currency, frequency_count, frequency_type, tax_rate_id, ledger_account_id, document_style_id, workflow_id, product_type, vat_rate_type, checkout_type, max_amount_per_order, active, created_at, updated_at FROM products WHERE administration_id = $1 AND id = $2
+`
+
+type ProductByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) ProductByID(ctx context.Context, arg ProductByIDParams) (Product, error) {
+	row := q.db.QueryRow(ctx, productByID, arg.AdministrationID, arg.ID)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Title,
+		&i.Description,
+		&i.CheckoutDescription,
+		&i.Identifier,
+		&i.Price,
+		&i.Currency,
+		&i.FrequencyCount,
+		&i.FrequencyType,
+		&i.TaxRateID,
+		&i.LedgerAccountID,
+		&i.DocumentStyleID,
+		&i.WorkflowID,
+		&i.ProductType,
+		&i.VatRateType,
+		&i.CheckoutType,
+		&i.MaxAmountPerOrder,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const productByIdentifier = `-- name: ProductByIdentifier :one
+SELECT id, administration_id, title, description, checkout_description, identifier, price, currency, frequency_count, frequency_type, tax_rate_id, ledger_account_id, document_style_id, workflow_id, product_type, vat_rate_type, checkout_type, max_amount_per_order, active, created_at, updated_at FROM products WHERE administration_id = $1 AND identifier = $2 AND identifier <> ''
+`
+
+type ProductByIdentifierParams struct {
+	AdministrationID int64
+	Identifier       string
+}
+
+func (q *Queries) ProductByIdentifier(ctx context.Context, arg ProductByIdentifierParams) (Product, error) {
+	row := q.db.QueryRow(ctx, productByIdentifier, arg.AdministrationID, arg.Identifier)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Title,
+		&i.Description,
+		&i.CheckoutDescription,
+		&i.Identifier,
+		&i.Price,
+		&i.Currency,
+		&i.FrequencyCount,
+		&i.FrequencyType,
+		&i.TaxRateID,
+		&i.LedgerAccountID,
+		&i.DocumentStyleID,
+		&i.WorkflowID,
+		&i.ProductType,
+		&i.VatRateType,
+		&i.CheckoutType,
+		&i.MaxAmountPerOrder,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const productOnInvoices = `-- name: ProductOnInvoices :one
+SELECT EXISTS (SELECT 1 FROM sales_invoice_details s WHERE s.administration_id = $1 AND s.product_id = $2
+               UNION ALL
+               SELECT 1 FROM external_sales_invoice_details e WHERE e.administration_id = $1 AND e.product_id = $2
+               UNION ALL
+               SELECT 1 FROM recurring_sales_invoice_details r WHERE r.administration_id = $1 AND r.product_id = $2)
+`
+
+type ProductOnInvoicesParams struct {
+	AdministrationID int64
+	ProductID        pgtype.Int8
+}
+
+func (q *Queries) ProductOnInvoices(ctx context.Context, arg ProductOnInvoicesParams) (bool, error) {
+	row := q.db.QueryRow(ctx, productOnInvoices, arg.AdministrationID, arg.ProductID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const projectByID = `-- name: ProjectByID :one
+SELECT id, administration_id, name, state, budget, created_at, updated_at FROM projects WHERE administration_id = $1 AND id = $2
+`
+
+type ProjectByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) ProjectByID(ctx context.Context, arg ProjectByIDParams) (Project, error) {
+	row := q.db.QueryRow(ctx, projectByID, arg.AdministrationID, arg.ID)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.Name,
+		&i.State,
+		&i.Budget,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const projectInJournal = `-- name: ProjectInJournal :one
+SELECT EXISTS (SELECT 1 FROM journal_entries WHERE administration_id = $1 AND project_id = $2)
+`
+
+type ProjectInJournalParams struct {
+	AdministrationID int64
+	ProjectID        pgtype.Int8
+}
+
+func (q *Queries) ProjectInJournal(ctx context.Context, arg ProjectInJournalParams) (bool, error) {
+	row := q.db.QueryRow(ctx, projectInJournal, arg.AdministrationID, arg.ProjectID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const projectNameTaken = `-- name: ProjectNameTaken :one
+SELECT EXISTS (SELECT 1 FROM projects WHERE administration_id = $1 AND lower(name) = lower($2) AND id <> $3)
+`
+
+type ProjectNameTakenParams struct {
+	AdministrationID int64
+	Name             string
+	OtherThan        int64
+}
+
+func (q *Queries) ProjectNameTaken(ctx context.Context, arg ProjectNameTakenParams) (bool, error) {
+	row := q.db.QueryRow(ctx, projectNameTaken, arg.AdministrationID, arg.Name, arg.OtherThan)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const projectOnInvoices = `-- name: ProjectOnInvoices :one
+SELECT EXISTS (SELECT 1 FROM sales_invoice_details s WHERE s.administration_id = $1 AND s.project_id = $2
+               UNION ALL
+               SELECT 1 FROM external_sales_invoice_details e WHERE e.administration_id = $1 AND e.project_id = $2
+               UNION ALL
+               SELECT 1 FROM recurring_sales_invoice_details r WHERE r.administration_id = $1 AND r.project_id = $2)
+`
+
+type ProjectOnInvoicesParams struct {
+	AdministrationID int64
+	ProjectID        pgtype.Int8
+}
+
+func (q *Queries) ProjectOnInvoices(ctx context.Context, arg ProjectOnInvoicesParams) (bool, error) {
+	row := q.db.QueryRow(ctx, projectOnInvoices, arg.AdministrationID, arg.ProjectID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const recentlyProcessedFinancialMutations = `-- name: RecentlyProcessedFinancialMutations :many
@@ -7078,6 +7422,100 @@ func (q *Queries) UpsertPayment(ctx context.Context, arg UpsertPaymentParams) er
 		arg.PaymentDate,
 		arg.TransactionIdentifier,
 		arg.UserID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const upsertProduct = `-- name: UpsertProduct :exec
+INSERT INTO products (id, administration_id, title, description, checkout_description, identifier, price, currency, frequency_count,
+    frequency_type, tax_rate_id, ledger_account_id, document_style_id, workflow_id, product_type, vat_rate_type, checkout_type,
+    max_amount_per_order, active, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title, description = EXCLUDED.description, checkout_description = EXCLUDED.checkout_description,
+    identifier = EXCLUDED.identifier, price = EXCLUDED.price, currency = EXCLUDED.currency, frequency_count = EXCLUDED.frequency_count,
+    frequency_type = EXCLUDED.frequency_type, tax_rate_id = EXCLUDED.tax_rate_id, ledger_account_id = EXCLUDED.ledger_account_id,
+    document_style_id = EXCLUDED.document_style_id, workflow_id = EXCLUDED.workflow_id, product_type = EXCLUDED.product_type,
+    vat_rate_type = EXCLUDED.vat_rate_type, checkout_type = EXCLUDED.checkout_type, max_amount_per_order = EXCLUDED.max_amount_per_order,
+    active = EXCLUDED.active, updated_at = EXCLUDED.updated_at
+`
+
+type UpsertProductParams struct {
+	ID                  int64
+	AdministrationID    int64
+	Title               string
+	Description         string
+	CheckoutDescription string
+	Identifier          string
+	Price               int64
+	Currency            string
+	FrequencyCount      int32
+	FrequencyType       string
+	TaxRateID           pgtype.Int8
+	LedgerAccountID     int64
+	DocumentStyleID     pgtype.Int8
+	WorkflowID          pgtype.Int8
+	ProductType         string
+	VatRateType         string
+	CheckoutType        string
+	MaxAmountPerOrder   pgtype.Int4
+	Active              bool
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertProduct(ctx context.Context, arg UpsertProductParams) error {
+	_, err := q.db.Exec(ctx, upsertProduct,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Title,
+		arg.Description,
+		arg.CheckoutDescription,
+		arg.Identifier,
+		arg.Price,
+		arg.Currency,
+		arg.FrequencyCount,
+		arg.FrequencyType,
+		arg.TaxRateID,
+		arg.LedgerAccountID,
+		arg.DocumentStyleID,
+		arg.WorkflowID,
+		arg.ProductType,
+		arg.VatRateType,
+		arg.CheckoutType,
+		arg.MaxAmountPerOrder,
+		arg.Active,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const upsertProject = `-- name: UpsertProject :exec
+INSERT INTO projects (id, administration_id, name, state, budget, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, state = EXCLUDED.state, budget = EXCLUDED.budget, updated_at = EXCLUDED.updated_at
+`
+
+type UpsertProjectParams struct {
+	ID               int64
+	AdministrationID int64
+	Name             string
+	State            string
+	Budget           pgtype.Int4
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertProject(ctx context.Context, arg UpsertProjectParams) error {
+	_, err := q.db.Exec(ctx, upsertProject,
+		arg.ID,
+		arg.AdministrationID,
+		arg.Name,
+		arg.State,
+		arg.Budget,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)

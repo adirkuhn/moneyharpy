@@ -317,6 +317,14 @@ func (s *Service) SettleCredit(ctx context.Context, admin, id, user resource.ID)
 	return s.Invoice(ctx, admin, id, user)
 }
 
+// Payment returns one payment of a sales or external sales invoice.
+func (s *Service) Payment(ctx context.Context, admin, id, user resource.ID) (Payment, error) {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return Payment{}, err
+	}
+	return s.store.Payment(ctx, admin, id)
+}
+
 // DeletePayment removes a payment. One linked to a bank transaction is
 // unlinked from it; one half of a settlement takes the other half along.
 func (s *Service) DeletePayment(ctx context.Context, admin, id, paymentID, user resource.ID) error {

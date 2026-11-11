@@ -58,6 +58,10 @@ import { LedgerEntriesPage } from './journal/LedgerEntriesPage'
 import { TrialBalancePage } from './journal/TrialBalancePage'
 import { RecurringInvoicePage } from './recurring/RecurringInvoicePage'
 import { RecurringInvoicesPage } from './recurring/RecurringInvoicesPage'
+import { ProductPage } from './products/ProductPage'
+import { ProductsPage } from './products/ProductsPage'
+import { ProjectPage } from './projects/ProjectPage'
+import { ProjectsPage } from './projects/ProjectsPage'
 
 export function AppRoutes() {
   return (
@@ -98,6 +102,12 @@ export function AppRoutes() {
           <Route path="/:administrationId/recurring_sales_invoices" element={<RecurringInvoicesPage />} />
           <Route path="/:administrationId/recurring_sales_invoices/new" element={<RecurringInvoicePage />} />
           <Route path="/:administrationId/recurring_sales_invoices/:recurringId" element={<RecurringInvoicePage />} />
+          <Route path="/:administrationId/products" element={<ProductsPage />} />
+          <Route path="/:administrationId/products/new" element={<ProductPage />} />
+          <Route path="/:administrationId/products/:productId" element={<ProductPage />} />
+          <Route path="/:administrationId/projects" element={<ProjectsPage />} />
+          <Route path="/:administrationId/projects/new" element={<ProjectPage />} />
+          <Route path="/:administrationId/projects/:projectId" element={<ProjectPage />} />
           <Route path="/:administrationId/report/general_ledger" element={<TrialBalancePage />} />
           <Route path="/:administrationId/report/journal_entries" element={<LedgerEntriesPage />} />
           <Route path="/:administrationId/documents/general_journal_documents" element={<JournalDocumentsPage />} />

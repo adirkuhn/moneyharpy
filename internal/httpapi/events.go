@@ -260,6 +260,32 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		}
 		return c.one(sales.RecurringEntityType, "recurring_sales_invoice_destroyed")
 	},
+	"createProduct": func(c change) []webhooks.Event { return c.one("Product", "product_created") },
+	"updateProduct": func(c change) []webhooks.Event {
+		return c.toggled("Product", "product", "product_updated", "product_activated", "product_deactivated")
+	},
+	"deleteProduct": func(c change) []webhooks.Event {
+		if c.header.Get("X-Kept-As") == "deactivated" {
+			return c.one("Product", "product_deactivated")
+		}
+		return c.one("Product", "product_destroyed")
+	},
+	"createProject": func(c change) []webhooks.Event { return c.one("Project", "project_created") },
+	"updateProject": func(c change) []webhooks.Event {
+		switch c.nested("project")["state"] {
+		case "archived":
+			return c.one("Project", "project_archived")
+		case "active":
+			return c.one("Project", "project_activated")
+		}
+		return c.one("Project", "project_updated")
+	},
+	"deleteProject": func(c change) []webhooks.Event {
+		if c.header.Get("X-Kept-As") == "archived" {
+			return c.one("Project", "project_archived")
+		}
+		return c.one("Project", "project_destroyed")
+	},
 	"createContact": func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
 	"updateContact": func(c change) []webhooks.Event {
 		switch c.nested("contact")["archived"] {
@@ -270,8 +296,13 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		}
 		return c.one("Contact", "contact_changed")
 	},
-	"archiveContact":       func(c change) []webhooks.Event { return c.one("Contact", "contact_archived") },
-	"deleteContact":        func(c change) []webhooks.Event { return c.one("Contact", "contact_destroyed") },
+	"archiveContact": func(c change) []webhooks.Event { return c.one("Contact", "contact_archived") },
+	"deleteContact": func(c change) []webhooks.Event {
+		if c.header.Get("X-Kept-As") == "archived" {
+			return c.one("Contact", "contact_archived")
+		}
+		return c.one("Contact", "contact_destroyed")
+	},
 	"createContactPerson":  func(c change) []webhooks.Event { return c.one("ContactPerson", "contact_person_created") },
 	"updateContactPerson":  func(c change) []webhooks.Event { return c.one("ContactPerson", "contact_person_updated") },
 	"deleteContactPerson":  func(c change) []webhooks.Event { return c.one("ContactPerson", "contact_person_destroyed") },

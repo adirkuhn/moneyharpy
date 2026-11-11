@@ -431,7 +431,7 @@ export interface paths {
         };
         /**
          * Retrieve tax rates
-         * @description Sales rates first, then purchase and journal rates, each in their set order.
+         * @description Sales rates first, then purchase and journal rates, each in their set order. Paged with a Link header and X-Total-Count, 100 a page unless per_page is given.
          */
         get: operations["listTaxRates"];
         put?: never;
@@ -843,7 +843,10 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** List the ids and versions of all financial mutations */
+        /**
+         * List the ids and versions of all financial mutations
+         * @description The ids and versions of the transactions the filter selects, with the terms of the list (period, state, mutation_type, financial_account_id, amount_from, amount_to); this year when no filter is given.
+         */
         get: operations["listFinancialMutationVersions"];
         put?: never;
         /**
@@ -934,7 +937,7 @@ export interface paths {
         };
         /**
          * Bank balance report
-         * @description The sum of every financial account's transactions. Accounts with a zero balance are left out.
+         * @description The balance of every financial account at the end of the period: the sum of its transactions up to that day. With granularity, periods also gives the balances at the end of every month, quarter or year in the period, the first and the last cut off at the period's start and end. An account with a zero balance at every end is left out. The period holds at most 12 months.
          */
         get: operations["getBankBalance"];
         put?: never;
@@ -1096,7 +1099,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a contact
-         * @description A contact that documents refer to cannot be deleted (422); archive it instead.
+         * @description A contact that documents refer to is archived instead, as Moneybird does, with the header X-Kept-As: archived.
          */
         delete: operations["deleteContact"];
         options?: never;
@@ -1384,7 +1387,7 @@ export interface paths {
         };
         /**
          * Download an attachment
-         * @description Answers with the file itself; Moneybird redirects to it instead.
+         * @description Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
          */
         get: operations["downloadGeneralJournalDocumentAttachment"];
         put?: never;
@@ -1588,7 +1591,7 @@ export interface paths {
         };
         /**
          * Download the PDF
-         * @description Answers with the file itself; Moneybird redirects to it instead.
+         * @description Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
          */
         get: operations["downloadSalesInvoicePdf"];
         put?: never;
@@ -1611,7 +1614,7 @@ export interface paths {
         };
         /**
          * Download the packing slip
-         * @description Answers with the file itself; Moneybird redirects to it instead.
+         * @description Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
          */
         get: operations["downloadSalesInvoicePackingSlip"];
         put?: never;
@@ -1822,6 +1825,180 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/payments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a payment
+         * @description A payment of a sales invoice or an external sales invoice. Moneybird also has payments of purchase invoices, receipts and VAT documents, which MoneyHarpy does not have yet.
+         */
+        get: operations["getPayment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all products
+         * @description Active products by title (or description), 10 a page unless per_page is given. Paged with a Link header and X-Total-Count. Members who may work on invoices or estimates may list them too, to pick them for lines.
+         */
+        get: operations["listProducts"];
+        put?: never;
+        /**
+         * Create a product
+         * @description Needs a price, a category (ledger_account_id) and a title or description. The currency is the administration's unless given; the identifier must be unique.
+         */
+        post: operations["createProduct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/products/identifier/{identifier}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        /** Get a product by its identifier */
+        get: operations["getProductByIdentifier"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get a product */
+        get: operations["getProduct"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete or deactivate a product
+         * @description A product no invoice line names is deleted. One that lines name is deactivated instead and kept, with the header X-Kept-As: deactivated, as Moneybird does.
+         */
+        delete: operations["deleteProduct"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a product
+         * @description Lines that name the product keep what they took from it. active false deactivates it, true reactivates it (MoneyHarpy extension).
+         */
+        patch: operations["updateProduct"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/products/{id}/sales_link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create an online sales link
+         * @description Moneybird makes a link to a checkout page through Moneybird Payments. MoneyHarpy has no online checkout: after checking the product and the contact it answers 404 "Product not valid for online sales", as Moneybird does for a product that cannot be sold online.
+         */
+        post: operations["createProductSalesLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all projects
+         * @description By name, 25 a page unless per_page is given. Filter term: state, one of all, active (the default) or archived, several joined by |. Paged with a Link header and X-Total-Count. Members who may work on invoices, estimates or documents may list them too, to book on them.
+         */
+        get: operations["listProjects"];
+        put?: never;
+        /**
+         * Create a project
+         * @description The name must be unique in the administration, ignoring case.
+         */
+        post: operations["createProject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/projects/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get a project */
+        get: operations["getProject"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete or archive a project
+         * @description A project nothing is booked on is deleted. One that invoice lines or journal entries are booked on is archived instead and kept, with the header X-Kept-As: archived, as Moneybird does.
+         */
+        delete: operations["deleteProject"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a project
+         * @description state archives the project or makes it active again (MoneyHarpy extension).
+         */
+        patch: operations["updateProject"];
         trace?: never;
     };
     "/api/v2/{administration_id}/sales_invoices/{id}/register_payment": {
@@ -3108,6 +3285,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/files/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download a file by a temporary link
+         * @description Where the download operations redirect to, like Moneybird's storage links: the token names the file and who asked for it, is signed, and expires 30 seconds after it was made. No sign-in is needed.
+         */
+        get: operations["downloadFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/register": {
         parameters: {
             query?: never;
@@ -4300,6 +4497,63 @@ export interface components {
                 details_attributes?: components["schemas"]["SalesInvoiceDetailInput"][] | {
                     [key: string]: components["schemas"]["SalesInvoiceDetailInput"];
                 };
+            };
+        };
+        /** @description A Moneybird product with MoneyHarpy extensions. */
+        Product: components["schemas"]["product_response"] & {
+            /** @description MoneyHarpy extension. False once deactivated. */
+            active: boolean;
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        ProductRequest: {
+            product: {
+                title?: string;
+                description?: string;
+                /** @description Accepted and kept; MoneyHarpy has no online checkout. */
+                checkout_description?: string;
+                price?: components["schemas"]["Money"];
+                document_style_id?: components["schemas"]["FlexibleIdentifier"];
+                ledger_account_id?: components["schemas"]["FlexibleIdentifier"];
+                tax_rate_id?: components["schemas"]["FlexibleIdentifier"];
+                workflow_id?: components["schemas"]["FlexibleIdentifier"];
+                currency?: string;
+                /** @enum {string} */
+                checkout_type?: "product" | "subscription" | "";
+                /** @enum {string} */
+                frequency_type?: "day" | "week" | "month" | "quarter" | "year" | "";
+                frequency?: number | string;
+                /** @enum {string} */
+                product_type?: "digital_service" | "service" | "product" | "";
+                /** @enum {string} */
+                vat_rate_type?: "standard" | "reduced" | "";
+                max_amount_per_order?: number | string;
+                identifier?: string;
+                frequency_preset?: string;
+                /** @description MoneyHarpy extension. false deactivates the product, true reactivates it. */
+                active?: components["schemas"]["FlexibleBoolean"];
+            };
+        };
+        /** @description A Moneybird project with MoneyHarpy extensions. */
+        Project: components["schemas"]["project_response"] & {
+            administration_id: components["schemas"]["Identifier"];
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        ProjectRequest: {
+            project: {
+                name?: string;
+                /** @description The budget in hours, as a number or a string; empty or null removes it. */
+                budget?: (number | string) | null;
+                /**
+                 * @description MoneyHarpy extension. archived archives the project, active makes it active again.
+                 * @enum {string}
+                 */
+                state?: "active" | "archived";
             };
         };
         /** @description A Moneybird recurring sales invoice with MoneyHarpy extensions. */
@@ -6164,6 +6418,61 @@ export interface components {
         };
     };
     responses: {
+        /** @description A page of products */
+        ProductPage: {
+            headers: {
+                /** @description RFC 8288 links to the first, prev, next and last pages. */
+                Link?: string;
+                /** @description The number of products selected in all. MoneyHarpy extension. */
+                "X-Total-Count"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Product"][];
+            };
+        };
+        /** @description A page of projects */
+        ProjectPage: {
+            headers: {
+                /** @description RFC 8288 links to the first, prev, next and last pages. */
+                Link?: string;
+                /** @description The number of projects selected in all. MoneyHarpy extension. */
+                "X-Total-Count"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Project"][];
+            };
+        };
+        /** @description Moneybird answers this when the plan's limit is reached. MoneyHarpy has no plans or limits, so it does not answer this; it is declared for clients written against Moneybird. */
+        PaymentRequired: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Moneybird answers this when finding duplicates takes too long. MoneyHarpy groups contacts in one pass and does not answer this; it is declared for clients written against Moneybird. */
+        ServiceUnavailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Found. Location holds a link to the file that works for 30 seconds, without signing in, as Moneybird's storage links do. */
+        FileRedirect: {
+            headers: {
+                /** @description The temporary link to the file. */
+                Location?: string;
+                [name: string]: unknown;
+            };
+            content: {
+                "text/plain": string;
+            };
+        };
         /** @description A page of sales invoices */
         SalesInvoicePage: {
             headers: {
@@ -6311,6 +6620,8 @@ export interface components {
         };
     };
     parameters: {
+        /** @description stationery leaves out the sender's address and logo, for printing on paper that has them. */
+        media: string;
         administration_id: components["schemas"]["Identifier"];
         id: components["schemas"]["Identifier"];
         /** @description Comma-separated key:value terms. */
@@ -7399,6 +7710,10 @@ export interface operations {
             query?: {
                 /** @description Comma-separated key:value pairs. Keys are name, partial_name, percentage, tax_rate_type, country, show_tax, active, created_after and updated_after, for example tax_rate_type:sales_invoice,active:true. */
                 filter?: string;
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
             };
             header?: never;
             path: {
@@ -7411,6 +7726,10 @@ export interface operations {
             /** @description The tax rates */
             200: {
                 headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of tax rates selected in all. */
+                    "X-Total-Count"?: number;
                     [name: string]: unknown;
                 };
                 content: {
@@ -8216,7 +8535,10 @@ export interface operations {
     };
     listFinancialMutationVersions: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+            };
             header?: never;
             path: {
                 administration_id: components["parameters"]["administration_id"];
@@ -8369,7 +8691,12 @@ export interface operations {
     };
     getBankBalance: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+                /** @description Splits the report into months, quarters or years. */
+                granularity?: "month" | "quarter" | "year";
+            };
             header?: never;
             path: {
                 administration_id: components["parameters"]["administration_id"];
@@ -8384,7 +8711,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["bank_balance_amounts"];
+                    "application/json": components["schemas"]["bank_balance_amounts"] & {
+                        /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
+                        periods?: ({
+                            /** @description The part of the period, as 202501..202503. */
+                            period: string;
+                        } & components["schemas"]["bank_balance_amounts"])[];
+                    };
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -8612,6 +8945,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     getContactByCustomerId: {
@@ -8669,9 +9003,11 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The contact is deleted */
+            /** @description The contact is deleted, or archived */
             204: {
                 headers: {
+                    /** @description archived when the contact was kept. */
+                    "X-Kept-As"?: "archived";
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -8912,6 +9248,8 @@ export interface operations {
                 /** @description Records per page, 50 unless given, at most 100. */
                 per_page?: components["parameters"]["per_page"];
                 sort?: "date_desc" | "date_asc";
+                /** @description Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter. */
+                new_filter?: string;
                 /** @description Accepted for compatibility; journal entries are never new. */
                 exclude_new_general_journal_documents?: "true" | "false";
             };
@@ -8957,6 +9295,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
@@ -9065,12 +9404,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The journal entry is deleted */
-            204: {
+            /** @description The journal entry is deleted. The body is the status code, as at Moneybird. */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": number;
+                };
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
@@ -9249,15 +9590,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The file */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/octet-stream": string;
-                };
-            };
+            302: components["responses"]["FileRedirect"];
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
@@ -9395,6 +9728,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
@@ -9642,7 +9976,10 @@ export interface operations {
     };
     downloadSalesInvoicePdf: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description stationery leaves out the sender's address and logo, for printing on paper that has them. */
+                media?: components["parameters"]["media"];
+            };
             header?: never;
             path: {
                 administration_id: components["parameters"]["administration_id"];
@@ -9652,15 +9989,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The file */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/pdf": string;
-                };
-            };
+            302: components["responses"]["FileRedirect"];
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
@@ -9671,7 +10000,10 @@ export interface operations {
     };
     downloadSalesInvoicePackingSlip: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description stationery leaves out the sender's address and logo, for printing on paper that has them. */
+                media?: components["parameters"]["media"];
+            };
             header?: never;
             path: {
                 administration_id: components["parameters"]["administration_id"];
@@ -9681,15 +10013,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The file */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/pdf": string;
-                };
-            };
+            302: components["responses"]["FileRedirect"];
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
@@ -9754,6 +10078,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
@@ -9971,6 +10296,397 @@ export interface operations {
             429: components["responses"]["TooManyRequests"];
         };
     };
+    getPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The payment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listProducts: {
+        parameters: {
+            query?: {
+                /** @description Free-text search across the title, description and identifier. */
+                query?: string;
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+                /** @description Only products in this currency, such as EUR. */
+                currency?: string;
+                /** @description true (the default) lists active products only; false includes deactivated ones. */
+                active?: "true" | "false";
+                /** @description true keeps the products sold through an online checkout, false those that are not. MoneyHarpy has no online checkout, so true finds none. */
+                for_checkout?: "true" | "false";
+                /** @description Only products booked on this category. */
+                ledger_account_id?: components["schemas"]["Identifier"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ProductPage"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductRequest"];
+            };
+        };
+        responses: {
+            /** @description The created product */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getProductByIdentifier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The product */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The product */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The product is deleted, or deactivated */
+            204: {
+                headers: {
+                    /** @description deactivated when the product was kept. */
+                    "X-Kept-As"?: "deactivated";
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductRequest"];
+            };
+        };
+        responses: {
+            /** @description The product */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createProductSalesLink: {
+        parameters: {
+            query?: {
+                /** @description The contact to fill in on the checkout page. */
+                contact_id?: components["schemas"]["Identifier"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sales link, valid for one hour. MoneyHarpy does not answer this. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listProjects: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ProjectPage"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectRequest"];
+            };
+        };
+        responses: {
+            /** @description The created project */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The project */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The project is deleted, or archived */
+            204: {
+                headers: {
+                    /** @description archived when the project was kept. */
+                    "X-Kept-As"?: "archived";
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectRequest"];
+            };
+        };
+        responses: {
+            /** @description The project */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
     registerSalesInvoicePayment: {
         parameters: {
             query?: never;
@@ -10179,15 +10895,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The file */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/octet-stream": string;
-                };
-            };
+            302: components["responses"]["FileRedirect"];
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
@@ -10515,15 +11223,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The file */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/octet-stream": string;
-                };
-            };
+            302: components["responses"]["FileRedirect"];
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
@@ -10770,6 +11470,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
@@ -12219,6 +12920,30 @@ export interface operations {
                 };
             };
             403: components["responses"]["Forbidden"];
+        };
+    };
+    downloadFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                    "application/octet-stream": string;
+                };
+            };
+            404: components["responses"]["NotFound"];
         };
     };
     register: {

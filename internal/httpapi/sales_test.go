@@ -98,16 +98,20 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 		t.Errorf("find = %s / %s", byNumber.ID, byRef.ID)
 	}
 
-	pdf := owner.do(http.MethodGet, invoices+"/"+inv.ID+"/download_pdf", nil)
-	wantStatus(t, pdf, http.StatusOK)
+	pdf := owner.follow(owner.do(http.MethodGet, invoices+"/"+inv.ID+"/download_pdf", nil))
 	if !bytes.HasPrefix(pdf.body, []byte("%PDF-")) || pdf.header.Get("Content-Type") != "application/pdf" {
 		t.Errorf("pdf = %d bytes, %s", len(pdf.body), pdf.header.Get("Content-Type"))
 	}
+	stationery := owner.follow(owner.do(http.MethodGet, invoices+"/"+inv.ID+"/download_pdf.json?media=stationery", nil))
+	if !bytes.HasPrefix(stationery.body, []byte("%PDF-")) || len(stationery.body) >= len(pdf.body) {
+		t.Errorf("stationery pdf = %d bytes, plain %d", len(stationery.body), len(pdf.body))
+	}
+	wantStatus(t, owner.do(http.MethodGet, invoices+"/1/download_pdf", nil), http.StatusNotFound)
 	ubl := owner.do(http.MethodGet, invoices+"/"+inv.ID+"/download_ubl", nil)
 	if !strings.Contains(string(ubl.body), "<cbc:PayableAmount currencyID=\"EUR\">272.86</cbc:PayableAmount>") {
 		t.Errorf("ubl = %s", ubl.body)
 	}
-	wantStatus(t, owner.do(http.MethodGet, invoices+"/"+inv.ID+"/download_packing_slip_pdf", nil), http.StatusOK)
+	owner.follow(owner.do(http.MethodGet, invoices+"/"+inv.ID+"/download_packing_slip_pdf", nil))
 
 	// The invoice posted debtors, revenue and VAT.
 	entries := decode[[]struct {
@@ -148,7 +152,7 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 
 	// Peppol is not there yet, and the contact now has invoices.
 	wantStatus(t, owner.do(http.MethodPatch, invoices+"/"+credit.ID+"/send_invoice", map[string]any{"sales_invoice_sending": map[string]any{"delivery_method": "Peppol"}}), http.StatusUnprocessableEntity)
-	wantStatus(t, owner.do(http.MethodDelete, api+"/contacts/"+customer.ID, nil), http.StatusUnprocessableEntity)
+	wantKept(t, owner.do(http.MethodDelete, api+"/contacts/"+customer.ID, nil), "archived")
 	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+credit.ID, nil), http.StatusNoContent)
 }
 
@@ -161,4 +165,26 @@ func TestSalesInvoicesFollowPermissions(t *testing.T) {
 	invite(t, h, owner, banker, a.Id, "banker@example.com", map[string]any{"user_type": "employee", "permissions": []string{"bank"}})
 	wantStatus(t, banker.do(http.MethodGet, "/api/v2/"+a.Id+"/sales_invoices", nil), http.StatusForbidden)
 	wantStatus(t, owner.do(http.MethodPost, "/api/v2/"+a.Id+"/sales_invoices", map[string]any{"sales_invoice": map[string]any{}}), http.StatusUnprocessableEntity)
+}
+
+func TestDownloadLinksExpireAndCannotBeForged(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	stranger := h.client()
+	stranger.register()
+	a := owner.createAdministration("Harpy")
+	customer := decode[contact](t, owner.do(http.MethodPost, "/api/v2/"+a.Id+"/contacts", map[string]any{"contact": map[string]any{"company_name": "Example Shop B.V."}}))
+	inv := decode[salesInvoice](t, owner.do(http.MethodPost, "/api/v2/"+a.Id+"/sales_invoices", map[string]any{"sales_invoice": map[string]any{"contact_id": customer.ID}}))
+	path := "/api/v2/" + a.Id + "/sales_invoices/" + inv.ID + "/download_pdf"
+	wantStatus(t, stranger.do(http.MethodGet, path, nil), http.StatusNotFound)
+	r := owner.do(http.MethodGet, path, nil)
+	wantStatus(t, r, http.StatusFound)
+	link := strings.TrimPrefix(r.header.Get("Location"), h.server.URL)
+	token := strings.TrimPrefix(link, "/api/files/")
+	payload, sig, _ := strings.Cut(token, ".")
+	for _, forged := range []string{payload + "." + sig[:len(sig)-2] + "AA", payload, "x.y", payload[1:] + "." + sig} {
+		wantStatus(t, stranger.do(http.MethodGet, "/api/files/"+forged, nil), http.StatusNotFound)
+	}
+	wantStatus(t, stranger.do(http.MethodGet, link, nil), http.StatusOK)
 }

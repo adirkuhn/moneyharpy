@@ -15,6 +15,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -33,7 +34,8 @@ func TestJournalPostsBankAndJournalEntries(t *testing.T) {
 	noteSvc := notes.NewService(postgres.NewNoteStore(testPool), ids, time.Now)
 	store := postgres.NewJournalStore(testPool)
 	people := contacts.NewService(admins, noWorkflows{}, admins, store, noteSvc, postgres.NewContactStore(testPool), ids, time.Now)
-	svc := journal.NewService(admins, books, people, store, store, noteSvc, attachments.NewService(postgres.NewAttachmentStore(testPool), diskless{}, ids, time.Now), ids, time.Now)
+	catalog := postgres.NewCatalogStore(testPool)
+	svc := journal.NewService(admins, books, people, projects.NewService(admins, catalog, store, ids, time.Now), store, store, noteSvc, attachments.NewService(postgres.NewAttachmentStore(testPool), diskless{}, ids, time.Now), ids, time.Now)
 
 	acc, err := bank.CreateAccount(ctx, admin, owner, banking.AccountChanges{Name: ptr("Main bank"), Identifier: ptr("NL91ABNA0417164300")})
 	if err != nil {
@@ -102,8 +104,8 @@ func TestJournalPostsBankAndJournalEntries(t *testing.T) {
 	if err != nil || total2 != 1 || entries[0].DocumentID != d.ID || entries[0].Amount != 40000 {
 		t.Errorf("entries for contact = %+v (%d), %v", entries, total2, err)
 	}
-	if err := people.Delete(ctx, admin, customer.ID, owner); err == nil {
-		t.Error("contact in a journal entry deleted")
+	if kept, err := people.Delete(ctx, admin, customer.ID, owner); err != nil || !kept {
+		t.Errorf("contact in a journal entry: kept %v, %v; want it archived", kept, err)
 	}
 
 	list, n, err := svc.Documents(ctx, admin, owner, journal.DocumentQuery{ContactID: &customer.ID})

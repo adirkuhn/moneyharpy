@@ -4,6 +4,7 @@ package main
 import (
 	"cmp"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -37,6 +38,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/pdok"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
+	"github.com/adirkuhn/moneyharpy/internal/products"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -123,9 +126,12 @@ func run(logger *slog.Logger) error {
 	salesStore := postgres.NewSalesStore(pool)
 	attachmentService := attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now)
 	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
-	ledger := journal.NewService(admins, books, contactService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
+	catalogStore := postgres.NewCatalogStore(pool)
+	productService := products.NewService(admins, books, contactService, catalogStore, salesStore, ids, time.Now)
+	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore}, ids, time.Now)
+	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
-		Administrations: admins, Contacts: contactService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
+		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
 		Store: salesStore, Renderer: invoicedoc.New(), Mailer: sales.MailClient{Client: mailer}, Bank: bank,
 		Notifier: httpapi.SalesNotifier{Webhooks: hooks, Logger: logger}, IDs: ids, Now: time.Now,
 	})
@@ -139,6 +145,8 @@ func run(logger *slog.Logger) error {
 		Journal:           ledger,
 		Contacts:          contactService,
 		Sales:             invoiceService,
+		Products:          productService,
+		Projects:          projectService,
 		Storage:           s3,
 		Identity:          people,
 		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
@@ -159,6 +167,7 @@ func run(logger *slog.Logger) error {
 		APILimiter:        ratelimit.New(150, 5*time.Minute),
 		AuthLimiter:       ratelimit.New(10, time.Minute),
 		TrustProxyHeaders: cfg.trustProxyHeaders,
+		FileKey:           fileKey(cfg.secretKey),
 	})
 	if err != nil {
 		return err
@@ -187,4 +196,11 @@ func run(logger *slog.Logger) error {
 	shutdown, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	return srv.Shutdown(shutdown)
+}
+
+// fileKey derives the key that signs download links from the secret key, so
+// every instance accepts the links of the others.
+func fileKey(secret string) []byte {
+	sum := sha256.Sum256([]byte("moneyharpy file links\x00" + secret))
+	return sum[:]
 }

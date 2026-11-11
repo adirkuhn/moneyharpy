@@ -54,6 +54,17 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v2/administrati
 
 Create tokens under **User account**.
 
+Downloads (`download_pdf`, `download_packing_slip_pdf` and attachments)
+answer `302 Found`, as at Moneybird, with `Location` set to
+`/api/files/{token}`: a link that works for 30 seconds without signing in.
+The token names the file and the user who asked for it, and is signed with a
+key derived from `SECRET_KEY`, so every instance accepts the others' links;
+the file is read as that user when the link is followed. `media=stationery`
+leaves the sender's address and logo off the PDF. Moneybird answers `402`
+when a plan's limit is reached and `503` when finding duplicate contacts
+takes too long; the contract declares both, but MoneyHarpy has no plans and
+groups contacts in one pass, so it answers neither.
+
 The schemas follow Moneybird's published API description. `go run ./cmd/mbschemas` copies their structure (field names, types and enums, without Moneybird's text) into the contract. The *Moneybird compatibility* workflow reports when Moneybird's API changes.
 
 ## URIs
@@ -107,8 +118,9 @@ id, likely duplicates, contact people and notes or to-dos. A new contact
 without a customer id gets the next number. Delivery by Peppol or
 Simplerinvoicing needs the contact's e-invoicing identifier, and a direct
 debit mandate needs its IBAN, holder, reference and date. Members with the
-sales invoices, documents or estimates permission work with contacts. A
-contact that documents refer to cannot be deleted; archive it instead.
+sales invoices, documents or estimates permission work with contacts.
+Deleting a contact that documents refer to archives it instead, as Moneybird
+does, answering `X-Kept-As: archived`.
 
 ## Journal
 
@@ -123,7 +135,10 @@ rows, refuse the debtors and creditors that only invoices settle, and keep
 out of the locked period. `GET /reports/general_ledger` and
 `GET /reports/journal_entries` read the whole journal, as do the trial
 balance and a category's bookings under Reports. Notes and attachments are
-kept per record, so invoices reuse them.
+kept per record, so invoices reuse them. Journal entry rows can be booked on
+a project (`project_id`); `new_filter` is accepted on the list and used
+instead of `filter`. Deleting one answers `200` with the status as its body,
+as at Moneybird.
 
 ## Sales invoices
 
@@ -226,10 +241,50 @@ With `auto_send` the invoice is then sent the way the contact receives
 invoices, acting as the administration's owner; when that fails it stays a
 draft and the error is logged. `deactivate` stops a recurring invoice for
 good; `DELETE` removes one that made no invoices and deactivates the others
-(answering `X-Kept-As: deactivated`). Contacts with recurring invoices cannot
-be deleted. Webhooks tell `recurring_sales_invoice_created`, `_updated`,
+(answering `X-Kept-As: deactivated`). Deleting a contact with recurring invoices
+archives it instead. Webhooks tell `recurring_sales_invoice_created`, `_updated`,
 `_deactivated`, `_destroyed` and `_invoice_created`. Subscriptions and
 merging invoices (`mergeable`, accepted and kept) are not available yet.
+
+## Products
+
+Products live at `/{id}/products`, with Moneybird's products API under
+`/api/v2/{administration_id}/products`: create, update, delete, paged lists
+(10 a page; `query` searches the title, description and identifier, with
+`currency`, `active`, `for_checkout` and `ledger_account_id`) and lookup by
+`identifier` (unique per administration). A product needs a price, a
+category and a title or description; it can carry a VAT rate and how often it
+is billed (`frequency` and `frequency_type`, or `frequency_preset` such as
+`3:month`). A sales, recurring or external invoice line with a `product_id`
+takes the product's description, price, VAT rate and category unless it
+sends its own. Deleting a product that lines name deactivates it instead
+(`X-Kept-As: deactivated`); `active` (MoneyHarpy extension) deactivates or
+reactivates one. Writes need the settings permission; members who work on
+invoices or estimates may read products to pick them. Moneybird's online
+sales links need Moneybird Payments: `POST .../sales_link` checks the product
+and contact and then answers `404` "Product not valid for online sales", as
+Moneybird does for a product that cannot be sold online. Webhooks tell
+`product_created`, `_updated`, `_activated`, `_deactivated` and
+`_destroyed`.
+
+## Projects
+
+Projects live at `/{id}/projects`, with Moneybird's projects API under
+`/api/v2/{administration_id}/projects`: a unique name and an optional budget
+in hours, listed by name, 25 a page, active ones unless `filter` says
+`state:archived`, `state:all` or `state:active|archived`. Invoice lines
+(sales, recurring and external) and journal entry rows can be booked on an
+active project with `project_id`; the posted journal entries keep it.
+Deleting a project something is booked on archives it instead
+(`X-Kept-As: archived`); `state` (MoneyHarpy extension) archives or
+reactivates one. Webhooks tell `project_created`, `_updated`, `_activated`,
+`_archived` and `_destroyed`.
+
+## Payments
+
+`GET /api/v2/{administration_id}/payments/{id}` returns any payment of a
+sales or external sales invoice, as Moneybird's payments endpoint does for
+the invoice types MoneyHarpy has.
 
 ## Users and permissions
 
@@ -275,7 +330,11 @@ Settings → Bank. Transactions an account has already are skipped, so a file
 can be imported twice. Cash and other accounts without files take
 transactions typed in by hand. Booking rules book matching transactions on a
 category as they come in; the rest are booked under Bank. The API follows
-Moneybird's financial accounts, statements and mutations. Direct bank
+Moneybird's financial accounts, statements and mutations; synchronization
+takes the list's `filter` (this year unless given), and the bank balance
+report gives the balances at the end of a `period` of up to 12 whole months
+(this month unless given) and, with `granularity`, at the end of every
+month, quarter or year in it (`periods`). Direct bank
 connections are not built yet; `internal/bankfile` is where another source
 would hand over its transactions.
 

@@ -93,8 +93,7 @@ func TestExternalSalesInvoiceLifecycle(t *testing.T) {
 	if fresh.State != "new" || fresh.ContactID != nil || len(fresh.Attachments) != 1 || deref(fresh.Origin) != "upload" || fresh.EntryNumber != 2 {
 		t.Fatalf("from file = %+v", fresh)
 	}
-	download := owner.do(http.MethodGet, externals+"/"+fresh.ID+"/attachments/"+fresh.Attachments[0].ID+"/download", nil)
-	wantStatus(t, download, http.StatusOK)
+	download := owner.follow(owner.do(http.MethodGet, externals+"/"+fresh.ID+"/attachments/"+fresh.Attachments[0].ID+"/download", nil))
 	if !bytes.Equal(download.body, []byte("%PDF-1.4 order 1002")) {
 		t.Errorf("download = %q", download.body)
 	}
@@ -165,7 +164,7 @@ func TestExternalSalesInvoiceLifecycle(t *testing.T) {
 		t.Errorf("uncollectible = %+v", u)
 	}
 	wantStatus(t, owner.do(http.MethodDelete, externals+"/"+e.ID+"/payments/"+part.ID, nil), http.StatusUnprocessableEntity)
-	wantStatus(t, owner.do(http.MethodDelete, api+"/contacts/"+deref(e.ContactID), nil), http.StatusUnprocessableEntity)
+	wantKept(t, owner.do(http.MethodDelete, api+"/contacts/"+deref(e.ContactID), nil), "archived")
 
 	wantStatus(t, owner.do(http.MethodDelete, externals+"/"+fresh.ID, nil), http.StatusNoContent)
 	wantStatus(t, owner.do(http.MethodGet, externals+"/"+fresh.ID, nil), http.StatusNotFound)
