@@ -7,6 +7,8 @@
 
 /* A block of a document's page: a title with its own actions, then its content. */
 .detail-block { margin: 0 0 2rem; }
+/* A document page's first block keeps clear of the title and subtitle above it. */
+.content > .detail-block:first-child { margin-top: 1rem; }
 .detail-block__header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 0.5rem 1rem; margin-bottom: 0.75rem; }
 .detail-block__title { margin: 0; font-size: 1rem; }
 .detail-block__subtitle { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.8125rem; }
