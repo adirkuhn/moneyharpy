@@ -653,6 +653,8 @@ export const en = {
     taxRate: 'VAT rate', reference: 'Box', turnover: 'Turnover', vat: 'VAT', rateTypes: { sales: 'sales', purchases: 'purchases' },
     openingBalance: 'Opening balance', closingBalance: 'Closing balance', received: 'Cash received', paid: 'Cash paid',
     contact: 'Contact', noContact: 'Without a contact', nothing: 'Nothing to show for this period.', nothingOpen: 'Nothing is open.',
+    project: 'Project', noProject: 'Without a project', asset: 'Asset',
+    assetColumns: { value_at_begin: 'Value at the start', investment: 'Investment', value_changes: 'Value changes', divestment: 'Divestment', value_at_end: 'Value at the end' },
   },
 }
 

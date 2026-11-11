@@ -74,7 +74,7 @@ func TestPurchaseInvoiceLifecycle(t *testing.T) {
 	owner.register()
 	adminID, api, supplier, vat21 := purchaseSetup(t, owner)
 	invoices := api + "/documents/purchase_invoices"
-	day := time.Now().AddDate(0, 0, -20).Format(time.DateOnly)
+	day := adminNow().AddDate(0, 0, -20).Format(time.DateOnly)
 	phone := category(t, owner, adminID, "Uncategorized expenses")
 
 	r := owner.do(http.MethodPost, invoices+".json", map[string]any{"purchase_invoice": map[string]any{
@@ -162,6 +162,24 @@ func TestPurchaseInvoiceLifecycle(t *testing.T) {
 	if got := decode[purchaseDocument](t, owner.do(http.MethodGet, invoices+"/"+inv.ID, nil)); got.State != "late" || got.TotalUnpaid != "21.0" {
 		t.Errorf("after payment removed = %+v", got)
 	}
+
+	// An invoices settlement pays it with a credit purchase invoice.
+	credit := decode[purchaseDocument](t, owner.do(http.MethodPost, invoices, map[string]any{"purchase_invoice": map[string]any{
+		"contact_id": supplier, "reference": "CR-1", "date": day, "details_attributes": []map[string]any{{"price": "-10", "tax_rate_id": vat21}},
+	}}))
+	r = owner.do(http.MethodPost, invoices+"/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{
+		"payment_date": day, "price": "12.10", "manual_payment_action": "invoices_settlement", "invoice_id": credit.ID,
+	}})
+	wantStatus(t, r, http.StatusCreated)
+	if s := decode[payment](t, r); deref(s.ManualPaymentAction) != "invoices_settlement" || deref(s.CreditInvoiceID) != credit.ID {
+		t.Errorf("settlement = %+v", s)
+	}
+	if got := decode[purchaseDocument](t, owner.do(http.MethodGet, invoices+"/"+credit.ID, nil)); got.State != "paid" {
+		t.Errorf("settled credit = %+v", got)
+	}
+	wantStatus(t, owner.do(http.MethodPost, invoices+"/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{
+		"payment_date": day, "price": "1", "manual_payment_action": "invoices_settlement",
+	}}), http.StatusUnprocessableEntity)
 
 	r = owner.do(http.MethodDelete, invoices+"/"+inv.ID, nil)
 	wantStatus(t, r, http.StatusOK)
@@ -396,7 +414,7 @@ func TestIncomingDocumentPermissionsAndWebhooks(t *testing.T) {
 		"contact_id": supplier, "details_attributes": []map[string]any{{"price": "10", "tax_rate_id": vat21}},
 	}}))
 	wantStatus(t, owner.do(http.MethodPatch, api+"/documents/purchase_invoices/"+inv.ID, map[string]any{"purchase_invoice": map[string]any{"reference": "X-1"}}), http.StatusOK)
-	r := owner.do(http.MethodPost, api+"/documents/purchase_invoices/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": time.Now().Format(time.DateOnly), "price": "12.10"}})
+	r := owner.do(http.MethodPost, api+"/documents/purchase_invoices/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": adminNow().Format(time.DateOnly), "price": "12.10"}})
 	wantStatus(t, r, http.StatusCreated)
 	p := decode[payment](t, r)
 	wantStatus(t, owner.do(http.MethodDelete, api+"/documents/purchase_invoices/"+inv.ID+"/payments/"+p.ID, nil), http.StatusNoContent)
@@ -416,5 +434,83 @@ func TestIncomingDocumentPermissionsAndWebhooks(t *testing.T) {
 	want := []string{"document_destroyed", "document_saved", "document_updated", "payment_destroyed", "payment_registered"}
 	if !slices.Equal(actions, want) {
 		t.Errorf("actions = %v, want %v", actions, want)
+	}
+}
+
+func TestBankTransactionsMakeAndPayPurchaseDocuments(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	adminID, api, supplier, vat21 := purchaseSetup(t, owner)
+	acc := decode[financialAccount](t, owner.do(http.MethodPost, api+"/financial_accounts", map[string]any{"financial_account": map[string]any{"name": "Main bank", "identifier": "NL91ABNA0417164300"}}))
+	data, err := os.ReadFile("../bankfile/testdata/camt053.xml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantStatus(t, owner.upload(api+"/financial_accounts/"+acc.ID+"/import", "application/octet-stream", data), http.StatusCreated)
+	list := decode[[]mutation](t, owner.do(http.MethodGet, api+"/financial_mutations", nil))
+	byAmount := func(amount string) mutation {
+		i := slices.IndexFunc(list, func(m mutation) bool { return m.Amount == amount })
+		if i < 0 {
+			t.Fatalf("no transaction of %s in %+v", amount, list)
+		}
+		return list[i]
+	}
+	statement := decode[statement](t, owner.do(http.MethodPost, api+"/financial_statements", map[string]any{"financial_statement": map[string]any{
+		"financial_account_id": acc.ID, "reference": "S2",
+		"financial_mutations_attributes": []map[string]any{{"date": "2026-11-02", "amount": "-9.99", "message": "Domain"}, {"date": "2026-11-02", "amount": "-40", "message": "INV-40"}},
+	}}))
+	hosting, small, out := byAmount("-25.5"), statement.Mutations[0], statement.Mutations[1]
+	link := func(m mutation, body map[string]any) response {
+		return owner.do(http.MethodPatch, api+"/financial_mutations/"+m.ID+"/link_booking.json", body)
+	}
+
+	// A new purchase invoice from the supplier with the transaction's IBAN,
+	// paid with it.
+	wantStatus(t, link(hosting, map[string]any{"booking_type": "NewPurchaseInvoice", "booking_id": supplier}), http.StatusUnprocessableEntity)
+	r := link(hosting, map[string]any{"booking_type": "NewPurchaseInvoice", "price_base": "25.50"})
+	wantStatus(t, r, http.StatusOK)
+	m := decode[mutation](t, r)
+	if m.State != "processed" || len(m.Payments) != 1 || m.Payments[0].InvoiceType != "Document" {
+		t.Fatalf("after a new purchase invoice = %+v", m)
+	}
+	inv := decode[purchaseDocument](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/"+m.Payments[0].InvoiceID, nil))
+	if inv.State != "paid" || deref(inv.ContactID) != supplier || inv.TotalIncl != "25.5" {
+		t.Errorf("new purchase invoice = %+v", inv)
+	}
+
+	// A category booking and a new receipt, both on a project, show in
+	// expenses by project.
+	falcon := decode[project](t, owner.do(http.MethodPost, api+"/projects", map[string]any{"project": map[string]any{"name": "Falcon"}}))
+	software := category(t, owner, adminID, "Software")
+	wantStatus(t, link(small, map[string]any{"booking_type": "LedgerAccount", "booking_id": software, "price_base": "4", "project_id": "123"}), http.StatusUnprocessableEntity)
+	r = link(small, map[string]any{"booking_type": "LedgerAccount", "booking_id": software, "price_base": "4", "project_id": falcon.ID})
+	wantStatus(t, r, http.StatusOK)
+	if m := decode[mutation](t, r); len(m.Bookings) != 1 || deref(m.Bookings[0].ProjectID) != falcon.ID {
+		t.Errorf("booking on a project = %+v", m.Bookings)
+	}
+	r = link(small, map[string]any{"booking_type": "NewReceipt", "project_id": falcon.ID})
+	wantStatus(t, r, http.StatusOK)
+	if m := decode[mutation](t, r); m.State != "processed" || len(m.Payments) != 1 {
+		t.Errorf("after a new receipt = %+v", m)
+	}
+	byProject := decode[map[string][]reportItem](t, owner.do(http.MethodGet, api+"/reports/expenses_by_project?period=202611", nil))["expenses_by_project"]
+	if i := slices.IndexFunc(byProject, func(p reportItem) bool { return deref(p.ProjectID) == falcon.ID }); i < 0 || byProject[i].Amount != "9.99" {
+		t.Errorf("expenses by project = %+v", byProject)
+	}
+
+	// A purchase transaction is paid when its bank transaction is linked.
+	other := decode[purchaseDocument](t, owner.do(http.MethodPost, api+"/documents/purchase_invoices", map[string]any{"purchase_invoice": map[string]any{
+		"contact_id": supplier, "date": "2026-10-01", "prices_are_incl_tax": true, "details_attributes": []map[string]any{{"price": "40", "tax_rate_id": vat21}},
+	}}))
+	tx := decode[map[string]any](t, owner.do(http.MethodPost, api+"/purchase_transactions", map[string]any{"purchase_transaction": map[string]any{"payable_id": other.ID, "financial_account_id": acc.ID}}))
+	wantStatus(t, link(out, map[string]any{"booking_type": "PurchaseTransaction", "booking_id": "1"}), http.StatusUnprocessableEntity)
+	r = link(out, map[string]any{"booking_type": "PurchaseTransaction", "booking_id": tx["id"]})
+	wantStatus(t, r, http.StatusOK)
+	if m := decode[mutation](t, r); m.State != "processed" {
+		t.Errorf("after the purchase transaction = %+v", m)
+	}
+	if got := decode[map[string]any](t, owner.do(http.MethodGet, api+"/purchase_transactions/"+tx["id"].(string), nil)); got["state"] != "paid" {
+		t.Errorf("purchase transaction = %v", got)
 	}
 }

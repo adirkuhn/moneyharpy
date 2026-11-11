@@ -8,18 +8,19 @@ import (
 )
 
 type salesInvoice struct {
-	ID          string  `json:"id"`
-	InvoiceID   *string `json:"invoice_id"`
-	DraftID     *int    `json:"draft_id"`
-	State       string  `json:"state"`
-	InvoiceDate *string `json:"invoice_date"`
-	DueDate     string  `json:"due_date"`
-	TotalIncl   string  `json:"total_price_incl_tax"`
-	TotalExcl   string  `json:"total_price_excl_tax"`
-	TotalUnpaid string  `json:"total_unpaid"`
-	OriginalID  *string `json:"original_sales_invoice_id"`
-	Paused      bool    `json:"paused"`
-	Contact     struct {
+	ID             string  `json:"id"`
+	InvoiceID      *string `json:"invoice_id"`
+	DraftID        *int    `json:"draft_id"`
+	State          string  `json:"state"`
+	InvoiceDate    *string `json:"invoice_date"`
+	SubscriptionID *string `json:"subscription_id"`
+	DueDate        string  `json:"due_date"`
+	TotalIncl      string  `json:"total_price_incl_tax"`
+	TotalExcl      string  `json:"total_price_excl_tax"`
+	TotalUnpaid    string  `json:"total_unpaid"`
+	OriginalID     *string `json:"original_sales_invoice_id"`
+	Paused         bool    `json:"paused"`
+	Contact        struct {
 		ID string `json:"id"`
 	} `json:"contact"`
 	Details []struct {

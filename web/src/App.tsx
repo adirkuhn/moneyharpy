@@ -61,7 +61,9 @@ import { JournalDocumentPage } from './journal/JournalDocumentPage'
 import { JournalDocumentsPage } from './journal/JournalDocumentsPage'
 import { LedgerEntriesPage } from './journal/LedgerEntriesPage'
 import { TrialBalancePage } from './journal/TrialBalancePage'
-import { AgingReportPage, BalanceSheetPage, CashFlowPage, ContactReportPage, ProfitLossPage, TaxReportPage } from './reports/ReportPages'
+import {
+  AgingReportPage, AssetsReportPage, BalanceSheetPage, CashFlowPage, ContactReportPage, ProfitLossPage, ProjectReportPage, TaxReportPage,
+} from './reports/ReportPages'
 import { EstimatePage } from './estimates/EstimatePage'
 import { EstimatesPage } from './estimates/EstimatesPage'
 import { RecurringInvoicePage } from './recurring/RecurringInvoicePage'
@@ -140,6 +142,9 @@ export function AppRoutes() {
           <Route path="/:administrationId/report/creditors" element={<ContactReportPage key="creditors" kind="creditors" />} />
           <Route path="/:administrationId/report/revenue_by_contact" element={<ContactReportPage key="revenue" kind="revenue_by_contact" />} />
           <Route path="/:administrationId/report/expenses_by_contact" element={<ContactReportPage key="expenses" kind="expenses_by_contact" />} />
+          <Route path="/:administrationId/report/revenue_by_project" element={<ProjectReportPage key="revenue" kind="revenue_by_project" />} />
+          <Route path="/:administrationId/report/expenses_by_project" element={<ProjectReportPage key="expenses" kind="expenses_by_project" />} />
+          <Route path="/:administrationId/report/assets_report" element={<AssetsReportPage />} />
           <Route path="/:administrationId/report/debtors_aging" element={<AgingReportPage key="debtors" kind="debtors_aging" />} />
           <Route path="/:administrationId/report/creditors_aging" element={<AgingReportPage key="creditors" kind="creditors_aging" />} />
           <Route path="/:administrationId/report/journal_entries" element={<LedgerEntriesPage />} />

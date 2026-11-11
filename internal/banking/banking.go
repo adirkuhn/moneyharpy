@@ -121,6 +121,8 @@ type Service struct {
 	invoices Invoices
 	// documents pays purchase invoices and receipts.
 	documents Invoices
+	purchases Purchases
+	projects  Projects
 	ids       *resource.Generator
 	now       func() time.Time
 }

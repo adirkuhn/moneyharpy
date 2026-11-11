@@ -104,10 +104,7 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 		verr.Add("payment_date", "can't be in the future")
 	}
 	action := strings.TrimSpace(in.ManualPaymentAction)
-	switch {
-	case action == sales.InvoicesSettlement:
-		verr.Add("manual_payment_action", "invoices_settlement is not available for purchase documents yet")
-	case action != "" && !slices.Contains(sales.PaymentActions, action):
+	if action != "" && !slices.Contains(sales.PaymentActions, action) {
 		verr.Add("manual_payment_action", "is not included in the list")
 	}
 	if len(in.TransactionIdentifier) > 255 {
@@ -119,6 +116,9 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 	if err := s.checkDay(ctx, admin, user, day, "payment_date"); err != nil {
 		return sales.Payment{}, err
 	}
+	if action == sales.InvoicesSettlement {
+		return s.settle(ctx, a, user, d, in.InvoiceID, price, day)
+	}
 	contra, account, err := s.contra(ctx, admin, user, action, in)
 	if err != nil {
 		return sales.Payment{}, err
@@ -127,7 +127,54 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 	p.PriceBase, p.LedgerAccountID, p.FinancialAccountID, p.ManualPaymentAction = base, &contra, account, action
 	p.TransactionIdentifier = strings.TrimSpace(in.TransactionIdentifier)
 	d.Payments = append(d.Payments, p)
-	if err := s.commit(ctx, a, user, &d, []sales.Payment{p}, nil); err != nil {
+	if err := s.commit(ctx, a, user, []*Document{&d}, []sales.Payment{p}, nil); err != nil {
+		return sales.Payment{}, err
+	}
+	return p, nil
+}
+
+// settle registers a payment on the document and one of the opposite sign
+// on the other purchase invoice or receipt, both against the settlements
+// account, so they settle against each other (Moneybird's invoices
+// settlement).
+func (s *Service) settle(ctx context.Context, a administration.Listed, user resource.ID, d Document, otherID *resource.ID, price money.Amount, day time.Time) (sales.Payment, error) {
+	if otherID == nil {
+		return sales.Payment{}, invalid("invoice_id", "can't be blank for an invoices settlement")
+	}
+	if *otherID == d.ID {
+		return sales.Payment{}, invalid("invoice_id", "is this document itself")
+	}
+	other, err := s.store.DocumentByID(ctx, a.ID, *otherID)
+	if errors.Is(err, ErrNotFound) {
+		return sales.Payment{}, invalid("invoice_id", "is not a purchase invoice or receipt of this administration")
+	}
+	if err != nil {
+		return sales.Payment{}, err
+	}
+	if !payable(other) {
+		return sales.Payment{}, invalid("invoice_id", "is not a document waiting for payment")
+	}
+	var verr resource.ValidationError
+	checkPrice(&verr, "price", -price, other.Unpaid())
+	if err := verr.OrNil(); err != nil {
+		return sales.Payment{}, err
+	}
+	account, err := s.ledger.SystemLedgerAccount(ctx, a.ID, user, "settlements")
+	if err != nil {
+		return sales.Payment{}, wrap("find category settlements", err)
+	}
+	p, q := s.newPayment(d, user, price, day), s.newPayment(other, user, -price, day)
+	p.ManualPaymentAction, q.ManualPaymentAction = sales.InvoicesSettlement, sales.InvoicesSettlement
+	p.LedgerAccountID, q.LedgerAccountID = &account, &account
+	p.LinkedPaymentID, q.LinkedPaymentID = &q.ID, &p.ID
+	switch {
+	case d.Total() < 0:
+		q.CreditInvoiceID = &d.ID
+	case other.Total() < 0:
+		p.CreditInvoiceID = &other.ID
+	}
+	d.Payments, other.Payments = append(d.Payments, p), append(other.Payments, q)
+	if err := s.commit(ctx, a, user, []*Document{&d, &other}, []sales.Payment{p, q}, nil); err != nil {
 		return sales.Payment{}, err
 	}
 	return p, nil
@@ -219,12 +266,36 @@ func (s *Service) DeletePayment(ctx context.Context, admin, user resource.ID, ki
 	return s.removePayment(ctx, a, user, d, p)
 }
 
+// removePayment removes a payment; one half of a settlement takes the other
+// half along.
 func (s *Service) removePayment(ctx context.Context, a administration.Listed, user resource.ID, d Document, p sales.Payment) error {
 	if err := s.checkDay(ctx, a.ID, user, p.PaymentDate, "payment_date"); err != nil {
 		return err
 	}
-	d.Payments = slices.DeleteFunc(slices.Clone(d.Payments), func(q sales.Payment) bool { return q.ID == p.ID })
-	return s.commit(ctx, a, user, &d, nil, []resource.ID{p.ID})
+	drop := func(doc *Document, id resource.ID) {
+		doc.Payments = slices.DeleteFunc(slices.Clone(doc.Payments), func(q sales.Payment) bool { return q.ID == id })
+	}
+	drop(&d, p.ID)
+	docs, removed := []*Document{&d}, []resource.ID{p.ID}
+	if p.LinkedPaymentID != nil {
+		linked, err := s.store.Payment(ctx, a.ID, *p.LinkedPaymentID)
+		switch {
+		case errors.Is(err, ErrPaymentNotFound):
+		case err != nil:
+			return err
+		case linked.InvoiceID == d.ID:
+			drop(&d, linked.ID)
+			removed = append(removed, linked.ID)
+		default:
+			other, err := s.store.DocumentByID(ctx, a.ID, linked.InvoiceID)
+			if err != nil {
+				return err
+			}
+			drop(&other, linked.ID)
+			docs, removed = append(docs, &other), append(removed, linked.ID)
+		}
+	}
+	return s.commit(ctx, a, user, docs, nil, removed)
 }
 
 // RegisterBankPayment pays a purchase invoice or receipt with (part of) a
@@ -259,7 +330,7 @@ func (s *Service) RegisterBankPayment(ctx context.Context, admin, user resource.
 		}
 		p := &d.Payments[i]
 		p.FinancialMutationID, p.FinancialAccountID, p.LedgerAccountID, p.PaymentDate, p.UpdatedAt = &mutation, &account, nil, day, s.now()
-		return p.ID, s.commit(ctx, a, user, &d, []sales.Payment{*p}, nil)
+		return p.ID, s.commit(ctx, a, user, []*Document{&d}, []sales.Payment{*p}, nil)
 	}
 	amount := d.Unpaid()
 	if price != nil {
@@ -278,7 +349,7 @@ func (s *Service) RegisterBankPayment(ctx context.Context, admin, user resource.
 	p := s.newPayment(d, user, amount, day)
 	p.FinancialMutationID, p.FinancialAccountID = &mutation, &account
 	d.Payments = append(d.Payments, p)
-	return p.ID, s.commit(ctx, a, user, &d, []sales.Payment{p}, nil)
+	return p.ID, s.commit(ctx, a, user, []*Document{&d}, []sales.Payment{p}, nil)
 }
 
 // registerBankPayment links a transaction through the bank, which calls
@@ -321,19 +392,27 @@ func (s *Service) RemoveBankPayment(ctx context.Context, admin, user, paymentID 
 }
 
 // commit stores changed payments: what added payments post and the
-// document's new state.
-func (s *Service) commit(ctx context.Context, a administration.Listed, user resource.ID, d *Document, added []sales.Payment, removed []resource.ID) error {
+// documents' new states.
+func (s *Service) commit(ctx context.Context, a administration.Listed, user resource.ID, docs []*Document, added []sales.Payment, removed []resource.ID) error {
 	var postings []PaymentPosting
 	for _, p := range added {
-		entries, err := s.paymentEntries(ctx, a.ID, user, p, *d)
+		i := slices.IndexFunc(docs, func(d *Document) bool { return d.ID == p.InvoiceID })
+		if i < 0 {
+			return fmt.Errorf("payment %d of an unknown document", p.ID)
+		}
+		entries, err := s.paymentEntries(ctx, a.ID, user, p, *docs[i])
 		if err != nil {
 			return err
 		}
 		postings = append(postings, PaymentPosting{Payment: p, Entries: entries})
 	}
-	settleState(d)
-	d.UpdatedAt = s.now()
-	if err := s.store.SavePayments(ctx, []Document{*d}, postings, removed); err != nil {
+	saved := make([]Document, len(docs))
+	for i, d := range docs {
+		settleState(d)
+		d.UpdatedAt = s.now()
+		saved[i] = *d
+	}
+	if err := s.store.SavePayments(ctx, saved, postings, removed); err != nil {
 		return fmt.Errorf("store payments: %w", err)
 	}
 	return nil

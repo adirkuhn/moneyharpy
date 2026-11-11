@@ -230,7 +230,8 @@ func (s *SalesStore) ProjectInUse(ctx context.Context, admin, project resource.I
 	return s.projectOnEstimates(ctx, admin, project)
 }
 
-// ProjectInUse implements projects.References for journal entries.
+// ProjectInUse implements projects.References for journal entries and bank
+// bookings.
 func (s *JournalStore) ProjectInUse(ctx context.Context, admin, project resource.ID) (bool, error) {
 	return s.q.ProjectInJournal(ctx, sqlc.ProjectInJournalParams{AdministrationID: int64(admin), ProjectID: pgtype.Int8{Int64: int64(project), Valid: true}})
 }

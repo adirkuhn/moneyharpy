@@ -394,8 +394,8 @@ SELECT id, updated_at FROM financial_mutations WHERE administration_id = $1 ORDE
 SELECT * FROM ledger_account_bookings WHERE administration_id = @administration_id AND financial_mutation_id = ANY(@ids::bigint[]) ORDER BY created_at, id;
 
 -- name: InsertLedgerAccountBooking :exec
-INSERT INTO ledger_account_bookings (id, administration_id, financial_mutation_id, ledger_account_id, description, price, booking_rule_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+INSERT INTO ledger_account_bookings (id, administration_id, financial_mutation_id, ledger_account_id, description, price, booking_rule_id, created_at, updated_at, project_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
 
 -- name: DeleteLedgerAccountBooking :exec
 DELETE FROM ledger_account_bookings WHERE administration_id = $1 AND financial_mutation_id = $2 AND id = $3;
@@ -1181,4 +1181,4 @@ SELECT EXISTS (SELECT 1 FROM sales_invoice_details s WHERE s.administration_id =
                SELECT 1 FROM recurring_sales_invoice_details r WHERE r.administration_id = @administration_id AND r.project_id = @project_id);
 
 -- name: ProjectInJournal :one
-SELECT EXISTS (SELECT 1 FROM journal_entries WHERE administration_id = @administration_id AND project_id = @project_id);
+SELECT EXISTS (SELECT 1 FROM ledger_entries WHERE administration_id = @administration_id AND project_id = @project_id);

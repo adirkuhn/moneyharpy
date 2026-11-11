@@ -195,6 +195,14 @@ func (s *SalesStore) completeRecurring(ctx context.Context, admin resource.ID, r
 		})
 		r.Totals.LineBases = append(r.Totals.LineBases, money.Amount(d.LineBase))
 	}
+	subscribed, err := s.q.SubscriptionsOfRecurringSalesInvoices(ctx, sqlc.SubscriptionsOfRecurringSalesInvoicesParams{AdministrationID: int64(admin), Ids: ids})
+	if err != nil {
+		return nil, err
+	}
+	for _, l := range subscribed {
+		id := resource.ID(l.ID)
+		out[index[l.RecurringSalesInvoiceID]].SubscriptionID = &id
+	}
 	values, err := s.q.RecurringSalesInvoiceCustomFieldValuesOf(ctx, sqlc.RecurringSalesInvoiceCustomFieldValuesOfParams{AdministrationID: int64(admin), Ids: ids})
 	if err != nil {
 		return nil, err

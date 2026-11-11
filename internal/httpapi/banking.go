@@ -314,7 +314,7 @@ func toFinancialMutation(m banking.Mutation) financialMutationJSON {
 		out.LedgerAccountBookings[i] = bookingJSON{
 			ID: b.ID.String(), AdministrationID: b.AdministrationID.String(), FinancialMutationID: b.MutationID.String(),
 			LedgerAccountID: b.LedgerAccountID.String(), Description: emptyNil(b.Description), Price: b.Price.String(),
-			CreatedAt: b.CreatedAt, UpdatedAt: b.UpdatedAt,
+			ProjectID: idString(b.ProjectID), CreatedAt: b.CreatedAt, UpdatedAt: b.UpdatedAt,
 		}
 		if b.RuleID != nil {
 			out.LedgerAccountBookings[i].BookingRuleID = ptr(b.RuleID.String())
@@ -588,6 +588,7 @@ func (s *server) LinkFinancialMutationBooking(w http.ResponseWriter, r *http.Req
 		PriceBase   *flexString `json:"price_base"`
 		Price       *flexString `json:"price"`
 		Description string      `json:"description"`
+		ProjectID   *flexString `json:"project_id"`
 	}](w, r)
 	if !ok {
 		return
@@ -596,11 +597,17 @@ func (s *server) LinkFinancialMutationBooking(w http.ResponseWriter, r *http.Req
 	if !ok {
 		return
 	}
+	project, ok := flexID(w, body.ProjectID)
+	if !ok {
+		return
+	}
 	price := body.PriceBase.ptr()
 	if price == nil {
 		price = body.Price.ptr()
 	}
-	m, err := s.deps.Banking.LinkBooking(r.Context(), admin, rid, user(r).ID, banking.Link{Type: body.BookingType, BookingID: booking, Price: price, Description: body.Description})
+	m, err := s.deps.Banking.LinkBooking(r.Context(), admin, rid, user(r).ID, banking.Link{
+		Type: body.BookingType, BookingID: booking, Price: price, Description: body.Description, ProjectID: project,
+	})
 	if err != nil {
 		s.fail(w, r, err)
 		return

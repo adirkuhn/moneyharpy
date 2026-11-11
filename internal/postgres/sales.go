@@ -433,6 +433,14 @@ func (s *SalesStore) complete(ctx context.Context, admin resource.ID, rows []sql
 		})
 		inv.Totals.LineBases = append(inv.Totals.LineBases, money.Amount(d.LineBase))
 	}
+	subscribed, err := s.q.SubscriptionsOfSalesInvoices(ctx, sqlc.SubscriptionsOfSalesInvoicesParams{AdministrationID: int64(admin), Ids: ids})
+	if err != nil {
+		return nil, err
+	}
+	for _, l := range subscribed {
+		id := resource.ID(l.SubscriptionID)
+		out[index[l.SalesInvoiceID]].SubscriptionID = &id
+	}
 	values, err := s.q.SalesInvoiceCustomFieldValuesOf(ctx, sqlc.SalesInvoiceCustomFieldValuesOfParams{AdministrationID: int64(admin), Ids: ids})
 	if err != nil {
 		return nil, err

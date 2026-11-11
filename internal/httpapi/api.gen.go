@@ -378,6 +378,69 @@ func (e DeclarationPeriod) Valid() bool {
 	}
 }
 
+// Defines values for DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType.
+const (
+	Bv                  DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "bv"
+	Coöperatie          DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "coöperatie"
+	Cv                  DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "cv"
+	Eenmanszaak         DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "eenmanszaak"
+	GeenKvkInschrijving DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "geen_kvk_inschrijving"
+	Maatschap           DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "maatschap"
+	Nv                  DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "nv"
+	Stichting           DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "stichting"
+	Vereniging          DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "vereniging"
+	Vof                 DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType = "vof"
+)
+
+// Valid indicates whether the value is a known member of the DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType enum.
+func (e DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType) Valid() bool {
+	switch e {
+	case Bv:
+		return true
+	case Coöperatie:
+		return true
+	case Cv:
+		return true
+	case Eenmanszaak:
+		return true
+	case GeenKvkInschrijving:
+		return true
+	case Maatschap:
+		return true
+	case Nv:
+		return true
+	case Stichting:
+		return true
+	case Vereniging:
+		return true
+	case Vof:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DefaultIdentityRequestIdentityTaxNumberAbsenceReason.
+const (
+	DefaultIdentityRequestIdentityTaxNumberAbsenceReasonBelowTaxThreshold DefaultIdentityRequestIdentityTaxNumberAbsenceReason = "below_tax_threshold"
+	DefaultIdentityRequestIdentityTaxNumberAbsenceReasonEmpty             DefaultIdentityRequestIdentityTaxNumberAbsenceReason = ""
+	DefaultIdentityRequestIdentityTaxNumberAbsenceReasonIndustryExemption DefaultIdentityRequestIdentityTaxNumberAbsenceReason = "industry_exemption"
+)
+
+// Valid indicates whether the value is a known member of the DefaultIdentityRequestIdentityTaxNumberAbsenceReason enum.
+func (e DefaultIdentityRequestIdentityTaxNumberAbsenceReason) Valid() bool {
+	switch e {
+	case DefaultIdentityRequestIdentityTaxNumberAbsenceReasonBelowTaxThreshold:
+		return true
+	case DefaultIdentityRequestIdentityTaxNumberAbsenceReasonEmpty:
+		return true
+	case DefaultIdentityRequestIdentityTaxNumberAbsenceReasonIndustryExemption:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DocumentStyleAddressPosition.
 const (
 	DocumentStyleAddressPositionLeft  DocumentStyleAddressPosition = "left"
@@ -5284,6 +5347,49 @@ type DebtorsReport struct {
 
 // DeclarationPeriod defines model for DeclarationPeriod.
 type DeclarationPeriod string
+
+// DefaultIdentityRequest Like IdentityRequest, plus the administration attributes only the default identity takes.
+type DefaultIdentityRequest struct {
+	Identity struct {
+		Address1 *string `json:"address1,omitempty"`
+		Address2 *string `json:"address2,omitempty"`
+
+		// AdministrationAttributes Updates the administration the default identity belongs to.
+		AdministrationAttributes *struct {
+			LegalEntityType *DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType `json:"legal_entity_type,omitempty"`
+		} `json:"administration_attributes,omitempty"`
+		BankAccountBic    *string `json:"bank_account_bic,omitempty"`
+		BankAccountName   *string `json:"bank_account_name,omitempty"`
+		BankAccountNumber *string `json:"bank_account_number,omitempty"`
+		ChamberOfCommerce *string `json:"chamber_of_commerce,omitempty"`
+		City              *string `json:"city,omitempty"`
+		CompanyName       *string `json:"company_name,omitempty"`
+		Country           *string `json:"country,omitempty"`
+
+		// CustomFieldsAttributes Custom field values to set. An empty value removes it.
+		CustomFieldsAttributes *[]struct {
+			// Id A unique record identifier. Parse as a string.
+			//
+			// Example: 123456789012345678
+			Id    Identifier `json:"id"`
+			Value string     `json:"value"`
+		} `json:"custom_fields_attributes,omitempty"`
+		Email           *string `json:"email,omitempty"`
+		LegalEntityType *string `json:"legal_entity_type,omitempty"`
+		Phone           *string `json:"phone,omitempty"`
+		TaxNumber       *string `json:"tax_number,omitempty"`
+
+		// TaxNumberAbsenceReason MoneyHarpy extension. Empty clears it. Ignored while a VAT number is set.
+		TaxNumberAbsenceReason *DefaultIdentityRequestIdentityTaxNumberAbsenceReason `json:"tax_number_absence_reason,omitempty"`
+		Zipcode                *string                                               `json:"zipcode,omitempty"`
+	} `json:"identity"`
+}
+
+// DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType defines model for DefaultIdentityRequest.Identity.AdministrationAttributes.LegalEntityType.
+type DefaultIdentityRequestIdentityAdministrationAttributesLegalEntityType string
+
+// DefaultIdentityRequestIdentityTaxNumberAbsenceReason MoneyHarpy extension. Empty clears it. Ignored while a VAT number is set.
+type DefaultIdentityRequestIdentityTaxNumberAbsenceReason string
 
 // DeleteAdministrationRequest defines model for DeleteAdministrationRequest.
 type DeleteAdministrationRequest struct {
@@ -13321,7 +13427,7 @@ type UpdateFinancialStatementJSONRequestBody = FinancialStatementRequest
 type CreateIdentityJSONRequestBody = IdentityRequest
 
 // UpdateDefaultIdentityJSONRequestBody defines body for UpdateDefaultIdentity for application/json ContentType.
-type UpdateDefaultIdentityJSONRequestBody = IdentityRequest
+type UpdateDefaultIdentityJSONRequestBody = DefaultIdentityRequest
 
 // UpdateIdentityJSONRequestBody defines body for UpdateIdentity for application/json ContentType.
 type UpdateIdentityJSONRequestBody = IdentityRequest

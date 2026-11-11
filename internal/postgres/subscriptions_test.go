@@ -32,7 +32,7 @@ func TestSubscriptionsRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	start := time.Now().AddDate(0, 0, 3).Format(time.DateOnly)
+	start := adminNow().AddDate(0, 0, 3).Format(time.DateOnly)
 	sub, err := svc.Create(ctx, f.admin, f.owner, subscriptions.Input{
 		ContactID: &f.customer, ProductID: &p.ID, StartDate: &start, Amount: ptr("2"), Discount: ptr("10"), Reference: ptr("Contract 7"),
 	})
@@ -58,7 +58,7 @@ func TestSubscriptionsRoundTrip(t *testing.T) {
 		t.Errorf("missing = %v", err)
 	}
 
-	later := time.Now().AddDate(0, 2, 0).Format(time.DateOnly)
+	later := adminNow().AddDate(0, 2, 0).Format(time.DateOnly)
 	if got, err = svc.Update(ctx, f.admin, sub.ID, f.owner, subscriptions.Changes{Amount: ptr("3"), StartDate: &later}); err != nil || len(got.Items) != 2 {
 		t.Fatalf("Update() = %+v, %v", got, err)
 	}
@@ -82,7 +82,7 @@ func TestSubscriptionsRoundTrip(t *testing.T) {
 	if work, err := store.ChargeWorkload(ctx); err != nil || !slices.ContainsFunc(work, func(w subscriptions.Workload) bool { return w.AdministrationID == f.admin && w.UserID == f.owner }) {
 		t.Errorf("workload = %+v, %v", work, err)
 	}
-	inv := f.invoice(t, "10", time.Now().Format(time.DateOnly))
+	inv := f.invoice(t, "10", adminNow().Format(time.DateOnly))
 	c.DetailID, c.InvoiceID = &inv.Lines[0].ID, &inv.ID
 	if err := store.BillCharges(ctx, f.admin, []subscriptions.Charge{c}); err != nil {
 		t.Fatal(err)

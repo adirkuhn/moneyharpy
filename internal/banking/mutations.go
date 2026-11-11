@@ -136,7 +136,9 @@ type Booking struct {
 	// Price is positive when booked in the mutation's direction.
 	Price Amount
 	// RuleID is the rule that made the booking, if one did.
-	RuleID    *resource.ID
+	RuleID *resource.ID
+	// ProjectID is the project the booking's revenue or expense is for.
+	ProjectID *resource.ID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -319,9 +321,14 @@ type Link struct {
 	// direction. Nil books what is still open.
 	Price       *string
 	Description string
+	// ProjectID puts a category booking, or the lines of a new purchase
+	// invoice or receipt, on a project.
+	ProjectID *resource.ID
 }
 
-// LinkBooking books (part of) a transaction on a category.
+// LinkBooking books (part of) a transaction: on a category, paying an
+// invoice or document, paying a new purchase invoice or receipt made for
+// it, or paying what a purchase transaction or batch pays.
 func (s *Service) LinkBooking(ctx context.Context, admin, id, user resource.ID, l Link) (Mutation, error) {
 	if _, err := s.ensure(ctx, admin, user); err != nil {
 		return Mutation{}, err
@@ -336,6 +343,10 @@ func (s *Service) LinkBooking(ctx context.Context, admin, id, user resource.ID, 
 	case s.payer(l.Type) != nil:
 		m, _, err := s.linkInvoice(ctx, admin, user, m, l)
 		return m, err
+	case (l.Type == "NewPurchaseInvoice" || l.Type == "NewReceipt") && s.purchases != nil && s.documents != nil:
+		return s.linkNewDocument(ctx, admin, user, m, l)
+	case (l.Type == "PurchaseTransaction" || l.Type == "PurchaseTransactionBatch") && s.purchases != nil && s.documents != nil:
+		return s.linkPurchaseTransactions(ctx, admin, user, m, l)
 	case slices.Contains(bookingTypes, l.Type):
 		return Mutation{}, ErrBookingUnavailable
 	default:
@@ -367,8 +378,14 @@ func (s *Service) LinkBooking(ctx context.Context, admin, id, user resource.ID, 
 	if err := verr.OrNil(); err != nil {
 		return Mutation{}, err
 	}
+	if err := s.checkProject(ctx, admin, user, l.ProjectID); err != nil {
+		return Mutation{}, err
+	}
 	now := s.now()
-	b := Booking{ID: s.ids.Next(), AdministrationID: admin, MutationID: m.ID, LedgerAccountID: *l.BookingID, Description: strings.TrimSpace(l.Description), Price: price, CreatedAt: now, UpdatedAt: now}
+	b := Booking{
+		ID: s.ids.Next(), AdministrationID: admin, MutationID: m.ID, LedgerAccountID: *l.BookingID, Description: strings.TrimSpace(l.Description), Price: price,
+		ProjectID: l.ProjectID, CreatedAt: now, UpdatedAt: now,
+	}
 	m.Bookings = append(m.Bookings, b)
 	m.settle(now)
 	if err := s.store.SaveBookings(ctx, m, []Booking{b}, nil); err != nil {

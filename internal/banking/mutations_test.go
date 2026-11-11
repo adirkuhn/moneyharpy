@@ -3,6 +3,7 @@ package banking
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -276,5 +277,99 @@ func TestLinkingPurchaseDocuments(t *testing.T) {
 	got, _ = svc.Mutation(ctx, adminID, out.ID, owner)
 	if got.Open() != -6000 || documents.unpaid[9101] != 6000 || len(sales.unpaid) != 0 {
 		t.Errorf("after unlink: open %s, unpaid %v", got.Open(), documents.unpaid)
+	}
+}
+
+func TestLinkingNewPurchaseDocuments(t *testing.T) {
+	svc, store, _ := newTestService()
+	documents := &fakeInvoices{store: store, unpaid: map[resource.ID]Amount{}}
+	ctx := context.Background()
+	acc := bank(t, svc)
+	out := transactions(t, svc, acc, "-121")[0]
+	if _, err := svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: "NewReceipt"}); !errors.Is(err, ErrBookingUnavailable) {
+		t.Errorf("NewReceipt without purchases error = %v", err)
+	}
+	purchases := &fakePurchases{documents: documents}
+	svc.UseDocuments(documents)
+	svc.UsePurchases(purchases)
+	svc.UseProjects(fakeProjects{})
+	if _, err := svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: "NewReceipt", BookingID: ptr(resourceID(1))}); fieldsOf(t, err)["booking_id"] == nil {
+		t.Error("accepted a booking_id for a new receipt")
+	}
+	if _, err := svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: "NewReceipt", Price: ptr("-21")}); fieldsOf(t, err)["price_base"] == nil {
+		t.Error("accepted an amount against the transaction's direction")
+	}
+	if _, err := svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: "NewReceipt", Price: ptr("200")}); fieldsOf(t, err)["price_base"] == nil {
+		t.Error("accepted more than the transaction has open")
+	}
+	if _, err := svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: "NewReceipt", ProjectID: ptr(resourceID(1))}); fieldsOf(t, err)["project_id"] == nil {
+		t.Error("accepted an unknown project")
+	}
+	// Money out of 121 makes a receipt of 21 and a purchase invoice of the
+	// rest, each paid with the transaction.
+	got, err := svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: "NewReceipt", Price: ptr("21"), ProjectID: ptr(resourceID(9900))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Payments) != 1 || got.Payments[0].InvoiceType != DocumentType || got.Payments[0].Price != 2100 || got.Open() != -10000 {
+		t.Errorf("after the receipt: %+v, open %s", got.Payments, got.Open())
+	}
+	got, err = svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: "NewPurchaseInvoice"})
+	if err != nil || got.State != Processed || len(got.Payments) != 2 || got.Payments[1].Price != 10000 {
+		t.Fatalf("purchase invoice = %+v, %v", got, err)
+	}
+	want := []NewDocument{
+		{Kind: "Receipt", Date: out.Date, Amount: 2100, Description: "Payment -121", ContraName: "Hosting Company", ProjectID: ptr(resourceID(9900))},
+		{Kind: "PurchaseInvoice", Date: out.Date, Amount: 10000, Description: "Payment -121", ContraName: "Hosting Company"},
+	}
+	if !reflect.DeepEqual(want, purchases.created) {
+		t.Errorf("created documents = %+v, want %+v", purchases.created, want)
+	}
+}
+
+func TestLinkingPurchaseTransactions(t *testing.T) {
+	svc, store, _ := newTestService()
+	documents := &fakeInvoices{store: store, unpaid: map[resource.ID]Amount{9101: 6000, 9102: 4000}}
+	svc.UseDocuments(documents)
+	svc.UsePurchases(&fakePurchases{documents: documents})
+	ctx := context.Background()
+	acc := bank(t, svc)
+	ms := transactions(t, svc, acc, "-60", "-100", "-50")
+	if _, err := svc.LinkBooking(ctx, adminID, ms[0].ID, owner, Link{Type: "PurchaseTransaction"}); fieldsOf(t, err)["booking_id"] == nil {
+		t.Error("linked without a booking_id")
+	}
+	if _, err := svc.LinkBooking(ctx, adminID, ms[0].ID, owner, Link{Type: "PurchaseTransaction", BookingID: ptr(resourceID(1))}); fieldsOf(t, err)["booking_id"] == nil {
+		t.Error("linked an unknown purchase transaction")
+	}
+	// The batch pays 100, more than the transaction of 50 has open.
+	if _, err := svc.LinkBooking(ctx, adminID, ms[2].ID, owner, Link{Type: "PurchaseTransactionBatch", BookingID: ptr(resourceID(9300))}); fieldsOf(t, err)["price_base"] == nil {
+		t.Error("linked a batch larger than the transaction")
+	}
+	// The amount comes from the batch; price_base is ignored.
+	got, err := svc.LinkBooking(ctx, adminID, ms[1].ID, owner, Link{Type: "PurchaseTransactionBatch", BookingID: ptr(resourceID(9300)), Price: ptr("1")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.State != Processed || len(got.Payments) != 2 || got.Payments[0].InvoiceID != 9101 || got.Payments[1].Price != 4000 {
+		t.Errorf("batch = %+v", got)
+	}
+	// Its transactions are paid now.
+	if _, err := svc.LinkBooking(ctx, adminID, ms[0].ID, owner, Link{Type: "PurchaseTransaction", BookingID: ptr(resourceID(9201))}); fieldsOf(t, err)["booking_id"] == nil {
+		t.Error("linked a paid purchase transaction")
+	}
+}
+
+func TestBookingOnAProject(t *testing.T) {
+	svc, _, _ := newTestService()
+	ctx := context.Background()
+	acc := bank(t, svc)
+	m := transactions(t, svc, acc, "-10")[0]
+	svc.UseProjects(fakeProjects{})
+	if _, err := svc.LinkBooking(ctx, adminID, m.ID, owner, Link{Type: "LedgerAccount", BookingID: ptr(rentCategory), ProjectID: ptr(resourceID(1))}); fieldsOf(t, err)["project_id"] == nil {
+		t.Error("booked on an unknown project")
+	}
+	got, err := svc.LinkBooking(ctx, adminID, m.ID, owner, Link{Type: "LedgerAccount", BookingID: ptr(rentCategory), ProjectID: ptr(resourceID(9900))})
+	if err != nil || got.Bookings[0].ProjectID == nil || *got.Bookings[0].ProjectID != 9900 {
+		t.Errorf("booking = %+v, %v", got.Bookings, err)
 	}
 }

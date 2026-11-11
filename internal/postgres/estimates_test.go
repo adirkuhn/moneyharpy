@@ -3,7 +3,6 @@ package postgres_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -81,7 +80,7 @@ func TestEstimatesAreStoredSentAndBilled(t *testing.T) {
 	if byNumber, err := f.store.EstimateByNumber(ctx, f.admin, sent.EstimateID); err != nil || byNumber.ID != e.ID {
 		t.Errorf("by number = %v", err)
 	}
-	today := time.Now()
+	today := adminNow()
 	for filter, want := range map[string]int{"state:open": 1, "state:draft|late": 0, "contact_id:" + quoted.String(): 1, "period:prev_year": 0} {
 		q, err := sales.ParseEstimateFilter(filter, today)
 		if err != nil {

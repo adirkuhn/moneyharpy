@@ -187,6 +187,22 @@ func (s *Service) Project(ctx context.Context, admin, id, user resource.ID) (Pro
 	return s.store.Project(ctx, admin, id)
 }
 
+// CheckProject returns a validation error on project_id unless the project
+// exists and is active, for records booked on it.
+func (s *Service) CheckProject(ctx context.Context, admin, user, id resource.ID) error {
+	p, err := s.Project(ctx, admin, id, user)
+	var verr resource.ValidationError
+	switch {
+	case errors.Is(err, ErrNotFound):
+		verr.Add("project_id", "does not exist")
+	case err != nil:
+		return err
+	case !p.Active():
+		verr.Add("project_id", "is archived")
+	}
+	return verr.OrNil()
+}
+
 // Create adds an active project; its name must be new.
 func (s *Service) Create(ctx context.Context, admin, user resource.ID, c Changes) (Project, error) {
 	if _, err := s.admins.Get(ctx, admin, user); err != nil {
