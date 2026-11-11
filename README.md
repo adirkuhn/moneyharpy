@@ -617,6 +617,102 @@ A new administration starts from its country's VAT rates, categories and
 chart scheme; the Netherlands comes with the Referentie Grootboekschema (RGS)
 3.8. See [docs/countries.md](docs/countries.md) to add a country.
 
+## To do
+
+Everything still open, in one place. The API matches Moneybird's published
+description operation by operation (all 303 operations; request, response,
+status codes and parameters), so most of what remains is behaviour behind
+those operations, and screens.
+
+### Decisions to make
+
+- [ ] **Purchase invoice made from a bank transaction** (`link_booking`
+  `NewPurchaseInvoice` / `NewReceipt`): Moneybird does not document how it is
+  filled in. Today: the contact whose IBAN matches, one line at the 0%
+  purchase rate on uncategorized expenses, for what is open on the
+  transaction; without a matching contact a purchase invoice is refused.
+- [ ] **Permissions wider than Moneybird's:** products and projects can be read
+  with the sales invoices, estimates or documents permission (Moneybird:
+  settings only); members log their own time without the sales invoices
+  permission; task lists declare `time_entries` and check the other five.
+- [ ] **Settled design differences:** inputs stay 36px high (Moneybird 28px);
+  document pages keep a narrower column than Moneybird's; MoneyHarpy's brand
+  colours stay. Keep, or follow Moneybird?
+- [ ] **External sales invoices:** "prices include VAT" defaults to off rather
+  than the administration's setting; the entry number is the highest plus one,
+  so deleting the latest frees its number; they never get reminders.
+- [ ] **Dubious invoices:** only a payment of the whole rest releases the
+  provision; partial payments leave it.
+- [ ] **Signed estimate PDF** answers 422 (Moneybird's error for an unsigned
+  estimate) rather than 404.
+
+### API behaviour still missing
+
+- [ ] Settling a purchase invoice or receipt against a sales invoice.
+- [ ] `link_booking` types `Payment`, `PaymentTransaction`,
+  `PaymentTransactionBatch` and `VatDocument`.
+- [ ] Closing a year; until then the balance sheet shows every year's result
+  as an open year.
+- [ ] Exports run while the request waits; Moneybird queues them.
+- [ ] Auditfile is always XAF 3.2, also when 4.0 is asked for.
+- [ ] Brugstaat uses MoneyHarpy's own XML layout; Moneybird's format is not
+  published.
+- [ ] Retroactive linear value changes of assets run while the request waits;
+  asset sources only look at purchase document lines.
+- [ ] Online signing of estimates (`sign_online`, signed PDF).
+- [ ] Merging recurring invoices (`mergeable` is stored, unused).
+- [ ] Subscriptions: merging charges into the next invoice is approximate (a
+  failure halfway can bill a charge twice); contact charges are invoiced when
+  the worker sees the month is over instead of being scheduled for the 1st; a
+  failed send leaves a draft with the charges marked billed.
+- [ ] Webhook events never sent: `estimate_state_changed_to_late` (late is
+  worked out on reading), template published/hidden; `events` arrays on
+  records are always empty.
+- [ ] Moneybird Payments features answer as Moneybird does with Payments off:
+  payment mandates, checkout, sales links, subscription templates.
+- [ ] Check that deleting a payment linked to a bank transaction needs the bank
+  permission on every invoice type (it does on external invoices).
+- [ ] Watch Moneybird's API for changes: the *Moneybird compatibility* workflow
+  covers schemas; rerun the operation-by-operation comparison when it reports
+  a change.
+
+### Features not built
+
+- [ ] Peppol sending and receiving (sending answers "not available yet").
+- [ ] Email-in addresses for external invoices and incoming documents;
+  documents from email or Peppol; recurring purchase documents.
+- [ ] Payment services: Mollie, PayPal, SEPA direct debit, Online incasso,
+  paying through Moneybird-style banking.
+- [ ] Direct bank connections (`internal/bankfile` is where a source would hand
+  over transactions).
+- [ ] VAT returns.
+- [ ] Statistics and export on lists (shown greyed out, "Not available yet"),
+  including the compose export.
+- [ ] Side menu pages without a screen yet: reports overview, audit report,
+  hours report, hours per project, events, online sales, task list
+  templates, purchase transaction batches.
+- [ ] Online checkout; customer portal (the API returns links into the app).
+- [ ] Passkeys, "keep me signed in", KVK company search while onboarding,
+  house number field, UBO and verification blocks, todos and downloads in the
+  notifications panel, Moneybird's "explainer video" and "show subscriptions".
+
+### Screens
+
+- [ ] Pages without a Moneybird reference only follow its patterns: invoice,
+  external and recurring invoice pages and editors, contacts, bank
+  transactions, journal, reports, and the new pages (incoming documents,
+  quotes, timesheets, task lists, assets, products, projects). Match each one
+  against a saved Moneybird page.
+- [ ] Info and statistics buttons lack Moneybird's dropdown caret; the period
+  band can only be dragged by its ends.
+- [ ] New API areas mostly have minimal screens; many operations (asset value
+  changes, subscriptions, purchase transactions, SEPA batches) have no screen.
+
+### Technical
+
+- [ ] Shared API rate limit per address (150 requests per 5 minutes) is easily
+  hit by several test runs on one machine.
+
 ## License
 
 [MIT](LICENSE)
