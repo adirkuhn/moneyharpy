@@ -8,7 +8,7 @@ import { ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { WorkflowFilter } from '../list/DocumentFilter'
-import { DocumentTable } from '../list/DocumentTable'
+import { DocumentTable, listDate } from '../list/DocumentTable'
 import { AdvancedFilter, ContactFilter, FilterPanel, RadioFilter } from '../list/FilterPanel'
 import { GettingStarted } from '../list/GettingStarted'
 import { ListActions } from '../list/ListActions'
@@ -25,7 +25,6 @@ export function RecurringInvoicesPage() {
   const page = Math.max(1, Number(params.get('page')) || 1)
   const invoices = useRecurringInvoices(administrationId, recurringFilterTerms(filter), page)
   const base = `/${administrationId}/recurring_sales_invoices`
-  const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
   const narrowed = !!(filter.frequency || filter.autoSend || filter.contactId || filter.workflowId)
   const view = narrowed || !['active', 'inactive', 'all'].includes(filter.state) ? 'custom' : filter.state
   const [info, setInfo] = useState<boolean | null>(null)
@@ -53,10 +52,6 @@ export function RecurringInvoicesPage() {
           info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
           exports={[]}
           primary={{ to: `${base}/new`, label: t('recurring.add') }}
-          more={[
-            { to: `/${administrationId}/sales_invoices`, label: t('invoices.title') },
-            { to: `/${administrationId}/settings/invoices_and_estimates`, label: t('invoices.settings') },
-          ]}
         />
       }
     >
@@ -89,7 +84,7 @@ export function RecurringInvoicesPage() {
             { key: 'reference', header: t('invoices.reference'), kind: 'extra', cell: (r) => r.reference },
             { key: 'icons', header: '', label: t('recurring.autoSend'), kind: 'icons', cell: (r) => r.auto_send && <AutoSendIcon /> },
             { key: 'frequency', header: t('recurring.frequency'), cell: (r) => frequencyText(r, t) },
-            { key: 'next', header: t('recurring.nextInvoiceDate'), kind: 'date', cell: (r) => (r.active ? date(r.invoice_date) : '') },
+            { key: 'next', header: t('recurring.nextInvoiceDate'), kind: 'date', cell: (r) => (r.active ? listDate(r.invoice_date) : '') },
             { key: 'amount', header: t('invoices.amount'), kind: 'amount', cell: (r) => formatAmount(r.total_price_incl_tax, r.currency ?? 'EUR', i18n.language) },
             {
               key: 'state', header: t('recurring.status'), kind: 'state',
@@ -119,7 +114,7 @@ function RecurringFilterForm({ administrationId, filter, reset, onApply }: FormP
   const [draft, setDraft] = useState(filter)
   const set = (changes: Partial<RecurringFilter>) => setDraft({ ...draft, ...changes })
   return (
-    <AdvancedFilter onApply={() => onApply(draft)} footer={<Link className="btn btn--secondary" to={reset}>{t('recurring.showAllActive')}</Link>}>
+    <AdvancedFilter value={draft} onApply={() => onApply(draft)} footer={<Link className="btn btn--secondary" to={reset}>{t('recurring.showAllActive')}</Link>}>
       <RadioFilter
         legend={t('recurring.status')}
         value={draft.state}

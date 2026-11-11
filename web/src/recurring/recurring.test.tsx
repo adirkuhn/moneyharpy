@@ -89,7 +89,7 @@ describe('the recurring invoice list', () => {
     const rows = within(table).getAllByRole('row')
     expect(rows[1]).toHaveTextContent('Example Shop B.V.')
     expect(rows[1]).toHaveTextContent('Every month')
-    expect(rows[1]).toHaveTextContent('Dec 1, 2026')
+    expect(rows[1]).toHaveTextContent('2026-12-01')
     expect(rows[1]).toHaveTextContent('€121.00')
     expect(rows[1]).toHaveTextContent('Contract 7')
     expect(rows[1]).toHaveTextContent('Active')
@@ -142,7 +142,7 @@ describe('a recurring invoice', () => {
     expect(await screen.findByRole('heading', { name: 'Example Shop B.V.' })).toBeInTheDocument()
     expect(screen.getByText('Next invoice on', { selector: 'dt' }).nextSibling).toHaveTextContent('Dec 1, 2026')
     const madeTable = await screen.findByRole('table', { name: 'Invoices made' })
-    expect(within(madeTable).getByRole('link', { name: 'Draft 4' })).toHaveAttribute('href', '/11/sales_invoices/901')
+    expect(within(madeTable).getByRole('link', { name: 'Draft #4' })).toHaveAttribute('href', '/11/sales_invoices/901')
     expect(seen.some((u) => u.pathname.endsWith('/sales_invoices') && u.searchParams.get('filter') === 'recurring_sales_invoice_id:941')).toBe(true)
 
     const form = screen.getByRole('form', { name: 'Recurring invoice' })

@@ -82,7 +82,6 @@ export function ContactsPage() {
           info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
           exports={[]}
           primary={{ to: `${base}/new`, label: t('contacts.new') }}
-          more={[]}
         />
       }
     >
@@ -140,7 +139,7 @@ function ContactFilter({ kind, archived, onApply }: { kind: Kind; archived: bool
   const [chosen, setChosen] = useState<Kind>(kind)
   const [withArchived, setWithArchived] = useState(archived)
   return (
-    <AdvancedFilter onApply={() => onApply(chosen, withArchived)}>
+    <AdvancedFilter value={{ chosen, withArchived }} onApply={() => onApply(chosen, withArchived)}>
       <RadioFilter legend={t('contacts.kind')} value={chosen} onChange={(v) => setChosen(v as Kind)} options={kinds.map((k) => ({ value: k, label: t(`contacts.kinds.${k || 'all'}`) }))} />
       <CheckFilter label={t('contacts.showArchived')} checked={withArchived} onChange={setWithArchived} />
     </AdvancedFilter>

@@ -12,7 +12,7 @@ import { ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { DocumentFilter } from '../list/DocumentFilter'
-import { AttachmentIcon, DocumentTable } from '../list/DocumentTable'
+import { AttachmentIcon, DocumentTable, listDate } from '../list/DocumentTable'
 import { FilterPanel } from '../list/FilterPanel'
 import { GettingStarted } from '../list/GettingStarted'
 import { ListActions } from '../list/ListActions'
@@ -55,7 +55,6 @@ export function ExternalInvoicesPage() {
   const administration = useAdministration(administrationId)
   const quick = quickOf(filter)
   const base = `/${administrationId}/external_sales_invoices`
-  const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
   const [info, setInfo] = useState<boolean | null>(null)
   const [emailShown, setEmailShown] = useState(false)
   const introId = useId()
@@ -106,10 +105,6 @@ export function ExternalInvoicesPage() {
           }
           exports={[t('list.excelPerInvoice'), t('list.excelPerRow'), t('list.composeExport')]}
           primary={{ to: `${base}/new`, label: t('external.add') }}
-          more={[
-            { to: `/${administrationId}/sales_invoices`, label: t('invoices.title') },
-            { to: `/${administrationId}/settings/invoices_and_estimates`, label: t('invoices.settings') },
-          ]}
         />
       }
     >
@@ -150,7 +145,7 @@ export function ExternalInvoicesPage() {
             { key: 'reference', header: t('invoices.reference'), link: true, cell: (inv) => externalTitle(inv, t) },
             { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (inv) => <AttachmentIcon count={inv.attachments?.length ?? 0} /> },
             { key: 'contact', header: t('invoices.contact'), cell: (inv) => (inv.contact ? contactName(inv.contact) : '') },
-            { key: 'date', header: t('external.date'), kind: 'date', cell: (inv) => date(inv.date) },
+            { key: 'date', header: t('external.date'), kind: 'date', cell: (inv) => listDate(inv.date) },
             {
               key: 'amount', header: t('invoices.amount'), kind: 'amount',
               cell: (inv) => formatAmount(inv.total_price_incl_tax, inv.currency ?? administration.data?.currency ?? 'EUR', i18n.language),

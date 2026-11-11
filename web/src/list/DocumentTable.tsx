@@ -109,6 +109,11 @@ export function DocumentTable<T>({ label, rows, rowKey, href, columns, selection
   )
 }
 
+/** A date in a list, as Moneybird shows it: 2026-11-09. */
+export function listDate(date: string | null | undefined): string {
+  return date?.slice(0, 10) ?? ''
+}
+
 /** A paperclip for a document with attachments, for the icons column. */
 export function AttachmentIcon({ count }: { count: number }) {
   const { t } = useTranslation()
