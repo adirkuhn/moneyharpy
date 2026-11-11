@@ -54,6 +54,8 @@ tags:
     description: Journal entries made by hand and the reports that read the whole journal. Compatible with the Moneybird API.
   - name: Sales invoices
     description: Invoices to customers, from draft to sent, with their PDF, e-invoice, bookings and credit invoices. Compatible with the Moneybird API.
+  - name: External sales invoices
+    description: Invoices made in other software, such as a webshop or a till, booked and followed until paid. Compatible with the Moneybird API.
   - name: Booking rules
     description: Rules that book matching transactions automatically. MoneyHarpy extension.
   - name: Management
@@ -4050,6 +4052,551 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/external_sales_invoices:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listExternalSalesInvoices
+      x-permissions: [sales_invoices]
+      summary: List all external sales invoices
+      description: >-
+        Newest first unless sort is date_asc. Filter terms: state (all, new, open, late, paid, uncollectible; several separated by |), period (on the invoice date; this year unless a filter is given) and contact_id. Late invoices are open invoices past their due date. Paged with a Link header and X-Total-Count.
+      tags: [External sales invoices]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+      responses:
+        '200':
+          $ref: '#/components/responses/ExternalSalesInvoicePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createExternalSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Create an external sales invoice
+      description: >-
+        An invoice made in other software, such as a webshop or a till. With a contact and at least one line it is booked at once (open, or late past its due date): the total on the debtors, each line on its category (revenue still to categorize when left out) and the VAT per rate on payable VAT. Without, it is new and books nothing until they are filled in. Not in the locked period.
+      tags: [External sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalSalesInvoiceRequest'
+      responses:
+        '201':
+          description: The created invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listExternalSalesInvoiceVersions
+      x-permissions: [sales_invoices]
+      summary: List all ids and versions
+      tags: [External sales invoices]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The ids and versions of the invoices the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchExternalSalesInvoices
+      x-permissions: [sales_invoices]
+      summary: Fetch external sales invoices with given ids
+      tags: [External sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The invoices with these ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExternalSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/attachment:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: createExternalSalesInvoiceFromAttachment
+      x-permissions: [sales_invoices]
+      summary: Create an external sales invoice from an attachment
+      description: >-
+        Makes a new invoice, dated today, holding the file (a PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file); fill in its contact and lines to book it.
+      tags: [External sales invoices]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The new invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getExternalSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Get an external sales invoice
+      tags: [External sales invoices]
+      responses:
+        '200':
+          description: The external sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateExternalSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Update an external sales invoice
+      description: >-
+        Lines with an id change, lines with _destroy go, lines without an id are added; the invoice is booked again. A booked invoice keeps its contact and at least one line. Not once it has payments or is marked dubious, nor in the locked period.
+      tags: [External sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalSalesInvoiceRequest'
+      responses:
+        '200':
+          description: The external sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      operationId: deleteExternalSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Delete an external sales invoice
+      description: >-
+        Removes the invoice with what it and its payments post. Payments made with bank transactions are unlinked first and settlements with other invoices undone. Not in the locked period.
+      tags: [External sales invoices]
+      responses:
+        '204':
+          description: The invoice is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/attachment:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createExternalSalesInvoiceAttachment
+      x-permissions: [sales_invoices]
+      summary: Add attachment to an external sales invoice
+      description: >-
+        A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+      tags: [External sales invoices]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/attachment_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteExternalSalesInvoiceAttachment
+      x-permissions: [sales_invoices]
+      summary: Delete an attachment from an external sales invoice
+      tags: [External sales invoices]
+      responses:
+        '204':
+          description: The attachment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: downloadExternalSalesInvoiceAttachment
+      x-permissions: [sales_invoices]
+      summary: Download an attachment
+      tags: [External sales invoices]
+      responses:
+        '200':
+          description: The file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createExternalSalesInvoiceNote
+      x-permissions: [sales_invoices]
+      summary: Add note to an external sales invoice
+      tags: [External sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteExternalSalesInvoiceNote
+      x-permissions: [sales_invoices]
+      summary: Delete a note from an external sales invoice
+      tags: [External sales invoices]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/payments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createExternalSalesInvoicePayment
+      x-permissions: [sales_invoices]
+      summary: Create a payment
+      description: >-
+        Registers a payment on a booked invoice, at most what is unpaid, as for sales invoices: the manual_payment_action chooses the account it is booked against, and with financial_mutation_id a bank transaction pays the invoice instead, which needs the bank permission too. A payment that covers what is unpaid makes the invoice paid. Not in the locked period or the future.
+      tags: [External sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '201':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/payments/{payment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: payment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteExternalSalesInvoicePayment
+      x-permissions: [sales_invoices]
+      summary: Delete a payment
+      description: >-
+        Removes the payment and what it posts; a paid invoice is open (or late) again. A payment made with a bank transaction is unlinked from it. Not for uncollectible invoices or in the locked period.
+      tags: [External sales invoices]
+      responses:
+        '204':
+          description: The payment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_dubious:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: markExternalSalesInvoiceAsDubious
+      x-permissions: [sales_invoices]
+      summary: Mark as dubious
+      description: >-
+        Reserves what is open of the invoice, excluding VAT, in the provision for doubtful debtors on the dubious_date (today when left out), as for sales invoices.
+      tags: [External sales invoices]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkDubiousRequest'
+      responses:
+        '200':
+          description: The external sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_uncollectible:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: markExternalSalesInvoiceAsUncollectible
+      x-permissions: [sales_invoices]
+      summary: Mark as uncollectible
+      description: >-
+        Writes off what is open of the invoice for good on the uncollectible_date (today when left out), as for sales invoices. This cannot be undone.
+      tags: [External sales invoices]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkUncollectibleRequest'
+      responses:
+        '200':
+          description: The external sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
   /api/v2/{administration_id}/booking_rules:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -5721,6 +6268,23 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/SalesInvoice'
+    ExternalSalesInvoicePage:
+      description: A page of external sales invoices
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number of invoices selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ExternalSalesInvoice'
     GeneralJournalDocumentPage:
       description: A page of journal entries
       headers:
@@ -7567,6 +8131,66 @@ components:
               type: string
               nullable: true
               description: MoneyHarpy extension. How the invoice was or will be sent.
+    ExternalSalesInvoice:
+      description: A Moneybird external sales invoice with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/external_sales_invoice_response'
+        - type: object
+          required: [id, administration_id, contact_id, date, state, entry_number, currency, details, payments, notes, attachments, events,
+                     tax_totals, total_price_excl_tax, total_price_incl_tax, total_paid, total_unpaid, version, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            total_tax:
+              type: string
+              description: MoneyHarpy extension. The VAT of all lines.
+    ExternalSalesInvoiceRequest:
+      type: object
+      required: [external_sales_invoice]
+      additionalProperties: false
+      properties:
+        external_sales_invoice:
+          type: object
+          additionalProperties: false
+          properties:
+            contact_id:
+              description: The customer; empty removes it from a new invoice.
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            reference:
+              type: string
+              description: The invoice's number in the other software, such as a webshop order number.
+              maxLength: 1000
+            date:
+              type: string
+              format: date
+            due_date:
+              type: string
+              description: yyyy-mm-dd; empty removes it.
+              pattern: '^(\d{4}-\d{2}-\d{2})?$'
+            currency:
+              type: string
+              maxLength: 3
+            prices_are_incl_tax:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            source:
+              type: string
+              description: The software the invoice comes from.
+              maxLength: 1000
+            source_url:
+              type: string
+              description: An http or https link to the invoice in that software.
+              maxLength: 1000
+            details_attributes:
+              description: An array of lines, or an object of lines keyed by position. is_optional and is_selected do not apply to external invoices.
+              oneOf:
+                - type: array
+                  maxItems: 500
+                  items:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
+                - type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
     SalesInvoiceDetailInput:
       type: object
       additionalProperties: false

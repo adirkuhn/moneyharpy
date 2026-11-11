@@ -27,6 +27,9 @@ var Events = []string{
 	"sales_invoice_state_changed_to_late", "sales_invoice_state_changed_to_reminded", "sales_invoice_state_changed_to_paid",
 	"sales_invoice_state_changed_to_uncollectible", "sales_invoice_marked_as_dubious", "sales_invoice_marked_as_uncollectible",
 	"sales_invoice_send_reminder_email", "sales_invoice_send_reminder_manually",
+	"external_sales_invoice_created", "external_sales_invoice_updated", "external_sales_invoice_destroyed",
+	"external_sales_invoice_state_changed_to_open", "external_sales_invoice_state_changed_to_late", "external_sales_invoice_state_changed_to_paid",
+	"external_sales_invoice_state_changed_to_uncollectible", "external_sales_invoice_marked_as_dubious", "external_sales_invoice_marked_as_uncollectible",
 	"payment_registered", "payment_destroyed", "payment_linked_to_financial_mutation",
 	"user_invited", "user_removed",
 	"access_token_created", "access_token_revoked",
@@ -36,7 +39,7 @@ var Events = []string{
 // matches every event starting with it.
 var Groups = []string{
 	"administration", "identity", "default_identity", "workflow", "document_style", "tax_rate", "ledger_account",
-	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "sales_invoice", "payment", "user", "access_token",
+	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "sales_invoice", "external_sales_invoice", "payment", "user", "access_token",
 }
 
 // known reports whether a subscription names an event or a group.

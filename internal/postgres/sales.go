@@ -219,11 +219,7 @@ func encodeInvoice(inv sales.Invoice) (delivery, taxTotals []byte, err error) {
 			return nil, nil, err
 		}
 	}
-	rates := make([]rateTotalJSON, len(inv.Totals.ByRate))
-	for i, r := range inv.Totals.ByRate {
-		rates[i] = rateTotalJSON{TaxRateID: r.TaxRateID.String(), Taxable: int64(r.Taxable), Tax: int64(r.Tax)}
-	}
-	taxTotals, err = json.Marshal(rates)
+	taxTotals, err = encodeTaxTotals(inv.Totals)
 	return delivery, taxTotals, err
 }
 
@@ -278,6 +274,12 @@ func (s *SalesStore) SavePayments(ctx context.Context, c sales.PaymentChange) er
 			}
 		}
 		for _, posting := range c.Invoices {
+			if posting.Invoice.Type == sales.ExternalEntityType {
+				if err := settleExternal(ctx, q, posting.Invoice, posting.Entries); err != nil {
+					return err
+				}
+				continue
+			}
 			delivery, taxTotals, err := encodeInvoice(posting.Invoice)
 			if err != nil {
 				return err
@@ -460,16 +462,12 @@ func toInvoice(r sqlc.SalesInvoice) (sales.Invoice, error) {
 		}
 		inv.Delivery = &d
 	}
-	var rates []rateTotalJSON
-	if err := json.Unmarshal(r.TaxTotals, &rates); err != nil {
-		return inv, fmt.Errorf("invoice %d tax totals: %w", r.ID, err)
+	rates, err := decodeTaxTotals(r.TaxTotals)
+	if err != nil {
+		return inv, fmt.Errorf("invoice %d: %w", r.ID, err)
 	}
-	for _, t := range rates {
-		id, err := resource.ParseID(t.TaxRateID)
-		if err != nil {
-			return inv, fmt.Errorf("invoice %d tax totals: %w", r.ID, err)
-		}
-		inv.Totals.ByRate = append(inv.Totals.ByRate, sales.RateTotal{TaxRateID: id, Taxable: money.Amount(t.Taxable), Tax: money.Amount(t.Tax)})
+	if len(rates) > 0 {
+		inv.Totals.ByRate = rates
 	}
 	return inv, nil
 }

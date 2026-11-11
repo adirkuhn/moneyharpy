@@ -3,7 +3,6 @@ package httpapi
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"sort"
 	"strconv"
@@ -355,29 +354,8 @@ func toSalesChanges(w http.ResponseWriter, body salesInvoiceBody) (sales.Changes
 	if c.FirstDueInterval, ok = flexInt(w, in.FirstDueInterval, "first_due_interval"); !ok {
 		return c, false
 	}
-	if in.Details != nil {
-		c.Details = []sales.DetailInput{}
-		for _, d := range *in.Details {
-			line := sales.DetailInput{Description: d.Description, Period: d.Period, Price: d.Price.ptr(), Amount: d.Amount.ptr(),
-				Optional: d.Optional.ptr(), Selected: d.Selected.ptr(), Destroy: deref(d.Destroy.ptr())}
-			if d.ID != nil && *d.ID != "" {
-				if line.ID, ok = flexID(w, d.ID); !ok {
-					return c, false
-				}
-			}
-			for _, f := range []struct {
-				src *flexString
-				dst **resource.ID
-			}{{d.TaxRateID, &line.TaxRateID}, {d.LedgerAccountID, &line.LedgerAccountID}, {d.ProjectID, &line.ProjectID}, {d.ProductID, &line.ProductID}} {
-				if *f.dst, ok = flexOptionalID(w, f.src); !ok {
-					return c, false
-				}
-			}
-			if line.RowOrder, ok = flexInt(w, d.RowOrder, "row_order"); !ok {
-				return c, false
-			}
-			c.Details = append(c.Details, line)
-		}
+	if c.Details, ok = toDetailInputs(w, in.Details); !ok {
+		return c, false
 	}
 	if in.CustomFields != nil {
 		c.CustomFields = []sales.FieldValue{}
@@ -392,6 +370,37 @@ func toSalesChanges(w http.ResponseWriter, body salesInvoiceBody) (sales.Changes
 	return c, true
 }
 
+// toDetailInputs reads details_attributes; nil when they are left out.
+func toDetailInputs(w http.ResponseWriter, details *salesDetails) ([]sales.DetailInput, bool) {
+	if details == nil {
+		return nil, true
+	}
+	out := []sales.DetailInput{}
+	var ok bool
+	for _, d := range *details {
+		line := sales.DetailInput{Description: d.Description, Period: d.Period, Price: d.Price.ptr(), Amount: d.Amount.ptr(),
+			Optional: d.Optional.ptr(), Selected: d.Selected.ptr(), Destroy: deref(d.Destroy.ptr())}
+		if d.ID != nil && *d.ID != "" {
+			if line.ID, ok = flexID(w, d.ID); !ok {
+				return nil, false
+			}
+		}
+		for _, f := range []struct {
+			src *flexString
+			dst **resource.ID
+		}{{d.TaxRateID, &line.TaxRateID}, {d.LedgerAccountID, &line.LedgerAccountID}, {d.ProjectID, &line.ProjectID}, {d.ProductID, &line.ProductID}} {
+			if *f.dst, ok = flexOptionalID(w, f.src); !ok {
+				return nil, false
+			}
+		}
+		if line.RowOrder, ok = flexInt(w, d.RowOrder, "row_order"); !ok {
+			return nil, false
+		}
+		out = append(out, line)
+	}
+	return out, true
+}
+
 func (s *server) salesQuery(w http.ResponseWriter, r *http.Request, admin resource.ID, filter *DocumentFilter) (sales.Query, bool) {
 	now, err := s.today(r, admin)
 	if err != nil {
@@ -400,12 +409,7 @@ func (s *server) salesQuery(w http.ResponseWriter, r *http.Request, admin resour
 	}
 	q, err := sales.ParseFilter(deref((*string)(filter)), now)
 	if err != nil {
-		var verr *resource.ValidationError
-		if errors.As(err, &verr) {
-			writeError(w, http.StatusBadRequest, strings.Join(verr.Fields["filter"], "; "))
-		} else {
-			writeError(w, http.StatusBadRequest, err.Error())
-		}
+		writeError(w, http.StatusBadRequest, filterProblem(err))
 		return q, false
 	}
 	return q, true
@@ -487,19 +491,9 @@ func (s *server) FetchSalesInvoices(w http.ResponseWriter, r *http.Request, admi
 	if !ok {
 		return
 	}
-	body, ok := decodeBody[struct {
-		IDs []flexString `json:"ids"`
-	}](w, r)
+	ids, ok := readSyncIDs(w, r)
 	if !ok {
 		return
-	}
-	ids := make([]resource.ID, len(body.IDs))
-	for i := range body.IDs {
-		id, ok := flexID(w, &body.IDs[i])
-		if !ok {
-			return
-		}
-		ids[i] = *id
 	}
 	list, err := s.deps.Sales.InvoicesByID(r.Context(), admin, user(r).ID, ids)
 	if err != nil {

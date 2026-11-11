@@ -550,7 +550,9 @@ func (q *Queries) ContactInJournal(ctx context.Context, arg ContactInJournalPara
 }
 
 const contactOnSalesInvoice = `-- name: ContactOnSalesInvoice :one
-SELECT EXISTS (SELECT 1 FROM sales_invoices WHERE administration_id = $1 AND contact_id = $2)
+SELECT EXISTS (SELECT 1 FROM sales_invoices s WHERE s.administration_id = $1 AND s.contact_id = $2
+               UNION ALL
+               SELECT 1 FROM external_sales_invoices e WHERE e.administration_id = $1 AND e.contact_id = $2)
 `
 
 type ContactOnSalesInvoiceParams struct {
@@ -879,6 +881,29 @@ func (q *Queries) DeleteDocumentStyle(ctx context.Context, arg DeleteDocumentSty
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const deleteExternalSalesInvoice = `-- name: DeleteExternalSalesInvoice :exec
+DELETE FROM external_sales_invoices WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteExternalSalesInvoiceParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteExternalSalesInvoice(ctx context.Context, arg DeleteExternalSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, deleteExternalSalesInvoice, arg.AdministrationID, arg.ID)
+	return err
+}
+
+const deleteExternalSalesInvoiceDetails = `-- name: DeleteExternalSalesInvoiceDetails :exec
+DELETE FROM external_sales_invoice_details WHERE external_sales_invoice_id = $1
+`
+
+func (q *Queries) DeleteExternalSalesInvoiceDetails(ctx context.Context, externalSalesInvoiceID int64) error {
+	_, err := q.db.Exec(ctx, deleteExternalSalesInvoiceDetails, externalSalesInvoiceID)
+	return err
 }
 
 const deleteFinancialMutations = `-- name: DeleteFinancialMutations :exec
@@ -1309,6 +1334,144 @@ type EnableTOTPParams struct {
 func (q *Queries) EnableTOTP(ctx context.Context, arg EnableTOTPParams) error {
 	_, err := q.db.Exec(ctx, enableTOTP, arg.ID, arg.TotpEnabledAt, arg.TotpLastStep)
 	return err
+}
+
+const externalSalesInvoiceByID = `-- name: ExternalSalesInvoiceByID :one
+SELECT id, administration_id, contact_id, entry_number, reference, date, due_date, state, origin, source, source_url, currency, prices_are_incl_tax, paid_at, marked_dubious_on, marked_uncollectible_on, total_excl_tax, total_tax, total_incl_tax, tax_totals, created_at, updated_at FROM external_sales_invoices WHERE administration_id = $1 AND id = $2
+`
+
+type ExternalSalesInvoiceByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) ExternalSalesInvoiceByID(ctx context.Context, arg ExternalSalesInvoiceByIDParams) (ExternalSalesInvoice, error) {
+	row := q.db.QueryRow(ctx, externalSalesInvoiceByID, arg.AdministrationID, arg.ID)
+	var i ExternalSalesInvoice
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.ContactID,
+		&i.EntryNumber,
+		&i.Reference,
+		&i.Date,
+		&i.DueDate,
+		&i.State,
+		&i.Origin,
+		&i.Source,
+		&i.SourceUrl,
+		&i.Currency,
+		&i.PricesAreInclTax,
+		&i.PaidAt,
+		&i.MarkedDubiousOn,
+		&i.MarkedUncollectibleOn,
+		&i.TotalExclTax,
+		&i.TotalTax,
+		&i.TotalInclTax,
+		&i.TaxTotals,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const externalSalesInvoiceDetailsOf = `-- name: ExternalSalesInvoiceDetailsOf :many
+SELECT id, administration_id, external_sales_invoice_id, description, period, price, amount, quantity, tax_rate_id, ledger_account_id, project_id, product_id, row_order, line_base, created_at, updated_at FROM external_sales_invoice_details
+WHERE administration_id = $1 AND external_sales_invoice_id = ANY($2::bigint[]) ORDER BY row_order, id
+`
+
+type ExternalSalesInvoiceDetailsOfParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) ExternalSalesInvoiceDetailsOf(ctx context.Context, arg ExternalSalesInvoiceDetailsOfParams) ([]ExternalSalesInvoiceDetail, error) {
+	rows, err := q.db.Query(ctx, externalSalesInvoiceDetailsOf, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExternalSalesInvoiceDetail
+	for rows.Next() {
+		var i ExternalSalesInvoiceDetail
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.ExternalSalesInvoiceID,
+			&i.Description,
+			&i.Period,
+			&i.Price,
+			&i.Amount,
+			&i.Quantity,
+			&i.TaxRateID,
+			&i.LedgerAccountID,
+			&i.ProjectID,
+			&i.ProductID,
+			&i.RowOrder,
+			&i.LineBase,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const externalSalesInvoicesByIDs = `-- name: ExternalSalesInvoicesByIDs :many
+SELECT id, administration_id, contact_id, entry_number, reference, date, due_date, state, origin, source, source_url, currency, prices_are_incl_tax, paid_at, marked_dubious_on, marked_uncollectible_on, total_excl_tax, total_tax, total_incl_tax, tax_totals, created_at, updated_at FROM external_sales_invoices WHERE administration_id = $1 AND id = ANY($2::bigint[]) ORDER BY id
+`
+
+type ExternalSalesInvoicesByIDsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) ExternalSalesInvoicesByIDs(ctx context.Context, arg ExternalSalesInvoicesByIDsParams) ([]ExternalSalesInvoice, error) {
+	rows, err := q.db.Query(ctx, externalSalesInvoicesByIDs, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExternalSalesInvoice
+	for rows.Next() {
+		var i ExternalSalesInvoice
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.ContactID,
+			&i.EntryNumber,
+			&i.Reference,
+			&i.Date,
+			&i.DueDate,
+			&i.State,
+			&i.Origin,
+			&i.Source,
+			&i.SourceUrl,
+			&i.Currency,
+			&i.PricesAreInclTax,
+			&i.PaidAt,
+			&i.MarkedDubiousOn,
+			&i.MarkedUncollectibleOn,
+			&i.TotalExclTax,
+			&i.TotalTax,
+			&i.TotalInclTax,
+			&i.TaxTotals,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const financialAccountByID = `-- name: FinancialAccountByID :one
@@ -1954,6 +2117,53 @@ func (q *Queries) InsertDocumentStyle(ctx context.Context, arg InsertDocumentSty
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const insertExternalSalesInvoiceDetail = `-- name: InsertExternalSalesInvoiceDetail :exec
+INSERT INTO external_sales_invoice_details (id, administration_id, external_sales_invoice_id, description, period, price, amount, quantity,
+    tax_rate_id, ledger_account_id, project_id, product_id, row_order, line_base, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+`
+
+type InsertExternalSalesInvoiceDetailParams struct {
+	ID                     int64
+	AdministrationID       int64
+	ExternalSalesInvoiceID int64
+	Description            string
+	Period                 string
+	Price                  int64
+	Amount                 string
+	Quantity               int64
+	TaxRateID              int64
+	LedgerAccountID        pgtype.Int8
+	ProjectID              pgtype.Int8
+	ProductID              pgtype.Int8
+	RowOrder               int32
+	LineBase               int64
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+}
+
+func (q *Queries) InsertExternalSalesInvoiceDetail(ctx context.Context, arg InsertExternalSalesInvoiceDetailParams) error {
+	_, err := q.db.Exec(ctx, insertExternalSalesInvoiceDetail,
+		arg.ID,
+		arg.AdministrationID,
+		arg.ExternalSalesInvoiceID,
+		arg.Description,
+		arg.Period,
+		arg.Price,
+		arg.Amount,
+		arg.Quantity,
+		arg.TaxRateID,
+		arg.LedgerAccountID,
+		arg.ProjectID,
+		arg.ProductID,
+		arg.RowOrder,
+		arg.LineBase,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
 }
 
 const insertFinancialAccount = `-- name: InsertFinancialAccount :exec
@@ -3455,6 +3665,100 @@ func (q *Queries) ListDocumentStyles(ctx context.Context, administrationID int64
 	return items, nil
 }
 
+const listExternalSalesInvoices = `-- name: ListExternalSalesInvoices :many
+SELECT e.id, e.administration_id, e.contact_id, e.entry_number, e.reference, e.date, e.due_date, e.state, e.origin, e.source, e.source_url, e.currency, e.prices_are_incl_tax, e.paid_at, e.marked_dubious_on, e.marked_uncollectible_on, e.total_excl_tax, e.total_tax, e.total_incl_tax, e.tax_totals, e.created_at, e.updated_at, count(*) OVER () AS total
+FROM external_sales_invoices e
+WHERE e.administration_id = $1
+  AND (cardinality($2::text[]) = 0 OR
+       (CASE WHEN e.state = 'open' AND e.due_date < $3::date THEN 'late' ELSE e.state END) = ANY($2::text[]))
+  AND ($4::date IS NULL OR e.date >= $4)
+  AND ($5::date IS NULL OR e.date <= $5)
+  AND ($6::bigint IS NULL OR e.contact_id = $6)
+  AND ($7::timestamptz IS NULL OR e.created_at > $7)
+  AND ($8::timestamptz IS NULL OR e.updated_at > $8)
+ORDER BY CASE WHEN $9::boolean THEN e.date END ASC,
+         CASE WHEN NOT $9::boolean THEN e.date END DESC,
+         CASE WHEN $9::boolean THEN e.id END ASC,
+         CASE WHEN NOT $9::boolean THEN e.id END DESC
+LIMIT $11 OFFSET $10
+`
+
+type ListExternalSalesInvoicesParams struct {
+	AdministrationID int64
+	States           []string
+	Today            pgtype.Date
+	FromDate         pgtype.Date
+	ToDate           pgtype.Date
+	ContactID        pgtype.Int8
+	CreatedAfter     pgtype.Timestamptz
+	UpdatedAfter     pgtype.Timestamptz
+	Ascending        bool
+	Skip             int32
+	MaxRows          pgtype.Int4
+}
+
+type ListExternalSalesInvoicesRow struct {
+	ExternalSalesInvoice ExternalSalesInvoice
+	Total                int64
+}
+
+// Late is worked out from the due date, as for sales invoices.
+func (q *Queries) ListExternalSalesInvoices(ctx context.Context, arg ListExternalSalesInvoicesParams) ([]ListExternalSalesInvoicesRow, error) {
+	rows, err := q.db.Query(ctx, listExternalSalesInvoices,
+		arg.AdministrationID,
+		arg.States,
+		arg.Today,
+		arg.FromDate,
+		arg.ToDate,
+		arg.ContactID,
+		arg.CreatedAfter,
+		arg.UpdatedAfter,
+		arg.Ascending,
+		arg.Skip,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListExternalSalesInvoicesRow
+	for rows.Next() {
+		var i ListExternalSalesInvoicesRow
+		if err := rows.Scan(
+			&i.ExternalSalesInvoice.ID,
+			&i.ExternalSalesInvoice.AdministrationID,
+			&i.ExternalSalesInvoice.ContactID,
+			&i.ExternalSalesInvoice.EntryNumber,
+			&i.ExternalSalesInvoice.Reference,
+			&i.ExternalSalesInvoice.Date,
+			&i.ExternalSalesInvoice.DueDate,
+			&i.ExternalSalesInvoice.State,
+			&i.ExternalSalesInvoice.Origin,
+			&i.ExternalSalesInvoice.Source,
+			&i.ExternalSalesInvoice.SourceUrl,
+			&i.ExternalSalesInvoice.Currency,
+			&i.ExternalSalesInvoice.PricesAreInclTax,
+			&i.ExternalSalesInvoice.PaidAt,
+			&i.ExternalSalesInvoice.MarkedDubiousOn,
+			&i.ExternalSalesInvoice.MarkedUncollectibleOn,
+			&i.ExternalSalesInvoice.TotalExclTax,
+			&i.ExternalSalesInvoice.TotalTax,
+			&i.ExternalSalesInvoice.TotalInclTax,
+			&i.ExternalSalesInvoice.TaxTotals,
+			&i.ExternalSalesInvoice.CreatedAt,
+			&i.ExternalSalesInvoice.UpdatedAt,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFinancialAccounts = `-- name: ListFinancialAccounts :many
 SELECT id, administration_id, type, name, identifier, currency, provider, active, position, ledger_account_id, last_import_at, created_at, updated_at FROM financial_accounts WHERE administration_id = $1 ORDER BY position, id
 `
@@ -4414,6 +4718,17 @@ func (q *Queries) MoveDocumentStylesToDefaultIdentity(ctx context.Context, ident
 	return err
 }
 
+const nextExternalSalesInvoiceEntryNumber = `-- name: NextExternalSalesInvoiceEntryNumber :one
+SELECT coalesce(max(entry_number), 0)::integer + 1 FROM external_sales_invoices WHERE administration_id = $1
+`
+
+func (q *Queries) NextExternalSalesInvoiceEntryNumber(ctx context.Context, administrationID int64) (int32, error) {
+	row := q.db.QueryRow(ctx, nextExternalSalesInvoiceEntryNumber, administrationID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const nextSalesInvoiceDraftID = `-- name: NextSalesInvoiceDraftID :one
 SELECT coalesce(max(draft_id), 0)::integer + 1 FROM sales_invoices WHERE administration_id = $1
 `
@@ -4499,6 +4814,54 @@ func (q *Queries) PaymentByID(ctx context.Context, arg PaymentByIDParams) (Payme
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const paymentsOfInvoice = `-- name: PaymentsOfInvoice :many
+SELECT id, administration_id, invoice_type, invoice_id, financial_account_id, financial_mutation_id, ledger_account_id, credit_invoice_id, linked_payment_id, manual_payment_action, price, price_base, payment_date, transaction_identifier, user_id, created_at, updated_at FROM payments WHERE administration_id = $1 AND invoice_type = $2 AND invoice_id = $3
+`
+
+type PaymentsOfInvoiceParams struct {
+	AdministrationID int64
+	InvoiceType      string
+	InvoiceID        int64
+}
+
+func (q *Queries) PaymentsOfInvoice(ctx context.Context, arg PaymentsOfInvoiceParams) ([]Payment, error) {
+	rows, err := q.db.Query(ctx, paymentsOfInvoice, arg.AdministrationID, arg.InvoiceType, arg.InvoiceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Payment
+	for rows.Next() {
+		var i Payment
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.InvoiceType,
+			&i.InvoiceID,
+			&i.FinancialAccountID,
+			&i.FinancialMutationID,
+			&i.LedgerAccountID,
+			&i.CreditInvoiceID,
+			&i.LinkedPaymentID,
+			&i.ManualPaymentAction,
+			&i.Price,
+			&i.PriceBase,
+			&i.PaymentDate,
+			&i.TransactionIdentifier,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const paymentsOfInvoices = `-- name: PaymentsOfInvoices :many
@@ -5014,6 +5377,14 @@ FROM (
            (i.state IN ('late', 'reminded') OR i.state = 'open' AND i.due_date < $1::date) AND NOT i.paused AS overdue
     FROM sales_invoices i
     WHERE i.administration_id = $2 AND i.state IN ('open', 'late', 'reminded', 'pending_payment')
+    UNION ALL
+    -- External invoices are to be received too; MoneyHarpy does not remind
+    -- their contacts.
+    SELECT e.total_incl_tax - coalesce((SELECT sum(p.price) FROM payments p
+                                        WHERE p.invoice_type = 'ExternalSalesInvoice' AND p.invoice_id = e.id), 0),
+           false
+    FROM external_sales_invoices e
+    WHERE e.administration_id = $2 AND e.state IN ('open', 'late', 'pending_payment')
 ) open_invoices
 `
 
@@ -5045,7 +5416,9 @@ func (q *Queries) SalesReceivables(ctx context.Context, arg SalesReceivablesPara
 
 const salesWorkload = `-- name: SalesWorkload :many
 SELECT w.administration_id, o.user_id
-FROM (SELECT DISTINCT administration_id FROM sales_invoices WHERE state IN ('scheduled', 'open', 'late', 'reminded')) w
+FROM (SELECT administration_id FROM sales_invoices WHERE state IN ('scheduled', 'open', 'late', 'reminded')
+      UNION
+      SELECT administration_id FROM external_sales_invoices WHERE state = 'open') w
 JOIN LATERAL (
     SELECT m.user_id FROM administration_members m
     WHERE m.administration_id = w.administration_id AND m.active AND 'ownership' = ANY(m.permissions)
@@ -5248,6 +5621,36 @@ func (q *Queries) SetWebhookDeactivated(ctx context.Context, arg SetWebhookDeact
 	return err
 }
 
+const settleExternalSalesInvoice = `-- name: SettleExternalSalesInvoice :exec
+UPDATE external_sales_invoices
+SET state = $3, paid_at = $4, marked_dubious_on = $5, marked_uncollectible_on = $6, updated_at = $7
+WHERE administration_id = $1 AND id = $2
+`
+
+type SettleExternalSalesInvoiceParams struct {
+	AdministrationID      int64
+	ID                    int64
+	State                 string
+	PaidAt                pgtype.Timestamptz
+	MarkedDubiousOn       pgtype.Date
+	MarkedUncollectibleOn pgtype.Date
+	UpdatedAt             pgtype.Timestamptz
+}
+
+// What payments and write-offs change of an external invoice.
+func (q *Queries) SettleExternalSalesInvoice(ctx context.Context, arg SettleExternalSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, settleExternalSalesInvoice,
+		arg.AdministrationID,
+		arg.ID,
+		arg.State,
+		arg.PaidAt,
+		arg.MarkedDubiousOn,
+		arg.MarkedUncollectibleOn,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const spendLoginChallengeAttempt = `-- name: SpendLoginChallengeAttempt :one
 UPDATE login_challenges c SET attempts = c.attempts + 1
 FROM users u
@@ -5368,6 +5771,21 @@ type TouchContactParams struct {
 
 func (q *Queries) TouchContact(ctx context.Context, arg TouchContactParams) error {
 	_, err := q.db.Exec(ctx, touchContact, arg.AdministrationID, arg.ID, arg.UpdatedAt)
+	return err
+}
+
+const touchExternalSalesInvoice = `-- name: TouchExternalSalesInvoice :exec
+UPDATE external_sales_invoices SET updated_at = $3 WHERE administration_id = $1 AND id = $2
+`
+
+type TouchExternalSalesInvoiceParams struct {
+	AdministrationID int64
+	ID               int64
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) TouchExternalSalesInvoice(ctx context.Context, arg TouchExternalSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, touchExternalSalesInvoice, arg.AdministrationID, arg.ID, arg.UpdatedAt)
 	return err
 }
 
@@ -6087,6 +6505,73 @@ func (q *Queries) UpsertContactPerson(ctx context.Context, arg UpsertContactPers
 		arg.Phone,
 		arg.Email,
 		arg.Department,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const upsertExternalSalesInvoice = `-- name: UpsertExternalSalesInvoice :exec
+INSERT INTO external_sales_invoices (
+    id, administration_id, contact_id, entry_number, reference, date, due_date, state, origin, source, source_url, currency,
+    prices_are_incl_tax, paid_at, marked_dubious_on, marked_uncollectible_on, total_excl_tax, total_tax, total_incl_tax, tax_totals,
+    created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+ON CONFLICT (id) DO UPDATE SET
+    contact_id = EXCLUDED.contact_id, reference = EXCLUDED.reference, date = EXCLUDED.date, due_date = EXCLUDED.due_date,
+    state = EXCLUDED.state, source = EXCLUDED.source, source_url = EXCLUDED.source_url, currency = EXCLUDED.currency,
+    prices_are_incl_tax = EXCLUDED.prices_are_incl_tax, paid_at = EXCLUDED.paid_at, marked_dubious_on = EXCLUDED.marked_dubious_on,
+    marked_uncollectible_on = EXCLUDED.marked_uncollectible_on, total_excl_tax = EXCLUDED.total_excl_tax, total_tax = EXCLUDED.total_tax,
+    total_incl_tax = EXCLUDED.total_incl_tax, tax_totals = EXCLUDED.tax_totals, updated_at = EXCLUDED.updated_at
+`
+
+type UpsertExternalSalesInvoiceParams struct {
+	ID                    int64
+	AdministrationID      int64
+	ContactID             pgtype.Int8
+	EntryNumber           int32
+	Reference             string
+	Date                  pgtype.Date
+	DueDate               pgtype.Date
+	State                 string
+	Origin                string
+	Source                string
+	SourceUrl             string
+	Currency              string
+	PricesAreInclTax      bool
+	PaidAt                pgtype.Timestamptz
+	MarkedDubiousOn       pgtype.Date
+	MarkedUncollectibleOn pgtype.Date
+	TotalExclTax          int64
+	TotalTax              int64
+	TotalInclTax          int64
+	TaxTotals             []byte
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertExternalSalesInvoice(ctx context.Context, arg UpsertExternalSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, upsertExternalSalesInvoice,
+		arg.ID,
+		arg.AdministrationID,
+		arg.ContactID,
+		arg.EntryNumber,
+		arg.Reference,
+		arg.Date,
+		arg.DueDate,
+		arg.State,
+		arg.Origin,
+		arg.Source,
+		arg.SourceUrl,
+		arg.Currency,
+		arg.PricesAreInclTax,
+		arg.PaidAt,
+		arg.MarkedDubiousOn,
+		arg.MarkedUncollectibleOn,
+		arg.TotalExclTax,
+		arg.TotalTax,
+		arg.TotalInclTax,
+		arg.TaxTotals,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)

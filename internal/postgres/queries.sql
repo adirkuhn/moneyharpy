@@ -902,7 +902,9 @@ DELETE FROM sales_invoice_custom_field_values WHERE sales_invoice_id = $1;
 INSERT INTO sales_invoice_custom_field_values (sales_invoice_id, custom_field_id, value) VALUES ($1, $2, $3);
 
 -- name: ContactOnSalesInvoice :one
-SELECT EXISTS (SELECT 1 FROM sales_invoices WHERE administration_id = $1 AND contact_id = $2);
+SELECT EXISTS (SELECT 1 FROM sales_invoices s WHERE s.administration_id = @administration_id AND s.contact_id = @contact_id
+               UNION ALL
+               SELECT 1 FROM external_sales_invoices e WHERE e.administration_id = @administration_id AND e.contact_id = @contact_id);
 
 -- name: PaymentsOfInvoices :many
 SELECT * FROM payments
@@ -941,16 +943,93 @@ FROM (
            (i.state IN ('late', 'reminded') OR i.state = 'open' AND i.due_date < @today::date) AND NOT i.paused AS overdue
     FROM sales_invoices i
     WHERE i.administration_id = @administration_id AND i.state IN ('open', 'late', 'reminded', 'pending_payment')
+    UNION ALL
+    -- External invoices are to be received too; MoneyHarpy does not remind
+    -- their contacts.
+    SELECT e.total_incl_tax - coalesce((SELECT sum(p.price) FROM payments p
+                                        WHERE p.invoice_type = 'ExternalSalesInvoice' AND p.invoice_id = e.id), 0),
+           false
+    FROM external_sales_invoices e
+    WHERE e.administration_id = @administration_id AND e.state IN ('open', 'late', 'pending_payment')
 ) open_invoices;
 
 -- name: SalesWorkload :many
 -- Administrations with invoices the background job may act on, each with
 -- its longest-standing active owner.
 SELECT w.administration_id, o.user_id
-FROM (SELECT DISTINCT administration_id FROM sales_invoices WHERE state IN ('scheduled', 'open', 'late', 'reminded')) w
+FROM (SELECT administration_id FROM sales_invoices WHERE state IN ('scheduled', 'open', 'late', 'reminded')
+      UNION
+      SELECT administration_id FROM external_sales_invoices WHERE state = 'open') w
 JOIN LATERAL (
     SELECT m.user_id FROM administration_members m
     WHERE m.administration_id = w.administration_id AND m.active AND 'ownership' = ANY(m.permissions)
     ORDER BY m.created_at, m.user_id LIMIT 1
 ) o ON true
 ORDER BY w.administration_id;
+
+-- name: ListExternalSalesInvoices :many
+-- Late is worked out from the due date, as for sales invoices.
+SELECT sqlc.embed(e), count(*) OVER () AS total
+FROM external_sales_invoices e
+WHERE e.administration_id = @administration_id
+  AND (cardinality(@states::text[]) = 0 OR
+       (CASE WHEN e.state = 'open' AND e.due_date < @today::date THEN 'late' ELSE e.state END) = ANY(@states::text[]))
+  AND (sqlc.narg(from_date)::date IS NULL OR e.date >= sqlc.narg(from_date))
+  AND (sqlc.narg(to_date)::date IS NULL OR e.date <= sqlc.narg(to_date))
+  AND (sqlc.narg(contact_id)::bigint IS NULL OR e.contact_id = sqlc.narg(contact_id))
+  AND (sqlc.narg(created_after)::timestamptz IS NULL OR e.created_at > sqlc.narg(created_after))
+  AND (sqlc.narg(updated_after)::timestamptz IS NULL OR e.updated_at > sqlc.narg(updated_after))
+ORDER BY CASE WHEN @ascending::boolean THEN e.date END ASC,
+         CASE WHEN NOT @ascending::boolean THEN e.date END DESC,
+         CASE WHEN @ascending::boolean THEN e.id END ASC,
+         CASE WHEN NOT @ascending::boolean THEN e.id END DESC
+LIMIT sqlc.narg(max_rows) OFFSET @skip;
+
+-- name: ExternalSalesInvoiceByID :one
+SELECT * FROM external_sales_invoices WHERE administration_id = $1 AND id = $2;
+
+-- name: ExternalSalesInvoicesByIDs :many
+SELECT * FROM external_sales_invoices WHERE administration_id = @administration_id AND id = ANY(@ids::bigint[]) ORDER BY id;
+
+-- name: NextExternalSalesInvoiceEntryNumber :one
+SELECT coalesce(max(entry_number), 0)::integer + 1 FROM external_sales_invoices WHERE administration_id = $1;
+
+-- name: UpsertExternalSalesInvoice :exec
+INSERT INTO external_sales_invoices (
+    id, administration_id, contact_id, entry_number, reference, date, due_date, state, origin, source, source_url, currency,
+    prices_are_incl_tax, paid_at, marked_dubious_on, marked_uncollectible_on, total_excl_tax, total_tax, total_incl_tax, tax_totals,
+    created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+ON CONFLICT (id) DO UPDATE SET
+    contact_id = EXCLUDED.contact_id, reference = EXCLUDED.reference, date = EXCLUDED.date, due_date = EXCLUDED.due_date,
+    state = EXCLUDED.state, source = EXCLUDED.source, source_url = EXCLUDED.source_url, currency = EXCLUDED.currency,
+    prices_are_incl_tax = EXCLUDED.prices_are_incl_tax, paid_at = EXCLUDED.paid_at, marked_dubious_on = EXCLUDED.marked_dubious_on,
+    marked_uncollectible_on = EXCLUDED.marked_uncollectible_on, total_excl_tax = EXCLUDED.total_excl_tax, total_tax = EXCLUDED.total_tax,
+    total_incl_tax = EXCLUDED.total_incl_tax, tax_totals = EXCLUDED.tax_totals, updated_at = EXCLUDED.updated_at;
+
+-- name: SettleExternalSalesInvoice :exec
+-- What payments and write-offs change of an external invoice.
+UPDATE external_sales_invoices
+SET state = $3, paid_at = $4, marked_dubious_on = $5, marked_uncollectible_on = $6, updated_at = $7
+WHERE administration_id = $1 AND id = $2;
+
+-- name: TouchExternalSalesInvoice :exec
+UPDATE external_sales_invoices SET updated_at = $3 WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteExternalSalesInvoice :exec
+DELETE FROM external_sales_invoices WHERE administration_id = $1 AND id = $2;
+
+-- name: ExternalSalesInvoiceDetailsOf :many
+SELECT * FROM external_sales_invoice_details
+WHERE administration_id = @administration_id AND external_sales_invoice_id = ANY(@ids::bigint[]) ORDER BY row_order, id;
+
+-- name: DeleteExternalSalesInvoiceDetails :exec
+DELETE FROM external_sales_invoice_details WHERE external_sales_invoice_id = $1;
+
+-- name: InsertExternalSalesInvoiceDetail :exec
+INSERT INTO external_sales_invoice_details (id, administration_id, external_sales_invoice_id, description, period, price, amount, quantity,
+    tax_rate_id, ledger_account_id, project_id, product_id, row_order, line_base, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16);
+
+-- name: PaymentsOfInvoice :many
+SELECT * FROM payments WHERE administration_id = $1 AND invoice_type = $2 AND invoice_id = $3;

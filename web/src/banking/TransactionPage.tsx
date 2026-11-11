@@ -7,7 +7,8 @@ import { Problems } from '../auth/AuthLayout'
 import { useLedgerAccounts } from '../bookkeeping/queries'
 import { contactName } from '../contacts/queries'
 import { FormSection, formErrors, TextInput } from '../forms/Form'
-import { invoiceTitle, type SalesInvoice, unpaidStates, useSalesInvoice, useSalesInvoices } from '../invoices/queries'
+import { externalTitle, unpaidExternalStates, useExternalInvoice, useExternalInvoices } from '../external/queries'
+import { invoiceTitle, unpaidStates, useSalesInvoice, useSalesInvoices } from '../invoices/queries'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
@@ -159,11 +160,16 @@ type PaymentRowProps = { administrationId: string; payment: NonNullable<Mutation
 
 function PaymentRow({ administrationId, payment: p, currency, disabled, onUnlink }: PaymentRowProps) {
   const { t, i18n } = useTranslation()
-  const invoice = useSalesInvoice(administrationId, p.invoice_id ?? '')
-  const name = invoice.data ? invoiceTitle(invoice.data, t) : t('bank.salesInvoice')
+  const external = p.invoice_type === 'ExternalSalesInvoice'
+  const sales = useSalesInvoice(administrationId, external ? undefined : p.invoice_id ?? '')
+  const other = useExternalInvoice(administrationId, external ? p.invoice_id ?? '' : undefined)
+  const name = external
+    ? (other.data ? externalTitle(other.data, t) : t('external.externalInvoice'))
+    : (sales.data ? invoiceTitle(sales.data, t) : t('bank.salesInvoice'))
+  const path = external ? 'external_sales_invoices' : 'sales_invoices'
   return (
     <tr>
-      <td><Link to={`/${administrationId}/sales_invoices/${p.invoice_id}`}>{name}</Link></td>
+      <td><Link to={`/${administrationId}/${path}/${p.invoice_id}`}>{name}</Link></td>
       <td className="transactions__amount">{formatAmount(p.price, currency, i18n.language)}</td>
       <td className="data-table__actions">
         <button type="button" className="btn btn--secondary btn--small" disabled={disabled} aria-label={t('bank.unlinkInvoice', { id: name })} onClick={onUnlink}>
@@ -174,39 +180,55 @@ function PaymentRow({ administrationId, payment: p, currency, disabled, onUnlink
   )
 }
 
-/** Pays an open sales invoice with the transaction, found by its number, reference or contact. */
+/** An open invoice of either kind the transaction can pay. */
+type Payable = { key: string; type: 'SalesInvoice' | 'ExternalSalesInvoice'; id: string; title: string; contact: string; reference: string; unpaid: string | undefined; currency: string }
+
+/** Pays an open sales or external invoice with the transaction, found by its number, reference or contact. */
 function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: string; mutation: Mutation }) {
   const { t, i18n } = useTranslation()
   const id = useId()
   const link = useLinkInvoice(administrationId, m.id ?? '')
   const invoices = useSalesInvoices(administrationId, `state:${unpaidStates}`, 1)
+  const externals = useExternalInvoices(administrationId, `state:${unpaidExternalStates}`, 1)
   const [search, setSearch] = useState('')
   const [chosen, setChosen] = useState('')
   const errors = formErrors(link.error, { booking_id: t('bank.invoice'), price_base: t('bank.amount'), date: t('bank.date') })
   const term = search.trim().toLowerCase()
-  const matches = (invoices.data?.invoices ?? []).filter((inv: SalesInvoice) =>
-    !term || [inv.invoice_id, inv.reference, inv.contact ? contactName(inv.contact) : ''].some((v) => (v ?? '').toLowerCase().includes(term)),
-  )
+  const all: Payable[] = [
+    ...(invoices.data?.invoices ?? []).map((inv): Payable => ({
+      key: `SalesInvoice:${inv.id}`, type: 'SalesInvoice', id: inv.id ?? '', title: invoiceTitle(inv, t), contact: inv.contact ? contactName(inv.contact) : '',
+      reference: inv.reference ?? '', unpaid: inv.total_unpaid, currency: inv.currency ?? 'EUR',
+    })),
+    ...(externals.data?.invoices ?? []).map((inv): Payable => ({
+      key: `ExternalSalesInvoice:${inv.id}`, type: 'ExternalSalesInvoice', id: inv.id ?? '', title: externalTitle(inv, t), contact: inv.contact ? contactName(inv.contact) : '',
+      reference: inv.reference ?? '', unpaid: inv.total_unpaid, currency: inv.currency ?? 'EUR',
+    })),
+  ]
+  const matches = all.filter((inv) => !term || [inv.title, inv.reference, inv.contact].some((v) => v.toLowerCase().includes(term)))
+  const loaded = !!invoices.data || !!externals.data
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    link.mutate({ booking_id: chosen })
+    const inv = all.find((i) => i.key === chosen)
+    if (inv) {
+      link.mutate({ booking_type: inv.type, booking_id: inv.id })
+    }
   }
   return (
     <Block id="link-invoice" title={t('bank.linkInvoice')} subtitle={t('bank.linkInvoiceSubtitle')}>
       <form className="form-sheet form-sheet--block" onSubmit={submit} noValidate aria-label={t('bank.linkInvoice')}>
         <Problems messages={[...errors.general, ...(errors.field('booking_id') ?? []), ...(errors.field('price_base') ?? []), ...(errors.field('date') ?? [])]} />
         <TextInput label={t('bank.findInvoice')} type="search" maxLength={100} help={t('bank.findInvoiceHelp')} value={search} onChange={(e) => setSearch(e.target.value)} />
-        {invoices.data && matches.length === 0 ? (
+        {loaded && matches.length === 0 ? (
           <p className="empty">{t('bank.noOpenInvoices')}</p>
         ) : (
           <fieldset className="invoice-choice">
             <legend className="sr-only">{t('bank.invoice')}</legend>
             {matches.slice(0, 10).map((inv) => (
-              <label key={inv.id} className="invoice-choice__row" htmlFor={`${id}-${inv.id}`}>
-                <input id={`${id}-${inv.id}`} type="radio" name={`${id}-invoice`} value={inv.id} checked={chosen === inv.id} onChange={() => setChosen(inv.id ?? '')} />
-                <span>{invoiceTitle(inv, t)}</span>
-                <span>{inv.contact ? contactName(inv.contact) : ''}</span>
-                <span className="transactions__amount">{formatAmount(inv.total_unpaid, inv.currency ?? 'EUR', i18n.language)}</span>
+              <label key={inv.key} className="invoice-choice__row" htmlFor={`${id}-${inv.key}`}>
+                <input id={`${id}-${inv.key}`} type="radio" name={`${id}-invoice`} value={inv.key} checked={chosen === inv.key} onChange={() => setChosen(inv.key)} />
+                <span>{inv.title}{inv.type === 'ExternalSalesInvoice' && <span className="hint"> · {t('external.externalInvoice')}</span>}</span>
+                <span>{inv.contact}</span>
+                <span className="transactions__amount">{formatAmount(inv.unpaid, inv.currency, i18n.language)}</span>
               </label>
             ))}
           </fieldset>

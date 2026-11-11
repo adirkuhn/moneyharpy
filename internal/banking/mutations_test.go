@@ -162,13 +162,17 @@ func TestLinkingInvoicePayments(t *testing.T) {
 	if got.Open() != 4000 || got.State != Unprocessed || len(got.Payments) != 1 {
 		t.Errorf("after first invoice: open %s, %s", got.Open(), got.State)
 	}
-	id, err := svc.LinkInvoicePayment(ctx, adminID, m.ID, owner, 9002, nil)
+	id, err := svc.LinkInvoicePayment(ctx, adminID, m.ID, owner, "SalesInvoice", 9002, ptr(Amount(2000)))
 	if err != nil || id == 0 {
 		t.Fatalf("link = %d, %v", id, err)
 	}
-	got, _ = svc.Mutation(ctx, adminID, m.ID, owner)
-	if got.Open() != 0 || got.State != Processed {
-		t.Errorf("after second invoice: open %s, %s", got.Open(), got.State)
+	// An external invoice takes the rest.
+	got, err = svc.LinkBooking(ctx, adminID, m.ID, owner, Link{Type: "ExternalSalesInvoice", BookingID: ptr(resourceID(9002))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Open() != 0 || got.State != Processed || got.Payments[2].InvoiceType != "ExternalSalesInvoice" {
+		t.Errorf("after external invoice: open %s, %s, %+v", got.Open(), got.State, got.Payments)
 	}
 	if _, err := svc.LinkBooking(ctx, adminID, m.ID, owner, Link{Type: "SalesInvoice", BookingID: ptr(resourceID(9001))}); fieldsOf(t, err)["price_base"] == nil {
 		t.Error("linked a transaction with nothing open")
@@ -188,7 +192,7 @@ func TestLinkingInvoicePayments(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, _ = svc.Mutation(ctx, adminID, m.ID, owner)
-	if got.Open() != 4000 || got.State != Unprocessed || invoices.unpaid[9002] != 10000 {
+	if got.Open() != 2000 || got.State != Unprocessed || invoices.unpaid[9002] != 8000 {
 		t.Errorf("after unlink: open %s, %s", got.Open(), got.State)
 	}
 	// An outgoing transaction pays back a credit invoice: the price is in

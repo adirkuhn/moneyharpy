@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -54,7 +55,8 @@ type paymentBody struct {
 	} `json:"payment"`
 }
 
-func (s *server) registerPayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, status int) {
+func (s *server) registerPayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, status int,
+	register func(ctx context.Context, admin, id, user resource.ID, in sales.PaymentInput) (sales.Payment, error)) {
 	admin, rid, ok := parseIDs(w, administrationID, id)
 	if !ok {
 		return
@@ -81,7 +83,7 @@ func (s *server) registerPayment(w http.ResponseWriter, r *http.Request, adminis
 	if p.FinancialMutationID != nil && !s.requireAlso(w, r, admin, administration.Bank) {
 		return
 	}
-	payment, err := s.deps.Sales.RegisterPayment(r.Context(), admin, rid, user(r).ID, p)
+	payment, err := register(r.Context(), admin, rid, user(r).ID, p)
 	if err != nil {
 		s.fail(w, r, err)
 		return
@@ -89,18 +91,8 @@ func (s *server) registerPayment(w http.ResponseWriter, r *http.Request, adminis
 	writeJSON(w, status, toPayment(payment))
 }
 
-// CreateSalesInvoicePayment implements ServerInterface.
-func (s *server) CreateSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
-	s.registerPayment(w, r, administrationID, id, http.StatusCreated)
-}
-
-// RegisterSalesInvoicePayment implements ServerInterface.
-func (s *server) RegisterSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
-	s.registerPayment(w, r, administrationID, id, http.StatusOK)
-}
-
-// DeleteSalesInvoicePayment implements ServerInterface.
-func (s *server) DeleteSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, paymentID Identifier) {
+func (s *server) deletePayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, paymentID Identifier,
+	remove func(ctx context.Context, admin, id, payment, user resource.ID) error) {
 	admin, rid, ok := parseIDs(w, administrationID, id)
 	if !ok {
 		return
@@ -109,11 +101,50 @@ func (s *server) DeleteSalesInvoicePayment(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
-	if err := s.deps.Sales.DeletePayment(r.Context(), admin, rid, pid, user(r).ID); err != nil {
+	if err := remove(r.Context(), admin, rid, pid, user(r).ID); err != nil {
 		s.fail(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// dubiousDate reads the date of mark_as_dubious, which may be left out.
+func dubiousDate(w http.ResponseWriter, r *http.Request) (string, bool) {
+	if r.ContentLength == 0 {
+		return "", true
+	}
+	body, ok := decodeBody[struct {
+		DubiousDate string `json:"dubious_date"`
+	}](w, r)
+	return body.DubiousDate, ok
+}
+
+type uncollectibleBody struct {
+	UncollectibleDate string `json:"uncollectible_date"`
+	BookMethod        string `json:"book_method"`
+}
+
+// readUncollectible reads mark_as_uncollectible, whose body may be left out.
+func readUncollectible(w http.ResponseWriter, r *http.Request) (uncollectibleBody, bool) {
+	if r.ContentLength == 0 {
+		return uncollectibleBody{}, true
+	}
+	return decodeBody[uncollectibleBody](w, r)
+}
+
+// CreateSalesInvoicePayment implements ServerInterface.
+func (s *server) CreateSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	s.registerPayment(w, r, administrationID, id, http.StatusCreated, s.deps.Sales.RegisterPayment)
+}
+
+// RegisterSalesInvoicePayment implements ServerInterface.
+func (s *server) RegisterSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	s.registerPayment(w, r, administrationID, id, http.StatusOK, s.deps.Sales.RegisterPayment)
+}
+
+// DeleteSalesInvoicePayment implements ServerInterface.
+func (s *server) DeleteSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, paymentID Identifier) {
+	s.deletePayment(w, r, administrationID, id, paymentID, s.deps.Sales.DeletePayment)
 }
 
 // SettleSalesCreditInvoice implements ServerInterface.
@@ -136,17 +167,11 @@ func (s *server) MarkSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
-	var body struct {
-		DubiousDate string `json:"dubious_date"`
+	date, ok := dubiousDate(w, r)
+	if !ok {
+		return
 	}
-	if r.ContentLength != 0 {
-		if body, ok = decodeBody[struct {
-			DubiousDate string `json:"dubious_date"`
-		}](w, r); !ok {
-			return
-		}
-	}
-	inv, err := s.deps.Sales.MarkDubious(r.Context(), admin, rid, user(r).ID, body.DubiousDate)
+	inv, err := s.deps.Sales.MarkDubious(r.Context(), admin, rid, user(r).ID, date)
 	if err != nil {
 		s.fail(w, r, err)
 		return
@@ -160,15 +185,9 @@ func (s *server) MarkSalesInvoiceAsUncollectible(w http.ResponseWriter, r *http.
 	if !ok {
 		return
 	}
-	type request struct {
-		UncollectibleDate string `json:"uncollectible_date"`
-		BookMethod        string `json:"book_method"`
-	}
-	var body request
-	if r.ContentLength != 0 {
-		if body, ok = decodeBody[request](w, r); !ok {
-			return
-		}
+	body, ok := readUncollectible(w, r)
+	if !ok {
+		return
 	}
 	inv, err := s.deps.Sales.MarkUncollectible(r.Context(), admin, rid, user(r).ID, body.UncollectibleDate, body.BookMethod)
 	if err != nil {

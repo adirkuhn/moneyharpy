@@ -154,7 +154,7 @@ func TestBankPayments(t *testing.T) {
 	// A payment registered by hand waits for its transaction, which takes it over.
 	manual, _ := h.svc.RegisterPayment(ctx, adminID, inv.ID, owner, PaymentInput{PaymentDate: "2026-11-03", ManualPaymentAction: BankTransfer})
 	h.bank.open[901] = 12100
-	id, err := h.bank.LinkInvoicePayment(ctx, adminID, 901, owner, inv.ID, nil)
+	id, err := h.bank.LinkInvoicePayment(ctx, adminID, 901, owner, EntityType, inv.ID, nil)
 	if err != nil || id != manual.ID {
 		t.Fatalf("take over = %d, %v", id, err)
 	}

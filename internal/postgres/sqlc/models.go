@@ -214,6 +214,50 @@ type DocumentStyle struct {
 	UpdatedAt              pgtype.Timestamptz
 }
 
+type ExternalSalesInvoice struct {
+	ID                    int64
+	AdministrationID      int64
+	ContactID             pgtype.Int8
+	EntryNumber           int32
+	Reference             string
+	Date                  pgtype.Date
+	DueDate               pgtype.Date
+	State                 string
+	Origin                string
+	Source                string
+	SourceUrl             string
+	Currency              string
+	PricesAreInclTax      bool
+	PaidAt                pgtype.Timestamptz
+	MarkedDubiousOn       pgtype.Date
+	MarkedUncollectibleOn pgtype.Date
+	TotalExclTax          int64
+	TotalTax              int64
+	TotalInclTax          int64
+	TaxTotals             []byte
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+}
+
+type ExternalSalesInvoiceDetail struct {
+	ID                     int64
+	AdministrationID       int64
+	ExternalSalesInvoiceID int64
+	Description            string
+	Period                 string
+	Price                  int64
+	Amount                 string
+	Quantity               int64
+	TaxRateID              int64
+	LedgerAccountID        pgtype.Int8
+	ProjectID              pgtype.Int8
+	ProductID              pgtype.Int8
+	RowOrder               int32
+	LineBase               int64
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+}
+
 type FinancialAccount struct {
 	ID               int64
 	AdministrationID int64

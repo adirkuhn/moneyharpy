@@ -884,3 +884,11 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
   .invoice-totals { width: 100%; }
   .invoices__number, .invoices__amount, .data-table.invoices th:last-child, .invoices__state { width: auto; }
 }
+
+/* External sales invoices: the area that takes their files. */
+.badge--new { border-style: dashed; border-color: var(--blue); color: var(--link); }
+.upload-area { display: grid; justify-items: start; gap: 0.5rem; margin: 0 0 1rem; padding: 1rem; border: 2px dashed var(--line); border-radius: 8px; background: var(--surface); }
+.upload-area.is-over { border-color: var(--blue); background: var(--bg); }
+.upload-area__title { margin: 0; font-size: 1rem; }
+.upload-area .hint { margin: 0; }
+.upload-area:has(input:focus-visible) .file-field__pick { outline: 2px solid var(--focus); outline-offset: 2px; }
