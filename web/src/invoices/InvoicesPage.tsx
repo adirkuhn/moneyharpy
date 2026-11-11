@@ -10,7 +10,7 @@ import { Problems } from '../auth/AuthLayout'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { DocumentFilter } from '../list/DocumentFilter'
-import { AttachmentIcon, DocumentTable } from '../list/DocumentTable'
+import { AttachmentIcon, DocumentTable, listDate } from '../list/DocumentTable'
 import { FilterPanel } from '../list/FilterPanel'
 import { GettingStarted } from '../list/GettingStarted'
 import { ListActions } from '../list/ListActions'
@@ -56,7 +56,6 @@ export function InvoicesPage() {
   const administration = useAdministration(administrationId)
   const quick = quickOf(filter)
   const base = `/${administrationId}/sales_invoices`
-  const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [result, setResult] = useState('')
   const [info, setInfo] = useState<boolean | null>(null)
@@ -105,11 +104,6 @@ export function InvoicesPage() {
           info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
           exports={[t('list.excelPerInvoice'), t('list.excelPerRow'), t('list.composeExport')]}
           primary={{ to: `${base}/new`, label: t('invoices.new') }}
-          more={[
-            { to: `/${administrationId}/settings/invoices_and_estimates`, label: t('invoices.settings') },
-            { to: `/${administrationId}/recurring_sales_invoices`, label: t('recurring.title') },
-            { to: `/${administrationId}/external_sales_invoices`, label: t('external.title') },
-          ]}
         />
       }
     >
@@ -141,10 +135,10 @@ export function InvoicesPage() {
             total={invoices.data.total}
             perPage={perPage}
             columns={[
-              { key: 'number', header: t('invoices.invoiceId'), link: true, cell: (inv) => invoiceTitle(inv, t) },
+              { key: 'number', header: t('invoices.invoiceId'), link: true, cell: (inv) => (inv.invoice_id ? inv.invoice_id : <em className="draft-id">{invoiceTitle(inv, t)}</em>) },
               { key: 'reference', header: t('invoices.reference'), kind: 'extra', cell: (inv) => inv.reference },
               { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (inv) => <AttachmentIcon count={inv.attachments?.length ?? 0} /> },
-              { key: 'date', header: t('invoices.invoiceDate'), kind: 'date', cell: (inv) => date(inv.invoice_date) },
+              { key: 'date', header: t('invoices.invoiceDate'), kind: 'date', cell: (inv) => listDate(inv.invoice_date) },
               { key: 'contact', header: t('invoices.contact'), cell: (inv) => (inv.contact ? contactName(inv.contact) : '') },
               {
                 key: 'amount', header: t('invoices.amount'), kind: 'amount',
