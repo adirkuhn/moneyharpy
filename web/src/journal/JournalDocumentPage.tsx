@@ -6,11 +6,12 @@ import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { useLedgerAccounts } from '../bookkeeping/queries'
 import { bookable, formatAmount } from '../banking/queries'
-import { ConfirmDelete } from '../forms/ConfirmDelete'
+import { ConfirmPanel } from '../detail/Detail'
 import { FormSection, formErrors, TextInput } from '../forms/Form'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
+import { MoreMenu } from '../list/ListActions'
 import { type JournalDocument, parseAmount, useDeleteJournalDocument, useJournalDocument, useSaveJournalDocument } from './queries'
 
 type Row = { id?: string; ledger_account_id: string; debit: string; credit: string; description: string }
@@ -46,6 +47,7 @@ function JournalForm({ administrationId, doc }: { administrationId: string; doc:
       : [blank(), blank()],
   )
   const [removed, setRemoved] = useState<string[]>([])
+  const [confirming, setConfirming] = useState(false)
   const currency = administration.data?.currency ?? 'EUR'
   const money = (n: number) => formatAmount(n, currency, i18n.language)
   const labels = { reference: t('journal.reference'), date: t('journal.date') }
@@ -77,18 +79,26 @@ function JournalForm({ administrationId, doc }: { administrationId: string; doc:
     ]
     save.mutate({ reference, date, general_journal_document_entries_attributes: entries }, { onSuccess: (saved) => navigate(`${list}/${saved.id}`) })
   }
-  const deleteAction = doc && (
-    <ConfirmDelete label={t('journal.delete')} confirmLabel={t('journal.confirmDelete')} disabled={remove.isPending} onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })} />
-  )
+  const actions = doc ? <MoreMenu items={[{ label: t('journal.delete'), danger: true, onSelect: () => setConfirming(true) }]} /> : undefined
 
   return (
-    <Page title={doc?.reference || t('journal.newEntry')} subtitle={t('journal.entrySubtitle')} back={{ to: list, label: t('journal.backToEntries') }} actions={deleteAction || undefined}>
-      <form className="form-sheet" onSubmit={submit} noValidate>
+    <Page title={doc?.reference || t('journal.newEntry')} subtitle={t('journal.entrySubtitle')} back={{ to: list, label: t('journal.backToEntries') }} actions={actions}>
+      {confirming && (
+        <ConfirmPanel
+          message={t('journal.confirmDeleteText')}
+          confirmLabel={t('journal.confirmDelete')}
+          disabled={remove.isPending}
+          onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
+      <form className="form-sheet" onSubmit={submit} noValidate aria-label={t('journal.entryTitle')}>
         <Problems messages={errors.general} />
         <FormSection>
           <TextInput label={labels.reference} required maxLength={255} value={reference} errors={errors.field('reference')} onChange={(e) => setReference(e.target.value)} />
           <TextInput label={labels.date} type="date" width="medium" required value={date} errors={errors.field('date')} onChange={(e) => setDate(e.target.value)} />
         </FormSection>
+        <FormSection title={t('journal.rows')}>
         <table className="data-table journal-rows" aria-label={t('journal.rows')}>
           <thead>
             <tr>
@@ -148,6 +158,7 @@ function JournalForm({ administrationId, doc }: { administrationId: string; doc:
         <p className={difference === 0 ? 'hint' : 'journal-rows__difference'} role="status">
           {difference === 0 ? t('journal.balanced') : t('journal.difference', { amount: money(Math.abs(difference)) })}
         </p>
+        </FormSection>
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={save.isPending || !ready}>{t('journal.save')}</button>
           <Link className="btn btn--secondary" to={list}>{t('common.cancel')}</Link>

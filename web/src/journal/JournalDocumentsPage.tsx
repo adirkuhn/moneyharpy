@@ -1,63 +1,97 @@
+import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { formatAmount } from '../banking/queries'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
-import { Pagination } from '../layout/Pagination'
+import { DocumentTable } from '../list/DocumentTable'
+import { GettingStarted } from '../list/GettingStarted'
+import { ListActions } from '../list/ListActions'
+import { allPeriods, PeriodFilter } from '../list/PeriodFilter'
+import { isPeriod } from '../list/period'
 import { documentsPerPage, reportPeriods, useJournalDocuments } from './queries'
 
-/** The journal entries made by hand, newest first. */
+const defaultPeriod = 'this_year'
+
+/** The journal entries made by hand, newest first, in a period (/documents/general_journal_documents). */
 export function JournalDocumentsPage() {
   const { t, i18n } = useTranslation()
   const { administrationId = '' } = useParams()
   const [search, setSearch] = useSearchParams()
-  const period = (reportPeriods as readonly string[]).includes(search.get('period') ?? '') ? search.get('period')! : 'this_year'
+  const today = useMemo(() => new Date(), [])
+  const asked = search.get('period') ?? ''
+  const period = asked === allPeriods || isPeriod(asked, today) ? asked : defaultPeriod
   const page = Math.max(1, Number(search.get('page')) || 1)
   const administration = useAdministration(administrationId)
   const docs = useJournalDocuments(administrationId, period, page)
+  const [info, setInfo] = useState<boolean | null>(null)
+  const introId = useId()
   const currency = administration.data?.currency ?? 'EUR'
   const date = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' })
   const base = `/${administrationId}/documents/general_journal_documents`
+  const shown = docs.data?.documents ?? []
+  const firstUse = docs.data !== undefined && shown.length === 0 && period === defaultPeriod && page === 1
+  const introShown = info ?? firstUse
+  const linkTo = (p: string) => (p === defaultPeriod ? base : `${base}?period=${p}`)
 
   return (
-    <Page title={t('journal.entries')} subtitle={t('journal.entriesSubtitle')} actions={<Link className="btn btn--accent" to={`${base}/new`}>{t('journal.newEntry')}</Link>}>
-      <div className="filter-bar" role="search" aria-label={t('journal.filters')}>
-        <label className="filter-bar__field">
-          <span>{t('journal.period')}</span>
-          <select value={period} onChange={(e) => setSearch({ period: e.target.value }, { replace: true })}>
-            {reportPeriods.map((p) => <option key={p} value={p}>{t(`journal.periods.${p}`)}</option>)}
-          </select>
-        </label>
-      </div>
+    <Page
+      wide
+      title={t('journal.entries')}
+      lead={
+        <PeriodFilter
+          allowAll
+          period={period}
+          today={today}
+          title={t('journal.entriesFilters')}
+          quick={reportPeriods.map((p) => ({ value: p, label: t(`journal.periods.${p}`) }))}
+          linkTo={linkTo}
+          onApply={(p) => setSearch(p === defaultPeriod ? {} : { period: p }, { replace: true })}
+        />
+      }
+      actions={
+        <ListActions
+          info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
+          exports={[]}
+          primary={{ to: `${base}/new`, label: t('journal.newEntry') }}
+          more={[{ to: `/${administrationId}/report/general_ledger`, label: t('journal.trialBalance') }]}
+        />
+      }
+    >
+      {introShown && (
+        <GettingStarted
+          id={introId}
+          title={t('journal.intro.title')}
+          text={t('journal.intro.text')}
+          steps={[
+            { icon: 'repeat', title: t('journal.intro.correct'), text: t('journal.intro.correctText') },
+            { icon: 'coins', title: t('journal.intro.private'), text: t('journal.intro.privateText') },
+            { icon: 'chart', title: t('journal.intro.check'), text: t('journal.intro.checkText') },
+          ]}
+        />
+      )}
       {!docs.data ? (
         docs.error ? <p className="empty">{t('journal.loadError')}</p> : <Loading />
-      ) : docs.data.documents.length === 0 ? (
+      ) : shown.length === 0 ? (
         <p className="empty">{t('journal.noEntries')}</p>
       ) : (
-        <>
-          <table className="data-table" aria-label={t('journal.entries')}>
-            <thead>
-              <tr>
-                <th scope="col" className="transactions__date">{t('journal.date')}</th>
-                <th scope="col">{t('journal.reference')}</th>
-                <th scope="col" className="ledger-report__amount">{t('journal.amount')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {docs.data.documents.map((d) => (
-                <tr key={d.id}>
-                  <td className="transactions__date">{date(d.date ?? '')}</td>
-                  <td><Link to={`${base}/${d.id}`}>{d.reference}</Link></td>
-                  <td className="ledger-report__amount">
-                    {formatAmount((d.general_journal_document_entries ?? []).reduce((sum, r) => sum + Number(r.debit ?? 0), 0), currency, i18n.language)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination total={docs.data.total} perPage={documentsPerPage} />
-        </>
+        <DocumentTable
+          label={t('journal.entries')}
+          rows={shown}
+          rowKey={(d) => d.id ?? ''}
+          href={(d) => `${base}/${d.id}`}
+          total={docs.data.total}
+          perPage={documentsPerPage}
+          columns={[
+            { key: 'date', header: t('journal.date'), kind: 'date', cell: (d) => date(d.date ?? '') },
+            { key: 'reference', header: t('journal.reference'), link: true, cell: (d) => d.reference },
+            {
+              key: 'amount', header: t('journal.amount'), kind: 'amount',
+              cell: (d) => formatAmount((d.general_journal_document_entries ?? []).reduce((sum, r) => sum + Number(r.debit ?? 0), 0), currency, i18n.language),
+            },
+          ]}
+        />
       )}
     </Page>
   )

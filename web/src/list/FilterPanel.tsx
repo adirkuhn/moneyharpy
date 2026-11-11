@@ -128,3 +128,15 @@ export function ContactFilter({ administrationId, contactId, onChange }: { admin
     </div>
   )
 }
+
+/** A yes or no, as a checkbox. */
+export function CheckFilter({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <div className="filter-field">
+      <label className="check">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        <span>{label}</span>
+      </label>
+    </div>
+  )
+}

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
@@ -5,6 +6,9 @@ import { balanceSheetTypes, type LedgerAccount, profitAndLossTypes, useLedgerAcc
 import { formatAmount } from '../banking/queries'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
+import { MoreMenu, Unavailable } from '../list/ListActions'
+import { PeriodFilter } from '../list/PeriodFilter'
+import { isPeriod } from '../list/period'
 import { byAccount, reportPeriods, useGeneralLedger } from './queries'
 
 /** Every category's balance at the start, its debits and credits, and its balance at the end of a period. */
@@ -12,25 +16,43 @@ export function TrialBalancePage() {
   const { t, i18n } = useTranslation()
   const { administrationId = '' } = useParams()
   const [search, setSearch] = useSearchParams()
-  const period = (reportPeriods as readonly string[]).includes(search.get('period') ?? '') ? search.get('period')! : 'this_month'
+  const today = useMemo(() => new Date(), [])
+  const asked = search.get('period') ?? ''
+  const period = isPeriod(asked, today) ? asked : 'this_month'
   const administration = useAdministration(administrationId)
   const accounts = useLedgerAccounts(administrationId)
   const ledger = useGeneralLedger(administrationId, period)
   const currency = administration.data?.currency ?? 'EUR'
   const money = (n: number) => formatAmount(n, currency, i18n.language)
+  const base = `/${administrationId}/report/general_ledger`
 
-  const filters = (
-    <div className="filter-bar" role="search" aria-label={t('journal.filters')}>
-      <label className="filter-bar__field">
-        <span>{t('journal.period')}</span>
-        <select value={period} onChange={(e) => setSearch({ period: e.target.value }, { replace: true })}>
-          {reportPeriods.map((p) => <option key={p} value={p}>{t(`journal.periods.${p}`)}</option>)}
-        </select>
-      </label>
-    </div>
+  const page = (children: React.ReactNode) => (
+    <Page
+      wide
+      title={t('journal.trialBalance')}
+      lead={
+        <PeriodFilter
+          period={period}
+          today={today}
+          title={t('journal.filters')}
+          quick={reportPeriods.map((p) => ({ value: p, label: t(`journal.periods.${p}`) }))}
+          linkTo={(p) => `${base}?period=${p}`}
+          onApply={(p) => setSearch({ period: p }, { replace: true })}
+        />
+      }
+      actions={
+        <>
+          <Unavailable icon="export" label={t('list.export')} text />
+          <MoreMenu items={[{ to: `/${administrationId}/documents/general_journal_documents`, label: t('journal.entries') }]} />
+        </>
+      }
+    >
+      <p className="list-intro">{t('journal.trialBalanceSubtitle')}</p>
+      {children}
+    </Page>
   )
   if (!ledger.data || !accounts.data) {
-    return <Page title={t('journal.trialBalance')}>{filters}{ledger.error ? <p className="empty">{t('journal.loadError')}</p> : <Loading />}</Page>
+    return page(ledger.error ? <p className="empty">{t('journal.loadError')}</p> : <Loading />)
   }
   const debit = byAccount(ledger.data.debit_sums)
   const credit = byAccount(ledger.data.credit_sums)
@@ -42,9 +64,8 @@ export function TrialBalancePage() {
     .filter((g) => g.rows.length > 0)
   const sum = (m: Map<string, number>) => [...m.values()].reduce((a, b) => a + b, 0)
 
-  return (
-    <Page title={t('journal.trialBalance')} subtitle={t('journal.trialBalanceSubtitle')}>
-      {filters}
+  return page(
+    <>
       {groups.length === 0 ? (
         <p className="empty">{t('journal.nothingBooked')}</p>
       ) : (
@@ -90,7 +111,7 @@ export function TrialBalancePage() {
           </tfoot>
         </table>
       )}
-    </Page>
+    </>,
   )
 }
 

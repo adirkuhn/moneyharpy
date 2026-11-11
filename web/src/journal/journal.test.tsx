@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import type { LedgerAccount } from '../bookkeeping/queries'
+import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
 import type { JournalDocument } from './queries'
@@ -82,8 +83,28 @@ describe('trial balance', () => {
     renderAt('/11/report/general_ledger')
     await screen.findByRole('table', { name: 'Trial balance' })
     expect(seen.at(-1)?.searchParams.get('period')).toBe('this_month')
-    await userEvent.selectOptions(screen.getByLabelText('Period'), 'prev_year')
+    await userEvent.click(screen.getByRole('button', { name: 'This month' }))
+    const panel = screen.getByRole('search', { name: 'Report filters' })
+    await userEvent.click(within(panel).getByRole('link', { name: 'Last year' }))
     await waitFor(() => expect(seen.at(-1)?.searchParams.get('period')).toBe('prev_year'))
+    expect(screen.getByRole('button', { name: 'Last year' })).toBeInTheDocument()
+  })
+
+  it('reports over a range of months picked in the period filter', async () => {
+    const seen: URL[] = []
+    server.use(...loaded(seen))
+    renderAt('/11/report/general_ledger?period=202601..202601')
+    await screen.findByRole('table', { name: 'Trial balance' })
+    expect(seen.at(-1)?.searchParams.get('period')).toBe('202601..202601')
+    await userEvent.click(screen.getByRole('button', { name: 'Jan 2026' }))
+    const picker = screen.getByRole('group', { name: 'Period' })
+    // A report always covers a period.
+    expect(within(picker).queryByRole('button', { name: 'All periods' })).toBeNull()
+    await userEvent.click(within(picker).getByRole('button', { name: 'February 2026' }))
+    await userEvent.click(within(picker).getByRole('button', { name: 'April 2026' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
+    await waitFor(() => expect(seen.at(-1)?.searchParams.get('period')).toBe('202602..202604'))
+    expect(screen.getByRole('button', { name: 'Feb 2026 – Apr 2026' })).toBeInTheDocument()
   })
 
   it('opens the bookings of a category', async () => {
@@ -106,6 +127,19 @@ describe('journal entries', () => {
     expect(within(table).getByRole('link', { name: 'Rent paid privately' })).toHaveAttribute('href', '/11/documents/general_journal_documents/801')
     expect(within(table).getByText('€400.00')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'New journal entry' })).toHaveAttribute('href', '/11/documents/general_journal_documents/new')
+  })
+
+  it('lists the journal entries of every period', async () => {
+    const seen: URL[] = []
+    server.use(...loaded(seen))
+    renderAt('/11/documents/general_journal_documents')
+    await screen.findByRole('table', { name: 'Journal entries' })
+    expect(seen.at(-1)?.searchParams.get('filter')).toBe('period:this_year')
+    await userEvent.click(screen.getByRole('button', { name: 'This year' }))
+    await userEvent.click(within(screen.getByRole('group', { name: 'Period' })).getByRole('button', { name: 'All periods' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
+    await waitFor(() => expect(seen.at(-1)?.searchParams.get('filter')).toBe('state:all'))
+    expect(screen.getByRole('button', { name: 'All periods' })).toBeInTheDocument()
   })
 
   it('books a balanced journal entry', async () => {
@@ -153,8 +187,8 @@ describe('journal entries', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Rent paid privately' })).toBeInTheDocument()
     const rows = screen.getByRole('table', { name: 'Rows' })
     expect(await within(rows).findByRole('option', { name: /Rent/, selected: true })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Delete permanently' }))
+    await chooseMore('Delete')
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Delete this journal entry? This cannot be undone.' })).getByRole('button', { name: 'Delete permanently' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/documents\/general_journal_documents$/))
   })
 })
