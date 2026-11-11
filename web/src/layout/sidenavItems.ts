@@ -85,7 +85,7 @@ export const navItems: NavItem[] = [
     kind: 'products', key: 'products', to: 'products', ready: true, permissions: ['settings', 'sales_invoices', 'estimates'],
     children: [link('productsOverview', 'products', true), link('onlineSales', 'payment_links')],
   },
-  { kind: 'assets', key: 'assets', to: 'assets', ready: false, permissions: ['documents'] },
+  { kind: 'assets', key: 'assets', to: 'assets', ready: true, permissions: ['documents'] },
   { kind: 'projects', key: 'projects', to: 'projects', ready: true, permissions: ['settings', 'sales_invoices', 'documents', 'estimates', 'time_entries'] },
   {
     kind: 'tasks', key: 'tasks', to: 'task_lists/lists', ready: true, permissions: [],

@@ -73,7 +73,10 @@ var netherlands = Seed{
 		{Key: "bank_costs", Parent: "other_costs", Type: "expenses", Code: "4720", Taxonomy: "WBedAdlBan", Name: Text{"Bank costs", "Bankkosten"}},
 		{Key: "rounding", Parent: "other_costs", Type: "expenses", Code: "4790", Taxonomy: "WBedAdlBet", Name: Text{"Rounding", "Afrondingsverschillen"},
 			Description: Text{"Small differences when an invoice is paid a little too much or too little.", "Kleine verschillen als een factuur net te veel of te weinig is betaald."}, System: "rounding"},
-		{Key: "depreciation", Type: "expenses", Code: "4800", Taxonomy: "WAfsAmv", Name: Text{"Depreciation costs", "Afschrijvingskosten"}},
+		{Key: "depreciation", Type: "expenses", Code: "4800", Taxonomy: "WAfsAmv", Name: Text{"Depreciation costs", "Afschrijvingskosten"},
+			Description: Text{"Depreciation of fixed assets.", "Afschrijvingen op vaste activa."}, System: "depreciation"},
+		{Key: "book_result", Type: "expenses", Code: "4890", Taxonomy: "WAfsRvm", Name: Text{"Book result on fixed assets", "Boekresultaat op materiële vaste activa"},
+			Description: Text{"Gains and losses when fixed assets are sold or taken out of use.", "Winst of verlies bij verkoop of buitengebruikstelling van vaste activa."}, System: "book_result"},
 		{Key: "uncategorized_expenses", Type: "expenses", Code: "4999", Taxonomy: "WBedAlkOal", Name: Text{"Uncategorized expenses", "Nog te categoriseren kosten"},
 			Description: Text{"Costs of purchase invoices not yet recorded to a category.", "Kosten van inkoopfacturen die nog niet op een categorie zijn geboekt."}, System: "uncategorized_expenses"},
 		{Key: "exchange_rate_differences", Type: "other_income_expenses", Code: "9100", Taxonomy: "WFbeWisWis", Name: Text{"Exchange rate differences", "Koersverschillen"},
@@ -82,6 +85,8 @@ var netherlands = Seed{
 		{Key: "interest_received", Type: "other_income_expenses", Code: "9210", Taxonomy: "WFbeRlm", Name: Text{"Interest received", "Ontvangen rente"}},
 
 		{Key: "equipment", Type: "non_current_assets", Code: "0200", Taxonomy: "BMvaBei", Name: Text{"Equipment and furniture", "Inventaris"}},
+		{Key: "equipment_depreciation_total", Parent: "equipment", Type: "non_current_assets", Code: "0210", Taxonomy: "BMvaBeiCae", Name: Text{"Equipment accumulated depreciation", "Cumulatieve afschrijving inventaris"},
+			Description: Text{"The total depreciated so far.", "Het totaal dat tot nu toe is afgeschreven."}, System: "accumulated_depreciation"},
 		{Key: "financial_accounts", Type: "current_assets", Code: "1000", Taxonomy: "BLim", Name: Text{"Financial accounts", "Liquide middelen"},
 			Description: Text{"Bank accounts, cash and payment providers.", "Bankrekeningen, kas en betaalproviders."}, System: "financial_accounts"},
 		{Key: "cash", Parent: "financial_accounts", Type: "current_assets", Code: "1010", Taxonomy: "BLimKas", Name: Text{"Cash", "Kas"}},
@@ -108,6 +113,8 @@ var netherlands = Seed{
 		{Key: "equity", Type: "equity", Code: "0500", Taxonomy: "BEivKap", Name: Text{"Equity", "Eigen vermogen"}},
 		{Key: "private_withdrawals", Parent: "equity", Type: "equity", Code: "0510", Taxonomy: "BEivKapPro", Name: Text{"Private withdrawals", "Privé-opnamen"}},
 		{Key: "private_deposits", Parent: "equity", Type: "equity", Code: "0520", Taxonomy: "BEivKapPrs", Name: Text{"Private deposits", "Privé-stortingen"}},
+		{Key: "reinvestment_reserve", Parent: "equity", Type: "equity", Code: "0530", Taxonomy: "BEivFirHer", Name: Text{"Reinvestment reserve", "Herinvesteringsreserve"},
+			Description: Text{"Book profits on sold assets, kept to fund new ones.", "Boekwinst op verkochte activa, gereserveerd voor nieuwe investeringen."}, System: "reinvestment_reserve"},
 
 		{Key: "sales_tax", Type: "current_liabilities", Code: "1500", Taxonomy: "BSchBepBtw", Name: Text{"Sales tax", "Btw"}, System: "sales_tax"},
 		{Key: "payable_vat", Parent: "sales_tax", Type: "current_liabilities", Code: "1510", Taxonomy: "BSchBepBtwOla", Name: Text{"Payable VAT", "Af te dragen btw"},
@@ -133,7 +140,7 @@ var netherlands = Seed{
 			Accounts: []Account{
 				{Key: "company_car", Type: "non_current_assets", Code: "0300", Taxonomy: "BMvaTev", Name: Text{"Company car", "Auto van de zaak"}},
 				{Key: "company_car_depreciation_total", Parent: "company_car", Type: "non_current_assets", Code: "0310", Taxonomy: "BMvaTevCae", Name: Text{"Company car accumulated depreciation", "Cumulatieve afschrijving auto"},
-					Description: Text{"The total depreciated so far.", "Het totaal dat tot nu toe is afgeschreven."}},
+					Description: Text{"The total depreciated so far.", "Het totaal dat tot nu toe is afgeschreven."}, System: "accumulated_depreciation"},
 				{Key: "company_car_costs", Type: "expenses", Code: "4250", Taxonomy: "WBedAut", Name: Text{"Company car costs", "Autokosten"}},
 				{Key: "company_car_fuel", Parent: "company_car_costs", Type: "expenses", Code: "4251", Taxonomy: "WBedAutBra", Name: Text{"Company car fuel", "Brandstof auto"}},
 				{Key: "company_car_insurance", Parent: "company_car_costs", Type: "expenses", Code: "4252", Taxonomy: "WBedAutAsa", Name: Text{"Company car insurance", "Verzekering auto"}},

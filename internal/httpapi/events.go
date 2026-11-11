@@ -426,6 +426,41 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 	"createPurchaseTransactionBatch": func(c change) []webhooks.Event {
 		return c.one("PurchaseTransactionBatch", "purchase_transaction_batch_created")
 	},
+	// Assets; the linear value changes MoneyHarpy books itself are told by
+	// AssetNotifier.
+	"createAsset": func(c change) []webhooks.Event {
+		out := c.one("Asset", "company_assets_asset_created")
+		if c.responseMap["value_change_plan"] != nil {
+			out = append(out, c.one("Asset", "company_assets_value_change_plan_created")...)
+		}
+		return out
+	},
+	"updateAsset": func(c change) []webhooks.Event {
+		out := c.one("Asset", "company_assets_asset_updated")
+		if _, ok := c.nested("asset")["value_change_plan_attributes"]; ok {
+			out = append(out, c.one("Asset", "company_assets_value_change_plan_updated")...)
+		}
+		return out
+	},
+	"deleteAsset":       func(c change) []webhooks.Event { return c.destroyed("Asset", "company_assets_asset_destroyed") },
+	"createAssetSource": func(c change) []webhooks.Event { return c.one("Source", "company_assets_source_created") },
+	"deleteAssetSource": func(c change) []webhooks.Event {
+		id := c.params["source_id"]
+		return []webhooks.Event{{EntityType: "Source", EntityID: id, Action: "company_assets_source_destroyed", Entity: json.RawMessage(`{"id":"` + id + `"}`)}}
+	},
+	"createAssetManualValueChange": func(c change) []webhooks.Event {
+		return c.one("ValueChange", "company_assets_value_changes_manual_created")
+	},
+	"createAssetArbitraryValueChange": func(c change) []webhooks.Event {
+		return c.one("ValueChange", "company_assets_value_changes_arbitrary_created")
+	},
+	"createAssetDivestmentValueChange": func(c change) []webhooks.Event {
+		return append(c.one("ValueChange", "company_assets_value_changes_divestment_created"), c.disposed()...)
+	},
+	"createAssetFullDepreciationValueChange": func(c change) []webhooks.Event {
+		return append(c.one("ValueChange", "company_assets_value_changes_full_depreciation_created"), c.disposed()...)
+	},
+	"createAssetDisposal": func(c change) []webhooks.Event { return c.disposed() },
 	"createSepaCreditTransfer": func(c change) []webhooks.Event {
 		var list []json.RawMessage
 		_ = json.Unmarshal(c.response, &list)
@@ -438,6 +473,17 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		}
 		return out
 	},
+}
+
+// disposed tells that an asset was disposed of, which ends its
+// depreciation plan.
+func (c change) disposed() []webhooks.Event {
+	id := c.params["id"]
+	entity := json.RawMessage(`{"asset_id":"` + id + `"}`)
+	return []webhooks.Event{
+		{EntityType: "Disposal", EntityID: id, Action: "company_assets_disposal_created", Entity: entity},
+		{EntityType: "Asset", EntityID: id, Action: "company_assets_value_change_plan_deactivated", Entity: entity},
+	}
 }
 
 // destroyed tells about a deleted record, which the response does not hold.

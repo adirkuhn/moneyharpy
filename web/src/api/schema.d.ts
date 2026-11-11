@@ -1459,6 +1459,315 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all assets
+         * @description By purchase date. Only active assets (without a disposal) unless active is false; ledger_account_id keeps the assets of one category. Paged with a Link header and X-Total-Count.
+         */
+        get: operations["listAssets"];
+        put?: never;
+        /**
+         * Create a new asset
+         * @description On a fixed asset category (non-current assets) that is not a sub-category. Every category needs a depreciation plan (value_change_plan_attributes), except land and buildings (chart scheme codes BMvaTer and BMvaBeg), which cannot have one. Creating an asset books nothing; the purchase is booked by the documents its sources link.
+         */
+        post: operations["createAsset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get an asset by ID */
+        get: operations["getAsset"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an asset
+         * @description With what it booked; not when that lies in the locked period. The bookings its sources link stay.
+         */
+        delete: operations["deleteAsset"];
+        options?: never;
+        head?: never;
+        /**
+         * Update an asset
+         * @description Once the asset has value changes, a disposal or a reinvestment reserve purchase, only its name can change.
+         */
+        patch: operations["updateAsset"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a source to an asset
+         * @description Links a purchase invoice or receipt line (detail_id) or a journal entry row (general_journal_document_entry_id) the asset was bought with. It must be booked on the asset's category. Books nothing.
+         */
+        post: operations["createAssetSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/sources/{source_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                source_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a source
+         * @description Unlinks the source; the booking and the asset stay.
+         */
+        delete: operations["deleteAssetSource"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/value_changes/manual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a manual value change
+         * @description On a day from the purchase date to today, outside the locked period, before any disposal. A decrease cannot exceed the value on that day. Unless externally_booked, booked on the category's accumulated depreciation against depreciation costs.
+         */
+        post: operations["createAssetManualValueChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/value_changes/arbitrary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create an arbitrary value change
+         * @description As a manual value change, and the depreciation plan starts again from it: the linear value changes after its day are removed, and what is left above the residual value is spread over the months left.
+         */
+        post: operations["createAssetArbitraryValueChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/value_changes/divestment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a divestment value change
+         * @description Writes off the value on the day (not before the last arbitrary value change) to the book result and disposes of the asset (reason divested). Linear value changes after the day are removed.
+         */
+        post: operations["createAssetDivestmentValueChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/value_changes/full_depreciation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a full depreciation value change
+         * @description Depreciates the value on the day (not before the last arbitrary value change) to zero, booked as depreciation costs, and disposes of the asset (reason out_of_use). Linear value changes after the day are removed.
+         */
+        post: operations["createAssetFullDepreciationValueChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/value_changes/retroactive_linear_value_changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create linear value changes retroactively
+         * @description Books the depreciation plan's monthly linear value changes that are missing up to today, from the purchase date or the last arbitrary value change. Needs an active plan and missing months, none of them in the locked period. New months are booked by MoneyHarpy itself at each month's end, from the month the asset was added in.
+         */
+        post: operations["createAssetRetroactiveLinearValueChanges"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/disposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a disposal
+         * @description For an asset without a disposal whose value on the day is zero. Clears the booked accumulated depreciation against the asset's category.
+         */
+        post: operations["createAssetDisposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/reinvestment_reserve_purchase": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a reinvestment reserve purchase
+         * @description Funds part of the purchase value from the reinvestment reserve ("herinvesteringsreserve"): booked on the purchase date, the reserve against the asset's category, lowering the calculated purchase value the plan depreciates. At most the purchase value less the residual value and what the reserve holds; one per asset; not in the locked period.
+         */
+        post: operations["createAssetReinvestmentReservePurchase"];
+        /** Delete a reinvestment reserve purchase */
+        delete: operations["deleteAssetReinvestmentReservePurchase"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/assets/{id}/reinvestment_reserve_sale": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a reinvestment reserve sale
+         * @description Books (part of) the book result of the asset's disposal to the reinvestment reserve on the disposal date: the book result against the reserve. Needs a disposal without one, outside the locked period.
+         */
+        post: operations["createAssetReinvestmentReserveSale"];
+        /** Delete a reinvestment reserve sale */
+        delete: operations["deleteAssetReinvestmentReserveSale"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Assets report
+         * @description Each asset not disposed of before the period ("staat van vaste activa"): its value at the start, what was invested and how its value changed in the period, and its value at the end. An asset bought after the period shows its value as value_not_in_use. lifespan is in seconds. The period is at most 12 months; this year unless given.
+         */
+        get: operations["getAssetsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/contacts": {
         parameters: {
             query?: never;
@@ -6886,6 +7195,93 @@ export interface components {
                 execution_date?: string;
             };
         };
+        /** @description A Moneybird asset with MoneyHarpy extensions. */
+        Asset: components["schemas"]["asset_response"] & {
+            administration_id?: components["schemas"]["Identifier"];
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            /**
+             * Format: date-time
+             * @description MoneyHarpy extension.
+             */
+            created_at?: string;
+            /**
+             * Format: date-time
+             * @description MoneyHarpy extension.
+             */
+            updated_at?: string;
+        };
+        AssetPlanInput: {
+            /** @description The lifespan in years; fractions are rounded to whole months. */
+            lifespan_in_years?: number | string;
+            residual_value?: components["schemas"]["Money"];
+        };
+        AssetInput: {
+            name?: string;
+            ledger_account_id?: components["schemas"]["FlexibleIdentifier"];
+            /** Format: date */
+            purchase_date?: string;
+            purchase_value?: components["schemas"]["Money"];
+            value_change_plan_attributes?: components["schemas"]["AssetPlanInput"];
+        };
+        AssetRequest: {
+            asset: components["schemas"]["AssetInput"] & Record<string, never>;
+        };
+        AssetUpdateRequest: {
+            asset: components["schemas"]["AssetInput"];
+        };
+        /** @description Exactly one of detail_id and general_journal_document_entry_id. */
+        AssetSourceRequest: {
+            detail_id?: components["schemas"]["FlexibleIdentifier"];
+            general_journal_document_entry_id?: components["schemas"]["FlexibleIdentifier"];
+        };
+        AssetValueChangeRequest: {
+            /** Format: date */
+            date: string;
+            amount: components["schemas"]["Money"];
+            description: string;
+            externally_booked?: components["schemas"]["FlexibleBoolean"];
+        };
+        AssetDivestmentRequest: {
+            /** Format: date */
+            date: string;
+        };
+        AssetFullDepreciationRequest: {
+            /** Format: date */
+            date: string;
+            description: string;
+        };
+        AssetDisposalRequest: {
+            /** Format: date */
+            date: string;
+            /** @enum {string} */
+            reason: "out_of_use" | "sold" | "private_withdrawal" | "divested";
+        };
+        AssetReserveRequest: {
+            amount: components["schemas"]["Money"];
+        };
+        /** @description One asset in the assets report. Amounts as strings, as Moneybird gives them. */
+        AssetsReportLine: {
+            asset_id: components["schemas"]["Identifier"];
+            ledger_account_id: components["schemas"]["Identifier"];
+            name: string;
+            /** Format: date */
+            purchase_date: string;
+            /** @description In seconds; null without a depreciation plan. */
+            lifespan: string | null;
+            purchase_value: string;
+            calculated_purchase_value: string;
+            residual_value: string;
+            total_value_changes_since_purchase: string;
+            value_at_begin: string;
+            investment: string;
+            depreciation: string;
+            divestment: string;
+            value_changes: string;
+            value_at_end: string;
+            /** @description The value of an asset bought after the period. */
+            value_not_in_use: string;
+        };
         /** @description MoneyHarpy extension. Present only with the documents permission. */
         OverviewIncoming: {
             to_pay: components["schemas"]["OverviewTally"];
@@ -6900,7 +7296,7 @@ export interface components {
             /** Format: date */
             date: string;
             /** @enum {string} */
-            document_type: "FinancialMutation" | "GeneralJournalDocument" | "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt" | "Payment";
+            document_type: "FinancialMutation" | "GeneralJournalDocument" | "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt" | "Payment" | "Asset";
             document_id: components["schemas"]["Identifier"];
             ledger_account_id: components["schemas"]["Identifier"];
             project_id?: components["schemas"]["identifier_nullable"];
@@ -12489,6 +12885,565 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Overview"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listAssets: {
+        parameters: {
+            query?: {
+                ledger_account_id?: string;
+                active?: "true" | "false";
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of assets */
+            200: {
+                headers: {
+                    Link?: string;
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Asset"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetRequest"];
+            };
+        };
+        responses: {
+            /** @description The created asset */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Asset"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The asset */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Asset"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The asset is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description The asset */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Asset"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAssetSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetSourceRequest"];
+            };
+        };
+        responses: {
+            /** @description The source */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["source_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteAssetSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                source_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The source is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAssetManualValueChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetValueChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description The value change */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["value_change_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAssetArbitraryValueChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetValueChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description The value change */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["value_change_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAssetDivestmentValueChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetDivestmentRequest"];
+            };
+        };
+        responses: {
+            /** @description The value change */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["value_change_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAssetFullDepreciationValueChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetFullDepreciationRequest"];
+            };
+        };
+        responses: {
+            /** @description The value change */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["value_change_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAssetRetroactiveLinearValueChanges: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The missing value changes are booked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAssetDisposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetDisposalRequest"];
+            };
+        };
+        responses: {
+            /** @description The disposal */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["disposal_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAssetReinvestmentReservePurchase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetReserveRequest"];
+            };
+        };
+        responses: {
+            /** @description The reinvestment reserve purchase */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["reinvestment_reserve_purchase_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteAssetReinvestmentReservePurchase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The reinvestment reserve purchase is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createAssetReinvestmentReserveSale: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetReserveRequest"];
+            };
+        };
+        responses: {
+            /** @description The reinvestment reserve sale */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["reinvestment_reserve_sale_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteAssetReinvestmentReserveSale: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The reinvestment reserve sale is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getAssetsReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The assets report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetsReportLine"][];
                 };
             };
             400: components["responses"]["BadRequest"];

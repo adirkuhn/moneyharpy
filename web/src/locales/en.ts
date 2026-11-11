@@ -634,6 +634,19 @@ export const en = {
     file: 'File', dropText: 'Drop bills and receipts here, or', select: 'choose files', uploadHelp: 'PDF, image or text files of at most 10 MB each.',
     tooLarge: 'Too large (more than 10 MB): {{names}}', refused: 'Not uploaded: {{names}}',
   },
+  assets: {
+    title: 'Assets', views: { active: 'Active assets', all: 'All assets' }, filters: 'Filters', backTo: 'Assets',
+    name: 'Name', purchaseDate: 'Purchase date', purchaseValue: 'Purchase value', calculatedPurchaseValue: 'Calculated purchase value',
+    currentValue: 'Current value', lifespan: 'Lifespan', years: '{{count}} years', residualValue: 'Residual value',
+    monthlyDepreciation: 'Monthly depreciation', status: 'Status', active: 'Depreciating', inactive: 'Not depreciating', noPlan: 'No depreciation',
+    disposed: 'Disposed of', disposal: 'Disposal', reasons: { out_of_use: 'Out of use', sold: 'Sold', private_withdrawal: 'Private withdrawal', divested: 'Divested' },
+    reservePurchase: 'From the reinvestment reserve', reserveSale: 'To the reinvestment reserve',
+    valueChanges: 'Value changes', noValueChanges: 'No value changes yet.', date: 'Date', type: 'Type', description: 'Description', amount: 'Amount',
+    types: { linear: 'Depreciation', manual: 'Manual', arbitrary: 'Arbitrary', divestment: 'Divestment', full_depreciation: 'Full depreciation' },
+    details: 'Details', delete: 'Delete', confirmDelete: 'Delete this asset with what it booked? This cannot be undone.',
+    empty: 'No assets yet. Add them through the API, linked to the purchase invoices they were bought with.', noMatches: 'No assets match this filter.',
+    loadError: 'The assets could not be loaded.',
+  },
 }
 
 export type Messages = typeof en
