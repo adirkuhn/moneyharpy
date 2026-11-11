@@ -1,7 +1,7 @@
 SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 E2E_COMPOSE := docker compose -p moneyharpy-e2e -f e2e/docker-compose.e2e.yml
 
-.PHONY: generate moneybird-schemas test test-web test-e2e run
+.PHONY: generate moneybird-schemas test test-web test-e2e run docs
 
 generate: ## Regenerate code from the OpenAPI contract and SQL queries.
 	cd internal/httpapi && go tool oapi-codegen -config oapi-codegen.yaml ../../api/openapi.yaml
@@ -24,3 +24,7 @@ test-e2e: ## End-to-end tests against a disposable stack.
 
 run: ## Start the app with Docker Compose.
 	docker compose up --build
+
+docs: ## Documentation site into build/site. Needs mkdocs-material.
+	cd web && npm ci --silent
+	./docs/build.sh
