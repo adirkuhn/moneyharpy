@@ -29,6 +29,35 @@ func TestContractMatchesLiveMoneybirdSchemas(t *testing.T) {
 	}
 }
 
+// TestContractCoversEveryMoneybirdOperation fails when Moneybird has an
+// operation, query parameter, status code, request field or response field
+// the contract lacks.
+func TestContractCoversEveryMoneybirdOperation(t *testing.T) {
+	raw, err := load(SpecURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var theirs map[string]any
+	if err := yaml.Unmarshal(raw, &theirs); err != nil {
+		t.Fatal(err)
+	}
+	if raw, err = os.ReadFile("../../api/openapi.yaml"); err != nil {
+		t.Fatal(err)
+	}
+	var ours map[string]any
+	if err := yaml.Unmarshal(raw, &ours); err != nil {
+		t.Fatal(err)
+	}
+	gaps, checked := compareOperations(theirs, ours)
+	if checked < 300 {
+		t.Fatalf("checked only %d operations; did Moneybird's description move?", checked)
+	}
+	for _, gap := range gaps {
+		t.Error(gap)
+	}
+	t.Logf("checked %d operations, %d with gaps", checked, len(gaps))
+}
+
 func TestOwnSchemasHaveEveryMoneybirdField(t *testing.T) {
 	raw, err := os.ReadFile("../../api/openapi.yaml")
 	if err != nil {
