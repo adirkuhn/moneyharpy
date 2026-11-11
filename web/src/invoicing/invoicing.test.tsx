@@ -193,6 +193,35 @@ describe('workflow form', () => {
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
     expect(screen.getByText(/This is the default workflow/)).toBeInTheDocument()
   })
+
+  it('sets the email invoices are sent with', async () => {
+    let sent: { workflow?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/workflows/603', () => HttpResponse.json({ ...exportFlow, invoice_email_subject: 'Invoice {invoice_id}' })),
+      http.patch('*/api/v2/11/workflows/603', async ({ request }) => {
+        sent = (await request.json()) as typeof sent
+        return HttpResponse.json(exportFlow)
+      }),
+    )
+    renderAt('/11/workflows/603')
+    const subject = await screen.findByLabelText('Email subject')
+    expect(subject).toHaveValue('Invoice {invoice_id}')
+    expect(subject).toHaveAccessibleDescription(/Empty uses the default/)
+    await userEvent.click(screen.getByLabelText('Email text'))
+    await userEvent.paste('Dear {contact_name}, please pay {total}.')
+    expect(screen.getByText(/\{payment_reference\}/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent.workflow).toMatchObject({ invoice_email_subject: 'Invoice {invoice_id}', invoice_email_body: 'Dear {contact_name}, please pay {total}.' }))
+  })
+
+  it('has no invoice email for quotes', async () => {
+    server.use(...loaded())
+    renderAt('/11/workflows/new/estimate_workflow')
+    expect(await screen.findByRole('heading', { name: 'New quote workflow', level: 1 })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Email subject')).toBeNull()
+    expect(screen.queryByLabelText('Email text')).toBeNull()
+  })
 })
 
 describe('document style form', () => {
