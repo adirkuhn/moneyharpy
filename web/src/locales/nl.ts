@@ -83,7 +83,24 @@ export const nl: Messages = {
   },
   invoices: {
     detailsTitle: 'Factuurgegevens', settingsTitle: 'Factuurinstellingen', confirmDeleteText: 'Deze conceptfactuur verwijderen? Dit kan niet ongedaan worden gemaakt.',
-    title: 'Facturen', new: 'Nieuwe factuur', newTitle: 'Nieuwe factuur', editTitle: 'Factuur {{name}} bewerken', draftTitle: 'Concept #{{id}}',
+    title: 'Facturen', new: 'Nieuwe factuur', newTitle: 'Factuur toevoegen',
+    editor: {
+      changeLayout: 'Opmaak wijzigen', selectLayout: 'Kies een opmaak', preview: 'Voorbeeld van de factuur', logo: 'Logo',
+      selectContact: '1. Selecteer contact', addDetails: '2. Voeg factuurregels toe', editDetails: 'Factuurregels bewerken', noDetails: 'Je hebt nog geen regels toegevoegd',
+      placeholderName: 'Voornaam Achternaam', placeholderAddress: 'Adres 123', placeholderCity: '1234AB Plaats',
+      editConditions: 'Betalingscondities bewerken', addConditions: 'Betalingscondities toevoegen', done: 'Klaar',
+    },
+    document: {
+      invoice: 'Factuur', draft: 'Concept', draftNumber: 'Concept #{{id}}', contact: 'Contact', invoiceDate: 'Factuurdatum', dueDate: 'Vervaldatum',
+      senderAddress: 'Afzenderadres', lines: 'Factuurregels', quantity: 'Aantal', description: 'Omschrijving', price: 'Bedrag', total: 'Totaal', vat: 'Btw',
+      subtotal: 'Subtotaal', discount: 'Korting {{percentage}}%', includesVat: 'Inclusief {{name}}',
+      payBefore: 'Graag ontvangen we {{amount}} vóór {{date}} op rekening {{account}} ten name van {{holder}}, onder vermelding van {{reference}}.',
+      numberOnSend: 'het factuurnummer',
+      fields: {
+        company_name: 'Bedrijfsnaam', address: 'Adres', email: 'E-mail', phone: 'Telefoon', website: 'Website', chamber_of_commerce: 'KVK', tax_number: 'Btw',
+        bank_account_number: 'Bank', bank_account_bic: 'BIC', bank_account_name: 'Tenaamstelling',
+      },
+    }, editTitle: 'Factuur {{name}} bewerken', draftTitle: 'Concept #{{id}}',
     back: 'Naar de factuur', backToList: 'Naar Facturen', save: 'Factuur opslaan', loadError: 'De facturen konden niet worden geladen. Laad de pagina opnieuw.',
     empty: 'Nog geen facturen. Maak je eerste factuur.', noMatches: 'Geen facturen voor dit filter. Probeer een ander filter.',
     filters: 'Factuurfilters', quick: { this_year: 'Facturen van dit jaar', draft: 'Conceptfacturen', unpaid: 'Openstaande facturen', paid: 'Betaalde facturen' },
@@ -91,9 +108,9 @@ export const nl: Messages = {
     status: 'Status', unpaidState: 'Openstaand', settings: 'Factuurinstellingen', invoiceId: 'Factuurnummer',
     intro: {
       title: 'Verstuur je factuur', text: 'Maak een verkoopfactuur en verstuur haar. Zodra ze verstuurd is, wordt de omzet voor je geboekt.',
-      create: 'Factuur maken en versturen', createText: 'Maak de factuur en stuur haar naar je klant per e-mail, per post of zelf.',
-      style: 'Je huisstijl instellen', styleText: 'Geef je facturen je eigen uitstraling met je logo, kleuren en opmaak.',
-      workflow: 'Een workflow maken', workflowText: 'Bepaal de betaaltermijn, de betaalmethoden en wanneer herinneringen uitgaan.',
+      create: 'Factuur maken en versturen', createText: 'Maak je verkoopfactuur en verstuur hem direct naar je klant. Je bepaalt zelf de instellingen en hoe je de factuur verstuurt.',
+      style: 'Je huisstijl instellen', styleText: 'Geef je facturen je eigen uitstraling. Gebruik je logo, kleuren en lettertype. Kies een opmaak die bij je bedrijf past.',
+      workflow: 'Een workflow maken', workflowText: 'Bepaal welk proces je factuur volgt: of herinneringen automatisch worden verstuurd en welke betaalmethoden je klant krijgt.',
     },
     states: { new: 'Nieuw', draft: 'Concept', scheduled: 'Ingepland', open: 'Open', pending_payment: 'Betaling in behandeling', late: 'Verlopen', reminded: 'Herinnerd', paid: 'Betaald', uncollectible: 'Oninbaar' },
     number: 'Factuurnummer', reference: 'Referentie', invoiceDate: 'Factuurdatum', dueDate: 'Vervaldatum', contact: 'Contact', amount: 'Bedrag',

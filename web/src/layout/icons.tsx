@@ -148,7 +148,7 @@ export function TileIcon({ kind }: { kind: 'balance' | 'attention' | 'in' | 'out
 /** Line icons for the actions and steps of the document lists, drawn for MoneyHarpy. */
 export type ListIconKind =
   | 'plus' | 'chart' | 'export' | 'more' | 'paperclip' | 'at' | 'send' | 'file' | 'palette' | 'flow'
-  | 'coins' | 'upload' | 'plug' | 'calendar' | 'repeat'
+  | 'coins' | 'upload' | 'plug' | 'calendar' | 'repeat' | 'edit'
 
 export function ListIcon({ kind }: { kind: ListIconKind }) {
   const shapes: Record<ListIconKind, React.ReactNode> = {
@@ -167,6 +167,7 @@ export function ListIcon({ kind }: { kind: ListIconKind }) {
     plug: <><path d="M9 3.500V8m6-4.500V8M6.500 8h11v3a5.500 5.500 0 0 1-11 0Z" /><path d="M12 16.500v4" /></>,
     calendar: <><rect x="3.500" y="5" width="17" height="15.500" rx="2" /><path d="M3.500 10h17M8 3v4m8-4v4" /></>,
     repeat: <><path d="M4 11V9.500a3 3 0 0 1 3-3h12.500M16.500 3.500l3 3-3 3" /><path d="M20 13v1.500a3 3 0 0 1-3 3H4.500m3 3-3-3 3-3" /></>,
+    edit: <><path d="M4 20h4L19 9a2.800 2.800 0 0 0-4-4L4 16Z" /><path d="m13.500 6.500 4 4" /></>,
   }
   return (
     <svg viewBox="0 0 24 24" width="1.125em" height="1.125em" aria-hidden="true" {...stroke}>

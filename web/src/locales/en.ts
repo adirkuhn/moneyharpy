@@ -81,7 +81,24 @@ export const en = {
   },
   invoices: {
     detailsTitle: 'Invoice details', settingsTitle: 'Invoice settings', confirmDeleteText: 'Delete this draft invoice? This cannot be undone.',
-    title: 'Invoices', new: 'New invoice', newTitle: 'New invoice', editTitle: 'Edit invoice {{name}}', draftTitle: 'Draft #{{id}}',
+    title: 'Invoices', new: 'New invoice', newTitle: 'Add invoice',
+    editor: {
+      changeLayout: 'Change layout', selectLayout: 'Select layout', preview: 'Invoice preview', logo: 'Logo',
+      selectContact: '1. Select contact', addDetails: '2. Add invoice details', editDetails: 'Edit invoice details', noDetails: "You didn't add any details yet",
+      placeholderName: 'First name Last name', placeholderAddress: 'Address 123', placeholderCity: '1234AB City',
+      editConditions: 'Edit payment conditions', addConditions: 'Add payment conditions', done: 'Done',
+    },
+    document: {
+      invoice: 'Invoice', draft: 'Draft', draftNumber: 'Draft #{{id}}', contact: 'Contact', invoiceDate: 'Invoice date', dueDate: 'Due date',
+      senderAddress: 'Sender address', lines: 'Invoice lines', quantity: 'Quantity', description: 'Description', price: 'Price', total: 'Total', vat: 'VAT',
+      subtotal: 'Subtotal', discount: 'Discount {{percentage}}%', includesVat: 'Includes {{name}}',
+      payBefore: 'Please pay {{amount}} before {{date}} to account {{account}} in the name of {{holder}}, quoting {{reference}}.',
+      numberOnSend: 'the invoice number',
+      fields: {
+        company_name: 'Company name', address: 'Address', email: 'Email', phone: 'Phone', website: 'Website', chamber_of_commerce: 'CoC', tax_number: 'VAT',
+        bank_account_number: 'Bank', bank_account_bic: 'BIC', bank_account_name: 'Account holder',
+      },
+    }, editTitle: 'Edit invoice {{name}}', draftTitle: 'Draft #{{id}}',
     back: 'To the invoice', backToList: 'To Invoices', save: 'Save invoice', loadError: 'The invoices could not be loaded. Reload the page to try again.',
     empty: 'No invoices yet. Create your first invoice.', noMatches: 'No invoices match this filter. Try another one.',
     filters: 'Invoice filters', quick: { this_year: "This year's invoices", draft: 'Draft invoices', unpaid: 'Unpaid invoices', paid: 'Paid invoices' },
@@ -89,9 +106,9 @@ export const en = {
     status: 'Status', unpaidState: 'Unpaid', settings: 'Invoice settings', invoiceId: 'Invoice id',
     intro: {
       title: 'Send your invoice', text: 'Create a sales invoice and send it. Once it is sent, the revenue is booked for you.',
-      create: 'Create and send an invoice', createText: 'Make the invoice and send it to your customer by email, by post or yourself.',
-      style: 'Set up your house style', styleText: 'Give your invoices your own look with your logo, colours and layout.',
-      workflow: 'Create a workflow', workflowText: 'Decide the payment term, the payment methods and when reminders go out.',
+      create: 'Create and send invoice', createText: 'Create your sales invoice and send it straight to your customer. Decide the settings and how you send the invoice yourself.',
+      style: 'Set up your house style', styleText: 'Give your invoices your own look. Use your logo, colors and font. Choose a layout that suits your business.',
+      workflow: 'Create a workflow', workflowText: 'Determine the process your invoice follows: whether reminders are sent automatically and which payment methods your customer gets.',
     },
     states: { new: 'New', draft: 'Draft', scheduled: 'Scheduled', open: 'Open', pending_payment: 'Pending payment', late: 'Expired', reminded: 'Reminded', paid: 'Paid', uncollectible: 'Irrecoverable' },
     number: 'Invoice number', reference: 'Reference', invoiceDate: 'Invoice date', dueDate: 'Due date', contact: 'Contact', amount: 'Amount',
