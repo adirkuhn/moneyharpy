@@ -243,3 +243,38 @@ func TestLinkingInvoicePayments(t *testing.T) {
 		t.Errorf("account ledger = %d, %v", ledgerID, err)
 	}
 }
+
+func TestLinkingPurchaseDocuments(t *testing.T) {
+	svc, store, _ := newTestService()
+	sales := &fakeInvoices{store: store, unpaid: map[resource.ID]Amount{}}
+	documents := &fakeInvoices{store: store, unpaid: map[resource.ID]Amount{9101: 6000}}
+	svc.UseInvoices(sales)
+	ctx := context.Background()
+	acc := bank(t, svc)
+	out := transactions(t, svc, acc, "-100")[0]
+	if _, err := svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: DocumentType, BookingID: ptr(resourceID(9101))}); !errors.Is(err, ErrBookingUnavailable) {
+		t.Errorf("Document without documents error = %v", err)
+	}
+	svc.UseDocuments(documents)
+	// Money out pays a purchase invoice: the payment is signed like the
+	// document, positive, and takes from what is open of the transaction.
+	got, err := svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: DocumentType, BookingID: ptr(resourceID(9101))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Payments[0].Price != 6000 || got.Open() != -4000 || got.State != Unprocessed {
+		t.Errorf("after the document: payments %+v, open %s", got.Payments, got.Open())
+	}
+	documents.unpaid[9102] = 10000
+	got, err = svc.LinkBooking(ctx, adminID, out.ID, owner, Link{Type: DocumentType, BookingID: ptr(resourceID(9102)), Price: ptr("40")})
+	if err != nil || got.Open() != 0 || got.State != Processed || got.Payments[1].Price != 4000 {
+		t.Fatalf("second document = %+v, %v", got, err)
+	}
+	if _, err := svc.UnlinkBooking(ctx, adminID, out.ID, owner, "Payment", got.Payments[0].ID); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = svc.Mutation(ctx, adminID, out.ID, owner)
+	if got.Open() != -6000 || documents.unpaid[9101] != 6000 || len(sales.unpaid) != 0 {
+		t.Errorf("after unlink: open %s, unpaid %v", got.Open(), documents.unpaid)
+	}
+}

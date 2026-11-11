@@ -17,12 +17,16 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
+	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
 // attachableTypes maps record kinds to the attachable_type Moneybird
 // reports; its journal entries are documents.
-var attachableTypes = map[string]string{journal.GeneralJournalDocument: "Document", journal.SalesInvoice: "SalesInvoice"}
+var attachableTypes = map[string]string{
+	journal.GeneralJournalDocument: "Document", journal.SalesInvoice: "SalesInvoice",
+	purchases.PurchaseInvoice: "Document", purchases.Receipt: "Document", purchases.GeneralDocument: "Document", purchases.TypelessDocument: "Document",
+}
 
 type attachmentJSON struct {
 	ID               string    `json:"id"`

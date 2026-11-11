@@ -12,6 +12,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
+	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
@@ -36,6 +37,19 @@ type Bank interface {
 // Sales is the part of sales invoices the overview reads.
 type Sales interface {
 	Summary(ctx context.Context, admin, user resource.ID) (sales.Summary, error)
+}
+
+// Incoming is the part of incoming documents the overview reads.
+type Incoming interface {
+	Summary(ctx context.Context, admin, user resource.ID) (purchases.Summary, error)
+}
+
+// IncomingBlock sums up the purchase invoices and receipts still to pay
+// and the uploads still to process.
+type IncomingBlock struct {
+	ToPay     purchases.Tally
+	ToProcess int
+	Currency  string
 }
 
 // SalesBlock sums up the sales invoices still to be paid.
@@ -71,7 +85,9 @@ type Overview struct {
 	// Bank is nil for members without the bank permission.
 	Bank *BankBlock
 	// Sales is nil for members without the sales invoices permission.
-	Sales             *SalesBlock
+	Sales *SalesBlock
+	// Incoming is nil for members without the documents permission.
+	Incoming          *IncomingBlock
 	RecentlyProcessed []Item
 }
 
@@ -80,12 +96,17 @@ type Service struct {
 	admins Administrations
 	bank   Bank
 	sales  Sales
+	// incoming may be nil until incoming documents join.
+	incoming Incoming
 }
 
 // NewService returns a Service.
 func NewService(admins Administrations, bank Bank, sales Sales) *Service {
 	return &Service{admins: admins, bank: bank, sales: sales}
 }
+
+// UseIncoming adds the incoming documents block.
+func (s *Service) UseIncoming(i Incoming) { s.incoming = i }
 
 // Get returns the overview as user may see it. A non-nil scopes further
 // limits it to what a connection token was granted.
@@ -114,6 +135,13 @@ func (s *Service) Get(ctx context.Context, admin, user resource.ID, scopes []adm
 			return Overview{}, fmt.Errorf("sales summary: %w", err)
 		}
 		out.Sales = &SalesBlock{ToReceive: sum.ToReceive, ToRemind: sum.ToRemind, Currency: sum.Currency}
+	}
+	if s.incoming != nil && may(administration.Documents) {
+		sum, err := s.incoming.Summary(ctx, admin, user)
+		if err != nil {
+			return Overview{}, fmt.Errorf("incoming summary: %w", err)
+		}
+		out.Incoming = &IncomingBlock{ToPay: sum.ToPay, ToProcess: sum.ToProcess, Currency: sum.Currency}
 	}
 	// Each source lists newest first; merging keeps that order on ties.
 	slices.SortStableFunc(out.RecentlyProcessed, func(a, b Item) int { return b.ProcessedAt.Compare(a.ProcessedAt) })

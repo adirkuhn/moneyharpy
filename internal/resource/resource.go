@@ -118,6 +118,13 @@ const (
 	TypeTaskListTemplate Type = "task_list_templates"
 	// Journal.
 	TypeGeneralJournalDocument Type = "documents/general_journal_documents"
+	// Incoming documents.
+	TypePurchaseInvoice          Type = "documents/purchase_invoices"
+	TypeReceipt                  Type = "documents/receipts"
+	TypeGeneralDocument          Type = "documents/general_documents"
+	TypeTypelessDocument         Type = "documents/typeless_documents"
+	TypePurchaseTransaction      Type = "purchase_transactions"
+	TypePurchaseTransactionBatch Type = "purchase_transaction_batches"
 )
 
 // Ref locates one resource.

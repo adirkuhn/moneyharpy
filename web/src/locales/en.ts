@@ -291,7 +291,7 @@ export const en = {
     label: 'Administration menu', menu: 'Menu', collapse: 'Collapse menu', expand: 'Expand menu', collapseShort: 'Collapse', later: 'Not available yet',
     items: {
       overview: 'Overview', invoices: 'Invoices', salesInvoices: 'Sales invoices', externalInvoices: 'External invoices', recurringInvoices: 'Recurring invoices',
-      incoming: 'Incoming', quotes: 'Quotes', bank: 'Bank', financialAccounts: 'Financial accounts', transactions: 'Transactions', payments: 'Payments',
+      incoming: 'Incoming', purchaseInvoices: 'Purchase invoices', receipts: 'Receipts', uploads: 'Uploads', quotes: 'Quotes', bank: 'Bank', financialAccounts: 'Financial accounts', transactions: 'Transactions', payments: 'Payments',
       timesheets: 'Timesheets', register: 'Register', hoursReport: 'Hours report', projectsReport: 'Projects report',
       contacts: 'Contacts', vat: 'VAT returns',
       reports: 'Reports', reportsOverview: 'Overview', profitLoss: 'Profit and loss statement', balanceSheet: 'Balance sheet', assetsReport: 'Assets report',
@@ -620,6 +620,19 @@ export const en = {
     kvkTitle: 'Company search', kvkEnable: 'Search the Dutch company register', kvkKey: 'KVK API key', addressTitle: 'Address lookup', addressEnable: 'Complete Dutch addresses from zipcode and house number', addressHint: 'Sends the zipcode and house number to PDOK, the Dutch government address service.',
     smtpTitle: 'Email', smtpEnable: 'Send email through this mail server', smtpHint: 'Needed for password recovery.', smtpHost: 'SMTP host', smtpPort: 'SMTP port', smtpUser: 'SMTP username', smtpPassword: 'SMTP password', smtpFrom: 'Send email from', smtpSecurity: 'Encryption', smtpStarttls: 'STARTTLS (usually port 587)', smtpTls: 'TLS (usually port 465)', smtpNone: 'None', testEmail: 'Send test email', testSent: 'Test email sent to {{email}}',
     save: 'Save settings', saved: 'Settings saved',
+  },
+  purchases: {
+    titles: { purchase_invoices: 'Purchase invoices', receipts: 'Receipts', uploads: 'Uploads to process' },
+    views: { this_year: 'This year', unpaid: 'Unpaid', paid: 'Paid', custom: 'Custom filter' }, filters: 'Filters',
+    untitled: { purchase_invoices: 'Purchase invoice {{n}}', receipts: 'Receipt {{n}}' },
+    backTo: { purchase_invoices: 'Purchase invoices', receipts: 'Receipts' },
+    upload: 'Upload documents', uploadTitle: 'Add document files', date: 'Date', total: 'Total', unpaid: 'Unpaid', details: 'Details', lines: 'Lines', payments: 'Payments',
+    description: 'Description', price: 'Price', excl: 'Excl. VAT', noLines: 'No lines yet.', noPayments: 'No payments yet.',
+    delete: 'Delete', confirmDelete: 'Delete this document with what it books? This cannot be undone.',
+    newNotice: 'This document is new: it books nothing until it has its lines and, for a purchase invoice, its supplier.',
+    empty: 'No documents match this filter.', loadError: 'The documents could not be loaded.', noUploads: 'No uploads to process.',
+    file: 'File', dropText: 'Drop bills and receipts here, or', select: 'choose files', uploadHelp: 'PDF, image or text files of at most 10 MB each.',
+    tooLarge: 'Too large (more than 10 MB): {{names}}', refused: 'Not uploaded: {{names}}',
   },
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
+	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
@@ -110,5 +111,32 @@ func TestBankNeedsThePermissionAndTheScope(t *testing.T) {
 func TestStrangersGetNotFound(t *testing.T) {
 	if _, err := NewService(fakeAdmins{}, &fakeBank{}, &fakeSales{}).Get(context.Background(), adminID, outsider, nil); !errors.Is(err, administration.ErrNotFound) {
 		t.Errorf("error = %v", err)
+	}
+}
+
+type fakeIncoming struct{ calls int }
+
+func (f *fakeIncoming) Summary(context.Context, resource.ID, resource.ID) (purchases.Summary, error) {
+	f.calls++
+	return purchases.Summary{ToPay: purchases.Tally{Count: 2, Amount: 24200}, ToProcess: 4, Currency: "EUR"}, nil
+}
+
+func TestIncomingBlock(t *testing.T) {
+	incoming := &fakeIncoming{}
+	svc := NewService(fakeAdmins{}, &fakeBank{}, &fakeSales{})
+	if got, _ := svc.Get(context.Background(), adminID, owner, nil); got.Incoming != nil {
+		t.Errorf("incoming without documents = %+v", got.Incoming)
+	}
+	svc.UseIncoming(incoming)
+	got, err := svc.Get(context.Background(), adminID, owner, nil)
+	if err != nil || got.Incoming == nil || got.Incoming.ToPay.Count != 2 || got.Incoming.ToPay.Amount != 24200 || got.Incoming.ToProcess != 4 || got.Incoming.Currency != "EUR" {
+		t.Fatalf("incoming = %+v, %v", got.Incoming, err)
+	}
+	// The clerk has no documents permission, and a bank-scoped token none either.
+	if got, _ := svc.Get(context.Background(), adminID, clerk, nil); got.Incoming != nil {
+		t.Errorf("clerk sees incoming documents")
+	}
+	if got, _ := svc.Get(context.Background(), adminID, owner, []administration.Permission{administration.Bank}); got.Incoming != nil || incoming.calls != 1 {
+		t.Errorf("bank-scoped token sees incoming documents")
 	}
 }
