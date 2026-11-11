@@ -70,10 +70,13 @@ type Recurring struct {
 	Anchor  time.Time
 	Periods int
 	// Generated counts every invoice made.
-	Generated    int
-	Lines        []Detail
-	CustomFields []FieldValue
-	Notes        []notes.Note
+	Generated int
+	// SubscriptionID is the subscription the recurring invoice bills; the
+	// store fills it in.
+	SubscriptionID *resource.ID
+	Lines          []Detail
+	CustomFields   []FieldValue
+	Notes          []notes.Note
 	// Totals are the amounts each invoice will have.
 	Totals    Totals
 	CreatedAt time.Time

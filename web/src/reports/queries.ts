@@ -69,6 +69,34 @@ export function useContactReport(administrationId: string, kind: ContactReportKi
   })
 }
 
+/** The reports that list an amount per project. */
+export type ProjectReportKind = 'revenue_by_project' | 'expenses_by_project'
+export type ProjectAmount = { project_id?: string | number | null; amount: string }
+export type AssetsReportLine = components['schemas']['AssetsReportLine']
+
+/** The first 100 projects of a report per project, the bookings without a project first. */
+export function useProjectReport(administrationId: string, kind: ProjectReportKind, period: string) {
+  return useQuery({
+    queryKey: ['report', kind, administrationId, period],
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<ProjectAmount[]> => {
+      const params = { params: { path: path(administrationId), query: { period, per_page: '100' } } }
+      return kind === 'revenue_by_project'
+        ? (await unwrap(api.GET('/api/v2/{administration_id}/reports/revenue_by_project', params))).revenue_by_project
+        : (await unwrap(api.GET('/api/v2/{administration_id}/reports/expenses_by_project', params))).expenses_by_project
+    },
+  })
+}
+
+/** Each fixed asset with how its value changed in the period. */
+export function useAssetsReport(administrationId: string, period: string) {
+  return useQuery({
+    queryKey: ['report', 'assets', administrationId, period],
+    placeholderData: keepPreviousData,
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/reports/assets', { params: { path: path(administrationId), query: { period } } })),
+  })
+}
+
 /** What contacts had open at the end of the month (today for this month), by age. */
 export function useAgingReport(administrationId: string, kind: AgingKind, until: string) {
   return useQuery({

@@ -48,7 +48,7 @@ func TestBookkeepingSeedsOnce(t *testing.T) {
 func TestBookkeepingSettingsRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	svc, store, admin, owner := bookkeepingService(t)
-	day := time.Now().AddDate(0, -1, 0).Format(time.DateOnly)
+	day := adminNow().AddDate(0, -1, 0).Format(time.DateOnly)
 	if _, err := svc.UpdateSettings(ctx, admin, owner, bookkeeping.SettingsChanges{VATPeriod: ptr("month"), ICPPeriod: ptr("year"), LockedUntil: &day}); err != nil {
 		t.Fatal(err)
 	}

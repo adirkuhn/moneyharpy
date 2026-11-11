@@ -1,12 +1,14 @@
 package httpapi
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
+	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
 )
 
 type recurringSalesInvoiceJSON struct {
@@ -123,8 +125,32 @@ func (s *server) toRecurringSalesInvoices(r *http.Request, admin resource.ID, li
 	out := make([]recurringSalesInvoiceJSON, len(list))
 	for i, rec := range list {
 		out[i] = s.toRecurringSalesInvoice(rec, byID[rec.ContactID])
+		if rec.SubscriptionID != nil && s.deps.Subscriptions != nil {
+			sub, err := s.subscriptionOf(r, admin, *rec.SubscriptionID)
+			if err != nil {
+				return nil, err
+			}
+			out[i].Subscription = sub
+		}
 	}
 	return out, nil
+}
+
+// subscriptionOf is the subscription a recurring invoice bills, as
+// Moneybird embeds it, or nil when it is gone.
+func (s *server) subscriptionOf(r *http.Request, admin, id resource.ID) (*subscriptionJSON, error) {
+	sub, err := s.deps.Subscriptions.Subscription(r.Context(), admin, id, user(r).ID)
+	if errors.Is(err, subscriptions.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	list, err := s.toSubscriptions(r, admin, []subscriptions.Subscription{sub})
+	if err != nil {
+		return nil, err
+	}
+	return &list[0], nil
 }
 
 func (s *server) writeRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, admin resource.ID, status int, rec sales.Recurring, err error) {

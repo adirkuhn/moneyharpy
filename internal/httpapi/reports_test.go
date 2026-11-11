@@ -25,7 +25,7 @@ func TestReports(t *testing.T) {
 	banker.register()
 	adminID, api, supplier, purchase21 := purchaseSetup(t, owner)
 	invite(t, h, owner, banker, adminID, "banker@example.com", map[string]any{"user_type": "employee", "permissions": []string{"bank"}})
-	today := time.Now().Format(time.DateOnly)
+	today := adminNow().Format(time.DateOnly)
 	customer := decode[contact](t, owner.do(http.MethodPost, api+"/contacts", map[string]any{"contact": map[string]any{"company_name": "Example Shop B.V."}}))
 	app := decode[project](t, owner.do(http.MethodPost, api+"/projects", map[string]any{"project": map[string]any{"name": "Web app"}}))
 	revenue := category(t, owner, adminID, "Revenue")
@@ -143,7 +143,7 @@ func TestReports(t *testing.T) {
 	wantStatus(t, banker.do(http.MethodGet, reports+"profit_loss", nil), http.StatusForbidden)
 	wantStatus(t, banker.do(http.MethodPost, reports+"export/auditfile", map[string]any{"year": "2026"}), http.StatusForbidden)
 
-	year := strconv.Itoa(time.Now().Year())
+	year := strconv.Itoa(adminNow().Year())
 	wantStatus(t, owner.do(http.MethodPost, reports+"export/auditfile", map[string]any{"year": year, "version": "5.0"}), http.StatusBadRequest)
 	none := owner.do(http.MethodPost, reports+"export/auditfile.json", map[string]any{"year": "2001"})
 	wantStatus(t, none, http.StatusBadRequest)

@@ -50,13 +50,13 @@ func TestBookkeepingSettings(t *testing.T) {
 	if st.VatDocumentsPeriod != "quarter" || st.ChartScheme != "nl-rgs-3.8" || len(st.ChartSchemes) == 0 || len(st.TaxReportBoxes) == 0 || st.PeriodLockedUntil != nil {
 		t.Fatalf("settings = %+v", st)
 	}
-	day := time.Now().AddDate(0, 0, -1).Format(time.DateOnly)
+	day := adminNow().AddDate(0, 0, -1).Format(time.DateOnly)
 	r := owner.do(http.MethodPatch, base, map[string]any{"bookkeeping_settings": map[string]any{"vat_documents_period": "month", "period_locked_until": day}})
 	wantStatus(t, r, http.StatusOK)
 	if st = decode[httpapi.BookkeepingSettings](t, r); st.VatDocumentsPeriod != "month" || st.PeriodLockedUntil.String() != day {
 		t.Errorf("updated = %+v", st)
 	}
-	future := time.Now().AddDate(0, 0, 2).Format(time.DateOnly)
+	future := adminNow().AddDate(0, 0, 2).Format(time.DateOnly)
 	wantStatus(t, owner.do(http.MethodPatch, base, map[string]any{"bookkeeping_settings": map[string]any{"period_locked_until": future}}), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodPatch, base, map[string]any{"bookkeeping_settings": map[string]any{"vat_documents_period": "week"}}), http.StatusBadRequest)
 	wantStatus(t, stranger.do(http.MethodGet, base, nil), http.StatusNotFound)

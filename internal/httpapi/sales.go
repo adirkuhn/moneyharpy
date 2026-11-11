@@ -153,7 +153,7 @@ func (s *server) toSalesInvoice(inv sales.Invoice, contact *contacts.Contact, to
 	unpaid := inv.Totals.InclTax - paid
 	out := salesInvoiceJSON{
 		ID: inv.ID.String(), AdministrationID: inv.AdministrationID.String(), ContactID: inv.ContactID.String(), ContactPersonID: idString(inv.ContactPersonID),
-		InvoiceID: nz(inv.InvoiceID), RecurringSalesInvoiceID: idString(inv.RecurringSalesInvoiceID), WorkflowID: inv.WorkflowID.String(),
+		InvoiceID: nz(inv.InvoiceID), RecurringSalesInvoiceID: idString(inv.RecurringSalesInvoiceID), SubscriptionID: idString(inv.SubscriptionID), WorkflowID: inv.WorkflowID.String(),
 		DocumentStyleID: inv.DocumentStyleID.String(), IdentityID: inv.IdentityID.String(), State: inv.State, InvoiceDate: date(inv.InvoiceDate),
 		DueDate: due.Format(time.DateOnly), PaymentConditions: nz(inv.PaymentConditions), PaymentReference: nz(inv.PaymentReference),
 		Reference: nz(inv.Reference), Language: inv.Language, Currency: inv.Currency, Discount: percentText(inv.Discount),

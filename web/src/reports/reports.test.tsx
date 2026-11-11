@@ -77,4 +77,34 @@ describe('reports', () => {
     expect(within(table).getByRole('columnheader', { name: '0 - 30 days' })).toBeInTheDocument()
     expect(within(table).getAllByText('€121.00')).toHaveLength(2)
   })
+
+  it('lists the expenses by project', async () => {
+    server.use(
+      ...loaded(),
+      http.get('*/api/v2/11/reports/expenses_by_project', () => HttpResponse.json({ expenses_by_project: [{ project_id: null, amount: '20.0' }, { project_id: '501', amount: '9.99' }] })),
+      http.get('*/api/v2/11/projects/501', () => HttpResponse.json({ id: '501', name: 'Falcon', state: 'active', budget: null })),
+    )
+    renderAt('/11/report/expenses_by_project')
+    const table = await screen.findByRole('table', { name: 'Expenses by project' })
+    expect(await within(table).findByRole('link', { name: 'Falcon' })).toHaveAttribute('href', '/11/projects/501')
+    expect(within(table).getByRole('row', { name: /Without a project/ })).toHaveTextContent('€20.00')
+    expect(within(table).getByRole('row', { name: /Total/ })).toHaveTextContent('€29.99')
+    const nav = screen.getByRole('navigation', { name: 'Administration menu' })
+    expect(within(nav).getByRole('link', { name: 'Revenue by project' })).toHaveAttribute('href', '/11/report/revenue_by_project')
+  })
+
+  it('shows the assets report', async () => {
+    server.use(
+      ...loaded(),
+      http.get('*/api/v2/11/reports/assets', () => HttpResponse.json([{
+        asset_id: '601', ledger_account_id: '1010', name: 'Laptop', purchase_date: '2026-01-15', lifespan: null, purchase_value: '1200.0',
+        calculated_purchase_value: '1200.0', residual_value: '0.0', total_value_changes_since_purchase: '-200.0', value_at_begin: '0.0',
+        investment: '1200.0', depreciation: '-200.0', divestment: '0.0', value_changes: '-200.0', value_at_end: '1000.0', value_not_in_use: '0.0',
+      }])),
+    )
+    renderAt('/11/report/assets_report')
+    const table = await screen.findByRole('table', { name: 'Assets report' })
+    expect(within(table).getByRole('link', { name: 'Laptop' })).toHaveAttribute('href', '/11/assets/601')
+    expect(within(table).getByRole('row', { name: /Laptop/ })).toHaveTextContent('€1,000.00')
+  })
 })

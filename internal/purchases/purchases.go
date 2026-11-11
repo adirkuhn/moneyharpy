@@ -91,6 +91,8 @@ type Administrations interface {
 // Contacts gives the suppliers documents are from.
 type Contacts interface {
 	Contact(ctx context.Context, admin, id, user resource.ID) (contacts.Contact, error)
+	// List finds contacts, such as the one with an IBAN.
+	List(ctx context.Context, admin, user resource.ID, q contacts.Query) (contacts.Page, error)
 }
 
 // Products gives the products lines name.
@@ -108,6 +110,7 @@ type Ledger interface {
 	Bookable(ctx context.Context, admin, user, id resource.ID, documentType string) (string, error)
 	SystemLedgerAccount(ctx context.Context, admin, user resource.ID, role string) (resource.ID, error)
 	TaxRate(ctx context.Context, admin, id, user resource.ID) (bookkeeping.TaxRate, error)
+	TaxRates(ctx context.Context, admin, user resource.ID, f bookkeeping.TaxRateFilter) ([]bookkeeping.TaxRate, error)
 	LockedUntil(ctx context.Context, admin, user resource.ID) (string, error)
 	SeedLedgerAccount(ctx context.Context, admin, user resource.ID, key string) (resource.ID, bool, error)
 	LedgerAccount(ctx context.Context, admin, id, user resource.ID) (bookkeeping.LedgerAccount, error)

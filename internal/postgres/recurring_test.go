@@ -14,7 +14,7 @@ import (
 func TestRecurringInvoicesAreStoredAndMakeInvoices(t *testing.T) {
 	ctx := context.Background()
 	f := newSalesFixture(t)
-	today := time.Now().Format(time.DateOnly)
+	today := adminNow().Format(time.DateOnly)
 	r, err := f.svc.CreateRecurring(ctx, f.admin, f.owner, sales.RecurringChanges{
 		ContactID: &f.customer, Reference: ptr("Contract 7"), InvoiceDate: ptr(today), FrequencyType: ptr(sales.Quarter), Frequency: ptr(2),
 		AutoSend: ptr(true), LastDate: ptr("2099-12-31"), Discount: ptr("10"),
@@ -51,7 +51,7 @@ func TestRecurringInvoicesAreStoredAndMakeInvoices(t *testing.T) {
 
 	// As if the worker had been down since two periods ago: it catches up,
 	// making each invoice with the recurring invoice moved on at once.
-	start := time.Now().AddDate(0, -9, 0)
+	start := adminNow().AddDate(0, -9, 0)
 	start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, time.UTC)
 	got.InvoiceDate, got.Anchor, got.StartDate, got.AutoSend = start, start, start, false
 	if err := f.store.SaveRecurring(ctx, got, false); err != nil {

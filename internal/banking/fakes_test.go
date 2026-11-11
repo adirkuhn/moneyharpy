@@ -344,3 +344,45 @@ func (f *fakeInvoices) RemoveBankPayment(_ context.Context, _, _, payment resour
 	}
 	return errors.New("no such payment")
 }
+
+// fakePurchases makes documents in the fake invoices and knows purchase
+// transactions by id: 9201 pays document 9101, batch 9300 holds 9201 and
+// 9202, which pays document 9102.
+type fakePurchases struct {
+	documents *fakeInvoices
+	created   []NewDocument
+}
+
+func (f *fakePurchases) CreateBankDocument(_ context.Context, _, _ resource.ID, d NewDocument) (resource.ID, error) {
+	f.created = append(f.created, d)
+	id := 9500 + resource.ID(len(f.created))
+	f.documents.unpaid[id] = d.Amount
+	return id, nil
+}
+
+func (f *fakePurchases) Payables(_ context.Context, _, _ resource.ID, bookingType string, id resource.ID) ([]Payable, error) {
+	all := map[resource.ID]Payable{9201: {DocumentID: 9101, Amount: f.documents.unpaid[9101]}, 9202: {DocumentID: 9102, Amount: f.documents.unpaid[9102]}}
+	var out []Payable
+	switch {
+	case bookingType == "PurchaseTransaction" && all[id].DocumentID != 0:
+		out = []Payable{all[id]}
+	case bookingType == "PurchaseTransactionBatch" && id == 9300:
+		out = []Payable{all[9201], all[9202]}
+	default:
+		return nil, invalid("booking_id", "is not one of this administration")
+	}
+	out = slices.DeleteFunc(out, func(p Payable) bool { return p.Amount == 0 })
+	if len(out) == 0 {
+		return nil, invalid("booking_id", "is paid already")
+	}
+	return out, nil
+}
+
+type fakeProjects struct{}
+
+func (fakeProjects) CheckProject(_ context.Context, _, _, id resource.ID) error {
+	if id != 9900 {
+		return invalid("project_id", "does not exist")
+	}
+	return nil
+}

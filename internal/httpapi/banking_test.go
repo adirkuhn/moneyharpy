@@ -33,7 +33,9 @@ type mutation struct {
 		ID            string  `json:"id"`
 		Price         string  `json:"price"`
 		BookingRuleID *string `json:"booking_rule_id"`
+		ProjectID     *string `json:"project_id"`
 	} `json:"ledger_account_bookings"`
+	Payments []payment `json:"payments"`
 }
 
 type statement struct {

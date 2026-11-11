@@ -531,6 +531,10 @@ func (s *Service) scheduleOneOff(ctx context.Context, admin, user resource.ID, s
 	if err := s.store.AddOneOffInvoice(ctx, admin, sub.ID, inv.ID); err != nil {
 		return sales.Invoice{}, wrap("link one-off invoice", err)
 	}
+	// Read it again: the link makes it the subscription's.
+	if linked, err := s.sales.Invoice(ctx, admin, inv.ID, user); err == nil {
+		return linked, nil
+	}
 	return scheduled, nil
 }
 
