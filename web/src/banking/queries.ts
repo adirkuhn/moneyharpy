@@ -138,18 +138,19 @@ export function useUnlinkBooking(administrationId: string, id: string) {
   })
 }
 
-/** Pays a sales invoice with what the transaction has open, or the amount given in its direction. */
+/** Pays a sales or external invoice with what the transaction has open, or the amount given in its direction. */
 export function useLinkInvoice(administrationId: string, id: string) {
   const client = useQueryClient()
   const saved = useMutationSaved(administrationId, id)
   return useMutation({
-    mutationFn: (body: { booking_id: string; price_base?: string }) =>
-      unwrap(api.PATCH('/api/v2/{administration_id}/financial_mutations/{id}/link_booking', { ...one(administrationId, id), body: { booking_type: 'SalesInvoice', ...body } })),
+    mutationFn: (body: { booking_type: 'SalesInvoice' | 'ExternalSalesInvoice'; booking_id: string; price_base?: string }) =>
+      unwrap(api.PATCH('/api/v2/{administration_id}/financial_mutations/{id}/link_booking', { ...one(administrationId, id), body })),
     onSuccess: saved.onSuccess,
     onSettled: () => {
       void saved.onSettled()
-      void client.invalidateQueries({ queryKey: ['sales-invoices', administrationId] })
-      void client.invalidateQueries({ queryKey: ['sales-invoice', administrationId] })
+      for (const key of ['sales-invoices', 'sales-invoice', 'external-invoices', 'external-invoice']) {
+        void client.invalidateQueries({ queryKey: [key, administrationId] })
+      }
     },
   })
 }
@@ -164,6 +165,7 @@ export function useUnlinkPayment(administrationId: string, id: string) {
     onSettled: () => {
       void saved.onSettled()
       void client.invalidateQueries({ queryKey: ['sales-invoice', administrationId] })
+      void client.invalidateQueries({ queryKey: ['external-invoice', administrationId] })
     },
   })
 }

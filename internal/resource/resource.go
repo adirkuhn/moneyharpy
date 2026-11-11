@@ -104,7 +104,8 @@ const (
 	// Contacts.
 	TypeContact Type = "contacts"
 	// Sales.
-	TypeSalesInvoice Type = "sales_invoices"
+	TypeSalesInvoice         Type = "sales_invoices"
+	TypeExternalSalesInvoice Type = "external_sales_invoices"
 	// Journal.
 	TypeGeneralJournalDocument Type = "documents/general_journal_documents"
 )
