@@ -48,7 +48,8 @@
 .ledger__state--icon { display: inline-flex; align-items: center; gap: 0.375rem; }
 .ledger__state--icon::before { content: none; }
 
-/* Tables whose rows open the item. */
+/* Tables whose rows open the item. A block header (with its Add menu) stays above them. */
+.settings-block__header { position: relative; z-index: 2; }
 .data-table--rows tbody tr { position: relative; }
 .data-table--rows tbody tr:hover td { background: var(--row-hover); }
 .data-table--rows td a.row-link { color: var(--text); text-decoration: none; }
