@@ -41,7 +41,7 @@ function RateTable({ administrationId, type, rates }: { administrationId: string
     )
   }
   return (
-    <table className="data-table" aria-label={title}>
+    <table className="data-table data-table--rows" aria-label={title}>
       <thead>
         <tr>
           <th scope="col">{title}</th>
@@ -53,7 +53,7 @@ function RateTable({ administrationId, type, rates }: { administrationId: string
         {rates.map((r) => (
           <tr key={r.id} className={r.active ? undefined : 'is-inactive'}>
             <td>
-              <Link to={`/${administrationId}/tax_rates/${r.id}`}>{r.name}</Link>
+              <Link className="row-link" to={`/${administrationId}/tax_rates/${r.id}`}>{r.name}</Link>
               {!r.active && <span className="hint"> · {t('bookkeeping.inactive')}</span>}
             </td>
             <td className="data-table__extra">{rateLabel(t, r)}</td>

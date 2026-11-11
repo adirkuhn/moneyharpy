@@ -38,7 +38,7 @@ function CategoryTable({ administrationId, title, types, accounts }: TableProps)
   const { t } = useTranslation()
   const remove = useDeleteLedgerAccount(administrationId)
   return (
-    <table className="data-table category-table" aria-label={title}>
+    <table className="data-table data-table--rows category-table" aria-label={title}>
       <thead>
         <tr>
           <th scope="col">{title}</th>
@@ -62,7 +62,7 @@ function CategoryTable({ administrationId, title, types, accounts }: TableProps)
                   <div className="category" style={{ paddingInlineStart: `${depth * 1.25}rem` }}>
                     {a.account_id && <span className="code-chip">{a.account_id}</span>}
                     <div className="category__text">
-                      <Link to={`/${administrationId}/ledger_accounts/${a.id}`}>{a.name}</Link>
+                      <Link className="row-link" to={`/${administrationId}/ledger_accounts/${a.id}`}>{a.name}</Link>
                       {!a.active && <span className="hint"> · {t('bookkeeping.inactive')}</span>}
                       {a.description && <p className="hint">{a.description}</p>}
                     </div>

@@ -1,5 +1,5 @@
 export const en = {
-  common: { loading: 'Loading…', language: 'Language', theme: 'Theme', system: 'System', light: 'Light', dark: 'Dark', cancel: 'Cancel', next: 'Next', skip: 'Skip to content', genericError: 'Something went wrong. Try again.', requestFailed: 'The request failed', pagination: 'Pagination', page: 'Page {{n}}', previousPage: 'Previous page', nextPage: 'Next page' },
+  common: { close: 'Close', loading: 'Loading…', language: 'Language', theme: 'Theme', system: 'System', light: 'Light', dark: 'Dark', cancel: 'Cancel', next: 'Next', skip: 'Skip to content', genericError: 'Something went wrong. Try again.', requestFailed: 'The request failed', pagination: 'Pagination', page: 'Page {{n}}', previousPage: 'Previous page', nextPage: 'Next page' },
   login: {
     title: 'Login', email: 'Email address', password: 'Password', submit: 'Login to MoneyHarpy', or: 'or', forgot: 'Forgot your password?', noAccount: 'No account?', passwordChanged: 'Password changed. Log in with your new password.', google: 'Continue with Google', lm2: 'Continue with LM2',
     unreachable: 'MoneyHarpy could not be reached. Reload the page to try again.',
@@ -211,6 +211,7 @@ export const en = {
   overview: {
     title: 'Overview', morning: 'Good morning {{name}}!', afternoon: 'Good afternoon {{name}}!', evening: 'Good evening {{name}}!',
     add: 'Add', addMenu: 'Add to this administration', addAccount: 'Financial account', addRule: 'Booking rule', addCategory: 'Category',
+    addInvoice: 'Invoice', addExternal: 'External invoice', addRecurring: 'Recurring invoice', addJournal: 'Manual journal', addContact: 'Contact',
     summary: 'Summary', bank: 'Bank', balance: 'Balance', toLink: 'To link',
     salesInvoices: 'Sales invoices and external invoices', toReceive: 'To receive', toRemind: 'To remind',
     incoming: 'Incoming', toPay: 'To pay', toProcess: 'To process',
@@ -219,7 +220,6 @@ export const en = {
     nothing: 'You have no access to the parts of this administration shown here. Ask an owner for permissions.',
     types: { financial_mutation: 'Transaction' }, states: { processed: 'Booked' },
     loadError: 'The overview could not be loaded. Reload the page to try again.',
-    tally_one: '{{amount}} · {{count}} invoice', tally_other: '{{amount}} · {{count}} invoices',
   },
   onboarding: {
     welcome: 'Welcome {{name}}', subtitle: 'In a few steps, we will create your financial administration.',
@@ -245,6 +245,7 @@ export const en = {
     bankAccount: 'Bank account', bankHolder: 'Account holder', iban: 'Account number', bic: 'BIC',
     editDetails: 'Edit company information', editSender: 'Edit sender address', toCompany: 'To Company',
     detailsNotice: 'The company details are shown on your invoices and estimates.',
+    detailsCheck: 'After editing, check that your <styles>document styles</styles> and <workflows>workflows</workflows> are still to your liking.',
     noVat: 'Company does not have a VAT number', noVatReason: 'Reason',
     reasons: { below_tax_threshold: 'Revenue below tax threshold', industry_exemption: 'Industry exemption' },
     kor: 'Company has been registered for the small business scheme (KOR)',
@@ -498,9 +499,12 @@ export const en = {
     customCss: 'Custom CSS', customCssHelp: 'Applied to PDFs of your documents, once MoneyHarpy creates them.',
   },
   user: {
-    title: 'User account', name: 'Name', email: 'Email', tokens: 'API tokens', tokensHint: 'Send a token as a bearer token to use the', api: 'API', copy: 'Copy this token now. It will not be shown again.', tokenName: 'Token name', create: 'Create token', list: 'API tokens', revoke: 'Revoke', revokeName: 'Revoke {{name}}',
+    subtitle: 'Your details, how you sign in, and access to the API.', details: 'Account details', detailsSubtitle: 'The name and email address you sign in with.',
+    tokensSubtitle: 'Send a token as a bearer token to use the API.', apiDocs: 'API documentation', created: 'Created', newToken: 'New API token',
+    title: 'User account', name: 'Name', email: 'Email', tokens: 'API tokens', copy: 'Copy this token now. It will not be shown again.', tokenName: 'Token name', create: 'Create token', list: 'API tokens', revoke: 'Revoke', revokeName: 'Revoke {{name}}',
   },
   instance: {
+    subtitle: 'Settings for everyone on this MoneyHarpy installation: sign-in, services and support access.', servicesTitle: 'Sign-in and services', servicesSubtitle: 'How people register and sign in, and the services MoneyHarpy connects to.',
     webhooksLocal: 'Let webhooks reach plain http and local addresses', webhooksLocalHint: 'For development only. Off, webhooks need public https addresses, so they cannot reach this server\u2019s own network.',
     storageTitle: 'File storage', storageEnable: 'Keep uploaded files, such as logos, in S3-compatible storage', storageHint: 'Works with Amazon S3, Cloudflare R2, Backblaze B2, MinIO, SeaweedFS and other S3-compatible services. While this is off, uploads are kept on the server\u2019s disk.', storageEndpoint: 'Endpoint', storageRegion: 'Region', storageBucket: 'Bucket', storageAccessKey: 'Access key', storageSecretKey: 'Secret key', storagePathStyle: 'Use path-style addresses (needed by most self-hosted services)', testStorage: 'Test storage', storageWorks: 'The storage works',
     title: 'Instance settings', register: 'Allow new users to register', googleTitle: 'Google login', googleEnable: 'Let users continue with Google', googleId: 'Google client ID', googleSecret: 'Google client secret', stored: 'Stored. Type to replace it.',

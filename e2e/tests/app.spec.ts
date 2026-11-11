@@ -801,7 +801,7 @@ test('sales invoices are paid by hand and by a bank transaction, and the overvie
   const number = (await sent.json()).invoice_id as string
   await page.goto(`${uri}/feed`)
   const sales = page.getByRole('region', { name: 'Sales invoices and external invoices' })
-  await expect(sales.getByRole('link', { name: /To receive\s*€1,000\.00 · 1 invoice/ })).toBeVisible()
+  await expect(sales.getByRole('link', { name: /To receive\s*— 1\s*€1,000\.00/ })).toBeVisible()
 
   // A bank transaction of the same amount pays it.
   const account = await (await page.request.post(`${api}/financial_accounts`, { data: { financial_account: { name: 'Main bank', identifier: 'NL91ABNA0417164300' } } })).json()
@@ -823,7 +823,7 @@ test('sales invoices are paid by hand and by a bank transaction, and the overvie
   await expect(page.getByRole('table', { name: 'Payments' }).getByRole('link', { name: 'Bank transaction' })).toBeVisible()
 
   await page.goto(`${uri}/feed`)
-  await expect(sales.getByRole('link', { name: /To receive\s*€0\.00 · 0 invoices/ })).toBeVisible()
+  await expect(sales.getByRole('link', { name: /To receive\s*— 0\s*€0\.00/ })).toBeVisible()
 })
 
 test('an external invoice is uploaded, filled in, booked and paid by a bank transaction', async ({ page }) => {

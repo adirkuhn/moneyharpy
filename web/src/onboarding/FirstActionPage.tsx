@@ -4,9 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { Wizard } from './Wizard'
 import { Loading } from '../layout/Loading'
+import { PageIcon, type PageIconKind } from '../layout/pageIcons'
 
 const actions = ['invoice', 'purchase', 'bank', 'open'] as const
 type Action = (typeof actions)[number]
+const icons: Record<Action, PageIconKind> = { invoice: 'invoice', purchase: 'receipt', bank: 'card', open: 'cabinet' }
 
 export function FirstActionPage() {
   const { t } = useTranslation()
@@ -33,9 +35,10 @@ export function FirstActionPage() {
       onSubmit={submit}
       footer={<button className="btn btn--primary wizard__end" disabled={!choice}>{t('onboarding.getStarted')}</button>}
     >
-      <div className="choices">
+      <div className="choices" role="radiogroup" aria-label={t('onboarding.firstTitle')}>
         {actions.map((action) => (
-          <label className="choice" key={action}>
+          <label className="choice choice--card" key={action}>
+            <span className="choice__icon"><PageIcon kind={icons[action]} /></span>
             <input type="radio" name="first_action" checked={choice === action} onChange={() => setChoice(action)} />
             <span className="choice__text">
               <strong>{t(`onboarding.${action}`)}</strong>
