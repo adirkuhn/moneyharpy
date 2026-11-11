@@ -737,28 +737,32 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
 
   await page.getByRole('link', { name: 'New invoice' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Add invoice' })).toBeVisible()
-  // The invoice is edited as its document: pick the contact in the address block, then open the lines.
+  // As on Moneybird, the "Add invoice" popup opens over the empty document: pick the contact and a reference.
+  const popup = page.getByRole('dialog', { name: 'Add invoice' })
+  await popup.getByRole('combobox', { name: 'Contact' }).click()
+  await popup.getByRole('searchbox', { name: 'Query' }).fill('Example')
+  await popup.getByRole('option', { name: 'Example Shop B.V.' }).click()
+  await expect(popup.getByRole('combobox', { name: 'Contact' })).toContainText('Example Shop B.V.')
+  await popup.getByLabel('Reference').fill('Order 12')
+  // "Invoice details" saves the draft and opens its details editor.
+  await popup.getByRole('button', { name: 'Invoice details' }).click()
+  await expect(page).toHaveURL(/\/sales_invoices\/\d+\/edit$/)
   const paper = page.getByRole('document', { name: 'Invoice preview' })
-  await paper.getByRole('combobox', { name: 'Contact' }).click()
-  await page.getByRole('searchbox', { name: 'Find a contact' }).fill('Example')
-  await page.getByRole('option', { name: 'Example Shop B.V.' }).click()
-  await expect(paper.getByRole('combobox', { name: 'Contact' })).toContainText('Example Shop B.V.')
-  await page.getByLabel('Reference').fill('Order 12')
-  await paper.getByRole('button', { name: '2. Add invoice details' }).click()
-  const rows = page.getByRole('table', { name: 'Lines' }).getByRole('row')
+  await expect(paper.getByRole('button', { name: 'Contact' })).toContainText('Example Shop B.V.')
+  const rows = page.getByRole('table', { name: 'Invoice details' }).getByRole('row')
   const vat21 = async (row: number) =>
     (await rows.nth(row).getByLabel('VAT rate').locator('option', { hasText: '21%' }).first().getAttribute('value')) ?? ''
   await rows.nth(1).getByLabel('Description').fill('Consulting')
-  await rows.nth(1).getByLabel('Quantity').fill('2')
+  await rows.nth(1).getByLabel('Amount').fill('2 x')
   await rows.nth(1).getByLabel('Price').fill('100')
   await rows.nth(1).getByLabel('VAT rate').selectOption(await vat21(1))
-  await page.getByRole('button', { name: 'Add line' }).click()
+  await page.getByRole('button', { name: 'Add detail' }).click()
   await rows.nth(2).getByLabel('Description').fill('Travel costs')
   await rows.nth(2).getByLabel('Price').fill('50')
   await rows.nth(2).getByLabel('VAT rate').selectOption(await vat21(2))
-  // The totals are printed in the document's language, which follows the workflow.
-  const totals = paper.getByRole('table', { name: 'Totals' })
-  await expect(totals.getByRole('row', { name: /^(Total|Totaal)\b/ })).toContainText(/302[.,]50/)
+  // The editor shows its totals in the user's language.
+  const totals = page.getByRole('region', { name: 'Invoice details' }).getByRole('table', { name: 'Totals' })
+  await expect(totals.getByRole('row', { name: /^Total\b/ })).toContainText(/302[.,]50/)
   await page.getByRole('button', { name: 'Save invoice' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Draft #1' })).toBeVisible()
 

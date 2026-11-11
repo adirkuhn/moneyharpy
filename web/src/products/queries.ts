@@ -40,6 +40,15 @@ export function useProducts(administrationId: string, search: ProductSearch) {
   })
 }
 
+/** The active products whose title or description matches what is typed, for an invoice line. */
+export function useProductSearch(administrationId: string, query: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['product-search', administrationId, query],
+    enabled: enabled && query.length >= 2,
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/products', { params: { path: admin(administrationId), query: { query, per_page: '10' } } })),
+  })
+}
+
 export function useProduct(administrationId: string, id?: string) {
   return useQuery({
     queryKey: ['product', administrationId, id],

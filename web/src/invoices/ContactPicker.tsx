@@ -18,7 +18,7 @@ type Props = {
 }
 
 /** The contacts matching what is typed, asked of the server after a pause in typing. */
-function useContactSearch(administrationId: string, query: string, enabled: boolean) {
+export function useContactSearch(administrationId: string, query: string, enabled: boolean) {
   const [debounced, setDebounced] = useState(query)
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(query.trim()), 200)
