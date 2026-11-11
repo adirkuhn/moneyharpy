@@ -59,6 +59,25 @@ func TestCreateTakesTheDefaults(t *testing.T) {
 	}
 }
 
+func TestNextDraftIDIsTheNumberCreateWouldGive(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	if got, err := h.svc.NextDraftID(ctx, adminID, owner); err != nil || got != 1 {
+		t.Fatalf("first = %d, %v", got, err)
+	}
+	draft(t, h)
+	want, err := h.svc.NextDraftID(ctx, adminID, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := draft(t, h); want != 2 || got.DraftID != want {
+		t.Errorf("next = %d, created %d", want, got.DraftID)
+	}
+	if _, err := h.svc.NextDraftID(ctx, adminID, stranger); !errors.Is(err, administration.ErrNotFound) {
+		t.Errorf("stranger = %v", err)
+	}
+}
+
 func TestCreateValidates(t *testing.T) {
 	h := newHarness(t)
 	_, err := h.svc.Create(context.Background(), adminID, owner, Changes{

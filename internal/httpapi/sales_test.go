@@ -65,6 +65,9 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 	vat21 := salesRate(t, owner, a.Id, "21")
 	revenue := category(t, owner, a.Id, "Revenue")
 
+	if next := decode[httpapi.NextDraftId](t, owner.do(http.MethodGet, invoices+"/next_draft_id", nil)); next.DraftId != 1 {
+		t.Errorf("next draft id = %d", next.DraftId)
+	}
 	created := owner.do(http.MethodPost, invoices, map[string]any{"sales_invoice": map[string]any{
 		"contact_id": customer.ID, "reference": "Order 6",
 		"details_attributes": map[string]any{

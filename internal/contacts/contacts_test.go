@@ -49,6 +49,30 @@ func TestCreateNumbersContactsAndTakesDefaults(t *testing.T) {
 	}
 }
 
+func TestNextCustomerIDIsTheNumberCreateWouldGive(t *testing.T) {
+	s, _ := newService()
+	ctx := context.Background()
+	next := func() string {
+		t.Helper()
+		got, err := s.NextCustomerID(ctx, adminID, owner)
+		if err != nil {
+			t.Fatalf("NextCustomerID: %v", err)
+		}
+		return got
+	}
+	if got := next(); got != "1" {
+		t.Errorf("first = %q, want 1", got)
+	}
+	create(t, s, Changes{Firstname: ptr("Ann"), CustomerID: ptr("42")})
+	want := next()
+	if got := create(t, s, Changes{Lastname: ptr("Jansen")}); want != "43" || got.CustomerID != want {
+		t.Errorf("next = %q, created %q", want, got.CustomerID)
+	}
+	if _, err := s.NextCustomerID(ctx, adminID, stranger); !errors.Is(err, administration.ErrNotFound) {
+		t.Errorf("stranger = %v", err)
+	}
+}
+
 func TestCreateNeedsAName(t *testing.T) {
 	s, _ := newService()
 	_, err := s.Create(context.Background(), adminID, owner, Changes{City: ptr("Utrecht")})

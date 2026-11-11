@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 )
 
 type contactPerson struct {
@@ -52,6 +54,9 @@ func TestContactsLifecycle(t *testing.T) {
 		ID string `json:"id"`
 	}](t, owner.do(http.MethodPost, api+"/custom_fields", map[string]any{"custom_field": map[string]any{"name": "Account manager", "source": "contact"}}))
 
+	if next := decode[httpapi.NextCustomerId](t, owner.do(http.MethodGet, api+"/contacts/next_customer_id", nil)); next.CustomerId != "1" {
+		t.Errorf("next customer id = %q", next.CustomerId)
+	}
 	created := owner.do(http.MethodPost, api+"/contacts", map[string]any{"contact": map[string]any{
 		"company_name": "Example Shop B.V.", "send_invoices_to_email": "billing@example.com", "delivery_method": "email",
 		"sepa_active": "true", "sepa_iban": "NL91ABNA0417164300", "sepa_iban_account_name": "Example Shop", "sepa_mandate_id": "M-1",
