@@ -1,0 +1,107 @@
+/*
+ * The contacts list and form, after Moneybird's: a list grouped by letter
+ * with the search in the action bar, and one card of compact sections.
+ * Colours come from the tokens in styles.css.
+ */
+
+.mute { color: var(--muted); }
+
+/* The search between the filter button and the actions, as on Moneybird. */
+.actionbar__search { flex: 1 1 16rem; max-width: 19rem; min-height: 2.25rem; margin: 0 auto; }
+.actionbar:has(.actionbar__search) .actionbar__actions { flex: 1 1 auto; }
+
+/* One column of names; the letter of each group stands in a narrow column before the first name. */
+.contact-list .data-table { margin-bottom: 0; table-layout: fixed; }
+.contact-list .data-table th:first-child { width: 5rem; }
+.contact-list .data-table th:last-child { width: auto; }
+.contact-list .data-table td { padding-block: 0.4375rem; }
+.contact-list .data-table tr + tr td { border-top: 0; }
+.contact-list .document-table__link { font-weight: 400; }
+.contact-list__letter { display: block; padding-left: 1.25rem; color: var(--text); font-weight: 500; }
+.contact-list__inactive { margin: 0.5rem 0 0; padding: 0.625rem 1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--muted); }
+
+.link-button { padding: 0; border: 0; background: none; color: var(--link); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.link-button:hover { text-decoration-thickness: 2px; }
+
+/* The nudge above the list, as Moneybird's small feature card. */
+.feature-banner { display: flex; align-items: center; gap: 0.875rem; margin: 0 0 0.625rem; padding: 0.625rem 0.875rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.feature-banner__icon { display: inline-flex; flex: none; justify-content: center; align-items: center; width: 2.25rem; height: 2.25rem; border-radius: 8px; background: var(--blue); color: var(--white); }
+.feature-banner__text { flex: 1; min-width: 0; }
+.feature-banner__title { margin: 0; font-size: 0.875rem; font-weight: 500; }
+.feature-banner__text p { margin: 0.125rem 0 0; font-size: 0.75rem; }
+
+.contact-import { width: 20rem; padding: 0.75rem 1rem; }
+.contact-import p { margin: 0; }
+
+/* The advanced filter's first fields side by side, as Moneybird's two columns. */
+.filter-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; }
+.filter-columns .filter-field select { width: 100%; }
+
+/* The contact form: one card of sections, then a bar that stays at the bottom of the screen. */
+.contact-form { margin: 0 auto; }
+.contact-form > .problems, .contact-form > .alert { margin: 0 0 1rem; }
+.contact-form__sheet { padding: 0.5rem 1rem 1.5rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.contact-form__section { padding-top: 0.75rem; }
+.contact-form__section + .contact-form__section { padding-top: 1.75rem; }
+.contact-form__section-header { display: flex; align-items: center; gap: 0.625rem; min-height: 2.25rem; margin-bottom: 1rem; padding: 0 0 0.75rem 0.75rem; border-bottom: 1px solid var(--line); }
+.contact-form__section-icon { display: inline-flex; color: var(--text); }
+.contact-form__section-title { flex: 1; margin: 0; font-size: 0.875rem; font-weight: 500; }
+.contact-form__rows { display: grid; gap: 0.25rem; padding-left: 2rem; }
+.contact-form__text { margin: 0; }
+.contact-form__person { display: grid; gap: 0.25rem; min-width: 0; margin: 1.25rem 0 0; padding: 0; border: 0; }
+.contact-form__subtitle { margin: 0 0 0.25rem; padding: 0; font-weight: 400; }
+
+/* Compact rows: a narrow label column and short controls, as on Moneybird. */
+.contact-form .form-input { --control-width: 18rem; grid-template-columns: 10.5rem minmax(0, 1fr); gap: 0.25rem 1rem; align-items: center; }
+.contact-form .form-input--medium { --control-width: 11.75rem; }
+.contact-form .form-input--small { --control-width: 7.25rem; }
+.contact-form .form-input__label { padding-top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.contact-form .form-input__label.is-muted { color: var(--muted); }
+.contact-form .form-input__label-row { display: flex; align-items: center; gap: 0.375rem; min-width: 0; }
+.contact-form .form-input__message { grid-column: 2; }
+.contact-form input:not([type='checkbox']):not([type='radio']), .contact-form select { min-height: 1.875rem; padding-inline: 0.5rem; border-color: var(--line); }
+.contact-form .form-input__control { position: relative; }
+.contact-form .form-input__control:has(.contact-form__inline-btn, .char-counter) { max-width: var(--control-width); }
+.contact-form .picker__button { min-height: 1.875rem; }
+.contact-form .form-input--check-row .check { min-height: 1.875rem; }
+.contact-form .form-input--check-row .check input:disabled + span { color: var(--text); }
+.contact-form__inline-btn { position: absolute; right: 0.25rem; width: 1.5rem; height: 1.5rem; }
+.contact-form .form-input__control:has(.contact-form__inline-btn) > input { padding-right: 2rem; }
+
+/* Joined segments for a short choice; the chosen one is raised. */
+.segment-control { display: inline-flex; gap: 0.125rem; padding: 0.1875rem; border-radius: 8px; background: var(--bg); }
+.segment-control__item { position: relative; display: inline-flex; align-items: center; min-height: 1.5rem; padding: 0 0.625rem; border-radius: 6px; color: var(--muted); font-size: 0.8125rem; font-weight: 600; cursor: pointer; }
+/* The radio covers its label, so a click anywhere on the option lands on it. */
+.segment-control__item input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.segment-control__item.is-checked { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgb(9 38 83 / 0.18); }
+.segment-control__item:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+/* An information button beside a label, its text in a bubble on hover and focus. */
+.tip { position: relative; display: inline-flex; flex: none; }
+.tip__button { display: inline-flex; padding: 0.125rem; border: 0; border-radius: 4px; background: none; color: var(--text); cursor: help; }
+.tip__text { position: absolute; bottom: calc(100% + 0.375rem); left: 50%; z-index: 20; width: max-content; max-width: 16rem; padding: 0.5rem 0.625rem; border-radius: 6px; background: var(--navy); color: var(--white); font-size: 0.75rem; white-space: normal; visibility: hidden; transform: translateX(-50%); }
+.tip:hover .tip__text, .tip__button:focus-visible + .tip__text { visibility: visible; }
+
+/* A count inside the field's right edge. */
+.char-counter { position: absolute; right: 0.5rem; color: var(--muted); font-size: 0.75rem; font-weight: 600; pointer-events: none; }
+.contact-form .form-input__control:has(.char-counter) > input { padding-right: 3rem; }
+
+/* The company name with the register's country in front and its matches under it. */
+.company-name { position: relative; display: flex; flex: 1; max-width: var(--control-width); }
+.contact-form .company-name__country { flex: none; width: 4.25rem; border-right: 0; border-radius: 6px 0 0 6px; background: var(--bg); }
+.contact-form .company-name__country + input { flex: 1; min-width: 0; border-radius: 0 6px 6px 0; }
+.company-name > input:only-child { flex: 1; min-width: 0; }
+.company-name__matches { position: absolute; top: calc(100% + 0.25rem); left: 0; z-index: 15; width: max(100%, 22rem); max-height: 16rem; margin: 0; padding: 0.25rem; overflow-y: auto; list-style: none; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 12px 28px rgb(9 38 83 / 0.22); }
+.company-name__matches li { display: grid; padding: 0.375rem 0.5rem; border-radius: 6px; cursor: pointer; }
+.company-name__matches li.is-active, .company-name__matches li:hover { background: var(--row-hover); }
+.company-name__matches .hint { margin: 0; }
+
+.contact-form__bar { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; padding: 0.875rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: 0 -4px 16px rgb(9 38 83 / 0.08); }
+
+@media (max-width: 40rem) {
+  .actionbar__search { flex-basis: 100%; max-width: none; margin: 0; }
+  .contact-form__rows { padding-left: 0; }
+  .contact-form .form-input { grid-template-columns: minmax(0, 1fr); }
+  .contact-form .form-input__message { grid-column: 1; }
+  .filter-columns { grid-template-columns: minmax(0, 1fr); }
+}

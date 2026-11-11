@@ -11,7 +11,8 @@ export const perPage = 50
 
 export type ContactSearch = {
   query: string
-  kind: '' | 'company' | 'private_individual'
+  /** The filter terms of the advanced filter, such as contact_type:company; empty for all contacts. */
+  filter: string
   archived: boolean
   page: number
 }
@@ -20,26 +21,45 @@ export type ContactPage = { contacts: Contact[]; total: number }
 
 const admin = (administrationId: string) => ({ administration_id: administrationId })
 
+async function fetchContacts(administrationId: string, search: ContactSearch, size: number): Promise<ContactPage> {
+  const query = {
+    page: String(search.page),
+    per_page: String(size),
+    ...(search.query ? { query: search.query } : {}),
+    ...(search.archived ? { include_archived: 'true' as const } : {}),
+  }
+  const { data, error, response } = search.filter
+    ? await api.GET('/api/v2/{administration_id}/contacts/filter', { params: { path: admin(administrationId), query: { ...query, filter: search.filter } } })
+    : await api.GET('/api/v2/{administration_id}/contacts', { params: { path: admin(administrationId), query } })
+  if (!response.ok) {
+    throw new ApiError(response.status, error)
+  }
+  return { contacts: data ?? [], total: Number(response.headers.get('X-Total-Count') ?? data?.length ?? 0) }
+}
+
 /** One page of contacts, with the number selected in all. */
 export function useContacts(administrationId: string, search: ContactSearch) {
   return useQuery({
     queryKey: ['contacts', administrationId, search],
     placeholderData: keepPreviousData,
-    queryFn: async (): Promise<ContactPage> => {
-      const query = {
-        page: String(search.page),
-        per_page: String(perPage),
-        ...(search.query ? { query: search.query } : {}),
-        ...(search.archived ? { include_archived: 'true' as const } : {}),
-      }
-      const { data, error, response } = search.kind
-        ? await api.GET('/api/v2/{administration_id}/contacts/filter', { params: { path: admin(administrationId), query: { ...query, filter: `contact_type:${search.kind}` } } })
-        : await api.GET('/api/v2/{administration_id}/contacts', { params: { path: admin(administrationId), query } })
-      if (!response.ok) {
-        throw new ApiError(response.status, error)
-      }
-      return { contacts: data ?? [], total: Number(response.headers.get('X-Total-Count') ?? data?.length ?? 0) }
-    },
+    queryFn: () => fetchContacts(administrationId, search, perPage),
+  })
+}
+
+/** How many contacts the search selects with the archived ones included, to tell how many it leaves out. */
+export function useTotalWithArchived(administrationId: string, search: ContactSearch, enabled: boolean) {
+  return useQuery({
+    queryKey: ['contacts', administrationId, 'with-archived', search.query, search.filter],
+    enabled,
+    queryFn: async () => (await fetchContacts(administrationId, { ...search, archived: true, page: 1 }, 1)).total,
+  })
+}
+
+/** The first page of groups of contacts that may be the same. */
+export function useContactDoubles(administrationId: string) {
+  return useQuery({
+    queryKey: ['contacts', administrationId, 'doubles'],
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/contacts/doubles', { params: { path: admin(administrationId) } })),
   })
 }
 
@@ -125,6 +145,17 @@ export function useDeleteNote(administrationId: string, contactId: string) {
     mutationFn: (id: string) =>
       unwrap(api.DELETE('/api/v2/{administration_id}/contacts/{contact_id}/notes/{id}', { params: { path: { ...admin(administrationId), contact_id: contactId, id } } })),
     onSuccess: () => refresh(contactId),
+  })
+}
+
+export type CompanyMatch = components['schemas']['CompanyMatch']
+
+/** Companies in a country's company register whose name matches, for filling in a new contact. */
+export function useCompanyRegister(country: string, term: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['company-search', country, term],
+    enabled: enabled && term.length >= 2,
+    queryFn: () => unwrap(api.GET('/api/onboarding/company_search', { params: { query: { country, query: term } } })),
   })
 }
 
