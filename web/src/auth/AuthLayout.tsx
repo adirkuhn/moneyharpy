@@ -14,6 +14,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
         <h1>{title}</h1>
         {children}
       </div>
+      <p className="wizard__brand"><Logo decorative /></p>
     </main>
   )
 }

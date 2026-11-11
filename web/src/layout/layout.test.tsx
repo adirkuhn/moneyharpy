@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn, user } from '../test/server'
@@ -31,6 +32,22 @@ describe('top navigation', () => {
     expect(await within(menu).findByRole('link', { name: 'Harpy B.V.' })).toHaveAttribute('href', '/11')
     expect(within(menu).getByRole('link', { name: 'All administrations' })).toHaveAttribute('href', '/administrations')
     expect(within(menu).getByRole('link', { name: 'New administration' })).toHaveAttribute('href', '/onboarding/company/create_administration?origin=onboarding')
+  })
+
+  it('marks the open administration in the switcher', async () => {
+    const other = administration({ id: '12', name: 'Other B.V.' })
+    server.use(signedIn(), listing([harpy, other]))
+    server.use(
+      http.get('*/api/v2/administrations/11', () => HttpResponse.json(harpy)),
+      http.get('*/api/v2/11/overview', () => HttpResponse.json({ recently_processed: [] })),
+      http.get('*/api/v2/11/financial_mutations', () => HttpResponse.json([])),
+      http.get('*/api/v2/11/financial_accounts', () => HttpResponse.json([])),
+    )
+    renderAt('/11/feed')
+    await userEvent.click(await screen.findByRole('button', { name: 'Harpy B.V.' }))
+    const menu = await screen.findByRole('navigation', { name: 'Your administrations' })
+    expect(within(menu).getByRole('link', { name: 'Harpy B.V.' })).toHaveAttribute('aria-current', 'true')
+    expect(within(menu).getByRole('link', { name: 'Other B.V.' })).not.toHaveAttribute('aria-current')
   })
 
   it('opens the notifications in a side panel and closes it again', async () => {
