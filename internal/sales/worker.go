@@ -42,8 +42,8 @@ func (s *Service) Summary(ctx context.Context, admin, user resource.ID) (Summary
 	return Summary{Receivables: r, Currency: a.Currency}, nil
 }
 
-// Run does the background work every interval until ctx ends: sending
-// scheduled invoices, marking invoices (external ones too) late and sending
+// Run does the background work every interval until ctx ends: making the
+// invoices of recurring invoices, sending scheduled invoices, marking invoices (external ones too) late and sending
 // the reminders their workflows send automatically.
 func (s *Service) Run(ctx context.Context, interval time.Duration, onError func(error)) {
 	t := time.NewTicker(interval)
@@ -98,6 +98,7 @@ func (s *Service) workOn(ctx context.Context, admin, user resource.ID) []error {
 		errs = append(errs, fmt.Errorf("administration %s, %s %s: %w", admin, what, id, err))
 	}
 
+	errs = append(errs, s.recur(ctx, a, user, today)...)
 	scheduled, _, err := s.store.Invoices(ctx, admin, Query{States: []string{Scheduled}, Today: today})
 	if err != nil {
 		return append(errs, err)
@@ -110,21 +111,9 @@ func (s *Service) workOn(ctx context.Context, admin, user resource.ID) []error {
 		if inv.Delivery != nil {
 			in.EmailMessage = inv.Delivery.EmailMessage
 		}
-		sent, err := s.Send(ctx, admin, inv.ID, user, in)
-		if err != nil && !errors.Is(err, ErrDelivery) {
+		if err := s.sendInBackground(ctx, admin, user, inv, in); err != nil {
 			fail("send scheduled invoice", inv.ID, err)
-			continue
 		}
-		if err != nil {
-			fail("deliver scheduled invoice", inv.ID, err)
-			sent, _ = s.Invoice(ctx, admin, inv.ID, user)
-		}
-		action := map[string]string{"Email": "sales_invoice_send_email", "Post": "sales_invoice_send_post"}[deliveryMethod(sent)]
-		if action == "" {
-			action = "sales_invoice_send_manually"
-		}
-		s.notify(ctx, admin, action, sent)
-		s.notify(ctx, admin, "sales_invoice_state_changed_to_open", sent)
 	}
 
 	late, _, err := s.store.Invoices(ctx, admin, Query{States: []string{Late}, Today: today})
@@ -213,6 +202,29 @@ func (s *Service) remind(ctx context.Context, admin, user resource.ID, today tim
 		}
 	}
 	return errs
+}
+
+// sendInBackground sends an invoice as the background job does, telling
+// about it. An invoice that was sent but not delivered is still told about,
+// and the error returned.
+func (s *Service) sendInBackground(ctx context.Context, admin, user resource.ID, inv Invoice, in SendInput) error {
+	sent, err := s.Send(ctx, admin, inv.ID, user, in)
+	if err != nil && !errors.Is(err, ErrDelivery) {
+		return err
+	}
+	undelivered := err
+	if undelivered != nil {
+		if sent, err = s.Invoice(ctx, admin, inv.ID, user); err != nil {
+			return errors.Join(undelivered, err)
+		}
+	}
+	action := map[string]string{"Email": "sales_invoice_send_email", "Post": "sales_invoice_send_post"}[deliveryMethod(sent)]
+	if action == "" {
+		action = "sales_invoice_send_manually"
+	}
+	s.notify(ctx, admin, action, sent)
+	s.notify(ctx, admin, "sales_invoice_state_changed_to_open", sent)
+	return undelivered
 }
 
 func deliveryMethod(inv Invoice) string {

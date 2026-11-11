@@ -904,7 +904,9 @@ INSERT INTO sales_invoice_custom_field_values (sales_invoice_id, custom_field_id
 -- name: ContactOnSalesInvoice :one
 SELECT EXISTS (SELECT 1 FROM sales_invoices s WHERE s.administration_id = @administration_id AND s.contact_id = @contact_id
                UNION ALL
-               SELECT 1 FROM external_sales_invoices e WHERE e.administration_id = @administration_id AND e.contact_id = @contact_id);
+               SELECT 1 FROM external_sales_invoices e WHERE e.administration_id = @administration_id AND e.contact_id = @contact_id
+               UNION ALL
+               SELECT 1 FROM recurring_sales_invoices r WHERE r.administration_id = @administration_id AND r.contact_id = @contact_id);
 
 -- name: PaymentsOfInvoices :many
 SELECT * FROM payments
@@ -959,7 +961,9 @@ FROM (
 SELECT w.administration_id, o.user_id
 FROM (SELECT administration_id FROM sales_invoices WHERE state IN ('scheduled', 'open', 'late', 'reminded')
       UNION
-      SELECT administration_id FROM external_sales_invoices WHERE state = 'open') w
+      SELECT administration_id FROM external_sales_invoices WHERE state = 'open'
+      UNION
+      SELECT administration_id FROM recurring_sales_invoices WHERE active) w
 JOIN LATERAL (
     SELECT m.user_id FROM administration_members m
     WHERE m.administration_id = w.administration_id AND m.active AND 'ownership' = ANY(m.permissions)
@@ -1033,3 +1037,72 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16);
 
 -- name: PaymentsOfInvoice :many
 SELECT * FROM payments WHERE administration_id = $1 AND invoice_type = $2 AND invoice_id = $3;
+
+-- name: ListRecurringSalesInvoices :many
+-- The next invoice to make first.
+SELECT sqlc.embed(r), count(*) OVER () AS total
+FROM recurring_sales_invoices r
+WHERE r.administration_id = @administration_id
+  AND (sqlc.narg(active)::boolean IS NULL OR r.active = sqlc.narg(active))
+  AND (@frequency_type::text = '' OR r.frequency_type = @frequency_type)
+  AND (sqlc.narg(auto_send)::boolean IS NULL OR r.auto_send = sqlc.narg(auto_send))
+  AND (sqlc.narg(contact_id)::bigint IS NULL OR r.contact_id = sqlc.narg(contact_id))
+  AND (sqlc.narg(workflow_id)::bigint IS NULL OR r.workflow_id = sqlc.narg(workflow_id))
+ORDER BY r.invoice_date, r.id
+LIMIT sqlc.narg(max_rows) OFFSET @skip;
+
+-- name: RecurringSalesInvoiceByID :one
+SELECT * FROM recurring_sales_invoices WHERE administration_id = $1 AND id = $2;
+
+-- name: RecurringSalesInvoicesByIDs :many
+SELECT * FROM recurring_sales_invoices WHERE administration_id = @administration_id AND id = ANY(@ids::bigint[]) ORDER BY id;
+
+-- name: UpsertRecurringSalesInvoice :exec
+INSERT INTO recurring_sales_invoices (
+    id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, reference, language, currency,
+    prices_are_incl_tax, payment_conditions, discount, first_due_interval, start_date, invoice_date, last_date, active, frequency_type,
+    frequency_count, auto_send, auto_send_at, auto_send_user_id, mergeable, anchor_date, period_count, generated_count, total_excl_tax,
+    total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
+    $29, $30, $31, $32, $33, $34)
+ON CONFLICT (id) DO UPDATE SET
+    contact_id = EXCLUDED.contact_id, contact_person_id = EXCLUDED.contact_person_id, identity_id = EXCLUDED.identity_id,
+    document_style_id = EXCLUDED.document_style_id, workflow_id = EXCLUDED.workflow_id, reference = EXCLUDED.reference,
+    language = EXCLUDED.language, currency = EXCLUDED.currency, prices_are_incl_tax = EXCLUDED.prices_are_incl_tax,
+    payment_conditions = EXCLUDED.payment_conditions, discount = EXCLUDED.discount, first_due_interval = EXCLUDED.first_due_interval,
+    start_date = EXCLUDED.start_date, invoice_date = EXCLUDED.invoice_date, last_date = EXCLUDED.last_date, active = EXCLUDED.active,
+    frequency_type = EXCLUDED.frequency_type, frequency_count = EXCLUDED.frequency_count, auto_send = EXCLUDED.auto_send,
+    auto_send_at = EXCLUDED.auto_send_at, auto_send_user_id = EXCLUDED.auto_send_user_id, mergeable = EXCLUDED.mergeable,
+    anchor_date = EXCLUDED.anchor_date, period_count = EXCLUDED.period_count, generated_count = EXCLUDED.generated_count,
+    total_excl_tax = EXCLUDED.total_excl_tax, total_tax = EXCLUDED.total_tax, total_incl_tax = EXCLUDED.total_incl_tax,
+    total_discount = EXCLUDED.total_discount, tax_totals = EXCLUDED.tax_totals, updated_at = EXCLUDED.updated_at;
+
+-- name: TouchRecurringSalesInvoice :exec
+UPDATE recurring_sales_invoices SET updated_at = $3 WHERE administration_id = $1 AND id = $2;
+
+-- name: DeleteRecurringSalesInvoice :exec
+DELETE FROM recurring_sales_invoices WHERE administration_id = $1 AND id = $2;
+
+-- name: RecurringSalesInvoiceDetailsOf :many
+SELECT * FROM recurring_sales_invoice_details
+WHERE administration_id = @administration_id AND recurring_sales_invoice_id = ANY(@ids::bigint[]) ORDER BY row_order, id;
+
+-- name: DeleteRecurringSalesInvoiceDetails :exec
+DELETE FROM recurring_sales_invoice_details WHERE recurring_sales_invoice_id = $1;
+
+-- name: InsertRecurringSalesInvoiceDetail :exec
+INSERT INTO recurring_sales_invoice_details (id, administration_id, recurring_sales_invoice_id, description, period, price, amount, quantity,
+    tax_rate_id, ledger_account_id, project_id, product_id, row_order, is_optional, is_selected, line_base, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18);
+
+-- name: RecurringSalesInvoiceCustomFieldValuesOf :many
+SELECT v.recurring_sales_invoice_id, f.id, f.name, v.value
+FROM recurring_sales_invoice_custom_field_values v JOIN custom_fields f ON f.id = v.custom_field_id
+WHERE f.administration_id = @administration_id AND v.recurring_sales_invoice_id = ANY(@ids::bigint[])
+ORDER BY f.position, f.id;
+
+-- name: DeleteRecurringSalesInvoiceCustomFieldValues :exec
+DELETE FROM recurring_sales_invoice_custom_field_values WHERE recurring_sales_invoice_id = $1;
+
+-- name: InsertRecurringSalesInvoiceCustomFieldValue :exec
+INSERT INTO recurring_sales_invoice_custom_field_values (recurring_sales_invoice_id, custom_field_id, value) VALUES ($1, $2, $3);

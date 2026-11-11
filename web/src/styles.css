@@ -306,6 +306,7 @@ a.ledger__name::after { content: ''; position: absolute; inset: 0; }
 .form-section { display: grid; gap: 1rem; min-width: 0; margin-block: 0; padding: 1.25rem 0; border: 0; }
 .form-section + .form-section { border-top: 1px solid var(--line); }
 .form-section__title { float: left; width: 100%; margin: 0 0 0.25rem; padding: 0; font-size: 1.0625rem; font-weight: 650; }
+.form-sheet__fieldset { min-width: 0; margin: 0 auto; padding: 0; border: 0; }
 .form-sheet__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
 
 .form-input { --control-width: 23rem; display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 0.375rem 1.5rem; align-items: start; }

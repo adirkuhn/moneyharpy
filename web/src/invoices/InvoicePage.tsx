@@ -81,6 +81,9 @@ function InvoiceView({ administrationId, invoiceId }: { administrationId: string
       {payable && (
         <button type="button" className="btn btn--secondary btn--small" onClick={() => setPanel('uncollectible')}>{t('invoices.writeOff.uncollectible')}</button>
       )}
+      {inv.state === 'draft' && (
+        <Link className="btn btn--secondary btn--small" to={`/${administrationId}/recurring_sales_invoices/new?from=${inv.id}`}>{t('recurring.makeRecurring')}</Link>
+      )}
       {!sent && <ConfirmDelete label={t('invoices.delete')} confirmLabel={t('invoices.confirmDelete')} disabled={remove.isPending} onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })} />}
     </>
   )

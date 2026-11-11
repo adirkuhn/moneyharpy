@@ -552,7 +552,9 @@ func (q *Queries) ContactInJournal(ctx context.Context, arg ContactInJournalPara
 const contactOnSalesInvoice = `-- name: ContactOnSalesInvoice :one
 SELECT EXISTS (SELECT 1 FROM sales_invoices s WHERE s.administration_id = $1 AND s.contact_id = $2
                UNION ALL
-               SELECT 1 FROM external_sales_invoices e WHERE e.administration_id = $1 AND e.contact_id = $2)
+               SELECT 1 FROM external_sales_invoices e WHERE e.administration_id = $1 AND e.contact_id = $2
+               UNION ALL
+               SELECT 1 FROM recurring_sales_invoices r WHERE r.administration_id = $1 AND r.contact_id = $2)
 `
 
 type ContactOnSalesInvoiceParams struct {
@@ -1121,6 +1123,38 @@ DELETE FROM recovery_codes WHERE user_id = $1
 
 func (q *Queries) DeleteRecoveryCodes(ctx context.Context, userID int64) error {
 	_, err := q.db.Exec(ctx, deleteRecoveryCodes, userID)
+	return err
+}
+
+const deleteRecurringSalesInvoice = `-- name: DeleteRecurringSalesInvoice :exec
+DELETE FROM recurring_sales_invoices WHERE administration_id = $1 AND id = $2
+`
+
+type DeleteRecurringSalesInvoiceParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeleteRecurringSalesInvoice(ctx context.Context, arg DeleteRecurringSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, deleteRecurringSalesInvoice, arg.AdministrationID, arg.ID)
+	return err
+}
+
+const deleteRecurringSalesInvoiceCustomFieldValues = `-- name: DeleteRecurringSalesInvoiceCustomFieldValues :exec
+DELETE FROM recurring_sales_invoice_custom_field_values WHERE recurring_sales_invoice_id = $1
+`
+
+func (q *Queries) DeleteRecurringSalesInvoiceCustomFieldValues(ctx context.Context, recurringSalesInvoiceID int64) error {
+	_, err := q.db.Exec(ctx, deleteRecurringSalesInvoiceCustomFieldValues, recurringSalesInvoiceID)
+	return err
+}
+
+const deleteRecurringSalesInvoiceDetails = `-- name: DeleteRecurringSalesInvoiceDetails :exec
+DELETE FROM recurring_sales_invoice_details WHERE recurring_sales_invoice_id = $1
+`
+
+func (q *Queries) DeleteRecurringSalesInvoiceDetails(ctx context.Context, recurringSalesInvoiceID int64) error {
+	_, err := q.db.Exec(ctx, deleteRecurringSalesInvoiceDetails, recurringSalesInvoiceID)
 	return err
 }
 
@@ -2632,6 +2666,72 @@ type InsertRecoveryCodeParams struct {
 
 func (q *Queries) InsertRecoveryCode(ctx context.Context, arg InsertRecoveryCodeParams) error {
 	_, err := q.db.Exec(ctx, insertRecoveryCode, arg.UserID, arg.CodeHash)
+	return err
+}
+
+const insertRecurringSalesInvoiceCustomFieldValue = `-- name: InsertRecurringSalesInvoiceCustomFieldValue :exec
+INSERT INTO recurring_sales_invoice_custom_field_values (recurring_sales_invoice_id, custom_field_id, value) VALUES ($1, $2, $3)
+`
+
+type InsertRecurringSalesInvoiceCustomFieldValueParams struct {
+	RecurringSalesInvoiceID int64
+	CustomFieldID           int64
+	Value                   string
+}
+
+func (q *Queries) InsertRecurringSalesInvoiceCustomFieldValue(ctx context.Context, arg InsertRecurringSalesInvoiceCustomFieldValueParams) error {
+	_, err := q.db.Exec(ctx, insertRecurringSalesInvoiceCustomFieldValue, arg.RecurringSalesInvoiceID, arg.CustomFieldID, arg.Value)
+	return err
+}
+
+const insertRecurringSalesInvoiceDetail = `-- name: InsertRecurringSalesInvoiceDetail :exec
+INSERT INTO recurring_sales_invoice_details (id, administration_id, recurring_sales_invoice_id, description, period, price, amount, quantity,
+    tax_rate_id, ledger_account_id, project_id, product_id, row_order, is_optional, is_selected, line_base, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+`
+
+type InsertRecurringSalesInvoiceDetailParams struct {
+	ID                      int64
+	AdministrationID        int64
+	RecurringSalesInvoiceID int64
+	Description             string
+	Period                  string
+	Price                   int64
+	Amount                  string
+	Quantity                int64
+	TaxRateID               int64
+	LedgerAccountID         pgtype.Int8
+	ProjectID               pgtype.Int8
+	ProductID               pgtype.Int8
+	RowOrder                int32
+	IsOptional              bool
+	IsSelected              bool
+	LineBase                int64
+	CreatedAt               pgtype.Timestamptz
+	UpdatedAt               pgtype.Timestamptz
+}
+
+func (q *Queries) InsertRecurringSalesInvoiceDetail(ctx context.Context, arg InsertRecurringSalesInvoiceDetailParams) error {
+	_, err := q.db.Exec(ctx, insertRecurringSalesInvoiceDetail,
+		arg.ID,
+		arg.AdministrationID,
+		arg.RecurringSalesInvoiceID,
+		arg.Description,
+		arg.Period,
+		arg.Price,
+		arg.Amount,
+		arg.Quantity,
+		arg.TaxRateID,
+		arg.LedgerAccountID,
+		arg.ProjectID,
+		arg.ProductID,
+		arg.RowOrder,
+		arg.IsOptional,
+		arg.IsSelected,
+		arg.LineBase,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
 	return err
 }
 
@@ -4239,6 +4339,101 @@ func (q *Queries) ListOpenInvitations(ctx context.Context, administrationID int6
 	return items, nil
 }
 
+const listRecurringSalesInvoices = `-- name: ListRecurringSalesInvoices :many
+SELECT r.id, r.administration_id, r.contact_id, r.contact_person_id, r.identity_id, r.document_style_id, r.workflow_id, r.reference, r.language, r.currency, r.prices_are_incl_tax, r.payment_conditions, r.discount, r.first_due_interval, r.start_date, r.invoice_date, r.last_date, r.active, r.frequency_type, r.frequency_count, r.auto_send, r.auto_send_at, r.auto_send_user_id, r.mergeable, r.anchor_date, r.period_count, r.generated_count, r.total_excl_tax, r.total_tax, r.total_incl_tax, r.total_discount, r.tax_totals, r.created_at, r.updated_at, count(*) OVER () AS total
+FROM recurring_sales_invoices r
+WHERE r.administration_id = $1
+  AND ($2::boolean IS NULL OR r.active = $2)
+  AND ($3::text = '' OR r.frequency_type = $3)
+  AND ($4::boolean IS NULL OR r.auto_send = $4)
+  AND ($5::bigint IS NULL OR r.contact_id = $5)
+  AND ($6::bigint IS NULL OR r.workflow_id = $6)
+ORDER BY r.invoice_date, r.id
+LIMIT $8 OFFSET $7
+`
+
+type ListRecurringSalesInvoicesParams struct {
+	AdministrationID int64
+	Active           pgtype.Bool
+	FrequencyType    string
+	AutoSend         pgtype.Bool
+	ContactID        pgtype.Int8
+	WorkflowID       pgtype.Int8
+	Skip             int32
+	MaxRows          pgtype.Int4
+}
+
+type ListRecurringSalesInvoicesRow struct {
+	RecurringSalesInvoice RecurringSalesInvoice
+	Total                 int64
+}
+
+// The next invoice to make first.
+func (q *Queries) ListRecurringSalesInvoices(ctx context.Context, arg ListRecurringSalesInvoicesParams) ([]ListRecurringSalesInvoicesRow, error) {
+	rows, err := q.db.Query(ctx, listRecurringSalesInvoices,
+		arg.AdministrationID,
+		arg.Active,
+		arg.FrequencyType,
+		arg.AutoSend,
+		arg.ContactID,
+		arg.WorkflowID,
+		arg.Skip,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListRecurringSalesInvoicesRow
+	for rows.Next() {
+		var i ListRecurringSalesInvoicesRow
+		if err := rows.Scan(
+			&i.RecurringSalesInvoice.ID,
+			&i.RecurringSalesInvoice.AdministrationID,
+			&i.RecurringSalesInvoice.ContactID,
+			&i.RecurringSalesInvoice.ContactPersonID,
+			&i.RecurringSalesInvoice.IdentityID,
+			&i.RecurringSalesInvoice.DocumentStyleID,
+			&i.RecurringSalesInvoice.WorkflowID,
+			&i.RecurringSalesInvoice.Reference,
+			&i.RecurringSalesInvoice.Language,
+			&i.RecurringSalesInvoice.Currency,
+			&i.RecurringSalesInvoice.PricesAreInclTax,
+			&i.RecurringSalesInvoice.PaymentConditions,
+			&i.RecurringSalesInvoice.Discount,
+			&i.RecurringSalesInvoice.FirstDueInterval,
+			&i.RecurringSalesInvoice.StartDate,
+			&i.RecurringSalesInvoice.InvoiceDate,
+			&i.RecurringSalesInvoice.LastDate,
+			&i.RecurringSalesInvoice.Active,
+			&i.RecurringSalesInvoice.FrequencyType,
+			&i.RecurringSalesInvoice.FrequencyCount,
+			&i.RecurringSalesInvoice.AutoSend,
+			&i.RecurringSalesInvoice.AutoSendAt,
+			&i.RecurringSalesInvoice.AutoSendUserID,
+			&i.RecurringSalesInvoice.Mergeable,
+			&i.RecurringSalesInvoice.AnchorDate,
+			&i.RecurringSalesInvoice.PeriodCount,
+			&i.RecurringSalesInvoice.GeneratedCount,
+			&i.RecurringSalesInvoice.TotalExclTax,
+			&i.RecurringSalesInvoice.TotalTax,
+			&i.RecurringSalesInvoice.TotalInclTax,
+			&i.RecurringSalesInvoice.TotalDiscount,
+			&i.RecurringSalesInvoice.TaxTotals,
+			&i.RecurringSalesInvoice.CreatedAt,
+			&i.RecurringSalesInvoice.UpdatedAt,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSalesInvoices = `-- name: ListSalesInvoices :many
 SELECT i.id, i.administration_id, i.contact_id, i.contact_person_id, i.identity_id, i.document_style_id, i.workflow_id, i.draft_id, i.invoice_id, i.sequence_id, i.reference, i.language, i.currency, i.prices_are_incl_tax, i.payment_conditions, i.discount, i.invoice_date, i.due_date, i.first_due_interval, i.state, i.paused, i.payment_reference, i.sent_at, i.paid_at, i.marked_dubious_on, i.marked_uncollectible_on, i.reminder_count, i.original_id, i.recurring_sales_invoice_id, i.delivery, i.total_excl_tax, i.total_tax, i.total_incl_tax, i.total_discount, i.tax_totals, i.created_at, i.updated_at, count(*) OVER () AS total
 FROM sales_invoices i
@@ -5016,6 +5211,214 @@ func (q *Queries) RecentlyProcessedFinancialMutations(ctx context.Context, arg R
 	return items, nil
 }
 
+const recurringSalesInvoiceByID = `-- name: RecurringSalesInvoiceByID :one
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, first_due_interval, start_date, invoice_date, last_date, active, frequency_type, frequency_count, auto_send, auto_send_at, auto_send_user_id, mergeable, anchor_date, period_count, generated_count, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM recurring_sales_invoices WHERE administration_id = $1 AND id = $2
+`
+
+type RecurringSalesInvoiceByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) RecurringSalesInvoiceByID(ctx context.Context, arg RecurringSalesInvoiceByIDParams) (RecurringSalesInvoice, error) {
+	row := q.db.QueryRow(ctx, recurringSalesInvoiceByID, arg.AdministrationID, arg.ID)
+	var i RecurringSalesInvoice
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.ContactID,
+		&i.ContactPersonID,
+		&i.IdentityID,
+		&i.DocumentStyleID,
+		&i.WorkflowID,
+		&i.Reference,
+		&i.Language,
+		&i.Currency,
+		&i.PricesAreInclTax,
+		&i.PaymentConditions,
+		&i.Discount,
+		&i.FirstDueInterval,
+		&i.StartDate,
+		&i.InvoiceDate,
+		&i.LastDate,
+		&i.Active,
+		&i.FrequencyType,
+		&i.FrequencyCount,
+		&i.AutoSend,
+		&i.AutoSendAt,
+		&i.AutoSendUserID,
+		&i.Mergeable,
+		&i.AnchorDate,
+		&i.PeriodCount,
+		&i.GeneratedCount,
+		&i.TotalExclTax,
+		&i.TotalTax,
+		&i.TotalInclTax,
+		&i.TotalDiscount,
+		&i.TaxTotals,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const recurringSalesInvoiceCustomFieldValuesOf = `-- name: RecurringSalesInvoiceCustomFieldValuesOf :many
+SELECT v.recurring_sales_invoice_id, f.id, f.name, v.value
+FROM recurring_sales_invoice_custom_field_values v JOIN custom_fields f ON f.id = v.custom_field_id
+WHERE f.administration_id = $1 AND v.recurring_sales_invoice_id = ANY($2::bigint[])
+ORDER BY f.position, f.id
+`
+
+type RecurringSalesInvoiceCustomFieldValuesOfParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+type RecurringSalesInvoiceCustomFieldValuesOfRow struct {
+	RecurringSalesInvoiceID int64
+	ID                      int64
+	Name                    string
+	Value                   string
+}
+
+func (q *Queries) RecurringSalesInvoiceCustomFieldValuesOf(ctx context.Context, arg RecurringSalesInvoiceCustomFieldValuesOfParams) ([]RecurringSalesInvoiceCustomFieldValuesOfRow, error) {
+	rows, err := q.db.Query(ctx, recurringSalesInvoiceCustomFieldValuesOf, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RecurringSalesInvoiceCustomFieldValuesOfRow
+	for rows.Next() {
+		var i RecurringSalesInvoiceCustomFieldValuesOfRow
+		if err := rows.Scan(
+			&i.RecurringSalesInvoiceID,
+			&i.ID,
+			&i.Name,
+			&i.Value,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const recurringSalesInvoiceDetailsOf = `-- name: RecurringSalesInvoiceDetailsOf :many
+SELECT id, administration_id, recurring_sales_invoice_id, description, period, price, amount, quantity, tax_rate_id, ledger_account_id, project_id, product_id, row_order, is_optional, is_selected, line_base, created_at, updated_at FROM recurring_sales_invoice_details
+WHERE administration_id = $1 AND recurring_sales_invoice_id = ANY($2::bigint[]) ORDER BY row_order, id
+`
+
+type RecurringSalesInvoiceDetailsOfParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) RecurringSalesInvoiceDetailsOf(ctx context.Context, arg RecurringSalesInvoiceDetailsOfParams) ([]RecurringSalesInvoiceDetail, error) {
+	rows, err := q.db.Query(ctx, recurringSalesInvoiceDetailsOf, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RecurringSalesInvoiceDetail
+	for rows.Next() {
+		var i RecurringSalesInvoiceDetail
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.RecurringSalesInvoiceID,
+			&i.Description,
+			&i.Period,
+			&i.Price,
+			&i.Amount,
+			&i.Quantity,
+			&i.TaxRateID,
+			&i.LedgerAccountID,
+			&i.ProjectID,
+			&i.ProductID,
+			&i.RowOrder,
+			&i.IsOptional,
+			&i.IsSelected,
+			&i.LineBase,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const recurringSalesInvoicesByIDs = `-- name: RecurringSalesInvoicesByIDs :many
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, first_due_interval, start_date, invoice_date, last_date, active, frequency_type, frequency_count, auto_send, auto_send_at, auto_send_user_id, mergeable, anchor_date, period_count, generated_count, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM recurring_sales_invoices WHERE administration_id = $1 AND id = ANY($2::bigint[]) ORDER BY id
+`
+
+type RecurringSalesInvoicesByIDsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) RecurringSalesInvoicesByIDs(ctx context.Context, arg RecurringSalesInvoicesByIDsParams) ([]RecurringSalesInvoice, error) {
+	rows, err := q.db.Query(ctx, recurringSalesInvoicesByIDs, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RecurringSalesInvoice
+	for rows.Next() {
+		var i RecurringSalesInvoice
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.ContactID,
+			&i.ContactPersonID,
+			&i.IdentityID,
+			&i.DocumentStyleID,
+			&i.WorkflowID,
+			&i.Reference,
+			&i.Language,
+			&i.Currency,
+			&i.PricesAreInclTax,
+			&i.PaymentConditions,
+			&i.Discount,
+			&i.FirstDueInterval,
+			&i.StartDate,
+			&i.InvoiceDate,
+			&i.LastDate,
+			&i.Active,
+			&i.FrequencyType,
+			&i.FrequencyCount,
+			&i.AutoSend,
+			&i.AutoSendAt,
+			&i.AutoSendUserID,
+			&i.Mergeable,
+			&i.AnchorDate,
+			&i.PeriodCount,
+			&i.GeneratedCount,
+			&i.TotalExclTax,
+			&i.TotalTax,
+			&i.TotalInclTax,
+			&i.TotalDiscount,
+			&i.TaxTotals,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const requiresTwoFactor = `-- name: RequiresTwoFactor :one
 SELECT EXISTS (
     SELECT 1 FROM administration_members m JOIN administrations a ON a.id = m.administration_id
@@ -5418,7 +5821,9 @@ const salesWorkload = `-- name: SalesWorkload :many
 SELECT w.administration_id, o.user_id
 FROM (SELECT administration_id FROM sales_invoices WHERE state IN ('scheduled', 'open', 'late', 'reminded')
       UNION
-      SELECT administration_id FROM external_sales_invoices WHERE state = 'open') w
+      SELECT administration_id FROM external_sales_invoices WHERE state = 'open'
+      UNION
+      SELECT administration_id FROM recurring_sales_invoices WHERE active) w
 JOIN LATERAL (
     SELECT m.user_id FROM administration_members m
     WHERE m.administration_id = w.administration_id AND m.active AND 'ownership' = ANY(m.permissions)
@@ -5801,6 +6206,21 @@ type TouchGeneralJournalDocumentParams struct {
 
 func (q *Queries) TouchGeneralJournalDocument(ctx context.Context, arg TouchGeneralJournalDocumentParams) error {
 	_, err := q.db.Exec(ctx, touchGeneralJournalDocument, arg.AdministrationID, arg.ID, arg.UpdatedAt)
+	return err
+}
+
+const touchRecurringSalesInvoice = `-- name: TouchRecurringSalesInvoice :exec
+UPDATE recurring_sales_invoices SET updated_at = $3 WHERE administration_id = $1 AND id = $2
+`
+
+type TouchRecurringSalesInvoiceParams struct {
+	AdministrationID int64
+	ID               int64
+	UpdatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) TouchRecurringSalesInvoice(ctx context.Context, arg TouchRecurringSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, touchRecurringSalesInvoice, arg.AdministrationID, arg.ID, arg.UpdatedAt)
 	return err
 }
 
@@ -6658,6 +7078,104 @@ func (q *Queries) UpsertPayment(ctx context.Context, arg UpsertPaymentParams) er
 		arg.PaymentDate,
 		arg.TransactionIdentifier,
 		arg.UserID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const upsertRecurringSalesInvoice = `-- name: UpsertRecurringSalesInvoice :exec
+INSERT INTO recurring_sales_invoices (
+    id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, reference, language, currency,
+    prices_are_incl_tax, payment_conditions, discount, first_due_interval, start_date, invoice_date, last_date, active, frequency_type,
+    frequency_count, auto_send, auto_send_at, auto_send_user_id, mergeable, anchor_date, period_count, generated_count, total_excl_tax,
+    total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
+    $29, $30, $31, $32, $33, $34)
+ON CONFLICT (id) DO UPDATE SET
+    contact_id = EXCLUDED.contact_id, contact_person_id = EXCLUDED.contact_person_id, identity_id = EXCLUDED.identity_id,
+    document_style_id = EXCLUDED.document_style_id, workflow_id = EXCLUDED.workflow_id, reference = EXCLUDED.reference,
+    language = EXCLUDED.language, currency = EXCLUDED.currency, prices_are_incl_tax = EXCLUDED.prices_are_incl_tax,
+    payment_conditions = EXCLUDED.payment_conditions, discount = EXCLUDED.discount, first_due_interval = EXCLUDED.first_due_interval,
+    start_date = EXCLUDED.start_date, invoice_date = EXCLUDED.invoice_date, last_date = EXCLUDED.last_date, active = EXCLUDED.active,
+    frequency_type = EXCLUDED.frequency_type, frequency_count = EXCLUDED.frequency_count, auto_send = EXCLUDED.auto_send,
+    auto_send_at = EXCLUDED.auto_send_at, auto_send_user_id = EXCLUDED.auto_send_user_id, mergeable = EXCLUDED.mergeable,
+    anchor_date = EXCLUDED.anchor_date, period_count = EXCLUDED.period_count, generated_count = EXCLUDED.generated_count,
+    total_excl_tax = EXCLUDED.total_excl_tax, total_tax = EXCLUDED.total_tax, total_incl_tax = EXCLUDED.total_incl_tax,
+    total_discount = EXCLUDED.total_discount, tax_totals = EXCLUDED.tax_totals, updated_at = EXCLUDED.updated_at
+`
+
+type UpsertRecurringSalesInvoiceParams struct {
+	ID                int64
+	AdministrationID  int64
+	ContactID         int64
+	ContactPersonID   pgtype.Int8
+	IdentityID        int64
+	DocumentStyleID   int64
+	WorkflowID        int64
+	Reference         string
+	Language          string
+	Currency          string
+	PricesAreInclTax  bool
+	PaymentConditions string
+	Discount          int32
+	FirstDueInterval  int32
+	StartDate         pgtype.Date
+	InvoiceDate       pgtype.Date
+	LastDate          pgtype.Date
+	Active            bool
+	FrequencyType     string
+	FrequencyCount    int32
+	AutoSend          bool
+	AutoSendAt        pgtype.Timestamptz
+	AutoSendUserID    pgtype.Int8
+	Mergeable         bool
+	AnchorDate        pgtype.Date
+	PeriodCount       int32
+	GeneratedCount    int32
+	TotalExclTax      int64
+	TotalTax          int64
+	TotalInclTax      int64
+	TotalDiscount     int64
+	TaxTotals         []byte
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertRecurringSalesInvoice(ctx context.Context, arg UpsertRecurringSalesInvoiceParams) error {
+	_, err := q.db.Exec(ctx, upsertRecurringSalesInvoice,
+		arg.ID,
+		arg.AdministrationID,
+		arg.ContactID,
+		arg.ContactPersonID,
+		arg.IdentityID,
+		arg.DocumentStyleID,
+		arg.WorkflowID,
+		arg.Reference,
+		arg.Language,
+		arg.Currency,
+		arg.PricesAreInclTax,
+		arg.PaymentConditions,
+		arg.Discount,
+		arg.FirstDueInterval,
+		arg.StartDate,
+		arg.InvoiceDate,
+		arg.LastDate,
+		arg.Active,
+		arg.FrequencyType,
+		arg.FrequencyCount,
+		arg.AutoSend,
+		arg.AutoSendAt,
+		arg.AutoSendUserID,
+		arg.Mergeable,
+		arg.AnchorDate,
+		arg.PeriodCount,
+		arg.GeneratedCount,
+		arg.TotalExclTax,
+		arg.TotalTax,
+		arg.TotalInclTax,
+		arg.TotalDiscount,
+		arg.TaxTotals,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
