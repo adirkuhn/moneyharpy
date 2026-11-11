@@ -46,6 +46,7 @@ function loaded(list: Contact[] = [contact(), ann], seen: URL[] = [], { total = 
     })),
     http.get('*/api/v2/11/contacts', ({ request }) => page(request, list, total)),
     http.get('*/api/v2/11/contacts/filter', ({ request }) => page(request, list.slice(0, 1), 1)),
+    http.get('*/api/v2/11/contacts/next_customer_id', () => HttpResponse.json({ customer_id: '43' })),
     http.get('*/api/v2/11/contacts/doubles', () => HttpResponse.json(doubles.map((contacts) => ({ contacts })))),
     http.get('*/api/v2/11/contacts/901', () => HttpResponse.json(contact())),
     // The documents of a contact, for its feed: none unless a test says otherwise.
@@ -486,7 +487,8 @@ describe('the contact form', () => {
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/11/contacts')
     expect(screen.getByRole('radio', { name: 'Company' })).toBeChecked()
     expect(screen.getByRole('radio', { name: 'Email' })).toBeChecked()
-    expect(screen.getByLabelText('Client number')).toHaveAttribute('placeholder', 'Next number')
+    // The next client number is filled in, as Moneybird does.
+    await waitFor(() => expect(screen.getByLabelText('Client number')).toHaveValue('43'))
     expect(screen.getByLabelText('IBAN')).toHaveAttribute('placeholder', 'NL 00 BANK 0123456789')
     expect(screen.getByRole('checkbox', { name: 'Trusting a contact can be done when approving a payment.' })).toBeDisabled()
     expect(screen.getByLabelText('For invoices')).toHaveDisplayValue('No workflow')

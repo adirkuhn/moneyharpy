@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
@@ -17,7 +17,7 @@ import { useCustomFields } from '../settings/queries'
 import { CompanyNameField } from './CompanyNameField'
 import { ContactIcon } from './ContactIcon'
 import { CheckRow, Counter, Section, SegmentedRow, Tip } from './ContactFormParts'
-import { type Contact, type ContactChanges, useArchiveContact, useContact, useSaveContact } from './queries'
+import { type Contact, type ContactChanges, useArchiveContact, useContact, useNextCustomerId, useSaveContact } from './queries'
 import './contacts.css'
 
 export const deliveryMethods = ['Email', 'Post', 'Manual', 'Peppol', 'Simplerinvoicing'] as const
@@ -67,6 +67,17 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
     initial.country = contact?.country ?? country
     return initial
   })
+  // A new contact shows the client number it will get, as Moneybird does.
+  const nextCustomerId = useNextCustomerId(administrationId, !contact)
+  const [prefilled, setPrefilled] = useState('')
+  useEffect(() => {
+    const next = nextCustomerId.data
+    if (next) {
+      // Only while the field still shows what was filled in, never over what the user typed.
+      setText((current) => (current.customer_id === prefilled ? { ...current, customer_id: next } : current))
+      setPrefilled(next)
+    }
+  }, [nextCustomerId.data]) // eslint-disable-line react-hooks/exhaustive-deps
   const [kind, setKind] = useState<Kind>(contact && !contact.company_name && (contact.firstname || contact.lastname) ? 'private_individual' : 'company')
   const [delivery, setDelivery] = useState<DeliveryMethod>((contact?.delivery_method as DeliveryMethod | undefined) ?? 'Email')
   const [emailUBL, setEmailUBL] = useState(contact?.email_ubl ?? false)
@@ -122,7 +133,8 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
       estimate_workflow_id: estimateWorkflow,
       ...(contactFields.length > 0 ? { custom_fields_attributes: contactFields.map((c) => ({ id: c.id, value: custom[c.id] ?? '' })) } : {}),
     }
-    if (!contact && !body.customer_id) {
+    // Left as filled in, the number is the server's to give: another contact may have taken it meanwhile.
+    if (!contact && (!body.customer_id || body.customer_id === prefilled)) {
       delete body.customer_id
     }
     save.mutate(body, { onSuccess: (saved) => navigate(`/${administrationId}/contacts/${saved.id}`) })
@@ -173,7 +185,7 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
               </>
             )}
             {input('phone', { type: 'tel', width: 'medium' })}
-            {input('customer_id', { width: 'medium', maxLength: 50, placeholder: contact ? undefined : f('nextNumber') })}
+            {input('customer_id', { width: 'medium', maxLength: 50 })}
             {kind === 'company' && (
               <fieldset className="contact-form__person">
                 <legend className="contact-form__subtitle">{f('contactPerson')}</legend>

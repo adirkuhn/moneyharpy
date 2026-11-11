@@ -76,6 +76,17 @@ export function useSalesInvoice(administrationId: string, id?: string) {
   })
 }
 
+/** The draft number the next new invoice gets, shown as "Concept #n" while adding one. */
+export function useNextDraftId(administrationId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['sales-invoice-next-draft-id', administrationId],
+    enabled,
+    // Another invoice may have taken it since, so it is asked for afresh every time.
+    gcTime: 0,
+    queryFn: async () => (await unwrap(api.GET('/api/v2/{administration_id}/sales_invoices/next_draft_id', { params: { path: admin(administrationId) } }))).draft_id,
+  })
+}
+
 /** Keeps the invoice the server answered with and has lists load again. */
 export function useSaved(administrationId: string, kind: InvoiceKind = 'sales') {
   const client = useQueryClient()

@@ -55,7 +55,7 @@ export const nl: Messages = {
       newTitle: 'Contact toevoegen', editTitle: 'Contact bewerken', save: 'Opslaan', contactTitle: 'Contact', type: 'Type', company: 'Bedrijf', private: 'Particulier',
       companyName: 'Bedrijfsnaam', registerCountry: 'Land van het handelsregister', registerMatches: 'Bedrijven in het handelsregister',
       chamberOfCommerce: 'KVK-nummer', taxNumber: 'Btw-id', taxNumberTip: 'Het btw-identificatienummer, zoals NL000099998B57.',
-      firstname: 'Voornaam', lastname: 'Achternaam', phone: 'Telefoonnummer', customerId: 'Klantnummer', nextNumber: 'Volgend nummer',
+      firstname: 'Voornaam', lastname: 'Achternaam', phone: 'Telefoonnummer', customerId: 'Klantnummer',
       contactPerson: 'Contactpersoon', personFirstname: 'Voornaam', personLastname: 'Achternaam',
       addressTitle: 'Adres', address: 'Adres', addAddressLine: 'Adresregel toevoegen', address2: 'Aanvullende adresgegevens', zipcode: 'Postcode', city: 'Plaats', country: 'Land',
       sendingTitle: 'Verzenden', deliveryMethod: 'Verzendmethode',

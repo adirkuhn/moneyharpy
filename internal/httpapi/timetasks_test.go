@@ -77,8 +77,15 @@ func TestTimeEntriesLifecycle(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodPost, api+"/time_entries", map[string]any{"time_entry": map[string]any{"colour": "red"}}), http.StatusBadRequest)
 	wantStatus(t, stranger.do(http.MethodGet, api+"/time_entries/"+work.ID, nil), http.StatusNotFound)
 
-	// A timer: the clerk starts one, stops it and resumes it.
-	r = clerk.do(http.MethodPost, api+"/time_entries", map[string]any{"time_entry": map[string]any{"user_id": clerkUser.Id, "started_at": today.Add(-time.Hour), "description": "Timer"}})
+	// A timer: the clerk starts one, stops it and resumes it. Only a timer
+	// started today can be resumed, so it starts an hour ago, or at midnight
+	// when that was yesterday.
+	n := adminNow()
+	timerStart := today.Add(-time.Hour)
+	if midnight := time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, adminZone).UTC(); timerStart.Before(midnight) {
+		timerStart = midnight
+	}
+	r = clerk.do(http.MethodPost, api+"/time_entries", map[string]any{"time_entry": map[string]any{"user_id": clerkUser.Id, "started_at": timerStart, "description": "Timer"}})
 	wantStatus(t, r, http.StatusCreated)
 	timer := decode[timeEntry](t, r)
 	if timer.EndedAt != nil {

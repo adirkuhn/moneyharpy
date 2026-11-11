@@ -63,11 +63,9 @@ func (s *Service) Create(ctx context.Context, admin, user resource.ID, c Changes
 		return Contact{}, err
 	}
 	if contact.CustomerID == "" {
-		n, err := s.store.MaxCustomerNumber(ctx, admin)
-		if err != nil {
-			return Contact{}, fmt.Errorf("number contact: %w", err)
+		if contact.CustomerID, err = s.nextCustomerID(ctx, admin); err != nil {
+			return Contact{}, err
 		}
-		contact.CustomerID = strconv.FormatInt(n+1, 10)
 	}
 	if c.Person != nil {
 		p := Person{ID: s.ids.Next(), AdministrationID: admin, ContactID: contact.ID, CreatedAt: now, UpdatedAt: now}
@@ -413,4 +411,21 @@ func (s *Service) applyCustomFields(ctx context.Context, admin, user resource.ID
 		}
 	}
 	c.CustomFields = current
+}
+
+// NextCustomerID returns the customer id a new contact gets when none is
+// given: one above the highest numeric one, as Moneybird prefills it.
+func (s *Service) NextCustomerID(ctx context.Context, admin, user resource.ID) (string, error) {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return "", err
+	}
+	return s.nextCustomerID(ctx, admin)
+}
+
+func (s *Service) nextCustomerID(ctx context.Context, admin resource.ID) (string, error) {
+	n, err := s.store.MaxCustomerNumber(ctx, admin)
+	if err != nil {
+		return "", fmt.Errorf("number contact: %w", err)
+	}
+	return strconv.FormatInt(n+1, 10), nil
 }
