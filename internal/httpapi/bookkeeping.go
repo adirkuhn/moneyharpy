@@ -181,10 +181,13 @@ func (s *server) ListTaxRates(w http.ResponseWriter, r *http.Request, administra
 		s.fail(w, r, err)
 		return
 	}
-	out := make([]taxRateJSON, len(list))
-	for i, t := range list {
-		out[i] = toTaxRate(t)
+	page, perPage := pageNumbers(params.Page, params.PerPage)
+	page, perPage = max(page, 1), cmpPerPage(perPage, bookkeeping.TaxRatesPerPage)
+	out := []taxRateJSON{}
+	for _, t := range list[min((page-1)*perPage, len(list)):min(page*perPage, len(list))] {
+		out = append(out, toTaxRate(t))
 	}
+	s.writeLinks(w, r, page, perPage, len(list))
 	writeJSON(w, http.StatusOK, out)
 }
 

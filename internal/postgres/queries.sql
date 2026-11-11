@@ -401,7 +401,9 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 DELETE FROM ledger_account_bookings WHERE administration_id = $1 AND financial_mutation_id = $2 AND id = $3;
 
 -- name: FinancialBalances :many
-SELECT financial_account_id, sum(amount)::bigint AS balance FROM financial_mutations WHERE administration_id = $1 GROUP BY financial_account_id;
+SELECT financial_account_id, sum(amount)::bigint AS balance FROM financial_mutations
+WHERE administration_id = @administration_id AND (sqlc.narg(until)::date IS NULL OR date <= sqlc.narg(until)::date)
+GROUP BY financial_account_id;
 
 -- name: InsertBookingRule :exec
 INSERT INTO booking_rules (id, administration_id, name, active, position, match_all, direction, financial_account_id, conditions, ledger_account_id, description, created_at, updated_at)
@@ -1106,3 +1108,76 @@ DELETE FROM recurring_sales_invoice_custom_field_values WHERE recurring_sales_in
 
 -- name: InsertRecurringSalesInvoiceCustomFieldValue :exec
 INSERT INTO recurring_sales_invoice_custom_field_values (recurring_sales_invoice_id, custom_field_id, value) VALUES ($1, $2, $3);
+
+-- name: ListProducts :many
+SELECT sqlc.embed(p), count(*) OVER () AS total
+FROM products p
+WHERE p.administration_id = @administration_id
+  AND (@include_inactive::boolean OR p.active)
+  AND (@currency::text = '' OR p.currency = @currency)
+  AND (NOT @checkout_only::boolean)
+  AND (sqlc.narg(ledger_account_id)::bigint IS NULL OR p.ledger_account_id = sqlc.narg(ledger_account_id))
+  AND (@search::text = '' OR p.title ILIKE '%' || @search || '%' OR p.description ILIKE '%' || @search || '%' OR p.identifier ILIKE '%' || @search || '%')
+ORDER BY lower(coalesce(nullif(p.title, ''), p.description)), p.id
+LIMIT sqlc.narg(max_rows) OFFSET @skip;
+
+-- name: ProductByID :one
+SELECT * FROM products WHERE administration_id = $1 AND id = $2;
+
+-- name: ProductByIdentifier :one
+SELECT * FROM products WHERE administration_id = $1 AND identifier = $2 AND identifier <> '';
+
+-- name: UpsertProduct :exec
+INSERT INTO products (id, administration_id, title, description, checkout_description, identifier, price, currency, frequency_count,
+    frequency_type, tax_rate_id, ledger_account_id, document_style_id, workflow_id, product_type, vat_rate_type, checkout_type,
+    max_amount_per_order, active, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title, description = EXCLUDED.description, checkout_description = EXCLUDED.checkout_description,
+    identifier = EXCLUDED.identifier, price = EXCLUDED.price, currency = EXCLUDED.currency, frequency_count = EXCLUDED.frequency_count,
+    frequency_type = EXCLUDED.frequency_type, tax_rate_id = EXCLUDED.tax_rate_id, ledger_account_id = EXCLUDED.ledger_account_id,
+    document_style_id = EXCLUDED.document_style_id, workflow_id = EXCLUDED.workflow_id, product_type = EXCLUDED.product_type,
+    vat_rate_type = EXCLUDED.vat_rate_type, checkout_type = EXCLUDED.checkout_type, max_amount_per_order = EXCLUDED.max_amount_per_order,
+    active = EXCLUDED.active, updated_at = EXCLUDED.updated_at;
+
+-- name: DeleteProduct :exec
+DELETE FROM products WHERE administration_id = $1 AND id = $2;
+
+-- name: ProductOnInvoices :one
+SELECT EXISTS (SELECT 1 FROM sales_invoice_details s WHERE s.administration_id = @administration_id AND s.product_id = @product_id
+               UNION ALL
+               SELECT 1 FROM external_sales_invoice_details e WHERE e.administration_id = @administration_id AND e.product_id = @product_id
+               UNION ALL
+               SELECT 1 FROM recurring_sales_invoice_details r WHERE r.administration_id = @administration_id AND r.product_id = @product_id);
+
+-- name: ListProjects :many
+SELECT sqlc.embed(p), count(*) OVER () AS total
+FROM projects p
+WHERE p.administration_id = @administration_id
+  AND (cardinality(@states::text[]) = 0 OR p.state = ANY(@states::text[]))
+ORDER BY lower(p.name), p.id
+LIMIT sqlc.narg(max_rows) OFFSET @skip;
+
+-- name: ProjectByID :one
+SELECT * FROM projects WHERE administration_id = $1 AND id = $2;
+
+-- name: ProjectNameTaken :one
+SELECT EXISTS (SELECT 1 FROM projects WHERE administration_id = @administration_id AND lower(name) = lower(@name) AND id <> @other_than);
+
+-- name: UpsertProject :exec
+INSERT INTO projects (id, administration_id, name, state, budget, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, state = EXCLUDED.state, budget = EXCLUDED.budget, updated_at = EXCLUDED.updated_at;
+
+-- name: DeleteProject :exec
+DELETE FROM projects WHERE administration_id = $1 AND id = $2;
+
+-- name: ProjectOnInvoices :one
+SELECT EXISTS (SELECT 1 FROM sales_invoice_details s WHERE s.administration_id = @administration_id AND s.project_id = @project_id
+               UNION ALL
+               SELECT 1 FROM external_sales_invoice_details e WHERE e.administration_id = @administration_id AND e.project_id = @project_id
+               UNION ALL
+               SELECT 1 FROM recurring_sales_invoice_details r WHERE r.administration_id = @administration_id AND r.project_id = @project_id);
+
+-- name: ProjectInJournal :one
+SELECT EXISTS (SELECT 1 FROM journal_entries WHERE administration_id = @administration_id AND project_id = @project_id);

@@ -101,8 +101,9 @@ type Store interface {
 	UpdateRules(ctx context.Context, rules []Rule) error
 	DeleteRule(ctx context.Context, admin, id resource.ID) error
 
-	// Balances returns the sum of every account's mutations.
-	Balances(ctx context.Context, admin resource.ID) (map[resource.ID]Amount, error)
+	// Balances returns the sum of every account's mutations dated up to
+	// until, or of all when until is nil.
+	Balances(ctx context.Context, admin resource.ID, until *time.Time) (map[resource.ID]Amount, error)
 	// CountUnprocessed counts the unprocessed transactions of active accounts.
 	CountUnprocessed(ctx context.Context, admin resource.ID) (int, error)
 	// RecentlyProcessed returns up to limit processed transactions, the
@@ -189,4 +190,10 @@ func cashName(language string) string {
 func IsNotFound(err error) bool {
 	return errors.Is(err, ErrAccountNotFound) || errors.Is(err, ErrStatementNotFound) || errors.Is(err, ErrMutationNotFound) ||
 		errors.Is(err, ErrBookingNotFound) || errors.Is(err, ErrRuleNotFound)
+}
+
+func invalid(field, problem string) error {
+	var verr resource.ValidationError
+	verr.Add(field, problem)
+	return &verr
 }

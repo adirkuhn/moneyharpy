@@ -110,9 +110,14 @@ func TestSynchronizationAndBalances(t *testing.T) {
 	ctx := context.Background()
 	acc := bank(t, svc)
 	ms := transactions(t, svc, acc, "10", "-2.5")
-	versions, err := svc.MutationVersions(ctx, adminID, owner)
+	thisYear, _ := ParseMutationFilter("", now)
+	versions, err := svc.MutationVersions(ctx, adminID, owner, thisYear)
 	if err != nil || len(versions) != 2 || versions[0].Version != now.Unix() {
 		t.Errorf("versions = %+v, %v", versions, err)
+	}
+	credit, _ := ParseMutationFilter("period:this_month,mutation_type:credit", now)
+	if versions, err := svc.MutationVersions(ctx, adminID, owner, credit); err != nil || len(versions) != 1 || versions[0].ID != ms[0].ID {
+		t.Errorf("credit versions = %+v, %v", versions, err)
 	}
 	got, err := svc.MutationsByID(ctx, adminID, owner, []resource.ID{ms[0].ID, 1})
 	if err != nil || len(got) != 1 {
@@ -121,6 +126,37 @@ func TestSynchronizationAndBalances(t *testing.T) {
 	balances, total, err := svc.Balances(ctx, adminID, owner)
 	if err != nil || len(balances) != 1 || total != 750 || balances[0].Account.ID != acc.ID {
 		t.Errorf("balances = %+v, total %s, %v", balances, total, err)
+	}
+}
+
+func TestBalanceReport(t *testing.T) {
+	svc, _, _ := newTestService()
+	ctx := context.Background()
+	acc := bank(t, svc)
+	transactions(t, svc, acc, "10", "-2.5")
+
+	got, err := svc.BalanceReport(ctx, adminID, owner, "", "")
+	if err != nil || got.Total != 750 || len(got.Balances) != 1 || got.Period.Monthly() != "202611..202611" || got.Periods != nil {
+		t.Errorf("this month = %+v, %v", got, err)
+	}
+	if got, _ := svc.BalanceReport(ctx, adminID, owner, "202610", ""); len(got.Balances) != 0 || got.Total != 0 {
+		t.Errorf("before the transactions = %+v", got)
+	}
+	got, err = svc.BalanceReport(ctx, adminID, owner, "202610..202611", "month")
+	if err != nil || got.Total != 750 || len(got.Periods) != 2 {
+		t.Fatalf("by month = %+v, %v", got, err)
+	}
+	// The account has a balance at some end, so every period lists it.
+	if p := got.Periods[0]; p.Period.Monthly() != "202610..202610" || len(p.Balances) != 1 || p.Total != 0 {
+		t.Errorf("october = %+v", p)
+	}
+	if p := got.Periods[1]; p.Total != 750 {
+		t.Errorf("november = %+v", p)
+	}
+	for _, in := range [][2]string{{"202501..202602", ""}, {"20251102..20251130", ""}, {"nonsense", ""}, {"", "week"}} {
+		if _, err := svc.BalanceReport(ctx, adminID, owner, in[0], in[1]); err == nil {
+			t.Errorf("BalanceReport(%q, %q) accepted", in[0], in[1])
+		}
 	}
 }
 

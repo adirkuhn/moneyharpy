@@ -150,7 +150,7 @@ func TestRecurringSalesInvoiceLifecycle(t *testing.T) {
 	}
 
 	// Contacts with recurring invoices stay.
-	wantStatus(t, owner.do(http.MethodDelete, api+"/contacts/"+r.ContactID, nil), http.StatusUnprocessableEntity)
+	wantKept(t, owner.do(http.MethodDelete, api+"/contacts/"+r.ContactID, nil), "archived")
 
 	// Deleting one that made invoices keeps it, deactivated.
 	d := owner.do(http.MethodDelete, recurrings+"/"+due.ID, nil)

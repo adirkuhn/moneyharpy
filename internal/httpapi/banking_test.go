@@ -165,16 +165,47 @@ func TestImportBookAndSynchronize(t *testing.T) {
 		t.Errorf("after unlink = %+v", got)
 	}
 
-	versions := decode[[]httpapi.SynchronizationItem](t, owner.do(http.MethodGet, api+"/financial_mutations/synchronization", nil))
+	versions := decode[[]httpapi.SynchronizationItem](t, owner.do(http.MethodGet, api+"/financial_mutations/synchronization.json?filter=period:202611..202611", nil))
+	if credit := decode[[]httpapi.SynchronizationItem](t, owner.do(http.MethodGet, api+"/financial_mutations/synchronization?filter=period:202611..202611,mutation_type:credit", nil)); len(credit) != 1 {
+		t.Errorf("credit versions = %+v", credit)
+	}
+	if none := decode[[]httpapi.SynchronizationItem](t, owner.do(http.MethodGet, api+"/financial_mutations/synchronization?filter=period:202610..202610", nil)); len(none) != 0 {
+		t.Errorf("october versions = %+v", none)
+	}
+	wantStatus(t, owner.do(http.MethodGet, api+"/financial_mutations/synchronization?filter=state:lost", nil), http.StatusBadRequest)
 	fetched := decode[[]mutation](t, owner.do(http.MethodPost, api+"/financial_mutations/synchronization", map[string]any{"ids": []any{versions[0].Id, 1}}))
 	if len(versions) != 2 || len(fetched) != 1 {
 		t.Errorf("versions %d, fetched %d", len(versions), len(fetched))
 	}
 	wantStatus(t, owner.do(http.MethodGet, api+"/financial_mutations/"+m.ID, nil), http.StatusOK)
 
-	balance := decode[map[string]any](t, owner.do(http.MethodGet, api+"/reports/bank_balance", nil))
-	if balance["total"] != "974.5" {
+	balance := decode[map[string]any](t, owner.do(http.MethodGet, api+"/reports/bank_balance?period=202611", nil))
+	if balance["total"] != "974.5" || balance["periods"] != nil {
 		t.Errorf("balance = %v", balance)
+	}
+	type bankBalance struct {
+		Total             string `json:"total"`
+		FinancialAccounts []struct {
+			Balance string `json:"balance"`
+		} `json:"financial_accounts"`
+		Periods []struct {
+			Period            string `json:"period"`
+			Total             string `json:"total"`
+			FinancialAccounts []struct {
+				Balance string `json:"balance"`
+			} `json:"financial_accounts"`
+		} `json:"periods"`
+	}
+	split := decode[bankBalance](t, owner.do(http.MethodGet, api+"/reports/bank_balance.json?period=202609..202611&granularity=month", nil))
+	if split.Total != "974.5" || len(split.Periods) != 3 || split.Periods[0].Period != "202609..202609" || split.Periods[1].Total != "0.0" ||
+		len(split.Periods[1].FinancialAccounts) != 1 || split.Periods[2].Total != "974.5" {
+		t.Errorf("by month = %+v", split)
+	}
+	if early := decode[bankBalance](t, owner.do(http.MethodGet, api+"/reports/bank_balance?period=202610", nil)); len(early.FinancialAccounts) != 0 {
+		t.Errorf("october = %+v", early)
+	}
+	for _, q := range []string{"period=202501..202602", "period=20251102..20251130", "period=nonsense", "granularity=week"} {
+		wantStatus(t, owner.do(http.MethodGet, api+"/reports/bank_balance?"+q, nil), http.StatusBadRequest)
 	}
 	wantStatus(t, owner.do(http.MethodDelete, api+"/financial_statements/"+m.StatementID, nil), http.StatusUnprocessableEntity)
 }

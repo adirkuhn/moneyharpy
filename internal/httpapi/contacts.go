@@ -603,9 +603,13 @@ func (s *server) DeleteContact(w http.ResponseWriter, r *http.Request, administr
 	if !ok {
 		return
 	}
-	if err := s.deps.Contacts.Delete(r.Context(), admin, rid, user(r).ID); err != nil {
+	kept, err := s.deps.Contacts.Delete(r.Context(), admin, rid, user(r).ID)
+	if err != nil {
 		s.fail(w, r, err)
 		return
+	}
+	if kept {
+		w.Header().Set("X-Kept-As", "archived")
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

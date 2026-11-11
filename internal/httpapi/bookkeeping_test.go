@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -71,6 +73,14 @@ func TestTaxRates(t *testing.T) {
 	all := decode[[]taxRate](t, owner.do(http.MethodGet, base+".json", nil))
 	if len(all) == 0 || all[0].TaxRateType != "sales_invoice" || all[0].Percentage != "21" {
 		t.Fatalf("list = %+v", all)
+	}
+	paged := owner.do(http.MethodGet, base+"?per_page=1&page=2", nil)
+	wantStatus(t, paged, http.StatusOK)
+	if got := decode[[]taxRate](t, paged); len(got) != 1 || got[0].ID != all[1].ID || paged.header.Get("X-Total-Count") != strconv.Itoa(len(all)) || !strings.Contains(paged.header.Get("Link"), `rel="prev"`) {
+		t.Errorf("page 2 = %+v, total %s", got, paged.header.Get("X-Total-Count"))
+	}
+	if got := decode[[]taxRate](t, owner.do(http.MethodGet, base+"?per_page=100&page=9", nil)); len(got) != 0 {
+		t.Errorf("past the end = %+v", got)
 	}
 	sales := decode[[]taxRate](t, owner.do(http.MethodGet, base+"?filter="+url.QueryEscape("tax_rate_type:sales_invoice,active:true"), nil))
 	for _, r := range sales {

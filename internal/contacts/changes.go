@@ -107,24 +107,26 @@ func (s *Service) Archive(ctx context.Context, admin, id, user resource.ID) (Con
 	return s.Update(ctx, admin, id, user, Changes{Archived: &archived})
 }
 
-// Delete removes a contact that no document refers to.
-func (s *Service) Delete(ctx context.Context, admin, id, user resource.ID) error {
+// Delete removes a contact that no document refers to. One that documents
+// refer to is archived instead, as Moneybird does, and kept reports so.
+func (s *Service) Delete(ctx context.Context, admin, id, user resource.ID) (kept bool, err error) {
 	if _, err := s.admins.Get(ctx, admin, user); err != nil {
-		return err
+		return false, err
 	}
 	if _, err := s.store.Contact(ctx, admin, id); err != nil {
-		return err
+		return false, err
 	}
 	if s.references != nil {
 		used, err := s.references.ContactInUse(ctx, admin, id)
 		if err != nil {
-			return fmt.Errorf("check contact use: %w", err)
+			return false, fmt.Errorf("check contact use: %w", err)
 		}
 		if used {
-			return ErrInUse
+			_, err := s.Archive(ctx, admin, id, user)
+			return err == nil, err
 		}
 	}
-	return s.store.DeleteContact(ctx, admin, id)
+	return false, s.store.DeleteContact(ctx, admin, id)
 }
 
 // Doubles groups the contacts that look like the same customer: they share

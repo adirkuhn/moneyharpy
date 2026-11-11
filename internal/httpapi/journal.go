@@ -182,6 +182,9 @@ func toDocumentChanges(w http.ResponseWriter, body journalDocumentBody) (journal
 		if row.ContactID, ok = flexOptionalID(w, r.ContactID); !ok {
 			return c, false
 		}
+		if row.ProjectID, ok = flexOptionalID(w, r.ProjectID); !ok {
+			return c, false
+		}
 		if r.RowOrder != nil {
 			n, err := strconv.Atoi(string(*r.RowOrder))
 			if err != nil {
@@ -232,7 +235,11 @@ func (s *server) ListGeneralJournalDocuments(w http.ResponseWriter, r *http.Requ
 	if !ok {
 		return
 	}
-	q, ok := s.documentQuery(w, r, admin, params.Filter)
+	filter := params.Filter
+	if params.NewFilter != nil {
+		filter = (*DocumentFilter)(params.NewFilter)
+	}
+	q, ok := s.documentQuery(w, r, admin, filter)
 	if !ok {
 		return
 	}
@@ -372,7 +379,8 @@ func (s *server) DeleteGeneralJournalDocument(w http.ResponseWriter, r *http.Req
 		s.fail(w, r, err)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	// Moneybird answers with the status code as the body.
+	writeJSON(w, http.StatusOK, http.StatusOK)
 }
 
 func decodeNote(w http.ResponseWriter, r *http.Request) (notes.Input, bool) {
@@ -485,20 +493,7 @@ func (s *server) DeleteGeneralJournalDocumentAttachment(w http.ResponseWriter, r
 
 // DownloadGeneralJournalDocumentAttachment implements ServerInterface.
 func (s *server) DownloadGeneralJournalDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, attachmentID Identifier) {
-	admin, rid, ok := parseIDs(w, administrationID, id)
-	if !ok {
-		return
-	}
-	att, ok := parseID(w, attachmentID)
-	if !ok {
-		return
-	}
-	a, body, err := s.deps.Journal.OpenDocumentAttachment(r.Context(), admin, rid, att, user(r).ID)
-	if err != nil {
-		s.fail(w, r, err)
-		return
-	}
-	writeFile(w, a, body)
+	s.redirectToAttachment(w, r, fileJournalAttachment, administrationID, id, attachmentID)
 }
 
 // writeFile answers with an attachment's contents.

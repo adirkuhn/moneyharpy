@@ -14,6 +14,10 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
+// TaxRatesPerPage is how many tax rates a page of the list holds unless
+// asked otherwise.
+const TaxRatesPerPage = 100
+
 // TaxRateTypes are the documents a VAT rate applies to, with Moneybird's
 // names.
 var TaxRateTypes = []string{"sales_invoice", "purchase_invoice", "general_journal_document"}

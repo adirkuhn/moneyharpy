@@ -18,6 +18,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
+	"github.com/adirkuhn/moneyharpy/internal/products"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -46,6 +48,10 @@ const (
 	provision       resource.ID = 709
 	uncollectible   resource.ID = 710
 	loan            resource.ID = 711
+	widget          resource.ID = 800
+	retired         resource.ID = 801
+	falcon          resource.ID = 850
+	shelved         resource.ID = 851
 	bankLedger      resource.ID = 712
 	bankAccount     resource.ID = 800
 )
@@ -74,6 +80,29 @@ func (f fakeAdmins) Identity(ctx context.Context, admin, id, user resource.ID) (
 
 func (fakeAdmins) CustomFields(context.Context, resource.ID, resource.ID) ([]administration.CustomField, error) {
 	return nil, nil
+}
+
+type fakeCatalog struct{}
+
+func (fakeCatalog) Product(_ context.Context, _, id, _ resource.ID) (products.Product, error) {
+	rate := vat21
+	switch id {
+	case widget:
+		return products.Product{ID: id, Title: "Widget", Description: "Widget, blue", Price: 2500, TaxRateID: &rate, LedgerAccountID: consulting, Active: true}, nil
+	case retired:
+		return products.Product{ID: id, Title: "Old widget", Price: 100, LedgerAccountID: consulting}, nil
+	}
+	return products.Product{}, products.ErrNotFound
+}
+
+func (fakeCatalog) Project(_ context.Context, _, id, _ resource.ID) (projects.Project, error) {
+	switch id {
+	case falcon:
+		return projects.Project{ID: id, Name: "Falcon", State: projects.Active}, nil
+	case shelved:
+		return projects.Project{ID: id, Name: "Shelved", State: projects.Archived}, nil
+	}
+	return projects.Project{}, projects.ErrNotFound
 }
 
 type fakeContacts struct{}
@@ -581,7 +610,12 @@ type fakeRenderer struct{}
 func (fakeRenderer) PDF(doc Document) ([]byte, error) {
 	return []byte("%PDF " + doc.Invoice.InvoiceID + " " + strconv.FormatInt(int64(doc.Totals.InclTax), 10)), nil
 }
-func (fakeRenderer) PackingSlip(doc Document) ([]byte, error) { return []byte("%PDF slip"), nil }
+func (fakeRenderer) PackingSlip(doc Document) ([]byte, error) {
+	if doc.Stationery {
+		return []byte("%PDF slip stationery"), nil
+	}
+	return []byte("%PDF slip"), nil
+}
 func (fakeRenderer) UBL(doc Document) ([]byte, error) {
 	return []byte("<Invoice>" + doc.Invoice.InvoiceID + "</Invoice>"), nil
 }
@@ -672,7 +706,7 @@ func newHarness(t *testing.T) harness {
 	bank := &fakeBank{open: map[resource.ID]money.Amount{}, day: now}
 	notifier := &fakeNotifier{}
 	svc := NewService(Deps{
-		Administrations: fakeAdmins{}, Contacts: fakeContacts{}, Invoicing: &fakeInvoicing{}, Ledger: ledger,
+		Administrations: fakeAdmins{}, Contacts: fakeContacts{}, Products: fakeCatalog{}, Projects: fakeCatalog{}, Invoicing: &fakeInvoicing{}, Ledger: ledger,
 		Notes: notes.NewService(&memNotes{}, ids, clock), Attachments: attachments.NewService(&memAttachments{}, noFiles{}, ids, clock),
 		Store: store, Renderer: fakeRenderer{}, Mailer: mailer, Bank: bank, Notifier: notifier, IDs: ids, Now: clock,
 	})

@@ -58,6 +58,14 @@ tags:
     description: Invoices made in other software, such as a webshop or a till, booked and followed until paid. Compatible with the Moneybird API.
   - name: Recurring sales invoices
     description: Templates that make sales invoices on a schedule, and send them if wanted. Compatible with the Moneybird API.
+  - name: Payments
+    description: Payments of invoices, looked up by id. Compatible with the Moneybird API.
+  - name: Products
+    description: What is sold, with the price, VAT rate and category lines take from it. Compatible with the Moneybird API.
+  - name: Projects
+    description: Projects lines and journal entries can be booked on. Compatible with the Moneybird API.
+  - name: Files
+    description: Temporary download links the download operations redirect to.
   - name: Booking rules
     description: Rules that book matching transactions automatically. MoneyHarpy extension.
   - name: Management
@@ -1110,7 +1118,7 @@ paths:
       operationId: listTaxRates
       x-permissions: [settings, sales_invoices, documents, estimates]
       summary: Retrieve tax rates
-      description: Sales rates first, then purchase and journal rates, each in their set order.
+      description: Sales rates first, then purchase and journal rates, each in their set order. Paged with a Link header and X-Total-Count, 100 a page unless per_page is given.
       tags: [Tax rates]
       parameters:
         - name: filter
@@ -1122,11 +1130,22 @@ paths:
           schema:
             type: string
             maxLength: 1000
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
       responses:
         '403':
           $ref: '#/components/responses/Forbidden'
         '200':
           description: The tax rates
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of tax rates selected in all.
+              schema:
+                type: integer
           content:
             application/json:
               schema:
@@ -1970,7 +1989,12 @@ paths:
       operationId: listFinancialMutationVersions
       x-permissions: [bank]
       summary: List the ids and versions of all financial mutations
+      description: >-
+        The ids and versions of the transactions the filter selects, with the terms of the list (period, state, mutation_type,
+        financial_account_id, amount_from, amount_to); this year when no filter is given.
       tags: [Financial mutations]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
       responses:
         '403':
           $ref: '#/components/responses/Forbidden'
@@ -2135,8 +2159,19 @@ paths:
       x-permissions: [bank]
       summary: Bank balance report
       description: >-
-        The sum of every financial account's transactions. Accounts with a zero balance are left out.
+        The balance of every financial account at the end of the period: the sum of its transactions up to that day. With
+        granularity, periods also gives the balances at the end of every month, quarter or year in the period, the first and
+        the last cut off at the period's start and end. An account with a zero balance at every end is left out. The period
+        holds at most 12 months.
       tags: [Financial mutations]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years.
+          schema:
+            type: string
+            enum: [month, quarter, year]
       responses:
         '403':
           $ref: '#/components/responses/Forbidden'
@@ -2145,7 +2180,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/bank_balance_amounts'
+                allOf:
+                  - $ref: '#/components/schemas/bank_balance_amounts'
+                  - type: object
+                    properties:
+                      periods:
+                        type: array
+                        description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+                        items:
+                          allOf:
+                            - type: object
+                              required: [period]
+                              properties:
+                                period:
+                                  type: string
+                                  description: The part of the period, as 202501..202503.
+                            - $ref: '#/components/schemas/bank_balance_amounts'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2369,6 +2419,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
       responses:
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
         '200':
           description: A page of possible duplicate contact groups
           content:
@@ -2476,11 +2528,18 @@ paths:
       operationId: deleteContact
       x-permissions: [sales_invoices, documents, estimates]
       summary: Delete a contact
-      description: A contact that documents refer to cannot be deleted (422); archive it instead.
+      description: >-
+        A contact that documents refer to is archived instead, as Moneybird does, with the header X-Kept-As: archived.
       tags: [Contacts]
       responses:
         '204':
-          description: The contact is deleted
+          description: The contact is deleted, or archived
+          headers:
+            X-Kept-As:
+              description: archived when the contact was kept.
+              schema:
+                type: string
+                enum: [archived]
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2693,6 +2752,12 @@ paths:
           schema:
             type: string
             enum: [date_desc, date_asc]
+        - name: new_filter
+          in: query
+          description: Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+          schema:
+            type: string
+            maxLength: 1000
         - name: exclude_new_general_journal_documents
           in: query
           description: Accepted for compatibility; journal entries are never new.
@@ -2726,6 +2791,8 @@ paths:
             schema:
               $ref: '#/components/schemas/GeneralJournalDocumentRequest'
       responses:
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
         '201':
           description: The created journal entry
           content:
@@ -2871,8 +2938,12 @@ paths:
         Not in the locked period.
       tags: [Journal]
       responses:
-        '204':
-          description: The journal entry is deleted
+        '200':
+          description: The journal entry is deleted. The body is the status code, as at Moneybird.
+          content:
+            application/json:
+              schema:
+                type: integer
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -3028,16 +3099,11 @@ paths:
       x-permissions: [documents]
       summary: Download an attachment
       description: >-
-        Answers with the file itself; Moneybird redirects to it instead.
+        Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
       tags: [Journal]
       responses:
-        '200':
-          description: The file
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
+        '302':
+          $ref: '#/components/responses/FileRedirect'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -3196,6 +3262,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SalesInvoiceRequest'
       responses:
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
         '201':
           description: The created draft
           content:
@@ -3464,16 +3532,13 @@ paths:
       x-permissions: [sales_invoices]
       summary: Download the PDF
       description: >-
-        Answers with the file itself; Moneybird redirects to it instead.
+        Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
       tags: [Sales invoices]
+      parameters:
+        - $ref: '#/components/parameters/media'
       responses:
-        '200':
-          description: The file
-          content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
+        '302':
+          $ref: '#/components/responses/FileRedirect'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -3495,16 +3560,13 @@ paths:
       x-permissions: [sales_invoices]
       summary: Download the packing slip
       description: >-
-        Answers with the file itself; Moneybird redirects to it instead.
+        Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
       tags: [Sales invoices]
+      parameters:
+        - $ref: '#/components/parameters/media'
       responses:
-        '200':
-          description: The file
-          content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
+        '302':
+          $ref: '#/components/responses/FileRedirect'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -3566,6 +3628,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CreditInvoiceRequest'
       responses:
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
         '200':
           description: The credit invoice
           content:
@@ -3809,6 +3873,425 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/payments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getPayment
+      x-permissions: [sales_invoices]
+      summary: Get a payment
+      description: >-
+        A payment of a sales invoice or an external sales invoice. Moneybird also has payments of purchase invoices,
+        receipts and VAT documents, which MoneyHarpy does not have yet.
+      tags: [Payments]
+      responses:
+        '200':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/products:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listProducts
+      x-permissions: [settings, sales_invoices, estimates]
+      summary: List all products
+      description: >-
+        Active products by title (or description), 10 a page unless per_page is given. Paged with a Link header and
+        X-Total-Count. Members who may work on invoices or estimates may list them too, to pick them for lines.
+      tags: [Products]
+      parameters:
+        - name: query
+          in: query
+          description: Free-text search across the title, description and identifier.
+          schema:
+            type: string
+            maxLength: 1000
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: currency
+          in: query
+          description: Only products in this currency, such as EUR.
+          schema:
+            type: string
+            maxLength: 3
+        - name: active
+          in: query
+          description: true (the default) lists active products only; false includes deactivated ones.
+          schema:
+            type: string
+            enum: ['true', 'false']
+        - name: for_checkout
+          in: query
+          description: >-
+            true keeps the products sold through an online checkout, false those that are not. MoneyHarpy has no online
+            checkout, so true finds none.
+          schema:
+            type: string
+            enum: ['true', 'false']
+        - name: ledger_account_id
+          in: query
+          description: Only products booked on this category.
+          schema:
+            $ref: '#/components/schemas/Identifier'
+      responses:
+        '200':
+          $ref: '#/components/responses/ProductPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createProduct
+      x-permissions: [settings]
+      summary: Create a product
+      description: >-
+        Needs a price, a category (ledger_account_id) and a title or description. The currency is the administration's
+        unless given; the identifier must be unique.
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '201':
+          description: The created product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/products/identifier/{identifier}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - name: identifier
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 255
+    get:
+      operationId: getProductByIdentifier
+      x-permissions: [settings, sales_invoices, estimates]
+      summary: Get a product by its identifier
+      tags: [Products]
+      responses:
+        '200':
+          description: The product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/products/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getProduct
+      x-permissions: [settings, sales_invoices, estimates]
+      summary: Get a product
+      tags: [Products]
+      responses:
+        '200':
+          description: The product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateProduct
+      x-permissions: [settings]
+      summary: Update a product
+      description: Lines that name the product keep what they took from it. active false deactivates it, true reactivates it (MoneyHarpy extension).
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '200':
+          description: The product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      operationId: deleteProduct
+      x-permissions: [settings]
+      summary: Delete or deactivate a product
+      description: >-
+        A product no invoice line names is deleted. One that lines name is deactivated instead and kept, with the header
+        X-Kept-As: deactivated, as Moneybird does.
+      tags: [Products]
+      responses:
+        '204':
+          description: The product is deleted, or deactivated
+          headers:
+            X-Kept-As:
+              description: deactivated when the product was kept.
+              schema:
+                type: string
+                enum: [deactivated]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/products/{id}/sales_link:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createProductSalesLink
+      x-permissions: [settings]
+      summary: Create an online sales link
+      description: >-
+        Moneybird makes a link to a checkout page through Moneybird Payments. MoneyHarpy has no online checkout: after
+        checking the product and the contact it answers 404 "Product not valid for online sales", as Moneybird does for a
+        product that cannot be sold online.
+      tags: [Products]
+      parameters:
+        - name: contact_id
+          in: query
+          description: The contact to fill in on the checkout page.
+          schema:
+            $ref: '#/components/schemas/Identifier'
+      responses:
+        '201':
+          description: The sales link, valid for one hour. MoneyHarpy does not answer this.
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/projects:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listProjects
+      x-permissions: [settings, sales_invoices, documents, estimates]
+      summary: List all projects
+      description: >-
+        By name, 25 a page unless per_page is given. Filter term: state, one of all, active (the default) or archived,
+        several joined by |. Paged with a Link header and X-Total-Count. Members who may work on invoices, estimates or
+        documents may list them too, to book on them.
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          $ref: '#/components/responses/ProjectPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createProject
+      x-permissions: [settings]
+      summary: Create a project
+      description: The name must be unique in the administration, ignoring case.
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+      responses:
+        '201':
+          description: The created project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/projects/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getProject
+      x-permissions: [settings, sales_invoices, documents, estimates]
+      summary: Get a project
+      tags: [Projects]
+      responses:
+        '200':
+          description: The project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateProject
+      x-permissions: [settings]
+      summary: Update a project
+      description: state archives the project or makes it active again (MoneyHarpy extension).
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+      responses:
+        '200':
+          description: The project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      operationId: deleteProject
+      x-permissions: [settings]
+      summary: Delete or archive a project
+      description: >-
+        A project nothing is booked on is deleted. One that invoice lines or journal entries are booked on is archived
+        instead and kept, with the header X-Kept-As: archived, as Moneybird does.
+      tags: [Projects]
+      responses:
+        '204':
+          description: The project is deleted, or archived
+          headers:
+            X-Kept-As:
+              description: archived when the project was kept.
+              schema:
+                type: string
+                enum: [archived]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
   /api/v2/{administration_id}/sales_invoices/{id}/register_payment:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -4037,13 +4520,8 @@ paths:
       summary: Download an attachment
       tags: [Sales invoices]
       responses:
-        '200':
-          description: The file
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
+        '302':
+          $ref: '#/components/responses/FileRedirect'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -4382,13 +4860,8 @@ paths:
       summary: Download an attachment
       tags: [External sales invoices]
       responses:
-        '200':
-          description: The file
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
+        '302':
+          $ref: '#/components/responses/FileRedirect'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -4640,6 +5113,8 @@ paths:
             schema:
               $ref: '#/components/schemas/RecurringSalesInvoiceRequest'
       responses:
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
         '201':
           description: The created recurring invoice
           content:
@@ -6089,6 +6564,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthProviders'
+  /api/files/{token}:
+    get:
+      operationId: downloadFile
+      summary: Download a file by a temporary link
+      description: >-
+        Where the download operations redirect to, like Moneybird's storage links: the token names the file and who asked
+        for it, is signed, and expires 30 seconds after it was made. No sign-in is needed.
+      tags: [Files]
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 2000
+      responses:
+        '200':
+          description: The file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/auth/register:
     post:
       operationId: register
@@ -6480,6 +6985,13 @@ components:
       schema:
         type: string
   parameters:
+    media:
+      name: media
+      in: query
+      description: stationery leaves out the sender's address and logo, for printing on paper that has them.
+      schema:
+        type: string
+        maxLength: 100
     administration_id:
       name: administration_id
       in: path
@@ -6550,6 +7062,69 @@ components:
         type: string
         maxLength: 1000
   responses:
+    ProductPage:
+      description: A page of products
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number of products selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Product'
+    ProjectPage:
+      description: A page of projects
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number of projects selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Project'
+    PaymentRequired:
+      description: >-
+        Moneybird answers this when the plan's limit is reached. MoneyHarpy has no plans or limits, so it does not answer
+        this; it is declared for clients written against Moneybird.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServiceUnavailable:
+      description: >-
+        Moneybird answers this when finding duplicates takes too long. MoneyHarpy groups contacts in one pass and does not
+        answer this; it is declared for clients written against Moneybird.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    FileRedirect:
+      description: >-
+        Found. Location holds a link to the file that works for 30 seconds, without signing in, as Moneybird's storage
+        links do.
+      headers:
+        Location:
+          description: The temporary link to the file.
+          schema:
+            type: string
+      content:
+        text/plain:
+          schema:
+            type: string
     SalesInvoicePage:
       description: A page of sales invoices
       headers:
@@ -8507,6 +9082,130 @@ components:
                 - type: object
                   additionalProperties:
                     $ref: '#/components/schemas/SalesInvoiceDetailInput'
+    Product:
+      description: A Moneybird product with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/product_response'
+        - type: object
+          required: [id, administration_id, price, currency, ledger_account_id, created_at, updated_at, active, uri]
+          properties:
+            active:
+              type: boolean
+              description: MoneyHarpy extension. False once deactivated.
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    ProductRequest:
+      type: object
+      required: [product]
+      additionalProperties: false
+      properties:
+        product:
+          type: object
+          additionalProperties: false
+          properties:
+            title:
+              type: string
+              maxLength: 255
+            description:
+              type: string
+              maxLength: 10000
+            checkout_description:
+              type: string
+              description: Accepted and kept; MoneyHarpy has no online checkout.
+              maxLength: 10000
+            price:
+              $ref: '#/components/schemas/Money'
+            document_style_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            ledger_account_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            tax_rate_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            workflow_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            currency:
+              type: string
+              maxLength: 3
+            checkout_type:
+              type: string
+              enum: [product, subscription, '']
+            frequency_type:
+              type: string
+              enum: [day, week, month, quarter, year, '']
+            frequency:
+              oneOf:
+                - type: integer
+                  minimum: 1
+                  maximum: 1000
+                - type: string
+                  pattern: '^[0-9]{1,4}$'
+            product_type:
+              type: string
+              enum: [digital_service, service, product, '']
+            vat_rate_type:
+              type: string
+              enum: [standard, reduced, '']
+            max_amount_per_order:
+              oneOf:
+                - type: integer
+                  minimum: 0
+                  maximum: 1000
+                - type: string
+                  pattern: '^[0-9]{1,4}$'
+            identifier:
+              type: string
+              maxLength: 255
+            frequency_preset:
+              type: string
+              pattern: '^\d+:(day|week|month|quarter|year|custom|nil)$'
+            active:
+              description: MoneyHarpy extension. false deactivates the product, true reactivates it.
+              $ref: '#/components/schemas/FlexibleBoolean'
+    Project:
+      description: A Moneybird project with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/project_response'
+        - type: object
+          required: [id, name, state, administration_id, uri]
+          properties:
+            administration_id:
+              $ref: '#/components/schemas/Identifier'
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+    ProjectRequest:
+      type: object
+      required: [project]
+      additionalProperties: false
+      properties:
+        project:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+            budget:
+              description: The budget in hours, as a number or a string; empty or null removes it.
+              nullable: true
+              oneOf:
+                - type: number
+                  minimum: 0
+                  maximum: 1000000000
+                - type: string
+                  pattern: '^([0-9]+([,.][0-9]*)?)?$'
+                  maxLength: 20
+            state:
+              type: string
+              description: MoneyHarpy extension. archived archives the project, active makes it active again.
+              enum: [active, archived]
     RecurringSalesInvoice:
       description: A Moneybird recurring sales invoice with MoneyHarpy extensions.
       allOf:
