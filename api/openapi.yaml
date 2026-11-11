@@ -2055,10 +2055,11 @@ paths:
       x-permissions: [bank]
       summary: Link a booking to a financial mutation
       description: >-
-        MoneyHarpy books on categories (LedgerAccount) so far; other booking types answer 422 until invoices
-        and documents exist. price_base is the amount; positive books in the direction of the transaction,
-        negative against it. Without it, the open amount is booked. Split a transaction with one request per
-        part.
+        Books on a category (LedgerAccount) or pays a sales invoice (SalesInvoice); other booking types answer
+        422 until their documents exist. price_base is the amount; positive books in the direction of the
+        transaction, negative against it. Without it, the open amount is booked, and for an invoice at most
+        what it has unpaid. A payment registered by hand that waits for its transaction is taken over by it.
+        Split a transaction with one request per part. Not in the locked period.
       tags: [Financial mutations]
       requestBody:
         required: true
@@ -2094,8 +2095,8 @@ paths:
       x-permissions: [bank]
       summary: Unlink a booking from a financial mutation
       description: >-
-        booking_type LedgerAccountBooking removes a booking on a category. Payment answers 422 until
-        invoices exist.
+        booking_type LedgerAccountBooking removes a booking on a category; Payment removes an invoice payment
+        made with the transaction, and the invoice waits for payment again.
       tags: [Financial mutations]
       requestBody:
         required: true
@@ -3700,6 +3701,255 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/sales_invoices/send_reminders:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: sendSalesInvoiceReminders
+      x-permissions: [sales_invoices]
+      summary: Send reminders
+      description: >-
+        Sends one reminder per entry: an email to the contact listing the invoices, with their PDFs, or nothing when delivered Manual. The text defaults to the workflow's next reminder step, then to MoneyHarpy's own; {invoices} in it lists the invoices. Each invoice becomes reminded and counts the reminder. All entries are checked before any is sent. Moneybird answers with a status code; MoneyHarpy answers with the reminded invoices.
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendRemindersRequest'
+      responses:
+        '200':
+          description: The reminded invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/payments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createSalesInvoicePayment
+      x-permissions: [sales_invoices]
+      summary: Create a payment
+      description: >-
+        Registers a payment on a sent invoice, signed like the invoice (negative on a credit invoice) and at most what is unpaid. The manual_payment_action chooses the account it is booked against: bank_transfer and payment_without_proof on received payments to be classified until a bank transaction takes the payment over, cash_payment on cash (or the financial account given), private_payment on private deposits, rounding_error on rounding, balance_settlement on the balance sheet category in ledger_account_id, and invoices_settlement against the invoice in invoice_id on settlements. With financial_mutation_id the bank transaction pays the invoice instead and posts the payment. A payment that covers what is unpaid makes the invoice paid. Not in the locked period or the future.
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '201':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/payments/{payment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: payment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteSalesInvoicePayment
+      x-permissions: [sales_invoices]
+      summary: Delete a payment
+      description: >-
+        Removes the payment and what it posts; a paid invoice is open (or late, or reminded) again. A payment made with a bank transaction is unlinked from it; one half of a settlement between invoices takes the other half along. Not for uncollectible invoices or in the locked period.
+      tags: [Sales invoices]
+      responses:
+        '204':
+          description: The payment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/register_payment:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: registerSalesInvoicePayment
+      x-permissions: [sales_invoices]
+      summary: Register a payment
+      deprecated: true
+      description: >-
+        Moneybird's older way to create a payment; it works the same and answers with the payment.
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/register_payment_creditinvoice:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: settleSalesCreditInvoice
+      x-permissions: [sales_invoices]
+      summary: Register a payment for a credit invoice
+      description: >-
+        Settles a credit invoice with the invoice it credits: a payment of what the credit invoice has unpaid on each, against the settlements account, dated today. Both must be waiting for payment.
+      tags: [Sales invoices]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyRequest'
+      responses:
+        '200':
+          description: The credit invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/mark_as_dubious:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: markSalesInvoiceAsDubious
+      x-permissions: [sales_invoices]
+      summary: Mark as dubious
+      description: >-
+        Reserves what is open of the invoice, excluding VAT, in the provision for doubtful debtors on the dubious_date (today when left out), which lies after the invoice date and not in the future or the locked period. The state stays; a payment of the rest releases the provision.
+      tags: [Sales invoices]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkDubiousRequest'
+      responses:
+        '200':
+          description: The sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/mark_as_uncollectible:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: markSalesInvoiceAsUncollectible
+      x-permissions: [sales_invoices]
+      summary: Mark as uncollectible
+      description: >-
+        Writes off what is open of the invoice for good on the uncollectible_date (today when left out): excluding VAT on uncollectible revenue, or on the provision when the invoice was dubious, and its VAT back off payable VAT, split over the invoice's VAT rates. The date lies after the invoice date and the dubious date, not in the future or the locked period. This cannot be undone; the invoice is uncollectible and takes no more payments.
+      tags: [Sales invoices]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkUncollectibleRequest'
+      responses:
+        '200':
+          description: The sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
   /api/v2/{administration_id}/sales_invoices/{id}/attachments:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -6910,6 +7160,8 @@ components:
       properties:
         bank:
           $ref: '#/components/schemas/OverviewBank'
+        sales:
+          $ref: '#/components/schemas/OverviewSales'
         recently_processed:
           type: array
           description: The records processed last, newest first, at most 25.
@@ -6931,6 +7183,30 @@ components:
           type: integer
           minimum: 0
           description: Transactions of active accounts still to link.
+    OverviewSales:
+      type: object
+      description: Present only with the sales invoices permission.
+      required: [to_receive, to_remind, currency]
+      properties:
+        to_receive:
+          $ref: '#/components/schemas/OverviewTally'
+        to_remind:
+          $ref: '#/components/schemas/OverviewTally'
+        currency:
+          type: string
+          example: EUR
+    OverviewTally:
+      type: object
+      description: Sent invoices still to be paid; to_remind holds those past their due date and not paused.
+      required: [count, amount]
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        amount:
+          type: string
+          description: What they have unpaid.
+          example: '1210.0'
     OverviewItem:
       type: object
       description: One recently processed record.
@@ -7448,6 +7724,102 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FlexibleIdentifier'
+    Payment:
+      description: A Moneybird payment.
+      allOf:
+        - $ref: '#/components/schemas/payment_response'
+        - type: object
+          required: [id, administration_id, invoice_type, invoice_id, price, price_base, payment_date, created_at, updated_at]
+    PaymentRequest:
+      type: object
+      required: [payment]
+      additionalProperties: false
+      properties:
+        payment:
+          type: object
+          required: [payment_date, price]
+          additionalProperties: false
+          properties:
+            payment_date:
+              type: string
+              description: yyyy-mm-dd; a time after it is ignored.
+              pattern: '^\d{4}-\d{2}-\d{2}'
+              maxLength: 40
+            price:
+              $ref: '#/components/schemas/Money'
+            price_base:
+              $ref: '#/components/schemas/Money'
+            financial_account_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            financial_mutation_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            transaction_identifier:
+              type: string
+              maxLength: 255
+            manual_payment_action:
+              type: string
+              enum: [private_payment, payment_without_proof, cash_payment, rounding_error, bank_transfer, balance_settlement, invoices_settlement]
+            ledger_account_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            invoice_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+    EmptyRequest:
+      type: object
+      additionalProperties: false
+    MarkDubiousRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        dubious_date:
+          type: string
+          format: date
+    MarkUncollectibleRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        uncollectible_date:
+          type: string
+          format: date
+        book_method:
+          type: string
+          enum: [revenue]
+    SendRemindersRequest:
+      type: object
+      required: [sales_invoice_reminders]
+      additionalProperties: false
+      properties:
+        sales_invoice_reminders:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            required: [contact_id, workflow_id, document_style_id, identity_id, sales_invoice_ids]
+            additionalProperties: false
+            properties:
+              contact_id:
+                $ref: '#/components/schemas/FlexibleIdentifier'
+              workflow_id:
+                $ref: '#/components/schemas/FlexibleIdentifier'
+              document_style_id:
+                $ref: '#/components/schemas/FlexibleIdentifier'
+              identity_id:
+                $ref: '#/components/schemas/FlexibleIdentifier'
+              sales_invoice_ids:
+                type: array
+                minItems: 1
+                maxItems: 100
+                items:
+                  $ref: '#/components/schemas/FlexibleIdentifier'
+              reminder_text:
+                type: string
+                maxLength: 10000
+              delivery_method:
+                type: string
+                enum: [Email, Manual]
+              email_address:
+                type: string
+                maxLength: 1000
     BookingRuleRequest:
       type: object
       required: [booking_rule]

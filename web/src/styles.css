@@ -828,6 +828,9 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
 .invoices__amount { width: 8rem; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .data-table th.invoices__amount { text-align: right; }
 .data-table th.invoices__state, .invoices__state { width: 9rem; }
+.invoices__select { width: 2.5rem; }
+.invoices__select input { width: 1.1rem; height: 1.1rem; }
+.invoices__bulk { align-items: center; padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 0.5rem; }
 
 .invoice-form .form-sheet__actions { margin-top: 1rem; }
 .invoice-lines { margin: 1.25rem 0 0.25rem; }
@@ -862,6 +865,10 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
 .data-table.invoice-view__lines th:last-child { width: 8rem; }
 .send-panel .form-sheet { border-color: var(--blue); }
 .send-panel__hint { margin: 1rem 0 0; }
+.invoice-choice { border: 0; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.25rem; }
+.invoice-choice__row { display: grid; grid-template-columns: auto minmax(6rem, 10rem) 1fr auto; gap: 0.75rem; align-items: center; padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 0.5rem; cursor: pointer; }
+.invoice-choice__row:has(input:checked) { border-color: var(--blue); }
+@media (max-width: 40rem) { .invoice-choice__row { grid-template-columns: auto 1fr; } }
 .file-field .hint { margin: 0; }
 
 /* On phones each line is a card of labelled fields instead of a table row. */

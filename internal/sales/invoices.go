@@ -156,6 +156,9 @@ func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, c Cha
 			due := inv.InvoiceDate.AddDate(0, 0, inv.FirstDueInterval)
 			inv.DueDate = &due
 		}
+		if inv.State == Late {
+			inv.State = reopened(inv, s.today(a))
+		}
 		if err := s.checkUnlocked(ctx, admin, user, inv.InvoiceDate); err != nil {
 			return Invoice{}, err
 		}
@@ -542,6 +545,11 @@ func (s *Service) post(ctx context.Context, admin, user resource.ID, inv Invoice
 			}
 		}
 	}
+	offs, err := s.writeOffs(ctx, admin, user, inv, tot, entry)
+	if err != nil {
+		return nil, err
+	}
+	entries = append(entries, offs...)
 	for i := range entries {
 		entries[i].RowOrder = i
 	}

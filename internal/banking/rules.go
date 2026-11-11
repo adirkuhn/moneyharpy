@@ -298,7 +298,7 @@ func (s *Service) autoBook(ctx context.Context, admin, user resource.ID, mutatio
 	}
 	bookable := map[resource.ID]bool{}
 	for i, m := range mutations {
-		if len(m.Bookings) > 0 || (locked != nil && !m.Date.After(*locked)) {
+		if m.Booked() || (locked != nil && !m.Date.After(*locked)) {
 			continue
 		}
 		for _, r := range rules {

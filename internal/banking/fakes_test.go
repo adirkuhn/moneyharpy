@@ -299,3 +299,45 @@ func transactions(t *testing.T, svc *Service, acc Account, amounts ...string) []
 }
 
 func resourceID(n int64) resource.ID { return resource.ID(n) }
+
+// fakeInvoices pays invoices with what they have unpaid, keeping the
+// payments on the store's transactions as the database does.
+type fakeInvoices struct {
+	store  *memStore
+	unpaid map[resource.ID]Amount
+	next   resource.ID
+}
+
+func (f *fakeInvoices) RegisterBankPayment(_ context.Context, _, user, invoice, mutation, _ resource.ID, day time.Time, open Amount, price *Amount) (resource.ID, error) {
+	unpaid, ok := f.unpaid[invoice]
+	if !ok {
+		var verr resource.ValidationError
+		verr.Add("booking_id", "is not a sales invoice of this administration")
+		return 0, &verr
+	}
+	amount := min(unpaid, open)
+	if price != nil {
+		amount = *price
+	}
+	f.next++
+	id := 5000 + f.next
+	mu := f.store.mutations[mutation]
+	mu.Payments = append(mu.Payments, PaymentLink{ID: id, InvoiceType: "SalesInvoice", InvoiceID: invoice, Price: amount, PaymentDate: day, UserID: user})
+	f.store.mutations[mutation] = mu
+	f.unpaid[invoice] -= amount
+	return id, nil
+}
+
+func (f *fakeInvoices) RemoveBankPayment(_ context.Context, _, _, payment resource.ID) error {
+	for id, mu := range f.store.mutations {
+		for i, p := range mu.Payments {
+			if p.ID == payment {
+				f.unpaid[p.InvoiceID] += p.Price
+				mu.Payments = slices.Delete(mu.Payments, i, i+1)
+				f.store.mutations[id] = mu
+				return nil
+			}
+		}
+	}
+	return errors.New("no such payment")
+}

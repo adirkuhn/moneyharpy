@@ -139,6 +139,42 @@ it) with the workflow's email text, or leaves sending to you. A sent invoice
 can change until it is paid and is booked again; it is credited rather than
 deleted. Peppol delivery is not available yet.
 
+**Payments.** A payment registered by hand (`POST .../payments`, or the older
+`register_payment`) posts the contra account against the debtors on its
+date: received payments to be classified for a bank transfer or a payment
+without proof, cash, private deposits, rounding, a balance sheet category
+(`balance_settlement`) or settlements (`invoices_settlement`, which pays the
+other invoice too). Once the payments cover the total the invoice is paid;
+deleting one opens it again. `register_payment_creditinvoice` settles a
+credit invoice with the invoice it credits.
+
+**Bank linking.** A bank transaction pays an invoice with `link_booking`
+(`SalesInvoice`) or a payment with `financial_mutation_id`; it pays what both
+have open unless an amount is given, and takes over a payment registered by
+hand that waits for it. The transaction posts the payment (bank against the
+debtors, in the `bank_journal_entries` view), lists it in `payments` and
+counts it in its open amount. `unlink_booking` (`Payment`) or deleting the
+payment undoes it. The locked period applies to the transaction's date.
+Linking from the invoice's side also needs the bank permission.
+
+**Dubious and uncollectible.** `mark_as_dubious` reserves what is open,
+excluding VAT, in the provision for doubtful debtors; a later payment of the
+rest releases it. `mark_as_uncollectible` writes off what is open for good:
+excluding VAT on uncollectible revenue (or the provision), and its VAT, split
+over the invoice's rates, back off payable VAT. Both are posted with the
+invoice on their own date, after the invoice date and not in the future.
+
+**Reminders and the background job.** The workflow's steps after the payment
+term are reminders, each due its delay after the previous one; invoices show
+the next as `next_reminder`. `send_reminders` emails one reminder per contact,
+workflow, style and identity, with the invoices listed (`{invoices}` in the
+text) and their PDFs attached, or marks them reminded when sent by hand.
+Every minute a background job sends scheduled invoices whose date has come,
+marks overdue open invoices late, and sends the reminders whose step sends
+automatically, acting as the administration's owner. An advisory lock per
+administration keeps two instances from doing the same work twice. The
+overview shows what is still to receive and to remind.
+
 ## Users and permissions
 
 Each user of an administration is an owner, employee or accountant, with

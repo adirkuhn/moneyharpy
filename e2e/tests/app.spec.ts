@@ -757,3 +757,66 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   await page.getByLabel('Show').selectOption('unpaid')
   await expect(page.getByRole('table', { name: 'Invoices' }).getByRole('row')).toHaveCount(2)
 })
+
+test('sales invoices are paid by hand and by a bank transaction, and the overview follows', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Payments Co')
+  const uri = administrationUri(page)
+  const api = `/api/v2${uri}`
+  const contact = await (await page.request.post(`${api}/contacts`, { data: { contact: { company_name: 'Example Shop B.V.', send_invoices_to_email: unique() } } })).json()
+  const rates = await (await page.request.get(`${api}/tax_rates`)).json()
+  const vat21 = rates.find((r: { tax_rate_type: string; percentage: string }) => r.tax_rate_type === 'sales_invoice' && r.percentage.startsWith('21')).id
+  const draft = async (price: string) => {
+    const created = await page.request.post(`${api}/sales_invoices`, { data: { sales_invoice: {
+      contact_id: contact.id, prices_are_incl_tax: true, details_attributes: [{ description: 'Consulting', amount: '1', price, tax_rate_id: vat21 }],
+    } } })
+    expect(created.status()).toBe(201)
+    return (await created.json()).id as string
+  }
+
+  // The first invoice is sent and paid by hand.
+  const first = await draft('121')
+  await page.goto(`${uri}/sales_invoices/${first}`)
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
+  const sending = page.getByRole('region', { name: 'Send invoice' })
+  await sending.getByLabel('Send by').selectOption('Manual')
+  await sending.getByRole('button', { name: 'Send invoice' }).click()
+  await expect(page.locator('.badge', { hasText: 'Open' })).toBeVisible()
+  const payments = page.getByRole('region', { name: 'Payments' })
+  const form = payments.getByRole('form', { name: 'Register payment' })
+  await expect(form.getByLabel('Amount')).toHaveValue('121')
+  await form.getByRole('button', { name: 'Register payment' }).click()
+  await expect(page.locator('.badge', { hasText: 'Paid' })).toBeVisible()
+  await expect(payments.getByRole('table', { name: 'Payments' }).getByRole('row', { name: /Bank transfer/ })).toContainText('€121.00')
+
+  // The second waits for its money, which the overview counts.
+  const second = await draft('1000')
+  const sent = await page.request.patch(`${api}/sales_invoices/${second}/send_invoice`, { data: { sales_invoice_sending: { delivery_method: 'Manual' } } })
+  expect(sent.status()).toBe(200)
+  const number = (await sent.json()).invoice_id as string
+  await page.goto(`${uri}/feed`)
+  const sales = page.getByRole('region', { name: 'Sales invoices and external invoices' })
+  await expect(sales.getByRole('link', { name: /To receive\s*€1,000\.00 · 1 invoice/ })).toBeVisible()
+
+  // A bank transaction of the same amount pays it.
+  const account = await (await page.request.post(`${api}/financial_accounts`, { data: { financial_account: { name: 'Main bank', identifier: 'NL91ABNA0417164300' } } })).json()
+  const today = new Date().toISOString().slice(0, 10)
+  const camt = readFileSync(join(__dirname, '../../internal/bankfile/testdata/camt053.xml'), 'utf8').replace(/2026-1[01]-\d\d/g, today)
+  const imported = await page.request.post(`${api}/financial_accounts/${account.id}/import`, { data: Buffer.from(camt), headers: { 'Content-Type': 'application/octet-stream' } })
+  expect(imported.status()).toBe(201)
+  const incoming = (await imported.json()).financial_statements[0].financial_mutations.find((m: { amount: string }) => m.amount === '1000.0')
+  await page.goto(`${uri}/financial_mutations/${incoming.id}`)
+  const link = page.getByRole('form', { name: 'Link to an invoice' })
+  await link.getByLabel('Find an invoice').fill(number)
+  await link.getByRole('radio', { name: new RegExp(number) }).check()
+  await link.getByRole('button', { name: 'Link invoice' }).click()
+  const paid = page.getByRole('table', { name: 'Invoices paid' })
+  await expect(paid.getByRole('link', { name: number })).toBeVisible()
+  await expect(page.getByRole('form', { name: 'Link to an invoice' })).toBeHidden()
+  await paid.getByRole('link', { name: number }).click()
+  await expect(page.locator('.badge', { hasText: 'Paid' })).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Payments' }).getByRole('link', { name: 'Bank transaction' })).toBeVisible()
+
+  await page.goto(`${uri}/feed`)
+  await expect(sales.getByRole('link', { name: /To receive\s*€0\.00 · 0 invoices/ })).toBeVisible()
+})

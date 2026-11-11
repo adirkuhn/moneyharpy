@@ -1076,6 +1076,20 @@ func (q *Queries) DeleteOpenInvitationsFor(ctx context.Context, arg DeleteOpenIn
 	return err
 }
 
+const deletePayment = `-- name: DeletePayment :exec
+DELETE FROM payments WHERE administration_id = $1 AND id = $2
+`
+
+type DeletePaymentParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) DeletePayment(ctx context.Context, arg DeletePaymentParams) error {
+	_, err := q.db.Exec(ctx, deletePayment, arg.AdministrationID, arg.ID)
+	return err
+}
+
 const deleteRecoveryCodes = `-- name: DeleteRecoveryCodes :exec
 DELETE FROM recovery_codes WHERE user_id = $1
 `
@@ -4453,6 +4467,139 @@ func (q *Queries) NotesOf(ctx context.Context, arg NotesOfParams) ([]Note, error
 	return items, nil
 }
 
+const paymentByID = `-- name: PaymentByID :one
+SELECT id, administration_id, invoice_type, invoice_id, financial_account_id, financial_mutation_id, ledger_account_id, credit_invoice_id, linked_payment_id, manual_payment_action, price, price_base, payment_date, transaction_identifier, user_id, created_at, updated_at FROM payments WHERE administration_id = $1 AND id = $2
+`
+
+type PaymentByIDParams struct {
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) PaymentByID(ctx context.Context, arg PaymentByIDParams) (Payment, error) {
+	row := q.db.QueryRow(ctx, paymentByID, arg.AdministrationID, arg.ID)
+	var i Payment
+	err := row.Scan(
+		&i.ID,
+		&i.AdministrationID,
+		&i.InvoiceType,
+		&i.InvoiceID,
+		&i.FinancialAccountID,
+		&i.FinancialMutationID,
+		&i.LedgerAccountID,
+		&i.CreditInvoiceID,
+		&i.LinkedPaymentID,
+		&i.ManualPaymentAction,
+		&i.Price,
+		&i.PriceBase,
+		&i.PaymentDate,
+		&i.TransactionIdentifier,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const paymentsOfInvoices = `-- name: PaymentsOfInvoices :many
+SELECT id, administration_id, invoice_type, invoice_id, financial_account_id, financial_mutation_id, ledger_account_id, credit_invoice_id, linked_payment_id, manual_payment_action, price, price_base, payment_date, transaction_identifier, user_id, created_at, updated_at FROM payments
+WHERE administration_id = $1 AND invoice_type = $2 AND invoice_id = ANY($3::bigint[])
+ORDER BY payment_date, created_at, id
+`
+
+type PaymentsOfInvoicesParams struct {
+	AdministrationID int64
+	InvoiceType      string
+	Ids              []int64
+}
+
+func (q *Queries) PaymentsOfInvoices(ctx context.Context, arg PaymentsOfInvoicesParams) ([]Payment, error) {
+	rows, err := q.db.Query(ctx, paymentsOfInvoices, arg.AdministrationID, arg.InvoiceType, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Payment
+	for rows.Next() {
+		var i Payment
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.InvoiceType,
+			&i.InvoiceID,
+			&i.FinancialAccountID,
+			&i.FinancialMutationID,
+			&i.LedgerAccountID,
+			&i.CreditInvoiceID,
+			&i.LinkedPaymentID,
+			&i.ManualPaymentAction,
+			&i.Price,
+			&i.PriceBase,
+			&i.PaymentDate,
+			&i.TransactionIdentifier,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const paymentsOfMutations = `-- name: PaymentsOfMutations :many
+SELECT id, administration_id, invoice_type, invoice_id, financial_account_id, financial_mutation_id, ledger_account_id, credit_invoice_id, linked_payment_id, manual_payment_action, price, price_base, payment_date, transaction_identifier, user_id, created_at, updated_at FROM payments
+WHERE administration_id = $1 AND financial_mutation_id = ANY($2::bigint[])
+ORDER BY payment_date, created_at, id
+`
+
+type PaymentsOfMutationsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+func (q *Queries) PaymentsOfMutations(ctx context.Context, arg PaymentsOfMutationsParams) ([]Payment, error) {
+	rows, err := q.db.Query(ctx, paymentsOfMutations, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Payment
+	for rows.Next() {
+		var i Payment
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.InvoiceType,
+			&i.InvoiceID,
+			&i.FinancialAccountID,
+			&i.FinancialMutationID,
+			&i.LedgerAccountID,
+			&i.CreditInvoiceID,
+			&i.LinkedPaymentID,
+			&i.ManualPaymentAction,
+			&i.Price,
+			&i.PriceBase,
+			&i.PaymentDate,
+			&i.TransactionIdentifier,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const recentlyProcessedFinancialMutations = `-- name: RecentlyProcessedFinancialMutations :many
 SELECT id, administration_id, financial_account_id, financial_statement_id, date, valutation_date, message, amount, currency, code, contra_account_name, contra_account_number, batch_reference, transaction_id, fingerprint, position, state, processed_at, created_at, updated_at FROM financial_mutations
 WHERE administration_id = $1 AND state = 'processed' AND processed_at IS NOT NULL
@@ -4848,6 +4995,82 @@ func (q *Queries) SalesInvoicesByIDs(ctx context.Context, arg SalesInvoicesByIDs
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const salesReceivables = `-- name: SalesReceivables :one
+SELECT count(*)::int AS receive_count, coalesce(sum(unpaid), 0)::bigint AS receive_amount,
+       (count(*) FILTER (WHERE overdue))::int AS remind_count, coalesce(sum(unpaid) FILTER (WHERE overdue), 0)::bigint AS remind_amount
+FROM (
+    SELECT i.total_incl_tax - coalesce((SELECT sum(p.price) FROM payments p
+                                        WHERE p.invoice_type = 'SalesInvoice' AND p.invoice_id = i.id), 0) AS unpaid,
+           (i.state IN ('late', 'reminded') OR i.state = 'open' AND i.due_date < $1::date) AND NOT i.paused AS overdue
+    FROM sales_invoices i
+    WHERE i.administration_id = $2 AND i.state IN ('open', 'late', 'reminded', 'pending_payment')
+) open_invoices
+`
+
+type SalesReceivablesParams struct {
+	Today            pgtype.Date
+	AdministrationID int64
+}
+
+type SalesReceivablesRow struct {
+	ReceiveCount  int32
+	ReceiveAmount int64
+	RemindCount   int32
+	RemindAmount  int64
+}
+
+// What sent invoices still have unpaid; those past their due date and not
+// paused are to be reminded.
+func (q *Queries) SalesReceivables(ctx context.Context, arg SalesReceivablesParams) (SalesReceivablesRow, error) {
+	row := q.db.QueryRow(ctx, salesReceivables, arg.Today, arg.AdministrationID)
+	var i SalesReceivablesRow
+	err := row.Scan(
+		&i.ReceiveCount,
+		&i.ReceiveAmount,
+		&i.RemindCount,
+		&i.RemindAmount,
+	)
+	return i, err
+}
+
+const salesWorkload = `-- name: SalesWorkload :many
+SELECT w.administration_id, o.user_id
+FROM (SELECT DISTINCT administration_id FROM sales_invoices WHERE state IN ('scheduled', 'open', 'late', 'reminded')) w
+JOIN LATERAL (
+    SELECT m.user_id FROM administration_members m
+    WHERE m.administration_id = w.administration_id AND m.active AND 'ownership' = ANY(m.permissions)
+    ORDER BY m.created_at, m.user_id LIMIT 1
+) o ON true
+ORDER BY w.administration_id
+`
+
+type SalesWorkloadRow struct {
+	AdministrationID int64
+	UserID           int64
+}
+
+// Administrations with invoices the background job may act on, each with
+// its longest-standing active owner.
+func (q *Queries) SalesWorkload(ctx context.Context) ([]SalesWorkloadRow, error) {
+	rows, err := q.db.Query(ctx, salesWorkload)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SalesWorkloadRow
+	for rows.Next() {
+		var i SalesWorkloadRow
+		if err := rows.Scan(&i.AdministrationID, &i.UserID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -5900,6 +6123,60 @@ func (q *Queries) UpsertInvitedMember(ctx context.Context, arg UpsertInvitedMemb
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const upsertPayment = `-- name: UpsertPayment :exec
+INSERT INTO payments (id, administration_id, invoice_type, invoice_id, financial_account_id, financial_mutation_id, ledger_account_id,
+    credit_invoice_id, linked_payment_id, manual_payment_action, price, price_base, payment_date, transaction_identifier, user_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+ON CONFLICT (id) DO UPDATE SET
+    financial_account_id = EXCLUDED.financial_account_id, financial_mutation_id = EXCLUDED.financial_mutation_id,
+    ledger_account_id = EXCLUDED.ledger_account_id, credit_invoice_id = EXCLUDED.credit_invoice_id, linked_payment_id = EXCLUDED.linked_payment_id,
+    manual_payment_action = EXCLUDED.manual_payment_action, price = EXCLUDED.price, price_base = EXCLUDED.price_base,
+    payment_date = EXCLUDED.payment_date, transaction_identifier = EXCLUDED.transaction_identifier, updated_at = EXCLUDED.updated_at
+`
+
+type UpsertPaymentParams struct {
+	ID                    int64
+	AdministrationID      int64
+	InvoiceType           string
+	InvoiceID             int64
+	FinancialAccountID    pgtype.Int8
+	FinancialMutationID   pgtype.Int8
+	LedgerAccountID       pgtype.Int8
+	CreditInvoiceID       pgtype.Int8
+	LinkedPaymentID       pgtype.Int8
+	ManualPaymentAction   string
+	Price                 int64
+	PriceBase             int64
+	PaymentDate           pgtype.Date
+	TransactionIdentifier string
+	UserID                pgtype.Int8
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertPayment(ctx context.Context, arg UpsertPaymentParams) error {
+	_, err := q.db.Exec(ctx, upsertPayment,
+		arg.ID,
+		arg.AdministrationID,
+		arg.InvoiceType,
+		arg.InvoiceID,
+		arg.FinancialAccountID,
+		arg.FinancialMutationID,
+		arg.LedgerAccountID,
+		arg.CreditInvoiceID,
+		arg.LinkedPaymentID,
+		arg.ManualPaymentAction,
+		arg.Price,
+		arg.PriceBase,
+		arg.PaymentDate,
+		arg.TransactionIdentifier,
+		arg.UserID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
 }
 
 const upsertSalesInvoice = `-- name: UpsertSalesInvoice :exec

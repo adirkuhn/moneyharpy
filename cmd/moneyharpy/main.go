@@ -126,14 +126,16 @@ func run(logger *slog.Logger) error {
 	ledger := journal.NewService(admins, books, contactService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
-		Store: salesStore, Renderer: invoicedoc.New(), Mailer: sales.MailClient{Client: mailer}, IDs: ids, Now: time.Now,
+		Store: salesStore, Renderer: invoicedoc.New(), Mailer: sales.MailClient{Client: mailer}, Bank: bank,
+		Notifier: httpapi.SalesNotifier{Webhooks: hooks, Logger: logger}, IDs: ids, Now: time.Now,
 	})
+	bank.UseInvoices(invoiceService)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
 		Bookkeeping:       books,
 		Banking:           bank,
-		Overview:          overview.NewService(admins, bank),
+		Overview:          overview.NewService(admins, bank, invoiceService),
 		Journal:           ledger,
 		Contacts:          contactService,
 		Sales:             invoiceService,
@@ -171,6 +173,7 @@ func run(logger *slog.Logger) error {
 		IdleTimeout:       2 * time.Minute,
 	}
 	go hooks.Run(ctx, 5*time.Second, func(err error) { logger.Error("deliver webhooks", "error", err) })
+	go invoiceService.Run(ctx, time.Minute, func(err error) { logger.Error("sales invoice background work", "error", err) })
 
 	errs := make(chan error, 1)
 	go func() { errs <- srv.ListenAndServe() }()

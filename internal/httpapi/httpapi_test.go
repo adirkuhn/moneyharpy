@@ -218,6 +218,7 @@ type harness struct {
 	files  *fakeFiles
 	settle *settings.Service
 	hooks  *webhooks.Service
+	sales  *sales.Service
 }
 
 func newHarness(t *testing.T, opts options) *harness {
@@ -258,8 +259,11 @@ func newHarness(t *testing.T, opts options) *harness {
 	ledger := journal.NewService(admins, books, contactService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
-		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, IDs: ids, Now: time.Now,
+		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, Bank: bank,
+		Notifier: httpapi.SalesNotifier{Webhooks: h.hooks}, IDs: ids, Now: time.Now,
 	})
+	bank.UseInvoices(invoiceService)
+	h.sales = invoiceService
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
@@ -268,7 +272,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Webhooks:        h.hooks,
 		Bookkeeping:     books,
 		Banking:         bank,
-		Overview:        overview.NewService(admins, bank),
+		Overview:        overview.NewService(admins, bank, invoiceService),
 		Journal:         ledger,
 		Contacts:        contactService,
 		Sales:           invoiceService,

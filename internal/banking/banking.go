@@ -48,6 +48,16 @@ type Ledger interface {
 	LockedUntil(ctx context.Context, admin, user resource.ID) (string, error)
 }
 
+// Invoices settles invoices with transactions; sales implements it.
+type Invoices interface {
+	// RegisterBankPayment pays an invoice with (part of) the transaction;
+	// price is signed like the invoice, nil pays what both have open. It
+	// returns the payment.
+	RegisterBankPayment(ctx context.Context, admin, user, invoice, mutation, account resource.ID, day time.Time, open Amount, price *Amount) (resource.ID, error)
+	// RemoveBankPayment removes a payment made with a transaction.
+	RemoveBankPayment(ctx context.Context, admin, user, payment resource.ID) error
+}
+
 // Settings are an administration's bank preferences.
 type Settings struct {
 	// AutoLink books new transactions that match a rule.
@@ -102,17 +112,22 @@ type Store interface {
 
 // Service implements the banking use cases.
 type Service struct {
-	admins Administrations
-	ledger Ledger
-	store  Store
-	ids    *resource.Generator
-	now    func() time.Time
+	admins   Administrations
+	ledger   Ledger
+	store    Store
+	invoices Invoices
+	ids      *resource.Generator
+	now      func() time.Time
 }
 
 // NewService returns a Service.
 func NewService(admins Administrations, ledger Ledger, store Store, ids *resource.Generator, now func() time.Time) *Service {
 	return &Service{admins: admins, ledger: ledger, store: store, ids: ids, now: now}
 }
+
+// UseInvoices lets transactions pay invoices. Sales needs the banking
+// service too, so it joins after both exist.
+func (s *Service) UseInvoices(i Invoices) { s.invoices = i }
 
 // Settings returns the bank preferences.
 func (s *Service) Settings(ctx context.Context, admin, user resource.ID) (Settings, error) {
