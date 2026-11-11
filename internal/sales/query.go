@@ -33,10 +33,15 @@ type Query struct {
 // ParseFilter reads Moneybird's sales invoice filter. Without a filter the
 // list holds this year's invoices.
 func ParseFilter(filter string, today time.Time) (Query, error) {
-	q := Query{Today: today}
 	if strings.TrimSpace(filter) == "" {
 		filter = "period:this_year"
 	}
+	return parseTerms(filter, today, States)
+}
+
+// parseTerms reads filter terms; states are those a state term may name.
+func parseTerms(filter string, today time.Time, states []string) (Query, error) {
+	q := Query{Today: today}
 	var verr resource.ValidationError
 	for term := range strings.SplitSeq(filter, ",") {
 		term = strings.TrimSpace(term)
@@ -53,10 +58,10 @@ func ParseFilter(filter string, today time.Time) (Query, error) {
 			for st := range strings.SplitSeq(value, "|") {
 				switch {
 				case st == "all":
-				case slices.Contains(States, st):
+				case slices.Contains(states, st):
 					q.States = append(q.States, st)
 				default:
-					verr.Add("filter", "state "+st+" is not one of all, "+strings.Join(States, ", "))
+					verr.Add("filter", "state "+st+" is not one of all, "+strings.Join(states, ", "))
 				}
 			}
 		case "period":
@@ -121,6 +126,9 @@ func (q Query) Matches(inv Invoice) bool {
 	}
 	return true
 }
+
+// MatchesExternal reports whether the query selects the external invoice.
+func (q Query) MatchesExternal(e ExternalInvoice) bool { return q.Matches(e.invoice()) }
 
 // Page sizes.
 const (

@@ -1,7 +1,8 @@
 // Package sales holds an administration's sales invoices: drafts with their
 // lines, sending them (numbering, the PDF, email and e-invoice), the
 // bookings they post, credit invoices, and the notes and files on them,
-// after Moneybird's sales invoices.
+// after Moneybird's sales invoices. External sales invoices, made in other
+// software, are booked and paid the same way.
 package sales
 
 import (
@@ -65,11 +66,14 @@ const EntityType = journal.SalesInvoice
 type Invoice struct {
 	ID               resource.ID
 	AdministrationID resource.ID
-	ContactID        resource.ID
-	ContactPersonID  *resource.ID
-	IdentityID       resource.ID
-	DocumentStyleID  resource.ID
-	WorkflowID       resource.ID
+	// Type is SalesInvoice, or ExternalSalesInvoice for an external invoice
+	// the payment code works on; empty means SalesInvoice.
+	Type            string
+	ContactID       resource.ID
+	ContactPersonID *resource.ID
+	IdentityID      resource.ID
+	DocumentStyleID resource.ID
+	WorkflowID      resource.ID
 	// DraftID numbers drafts; InvoiceID is the number given when sent.
 	DraftID   int
 	InvoiceID string
@@ -114,7 +118,38 @@ type Invoice struct {
 
 // Ref locates the invoice.
 func (i Invoice) Ref() resource.Ref {
-	return resource.Ref{ID: i.ID, Type: resource.TypeSalesInvoice, AdministrationID: i.AdministrationID}
+	t := resource.TypeSalesInvoice
+	if i.external() {
+		t = resource.TypeExternalSalesInvoice
+	}
+	return resource.Ref{ID: i.ID, Type: t, AdministrationID: i.AdministrationID}
+}
+
+// kind is the invoice's document type: SalesInvoice or ExternalSalesInvoice.
+func (i Invoice) kind() string {
+	if i.Type == "" {
+		return EntityType
+	}
+	return i.Type
+}
+
+func (i Invoice) external() bool { return i.Type == ExternalEntityType }
+
+// label names the invoice in what it posts: its number, an external
+// invoice's reference, or a draft's number.
+func (i Invoice) label() string {
+	if i.external() {
+		return cmpString(i.Reference, "external invoice")
+	}
+	return cmpString(i.InvoiceID, fmt.Sprintf("draft %d", i.DraftID))
+}
+
+// events is the prefix of the invoice's webhook events.
+func (i Invoice) events() string {
+	if i.external() {
+		return "external_sales_invoice"
+	}
+	return "sales_invoice"
 }
 
 // Version changes whenever the invoice does.
@@ -170,7 +205,7 @@ type FieldValue struct {
 type Payment struct {
 	ID               resource.ID
 	AdministrationID resource.ID
-	// InvoiceType is SalesInvoice; external invoices join later.
+	// InvoiceType is SalesInvoice or ExternalSalesInvoice.
 	InvoiceType         string
 	InvoiceID           resource.ID
 	FinancialAccountID  *resource.ID
@@ -239,9 +274,10 @@ type Ledger interface {
 // Bank links invoices to bank transactions. It calls back into the
 // service's RegisterBankPayment and RemoveBankPayment.
 type Bank interface {
-	// LinkInvoicePayment pays the invoice with (part of) the transaction;
-	// a nil price pays what both still have open. It returns the payment.
-	LinkInvoicePayment(ctx context.Context, admin, mutation, user, invoice resource.ID, price *money.Amount) (resource.ID, error)
+	// LinkInvoicePayment pays the invoice of the type (SalesInvoice or
+	// ExternalSalesInvoice) with (part of) the transaction; a nil price pays
+	// what both still have open. It returns the payment.
+	LinkInvoicePayment(ctx context.Context, admin, mutation, user resource.ID, invoiceType string, invoice resource.ID, price *money.Amount) (resource.ID, error)
 	// UnlinkPayment removes a payment from its transaction.
 	UnlinkPayment(ctx context.Context, admin, mutation, user, payment resource.ID) error
 	// AccountLedger returns the category a financial account's money is in.
@@ -288,6 +324,19 @@ type Store interface {
 	TouchInvoice(ctx context.Context, admin, id resource.ID, at time.Time) error
 	ContactInUse(ctx context.Context, admin, contact resource.ID) (bool, error)
 
+	ExternalInvoices(ctx context.Context, admin resource.ID, q Query) ([]ExternalInvoice, int, error)
+	ExternalInvoice(ctx context.Context, admin, id resource.ID) (ExternalInvoice, error)
+	ExternalInvoicesByID(ctx context.Context, admin resource.ID, ids []resource.ID) ([]ExternalInvoice, error)
+	// NextEntryNumber is the number the next external invoice gets.
+	NextEntryNumber(ctx context.Context, admin resource.ID) (int, error)
+	// SaveExternalInvoice stores the external invoice and replaces what it
+	// posts; nil entries keep them.
+	SaveExternalInvoice(ctx context.Context, e ExternalInvoice, entries []journal.Entry, created bool) error
+	// DeleteExternalInvoice removes the external invoice with what it and
+	// its payments post.
+	DeleteExternalInvoice(ctx context.Context, admin, id resource.ID) error
+	TouchExternalInvoice(ctx context.Context, admin, id resource.ID, at time.Time) error
+
 	// Payment returns one payment.
 	Payment(ctx context.Context, admin, id resource.ID) (Payment, error)
 	// SavePayments stores, at once, invoices with what they post (nil
@@ -297,7 +346,7 @@ type Store interface {
 	// Receivables sums up the invoices still to be paid.
 	Receivables(ctx context.Context, admin resource.ID, today time.Time) (Receivables, error)
 	// Workload lists the administrations with sent or scheduled invoices,
-	// each with an owner to act as.
+	// sales or external, each with an owner to act as.
 	Workload(ctx context.Context) ([]Workload, error)
 	// Lock keeps other instances from working on the administration until
 	// release is called; ok is false when another holds it.
@@ -311,7 +360,9 @@ type PaymentChange struct {
 	Removed  []resource.ID
 }
 
-// Posting is an invoice with what it posts; nil entries keep them.
+// Posting is an invoice with what it posts; nil entries keep them. An
+// external invoice (Type ExternalSalesInvoice) changes only its state,
+// payment and write-off dates.
 type Posting struct {
 	Invoice Invoice
 	Entries []journal.Entry

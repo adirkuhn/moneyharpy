@@ -261,4 +261,39 @@ describe('transactions', () => {
     await waitFor(() => expect(unlinked).toEqual({ booking_type: 'Payment', booking_id: '991' }))
     expect(await screen.findByRole('form', { name: 'Link to an invoice' })).toBeInTheDocument()
   })
+
+  it('pays an open external invoice too', async () => {
+    let sent: unknown
+    const incoming = mutation({ amount: '121.0', amount_open: '121.0', contra_account_name: 'Example Shop B.V.', message: 'Order WEB-1001' })
+    const shop = { id: '801', company_name: 'Example Shop B.V.', firstname: null, lastname: null }
+    const external = {
+      id: '931', administration_id: '11', contact_id: '801', contact: shop, reference: 'WEB-1001', entry_number: 1, date: '2026-11-01', state: 'open', currency: 'EUR',
+      total_unpaid: '121.0', total_paid: '0.0', details: [], tax_totals: [], payments: [], notes: [], attachments: [], events: [], total_price_excl_tax: '100.0',
+      total_price_incl_tax: '121.0', version: 1, uri: '/11/external_sales_invoices/931',
+    }
+    const paid = {
+      ...incoming, amount_open: '0.0', state: 'processed' as const,
+      payments: [{ id: '992', administration_id: '11', invoice_type: 'ExternalSalesInvoice' as const, invoice_id: '931', price: '121.0', price_base: '121.0', payment_date: '2026-11-01', created_at: stamp, updated_at: stamp }],
+    }
+    let current: Mutation = incoming
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/financial_mutations/701', () => HttpResponse.json(current)),
+      http.get('*/api/v2/11/sales_invoices', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
+      http.get('*/api/v2/11/external_sales_invoices', () => HttpResponse.json([external], { headers: { 'X-Total-Count': '1' } })),
+      http.get('*/api/v2/11/external_sales_invoices/931', () => HttpResponse.json(external)),
+      http.patch('*/api/v2/11/financial_mutations/701/link_booking', async ({ request }) => {
+        sent = await request.json()
+        current = paid as Mutation
+        return HttpResponse.json(current)
+      }),
+    )
+    renderAt('/11/financial_mutations/701')
+    const form = await screen.findByRole('form', { name: 'Link to an invoice' })
+    await userEvent.click(await within(form).findByRole('radio', { name: /WEB-1001/ }))
+    await userEvent.click(within(form).getByRole('button', { name: 'Link invoice' }))
+    await waitFor(() => expect(sent).toEqual({ booking_type: 'ExternalSalesInvoice', booking_id: '931' }))
+    const paidTable = await screen.findByRole('table', { name: 'Invoices paid' })
+    expect(await within(paidTable).findByRole('link', { name: 'WEB-1001' })).toHaveAttribute('href', '/11/external_sales_invoices/931')
+  })
 })

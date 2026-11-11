@@ -89,7 +89,7 @@ func checkPrice(verr *resource.ValidationError, field string, price, unpaid mone
 func (s *Service) newPayment(inv Invoice, user resource.ID, price money.Amount, day time.Time) Payment {
 	now := s.now()
 	return Payment{
-		ID: s.ids.Next(), AdministrationID: inv.AdministrationID, InvoiceType: EntityType, InvoiceID: inv.ID, Price: price, PriceBase: price,
+		ID: s.ids.Next(), AdministrationID: inv.AdministrationID, InvoiceType: inv.kind(), InvoiceID: inv.ID, Price: price, PriceBase: price,
 		PaymentDate: day, UserID: user, CreatedAt: now, UpdatedAt: now,
 	}
 }
@@ -98,11 +98,30 @@ func (s *Service) newPayment(inv Invoice, user resource.ID, price money.Amount, 
 // transaction it links the transaction instead; an invoices settlement
 // settles against another invoice.
 func (s *Service) RegisterPayment(ctx context.Context, admin, id, user resource.ID, in PaymentInput) (Payment, error) {
+	return s.registerPayment(ctx, admin, user, EntityType, id, in)
+}
+
+// RegisterExternalPayment registers a payment on an external invoice, as
+// RegisterPayment does on a sales invoice.
+func (s *Service) RegisterExternalPayment(ctx context.Context, admin, id, user resource.ID, in PaymentInput) (Payment, error) {
+	return s.registerPayment(ctx, admin, user, ExternalEntityType, id, in)
+}
+
+// loadInvoice returns an invoice of the kind for the payment code.
+func (s *Service) loadInvoice(ctx context.Context, admin resource.ID, kind string, id resource.ID) (Invoice, error) {
+	if kind == ExternalEntityType {
+		e, err := s.store.ExternalInvoice(ctx, admin, id)
+		return e.invoice(), err
+	}
+	return s.store.Invoice(ctx, admin, id)
+}
+
+func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, in PaymentInput) (Payment, error) {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
 		return Payment{}, err
 	}
-	inv, err := s.store.Invoice(ctx, admin, id)
+	inv, err := s.loadInvoice(ctx, admin, kind, id)
 	if err != nil {
 		return Payment{}, err
 	}
@@ -301,11 +320,21 @@ func (s *Service) SettleCredit(ctx context.Context, admin, id, user resource.ID)
 // DeletePayment removes a payment. One linked to a bank transaction is
 // unlinked from it; one half of a settlement takes the other half along.
 func (s *Service) DeletePayment(ctx context.Context, admin, id, paymentID, user resource.ID) error {
+	return s.deletePayment(ctx, admin, user, EntityType, id, paymentID)
+}
+
+// DeleteExternalPayment removes a payment of an external invoice, as
+// DeletePayment does.
+func (s *Service) DeleteExternalPayment(ctx context.Context, admin, id, paymentID, user resource.ID) error {
+	return s.deletePayment(ctx, admin, user, ExternalEntityType, id, paymentID)
+}
+
+func (s *Service) deletePayment(ctx context.Context, admin, user resource.ID, kind string, id, paymentID resource.ID) error {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
 		return err
 	}
-	inv, err := s.store.Invoice(ctx, admin, id)
+	inv, err := s.loadInvoice(ctx, admin, kind, id)
 	if err != nil {
 		return err
 	}
@@ -341,7 +370,7 @@ func (s *Service) removePayment(ctx context.Context, a administration.Listed, us
 			return err
 		}
 		if err == nil {
-			other, err := s.store.Invoice(ctx, a.ID, linked.InvoiceID)
+			other, err := s.loadInvoice(ctx, a.ID, linked.InvoiceType, linked.InvoiceID)
 			if err != nil {
 				return err
 			}
@@ -355,18 +384,22 @@ func (s *Service) removePayment(ctx context.Context, a administration.Listed, us
 	return s.commit(ctx, a, user, invoices, nil, removed)
 }
 
-// RegisterBankPayment pays an invoice with (part of) a bank transaction,
-// for banking. price is signed like the invoice; nil pays what both still
-// have open. A payment registered by hand that waits for its transaction
-// becomes this transaction's when the invoice has nothing else unpaid.
-func (s *Service) RegisterBankPayment(ctx context.Context, admin, user, invoiceID, mutation, account resource.ID, day time.Time, open money.Amount, price *money.Amount) (resource.ID, error) {
+// RegisterBankPayment pays an invoice of the type (SalesInvoice or
+// ExternalSalesInvoice) with (part of) a bank transaction, for banking.
+// price is signed like the invoice; nil pays what both still have open. A
+// payment registered by hand that waits for its transaction becomes this
+// transaction's when the invoice has nothing else unpaid.
+func (s *Service) RegisterBankPayment(ctx context.Context, admin, user resource.ID, invoiceType string, invoiceID, mutation, account resource.ID, day time.Time, open money.Amount, price *money.Amount) (resource.ID, error) {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
 		return 0, err
 	}
-	inv, err := s.store.Invoice(ctx, admin, invoiceID)
+	if invoiceType != EntityType && invoiceType != ExternalEntityType {
+		return 0, invalid("booking_type", "is not an invoice type")
+	}
+	inv, err := s.loadInvoice(ctx, admin, invoiceType, invoiceID)
 	if errors.Is(err, ErrNotFound) {
-		return 0, invalid("booking_id", "is not a sales invoice of this administration")
+		return 0, invalid("booking_id", "is not an invoice of this administration")
 	}
 	if err != nil {
 		return 0, err
@@ -419,7 +452,7 @@ func (s *Service) registerBankPayment(ctx context.Context, admin, user resource.
 		}
 		price = &p
 	}
-	id, err := s.bank.LinkInvoicePayment(ctx, admin, mutation, user, inv.ID, price)
+	id, err := s.bank.LinkInvoicePayment(ctx, admin, mutation, user, inv.kind(), inv.ID, price)
 	if err != nil {
 		return Payment{}, err
 	}
@@ -437,7 +470,7 @@ func (s *Service) RemoveBankPayment(ctx context.Context, admin, user, paymentID 
 	if err != nil {
 		return err
 	}
-	inv, err := s.store.Invoice(ctx, admin, p.InvoiceID)
+	inv, err := s.loadInvoice(ctx, admin, p.InvoiceType, p.InvoiceID)
 	if err != nil {
 		return err
 	}
@@ -484,7 +517,7 @@ func (s *Service) commit(ctx context.Context, a administration.Listed, user reso
 		return fmt.Errorf("store payments: %w", err)
 	}
 	for _, inv := range changed {
-		s.notify(ctx, a.ID, "sales_invoice_state_changed_to_"+effective(inv, today), inv)
+		s.notify(ctx, a.ID, inv.events()+"_state_changed_to_"+effective(inv, today), inv)
 	}
 	return nil
 }
@@ -500,7 +533,7 @@ func (s *Service) paymentEntries(ctx context.Context, admin, user resource.ID, p
 		return nil, wrap("find category accounts_receivable", err)
 	}
 	contact := inv.ContactID
-	description := cmpString(inv.InvoiceID, fmt.Sprintf("draft %d", inv.DraftID))
+	description := inv.label()
 	entries := []journal.Entry{
 		{ID: s.ids.Next(), AdministrationID: admin, DocumentType: journal.Payment, DocumentID: p.ID, Date: p.PaymentDate, LedgerAccountID: *p.LedgerAccountID,
 			FinancialAccountID: p.FinancialAccountID, Amount: p.Price, Description: description},

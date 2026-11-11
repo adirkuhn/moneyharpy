@@ -6,15 +6,15 @@ import { formatAmount } from '../banking/queries'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
 import {
-  isPayable, type Payment, type PaymentAction, paymentActions, type SalesInvoice, today, useDeletePayment, useRegisterPayment, useSettleCredit,
+  type Collectable, type InvoiceKind, isPayable, type Payment, type PaymentAction, paymentActions, today, useDeletePayment, useRegisterPayment, useSettleCredit,
 } from './queries'
 
-type Props = { administrationId: string; invoice: SalesInvoice }
+type Props = { administrationId: string; invoice: Collectable; kind?: InvoiceKind }
 
 /** What was paid on an invoice, and registering a payment made by hand. */
-export function PaymentsPanel({ administrationId, invoice: inv }: Props) {
+export function PaymentsPanel({ administrationId, invoice: inv, kind = 'sales' }: Props) {
   const { t, i18n } = useTranslation()
-  const remove = useDeletePayment(administrationId, inv.id ?? '')
+  const remove = useDeletePayment(administrationId, inv.id ?? '', kind)
   const settle = useSettleCredit(administrationId, inv.id ?? '')
   const money = (v: string | number | null | undefined) => formatAmount(v, inv.currency ?? 'EUR', i18n.language)
   const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
@@ -80,14 +80,14 @@ export function PaymentsPanel({ administrationId, invoice: inv }: Props) {
           <span className="hint">{t('invoices.payments.settleCreditHelp')}</span>
         </div>
       )}
-      {payable && !credit && <PaymentForm key={inv.total_unpaid} administrationId={administrationId} invoice={inv} />}
+      {payable && !credit && <PaymentForm key={inv.total_unpaid} administrationId={administrationId} invoice={inv} kind={kind} />}
     </section>
   )
 }
 
-function PaymentForm({ administrationId, invoice: inv }: Props) {
+function PaymentForm({ administrationId, invoice: inv, kind }: Props) {
   const { t } = useTranslation()
-  const register = useRegisterPayment(administrationId, inv.id ?? '')
+  const register = useRegisterPayment(administrationId, inv.id ?? '', kind)
   const [form, setForm] = useState({ payment_date: today(), price: String(Number(inv.total_unpaid ?? 0)), manual_payment_action: 'bank_transfer' as PaymentAction })
   const labels = { payment_date: t('invoices.payments.date'), price: t('invoices.amount'), manual_payment_action: t('invoices.payments.method') }
   const errors = formErrors(register.error, labels)

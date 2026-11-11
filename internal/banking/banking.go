@@ -50,10 +50,10 @@ type Ledger interface {
 
 // Invoices settles invoices with transactions; sales implements it.
 type Invoices interface {
-	// RegisterBankPayment pays an invoice with (part of) the transaction;
-	// price is signed like the invoice, nil pays what both have open. It
-	// returns the payment.
-	RegisterBankPayment(ctx context.Context, admin, user, invoice, mutation, account resource.ID, day time.Time, open Amount, price *Amount) (resource.ID, error)
+	// RegisterBankPayment pays an invoice of the type (SalesInvoice or
+	// ExternalSalesInvoice) with (part of) the transaction; price is signed
+	// like the invoice, nil pays what both have open. It returns the payment.
+	RegisterBankPayment(ctx context.Context, admin, user resource.ID, invoiceType string, invoice, mutation, account resource.ID, day time.Time, open Amount, price *Amount) (resource.ID, error)
 	// RemoveBankPayment removes a payment made with a transaction.
 	RemoveBankPayment(ctx context.Context, admin, user, payment resource.ID) error
 }
