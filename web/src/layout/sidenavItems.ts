@@ -24,9 +24,9 @@ const bookkeeping: Permission[] = ['bank', 'documents', 'sales_invoices']
 export const navItems: NavItem[] = [
   { kind: 'overview', key: 'overview', to: 'feed', ready: true, permissions: [] },
   {
-    kind: 'invoices', key: 'invoices', to: 'sales_invoices', ready: false, permissions: ['sales_invoices'],
+    kind: 'invoices', key: 'invoices', to: 'sales_invoices', ready: true, permissions: ['sales_invoices'],
     children: [
-      link('salesInvoices', 'sales_invoices'),
+      link('salesInvoices', 'sales_invoices', true),
       link('externalInvoices', 'external_sales_invoices'),
       link('recurringInvoices', 'recurring_sales_invoices'),
     ],

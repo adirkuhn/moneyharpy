@@ -81,6 +81,16 @@ describe('side menu', () => {
     expect(within(nav).getByRole('link', { name: 'Transactions' })).not.toHaveAttribute('aria-disabled')
   })
 
+  it('leads to the sales invoices', async () => {
+    open()
+    renderAt('/11/feed')
+    const nav = await menu()
+    await userEvent.click(within(nav).getByRole('button', { name: 'Invoices' }))
+    expect(within(nav).getByRole('link', { name: 'Sales invoices' })).toHaveAttribute('href', '/11/sales_invoices')
+    expect(within(nav).getByRole('link', { name: 'External invoices' })).toHaveAttribute('aria-disabled', 'true')
+    expect(within(nav).getByRole('link', { name: 'Recurring invoices' })).toHaveAttribute('aria-disabled', 'true')
+  })
+
   it('shows only the parts a member may use', async () => {
     open(administration({ id: '11', user_type: 'employee', permissions: ['time_entries'] }))
     renderAt('/11/feed')
