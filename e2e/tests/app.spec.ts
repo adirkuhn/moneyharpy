@@ -734,7 +734,7 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   const totals = page.getByRole('table', { name: 'Totals' })
   await expect(totals.getByRole('row', { name: /^Total/ })).toContainText('€302.50')
   await page.getByRole('button', { name: 'Save invoice' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Draft 1' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Draft #1' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Send', exact: true }).click()
   const sending = page.getByRole('region', { name: 'Send invoice' })

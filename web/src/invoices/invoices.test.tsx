@@ -76,10 +76,13 @@ describe('the invoice list', () => {
     renderAt('/11/sales_invoices')
     const table = await screen.findByRole('table', { name: 'Invoices' })
     expect(within(table).getByRole('link', { name: '2026-0001' })).toHaveAttribute('href', '/11/sales_invoices/901')
-    expect(within(table).getByRole('link', { name: 'Draft 3' })).toHaveAttribute('href', '/11/sales_invoices/902')
+    const draft = within(table).getByRole('link', { name: 'Draft #3' })
+    expect(draft).toHaveAttribute('href', '/11/sales_invoices/902')
+    expect(draft.querySelector('em')).toHaveTextContent('Draft #3')
     expect(within(table).getAllByText('Example Shop B.V.')).toHaveLength(2)
     expect(within(table).getAllByText('€242.00')).toHaveLength(2)
     const rows = within(table).getAllByRole('row')
+    expect(rows[1]).toHaveTextContent('2026-11-01')
     expect(within(rows[1]!).getByText('Open')).toHaveClass('badge')
     expect(within(rows[2]!).getByText('Draft')).toHaveClass('badge')
     expect(screen.getByRole('link', { name: 'New invoice' })).toHaveAttribute('href', '/11/sales_invoices/new')
@@ -123,20 +126,18 @@ describe('the invoice list', () => {
     expect(await within(again).findByRole('combobox', { name: 'Contact' })).toHaveTextContent('Example Shop B.V.')
     await userEvent.click(within(again).getByRole('button', { name: 'Clear contact' }))
     await userEvent.click(within(again).getByRole('radio', { name: 'All' }))
-    await userEvent.click(within(again).getByRole('button', { name: 'All periods' }))
     await userEvent.click(within(again).getByRole('button', { name: 'Filter' }))
-    await waitFor(() => expect(seen.at(-1)?.searchParams.get('filter')).toBe('workflow_id:601'))
+    await waitFor(() => expect(seen.at(-1)?.searchParams.get('filter')).toBe('period:prev_year,workflow_id:601'))
   })
 
-  it('offers statistics and exports as not available yet, and more actions', async () => {
+  it('offers statistics and exports as not available yet, and no more actions', async () => {
     server.use(...loaded())
     renderAt('/11/sales_invoices')
     await screen.findByRole('table', { name: 'Invoices' })
     expect(screen.getByRole('button', { name: 'Show statistics' })).toHaveAccessibleDescription('Not available yet.')
     await userEvent.click(screen.getByRole('button', { name: 'Export' }))
     expect(screen.getByText('Excel per invoice').closest('[aria-disabled]')).toHaveAttribute('aria-disabled', 'true')
-    await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
-    expect(screen.getByRole('link', { name: 'Invoice settings' })).toHaveAttribute('href', '/11/settings/invoices_and_estimates')
+    expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull()
   })
 
   it('opens an invoice from anywhere in its row', async () => {
@@ -314,7 +315,7 @@ describe('an invoice', () => {
       }),
     )
     renderAt('/11/sales_invoices/902')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Draft 3' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Draft #3' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
     expect(screen.queryByRole('link', { name: 'Download UBL' })).toBeNull()
     expect(screen.getByRole('link', { name: 'Make recurring' })).toHaveAttribute('href', '/11/recurring_sales_invoices/new?from=902')
@@ -373,7 +374,7 @@ describe('an invoice', () => {
     await chooseMore('Create credit invoice')
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/sales_invoices/903'))
     expect(called).toBe(true)
-    expect(await screen.findByRole('heading', { level: 1, name: 'Draft 4' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Draft #4' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'the original invoice' })).toHaveAttribute('href', '/11/sales_invoices/901')
   })
 
@@ -401,7 +402,7 @@ describe('an invoice', () => {
   it('deletes a draft and returns to the list', async () => {
     server.use(...loaded(), http.delete('*/api/v2/11/sales_invoices/902', () => new HttpResponse(null, { status: 204 })))
     renderAt('/11/sales_invoices/902')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Draft 3' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Draft #3' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
     expect(screen.queryByRole('button', { name: 'Create credit invoice' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
@@ -645,7 +646,7 @@ describe('bulk actions in the list', () => {
     const table = await screen.findByRole('table', { name: 'Invoices' })
     expect(screen.queryByRole('group', { name: 'Selected invoices' })).toBeNull()
     await userEvent.click(within(table).getByRole('checkbox', { name: 'Select 2026-0004' }))
-    await userEvent.click(within(table).getByRole('checkbox', { name: 'Select Draft 3' }))
+    await userEvent.click(within(table).getByRole('checkbox', { name: 'Select Draft #3' }))
     let bar = screen.getByRole('group', { name: 'Selected invoices' })
     expect(within(bar).getByText('2 selected')).toBeInTheDocument()
     await userEvent.click(within(bar).getByRole('button', { name: 'Send reminders (1)' }))
@@ -662,7 +663,7 @@ describe('bulk actions in the list', () => {
     ])
     expect(await screen.findByText('Registered the payments of 2 invoices.')).toBeInTheDocument()
 
-    await userEvent.click(within(table).getByRole('checkbox', { name: 'Select Draft 3' }))
+    await userEvent.click(within(table).getByRole('checkbox', { name: 'Select Draft #3' }))
     bar = screen.getByRole('group', { name: 'Selected invoices' })
     expect(within(bar).getByRole('button', { name: 'Register full payment (0)' })).toBeDisabled()
     await userEvent.click(within(bar).getByRole('button', { name: 'Delete drafts (1)' }))

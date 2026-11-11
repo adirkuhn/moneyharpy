@@ -1,13 +1,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { type ReactNode, useState } from 'react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { Page } from '../layout/Page'
+import { pageWindow } from '../layout/Pagination'
 import { DocumentTable } from './DocumentTable'
 import { AdvancedFilter, FilterPanel, RadioFilter } from './FilterPanel'
 import { GettingStarted } from './GettingStarted'
-import { ListActions } from './ListActions'
+import { ListActions, MoreMenu } from './ListActions'
+import { allPeriods, PeriodFilter } from './PeriodFilter'
 import { monthOf, type MonthRange } from './period'
 import { PeriodPicker } from './PeriodPicker'
 
@@ -37,7 +40,6 @@ describe('the actions of a list', () => {
     <ListActions
       exports={['Excel per invoice', 'Excel per row', 'Compose export']}
       primary={{ to: '/list/new', label: 'New invoice' }}
-      more={[{ to: '/settings', label: 'Invoice settings' }]}
     />
   )
 
@@ -70,8 +72,13 @@ describe('the actions of a list', () => {
     expect(exportButton).toHaveFocus()
   })
 
-  it('opens more actions and closes them on a click elsewhere', async () => {
+  it('has no more actions button, as Moneybird lists have none', () => {
     show(actions)
+    expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull()
+  })
+
+  it('opens more actions and closes them on a click elsewhere', async () => {
+    show(<MoreMenu items={[{ to: '/settings', label: 'Invoice settings' }]} />)
     const more = screen.getByRole('button', { name: 'More actions' })
     await userEvent.click(more)
     expect(screen.getByRole('link', { name: 'Invoice settings' })).toHaveAttribute('href', '/settings')
@@ -85,7 +92,7 @@ describe('the actions of a list', () => {
       const [shown, setShown] = useState(false)
       return (
         <>
-          <ListActions exports={[]} primary={{ to: '/list/new', label: 'Add' }} more={[]} info={{ shown, onToggle: () => setShown(!shown), controls: 'intro' }} />
+          <ListActions exports={[]} primary={{ to: '/list/new', label: 'Add' }} info={{ shown, onToggle: () => setShown(!shown), controls: 'intro' }} />
           {shown && <p id="intro">Intro</p>}
         </>
       )
@@ -111,7 +118,7 @@ describe('the filter panel', () => {
           { label: 'Draft invoices', to: '/list?filter=state:draft', current: false },
         ]}
       >
-        <AdvancedFilter onApply={() => onApply(state)}>
+        <AdvancedFilter value={state} onApply={() => onApply(state)}>
           <RadioFilter legend="Status" value={state} onChange={setState} options={[{ value: 'all', label: 'All' }, { value: 'paid', label: 'Paid' }]} />
         </AdvancedFilter>
       </FilterPanel>
@@ -142,6 +149,25 @@ describe('the filter panel', () => {
     expect(applied).toBe('paid')
   })
 
+  it('enables the Filter button only once something changed', async () => {
+    show(<Panel />)
+    await userEvent.click(screen.getByRole('button', { name: 'Invoices from this year' }))
+    const panel = screen.getByRole('search', { name: 'Invoice filters' })
+    const filter = within(panel).getByRole('button', { name: 'Filter' })
+    expect(filter).toBeDisabled()
+    await userEvent.click(within(panel).getByRole('radio', { name: 'Paid' }))
+    expect(filter).toBeEnabled()
+    await userEvent.click(within(panel).getByRole('radio', { name: 'All' }))
+    expect(filter).toBeDisabled()
+  })
+
+  it('names its parts in plain headings', async () => {
+    show(<Panel />)
+    await userEvent.click(screen.getByRole('button', { name: 'Invoices from this year' }))
+    const panel = screen.getByRole('search', { name: 'Invoice filters' })
+    expect(within(panel).getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Quick filter', 'Advanced filter'])
+  })
+
   it('closes with Escape, returning focus, and on a click elsewhere', async () => {
     show(<Panel />)
     const toggle = screen.getByRole('button', { name: 'Invoices from this year' })
@@ -160,11 +186,12 @@ describe('the period picker', () => {
     const [range, setRange] = useState(initial)
     return <PeriodPicker value={range} onChange={setRange} today={new Date(2026, 10, 11)} />
   }
+  const year2026 = { from: monthOf(2026, 0), to: monthOf(2026, 11) }
 
   it('picks a month, then widens it to a range with a second choice', async () => {
     show(<Picker initial={null} />)
     const picker = screen.getByRole('group', { name: 'Period' })
-    expect(within(picker).getByRole('button', { name: 'All periods' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(picker).queryByRole('slider')).toBeNull()
     await userEvent.click(within(picker).getByRole('button', { name: 'March 2026' }))
     expect(within(picker).getByRole('button', { name: 'March 2026' })).toHaveAttribute('aria-pressed', 'true')
     expect(within(picker).getByRole('status')).toHaveTextContent('Mar 2026')
@@ -174,8 +201,13 @@ describe('the period picker', () => {
     expect(within(picker).getByRole('button', { name: 'October 2026' })).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('picks a whole year, moves to earlier years and clears the period', async () => {
-    show(<Picker initial={{ from: monthOf(2026, 0), to: monthOf(2026, 11) }} />)
+  it('offers no all periods button of its own', () => {
+    show(<Picker initial={year2026} />)
+    expect(within(screen.getByRole('group', { name: 'Period' })).queryByRole('button', { name: 'All periods' })).toBeNull()
+  })
+
+  it('picks a whole year and moves to earlier years', async () => {
+    show(<Picker initial={year2026} />)
     const picker = screen.getByRole('group', { name: 'Period' })
     expect(within(picker).getByRole('button', { name: '2026' })).toHaveAttribute('aria-pressed', 'true')
     expect(within(picker).getByRole('button', { name: 'Later years' })).toBeDisabled()
@@ -183,8 +215,96 @@ describe('the period picker', () => {
     expect(within(picker).getByRole('button', { name: '2024' })).toBeInTheDocument()
     await userEvent.click(within(picker).getByRole('button', { name: '2024' }))
     expect(within(picker).getByRole('status')).toHaveTextContent('2024')
-    await userEvent.click(within(picker).getByRole('button', { name: 'All periods' }))
-    expect(within(picker).getByRole('status')).toHaveTextContent('All periods')
+  })
+
+  it('has a handle at each end of the period, moved a month at a time with the arrow keys', async () => {
+    show(<Picker initial={year2026} />)
+    const picker = screen.getByRole('group', { name: 'Period' })
+    const start = within(picker).getByRole('slider', { name: 'Start of period' })
+    const end = within(picker).getByRole('slider', { name: 'End of period' })
+    expect(start).toHaveAttribute('aria-valuetext', 'January 2026')
+    expect(end).toHaveAttribute('aria-valuetext', 'December 2026')
+
+    start.focus()
+    await userEvent.keyboard('{ArrowLeft}')
+    expect(start).toHaveAttribute('aria-valuetext', 'December 2025')
+    expect(within(picker).getByRole('status')).toHaveTextContent('Dec 2025 – Dec 2026')
+
+    end.focus()
+    await userEvent.keyboard('{ArrowRight}')
+    expect(end).toHaveAttribute('aria-valuetext', 'December 2026')
+    await userEvent.keyboard('{ArrowLeft}{ArrowDown}')
+    expect(within(picker).getByRole('status')).toHaveTextContent('Dec 2025 – Oct 2026')
+  })
+
+  it('keeps the start of the period before its end', async () => {
+    show(<Picker initial={{ from: monthOf(2026, 2), to: monthOf(2026, 3) }} />)
+    const picker = screen.getByRole('group', { name: 'Period' })
+    const start = within(picker).getByRole('slider', { name: 'Start of period' })
+    start.focus()
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}')
+    expect(within(picker).getByRole('status')).toHaveTextContent('Apr 2026')
+    await userEvent.keyboard('{Home}')
+    expect(start).toHaveAttribute('aria-valuetext', 'January 2025')
+    const end = within(picker).getByRole('slider', { name: 'End of period' })
+    end.focus()
+    await userEvent.keyboard('{End}')
+    expect(within(picker).getByRole('status')).toHaveTextContent('Jan 2025 – Dec 2026')
+  })
+
+  it('moves a handle by dragging it over the months', () => {
+    show(<Picker initial={year2026} />)
+    const picker = screen.getByRole('group', { name: 'Period' })
+    // The two years are 2400px wide, so a month is 100px.
+    vi.spyOn(picker.querySelector('.period-picker__track') as HTMLElement, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 2400, 90))
+    const start = within(picker).getByRole('slider', { name: 'Start of period' })
+    fireEvent.pointerDown(start, { pointerId: 1, clientX: 1200 })
+    fireEvent.pointerMove(start, { pointerId: 1, clientX: 820 })
+    fireEvent.pointerUp(start, { pointerId: 1, clientX: 820 })
+    expect(within(picker).getByRole('status')).toHaveTextContent('Sep 2025 – Dec 2026')
+    const end = within(picker).getByRole('slider', { name: 'End of period' })
+    fireEvent.pointerDown(end, { pointerId: 1, clientX: 2400 })
+    fireEvent.pointerMove(end, { pointerId: 1, clientX: 1590 })
+    fireEvent.pointerUp(end, { pointerId: 1 })
+    expect(within(picker).getByRole('status')).toHaveTextContent('Sep 2025 – Apr 2026')
+    // Moving without pressing first does nothing.
+    fireEvent.pointerMove(end, { pointerId: 1, clientX: 2000 })
+    expect(within(picker).getByRole('status')).toHaveTextContent('Sep 2025 – Apr 2026')
+  })
+})
+
+describe('the period filter', () => {
+  it('offers all periods as a quick filter where a list can show every period', async () => {
+    show(<PeriodFilter allowAll period="this_year" title="Entry filters" quick={[{ value: 'this_year', label: 'This year' }]} linkTo={(p) => `/list?period=${p}`} onApply={() => {}} />)
+    await userEvent.click(screen.getByRole('button', { name: 'This year' }))
+    const panel = screen.getByRole('search', { name: 'Entry filters' })
+    expect(within(panel).getByRole('link', { name: 'All periods' })).toHaveAttribute('href', `/list?period=${allPeriods}`)
+  })
+
+  it('offers no all periods where a period is needed', async () => {
+    show(<PeriodFilter period="this_year" title="Report filters" quick={[{ value: 'this_year', label: 'This year' }]} linkTo={(p) => `/list?period=${p}`} onApply={() => {}} />)
+    await userEvent.click(screen.getByRole('button', { name: 'This year' }))
+    expect(within(screen.getByRole('search', { name: 'Report filters' })).queryByRole('link', { name: 'All periods' })).toBeNull()
+  })
+})
+
+describe('the page of a list', () => {
+  it('keeps the title for screen readers only beside a filter button, as Moneybird does', () => {
+    show(<Page wide title="Invoices" lead={<button type="button">This year</button>}><p>List</p></Page>)
+    expect(screen.getByRole('heading', { level: 1, name: 'Invoices' })).toHaveClass('sr-only')
+  })
+
+  it('shows the title of a page without a filter', () => {
+    show(<Page title="Invoice settings"><p>Form</p></Page>)
+    expect(screen.getByRole('heading', { level: 1, name: 'Invoice settings' })).not.toHaveClass('sr-only')
+  })
+})
+
+describe('the pages of a long list', () => {
+  it('offers two pages either side of the current one, the first and the last', () => {
+    expect(pageWindow(1, 30)).toEqual([1, 2, 3, null, 30])
+    expect(pageWindow(10, 30)).toEqual([1, null, 8, 9, 10, 11, 12, null, 30])
+    expect(pageWindow(4, 5)).toEqual([1, 2, 3, 4, 5])
   })
 })
 

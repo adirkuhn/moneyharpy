@@ -5,7 +5,7 @@ import { useAdministration } from '../administrations/queries'
 import { formatAmount } from '../banking/queries'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
-import { DocumentTable } from '../list/DocumentTable'
+import { DocumentTable, listDate } from '../list/DocumentTable'
 import { GettingStarted } from '../list/GettingStarted'
 import { ListActions } from '../list/ListActions'
 import { allPeriods, PeriodFilter } from '../list/PeriodFilter'
@@ -28,7 +28,6 @@ export function JournalDocumentsPage() {
   const [info, setInfo] = useState<boolean | null>(null)
   const introId = useId()
   const currency = administration.data?.currency ?? 'EUR'
-  const date = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' })
   const base = `/${administrationId}/documents/general_journal_documents`
   const shown = docs.data?.documents ?? []
   const firstUse = docs.data !== undefined && shown.length === 0 && period === defaultPeriod && page === 1
@@ -55,7 +54,6 @@ export function JournalDocumentsPage() {
           info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
           exports={[]}
           primary={{ to: `${base}/new`, label: t('journal.newEntry') }}
-          more={[{ to: `/${administrationId}/report/general_ledger`, label: t('journal.trialBalance') }]}
         />
       }
     >
@@ -84,7 +82,7 @@ export function JournalDocumentsPage() {
           total={docs.data.total}
           perPage={documentsPerPage}
           columns={[
-            { key: 'date', header: t('journal.date'), kind: 'date', cell: (d) => date(d.date ?? '') },
+            { key: 'date', header: t('journal.date'), kind: 'date', cell: (d) => listDate(d.date) },
             { key: 'reference', header: t('journal.reference'), link: true, cell: (d) => d.reference },
             {
               key: 'amount', header: t('journal.amount'), kind: 'amount',

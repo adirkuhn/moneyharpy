@@ -2,9 +2,13 @@ import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { ArrowLeftIcon, ChevronIcon } from './icons'
 
+/** How many pages to offer either side of the current one, as Moneybird does. */
+const around = 2
+
 /** The pages to offer around the current one, with null for a gap. */
 export function pageWindow(current: number, last: number): (number | null)[] {
-  const wanted = new Set([1, last, current - 1, current, current + 1].filter((p) => p >= 1 && p <= last))
+  const near = Array.from({ length: 2 * around + 1 }, (_, i) => current - around + i)
+  const wanted = new Set([1, last, ...near].filter((p) => p >= 1 && p <= last))
   const pages = [...wanted].sort((a, b) => a - b)
   const out: (number | null)[] = []
   pages.forEach((p, i) => {
