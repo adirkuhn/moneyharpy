@@ -301,6 +301,14 @@ describe('the invoice editor', () => {
     expect(within(totals).getByRole('row', { name: /^Totaal/ })).toHaveTextContent('€ 121,00')
   })
 
+  it("starts with the contact it was added from, as a contact's Add menu does", async () => {
+    server.use(...loaded(), http.get('*/api/v2/11/contacts/701', () => HttpResponse.json(shop)))
+    renderAt('/11/sales_invoices/new?contact_id=701')
+    await screen.findByRole('heading', { level: 1, name: 'Add invoice' })
+    const recipient = within(paper()).getByRole('combobox', { name: 'Contact' })
+    expect(recipient).toHaveTextContent('Example Shop B.V.Dam 21012AB Amsterdam')
+  })
+
   it('shows what is wrong beside the fields', async () => {
     server.use(...loaded(), http.post('*/api/v2/11/sales_invoices', () => HttpResponse.json({ error: { contact_id: ["can't be blank"], 'details_attributes.0.price': ['is not an amount'] } }, { status: 422 })))
     renderAt('/11/sales_invoices/new')

@@ -1,12 +1,12 @@
 import { type FormEvent, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
 import { type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
-import { type Contact, contactName } from '../contacts/queries'
+import { type Contact, contactName, useContact } from '../contacts/queries'
 import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
 import { styleFileURL, useDocumentStyles, useWorkflows } from '../invoicing/queries'
 import { Loading } from '../layout/Loading'
@@ -24,10 +24,15 @@ import { invoiceTitle, type SalesInvoice, type SalesInvoiceChanges, useSalesInvo
 import { computeTotals, parseCents, parsePercentage, parseQuantity } from './totals'
 import { TotalsTable } from './TotalsTable'
 
-/** Creates an invoice (/sales_invoices/new) or edits one (/sales_invoices/:id/edit). */
+/**
+ * Creates an invoice (/sales_invoices/new, ?contact_id= to start with that
+ * contact, as a contact's Add menu does) or edits one (/sales_invoices/:id/edit).
+ */
 export function InvoiceFormPage() {
   const { administrationId = '', invoiceId } = useParams()
+  const [params] = useSearchParams()
   const invoice = useSalesInvoice(administrationId, invoiceId)
+  const preset = useContact(administrationId, invoiceId ? undefined : params.get('contact_id') ?? undefined)
   const rates = useTaxRates(administrationId)
   // The document's language, layout and sender come from these, so it waits for them.
   const workflows = useWorkflows(administrationId)
@@ -36,14 +41,14 @@ export function InvoiceFormPage() {
   if (invoiceId && invoice.error instanceof ApiError && invoice.error.status < 500) {
     return <NotFoundPage />
   }
-  const settled = [workflows, styles, identities].every((q) => !q.isPending)
+  const settled = [workflows, styles, identities].every((q) => !q.isPending) && !(preset.fetchStatus === 'fetching' && !preset.data)
   if ((invoiceId && !invoice.data) || !rates.data || !settled) {
     return <Loading />
   }
   const inv = invoice.data ?? null
   // Rates the invoice already uses stay available even when they were turned off since.
   const usable = rates.data.filter((r) => r.tax_rate_type === 'sales_invoice' && (r.active || inv?.details?.some((d) => d.tax_rate_id === r.id)))
-  return <InvoiceForm key={inv?.id ?? 'new'} administrationId={administrationId} invoice={inv} rates={usable} />
+  return <InvoiceForm key={inv?.id ?? 'new'} administrationId={administrationId} invoice={inv} contact={preset.data} rates={usable} />
 }
 
 let nextKey = 0
@@ -64,7 +69,9 @@ const chosen = (c: Pick<Contact, 'id' | 'company_name' | 'firstname' | 'lastname
  * its document, edited in place, with what the document does not show in the
  * settings underneath.
  */
-function InvoiceForm({ administrationId, invoice, rates }: { administrationId: string; invoice: SalesInvoice | null; rates: TaxRate[] }) {
+type FormProps = { administrationId: string; invoice: SalesInvoice | null; contact?: Contact; rates: TaxRate[] }
+
+function InvoiceForm({ administrationId, invoice, contact: preset, rates }: FormProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const save = useSaveSalesInvoice(administrationId, invoice?.id)
@@ -77,7 +84,10 @@ function InvoiceForm({ administrationId, invoice, rates }: { administrationId: s
   const layoutsId = useId()
   const settingsRef = useRef<HTMLDivElement>(null)
 
-  const [contact, setContact] = useState<ChosenContact>(invoice?.contact ? chosen(invoice.contact) : { id: invoice?.contact_id ?? '', name: '', address: [] })
+  const [contact, setContact] = useState<ChosenContact>(() => {
+    const known = invoice?.contact ?? preset
+    return known ? chosen(known) : { id: invoice?.contact_id ?? '', name: '', address: [] }
+  })
   const [reference, setReference] = useState(invoice?.reference ?? '')
   const [invoiceDate, setInvoiceDate] = useState(invoice?.invoice_date ?? '')
   const [term, setTerm] = useState(invoice?.first_due_interval === undefined ? '' : String(invoice.first_due_interval))

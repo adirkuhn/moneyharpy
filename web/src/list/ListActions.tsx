@@ -21,6 +21,7 @@ export type MenuItem =
   | { label: string; to: string }
   | { label: string; href: string; download?: boolean }
   | { label: string; onSelect: () => void; disabled?: boolean; danger?: boolean }
+  | { label: string; unavailable: true }
 
 /**
  * The actions on the right of a list's action bar, after Moneybird: information,
@@ -106,34 +107,82 @@ function ExportMenu({ entries }: { entries: string[] }) {
   )
 }
 
+/** An entry of a menu: a link, a download, an action, or something MoneyHarpy does not do yet. */
+function MenuEntry({ item, close }: { item: MenuItem; close: () => void }) {
+  const { t } = useTranslation()
+  if ('unavailable' in item) {
+    return (
+      <span className="dropdown__item is-disabled" aria-disabled="true">
+        <span>{item.label}</span>
+        <span className="dropdown__hint">{t('list.notAvailable')}</span>
+      </span>
+    )
+  }
+  if ('to' in item) {
+    return <Link className="dropdown__item" to={item.to} onClick={close}>{item.label}</Link>
+  }
+  if ('href' in item) {
+    return item.download
+      ? <a className="dropdown__item" href={item.href} download onClick={close}>{item.label}</a>
+      : <a className="dropdown__item" href={item.href} target="_blank" rel="noreferrer" onClick={close}>{item.label}</a>
+  }
+  return (
+    <button
+      type="button"
+      className={`dropdown__item dropdown__action${item.danger ? ' is-danger' : ''}`}
+      disabled={item.disabled}
+      onClick={() => {
+        close()
+        item.onSelect()
+      }}
+    >
+      {item.label}
+    </button>
+  )
+}
+
+type ActionMenuProps = {
+  label: string
+  icon?: ReactNode
+  items: MenuItem[]
+  /** The page's main action, such as Moneybird's Add, in the primary style. */
+  primary?: boolean
+}
+
+/** A named button of a page's action bar with its own menu, after Moneybird's Export, Extra and Add. */
+export function ActionMenu({ label, icon, items, primary = false }: ActionMenuProps) {
+  const id = useId()
+  const { open, toggle, close, root, button } = useDisclosure()
+  return (
+    <div className="dropdown" ref={root}>
+      <button
+        ref={button}
+        type="button"
+        className={`btn ${primary ? 'btn--accent' : 'btn--secondary'} btn--with-icon`}
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={toggle}
+      >
+        {icon}
+        <span>{label}</span>
+        <CaretIcon />
+      </button>
+      {open && (
+        <div id={id} className="dropdown__panel dropdown__panel--right">
+          <ul className="dropdown__list">
+            {items.map((item) => <li key={item.label}><MenuEntry item={item} close={close} /></li>)}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** The ⋯ button of an action bar, after Moneybird: the actions that do not need a button of their own. */
 export function MoreMenu({ items }: { items: MenuItem[] }) {
   const { t } = useTranslation()
   const id = useId()
   const { open, toggle, close, root, button } = useDisclosure()
-  const entry = (item: MenuItem) => {
-    if ('to' in item) {
-      return <Link className="dropdown__item" to={item.to} onClick={close}>{item.label}</Link>
-    }
-    if ('href' in item) {
-      return item.download
-        ? <a className="dropdown__item" href={item.href} download onClick={close}>{item.label}</a>
-        : <a className="dropdown__item" href={item.href} target="_blank" rel="noreferrer" onClick={close}>{item.label}</a>
-    }
-    return (
-      <button
-        type="button"
-        className={`dropdown__item dropdown__action${item.danger ? ' is-danger' : ''}`}
-        disabled={item.disabled}
-        onClick={() => {
-          close()
-          item.onSelect()
-        }}
-      >
-        {item.label}
-      </button>
-    )
-  }
   return (
     <div className="dropdown" ref={root}>
       <button
@@ -151,7 +200,7 @@ export function MoreMenu({ items }: { items: MenuItem[] }) {
       {open && (
         <div id={id} className="dropdown__panel dropdown__panel--right">
           <ul className="dropdown__list">
-            {items.map((item) => <li key={item.label}>{entry(item)}</li>)}
+            {items.map((item) => <li key={item.label}><MenuEntry item={item} close={close} /></li>)}
           </ul>
         </div>
       )}
