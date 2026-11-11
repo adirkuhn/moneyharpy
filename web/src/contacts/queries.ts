@@ -9,6 +9,17 @@ export type PersonChanges = components['schemas']['ContactPersonFields']
 
 export const perPage = 50
 
+/** The client number a new contact gets, which the add contact form shows filled in. */
+export function useNextCustomerId(administrationId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['contact-next-customer-id', administrationId],
+    enabled,
+    // Another contact may have taken it since, so it is asked for afresh every time.
+    gcTime: 0,
+    queryFn: async () => (await unwrap(api.GET('/api/v2/{administration_id}/contacts/next_customer_id', { params: { path: admin(administrationId) } }))).customer_id,
+  })
+}
+
 export type ContactSearch = {
   query: string
   /** The filter terms of the advanced filter, such as contact_type:company; empty for all contacts. */

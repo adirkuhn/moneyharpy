@@ -20,7 +20,7 @@ import { DateView, DetailsView, Paper, RecipientContent, SenderAddress, type Sho
 import { LayoutPicker } from './LayoutPicker'
 import { type LineRow, LinesEditor } from './LinesEditor'
 import { addDays, addressLines, daysBetween, documentDate, percentText, senderEntries, today } from './paper'
-import { invoiceTitle, type SalesInvoice, type SalesInvoiceChanges, useSalesInvoice, useSaveSalesInvoice } from './queries'
+import { invoiceTitle, type SalesInvoice, type SalesInvoiceChanges, useNextDraftId, useSalesInvoice, useSaveSalesInvoice } from './queries'
 import { computeTotals, parseCents, parsePercentage, parseQuantity } from './totals'
 import { TotalsTable } from './TotalsTable'
 
@@ -72,6 +72,7 @@ const chosen = (c: Pick<Contact, 'id' | 'company_name' | 'firstname' | 'lastname
 type FormProps = { administrationId: string; invoice: SalesInvoice | null; contact?: Contact; rates: TaxRate[] }
 
 function InvoiceForm({ administrationId, invoice, contact: preset, rates }: FormProps) {
+  const nextDraftId = useNextDraftId(administrationId, !invoice)
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const save = useSaveSalesInvoice(administrationId, invoice?.id)
@@ -195,7 +196,8 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates }: Form
   const list = `/${administrationId}/sales_invoices`
   const back = invoice ? `${list}/${invoice.id}` : list
   const title = invoice ? t('invoices.editTitle', { name: invoiceTitle(invoice, t) }) : t('invoices.newTitle')
-  const draftLabel = invoice?.invoice_id || (invoice?.draft_id ? dt('invoices.document.draftNumber', { id: invoice.draft_id }) : dt('invoices.document.draft'))
+  const draftId = invoice ? invoice.draft_id : nextDraftId.data
+  const draftLabel = invoice?.invoice_id || (draftId ? dt('invoices.document.draftNumber', { id: draftId }) : dt('invoices.document.draft'))
   const rateName = (id: string) => rateOf(id)?.name ?? ''
   const totalRows = [
     { label: dt('invoices.document.subtotal'), amount: money(totals.subtotal) },

@@ -59,6 +59,19 @@ type Changes struct {
 	CustomFields      []FieldValue
 }
 
+// NextDraftID returns the draft number the next new invoice gets, which
+// Moneybird shows on an invoice being added ("Concept #12").
+func (s *Service) NextDraftID(ctx context.Context, admin, user resource.ID) (int, error) {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return 0, err
+	}
+	n, err := s.store.NextDraftID(ctx, admin)
+	if err != nil {
+		return 0, wrap("number draft", err)
+	}
+	return n, nil
+}
+
 // Create adds a draft invoice, filled from the administration's default
 // workflow, document style and identity where the changes leave them out.
 func (s *Service) Create(ctx context.Context, admin, user resource.ID, c Changes) (Invoice, error) {

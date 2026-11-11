@@ -4057,6 +4057,34 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/next_customer_id:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getNextCustomerId
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Get the next customer id
+      description: >-
+        MoneyHarpy extension. The customer id a contact created now gets when it is given none, which the add contact
+        screen shows prefilled as Moneybird does. Another contact may take it first.
+      tags: [Contacts]
+      responses:
+        '200':
+          description: The next customer id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextCustomerId'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/contacts/synchronization:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -7721,6 +7749,34 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/next_draft_id:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getNextSalesInvoiceDraftId
+      x-permissions: [sales_invoices]
+      summary: Get the next draft number
+      description: >-
+        MoneyHarpy extension. The draft number a sales invoice created now gets, which the add invoice screen shows
+        as "Concept #n" as Moneybird does. Another invoice may take it first.
+      tags: [Sales invoices]
+      responses:
+        '200':
+          description: The next draft number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextDraftId'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/sales_invoices/synchronization:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -14733,6 +14789,20 @@ components:
               maxItems: 10000
               items:
                 $ref: '#/components/schemas/FinancialMutationInput'
+    NextCustomerId:
+      type: object
+      required: [customer_id]
+      properties:
+        customer_id:
+          type: string
+          example: '43'
+    NextDraftId:
+      type: object
+      required: [draft_id]
+      properties:
+        draft_id:
+          type: integer
+          example: 12
     SynchronizationItem:
       type: object
       required: [id, version]
