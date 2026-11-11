@@ -22,7 +22,7 @@ import (
 
 // attachableTypes maps record kinds to the attachable_type Moneybird
 // reports; its journal entries are documents.
-var attachableTypes = map[string]string{journal.GeneralJournalDocument: "Document"}
+var attachableTypes = map[string]string{journal.GeneralJournalDocument: "Document", journal.SalesInvoice: "SalesInvoice"}
 
 type attachmentJSON struct {
 	ID               string    `json:"id"`

@@ -30,6 +30,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
+	"github.com/adirkuhn/moneyharpy/internal/invoicedoc"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
@@ -39,6 +40,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/postgres/postgrestest"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
+	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -131,7 +133,18 @@ func (f *fakeLookups) LookupAddress(_ context.Context, _, _ string) (administrat
 
 type sentMail struct{ to, token, language string }
 
+// SendDocument implements sales.Mailer.
+func (m *fakeMailer) SendDocument(_ context.Context, d sales.Mail) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.documents = append(m.documents, d)
+	return m.documentErr
+}
+
 type fakeMailer struct {
+	mu          sync.Mutex
+	documents   []sales.Mail
+	documentErr error
 	resets      chan sentMail
 	testErr     error
 	tested      []string
@@ -239,9 +252,14 @@ func newHarness(t *testing.T, opts options) *harness {
 	bank := banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now)
 	noteService := notes.NewService(postgres.NewNoteStore(pool), ids, time.Now)
 	journalStore := postgres.NewJournalStore(pool)
-	contactService := contacts.NewService(admins, invoices, admins, journalStore, noteService, postgres.NewContactStore(pool), ids, time.Now)
-	ledger := journal.NewService(admins, books, contactService, journalStore, journalStore, noteService,
-		attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now), ids, time.Now)
+	salesStore := postgres.NewSalesStore(pool)
+	attachmentService := attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now)
+	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
+	ledger := journal.NewService(admins, books, contactService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
+	invoiceService := sales.NewService(sales.Deps{
+		Administrations: admins, Contacts: contactService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
+		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, IDs: ids, Now: time.Now,
+	})
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
@@ -253,6 +271,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Overview:        overview.NewService(admins, bank),
 		Journal:         ledger,
 		Contacts:        contactService,
+		Sales:           invoiceService,
 		Storage:         files,
 		Identity:        people,
 		Settings:        settle,

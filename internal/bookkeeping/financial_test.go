@@ -53,6 +53,16 @@ func TestCheckBookable(t *testing.T) {
 	if problem, err := svc.Bookable(ctx, adminID, owner, byKey(t, store, "rounding").ID, "general_journal_document"); problem != "" || err != nil {
 		t.Errorf("rounding in a journal entry: %q, %v", problem, err)
 	}
+	receivable, err := svc.SystemLedgerAccount(ctx, adminID, owner, "accounts_receivable")
+	if err != nil || receivable != byKey(t, store, "accounts_receivable").ID {
+		t.Errorf("SystemLedgerAccount() = %d, %v", receivable, err)
+	}
+	uncollectible := byKey(t, store, "uncollectible_revenue")
+	delete(store.accounts, uncollectible.ID)
+	again, err := svc.SystemLedgerAccount(ctx, adminID, owner, "uncollectible_revenue")
+	if err != nil || again == uncollectible.ID || store.accounts[again].System != "uncollectible_revenue" || store.accounts[again].ParentID == nil {
+		t.Errorf("recreated = %+v, %v", store.accounts[again], err)
+	}
 	if day, _ := svc.LockedUntil(ctx, adminID, owner); day != "" {
 		t.Errorf("LockedUntil() = %q", day)
 	}

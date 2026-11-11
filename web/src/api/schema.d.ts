@@ -1439,6 +1439,387 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/sales_invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all sales invoices
+         * @description Newest first unless sort is date_asc. Filter terms: state (all, draft, scheduled, open, pending_payment, late, reminded, paid, uncollectible; several separated by |), period (this year unless a filter is given), reference (several separated by |), contact_id, recurring_sales_invoice_id, workflow_id, created_after, updated_after. Late invoices are open invoices past their due date. Paged with a Link header and X-Total-Count.
+         */
+        get: operations["listSalesInvoices"];
+        put?: never;
+        /**
+         * Create a new sales invoice
+         * @description A draft, following the default workflow, document style and identity unless given.
+         */
+        post: operations["createSalesInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/synchronization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /** List all ids and versions */
+        get: operations["listSalesInvoiceVersions"];
+        put?: never;
+        /** Fetch sales invoices with given ids */
+        post: operations["fetchSalesInvoices"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/find_by_invoice_id/{invoice_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        /** Find a sales invoice by invoice number */
+        get: operations["getSalesInvoiceByInvoiceId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/find_by_reference/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                reference: string;
+            };
+            cookie?: never;
+        };
+        /** Find a sales invoice by reference */
+        get: operations["getSalesInvoiceByReference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get a sales invoice */
+        get: operations["getSalesInvoice"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a sales invoice
+         * @description Only drafts and scheduled invoices; credit a sent one instead.
+         */
+        delete: operations["deleteSalesInvoice"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a sales invoice
+         * @description A sent invoice can change until it is paid and is booked again; lines with an id change, lines with _destroy go, lines without an id are added. Not in the locked period.
+         */
+        patch: operations["updateSalesInvoice"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/send_invoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Send a sales invoice
+         * @description A draft gets its number, its due date and its bookings, and goes out by email with its PDF (and UBL file when asked), or is marked sent when delivery is Manual or Post. A sent invoice goes out again. With sending_scheduled and a future invoice_date it waits until then. Empty fields take the previous sending's settings, then the contact's and the workflow's. Peppol and Simplerinvoicing are not available yet (422). When the email fails the invoice stays sent and booked (422), so it can be sent again.
+         */
+        patch: operations["sendSalesInvoice"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/download_pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download the PDF
+         * @description Answers with the file itself; Moneybird redirects to it instead.
+         */
+        get: operations["downloadSalesInvoicePdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/download_packing_slip_pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download the packing slip
+         * @description Answers with the file itself; Moneybird redirects to it instead.
+         */
+        get: operations["downloadSalesInvoicePackingSlip"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/download_ubl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download the UBL e-invoice
+         * @description A UBL 2.1 invoice after Peppol BIS Billing 3.0. Only for sent invoices.
+         */
+        get: operations["downloadSalesInvoiceUbl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/duplicate_creditinvoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Create a credit invoice
+         * @description A draft crediting the sent invoice: its lines, or those in detail_ids, with negative quantities.
+         */
+        patch: operations["duplicateCreditSalesInvoice"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause a sales invoice
+         * @description Stops or restarts the reminders of a sent invoice.
+         */
+        post: operations["pauseSalesInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume a sales invoice
+         * @description Stops or restarts the reminders of a sent invoice.
+         */
+        post: operations["resumeSalesInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add note to a sales invoice */
+        post: operations["createSalesInvoiceNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a note from a sales invoice */
+        delete: operations["deleteSalesInvoiceNote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add attachment to a sales invoice
+         * @description A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+         */
+        post: operations["createSalesInvoiceAttachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an attachment from a sales invoice */
+        delete: operations["deleteSalesInvoiceAttachment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/attachments/{attachment_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        /** Download an attachment */
+        get: operations["downloadSalesInvoiceAttachment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/booking_rules": {
         parameters: {
             query?: never;
@@ -2757,6 +3138,10 @@ export interface components {
         Workflow: components["schemas"]["workflow_response"] & {
             /** @description MoneyHarpy extension. Canonical path of this resource. */
             uri: string;
+            /** @description MoneyHarpy extension. The subject invoices are emailed with; empty uses the default. Placeholders: {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference}, {reference}. */
+            invoice_email_subject: string;
+            /** @description MoneyHarpy extension. The text invoices are emailed with; empty uses the default. Same placeholders. */
+            invoice_email_body: string;
         };
         /** @description A Moneybird document style with MoneyHarpy extensions. */
         DocumentStyle: components["schemas"]["document_style_response"] & {
@@ -2777,6 +3162,10 @@ export interface components {
                 default?: boolean;
                 prices_are_incl_tax?: boolean;
                 show_qr_code?: boolean;
+                /** @description MoneyHarpy extension. Empty uses the default. */
+                invoice_email_subject?: string;
+                /** @description MoneyHarpy extension. Empty uses the default. */
+                invoice_email_body?: string;
                 /** @description The payment term or validity first, then the reminders. */
                 steps_attributes?: {
                     /** @description Days until payment is due, or until an estimate expires. First step only. */
@@ -3260,6 +3649,86 @@ export interface components {
         };
         GeneralLedgerReport: components["schemas"]["GeneralLedgerPeriod"] & {
             periods?: components["schemas"]["GeneralLedgerPeriod"][];
+        };
+        /** @description A Moneybird sales invoice with MoneyHarpy extensions. */
+        SalesInvoice: components["schemas"]["sales_invoice_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+            /** @description MoneyHarpy extension. Days from the invoice date to the due date. */
+            first_due_interval?: number;
+            /** @description MoneyHarpy extension. The VAT of all lines. */
+            total_tax?: string;
+            /** @description MoneyHarpy extension. How the invoice was or will be sent. */
+            delivery_method?: string | null;
+        };
+        SalesInvoiceDetailInput: {
+            id?: components["schemas"]["FlexibleIdentifier"];
+            description?: string;
+            /** @description The days the line is about, as yyyymmdd..yyyymmdd; empty clears it. */
+            period?: string;
+            price?: components["schemas"]["Money"];
+            /** @description The quantity, such as "2" or "1,5 hours"; it must start with a number. */
+            amount?: string | number;
+            tax_rate_id?: components["schemas"]["FlexibleIdentifier"];
+            ledger_account_id?: components["schemas"]["FlexibleIdentifier"];
+            project_id?: components["schemas"]["FlexibleIdentifier"];
+            product_id?: components["schemas"]["FlexibleIdentifier"];
+            row_order?: number | string;
+            is_optional?: components["schemas"]["FlexibleBoolean"];
+            is_selected?: components["schemas"]["FlexibleBoolean"];
+            /** @description Accepted for compatibility. */
+            automated_tax_enabled?: components["schemas"]["FlexibleBoolean"];
+            _destroy?: components["schemas"]["FlexibleBoolean"];
+        };
+        SalesInvoiceRequest: {
+            sales_invoice: {
+                contact_id?: components["schemas"]["FlexibleIdentifier"];
+                contact_person_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description Accepted for compatibility. */
+                update_contact?: components["schemas"]["FlexibleBoolean"];
+                /** @description Accepted for compatibility; MoneyHarpy has no estimates yet. */
+                original_estimate_id?: components["schemas"]["FlexibleIdentifier"];
+                document_style_id?: components["schemas"]["FlexibleIdentifier"];
+                workflow_id?: components["schemas"]["FlexibleIdentifier"];
+                identity_id?: components["schemas"]["FlexibleIdentifier"];
+                reference?: string;
+                /** @description Sets the {id} part of the number this invoice gets when sent. */
+                invoice_sequence_id?: string;
+                remove_invoice_sequence_id?: components["schemas"]["FlexibleBoolean"];
+                /** @description yyyy-mm-dd; empty clears it on a draft. */
+                invoice_date?: string;
+                first_due_interval?: number | string;
+                currency?: string;
+                prices_are_incl_tax?: components["schemas"]["FlexibleBoolean"];
+                payment_conditions?: string;
+                /** @description A percentage, such as "10" or "2.5"; empty for none. */
+                discount?: string | number;
+                /** @description Accepted for compatibility; MoneyHarpy has no time entries yet. */
+                time_entry_ids?: components["schemas"]["FlexibleIdentifier"][];
+                /** @description An array of lines, or an object of lines keyed by position. */
+                details_attributes?: components["schemas"]["SalesInvoiceDetailInput"][] | {
+                    [key: string]: components["schemas"]["SalesInvoiceDetailInput"];
+                };
+                custom_fields_attributes?: components["schemas"]["custom_fields_attributes"];
+            };
+            /** @description Accepted for compatibility. */
+            from_payment_request?: components["schemas"]["FlexibleBoolean"];
+        };
+        SendSalesInvoiceRequest: {
+            sales_invoice_sending?: {
+                /** @enum {string} */
+                delivery_method?: "Email" | "Manual" | "Post" | "Peppol" | "Simplerinvoicing";
+                sending_scheduled?: components["schemas"]["FlexibleBoolean"];
+                deliver_ubl?: components["schemas"]["FlexibleBoolean"];
+                mergeable?: components["schemas"]["FlexibleBoolean"];
+                email_address?: string;
+                /** @description Replaces the workflow's email text; the same placeholders work. */
+                email_message?: string;
+                invoice_date?: string;
+            };
+        };
+        CreditInvoiceRequest: {
+            detail_ids?: components["schemas"]["FlexibleIdentifier"][];
         };
         BookingRuleRequest: {
             booking_rule: {
@@ -4958,6 +5427,19 @@ export interface components {
         };
     };
     responses: {
+        /** @description A page of sales invoices */
+        SalesInvoicePage: {
+            headers: {
+                /** @description RFC 8288 links to the first, prev, next and last pages. */
+                Link?: string;
+                /** @description The number of invoices selected in all. MoneyHarpy extension. */
+                "X-Total-Count"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["SalesInvoice"][];
+            };
+        };
         /** @description A page of journal entries */
         GeneralJournalDocumentPage: {
             headers: {
@@ -8094,6 +8576,634 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listSalesInvoices: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+                sort?: "date_desc" | "date_asc";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["SalesInvoicePage"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description The created draft */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listSalesInvoiceVersions: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ids and versions of the invoices the filter selects */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SynchronizationItem"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    fetchSalesInvoices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SynchronizationRequest"];
+            };
+        };
+        responses: {
+            /** @description The invoices with these ids */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getSalesInvoiceByInvoiceId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getSalesInvoiceByReference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The invoice is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description The sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    sendSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendSalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description The sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadSalesInvoicePdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadSalesInvoicePackingSlip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadSalesInvoiceUbl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/xml": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    duplicateCreditSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description The credit invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    pauseSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The invoice */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    resumeSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The invoice */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createSalesInvoiceNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteRequest"];
+            };
+        };
+        responses: {
+            /** @description The created note */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["note_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteSalesInvoiceNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The note is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createSalesInvoiceAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The attachment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["attachment_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteSalesInvoiceAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The attachment is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadSalesInvoiceAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };
