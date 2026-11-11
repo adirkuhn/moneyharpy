@@ -4519,19 +4519,21 @@ WHERE r.administration_id = $1
   AND ($4::boolean IS NULL OR r.auto_send = $4)
   AND ($5::bigint IS NULL OR r.contact_id = $5)
   AND ($6::bigint IS NULL OR r.workflow_id = $6)
+  AND ($7::boolean OR NOT EXISTS (SELECT 1 FROM subscriptions s WHERE s.recurring_sales_invoice_id = r.id))
 ORDER BY r.invoice_date, r.id
-LIMIT $8 OFFSET $7
+LIMIT $9 OFFSET $8
 `
 
 type ListRecurringSalesInvoicesParams struct {
-	AdministrationID int64
-	Active           pgtype.Bool
-	FrequencyType    string
-	AutoSend         pgtype.Bool
-	ContactID        pgtype.Int8
-	WorkflowID       pgtype.Int8
-	Skip             int32
-	MaxRows          pgtype.Int4
+	AdministrationID     int64
+	Active               pgtype.Bool
+	FrequencyType        string
+	AutoSend             pgtype.Bool
+	ContactID            pgtype.Int8
+	WorkflowID           pgtype.Int8
+	IncludeSubscriptions bool
+	Skip                 int32
+	MaxRows              pgtype.Int4
 }
 
 type ListRecurringSalesInvoicesRow struct {
@@ -4548,6 +4550,7 @@ func (q *Queries) ListRecurringSalesInvoices(ctx context.Context, arg ListRecurr
 		arg.AutoSend,
 		arg.ContactID,
 		arg.WorkflowID,
+		arg.IncludeSubscriptions,
 		arg.Skip,
 		arg.MaxRows,
 	)

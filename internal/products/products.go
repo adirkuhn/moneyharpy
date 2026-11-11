@@ -175,6 +175,20 @@ type References interface {
 	ProductInUse(ctx context.Context, admin, product resource.ID) (bool, error)
 }
 
+// AnyReferences reports a product in use when any of its members does.
+type AnyReferences []References
+
+// ProductInUse implements References.
+func (refs AnyReferences) ProductInUse(ctx context.Context, admin, product resource.ID) (bool, error) {
+	for _, r := range refs {
+		used, err := r.ProductInUse(ctx, admin, product)
+		if err != nil || used {
+			return used, err
+		}
+	}
+	return false, nil
+}
+
 // Contacts finds the contact a sales link is made for.
 type Contacts interface {
 	Contact(ctx context.Context, admin, id, user resource.ID) (contacts.Contact, error)

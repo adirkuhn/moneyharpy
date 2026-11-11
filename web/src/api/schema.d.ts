@@ -2465,7 +2465,7 @@ export interface paths {
         };
         /**
          * List all recurring sales invoices
-         * @description The next invoice to make first. Filter terms: state (active, inactive or, as an extension, all; active unless given), frequency (all, day, week, month, quarter, year), auto_send (true, false or null), contact_id and workflow_id; include_subscriptions is accepted. Paged with a Link header and X-Total-Count.
+         * @description The next invoice to make first. Filter terms: state (active, inactive or, as an extension, all; active unless given), frequency (all, day, week, month, quarter, year), auto_send (true, false or null), contact_id, workflow_id and include_subscriptions (true also lists the recurring invoices of subscriptions; false unless given). Paged with a Link header and X-Total-Count.
          */
         get: operations["listRecurringSalesInvoices"];
         put?: never;
@@ -2587,6 +2587,391 @@ export interface paths {
         post?: never;
         /** Delete a note from a recurring sales invoice */
         delete: operations["deleteRecurringSalesInvoiceNote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List subscriptions of a contact
+         * @description Lists the subscriptions of a single contact, the oldest first, cancelled ones too. There is no endpoint that returns the subscriptions of every contact at once.
+         */
+        get: operations["listSubscriptions"];
+        put?: never;
+        /**
+         * Create a new subscription
+         * @description Starts a new subscription for the contact. product_id points to a product with a frequency, price and VAT rate. A recurring sales invoice is made that bills the contact every period in advance and sends the invoices itself; the first is sent on the start date, but no sooner than tomorrow. The reference goes on the invoices. The frequency may differ from the product's when they fit: a monthly product can be billed every quarter or year, at the product's price times the months.
+         */
+        post: operations["createSubscription"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/subscriptions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get subscription */
+        get: operations["getSubscription"];
+        put?: never;
+        post?: never;
+        /**
+         * Cancel a subscription
+         * @description Cancels the subscription on end_date, today unless given: its recurring sales invoice makes no invoice on or after that date. A cancelled subscription cannot be cancelled or changed again (400).
+         */
+        delete: operations["cancelSubscription"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a subscription
+         * @description A new product, amount or discount starts on start_date, today unless given, and the subscription's products list both. When the change starts within a period already billed, the difference in price for the rest of that period is billed on a one-off sales invoice that goes with the next subscription invoice. A change after the next invoice date applies from the invoice that falls in it.
+         */
+        patch: operations["updateSubscription"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/subscriptions/{id}/additional_charges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get additional charges of a subscription */
+        get: operations["listSubscriptionAdditionalCharges"];
+        put?: never;
+        /**
+         * Create an additional charge to be invoiced together with the subscription
+         * @description The charge is billed as a line of the subscription's next invoice, when that is made.
+         */
+        post: operations["createSubscriptionAdditionalCharge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/subscriptions/{id}/create_and_schedule_one_off_sales_invoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create and schedule an invoice to be sent together with the subscription
+         * @description Makes a sales invoice with the lines and schedules it for the date of the subscription's next invoice, or invoice_date. When the subscription's invoice is made on or after that date, the lines are merged into it and the scheduled invoice is removed, so the contact receives one invoice.
+         */
+        post: operations["createSubscriptionOneOffSalesInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/subscription_templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all subscription templates
+         * @description Moneybird's subscription templates sell subscriptions through Moneybird Payments' online checkout. MoneyHarpy has no online checkout, so the list is always empty.
+         */
+        get: operations["listSubscriptionTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/subscription_templates/{id}/checkout_identifier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Create online sales link [Deprecated]
+         * @deprecated
+         * @description Moneybird makes a checkout link through Moneybird Payments. MoneyHarpy has no subscription templates, so it answers 404 "Record not found for model name: SubscriptionTemplate", as Moneybird does for a template that does not exist.
+         */
+        get: operations["getSubscriptionTemplateCheckoutIdentifier"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/subscription_templates/{id}/sales_link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create online sales link
+         * @description Moneybird makes a checkout link through Moneybird Payments, valid for one hour. MoneyHarpy has no subscription templates, so it answers 404 "Record not found for model name: SubscriptionTemplate", as Moneybird does for a template that does not exist.
+         */
+        post: operations["createSubscriptionTemplateSalesLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/{id}/additional_charges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /** Get additional charges of a contact */
+        get: operations["listContactAdditionalCharges"];
+        put?: never;
+        /**
+         * Create an additional charge to be invoiced at start of next period
+         * @description Once the month the charge is added in is over, the contact's charges are billed together on one sales invoice dated the first of the next month, which is sent at once.
+         */
+        post: operations["createContactAdditionalCharge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get Moneybird Payments mandate
+         * @description Mandates are stored by Moneybird Payments, which MoneyHarpy does not have: no contact has one, so this answers 404 with the body 404, as Moneybird does when no mandate is found.
+         */
+        get: operations["getContactPaymentsMandate"];
+        put?: never;
+        /**
+         * Request a new Moneybird Payments mandate
+         * @description Needs sales_invoices and settings. Only available when Moneybird Payments is enabled, which it never is in MoneyHarpy: after checking the contact this answers 403 with the body 403, as Moneybird does.
+         */
+        post: operations["requestContactPaymentsMandate"];
+        /**
+         * Delete a stored Moneybird Payments mandate
+         * @description Only available when Moneybird Payments is enabled, which it never is in MoneyHarpy: after checking the contact this answers 403 with the body 403, as Moneybird does.
+         */
+        delete: operations["deleteContactPaymentsMandate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate/url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request an URL for setting up a Moneybird Payments mandate
+         * @description Needs sales_invoices and settings. Only available when Moneybird Payments is enabled, which it never is in MoneyHarpy: after checking the contact this answers 403 with the body 403, as Moneybird does.
+         */
+        post: operations["requestContactPaymentsMandateURL"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/customer_contact_portal/{contact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a temporary link to the customer contact portal
+         * @description MoneyHarpy hosts no customer portal: the link opens the contact in MoneyHarpy, for its users.
+         */
+        get: operations["getCustomerContactPortalLink"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/customer_contact_portal/{contact_id}/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a temporary link to the invoices in the customer contact portal
+         * @description MoneyHarpy hosts no customer portal: the link opens the contact's sales invoices in MoneyHarpy, for its users.
+         */
+        get: operations["getCustomerContactPortalInvoicesLink"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/customer_contact_portal/{contact_id}/subscriptions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a temporary link to the subscriptions in the customer contact portal
+         * @description Moneybird links only to subscriptions sold through a subscription template, and answers 404 for others. MoneyHarpy has no subscription templates, so after checking the contact and the subscription it always answers 404 "Record not found for model name: Subscription".
+         */
+        get: operations["getCustomerContactPortalSubscriptionLink"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/verifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve verifications
+         * @description Moneybird lists the email addresses, bank account numbers, chamber of commerce number and tax number it verified. MoneyHarpy verifies none of these, so it answers {}, as Moneybird does when no verifications are present.
+         */
+        get: operations["getVerifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/downloads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all downloads
+         * @description The files exports made, the newest first, 25 a page unless per_page is given. Only downloads of a type the user may open are listed: each type needs the permission of the export that made it, such as documents for export_documents.
+         */
+        get: operations["listDownloads"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/downloads/{id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Download a file
+         * @description Redirects to a link to the file that works for 30 seconds, and marks the download downloaded. The user needs the permission of the download's type (401 otherwise, as at Moneybird).
+         */
+        post: operations["downloadDownload"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -4610,6 +4995,99 @@ export interface components {
                 };
                 custom_fields_attributes?: components["schemas"]["custom_fields_attributes"];
             };
+        };
+        /** @description A Moneybird subscription with MoneyHarpy extensions. */
+        Subscription: components["schemas"]["subscription_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        SubscriptionCreateRequest: {
+            subscription: {
+                /** Format: date */
+                start_date: string;
+                product_id: components["schemas"]["FlexibleIdentifier"];
+                /** @description Quantity of the product billed each period, such as "1" or "5 x"; 1 x unless given. */
+                amount?: string;
+                /** @description A percentage; both a decimal and a string '10,95' are accepted. */
+                discount?: string | number;
+                contact_id: components["schemas"]["FlexibleIdentifier"];
+                contact_person_id?: components["schemas"]["FlexibleIdentifier"];
+                /** Format: date */
+                end_date?: string;
+                reference?: string;
+                document_style_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description Periods between invoices with frequency_type; must fit the product's. The product's unless given. */
+                frequency?: number;
+                /** @enum {string} */
+                frequency_type?: "day" | "week" | "month" | "quarter" | "year";
+                mergeable?: components["schemas"]["FlexibleBoolean"];
+                prices_are_incl_tax?: components["schemas"]["FlexibleBoolean"];
+            };
+        };
+        SubscriptionUpdateRequest: {
+            subscription: {
+                contact_person_id?: components["schemas"]["FlexibleIdentifier"];
+                document_style_id?: components["schemas"]["FlexibleIdentifier"];
+                reference?: string;
+                mergeable?: components["schemas"]["FlexibleBoolean"];
+                prices_are_incl_tax?: components["schemas"]["FlexibleBoolean"];
+                product_id?: components["schemas"]["FlexibleIdentifier"];
+                /**
+                 * Format: date
+                 * @description When the new product, amount or discount starts; today unless given.
+                 */
+                start_date?: string;
+                amount?: string;
+                /** @description A percentage; both a decimal and a string '10,95' are accepted. */
+                discount?: string | number;
+            };
+        };
+        SubscriptionCancelRequest: {
+            subscription?: {
+                /** Format: date */
+                end_date?: string;
+            };
+        };
+        /** @description A Moneybird additional charge with MoneyHarpy extensions. */
+        AdditionalCharge: components["schemas"]["subscription_additional_charge_response"] & {
+            /** @description MoneyHarpy extension. Your own reference for the charge, as given. */
+            identifier?: string | null;
+            sales_invoice_id?: components["schemas"]["identifier_nullable"];
+        };
+        AdditionalChargeRequest: {
+            product_id: components["schemas"]["FlexibleIdentifier"];
+            /** @description The quantity on the invoice line, such as 1 or "5 x". */
+            amount: string | number;
+            price?: components["schemas"]["Money"];
+            /** @description The period the charge applies to, such as 20250101..20250131, 202501..202503 or this_month; kept as whole months. */
+            period: string;
+            description: string;
+            identifier?: string;
+        };
+        OneOffSalesInvoiceRequest: {
+            sales_invoice?: {
+                /** @description An array of lines, or an object of lines keyed by position. */
+                details_attributes?: components["schemas"]["SalesInvoiceDetailInput"][] | {
+                    [key: string]: components["schemas"]["SalesInvoiceDetailInput"];
+                };
+                /**
+                 * Format: date
+                 * @description Date to schedule the invoice for; the date of the next subscription invoice unless given.
+                 */
+                invoice_date?: string;
+            };
+        };
+        MandateRequest: {
+            mandate_request?: {
+                email_message?: string;
+                identity_id?: components["schemas"]["FlexibleIdentifier"];
+                workflow_id?: components["schemas"]["FlexibleIdentifier"];
+            };
+        };
+        /** @description A Moneybird download with MoneyHarpy extensions. */
+        Download: components["schemas"]["download_response"] & {
+            /** @description MoneyHarpy extension. The file's size in bytes. */
+            size?: number;
         };
         SalesInvoiceDetailInput: {
             id?: components["schemas"]["FlexibleIdentifier"];
@@ -11711,6 +12189,780 @@ export interface operations {
                 };
                 content?: never;
             };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listSubscriptions: {
+        parameters: {
+            query: {
+                contact_id: components["schemas"]["Identifier"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A list of subscriptions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createSubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscriptionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description The created subscription */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getSubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The subscription */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    cancelSubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SubscriptionCancelRequest"];
+            };
+        };
+        responses: {
+            /** @description The cancelled subscription */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateSubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscriptionUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated subscription */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listSubscriptionAdditionalCharges: {
+        parameters: {
+            query?: {
+                /** @description true includes the charges that were billed already; false unless given. */
+                include_billed?: "true" | "false";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The subscription's additional charges, the oldest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdditionalCharge"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createSubscriptionAdditionalCharge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdditionalChargeRequest"];
+            };
+        };
+        responses: {
+            /** @description The created charge */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdditionalCharge"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createSubscriptionOneOffSalesInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OneOffSalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description The scheduled sales invoice */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listSubscriptionTemplates: {
+        parameters: {
+            query?: {
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of subscription templates */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of templates in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["subscription_template_response"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getSubscriptionTemplateCheckoutIdentifier: {
+        parameters: {
+            query?: {
+                contact_id?: components["schemas"]["Identifier"];
+                /** @description yyyy-mm-dd. */
+                start_date?: string;
+                product_id?: components["schemas"]["Identifier"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sales link. MoneyHarpy does not answer this. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createSubscriptionTemplateSalesLink: {
+        parameters: {
+            query?: {
+                contact_id?: components["schemas"]["Identifier"];
+                /** @description yyyy-mm-dd. */
+                start_date?: string;
+                product_id?: components["schemas"]["Identifier"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sales link. MoneyHarpy does not answer this. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listContactAdditionalCharges: {
+        parameters: {
+            query?: {
+                /** @description true includes the charges that were billed already; false unless given. */
+                include_billed?: "true" | "false";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The contact's additional charges, the oldest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdditionalCharge"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createContactAdditionalCharge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdditionalChargeRequest"];
+            };
+        };
+        responses: {
+            /** @description The created charge */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdditionalCharge"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getContactPaymentsMandate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The mandate. MoneyHarpy does not answer this. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["recurring_contract_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            /** @description Moneybird Payments is not enabled for the administration, or the user lacks a permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number | components["schemas"]["Error"];
+                };
+            };
+            /** @description The contact, or its mandate, is not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number | components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    requestContactPaymentsMandate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MandateRequest"];
+            };
+        };
+        responses: {
+            /** @description The mandate is requested. MoneyHarpy does not answer this. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            /** @description Moneybird Payments is not enabled for the administration, or the user lacks a permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number | components["schemas"]["Error"];
+                };
+            };
+            /** @description The contact, or its mandate, is not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number | components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteContactPaymentsMandate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The mandate is deleted. MoneyHarpy does not answer this. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            /** @description Moneybird Payments is not enabled for the administration, or the user lacks a permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number | components["schemas"]["Error"];
+                };
+            };
+            /** @description The contact, or its mandate, is not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number | components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    requestContactPaymentsMandateURL: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MandateRequest"];
+            };
+        };
+        responses: {
+            /** @description The URL. MoneyHarpy does not answer this. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        url?: string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            /** @description Moneybird Payments is not enabled for the administration, or the user lacks a permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number | components["schemas"]["Error"];
+                };
+            };
+            /** @description The contact, or its mandate, is not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number | components["schemas"]["Error"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getCustomerContactPortalLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A link that works for one hour */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getCustomerContactPortalInvoicesLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A link that works for one hour */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getCustomerContactPortalSubscriptionLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                contact_id: components["parameters"]["contact_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A link that works for one hour */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getVerifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The verifications */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["verification_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listDownloads: {
+        parameters: {
+            query?: {
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+                /** @description Only downloads of this type, such as auditfile, brugstaat or export_ledger_account_report. */
+                download_type?: string;
+                downloaded?: "true" | "false";
+                failed?: "true" | "false";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of downloads */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number of downloads selected in all. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Download"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadDownload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            302: components["responses"]["FileRedirect"];
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
