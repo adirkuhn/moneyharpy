@@ -102,6 +102,30 @@ func (e AdministrationUserType) Valid() bool {
 	}
 }
 
+// Defines values for AssetDisposalRequestReason.
+const (
+	AssetDisposalRequestReasonDivested          AssetDisposalRequestReason = "divested"
+	AssetDisposalRequestReasonOutOfUse          AssetDisposalRequestReason = "out_of_use"
+	AssetDisposalRequestReasonPrivateWithdrawal AssetDisposalRequestReason = "private_withdrawal"
+	AssetDisposalRequestReasonSold              AssetDisposalRequestReason = "sold"
+)
+
+// Valid indicates whether the value is a known member of the AssetDisposalRequestReason enum.
+func (e AssetDisposalRequestReason) Valid() bool {
+	switch e {
+	case AssetDisposalRequestReasonDivested:
+		return true
+	case AssetDisposalRequestReasonOutOfUse:
+		return true
+	case AssetDisposalRequestReasonPrivateWithdrawal:
+		return true
+	case AssetDisposalRequestReasonSold:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for BookingRuleDirection.
 const (
 	BookingRuleDirectionAny    BookingRuleDirection = "any"
@@ -788,6 +812,7 @@ func (e ImportResultFormat) Valid() bool {
 
 // Defines values for JournalEntryDocumentType.
 const (
+	JournalEntryDocumentTypeAsset                  JournalEntryDocumentType = "Asset"
 	JournalEntryDocumentTypeExternalSalesInvoice   JournalEntryDocumentType = "ExternalSalesInvoice"
 	JournalEntryDocumentTypeFinancialMutation      JournalEntryDocumentType = "FinancialMutation"
 	JournalEntryDocumentTypeGeneralJournalDocument JournalEntryDocumentType = "GeneralJournalDocument"
@@ -800,6 +825,8 @@ const (
 // Valid indicates whether the value is a known member of the JournalEntryDocumentType enum.
 func (e JournalEntryDocumentType) Valid() bool {
 	switch e {
+	case JournalEntryDocumentTypeAsset:
+		return true
 	case JournalEntryDocumentTypeExternalSalesInvoice:
 		return true
 	case JournalEntryDocumentTypeFinancialMutation:
@@ -2277,6 +2304,30 @@ func (e ContactResponseSepaSequenceType) Valid() bool {
 	}
 }
 
+// Defines values for DisposalResponseReason.
+const (
+	DisposalResponseReasonDivested          DisposalResponseReason = "divested"
+	DisposalResponseReasonOutOfUse          DisposalResponseReason = "out_of_use"
+	DisposalResponseReasonPrivateWithdrawal DisposalResponseReason = "private_withdrawal"
+	DisposalResponseReasonSold              DisposalResponseReason = "sold"
+)
+
+// Valid indicates whether the value is a known member of the DisposalResponseReason enum.
+func (e DisposalResponseReason) Valid() bool {
+	switch e {
+	case DisposalResponseReasonDivested:
+		return true
+	case DisposalResponseReasonOutOfUse:
+		return true
+	case DisposalResponseReasonPrivateWithdrawal:
+		return true
+	case DisposalResponseReasonSold:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DocumentStyleResponseAddressPosition.
 const (
 	DocumentStyleResponseAddressPositionLeft  DocumentStyleResponseAddressPosition = "left"
@@ -3468,6 +3519,33 @@ func (e TypelessDocumentResponseState) Valid() bool {
 	}
 }
 
+// Defines values for ValueChangeResponseType.
+const (
+	ValueChangeResponseTypeArbitrary        ValueChangeResponseType = "arbitrary"
+	ValueChangeResponseTypeDivestment       ValueChangeResponseType = "divestment"
+	ValueChangeResponseTypeFullDepreciation ValueChangeResponseType = "full_depreciation"
+	ValueChangeResponseTypeLinear           ValueChangeResponseType = "linear"
+	ValueChangeResponseTypeManual           ValueChangeResponseType = "manual"
+)
+
+// Valid indicates whether the value is a known member of the ValueChangeResponseType enum.
+func (e ValueChangeResponseType) Valid() bool {
+	switch e {
+	case ValueChangeResponseTypeArbitrary:
+		return true
+	case ValueChangeResponseTypeDivestment:
+		return true
+	case ValueChangeResponseTypeFullDepreciation:
+		return true
+	case ValueChangeResponseTypeLinear:
+		return true
+	case ValueChangeResponseTypeManual:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for WorkflowStepResponseAction.
 const (
 	CancelSubscription         WorkflowStepResponseAction = "cancel_subscription"
@@ -3504,6 +3582,24 @@ func (e IncludeArchived) Valid() bool {
 	case IncludeArchivedFalse:
 		return true
 	case IncludeArchivedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListAssetsParamsActive.
+const (
+	ListAssetsParamsActiveFalse ListAssetsParamsActive = "false"
+	ListAssetsParamsActiveTrue  ListAssetsParamsActive = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListAssetsParamsActive enum.
+func (e ListAssetsParamsActive) Valid() bool {
+	switch e {
+	case ListAssetsParamsActiveFalse:
+		return true
+	case ListAssetsParamsActiveTrue:
 		return true
 	default:
 		return false
@@ -4131,6 +4227,192 @@ type ApiToken struct {
 	// Example: 123456789012345678
 	Id   Identifier `json:"id"`
 	Name string     `json:"name"`
+}
+
+// Asset A Moneybird asset with MoneyHarpy extensions.
+type Asset struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CalculatedPurchaseValue Moneybird-compatible number.
+	CalculatedPurchaseValue *Number `json:"calculated_purchase_value"`
+
+	// CreatedAt MoneyHarpy extension.
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// CurrentValue Moneybird-compatible number.
+	CurrentValue *Number         `json:"current_value"`
+	Disposal     *Asset_Disposal `json:"disposal"`
+
+	// Id Moneybird-compatible identifier_nullable.
+	Id *IdentifierNullable `json:"id"`
+
+	// LedgerAccountId Moneybird-compatible identifier_nullable.
+	LedgerAccountId *IdentifierNullable `json:"ledger_account_id"`
+	Name            string              `json:"name"`
+	PurchaseDate    openapi_types.Date  `json:"purchase_date"`
+
+	// PurchaseValue Moneybird-compatible number.
+	PurchaseValue               *Number                            `json:"purchase_value"`
+	ReinvestmentReservePurchase *Asset_ReinvestmentReservePurchase `json:"reinvestment_reserve_purchase"`
+	Sources                     []SourceResponse                   `json:"sources"`
+
+	// UpdatedAt MoneyHarpy extension.
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri             string `json:"uri"`
+	ValueChangePlan *struct {
+		Active          *bool    `json:"active,omitempty"`
+		LifespanInYears *float32 `json:"lifespan_in_years,omitempty"`
+
+		// MonthlyDepreciation Moneybird-compatible number.
+		MonthlyDepreciation *Number `json:"monthly_depreciation,omitempty"`
+
+		// ResidualValue Moneybird-compatible number.
+		ResidualValue *Number `json:"residual_value,omitempty"`
+	} `json:"value_change_plan"`
+	ValueChanges []ValueChangeResponse `json:"value_changes"`
+}
+
+// Asset_Disposal defines model for Asset.Disposal.
+type Asset_Disposal struct {
+	union json.RawMessage
+}
+
+// Asset_ReinvestmentReservePurchase defines model for Asset.ReinvestmentReservePurchase.
+type Asset_ReinvestmentReservePurchase struct {
+	union json.RawMessage
+}
+
+// AssetDisposalRequest defines model for AssetDisposalRequest.
+type AssetDisposalRequest struct {
+	Date   openapi_types.Date         `json:"date"`
+	Reason AssetDisposalRequestReason `json:"reason"`
+}
+
+// AssetDisposalRequestReason defines model for AssetDisposalRequest.Reason.
+type AssetDisposalRequestReason string
+
+// AssetDivestmentRequest defines model for AssetDivestmentRequest.
+type AssetDivestmentRequest struct {
+	Date openapi_types.Date `json:"date"`
+}
+
+// AssetFullDepreciationRequest defines model for AssetFullDepreciationRequest.
+type AssetFullDepreciationRequest struct {
+	Date        openapi_types.Date `json:"date"`
+	Description string             `json:"description"`
+}
+
+// AssetInput defines model for AssetInput.
+type AssetInput struct {
+	// LedgerAccountId An id as a string or a number; an empty string clears it.
+	LedgerAccountId *FlexibleIdentifier `json:"ledger_account_id,omitempty"`
+	Name            *string             `json:"name,omitempty"`
+	PurchaseDate    *openapi_types.Date `json:"purchase_date,omitempty"`
+
+	// PurchaseValue An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	PurchaseValue             *Money          `json:"purchase_value,omitempty"`
+	ValueChangePlanAttributes *AssetPlanInput `json:"value_change_plan_attributes,omitempty"`
+}
+
+// AssetPlanInput defines model for AssetPlanInput.
+type AssetPlanInput struct {
+	// LifespanInYears The lifespan in years; fractions are rounded to whole months.
+	LifespanInYears *AssetPlanInput_LifespanInYears `json:"lifespan_in_years,omitempty"`
+
+	// ResidualValue An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	ResidualValue *Money `json:"residual_value,omitempty"`
+}
+
+// AssetPlanInputLifespanInYears0 defines model for AssetPlanInput.LifespanInYears.0.
+type AssetPlanInputLifespanInYears0 = float32
+
+// AssetPlanInputLifespanInYears1 defines model for AssetPlanInput.LifespanInYears.1.
+type AssetPlanInputLifespanInYears1 = string
+
+// AssetPlanInput_LifespanInYears The lifespan in years; fractions are rounded to whole months.
+type AssetPlanInput_LifespanInYears struct {
+	union json.RawMessage
+}
+
+// AssetRequest defines model for AssetRequest.
+type AssetRequest struct {
+	Asset struct {
+		// LedgerAccountId An id as a string or a number; an empty string clears it.
+		LedgerAccountId FlexibleIdentifier `json:"ledger_account_id"`
+		Name            string             `json:"name"`
+		PurchaseDate    openapi_types.Date `json:"purchase_date"`
+
+		// PurchaseValue An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+		PurchaseValue             Money           `json:"purchase_value"`
+		ValueChangePlanAttributes *AssetPlanInput `json:"value_change_plan_attributes,omitempty"`
+	} `json:"asset"`
+}
+
+// AssetReserveRequest defines model for AssetReserveRequest.
+type AssetReserveRequest struct {
+	// Amount An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	Amount Money `json:"amount"`
+}
+
+// AssetSourceRequest Exactly one of detail_id and general_journal_document_entry_id.
+type AssetSourceRequest struct {
+	// DetailId An id as a string or a number; an empty string clears it.
+	DetailId *FlexibleIdentifier `json:"detail_id,omitempty"`
+
+	// GeneralJournalDocumentEntryId An id as a string or a number; an empty string clears it.
+	GeneralJournalDocumentEntryId *FlexibleIdentifier `json:"general_journal_document_entry_id,omitempty"`
+}
+
+// AssetUpdateRequest defines model for AssetUpdateRequest.
+type AssetUpdateRequest struct {
+	Asset AssetInput `json:"asset"`
+}
+
+// AssetValueChangeRequest defines model for AssetValueChangeRequest.
+type AssetValueChangeRequest struct {
+	// Amount An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	Amount      Money              `json:"amount"`
+	Date        openapi_types.Date `json:"date"`
+	Description string             `json:"description"`
+
+	// ExternallyBooked A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	ExternallyBooked *FlexibleBoolean `json:"externally_booked,omitempty"`
+}
+
+// AssetsReportLine One asset in the assets report. Amounts as strings, as Moneybird gives them.
+type AssetsReportLine struct {
+	// AssetId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AssetId                 Identifier `json:"asset_id"`
+	CalculatedPurchaseValue string     `json:"calculated_purchase_value"`
+	Depreciation            string     `json:"depreciation"`
+	Divestment              string     `json:"divestment"`
+	Investment              string     `json:"investment"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	LedgerAccountId Identifier `json:"ledger_account_id"`
+
+	// Lifespan In seconds; null without a depreciation plan.
+	Lifespan                       *string            `json:"lifespan"`
+	Name                           string             `json:"name"`
+	PurchaseDate                   openapi_types.Date `json:"purchase_date"`
+	PurchaseValue                  string             `json:"purchase_value"`
+	ResidualValue                  string             `json:"residual_value"`
+	TotalValueChangesSincePurchase string             `json:"total_value_changes_since_purchase"`
+	ValueAtBegin                   string             `json:"value_at_begin"`
+	ValueAtEnd                     string             `json:"value_at_end"`
+	ValueChanges                   string             `json:"value_changes"`
+
+	// ValueNotInUse The value of an asset bought after the period.
+	ValueNotInUse string `json:"value_not_in_use"`
 }
 
 // AuthProviders defines model for AuthProviders.
@@ -8639,6 +8921,50 @@ type WorkflowRequest struct {
 // WorkflowRequestWorkflowType Required when creating; ignored when updating.
 type WorkflowRequestWorkflowType string
 
+// AssetResponse Moneybird-compatible asset_response.
+type AssetResponse struct {
+	// CalculatedPurchaseValue Moneybird-compatible number.
+	CalculatedPurchaseValue *Number `json:"calculated_purchase_value,omitempty"`
+
+	// CurrentValue Moneybird-compatible number.
+	CurrentValue *Number                 `json:"current_value,omitempty"`
+	Disposal     *AssetResponse_Disposal `json:"disposal,omitempty"`
+
+	// Id Moneybird-compatible identifier_nullable.
+	Id *IdentifierNullable `json:"id,omitempty"`
+
+	// LedgerAccountId Moneybird-compatible identifier_nullable.
+	LedgerAccountId *IdentifierNullable `json:"ledger_account_id,omitempty"`
+	Name            *string             `json:"name,omitempty"`
+	PurchaseDate    *openapi_types.Date `json:"purchase_date,omitempty"`
+
+	// PurchaseValue Moneybird-compatible number.
+	PurchaseValue               *Number                                    `json:"purchase_value,omitempty"`
+	ReinvestmentReservePurchase *AssetResponse_ReinvestmentReservePurchase `json:"reinvestment_reserve_purchase,omitempty"`
+	Sources                     *[]SourceResponse                          `json:"sources,omitempty"`
+	ValueChangePlan             *struct {
+		Active          *bool    `json:"active,omitempty"`
+		LifespanInYears *float32 `json:"lifespan_in_years,omitempty"`
+
+		// MonthlyDepreciation Moneybird-compatible number.
+		MonthlyDepreciation *Number `json:"monthly_depreciation,omitempty"`
+
+		// ResidualValue Moneybird-compatible number.
+		ResidualValue *Number `json:"residual_value,omitempty"`
+	} `json:"value_change_plan,omitempty"`
+	ValueChanges *[]ValueChangeResponse `json:"value_changes,omitempty"`
+}
+
+// AssetResponse_Disposal defines model for AssetResponse.Disposal.
+type AssetResponse_Disposal struct {
+	union json.RawMessage
+}
+
+// AssetResponse_ReinvestmentReservePurchase defines model for AssetResponse.ReinvestmentReservePurchase.
+type AssetResponse_ReinvestmentReservePurchase struct {
+	union json.RawMessage
+}
+
 // AttachmentResponse Moneybird-compatible attachment_response.
 type AttachmentResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -8961,6 +9287,26 @@ type DetailResponse struct {
 	// TotalPriceExclTaxWithDiscountBase Moneybird-compatible number.
 	TotalPriceExclTaxWithDiscountBase *Number    `json:"total_price_excl_tax_with_discount_base,omitempty"`
 	UpdatedAt                         *time.Time `json:"updated_at,omitempty"`
+}
+
+// DisposalResponse Moneybird-compatible disposal_response.
+type DisposalResponse struct {
+	// AssetId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AssetId                 *Identifier                               `json:"asset_id,omitempty"`
+	Date                    *openapi_types.Date                       `json:"date,omitempty"`
+	ExternallyBooked        *bool                                     `json:"externally_booked,omitempty"`
+	Reason                  *DisposalResponseReason                   `json:"reason,omitempty"`
+	ReinvestmentReserveSale *DisposalResponse_ReinvestmentReserveSale `json:"reinvestment_reserve_sale,omitempty"`
+}
+
+// DisposalResponseReason defines model for DisposalResponse.Reason.
+type DisposalResponseReason string
+
+// DisposalResponse_ReinvestmentReserveSale defines model for DisposalResponse.ReinvestmentReserveSale.
+type DisposalResponse_ReinvestmentReserveSale struct {
+	union json.RawMessage
 }
 
 // DocumentStyleResponse Moneybird-compatible document_style_response.
@@ -10191,6 +10537,40 @@ type RecurringSalesInvoiceResponse_Subscription struct {
 	union json.RawMessage
 }
 
+// ReinvestmentReservePurchaseResponse Moneybird-compatible reinvestment_reserve_purchase_response.
+type ReinvestmentReservePurchaseResponse struct {
+	// Amount Moneybird-compatible number.
+	Amount *Number `json:"amount,omitempty"`
+
+	// AssetId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AssetId *Identifier         `json:"asset_id,omitempty"`
+	Date    *openapi_types.Date `json:"date,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+}
+
+// ReinvestmentReserveSaleResponse Moneybird-compatible reinvestment_reserve_sale_response.
+type ReinvestmentReserveSaleResponse struct {
+	// Amount Moneybird-compatible number.
+	Amount *Number             `json:"amount,omitempty"`
+	Date   *openapi_types.Date `json:"date,omitempty"`
+
+	// DisposalId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DisposalId *Identifier `json:"disposal_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+}
+
 // SalesInvoiceResponse Moneybird-compatible sales_invoice_response.
 type SalesInvoiceResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -10373,6 +10753,29 @@ type SimpleContactResponseDeliveryMethod string
 
 // SimpleContactResponseSepaSequenceType defines model for SimpleContactResponse.SepaSequenceType.
 type SimpleContactResponseSepaSequenceType string
+
+// SourceResponse Moneybird-compatible source_response.
+type SourceResponse struct {
+	// AssetId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AssetId *Identifier `json:"asset_id,omitempty"`
+
+	// DetailId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DetailId *Identifier `json:"detail_id,omitempty"`
+
+	// GeneralJournalDocumentEntryId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	GeneralJournalDocumentEntryId *Identifier `json:"general_journal_document_entry_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+}
 
 // SubscriptionAdditionalChargeResponse Moneybird-compatible subscription_additional_charge_response.
 type SubscriptionAdditionalChargeResponse struct {
@@ -10783,6 +11186,24 @@ type TypelessDocumentResponseState string
 // UserResponse Moneybird-compatible base_user_response.
 type UserResponse = BaseUserResponse
 
+// ValueChangeResponse Moneybird-compatible value_change_response.
+type ValueChangeResponse struct {
+	// Amount Moneybird-compatible number.
+	Amount *Number `json:"amount,omitempty"`
+
+	// AssetId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AssetId          *Identifier              `json:"asset_id,omitempty"`
+	Date             *openapi_types.Date      `json:"date,omitempty"`
+	Description      *string                  `json:"description,omitempty"`
+	ExternallyBooked *bool                    `json:"externally_booked,omitempty"`
+	Type             *ValueChangeResponseType `json:"type,omitempty"`
+}
+
+// ValueChangeResponseType defines model for ValueChangeResponse.Type.
+type ValueChangeResponseType string
+
 // VerificationResponse Moneybird-compatible verification_response.
 type VerificationResponse struct {
 	BankAccountNumbers      *[]string `json:"bank_account_numbers,omitempty"`
@@ -11025,6 +11446,21 @@ type CompanySearchParams struct {
 	Country string `form:"country" json:"country"`
 	Query   string `form:"query" json:"query"`
 }
+
+// ListAssetsParams defines parameters for ListAssets.
+type ListAssetsParams struct {
+	LedgerAccountId *string                 `form:"ledger_account_id,omitempty" json:"ledger_account_id,omitempty"`
+	Active          *ListAssetsParamsActive `form:"active,omitempty" json:"active,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// ListAssetsParamsActive defines parameters for ListAssets.
+type ListAssetsParamsActive string
 
 // ListContactsParams defines parameters for ListContacts.
 type ListContactsParams struct {
@@ -11511,6 +11947,12 @@ type ListRecurringSalesInvoiceVersionsParams struct {
 	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
 }
 
+// GetAssetsReportParams defines parameters for GetAssetsReport.
+type GetAssetsReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+}
+
 // GetBankBalanceParams defines parameters for GetBankBalance.
 type GetBankBalanceParams struct {
 	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
@@ -11737,6 +12179,36 @@ type UpdateAdministrationJSONRequestBody = UpdateAdministrationRequest
 
 // DeleteAdministrationJSONRequestBody defines body for DeleteAdministration for application/json ContentType.
 type DeleteAdministrationJSONRequestBody = DeleteAdministrationRequest
+
+// CreateAssetJSONRequestBody defines body for CreateAsset for application/json ContentType.
+type CreateAssetJSONRequestBody = AssetRequest
+
+// UpdateAssetJSONRequestBody defines body for UpdateAsset for application/json ContentType.
+type UpdateAssetJSONRequestBody = AssetUpdateRequest
+
+// CreateAssetDisposalJSONRequestBody defines body for CreateAssetDisposal for application/json ContentType.
+type CreateAssetDisposalJSONRequestBody = AssetDisposalRequest
+
+// CreateAssetReinvestmentReservePurchaseJSONRequestBody defines body for CreateAssetReinvestmentReservePurchase for application/json ContentType.
+type CreateAssetReinvestmentReservePurchaseJSONRequestBody = AssetReserveRequest
+
+// CreateAssetReinvestmentReserveSaleJSONRequestBody defines body for CreateAssetReinvestmentReserveSale for application/json ContentType.
+type CreateAssetReinvestmentReserveSaleJSONRequestBody = AssetReserveRequest
+
+// CreateAssetSourceJSONRequestBody defines body for CreateAssetSource for application/json ContentType.
+type CreateAssetSourceJSONRequestBody = AssetSourceRequest
+
+// CreateAssetArbitraryValueChangeJSONRequestBody defines body for CreateAssetArbitraryValueChange for application/json ContentType.
+type CreateAssetArbitraryValueChangeJSONRequestBody = AssetValueChangeRequest
+
+// CreateAssetDivestmentValueChangeJSONRequestBody defines body for CreateAssetDivestmentValueChange for application/json ContentType.
+type CreateAssetDivestmentValueChangeJSONRequestBody = AssetDivestmentRequest
+
+// CreateAssetFullDepreciationValueChangeJSONRequestBody defines body for CreateAssetFullDepreciationValueChange for application/json ContentType.
+type CreateAssetFullDepreciationValueChangeJSONRequestBody = AssetFullDepreciationRequest
+
+// CreateAssetManualValueChangeJSONRequestBody defines body for CreateAssetManualValueChange for application/json ContentType.
+type CreateAssetManualValueChangeJSONRequestBody = AssetValueChangeRequest
 
 // UpdateBankSettingsJSONRequestBody defines body for UpdateBankSettings for application/json ContentType.
 type UpdateBankSettingsJSONRequestBody = BankSettingsRequest
@@ -12198,6 +12670,140 @@ func (t AdditionalChargeRequest_Amount) MarshalJSON() ([]byte, error) {
 }
 
 func (t *AdditionalChargeRequest_Amount) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsDisposalResponse returns the union data inside the Asset_Disposal as a DisposalResponse
+func (t Asset_Disposal) AsDisposalResponse() (DisposalResponse, error) {
+	var body DisposalResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDisposalResponse overwrites any union data inside the Asset_Disposal as the provided DisposalResponse
+func (t *Asset_Disposal) FromDisposalResponse(v DisposalResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDisposalResponse performs a merge with any union data inside the Asset_Disposal, using the provided DisposalResponse
+func (t *Asset_Disposal) MergeDisposalResponse(v DisposalResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Asset_Disposal) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Asset_Disposal) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsReinvestmentReservePurchaseResponse returns the union data inside the Asset_ReinvestmentReservePurchase as a ReinvestmentReservePurchaseResponse
+func (t Asset_ReinvestmentReservePurchase) AsReinvestmentReservePurchaseResponse() (ReinvestmentReservePurchaseResponse, error) {
+	var body ReinvestmentReservePurchaseResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReinvestmentReservePurchaseResponse overwrites any union data inside the Asset_ReinvestmentReservePurchase as the provided ReinvestmentReservePurchaseResponse
+func (t *Asset_ReinvestmentReservePurchase) FromReinvestmentReservePurchaseResponse(v ReinvestmentReservePurchaseResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeReinvestmentReservePurchaseResponse performs a merge with any union data inside the Asset_ReinvestmentReservePurchase, using the provided ReinvestmentReservePurchaseResponse
+func (t *Asset_ReinvestmentReservePurchase) MergeReinvestmentReservePurchaseResponse(v ReinvestmentReservePurchaseResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Asset_ReinvestmentReservePurchase) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Asset_ReinvestmentReservePurchase) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsAssetPlanInputLifespanInYears0 returns the union data inside the AssetPlanInput_LifespanInYears as a AssetPlanInputLifespanInYears0
+func (t AssetPlanInput_LifespanInYears) AsAssetPlanInputLifespanInYears0() (AssetPlanInputLifespanInYears0, error) {
+	var body AssetPlanInputLifespanInYears0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAssetPlanInputLifespanInYears0 overwrites any union data inside the AssetPlanInput_LifespanInYears as the provided AssetPlanInputLifespanInYears0
+func (t *AssetPlanInput_LifespanInYears) FromAssetPlanInputLifespanInYears0(v AssetPlanInputLifespanInYears0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAssetPlanInputLifespanInYears0 performs a merge with any union data inside the AssetPlanInput_LifespanInYears, using the provided AssetPlanInputLifespanInYears0
+func (t *AssetPlanInput_LifespanInYears) MergeAssetPlanInputLifespanInYears0(v AssetPlanInputLifespanInYears0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAssetPlanInputLifespanInYears1 returns the union data inside the AssetPlanInput_LifespanInYears as a AssetPlanInputLifespanInYears1
+func (t AssetPlanInput_LifespanInYears) AsAssetPlanInputLifespanInYears1() (AssetPlanInputLifespanInYears1, error) {
+	var body AssetPlanInputLifespanInYears1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAssetPlanInputLifespanInYears1 overwrites any union data inside the AssetPlanInput_LifespanInYears as the provided AssetPlanInputLifespanInYears1
+func (t *AssetPlanInput_LifespanInYears) FromAssetPlanInputLifespanInYears1(v AssetPlanInputLifespanInYears1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAssetPlanInputLifespanInYears1 performs a merge with any union data inside the AssetPlanInput_LifespanInYears, using the provided AssetPlanInputLifespanInYears1
+func (t *AssetPlanInput_LifespanInYears) MergeAssetPlanInputLifespanInYears1(v AssetPlanInputLifespanInYears1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t AssetPlanInput_LifespanInYears) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *AssetPlanInput_LifespanInYears) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -16006,6 +16612,78 @@ func (t *Webhook_LastHttpStatus) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsDisposalResponse returns the union data inside the AssetResponse_Disposal as a DisposalResponse
+func (t AssetResponse_Disposal) AsDisposalResponse() (DisposalResponse, error) {
+	var body DisposalResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDisposalResponse overwrites any union data inside the AssetResponse_Disposal as the provided DisposalResponse
+func (t *AssetResponse_Disposal) FromDisposalResponse(v DisposalResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDisposalResponse performs a merge with any union data inside the AssetResponse_Disposal, using the provided DisposalResponse
+func (t *AssetResponse_Disposal) MergeDisposalResponse(v DisposalResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t AssetResponse_Disposal) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *AssetResponse_Disposal) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsReinvestmentReservePurchaseResponse returns the union data inside the AssetResponse_ReinvestmentReservePurchase as a ReinvestmentReservePurchaseResponse
+func (t AssetResponse_ReinvestmentReservePurchase) AsReinvestmentReservePurchaseResponse() (ReinvestmentReservePurchaseResponse, error) {
+	var body ReinvestmentReservePurchaseResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReinvestmentReservePurchaseResponse overwrites any union data inside the AssetResponse_ReinvestmentReservePurchase as the provided ReinvestmentReservePurchaseResponse
+func (t *AssetResponse_ReinvestmentReservePurchase) FromReinvestmentReservePurchaseResponse(v ReinvestmentReservePurchaseResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeReinvestmentReservePurchaseResponse performs a merge with any union data inside the AssetResponse_ReinvestmentReservePurchase, using the provided ReinvestmentReservePurchaseResponse
+func (t *AssetResponse_ReinvestmentReservePurchase) MergeReinvestmentReservePurchaseResponse(v ReinvestmentReservePurchaseResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t AssetResponse_ReinvestmentReservePurchase) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *AssetResponse_ReinvestmentReservePurchase) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsCustomFieldsAttributes0 returns the union data inside the CustomFieldsAttributes as a CustomFieldsAttributes0
 func (t CustomFieldsAttributes) AsCustomFieldsAttributes0() (CustomFieldsAttributes0, error) {
 	var body CustomFieldsAttributes0
@@ -16064,6 +16742,42 @@ func (t CustomFieldsAttributes) MarshalJSON() ([]byte, error) {
 }
 
 func (t *CustomFieldsAttributes) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsReinvestmentReserveSaleResponse returns the union data inside the DisposalResponse_ReinvestmentReserveSale as a ReinvestmentReserveSaleResponse
+func (t DisposalResponse_ReinvestmentReserveSale) AsReinvestmentReserveSaleResponse() (ReinvestmentReserveSaleResponse, error) {
+	var body ReinvestmentReserveSaleResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReinvestmentReserveSaleResponse overwrites any union data inside the DisposalResponse_ReinvestmentReserveSale as the provided ReinvestmentReserveSaleResponse
+func (t *DisposalResponse_ReinvestmentReserveSale) FromReinvestmentReserveSaleResponse(v ReinvestmentReserveSaleResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeReinvestmentReserveSaleResponse performs a merge with any union data inside the DisposalResponse_ReinvestmentReserveSale, using the provided ReinvestmentReserveSaleResponse
+func (t *DisposalResponse_ReinvestmentReserveSale) MergeReinvestmentReserveSaleResponse(v ReinvestmentReserveSaleResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DisposalResponse_ReinvestmentReserveSale) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DisposalResponse_ReinvestmentReserveSale) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -18026,6 +18740,57 @@ type ServerInterface interface {
 	// FavoriteAdministration Mark an administration as favorite
 	// (PUT /api/v2/administrations/{id}/favorite)
 	FavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id)
+	// ListAssets List all assets
+	// (GET /api/v2/{administration_id}/assets)
+	ListAssets(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListAssetsParams)
+	// CreateAsset Create a new asset
+	// (POST /api/v2/{administration_id}/assets)
+	CreateAsset(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteAsset Delete an asset
+	// (DELETE /api/v2/{administration_id}/assets/{id})
+	DeleteAsset(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetAsset Get an asset by ID
+	// (GET /api/v2/{administration_id}/assets/{id})
+	GetAsset(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateAsset Update an asset
+	// (PATCH /api/v2/{administration_id}/assets/{id})
+	UpdateAsset(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateAssetDisposal Create a disposal
+	// (POST /api/v2/{administration_id}/assets/{id}/disposals)
+	CreateAssetDisposal(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteAssetReinvestmentReservePurchase Delete a reinvestment reserve purchase
+	// (DELETE /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_purchase)
+	DeleteAssetReinvestmentReservePurchase(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateAssetReinvestmentReservePurchase Create a reinvestment reserve purchase
+	// (POST /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_purchase)
+	CreateAssetReinvestmentReservePurchase(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteAssetReinvestmentReserveSale Delete a reinvestment reserve sale
+	// (DELETE /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_sale)
+	DeleteAssetReinvestmentReserveSale(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateAssetReinvestmentReserveSale Create a reinvestment reserve sale
+	// (POST /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_sale)
+	CreateAssetReinvestmentReserveSale(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateAssetSource Add a source to an asset
+	// (POST /api/v2/{administration_id}/assets/{id}/sources)
+	CreateAssetSource(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteAssetSource Delete a source
+	// (DELETE /api/v2/{administration_id}/assets/{id}/sources/{source_id})
+	DeleteAssetSource(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, sourceId Identifier)
+	// CreateAssetArbitraryValueChange Create an arbitrary value change
+	// (POST /api/v2/{administration_id}/assets/{id}/value_changes/arbitrary)
+	CreateAssetArbitraryValueChange(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateAssetDivestmentValueChange Create a divestment value change
+	// (POST /api/v2/{administration_id}/assets/{id}/value_changes/divestment)
+	CreateAssetDivestmentValueChange(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateAssetFullDepreciationValueChange Create a full depreciation value change
+	// (POST /api/v2/{administration_id}/assets/{id}/value_changes/full_depreciation)
+	CreateAssetFullDepreciationValueChange(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateAssetManualValueChange Create a manual value change
+	// (POST /api/v2/{administration_id}/assets/{id}/value_changes/manual)
+	CreateAssetManualValueChange(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateAssetRetroactiveLinearValueChanges Create linear value changes retroactively
+	// (POST /api/v2/{administration_id}/assets/{id}/value_changes/retroactive_linear_value_changes)
+	CreateAssetRetroactiveLinearValueChanges(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// GetBankSettings Get bank settings
 	// (GET /api/v2/{administration_id}/bank_settings)
 	GetBankSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -18692,6 +19457,9 @@ type ServerInterface interface {
 	// DeleteRecurringSalesInvoiceNote Delete a note from a recurring sales invoice
 	// (DELETE /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes/{note_id})
 	DeleteRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
+	// GetAssetsReport Assets report
+	// (GET /api/v2/{administration_id}/reports/assets)
+	GetAssetsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetAssetsReportParams)
 	// GetBankBalance Bank balance report
 	// (GET /api/v2/{administration_id}/reports/bank_balance)
 	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetBankBalanceParams)
@@ -19254,6 +20022,108 @@ func (_ Unimplemented) UnfavoriteAdministration(w http.ResponseWriter, r *http.R
 // FavoriteAdministration Mark an administration as favorite
 // (PUT /api/v2/administrations/{id}/favorite)
 func (_ Unimplemented) FavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListAssets List all assets
+// (GET /api/v2/{administration_id}/assets)
+func (_ Unimplemented) ListAssets(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListAssetsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAsset Create a new asset
+// (POST /api/v2/{administration_id}/assets)
+func (_ Unimplemented) CreateAsset(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteAsset Delete an asset
+// (DELETE /api/v2/{administration_id}/assets/{id})
+func (_ Unimplemented) DeleteAsset(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetAsset Get an asset by ID
+// (GET /api/v2/{administration_id}/assets/{id})
+func (_ Unimplemented) GetAsset(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateAsset Update an asset
+// (PATCH /api/v2/{administration_id}/assets/{id})
+func (_ Unimplemented) UpdateAsset(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetDisposal Create a disposal
+// (POST /api/v2/{administration_id}/assets/{id}/disposals)
+func (_ Unimplemented) CreateAssetDisposal(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteAssetReinvestmentReservePurchase Delete a reinvestment reserve purchase
+// (DELETE /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_purchase)
+func (_ Unimplemented) DeleteAssetReinvestmentReservePurchase(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetReinvestmentReservePurchase Create a reinvestment reserve purchase
+// (POST /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_purchase)
+func (_ Unimplemented) CreateAssetReinvestmentReservePurchase(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteAssetReinvestmentReserveSale Delete a reinvestment reserve sale
+// (DELETE /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_sale)
+func (_ Unimplemented) DeleteAssetReinvestmentReserveSale(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetReinvestmentReserveSale Create a reinvestment reserve sale
+// (POST /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_sale)
+func (_ Unimplemented) CreateAssetReinvestmentReserveSale(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetSource Add a source to an asset
+// (POST /api/v2/{administration_id}/assets/{id}/sources)
+func (_ Unimplemented) CreateAssetSource(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteAssetSource Delete a source
+// (DELETE /api/v2/{administration_id}/assets/{id}/sources/{source_id})
+func (_ Unimplemented) DeleteAssetSource(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, sourceId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetArbitraryValueChange Create an arbitrary value change
+// (POST /api/v2/{administration_id}/assets/{id}/value_changes/arbitrary)
+func (_ Unimplemented) CreateAssetArbitraryValueChange(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetDivestmentValueChange Create a divestment value change
+// (POST /api/v2/{administration_id}/assets/{id}/value_changes/divestment)
+func (_ Unimplemented) CreateAssetDivestmentValueChange(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetFullDepreciationValueChange Create a full depreciation value change
+// (POST /api/v2/{administration_id}/assets/{id}/value_changes/full_depreciation)
+func (_ Unimplemented) CreateAssetFullDepreciationValueChange(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetManualValueChange Create a manual value change
+// (POST /api/v2/{administration_id}/assets/{id}/value_changes/manual)
+func (_ Unimplemented) CreateAssetManualValueChange(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetRetroactiveLinearValueChanges Create linear value changes retroactively
+// (POST /api/v2/{administration_id}/assets/{id}/value_changes/retroactive_linear_value_changes)
+func (_ Unimplemented) CreateAssetRetroactiveLinearValueChanges(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -20580,6 +21450,12 @@ func (_ Unimplemented) CreateRecurringSalesInvoiceNote(w http.ResponseWriter, r 
 // DeleteRecurringSalesInvoiceNote Delete a note from a recurring sales invoice
 // (DELETE /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes/{note_id})
 func (_ Unimplemented) DeleteRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetAssetsReport Assets report
+// (GET /api/v2/{administration_id}/reports/assets)
+func (_ Unimplemented) GetAssetsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetAssetsReportParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -22047,6 +22923,647 @@ func (siw *ServerInterfaceWrapper) FavoriteAdministration(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.FavoriteAdministration(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAssets operation middleware
+func (siw *ServerInterfaceWrapper) ListAssets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAssetsParams
+
+	// ------------- Optional query parameter "ledger_account_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ledger_account_id", r.URL.Query(), &params.LedgerAccountId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "ledger_account_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ledger_account_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "active" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "active", r.URL.Query(), &params.Active, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "active"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "active", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAssets(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAsset operation middleware
+func (siw *ServerInterfaceWrapper) CreateAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAsset(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAsset operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAsset(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAsset operation middleware
+func (siw *ServerInterfaceWrapper) GetAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAsset(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateAsset operation middleware
+func (siw *ServerInterfaceWrapper) UpdateAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateAsset(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetDisposal operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetDisposal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetDisposal(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAssetReinvestmentReservePurchase operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAssetReinvestmentReservePurchase(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAssetReinvestmentReservePurchase(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetReinvestmentReservePurchase operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetReinvestmentReservePurchase(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetReinvestmentReservePurchase(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAssetReinvestmentReserveSale operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAssetReinvestmentReserveSale(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAssetReinvestmentReserveSale(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetReinvestmentReserveSale operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetReinvestmentReserveSale(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetReinvestmentReserveSale(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetSource operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetSource(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetSource(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAssetSource operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAssetSource(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "source_id" -------------
+	var sourceId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "source_id", chi.URLParam(r, "source_id"), &sourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "source_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAssetSource(w, r, administrationId, id, sourceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetArbitraryValueChange operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetArbitraryValueChange(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetArbitraryValueChange(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetDivestmentValueChange operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetDivestmentValueChange(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetDivestmentValueChange(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetFullDepreciationValueChange operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetFullDepreciationValueChange(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetFullDepreciationValueChange(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetManualValueChange operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetManualValueChange(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetManualValueChange(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetRetroactiveLinearValueChanges operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetRetroactiveLinearValueChanges(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetRetroactiveLinearValueChanges(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -30513,6 +32030,48 @@ func (siw *ServerInterfaceWrapper) DeleteRecurringSalesInvoiceNote(w http.Respon
 	handler.ServeHTTP(w, r)
 }
 
+// GetAssetsReport operation middleware
+func (siw *ServerInterfaceWrapper) GetAssetsReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAssetsReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAssetsReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetBankBalance operation middleware
 func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http.Request) {
 
@@ -34970,6 +36529,60 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/overview", wrapper.GetOverview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/assets", wrapper.ListAssets)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets", wrapper.CreateAsset)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/assets/{id}", wrapper.DeleteAsset)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/assets/{id}", wrapper.GetAsset)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/assets/{id}", wrapper.UpdateAsset)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/sources", wrapper.CreateAssetSource)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/sources/{source_id}", wrapper.DeleteAssetSource)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/value_changes/manual", wrapper.CreateAssetManualValueChange)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/value_changes/arbitrary", wrapper.CreateAssetArbitraryValueChange)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/value_changes/divestment", wrapper.CreateAssetDivestmentValueChange)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/value_changes/full_depreciation", wrapper.CreateAssetFullDepreciationValueChange)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/value_changes/retroactive_linear_value_changes", wrapper.CreateAssetRetroactiveLinearValueChanges)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/disposals", wrapper.CreateAssetDisposal)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/reinvestment_reserve_purchase", wrapper.DeleteAssetReinvestmentReservePurchase)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/reinvestment_reserve_purchase", wrapper.CreateAssetReinvestmentReservePurchase)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/reinvestment_reserve_sale", wrapper.DeleteAssetReinvestmentReserveSale)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/reinvestment_reserve_sale", wrapper.CreateAssetReinvestmentReserveSale)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/assets", wrapper.GetAssetsReport)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts", wrapper.ListContacts)

@@ -636,6 +636,19 @@ export const nl: Messages = {
     file: 'Bestand', dropText: 'Sleep facturen en bonnetjes hierheen, of', select: 'kies bestanden', uploadHelp: 'PDF-, afbeelding- of tekstbestanden van maximaal 10 MB per stuk.',
     tooLarge: 'Te groot (meer dan 10 MB): {{names}}', refused: 'Niet geüpload: {{names}}',
   },
+  assets: {
+    title: 'Activa', views: { active: 'Actieve activa', all: 'Alle activa' }, filters: 'Filters', backTo: 'Activa',
+    name: 'Naam', purchaseDate: 'Aanschafdatum', purchaseValue: 'Aanschafwaarde', calculatedPurchaseValue: 'Berekende aanschafwaarde',
+    currentValue: 'Huidige waarde', lifespan: 'Levensduur', years: '{{count}} jaar', residualValue: 'Restwaarde',
+    monthlyDepreciation: 'Afschrijving per maand', status: 'Status', active: 'Wordt afgeschreven', inactive: 'Wordt niet afgeschreven', noPlan: 'Geen afschrijving',
+    disposed: 'Afgestoten', disposal: 'Afstoting', reasons: { out_of_use: 'Buiten gebruik', sold: 'Verkocht', private_withdrawal: 'Privé-onttrekking', divested: 'Gedesinvesteerd' },
+    reservePurchase: 'Uit de herinvesteringsreserve', reserveSale: 'Naar de herinvesteringsreserve',
+    valueChanges: 'Waardeveranderingen', noValueChanges: 'Nog geen waardeveranderingen.', date: 'Datum', type: 'Soort', description: 'Omschrijving', amount: 'Bedrag',
+    types: { linear: 'Afschrijving', manual: 'Handmatig', arbitrary: 'Willekeurig', divestment: 'Desinvestering', full_depreciation: 'Volledige afschrijving' },
+    details: 'Gegevens', delete: 'Verwijderen', confirmDelete: 'Dit activum verwijderen met wat het heeft geboekt? Dit kan niet ongedaan worden gemaakt.',
+    empty: 'Nog geen activa. Voeg ze toe via de API, gekoppeld aan de inkoopfacturen waarmee ze zijn gekocht.', noMatches: 'Geen activa voor dit filter.',
+    loadError: 'De activa konden niet worden geladen.',
+  },
 }
 
 /** Dutch for the messages the server sends. Unknown ones stay as sent. */

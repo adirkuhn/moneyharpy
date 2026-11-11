@@ -48,6 +48,15 @@ var Events = []string{
 	"task_lists_task_category_linked", "task_lists_task_unlinked",
 	"document_saved", "document_updated", "document_destroyed",
 	"purchase_transaction_created", "purchase_transaction_deleted", "purchase_transaction_batch_created",
+	"company_assets_asset_created", "company_assets_asset_updated", "company_assets_asset_destroyed",
+	"company_assets_disposal_created", "company_assets_disposal_destroyed", "company_assets_source_created", "company_assets_source_destroyed",
+	"company_assets_value_changes_linear_created", "company_assets_value_changes_linear_destroyed",
+	"company_assets_value_changes_arbitrary_created", "company_assets_value_changes_arbitrary_destroyed",
+	"company_assets_value_changes_divestment_created", "company_assets_value_changes_divestment_destroyed",
+	"company_assets_value_changes_full_depreciation_created", "company_assets_value_changes_full_depreciation_destroyed",
+	"company_assets_value_changes_manual_created", "company_assets_value_changes_manual_destroyed",
+	"company_assets_value_change_plan_created", "company_assets_value_change_plan_updated", "company_assets_value_change_plan_activated",
+	"company_assets_value_change_plan_deactivated", "company_assets_value_change_plan_destroyed",
 	"user_invited", "user_removed",
 	"access_token_created", "access_token_revoked",
 }
@@ -58,6 +67,9 @@ var Groups = []string{
 	"administration", "identity", "default_identity", "workflow", "document_style", "tax_rate", "ledger_account",
 	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "sales_invoice", "external_sales_invoice", "recurring_sales_invoice", "subscription", "payment", "product", "project", "user", "access_token", "estimate", "estimate_send", "estimate_mark", "estimate_created_from", "time_entry", "task_lists", "task_lists_list", "task_lists_list_template", "task_lists_task",
 	"document", "purchase_transaction", "purchase_transaction_batch",
+	"company_assets", "company_assets_asset", "company_assets_disposal", "company_assets_source", "company_assets_value_changes",
+	"company_assets_value_changes_linear", "company_assets_value_changes_arbitrary", "company_assets_value_changes_divestment",
+	"company_assets_value_changes_full_depreciation", "company_assets_value_changes_manual", "company_assets_value_change_plan",
 }
 
 // known reports whether a subscription names an event or a group.
