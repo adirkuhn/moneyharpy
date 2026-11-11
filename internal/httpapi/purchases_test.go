@@ -247,6 +247,72 @@ func TestReceiptsAndBankLinks(t *testing.T) {
 	_ = adminID
 }
 
+func TestReceiptLifecycle(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	_, api, supplier, vat21 := purchaseSetup(t, owner)
+	receipts := api + "/documents/receipts"
+	day := adminNow().AddDate(0, 0, -3).Format(time.DateOnly)
+
+	r := owner.do(http.MethodPost, receipts, map[string]any{"receipt": map[string]any{
+		"contact_id": supplier, "reference": "R-7", "date": day, "prices_are_incl_tax": true,
+		"details_attributes": []map[string]any{{"description": "Ink", "price": "60.50", "tax_rate_id": vat21}},
+	}})
+	wantStatus(t, r, http.StatusCreated)
+	rec := decode[purchaseDocument](t, r)
+
+	r = owner.do(http.MethodPatch, receipts+"/"+rec.ID, map[string]any{"receipt": map[string]any{"reference": "R-8"}})
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[purchaseDocument](t, r); deref(got.Reference) != "R-8" {
+		t.Errorf("updated reference = %v", got.Reference)
+	}
+	if list := decode[[]purchaseDocument](t, owner.do(http.MethodGet, receipts+"?filter=state:open", nil)); len(list) != 1 || list[0].ID != rec.ID {
+		t.Errorf("open receipts = %+v", list)
+	}
+	versions := decode[[]httpapi.SynchronizationItem](t, owner.do(http.MethodGet, receipts+"/synchronization", nil))
+	if len(versions) != 1 || versions[0].Id != rec.ID {
+		t.Errorf("versions = %+v", versions)
+	}
+	if list := decode[[]purchaseDocument](t, owner.do(http.MethodPost, receipts+"/synchronization", map[string]any{"ids": []string{rec.ID}})); len(list) != 1 {
+		t.Errorf("fetched = %d", len(list))
+	}
+
+	r = owner.do(http.MethodPost, receipts+"/"+rec.ID+"/notes", map[string]any{"note": map[string]any{"note": "Office"}})
+	wantStatus(t, r, http.StatusCreated)
+	note := decode[struct {
+		ID string `json:"id"`
+	}](t, r)
+	wantStatus(t, owner.do(http.MethodDelete, receipts+"/"+rec.ID+"/notes/"+note.ID, nil), http.StatusNoContent)
+
+	wantStatus(t, owner.attach(receipts+"/"+rec.ID+"/attachments", "ink.pdf", "application/pdf", []byte("%PDF-1.4 ink")), http.StatusOK)
+	got := decode[purchaseDocument](t, owner.do(http.MethodGet, receipts+"/"+rec.ID, nil))
+	if len(got.Notes) != 0 || len(got.Attachments) != 1 {
+		t.Fatalf("notes and attachments = %+v", got)
+	}
+	att := got.Attachments[0].ID
+	owner.follow(owner.do(http.MethodGet, receipts+"/"+rec.ID+"/attachments/"+att+"/download", nil))
+	wantStatus(t, owner.do(http.MethodDelete, receipts+"/"+rec.ID+"/attachments/"+att, nil), http.StatusNoContent)
+
+	r = owner.do(http.MethodPost, receipts+"/"+rec.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": day, "price": "10.50"}})
+	wantStatus(t, r, http.StatusCreated)
+	part := decode[payment](t, r)
+	if got := decode[purchaseDocument](t, owner.do(http.MethodGet, receipts+"/"+rec.ID, nil)); got.TotalUnpaid != "50.0" {
+		t.Errorf("unpaid after part = %s", got.TotalUnpaid)
+	}
+	wantStatus(t, owner.do(http.MethodDelete, receipts+"/"+rec.ID+"/payments/"+part.ID, nil), http.StatusNoContent)
+	r = owner.do(http.MethodPatch, receipts+"/"+rec.ID+"/register_payment", map[string]any{"payment": map[string]any{
+		"payment_date": day, "price": "60.50", "manual_payment_action": "private_payment",
+	}})
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[purchaseDocument](t, owner.do(http.MethodGet, receipts+"/"+rec.ID, nil)); got.State != "paid" {
+		t.Errorf("after register_payment = %s", got.State)
+	}
+
+	wantStatus(t, owner.do(http.MethodDelete, receipts+"/"+rec.ID, nil), http.StatusOK)
+	wantStatus(t, owner.do(http.MethodGet, receipts+"/"+rec.ID, nil), http.StatusNotFound)
+}
+
 func TestGeneralAndTypelessDocuments(t *testing.T) {
 	h := newHarness(t, options{})
 	owner := h.client()
@@ -267,8 +333,19 @@ func TestGeneralAndTypelessDocuments(t *testing.T) {
 	if g := decode[map[string]any](t, r); g["contact_id"] != nil || g["due_date"] != "2026-12-31" {
 		t.Errorf("updated = %v", g)
 	}
-	wantStatus(t, owner.do(http.MethodPost, general+"/"+id+"/notes", map[string]any{"note": map[string]any{"note": "Signed"}}), http.StatusCreated)
-	wantStatus(t, owner.attach(general+"/"+id+"/attachments", "lease.pdf", "application/pdf", []byte("%PDF")), http.StatusOK)
+	r = owner.do(http.MethodPost, general+"/"+id+"/notes", map[string]any{"note": map[string]any{"note": "Signed"}})
+	wantStatus(t, r, http.StatusCreated)
+	noteID := decode[map[string]any](t, r)["id"].(string)
+	r = owner.attach(general+"/"+id+"/attachments", "lease.pdf", "application/pdf", []byte("%PDF"))
+	wantStatus(t, r, http.StatusOK)
+	attID := decode[map[string]any](t, r)["id"].(string)
+	g = decode[map[string]any](t, owner.do(http.MethodGet, general+"/"+id, nil))
+	if notes, _ := g["notes"].([]any); len(notes) != 1 {
+		t.Errorf("general notes = %v", g["notes"])
+	}
+	owner.follow(owner.do(http.MethodGet, general+"/"+id+"/attachments/"+attID+"/download", nil))
+	wantStatus(t, owner.do(http.MethodDelete, general+"/"+id+"/attachments/"+attID, nil), http.StatusNoContent)
+	wantStatus(t, owner.do(http.MethodDelete, general+"/"+id+"/notes/"+noteID, nil), http.StatusNoContent)
 	if list := decode[[]map[string]any](t, owner.do(http.MethodGet, general+"?filter=reference:Lease", nil)); len(list) != 1 {
 		t.Errorf("general list = %d", len(list))
 	}
@@ -287,6 +364,15 @@ func TestGeneralAndTypelessDocuments(t *testing.T) {
 	tid := tl["id"].(string)
 	if tl["state"] != "new" || tl["origin"] != "api" {
 		t.Errorf("typeless = %v", tl)
+	}
+	if got := decode[map[string]any](t, owner.do(http.MethodGet, typeless+"/"+tid, nil)); got["reference"] != "Scan 1" {
+		t.Errorf("typeless fetched = %v", got)
+	}
+	if v := decode[[]httpapi.SynchronizationItem](t, owner.do(http.MethodGet, typeless+"/synchronization", nil)); len(v) != 1 {
+		t.Errorf("typeless versions = %v", v)
+	}
+	if list := decode[[]map[string]any](t, owner.do(http.MethodPost, typeless+"/synchronization", map[string]any{"ids": []string{tid}})); len(list) != 1 {
+		t.Errorf("typeless fetched by sync = %d", len(list))
 	}
 	r = owner.attach(typeless+"/"+tid+"/attachments", "scan.png", "image/png", []byte("\x89PNG\r\n\x1a\nimage"))
 	wantStatus(t, r, http.StatusOK)
@@ -352,6 +438,14 @@ func TestPurchaseTransactionsAndSEPA(t *testing.T) {
 		t.Errorf("unbatched = %v", list)
 	}
 	wantStatus(t, owner.do(http.MethodGet, api+"/purchase_transactions?filter=state:nope", nil), http.StatusBadRequest)
+	// An open transaction can be removed, then made again.
+	wantStatus(t, owner.do(http.MethodDelete, api+"/purchase_transactions/"+tx["id"].(string), nil), http.StatusNoContent)
+	if list := decode[[]map[string]any](t, owner.do(http.MethodGet, api+"/purchase_transactions", nil)); len(list) != 0 {
+		t.Errorf("after delete = %v", list)
+	}
+	r = owner.do(http.MethodPost, api+"/purchase_transactions", map[string]any{"purchase_transaction": map[string]any{"payable_id": inv.ID, "financial_account_id": acc.ID}})
+	wantStatus(t, r, http.StatusCreated)
+	tx = decode[map[string]any](t, r)
 	r = owner.do(http.MethodPost, api+"/purchase_transaction_batches", map[string]any{"purchase_transaction_batch": map[string]any{"financial_account_id": acc.ID}})
 	wantStatus(t, r, http.StatusCreated)
 	batch := decode[map[string]any](t, r)

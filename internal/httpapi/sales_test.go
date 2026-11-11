@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 )
 
 type salesInvoice struct {
@@ -64,7 +66,7 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 	revenue := category(t, owner, a.Id, "Revenue")
 
 	created := owner.do(http.MethodPost, invoices, map[string]any{"sales_invoice": map[string]any{
-		"contact_id": customer.ID, "reference": "Order 7",
+		"contact_id": customer.ID, "reference": "Order 6",
 		"details_attributes": map[string]any{
 			"0": map[string]any{"description": "Consulting", "amount": "2 hours", "price": "100", "tax_rate_id": vat21, "ledger_account_id": revenue},
 			"1": map[string]any{"description": "Travel", "amount": 1, "price": 25.5, "tax_rate_id": vat21},
@@ -79,6 +81,26 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 	if inv.Details[1].LedgerAccountID == "" || inv.Details[1].LedgerAccountID == revenue {
 		t.Errorf("uncategorized line = %+v", inv.Details[1])
 	}
+
+	edited := owner.do(http.MethodPatch, invoices+"/"+inv.ID, map[string]any{"sales_invoice": map[string]any{"reference": "Order 7"}})
+	wantStatus(t, edited, http.StatusOK)
+	inv = decode[salesInvoice](t, edited)
+	if len(inv.Details) != 2 || inv.TotalIncl != "272.86" {
+		t.Fatalf("edited draft = %+v", inv)
+	}
+	re := owner.do(http.MethodPost, invoices, map[string]any{"sales_invoice": map[string]any{
+		"contact_id": customer.ID, "details_attributes": []map[string]any{{"description": "Travel", "price": 25.5, "tax_rate_id": vat21}},
+	}})
+	wantStatus(t, re, http.StatusCreated)
+	travel := decode[salesInvoice](t, re)
+	versions := decode[[]httpapi.SynchronizationItem](t, owner.do(http.MethodGet, invoices+"/synchronization", nil))
+	if len(versions) != 2 {
+		t.Errorf("versions = %+v", versions)
+	}
+	if list := decode[[]salesInvoice](t, owner.do(http.MethodPost, invoices+"/synchronization", map[string]any{"ids": []string{travel.ID}})); len(list) != 1 || list[0].ID != travel.ID {
+		t.Errorf("fetched = %+v", list)
+	}
+	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+travel.ID, nil), http.StatusNoContent)
 
 	sent := owner.do(http.MethodPatch, invoices+"/"+inv.ID+"/send_invoice", map[string]any{"sales_invoice_sending": map[string]any{"delivery_method": "Email"}})
 	wantStatus(t, sent, http.StatusOK)
@@ -148,8 +170,17 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodGet, invoices+"?filter=state:lost", nil), http.StatusBadRequest)
 
-	wantStatus(t, owner.do(http.MethodPost, invoices+"/"+inv.ID+"/notes", map[string]any{"note": map[string]any{"note": "Called"}}), http.StatusCreated)
-	wantStatus(t, owner.attach(invoices+"/"+inv.ID+"/attachments", "order.pdf", "application/pdf", []byte("%PDF-1.4 order")), http.StatusOK)
+	r := owner.do(http.MethodPost, invoices+"/"+inv.ID+"/notes", map[string]any{"note": map[string]any{"note": "Called"}})
+	wantStatus(t, r, http.StatusCreated)
+	noteID := decode[map[string]any](t, r)["id"].(string)
+	r = owner.attach(invoices+"/"+inv.ID+"/attachments", "order.pdf", "application/pdf", []byte("%PDF-1.4 order"))
+	wantStatus(t, r, http.StatusOK)
+	attID := decode[map[string]any](t, r)["id"].(string)
+	if got := owner.follow(owner.do(http.MethodGet, invoices+"/"+inv.ID+"/attachments/"+attID+"/download", nil)); string(got.body) != "%PDF-1.4 order" {
+		t.Errorf("attachment = %q", got.body)
+	}
+	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID+"/attachments/"+attID, nil), http.StatusNoContent)
+	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID+"/notes/"+noteID, nil), http.StatusNoContent)
 
 	// Peppol is not there yet, and the contact now has invoices.
 	wantStatus(t, owner.do(http.MethodPatch, invoices+"/"+credit.ID+"/send_invoice", map[string]any{"sales_invoice_sending": map[string]any{"delivery_method": "Peppol"}}), http.StatusUnprocessableEntity)

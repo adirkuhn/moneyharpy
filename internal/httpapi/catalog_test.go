@@ -66,6 +66,9 @@ func TestProductsLifecycle(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodGet, api+"/products/identifier/nope.json", nil), http.StatusNotFound)
 	wantStatus(t, stranger.do(http.MethodGet, api+"/products/"+p.ID, nil), http.StatusNotFound)
+	if got := decode[product](t, owner.do(http.MethodGet, api+"/products/"+p.ID, nil)); got.ID != p.ID {
+		t.Errorf("fetched = %+v", got)
+	}
 
 	up := owner.do(http.MethodPatch, api+"/products/"+p.ID, map[string]any{"product": map[string]any{"title": "Harpy", "price": 60, "frequency_preset": "0:nil"}})
 	wantStatus(t, up, http.StatusOK)
@@ -115,6 +118,9 @@ func TestProductsLifecycle(t *testing.T) {
 	}}), http.StatusUnprocessableEntity)
 
 	falcon := decode[project](t, owner.do(http.MethodPost, api+"/projects", map[string]any{"project": map[string]any{"name": "Falcon"}}))
+	if got := decode[project](t, owner.do(http.MethodGet, api+"/projects/"+falcon.ID, nil)); got.ID != falcon.ID {
+		t.Errorf("fetched = %+v", got)
+	}
 	type lines struct {
 		Details []struct {
 			ProductID *string `json:"product_id"`

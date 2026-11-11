@@ -80,6 +80,22 @@ func TestPermissionsGuardEveryResource(t *testing.T) {
 	wantStatus(t, clerk.do(http.MethodGet, api+"/financial_accounts", nil), http.StatusNotFound)
 }
 
+func TestTurningTwoFactorOff(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	setup := decode[httpapi.TwoFactorSetup](t, owner.do(http.MethodPost, "/api/user/two_factor", nil))
+	r := owner.do(http.MethodPost, "/api/user/two_factor/confirm", map[string]string{"code": totp(t, setup.Secret, time.Now())})
+	wantStatus(t, r, http.StatusOK)
+	codes := decode[httpapi.RecoveryCodes](t, r).RecoveryCodes
+
+	wantStatus(t, owner.do(http.MethodDelete, "/api/user/two_factor", map[string]string{"code": "zzzz-zzzz-zzzz"}), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodDelete, "/api/user/two_factor", map[string]string{"code": codes[0]}), http.StatusNoContent)
+	if st := decode[httpapi.TwoFactorStatus](t, owner.do(http.MethodGet, "/api/user/two_factor", nil)); st.Enabled {
+		t.Errorf("status = %+v", st)
+	}
+}
+
 func TestUsersAndLeaving(t *testing.T) {
 	h := newHarness(t, options{})
 	owner, partner := h.client(), h.client()
@@ -100,6 +116,12 @@ func TestUsersAndLeaving(t *testing.T) {
 	if len(accountants) != 2 {
 		t.Errorf("users with flags = %d", len(accountants))
 	}
+	clerk := h.client()
+	clerkUser := clerk.register()
+	invite(t, h, owner, clerk, a.Id, "clerk@example.com", map[string]any{"user_type": "employee"})
+	wantStatus(t, clerk.do(http.MethodGet, "/api/v2/administrations/"+a.Id, nil), http.StatusOK)
+	wantStatus(t, owner.do(http.MethodDelete, api+"/users/"+clerkUser.Id, nil), http.StatusNoContent)
+	wantStatus(t, clerk.do(http.MethodGet, "/api/v2/administrations/"+a.Id, nil), http.StatusNotFound)
 	wantStatus(t, owner.do(http.MethodDelete, api+"/membership", nil), http.StatusNoContent)
 	wantStatus(t, owner.do(http.MethodGet, "/api/v2/administrations/"+a.Id, nil), http.StatusNotFound)
 	wantStatus(t, partner.do(http.MethodDelete, api+"/users/"+partnerUser.Id, nil), http.StatusUnprocessableEntity)

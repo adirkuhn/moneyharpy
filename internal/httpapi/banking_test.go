@@ -90,6 +90,9 @@ func TestFinancialAccounts(t *testing.T) {
 	if bank.Identifier != "NL91ABNA0417164300" || bank.Type != "BankAccount" || bank.URI != "/"+a.Id+"/financial_accounts/"+bank.ID {
 		t.Errorf("created = %+v", bank)
 	}
+	if got := decode[financialAccount](t, owner.do(http.MethodGet, base+"/"+bank.ID, nil)); got.ID != bank.ID || got.Identifier != bank.Identifier {
+		t.Errorf("fetched = %+v", got)
+	}
 	wantStatus(t, owner.do(http.MethodPost, base, map[string]any{"financial_account": map[string]any{"name": "Bad", "identifier": "NL00ABNA0417164300"}}), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodPost, base, map[string]any{"financial_account": map[string]any{"name": "Bad", "type": "Piggy"}}), http.StatusBadRequest)
 
@@ -265,6 +268,9 @@ func TestBankSettingsAndRules(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodPost, api+"/booking_rules", map[string]any{"booking_rule": map[string]any{"name": "x", "ledger_account_id": software, "conditions": []map[string]string{}}}), http.StatusUnprocessableEntity)
 	if list := decode[[]httpapi.BookingRule](t, owner.do(http.MethodGet, api+"/booking_rules", nil)); len(list) != 1 || list[0].MatchAll {
 		t.Errorf("rules = %+v", list)
+	}
+	if got := decode[httpapi.BookingRule](t, owner.do(http.MethodGet, api+"/booking_rules/"+rule.Id, nil)); got.Name != "Hosting" || got.MatchAll {
+		t.Errorf("rule = %+v", got)
 	}
 	wantStatus(t, owner.do(http.MethodDelete, api+"/booking_rules/"+rule.Id, nil), http.StatusNoContent)
 	wantStatus(t, owner.do(http.MethodGet, api+"/booking_rules/"+rule.Id, nil), http.StatusNotFound)
