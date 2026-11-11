@@ -1044,6 +1044,60 @@ func (e Permission) Valid() bool {
 	}
 }
 
+// Defines values for RecurringSalesInvoiceFrequencyType.
+const (
+	RecurringSalesInvoiceFrequencyTypeDay     RecurringSalesInvoiceFrequencyType = "day"
+	RecurringSalesInvoiceFrequencyTypeMonth   RecurringSalesInvoiceFrequencyType = "month"
+	RecurringSalesInvoiceFrequencyTypeQuarter RecurringSalesInvoiceFrequencyType = "quarter"
+	RecurringSalesInvoiceFrequencyTypeWeek    RecurringSalesInvoiceFrequencyType = "week"
+	RecurringSalesInvoiceFrequencyTypeYear    RecurringSalesInvoiceFrequencyType = "year"
+)
+
+// Valid indicates whether the value is a known member of the RecurringSalesInvoiceFrequencyType enum.
+func (e RecurringSalesInvoiceFrequencyType) Valid() bool {
+	switch e {
+	case RecurringSalesInvoiceFrequencyTypeDay:
+		return true
+	case RecurringSalesInvoiceFrequencyTypeMonth:
+		return true
+	case RecurringSalesInvoiceFrequencyTypeQuarter:
+		return true
+	case RecurringSalesInvoiceFrequencyTypeWeek:
+		return true
+	case RecurringSalesInvoiceFrequencyTypeYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType.
+const (
+	RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeDay     RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType = "day"
+	RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeMonth   RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType = "month"
+	RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeQuarter RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType = "quarter"
+	RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeWeek    RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType = "week"
+	RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeYear    RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType = "year"
+)
+
+// Valid indicates whether the value is a known member of the RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType enum.
+func (e RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType) Valid() bool {
+	switch e {
+	case RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeDay:
+		return true
+	case RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeMonth:
+		return true
+	case RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeQuarter:
+		return true
+	case RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeWeek:
+		return true
+	case RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyTypeYear:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RuleConditionField.
 const (
 	Amount              RuleConditionField = "amount"
@@ -2262,6 +2316,60 @@ func (e PaymentResponseInvoiceType) Valid() bool {
 	}
 }
 
+// Defines values for ProductResponseFrequencyType.
+const (
+	ProductResponseFrequencyTypeDay     ProductResponseFrequencyType = "day"
+	ProductResponseFrequencyTypeMonth   ProductResponseFrequencyType = "month"
+	ProductResponseFrequencyTypeQuarter ProductResponseFrequencyType = "quarter"
+	ProductResponseFrequencyTypeWeek    ProductResponseFrequencyType = "week"
+	ProductResponseFrequencyTypeYear    ProductResponseFrequencyType = "year"
+)
+
+// Valid indicates whether the value is a known member of the ProductResponseFrequencyType enum.
+func (e ProductResponseFrequencyType) Valid() bool {
+	switch e {
+	case ProductResponseFrequencyTypeDay:
+		return true
+	case ProductResponseFrequencyTypeMonth:
+		return true
+	case ProductResponseFrequencyTypeQuarter:
+		return true
+	case ProductResponseFrequencyTypeWeek:
+		return true
+	case ProductResponseFrequencyTypeYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RecurringSalesInvoiceResponseFrequencyType.
+const (
+	RecurringSalesInvoiceResponseFrequencyTypeDay     RecurringSalesInvoiceResponseFrequencyType = "day"
+	RecurringSalesInvoiceResponseFrequencyTypeMonth   RecurringSalesInvoiceResponseFrequencyType = "month"
+	RecurringSalesInvoiceResponseFrequencyTypeQuarter RecurringSalesInvoiceResponseFrequencyType = "quarter"
+	RecurringSalesInvoiceResponseFrequencyTypeWeek    RecurringSalesInvoiceResponseFrequencyType = "week"
+	RecurringSalesInvoiceResponseFrequencyTypeYear    RecurringSalesInvoiceResponseFrequencyType = "year"
+)
+
+// Valid indicates whether the value is a known member of the RecurringSalesInvoiceResponseFrequencyType enum.
+func (e RecurringSalesInvoiceResponseFrequencyType) Valid() bool {
+	switch e {
+	case RecurringSalesInvoiceResponseFrequencyTypeDay:
+		return true
+	case RecurringSalesInvoiceResponseFrequencyTypeMonth:
+		return true
+	case RecurringSalesInvoiceResponseFrequencyTypeQuarter:
+		return true
+	case RecurringSalesInvoiceResponseFrequencyTypeWeek:
+		return true
+	case RecurringSalesInvoiceResponseFrequencyTypeYear:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SalesInvoiceResponseState.
 const (
 	SalesInvoiceResponseStateDraft          SalesInvoiceResponseState = "draft"
@@ -2361,6 +2469,33 @@ func (e SimpleContactResponseSepaSequenceType) Valid() bool {
 	case SimpleContactResponseSepaSequenceTypeOOFF:
 		return true
 	case SimpleContactResponseSepaSequenceTypeRCUR:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubscriptionResponseFrequencyType.
+const (
+	SubscriptionResponseFrequencyTypeDay     SubscriptionResponseFrequencyType = "day"
+	SubscriptionResponseFrequencyTypeMonth   SubscriptionResponseFrequencyType = "month"
+	SubscriptionResponseFrequencyTypeQuarter SubscriptionResponseFrequencyType = "quarter"
+	SubscriptionResponseFrequencyTypeWeek    SubscriptionResponseFrequencyType = "week"
+	SubscriptionResponseFrequencyTypeYear    SubscriptionResponseFrequencyType = "year"
+)
+
+// Valid indicates whether the value is a known member of the SubscriptionResponseFrequencyType enum.
+func (e SubscriptionResponseFrequencyType) Valid() bool {
+	switch e {
+	case SubscriptionResponseFrequencyTypeDay:
+		return true
+	case SubscriptionResponseFrequencyTypeMonth:
+		return true
+	case SubscriptionResponseFrequencyTypeQuarter:
+		return true
+	case SubscriptionResponseFrequencyTypeWeek:
+		return true
+	case SubscriptionResponseFrequencyTypeYear:
 		return true
 	default:
 		return false
@@ -4676,6 +4811,227 @@ type RecoveryCodes struct {
 	RecoveryCodes []string `json:"recovery_codes"`
 }
 
+// RecurringSalesInvoice A Moneybird recurring sales invoice with MoneyHarpy extensions.
+type RecurringSalesInvoice struct {
+	Active *bool `json:"active"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier           `json:"administration_id"`
+	Attachments      []AttachmentResponse `json:"attachments"`
+	AutoSend         *bool                `json:"auto_send"`
+
+	// Contact Moneybird-compatible simple_contact_response.
+	Contact *SimpleContactResponse `json:"contact,omitempty"`
+
+	// ContactId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ContactId     Identifier                           `json:"contact_id"`
+	ContactPerson *RecurringSalesInvoice_ContactPerson `json:"contact_person,omitempty"`
+
+	// ContactPersonId Moneybird-compatible identifier_nullable.
+	ContactPersonId *IdentifierNullable        `json:"contact_person_id,omitempty"`
+	CreatedAt       *time.Time                 `json:"created_at,omitempty"`
+	Currency        string                     `json:"currency"`
+	CustomFields    []CustomFieldValueResponse `json:"custom_fields"`
+	Details         []DetailResponse           `json:"details"`
+	Discount        *string                    `json:"discount,omitempty"`
+
+	// DocumentStyleId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DocumentStyleId  *Identifier                        `json:"document_style_id,omitempty"`
+	Events           []EventResponse                    `json:"events"`
+	FirstDueInterval *int                               `json:"first_due_interval,omitempty"`
+	Frequency        int                                `json:"frequency"`
+	FrequencyType    RecurringSalesInvoiceFrequencyType `json:"frequency_type"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// IdentityId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	IdentityId  *Identifier        `json:"identity_id,omitempty"`
+	InvoiceDate openapi_types.Date `json:"invoice_date"`
+
+	// InvoicesCreated MoneyHarpy extension. How many invoices it made.
+	InvoicesCreated *int                `json:"invoices_created,omitempty"`
+	Language        *string             `json:"language,omitempty"`
+	LastDate        *openapi_types.Date `json:"last_date,omitempty"`
+
+	// Mergeable MoneyHarpy extension. Accepted and kept; MoneyHarpy does not merge invoices yet.
+	Mergeable          *bool          `json:"mergeable,omitempty"`
+	Notes              []NoteResponse `json:"notes"`
+	PaymentConditions  *string        `json:"payment_conditions,omitempty"`
+	PricesAreInclTax   *bool          `json:"prices_are_incl_tax,omitempty"`
+	Reference          *string        `json:"reference,omitempty"`
+	SendingScheduledAt *time.Time     `json:"sending_scheduled_at,omitempty"`
+
+	// SendingScheduledUserId Moneybird-compatible identifier_nullable.
+	SendingScheduledUserId *IdentifierNullable                 `json:"sending_scheduled_user_id,omitempty"`
+	StartDate              openapi_types.Date                  `json:"start_date"`
+	Subscription           *RecurringSalesInvoice_Subscription `json:"subscription,omitempty"`
+
+	// TotalDiscount MoneyHarpy extension. The discount on all lines.
+	TotalDiscount         *string `json:"total_discount,omitempty"`
+	TotalPriceExclTax     string  `json:"total_price_excl_tax"`
+	TotalPriceExclTaxBase *string `json:"total_price_excl_tax_base,omitempty"`
+	TotalPriceInclTax     string  `json:"total_price_incl_tax"`
+	TotalPriceInclTaxBase *string `json:"total_price_incl_tax_base,omitempty"`
+
+	// TotalTax MoneyHarpy extension. The VAT of all lines.
+	TotalTax  *string    `json:"total_tax,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+
+	// Version Moneybird-compatible version.
+	Version Version `json:"version"`
+
+	// WorkflowId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	WorkflowId Identifier `json:"workflow_id"`
+}
+
+// RecurringSalesInvoice_ContactPerson defines model for RecurringSalesInvoice.ContactPerson.
+type RecurringSalesInvoice_ContactPerson struct {
+	union json.RawMessage
+}
+
+// RecurringSalesInvoiceFrequencyType defines model for RecurringSalesInvoice.FrequencyType.
+type RecurringSalesInvoiceFrequencyType string
+
+// RecurringSalesInvoice_Subscription defines model for RecurringSalesInvoice.Subscription.
+type RecurringSalesInvoice_Subscription struct {
+	union json.RawMessage
+}
+
+// RecurringSalesInvoiceRequest defines model for RecurringSalesInvoiceRequest.
+type RecurringSalesInvoiceRequest struct {
+	RecurringSalesInvoice struct {
+		// AutoSend A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		AutoSend *FlexibleBoolean `json:"auto_send,omitempty"`
+
+		// ContactId An id as a string or a number; an empty string clears it.
+		ContactId *FlexibleIdentifier `json:"contact_id,omitempty"`
+
+		// ContactPersonId An id as a string or a number; an empty string clears it.
+		ContactPersonId *FlexibleIdentifier `json:"contact_person_id,omitempty"`
+		Currency        *string             `json:"currency,omitempty"`
+
+		// CustomFieldsAttributes Moneybird-compatible custom_fields_attributes.
+		CustomFieldsAttributes *CustomFieldsAttributes `json:"custom_fields_attributes,omitempty"`
+
+		// DesiredCount With has_desired_count, the number of invoices to make in all; it sets last_date.
+		DesiredCount *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount `json:"desired_count,omitempty"`
+
+		// DetailsAttributes An array of lines, or an object of lines keyed by position.
+		DetailsAttributes *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes `json:"details_attributes,omitempty"`
+
+		// Discount A percentage, such as "10" or "2.5"; empty for none.
+		Discount *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount `json:"discount,omitempty"`
+
+		// DocumentStyleId An id as a string or a number; an empty string clears it.
+		DocumentStyleId  *FlexibleIdentifier                                                  `json:"document_style_id,omitempty"`
+		FirstDueInterval *RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval `json:"first_due_interval,omitempty"`
+
+		// Frequency How many frequency_types lie between two invoices.
+		Frequency     *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency   `json:"frequency,omitempty"`
+		FrequencyType *RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType `json:"frequency_type,omitempty"`
+
+		// HasDesiredCount A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		HasDesiredCount *FlexibleBoolean `json:"has_desired_count,omitempty"`
+
+		// IdentityId An id as a string or a number; an empty string clears it.
+		IdentityId *FlexibleIdentifier `json:"identity_id,omitempty"`
+
+		// InvoiceDate The date of the next invoice, yyyy-mm-dd; not in the past.
+		InvoiceDate *openapi_types.Date `json:"invoice_date,omitempty"`
+
+		// LastDate MoneyHarpy extension. The last day an invoice may be made on, yyyy-mm-dd; empty for no end.
+		LastDate *string `json:"last_date,omitempty"`
+
+		// Mergeable A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		Mergeable         *FlexibleBoolean `json:"mergeable,omitempty"`
+		PaymentConditions *string          `json:"payment_conditions,omitempty"`
+
+		// PricesAreInclTax A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		PricesAreInclTax *FlexibleBoolean `json:"prices_are_incl_tax,omitempty"`
+		Reference        *string          `json:"reference,omitempty"`
+
+		// UpdateContact A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		UpdateContact *FlexibleBoolean `json:"update_contact,omitempty"`
+
+		// WorkflowId An id as a string or a number; an empty string clears it.
+		WorkflowId *FlexibleIdentifier `json:"workflow_id,omitempty"`
+	} `json:"recurring_sales_invoice"`
+}
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.DesiredCount.0.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0 = int
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.DesiredCount.1.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1 = string
+
+// RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount With has_desired_count, the number of invoices to make in all; it sets last_date.
+type RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount struct {
+	union json.RawMessage
+}
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.DetailsAttributes.0.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0 = []SalesInvoiceDetailInput
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.DetailsAttributes.1.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1 map[string]SalesInvoiceDetailInput
+
+// RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes An array of lines, or an object of lines keyed by position.
+type RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes struct {
+	union json.RawMessage
+}
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.Discount.0.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0 = string
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.Discount.1.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1 = float32
+
+// RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount A percentage, such as "10" or "2.5"; empty for none.
+type RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount struct {
+	union json.RawMessage
+}
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.FirstDueInterval.0.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0 = int
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.FirstDueInterval.1.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1 = string
+
+// RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.FirstDueInterval.
+type RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval struct {
+	union json.RawMessage
+}
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.Frequency.0.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0 = int
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1 defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.Frequency.1.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1 = string
+
+// RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency How many frequency_types lie between two invoices.
+type RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency struct {
+	union json.RawMessage
+}
+
+// RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType defines model for RecurringSalesInvoiceRequest.RecurringSalesInvoice.FrequencyType.
+type RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequencyType string
+
 // RegisterRequest defines model for RegisterRequest.
 type RegisterRequest struct {
 	Email string `json:"email"`
@@ -6467,6 +6823,120 @@ type PaymentResponse struct {
 // PaymentResponseInvoiceType defines model for PaymentResponse.InvoiceType.
 type PaymentResponseInvoiceType string
 
+// ProductResponse Moneybird-compatible product_response.
+type ProductResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt     *Timestamp                    `json:"created_at,omitempty"`
+	Currency      *string                       `json:"currency,omitempty"`
+	Description   *string                       `json:"description,omitempty"`
+	Frequency     *int                          `json:"frequency,omitempty"`
+	FrequencyType *ProductResponseFrequencyType `json:"frequency_type,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id         *Identifier `json:"id,omitempty"`
+	Identifier *string     `json:"identifier,omitempty"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	LedgerAccountId *Identifier `json:"ledger_account_id,omitempty"`
+	Price           *string     `json:"price,omitempty"`
+
+	// TaxRateId Moneybird-compatible identifier_nullable.
+	TaxRateId *IdentifierNullable `json:"tax_rate_id,omitempty"`
+	Title     *string             `json:"title,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// ProductResponseFrequencyType defines model for ProductResponse.FrequencyType.
+type ProductResponseFrequencyType string
+
+// RecurringSalesInvoiceResponse Moneybird-compatible recurring_sales_invoice_response.
+type RecurringSalesInvoiceResponse struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier           `json:"administration_id,omitempty"`
+	Attachments      *[]AttachmentResponse `json:"attachments,omitempty"`
+	AutoSend         *bool                 `json:"auto_send,omitempty"`
+
+	// Contact Moneybird-compatible simple_contact_response.
+	Contact *SimpleContactResponse `json:"contact,omitempty"`
+
+	// ContactId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ContactId     *Identifier                                  `json:"contact_id,omitempty"`
+	ContactPerson *RecurringSalesInvoiceResponse_ContactPerson `json:"contact_person,omitempty"`
+
+	// ContactPersonId Moneybird-compatible identifier_nullable.
+	ContactPersonId  *IdentifierNullable                         `json:"contact_person_id,omitempty"`
+	CreatedAt        *time.Time                                  `json:"created_at,omitempty"`
+	Currency         *string                                     `json:"currency,omitempty"`
+	CustomFields     *[]CustomFieldValueResponse                 `json:"custom_fields,omitempty"`
+	Details          *[]DetailResponse                           `json:"details,omitempty"`
+	Discount         *string                                     `json:"discount,omitempty"`
+	Events           *[]EventResponse                            `json:"events,omitempty"`
+	FirstDueInterval *int                                        `json:"first_due_interval,omitempty"`
+	Frequency        *int                                        `json:"frequency,omitempty"`
+	FrequencyType    *RecurringSalesInvoiceResponseFrequencyType `json:"frequency_type,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id                 *Identifier         `json:"id,omitempty"`
+	InvoiceDate        *openapi_types.Date `json:"invoice_date,omitempty"`
+	Language           *string             `json:"language,omitempty"`
+	LastDate           *openapi_types.Date `json:"last_date,omitempty"`
+	Notes              *[]NoteResponse     `json:"notes,omitempty"`
+	PaymentConditions  *string             `json:"payment_conditions,omitempty"`
+	PricesAreInclTax   *bool               `json:"prices_are_incl_tax,omitempty"`
+	Reference          *string             `json:"reference,omitempty"`
+	SendingScheduledAt *time.Time          `json:"sending_scheduled_at,omitempty"`
+
+	// SendingScheduledUserId Moneybird-compatible identifier_nullable.
+	SendingScheduledUserId *IdentifierNullable                         `json:"sending_scheduled_user_id,omitempty"`
+	StartDate              *openapi_types.Date                         `json:"start_date,omitempty"`
+	Subscription           *RecurringSalesInvoiceResponse_Subscription `json:"subscription,omitempty"`
+	TotalPriceExclTax      *string                                     `json:"total_price_excl_tax,omitempty"`
+	TotalPriceExclTaxBase  *string                                     `json:"total_price_excl_tax_base,omitempty"`
+	TotalPriceInclTax      *string                                     `json:"total_price_incl_tax,omitempty"`
+	TotalPriceInclTaxBase  *string                                     `json:"total_price_incl_tax_base,omitempty"`
+	UpdatedAt              *time.Time                                  `json:"updated_at,omitempty"`
+
+	// Version Moneybird-compatible version.
+	Version *Version `json:"version,omitempty"`
+
+	// WorkflowId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	WorkflowId *Identifier `json:"workflow_id,omitempty"`
+}
+
+// RecurringSalesInvoiceResponse_ContactPerson defines model for RecurringSalesInvoiceResponse.ContactPerson.
+type RecurringSalesInvoiceResponse_ContactPerson struct {
+	union json.RawMessage
+}
+
+// RecurringSalesInvoiceResponseFrequencyType defines model for RecurringSalesInvoiceResponse.FrequencyType.
+type RecurringSalesInvoiceResponseFrequencyType string
+
+// RecurringSalesInvoiceResponse_Subscription defines model for RecurringSalesInvoiceResponse.Subscription.
+type RecurringSalesInvoiceResponse_Subscription struct {
+	union json.RawMessage
+}
+
 // SalesInvoiceResponse Moneybird-compatible sales_invoice_response.
 type SalesInvoiceResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -6649,6 +7119,73 @@ type SimpleContactResponseDeliveryMethod string
 
 // SimpleContactResponseSepaSequenceType defines model for SimpleContactResponse.SepaSequenceType.
 type SimpleContactResponseSepaSequenceType string
+
+// SubscriptionProductResponse Moneybird-compatible subscription_product_response.
+type SubscriptionProductResponse struct {
+	Amount   *string             `json:"amount,omitempty"`
+	Discount *string             `json:"discount,omitempty"`
+	EndDate  *openapi_types.Date `json:"end_date,omitempty"`
+
+	// Product Moneybird-compatible product_response.
+	Product *ProductResponse `json:"product,omitempty"`
+
+	// ProductId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ProductId *Identifier         `json:"product_id,omitempty"`
+	StartDate *openapi_types.Date `json:"start_date,omitempty"`
+}
+
+// SubscriptionResponse Moneybird-compatible subscription_response.
+type SubscriptionResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+	CancelledAt      *time.Time  `json:"cancelled_at,omitempty"`
+
+	// Contact Moneybird-compatible simple_contact_response.
+	Contact *SimpleContactResponse `json:"contact,omitempty"`
+
+	// ContactId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ContactId     *Identifier                         `json:"contact_id,omitempty"`
+	ContactPerson *SubscriptionResponse_ContactPerson `json:"contact_person,omitempty"`
+
+	// ContactPersonId Moneybird-compatible identifier_nullable.
+	ContactPersonId *IdentifierNullable                `json:"contact_person_id,omitempty"`
+	EndDate         *openapi_types.Date                `json:"end_date,omitempty"`
+	Frequency       *int                               `json:"frequency,omitempty"`
+	FrequencyType   *SubscriptionResponseFrequencyType `json:"frequency_type,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+
+	// Product Moneybird-compatible product_response.
+	Product *ProductResponse `json:"product,omitempty"`
+
+	// ProductId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ProductId *Identifier `json:"product_id,omitempty"`
+
+	// RecurringSalesInvoiceId Moneybird-compatible identifier_nullable.
+	RecurringSalesInvoiceId *IdentifierNullable            `json:"recurring_sales_invoice_id,omitempty"`
+	Reference               *string                        `json:"reference,omitempty"`
+	StartDate               *openapi_types.Date            `json:"start_date,omitempty"`
+	SubscriptionProducts    *[]SubscriptionProductResponse `json:"subscription_products,omitempty"`
+}
+
+// SubscriptionResponse_ContactPerson defines model for SubscriptionResponse.ContactPerson.
+type SubscriptionResponse_ContactPerson struct {
+	union json.RawMessage
+}
+
+// SubscriptionResponseFrequencyType defines model for SubscriptionResponse.FrequencyType.
+type SubscriptionResponseFrequencyType string
 
 // TaskListTaskResponse Moneybird-compatible task_list_task_response.
 type TaskListTaskResponse struct {
@@ -6908,6 +7445,9 @@ type OneContact = Contact
 // OneContactPerson Moneybird-compatible contact_person_response.
 type OneContactPerson = ContactPersonResponse
 
+// RecurringSalesInvoicePage defines model for RecurringSalesInvoicePage.
+type RecurringSalesInvoicePage = []RecurringSalesInvoice
+
 // SalesInvoicePage defines model for SalesInvoicePage.
 type SalesInvoicePage = []SalesInvoice
 
@@ -7095,6 +7635,24 @@ type CreateExternalSalesInvoiceAttachmentMultipartBody struct {
 type ListFinancialMutationsParams struct {
 	// Filter Comma-separated key:value terms: period (this_week, prev_month, this_quarter, next_year and so on, or a range like 202401..202403 or 20240101..20240131), state (all, unprocessed, processed, auto_booked), mutation_type (all, debit, credit), financial_account_id, amount_from and amount_to. Join several states or types with a pipe. Without a filter, the period is this year.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// ListRecurringSalesInvoicesParams defines parameters for ListRecurringSalesInvoices.
+type ListRecurringSalesInvoicesParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// ListRecurringSalesInvoiceVersionsParams defines parameters for ListRecurringSalesInvoiceVersions.
+type ListRecurringSalesInvoiceVersionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
 }
 
 // GetGeneralLedgerReportParams defines parameters for GetGeneralLedgerReport.
@@ -7360,6 +7918,18 @@ type UpdateLedgerAccountSchemeJSONRequestBody = LedgerAccountSchemeRequest
 
 // UpdateLedgerAccountJSONRequestBody defines body for UpdateLedgerAccount for application/json ContentType.
 type UpdateLedgerAccountJSONRequestBody = LedgerAccountRequest
+
+// CreateRecurringSalesInvoiceJSONRequestBody defines body for CreateRecurringSalesInvoice for application/json ContentType.
+type CreateRecurringSalesInvoiceJSONRequestBody = RecurringSalesInvoiceRequest
+
+// FetchRecurringSalesInvoicesJSONRequestBody defines body for FetchRecurringSalesInvoices for application/json ContentType.
+type FetchRecurringSalesInvoicesJSONRequestBody = SynchronizationRequest
+
+// UpdateRecurringSalesInvoiceJSONRequestBody defines body for UpdateRecurringSalesInvoice for application/json ContentType.
+type UpdateRecurringSalesInvoiceJSONRequestBody = RecurringSalesInvoiceRequest
+
+// CreateRecurringSalesInvoiceNoteJSONRequestBody defines body for CreateRecurringSalesInvoiceNote for application/json ContentType.
+type CreateRecurringSalesInvoiceNoteJSONRequestBody = NoteRequest
 
 // CreateSalesInvoiceJSONRequestBody defines body for CreateSalesInvoice for application/json ContentType.
 type CreateSalesInvoiceJSONRequestBody = SalesInvoiceRequest
@@ -8675,6 +9245,388 @@ func (t Money) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Money) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsContactPersonResponse returns the union data inside the RecurringSalesInvoice_ContactPerson as a ContactPersonResponse
+func (t RecurringSalesInvoice_ContactPerson) AsContactPersonResponse() (ContactPersonResponse, error) {
+	var body ContactPersonResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromContactPersonResponse overwrites any union data inside the RecurringSalesInvoice_ContactPerson as the provided ContactPersonResponse
+func (t *RecurringSalesInvoice_ContactPerson) FromContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeContactPersonResponse performs a merge with any union data inside the RecurringSalesInvoice_ContactPerson, using the provided ContactPersonResponse
+func (t *RecurringSalesInvoice_ContactPerson) MergeContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecurringSalesInvoice_ContactPerson) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecurringSalesInvoice_ContactPerson) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSubscriptionResponse returns the union data inside the RecurringSalesInvoice_Subscription as a SubscriptionResponse
+func (t RecurringSalesInvoice_Subscription) AsSubscriptionResponse() (SubscriptionResponse, error) {
+	var body SubscriptionResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSubscriptionResponse overwrites any union data inside the RecurringSalesInvoice_Subscription as the provided SubscriptionResponse
+func (t *RecurringSalesInvoice_Subscription) FromSubscriptionResponse(v SubscriptionResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSubscriptionResponse performs a merge with any union data inside the RecurringSalesInvoice_Subscription, using the provided SubscriptionResponse
+func (t *RecurringSalesInvoice_Subscription) MergeSubscriptionResponse(v SubscriptionResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecurringSalesInvoice_Subscription) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecurringSalesInvoice_Subscription) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount as a RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0() (RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount as a RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1() (RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDesiredCount1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DesiredCount) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes as a RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0() (RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes as a RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1() (RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_DetailsAttributes) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount as a RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0() (RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount as a RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1() (RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceDiscount1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Discount) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval as a RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0() (RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval as a RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1() (RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceFirstDueInterval1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_FirstDueInterval) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency as a RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0() (RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0(v RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1 returns the union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency as a RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency) AsRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1() (RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1, error) {
+	var body RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1 overwrites any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency as the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency) FromRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1 performs a merge with any union data inside the RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency, using the provided RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency) MergeRecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1(v RecurringSalesInvoiceRequestRecurringSalesInvoiceFrequency1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecurringSalesInvoiceRequest_RecurringSalesInvoice_Frequency) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -10011,6 +10963,78 @@ func (t *Number) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsContactPersonResponse returns the union data inside the RecurringSalesInvoiceResponse_ContactPerson as a ContactPersonResponse
+func (t RecurringSalesInvoiceResponse_ContactPerson) AsContactPersonResponse() (ContactPersonResponse, error) {
+	var body ContactPersonResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromContactPersonResponse overwrites any union data inside the RecurringSalesInvoiceResponse_ContactPerson as the provided ContactPersonResponse
+func (t *RecurringSalesInvoiceResponse_ContactPerson) FromContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeContactPersonResponse performs a merge with any union data inside the RecurringSalesInvoiceResponse_ContactPerson, using the provided ContactPersonResponse
+func (t *RecurringSalesInvoiceResponse_ContactPerson) MergeContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecurringSalesInvoiceResponse_ContactPerson) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecurringSalesInvoiceResponse_ContactPerson) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSubscriptionResponse returns the union data inside the RecurringSalesInvoiceResponse_Subscription as a SubscriptionResponse
+func (t RecurringSalesInvoiceResponse_Subscription) AsSubscriptionResponse() (SubscriptionResponse, error) {
+	var body SubscriptionResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSubscriptionResponse overwrites any union data inside the RecurringSalesInvoiceResponse_Subscription as the provided SubscriptionResponse
+func (t *RecurringSalesInvoiceResponse_Subscription) FromSubscriptionResponse(v SubscriptionResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSubscriptionResponse performs a merge with any union data inside the RecurringSalesInvoiceResponse_Subscription, using the provided SubscriptionResponse
+func (t *RecurringSalesInvoiceResponse_Subscription) MergeSubscriptionResponse(v SubscriptionResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RecurringSalesInvoiceResponse_Subscription) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RecurringSalesInvoiceResponse_Subscription) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsContactPersonResponse returns the union data inside the SalesInvoiceResponse_ContactPerson as a ContactPersonResponse
 func (t SalesInvoiceResponse_ContactPerson) AsContactPersonResponse() (ContactPersonResponse, error) {
 	var body ContactPersonResponse
@@ -10043,6 +11067,42 @@ func (t SalesInvoiceResponse_ContactPerson) MarshalJSON() ([]byte, error) {
 }
 
 func (t *SalesInvoiceResponse_ContactPerson) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsContactPersonResponse returns the union data inside the SubscriptionResponse_ContactPerson as a ContactPersonResponse
+func (t SubscriptionResponse_ContactPerson) AsContactPersonResponse() (ContactPersonResponse, error) {
+	var body ContactPersonResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromContactPersonResponse overwrites any union data inside the SubscriptionResponse_ContactPerson as the provided ContactPersonResponse
+func (t *SubscriptionResponse_ContactPerson) FromContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeContactPersonResponse performs a merge with any union data inside the SubscriptionResponse_ContactPerson, using the provided ContactPersonResponse
+func (t *SubscriptionResponse_ContactPerson) MergeContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t SubscriptionResponse_ContactPerson) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *SubscriptionResponse_ContactPerson) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -10627,6 +11687,36 @@ type ServerInterface interface {
 	// GetOverview Get the administration's overview
 	// (GET /api/v2/{administration_id}/overview)
 	GetOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListRecurringSalesInvoices List all recurring sales invoices
+	// (GET /api/v2/{administration_id}/recurring_sales_invoices)
+	ListRecurringSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListRecurringSalesInvoicesParams)
+	// CreateRecurringSalesInvoice Create a recurring sales invoice
+	// (POST /api/v2/{administration_id}/recurring_sales_invoices)
+	CreateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListRecurringSalesInvoiceVersions List all ids and versions
+	// (GET /api/v2/{administration_id}/recurring_sales_invoices/synchronization)
+	ListRecurringSalesInvoiceVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListRecurringSalesInvoiceVersionsParams)
+	// FetchRecurringSalesInvoices Fetch recurring sales invoices with given ids
+	// (POST /api/v2/{administration_id}/recurring_sales_invoices/synchronization)
+	FetchRecurringSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteRecurringSalesInvoice Delete or deactivate a recurring sales invoice
+	// (DELETE /api/v2/{administration_id}/recurring_sales_invoices/{id})
+	DeleteRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetRecurringSalesInvoice Get a recurring sales invoice
+	// (GET /api/v2/{administration_id}/recurring_sales_invoices/{id})
+	GetRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateRecurringSalesInvoice Update a recurring sales invoice
+	// (PATCH /api/v2/{administration_id}/recurring_sales_invoices/{id})
+	UpdateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeactivateRecurringSalesInvoice Deactivate a recurring sales invoice
+	// (PATCH /api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate)
+	DeactivateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateRecurringSalesInvoiceNote Add note to a recurring sales invoice
+	// (POST /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes)
+	CreateRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteRecurringSalesInvoiceNote Delete a note from a recurring sales invoice
+	// (DELETE /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes/{note_id})
+	DeleteRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
 	// GetBankBalance Bank balance report
 	// (GET /api/v2/{administration_id}/reports/bank_balance)
 	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -11694,6 +12784,66 @@ func (_ Unimplemented) LeaveAdministration(w http.ResponseWriter, r *http.Reques
 // GetOverview Get the administration's overview
 // (GET /api/v2/{administration_id}/overview)
 func (_ Unimplemented) GetOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListRecurringSalesInvoices List all recurring sales invoices
+// (GET /api/v2/{administration_id}/recurring_sales_invoices)
+func (_ Unimplemented) ListRecurringSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListRecurringSalesInvoicesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateRecurringSalesInvoice Create a recurring sales invoice
+// (POST /api/v2/{administration_id}/recurring_sales_invoices)
+func (_ Unimplemented) CreateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListRecurringSalesInvoiceVersions List all ids and versions
+// (GET /api/v2/{administration_id}/recurring_sales_invoices/synchronization)
+func (_ Unimplemented) ListRecurringSalesInvoiceVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListRecurringSalesInvoiceVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchRecurringSalesInvoices Fetch recurring sales invoices with given ids
+// (POST /api/v2/{administration_id}/recurring_sales_invoices/synchronization)
+func (_ Unimplemented) FetchRecurringSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteRecurringSalesInvoice Delete or deactivate a recurring sales invoice
+// (DELETE /api/v2/{administration_id}/recurring_sales_invoices/{id})
+func (_ Unimplemented) DeleteRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetRecurringSalesInvoice Get a recurring sales invoice
+// (GET /api/v2/{administration_id}/recurring_sales_invoices/{id})
+func (_ Unimplemented) GetRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateRecurringSalesInvoice Update a recurring sales invoice
+// (PATCH /api/v2/{administration_id}/recurring_sales_invoices/{id})
+func (_ Unimplemented) UpdateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeactivateRecurringSalesInvoice Deactivate a recurring sales invoice
+// (PATCH /api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate)
+func (_ Unimplemented) DeactivateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateRecurringSalesInvoiceNote Add note to a recurring sales invoice
+// (POST /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes)
+func (_ Unimplemented) CreateRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteRecurringSalesInvoiceNote Delete a note from a recurring sales invoice
+// (DELETE /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes/{note_id})
+func (_ Unimplemented) DeleteRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -16767,6 +17917,387 @@ func (siw *ServerInterfaceWrapper) GetOverview(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ListRecurringSalesInvoices operation middleware
+func (siw *ServerInterfaceWrapper) ListRecurringSalesInvoices(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListRecurringSalesInvoicesParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRecurringSalesInvoices(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateRecurringSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) CreateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateRecurringSalesInvoice(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListRecurringSalesInvoiceVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListRecurringSalesInvoiceVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListRecurringSalesInvoiceVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRecurringSalesInvoiceVersions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchRecurringSalesInvoices operation middleware
+func (siw *ServerInterfaceWrapper) FetchRecurringSalesInvoices(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchRecurringSalesInvoices(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRecurringSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRecurringSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRecurringSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRecurringSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) GetRecurringSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRecurringSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateRecurringSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) UpdateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateRecurringSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeactivateRecurringSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) DeactivateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeactivateRecurringSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateRecurringSalesInvoiceNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateRecurringSalesInvoiceNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRecurringSalesInvoiceNote operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "note_id" -------------
+	var noteId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "note_id", chi.URLParam(r, "note_id"), &noteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "note_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRecurringSalesInvoiceNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetBankBalance operation middleware
 func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http.Request) {
 
@@ -19479,6 +21010,36 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_uncollectible", wrapper.MarkExternalSalesInvoiceAsUncollectible)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices", wrapper.ListRecurringSalesInvoices)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices", wrapper.CreateRecurringSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/synchronization", wrapper.ListRecurringSalesInvoiceVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/synchronization", wrapper.FetchRecurringSalesInvoices)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}", wrapper.DeleteRecurringSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}", wrapper.GetRecurringSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}", wrapper.UpdateRecurringSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate", wrapper.DeactivateRecurringSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes", wrapper.CreateRecurringSalesInvoiceNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes/{note_id}", wrapper.DeleteRecurringSalesInvoiceNote)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/booking_rules", wrapper.ListBookingRules)

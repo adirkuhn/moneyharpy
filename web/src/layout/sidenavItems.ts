@@ -28,7 +28,7 @@ export const navItems: NavItem[] = [
     children: [
       link('salesInvoices', 'sales_invoices', true),
       link('externalInvoices', 'external_sales_invoices', true),
-      link('recurringInvoices', 'recurring_sales_invoices'),
+      link('recurringInvoices', 'recurring_sales_invoices', true),
     ],
   },
   { kind: 'incoming', key: 'incoming', to: 'documents', ready: false, permissions: ['documents'] },

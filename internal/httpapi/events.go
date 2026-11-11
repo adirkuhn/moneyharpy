@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -19,6 +20,7 @@ import (
 type change struct {
 	params      map[string]string
 	status      int
+	header      http.Header
 	request     map[string]any
 	response    []byte
 	responseMap map[string]any
@@ -243,6 +245,21 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 	"markExternalSalesInvoiceAsUncollectible": func(c change) []webhooks.Event {
 		return c.one("ExternalSalesInvoice", "external_sales_invoice_marked_as_uncollectible")
 	},
+	"createRecurringSalesInvoice": func(c change) []webhooks.Event {
+		return c.one(sales.RecurringEntityType, "recurring_sales_invoice_created")
+	},
+	"updateRecurringSalesInvoice": func(c change) []webhooks.Event {
+		return c.one(sales.RecurringEntityType, "recurring_sales_invoice_updated")
+	},
+	"deactivateRecurringSalesInvoice": func(c change) []webhooks.Event {
+		return c.one(sales.RecurringEntityType, "recurring_sales_invoice_deactivated")
+	},
+	"deleteRecurringSalesInvoice": func(c change) []webhooks.Event {
+		if c.header.Get("X-Kept-As") == "deactivated" {
+			return c.one(sales.RecurringEntityType, "recurring_sales_invoice_deactivated")
+		}
+		return c.one(sales.RecurringEntityType, "recurring_sales_invoice_destroyed")
+	},
 	"createContact": func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
 	"updateContact": func(c change) []webhooks.Event {
 		switch c.nested("contact")["archived"] {
@@ -316,7 +333,7 @@ func (s *server) recordEvents(next http.Handler) http.Handler {
 		if err != nil {
 			return
 		}
-		c := change{params: info.params, status: rec.status, response: bytes.TrimSpace(rec.body.Bytes())}
+		c := change{params: info.params, status: rec.status, header: rec.Header(), response: bytes.TrimSpace(rec.body.Bytes())}
 		_ = json.Unmarshal(reqBody, &c.request)
 		_ = json.Unmarshal(c.response, &c.responseMap)
 		ctx := context.WithoutCancel(r.Context())
@@ -329,7 +346,8 @@ func (s *server) recordEvents(next http.Handler) http.Handler {
 }
 
 // SalesNotifier publishes what sales invoices tell, such as a change of
-// state by the background job, as webhook events.
+// state by the background job or an invoice a recurring invoice made, as
+// webhook events.
 type SalesNotifier struct {
 	Webhooks *webhooks.Service
 	Logger   *slog.Logger
@@ -351,6 +369,19 @@ func (n SalesNotifier) Notify(ctx context.Context, admin resource.ID, action str
 	}
 	entity, _ := json.Marshal(fields)
 	e := webhooks.Event{EntityType: entityType, EntityID: inv.ID.String(), Action: action, State: inv.State, Entity: entity}
+	if err := n.Webhooks.Publish(context.WithoutCancel(ctx), admin, e); err != nil && n.Logger != nil {
+		n.Logger.ErrorContext(ctx, "publish webhook event", "action", action, "error", err)
+	}
+}
+
+// NotifyRecurring implements sales.Notifier, for recurring invoices.
+func (n SalesNotifier) NotifyRecurring(ctx context.Context, admin resource.ID, action string, r sales.Recurring) {
+	entity, _ := json.Marshal(map[string]any{
+		"id": r.ID.String(), "administration_id": admin.String(), "contact_id": r.ContactID.String(), "active": r.Active,
+		"invoice_date": r.InvoiceDate.Format(time.DateOnly), "frequency_type": r.FrequencyType, "frequency": r.Frequency,
+		"total_price_incl_tax": r.Totals.InclTax.String(), "version": r.Version(), "uri": r.Ref().URI(),
+	})
+	e := webhooks.Event{EntityType: sales.RecurringEntityType, EntityID: r.ID.String(), Action: action, Entity: entity}
 	if err := n.Webhooks.Publish(context.WithoutCancel(ctx), admin, e); err != nil && n.Logger != nil {
 		n.Logger.ErrorContext(ctx, "publish webhook event", "action", action, "error", err)
 	}

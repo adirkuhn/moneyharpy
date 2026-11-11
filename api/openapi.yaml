@@ -56,6 +56,8 @@ tags:
     description: Invoices to customers, from draft to sent, with their PDF, e-invoice, bookings and credit invoices. Compatible with the Moneybird API.
   - name: External sales invoices
     description: Invoices made in other software, such as a webshop or a till, booked and followed until paid. Compatible with the Moneybird API.
+  - name: Recurring sales invoices
+    description: Templates that make sales invoices on a schedule, and send them if wanted. Compatible with the Moneybird API.
   - name: Booking rules
     description: Rules that book matching transactions automatically. MoneyHarpy extension.
   - name: Management
@@ -4597,6 +4599,303 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/recurring_sales_invoices:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listRecurringSalesInvoices
+      x-permissions: [sales_invoices]
+      summary: List all recurring sales invoices
+      description: >-
+        The next invoice to make first. Filter terms: state (active, inactive or, as an extension, all; active unless given), frequency (all, day, week, month, quarter, year), auto_send (true, false or null), contact_id and workflow_id; include_subscriptions is accepted. Paged with a Link header and X-Total-Count.
+      tags: [Recurring sales invoices]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          $ref: '#/components/responses/RecurringSalesInvoicePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createRecurringSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Create a recurring sales invoice
+      description: >-
+        A template that makes a draft sales invoice on invoice_date (today unless given, not in the past) and every frequency frequency_types after it (every month unless given), until last_date or desired_count invoices; with auto_send each is sent too, the way the contact receives invoices. Months, quarters and years keep the day of the first date, or the month's last day when the month is shorter. {period} in a line's description becomes the period the invoice covers, and lines with a period get that period. Workflow, document style and identity default like a new invoice's.
+      tags: [Recurring sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurringSalesInvoiceRequest'
+      responses:
+        '201':
+          description: The created recurring invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/recurring_sales_invoices/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listRecurringSalesInvoiceVersions
+      x-permissions: [sales_invoices]
+      summary: List all ids and versions
+      tags: [Recurring sales invoices]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The ids and versions of the recurring invoices the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchRecurringSalesInvoices
+      x-permissions: [sales_invoices]
+      summary: Fetch recurring sales invoices with given ids
+      tags: [Recurring sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The recurring invoices with these ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecurringSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/recurring_sales_invoices/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getRecurringSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Get a recurring sales invoice
+      tags: [Recurring sales invoices]
+      responses:
+        '200':
+          description: The recurring sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateRecurringSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Update a recurring sales invoice
+      description: >-
+        Lines with an id change, lines with _destroy go, lines without an id are added; invoices already made stay as they are. A new invoice_date, frequency or frequency_type restarts the schedule from the next invoice date; invoice_date must not lie in the past.
+      tags: [Recurring sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecurringSalesInvoiceRequest'
+      responses:
+        '200':
+          description: The recurring sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      operationId: deleteRecurringSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Delete or deactivate a recurring sales invoice
+      description: >-
+        One that made no invoices yet is deleted. One that did is deactivated instead and kept, with the header X-Kept-As: deactivated; once deactivated it cannot be removed.
+      tags: [Recurring sales invoices]
+      responses:
+        '204':
+          description: The recurring invoice is deleted, or deactivated
+          headers:
+            X-Kept-As:
+              description: deactivated when the recurring invoice was kept.
+              schema:
+                type: string
+                enum: [deactivated]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: deactivateRecurringSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Deactivate a recurring sales invoice
+      description: >-
+        Stops it from making invoices, for good; the recurring invoice and the invoices it made are kept. Not when it is deactivated already.
+      tags: [Recurring sales invoices]
+      responses:
+        '200':
+          description: The deactivated recurring invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createRecurringSalesInvoiceNote
+      x-permissions: [sales_invoices]
+      summary: Add note to a recurring sales invoice
+      tags: [Recurring sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteRecurringSalesInvoiceNote
+      x-permissions: [sales_invoices]
+      summary: Delete a note from a recurring sales invoice
+      tags: [Recurring sales invoices]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/booking_rules:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -6285,6 +6584,23 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/ExternalSalesInvoice'
+    RecurringSalesInvoicePage:
+      description: A page of recurring sales invoices
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number of recurring invoices selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RecurringSalesInvoice'
     GeneralJournalDocumentPage:
       description: A page of journal entries
       headers:
@@ -8191,6 +8507,124 @@ components:
                 - type: object
                   additionalProperties:
                     $ref: '#/components/schemas/SalesInvoiceDetailInput'
+    RecurringSalesInvoice:
+      description: A Moneybird recurring sales invoice with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/recurring_sales_invoice_response'
+        - type: object
+          required: [id, administration_id, contact_id, workflow_id, start_date, invoice_date, active, currency, frequency_type, frequency,
+                     auto_send, details, custom_fields, notes, attachments, events, total_price_excl_tax, total_price_incl_tax, version, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            document_style_id:
+              $ref: '#/components/schemas/Identifier'
+            identity_id:
+              $ref: '#/components/schemas/Identifier'
+            mergeable:
+              type: boolean
+              description: MoneyHarpy extension. Accepted and kept; MoneyHarpy does not merge invoices yet.
+            invoices_created:
+              type: integer
+              description: MoneyHarpy extension. How many invoices it made.
+            total_tax:
+              type: string
+              description: MoneyHarpy extension. The VAT of all lines.
+            total_discount:
+              type: string
+              description: MoneyHarpy extension. The discount on all lines.
+    RecurringSalesInvoiceRequest:
+      type: object
+      required: [recurring_sales_invoice]
+      additionalProperties: false
+      properties:
+        recurring_sales_invoice:
+          type: object
+          additionalProperties: false
+          properties:
+            contact_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            contact_person_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            update_contact:
+              description: Accepted for compatibility; every invoice shows the contact as it is when the invoice is made.
+              $ref: '#/components/schemas/FlexibleBoolean'
+            document_style_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            workflow_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            identity_id:
+              description: MoneyHarpy extension.
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            reference:
+              type: string
+              maxLength: 1000
+            invoice_date:
+              type: string
+              description: The date of the next invoice, yyyy-mm-dd; not in the past.
+              format: date
+            currency:
+              type: string
+              maxLength: 3
+            first_due_interval:
+              oneOf:
+                - type: integer
+                  minimum: 0
+                  maximum: 365
+                - type: string
+                  pattern: '^[0-9]{1,3}$'
+            prices_are_incl_tax:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            payment_conditions:
+              type: string
+              maxLength: 1000
+            discount:
+              description: A percentage, such as "10" or "2.5"; empty for none.
+              oneOf:
+                - type: string
+                  maxLength: 10
+                - type: number
+            frequency_type:
+              type: string
+              enum: [day, week, month, quarter, year]
+            frequency:
+              description: How many frequency_types lie between two invoices.
+              oneOf:
+                - type: integer
+                  minimum: 1
+                  maximum: 1000
+                - type: string
+                  pattern: '^[0-9]{1,4}$'
+            has_desired_count:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            desired_count:
+              description: With has_desired_count, the number of invoices to make in all; it sets last_date.
+              oneOf:
+                - type: integer
+                  minimum: 1
+                - type: string
+                  pattern: '^[0-9]{1,6}$'
+            last_date:
+              type: string
+              description: MoneyHarpy extension. The last day an invoice may be made on, yyyy-mm-dd; empty for no end.
+              pattern: '^(\d{4}-\d{2}-\d{2})?$'
+            auto_send:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            mergeable:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            details_attributes:
+              description: An array of lines, or an object of lines keyed by position.
+              oneOf:
+                - type: array
+                  maxItems: 500
+                  items:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
+                - type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
+            custom_fields_attributes:
+              $ref: '#/components/schemas/custom_fields_attributes'
     SalesInvoiceDetailInput:
       type: object
       additionalProperties: false

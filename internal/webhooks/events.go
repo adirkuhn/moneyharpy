@@ -30,6 +30,8 @@ var Events = []string{
 	"external_sales_invoice_created", "external_sales_invoice_updated", "external_sales_invoice_destroyed",
 	"external_sales_invoice_state_changed_to_open", "external_sales_invoice_state_changed_to_late", "external_sales_invoice_state_changed_to_paid",
 	"external_sales_invoice_state_changed_to_uncollectible", "external_sales_invoice_marked_as_dubious", "external_sales_invoice_marked_as_uncollectible",
+	"recurring_sales_invoice_created", "recurring_sales_invoice_updated", "recurring_sales_invoice_deactivated", "recurring_sales_invoice_destroyed",
+	"recurring_sales_invoice_invoice_created",
 	"payment_registered", "payment_destroyed", "payment_linked_to_financial_mutation",
 	"user_invited", "user_removed",
 	"access_token_created", "access_token_revoked",
@@ -39,7 +41,7 @@ var Events = []string{
 // matches every event starting with it.
 var Groups = []string{
 	"administration", "identity", "default_identity", "workflow", "document_style", "tax_rate", "ledger_account",
-	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "sales_invoice", "external_sales_invoice", "payment", "user", "access_token",
+	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "sales_invoice", "external_sales_invoice", "recurring_sales_invoice", "payment", "user", "access_token",
 }
 
 // known reports whether a subscription names an event or a group.

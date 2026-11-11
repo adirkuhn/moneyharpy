@@ -56,6 +56,8 @@ import { JournalDocumentPage } from './journal/JournalDocumentPage'
 import { JournalDocumentsPage } from './journal/JournalDocumentsPage'
 import { LedgerEntriesPage } from './journal/LedgerEntriesPage'
 import { TrialBalancePage } from './journal/TrialBalancePage'
+import { RecurringInvoicePage } from './recurring/RecurringInvoicePage'
+import { RecurringInvoicesPage } from './recurring/RecurringInvoicesPage'
 
 export function AppRoutes() {
   return (
@@ -93,6 +95,9 @@ export function AppRoutes() {
           <Route path="/:administrationId/external_sales_invoices" element={<ExternalInvoicesPage />} />
           <Route path="/:administrationId/external_sales_invoices/new" element={<ExternalInvoicePage />} />
           <Route path="/:administrationId/external_sales_invoices/:invoiceId" element={<ExternalInvoicePage />} />
+          <Route path="/:administrationId/recurring_sales_invoices" element={<RecurringInvoicesPage />} />
+          <Route path="/:administrationId/recurring_sales_invoices/new" element={<RecurringInvoicePage />} />
+          <Route path="/:administrationId/recurring_sales_invoices/:recurringId" element={<RecurringInvoicePage />} />
           <Route path="/:administrationId/report/general_ledger" element={<TrialBalancePage />} />
           <Route path="/:administrationId/report/journal_entries" element={<LedgerEntriesPage />} />
           <Route path="/:administrationId/documents/general_journal_documents" element={<JournalDocumentsPage />} />
