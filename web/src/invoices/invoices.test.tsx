@@ -6,7 +6,7 @@ import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import type { Contact } from '../contacts/queries'
 import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
-import { administration, documentStyle, listing, server, signedIn, workflow } from '../test/server'
+import { administration, documentStyle, identity, listing, server, signedIn, workflow } from '../test/server'
 import type { SalesInvoice } from './queries'
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
@@ -31,6 +31,7 @@ const sales: LedgerAccount = {
 
 const shop = {
   id: '701', administration_id: '11', company_name: 'Example Shop B.V.', firstname: null, lastname: null, customer_id: '1',
+  address1: 'Dam 2', address2: null, zipcode: '1012AB', city: 'Amsterdam',
   send_invoices_to_email: 'billing@example.com', email_ubl: false, delivery_method: 'Email' as const, country: 'NL',
 }
 
@@ -47,6 +48,15 @@ const invoice = (over: Partial<SalesInvoice> = {}): SalesInvoice => ({
 })
 const draft = invoice({ id: '902', invoice_id: null, draft_id: 3, state: 'draft', invoice_date: null, uri: '/11/sales_invoices/902' })
 
+/** The sender block of Moneybird's default layout. */
+const senderStyle = documentStyle({
+  id: '701',
+  invoice_sender_address: [
+    { field: 'company_name', bold: true }, { field: 'address' }, { field: 'newline' }, { field: 'email' }, { field: 'phone' },
+    { field: 'newline' }, { field: 'chamber_of_commerce', label: true }, { field: 'tax_number', label: true }, { field: 'bank_account_number', label: true },
+  ],
+})
+
 function loaded(list: SalesInvoice[] = [invoice(), draft], total = list.length, seen: URL[] = []) {
   return [
     signedIn(),
@@ -61,7 +71,8 @@ function loaded(list: SalesInvoice[] = [invoice(), draft], total = list.length, 
     http.get('*/api/v2/11/tax_rates', () => HttpResponse.json(rates)),
     http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales])),
     http.get('*/api/v2/11/workflows', () => HttpResponse.json([workflow(), workflow({ id: '602', type: 'EstimateWorkflow', name: 'Quotes' })])),
-    http.get('*/api/v2/11/document_styles', () => HttpResponse.json([documentStyle({ id: '701' })])),
+    http.get('*/api/v2/11/document_styles', () => HttpResponse.json([senderStyle])),
+    http.get('*/api/v2/11/identities', () => HttpResponse.json([identity({ id: '500' })])),
     http.get('*/api/v2/11/contacts', ({ request }) => {
       seen.push(new URL(request.url))
       return HttpResponse.json([shop as unknown as Contact], { headers: { 'X-Total-Count': '1' } })
@@ -162,7 +173,10 @@ describe('the invoice list', () => {
     renderAt('/11/sales_invoices')
     expect(await screen.findByText('No invoices yet. Create your first invoice.')).toBeInTheDocument()
     const intro = screen.getByRole('region', { name: 'Send your invoice' })
-    expect(within(intro).getAllByRole('heading', { level: 3 })).toHaveLength(3)
+    expect(within(intro).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Create and send invoice', 'Set up your house style', 'Create a workflow'])
+    expect(within(intro).getByText('Create your sales invoice and send it straight to your customer. Decide the settings and how you send the invoice yourself.')).toBeInTheDocument()
+    expect(within(intro).getByText('Give your invoices your own look. Use your logo, colors and font. Choose a layout that suits your business.')).toBeInTheDocument()
+    expect(within(intro).getByText('Determine the process your invoice follows: whether reminders are sent automatically and which payment methods your customer gets.')).toBeInTheDocument()
     const info = screen.getByRole('button', { name: 'More information' })
     expect(info).toHaveAttribute('aria-expanded', 'true')
     await userEvent.click(info)
@@ -176,7 +190,58 @@ async function pickContact() {
   await userEvent.click(await screen.findByRole('option', { name: 'Example Shop B.V.' }))
 }
 
+/** The texts of a row's cells, with the spaces money is written with made plain. */
+const cells = (row: HTMLElement) => within(row).getAllByRole('cell').map((c) => c.textContent?.replace(/\s/g, ' '))
+
+const paper = () => screen.getByRole('document', { name: 'Invoice preview' })
+
+/** Opens the lines of the document for editing, as a click on them does. */
+async function editLines() {
+  await userEvent.click(within(paper()).getByRole('button', { name: /invoice details/ }))
+  return screen.getByRole('table', { name: 'Lines' })
+}
+
 describe('the invoice editor', () => {
+  it('shows a new invoice as its document, empty, after Moneybird', async () => {
+    server.use(...loaded())
+    renderAt('/11/sales_invoices/new')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Add invoice' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Change layout' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'More actions' })).toBeInTheDocument()
+
+    // The sender comes from the document style's sender block and its identity.
+    const sender = await within(paper()).findByRole('list', { name: 'Afzenderadres' })
+    expect(within(sender).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      'Harpy B.V.', 'Dam 11012JS Amsterdam', '', 'books@example.com', '', 'KVK: 12345678', 'Bank: NL91ABNA0417164300',
+    ])
+    expect(within(sender).getByText('Harpy B.V.').closest('li')).toHaveClass('invoice-paper__bold')
+
+    const recipient = within(paper()).getByRole('combobox', { name: 'Contact' })
+    expect(recipient).toHaveTextContent('1. Select contact')
+    expect(recipient).toHaveTextContent('First name Last nameAddress 1231234AB City')
+
+    // The document speaks the workflow's language: this one is Dutch.
+    expect(within(paper()).getByRole('heading', { level: 2 })).toHaveTextContent('Factuur Concept')
+    expect(within(paper()).getByText('Contact:').parentElement).toHaveTextContent('Contact: First name Last name')
+    expect(within(paper()).getByRole('button', { name: /Factuurdatum/ })).toHaveTextContent('Factuurdatum:11-11-2026')
+    expect(within(paper()).getByRole('button', { name: /Vervaldatum/ })).toHaveTextContent('Vervaldatum:25-11-2026')
+
+    expect(within(paper()).getByRole('button', { name: '2. Add invoice details' })).toBeInTheDocument()
+    const lines = within(paper()).getByRole('table', { name: 'Factuurregels' })
+    expect(cells(within(lines).getAllByRole('row')[1]!)).toEqual(['1 x', "You didn't add any details yet", '€ 0,00', '€ 0,00', '21%'])
+    const totals = within(paper()).getByRole('table', { name: 'Totals' })
+    expect(within(totals).getAllByRole('row').map((r) => r.textContent?.replace(/\s/g, ' '))).toEqual(['Subtotaal€ 0,00', 'Totaal€ 0,00'])
+    expect(within(paper()).getByText(/Graag ontvangen we € 0,00 vóór 25-11-2026 op rekening NL91ABNA0417164300 ten name van Harpy B.V./)).toBeInTheDocument()
+
+    // What the paper does not show is set below it.
+    const settings = screen.getByRole('group', { name: 'Invoice settings' })
+    for (const label of ['Reference', 'Workflow', 'Document style', 'Prices include VAT', 'Discount', 'Payment term']) {
+      expect(within(settings).getByLabelText(label)).toBeInTheDocument()
+    }
+    expect(screen.getByRole('button', { name: 'Save invoice' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/11/sales_invoices')
+  })
+
   it('creates an invoice with lines and shows the totals as you type', async () => {
     let sent: { sales_invoice?: Record<string, unknown> } = {}
     server.use(...loaded(), http.post('*/api/v2/11/sales_invoices', async ({ request }) => {
@@ -184,10 +249,14 @@ describe('the invoice editor', () => {
       return HttpResponse.json(draft, { status: 201 })
     }))
     renderAt('/11/sales_invoices/new')
-    expect(await screen.findByRole('heading', { level: 1, name: 'New invoice' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Add invoice' })).toBeInTheDocument()
     await pickContact()
+    const recipient = within(paper()).getByRole('combobox', { name: 'Contact' })
+    expect(recipient).toHaveTextContent('Example Shop B.V.Dam 21012AB Amsterdam')
+    expect(recipient).not.toHaveTextContent('Select contact')
+    expect(within(paper()).getByText('Contact:').parentElement).toHaveTextContent('Contact: Example Shop B.V.')
     await userEvent.type(screen.getByLabelText('Reference'), 'Order 12')
-    const lines = screen.getByRole('table', { name: 'Lines' })
+    const lines = await editLines()
     let rows = within(lines).getAllByRole('row')
     await userEvent.type(within(rows[1]!).getByLabelText('Description'), 'Consulting')
     await userEvent.clear(within(rows[1]!).getByLabelText('Quantity'))
@@ -204,11 +273,12 @@ describe('the invoice editor', () => {
     await userEvent.type(screen.getByLabelText('Discount'), '10')
 
     const totals = screen.getByRole('table', { name: 'Totals' })
-    expect(within(totals).getByRole('row', { name: /Subtotal/ })).toHaveTextContent('€250.00')
-    expect(within(totals).getByRole('row', { name: /Discount/ })).toHaveTextContent('-€25.00')
-    expect(within(totals).getByRole('row', { name: /21% btw/ })).toHaveTextContent('€37.80')
-    expect(within(totals).getByRole('row', { name: /9% btw/ })).toHaveTextContent('€4.05')
-    expect(within(totals).getByRole('row', { name: /Total/ })).toHaveTextContent('€266.85')
+    expect(within(totals).getByRole('row', { name: /Subtotaal/ })).toHaveTextContent('€ 250,00')
+    expect(within(totals).getByRole('row', { name: /Korting/ })).toHaveTextContent('€ -25,00')
+    expect(within(totals).getByRole('row', { name: /21% btw/ })).toHaveTextContent('€ 37,80')
+    expect(within(totals).getByRole('row', { name: /9% btw/ })).toHaveTextContent('€ 4,05')
+    expect(within(totals).getByRole('row', { name: /^Totaal/ })).toHaveTextContent('€ 266,85')
+    expect(within(paper()).getByText(/Graag ontvangen we € 266,85/)).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
@@ -222,23 +292,94 @@ describe('the invoice editor', () => {
   it('takes VAT out of prices that include it', async () => {
     server.use(...loaded())
     renderAt('/11/sales_invoices/new')
-    const lines = await screen.findByRole('table', { name: 'Lines' })
+    await screen.findByRole('heading', { level: 1, name: 'Add invoice' })
     await userEvent.click(screen.getByRole('checkbox', { name: 'Prices include VAT' }))
+    const lines = await editLines()
     await userEvent.type(within(within(lines).getAllByRole('row')[1]!).getByLabelText('Price'), '121')
     const totals = screen.getByRole('table', { name: 'Totals' })
-    expect(within(totals).getByRole('row', { name: /21% btw/ })).toHaveTextContent('€21.00')
-    expect(within(totals).getByRole('row', { name: /Total/ })).toHaveTextContent('€121.00')
+    expect(within(totals).getByRole('row', { name: /21% btw/ })).toHaveTextContent('€ 21,00')
+    expect(within(totals).getByRole('row', { name: /^Totaal/ })).toHaveTextContent('€ 121,00')
   })
 
   it('shows what is wrong beside the fields', async () => {
     server.use(...loaded(), http.post('*/api/v2/11/sales_invoices', () => HttpResponse.json({ error: { contact_id: ["can't be blank"], 'details_attributes.0.price': ['is not an amount'] } }, { status: 422 })))
     renderAt('/11/sales_invoices/new')
-    const lines = await screen.findByRole('table', { name: 'Lines' })
+    await screen.findByRole('heading', { level: 1, name: 'Add invoice' })
+    const lines = await editLines()
     await userEvent.type(within(within(lines).getAllByRole('row')[1]!).getByLabelText('Description'), 'Consulting')
     await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
     expect(await screen.findByText("Contact can't be blank")).toBeInTheDocument()
+    expect(within(paper()).getByRole('combobox', { name: 'Contact' })).toHaveAttribute('aria-invalid', 'true')
     expect(screen.getByText('Price on line 1 is not an amount')).toBeInTheDocument()
-    expect(within(lines).getByLabelText('Price')).toHaveAttribute('aria-invalid', 'true')
+    expect(within(screen.getByRole('table', { name: 'Lines' })).getByLabelText('Price')).toHaveAttribute('aria-invalid', 'true')
+  })
+
+  it('edits the dates and the payment conditions in place', async () => {
+    let sent: { sales_invoice?: Record<string, unknown> } = {}
+    server.use(...loaded(), http.post('*/api/v2/11/sales_invoices', async ({ request }) => {
+      sent = (await request.json()) as typeof sent
+      return HttpResponse.json(draft, { status: 201 })
+    }))
+    renderAt('/11/sales_invoices/new')
+    await screen.findByRole('heading', { level: 1, name: 'Add invoice' })
+    await pickContact()
+
+    await userEvent.click(within(paper()).getByRole('button', { name: /Factuurdatum/ }))
+    const date = within(paper()).getByLabelText('Invoice date')
+    expect(date).toHaveFocus()
+    await userEvent.type(date, '2026-12-01')
+    await userEvent.keyboard('{Enter}')
+    expect(within(paper()).getByRole('button', { name: /Factuurdatum/ })).toHaveTextContent('01-12-2026')
+    expect(within(paper()).getByRole('button', { name: /Vervaldatum/ })).toHaveTextContent('15-12-2026')
+
+    await userEvent.click(within(paper()).getByRole('button', { name: /Vervaldatum/ }))
+    const due = within(paper()).getByLabelText('Due date')
+    await userEvent.clear(due)
+    await userEvent.type(due, '2026-12-31')
+    await userEvent.keyboard('{Enter}')
+    expect(within(paper()).getByRole('button', { name: /Vervaldatum/ })).toHaveTextContent('31-12-2026')
+    expect(screen.getByLabelText('Payment term')).toHaveValue(30)
+
+    await userEvent.click(within(paper()).getByRole('button', { name: /payment conditions/i }))
+    await userEvent.type(within(paper()).getByLabelText('Payment conditions'), 'Pay within 30 days.')
+    await userEvent.tab()
+    expect(within(paper()).getByText('Pay within 30 days.')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
+    expect(sent.sales_invoice).toMatchObject({ invoice_date: '2026-12-01', first_due_interval: 30, payment_conditions: 'Pay within 30 days.' })
+  })
+
+  it('picks the layout, and the document follows the workflow language', async () => {
+    let sent: { sales_invoice?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/document_styles', () => HttpResponse.json([senderStyle, documentStyle({ id: '702', name: 'Modern', default: false, uri: '/11/document_styles/702' })])),
+      http.get('*/api/v2/11/workflows', () => HttpResponse.json([workflow(), workflow({ id: '603', name: 'English', default: false, language: 'en', uri: '/11/workflows/603' })])),
+      http.post('*/api/v2/11/sales_invoices', async ({ request }) => {
+        sent = (await request.json()) as typeof sent
+        return HttpResponse.json(draft, { status: 201 })
+      }),
+    )
+    renderAt('/11/sales_invoices/new')
+    await screen.findByRole('heading', { level: 1, name: 'Add invoice' })
+    await pickContact()
+    const change = screen.getByRole('button', { name: 'Change layout' })
+    await userEvent.click(change)
+    expect(change).toHaveAttribute('aria-expanded', 'true')
+    const layouts = screen.getByRole('region', { name: 'Select layout' })
+    expect(await within(layouts).findByRole('button', { name: 'Standaard' })).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(within(layouts).getByRole('button', { name: 'Modern' }))
+    expect(screen.queryByRole('region', { name: 'Select layout' })).toBeNull()
+    expect(screen.getByLabelText('Document style')).toHaveValue('702')
+
+    await userEvent.selectOptions(screen.getByLabelText('Workflow'), '603')
+    expect(within(paper()).getByRole('heading', { level: 2 })).toHaveTextContent('Invoice Draft')
+    expect(within(paper()).getByRole('button', { name: /Invoice date/ })).toHaveTextContent('Invoice date:11/11/2026')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
+    expect(sent.sales_invoice).toMatchObject({ document_style_id: '702', workflow_id: '603' })
   })
 
   it('edits an invoice, changing and removing lines', async () => {
@@ -261,13 +402,16 @@ describe('the invoice editor', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Edit invoice 2026-0001' })).toBeInTheDocument()
     expect(screen.getByLabelText('Reference')).toHaveValue('Order 12')
     expect(screen.getByRole('combobox', { name: 'Contact' })).toHaveTextContent('Example Shop B.V.')
-    const lines = screen.getByRole('table', { name: 'Lines' })
+    expect(within(paper()).getByRole('heading', { level: 2 })).toHaveTextContent('Factuur 2026-0001')
+    const shown = within(paper()).getByRole('table', { name: 'Factuurregels' })
+    expect(cells(within(shown).getAllByRole('row')[1]!)).toEqual(['2 x', 'Consulting', '€ 100,00', '€ 200,00', '21%'])
+    const lines = await editLines()
     const price = within(within(lines).getAllByRole('row')[1]!).getByLabelText('Price')
     expect(price).toHaveValue('100')
     await userEvent.clear(price)
     await userEvent.type(price, '120')
     await userEvent.click(screen.getByRole('button', { name: 'Remove line 2' }))
-    expect(within(screen.getByRole('table', { name: 'Totals' })).getByRole('row', { name: /Total/ })).toHaveTextContent('€290.40')
+    expect(within(screen.getByRole('table', { name: 'Totals' })).getByRole('row', { name: /^Totaal/ })).toHaveTextContent('€ 290,40')
     await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/901$/))
     expect(sent.sales_invoice).toMatchObject({ contact_id: '701', workflow_id: '601', first_due_interval: 14 })
