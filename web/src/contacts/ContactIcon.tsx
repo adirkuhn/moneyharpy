@@ -2,7 +2,7 @@ const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeL
 
 export type ContactIconKind =
   | 'merge' | 'import' | 'card' | 'pin' | 'send' | 'wallet' | 'flow' | 'fields' | 'plus' | 'info'
-  | 'phone' | 'mail' | 'map' | 'landmark' | 'pen' | 'invoice' | 'external' | 'quote' | 'purchase' | 'receipt'
+  | 'phone' | 'mail' | 'map' | 'landmark' | 'pen' | 'invoice' | 'external' | 'quote' | 'purchase' | 'receipt' | 'copy'
 
 /** Line icons of the contacts pages, drawn for MoneyHarpy. */
 export function ContactIcon({ kind }: { kind: ContactIconKind }) {
@@ -26,6 +26,7 @@ export function ContactIcon({ kind }: { kind: ContactIconKind }) {
     external: <><path d="M6.500 3.500h8l3.500 3.500v13.500h-11.500Z" /><path d="M14.500 3.500V7H18M10 16l4.500-4.500M11 11.500h3.500V15" /></>,
     quote: <><path d="M6.500 3.500h8l3.500 3.500v13.500h-11.500Z" /><path d="M14.500 3.500V7H18M9.500 12.500h5m-5 3h3" /></>,
     purchase: <><path d="M6.500 3.500h11v17l-2.200-1.500-2.200 1.500-2.200-1.500-2.200 1.500-2.200-1.500Z" transform="translate(-1 0)" /><path d="M8.500 9h6m-6 3.500h6" /></>,
+    copy: <><rect x="8.500" y="8.500" width="11" height="11" rx="2" /><path d="M15.500 8.500V6.500a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2" /></>,
     receipt: <><rect x="3.500" y="7" width="17" height="12.500" rx="2" /><path d="m4 9 8 5 8-5M7.500 7V4.500h9V7" /></>,
   }
   return (

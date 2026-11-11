@@ -80,6 +80,8 @@ export const nl: Messages = {
       title: 'Contact', clientNumber: 'Klantnummer: {{id}}', export: 'Exporteren', extra: 'Extra', add: 'Toevoegen',
       call: 'Bel dit contact', email: 'E-mail dit contact', map: 'Open adres in Google Maps', kvk: 'Bekijk de KVK-pagina van dit bedrijf',
       emailAddress: 'E-mailadres', phone: 'Telefoonnummer', address: 'Adres', kvkNumber: 'KVK-nummer',
+      taxNumber: 'Btw-nummer', copyTaxNumber: 'Btw-nummer kopiëren', copied: 'Gekopieerd',
+      registerNotice: 'Mogelijk is er meer informatie beschikbaar voor dit contact.', registerLink: 'Vul informatie aan vanuit de Kamer van Koophandel',
       cocNumber: 'KvK-nummer', documents: 'Bijbehorende documenten',
       counts: {
         invoice_one: '{{count}} factuur', invoice_other: '{{count}} facturen', external_one: '{{count}} externe factuur', external_other: '{{count}} externe facturen',
