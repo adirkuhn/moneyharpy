@@ -22,20 +22,27 @@ export function LayoutPicker({ id, administrationId, styles, current, onPick }: 
         {styles.map((s) => (
           <li key={s.id}>
             <button type="button" className="layout-picker__style" aria-pressed={s.id === current} onClick={() => onPick(s.id ?? '')}>
-              <span className={`layout-picker__preview layout-picker__preview--${s.address_position ?? 'left'}`} aria-hidden="true">
-                {s.logo_hash
-                  ? <img className={`layout-picker__logo layout-picker__logo--${s.logo_position ?? 'left'}`} src={styleFileURL(administrationId, s.id ?? '', 'logo', s.logo_hash)} alt="" />
-                  : <span className={`layout-picker__logo layout-picker__logo--${s.logo_position ?? 'left'}`} />}
-                <span className="layout-picker__sender" />
-                <span className="layout-picker__recipient" />
-                <span className="layout-picker__title-bar" />
-                <span className="layout-picker__rows" />
-              </span>
+              <StylePreview administrationId={administrationId} style={s} />
               <span className="layout-picker__name">{s.name}</span>
             </button>
           </li>
         ))}
       </ul>
     </section>
+  )
+}
+
+/** A small drawing of a document style: its logo, sender, recipient, title and lines where the style puts them. */
+export function StylePreview({ administrationId, style: s }: { administrationId: string; style: DocumentStyle }) {
+  return (
+    <span className={`layout-picker__preview layout-picker__preview--${s.address_position ?? 'left'}`} aria-hidden="true">
+      {s.logo_hash
+        ? <img className={`layout-picker__logo layout-picker__logo--${s.logo_position ?? 'left'}`} src={styleFileURL(administrationId, s.id ?? '', 'logo', s.logo_hash)} alt="" />
+        : <span className={`layout-picker__logo layout-picker__logo--${s.logo_position ?? 'left'}`} />}
+      <span className="layout-picker__sender" />
+      <span className="layout-picker__recipient" />
+      <span className="layout-picker__title-bar" />
+      <span className="layout-picker__rows" />
+    </span>
   )
 }
