@@ -754,8 +754,13 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   await expect(page.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText('-€302.50')
 
   await page.getByRole('link', { name: 'Back to invoices' }).click()
-  await page.getByLabel('Show').selectOption('unpaid')
+  await page.getByRole('button', { name: 'Invoices from this year' }).click()
+  await page.getByRole('search', { name: 'Invoice filters' }).getByRole('link', { name: 'Unpaid invoices' }).click()
+  await expect(page.getByRole('button', { name: 'Unpaid invoices' })).toBeVisible()
   await expect(page.getByRole('table', { name: 'Invoices' }).getByRole('row')).toHaveCount(2)
+  // A click anywhere in a row opens the invoice.
+  await page.getByRole('table', { name: 'Invoices' }).getByRole('row').nth(1).getByRole('cell').last().click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/\d/)
 })
 
 test('sales invoices are paid by hand and by a bank transaction, and the overview follows', async ({ page }) => {
@@ -930,6 +935,9 @@ test('a draft invoice is made recurring, scheduled and deactivated', async ({ pa
 
   await page.getByRole('link', { name: 'Back to recurring invoices' }).click()
   await expect(page.getByText(/No recurring invoices yet/)).toBeVisible()
-  await page.getByLabel('Status').selectOption('inactive')
+  await page.getByRole('button', { name: 'Active recurring invoices' }).click()
+  const filters = page.getByRole('search', { name: 'Recurring invoice filters' })
+  await filters.getByRole('radio', { name: 'Inactive' }).check()
+  await filters.getByRole('button', { name: 'Filter' }).click()
   await expect(page.getByRole('table', { name: 'Recurring invoices' }).getByRole('row')).toHaveCount(2)
 })

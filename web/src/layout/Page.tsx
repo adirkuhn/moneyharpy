@@ -7,20 +7,25 @@ type Props = {
   subtitle?: string
   /** Where the page's back button leads, as on Moneybird's edit pages. */
   back?: { to: string; label: string }
+  /** What comes before the title, such as the filter button of a list. */
+  lead?: ReactNode
   actions?: ReactNode
+  /** Lists use the width of the screen. */
+  wide?: boolean
   children: ReactNode
 }
 
-export function Page({ title, subtitle, back, actions, children }: Props) {
+export function Page({ title, subtitle, back, lead, actions, wide = false, children }: Props) {
   return (
     <>
-      <header className="actionbar">
+      <header className={`actionbar${wide ? ' actionbar--wide' : ''}`}>
         <div className="actionbar__heading">
           {back && (
             <Link className="actionbar__back" to={back.to} aria-label={back.label} title={back.label}>
               <ArrowLeftIcon />
             </Link>
           )}
+          {lead}
           <div>
             <h1>{title}</h1>
             {subtitle && <p className="actionbar__subtitle">{subtitle}</p>}
@@ -28,7 +33,7 @@ export function Page({ title, subtitle, back, actions, children }: Props) {
         </div>
         {actions && <div className="actionbar__actions">{actions}</div>}
       </header>
-      <div className="content">{children}</div>
+      <div className={`content${wide ? ' content--wide' : ''}`}>{children}</div>
     </>
   )
 }

@@ -10,12 +10,40 @@ export type FrequencyType = NonNullable<RecurringChanges['frequency_type']>
 
 export const frequencyTypes: FrequencyType[] = ['day', 'week', 'month', 'quarter', 'year']
 
-/** The list's filter: state is active, inactive or all; frequency and auto send are left out when empty. */
-export type RecurringFilter = { state: string; frequency: string; autoSend: string }
+/** The list's filter: state is active, inactive or all; the others are left out when empty. */
+export type RecurringFilter = { state: string; frequency: string; autoSend: string; contactId: string; workflowId: string }
+
+/** The filter kept in the address, active ones unless it says otherwise. */
+export function recurringFilterOf(params: URLSearchParams): RecurringFilter {
+  return {
+    state: params.get('state') || 'active', frequency: params.get('frequency') ?? '', autoSend: params.get('auto_send') ?? '',
+    contactId: params.get('contact_id') ?? '', workflowId: params.get('workflow_id') ?? '',
+  }
+}
+
+/** The address of the list with a filter, leaving out what is the default. */
+export function recurringQuery(f: RecurringFilter, params: URLSearchParams) {
+  const next = new URLSearchParams(params)
+  const values: [string, string][] = [
+    ['state', f.state === 'active' ? '' : f.state], ['frequency', f.frequency], ['auto_send', f.autoSend], ['contact_id', f.contactId], ['workflow_id', f.workflowId],
+  ]
+  for (const [key, value] of values) {
+    if (value) {
+      next.set(key, value)
+    } else {
+      next.delete(key)
+    }
+  }
+  next.delete('page')
+  return next
+}
 
 /** Moneybird's filter terms for a filter, such as "state:active,frequency:month". */
 export function recurringFilterTerms(f: RecurringFilter) {
-  return [`state:${f.state || 'active'}`, f.frequency && `frequency:${f.frequency}`, f.autoSend && `auto_send:${f.autoSend}`].filter(Boolean).join(',')
+  return [
+    `state:${f.state || 'active'}`, f.frequency && `frequency:${f.frequency}`, f.autoSend && `auto_send:${f.autoSend}`,
+    f.contactId && `contact_id:${f.contactId}`, f.workflowId && `workflow_id:${f.workflowId}`,
+  ].filter(Boolean).join(',')
 }
 
 const admin = (administrationId: string) => ({ administration_id: administrationId })

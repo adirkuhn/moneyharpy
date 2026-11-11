@@ -1,6 +1,6 @@
 import { type DragEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
@@ -8,15 +8,43 @@ import { contactName } from '../contacts/queries'
 import { formErrors } from '../forms/Form'
 import { filterTerms, type ListFilter, parseFilter, perPage } from '../invoices/queries'
 import { StateBadge } from '../invoices/StateBadge'
-import { reportPeriods } from '../journal/queries'
+import { ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
-import { Pagination } from '../layout/Pagination'
+import { DocumentFilter } from '../list/DocumentFilter'
+import { AttachmentIcon, DocumentTable } from '../list/DocumentTable'
+import { FilterPanel } from '../list/FilterPanel'
+import { GettingStarted } from '../list/GettingStarted'
+import { ListActions } from '../list/ListActions'
 import { externalStates, externalTitle, unpaidExternalStates, useExternalInvoices, useUploadExternalInvoices } from './queries'
 
 const maxSize = 10 * 1024 * 1024
 
-/** Invoices made in other software, filtered by state and period, with an upload area for their files (/external_sales_invoices). */
+/** The quick filters of Moneybird's external invoice list. */
+const quickFilters: Record<string, Pick<ListFilter, 'state' | 'period'>> = {
+  this_year: { state: '', period: 'this_year' },
+  unpaid: { state: unpaidExternalStates, period: '' },
+  paid: { state: 'paid', period: '' },
+}
+
+function quickOf(f: ListFilter) {
+  const found = Object.entries(quickFilters).find(([, q]) => q.state === f.state && q.period === f.period && f.rest.length === 0)
+  return found?.[0] ?? 'custom'
+}
+
+/** The address of the list with a filter; this year's invoices need none. */
+function listQuery(f: ListFilter, params: URLSearchParams) {
+  const next = new URLSearchParams(params)
+  if (quickOf(f) === 'this_year') {
+    next.delete('filter')
+  } else {
+    next.set('filter', filterTerms(f))
+  }
+  next.delete('page')
+  return next
+}
+
+/** Invoices made in other software, filtered by state, period and contact, with an upload area for their files (/external_sales_invoices). */
 export function ExternalInvoicesPage() {
   const { t, i18n } = useTranslation()
   const { administrationId = '' } = useParams()
@@ -25,72 +53,111 @@ export function ExternalInvoicesPage() {
   const page = Math.max(1, Number(params.get('page')) || 1)
   const invoices = useExternalInvoices(administrationId, filterTerms(filter), page)
   const administration = useAdministration(administrationId)
+  const quick = quickOf(filter)
   const base = `/${administrationId}/external_sales_invoices`
   const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
-  const isDefault = !filter.state && filter.period === 'this_year' && filter.rest.length === 0
-
-  const change = (changes: Partial<ListFilter>) => {
-    const nextFilter = { ...filter, ...changes }
-    const next = new URLSearchParams(params)
-    if (!nextFilter.state && nextFilter.period === 'this_year' && nextFilter.rest.length === 0) {
-      next.delete('filter')
-    } else {
-      next.set('filter', filterTerms(nextFilter))
-    }
-    next.delete('page')
-    setParams(next, { replace: true })
+  const [info, setInfo] = useState<boolean | null>(null)
+  const [emailShown, setEmailShown] = useState(false)
+  const introId = useId()
+  const emailId = useId()
+  const shown = invoices.data?.invoices ?? []
+  const firstUse = invoices.data !== undefined && shown.length === 0 && quick === 'this_year' && page === 1
+  const introShown = info ?? firstUse
+  const linkTo = (f: Pick<ListFilter, 'state' | 'period'>) => {
+    const query = listQuery({ ...f, rest: [] }, new URLSearchParams()).toString()
+    return query ? `${base}?${query}` : base
   }
 
+  const filterPanel = (
+    <FilterPanel
+      label={t(`external.views.${quick}`)}
+      title={t('external.filters')}
+      quick={Object.entries(quickFilters).map(([key, f]) => ({ label: t(`external.quick.${key}`), to: linkTo(f), current: key === quick }))}
+    >
+      <DocumentFilter
+        administrationId={administrationId}
+        filter={filter}
+        states={[{ value: '', label: t('list.all') }, ...externalStates.map((s) => ({ value: s, label: t(`invoices.states.${s}`) }))]}
+        onApply={(next) => setParams(listQuery(next, params), { replace: true })}
+      />
+    </FilterPanel>
+  )
+
   return (
-    <Page title={t('external.title')} actions={<Link className="btn btn--accent" to={`${base}/new`}>{t('external.new')}</Link>}>
+    <Page
+      wide
+      title={t('external.title')}
+      lead={filterPanel}
+      actions={
+        <ListActions
+          info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
+          extra={
+            <button
+              type="button"
+              className={`btn btn--secondary btn--icon${emailShown ? ' is-active' : ''}`}
+              aria-label={t('external.emailFiles')}
+              title={t('external.emailFiles')}
+              aria-expanded={emailShown}
+              aria-controls={emailId}
+              onClick={() => setEmailShown(!emailShown)}
+            >
+              <ListIcon kind="at" />
+            </button>
+          }
+          exports={[t('list.excelPerInvoice'), t('list.excelPerRow'), t('list.composeExport')]}
+          primary={{ to: `${base}/new`, label: t('external.add') }}
+          more={[
+            { to: `/${administrationId}/sales_invoices`, label: t('invoices.title') },
+            { to: `/${administrationId}/settings/invoices_and_estimates`, label: t('invoices.settings') },
+          ]}
+        />
+      }
+    >
+      {introShown && (
+        <GettingStarted
+          id={introId}
+          title={t('external.intro.title')}
+          text={t('external.intro.text')}
+          steps={[
+            { icon: 'coins', title: t('external.intro.outside'), text: t('external.intro.outsideText') },
+            { icon: 'upload', title: t('external.intro.add'), text: t('external.intro.addText') },
+            { icon: 'plug', title: t('external.intro.api'), text: t('external.intro.apiText') },
+          ]}
+        />
+      )}
+      {emailShown && (
+        <section id={emailId} className="panel-box" aria-labelledby={`${emailId}-title`}>
+          <h2 id={`${emailId}-title`} className="panel-box__title">{t('external.emailTitle')}</h2>
+          <p className="panel-box__text">{t('external.emailText')}</p>
+          <p className="hint">{t('list.notAvailable')}</p>
+          <button type="button" className="btn btn--secondary btn--small" onClick={() => setEmailShown(false)}>{t('external.close')}</button>
+        </section>
+      )}
       <UploadArea administrationId={administrationId} />
-      <div className="filter-bar" role="search" aria-label={t('external.filters')}>
-        <label className="filter-bar__field">
-          <span>{t('invoices.period')}</span>
-          <select value={filter.period} onChange={(e) => change({ period: e.target.value })}>
-            <option value="">{t('invoices.allPeriods')}</option>
-            {reportPeriods.map((p) => <option key={p} value={p}>{t(`journal.periods.${p}`)}</option>)}
-          </select>
-        </label>
-        <label className="filter-bar__field">
-          <span>{t('invoices.status')}</span>
-          <select value={filter.state} onChange={(e) => change({ state: e.target.value })}>
-            <option value="">{t('invoices.allStates')}</option>
-            <option value={unpaidExternalStates}>{t('invoices.quick.unpaid')}</option>
-            {externalStates.map((s) => <option key={s} value={s}>{t(`invoices.states.${s}`)}</option>)}
-          </select>
-        </label>
-      </div>
       {!invoices.data ? (
         invoices.error ? <p className="empty">{t('external.loadError')}</p> : <Loading />
-      ) : invoices.data.invoices.length === 0 ? (
-        <p className="empty">{isDefault && page === 1 ? t('external.empty') : t('invoices.noMatches')}</p>
+      ) : shown.length === 0 ? (
+        <p className="empty">{firstUse ? t('external.empty') : t('external.noMatches')}</p>
       ) : (
-        <>
-          <table className="data-table invoices" aria-label={t('external.title')}>
-            <thead>
-              <tr>
-                <th scope="col" className="invoices__date">{t('invoices.invoiceDate')}</th>
-                <th scope="col">{t('invoices.contact')}</th>
-                <th scope="col" className="invoices__number">{t('invoices.reference')}</th>
-                <th scope="col" className="invoices__amount">{t('invoices.amount')}</th>
-                <th scope="col" className="invoices__state">{t('invoices.status')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.data.invoices.map((inv) => (
-                <tr key={inv.id}>
-                  <td className="invoices__date">{date(inv.date)}</td>
-                  <td>{inv.contact ? contactName(inv.contact) : ''}</td>
-                  <td className="invoices__number"><Link to={`${base}/${inv.id}`}>{externalTitle(inv, t)}</Link></td>
-                  <td className="invoices__amount">{formatAmount(inv.total_price_incl_tax, inv.currency ?? administration.data?.currency ?? 'EUR', i18n.language)}</td>
-                  <td className="invoices__state"><StateBadge state={inv.state} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination total={invoices.data.total} perPage={perPage} />
-        </>
+        <DocumentTable
+          label={t('external.title')}
+          rows={shown}
+          rowKey={(inv) => inv.id ?? ''}
+          href={(inv) => `${base}/${inv.id}`}
+          total={invoices.data.total}
+          perPage={perPage}
+          columns={[
+            { key: 'reference', header: t('invoices.reference'), link: true, cell: (inv) => externalTitle(inv, t) },
+            { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (inv) => <AttachmentIcon count={inv.attachments?.length ?? 0} /> },
+            { key: 'contact', header: t('invoices.contact'), cell: (inv) => (inv.contact ? contactName(inv.contact) : '') },
+            { key: 'date', header: t('external.date'), kind: 'date', cell: (inv) => date(inv.date) },
+            {
+              key: 'amount', header: t('invoices.amount'), kind: 'amount',
+              cell: (inv) => formatAmount(inv.total_price_incl_tax, inv.currency ?? administration.data?.currency ?? 'EUR', i18n.language),
+            },
+            { key: 'state', header: t('invoices.status'), kind: 'state', cell: (inv) => <StateBadge state={inv.state} /> },
+          ]}
+        />
       )}
     </Page>
   )
@@ -138,10 +205,17 @@ function UploadArea({ administrationId }: { administrationId: string }) {
       onDragLeave={() => setOver(false)}
       onDrop={drop}
     >
-      <h2 id={`${id}-title`} className="upload-area__title">{t('external.uploadTitle')}</h2>
+      <h2 id={`${id}-title`} className="sr-only">{t('external.uploadTitle')}</h2>
+      <p className="upload-area__text">
+        <ListIcon kind="paperclip" />
+        <span>
+          {t('external.dropText')}{' '}
+          <label className="upload-area__pick" htmlFor={`${id}-file`}>{t('external.select')}</label>{' '}
+          <span className="upload-area__limit">{t('external.maxSize')}</span>
+        </span>
+      </p>
       <p className="hint">{upload.isPending ? t('invoices.uploading') : t('external.uploadHelp')}</p>
       <Problems messages={[...problems, ...formErrors(upload.error, {}).general]} />
-      <label className="btn btn--secondary btn--small file-field__pick" htmlFor={`${id}-file`}>{t('external.choose')}</label>
       <input
         id={`${id}-file`}
         className="sr-only"
