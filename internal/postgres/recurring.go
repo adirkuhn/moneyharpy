@@ -26,7 +26,7 @@ func optionalBool(b *bool) pgtype.Bool {
 func (s *SalesStore) RecurringInvoices(ctx context.Context, admin resource.ID, q sales.RecurringQuery) ([]sales.Recurring, int, error) {
 	p := sqlc.ListRecurringSalesInvoicesParams{
 		AdministrationID: int64(admin), Active: optionalBool(q.Active), FrequencyType: q.FrequencyType, AutoSend: optionalBool(q.AutoSend),
-		ContactID: optionalID(q.ContactID), WorkflowID: optionalID(q.WorkflowID),
+		ContactID: optionalID(q.ContactID), WorkflowID: optionalID(q.WorkflowID), IncludeSubscriptions: q.IncludeSubscriptions,
 	}
 	if q.PerPage > 0 {
 		p.MaxRows = pgtype.Int4{Int32: int32(q.PerPage), Valid: true}

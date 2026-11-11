@@ -260,6 +260,22 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		}
 		return c.one(sales.RecurringEntityType, "recurring_sales_invoice_destroyed")
 	},
+	"createSubscription": func(c change) []webhooks.Event { return c.one("Subscription", "subscription_created") },
+	"updateSubscription": func(c change) []webhooks.Event {
+		// A new product, amount or discount updates the subscription; other
+		// fields edit it.
+		sub := c.nested("subscription")
+		for _, key := range []string{"product_id", "amount", "discount", "start_date"} {
+			if _, ok := sub[key]; ok {
+				return c.one("Subscription", "subscription_updated")
+			}
+		}
+		return c.one("Subscription", "subscription_edited")
+	},
+	"cancelSubscription": func(c change) []webhooks.Event { return c.one("Subscription", "subscription_cancelled") },
+	"createSubscriptionOneOffSalesInvoice": func(c change) []webhooks.Event {
+		return append(c.one("SalesInvoice", "sales_invoice_created"), c.one("SalesInvoice", "sales_invoice_state_changed_to_scheduled")...)
+	},
 	"createProduct": func(c change) []webhooks.Event { return c.one("Product", "product_created") },
 	"updateProduct": func(c change) []webhooks.Event {
 		return c.toggled("Product", "product", "product_updated", "product_activated", "product_deactivated")

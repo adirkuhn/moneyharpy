@@ -450,6 +450,7 @@ type Service struct {
 	mailer      Mailer
 	bank        Bank
 	notifier    Notifier
+	hook        RecurringHook
 	ids         *resource.Generator
 	now         func() time.Time
 }

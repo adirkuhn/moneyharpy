@@ -83,6 +83,7 @@ type salesFixture struct {
 	revenue  resource.ID
 	products *products.Service
 	projects *projects.Service
+	contacts *contacts.Service
 }
 
 func newSalesFixture(t *testing.T) salesFixture {
@@ -115,7 +116,7 @@ func newSalesFixture(t *testing.T) salesFixture {
 	return salesFixture{
 		svc: svc, bank: bank, books: books, store: store, admin: admin, owner: owner, customer: customer.ID, vat21: rates[0].ID,
 		revenue:  categoryByKey(t, books, admin, owner, "revenue"),
-		products: productSvc, projects: projectSvc,
+		products: productSvc, projects: projectSvc, contacts: people,
 		journal: journal.NewService(admins, books, people, projectSvc, journalStore, journalStore, noteSvc, files, ids, time.Now),
 	}
 }

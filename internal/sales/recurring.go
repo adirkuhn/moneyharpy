@@ -365,11 +365,15 @@ type RecurringQuery struct {
 	AutoSend      *bool
 	ContactID     *resource.ID
 	WorkflowID    *resource.ID
-	Page, PerPage int
+	// IncludeSubscriptions keeps the recurring invoices that bill a
+	// subscription too; stores leave them out otherwise.
+	IncludeSubscriptions bool
+	Page, PerPage        int
 }
 
 // Matches reports whether the query selects the recurring invoice; the
-// reference for stores without a query language of their own.
+// reference for stores without a query language of their own. It does not
+// know subscriptions, which stores filter themselves.
 func (q RecurringQuery) Matches(r Recurring) bool {
 	switch {
 	case q.Active != nil && r.Active != *q.Active,
@@ -384,8 +388,9 @@ func (q RecurringQuery) Matches(r Recurring) bool {
 
 // ParseRecurringFilter reads Moneybird's recurring sales invoice filter:
 // state (active, inactive or, as an extension, all; active unless given),
-// frequency, auto_send, contact_id and workflow_id. include_subscriptions
-// is accepted; MoneyHarpy has no subscriptions.
+// frequency, auto_send, contact_id, workflow_id and include_subscriptions,
+// which keeps the recurring invoices of subscriptions too (false unless
+// given).
 func ParseRecurringFilter(filter string) (RecurringQuery, error) {
 	active := true
 	q := RecurringQuery{Active: &active}
@@ -428,6 +433,12 @@ func ParseRecurringFilter(filter string) (RecurringQuery, error) {
 				verr.Add("filter", "auto_send is not true, false or null")
 			}
 		case "include_subscriptions":
+			switch value {
+			case "true", "false":
+				q.IncludeSubscriptions = value == "true"
+			default:
+				verr.Add("filter", "include_subscriptions is not true or false")
+			}
 		case "contact_id", "workflow_id":
 			id, err := resource.ParseID(value)
 			if err != nil {
@@ -552,7 +563,7 @@ func (s *Service) DeleteRecurringNote(ctx context.Context, admin, id, noteID, us
 // that auto-send. Each invoice is stored with the recurring invoice moved
 // on to its next date at once, so a next round never makes it again.
 func (s *Service) recur(ctx context.Context, a administration.Listed, user resource.ID, today time.Time) []error {
-	list, _, err := s.store.RecurringInvoices(ctx, a.ID, RecurringQuery{Active: ptrTo(true)})
+	list, _, err := s.store.RecurringInvoices(ctx, a.ID, RecurringQuery{Active: ptrTo(true), IncludeSubscriptions: true})
 	if err != nil {
 		return []error{fmt.Errorf("administration %s, list recurring invoices: %w", a.ID, err)}
 	}
@@ -566,6 +577,14 @@ func (s *Service) recur(ctx context.Context, a administration.Listed, user resou
 			}
 			s.notify(ctx, a.ID, "sales_invoice_created", inv)
 			s.notifyRecurring(ctx, a.ID, "recurring_sales_invoice_invoice_created", r)
+			if s.hook != nil {
+				completed, err := s.hook.Generated(ctx, a.ID, user, inv, r)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("administration %s, complete invoice %s of recurring invoice %s: %w", a.ID, inv.ID, r.ID, err))
+				} else {
+					inv = completed
+				}
+			}
 			if !r.AutoSend {
 				continue
 			}
@@ -614,6 +633,17 @@ func (s *Service) generate(ctx context.Context, a administration.Listed, user re
 	*r = moved
 	return inv, nil
 }
+
+// RecurringHook completes an invoice a recurring invoice made, before it is
+// sent, such as with what a subscription adds to it.
+type RecurringHook interface {
+	// Generated returns the invoice as it is to be sent.
+	Generated(ctx context.Context, admin, user resource.ID, inv Invoice, r Recurring) (Invoice, error)
+}
+
+// UseRecurringHook sets the hook invoices recurring invoices make pass
+// through; it is set after construction because the hook uses the service.
+func (s *Service) UseRecurringHook(h RecurringHook) { s.hook = h }
 
 // notifyRecurring tells the notifier, if there is one.
 func (s *Service) notifyRecurring(ctx context.Context, admin resource.ID, action string, r Recurring) {
