@@ -41,6 +41,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/products"
 	"github.com/adirkuhn/moneyharpy/internal/projects"
+	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -128,13 +129,14 @@ func run(logger *slog.Logger) error {
 	noteService := notes.NewService(postgres.NewNoteStore(pool), ids, time.Now)
 	journalStore := postgres.NewJournalStore(pool)
 	salesStore := postgres.NewSalesStore(pool)
+	purchaseStore := postgres.NewPurchaseStore(pool)
 	attachmentService := attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now)
 	timeEntryStore := postgres.NewTimeEntryStore(pool)
-	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore, timeEntryStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
+	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore, timeEntryStore, purchaseStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
 	catalogStore := postgres.NewCatalogStore(pool)
 	subscriptionStore := postgres.NewSubscriptionStore(pool)
-	productService := products.NewService(admins, books, contactService, catalogStore, products.AnyReferences{salesStore, subscriptionStore}, ids, time.Now)
-	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore, timeEntryStore}, ids, time.Now)
+	productService := products.NewService(admins, books, contactService, catalogStore, products.AnyReferences{salesStore, subscriptionStore, purchaseStore}, ids, time.Now)
+	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore, timeEntryStore, purchaseStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
@@ -150,15 +152,25 @@ func run(logger *slog.Logger) error {
 	})
 	invoiceService.UseRecurringHook(subscriptionService)
 	downloadService := downloads.NewService(admins, subscriptionStore, files, ids, time.Now)
+	// Incoming documents: purchase invoices, receipts, general and typeless
+	// documents and purchase transactions.
+	documentService := purchases.NewService(purchases.Deps{
+		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Ledger: books, Notes: noteService,
+		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
+	})
+	bank.UseDocuments(documentService)
+	home := overview.NewService(admins, bank, invoiceService)
+	home.UseIncoming(documentService)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
 		Bookkeeping:       books,
 		Banking:           bank,
-		Overview:          overview.NewService(admins, bank, invoiceService),
+		Overview:          home,
 		Journal:           ledger,
 		Contacts:          contactService,
 		Sales:             invoiceService,
+		Purchases:         documentService,
 		Products:          productService,
 		Projects:          projectService,
 		Subscriptions:     subscriptionService,

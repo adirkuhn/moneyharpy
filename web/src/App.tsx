@@ -49,6 +49,9 @@ import { ContactPage } from './contacts/ContactPage'
 import { ContactsPage } from './contacts/ContactsPage'
 import { ExternalInvoicePage } from './external/ExternalInvoicePage'
 import { ExternalInvoicesPage } from './external/ExternalInvoicesPage'
+import { IncomingDocumentPage } from './incoming/IncomingDocumentPage'
+import { IncomingListPage } from './incoming/IncomingListPage'
+import { UploadsPage } from './incoming/UploadsPage'
 import { InvoiceFormPage } from './invoices/InvoiceFormPage'
 import { InvoicePage } from './invoices/InvoicePage'
 import { InvoicesPage } from './invoices/InvoicesPage'
@@ -125,6 +128,11 @@ export function AppRoutes() {
           <Route path="/:administrationId/task_lists/:taskListId" element={<TaskListPage />} />
           <Route path="/:administrationId/report/general_ledger" element={<TrialBalancePage />} />
           <Route path="/:administrationId/report/journal_entries" element={<LedgerEntriesPage />} />
+          <Route path="/:administrationId/documents/purchase_invoices" element={<IncomingListPage key="purchase_invoices" kind="purchase_invoices" />} />
+          <Route path="/:administrationId/documents/purchase_invoices/:documentId" element={<IncomingDocumentPage kind="purchase_invoices" />} />
+          <Route path="/:administrationId/documents/receipts" element={<IncomingListPage key="receipts" kind="receipts" />} />
+          <Route path="/:administrationId/documents/receipts/:documentId" element={<IncomingDocumentPage kind="receipts" />} />
+          <Route path="/:administrationId/documents/typeless_documents" element={<UploadsPage />} />
           <Route path="/:administrationId/documents/general_journal_documents" element={<JournalDocumentsPage />} />
           <Route path="/:administrationId/documents/general_journal_documents/new" element={<JournalDocumentPage />} />
           <Route path="/:administrationId/documents/general_journal_documents/:documentId" element={<JournalDocumentPage />} />

@@ -463,7 +463,7 @@ test('bank statements are imported, booked by rules and by hand', async ({ page 
   const recent = page.getByRole('region', { name: 'Recently processed' })
   await expect(recent.getByRole('link')).toHaveCount(2)
   await expect(recent.getByRole('link', { name: /Example Client B\.V\./ })).toContainText('Booked')
-  await expect(page.getByRole('region', { name: 'Incoming' })).toContainText('Not available yet')
+  await expect(page.getByRole('region', { name: 'Incoming' })).toContainText('To pay — 0')
 
   await page.goto('/user')
   await page.getByRole('link', { name: 'MoneyHarpy home' }).click()
@@ -1087,4 +1087,48 @@ test('time is recorded with a timer, and a task list is ticked off', async ({ pa
   await page.getByRole('checkbox', { name: 'Reconcile the bank' }).click()
   await expect(page.getByRole('checkbox', { name: 'Reconcile the bank' })).toBeChecked()
   await expect(page.getByRole('region', { name: 'Task list details' })).toContainText('Completed')
+})
+
+test('a purchase invoice is booked through the API, paid by a bank transaction and an upload waits to be processed', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Buyer Co')
+  const uri = administrationUri(page)
+  const api = `/api/v2${uri}`
+  const supplier = await (await page.request.post(`${api}/contacts`, { data: { contact: { company_name: 'Supplier B.V.' } } })).json()
+  const rates = await (await page.request.get(`${api}/tax_rates`)).json()
+  const vat21 = rates.find((r: { tax_rate_type: string; percentage: string }) => r.tax_rate_type === 'purchase_invoice' && r.percentage.startsWith('21')).id
+  const today = new Date().toISOString().slice(0, 10)
+  const created = await page.request.post(`${api}/documents/purchase_invoices.json`, { data: { purchase_invoice: {
+    contact_id: supplier.id, reference: 'INV-2026-77', date: today, prices_are_incl_tax: true,
+    details_attributes: [{ description: 'Paper', price: '25.50', tax_rate_id: vat21 }],
+  } } })
+  expect(created.status()).toBe(201)
+
+  const menu = page.getByRole('navigation', { name: 'Administration menu' })
+  await menu.getByRole('button', { name: 'Incoming' }).click()
+  await menu.getByRole('link', { name: 'Purchase invoices' }).click()
+  const table = page.getByRole('table', { name: 'Purchase invoices' })
+  await expect(table.getByRole('link', { name: 'INV-2026-77' })).toBeVisible()
+  await expect(table.locator('.badge', { hasText: 'Open' })).toBeVisible()
+
+  // The outgoing bank transaction pays it, booked against the creditors.
+  const account = await (await page.request.post(`${api}/financial_accounts`, { data: { financial_account: { name: 'Main bank', identifier: 'NL91ABNA0417164300' } } })).json()
+  const camt = readFileSync(join(__dirname, '../../internal/bankfile/testdata/camt053.xml'), 'utf8').replace(/2026-1[01]-\d\d/g, today)
+  const imported = await page.request.post(`${api}/financial_accounts/${account.id}/import`, { data: Buffer.from(camt), headers: { 'Content-Type': 'application/octet-stream' } })
+  expect(imported.status()).toBe(201)
+  const outgoing = (await imported.json()).financial_statements[0].financial_mutations.find((m: { amount: string }) => m.amount === '-25.5')
+  const doc = await created.json()
+  const linked = await page.request.patch(`${api}/financial_mutations/${outgoing.id}/link_booking`, { data: { booking_type: 'Document', booking_id: doc.id } })
+  expect(linked.status()).toBe(200)
+  expect((await linked.json()).state).toBe('processed')
+  await table.getByRole('link', { name: 'INV-2026-77' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'INV-2026-77' })).toBeVisible()
+  await expect(page.locator('.badge', { hasText: 'Paid' })).toBeVisible()
+
+  // An upload waits on the overview until it is processed.
+  await menu.getByRole('link', { name: 'Uploads' }).click()
+  await page.getByLabel('Upload documents').setInputFiles({ name: 'bill-78.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n% bill 78\n') })
+  await expect(page.getByRole('table', { name: 'Uploads to process' }).getByRole('link', { name: 'bill-78.pdf' })).toBeVisible()
+  await page.goto(`${uri}/feed`)
+  await expect(page.getByRole('region', { name: 'Incoming' }).getByRole('link', { name: /To process\s*1/ })).toBeVisible()
 })

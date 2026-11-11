@@ -11,6 +11,7 @@ const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 const full: Overview = {
   bank: { balance: '1250.5', currency: 'EUR', unprocessed_count: 3 },
   sales: { to_receive: { count: 3, amount: '363.0' }, to_remind: { count: 1, amount: '121.0' }, currency: 'EUR' },
+  incoming: { to_pay: { count: 2, amount: '242.0' }, to_process: 4, currency: 'EUR' },
   recently_processed: [
     {
       type: 'financial_mutation', id: '701', uri: '/11/financial_mutations/701', title: 'Hosting Company', description: 'Invoice 12',
@@ -59,9 +60,15 @@ describe('administration overview', () => {
     expect(await within(sales).findByRole('link', { name: /To receive\s*— 3\s*€363.00$/ })).toHaveAttribute('href', '/11/sales_invoices?filter=state%3Aopen%7Clate%7Creminded%7Cpending_payment')
     expect(within(sales).getByRole('link', { name: /To remind\s*1$/ })).toHaveAttribute('href', '/11/sales_invoices?filter=state%3Alate%7Creminded')
     expect(within(sales).queryByText('Not available yet')).toBeNull()
-    const incoming = screen.getByRole('region', { name: 'Incoming' })
-    expect(within(incoming).getByText('To pay')).toBeInTheDocument()
-    expect(within(incoming).getAllByText('Not available yet')).toHaveLength(2)
+  })
+
+  it('shows the documents to pay and the uploads to process, linking to them', async () => {
+    open()
+    renderAt('/11/feed')
+    const incoming = await screen.findByRole('region', { name: 'Incoming' })
+    expect(await within(incoming).findByRole('link', { name: /To pay\s*— 2\s*€242.00$/ })).toHaveAttribute('href', '/11/documents/purchase_invoices?filter=state%3Aopen%7Clate%7Cpending_payment')
+    expect(within(incoming).getByRole('link', { name: /To process\s*4$/ })).toHaveAttribute('href', '/11/documents/typeless_documents')
+    expect(within(incoming).queryByText('Not available yet')).toBeNull()
   })
 
   it('opens the filtered invoice list from a tile', async () => {

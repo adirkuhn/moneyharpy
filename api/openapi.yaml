@@ -52,6 +52,16 @@ tags:
     description: Customers and suppliers with their contact people and notes. Compatible with the Moneybird API.
   - name: Journal
     description: Journal entries made by hand and the reports that read the whole journal. Compatible with the Moneybird API.
+  - name: Purchase invoices
+    description: Invoices from suppliers, booked when saved and paid by hand or with bank transactions. Compatible with the Moneybird API.
+  - name: Receipts
+    description: Receipts of costs paid at once or later, booked when saved. Compatible with the Moneybird API.
+  - name: General documents
+    description: Documents kept for the record, such as contracts, that book nothing. Compatible with the Moneybird API.
+  - name: Typeless documents
+    description: Uploads still to be processed into a document. Compatible with the Moneybird API.
+  - name: Purchase transactions
+    description: Credit transfers that pay purchase invoices, batched and exported as SEPA files. Compatible with the Moneybird API.
   - name: Sales invoices
     description: Invoices to customers, from draft to sent, with their PDF, e-invoice, bookings and credit invoices. Compatible with the Moneybird API.
   - name: External sales invoices
@@ -3183,7 +3193,8 @@ paths:
       x-permissions: [bank]
       summary: Link a booking to a financial mutation
       description: >-
-        Books on a category (LedgerAccount) or pays a sales invoice (SalesInvoice); other booking types answer
+        Books on a category (LedgerAccount), pays a sales invoice (SalesInvoice, ExternalSalesInvoice) or a purchase
+        invoice or receipt (Document), whose payment the bank posts on the creditors; other booking types answer
         422 until their documents exist. price_base is the amount; positive books in the direction of the
         transaction, negative against it. Without it, the open amount is booked, and for an invoice at most
         what it has unpaid. A payment registered by hand that waits for its transaction is taken over by it.
@@ -4212,6 +4223,1959 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listPurchaseInvoices
+      x-permissions: [documents]
+      summary: List all purchase invoices
+      description: >-
+        Filter terms: period (on the document date; this year unless a filter is given), state (all, new, open, late,
+        paid, pending_payment; several separated by |), reference (several separated by |), contact_id,
+        ledger_account_id, updated_after and attachment (all, with, without); recurring and automatic_saving are
+        accepted, and as documents never recur and MoneyHarpy saves none by itself, recurring:enabled and
+        automatic_saving:automatic select nothing. Newest first unless sort is date_asc. Paged with a Link header and
+        X-Total-Count.
+      tags: [Purchase invoices]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+        - name: new_filter
+          in: query
+          description: Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+          schema:
+            type: string
+            maxLength: 1000
+      responses:
+        '200':
+          $ref: '#/components/responses/PurchaseInvoicePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createPurchaseInvoice
+      x-permissions: [documents]
+      summary: Create a purchase invoice
+      description: >-
+        With a supplier and at least one line it is booked at once: the total on the creditors (accounts payable) for
+        the supplier, each line excluding VAT on its category (expenses still to categorize when left out) and the VAT
+        per rate on receivable VAT; reverse-charged VAT is booked on both receivable and payable VAT and is not part
+        of the total, and fiscal allocations move their percentage of a category's amount, VAT included, to a private
+        category. A revenue_invoice books the other way. Without, it is new and books nothing until filled in. Not in
+        the locked period.
+      tags: [Purchase invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseInvoiceRequest'
+      responses:
+        '201':
+          description: The created purchase invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listPurchaseInvoiceVersions
+      x-permissions: [documents]
+      summary: List all ids and versions
+      tags: [Purchase invoices]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The ids and versions of the purchase invoices the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchPurchaseInvoices
+      x-permissions: [documents]
+      summary: Fetch purchase invoices with given ids
+      description: >-
+        At most 100 ids.
+      tags: [Purchase invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The purchase invoices with these ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getPurchaseInvoice
+      x-permissions: [documents]
+      summary: Get a purchase invoice
+      tags: [Purchase invoices]
+      responses:
+        '200':
+          description: The purchase invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updatePurchaseInvoice
+      x-permissions: [documents]
+      summary: Update a purchase invoice
+      description: >-
+        Lines with an id change, lines with _destroy go, lines without an id are added; the same for fiscal
+        allocations. A paid purchase invoice, or one with payments, cannot change. Not in the locked period.
+      tags: [Purchase invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseInvoiceRequest'
+      responses:
+        '200':
+          description: The purchase invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deletePurchaseInvoice
+      x-permissions: [documents]
+      summary: Delete a purchase invoice
+      description: >-
+        Removes it with what it posts and its payments; payments made with bank transactions are unlinked, which needs
+        the bank permission too. Not in the locked period.
+      tags: [Purchase invoices]
+      responses:
+        '200':
+          description: The purchase invoice is deleted. The body is the status code, as at Moneybird.
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createPurchaseInvoiceNote
+      x-permissions: [documents]
+      summary: Add note to a purchase invoice
+      tags: [Purchase invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deletePurchaseInvoiceNote
+      x-permissions: [documents]
+      summary: Delete a note from a purchase invoice
+      tags: [Purchase invoices]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createPurchaseInvoiceAttachment
+      x-permissions: [documents]
+      summary: Add attachment to a purchase invoice
+      description: >-
+        A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+      tags: [Purchase invoices]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/attachment_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments/{attachment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deletePurchaseInvoiceAttachment
+      x-permissions: [documents]
+      summary: Delete an attachment from a purchase invoice
+      tags: [Purchase invoices]
+      responses:
+        '204':
+          description: The attachment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments/{attachment_id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: downloadPurchaseInvoiceAttachment
+      x-permissions: [documents]
+      summary: Download an attachment
+      description: >-
+        Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
+      tags: [Purchase invoices]
+      responses:
+        '302':
+          $ref: '#/components/responses/FileRedirect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/{id}/payments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createPurchaseInvoicePayment
+      x-permissions: [documents]
+      summary: Create a payment
+      description: >-
+        Registers a payment on a booked purchase invoice, at most what is unpaid: the manual_payment_action chooses
+        the account it is booked against (payments to classify for bank_transfer, payment_without_proof or none; cash
+        for cash_payment, or the financial account given; private deposits for private_payment; rounding differences
+        for rounding_error; the category given for balance_settlement); invoices_settlement is not available for
+        purchase documents yet. With financial_mutation_id a bank transaction pays it instead, which needs the bank
+        permission too. A payment that covers what is unpaid makes it paid. Not in the locked period or the future.
+      tags: [Purchase invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '201':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/{id}/payments/{payment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: payment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deletePurchaseInvoicePayment
+      x-permissions: [documents]
+      summary: Delete a payment
+      description: >-
+        Removes the payment and what it posts; a paid purchase invoice is open again. A payment made with a bank
+        transaction is unlinked from it, which needs the bank permission too. Not in the locked period.
+      tags: [Purchase invoices]
+      responses:
+        '204':
+          description: The payment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/purchase_invoices/{id}/register_payment:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: registerPurchaseInvoicePayment
+      x-permissions: [documents]
+      summary: Register a payment
+      deprecated: true
+      description: >-
+        Moneybird's older way to create a payment; it works the same and answers with the payment.
+      tags: [Purchase invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listReceipts
+      x-permissions: [documents]
+      summary: List all receipts
+      description: >-
+        Filter terms: period (on the document date; this year unless a filter is given), state (all, new, open, late,
+        paid, pending_payment; several separated by |), reference (several separated by |), contact_id,
+        ledger_account_id, updated_after and attachment (all, with, without); recurring and automatic_saving are
+        accepted, and as documents never recur and MoneyHarpy saves none by itself, recurring:enabled and
+        automatic_saving:automatic select nothing. Newest first unless sort is date_asc. Paged with a Link header and
+        X-Total-Count.
+      tags: [Receipts]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+        - name: new_filter
+          in: query
+          description: Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+          schema:
+            type: string
+            maxLength: 1000
+      responses:
+        '200':
+          $ref: '#/components/responses/ReceiptPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createReceipt
+      x-permissions: [documents]
+      summary: Create a receipt
+      description: >-
+        With at least one line it is booked at once: the total on the creditors (accounts payable) for the supplier,
+        each line excluding VAT on its category (expenses still to categorize when left out) and the VAT per rate on
+        receivable VAT; reverse-charged VAT is booked on both receivable and payable VAT and is not part of the total,
+        and fiscal allocations move their percentage of a category's amount, VAT included, to a private category. A
+        supplier is optional. With payment.financial_account_id the receipt is paid at once from that financial
+        account, as a cash payment dated the receipt date. Without, it is new and books nothing until filled in. Not
+        in the locked period.
+      tags: [Receipts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReceiptRequest'
+      responses:
+        '201':
+          description: The created receipt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Receipt'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listReceiptVersions
+      x-permissions: [documents]
+      summary: List all ids and versions
+      tags: [Receipts]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The ids and versions of the receipts the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchReceipts
+      x-permissions: [documents]
+      summary: Fetch receipts with given ids
+      description: >-
+        At most 100 ids.
+      tags: [Receipts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The receipts with these ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Receipt'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getReceipt
+      x-permissions: [documents]
+      summary: Get a receipt
+      tags: [Receipts]
+      responses:
+        '200':
+          description: The receipt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Receipt'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateReceipt
+      x-permissions: [documents]
+      summary: Update a receipt
+      description: >-
+        Lines with an id change, lines with _destroy go, lines without an id are added. payment.financial_account_id
+        pays an unpaid receipt from that account. A paid receipt, or one with payments, cannot change. Not in the
+        locked period.
+      tags: [Receipts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReceiptRequest'
+      responses:
+        '200':
+          description: The receipt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Receipt'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteReceipt
+      x-permissions: [documents]
+      summary: Delete a receipt
+      description: >-
+        Removes it with what it posts and its payments; payments made with bank transactions are unlinked, which needs
+        the bank permission too. Not in the locked period.
+      tags: [Receipts]
+      responses:
+        '200':
+          description: The receipt is deleted. The body is the status code, as at Moneybird.
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createReceiptNote
+      x-permissions: [documents]
+      summary: Add note to a receipt
+      tags: [Receipts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteReceiptNote
+      x-permissions: [documents]
+      summary: Delete a note from a receipt
+      tags: [Receipts]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/{id}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createReceiptAttachment
+      x-permissions: [documents]
+      summary: Add attachment to a receipt
+      description: >-
+        A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+      tags: [Receipts]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/attachment_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/{id}/attachments/{attachment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteReceiptAttachment
+      x-permissions: [documents]
+      summary: Delete an attachment from a receipt
+      tags: [Receipts]
+      responses:
+        '204':
+          description: The attachment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/{id}/attachments/{attachment_id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: downloadReceiptAttachment
+      x-permissions: [documents]
+      summary: Download an attachment
+      description: >-
+        Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
+      tags: [Receipts]
+      responses:
+        '302':
+          $ref: '#/components/responses/FileRedirect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/{id}/payments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createReceiptPayment
+      x-permissions: [documents]
+      summary: Create a payment
+      description: >-
+        Registers a payment on a booked receipt, at most what is unpaid: the manual_payment_action chooses the account
+        it is booked against (payments to classify for bank_transfer, payment_without_proof or none; cash for
+        cash_payment, or the financial account given; private deposits for private_payment; rounding differences for
+        rounding_error; the category given for balance_settlement); invoices_settlement is not available for purchase
+        documents yet. With financial_mutation_id a bank transaction pays it instead, which needs the bank permission
+        too. A payment that covers what is unpaid makes it paid. Not in the locked period or the future.
+      tags: [Receipts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '201':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/{id}/payments/{payment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: payment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteReceiptPayment
+      x-permissions: [documents]
+      summary: Delete a payment
+      description: >-
+        Removes the payment and what it posts; a paid receipt is open again. A payment made with a bank transaction is
+        unlinked from it, which needs the bank permission too. Not in the locked period.
+      tags: [Receipts]
+      responses:
+        '204':
+          description: The payment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/receipts/{id}/register_payment:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: registerReceiptPayment
+      x-permissions: [documents]
+      summary: Register a payment
+      deprecated: true
+      description: >-
+        Moneybird's older way to create a payment; it works the same and answers with the payment.
+      tags: [Receipts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: The payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_documents:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listGeneralDocuments
+      x-permissions: [documents]
+      summary: List all general documents
+      description: >-
+        Filter terms: period (on the document date; this year unless a filter is given), state (all or saved; several
+        separated by |), reference (several separated by |), contact_id, ledger_account_id, updated_after and
+        attachment (all, with, without); recurring and automatic_saving are accepted, and as documents never recur and
+        MoneyHarpy saves none by itself, recurring:enabled and automatic_saving:automatic select nothing. Newest first
+        unless sort is date_asc. Paged with a Link header and X-Total-Count.
+      tags: [General documents]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+        - name: new_filter
+          in: query
+          description: Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+          schema:
+            type: string
+            maxLength: 1000
+      responses:
+        '200':
+          $ref: '#/components/responses/GeneralDocumentPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createGeneralDocument
+      x-permissions: [documents]
+      summary: Create a general document
+      description: >-
+        A document kept for the record, such as a contract, with an optional reminder; it books nothing. Dated today
+        unless given.
+      tags: [General documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneralDocumentRequest'
+      responses:
+        '201':
+          description: The created general document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_documents/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listGeneralDocumentVersions
+      x-permissions: [documents]
+      summary: List all ids and versions
+      tags: [General documents]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The ids and versions of the general documents the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchGeneralDocuments
+      x-permissions: [documents]
+      summary: Fetch general documents with given ids
+      description: >-
+        At most 100 ids.
+      tags: [General documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The general documents with these ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeneralDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_documents/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getGeneralDocument
+      x-permissions: [documents]
+      summary: Get a general document
+      tags: [General documents]
+      responses:
+        '200':
+          description: The general document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateGeneralDocument
+      x-permissions: [documents]
+      summary: Update a general document
+      description: >-
+        remove_contact removes the contact.
+      tags: [General documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneralDocumentRequest'
+      responses:
+        '200':
+          description: The general document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteGeneralDocument
+      x-permissions: [documents]
+      summary: Delete a general document
+      tags: [General documents]
+      responses:
+        '200':
+          description: The general document is deleted. The body is the status code, as at Moneybird.
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_documents/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createGeneralDocumentNote
+      x-permissions: [documents]
+      summary: Add note to a general document
+      tags: [General documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_documents/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteGeneralDocumentNote
+      x-permissions: [documents]
+      summary: Delete a note from a general document
+      tags: [General documents]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_documents/{id}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createGeneralDocumentAttachment
+      x-permissions: [documents]
+      summary: Add attachment to a general document
+      description: >-
+        A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+      tags: [General documents]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/attachment_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_documents/{id}/attachments/{attachment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteGeneralDocumentAttachment
+      x-permissions: [documents]
+      summary: Delete an attachment from a general document
+      tags: [General documents]
+      responses:
+        '204':
+          description: The attachment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/general_documents/{id}/attachments/{attachment_id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: downloadGeneralDocumentAttachment
+      x-permissions: [documents]
+      summary: Download an attachment
+      description: >-
+        Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
+      tags: [General documents]
+      responses:
+        '302':
+          $ref: '#/components/responses/FileRedirect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/typeless_documents:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listTypelessDocuments
+      x-permissions: [documents]
+      summary: List all typeless documents
+      description: >-
+        Filter terms: period (on the document date; this year unless a filter is given), state (all or new; several
+        separated by |), reference (several separated by |), contact_id, ledger_account_id, updated_after and
+        attachment (all, with, without); recurring and automatic_saving are accepted, and as documents never recur and
+        MoneyHarpy saves none by itself, recurring:enabled and automatic_saving:automatic select nothing. Newest first
+        unless sort is date_asc. Paged with a Link header and X-Total-Count.
+      tags: [Typeless documents]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+        - name: new_filter
+          in: query
+          description: Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+          schema:
+            type: string
+            maxLength: 1000
+      responses:
+        '200':
+          $ref: '#/components/responses/TypelessDocumentPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createTypelessDocument
+      x-permissions: [documents]
+      summary: Create a typeless document
+      description: >-
+        An upload still to be processed into a purchase invoice, receipt or other document; add its file as an
+        attachment. Dated today unless given.
+      tags: [Typeless documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypelessDocumentRequest'
+      responses:
+        '201':
+          description: The created typeless document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypelessDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/typeless_documents/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listTypelessDocumentVersions
+      x-permissions: [documents]
+      summary: List all ids and versions
+      tags: [Typeless documents]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The ids and versions of the typeless documents the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchTypelessDocuments
+      x-permissions: [documents]
+      summary: Fetch typeless documents with given ids
+      description: >-
+        At most 100 ids.
+      tags: [Typeless documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The typeless documents with these ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TypelessDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/typeless_documents/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getTypelessDocument
+      x-permissions: [documents]
+      summary: Get a typeless document
+      tags: [Typeless documents]
+      responses:
+        '200':
+          description: The typeless document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypelessDocument'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteTypelessDocument
+      x-permissions: [documents]
+      summary: Delete a typeless document
+      tags: [Typeless documents]
+      responses:
+        '200':
+          description: The typeless document is deleted. The body is the status code, as at Moneybird.
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createTypelessDocumentAttachment
+      x-permissions: [documents]
+      summary: Add attachment to a typeless document
+      description: >-
+        A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+      tags: [Typeless documents]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/attachment_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteTypelessDocumentAttachment
+      x-permissions: [documents]
+      summary: Delete an attachment from a typeless document
+      tags: [Typeless documents]
+      responses:
+        '204':
+          description: The attachment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: downloadTypelessDocumentAttachment
+      x-permissions: [documents]
+      summary: Download an attachment
+      description: >-
+        Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
+      tags: [Typeless documents]
+      responses:
+        '302':
+          $ref: '#/components/responses/FileRedirect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/purchase_transactions:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listPurchaseTransactions
+      x-permissions: [bank]
+      summary: List all purchase transactions
+      description: >-
+        Credit transfers to pay, oldest first. Filter terms: state (all, open, pending_payment, paid, cancelled;
+        several separated by |), period (on the date), unbatched (true unless purchase_transaction_batch_id is given)
+        and purchase_transaction_batch_id. A transaction is pending payment while a batch holds it and paid once the
+        purchase invoice or receipt it pays is. Paged with a Link header and X-Total-Count.
+      tags: [Purchase transactions]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          $ref: '#/components/responses/PurchaseTransactionPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createPurchaseTransaction
+      x-permissions: [bank]
+      summary: Pay a purchase invoice or receipt by credit transfer
+      description: >-
+        MoneyHarpy extension. Makes an open purchase transaction for what the document has unpaid, to the supplier's
+        SEPA IBAN (or bank account), from a bank account with an IBAN, to batch and export as a SEPA credit transfer
+        file.
+      tags: [Purchase transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseTransactionRequest'
+      responses:
+        '201':
+          description: The purchase transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseTransaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/purchase_transactions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getPurchaseTransaction
+      x-permissions: [bank]
+      summary: Get a purchase transaction
+      tags: [Purchase transactions]
+      responses:
+        '200':
+          description: The purchase transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseTransaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deletePurchaseTransaction
+      x-permissions: [bank]
+      summary: Delete a purchase transaction
+      description: >-
+        Only an open purchase transaction that no batch holds.
+      tags: [Purchase transactions]
+      responses:
+        '204':
+          description: The purchase transaction is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/purchase_transactions/{id}/delete:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    delete:
+      operationId: deletePurchaseTransactionDeprecated
+      x-permissions: [bank]
+      summary: Delete a purchase transaction
+      deprecated: true
+      description: >-
+        Moneybird's older path to delete a purchase transaction; it works the same.
+      tags: [Purchase transactions]
+      responses:
+        '204':
+          description: The purchase transaction is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/purchase_transaction_batches:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: createPurchaseTransactionBatch
+      x-permissions: [bank]
+      summary: Batch purchase transactions
+      description: >-
+        MoneyHarpy extension. Groups open purchase transactions of a bank account outside a batch (those named, or all
+        of them) in a batch to download as one SEPA credit transfer file; the documents they pay are pending payment
+        until the bank transactions come in.
+      tags: [Purchase transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseTransactionBatchRequest'
+      responses:
+        '201':
+          description: The batch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseTransactionBatch'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/purchase_transaction_batches/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getPurchaseTransactionBatch
+      x-permissions: [bank]
+      summary: Get a purchase transaction batch
+      description: >-
+        List its purchase transactions with the purchase_transaction_batch_id filter of the purchase transactions.
+      tags: [Purchase transactions]
+      responses:
+        '200':
+          description: The batch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseTransactionBatch'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/purchase_transaction_batches/{id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: downloadPurchaseTransactionBatch
+      x-permissions: [bank]
+      summary: Download a purchase transaction batch as SEPA credit transfer file
+      description: >-
+        The batch as a SEPA credit transfer file (pain.001.001.09), as Moneybird makes it; an open batch is exported
+        from then on. A batch of a financial account that is not a bank account with an IBAN answers 422; a cancelled
+        or empty one 404.
+      tags: [Purchase transactions]
+      responses:
+        '200':
+          description: A SEPA credit transfer file
+          content:
+            text/xml:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/sepa_credit_transfer:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: createSepaCreditTransfer
+      x-permissions: [bank]
+      summary: Upload a SEPA credit transfer file
+      description: >-
+        Reads a SEPA credit transfer file (pain.001.001.09, or an older pain.001.001 version such as .03) and makes a
+        purchase transaction batch per payment information block with a purchase transaction per transfer. Each batch
+        is paid from financial_account_id, or from the financial account with the block's IBAN. A transfer whose
+        end-to-end id is the id of an open purchase invoice or receipt, or whose message is its reference, with that
+        amount unpaid, pays it. ledger_account_id is accepted for compatibility.
+      tags: [Purchase transactions]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                ledger_account_id:
+                  type: string
+                financial_account_id:
+                  type: string
+      responses:
+        '201':
+          description: The batches made from the file
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseTransactionBatch'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/reports/journal_entries:
@@ -9710,6 +11674,91 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/GeneralJournalDocument'
+    PurchaseInvoicePage:
+      description: A page of purchase invoices
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/PurchaseInvoice'
+    ReceiptPage:
+      description: A page of receipts
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Receipt'
+    GeneralDocumentPage:
+      description: A page of general documents
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/GeneralDocument'
+    TypelessDocumentPage:
+      description: A page of typeless documents
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/TypelessDocument'
+    PurchaseTransactionPage:
+      description: A page of purchase transactions
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/PurchaseTransaction'
     ContactPage:
       description: A page of contacts
       headers:
@@ -11340,6 +13389,8 @@ components:
           $ref: '#/components/schemas/OverviewBank'
         sales:
           $ref: '#/components/schemas/OverviewSales'
+        incoming:
+          $ref: '#/components/schemas/OverviewIncoming'
         recently_processed:
           type: array
           description: The records processed last, newest first, at most 25.
@@ -11656,6 +13707,350 @@ components:
               pattern: '^[0-9]{1,6}$'
         _destroy:
           $ref: '#/components/schemas/FlexibleBoolean'
+    PurchaseInvoice:
+      description: A Moneybird purchase invoice with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/purchase_invoice_response'
+        - $ref: '#/components/schemas/PurchaseDocumentFields'
+    Receipt:
+      description: A Moneybird receipt with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/receipt_response'
+        - $ref: '#/components/schemas/PurchaseDocumentFields'
+    PurchaseDocumentFields:
+      type: object
+      required: [id, administration_id, contact_id, date, state, entry_number, currency, details, payments, notes, attachments, events,
+                 fiscal_allocations, total_price_excl_tax, total_price_incl_tax, total_paid, total_unpaid, version, uri]
+      properties:
+        uri:
+          type: string
+          description: MoneyHarpy extension. Canonical path of this resource.
+        total_tax:
+          type: string
+          description: MoneyHarpy extension. The VAT charged; reverse-charged VAT is not part of it.
+        total_paid:
+          type: string
+          description: MoneyHarpy extension. What payments settled.
+        total_unpaid:
+          type: string
+          description: MoneyHarpy extension. What is still to be paid; negative for a revenue invoice.
+        tax_totals:
+          type: array
+          description: MoneyHarpy extension. The VAT per rate.
+          items:
+            type: object
+            required: [tax_rate_id, taxable_amount, tax_amount]
+            properties:
+              tax_rate_id:
+                $ref: '#/components/schemas/Identifier'
+              taxable_amount:
+                type: string
+              taxable_amount_base:
+                type: string
+              tax_amount:
+                type: string
+              tax_amount_base:
+                type: string
+    PurchaseDetailInput:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        description:
+          type: string
+          maxLength: 10000
+        period:
+          type: string
+          description: The days the line is about, as yyyymmdd..yyyymmdd; empty clears it.
+          pattern: '^(\d{8}\.\.\d{8})?$'
+        price:
+          $ref: '#/components/schemas/Money'
+        amount:
+          description: The quantity, such as "2" or "1,5 hours"; it must start with a number.
+          oneOf:
+            - type: string
+              maxLength: 255
+            - type: number
+        tax_rate_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        ledger_account_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        project_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        product_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        row_order:
+          oneOf:
+            - type: integer
+            - type: string
+              pattern: '^[0-9]{1,6}$'
+        is_optional:
+          description: Accepted for compatibility; every line of a document counts.
+          $ref: '#/components/schemas/FlexibleBoolean'
+        is_selected:
+          description: Accepted for compatibility; every line of a document counts.
+          $ref: '#/components/schemas/FlexibleBoolean'
+        automated_tax_enabled:
+          description: Accepted for compatibility.
+          $ref: '#/components/schemas/FlexibleBoolean'
+        _destroy:
+          $ref: '#/components/schemas/FlexibleBoolean'
+    FiscalAllocationInput:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        ledger_account_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        private_ledger_account_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        percentage:
+          description: A percentage such as "25" or "12.5".
+          oneOf:
+            - type: string
+              maxLength: 10
+            - type: number
+        _destroy:
+          $ref: '#/components/schemas/FlexibleBoolean'
+    PurchaseDocumentInput:
+      type: object
+      additionalProperties: false
+      properties:
+        contact_id:
+          description: The supplier; empty removes it.
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        reference:
+          type: string
+          description: The document's number at the supplier.
+          maxLength: 1000
+        date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          description: yyyy-mm-dd; empty removes it.
+          pattern: '^(\d{4}-\d{2}-\d{2})?$'
+        currency:
+          type: string
+          maxLength: 3
+        prices_are_incl_tax:
+          $ref: '#/components/schemas/FlexibleBoolean'
+        revenue_invoice:
+          description: A purchase invoice the administration receives money on; it books the other way.
+          $ref: '#/components/schemas/FlexibleBoolean'
+        details_attributes:
+          description: An array of lines, or an object of lines keyed by position.
+          oneOf:
+            - type: array
+              maxItems: 500
+              items:
+                $ref: '#/components/schemas/PurchaseDetailInput'
+            - type: object
+              additionalProperties:
+                $ref: '#/components/schemas/PurchaseDetailInput'
+        fiscal_allocations_attributes:
+          description: An array of fiscal allocations, or an object of them keyed by position.
+          oneOf:
+            - type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/FiscalAllocationInput'
+            - type: object
+              additionalProperties:
+                $ref: '#/components/schemas/FiscalAllocationInput'
+    PurchaseInvoiceRequest:
+      type: object
+      required: [purchase_invoice]
+      additionalProperties: false
+      properties:
+        purchase_invoice:
+          $ref: '#/components/schemas/PurchaseDocumentInput'
+    ReceiptRequest:
+      type: object
+      required: [receipt]
+      additionalProperties: false
+      properties:
+        receipt:
+          $ref: '#/components/schemas/PurchaseDocumentInput'
+        payment:
+          type: object
+          additionalProperties: false
+          properties:
+            financial_account_id:
+              description: Pays the receipt at once from this financial account.
+              $ref: '#/components/schemas/FlexibleIdentifier'
+    GeneralDocument:
+      description: A Moneybird general document with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/general_document_response'
+        - type: object
+          required: [id, administration_id, contact_id, date, state, entry_number, notes, attachments, events, version, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            reminder_date:
+              type: string
+              format: date
+              nullable: true
+              description: MoneyHarpy extension. When to be reminded.
+            reminder_message:
+              type: string
+              nullable: true
+              description: MoneyHarpy extension. What to be reminded of.
+    GeneralDocumentRequest:
+      type: object
+      required: [general_document]
+      additionalProperties: false
+      properties:
+        general_document:
+          type: object
+          additionalProperties: false
+          properties:
+            reference:
+              type: string
+              maxLength: 1000
+            date:
+              type: string
+              format: date
+            due_date:
+              type: string
+              description: yyyy-mm-dd; empty removes it.
+              pattern: '^(\d{4}-\d{2}-\d{2})?$'
+            reminder_date:
+              type: string
+              description: yyyy-mm-dd; empty removes it.
+              pattern: '^(\d{4}-\d{2}-\d{2})?$'
+            contact_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            reminder:
+              type: object
+              required: [date]
+              additionalProperties: false
+              properties:
+                date:
+                  type: string
+                  pattern: '^(\d{4}-\d{2}-\d{2})?$'
+                message:
+                  type: string
+                  maxLength: 10000
+        remove_contact:
+          $ref: '#/components/schemas/FlexibleBoolean'
+    TypelessDocument:
+      description: A Moneybird typeless document with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/typeless_document_response'
+        - type: object
+          required: [id, administration_id, contact_id, date, state, attachments, events, version, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    TypelessDocumentRequest:
+      type: object
+      required: [typeless_document]
+      additionalProperties: false
+      properties:
+        typeless_document:
+          type: object
+          additionalProperties: false
+          properties:
+            reference:
+              type: string
+              maxLength: 1000
+            date:
+              type: string
+              format: date
+            contact_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+    PurchaseTransaction:
+      description: A Moneybird purchase transaction with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/purchase_transaction_response'
+        - type: object
+          required: [id, administration_id, financial_account_id, amount, state, sepa_iban, sepa_iban_account_name, sepa_bic, end_to_end_id,
+                     description, created_at, updated_at, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    PurchaseTransactionBatch:
+      description: A Moneybird purchase transaction batch with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/purchase_transaction_batch_response'
+        - type: object
+          required: [id, administration_id, financial_account_id, identifier, state, created_at, updated_at, uri]
+          properties:
+            execution_date:
+              type: string
+              format: date
+              description: MoneyHarpy extension. When the bank pays.
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    PurchaseTransactionRequest:
+      type: object
+      description: MoneyHarpy extension.
+      required: [purchase_transaction]
+      additionalProperties: false
+      properties:
+        purchase_transaction:
+          type: object
+          required: [payable_id, financial_account_id]
+          additionalProperties: false
+          properties:
+            payable_id:
+              description: The purchase invoice or receipt to pay.
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            payable_type:
+              type: string
+              enum: [Document]
+            financial_account_id:
+              description: The bank account to pay from.
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            date:
+              type: string
+              description: yyyy-mm-dd; when to pay. Empty pays when the batch is executed.
+              pattern: '^(\d{4}-\d{2}-\d{2})?$'
+    PurchaseTransactionBatchRequest:
+      type: object
+      description: MoneyHarpy extension.
+      required: [purchase_transaction_batch]
+      additionalProperties: false
+      properties:
+        purchase_transaction_batch:
+          type: object
+          required: [financial_account_id]
+          additionalProperties: false
+          properties:
+            financial_account_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            purchase_transaction_ids:
+              description: The transactions to batch; left out, every open one of the account outside a batch.
+              type: array
+              maxItems: 1000
+              items:
+                $ref: '#/components/schemas/FlexibleIdentifier'
+            execution_date:
+              type: string
+              description: yyyy-mm-dd; today when left out.
+              pattern: '^(\d{4}-\d{2}-\d{2})?$'
+    OverviewIncoming:
+      type: object
+      description: MoneyHarpy extension. Present only with the documents permission.
+      required: [to_pay, to_process, currency]
+      properties:
+        to_pay:
+          $ref: '#/components/schemas/OverviewTally'
+        to_process:
+          type: integer
+          minimum: 0
+          description: Uploads still to process into documents, and purchase invoices and receipts still new.
+        currency:
+          type: string
+          example: EUR
     JournalEntry:
       type: object
       description: One booking in the journal. Debits are positive amounts, credits negative.
@@ -11668,7 +14063,7 @@ components:
           format: date
         document_type:
           type: string
-          enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, Payment]
+          enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt, Payment]
         document_id:
           $ref: '#/components/schemas/Identifier'
         ledger_account_id:

@@ -414,10 +414,61 @@ every permission for task lists, and so does MoneyHarpy. Webhooks tell
 `_report_type_linked`, `_category_linked`, `_unlinked`, `_assigned`,
 `_unassigned`, `_completed`, `_reopened` and `_destroyed`.
 
+## Incoming documents
+
+Purchase invoices and receipts live at `/{id}/documents/purchase_invoices`
+and `/{id}/documents/receipts` ("Incoming" in the menu), with Moneybird's
+documents API under `/api/v2/{administration_id}/documents/purchase_invoices`
+and `.../documents/receipts`: lists (filter terms `period`, `state` with
+`new`, `open`, `late`, `pending_payment` and `paid`, `reference`,
+`contact_id`, `ledger_account_id`, `updated_after`, `attachment`; `new_filter`
+too), synchronization, create, update, delete, notes, attachments, payments
+and `register_payment`. A purchase invoice with a supplier and at least one
+line, or a receipt with a line, is booked when saved, with its kind as
+document type: the total on the creditors for the supplier, each line
+excluding VAT on its category (expenses still to categorize when left out),
+the VAT per rate on receivable VAT. Reverse-charged rates (purchase rates
+that do not show VAT, such as "Within the EU 21%") leave the VAT out of the
+total and book it on both receivable and payable VAT. `revenue_invoice`
+books the other way. Fiscal allocations move their percentage of what the
+lines book on a category, VAT included, to a private category. A document
+without what booking needs is new and books nothing. A receipt created with
+`payment.financial_account_id` is paid at once from that account. Payments
+work as for sales invoices, against payments to classify unless the manual
+payment action says otherwise (invoices settlement is not available for
+documents yet), with `invoice_type` `Document`. A paid document, or one with
+payments, cannot change; nothing changes in the locked period.
+
+Bank transactions pay purchase invoices and receipts with `link_booking`
+and `booking_type` `Document` (or a payment with `financial_mutation_id`):
+the bank posts the payment on the creditors, and `unlink_booking` with the
+payment undoes it. General documents (`/documents/general_documents`) are
+kept for the record and book nothing; typeless documents
+(`/documents/typeless_documents`, "Uploads" in the menu) are uploads still
+to process. The overview shows what open purchase invoices and receipts
+have unpaid and how many uploads and new documents wait.
+
+Purchase transactions (`/api/v2/{administration_id}/purchase_transactions`)
+are the credit transfers that pay documents. `POST .../purchase_transactions`
+and `POST .../purchase_transaction_batches` (MoneyHarpy extensions) make one
+for what a document has unpaid, to the supplier's SEPA IBAN, and batch the
+open ones of a bank account; the documents are pending payment from then on.
+`POST .../purchase_transaction_batches/{id}/download` renders the batch as a
+SEPA credit transfer file (pain.001.001.09, as Moneybird makes it), and
+`POST .../sepa_credit_transfer` reads such a file (version .09 or older, such
+as .03) into batches, paying the open documents whose reference or id the
+transfers name. A transaction is paid once its document is. Webhooks tell
+`document_saved`, `document_updated`, `document_destroyed`,
+`purchase_transaction_created`, `purchase_transaction_deleted` and
+`purchase_transaction_batch_created`, with the payment events. Documents
+saved from email or Peppol, recurring documents, new documents made from a
+bank transaction (`NewPurchaseInvoice`, `NewReceipt`) and paying through
+Moneybird Banking are not available yet.
+
 ## Payments
 
 `GET /api/v2/{administration_id}/payments/{id}` returns any payment of a
-sales or external sales invoice, as Moneybird's payments endpoint does for
+sales or external sales invoice, purchase invoice or receipt, as Moneybird's payments endpoint does for
 the invoice types MoneyHarpy has.
 
 ## Users and permissions
