@@ -460,6 +460,40 @@ type Payment struct {
 	UpdatedAt             pgtype.Timestamptz
 }
 
+type Product struct {
+	ID                  int64
+	AdministrationID    int64
+	Title               string
+	Description         string
+	CheckoutDescription string
+	Identifier          string
+	Price               int64
+	Currency            string
+	FrequencyCount      int32
+	FrequencyType       string
+	TaxRateID           pgtype.Int8
+	LedgerAccountID     int64
+	DocumentStyleID     pgtype.Int8
+	WorkflowID          pgtype.Int8
+	ProductType         string
+	VatRateType         string
+	CheckoutType        string
+	MaxAmountPerOrder   pgtype.Int4
+	Active              bool
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+}
+
+type Project struct {
+	ID               int64
+	AdministrationID int64
+	Name             string
+	State            string
+	Budget           pgtype.Int4
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type RecoveryCode struct {
 	UserID   int64
 	CodeHash string

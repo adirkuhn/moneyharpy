@@ -25,6 +25,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/overview"
+	"github.com/adirkuhn/moneyharpy/internal/products"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -84,6 +86,8 @@ type Deps struct {
 	Contacts        *contacts.Service
 	Journal         *journal.Service
 	Sales           *sales.Service
+	Products        *products.Service
+	Projects        *projects.Service
 	Membership      *membership.Service
 	Connections     *connections.Service
 	Webhooks        *webhooks.Service
@@ -109,6 +113,9 @@ type Deps struct {
 	// ResetLimiter caps reset mails per address, so nobody's inbox can be
 	// flooded.
 	ResetLimiter *ratelimit.Limiter
+	// FileKey signs the temporary download links; a random key is used
+	// when it is empty, which works with one instance only.
+	FileKey []byte
 	// TrustProxyHeaders takes the client address from X-Forwarded-For. Enable
 	// it only behind exactly one reverse proxy that appends to the header.
 	TrustProxyHeaders bool
@@ -133,7 +140,7 @@ func NewHandler(d Deps) (http.Handler, error) {
 		return nil, fmt.Errorf("validate contract: %w", err)
 	}
 
-	s := &server{deps: d, secureCookies: strings.HasPrefix(d.BaseURL, "https://")}
+	s := &server{deps: d, secureCookies: strings.HasPrefix(d.BaseURL, "https://"), fileKey: fileKey(d.FileKey)}
 	rules, err := permissionRules(spec)
 	if err != nil {
 		return nil, err
@@ -180,6 +187,8 @@ type server struct {
 	// root is the whole handler, for running MCP tools as API requests.
 	root  http.Handler
 	tools []operationTool
+	// fileKey signs download links.
+	fileKey []byte
 }
 
 func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
@@ -205,8 +214,6 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"delivery_method": {"is not available yet; send the invoice by email or yourself"}}))
 	case errors.Is(err, sales.ErrDelivery):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The invoice is booked but could not be emailed; check the mail settings and send it again"}}))
-	case errors.Is(err, contacts.ErrInUse):
-		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Documents refer to this contact; archive it instead"}}))
 	case errors.Is(err, banking.ErrStatementBooked):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Remove the bookings of this statement's transactions first"}}))
 	case errors.Is(err, connections.ErrForbidden):
@@ -255,6 +262,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		contacts.IsNotFound(err),
 		journal.IsNotFound(err),
 		sales.IsNotFound(err),
+		errors.Is(err, products.ErrNotFound),
+		errors.Is(err, projects.ErrNotFound),
 		errors.Is(err, membership.ErrUserNotFound),
 		errors.Is(err, connections.ErrNotFound),
 		errors.Is(err, webhooks.ErrNotFound),

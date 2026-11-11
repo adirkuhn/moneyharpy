@@ -8,12 +8,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/money"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -80,7 +79,12 @@ type Ledger interface {
 	LockedUntil(ctx context.Context, admin, user resource.ID) (string, error)
 }
 
-// Contacts checks the contacts entries refer to.
+// Projects gives the projects entries are booked on.
+type Projects interface {
+	Project(ctx context.Context, admin, id, user resource.ID) (projects.Project, error)
+}
+
+// Contacts checks the contacts entries name.
 type Contacts interface {
 	// ContactExists returns an error unless the contact is the
 	// administration's.
@@ -125,6 +129,7 @@ type Service struct {
 	admins      Administrations
 	ledger      Ledger
 	contacts    Contacts
+	projects    Projects
 	store       Store
 	documents   DocumentStore
 	attachments Attachments
@@ -134,8 +139,8 @@ type Service struct {
 }
 
 // NewService returns a Service.
-func NewService(admins Administrations, ledger Ledger, contacts Contacts, store Store, documents DocumentStore, notes Notes, attachments Attachments, ids *resource.Generator, now func() time.Time) *Service {
-	return &Service{admins: admins, ledger: ledger, contacts: contacts, store: store, documents: documents, notes: notes, attachments: attachments, ids: ids, now: now}
+func NewService(admins Administrations, ledger Ledger, contacts Contacts, projects Projects, store Store, documents DocumentStore, notes Notes, attachments Attachments, ids *resource.Generator, now func() time.Time) *Service {
+	return &Service{admins: admins, ledger: ledger, contacts: contacts, projects: projects, store: store, documents: documents, notes: notes, attachments: attachments, ids: ids, now: now}
 }
 
 // today is the date in the administration's time zone.
@@ -146,30 +151,13 @@ func today(a administration.Listed, now time.Time) time.Time {
 	return now
 }
 
-var monthPattern = regexp.MustCompile(`^\d{6}$`)
-
-// ParseReportPeriod reads a report period: a name such as this_month, a
-// month such as 202501 or a range of whole months. Empty means this month.
+// ParseReportPeriod reads a report period; see money.ParseReportPeriod.
 func ParseReportPeriod(s string, now time.Time) (money.Period, error) {
-	s = strings.TrimSpace(s)
-	switch {
-	case s == "":
-		s = "this_month"
-	case monthPattern.MatchString(s):
-		s += ".." + s
-	}
-	p, err := money.ParsePeriod(s, now)
-	if err != nil {
-		return p, err
-	}
-	if p.From.Day() != 1 || p.To.AddDate(0, 0, 1).Day() != 1 {
-		return p, errors.New("must cover whole months")
-	}
-	return p, nil
+	return money.ParseReportPeriod(s, now)
 }
 
 // Granularities split a report into periods.
-var Granularities = []string{"month", "quarter", "year"}
+var Granularities = money.Granularities
 
 // LedgerPeriod is the general ledger over part of the report's period.
 type LedgerPeriod struct {
@@ -202,35 +190,18 @@ func (s *Service) GeneralLedger(ctx context.Context, admin, user resource.ID, pe
 	if granularity == "" {
 		return out, nil
 	}
-	months := map[string]int{"month": 1, "quarter": 3, "year": 12}[granularity]
-	if months == 0 {
-		return GeneralLedgerReport{}, invalid("granularity", "is not one of month, quarter, year")
+	parts, err := p.Split(granularity)
+	if err != nil {
+		return GeneralLedgerReport{}, invalid("granularity", err.Error())
 	}
-	for from := p.From; !from.After(p.To); {
-		next := alignedNext(from, months)
-		part := money.Period{From: from, To: minTime(next.AddDate(0, 0, -1), p.To)}
+	for _, part := range parts {
 		partSums, err := s.store.Sums(ctx, admin, part)
 		if err != nil {
 			return GeneralLedgerReport{}, fmt.Errorf("sum journal: %w", err)
 		}
 		out.Periods = append(out.Periods, LedgerPeriod{Period: part, Sums: active(partSums)})
-		from = next
 	}
 	return out, nil
-}
-
-// alignedNext is the start of the month, quarter or year after the one
-// holding day.
-func alignedNext(day time.Time, months int) time.Time {
-	m := (int(day.Month())-1)/months*months + months
-	return time.Date(day.Year(), time.Month(m+1), 1, 0, 0, 0, 0, time.UTC)
-}
-
-func minTime(a, b time.Time) time.Time {
-	if a.Before(b) {
-		return a
-	}
-	return b
 }
 
 // active keeps the categories with a balance or bookings.

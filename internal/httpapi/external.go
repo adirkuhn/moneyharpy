@@ -380,20 +380,7 @@ func (s *server) DeleteExternalSalesInvoiceAttachment(w http.ResponseWriter, r *
 
 // DownloadExternalSalesInvoiceAttachment implements ServerInterface.
 func (s *server) DownloadExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, attachmentID Identifier) {
-	admin, rid, ok := parseIDs(w, administrationID, id)
-	if !ok {
-		return
-	}
-	att, ok := parseID(w, attachmentID)
-	if !ok {
-		return
-	}
-	a, body, err := s.deps.Sales.OpenExternalAttachment(r.Context(), admin, rid, att, user(r).ID)
-	if err != nil {
-		s.fail(w, r, err)
-		return
-	}
-	writeFile(w, a, body)
+	s.redirectToAttachment(w, r, fileExternalAttachment, administrationID, id, attachmentID)
 }
 
 // CreateExternalSalesInvoiceNote implements ServerInterface.

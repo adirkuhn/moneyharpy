@@ -92,6 +92,29 @@ describe('side menu', () => {
     expect(within(nav).getByRole('link', { name: 'Recurring invoices' })).not.toHaveAttribute('aria-disabled')
   })
 
+  it('leads to the products and the projects', async () => {
+    open()
+    renderAt('/11/feed')
+    const nav = await menu()
+    await userEvent.click(within(nav).getByRole('button', { name: 'Products' }))
+    // The section's own overview, beside the administration's at /11/feed.
+    const products = within(nav).getAllByRole('link', { name: 'Overview' }).find((l) => l.getAttribute('href') === '/11/products')
+    expect(products).toBeDefined()
+    expect(products).not.toHaveAttribute('aria-disabled')
+    expect(within(nav).getByRole('link', { name: 'Online sales' })).toHaveAttribute('aria-disabled', 'true')
+    expect(within(nav).getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/11/projects')
+    expect(within(nav).getByRole('link', { name: 'Projects' })).not.toHaveAttribute('aria-disabled')
+  })
+
+  it('shows products and projects to a member who manages the settings', async () => {
+    open(administration({ id: '11', user_type: 'employee', permissions: ['settings'] }))
+    renderAt('/11/feed')
+    const nav = await menu()
+    expect(within(nav).getByRole('button', { name: 'Products' })).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Projects' })).toBeInTheDocument()
+    expect(within(nav).queryByRole('button', { name: 'Invoices' })).toBeNull()
+  })
+
   it('shows only the parts a member may use', async () => {
     open(administration({ id: '11', user_type: 'employee', permissions: ['time_entries'] }))
     renderAt('/11/feed')

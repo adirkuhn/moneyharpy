@@ -251,3 +251,17 @@ func (s *server) SendSalesInvoiceReminders(w http.ResponseWriter, r *http.Reques
 	}
 	writeJSON(w, http.StatusOK, out)
 }
+
+// GetPayment implements ServerInterface.
+func (s *server) GetPayment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	p, err := s.deps.Sales.Payment(r.Context(), admin, rid, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toPayment(p))
+}

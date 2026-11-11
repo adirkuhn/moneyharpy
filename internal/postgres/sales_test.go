@@ -19,6 +19,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
+	"github.com/adirkuhn/moneyharpy/internal/products"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
@@ -79,6 +81,8 @@ type salesFixture struct {
 	customer resource.ID
 	vat21    resource.ID
 	revenue  resource.ID
+	products *products.Service
+	projects *projects.Service
 }
 
 func newSalesFixture(t *testing.T) salesFixture {
@@ -92,8 +96,11 @@ func newSalesFixture(t *testing.T) salesFixture {
 	store := postgres.NewSalesStore(testPool)
 	journalStore := postgres.NewJournalStore(testPool)
 	people := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, store}, noteSvc, postgres.NewContactStore(testPool), ids, time.Now)
+	catalog := postgres.NewCatalogStore(testPool)
+	productSvc := products.NewService(admins, books, people, catalog, store, ids, time.Now)
+	projectSvc := projects.NewService(admins, catalog, projects.AnyReferences{store, journalStore}, ids, time.Now)
 	svc := sales.NewService(sales.Deps{
-		Administrations: admins, Contacts: people, Invoicing: invoices, Ledger: books, Notes: noteSvc, Attachments: files,
+		Administrations: admins, Contacts: people, Products: productSvc, Projects: projectSvc, Invoicing: invoices, Ledger: books, Notes: noteSvc, Attachments: files,
 		Store: store, Renderer: manualOnly{}, Mailer: noDocumentMail{}, Bank: bank, IDs: ids, Now: time.Now,
 	})
 	bank.UseInvoices(svc)
@@ -107,8 +114,9 @@ func newSalesFixture(t *testing.T) salesFixture {
 	}
 	return salesFixture{
 		svc: svc, bank: bank, books: books, store: store, admin: admin, owner: owner, customer: customer.ID, vat21: rates[0].ID,
-		revenue: categoryByKey(t, books, admin, owner, "revenue"),
-		journal: journal.NewService(admins, books, people, journalStore, journalStore, noteSvc, files, ids, time.Now),
+		revenue:  categoryByKey(t, books, admin, owner, "revenue"),
+		products: productSvc, projects: projectSvc,
+		journal: journal.NewService(admins, books, people, projectSvc, journalStore, journalStore, noteSvc, files, ids, time.Now),
 	}
 }
 

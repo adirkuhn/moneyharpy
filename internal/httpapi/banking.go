@@ -3,6 +3,7 @@ package httpapi
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -473,24 +474,34 @@ func (s *server) DeleteFinancialStatement(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// mutationFilter reads a financial mutation filter, whose periods count
+// from today in the administration's time zone.
+func (s *server) mutationFilter(w http.ResponseWriter, r *http.Request, admin resource.ID, filter *DocumentFilter) (banking.MutationFilter, bool) {
+	a, err := s.deps.Administrations.Get(r.Context(), admin, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return banking.MutationFilter{}, false
+	}
+	today := time.Now()
+	if loc, err := time.LoadLocation(a.TimeZone); err == nil {
+		today = today.In(loc)
+	}
+	f, err := banking.ParseMutationFilter(deref((*string)(filter)), today)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, strings.TrimPrefix(err.Error(), "invalid fields: "))
+		return f, false
+	}
+	return f, true
+}
+
 // ListFinancialMutations implements ServerInterface.
 func (s *server) ListFinancialMutations(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, params ListFinancialMutationsParams) {
 	admin, ok := parseID(w, administrationID)
 	if !ok {
 		return
 	}
-	a, err := s.deps.Administrations.Get(r.Context(), admin, user(r).ID)
-	if err != nil {
-		s.fail(w, r, err)
-		return
-	}
-	today := time.Now()
-	if loc, err := time.LoadLocation(a.TimeZone); err == nil {
-		today = today.In(loc)
-	}
-	f, err := banking.ParseMutationFilter(deref(params.Filter), today)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, strings.TrimPrefix(err.Error(), "invalid fields: "))
+	f, ok := s.mutationFilter(w, r, admin, params.Filter)
+	if !ok {
 		return
 	}
 	list, err := s.deps.Banking.Mutations(r.Context(), admin, user(r).ID, f)
@@ -516,12 +527,16 @@ func (s *server) GetFinancialMutation(w http.ResponseWriter, r *http.Request, ad
 }
 
 // ListFinancialMutationVersions implements ServerInterface.
-func (s *server) ListFinancialMutationVersions(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+func (s *server) ListFinancialMutationVersions(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, params ListFinancialMutationVersionsParams) {
 	admin, ok := parseID(w, administrationID)
 	if !ok {
 		return
 	}
-	list, err := s.deps.Banking.MutationVersions(r.Context(), admin, user(r).ID)
+	f, ok := s.mutationFilter(w, r, admin, params.Filter)
+	if !ok {
+		return
+	}
+	list, err := s.deps.Banking.MutationVersions(r.Context(), admin, user(r).ID, f)
 	if err != nil {
 		s.fail(w, r, err)
 		return
@@ -618,29 +633,54 @@ func (s *server) UnlinkFinancialMutationBooking(w http.ResponseWriter, r *http.R
 	writeJSON(w, http.StatusOK, toFinancialMutation(m))
 }
 
-// GetBankBalance implements ServerInterface.
-func (s *server) GetBankBalance(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+type accountBalanceJSON struct {
+	FinancialAccountID string `json:"financial_account_id"`
+	Name               string `json:"name"`
+	Type               string `json:"type"`
+	Balance            string `json:"balance"`
+}
+
+type bankBalanceJSON struct {
+	Period            string               `json:"period,omitempty"`
+	Total             string               `json:"total"`
+	FinancialAccounts []accountBalanceJSON `json:"financial_accounts"`
+}
+
+func toBankBalance(p banking.BalancePeriod) bankBalanceJSON {
+	out := bankBalanceJSON{Total: p.Total.String(), FinancialAccounts: []accountBalanceJSON{}}
+	for _, b := range p.Balances {
+		out.FinancialAccounts = append(out.FinancialAccounts, accountBalanceJSON{FinancialAccountID: b.Account.ID.String(), Name: b.Account.Name, Type: b.Account.Type, Balance: b.Balance.String()})
+	}
+	return out
+}
+
+// GetBankBalance implements ServerInterface. A period Moneybird would
+// refuse is a bad request, as there.
+func (s *server) GetBankBalance(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, params GetBankBalanceParams) {
 	admin, ok := parseID(w, administrationID)
 	if !ok {
 		return
 	}
-	list, total, err := s.deps.Banking.Balances(r.Context(), admin, user(r).ID)
+	report, err := s.deps.Banking.BalanceReport(r.Context(), admin, user(r).ID, deref((*string)(params.Period)), string(deref(params.Granularity)))
+	var verr *resource.ValidationError
+	if errors.As(err, &verr) {
+		for field, problems := range verr.Fields {
+			writeError(w, http.StatusBadRequest, strings.ToUpper(field[:1])+field[1:]+" "+problems[0])
+			return
+		}
+	}
 	if err != nil {
 		s.fail(w, r, err)
 		return
 	}
-	type accountBalance struct {
-		FinancialAccountID string `json:"financial_account_id"`
-		Name               string `json:"name"`
-		Type               string `json:"type"`
-		Balance            string `json:"balance"`
-	}
 	out := struct {
-		Total             string           `json:"total"`
-		FinancialAccounts []accountBalance `json:"financial_accounts"`
-	}{Total: total.String(), FinancialAccounts: []accountBalance{}}
-	for _, b := range list {
-		out.FinancialAccounts = append(out.FinancialAccounts, accountBalance{FinancialAccountID: b.Account.ID.String(), Name: b.Account.Name, Type: b.Account.Type, Balance: b.Balance.String()})
+		bankBalanceJSON
+		Periods []bankBalanceJSON `json:"periods,omitempty"`
+	}{bankBalanceJSON: toBankBalance(report.BalancePeriod)}
+	for _, p := range report.Periods {
+		part := toBankBalance(p)
+		part.Period = p.Period.Monthly()
+		out.Periods = append(out.Periods, part)
 	}
 	writeJSON(w, http.StatusOK, out)
 }

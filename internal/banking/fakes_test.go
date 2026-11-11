@@ -226,9 +226,12 @@ func (m *memStore) DeleteRule(_ context.Context, _, id resource.ID) error {
 	delete(m.rules, id)
 	return nil
 }
-func (m *memStore) Balances(context.Context, resource.ID) (map[resource.ID]Amount, error) {
+func (m *memStore) Balances(_ context.Context, _ resource.ID, until *time.Time) (map[resource.ID]Amount, error) {
 	out := map[resource.ID]Amount{}
 	for _, mu := range m.mutations {
+		if until != nil && mu.Date.After(*until) {
+			continue
+		}
 		out[mu.AccountID] += mu.Amount
 	}
 	return out, nil

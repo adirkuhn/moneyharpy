@@ -107,10 +107,15 @@ func TestBankingImportBookAndRules(t *testing.T) {
 		t.Errorf("after unlink = %+v", got)
 	}
 
-	versions, _ := svc.MutationVersions(ctx, admin, owner)
+	all, _ := banking.ParseMutationFilter("state:all", time.Now())
+	versions, _ := svc.MutationVersions(ctx, admin, owner, all)
 	balances, total, _ := svc.Balances(ctx, admin, owner)
 	if len(versions) != 2 || len(balances) != 1 || total != 97450 {
 		t.Errorf("versions %d, balances %+v, total %s", len(versions), balances, total)
+	}
+	early2000 := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	if early, err := store.Balances(ctx, admin, &early2000); err != nil || len(early) != 0 {
+		t.Errorf("balances in 2000 = %v, %v", early, err)
 	}
 
 	if err := svc.DeleteStatement(ctx, admin, m.StatementID, owner); !errors.Is(err, banking.ErrStatementBooked) {

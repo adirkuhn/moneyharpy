@@ -48,6 +48,9 @@ type Document struct {
 	// Logo is the document style's logo, if it has one.
 	Logo, LogoType string
 	LogoData       []byte
+	// Stationery leaves out the sender's address and logo, for printing
+	// on paper that has them.
+	Stationery bool
 }
 
 // Send sends an invoice: a draft gets its number and is booked, a sent one
@@ -255,21 +258,23 @@ func (s *Service) document(ctx context.Context, a administration.Listed, user re
 }
 
 // PDF renders the invoice, with the file name to save it under.
-func (s *Service) PDF(ctx context.Context, admin, id, user resource.ID) ([]byte, string, error) {
+func (s *Service) PDF(ctx context.Context, admin, id, user resource.ID, stationery bool) ([]byte, string, error) {
 	doc, err := s.Document(ctx, admin, id, user)
 	if err != nil {
 		return nil, "", err
 	}
+	doc.Stationery = stationery
 	data, err := s.renderer.PDF(doc)
 	return data, fileName(doc.Invoice, "pdf"), wrap("render invoice", err)
 }
 
 // PackingSlip renders the invoice without prices.
-func (s *Service) PackingSlip(ctx context.Context, admin, id, user resource.ID) ([]byte, string, error) {
+func (s *Service) PackingSlip(ctx context.Context, admin, id, user resource.ID, stationery bool) ([]byte, string, error) {
 	doc, err := s.Document(ctx, admin, id, user)
 	if err != nil {
 		return nil, "", err
 	}
+	doc.Stationery = stationery
 	data, err := s.renderer.PackingSlip(doc)
 	return data, fileName(doc.Invoice, "packing-slip.pdf"), wrap("render packing slip", err)
 }

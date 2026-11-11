@@ -89,6 +89,9 @@ func TestJournalEntriesLifecycle(t *testing.T) {
 	if got := decode[[]journalDocument](t, list); len(got) != 1 || list.header.Get("X-Total-Count") != "1" {
 		t.Errorf("filtered = %+v", got)
 	}
+	if got := decode[[]journalDocument](t, owner.do(http.MethodGet, docs+"?filter=period:202611..202611&new_filter=period:prev_year", nil)); len(got) != 0 {
+		t.Errorf("new_filter for last year = %d", len(got))
+	}
 	if got := decode[[]journalDocument](t, owner.do(http.MethodGet, docs+"?filter=period:prev_year", nil)); len(got) != 0 {
 		t.Errorf("last year = %d", len(got))
 	}
@@ -112,8 +115,7 @@ func TestJournalEntriesLifecycle(t *testing.T) {
 		t.Errorf("attachable type = %s", att.AttachableType)
 	}
 	wantStatus(t, owner.attach(docs+"/"+d.ID+"/attachments", "tool.exe", "application/octet-stream", []byte{0x4d, 0x5a, 0x90, 0x00}), http.StatusUnprocessableEntity)
-	download := owner.do(http.MethodGet, docs+"/"+d.ID+"/attachments/"+att.ID+"/download", nil)
-	wantStatus(t, download, http.StatusOK)
+	download := owner.follow(owner.do(http.MethodGet, docs+"/"+d.ID+"/attachments/"+att.ID+"/download", nil))
 	if !bytes.Equal(download.body, pdf) || !strings.Contains(download.header.Get("Content-Disposition"), "receipt.pdf") {
 		t.Errorf("download = %q %q", download.body, download.header.Get("Content-Disposition"))
 	}
@@ -133,7 +135,7 @@ func TestJournalEntriesLifecycle(t *testing.T) {
 	}
 
 	// A contact in a journal entry stays; the debtors are settled by invoices only.
-	wantStatus(t, owner.do(http.MethodDelete, api+"/contacts/"+customer.ID, nil), http.StatusUnprocessableEntity)
+	wantKept(t, owner.do(http.MethodDelete, api+"/contacts/"+customer.ID, nil), "archived")
 	debtors := category(t, owner, a.Id, "Accounts receivable")
 	wantStatus(t, owner.do(http.MethodPost, docs, map[string]any{"general_journal_document": map[string]any{
 		"reference": "Write off", "date": "2026-11-05",
@@ -144,7 +146,11 @@ func TestJournalEntriesLifecycle(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodPatch, api+"/bookkeeping_settings", map[string]any{"bookkeeping_settings": map[string]any{"period_locked_until": "2026-11-05"}}), http.StatusOK)
 	wantStatus(t, owner.do(http.MethodDelete, docs+"/"+d.ID, nil), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodPatch, api+"/bookkeeping_settings", map[string]any{"bookkeeping_settings": map[string]any{"period_locked_until": ""}}), http.StatusOK)
-	wantStatus(t, owner.do(http.MethodDelete, docs+"/"+d.ID, nil), http.StatusNoContent)
+	deleted := owner.do(http.MethodDelete, docs+"/"+d.ID, nil)
+	wantStatus(t, deleted, http.StatusOK)
+	if strings.TrimSpace(string(deleted.body)) != "200" {
+		t.Errorf("delete body = %s", deleted.body)
+	}
 }
 
 type ledgerValues struct {

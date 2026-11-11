@@ -440,8 +440,12 @@ func (s *BankingStore) withBookings(ctx context.Context, admin resource.ID, rows
 }
 
 // Balances implements banking.Store.
-func (s *BankingStore) Balances(ctx context.Context, admin resource.ID) (map[resource.ID]banking.Amount, error) {
-	rows, err := s.q.FinancialBalances(ctx, int64(admin))
+func (s *BankingStore) Balances(ctx context.Context, admin resource.ID, until *time.Time) (map[resource.ID]banking.Amount, error) {
+	day := pgtype.Date{}
+	if until != nil {
+		day = pgtype.Date{Time: *until, Valid: true}
+	}
+	rows, err := s.q.FinancialBalances(ctx, sqlc.FinancialBalancesParams{AdministrationID: int64(admin), Until: day})
 	if err != nil {
 		return nil, err
 	}

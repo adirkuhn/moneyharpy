@@ -54,6 +54,13 @@ func TestPDF(t *testing.T) {
 			t.Errorf("%s: not a PDF (%d bytes)", lang, len(data))
 		}
 	}
+	plain, _ := New().PDF(document(t, "en"))
+	doc := document(t, "en")
+	doc.Stationery = true
+	stationery, err := New().PDF(doc)
+	if err != nil || !bytes.HasPrefix(stationery, []byte("%PDF-")) || len(stationery) >= len(plain) {
+		t.Errorf("stationery: %d bytes, plain %d, %v; want a smaller PDF without the logo", len(stationery), len(plain), err)
+	}
 	slip, err := New().PackingSlip(document(t, "en"))
 	if err != nil || !bytes.HasPrefix(slip, []byte("%PDF-")) {
 		t.Errorf("packing slip: %v", err)

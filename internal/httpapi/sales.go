@@ -640,18 +640,15 @@ func (s *server) download(w http.ResponseWriter, r *http.Request, administration
 	writeDocument(w, contentType, name, data)
 }
 
-// DownloadSalesInvoicePdf implements ServerInterface.
-func (s *server) DownloadSalesInvoicePdf(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
-	s.download(w, r, administrationID, id, "application/pdf", func(admin, rid resource.ID) ([]byte, string, error) {
-		return s.deps.Sales.PDF(r.Context(), admin, rid, user(r).ID)
-	})
+// DownloadSalesInvoicePdf implements ServerInterface: it redirects to a
+// temporary link to the PDF, as Moneybird does.
+func (s *server) DownloadSalesInvoicePdf(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, params DownloadSalesInvoicePdfParams) {
+	s.redirectToDocument(w, r, filePDF, administrationID, id, params.Media)
 }
 
 // DownloadSalesInvoicePackingSlip implements ServerInterface.
-func (s *server) DownloadSalesInvoicePackingSlip(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
-	s.download(w, r, administrationID, id, "application/pdf", func(admin, rid resource.ID) ([]byte, string, error) {
-		return s.deps.Sales.PackingSlip(r.Context(), admin, rid, user(r).ID)
-	})
+func (s *server) DownloadSalesInvoicePackingSlip(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, params DownloadSalesInvoicePackingSlipParams) {
+	s.redirectToDocument(w, r, filePackingSlip, administrationID, id, params.Media)
 }
 
 // DownloadSalesInvoiceUbl implements ServerInterface.
@@ -786,18 +783,5 @@ func (s *server) DeleteSalesInvoiceAttachment(w http.ResponseWriter, r *http.Req
 
 // DownloadSalesInvoiceAttachment implements ServerInterface.
 func (s *server) DownloadSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, attachmentID Identifier) {
-	admin, rid, ok := parseIDs(w, administrationID, id)
-	if !ok {
-		return
-	}
-	att, ok := parseID(w, attachmentID)
-	if !ok {
-		return
-	}
-	a, body, err := s.deps.Sales.OpenAttachment(r.Context(), admin, rid, att, user(r).ID)
-	if err != nil {
-		s.fail(w, r, err)
-		return
-	}
-	writeFile(w, a, body)
+	s.redirectToAttachment(w, r, fileSalesAttachment, administrationID, id, attachmentID)
 }
