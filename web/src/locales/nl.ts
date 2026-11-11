@@ -85,6 +85,38 @@ export const nl: Messages = {
     attachments: 'Bijlagen', noAttachments: 'Nog geen bijlagen.', addAttachment: 'Bijlage toevoegen', attachmentHelp: 'Een PDF, afbeelding of tekstbestand van maximaal 10 MB.',
     uploading: 'Uploaden…', attachmentTooLarge: 'Dit bestand is groter dan 10 MB. Kies een kleiner bestand.',
     removeAttachment: '{{name}} verwijderen', confirmRemoveAttachment: 'Bevestig verwijderen {{name}}',
+    paidAt: 'Betaald op', nextReminder: 'Volgende herinnering', reminderCount: 'Herinneringen verstuurd', markedDubiousOn: 'Dubieus sinds', markedUncollectibleOn: 'Oninbaar sinds',
+    payments: {
+      title: 'Betalingen', none: 'Nog geen betalingen.', date: 'Betaaldatum', method: 'Betaald via', bankTransaction: 'Banktransactie',
+      actions: {
+        bank_transfer: 'Bankoverschrijving', cash_payment: 'Contant', private_payment: 'Op een privérekening', payment_without_proof: 'Zonder bewijs',
+        rounding_error: 'Afrondingsverschil', balance_settlement: 'Verrekening met balanspost', invoices_settlement: 'Verrekend met een factuur',
+      },
+      remove: 'Betaling van {{date}} verwijderen', confirmRemove: 'Bevestig verwijderen betaling van {{date}}', unlink: 'Ontkoppelen',
+      settleCredit: 'Verrekenen met de oorspronkelijke factuur', settleCreditHelp: 'Boekt deze creditfactuur tegen de factuur die ze crediteert, zodat beide betaald zijn.',
+      register: 'Betaling registreren', registerButton: 'Betaling registreren', amountHelp: 'Wat er betaald is; hooguit het openstaande bedrag.',
+    },
+    reminders: {
+      action: 'Herinnering sturen', title: 'Herinnering sturen', text: 'Tekst van de herinnering', textPlaceholder: 'Laat leeg om de tekst van de workflow te gebruiken.',
+      textHelp: 'Je kunt {invoice_id}, {total}, {due_date}, {contact_name} en {invoices}, de lijst met openstaande facturen, gebruiken.',
+      manualHint: 'De factuur wordt gemarkeerd als herinnerd. Verstuur de herinnering zelf.', submit: 'Herinnering sturen',
+    },
+    writeOff: {
+      dubious: 'Markeren als dubieus', uncollectible: 'Markeren als oninbaar', dubiousTitle: 'Markeren als dubieus', uncollectibleTitle: 'Markeren als oninbaar',
+      dubiousHint: 'Het openstaande bedrag exclusief btw wordt gereserveerd in de voorziening dubieuze debiteuren. Wordt de factuur toch betaald, dan valt de voorziening vrij.',
+      uncollectibleHint: 'Het openstaande bedrag wordt definitief afgeboekt en de btw wordt teruggevraagd. Dit kan niet ongedaan worden gemaakt.',
+      dubiousSubmit: 'Markeren als dubieus', uncollectibleSubmit: 'Afboeken als oninbaar', date: 'Datum', dubiousNotice: 'Deze factuur is gemarkeerd als dubieus.',
+    },
+    bulk: {
+      label: 'Geselecteerde facturen', selectAll: 'Alle facturen selecteren', select: '{{name}} selecteren',
+      selected_one: '{{count}} geselecteerd', selected_other: '{{count}} geselecteerd',
+      pay: 'Volledige betaling registreren ({{count}})', remind: 'Herinneringen sturen ({{count}})',
+      delete: 'Concepten verwijderen ({{count}})', confirmDelete_one: '{{count}} concept definitief verwijderen', confirmDelete_other: '{{count}} concepten definitief verwijderen',
+      paid_one: 'Betaling van {{count}} factuur geregistreerd.', paid_other: 'Betalingen van {{count}} facturen geregistreerd.',
+      reminded_one: 'Herinnering voor {{count}} factuur verstuurd.', reminded_other: 'Herinneringen voor {{count}} facturen verstuurd.',
+      deleted_one: '{{count}} concept verwijderd.', deleted_other: '{{count}} concepten verwijderd.',
+      failed: 'Deze konden niet worden verwerkt: {{names}}. Open ze om te zien waarom.',
+    },
   },
   sidenav: {
     label: 'Administratiemenu', menu: 'Menu', collapse: 'Menu inklappen', expand: 'Menu uitklappen', collapseShort: 'Inklappen', later: 'Nog niet beschikbaar',
@@ -118,6 +150,7 @@ export const nl: Messages = {
     nothing: 'Je hebt geen toegang tot de onderdelen van deze administratie die hier staan. Vraag een eigenaar om rechten.',
     types: { financial_mutation: 'Transactie' }, states: { processed: 'Geboekt' },
     loadError: 'Het overzicht kon niet worden geladen. Laad de pagina opnieuw om het nog eens te proberen.',
+    tally_one: '{{amount}} · {{count}} factuur', tally_other: '{{amount}} · {{count}} facturen',
   },
   onboarding: {
     welcome: 'Welkom {{name}}', subtitle: 'In een paar stappen maken we je financiële administratie aan.',
@@ -256,6 +289,10 @@ export const nl: Messages = {
     bookings: 'Boekingen', bookingsSubtitle: 'De categorieën waarop deze transactie is geboekt.', noBookings: 'Nog niet geboekt.', byRule: 'Geboekt door een regel',
     removeBooking: 'Verwijderen', removeBookingOn: 'Boeking op {{name}} verwijderen',
     book: 'Boeken', bookSubtitle: 'Boek het openstaande bedrag op een categorie, of een deel ervan om de transactie te splitsen.', splitHelp: 'Boek minder om de transactie over meerdere categorieën te verdelen.', bookButton: 'Boeken',
+    invoicePayments: 'Betaalde facturen', invoicePaymentsSubtitle: 'De verkoopfacturen die deze transactie betaalt.', invoice: 'Factuur', salesInvoice: 'Verkoopfactuur',
+    unlinkInvoice: 'Factuur {{id}} ontkoppelen', linkInvoice: 'Koppelen aan een factuur', linkInvoiceSubtitle: 'Betaal een openstaande verkoopfactuur met deze transactie.',
+    findInvoice: 'Factuur zoeken', findInvoiceHelp: 'Zoek op factuurnummer, referentie of contact.', noOpenInvoices: 'Geen openstaande facturen gevonden.',
+    linkInvoiceButton: 'Factuur koppelen',
   },
   management: {
     subtitle: 'Administratiegegevens, gebruikers, beveiliging en toegang.', back: 'Naar Beheer',

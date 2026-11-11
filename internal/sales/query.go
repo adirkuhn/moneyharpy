@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -143,7 +144,7 @@ func (s *Service) List(ctx context.Context, admin, user resource.ID, q Query) ([
 	if err != nil {
 		return nil, 0, fmt.Errorf("list invoices: %w", err)
 	}
-	list, err = s.complete(ctx, a.ID, list, q.Today)
+	list, err = s.complete(ctx, a.ID, user, list, q.Today)
 	return list, total, err
 }
 
@@ -171,7 +172,7 @@ func (s *Service) InvoicesByID(ctx context.Context, admin, user resource.ID, ids
 	if err != nil {
 		return nil, err
 	}
-	return s.complete(ctx, admin, list, s.today(a))
+	return s.complete(ctx, admin, user, list, s.today(a))
 }
 
 // Invoice returns one invoice.
@@ -198,15 +199,16 @@ func (s *Service) one(ctx context.Context, admin, user resource.ID, load func() 
 	if err != nil {
 		return Invoice{}, err
 	}
-	list, err := s.complete(ctx, admin, []Invoice{inv}, s.today(a))
+	list, err := s.complete(ctx, admin, user, []Invoice{inv}, s.today(a))
 	if err != nil {
 		return Invoice{}, err
 	}
 	return list[0], nil
 }
 
-// complete adds notes and attachments and shows late invoices as late.
-func (s *Service) complete(ctx context.Context, admin resource.ID, list []Invoice, today time.Time) ([]Invoice, error) {
+// complete adds notes and attachments, shows late invoices as late and
+// works out when the next reminder is due.
+func (s *Service) complete(ctx context.Context, admin, user resource.ID, list []Invoice, today time.Time) ([]Invoice, error) {
 	ids := make([]resource.ID, len(list))
 	for i, inv := range list {
 		ids[i] = inv.ID
@@ -219,9 +221,23 @@ func (s *Service) complete(ctx context.Context, admin resource.ID, list []Invoic
 	if err != nil {
 		return nil, err
 	}
+	var flows map[resource.ID]invoicing.Workflow
+	if slices.ContainsFunc(list, payable) {
+		all, err := s.invoicing.Workflows(ctx, admin, user)
+		if err != nil {
+			return nil, wrap("load workflows", err)
+		}
+		flows = map[resource.ID]invoicing.Workflow{}
+		for _, w := range all {
+			flows[w.ID] = w
+		}
+	}
 	for i := range list {
 		list[i].Notes, list[i].Attachments = byInvoice[list[i].ID], files[list[i].ID]
 		list[i].State = effective(list[i], today)
+		if day, _, ok := nextReminder(list[i], flows[list[i].WorkflowID]); ok {
+			list[i].NextReminder = &day
+		}
 	}
 	return list, nil
 }

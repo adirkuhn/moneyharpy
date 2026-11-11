@@ -903,3 +903,54 @@ INSERT INTO sales_invoice_custom_field_values (sales_invoice_id, custom_field_id
 
 -- name: ContactOnSalesInvoice :one
 SELECT EXISTS (SELECT 1 FROM sales_invoices WHERE administration_id = $1 AND contact_id = $2);
+
+-- name: PaymentsOfInvoices :many
+SELECT * FROM payments
+WHERE administration_id = @administration_id AND invoice_type = @invoice_type AND invoice_id = ANY(@ids::bigint[])
+ORDER BY payment_date, created_at, id;
+
+-- name: PaymentsOfMutations :many
+SELECT * FROM payments
+WHERE administration_id = @administration_id AND financial_mutation_id = ANY(@ids::bigint[])
+ORDER BY payment_date, created_at, id;
+
+-- name: PaymentByID :one
+SELECT * FROM payments WHERE administration_id = $1 AND id = $2;
+
+-- name: UpsertPayment :exec
+INSERT INTO payments (id, administration_id, invoice_type, invoice_id, financial_account_id, financial_mutation_id, ledger_account_id,
+    credit_invoice_id, linked_payment_id, manual_payment_action, price, price_base, payment_date, transaction_identifier, user_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+ON CONFLICT (id) DO UPDATE SET
+    financial_account_id = EXCLUDED.financial_account_id, financial_mutation_id = EXCLUDED.financial_mutation_id,
+    ledger_account_id = EXCLUDED.ledger_account_id, credit_invoice_id = EXCLUDED.credit_invoice_id, linked_payment_id = EXCLUDED.linked_payment_id,
+    manual_payment_action = EXCLUDED.manual_payment_action, price = EXCLUDED.price, price_base = EXCLUDED.price_base,
+    payment_date = EXCLUDED.payment_date, transaction_identifier = EXCLUDED.transaction_identifier, updated_at = EXCLUDED.updated_at;
+
+-- name: DeletePayment :exec
+DELETE FROM payments WHERE administration_id = $1 AND id = $2;
+
+-- name: SalesReceivables :one
+-- What sent invoices still have unpaid; those past their due date and not
+-- paused are to be reminded.
+SELECT count(*)::int AS receive_count, coalesce(sum(unpaid), 0)::bigint AS receive_amount,
+       (count(*) FILTER (WHERE overdue))::int AS remind_count, coalesce(sum(unpaid) FILTER (WHERE overdue), 0)::bigint AS remind_amount
+FROM (
+    SELECT i.total_incl_tax - coalesce((SELECT sum(p.price) FROM payments p
+                                        WHERE p.invoice_type = 'SalesInvoice' AND p.invoice_id = i.id), 0) AS unpaid,
+           (i.state IN ('late', 'reminded') OR i.state = 'open' AND i.due_date < @today::date) AND NOT i.paused AS overdue
+    FROM sales_invoices i
+    WHERE i.administration_id = @administration_id AND i.state IN ('open', 'late', 'reminded', 'pending_payment')
+) open_invoices;
+
+-- name: SalesWorkload :many
+-- Administrations with invoices the background job may act on, each with
+-- its longest-standing active owner.
+SELECT w.administration_id, o.user_id
+FROM (SELECT DISTINCT administration_id FROM sales_invoices WHERE state IN ('scheduled', 'open', 'late', 'reminded')) w
+JOIN LATERAL (
+    SELECT m.user_id FROM administration_members m
+    WHERE m.administration_id = w.administration_id AND m.active AND 'ownership' = ANY(m.permissions)
+    ORDER BY m.created_at, m.user_id LIMIT 1
+) o ON true
+ORDER BY w.administration_id;

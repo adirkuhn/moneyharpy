@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
+	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 )
 
@@ -44,6 +46,39 @@ func (c change) one(entityType, action string) []webhooks.Event {
 	}
 	state, _ := c.responseMap["state"].(string)
 	return []webhooks.Event{{EntityType: entityType, EntityID: c.id(), Action: action, State: state, Entity: entity}}
+}
+
+// payment tells about a payment in the response: registered, and linked
+// when a bank transaction made it.
+func (c change) payment() []webhooks.Event {
+	events := c.one("Payment", "payment_registered")
+	if id, _ := c.responseMap["financial_mutation_id"].(string); id != "" {
+		events = append(events, c.one("Payment", "payment_linked_to_financial_mutation")...)
+	}
+	return events
+}
+
+// newestPayment tells about the payment last added to the response's
+// payments, as a bank link or credit settlement adds it.
+func (c change) newestPayment(linked bool) []webhooks.Event {
+	list, _ := c.responseMap["payments"].([]any)
+	var newest map[string]any
+	for _, p := range list {
+		m, _ := p.(map[string]any)
+		if newest == nil || fmt.Sprint(m["created_at"]) >= fmt.Sprint(newest["created_at"]) {
+			newest = m
+		}
+	}
+	if newest == nil {
+		return nil
+	}
+	raw, _ := json.Marshal(newest)
+	id, _ := newest["id"].(string)
+	events := []webhooks.Event{{EntityType: "Payment", EntityID: id, Action: "payment_registered", Entity: raw}}
+	if linked {
+		events = append(events, webhooks.Event{EntityType: "Payment", EntityID: id, Action: "payment_linked_to_financial_mutation", Entity: raw})
+	}
+	return events
 }
 
 // toggled picks the event of an update by the active field it sends.
@@ -143,14 +178,25 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		}
 		return out
 	},
-	"linkFinancialMutationBooking":   func(c change) []webhooks.Event { return c.one("FinancialMutation", "ledger_account_booking_created") },
-	"unlinkFinancialMutationBooking": func(c change) []webhooks.Event { return c.one("FinancialMutation", "ledger_account_booking_destroyed") },
-	"createBookingRule":              func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_created") },
-	"updateBookingRule":              func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_updated") },
-	"deleteBookingRule":              func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_destroyed") },
-	"createSalesInvoice":             func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_created") },
-	"updateSalesInvoice":             func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_updated") },
-	"deleteSalesInvoice":             func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_destroyed") },
+	"linkFinancialMutationBooking": func(c change) []webhooks.Event {
+		if c.request["booking_type"] == "SalesInvoice" {
+			return c.newestPayment(true)
+		}
+		return c.one("FinancialMutation", "ledger_account_booking_created")
+	},
+	"unlinkFinancialMutationBooking": func(c change) []webhooks.Event {
+		if c.request["booking_type"] == "Payment" {
+			id := fmt.Sprint(c.request["booking_id"])
+			return []webhooks.Event{{EntityType: "Payment", EntityID: id, Action: "payment_destroyed", Entity: json.RawMessage(`{"id":"` + id + `"}`)}}
+		}
+		return c.one("FinancialMutation", "ledger_account_booking_destroyed")
+	},
+	"createBookingRule":  func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_created") },
+	"updateBookingRule":  func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_updated") },
+	"deleteBookingRule":  func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_destroyed") },
+	"createSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_created") },
+	"updateSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_updated") },
+	"deleteSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_destroyed") },
 	"sendSalesInvoice": func(c change) []webhooks.Event {
 		action := map[string]string{"Email": "sales_invoice_send_email", "Post": "sales_invoice_send_post"}[fmt.Sprint(c.responseMap["delivery_method"])]
 		if action == "" {
@@ -163,9 +209,18 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		return events
 	},
 	"duplicateCreditSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_created_from_original") },
-	"pauseSalesInvoice":           func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_paused") },
-	"resumeSalesInvoice":          func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_unpaused") },
-	"createContact":               func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
+	"createSalesInvoicePayment":   func(c change) []webhooks.Event { return c.payment() },
+	"registerSalesInvoicePayment": func(c change) []webhooks.Event { return c.payment() },
+	"deleteSalesInvoicePayment": func(c change) []webhooks.Event {
+		id := c.params["payment_id"]
+		return []webhooks.Event{{EntityType: "Payment", EntityID: id, Action: "payment_destroyed", Entity: json.RawMessage(`{"id":"` + id + `"}`)}}
+	},
+	"settleSalesCreditInvoice":        func(c change) []webhooks.Event { return c.newestPayment(false) },
+	"markSalesInvoiceAsDubious":       func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_marked_as_dubious") },
+	"markSalesInvoiceAsUncollectible": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_marked_as_uncollectible") },
+	"pauseSalesInvoice":               func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_paused") },
+	"resumeSalesInvoice":              func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_unpaused") },
+	"createContact":                   func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
 	"updateContact": func(c change) []webhooks.Event {
 		switch c.nested("contact")["archived"] {
 		case true:
@@ -248,4 +303,24 @@ func (s *server) recordEvents(next http.Handler) http.Handler {
 			}
 		}
 	})
+}
+
+// SalesNotifier publishes what sales invoices tell, such as a change of
+// state by the background job, as webhook events.
+type SalesNotifier struct {
+	Webhooks *webhooks.Service
+	Logger   *slog.Logger
+}
+
+// Notify implements sales.Notifier.
+func (n SalesNotifier) Notify(ctx context.Context, admin resource.ID, action string, inv sales.Invoice) {
+	entity, _ := json.Marshal(map[string]any{
+		"id": inv.ID.String(), "administration_id": admin.String(), "contact_id": inv.ContactID.String(), "invoice_id": nz(inv.InvoiceID),
+		"state": inv.State, "total_price_incl_tax": inv.Totals.InclTax.String(), "total_unpaid": inv.Unpaid().String(),
+		"reminder_count": inv.ReminderCount, "version": inv.Version(), "uri": inv.Ref().URI(),
+	})
+	e := webhooks.Event{EntityType: "SalesInvoice", EntityID: inv.ID.String(), Action: action, State: inv.State, Entity: entity}
+	if err := n.Webhooks.Publish(context.WithoutCancel(ctx), admin, e); err != nil && n.Logger != nil {
+		n.Logger.ErrorContext(ctx, "publish webhook event", "action", action, "error", err)
+	}
 }

@@ -152,72 +152,216 @@ func (s *SalesStore) NumberTaken(ctx context.Context, admin resource.ID, number 
 
 // SaveInvoice implements sales.Store.
 func (s *SalesStore) SaveInvoice(ctx context.Context, inv sales.Invoice, entries []journal.Entry, created bool) error {
-	var delivery []byte
-	if inv.Delivery != nil {
-		var err error
-		if delivery, err = json.Marshal(inv.Delivery); err != nil {
+	delivery, taxTotals, err := encodeInvoice(inv)
+	if err != nil {
+		return err
+	}
+	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		return saveInvoice(ctx, s.q.WithTx(tx), inv, delivery, taxTotals, entries, created)
+	})
+}
+
+func saveInvoice(ctx context.Context, q *sqlc.Queries, inv sales.Invoice, delivery, taxTotals []byte, entries []journal.Entry, created bool) error {
+	if err := q.UpsertSalesInvoice(ctx, sqlc.UpsertSalesInvoiceParams{
+		ID: int64(inv.ID), AdministrationID: int64(inv.AdministrationID), ContactID: int64(inv.ContactID), ContactPersonID: optionalID(inv.ContactPersonID),
+		IdentityID: int64(inv.IdentityID), DocumentStyleID: int64(inv.DocumentStyleID), WorkflowID: int64(inv.WorkflowID), DraftID: int32(inv.DraftID),
+		InvoiceID: inv.InvoiceID, SequenceID: inv.SequenceID, Reference: inv.Reference, Language: inv.Language, Currency: inv.Currency,
+		PricesAreInclTax: inv.PricesAreInclTax, PaymentConditions: inv.PaymentConditions, Discount: int32(inv.Discount),
+		InvoiceDate: optionalDate(inv.InvoiceDate), DueDate: optionalDate(inv.DueDate), FirstDueInterval: int32(inv.FirstDueInterval),
+		State: inv.State, Paused: inv.Paused, PaymentReference: inv.PaymentReference, SentAt: optionalTime(inv.SentAt), PaidAt: optionalTime(inv.PaidAt),
+		MarkedDubiousOn: optionalDate(inv.MarkedDubiousOn), MarkedUncollectibleOn: optionalDate(inv.MarkedUncollectibleOn),
+		ReminderCount: int32(inv.ReminderCount), OriginalID: optionalID(inv.OriginalID), RecurringSalesInvoiceID: optionalID(inv.RecurringSalesInvoiceID),
+		Delivery: delivery, TotalExclTax: int64(inv.Totals.ExclTax), TotalTax: int64(inv.Totals.Tax), TotalInclTax: int64(inv.Totals.InclTax),
+		TotalDiscount: int64(inv.Totals.Discount), TaxTotals: taxTotals, CreatedAt: timestamp(inv.CreatedAt), UpdatedAt: timestamp(inv.UpdatedAt),
+	}); err != nil {
+		return err
+	}
+	if created {
+		if err := q.InsertResource(ctx, sqlc.InsertResourceParams{ID: int64(inv.ID), Type: string(resource.TypeSalesInvoice), AdministrationID: int64(inv.AdministrationID)}); err != nil {
 			return err
+		}
+	}
+	if err := q.DeleteSalesInvoiceDetails(ctx, int64(inv.ID)); err != nil {
+		return err
+	}
+	for i, d := range inv.Lines {
+		var base int64
+		if i < len(inv.Totals.LineBases) {
+			base = int64(inv.Totals.LineBases[i])
+		}
+		if err := q.InsertSalesInvoiceDetail(ctx, sqlc.InsertSalesInvoiceDetailParams{
+			ID: int64(d.ID), AdministrationID: int64(inv.AdministrationID), SalesInvoiceID: int64(inv.ID), Description: d.Description, Period: d.Period,
+			Price: int64(d.Price), Amount: d.Amount, Quantity: d.Quantity, TaxRateID: int64(d.TaxRateID), LedgerAccountID: optionalID(d.LedgerAccountID),
+			ProjectID: optionalID(d.ProjectID), ProductID: optionalID(d.ProductID), RowOrder: int32(d.RowOrder), IsOptional: d.Optional,
+			IsSelected: d.Selected, LineBase: base, CreatedAt: timestamp(d.CreatedAt), UpdatedAt: timestamp(d.UpdatedAt),
+		}); err != nil {
+			return err
+		}
+	}
+	if err := q.DeleteSalesInvoiceCustomFieldValues(ctx, int64(inv.ID)); err != nil {
+		return err
+	}
+	for _, v := range inv.CustomFields {
+		if err := q.InsertSalesInvoiceCustomFieldValue(ctx, sqlc.InsertSalesInvoiceCustomFieldValueParams{SalesInvoiceID: int64(inv.ID), CustomFieldID: int64(v.FieldID), Value: v.Value}); err != nil {
+			return err
+		}
+	}
+	if entries != nil {
+		return postEntries(ctx, q, inv.AdministrationID, journal.SalesInvoice, inv.ID, entries, inv.UpdatedAt)
+	}
+	return nil
+}
+
+// encodeInvoice turns the invoice's delivery and VAT totals into JSON.
+func encodeInvoice(inv sales.Invoice) (delivery, taxTotals []byte, err error) {
+	if inv.Delivery != nil {
+		if delivery, err = json.Marshal(inv.Delivery); err != nil {
+			return nil, nil, err
 		}
 	}
 	rates := make([]rateTotalJSON, len(inv.Totals.ByRate))
 	for i, r := range inv.Totals.ByRate {
 		rates[i] = rateTotalJSON{TaxRateID: r.TaxRateID.String(), Taxable: int64(r.Taxable), Tax: int64(r.Tax)}
 	}
-	taxTotals, err := json.Marshal(rates)
-	if err != nil {
-		return err
+	taxTotals, err = json.Marshal(rates)
+	return delivery, taxTotals, err
+}
+
+// Payment implements sales.Store.
+func (s *SalesStore) Payment(ctx context.Context, admin, id resource.ID) (sales.Payment, error) {
+	r, err := s.q.PaymentByID(ctx, sqlc.PaymentByIDParams{AdministrationID: int64(admin), ID: int64(id)})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return sales.Payment{}, sales.ErrPaymentNotFound
 	}
+	if err != nil {
+		return sales.Payment{}, err
+	}
+	return toPayment(r), nil
+}
+
+// SavePayments implements sales.Store.
+func (s *SalesStore) SavePayments(ctx context.Context, c sales.PaymentChange) error {
 	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
-		if err := q.UpsertSalesInvoice(ctx, sqlc.UpsertSalesInvoiceParams{
-			ID: int64(inv.ID), AdministrationID: int64(inv.AdministrationID), ContactID: int64(inv.ContactID), ContactPersonID: optionalID(inv.ContactPersonID),
-			IdentityID: int64(inv.IdentityID), DocumentStyleID: int64(inv.DocumentStyleID), WorkflowID: int64(inv.WorkflowID), DraftID: int32(inv.DraftID),
-			InvoiceID: inv.InvoiceID, SequenceID: inv.SequenceID, Reference: inv.Reference, Language: inv.Language, Currency: inv.Currency,
-			PricesAreInclTax: inv.PricesAreInclTax, PaymentConditions: inv.PaymentConditions, Discount: int32(inv.Discount),
-			InvoiceDate: optionalDate(inv.InvoiceDate), DueDate: optionalDate(inv.DueDate), FirstDueInterval: int32(inv.FirstDueInterval),
-			State: inv.State, Paused: inv.Paused, PaymentReference: inv.PaymentReference, SentAt: optionalTime(inv.SentAt), PaidAt: optionalTime(inv.PaidAt),
-			MarkedDubiousOn: optionalDate(inv.MarkedDubiousOn), MarkedUncollectibleOn: optionalDate(inv.MarkedUncollectibleOn),
-			ReminderCount: int32(inv.ReminderCount), OriginalID: optionalID(inv.OriginalID), RecurringSalesInvoiceID: optionalID(inv.RecurringSalesInvoiceID),
-			Delivery: delivery, TotalExclTax: int64(inv.Totals.ExclTax), TotalTax: int64(inv.Totals.Tax), TotalInclTax: int64(inv.Totals.InclTax),
-			TotalDiscount: int64(inv.Totals.Discount), TaxTotals: taxTotals, CreatedAt: timestamp(inv.CreatedAt), UpdatedAt: timestamp(inv.UpdatedAt),
-		}); err != nil {
-			return err
-		}
-		if created {
-			if err := q.InsertResource(ctx, sqlc.InsertResourceParams{ID: int64(inv.ID), Type: string(resource.TypeSalesInvoice), AdministrationID: int64(inv.AdministrationID)}); err != nil {
+		for _, id := range c.Removed {
+			p, err := q.PaymentByID(ctx, sqlc.PaymentByIDParams{AdministrationID: adminOf(c), ID: int64(id)})
+			if errors.Is(err, pgx.ErrNoRows) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+			if err := q.DeleteJournalEntriesOf(ctx, sqlc.DeleteJournalEntriesOfParams{AdministrationID: p.AdministrationID, DocumentType: journal.Payment, DocumentID: p.ID}); err != nil {
+				return err
+			}
+			if err := q.DeletePayment(ctx, sqlc.DeletePaymentParams{AdministrationID: p.AdministrationID, ID: p.ID}); err != nil {
 				return err
 			}
 		}
-		if err := q.DeleteSalesInvoiceDetails(ctx, int64(inv.ID)); err != nil {
-			return err
-		}
-		for i, d := range inv.Lines {
-			var base int64
-			if i < len(inv.Totals.LineBases) {
-				base = int64(inv.Totals.LineBases[i])
-			}
-			if err := q.InsertSalesInvoiceDetail(ctx, sqlc.InsertSalesInvoiceDetailParams{
-				ID: int64(d.ID), AdministrationID: int64(inv.AdministrationID), SalesInvoiceID: int64(inv.ID), Description: d.Description, Period: d.Period,
-				Price: int64(d.Price), Amount: d.Amount, Quantity: d.Quantity, TaxRateID: int64(d.TaxRateID), LedgerAccountID: optionalID(d.LedgerAccountID),
-				ProjectID: optionalID(d.ProjectID), ProductID: optionalID(d.ProductID), RowOrder: int32(d.RowOrder), IsOptional: d.Optional,
-				IsSelected: d.Selected, LineBase: base, CreatedAt: timestamp(d.CreatedAt), UpdatedAt: timestamp(d.UpdatedAt),
+		for _, pp := range c.Payments {
+			p := pp.Payment
+			if err := q.UpsertPayment(ctx, sqlc.UpsertPaymentParams{
+				ID: int64(p.ID), AdministrationID: int64(p.AdministrationID), InvoiceType: p.InvoiceType, InvoiceID: int64(p.InvoiceID),
+				FinancialAccountID: optionalID(p.FinancialAccountID), FinancialMutationID: optionalID(p.FinancialMutationID),
+				LedgerAccountID: optionalID(p.LedgerAccountID), CreditInvoiceID: optionalID(p.CreditInvoiceID), LinkedPaymentID: optionalID(p.LinkedPaymentID),
+				ManualPaymentAction: p.ManualPaymentAction, Price: int64(p.Price), PriceBase: int64(p.PriceBase), PaymentDate: day(p.PaymentDate),
+				TransactionIdentifier: p.TransactionIdentifier, UserID: optionalID(&p.UserID), CreatedAt: timestamp(p.CreatedAt), UpdatedAt: timestamp(p.UpdatedAt),
 			}); err != nil {
 				return err
 			}
-		}
-		if err := q.DeleteSalesInvoiceCustomFieldValues(ctx, int64(inv.ID)); err != nil {
-			return err
-		}
-		for _, v := range inv.CustomFields {
-			if err := q.InsertSalesInvoiceCustomFieldValue(ctx, sqlc.InsertSalesInvoiceCustomFieldValueParams{SalesInvoiceID: int64(inv.ID), CustomFieldID: int64(v.FieldID), Value: v.Value}); err != nil {
+			entries := pp.Entries
+			if entries == nil {
+				entries = []journal.Entry{}
+			}
+			if err := postEntries(ctx, q, p.AdministrationID, journal.Payment, p.ID, entries, p.UpdatedAt); err != nil {
 				return err
 			}
 		}
-		if entries != nil {
-			return postEntries(ctx, q, inv.AdministrationID, journal.SalesInvoice, inv.ID, entries, inv.UpdatedAt)
+		for _, posting := range c.Invoices {
+			delivery, taxTotals, err := encodeInvoice(posting.Invoice)
+			if err != nil {
+				return err
+			}
+			if err := saveInvoice(ctx, q, posting.Invoice, delivery, taxTotals, posting.Entries, false); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
+}
+
+// adminOf is the administration a payment change is in.
+func adminOf(c sales.PaymentChange) int64 {
+	if len(c.Invoices) > 0 {
+		return int64(c.Invoices[0].Invoice.AdministrationID)
+	}
+	if len(c.Payments) > 0 {
+		return int64(c.Payments[0].Payment.AdministrationID)
+	}
+	return 0
+}
+
+// Receivables implements sales.Store.
+func (s *SalesStore) Receivables(ctx context.Context, admin resource.ID, today time.Time) (sales.Receivables, error) {
+	r, err := s.q.SalesReceivables(ctx, sqlc.SalesReceivablesParams{AdministrationID: int64(admin), Today: day(today)})
+	if err != nil {
+		return sales.Receivables{}, err
+	}
+	return sales.Receivables{
+		ToReceive: sales.Tally{Count: int(r.ReceiveCount), Amount: money.Amount(r.ReceiveAmount)},
+		ToRemind:  sales.Tally{Count: int(r.RemindCount), Amount: money.Amount(r.RemindAmount)},
+	}, nil
+}
+
+// Workload implements sales.Store.
+func (s *SalesStore) Workload(ctx context.Context) ([]sales.Workload, error) {
+	rows, err := s.q.SalesWorkload(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]sales.Workload, len(rows))
+	for i, r := range rows {
+		out[i] = sales.Workload{AdministrationID: resource.ID(r.AdministrationID), UserID: resource.ID(r.UserID)}
+	}
+	return out, nil
+}
+
+// workLock keeps the advisory locks of the sales background job apart
+// from any other: the administration's id is the second key.
+const workLock = 1517
+
+// Lock implements sales.Store with a session advisory lock, held on its
+// own connection until release.
+func (s *SalesStore) Lock(ctx context.Context, admin resource.ID) (func(), bool, error) {
+	conn, err := s.pool.Acquire(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	key := int64(workLock)<<32 ^ int64(admin)
+	var ok bool
+	if err := conn.QueryRow(ctx, "SELECT pg_try_advisory_lock($1)", key).Scan(&ok); err != nil || !ok {
+		conn.Release()
+		return nil, false, err
+	}
+	release := func() {
+		_, _ = conn.Exec(context.WithoutCancel(ctx), "SELECT pg_advisory_unlock($1)", key)
+		conn.Release()
+	}
+	return release, true, nil
+}
+
+func toPayment(r sqlc.Payment) sales.Payment {
+	p := sales.Payment{
+		ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), InvoiceType: r.InvoiceType, InvoiceID: resource.ID(r.InvoiceID),
+		FinancialAccountID: idOf(r.FinancialAccountID), FinancialMutationID: idOf(r.FinancialMutationID), LedgerAccountID: idOf(r.LedgerAccountID),
+		CreditInvoiceID: idOf(r.CreditInvoiceID), LinkedPaymentID: idOf(r.LinkedPaymentID), ManualPaymentAction: r.ManualPaymentAction,
+		Price: money.Amount(r.Price), PriceBase: money.Amount(r.PriceBase), PaymentDate: *dateOf(r.PaymentDate),
+		TransactionIdentifier: r.TransactionIdentifier, CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
+	}
+	if r.UserID.Valid {
+		p.UserID = resource.ID(r.UserID.Int64)
+	}
+	return p
 }
 
 // DeleteInvoice implements sales.Store.
@@ -283,6 +427,14 @@ func (s *SalesStore) complete(ctx context.Context, admin resource.ID, rows []sql
 	for _, v := range values {
 		inv := &out[index[v.SalesInvoiceID]]
 		inv.CustomFields = append(inv.CustomFields, sales.FieldValue{FieldID: resource.ID(v.ID), Name: v.Name, Value: v.Value})
+	}
+	payments, err := s.q.PaymentsOfInvoices(ctx, sqlc.PaymentsOfInvoicesParams{AdministrationID: int64(admin), InvoiceType: journal.SalesInvoice, Ids: ids})
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range payments {
+		inv := &out[index[p.InvoiceID]]
+		inv.Payments = append(inv.Payments, toPayment(p))
 	}
 	return out, nil
 }

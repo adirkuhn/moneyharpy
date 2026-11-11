@@ -895,7 +895,7 @@ export interface paths {
         head?: never;
         /**
          * Link a booking to a financial mutation
-         * @description MoneyHarpy books on categories (LedgerAccount) so far; other booking types answer 422 until invoices and documents exist. price_base is the amount; positive books in the direction of the transaction, negative against it. Without it, the open amount is booked. Split a transaction with one request per part.
+         * @description Books on a category (LedgerAccount) or pays a sales invoice (SalesInvoice); other booking types answer 422 until their documents exist. price_base is the amount; positive books in the direction of the transaction, negative against it. Without it, the open amount is booked, and for an invoice at most what it has unpaid. A payment registered by hand that waits for its transaction is taken over by it. Split a transaction with one request per part. Not in the locked period.
          */
         patch: operations["linkFinancialMutationBooking"];
         trace?: never;
@@ -915,7 +915,7 @@ export interface paths {
         post?: never;
         /**
          * Unlink a booking from a financial mutation
-         * @description booking_type LedgerAccountBooking removes a booking on a category. Payment answers 422 until invoices exist.
+         * @description booking_type LedgerAccountBooking removes a booking on a category; Payment removes an invoice payment made with the transaction, and the invoice waits for payment again.
          */
         delete: operations["unlinkFinancialMutationBooking"];
         options?: never;
@@ -1753,6 +1753,168 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/send_reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send reminders
+         * @description Sends one reminder per entry: an email to the contact listing the invoices, with their PDFs, or nothing when delivered Manual. The text defaults to the workflow's next reminder step, then to MoneyHarpy's own; {invoices} in it lists the invoices. Each invoice becomes reminded and counts the reminder. All entries are checked before any is sent. Moneybird answers with a status code; MoneyHarpy answers with the reminded invoices.
+         */
+        post: operations["sendSalesInvoiceReminders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a payment
+         * @description Registers a payment on a sent invoice, signed like the invoice (negative on a credit invoice) and at most what is unpaid. The manual_payment_action chooses the account it is booked against: bank_transfer and payment_without_proof on received payments to be classified until a bank transaction takes the payment over, cash_payment on cash (or the financial account given), private_payment on private deposits, rounding_error on rounding, balance_settlement on the balance sheet category in ledger_account_id, and invoices_settlement against the invoice in invoice_id on settlements. With financial_mutation_id the bank transaction pays the invoice instead and posts the payment. A payment that covers what is unpaid makes the invoice paid. Not in the locked period or the future.
+         */
+        post: operations["createSalesInvoicePayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/payments/{payment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                payment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a payment
+         * @description Removes the payment and what it posts; a paid invoice is open (or late, or reminded) again. A payment made with a bank transaction is unlinked from it; one half of a settlement between invoices takes the other half along. Not for uncollectible invoices or in the locked period.
+         */
+        delete: operations["deleteSalesInvoicePayment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/register_payment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Register a payment
+         * @deprecated
+         * @description Moneybird's older way to create a payment; it works the same and answers with the payment.
+         */
+        patch: operations["registerSalesInvoicePayment"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/register_payment_creditinvoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Register a payment for a credit invoice
+         * @description Settles a credit invoice with the invoice it credits: a payment of what the credit invoice has unpaid on each, against the settlements account, dated today. Both must be waiting for payment.
+         */
+        patch: operations["settleSalesCreditInvoice"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/mark_as_dubious": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Mark as dubious
+         * @description Reserves what is open of the invoice, excluding VAT, in the provision for doubtful debtors on the dubious_date (today when left out), which lies after the invoice date and not in the future or the locked period. The state stays; a payment of the rest releases the provision.
+         */
+        patch: operations["markSalesInvoiceAsDubious"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/{id}/mark_as_uncollectible": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Mark as uncollectible
+         * @description Writes off what is open of the invoice for good on the uncollectible_date (today when left out): excluding VAT on uncollectible revenue, or on the provision when the invoice was dubious, and its VAT back off payable VAT, split over the invoice's VAT rates. The date lies after the invoice date and the dubious date, not in the future or the locked period. This cannot be undone; the invoice is uncollectible and takes no more payments.
+         */
+        patch: operations["markSalesInvoiceAsUncollectible"];
         trace?: never;
     };
     "/api/v2/{administration_id}/sales_invoices/{id}/attachments": {
@@ -3454,6 +3616,7 @@ export interface components {
         /** @description MoneyHarpy extension. An administration's home page. */
         Overview: {
             bank?: components["schemas"]["OverviewBank"];
+            sales?: components["schemas"]["OverviewSales"];
             /** @description The records processed last, newest first, at most 25. */
             recently_processed: components["schemas"]["OverviewItem"][];
         };
@@ -3468,6 +3631,22 @@ export interface components {
             currency: string;
             /** @description Transactions of active accounts still to link. */
             unprocessed_count: number;
+        };
+        /** @description Present only with the sales invoices permission. */
+        OverviewSales: {
+            to_receive: components["schemas"]["OverviewTally"];
+            to_remind: components["schemas"]["OverviewTally"];
+            /** @example EUR */
+            currency: string;
+        };
+        /** @description Sent invoices still to be paid; to_remind holds those past their due date and not paused. */
+        OverviewTally: {
+            count: number;
+            /**
+             * @description What they have unpaid.
+             * @example 1210.0
+             */
+            amount: string;
         };
         /** @description One recently processed record. */
         OverviewItem: {
@@ -3729,6 +3908,47 @@ export interface components {
         };
         CreditInvoiceRequest: {
             detail_ids?: components["schemas"]["FlexibleIdentifier"][];
+        };
+        /** @description A Moneybird payment. */
+        Payment: components["schemas"]["payment_response"] & Record<string, never>;
+        PaymentRequest: {
+            payment: {
+                /** @description yyyy-mm-dd; a time after it is ignored. */
+                payment_date: string;
+                price: components["schemas"]["Money"];
+                price_base?: components["schemas"]["Money"];
+                financial_account_id?: components["schemas"]["FlexibleIdentifier"];
+                financial_mutation_id?: components["schemas"]["FlexibleIdentifier"];
+                transaction_identifier?: string;
+                /** @enum {string} */
+                manual_payment_action?: "private_payment" | "payment_without_proof" | "cash_payment" | "rounding_error" | "bank_transfer" | "balance_settlement" | "invoices_settlement";
+                ledger_account_id?: components["schemas"]["FlexibleIdentifier"];
+                invoice_id?: components["schemas"]["FlexibleIdentifier"];
+            };
+        };
+        EmptyRequest: Record<string, never>;
+        MarkDubiousRequest: {
+            /** Format: date */
+            dubious_date?: string;
+        };
+        MarkUncollectibleRequest: {
+            /** Format: date */
+            uncollectible_date?: string;
+            /** @enum {string} */
+            book_method?: "revenue";
+        };
+        SendRemindersRequest: {
+            sales_invoice_reminders: {
+                contact_id: components["schemas"]["FlexibleIdentifier"];
+                workflow_id: components["schemas"]["FlexibleIdentifier"];
+                document_style_id: components["schemas"]["FlexibleIdentifier"];
+                identity_id: components["schemas"]["FlexibleIdentifier"];
+                sales_invoice_ids: components["schemas"]["FlexibleIdentifier"][];
+                reminder_text?: string;
+                /** @enum {string} */
+                delivery_method?: "Email" | "Manual";
+                email_address?: string;
+            }[];
         };
         BookingRuleRequest: {
             booking_rule: {
@@ -9112,6 +9332,231 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    sendSalesInvoiceReminders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendRemindersRequest"];
+            };
+        };
+        responses: {
+            /** @description The reminded invoices */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createSalesInvoicePayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description The payment */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteSalesInvoicePayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                payment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The payment is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    registerSalesInvoicePayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description The payment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    settleSalesCreditInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["EmptyRequest"];
+            };
+        };
+        responses: {
+            /** @description The credit invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    markSalesInvoiceAsDubious: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MarkDubiousRequest"];
+            };
+        };
+        responses: {
+            /** @description The sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    markSalesInvoiceAsUncollectible: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MarkUncollectibleRequest"];
+            };
+        };
+        responses: {
+            /** @description The sales invoice */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };
     };

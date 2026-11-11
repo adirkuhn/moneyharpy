@@ -7,6 +7,10 @@ export type SalesInvoice = components['schemas']['SalesInvoice']
 export type SalesInvoiceChanges = components['schemas']['SalesInvoiceRequest']['sales_invoice']
 export type Sending = NonNullable<components['schemas']['SendSalesInvoiceRequest']['sales_invoice_sending']>
 export type InvoiceState = NonNullable<SalesInvoice['state']>
+export type Payment = components['schemas']['Payment']
+export type PaymentChanges = components['schemas']['PaymentRequest']['payment']
+export type Reminder = components['schemas']['SendRemindersRequest']['sales_invoice_reminders'][number]
+export type PaymentAction = NonNullable<PaymentChanges['manual_payment_action']>
 
 export const perPage = 50
 
@@ -17,6 +21,19 @@ export const unpaidStates = 'open|late|reminded|pending_payment'
 export const isSent = (state: InvoiceState | undefined) => state !== 'draft' && state !== 'scheduled'
 /** Paid and uncollectible invoices are finished and no longer change. */
 export const isClosed = (state: InvoiceState | undefined) => state === 'paid' || state === 'uncollectible'
+/** Sent invoices waiting for their money take payments and reminders. */
+export const isPayable = (state: InvoiceState | undefined) => state === 'open' || state === 'late' || state === 'reminded' || state === 'pending_payment'
+/** Overdue invoices, which the overview counts as to remind. */
+export const overdueStates = 'late|reminded'
+
+/** The ways to register a payment by hand, as the payment form offers them. */
+export const paymentActions: PaymentAction[] = ['bank_transfer', 'cash_payment', 'private_payment', 'payment_without_proof', 'rounding_error']
+
+/** Today in the browser's time zone, as yyyy-mm-dd. */
+export function today() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 const admin = (administrationId: string) => ({ administration_id: administrationId })
 const one = (administrationId: string, id: string) => ({ params: { path: { ...admin(administrationId), id } } })
@@ -113,6 +130,118 @@ export function usePauseSalesInvoice(administrationId: string, id: string) {
         ? unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/{id}/pause', one(administrationId, id)))
         : unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/{id}/resume', one(administrationId, id))),
     onSuccess: saved,
+  })
+}
+
+export function useRegisterPayment(administrationId: string, id: string) {
+  const refetch = useRefetch(administrationId, id)
+  return useMutation({
+    mutationFn: (payment: PaymentChanges) =>
+      unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/{id}/payments', { ...one(administrationId, id), body: { payment } })),
+    onSuccess: refetch,
+  })
+}
+
+export function useDeletePayment(administrationId: string, id: string) {
+  const refetch = useRefetch(administrationId, id)
+  return useMutation({
+    mutationFn: (paymentId: string) =>
+      unwrap(api.DELETE('/api/v2/{administration_id}/sales_invoices/{id}/payments/{payment_id}', { params: { path: { ...admin(administrationId), id, payment_id: paymentId } } })),
+    onSuccess: refetch,
+  })
+}
+
+/** Settles a credit invoice with the invoice it credits. */
+export function useSettleCredit(administrationId: string, id: string) {
+  const saved = useSaved(administrationId)
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: () => unwrap(api.PATCH('/api/v2/{administration_id}/sales_invoices/{id}/register_payment_creditinvoice', { ...one(administrationId, id), body: {} })),
+    onSuccess: (inv) => {
+      saved(inv)
+      void client.invalidateQueries({ queryKey: ['sales-invoice', administrationId] })
+    },
+  })
+}
+
+export type WriteOff = { kind: 'dubious' | 'uncollectible'; date: string }
+
+/** Marks an invoice dubious or, for good, uncollectible. */
+export function useWriteOff(administrationId: string, id: string) {
+  const saved = useSaved(administrationId)
+  return useMutation({
+    mutationFn: ({ kind, date }: WriteOff) =>
+      kind === 'dubious'
+        ? unwrap(api.PATCH('/api/v2/{administration_id}/sales_invoices/{id}/mark_as_dubious', { ...one(administrationId, id), body: { dubious_date: date } }))
+        : unwrap(api.PATCH('/api/v2/{administration_id}/sales_invoices/{id}/mark_as_uncollectible', { ...one(administrationId, id), body: { uncollectible_date: date, book_method: 'revenue' } })),
+    onSuccess: saved,
+  })
+}
+
+/** The reminders that cover invoices: one per contact, workflow, document style and identity, as Moneybird groups them. */
+export function remindersFor(invoices: SalesInvoice[], extra: Partial<Reminder> = {}): Reminder[] {
+  const groups = new Map<string, Reminder>()
+  for (const inv of invoices) {
+    const key = [inv.contact_id, inv.workflow_id, inv.document_style_id, inv.identity_id].join('/')
+    const group = groups.get(key) ?? {
+      contact_id: inv.contact_id ?? '', workflow_id: inv.workflow_id ?? '', document_style_id: inv.document_style_id ?? '', identity_id: inv.identity_id ?? '',
+      sales_invoice_ids: [], ...extra,
+    }
+    group.sales_invoice_ids.push(inv.id ?? '')
+    groups.set(key, group)
+  }
+  return [...groups.values()]
+}
+
+export function useSendReminders(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (sales_invoice_reminders: Reminder[]) =>
+      unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/send_reminders', { params: { path: admin(administrationId) }, body: { sales_invoice_reminders } })),
+    onSuccess: (list) => {
+      for (const inv of list) {
+        client.setQueryData(['sales-invoice', administrationId, inv.id], inv)
+      }
+      void client.invalidateQueries({ queryKey: ['sales-invoices', administrationId] })
+    },
+  })
+}
+
+/** Registers full payments of several invoices dated today, one request each; it answers with the ones that failed. */
+export function useRegisterFullPayments(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: async (invoices: SalesInvoice[]) => {
+      const failed: SalesInvoice[] = []
+      for (const inv of invoices) {
+        const { response } = await api.POST('/api/v2/{administration_id}/sales_invoices/{id}/payments', {
+          ...one(administrationId, inv.id ?? ''), body: { payment: { payment_date: today(), price: inv.total_unpaid ?? '0' } },
+        })
+        if (!response.ok) {
+          failed.push(inv)
+        }
+      }
+      return failed
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: ['sales-invoices', administrationId] }),
+  })
+}
+
+/** Deletes several drafts, one request each; it answers with the ones that failed. */
+export function useDeleteDrafts(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: async (invoices: SalesInvoice[]) => {
+      const failed: SalesInvoice[] = []
+      for (const inv of invoices) {
+        const { response } = await api.DELETE('/api/v2/{administration_id}/sales_invoices/{id}', one(administrationId, inv.id ?? ''))
+        if (!response.ok) {
+          failed.push(inv)
+        }
+      }
+      return failed
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: ['sales-invoices', administrationId] }),
   })
 }
 

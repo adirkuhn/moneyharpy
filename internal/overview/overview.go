@@ -13,6 +13,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
+	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
 
 // RecentLimit is how many recently processed records the overview lists.
@@ -30,6 +31,18 @@ type Administrations interface {
 // Bank is the part of banking the overview reads.
 type Bank interface {
 	Summary(ctx context.Context, admin, user resource.ID, recent int) (banking.Summary, error)
+}
+
+// Sales is the part of sales invoices the overview reads.
+type Sales interface {
+	Summary(ctx context.Context, admin, user resource.ID) (sales.Summary, error)
+}
+
+// SalesBlock sums up the sales invoices still to be paid.
+type SalesBlock struct {
+	ToReceive sales.Tally
+	ToRemind  sales.Tally
+	Currency  string
 }
 
 // BankBlock sums up the financial accounts.
@@ -56,7 +69,9 @@ type Item struct {
 // Overview is an administration's home page.
 type Overview struct {
 	// Bank is nil for members without the bank permission.
-	Bank              *BankBlock
+	Bank *BankBlock
+	// Sales is nil for members without the sales invoices permission.
+	Sales             *SalesBlock
 	RecentlyProcessed []Item
 }
 
@@ -64,11 +79,12 @@ type Overview struct {
 type Service struct {
 	admins Administrations
 	bank   Bank
+	sales  Sales
 }
 
 // NewService returns a Service.
-func NewService(admins Administrations, bank Bank) *Service {
-	return &Service{admins: admins, bank: bank}
+func NewService(admins Administrations, bank Bank, sales Sales) *Service {
+	return &Service{admins: admins, bank: bank, sales: sales}
 }
 
 // Get returns the overview as user may see it. A non-nil scopes further
@@ -91,6 +107,13 @@ func (s *Service) Get(ctx context.Context, admin, user resource.ID, scopes []adm
 		for _, m := range sum.RecentlyProcessed {
 			out.RecentlyProcessed = append(out.RecentlyProcessed, mutationItem(m))
 		}
+	}
+	if may(administration.SalesInvoices) {
+		sum, err := s.sales.Summary(ctx, admin, user)
+		if err != nil {
+			return Overview{}, fmt.Errorf("sales summary: %w", err)
+		}
+		out.Sales = &SalesBlock{ToReceive: sum.ToReceive, ToRemind: sum.ToRemind, Currency: sum.Currency}
 	}
 	// Each source lists newest first; merging keeps that order on ties.
 	slices.SortStableFunc(out.RecentlyProcessed, func(a, b Item) int { return b.ProcessedAt.Compare(a.ProcessedAt) })

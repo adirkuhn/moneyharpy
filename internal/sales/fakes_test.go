@@ -16,6 +16,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -36,6 +37,17 @@ const (
 	debtors         resource.ID = 700
 	payableVAT      resource.ID = 701
 	uncategorized   resource.ID = 702
+	toClassify      resource.ID = 703
+	cashLedger      resource.ID = 704
+	privateDeposits resource.ID = 705
+	rounding        resource.ID = 706
+	settlements     resource.ID = 707
+	allocation      resource.ID = 708
+	provision       resource.ID = 709
+	uncollectible   resource.ID = 710
+	loan            resource.ID = 711
+	bankLedger      resource.ID = 712
+	bankAccount     resource.ID = 800
 )
 
 var now = time.Date(2026, 11, 11, 9, 0, 0, 0, time.UTC)
@@ -84,7 +96,11 @@ func (f *fakeInvoicing) Settings(context.Context, resource.ID, resource.ID) (inv
 
 func (f *fakeInvoicing) workflows() []invoicing.Workflow {
 	return []invoicing.Workflow{
-		{ID: flow, Type: invoicing.InvoiceWorkflow, Default: true, Active: true, Currency: "EUR", Language: "nl", Steps: []invoicing.WorkflowStep{{DueInterval: 14}}},
+		{ID: flow, Type: invoicing.InvoiceWorkflow, Default: true, Active: true, Currency: "EUR", Language: "nl", Steps: []invoicing.WorkflowStep{
+			{StepOrder: 1, DueInterval: 14},
+			{StepOrder: 2, ReminderDelay: 7, ReminderText: "Please pay {invoice_id}.\n\n{invoices}", ReminderAutoSend: true},
+			{StepOrder: 3, ReminderDelay: 14},
+		}},
 		{ID: estimateFlow, Type: invoicing.EstimateWorkflow, Default: true, Active: true},
 	}
 }
@@ -134,8 +150,42 @@ func (f *fakeLedger) SystemLedgerAccount(_ context.Context, _, _ resource.ID, ro
 		return payableVAT, nil
 	case "uncategorized_income":
 		return uncategorized, nil
+	case "received_payments_to_classify":
+		return toClassify, nil
+	case "rounding":
+		return rounding, nil
+	case "settlements":
+		return settlements, nil
+	case "doubtful_debtors_allocation":
+		return allocation, nil
+	case "doubtful_debtors_provision":
+		return provision, nil
+	case "uncollectible_revenue":
+		return uncollectible, nil
 	}
 	return 0, errors.New("no such role")
+}
+
+func (f *fakeLedger) SeedLedgerAccount(_ context.Context, _, _ resource.ID, key string) (resource.ID, bool, error) {
+	switch key {
+	case "cash":
+		return cashLedger, true, nil
+	case "private_deposits":
+		return privateDeposits, true, nil
+	}
+	return 0, false, nil
+}
+
+func (f *fakeLedger) LedgerAccount(_ context.Context, _, id, _ resource.ID) (bookkeeping.LedgerAccount, error) {
+	switch id {
+	case loan:
+		return bookkeeping.LedgerAccount{ID: loan, Type: "non_current_liabilities", Active: true}, nil
+	case revenue:
+		return bookkeeping.LedgerAccount{ID: revenue, Type: "revenue", Active: true}, nil
+	case debtors:
+		return bookkeeping.LedgerAccount{ID: debtors, Type: "current_assets", Active: true, System: "accounts_receivable"}, nil
+	}
+	return bookkeeping.LedgerAccount{}, bookkeeping.ErrLedgerAccountNotFound
 }
 
 func (f *fakeLedger) TaxRate(_ context.Context, _, id, _ resource.ID) (bookkeeping.TaxRate, error) {
@@ -157,7 +207,65 @@ func (f *fakeLedger) LockedUntil(context.Context, resource.ID, resource.ID) (str
 type memStore struct {
 	invoices map[resource.ID]Invoice
 	entries  map[resource.ID][]journal.Entry
+	// paid holds what payments post, by payment.
+	paid     map[resource.ID][]journal.Entry
 	sequence int
+	locked   map[resource.ID]bool
+}
+
+func (m *memStore) Payment(_ context.Context, _, id resource.ID) (Payment, error) {
+	for _, inv := range m.invoices {
+		for _, p := range inv.Payments {
+			if p.ID == id {
+				return p, nil
+			}
+		}
+	}
+	return Payment{}, ErrPaymentNotFound
+}
+
+func (m *memStore) SavePayments(_ context.Context, c PaymentChange) error {
+	for _, p := range c.Invoices {
+		m.invoices[p.Invoice.ID] = p.Invoice
+		if p.Entries != nil {
+			m.entries[p.Invoice.ID] = p.Entries
+		}
+	}
+	for _, p := range c.Payments {
+		m.paid[p.Payment.ID] = p.Entries
+	}
+	for _, id := range c.Removed {
+		delete(m.paid, id)
+	}
+	return nil
+}
+
+func (m *memStore) Receivables(_ context.Context, _ resource.ID, today time.Time) (Receivables, error) {
+	var r Receivables
+	for _, inv := range m.invoices {
+		if !payable(inv) {
+			continue
+		}
+		r.ToReceive.Count++
+		r.ToReceive.Amount += inv.Unpaid()
+		if st := effective(inv, today); (st == Late || st == Reminded) && !inv.Paused {
+			r.ToRemind.Count++
+			r.ToRemind.Amount += inv.Unpaid()
+		}
+	}
+	return r, nil
+}
+
+func (m *memStore) Workload(context.Context) ([]Workload, error) {
+	return []Workload{{AdministrationID: adminID, UserID: owner}}, nil
+}
+
+func (m *memStore) Lock(_ context.Context, admin resource.ID) (func(), bool, error) {
+	if m.locked[admin] {
+		return nil, false, nil
+	}
+	m.locked[admin] = true
+	return func() { m.locked[admin] = false }, true, nil
 }
 
 func (m *memStore) Invoices(_ context.Context, _ resource.ID, q Query) ([]Invoice, int, error) {
@@ -250,6 +358,53 @@ func (m *memStore) ContactInUse(_ context.Context, _, contact resource.ID) (bool
 	return err == nil, nil
 }
 
+// fakeBank keeps what transactions have open and links them through the
+// service, as banking does.
+type fakeBank struct {
+	svc  *Service
+	open map[resource.ID]money.Amount
+	day  time.Time
+}
+
+func (f *fakeBank) LinkInvoicePayment(ctx context.Context, admin, mutation, user, invoice resource.ID, price *money.Amount) (resource.ID, error) {
+	open, ok := f.open[mutation]
+	if !ok {
+		return 0, errors.New("no such transaction")
+	}
+	id, err := f.svc.RegisterBankPayment(ctx, admin, user, invoice, mutation, bankAccount, f.day, open, price)
+	if err != nil {
+		return 0, err
+	}
+	p, _ := f.svc.store.Payment(ctx, admin, id)
+	f.open[mutation] -= p.Price
+	return id, nil
+}
+
+func (f *fakeBank) UnlinkPayment(ctx context.Context, admin, mutation, user, payment resource.ID) error {
+	p, err := f.svc.store.Payment(ctx, admin, payment)
+	if err != nil {
+		return err
+	}
+	if err := f.svc.RemoveBankPayment(ctx, admin, user, payment); err != nil {
+		return err
+	}
+	f.open[mutation] += p.Price
+	return nil
+}
+
+func (f *fakeBank) AccountLedger(_ context.Context, _, account, _ resource.ID) (resource.ID, error) {
+	if account != bankAccount {
+		return 0, errors.New("no such account")
+	}
+	return bankLedger, nil
+}
+
+type fakeNotifier struct{ actions []string }
+
+func (f *fakeNotifier) Notify(_ context.Context, _ resource.ID, action string, _ Invoice) {
+	f.actions = append(f.actions, action)
+}
+
 type fakeRenderer struct{}
 
 func (fakeRenderer) PDF(doc Document) ([]byte, error) {
@@ -325,23 +480,30 @@ func (noFiles) Open(context.Context, string) (io.ReadCloser, string, error) {
 func (noFiles) Delete(context.Context, string) error { return nil }
 
 type harness struct {
-	svc    *Service
-	store  *memStore
-	ledger *fakeLedger
-	mailer *fakeMailer
+	svc      *Service
+	store    *memStore
+	ledger   *fakeLedger
+	mailer   *fakeMailer
+	bank     *fakeBank
+	notifier *fakeNotifier
+	clock    *time.Time
 }
 
 func newHarness(t *testing.T) harness {
 	t.Helper()
-	store := &memStore{invoices: map[resource.ID]Invoice{}, entries: map[resource.ID][]journal.Entry{}}
+	store := &memStore{invoices: map[resource.ID]Invoice{}, entries: map[resource.ID][]journal.Entry{}, paid: map[resource.ID][]journal.Entry{}, locked: map[resource.ID]bool{}}
 	ledger := &fakeLedger{}
 	mailer := &fakeMailer{}
 	ids := resource.NewGenerator(1)
-	clock := func() time.Time { return now }
+	at := now
+	clock := func() time.Time { return at }
+	bank := &fakeBank{open: map[resource.ID]money.Amount{}, day: now}
+	notifier := &fakeNotifier{}
 	svc := NewService(Deps{
 		Administrations: fakeAdmins{}, Contacts: fakeContacts{}, Invoicing: &fakeInvoicing{}, Ledger: ledger,
 		Notes: notes.NewService(&memNotes{}, ids, clock), Attachments: attachments.NewService(&memAttachments{}, noFiles{}, ids, clock),
-		Store: store, Renderer: fakeRenderer{}, Mailer: mailer, IDs: ids, Now: clock,
+		Store: store, Renderer: fakeRenderer{}, Mailer: mailer, Bank: bank, Notifier: notifier, IDs: ids, Now: clock,
 	})
-	return harness{svc: svc, store: store, ledger: ledger, mailer: mailer}
+	bank.svc = svc
+	return harness{svc: svc, store: store, ledger: ledger, mailer: mailer, bank: bank, notifier: notifier, clock: &at}
 }

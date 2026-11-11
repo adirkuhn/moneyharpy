@@ -283,7 +283,7 @@ type financialMutationJSON struct {
 	SettlementState       string        `json:"settlement_state"`
 	ProcessedAt           *time.Time    `json:"processed_at"`
 	SepaFields            *struct{}     `json:"sepa_fields"`
-	Payments              []struct{}    `json:"payments"`
+	Payments              []paymentJSON `json:"payments"`
 	LedgerAccountBookings []bookingJSON `json:"ledger_account_bookings"`
 	Version               int64         `json:"version"`
 	CreatedAt             time.Time     `json:"created_at"`
@@ -298,8 +298,16 @@ func toFinancialMutation(m banking.Mutation) financialMutationJSON {
 		Message: emptyNil(m.Message), Amount: m.Amount.String(), AmountOpen: m.Open().String(), Currency: m.Currency, Code: emptyNil(m.Code),
 		ContraAccountName: emptyNil(m.ContraName), ContraAccountNumber: m.ContraAccount, BatchReference: emptyNil(m.BatchReference),
 		AccountServicerTxID: emptyNil(m.TransactionID), State: m.State, SettlementState: "settled", ProcessedAt: m.ProcessedAt,
-		Payments: []struct{}{}, LedgerAccountBookings: make([]bookingJSON, len(m.Bookings)), Version: m.Version(),
+		Payments: make([]paymentJSON, len(m.Payments)), LedgerAccountBookings: make([]bookingJSON, len(m.Bookings)), Version: m.Version(),
 		CreatedAt: m.CreatedAt, UpdatedAt: m.UpdatedAt, URI: m.Ref().URI(),
+	}
+	for i, p := range m.Payments {
+		out.Payments[i] = paymentJSON{
+			ID: p.ID.String(), AdministrationID: m.AdministrationID.String(), InvoiceType: p.InvoiceType, InvoiceID: p.InvoiceID.String(),
+			FinancialAccountID: ptr(m.AccountID.String()), FinancialMutationID: ptr(m.ID.String()), ManualPaymentAction: emptyNil(p.ManualPaymentAction),
+			Price: p.Price.String(), PriceBase: p.PriceBase.String(), PaymentDate: p.PaymentDate.Format(time.DateOnly),
+			TransactionIdentifier: emptyNil(p.TransactionIdentifier), UserID: p.UserID.String(), CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt,
+		}
 	}
 	for i, b := range m.Bookings {
 		out.LedgerAccountBookings[i] = bookingJSON{
