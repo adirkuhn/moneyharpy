@@ -27,6 +27,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/downloads"
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
@@ -44,6 +45,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
+	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -221,6 +223,9 @@ type harness struct {
 	settle *settings.Service
 	hooks  *webhooks.Service
 	sales  *sales.Service
+
+	subscriptions *subscriptions.Service
+	downloads     *downloads.Service
 }
 
 func newHarness(t *testing.T, opts options) *harness {
@@ -259,7 +264,8 @@ func newHarness(t *testing.T, opts options) *harness {
 	attachmentService := attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now)
 	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
 	catalogStore := postgres.NewCatalogStore(pool)
-	productService := products.NewService(admins, books, contactService, catalogStore, salesStore, ids, time.Now)
+	subscriptionStore := postgres.NewSubscriptionStore(pool)
+	productService := products.NewService(admins, books, contactService, catalogStore, products.AnyReferences{salesStore, subscriptionStore}, ids, time.Now)
 	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
@@ -269,6 +275,12 @@ func newHarness(t *testing.T, opts options) *harness {
 	})
 	bank.UseInvoices(invoiceService)
 	h.sales = invoiceService
+	h.subscriptions = subscriptions.NewService(subscriptions.Deps{
+		Administrations: admins, Contacts: contactService, Products: productService, Sales: invoiceService, Store: subscriptionStore,
+		Notifier: httpapi.SalesNotifier{Webhooks: h.hooks}, IDs: ids, Now: time.Now,
+	})
+	invoiceService.UseRecurringHook(h.subscriptions)
+	h.downloads = downloads.NewService(admins, subscriptionStore, files, ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
@@ -283,6 +295,8 @@ func newHarness(t *testing.T, opts options) *harness {
 		Sales:           invoiceService,
 		Products:        productService,
 		Projects:        projectService,
+		Subscriptions:   h.subscriptions,
+		Downloads:       h.downloads,
 		Storage:         files,
 		Identity:        people,
 		Settings:        settle,

@@ -1050,6 +1050,7 @@ WHERE r.administration_id = @administration_id
   AND (sqlc.narg(auto_send)::boolean IS NULL OR r.auto_send = sqlc.narg(auto_send))
   AND (sqlc.narg(contact_id)::bigint IS NULL OR r.contact_id = sqlc.narg(contact_id))
   AND (sqlc.narg(workflow_id)::bigint IS NULL OR r.workflow_id = sqlc.narg(workflow_id))
+  AND (@include_subscriptions::boolean OR NOT EXISTS (SELECT 1 FROM subscriptions s WHERE s.recurring_sales_invoice_id = r.id))
 ORDER BY r.invoice_date, r.id
 LIMIT sqlc.narg(max_rows) OFFSET @skip;
 

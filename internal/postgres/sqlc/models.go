@@ -8,6 +8,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AdditionalCharge struct {
+	ID               int64
+	AdministrationID int64
+	ContactID        pgtype.Int8
+	SubscriptionID   pgtype.Int8
+	ProductID        int64
+	Amount           string
+	Quantity         int64
+	Price            int64
+	PeriodFrom       pgtype.Date
+	PeriodTo         pgtype.Date
+	Description      string
+	Identifier       string
+	SalesInvoiceID   pgtype.Int8
+	DetailID         pgtype.Int8
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type Administration struct {
 	ID                           int64
 	Name                         string
@@ -212,6 +231,20 @@ type DocumentStyle struct {
 	Layout                 []byte
 	CreatedAt              pgtype.Timestamptz
 	UpdatedAt              pgtype.Timestamptz
+}
+
+type Download struct {
+	ID               int64
+	AdministrationID int64
+	UserID           pgtype.Int8
+	DownloadType     string
+	Filename         string
+	ContentType      string
+	Size             int64
+	Failed           bool
+	Downloaded       bool
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
 }
 
 type ExternalSalesInvoice struct {
@@ -647,6 +680,39 @@ type Setting struct {
 	Key       string
 	Value     []byte
 	UpdatedAt pgtype.Timestamptz
+}
+
+type Subscription struct {
+	ID                      int64
+	AdministrationID        int64
+	ContactID               int64
+	ContactPersonID         pgtype.Int8
+	RecurringSalesInvoiceID pgtype.Int8
+	StartDate               pgtype.Date
+	EndDate                 pgtype.Date
+	FrequencyCount          int32
+	FrequencyType           string
+	Reference               string
+	CancelledAt             pgtype.Timestamptz
+	CreatedAt               pgtype.Timestamptz
+	UpdatedAt               pgtype.Timestamptz
+}
+
+type SubscriptionOneOffInvoice struct {
+	SalesInvoiceID   int64
+	SubscriptionID   int64
+	AdministrationID int64
+}
+
+type SubscriptionProduct struct {
+	ID             int64
+	SubscriptionID int64
+	ProductID      int64
+	StartDate      pgtype.Date
+	EndDate        pgtype.Date
+	Amount         string
+	Quantity       int64
+	Discount       int32
 }
 
 type TaxRate struct {

@@ -25,6 +25,7 @@ const (
 	fileSalesAttachment    = "sales_invoice_attachment"
 	fileExternalAttachment = "external_sales_invoice_attachment"
 	fileJournalAttachment  = "general_journal_document_attachment"
+	fileDownload           = "download"
 )
 
 // fileLink names a file and the user who asked for it. Download operations
@@ -93,7 +94,10 @@ func (s *server) redirectToFile(w http.ResponseWriter, l fileLink) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(http.StatusFound)
 	text := `{"message":"Use the Location header to download the attachment"}`
-	if l.Attachment == 0 {
+	switch {
+	case l.Kind == fileDownload:
+		text = `{"message":"Use the Location header to download the file"}`
+	case l.Attachment == 0:
 		text = "This resource has been moved temporarily to " + to + "."
 	}
 	// The client went away if this fails; there is nobody left to tell.
@@ -171,6 +175,13 @@ func (s *server) DownloadFile(w http.ResponseWriter, r *http.Request, token stri
 			return
 		}
 		writeDocument(w, "application/pdf", name, data)
+	case fileDownload:
+		d, body, err := s.deps.Downloads.Open(r.Context(), l.Admin, l.ID, l.User)
+		if err != nil {
+			s.fail(w, r, err)
+			return
+		}
+		writeFile(w, attachments.Attachment{Filename: d.Filename, ContentType: d.ContentType, Size: d.Size}, body)
 	default:
 		a, body, err := s.openAttachment(r, l)
 		if err != nil {

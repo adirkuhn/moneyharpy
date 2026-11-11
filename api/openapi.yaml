@@ -58,6 +58,16 @@ tags:
     description: Invoices made in other software, such as a webshop or a till, booked and followed until paid. Compatible with the Moneybird API.
   - name: Recurring sales invoices
     description: Templates that make sales invoices on a schedule, and send them if wanted. Compatible with the Moneybird API.
+  - name: Subscriptions
+    description: Products billed to a contact every period through a recurring sales invoice, with additional charges. Compatible with the Moneybird API.
+  - name: Subscription templates
+    description: Subscriptions sold through Moneybird Payments' checkout, which MoneyHarpy does not have. Compatible with the Moneybird API.
+  - name: Customer contact portal
+    description: Temporary links to a contact's invoices and subscriptions. Compatible with the Moneybird API.
+  - name: Verifications
+    description: What the administration has verified about itself. Compatible with the Moneybird API.
+  - name: Downloads
+    description: The files exports made. Compatible with the Moneybird API.
   - name: Payments
     description: Payments of invoices, looked up by id. Compatible with the Moneybird API.
   - name: Products
@@ -5080,7 +5090,7 @@ paths:
       x-permissions: [sales_invoices]
       summary: List all recurring sales invoices
       description: >-
-        The next invoice to make first. Filter terms: state (active, inactive or, as an extension, all; active unless given), frequency (all, day, week, month, quarter, year), auto_send (true, false or null), contact_id and workflow_id; include_subscriptions is accepted. Paged with a Link header and X-Total-Count.
+        The next invoice to make first. Filter terms: state (active, inactive or, as an extension, all; active unless given), frequency (all, day, week, month, quarter, year), auto_send (true, false or null), contact_id, workflow_id and include_subscriptions (true also lists the recurring invoices of subscriptions; false unless given). Paged with a Link header and X-Total-Count.
       tags: [Recurring sales invoices]
       parameters:
         - $ref: '#/components/parameters/document_filter'
@@ -5361,6 +5371,851 @@ paths:
       responses:
         '204':
           description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/subscriptions:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listSubscriptions
+      x-permissions: [sales_invoices]
+      summary: List subscriptions of a contact
+      description: >-
+        Lists the subscriptions of a single contact, the oldest first, cancelled ones too. There is no endpoint that
+        returns the subscriptions of every contact at once.
+      tags: [Subscriptions]
+      parameters:
+        - name: contact_id
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Identifier'
+      responses:
+        '200':
+          description: A list of subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createSubscription
+      x-permissions: [sales_invoices]
+      summary: Create a new subscription
+      description: >-
+        Starts a new subscription for the contact. product_id points to a product with a frequency, price and VAT rate. A
+        recurring sales invoice is made that bills the contact every period in advance and sends the invoices itself; the
+        first is sent on the start date, but no sooner than tomorrow. The reference goes on the invoices. The frequency
+        may differ from the product's when they fit: a monthly product can be billed every quarter or year, at the
+        product's price times the months.
+      tags: [Subscriptions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreateRequest'
+      responses:
+        '201':
+          description: The created subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/subscriptions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getSubscription
+      x-permissions: [sales_invoices]
+      summary: Get subscription
+      tags: [Subscriptions]
+      responses:
+        '200':
+          description: The subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateSubscription
+      x-permissions: [sales_invoices]
+      summary: Update a subscription
+      description: >-
+        A new product, amount or discount starts on start_date, today unless given, and the subscription's products list
+        both. When the change starts within a period already billed, the difference in price for the rest of that period
+        is billed on a one-off sales invoice that goes with the next subscription invoice. A change after the next invoice
+        date applies from the invoice that falls in it.
+      tags: [Subscriptions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionUpdateRequest'
+      responses:
+        '200':
+          description: The updated subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: cancelSubscription
+      x-permissions: [sales_invoices]
+      summary: Cancel a subscription
+      description: >-
+        Cancels the subscription on end_date, today unless given: its recurring sales invoice makes no invoice on or after
+        that date. A cancelled subscription cannot be cancelled or changed again (400).
+      tags: [Subscriptions]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCancelRequest'
+      responses:
+        '200':
+          description: The cancelled subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/subscriptions/{id}/additional_charges:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: listSubscriptionAdditionalCharges
+      x-permissions: [sales_invoices]
+      summary: Get additional charges of a subscription
+      tags: [Subscriptions]
+      parameters:
+        - name: include_billed
+          in: query
+          description: true includes the charges that were billed already; false unless given.
+          schema:
+            type: string
+            enum: ['true', 'false']
+      responses:
+        '200':
+          description: The subscription's additional charges, the oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdditionalCharge'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createSubscriptionAdditionalCharge
+      x-permissions: [sales_invoices]
+      summary: Create an additional charge to be invoiced together with the subscription
+      description: >-
+        The charge is billed as a line of the subscription's next invoice, when that is made.
+      tags: [Subscriptions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdditionalChargeRequest'
+      responses:
+        '201':
+          description: The created charge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdditionalCharge'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/subscriptions/{id}/create_and_schedule_one_off_sales_invoice:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createSubscriptionOneOffSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Create and schedule an invoice to be sent together with the subscription
+      description: >-
+        Makes a sales invoice with the lines and schedules it for the date of the subscription's next invoice, or
+        invoice_date. When the subscription's invoice is made on or after that date, the lines are merged into it and the
+        scheduled invoice is removed, so the contact receives one invoice.
+      tags: [Subscriptions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OneOffSalesInvoiceRequest'
+      responses:
+        '201':
+          description: The scheduled sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/subscription_templates:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listSubscriptionTemplates
+      x-permissions: [settings]
+      summary: List all subscription templates
+      description: >-
+        Moneybird's subscription templates sell subscriptions through Moneybird Payments' online checkout. MoneyHarpy has
+        no online checkout, so the list is always empty.
+      tags: [Subscription templates]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          description: A page of subscription templates
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of templates in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/subscription_template_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/subscription_templates/{id}/checkout_identifier:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getSubscriptionTemplateCheckoutIdentifier
+      x-permissions: [settings]
+      deprecated: true
+      summary: Create online sales link [Deprecated]
+      description: >-
+        Moneybird makes a checkout link through Moneybird Payments. MoneyHarpy has no subscription templates, so it answers
+        404 "Record not found for model name: SubscriptionTemplate", as Moneybird does for a template that does not exist.
+      tags: [Subscription templates]
+      parameters:
+        - name: contact_id
+          in: query
+          schema:
+            $ref: '#/components/schemas/Identifier'
+        - name: start_date
+          in: query
+          description: yyyy-mm-dd.
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}-\d{2}$'
+        - name: product_id
+          in: query
+          schema:
+            $ref: '#/components/schemas/Identifier'
+      responses:
+        '200':
+          description: The sales link. MoneyHarpy does not answer this.
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/subscription_templates/{id}/sales_link:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createSubscriptionTemplateSalesLink
+      x-permissions: [settings]
+      summary: Create online sales link
+      description: >-
+        Moneybird makes a checkout link through Moneybird Payments, valid for one hour. MoneyHarpy has no subscription
+        templates, so it answers 404 "Record not found for model name: SubscriptionTemplate", as Moneybird does for a
+        template that does not exist.
+      tags: [Subscription templates]
+      parameters:
+        - name: contact_id
+          in: query
+          schema:
+            $ref: '#/components/schemas/Identifier'
+        - name: start_date
+          in: query
+          description: yyyy-mm-dd.
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}-\d{2}$'
+        - name: product_id
+          in: query
+          schema:
+            $ref: '#/components/schemas/Identifier'
+      responses:
+        '201':
+          description: The sales link. MoneyHarpy does not answer this.
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/{id}/additional_charges:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: listContactAdditionalCharges
+      x-permissions: [sales_invoices]
+      summary: Get additional charges of a contact
+      tags: [Contacts]
+      parameters:
+        - name: include_billed
+          in: query
+          description: true includes the charges that were billed already; false unless given.
+          schema:
+            type: string
+            enum: ['true', 'false']
+      responses:
+        '200':
+          description: The contact's additional charges, the oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdditionalCharge'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createContactAdditionalCharge
+      x-permissions: [sales_invoices]
+      summary: Create an additional charge to be invoiced at start of next period
+      description: >-
+        Once the month the charge is added in is over, the contact's charges are billed together on one sales invoice
+        dated the first of the next month, which is sent at once.
+      tags: [Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdditionalChargeRequest'
+      responses:
+        '201':
+          description: The created charge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdditionalCharge'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/contact_id'
+    get:
+      operationId: getContactPaymentsMandate
+      x-permissions: [estimates, sales_invoices, documents, bank, settings]
+      summary: Get Moneybird Payments mandate
+      description: >-
+        Mandates are stored by Moneybird Payments, which MoneyHarpy does not have: no contact has one, so this answers
+        404 with the body 404, as Moneybird does when no mandate is found.
+      tags: [Contacts]
+      responses:
+        '200':
+          description: The mandate. MoneyHarpy does not answer this.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recurring_contract_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Moneybird Payments is not enabled for the administration, or the user lacks a permission
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: integer
+                    description: The status code, as Moneybird answers it.
+                  - $ref: '#/components/schemas/Error'
+        '404':
+          description: The contact, or its mandate, is not found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: integer
+                    description: The status code, as Moneybird answers it.
+                  - $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: requestContactPaymentsMandate
+      x-permissions: [sales_invoices]
+      summary: Request a new Moneybird Payments mandate
+      description: >-
+        Needs sales_invoices and settings. Only available when Moneybird Payments is enabled, which it never is in
+        MoneyHarpy: after checking the contact this answers 403 with the body 403, as Moneybird does.
+      tags: [Contacts]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MandateRequest'
+      responses:
+        '204':
+          description: The mandate is requested. MoneyHarpy does not answer this.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Moneybird Payments is not enabled for the administration, or the user lacks a permission
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: integer
+                    description: The status code, as Moneybird answers it.
+                  - $ref: '#/components/schemas/Error'
+        '404':
+          description: The contact, or its mandate, is not found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: integer
+                    description: The status code, as Moneybird answers it.
+                  - $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteContactPaymentsMandate
+      x-permissions: [estimates, sales_invoices, documents, bank, settings]
+      summary: Delete a stored Moneybird Payments mandate
+      description: >-
+        Only available when Moneybird Payments is enabled, which it never is in MoneyHarpy: after checking the contact
+        this answers 403 with the body 403, as Moneybird does.
+      tags: [Contacts]
+      responses:
+        '204':
+          description: The mandate is deleted. MoneyHarpy does not answer this.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Moneybird Payments is not enabled for the administration, or the user lacks a permission
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: integer
+                    description: The status code, as Moneybird answers it.
+                  - $ref: '#/components/schemas/Error'
+        '404':
+          description: The contact, or its mandate, is not found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: integer
+                    description: The status code, as Moneybird answers it.
+                  - $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate/url:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/contact_id'
+    post:
+      operationId: requestContactPaymentsMandateURL
+      x-permissions: [sales_invoices]
+      summary: Request an URL for setting up a Moneybird Payments mandate
+      description: >-
+        Needs sales_invoices and settings. Only available when Moneybird Payments is enabled, which it never is in
+        MoneyHarpy: after checking the contact this answers 403 with the body 403, as Moneybird does.
+      tags: [Contacts]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MandateRequest'
+      responses:
+        '201':
+          description: The URL. MoneyHarpy does not answer this.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Moneybird Payments is not enabled for the administration, or the user lacks a permission
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: integer
+                    description: The status code, as Moneybird answers it.
+                  - $ref: '#/components/schemas/Error'
+        '404':
+          description: The contact, or its mandate, is not found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: integer
+                    description: The status code, as Moneybird answers it.
+                  - $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/customer_contact_portal/{contact_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/contact_id'
+    get:
+      operationId: getCustomerContactPortalLink
+      x-permissions: [sales_invoices, estimates]
+      summary: Get a temporary link to the customer contact portal
+      description: >-
+        MoneyHarpy hosts no customer portal: the link opens the contact in MoneyHarpy, for its users.
+      tags: [Customer contact portal]
+      responses:
+        '200':
+          description: A link that works for one hour
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/customer_contact_portal/{contact_id}/invoices:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/contact_id'
+    get:
+      operationId: getCustomerContactPortalInvoicesLink
+      x-permissions: [sales_invoices, estimates]
+      summary: Get a temporary link to the invoices in the customer contact portal
+      description: >-
+        MoneyHarpy hosts no customer portal: the link opens the contact's sales invoices in MoneyHarpy, for its users.
+      tags: [Customer contact portal]
+      responses:
+        '200':
+          description: A link that works for one hour
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/customer_contact_portal/{contact_id}/subscriptions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/contact_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getCustomerContactPortalSubscriptionLink
+      x-permissions: [sales_invoices, estimates]
+      summary: Get a temporary link to the subscriptions in the customer contact portal
+      description: >-
+        Moneybird links only to subscriptions sold through a subscription template, and answers 404 for others. MoneyHarpy
+        has no subscription templates, so after checking the contact and the subscription it always answers 404 "Record
+        not found for model name: Subscription".
+      tags: [Customer contact portal]
+      responses:
+        '200':
+          description: A link that works for one hour
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/verifications:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getVerifications
+      x-permissions: [settings]
+      summary: Retrieve verifications
+      description: >-
+        Moneybird lists the email addresses, bank account numbers, chamber of commerce number and tax number it verified.
+        MoneyHarpy verifies none of these, so it answers {}, as Moneybird does when no verifications are present.
+      tags: [Verifications]
+      responses:
+        '200':
+          description: The verifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/verification_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/downloads:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listDownloads
+      x-permissions: []
+      summary: List all downloads
+      description: >-
+        The files exports made, the newest first, 25 a page unless per_page is given. Only downloads of a type the user
+        may open are listed: each type needs the permission of the export that made it, such as documents for
+        export_documents.
+      tags: [Downloads]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: download_type
+          in: query
+          description: Only downloads of this type, such as auditfile, brugstaat or export_ledger_account_report.
+          schema:
+            type: string
+            maxLength: 100
+        - name: downloaded
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+        - name: failed
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+      responses:
+        '200':
+          description: A page of downloads
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of downloads selected in all.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Download'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/downloads/{id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: downloadDownload
+      x-permissions: []
+      summary: Download a file
+      description: >-
+        Redirects to a link to the file that works for 30 seconds, and marks the download downloaded. The user needs the
+        permission of the download's type (401 otherwise, as at Moneybird).
+      tags: [Downloads]
+      responses:
+        '302':
+          $ref: '#/components/responses/FileRedirect'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -9324,6 +10179,196 @@ components:
                     $ref: '#/components/schemas/SalesInvoiceDetailInput'
             custom_fields_attributes:
               $ref: '#/components/schemas/custom_fields_attributes'
+    Subscription:
+      description: A Moneybird subscription with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/subscription_response'
+        - type: object
+          required: [id, administration_id, start_date, frequency, frequency_type, product_id, contact_id, subscription_products, recurring_sales_invoice_id, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    SubscriptionCreateRequest:
+      type: object
+      required: [subscription]
+      additionalProperties: false
+      properties:
+        subscription:
+          type: object
+          additionalProperties: false
+          required: [start_date, product_id, contact_id]
+          properties:
+            start_date:
+              type: string
+              format: date
+            product_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            amount:
+              type: string
+              maxLength: 255
+              description: Quantity of the product billed each period, such as "1" or "5 x"; 1 x unless given.
+            discount:
+              description: A percentage; both a decimal and a string '10,95' are accepted.
+              oneOf:
+                - type: string
+                  maxLength: 10
+                - type: number
+            contact_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            contact_person_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            end_date:
+              type: string
+              format: date
+            reference:
+              type: string
+              maxLength: 1000
+            document_style_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            frequency:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              description: Periods between invoices with frequency_type; must fit the product's. The product's unless given.
+            frequency_type:
+              type: string
+              enum: [day, week, month, quarter, year]
+            mergeable:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            prices_are_incl_tax:
+              $ref: '#/components/schemas/FlexibleBoolean'
+    SubscriptionUpdateRequest:
+      type: object
+      required: [subscription]
+      additionalProperties: false
+      properties:
+        subscription:
+          type: object
+          additionalProperties: false
+          properties:
+            contact_person_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            document_style_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            reference:
+              type: string
+              maxLength: 1000
+            mergeable:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            prices_are_incl_tax:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            product_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            start_date:
+              type: string
+              format: date
+              description: When the new product, amount or discount starts; today unless given.
+            amount:
+              type: string
+              maxLength: 255
+            discount:
+              description: A percentage; both a decimal and a string '10,95' are accepted.
+              oneOf:
+                - type: string
+                  maxLength: 10
+                - type: number
+    SubscriptionCancelRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        subscription:
+          type: object
+          additionalProperties: false
+          properties:
+            end_date:
+              type: string
+              format: date
+    AdditionalCharge:
+      description: A Moneybird additional charge with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/subscription_additional_charge_response'
+        - type: object
+          required: [id, administration_id, product_id, amount, price, period, description]
+          properties:
+            identifier:
+              type: string
+              nullable: true
+              description: MoneyHarpy extension. Your own reference for the charge, as given.
+            sales_invoice_id:
+              $ref: '#/components/schemas/identifier_nullable'
+    AdditionalChargeRequest:
+      type: object
+      additionalProperties: false
+      required: [product_id, amount, period, description]
+      properties:
+        product_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        amount:
+          description: The quantity on the invoice line, such as 1 or "5 x".
+          oneOf:
+            - type: string
+              maxLength: 255
+            - type: integer
+        price:
+          $ref: '#/components/schemas/Money'
+        period:
+          type: string
+          maxLength: 20
+          description: The period the charge applies to, such as 20250101..20250131, 202501..202503 or this_month; kept as whole months.
+        description:
+          type: string
+          maxLength: 10000
+        identifier:
+          type: string
+          maxLength: 255
+    OneOffSalesInvoiceRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        sales_invoice:
+          type: object
+          additionalProperties: false
+          properties:
+            details_attributes:
+              description: An array of lines, or an object of lines keyed by position.
+              oneOf:
+                - type: array
+                  maxItems: 500
+                  items:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
+                - type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
+            invoice_date:
+              type: string
+              format: date
+              description: Date to schedule the invoice for; the date of the next subscription invoice unless given.
+    MandateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        mandate_request:
+          type: object
+          additionalProperties: false
+          properties:
+            email_message:
+              type: string
+              maxLength: 10000
+            identity_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            workflow_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+    Download:
+      description: A Moneybird download with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/download_response'
+        - type: object
+          required: [id, download_type, filename, content_type, failed, downloaded, created_at, updated_at]
+          properties:
+            size:
+              type: integer
+              description: MoneyHarpy extension. The file's size in bytes.
     SalesInvoiceDetailInput:
       type: object
       additionalProperties: false

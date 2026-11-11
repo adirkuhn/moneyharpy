@@ -22,6 +22,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/diskstore"
+	"github.com/adirkuhn/moneyharpy/internal/downloads"
 	"github.com/adirkuhn/moneyharpy/internal/google"
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
@@ -44,6 +45,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
+	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
 	"github.com/adirkuhn/moneyharpy/internal/uploads"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/adirkuhn/moneyharpy/web"
@@ -127,7 +129,8 @@ func run(logger *slog.Logger) error {
 	attachmentService := attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now)
 	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
 	catalogStore := postgres.NewCatalogStore(pool)
-	productService := products.NewService(admins, books, contactService, catalogStore, salesStore, ids, time.Now)
+	subscriptionStore := postgres.NewSubscriptionStore(pool)
+	productService := products.NewService(admins, books, contactService, catalogStore, products.AnyReferences{salesStore, subscriptionStore}, ids, time.Now)
 	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
@@ -136,6 +139,14 @@ func run(logger *slog.Logger) error {
 		Notifier: httpapi.SalesNotifier{Webhooks: hooks, Logger: logger}, IDs: ids, Now: time.Now,
 	})
 	bank.UseInvoices(invoiceService)
+	// Subscriptions bill through recurring sales invoices and complete the
+	// invoices those make; downloads keep what exports make.
+	subscriptionService := subscriptions.NewService(subscriptions.Deps{
+		Administrations: admins, Contacts: contactService, Products: productService, Sales: invoiceService, Store: subscriptionStore,
+		Notifier: httpapi.SalesNotifier{Webhooks: hooks, Logger: logger}, IDs: ids, Now: time.Now,
+	})
+	invoiceService.UseRecurringHook(subscriptionService)
+	downloadService := downloads.NewService(admins, subscriptionStore, files, ids, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
@@ -147,6 +158,8 @@ func run(logger *slog.Logger) error {
 		Sales:             invoiceService,
 		Products:          productService,
 		Projects:          projectService,
+		Subscriptions:     subscriptionService,
+		Downloads:         downloadService,
 		Storage:           s3,
 		Identity:          people,
 		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
@@ -183,6 +196,7 @@ func run(logger *slog.Logger) error {
 	}
 	go hooks.Run(ctx, 5*time.Second, func(err error) { logger.Error("deliver webhooks", "error", err) })
 	go invoiceService.Run(ctx, time.Minute, func(err error) { logger.Error("sales invoice background work", "error", err) })
+	go subscriptionService.Run(ctx, time.Minute, func(err error) { logger.Error("subscription charge billing", "error", err) })
 
 	errs := make(chan error, 1)
 	go func() { errs <- srv.ListenAndServe() }()
