@@ -62,6 +62,8 @@ tags:
     description: Uploads still to be processed into a document. Compatible with the Moneybird API.
   - name: Purchase transactions
     description: Credit transfers that pay purchase invoices, batched and exported as SEPA files. Compatible with the Moneybird API.
+  - name: Assets
+    description: Fixed assets with their depreciation, disposal and reinvestment reserve, booked in the journal. Compatible with the Moneybird API.
   - name: Sales invoices
     description: Invoices to customers, from draft to sent, with their PDF, e-invoice, bookings and credit invoices. Compatible with the Moneybird API.
   - name: External sales invoices
@@ -3339,6 +3341,600 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listAssets
+      x-permissions: [documents]
+      summary: List all assets
+      description: >-
+        By purchase date. Only active assets (without a disposal) unless active is false; ledger_account_id keeps the
+        assets of one category. Paged with a Link header and X-Total-Count.
+      tags: [Assets]
+      parameters:
+        - name: ledger_account_id
+          in: query
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+        - name: active
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          description: One page of assets
+          headers:
+            Link:
+              schema:
+                type: string
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Asset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createAsset
+      x-permissions: [documents]
+      summary: Create a new asset
+      description: >-
+        On a fixed asset category (non-current assets) that is not a sub-category. Every category needs a depreciation
+        plan (value_change_plan_attributes), except land and buildings (chart scheme codes BMvaTer and BMvaBeg), which
+        cannot have one. Creating an asset books nothing; the purchase is booked by the documents its sources link.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetRequest'
+      responses:
+        '201':
+          description: The created asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getAsset
+      x-permissions: [documents]
+      summary: Get an asset by ID
+      tags: [Assets]
+      responses:
+        '200':
+          description: The asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateAsset
+      x-permissions: [documents]
+      summary: Update an asset
+      description: >-
+        Once the asset has value changes, a disposal or a reinvestment reserve purchase, only its name can change.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetUpdateRequest'
+      responses:
+        '200':
+          description: The asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteAsset
+      x-permissions: [documents]
+      summary: Delete an asset
+      description: With what it booked; not when that lies in the locked period. The bookings its sources link stay.
+      tags: [Assets]
+      responses:
+        '204':
+          description: The asset is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/sources:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetSource
+      x-permissions: [documents]
+      summary: Add a source to an asset
+      description: >-
+        Links a purchase invoice or receipt line (detail_id) or a journal entry row (general_journal_document_entry_id)
+        the asset was bought with. It must be booked on the asset's category. Books nothing.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetSourceRequest'
+      responses:
+        '201':
+          description: The source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/source_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/sources/{source_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: source_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteAssetSource
+      x-permissions: [documents]
+      summary: Delete a source
+      description: Unlinks the source; the booking and the asset stay.
+      tags: [Assets]
+      responses:
+        '204':
+          description: The source is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/value_changes/manual:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetManualValueChange
+      x-permissions: [documents]
+      summary: Create a manual value change
+      description: >-
+        On a day from the purchase date to today, outside the locked period, before any disposal. A decrease cannot
+        exceed the value on that day. Unless externally_booked, booked on the category's accumulated depreciation
+        against depreciation costs.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetValueChangeRequest'
+      responses:
+        '201':
+          description: The value change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/value_change_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/value_changes/arbitrary:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetArbitraryValueChange
+      x-permissions: [documents]
+      summary: Create an arbitrary value change
+      description: >-
+        As a manual value change, and the depreciation plan starts again from it: the linear value changes after its
+        day are removed, and what is left above the residual value is spread over the months left.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetValueChangeRequest'
+      responses:
+        '201':
+          description: The value change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/value_change_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/value_changes/divestment:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetDivestmentValueChange
+      x-permissions: [documents]
+      summary: Create a divestment value change
+      description: >-
+        Writes off the value on the day (not before the last arbitrary value change) to the book result and disposes
+        of the asset (reason divested). Linear value changes after the day are removed.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetDivestmentRequest'
+      responses:
+        '201':
+          description: The value change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/value_change_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/value_changes/full_depreciation:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetFullDepreciationValueChange
+      x-permissions: [documents]
+      summary: Create a full depreciation value change
+      description: >-
+        Depreciates the value on the day (not before the last arbitrary value change) to zero, booked as depreciation
+        costs, and disposes of the asset (reason out_of_use). Linear value changes after the day are removed.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetFullDepreciationRequest'
+      responses:
+        '201':
+          description: The value change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/value_change_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/value_changes/retroactive_linear_value_changes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetRetroactiveLinearValueChanges
+      x-permissions: [documents]
+      summary: Create linear value changes retroactively
+      description: >-
+        Books the depreciation plan's monthly linear value changes that are missing up to today, from the purchase
+        date or the last arbitrary value change. Needs an active plan and missing months, none of them in the locked
+        period. New months are booked by MoneyHarpy itself at each month's end, from the month the asset was added in.
+      tags: [Assets]
+      responses:
+        '204':
+          description: The missing value changes are booked
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/disposals:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetDisposal
+      x-permissions: [documents]
+      summary: Create a disposal
+      description: >-
+        For an asset without a disposal whose value on the day is zero. Clears the booked accumulated depreciation
+        against the asset's category.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetDisposalRequest'
+      responses:
+        '201':
+          description: The disposal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/disposal_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_purchase:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetReinvestmentReservePurchase
+      x-permissions: [documents]
+      summary: Create a reinvestment reserve purchase
+      description: >-
+        Funds part of the purchase value from the reinvestment reserve ("herinvesteringsreserve"): booked on the
+        purchase date, the reserve against the asset's category, lowering the calculated purchase value the plan
+        depreciates. At most the purchase value less the residual value and what the reserve holds; one per asset;
+        not in the locked period.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetReserveRequest'
+      responses:
+        '201':
+          description: The reinvestment reserve purchase
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reinvestment_reserve_purchase_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteAssetReinvestmentReservePurchase
+      x-permissions: [documents]
+      summary: Delete a reinvestment reserve purchase
+      tags: [Assets]
+      responses:
+        '204':
+          description: The reinvestment reserve purchase is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_sale:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetReinvestmentReserveSale
+      x-permissions: [documents]
+      summary: Create a reinvestment reserve sale
+      description: >-
+        Books (part of) the book result of the asset's disposal to the reinvestment reserve on the disposal date: the
+        book result against the reserve. Needs a disposal without one, outside the locked period.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetReserveRequest'
+      responses:
+        '201':
+          description: The reinvestment reserve sale
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reinvestment_reserve_sale_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteAssetReinvestmentReserveSale
+      x-permissions: [documents]
+      summary: Delete a reinvestment reserve sale
+      tags: [Assets]
+      responses:
+        '204':
+          description: The reinvestment reserve sale is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/assets:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getAssetsReport
+      x-permissions: [documents]
+      summary: Assets report
+      description: >-
+        Each asset not disposed of before the period ("staat van vaste activa"): its value at the start, what was
+        invested and how its value changed in the period, and its value at the end. An asset bought after the period
+        shows its value as value_not_in_use. lifespan is in seconds. The period is at most 12 months; this year unless
+        given.
+      tags: [Assets]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+      responses:
+        '200':
+          description: The assets report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetsReportLine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
@@ -14037,6 +14633,178 @@ components:
               type: string
               description: yyyy-mm-dd; today when left out.
               pattern: '^(\d{4}-\d{2}-\d{2})?$'
+    Asset:
+      description: A Moneybird asset with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/asset_response'
+        - type: object
+          required: [id, ledger_account_id, name, purchase_date, purchase_value, calculated_purchase_value, current_value,
+                     value_change_plan, disposal, value_changes, sources, reinvestment_reserve_purchase, uri]
+          properties:
+            administration_id:
+              $ref: '#/components/schemas/Identifier'
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            created_at:
+              type: string
+              format: date-time
+              description: MoneyHarpy extension.
+            updated_at:
+              type: string
+              format: date-time
+              description: MoneyHarpy extension.
+    AssetPlanInput:
+      type: object
+      additionalProperties: false
+      properties:
+        lifespan_in_years:
+          description: The lifespan in years; fractions are rounded to whole months.
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1000
+            - type: string
+              pattern: '^[0-9]{1,4}([.,][0-9]{1,4})?$'
+        residual_value:
+          $ref: '#/components/schemas/Money'
+    AssetInput:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        ledger_account_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        purchase_date:
+          type: string
+          format: date
+        purchase_value:
+          $ref: '#/components/schemas/Money'
+        value_change_plan_attributes:
+          $ref: '#/components/schemas/AssetPlanInput'
+    AssetRequest:
+      type: object
+      required: [asset]
+      additionalProperties: false
+      properties:
+        asset:
+          allOf:
+            - $ref: '#/components/schemas/AssetInput'
+            - type: object
+              required: [name, ledger_account_id, purchase_date, purchase_value]
+    AssetUpdateRequest:
+      type: object
+      required: [asset]
+      additionalProperties: false
+      properties:
+        asset:
+          $ref: '#/components/schemas/AssetInput'
+    AssetSourceRequest:
+      type: object
+      description: Exactly one of detail_id and general_journal_document_entry_id.
+      additionalProperties: false
+      properties:
+        detail_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        general_journal_document_entry_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+    AssetValueChangeRequest:
+      type: object
+      required: [date, amount, description]
+      additionalProperties: false
+      properties:
+        date:
+          type: string
+          format: date
+        amount:
+          $ref: '#/components/schemas/Money'
+        description:
+          type: string
+          maxLength: 1000
+        externally_booked:
+          $ref: '#/components/schemas/FlexibleBoolean'
+    AssetDivestmentRequest:
+      type: object
+      required: [date]
+      additionalProperties: false
+      properties:
+        date:
+          type: string
+          format: date
+    AssetFullDepreciationRequest:
+      type: object
+      required: [date, description]
+      additionalProperties: false
+      properties:
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+          maxLength: 1000
+    AssetDisposalRequest:
+      type: object
+      required: [date, reason]
+      additionalProperties: false
+      properties:
+        date:
+          type: string
+          format: date
+        reason:
+          type: string
+          enum: [out_of_use, sold, private_withdrawal, divested]
+    AssetReserveRequest:
+      type: object
+      required: [amount]
+      additionalProperties: false
+      properties:
+        amount:
+          $ref: '#/components/schemas/Money'
+    AssetsReportLine:
+      type: object
+      description: One asset in the assets report. Amounts as strings, as Moneybird gives them.
+      required: [asset_id, ledger_account_id, name, purchase_date, lifespan, purchase_value, calculated_purchase_value, residual_value,
+                 total_value_changes_since_purchase, value_at_begin, investment, depreciation, divestment, value_changes, value_at_end,
+                 value_not_in_use]
+      properties:
+        asset_id:
+          $ref: '#/components/schemas/Identifier'
+        ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        purchase_date:
+          type: string
+          format: date
+        lifespan:
+          type: string
+          nullable: true
+          description: In seconds; null without a depreciation plan.
+        purchase_value:
+          type: string
+        calculated_purchase_value:
+          type: string
+        residual_value:
+          type: string
+        total_value_changes_since_purchase:
+          type: string
+        value_at_begin:
+          type: string
+        investment:
+          type: string
+        depreciation:
+          type: string
+        divestment:
+          type: string
+        value_changes:
+          type: string
+        value_at_end:
+          type: string
+        value_not_in_use:
+          type: string
+          description: The value of an asset bought after the period.
     OverviewIncoming:
       type: object
       description: MoneyHarpy extension. Present only with the documents permission.
@@ -14063,7 +14831,7 @@ components:
           format: date
         document_type:
           type: string
-          enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt, Payment]
+          enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt, Payment, Asset]
         document_id:
           $ref: '#/components/schemas/Identifier'
         ledger_account_id:

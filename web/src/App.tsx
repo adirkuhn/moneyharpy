@@ -49,6 +49,8 @@ import { ContactPage } from './contacts/ContactPage'
 import { ContactsPage } from './contacts/ContactsPage'
 import { ExternalInvoicePage } from './external/ExternalInvoicePage'
 import { ExternalInvoicesPage } from './external/ExternalInvoicesPage'
+import { AssetPage } from './assets/AssetPage'
+import { AssetsPage } from './assets/AssetsPage'
 import { IncomingDocumentPage } from './incoming/IncomingDocumentPage'
 import { IncomingListPage } from './incoming/IncomingListPage'
 import { UploadsPage } from './incoming/UploadsPage'
@@ -117,6 +119,8 @@ export function AppRoutes() {
           <Route path="/:administrationId/products" element={<ProductsPage />} />
           <Route path="/:administrationId/products/new" element={<ProductPage />} />
           <Route path="/:administrationId/products/:productId" element={<ProductPage />} />
+          <Route path="/:administrationId/assets" element={<AssetsPage />} />
+          <Route path="/:administrationId/assets/:assetId" element={<AssetPage />} />
           <Route path="/:administrationId/projects" element={<ProjectsPage />} />
           <Route path="/:administrationId/projects/new" element={<ProjectPage />} />
           <Route path="/:administrationId/projects/:projectId" element={<ProjectPage />} />

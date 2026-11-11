@@ -92,6 +92,10 @@ func (s *Service) SystemLedgerAccount(ctx context.Context, admin, user resource.
 	if i < 0 {
 		return 0, fmt.Errorf("no category for role %s", role)
 	}
+	// A category seeded before it had the role plays it still.
+	if j := slices.IndexFunc(all, func(l LedgerAccount) bool { return l.Key == seed.Accounts[i].Key }); j >= 0 {
+		return all[j].ID, nil
+	}
 	added := s.accountsFrom(a.Administration, seed.Accounts[i:i+1], all, "")
 	st, err := s.store.Settings(ctx, admin)
 	if err != nil {

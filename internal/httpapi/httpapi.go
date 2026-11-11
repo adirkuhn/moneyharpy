@@ -16,6 +16,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/api"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/assets"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
@@ -92,6 +93,7 @@ type Deps struct {
 	Journal         *journal.Service
 	Sales           *sales.Service
 	Purchases       *purchases.Service
+	Assets          *assets.Service
 	Products        *products.Service
 	Projects        *projects.Service
 	Subscriptions   *subscriptions.Service
@@ -275,6 +277,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		journal.IsNotFound(err),
 		sales.IsNotFound(err),
 		purchases.IsNotFound(err),
+		assets.IsNotFound(err),
 		errors.Is(err, purchases.ErrNoSEPAFile),
 		errors.Is(err, products.ErrNotFound),
 		errors.Is(err, projects.ErrNotFound),
