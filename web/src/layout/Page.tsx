@@ -15,7 +15,12 @@ type Props = {
   children: ReactNode
 }
 
+/**
+ * A page with its action bar. Beside a filter button the title is for screen
+ * readers only, as on Moneybird's lists: the button already says what is shown.
+ */
 export function Page({ title, subtitle, back, lead, actions, wide = false, children }: Props) {
+  const titleHidden = lead !== undefined && back === undefined
   return (
     <>
       <header className={`actionbar${wide ? ' actionbar--wide' : ''}`}>
@@ -27,7 +32,7 @@ export function Page({ title, subtitle, back, lead, actions, wide = false, child
           )}
           {lead}
           <div>
-            <h1>{title}</h1>
+            <h1 className={titleHidden ? 'sr-only' : undefined}>{title}</h1>
             {subtitle && <p className="actionbar__subtitle">{subtitle}</p>}
           </div>
         </div>

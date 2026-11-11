@@ -12,8 +12,6 @@ type Props = {
   /** Actions of this list only, placed before the export menu. */
   extra?: ReactNode
   primary: { to: string; label: string }
-  /** What the ⋯ button offers. */
-  more: MenuItem[]
 }
 
 /** An entry of the ⋯ menu: a page, a file to download or open, or an action on this page. */
@@ -22,8 +20,11 @@ export type MenuItem =
   | { label: string; href: string; download?: boolean }
   | { label: string; onSelect: () => void; disabled?: boolean; danger?: boolean }
 
-/** The actions on the right of a list's action bar, after Moneybird: information, statistics, export, the primary action and more. */
-export function ListActions({ info, exports, extra, primary, more }: Props) {
+/**
+ * The actions on the right of a list's action bar, after Moneybird: information,
+ * statistics, export and the primary action. Lists have no ⋯ menu there.
+ */
+export function ListActions({ info, exports, extra, primary }: Props) {
   const { t } = useTranslation()
   return (
     <>
@@ -47,7 +48,6 @@ export function ListActions({ info, exports, extra, primary, more }: Props) {
         <ListIcon kind="plus" />
         <span>{primary.label}</span>
       </Link>
-      {more.length > 0 && <MoreMenu items={more} />}
     </>
   )
 }

@@ -6,7 +6,7 @@ import { useLedgerAccounts } from '../bookkeeping/queries'
 import { formatAmount } from '../banking/queries'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
-import { DocumentTable } from '../list/DocumentTable'
+import { DocumentTable, listDate } from '../list/DocumentTable'
 import { MoreMenu } from '../list/ListActions'
 import { PeriodFilter } from '../list/PeriodFilter'
 import { isPeriod } from '../list/period'
@@ -28,7 +28,6 @@ export function LedgerEntriesPage() {
   const account = accounts.data?.find((a) => a.id === ledgerAccountId)
   const currency = administration.data?.currency ?? 'EUR'
   const money = (n: string | number) => formatAmount(n, currency, i18n.language)
-  const date = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' })
   const back = `/${administrationId}/report/general_ledger?period=${period}`
   const linkTo = (p: string) => `/${administrationId}/report/journal_entries?${new URLSearchParams({ ledger_account_id: ledgerAccountId, period: p })}`
 
@@ -63,7 +62,7 @@ export function LedgerEntriesPage() {
           total={entries.data.total}
           perPage={100}
           columns={[
-            { key: 'date', header: t('journal.date'), kind: 'date', cell: (e) => date(e.date) },
+            { key: 'date', header: t('journal.date'), kind: 'date', cell: (e) => listDate(e.date) },
             { key: 'description', header: t('journal.description'), cell: (e) => e.description },
             { key: 'document', header: t('journal.document'), link: true, cell: (e) => t(`journal.documentTypes.${e.document_type}`) },
             { key: 'debit', header: t('journal.debit'), kind: 'amount', cell: (e) => (Number(e.amount) > 0 ? money(e.amount) : '') },

@@ -1,4 +1,4 @@
-import { createContext, type FormEvent, type ReactNode, useContext, useId } from 'react'
+import { createContext, type FormEvent, type ReactNode, useContext, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { contactName, useContact } from '../contacts/queries'
@@ -54,13 +54,32 @@ export function FilterPanel({ label, title, quick = [], children }: Props) {
   )
 }
 
-/** The advanced part of the panel: its fields and the Filter button, which applies them and closes the panel. */
-export function AdvancedFilter({ onApply, footer, children }: { onApply: () => void; footer?: ReactNode; children: ReactNode }) {
+type AdvancedProps = {
+  /** What the fields hold now; the Filter button waits until it differs from what they held at first. */
+  value: unknown
+  onApply: () => void
+  /** A control beside the Filter button, such as a link back to the list's default. */
+  footer?: ReactNode
+  children: ReactNode
+}
+
+/**
+ * The advanced part of the panel: its fields and, under a rule, the Filter
+ * button, which applies them and closes the panel. As on Moneybird the button
+ * is disabled until something changed.
+ */
+export function AdvancedFilter({ value, onApply, footer, children }: AdvancedProps) {
   const { t } = useTranslation()
   const close = useContext(PanelContext)
   const id = useId()
+  const current = JSON.stringify(value)
+  const [initial] = useState(current)
+  const changed = current !== initial
   const submit = (e: FormEvent) => {
     e.preventDefault()
+    if (!changed) {
+      return
+    }
     onApply()
     close()
   }
@@ -69,7 +88,7 @@ export function AdvancedFilter({ onApply, footer, children }: { onApply: () => v
       <h2 id={id} className="filter-panel__heading">{t('list.advancedFilter')}</h2>
       {children}
       <div className="filter-form__actions">
-        <button type="submit" className="btn btn--primary">{t('list.filter')}</button>
+        <button type="submit" className="btn btn--primary" disabled={!changed}>{t('list.filter')}</button>
         {footer}
       </div>
     </form>
@@ -96,7 +115,7 @@ export function RadioFilter({ legend, value, onChange, options }: { legend: stri
   )
 }
 
-/** One choice of many, as a select. */
+/** One choice of many, as a compact select. */
 export function SelectFilter({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Option[] }) {
   const id = useId()
   return (

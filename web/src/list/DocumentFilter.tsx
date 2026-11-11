@@ -35,7 +35,7 @@ export function DocumentFilter({ administrationId, filter, states, workflows = f
     })
 
   return (
-    <AdvancedFilter onApply={apply}>
+    <AdvancedFilter value={{ range, state, contactId, workflowId }} onApply={apply}>
       <PeriodPicker
         value={range}
         today={today}

@@ -19,6 +19,14 @@
   --input-border: #8794a8;
   --focus: var(--blue);
   --nav-active: var(--blue);
+  /* Solid state labels in lists; each carries white text at 4.5:1 or more, in both themes. */
+  --state-neutral: #5a6b84;
+  --state-open: #1268b8;
+  --state-late: #c2410c;
+  --state-reminded: #b42318;
+  --state-paid: #0b7a6a;
+  --state-dark: #092653;
+  --period-band: rgb(19 189 181 / 0.18);
 
   --font: 'Inter Variable', system-ui, sans-serif;
   color-scheme: light;
@@ -38,6 +46,8 @@
   --star: var(--gold);
   --input-border: #5b82bd;
   --focus: #5aa6f0;
+  --state-dark: #3d4f6b;
+  --period-band: rgb(19 189 181 / 0.24);
   color-scheme: dark;
 }
 
@@ -56,6 +66,8 @@
     --star: var(--gold);
     --input-border: #5b82bd;
     --focus: #5aa6f0;
+    --state-dark: #3d4f6b;
+    --period-band: rgb(19 189 181 / 0.24);
     color-scheme: dark;
   }
 }
@@ -784,12 +796,19 @@ a.sidenav__link:active, button.sidenav__link:active { filter: brightness(0.92); 
 
 /* Contacts: a searchable list, paged like Moneybird, and a page per contact. */
 .details__line { display: block; }
-.pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem; margin: 1.5rem 0 0; }
-.pagination__page, .pagination__step { display: inline-grid; place-items: center; min-width: 2.5rem; height: 2.5rem; padding: 0 0.5rem; border-radius: 8px; color: var(--text); font-variant-numeric: tabular-nums; text-decoration: none; }
+/* A centred pager on a small sheet, after Moneybird: previous, the pages around the current one, next. */
+.pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; width: fit-content; max-width: 100%; margin: 1rem auto 0; padding: 2px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.pagination__page, .pagination__step { display: inline-grid; place-items: center; min-width: 2rem; height: 2rem; padding: 0 0.5rem; border-radius: 8px; color: var(--text); font-size: 0.9375rem; font-variant-numeric: tabular-nums; text-decoration: none; }
+.pagination__step { position: relative; }
+.pagination__step:first-child { margin-right: 0.375rem; }
+.pagination__step:last-child { margin-left: 0.375rem; }
+.pagination__step:first-child::after, .pagination__step:last-child::before { content: ''; position: absolute; top: 0.375rem; bottom: 0.375rem; width: 1px; background: var(--line); }
+.pagination__step:first-child::after { right: -0.25rem; }
+.pagination__step:last-child::before { left: -0.25rem; }
 a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover); }
-.pagination__page.is-current { background: var(--nav-active); color: var(--white); font-weight: 600; }
+.pagination__page.is-current { background: var(--row-hover); color: var(--link); font-weight: 650; }
 .pagination__step.is-disabled { color: var(--muted); opacity: 0.5; }
-.pagination__gap { padding: 0 0.25rem; color: var(--muted); }
+.pagination__gap { min-width: 1.5rem; color: var(--muted); text-align: center; }
 .people, .notes { margin: 0 0 1rem; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .people__row, .notes__row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 0.75rem 1rem; }
 .people__row + .people__row, .notes__row + .notes__row { border-top: 1px solid var(--line); }
@@ -915,46 +934,66 @@ a.dropdown__item:hover { background: var(--row-hover); }
 .dropdown__item.is-disabled { color: var(--muted); cursor: not-allowed; }
 .dropdown__hint { font-size: 0.8125rem; white-space: nowrap; }
 
-/* The filter button and the panel it drops down. */
+/* The filter button and the panel it drops down, after Moneybird: quick filters as plain links, then the advanced filter. */
 .filter-menu { position: relative; }
 .filter-menu__toggle { gap: 0.5rem; max-width: min(22rem, calc(100vw - 2rem)); }
 .filter-menu__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.filter-panel { position: absolute; top: calc(100% + 0.5rem); left: 0; z-index: 10; display: grid; grid-template-columns: 15rem minmax(0, 1fr); width: min(62rem, calc(100vw - 2rem)); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: 0 16px 40px rgb(9 38 83 / 0.25); }
-.filter-panel:not(:has(.filter-panel__quick)) { grid-template-columns: minmax(0, 1fr); width: min(46rem, calc(100vw - 2rem)); }
-.filter-panel__quick { padding: 1.25rem 1rem; border-right: 1px solid var(--line); border-radius: 12px 0 0 12px; background: var(--bg); }
-.filter-panel__advanced { min-width: 0; padding: 1.25rem 1.5rem; }
-.filter-panel__heading { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.8125rem; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
+.filter-panel { position: absolute; top: calc(100% + 0.375rem); left: 0; z-index: 10; display: grid; grid-template-columns: 12.5rem minmax(0, 1fr); width: min(62rem, calc(100vw - 2rem)); max-height: calc(95vh - 10rem); padding: 1rem 1rem 1rem 0.5rem; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: 0 4px 8px -2px rgb(9 38 83 / 0.12), 0 12px 32px rgb(9 38 83 / 0.16); }
+.filter-panel:not(:has(.filter-panel__quick)) { grid-template-columns: minmax(0, 1fr); width: min(48rem, calc(100vw - 2rem)); padding-left: 1rem; }
+.filter-panel__quick { margin-right: 1rem; padding-right: 0.5rem; border-right: 1px solid var(--line); }
+.filter-panel__advanced { min-width: 0; }
+.filter-panel__heading { margin: 0 0 0.5rem; color: var(--text); font-size: 0.9375rem; font-weight: 400; line-height: 1.5; }
+.filter-panel__quick .filter-panel__heading { margin-left: 0.5rem; }
 .filter-panel__links { display: grid; gap: 0.125rem; margin: 0; padding: 0; list-style: none; }
-.filter-panel__links a { display: block; padding: 0.5rem 0.625rem; border-radius: 6px; color: var(--text); font-weight: 550; text-decoration: none; }
+.filter-panel__links a { display: block; padding: 0.5rem; border-radius: 8px; color: var(--text); font-size: 0.9375rem; text-decoration: none; }
 .filter-panel__links a:hover { background: var(--row-hover); }
-.filter-panel__links a[aria-current] { background: var(--nav-active); color: var(--white); }
+.filter-panel__links a[aria-current] { font-weight: 600; }
 .filter-form { display: grid; gap: 1.25rem; }
-.filter-form .filter-panel__heading { margin: 0; }
-.filter-form__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.filter-form .filter-panel__heading { margin: 0 0 -0.5rem; }
+.filter-form__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.filter-form__actions .btn:disabled { border-color: var(--line); background: var(--bg); color: var(--muted); opacity: 1; }
 .filter-field { display: grid; gap: 0.5rem; min-width: 0; margin: 0; padding: 0; border: 0; }
 .filter-field__label { padding: 0; font-weight: 600; }
-.filter-field select { max-width: 23rem; }
+/* Contact and workflow are compact controls, as wide as Moneybird's. */
+.filter-field select, .filter-field--contact .picker { width: 15rem; max-width: 100%; }
+.filter-field select { min-height: 2rem; padding-block: 0.125rem; font-size: 0.9375rem; }
 .filter-field--contact .form-input { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
 .filter-field--contact .form-input__label { padding-top: 0; font-weight: 600; }
-.tag-options { display: flex; flex-wrap: wrap; gap: 0.375rem; }
-.tag-option { position: relative; display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 0.875rem; border: 1px solid var(--input-border); border-radius: 999px; font-size: 0.9375rem; cursor: pointer; }
+.filter-field--contact .form-input__control > .picker { flex: none; }
+.filter-field--contact .picker__button { min-height: 2rem; font-size: 0.9375rem; }
+/* Choices as compact segments that wrap; the chosen one is filled. */
+.tag-options { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.tag-option { position: relative; display: inline-flex; align-items: center; min-height: 1.875rem; padding: 0.125rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font-size: 0.9375rem; cursor: pointer; }
 /* The radio covers its tag, unseen, so a click anywhere on the tag reaches it. */
 .tag-option input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
-.tag-option:hover { background: var(--row-hover); }
-.tag-option.is-checked { border-color: var(--blue); background: var(--blue); color: var(--white); font-weight: 600; }
+.tag-option:hover { border-color: var(--input-border); color: var(--text); }
+.tag-option.is-checked { border-color: var(--teal); background: var(--teal); color: var(--navy); font-weight: 600; }
 .tag-option:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-/* The period over two years, by month, quarter or year. */
-.period-picker__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.period-picker__bar .icon-btn:disabled { opacity: 0.4; cursor: default; }
-.period-picker__chosen { margin: 0 0 0 auto; font-weight: 650; font-variant-numeric: tabular-nums; }
-.period-picker__grid { display: grid; gap: 3px; padding: 0.375rem; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
-.period-picker__row { display: grid; grid-template-columns: repeat(24, minmax(1.5rem, 1fr)); gap: 2px; }
-.period-picker__cell { min-width: 0; min-height: 2rem; padding: 0; border: 0; border-radius: 4px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.75rem; cursor: pointer; }
-.period-picker__row:last-child .period-picker__cell { font-weight: 650; }
-.period-picker__cell:hover { background: var(--row-hover); }
-.period-picker__cell.is-chosen { background: var(--teal); color: var(--navy); font-weight: 650; }
-.period-picker .hint { margin: 0; }
+/* The period over two years, by month, quarter or year: a tinted band with a handle at each end. */
+.period-picker__scroll { overflow-x: auto; padding: 0 0.5rem; }
+.period-picker__track { position: relative; min-width: 36rem; user-select: none; }
+.period-picker__row { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+.period-picker__row--quarters { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.period-picker__row--years { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.period-picker__row--quarters > *, .period-picker__year { border-left: 1px solid var(--line); }
+.period-picker__row--quarters > :first-child, .period-picker__year:first-child { border-left: 0; }
+.period-picker__cell { min-width: 0; height: 1.875rem; padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 0.875rem; cursor: pointer; }
+.period-picker__row--months .period-picker__cell { font-size: 0.8125rem; font-weight: 550; }
+.period-picker__cell:hover { background: var(--period-band); box-shadow: inset 0 0 0 1px var(--teal); }
+.period-picker__cell:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.period-picker__year { position: relative; }
+.period-picker__year .period-picker__cell { width: 100%; }
+.period-picker__step { position: absolute; top: 50%; z-index: 1; display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--link); transform: translateY(-50%); cursor: pointer; }
+.period-picker__step svg { width: 1rem; height: 1rem; }
+.period-picker__step--earlier { right: calc(50% + 1.75rem); }
+.period-picker__step--later { left: calc(50% + 1.75rem); }
+.period-picker__step:hover:not(:disabled) { background: var(--row-hover); }
+.period-picker__step:disabled { color: var(--muted); opacity: 0.4; cursor: default; }
+.period-picker__band { position: absolute; top: 0; bottom: 0; background: var(--period-band); box-shadow: inset 0 0 0 1px var(--teal); pointer-events: none; }
+.period-picker__handle { position: absolute; top: 50%; z-index: 2; width: 0.875rem; height: 1.875rem; border-radius: 4px; background: var(--teal); transform: translate(-50%, -50%); cursor: ew-resize; touch-action: none; }
+.period-picker__handle::after { content: ''; position: absolute; top: 50%; left: 50%; width: 3px; height: 1.125rem; border-radius: 2px; background: var(--navy); opacity: 0.45; transform: translate(-50%, -50%); }
+.period-picker__handle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* The introduction of a list. */
 .getting-started { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 1.5rem 2rem; margin: 0 0 1.5rem; padding: 1.5rem; border: 1px solid var(--line); border-top: 4px solid var(--teal); border-radius: 12px; background: var(--surface); }
@@ -974,7 +1013,7 @@ a.dropdown__item:hover { background: var(--row-hover); }
 .document-table th.document-table__check { width: 2.75rem; }
 .document-table th.document-table__amount { width: 9rem; text-align: right; }
 .document-table th.document-table__date { width: 8.5rem; }
-.document-table th.document-table__state { width: 10rem; }
+.document-table th.document-table__state { width: 8.5rem; }
 .document-table th.document-table__icons { width: 2.75rem; }
 .document-table .document-table__check { padding-right: 0; }
 .document-table__check input { width: 1.125rem; height: 1.125rem; margin: 0; accent-color: var(--blue); vertical-align: middle; }
@@ -984,9 +1023,20 @@ a.dropdown__item:hover { background: var(--row-hover); }
 .document-table__icon { display: inline-flex; vertical-align: middle; }
 .document-table__row { cursor: pointer; }
 .document-table__row:hover td, .document-table__row.is-selected td { background: var(--row-hover); }
-.document-table__link { color: var(--text); font-weight: 600; text-decoration: none; }
-.document-table__link:hover { color: var(--link); text-decoration: underline; }
+.document-table th { color: var(--text); font-weight: 400; }
+.document-table td a.document-table__link { color: var(--text); font-weight: 400; text-decoration: none; }
+.document-table .draft-id { font-style: italic; }
+.document-table td a.document-table__link:hover { color: var(--link); text-decoration: underline; }
 .badge--active { border-color: var(--teal); color: var(--text); }
+/* In a list a state is a solid label of fixed width, coloured by state, after Moneybird. */
+.document-table td.document-table__state { padding-block: 0.375rem; }
+.document-table__state .badge { display: flex; justify-content: center; align-items: center; min-height: 1.75rem; padding: 0 0.5rem; overflow: hidden; border: 0; border-radius: 8px; background: var(--state-neutral); color: var(--white); font-size: 0.8125rem; text-overflow: ellipsis; }
+.document-table__state .badge::before { content: none; }
+.document-table__state :is(.badge--scheduled, .badge--open, .badge--pending_payment) { background: var(--state-open); }
+.document-table__state .badge--late { background: var(--state-late); }
+.document-table__state .badge--reminded { background: var(--state-reminded); }
+.document-table__state :is(.badge--paid, .badge--active) { background: var(--state-paid); }
+.document-table__state .badge--uncollectible { background: var(--state-dark); }
 
 /* The actions on the ticked rows, kept in view at the bottom of the screen. */
 .bulk-bar { position: sticky; bottom: 1rem; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; margin-top: 1rem; padding: 0.75rem 1rem; border: 1px solid var(--blue); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px rgb(9 38 83 / 0.2); }
@@ -999,7 +1049,8 @@ a.dropdown__item:hover { background: var(--row-hover); }
   .document-table .document-table__extra { display: none; }
   .getting-started { grid-template-columns: minmax(0, 1fr); }
   .filter-panel { grid-template-columns: minmax(0, 1fr); }
-  .filter-panel__quick { border-right: 0; border-bottom: 1px solid var(--line); border-radius: 12px 12px 0 0; }
+  .filter-panel { padding-left: 1rem; }
+  .filter-panel__quick { margin: 0 0 1rem; padding: 0 0 0.75rem; border-right: 0; border-bottom: 1px solid var(--line); }
 }
 @media (max-width: 44rem) {
   .document-table .document-table__icons, .document-table .document-table__date { display: none; }
@@ -1007,8 +1058,10 @@ a.dropdown__item:hover { background: var(--row-hover); }
   .document-table th.document-table__state { width: 7.5rem; }
   .document-table { min-width: 34rem; }
   .document-table td, .document-table th { padding-inline: 0.5rem; }
-  .filter-panel__advanced { padding: 1rem; }
 }
 @media (forced-colors: active) {
-  .tag-option.is-checked, .period-picker__cell.is-chosen, .filter-panel__links a[aria-current] { outline: 2px solid Highlight; }
+  .tag-option.is-checked, .filter-panel__links a[aria-current] { outline: 2px solid Highlight; }
+  .period-picker__band { border: 2px solid Highlight; }
+  .period-picker__handle { background: Highlight; }
+  .document-table__state .badge { border: 1px solid CanvasText; }
 }

@@ -17,7 +17,7 @@ type Props = {
   /** The address of the page for a period, for the quick filters. */
   linkTo: (period: string) => string
   onApply: (period: string) => void
-  /** Whether "All periods" can be chosen; a report always covers some period. */
+  /** Whether "All periods" is offered, as a quick filter; a report always covers some period. */
   allowAll?: boolean
   today?: Date
 }
@@ -32,8 +32,9 @@ export function PeriodFilter({ period, title, quick, linkTo, onApply, allowAll =
   const range = period === allPeriods ? null : parsePeriod(period, today)
   const named = quick.find((q) => q.value === period)
   const label = named ? named.label : range ? describePeriod(range, i18n.language) : t('list.allPeriods')
+  const offered = allowAll ? [...quick, { value: allPeriods, label: t('list.allPeriods') }] : quick
   return (
-    <FilterPanel label={label} title={title} quick={quick.map((q) => ({ label: q.label, to: linkTo(q.value), current: q.value === period }))}>
+    <FilterPanel label={label} title={title} quick={offered.map((q) => ({ label: q.label, to: linkTo(q.value), current: q.value === period }))}>
       <PeriodForm period={period} today={today} allowAll={allowAll} onApply={onApply} />
     </FilterPanel>
   )
@@ -42,8 +43,8 @@ export function PeriodFilter({ period, title, quick, linkTo, onApply, allowAll =
 function PeriodForm({ period, today, allowAll, onApply }: { period: string; today: Date; allowAll: boolean; onApply: (period: string) => void }) {
   const [range, setRange] = useState(() => (period === allPeriods ? null : parsePeriod(period, today)))
   return (
-    <AdvancedFilter onApply={() => onApply(range ? periodValue(range, today) : allowAll ? allPeriods : period)}>
-      <PeriodPicker value={range} today={today} allowAll={allowAll} onChange={setRange} />
+    <AdvancedFilter value={range} onApply={() => onApply(range ? periodValue(range, today) : allowAll ? allPeriods : period)}>
+      <PeriodPicker value={range} today={today} onChange={setRange} />
     </AdvancedFilter>
   )
 }

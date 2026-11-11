@@ -6,7 +6,7 @@ import { ApiError } from '../api/client'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
-import { DocumentTable } from '../list/DocumentTable'
+import { DocumentTable, listDate } from '../list/DocumentTable'
 import { AdvancedFilter, FilterPanel, RadioFilter, SelectFilter } from '../list/FilterPanel'
 import { GettingStarted } from '../list/GettingStarted'
 import { ListActions } from '../list/ListActions'
@@ -62,14 +62,16 @@ export function TransactionsPage() {
   const names = new Map(accounts.data?.map((a) => [a.id, a.name]))
   const currency = administration.data.currency
   const money = (m: Mutation, v: string | null | undefined) => formatAmount(v, m.currency ?? currency, i18n.language)
-  const date = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' })
   const shown = mutations.data ?? []
 
   const filterPanel = (
     <FilterPanel
       label={t(`bank.views.${custom ? 'custom' : state}`)}
       title={t('bank.filters')}
-      quick={states.map((s) => ({ label: t(`bank.views.${s}`), to: linkTo({ state: s, period: defaultPeriod, account: '' }), current: !custom && s === state }))}
+      quick={[
+        ...states.map((s) => ({ label: t(`bank.views.${s}`), to: linkTo({ state: s, period: defaultPeriod, account: '' }), current: !custom && s === state })),
+        { label: t('list.allPeriods'), to: linkTo({ state, period: allPeriods, account: '' }), current: period === allPeriods && account === '' },
+      ]}
     >
       <TransactionFilter filter={{ state, period, account }} today={today} accounts={(accounts.data ?? []).map((a) => ({ value: a.id ?? '', label: a.name ?? '' }))} onApply={apply} />
     </FilterPanel>
@@ -85,10 +87,6 @@ export function TransactionsPage() {
           info={{ shown: info, onToggle: () => setInfo(!info), controls: introId }}
           exports={[]}
           primary={{ to: account ? `/${administrationId}/financial_accounts/${account}` : `/${administrationId}/settings/bank`, label: t('bank.importStatement') }}
-          more={[
-            { to: `/${administrationId}/settings/bank`, label: t('bank.settings') },
-            { to: `/${administrationId}/booking_rules/new`, label: t('bank.newRule') },
-          ]}
         />
       }
     >
@@ -117,7 +115,7 @@ export function TransactionsPage() {
           total={shown.length}
           perPage={Math.max(shown.length, 1)}
           columns={[
-            { key: 'date', header: t('bank.date'), kind: 'date', cell: (m) => date(m.date ?? '') },
+            { key: 'date', header: t('bank.date'), kind: 'date', cell: (m) => listDate(m.date) },
             { key: 'name', header: t('bank.contraName'), link: true, cell: (m) => m.contra_account_name || m.message || t('bank.noDescription') },
             { key: 'message', header: t('bank.description'), kind: 'extra', cell: (m) => (m.contra_account_name ? m.message : '') },
             ...(account ? [] : [{ key: 'account', header: t('bank.account'), kind: 'extra' as const, cell: (m: Mutation) => names.get(m.financial_account_id ?? '') }]),
@@ -142,7 +140,7 @@ function TransactionFilter({ filter, today, accounts, onApply }: FilterProps) {
   const [state, setState] = useState<State>(filter.state)
   const [account, setAccount] = useState(filter.account)
   return (
-    <AdvancedFilter onApply={() => onApply({ state, account, period: range ? periodValue(range, today) : allPeriods })}>
+    <AdvancedFilter value={{ range, state, account }} onApply={() => onApply({ state, account, period: range ? periodValue(range, today) : allPeriods })}>
       <PeriodPicker value={range} today={today} onChange={setRange} />
       <RadioFilter legend={t('bank.state')} value={state} onChange={(v) => setState(v as State)} options={states.map((s) => ({ value: s, label: t(`bank.states.${s}`) }))} />
       <SelectFilter label={t('bank.account')} value={account} onChange={setAccount} options={[{ value: '', label: t('bank.allAccounts') }, ...accounts]} />
