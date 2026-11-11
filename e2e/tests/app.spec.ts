@@ -1159,3 +1159,34 @@ test('an asset is added through the API, depreciated and shown with its value ch
   const changes = page.getByRole('table', { name: 'Value changes' })
   await expect(changes.getByRole('row').nth(1)).toContainText('Depreciation')
 })
+
+test('a booked purchase invoice shows in the reports and an auditfile lands in the downloads', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Report Co')
+  const uri = administrationUri(page)
+  const api = `/api/v2${uri}`
+  const supplier = await (await page.request.post(`${api}/contacts`, { data: { contact: { company_name: 'Supplier B.V.' } } })).json()
+  const rates = await (await page.request.get(`${api}/tax_rates`)).json()
+  const vat21 = rates.find((r: { tax_rate_type: string; percentage: string }) => r.tax_rate_type === 'purchase_invoice' && r.percentage.startsWith('21')).id
+  const today = new Date().toISOString().slice(0, 10)
+  const created = await page.request.post(`${api}/documents/purchase_invoices`, { data: { purchase_invoice: {
+    contact_id: supplier.id, reference: 'INV-2026-88', date: today, prices_are_incl_tax: false,
+    details_attributes: [{ description: 'Paper', price: '100', tax_rate_id: vat21 }],
+  } } })
+  expect(created.status()).toBe(201)
+
+  const menu = page.getByRole('navigation', { name: 'Administration menu' })
+  await menu.getByRole('button', { name: 'Reports' }).click()
+  await menu.getByRole('link', { name: 'Profit and loss statement' }).click()
+  const pl = page.getByRole('table', { name: 'Profit and loss statement' })
+  await expect(pl.getByRole('row', { name: /Net profit/ })).toContainText('100.00')
+  await menu.getByRole('link', { name: 'Payable overview' }).click()
+  await expect(page.getByRole('table', { name: 'Payable overview' }).getByRole('link', { name: 'Supplier B.V.' })).toBeVisible()
+  await menu.getByRole('link', { name: 'VAT summary' }).click()
+  await expect(page.getByRole('table', { name: 'VAT summary' }).getByRole('row', { name: /21/ })).toContainText('€21.00')
+
+  const exported = await page.request.post(`${api}/reports/export/auditfile`, { data: { year: today.slice(0, 4) } })
+  expect(exported.status()).toBe(204)
+  const downloads = await (await page.request.get(`${api}/downloads`)).json()
+  expect(downloads.map((d: { download_type: string }) => d.download_type)).toContain('auditfile')
+})
