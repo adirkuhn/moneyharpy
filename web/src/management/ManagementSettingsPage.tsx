@@ -5,9 +5,12 @@ import { useAdministration } from '../administrations/queries'
 import { type Administration, errorMessages, type Language } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { useCurrentUser } from '../auth/queries'
-import { FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
+import { FormSection, formErrors, TextInput } from '../forms/Form'
+import { RadioRow } from '../forms/RadioRow'
 import { SwitchRow } from '../invoicing/Switch'
+import { ChevronIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
+import { PageIcon } from '../layout/pageIcons'
 import { Menu } from '../layout/Menu'
 import { Page } from '../layout/Page'
 import { useOnboardingOptions } from '../onboarding/queries'
@@ -54,7 +57,10 @@ function DetailsBlock({ administration: a }: { administration: Administration })
   const { t, i18n } = useTranslation()
   const options = useOnboardingOptions()
   const update = useUpdateAdministration(a.id)
-  const [form, setForm] = useState({ name: a.name, country: a.country, language: a.language, currency: a.currency, time_zone: a.time_zone })
+  const saved = { name: a.name, country: a.country, language: a.language, currency: a.currency, time_zone: a.time_zone }
+  const [form, setForm] = useState(saved)
+  // Like Moneybird, Save and Cancel show once something changed.
+  const dirty = JSON.stringify(form) !== JSON.stringify(saved)
   const editable = can(a, 'settings')
 
   const countryOptions = useMemo(() => {
@@ -92,22 +98,25 @@ function DetailsBlock({ administration: a }: { administration: Administration })
               help={form.country !== a.country ? t('management.countryHelp') : undefined}
               onChange={(country) => setForm({ ...form, country })}
             />
-            <SelectInput label={labels.language} width="medium" value={form.language} errors={errors.field('language')} onChange={(e) => setForm({ ...form, language: e.target.value as Language })}>
-              <option value="nl">Nederlands</option>
-              <option value="nl-be">Nederlands (België)</option>
-              <option value="en">English</option>
-            </SelectInput>
           </FormSection>
           <FormSection>
+            <RadioRow<Language>
+              label={labels.language}
+              value={form.language}
+              errors={errors.field('language')}
+              options={[{ value: 'nl', label: 'Nederlands' }, { value: 'nl-be', label: 'Nederlands (België)' }, { value: 'en', label: 'English' }]}
+              onChange={(language) => setForm({ ...form, language })}
+            />
             <SearchableSelect label={labels.currency} searchLabel={t('onboarding.findCurrency')} emptyLabel={t('onboarding.noOption')} value={form.currency} options={currencyOptions} width="medium" errors={errors.field('currency')} onChange={(currency) => setForm({ ...form, currency })} />
             <SearchableSelect label={labels.time_zone} searchLabel={t('settings.findTimeZone')} emptyLabel={t('onboarding.noOption')} value={form.time_zone} options={zoneOptions} width="medium" errors={errors.field('time_zone')} onChange={(time_zone) => setForm({ ...form, time_zone })} />
           </FormSection>
-          {editable && (
+          {editable && dirty && (
             <div className="form-sheet__actions">
               <button className="btn btn--primary" disabled={update.isPending}>{t('settings.save')}</button>
-              {update.isSuccess && <p role="status" className="saved">{t('settings.saved')}</p>}
+              <button type="button" className="btn btn--secondary" onClick={() => setForm(saved)}>{t('common.cancel')}</button>
             </div>
           )}
+          {editable && !dirty && update.isSuccess && <p role="status" className="saved">{t('settings.saved')}</p>}
         </fieldset>
       </form>
     </Block>
@@ -138,7 +147,7 @@ function UsersBlock({ administration: a }: { administration: Administration }) {
         )
       }
     >
-      <table className="data-table" aria-label={t('management.parts.users')}>
+      <table className={`data-table${owner ? ' data-table--rows' : ''}`} aria-label={t('management.parts.users')}>
         <thead>
           <tr>
             <th scope="col">{t('management.name')}</th>
@@ -151,7 +160,7 @@ function UsersBlock({ administration: a }: { administration: Administration }) {
           {users.data?.map((u) => (
             <tr key={u.id} className={u.active ? undefined : 'is-inactive'}>
               <td>
-                {owner ? <Link to={`/${a.id}/users/${u.id}`}>{u.name}</Link> : u.name}
+                {owner ? <Link className="row-link" to={`/${a.id}/users/${u.id}`}>{u.name}</Link> : u.name}
                 {!u.active && <span className="hint"> · {t('bookkeeping.inactive')}</span>}
               </td>
               <td className="data-table__extra">{u.email}</td>
@@ -261,6 +270,7 @@ function PrivacyBlock({ administration: a }: { administration: Administration })
               <p className="hint">{i.help}</p>
             </div>
             {i.state && <span className="hint">{i.state}</span>}
+            <ChevronIcon className="ledger__chevron" />
           </li>
         ))}
       </ul>
@@ -281,7 +291,8 @@ function LeaveBlock({ administration: a }: { administration: Administration }) {
   return (
     <Block id="leave-or-delete" title={t('management.parts.leave')} subtitle={t('management.leaveSubtitle')}>
       <ul className="ledger">
-        <li className="ledger__row">
+        <li className={`ledger__row${onlyOwner || support ? ' ledger__row--disabled' : ''}`}>
+          <span className="link-row__icon"><PageIcon kind="leave" /></span>
           <div className="ledger__text">
             <span className="ledger__name">{t('management.leave')}</span>
             <p className="hint">{onlyOwner ? t('management.onlyOwner') : t('management.leaveHelp')}</p>
@@ -296,10 +307,12 @@ function LeaveBlock({ administration: a }: { administration: Administration }) {
         </li>
         {can(a, 'ownership') && (
           <li className="ledger__row">
+            <span className="link-row__icon"><PageIcon kind="delete" /></span>
             <div className="ledger__text">
               <Link className="ledger__name ledger__name--danger" to={`/${a.id}/delete`}>{t('management.delete')}</Link>
               <p className="hint">{t('management.deleteHelp')}</p>
             </div>
+            <ChevronIcon className="ledger__chevron" />
           </li>
         )}
       </ul>

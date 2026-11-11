@@ -33,6 +33,22 @@ describe('top navigation', () => {
     expect(within(menu).getByRole('link', { name: 'New administration' })).toHaveAttribute('href', '/onboarding/company/create_administration?origin=onboarding')
   })
 
+  it('opens the notifications in a side panel and closes it again', async () => {
+    server.use(signedIn(), listing([]))
+    renderAt('/administrations')
+    const bell = await screen.findByRole('button', { name: 'Notifications' })
+    await userEvent.click(bell)
+    const panel = screen.getByRole('dialog', { name: 'Notifications' })
+    expect(within(panel).getByText('You have no notifications.')).toBeInTheDocument()
+    expect(within(panel).getByRole('button', { name: 'Close' })).toHaveFocus()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(bell).toHaveFocus()
+    await userEvent.click(bell)
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   it('closes a menu with Escape', async () => {
     server.use(signedIn(), listing([harpy]))
     renderAt('/administrations')

@@ -98,7 +98,8 @@ describe('invoices and estimates settings', () => {
     server.use(...loaded())
     renderAt('/11/settings/invoices_and_estimates')
     const card = await screen.findByRole('group', { name: 'Quote number' })
-    await userEvent.selectOptions(within(card).getByLabelText('Insert tag'), 'quarter')
+    await userEvent.click(within(card).getByRole('button', { name: 'Insert tag' }))
+    await userEvent.click(within(card).getByRole('button', { name: 'Quarter' }))
     expect(within(card).getByLabelText('Template')).toHaveValue('{year}-{id}{quarter}')
   })
 

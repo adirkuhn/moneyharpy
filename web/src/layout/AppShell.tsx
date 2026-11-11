@@ -5,7 +5,8 @@ import { useAdministration, useAdministrations } from '../administrations/querie
 import { useCurrentUser, useLogout } from '../auth/queries'
 import { useAdministrationId } from './administrationId'
 import { MenuToggle, SidenavProvider } from './Sidenav'
-import { BellIcon, SearchIcon } from './icons'
+import { SearchIcon } from './icons'
+import { NotificationsAside } from './NotificationsAside'
 import { LanguageSelect } from './LanguageSelect'
 import { Logo } from './Logo'
 import { Menu } from './Menu'
@@ -30,9 +31,7 @@ export function AppShell() {
           <span id="search-soon" className="sr-only">{t('nav.searchSoon')}</span>
         </div>
         <div className="topnav__right">
-          <Menu label={<BellIcon />} ariaLabel={t('nav.notifications')} caret={false} align="right">
-            <p className="menu__note">{t('nav.noNotifications')}</p>
-          </Menu>
+          <NotificationsAside />
           <UserMenu />
         </div>
       </nav>
