@@ -466,6 +466,70 @@ type RecoveryCode struct {
 	UsedAt   pgtype.Timestamptz
 }
 
+type RecurringSalesInvoice struct {
+	ID                int64
+	AdministrationID  int64
+	ContactID         int64
+	ContactPersonID   pgtype.Int8
+	IdentityID        int64
+	DocumentStyleID   int64
+	WorkflowID        int64
+	Reference         string
+	Language          string
+	Currency          string
+	PricesAreInclTax  bool
+	PaymentConditions string
+	Discount          int32
+	FirstDueInterval  int32
+	StartDate         pgtype.Date
+	InvoiceDate       pgtype.Date
+	LastDate          pgtype.Date
+	Active            bool
+	FrequencyType     string
+	FrequencyCount    int32
+	AutoSend          bool
+	AutoSendAt        pgtype.Timestamptz
+	AutoSendUserID    pgtype.Int8
+	Mergeable         bool
+	AnchorDate        pgtype.Date
+	PeriodCount       int32
+	GeneratedCount    int32
+	TotalExclTax      int64
+	TotalTax          int64
+	TotalInclTax      int64
+	TotalDiscount     int64
+	TaxTotals         []byte
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type RecurringSalesInvoiceCustomFieldValue struct {
+	RecurringSalesInvoiceID int64
+	CustomFieldID           int64
+	Value                   string
+}
+
+type RecurringSalesInvoiceDetail struct {
+	ID                      int64
+	AdministrationID        int64
+	RecurringSalesInvoiceID int64
+	Description             string
+	Period                  string
+	Price                   int64
+	Amount                  string
+	Quantity                int64
+	TaxRateID               int64
+	LedgerAccountID         pgtype.Int8
+	ProjectID               pgtype.Int8
+	ProductID               pgtype.Int8
+	RowOrder                int32
+	IsOptional              bool
+	IsSelected              bool
+	LineBase                int64
+	CreatedAt               pgtype.Timestamptz
+	UpdatedAt               pgtype.Timestamptz
+}
+
 type Resource struct {
 	ID               int64
 	Type             string

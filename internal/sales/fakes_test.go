@@ -211,9 +211,80 @@ type memStore struct {
 	externals       map[resource.ID]ExternalInvoice
 	externalEntries map[resource.ID][]journal.Entry
 	// paid holds what payments post, by payment.
-	paid     map[resource.ID][]journal.Entry
-	sequence int
-	locked   map[resource.ID]bool
+	paid map[resource.ID][]journal.Entry
+	// recurring holds recurring invoices.
+	recurring map[resource.ID]Recurring
+	sequence  int
+	locked    map[resource.ID]bool
+}
+
+func (m *memStore) RecurringInvoices(_ context.Context, _ resource.ID, q RecurringQuery) ([]Recurring, int, error) {
+	var out []Recurring
+	for _, r := range m.recurring {
+		if q.Matches(r) {
+			out = append(out, r)
+		}
+	}
+	slices.SortFunc(out, func(a, b Recurring) int {
+		if c := a.InvoiceDate.Compare(b.InvoiceDate); c != 0 {
+			return c
+		}
+		return int(a.ID - b.ID)
+	})
+	return out, len(out), nil
+}
+
+func (m *memStore) RecurringInvoice(_ context.Context, _, id resource.ID) (Recurring, error) {
+	r, ok := m.recurring[id]
+	if !ok {
+		return Recurring{}, ErrNotFound
+	}
+	return r, nil
+}
+
+func (m *memStore) RecurringInvoicesByID(ctx context.Context, admin resource.ID, ids []resource.ID) ([]Recurring, error) {
+	var out []Recurring
+	for _, id := range ids {
+		if r, err := m.RecurringInvoice(ctx, admin, id); err == nil {
+			out = append(out, r)
+		}
+	}
+	return out, nil
+}
+
+func (m *memStore) SaveRecurring(_ context.Context, r Recurring, _ bool) error {
+	m.recurring[r.ID] = r
+	return nil
+}
+
+func (m *memStore) DeleteRecurring(_ context.Context, _, id resource.ID) error {
+	delete(m.recurring, id)
+	return nil
+}
+
+func (m *memStore) TouchRecurring(_ context.Context, _, id resource.ID, at time.Time) error {
+	r := m.recurring[id]
+	r.UpdatedAt = at
+	m.recurring[id] = r
+	return nil
+}
+
+func (m *memStore) SaveGenerated(_ context.Context, inv Invoice, r Recurring) error {
+	m.invoices[inv.ID] = inv
+	m.recurring[r.ID] = r
+	return nil
+}
+
+// fromRecurring lists the invoices a recurring invoice made, by date.
+func (m *memStore) fromRecurring(id resource.ID) []Invoice {
+	var out []Invoice
+	for _, inv := range m.invoices {
+		if inv.RecurringSalesInvoiceID != nil && *inv.RecurringSalesInvoiceID == id {
+			out = append(out, inv)
+		}
+	}
+	slices.SortFunc(out, func(a, b Invoice) int { return a.InvoiceDate.Compare(*b.InvoiceDate) })
+	return out
 }
 
 func (m *memStore) Payment(_ context.Context, _, id resource.ID) (Payment, error) {
@@ -378,6 +449,11 @@ func (m *memStore) TouchInvoice(_ context.Context, _, id resource.ID, at time.Ti
 
 func (m *memStore) ContactInUse(_ context.Context, _, contact resource.ID) (bool, error) {
 	_, err := m.find(func(i Invoice) bool { return i.ContactID == contact })
+	for _, r := range m.recurring {
+		if r.ContactID == contact {
+			return true, nil
+		}
+	}
 	return err == nil, nil
 }
 
@@ -496,6 +572,10 @@ func (f *fakeNotifier) Notify(_ context.Context, _ resource.ID, action string, _
 	f.actions = append(f.actions, action)
 }
 
+func (f *fakeNotifier) NotifyRecurring(_ context.Context, _ resource.ID, action string, _ Recurring) {
+	f.actions = append(f.actions, action)
+}
+
 type fakeRenderer struct{}
 
 func (fakeRenderer) PDF(doc Document) ([]byte, error) {
@@ -583,7 +663,7 @@ type harness struct {
 func newHarness(t *testing.T) harness {
 	t.Helper()
 	store := &memStore{invoices: map[resource.ID]Invoice{}, entries: map[resource.ID][]journal.Entry{}, paid: map[resource.ID][]journal.Entry{}, locked: map[resource.ID]bool{},
-		externals: map[resource.ID]ExternalInvoice{}, externalEntries: map[resource.ID][]journal.Entry{}}
+		externals: map[resource.ID]ExternalInvoice{}, externalEntries: map[resource.ID][]journal.Entry{}, recurring: map[resource.ID]Recurring{}}
 	ledger := &fakeLedger{}
 	mailer := &fakeMailer{}
 	ids := resource.NewGenerator(1)
