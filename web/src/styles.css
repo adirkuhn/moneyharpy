@@ -678,9 +678,6 @@ textarea { min-height: 4.5rem; padding: 0.5rem 0.625rem; resize: vertical; }
 .template__accounts li { padding: 0.25rem 0; }
 
 /* Bank. */
-.filter-bar { display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem 1rem; margin-bottom: 1rem; }
-.filter-bar__field { display: grid; gap: 0.25rem; font-weight: 550; }
-.filter-bar__field select { min-width: 12rem; }
 .transactions__date { width: 8.5rem; white-space: nowrap; }
 .transactions__amount { width: 9rem; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .data-table th.transactions__amount { text-align: right; }
@@ -786,13 +783,6 @@ a.sidenav__link:active, button.sidenav__link:active { filter: brightness(0.92); 
 .actionbar__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 
 /* Contacts: a searchable list, paged like Moneybird, and a page per contact. */
-.filter-bar__search { display: flex; flex: 1 1 16rem; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0 0.75rem; border: 1px solid var(--input-border); border-radius: 8px; background: var(--surface); color: var(--muted); }
-.filter-bar__search input[type='search'] { flex: 1; min-width: 0; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--text); }
-.filter-bar__search:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
-.filter-bar__search input[type='search']:focus-visible { outline: none; }
-.filter-bar__check { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; }
-.contacts__number { width: 5.5rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.contacts .ledger__state { margin-left: 0.5rem; }
 .details__line { display: block; }
 .pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem; margin: 1.5rem 0 0; }
 .pagination__page, .pagination__step { display: inline-grid; place-items: center; min-width: 2.5rem; height: 2.5rem; padding: 0 0.5rem; border-radius: 8px; color: var(--text); font-variant-numeric: tabular-nums; text-decoration: none; }

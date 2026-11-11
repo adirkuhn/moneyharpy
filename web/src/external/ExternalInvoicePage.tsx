@@ -7,7 +7,7 @@ import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
 import { type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
 import { contactName } from '../contacts/queries'
-import { ConfirmDelete } from '../forms/ConfirmDelete'
+import { ConfirmPanel, DetailBlock, DetailList, type DetailRow } from '../detail/Detail'
 import { CheckboxInput, FormSection, formErrors, TextInput } from '../forms/Form'
 import { WriteOffPanel } from '../invoices/CollectPanels'
 import { ContactPicker } from '../invoices/ContactPicker'
@@ -21,6 +21,7 @@ import { TotalsTable } from '../invoices/TotalsTable'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
+import { MoreMenu } from '../list/ListActions'
 import {
   type ExternalChanges, type ExternalInvoice, externalTitle, isEditable, useDeleteExternalInvoice, useExternalInvoice, useSaveExternalInvoice,
 } from './queries'
@@ -60,41 +61,48 @@ function ExternalInvoiceView({ administrationId, invoice: inv, rates }: { admini
   const navigate = useNavigate()
   const remove = useDeleteExternalInvoice(administrationId, inv.id ?? '')
   const [panel, setPanel] = useState<'dubious' | 'uncollectible' | null>(null)
+  const [confirming, setConfirming] = useState(false)
   const list = `/${administrationId}/external_sales_invoices`
   const payable = isPayable(inv.state)
   const file = inv.attachments?.[0]
 
   const actions = (
     <>
-      {payable && !inv.marked_dubious_on && (
-        <button type="button" className="btn btn--secondary btn--small" onClick={() => setPanel('dubious')}>{t('invoices.writeOff.dubious')}</button>
+      {file && (
+        <a className="btn btn--secondary" href={attachmentURL(administrationId, inv.id ?? '', file.id ?? '', 'external')} target="_blank" rel="noreferrer">
+          {t('external.viewFile', { name: file.filename })}
+        </a>
       )}
-      {payable && (
-        <button type="button" className="btn btn--secondary btn--small" onClick={() => setPanel('uncollectible')}>{t('invoices.writeOff.uncollectible')}</button>
-      )}
-      <ConfirmDelete label={t('invoices.delete')} confirmLabel={t('invoices.confirmDelete')} disabled={remove.isPending} onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })} />
+      <MoreMenu
+        items={[
+          ...(payable && !inv.marked_dubious_on ? [{ label: t('invoices.writeOff.dubious'), onSelect: () => setPanel('dubious') }] : []),
+          ...(payable ? [{ label: t('invoices.writeOff.uncollectible'), onSelect: () => setPanel('uncollectible') }] : []),
+          { label: t('invoices.delete'), danger: true, onSelect: () => setConfirming(true) },
+        ]}
+      />
     </>
   )
 
   return (
     <Page title={externalTitle(inv, t)} subtitle={inv.contact ? contactName(inv.contact) : undefined} back={{ to: list, label: t('external.backToList') }} actions={actions}>
       <Problems messages={formErrors(remove.error, {}).general} />
-      {inv.state === 'new' && <p className="notice">{t('external.newNotice')}</p>}
-      {file && (
-        <p>
-          <a className="icon-link" href={attachmentURL(administrationId, inv.id ?? '', file.id ?? '', 'external')} target="_blank" rel="noreferrer">
-            {t('external.viewFile', { name: file.filename })}
-          </a>
-        </p>
+      {confirming && (
+        <ConfirmPanel
+          message={t('external.confirmDeleteText')}
+          confirmLabel={t('invoices.confirmDelete')}
+          disabled={remove.isPending}
+          onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })}
+          onCancel={() => setConfirming(false)}
+        />
       )}
+      {inv.state === 'new' && <p className="notice">{t('external.newNotice')}</p>}
       {panel && <WriteOffPanel key={panel} administrationId={administrationId} invoice={inv} kind={panel} invoiceKind="external" onDone={() => setPanel(null)} />}
       {inv.marked_dubious_on && inv.state !== 'paid' && inv.state !== 'uncollectible' && <p className="notice">{t('invoices.writeOff.dubiousNotice')}</p>}
       {isEditable(inv) ? (
-        <>
-          <p><StateBadge state={inv.state} /></p>
+        <DetailBlock title={t('external.detailsTitle')} actions={<StateBadge state={inv.state} />}>
           {/* A fresh form for every version, so saved lines carry their ids. */}
           <ExternalForm key={inv.updated_at} administrationId={administrationId} invoice={inv} rates={rates} />
-        </>
+        </DetailBlock>
       ) : (
         <>
           <Details administrationId={administrationId} invoice={inv} />
@@ -112,7 +120,7 @@ function Details({ administrationId, invoice: inv }: { administrationId: string;
   const { t, i18n } = useTranslation()
   const date = (d: string | null | undefined) => d && new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' })
   const source = inv.source_url ? <a href={inv.source_url} target="_blank" rel="noreferrer">{inv.source || inv.source_url}</a> : inv.source
-  const rows: [string, React.ReactNode][] = [
+  const rows: DetailRow[] = [
     [t('invoices.status'), <StateBadge key="state" state={inv.state} />],
     [t('invoices.contact'), inv.contact && <Link to={`/${administrationId}/contacts/${inv.contact_id}`}>{contactName(inv.contact)}</Link>],
     [t('invoices.invoiceDate'), date(inv.date)],
@@ -124,14 +132,9 @@ function Details({ administrationId, invoice: inv }: { administrationId: string;
     [t('external.source'), source],
   ]
   return (
-    <dl className="details">
-      {rows.filter(([, v]) => v).map(([label, value]) => (
-        <div key={label}>
-          <dt>{label}</dt>
-          <dd>{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <DetailBlock title={t('external.detailsTitle')}>
+      <DetailList rows={rows} />
+    </DetailBlock>
   )
 }
 
@@ -146,9 +149,9 @@ function Lines({ invoice: inv, rates }: { invoice: ExternalInvoice; rates: TaxRa
     { label: t('invoices.unpaid'), amount: money(inv.total_unpaid) },
   ]
   return (
-    <section className="invoice-view" aria-labelledby="external-lines">
-      <h2 id="external-lines">{inv.prices_are_incl_tax ? t('invoices.linesInclTax') : t('invoices.linesExclTax')}</h2>
-      <table className="data-table invoice-view__lines" aria-label={t('invoices.lines')}>
+    <DetailBlock title={inv.prices_are_incl_tax ? t('invoices.linesInclTax') : t('invoices.linesExclTax')}>
+      <div className="detail-sheet">
+        <table className="data-table invoice-view__lines" aria-label={t('invoices.lines')}>
         <thead>
           <tr>
             <th scope="col">{t('invoices.description')}</th>
@@ -169,9 +172,10 @@ function Lines({ invoice: inv, rates }: { invoice: ExternalInvoice; rates: TaxRa
             </tr>
           ))}
         </tbody>
-      </table>
-      <TotalsTable rows={totals} />
-    </section>
+        </table>
+        <TotalsTable rows={totals} />
+      </div>
+    </DetailBlock>
   )
 }
 
@@ -291,18 +295,20 @@ function ExternalForm({ administrationId, invoice, rates }: { administrationId: 
         <TextInput label={labels.due_date ?? ''} type="date" width="medium" value={dueDate} errors={errors.field('due_date')} onChange={(e) => setDueDate(e.target.value)} />
         <CheckboxInput label={labels.prices_are_incl_tax ?? ''} checked={inclTax} onChange={(e) => setInclTax(e.target.checked)} />
       </FormSection>
-      <LinesEditor
-        rows={rows}
-        rates={rates}
-        accounts={accounts.data ?? []}
-        amounts={totals.lines.map(money)}
-        invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
-        errors={errors}
-        onChange={change}
-        onRemove={remove}
-        onAdd={() => setRows([...rows, blank(defaultRate)])}
-      />
-      <TotalsTable rows={totalRows} />
+      <FormSection title={t('invoices.lines')}>
+        <LinesEditor
+          rows={rows}
+          rates={rates}
+          accounts={accounts.data ?? []}
+          amounts={totals.lines.map(money)}
+          invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
+          errors={errors}
+          onChange={change}
+          onRemove={remove}
+          onAdd={() => setRows([...rows, blank(defaultRate)])}
+        />
+        <TotalsTable rows={totalRows} />
+      </FormSection>
       <div className="form-sheet__actions">
         <button className="btn btn--primary" disabled={save.isPending}>{t('external.save')}</button>
         {!invoice && <Link className="btn btn--secondary" to={`/${administrationId}/external_sales_invoices`}>{t('common.cancel')}</Link>}

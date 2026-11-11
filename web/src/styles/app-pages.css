@@ -1,0 +1,72 @@
+/*
+ * The pages of an administration's documents, after Moneybird's patterns:
+ * lists with their filter button, document pages with an action bar and
+ * content in blocks, and edit forms on one sheet. Colours come from the
+ * tokens in styles.css, so dark mode and high contrast follow.
+ */
+
+/* A block of a document's page: a title with its own actions, then its content. */
+.detail-block { margin: 0 0 2rem; }
+.detail-block__header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 0.5rem 1rem; margin-bottom: 0.75rem; }
+.detail-block__title { margin: 0; font-size: 1.125rem; }
+.detail-block__subtitle { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9375rem; }
+.detail-block__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.detail-block > .empty { margin: 0 0 0.75rem; }
+.detail-block > .form-sheet { margin-top: 0.75rem; }
+.detail-block > .empty + .form-sheet, .detail-block > .data-table + .form-sheet { margin-top: 0; }
+.detail-block > .data-table { margin-bottom: 0.75rem; }
+
+/* The facts of a document: labels on the left, values on the right, on one sheet. */
+.detail-list { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.detail-list__header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--line); font-weight: 600; }
+.detail-list__rows { margin: 0; padding: 0.625rem 1.25rem; }
+.detail-list__row { display: grid; grid-template-columns: minmax(10rem, 15rem) minmax(0, 1fr); gap: 0.25rem 1.5rem; padding: 0.375rem 0; }
+.detail-list__row + .detail-list__row { border-top: 1px solid var(--line); }
+.detail-list__row dt { color: var(--muted); }
+.detail-list__row dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Lines and totals of a document together on one sheet. */
+.detail-sheet { padding: 0.25rem 1.25rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.detail-sheet > .data-table { margin: 0; border: 0; border-radius: 0; background: transparent; }
+.detail-sheet > .data-table th, .detail-sheet > .data-table td { padding-inline: 0.5rem; }
+.detail-sheet > .data-table tbody tr td { border-top: 1px solid var(--line); }
+.detail-sheet > .invoice-totals { margin-top: 0.5rem; }
+
+/* Asking once more before deleting, at the top of the page. */
+.confirm-panel { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem 1rem; margin: 0 0 1.5rem; padding: 0.875rem 1rem; border: 1px solid var(--danger); border-radius: 10px; background: var(--danger-bg); color: var(--danger-text); }
+.confirm-panel__message { margin: 0; font-weight: 600; }
+.confirm-panel__buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* Actions in the ⋯ menu that act on the page rather than lead elsewhere. */
+.dropdown__action { width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.dropdown__action:hover:not(:disabled) { background: var(--row-hover); }
+.dropdown__action:disabled { color: var(--muted); cursor: default; }
+.dropdown__action.is-danger { color: var(--danger); }
+.dropdown__list a.dropdown__item:focus-visible, .dropdown__action:focus-visible { outline-offset: -2px; }
+
+/* Searching a list by its text, above the table. */
+.list-search { display: flex; align-items: center; gap: 0.5rem; max-width: 28rem; min-height: 2.5rem; margin: 0 0 1rem; padding: 0 0.75rem; border: 1px solid var(--input-border); border-radius: 8px; background: var(--surface); color: var(--muted); }
+.list-search input[type='search'] { flex: 1; min-width: 0; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--text); }
+.list-search:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+.list-search input[type='search']:focus-visible { outline: none; }
+
+/* What a report shows, above it. */
+.list-intro { margin: 0 0 1rem; color: var(--muted); }
+
+.document-table__row.is-plain { cursor: default; }
+.document-table__link .badge { margin-left: 0.5rem; }
+.badge--archived, .badge--inactive { border-style: dashed; }
+.is-out { color: var(--text); }
+
+/* Tables of rows inside a titled part of a form sit right under its title. */
+.form-section > .journal-rows, .form-section > .invoice-lines { margin: 0; }
+.form-section > .journal-rows__difference, .form-section > .hint { margin: 0; }
+
+@media (max-width: 44rem) {
+  .detail-list__row { grid-template-columns: minmax(0, 1fr); gap: 0.125rem; }
+  .detail-list__rows, .detail-sheet { padding-inline: 0.875rem; }
+}
+
+@media (forced-colors: active) {
+  .confirm-panel { border: 2px solid CanvasText; }
+}

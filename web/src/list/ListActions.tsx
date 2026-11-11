@@ -12,9 +12,15 @@ type Props = {
   /** Actions of this list only, placed before the export menu. */
   extra?: ReactNode
   primary: { to: string; label: string }
-  /** Links under the ⋯ button. */
-  more: { to: string; label: string }[]
+  /** What the ⋯ button offers. */
+  more: MenuItem[]
 }
+
+/** An entry of the ⋯ menu: a page, a file to download or open, or an action on this page. */
+export type MenuItem =
+  | { label: string; to: string }
+  | { label: string; href: string; download?: boolean }
+  | { label: string; onSelect: () => void; disabled?: boolean; danger?: boolean }
 
 /** The actions on the right of a list's action bar, after Moneybird: information, statistics, export, the primary action and more. */
 export function ListActions({ info, exports, extra, primary, more }: Props) {
@@ -41,7 +47,7 @@ export function ListActions({ info, exports, extra, primary, more }: Props) {
         <ListIcon kind="plus" />
         <span>{primary.label}</span>
       </Link>
-      {more.length > 0 && <MoreMenu links={more} />}
+      {more.length > 0 && <MoreMenu items={more} />}
     </>
   )
 }
@@ -97,10 +103,34 @@ function ExportMenu({ entries }: { entries: string[] }) {
   )
 }
 
-function MoreMenu({ links }: { links: { to: string; label: string }[] }) {
+/** The ⋯ button of an action bar, after Moneybird: the actions that do not need a button of their own. */
+export function MoreMenu({ items }: { items: MenuItem[] }) {
   const { t } = useTranslation()
   const id = useId()
-  const { open, toggle, root, button } = useDisclosure()
+  const { open, toggle, close, root, button } = useDisclosure()
+  const entry = (item: MenuItem) => {
+    if ('to' in item) {
+      return <Link className="dropdown__item" to={item.to} onClick={close}>{item.label}</Link>
+    }
+    if ('href' in item) {
+      return item.download
+        ? <a className="dropdown__item" href={item.href} download onClick={close}>{item.label}</a>
+        : <a className="dropdown__item" href={item.href} target="_blank" rel="noreferrer" onClick={close}>{item.label}</a>
+    }
+    return (
+      <button
+        type="button"
+        className={`dropdown__item dropdown__action${item.danger ? ' is-danger' : ''}`}
+        disabled={item.disabled}
+        onClick={() => {
+          close()
+          item.onSelect()
+        }}
+      >
+        {item.label}
+      </button>
+    )
+  }
   return (
     <div className="dropdown" ref={root}>
       <button
@@ -118,11 +148,7 @@ function MoreMenu({ links }: { links: { to: string; label: string }[] }) {
       {open && (
         <div id={id} className="dropdown__panel dropdown__panel--right">
           <ul className="dropdown__list">
-            {links.map((link) => (
-              <li key={link.to}>
-                <Link className="dropdown__item" to={link.to}>{link.label}</Link>
-              </li>
-            ))}
+            {items.map((item) => <li key={item.label}>{entry(item)}</li>)}
           </ul>
         </div>
       )}

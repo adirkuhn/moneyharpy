@@ -37,13 +37,14 @@ export function useLedgerEntries(administrationId: string, ledgerAccountId: stri
   })
 }
 
+/** The journal entries of a period; "all" lists every period (journal entries have no state, so state:all matches all of them). */
 export function useJournalDocuments(administrationId: string, period: string, page: number) {
   return useQuery({
     queryKey: ['journal-documents', administrationId, period, page],
     placeholderData: keepPreviousData,
     queryFn: async () => {
       const { data, error, response } = await api.GET('/api/v2/{administration_id}/documents/general_journal_documents', {
-        params: { path: path(administrationId), query: { filter: `period:${period}`, page: String(page), per_page: String(documentsPerPage) } },
+        params: { path: path(administrationId), query: { filter: period === 'all' ? 'state:all' : `period:${period}`, page: String(page), per_page: String(documentsPerPage) } },
       })
       if (!response.ok) {
         throw new ApiError(response.status, error)

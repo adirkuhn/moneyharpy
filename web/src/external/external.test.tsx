@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import type { Contact } from '../contacts/queries'
+import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
 import type { ExternalInvoice } from './queries'
@@ -188,7 +189,7 @@ describe('an external invoice', () => {
     // With a payment it can no longer change.
     expect(screen.queryByRole('form', { name: 'External invoice' })).toBeNull()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Mark as dubious' }))
+    await chooseMore('Mark as dubious')
     const panel = screen.getByRole('region', { name: 'Mark as dubious' })
     await userEvent.clear(within(panel).getByLabelText('Date'))
     await userEvent.type(within(panel).getByLabelText('Date'), '2026-11-08')
@@ -225,8 +226,8 @@ describe('an external invoice', () => {
       return new HttpResponse(null, { status: 204 })
     }))
     renderAt('/11/external_sales_invoices/931')
-    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Delete permanently' }))
+    await chooseMore('Delete')
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Delete this external invoice? This cannot be undone.' })).getByRole('button', { name: 'Delete permanently' }))
     await waitFor(() => expect(deleted).toBe(true))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/external_sales_invoices$/))
   })

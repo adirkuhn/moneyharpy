@@ -62,3 +62,8 @@ export function describePeriod(range: MonthRange, locale: string): string {
   const format = (m: number) => new Date(yearOfMonth(m), m % 12, 1).toLocaleDateString(locale, { month: 'short', year: 'numeric' })
   return range.from === range.to ? format(range.from) : `${format(range.from)} – ${format(range.to)}`
 }
+
+/** Whether a period from an address is one the lists and reports understand. */
+export function isPeriod(period: string, today: Date): boolean {
+  return parsePeriod(period, today) !== null
+}

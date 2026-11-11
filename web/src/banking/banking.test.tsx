@@ -180,11 +180,48 @@ describe('transactions', () => {
     const table = await screen.findByRole('table', { name: 'Transactions' })
     expect(within(table).getByRole('link', { name: 'Hosting Company' })).toHaveAttribute('href', '/11/financial_mutations/701')
     expect(filter).toBe('period:this_year,state:unprocessed')
-    await userEvent.selectOptions(screen.getByLabelText('Account'), '501')
-    await userEvent.click(screen.getByRole('radio', { name: 'All' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Transactions to book' }))
+    const panel = screen.getByRole('search', { name: 'Filter transactions' })
+    await userEvent.selectOptions(within(panel).getByLabelText('Account'), '501')
+    await userEvent.click(within(panel).getByRole('radio', { name: 'All' }))
+    await userEvent.click(within(panel).getByRole('button', { name: 'Filter' }))
     await waitFor(() => expect(filter).toBe('period:this_year,state:all,financial_account_id:501'))
+    expect(screen.getByRole('button', { name: 'Filtered transactions' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Import statement' })).toHaveAttribute('href', '/11/financial_accounts/501')
     const nav = screen.getByRole('navigation', { name: 'Administration menu' })
     expect(within(nav).getByRole('link', { name: 'Transactions' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('offers quick filters and a period over months, quarters and years', async () => {
+    let filter = ''
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/financial_mutations', ({ request }) => {
+      filter = new URL(request.url).searchParams.get('filter') ?? ''
+      return HttpResponse.json([mutation()])
+    }))
+    renderAt('/11/financial_mutations')
+    await screen.findByRole('table', { name: 'Transactions' })
+    await userEvent.click(screen.getByRole('button', { name: 'Transactions to book' }))
+    const panel = screen.getByRole('search', { name: 'Filter transactions' })
+    expect(within(panel).getByRole('link', { name: 'Booked transactions' })).toHaveAttribute('href', '/11/financial_mutations?state=processed')
+    await userEvent.click(within(panel).getByRole('button', { name: 'All periods' }))
+    await userEvent.click(within(panel).getByRole('button', { name: 'Filter' }))
+    await waitFor(() => expect(filter).toBe('state:unprocessed'))
+    await userEvent.click(screen.getByRole('button', { name: 'Filtered transactions' }))
+    await userEvent.click(screen.getByRole('link', { name: 'All transactions' }))
+    await waitFor(() => expect(filter).toBe('period:this_year,state:all'))
+  })
+
+  it('reads a range of months from the address', async () => {
+    let filter = ''
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/financial_mutations', ({ request }) => {
+      filter = new URL(request.url).searchParams.get('filter') ?? ''
+      return HttpResponse.json([])
+    }))
+    renderAt('/11/financial_mutations?state=processed&period=202601..202603')
+    await waitFor(() => expect(filter).toBe('period:202601..202603,state:processed'))
+    expect(await screen.findByRole('button', { name: 'Filtered transactions' })).toBeInTheDocument()
   })
 
   it('books part of a transaction on a category', async () => {
