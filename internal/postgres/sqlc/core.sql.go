@@ -4609,7 +4609,7 @@ func (q *Queries) ListRecurringSalesInvoices(ctx context.Context, arg ListRecurr
 }
 
 const listSalesInvoices = `-- name: ListSalesInvoices :many
-SELECT i.id, i.administration_id, i.contact_id, i.contact_person_id, i.identity_id, i.document_style_id, i.workflow_id, i.draft_id, i.invoice_id, i.sequence_id, i.reference, i.language, i.currency, i.prices_are_incl_tax, i.payment_conditions, i.discount, i.invoice_date, i.due_date, i.first_due_interval, i.state, i.paused, i.payment_reference, i.sent_at, i.paid_at, i.marked_dubious_on, i.marked_uncollectible_on, i.reminder_count, i.original_id, i.recurring_sales_invoice_id, i.delivery, i.total_excl_tax, i.total_tax, i.total_incl_tax, i.total_discount, i.tax_totals, i.created_at, i.updated_at, count(*) OVER () AS total
+SELECT i.id, i.administration_id, i.contact_id, i.contact_person_id, i.identity_id, i.document_style_id, i.workflow_id, i.draft_id, i.invoice_id, i.sequence_id, i.reference, i.language, i.currency, i.prices_are_incl_tax, i.payment_conditions, i.discount, i.invoice_date, i.due_date, i.first_due_interval, i.state, i.paused, i.payment_reference, i.sent_at, i.paid_at, i.marked_dubious_on, i.marked_uncollectible_on, i.reminder_count, i.original_id, i.recurring_sales_invoice_id, i.delivery, i.total_excl_tax, i.total_tax, i.total_incl_tax, i.total_discount, i.tax_totals, i.created_at, i.updated_at, i.original_estimate_id, count(*) OVER () AS total
 FROM sales_invoices i
 WHERE i.administration_id = $1
   AND (cardinality($2::text[]) = 0 OR
@@ -4715,6 +4715,7 @@ func (q *Queries) ListSalesInvoices(ctx context.Context, arg ListSalesInvoicesPa
 			&i.SalesInvoice.TaxTotals,
 			&i.SalesInvoice.CreatedAt,
 			&i.SalesInvoice.UpdatedAt,
+			&i.SalesInvoice.OriginalEstimateID,
 			&i.Total,
 		); err != nil {
 			return nil, err
@@ -5781,7 +5782,7 @@ func (q *Queries) RequiresTwoFactor(ctx context.Context, userID int64) (bool, er
 }
 
 const salesInvoiceByID = `-- name: SalesInvoiceByID :one
-SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM sales_invoices WHERE administration_id = $1 AND id = $2
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at, original_estimate_id FROM sales_invoices WHERE administration_id = $1 AND id = $2
 `
 
 type SalesInvoiceByIDParams struct {
@@ -5830,12 +5831,13 @@ func (q *Queries) SalesInvoiceByID(ctx context.Context, arg SalesInvoiceByIDPara
 		&i.TaxTotals,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OriginalEstimateID,
 	)
 	return i, err
 }
 
 const salesInvoiceByNumber = `-- name: SalesInvoiceByNumber :one
-SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM sales_invoices WHERE administration_id = $1 AND invoice_id = $2 AND invoice_id <> ''
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at, original_estimate_id FROM sales_invoices WHERE administration_id = $1 AND invoice_id = $2 AND invoice_id <> ''
 `
 
 type SalesInvoiceByNumberParams struct {
@@ -5884,12 +5886,13 @@ func (q *Queries) SalesInvoiceByNumber(ctx context.Context, arg SalesInvoiceByNu
 		&i.TaxTotals,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OriginalEstimateID,
 	)
 	return i, err
 }
 
 const salesInvoiceByReference = `-- name: SalesInvoiceByReference :one
-SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM sales_invoices WHERE administration_id = $1 AND reference = $2 ORDER BY created_at DESC LIMIT 1
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at, original_estimate_id FROM sales_invoices WHERE administration_id = $1 AND reference = $2 ORDER BY created_at DESC LIMIT 1
 `
 
 type SalesInvoiceByReferenceParams struct {
@@ -5938,6 +5941,7 @@ func (q *Queries) SalesInvoiceByReference(ctx context.Context, arg SalesInvoiceB
 		&i.TaxTotals,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OriginalEstimateID,
 	)
 	return i, err
 }
@@ -6052,7 +6056,7 @@ func (q *Queries) SalesInvoiceNumberTaken(ctx context.Context, arg SalesInvoiceN
 }
 
 const salesInvoicesByIDs = `-- name: SalesInvoicesByIDs :many
-SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at FROM sales_invoices WHERE administration_id = $1 AND id = ANY($2::bigint[]) ORDER BY id
+SELECT id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id, reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state, paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id, recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at, original_estimate_id FROM sales_invoices WHERE administration_id = $1 AND id = ANY($2::bigint[]) ORDER BY id
 `
 
 type SalesInvoicesByIDsParams struct {
@@ -6107,6 +6111,7 @@ func (q *Queries) SalesInvoicesByIDs(ctx context.Context, arg SalesInvoicesByIDs
 			&i.TaxTotals,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.OriginalEstimateID,
 		); err != nil {
 			return nil, err
 		}

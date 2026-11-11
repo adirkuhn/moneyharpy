@@ -298,6 +298,43 @@ valid for 30 seconds and marks it downloaded, or answers `401` without the
 type's permission. Exports register their file with `downloads.Service.Add`
 (and new types with `downloads.RegisterType`).
 
+## Estimates
+
+Quotes live at `/{id}/estimates`, with Moneybird's estimates API under
+`/api/v2/{administration_id}/estimates`: list (filter `state`, all unless
+given, several separated by `|`; `period` on the estimate date, this year when
+no filter is given; `contact_id`; `workflow_id`), CRUD, synchronization,
+`find_by_estimate_id`, notes and attachments. An estimate has lines, VAT
+totals, products and projects like a sales invoice, and follows the contact's
+estimate workflow or the default one, whose first step is its validity.
+
+`send_estimate` gives a draft its number from the estimate numbering in the
+invoice settings, its date (today unless set) and due date, and makes it
+`open`; it goes out by `Email` with its PDF (the workflow's email text or
+MoneyHarpy's, copied to the estimate BCC address) or is marked sent with
+`Manual`. Email needs a sender address on the identity. A sent estimate goes
+out again in its state. An open estimate past its due date shows as `late`.
+`change_state` only changes the state: a draft leaves draft only by being
+sent; open and late go to accepted, rejected, billed or archived; accepted to
+open, rejected, billed or archived; rejected to open, accepted or archived;
+billed to open, accepted or archived; archived back to open, accepted,
+rejected or billed. Other changes answer 400 with Moneybird's symbolic error,
+such as `can_not_change_draft_to_open`. Billed and archived estimates do not
+change.
+
+`bill_estimate` (which needs the sales invoices permission too) makes a draft
+sales invoice of an open, late or accepted estimate, with the estimate's
+lines, language, currency and prices, the default invoice workflow and
+`original_estimate_id` naming the estimate, and marks the estimate `billed`.
+`download_pdf` renders it as a quote, with its texts above and below the
+lines. MoneyHarpy has no online signing yet: `download_signed_pdf` answers 422
+for every estimate, and `sign_online` is kept but not used. Deleting an
+estimate keeps invoices billed from it; a contact with estimates is archived
+instead of deleted. Webhooks tell `estimate_created`,
+`estimate_created_from_original_invoice`, `_updated`, `_destroyed`,
+`_send_email`, `_send_manually`, `_mark_<state>`, `_billed` and
+`sales_invoice_created_based_on_estimate`.
+
 ## Products
 
 Products live at `/{id}/products`, with Moneybird's products API under

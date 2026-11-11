@@ -157,7 +157,7 @@ func (s *server) toSalesInvoice(inv sales.Invoice, contact *contacts.Contact, to
 		DocumentStyleID: inv.DocumentStyleID.String(), IdentityID: inv.IdentityID.String(), State: inv.State, InvoiceDate: date(inv.InvoiceDate),
 		DueDate: due.Format(time.DateOnly), PaymentConditions: nz(inv.PaymentConditions), PaymentReference: nz(inv.PaymentReference),
 		Reference: nz(inv.Reference), Language: inv.Language, Currency: inv.Currency, Discount: percentText(inv.Discount),
-		OriginalSalesInvoiceID: idString(inv.OriginalID), Paused: inv.Paused, PaidAt: date(inv.PaidAt), SentAt: date(inv.SentAt),
+		OriginalSalesInvoiceID: idString(inv.OriginalID), OriginalEstimateID: idString(inv.OriginalEstimateID), Paused: inv.Paused, PaidAt: date(inv.PaidAt), SentAt: date(inv.SentAt),
 		CreatedAt: inv.CreatedAt, UpdatedAt: inv.UpdatedAt, Version: inv.Version(), Details: []salesDetailJSON{}, Payments: []paymentJSON{},
 		TotalPaid: paid.String(), TotalUnpaid: unpaid.String(), TotalUnpaidBase: unpaid.String(), PricesAreInclTax: inv.PricesAreInclTax,
 		TotalPriceExclTax: inv.Totals.ExclTax.String(), TotalPriceExclTaxBase: inv.Totals.ExclTax.String(), TotalPriceInclTax: inv.Totals.InclTax.String(),

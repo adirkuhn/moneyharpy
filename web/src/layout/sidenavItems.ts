@@ -32,7 +32,7 @@ export const navItems: NavItem[] = [
     ],
   },
   { kind: 'incoming', key: 'incoming', to: 'documents', ready: false, permissions: ['documents'] },
-  { kind: 'quotes', key: 'quotes', to: 'estimates', ready: false, permissions: ['estimates'] },
+  { kind: 'quotes', key: 'quotes', to: 'estimates', ready: true, permissions: ['estimates'] },
   {
     kind: 'bank', key: 'bank', to: 'financial_mutations', ready: true, permissions: ['bank'],
     children: [
