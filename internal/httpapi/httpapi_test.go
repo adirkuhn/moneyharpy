@@ -46,6 +46,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
 	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
+	"github.com/adirkuhn/moneyharpy/internal/tasklists"
+	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -262,11 +264,12 @@ func newHarness(t *testing.T, opts options) *harness {
 	journalStore := postgres.NewJournalStore(pool)
 	salesStore := postgres.NewSalesStore(pool)
 	attachmentService := attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now)
-	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
+	timeEntryStore := postgres.NewTimeEntryStore(pool)
+	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore, timeEntryStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
 	catalogStore := postgres.NewCatalogStore(pool)
 	subscriptionStore := postgres.NewSubscriptionStore(pool)
 	productService := products.NewService(admins, books, contactService, catalogStore, products.AnyReferences{salesStore, subscriptionStore}, ids, time.Now)
-	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore}, ids, time.Now)
+	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore, timeEntryStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
@@ -297,6 +300,8 @@ func newHarness(t *testing.T, opts options) *harness {
 		Projects:        projectService,
 		Subscriptions:   h.subscriptions,
 		Downloads:       h.downloads,
+		TimeEntries:     timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now),
+		TaskLists:       tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
 		Storage:         files,
 		Identity:        people,
 		Settings:        settle,

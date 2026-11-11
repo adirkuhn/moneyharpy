@@ -162,3 +162,12 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
   :is(.document-table__state, .detail-list, .detail-block__actions, .invoices__state) .badge { border: 1px solid CanvasText; }
   .pagination__page.is-current { outline: 2px solid Highlight; }
 }
+
+/* A task list's tasks, with subtasks indented below their task. */
+.task-list { margin: 0; padding: 0.5rem 1.25rem; list-style: none; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.task-list--sub { margin: 0.25rem 0 0 1.625rem; padding: 0; border: 0; background: none; }
+.task-list__item { padding: 0.375rem 0; }
+.task-list > .task-list__item + .task-list__item { border-top: 1px solid var(--line); }
+.task-list__description { margin: 0.125rem 0 0 1.625rem; color: var(--muted); font-size: 0.8125rem; }
+.task-list:empty { display: none; }
+.task-list__add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.5rem 1rem; margin-top: 0.75rem; }

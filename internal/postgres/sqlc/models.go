@@ -783,6 +783,60 @@ type SubscriptionProduct struct {
 	Discount       int32
 }
 
+type TaskList struct {
+	ID               int64
+	AdministrationID int64
+	TemplateID       pgtype.Int8
+	Name             string
+	Description      string
+	DeadlineOn       pgtype.Date
+	PeriodBegin      pgtype.Date
+	PeriodEnd        pgtype.Date
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type TaskListGroup struct {
+	ID               int64
+	AdministrationID int64
+	TaskListID       pgtype.Int8
+	TemplateID       pgtype.Int8
+	Name             pgtype.Text
+	IsFirst          bool
+	RowOrder         int32
+	ReportType       string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type TaskListTask struct {
+	ID               int64
+	AdministrationID int64
+	GroupID          int64
+	ParentTaskID     pgtype.Int8
+	Name             string
+	Description      string
+	RowOrder         int32
+	CompletedAt      pgtype.Timestamptz
+	ReportType       string
+	AssigneeID       pgtype.Int8
+	RelatedEntityID  pgtype.Int8
+	Generated        bool
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type TaskListTemplate struct {
+	ID               int64
+	AdministrationID int64
+	Name             string
+	Description      string
+	Period           string
+	DeadlineAfter    string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type TaxRate struct {
 	ID               int64
 	AdministrationID int64
@@ -794,6 +848,22 @@ type TaxRate struct {
 	Country          string
 	ReportBoxes      []string
 	Position         int32
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type TimeEntry struct {
+	ID               int64
+	AdministrationID int64
+	UserID           int64
+	ContactID        pgtype.Int8
+	ProjectID        pgtype.Int8
+	SalesInvoiceID   pgtype.Int8
+	StartedAt        pgtype.Timestamptz
+	EndedAt          pgtype.Timestamptz
+	Description      string
+	PausedDuration   int32
+	Billable         bool
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
 }
