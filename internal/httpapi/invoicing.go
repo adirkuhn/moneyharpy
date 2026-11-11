@@ -91,6 +91,7 @@ func toWorkflow(wf invoicing.Workflow) Workflow {
 		Currency: &wf.Currency, Language: &wf.Language, Active: &wf.Active, PricesAreInclTax: &wf.PricesAreInclTax,
 		NumberOfCollections: ptr(0), ShowQrCode: &wf.ShowQRCode, Steps: &steps,
 		CreatedAt: ptr(wf.CreatedAt), UpdatedAt: ptr(wf.UpdatedAt), Uri: wf.Ref().URI(),
+		InvoiceEmailSubject: wf.InvoiceEmailSubject, InvoiceEmailBody: wf.InvoiceEmailBody,
 	}
 }
 
@@ -98,7 +99,7 @@ func toWorkflowChanges(body WorkflowRequest) invoicing.WorkflowChanges {
 	in := body.Workflow
 	c := invoicing.WorkflowChanges{
 		Name: in.Name, Currency: in.Currency, Language: (*string)(in.Language), Active: in.Active, Default: in.Default,
-		PricesAreInclTax: in.PricesAreInclTax, ShowQRCode: in.ShowQrCode,
+		PricesAreInclTax: in.PricesAreInclTax, ShowQRCode: in.ShowQrCode, InvoiceEmailSubject: in.InvoiceEmailSubject, InvoiceEmailBody: in.InvoiceEmailBody,
 	}
 	if in.StepsAttributes != nil {
 		steps := make([]invoicing.StepInput, len(*in.StepsAttributes))

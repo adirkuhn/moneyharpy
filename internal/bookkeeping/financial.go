@@ -72,6 +72,40 @@ func (s *Service) SeedLedgerAccount(ctx context.Context, admin, user resource.ID
 	return 0, false, nil
 }
 
+// SystemLedgerAccount returns the category that plays a role the books rely
+// on, such as accounts_receivable or payable_vat. An administration seeded
+// before the role existed gets it from its country's seed now.
+func (s *Service) SystemLedgerAccount(ctx context.Context, admin, user resource.ID, role string) (resource.ID, error) {
+	a, err := s.ensure(ctx, admin, user)
+	if err != nil {
+		return 0, err
+	}
+	all, err := s.store.LedgerAccounts(ctx, admin)
+	if err != nil {
+		return 0, fmt.Errorf("list ledger accounts: %w", err)
+	}
+	if i := slices.IndexFunc(all, func(l LedgerAccount) bool { return l.System == role }); i >= 0 {
+		return all[i].ID, nil
+	}
+	seed := countries.For(a.Country)
+	i := slices.IndexFunc(seed.Accounts, func(sa countries.Account) bool { return sa.System == role })
+	if i < 0 {
+		return 0, fmt.Errorf("no category for role %s", role)
+	}
+	added := s.accountsFrom(a.Administration, seed.Accounts[i:i+1], all, "")
+	st, err := s.store.Settings(ctx, admin)
+	if err != nil {
+		return 0, fmt.Errorf("load settings: %w", err)
+	}
+	if st.Scheme != seed.Scheme {
+		added[0].Taxonomy = ""
+	}
+	if err := s.store.CreateLedgerAccounts(ctx, added); err != nil {
+		return 0, fmt.Errorf("store ledger account: %w", err)
+	}
+	return added[0].ID, nil
+}
+
 // CheckBookable reports, as a validation error, why transactions cannot be
 // booked on a category.
 func (s *Service) CheckBookable(ctx context.Context, admin, user, id resource.ID) error {

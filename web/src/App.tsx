@@ -47,6 +47,9 @@ import { StartPage } from './overview/StartPage'
 import { ContactFormPage } from './contacts/ContactFormPage'
 import { ContactPage } from './contacts/ContactPage'
 import { ContactsPage } from './contacts/ContactsPage'
+import { InvoiceFormPage } from './invoices/InvoiceFormPage'
+import { InvoicePage } from './invoices/InvoicePage'
+import { InvoicesPage } from './invoices/InvoicesPage'
 import { JournalDocumentPage } from './journal/JournalDocumentPage'
 import { JournalDocumentsPage } from './journal/JournalDocumentsPage'
 import { LedgerEntriesPage } from './journal/LedgerEntriesPage'
@@ -81,6 +84,10 @@ export function AppRoutes() {
           <Route path="/:administrationId/contacts/new" element={<ContactFormPage />} />
           <Route path="/:administrationId/contacts/:contactId" element={<ContactPage />} />
           <Route path="/:administrationId/contacts/:contactId/edit" element={<ContactFormPage />} />
+          <Route path="/:administrationId/sales_invoices" element={<InvoicesPage />} />
+          <Route path="/:administrationId/sales_invoices/new" element={<InvoiceFormPage />} />
+          <Route path="/:administrationId/sales_invoices/:invoiceId" element={<InvoicePage />} />
+          <Route path="/:administrationId/sales_invoices/:invoiceId/edit" element={<InvoiceFormPage />} />
           <Route path="/:administrationId/report/general_ledger" element={<TrialBalancePage />} />
           <Route path="/:administrationId/report/journal_entries" element={<LedgerEntriesPage />} />
           <Route path="/:administrationId/documents/general_journal_documents" element={<JournalDocumentsPage />} />

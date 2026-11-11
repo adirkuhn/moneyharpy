@@ -9,13 +9,17 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"mime"
+	"mime/multipart"
 	"mime/quotedprintable"
 	"net"
 	stdmail "net/mail"
 	"net/smtp"
+	"net/textproto"
 	"net/url"
 	"strconv"
 	"strings"
@@ -49,6 +53,37 @@ func New(s Settings, baseURL string) *Client {
 type message struct {
 	subject string
 	body    string
+	// Documents also name the sender, a reply-to address, copies and files.
+	cc       []string
+	bcc      []string
+	replyTo  string
+	fromName string
+	files    []Attachment
+}
+
+// Attachment is a file sent along with a document.
+type Attachment struct {
+	Name, ContentType string
+	Data              []byte
+}
+
+// Document is an email carrying documents, such as an invoice with its PDF.
+type Document struct {
+	To, BCC       []string
+	ReplyTo       string
+	FromName      string
+	Subject, Body string
+	Files         []Attachment
+}
+
+// SendDocument emails documents in the name of the sender. The first To
+// address is the recipient, the others get a visible copy.
+func (c *Client) SendDocument(ctx context.Context, d Document) error {
+	if len(d.To) == 0 {
+		return errors.New("no recipient")
+	}
+	body := strings.ReplaceAll(strings.ReplaceAll(d.Body, "\r\n", "\n"), "\n", "\r\n")
+	return c.send(ctx, d.To[0], message{subject: d.Subject, body: body, cc: d.To[1:], bcc: d.BCC, replyTo: d.ReplyTo, fromName: d.FromName, files: d.Files})
 }
 
 // SendPasswordReset emails a link for choosing a new password.
@@ -111,8 +146,11 @@ func (c *Client) send(ctx context.Context, to string, m message) error {
 	if !cfg.Enabled {
 		return ErrDisabled
 	}
-	if addr, err := stdmail.ParseAddress(to); err != nil || addr.Address != to {
-		return errors.New("recipient is not a plain email address")
+	recipients := append(append([]string{to}, m.cc...), m.bcc...)
+	for _, r := range append(recipients, nonEmpty(m.replyTo)...) {
+		if addr, err := stdmail.ParseAddress(r); err != nil || addr.Address != r {
+			return errors.New("recipient is not a plain email address")
+		}
 	}
 	if cfg.Security == "none" && cfg.Username != "" {
 		return errors.New("refusing to send credentials without encryption")
@@ -141,8 +179,10 @@ func (c *Client) send(ctx context.Context, to string, m message) error {
 	if err := client.Mail(cfg.From); err != nil {
 		return fmt.Errorf("set sender: %w", err)
 	}
-	if err := client.Rcpt(to); err != nil {
-		return fmt.Errorf("set recipient: %w", err)
+	for _, r := range recipients {
+		if err := client.Rcpt(r); err != nil {
+			return fmt.Errorf("set recipient: %w", err)
+		}
 	}
 	w, err := client.Data()
 	if err != nil {
@@ -214,22 +254,80 @@ func (c *Client) hostname() string {
 func (c *Client) compose(from, to string, m message) ([]byte, error) {
 	var out bytes.Buffer
 	header := func(name, value string) { fmt.Fprintf(&out, "%s: %s\r\n", name, value) }
+	if m.fromName != "" {
+		from = (&stdmail.Address{Name: m.fromName, Address: from}).String()
+	}
 	header("From", from)
 	header("To", to)
+	if len(m.cc) > 0 {
+		header("Cc", strings.Join(m.cc, ", "))
+	}
+	if m.replyTo != "" {
+		header("Reply-To", m.replyTo)
+	}
 	header("Subject", mime.QEncoding.Encode("utf-8", m.subject))
 	header("Date", time.Now().Format(time.RFC1123Z))
 	header("Message-ID", "<"+rand.Text()+"@"+c.hostname()+">")
 	header("MIME-Version", "1.0")
-	header("Content-Type", "text/plain; charset=utf-8")
-	header("Content-Transfer-Encoding", "quoted-printable")
-	out.WriteString("\r\n")
-
-	w := quotedprintable.NewWriter(&out)
-	if _, err := w.Write([]byte(m.body)); err != nil {
-		return nil, fmt.Errorf("encode body: %w", err)
+	if len(m.files) == 0 {
+		header("Content-Type", "text/plain; charset=utf-8")
+		header("Content-Transfer-Encoding", "quoted-printable")
+		out.WriteString("\r\n")
+		if err := writeQuoted(&out, m.body); err != nil {
+			return nil, err
+		}
+		return out.Bytes(), nil
 	}
-	if err := w.Close(); err != nil {
-		return nil, fmt.Errorf("encode body: %w", err)
+	parts := multipart.NewWriter(&out)
+	header("Content-Type", "multipart/mixed; boundary="+parts.Boundary())
+	out.WriteString("\r\n")
+	text, err := parts.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/plain; charset=utf-8"}, "Content-Transfer-Encoding": {"quoted-printable"}})
+	if err != nil {
+		return nil, fmt.Errorf("start body: %w", err)
+	}
+	if err := writeQuoted(text, m.body); err != nil {
+		return nil, err
+	}
+	for _, f := range m.files {
+		part, err := parts.CreatePart(textproto.MIMEHeader{
+			"Content-Type":              {mime.FormatMediaType(f.ContentType, map[string]string{"name": f.Name})},
+			"Content-Disposition":       {mime.FormatMediaType("attachment", map[string]string{"filename": f.Name})},
+			"Content-Transfer-Encoding": {"base64"},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("start attachment: %w", err)
+		}
+		encoded := base64.StdEncoding.EncodeToString(f.Data)
+		var lines strings.Builder
+		for len(encoded) > 76 {
+			lines.WriteString(encoded[:76] + "\r\n")
+			encoded = encoded[76:]
+		}
+		lines.WriteString(encoded + "\r\n")
+		if _, err := io.WriteString(part, lines.String()); err != nil {
+			return nil, fmt.Errorf("write attachment: %w", err)
+		}
+	}
+	if err := parts.Close(); err != nil {
+		return nil, fmt.Errorf("finish message: %w", err)
 	}
 	return out.Bytes(), nil
+}
+
+func writeQuoted(dst io.Writer, body string) error {
+	w := quotedprintable.NewWriter(dst)
+	if _, err := w.Write([]byte(body)); err != nil {
+		return fmt.Errorf("encode body: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("encode body: %w", err)
+	}
+	return nil
+}
+
+func nonEmpty(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return []string{s}
 }

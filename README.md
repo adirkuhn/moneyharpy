@@ -125,6 +125,20 @@ out of the locked period. `GET /reports/general_ledger` and
 balance and a category's bookings under Reports. Notes and attachments are
 kept per record, so invoices reuse them.
 
+## Sales invoices
+
+Invoices live at `/{id}/sales_invoices`, with Moneybird's sales invoices API
+under `/api/v2/{administration_id}/sales_invoices`. A draft follows the
+default workflow, document style and identity; VAT is worked out per rate on
+the summed lines, as Moneybird's `tax_totals` show it. Sending reserves the
+next number (one database lock, so two invoices never share one), sets the
+due date and books the invoice: the total on the debtors, each line on its
+category (or uncategorized income), the VAT per rate on payable VAT. It then
+emails the PDF (and a UBL 2.1 e-invoice when the contact or settings ask for
+it) with the workflow's email text, or leaves sending to you. A sent invoice
+can change until it is paid and is booked again; it is credited rather than
+deleted. Peppol delivery is not available yet.
+
 ## Users and permissions
 
 Each user of an administration is an owner, employee or accountant, with
