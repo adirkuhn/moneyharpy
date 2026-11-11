@@ -829,9 +829,6 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
 .invoices__amount { width: 8rem; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .data-table th.invoices__amount { text-align: right; }
 .data-table th.invoices__state, .invoices__state { width: 9rem; }
-.invoices__select { width: 2.5rem; }
-.invoices__select input { width: 1.1rem; height: 1.1rem; }
-.invoices__bulk { align-items: center; padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 0.5rem; }
 
 .invoice-form .form-sheet__actions { margin-top: 1rem; }
 .invoice-lines { margin: 1.25rem 0 0.25rem; }
@@ -886,10 +883,142 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
   .invoices__number, .invoices__amount, .data-table.invoices th:last-child, .invoices__state { width: auto; }
 }
 
-/* External sales invoices: the area that takes their files. */
+/* External sales invoices: the area that takes their files, and the box about emailing them. */
 .badge--new { border-style: dashed; border-color: var(--blue); color: var(--link); }
-.upload-area { display: grid; justify-items: start; gap: 0.5rem; margin: 0 0 1rem; padding: 1rem; border: 2px dashed var(--line); border-radius: 8px; background: var(--surface); }
-.upload-area.is-over { border-color: var(--blue); background: var(--bg); }
-.upload-area__title { margin: 0; font-size: 1rem; }
+.upload-area { display: grid; justify-items: center; gap: 0.375rem; margin: 0 0 1rem; padding: 1.25rem 1rem; border: 2px dashed var(--line); border-radius: 10px; background: var(--surface); text-align: center; }
+.upload-area.is-over { border-color: var(--blue); background: var(--row-hover); }
 .upload-area .hint { margin: 0; }
-.upload-area:has(input:focus-visible) .file-field__pick { outline: 2px solid var(--focus); outline-offset: 2px; }
+.upload-area .problems { margin: 0; }
+.upload-area__text { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
+.upload-area__text svg { flex: none; color: var(--muted); }
+.upload-area__pick { color: var(--link); font-weight: 650; text-decoration: underline; cursor: pointer; }
+.upload-area__limit { color: var(--muted); }
+.upload-area:has(input:focus-visible) .upload-area__pick { outline: 2px solid var(--focus); outline-offset: 2px; }
+.panel-box { display: grid; justify-items: start; gap: 0.5rem; margin: 0 0 1rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.panel-box__title { margin: 0; font-size: 1rem; }
+.panel-box__text, .panel-box .hint { margin: 0; }
+
+/*
+ * Document lists, after Moneybird: a filter button and the title on the
+ * left of the action bar, the list's actions on the right, an introduction,
+ * a table whose rows open their document and a bar for ticked rows.
+ */
+.actionbar--wide, .content--wide { max-width: 80rem; }
+.actionbar__heading { flex-wrap: wrap; }
+.btn--icon { width: 2.375rem; padding: 0; }
+.btn--with-icon { gap: 0.5rem; }
+.btn--secondary.is-active { border-color: var(--blue); background: var(--row-hover); }
+.btn[aria-disabled='true'] { opacity: 0.55; cursor: not-allowed; }
+.btn[aria-disabled='true']:active { filter: none; }
+
+.unavailable { position: relative; display: inline-flex; }
+.unavailable__tip { display: none; position: absolute; top: calc(100% + 0.375rem); right: 0; z-index: 11; padding: 0.25rem 0.5rem; border-radius: 6px; background: var(--text); color: var(--surface); font-size: 0.8125rem; font-weight: 550; white-space: nowrap; }
+.unavailable:hover .unavailable__tip, .unavailable:focus-within .unavailable__tip { display: block; }
+
+.dropdown { position: relative; }
+.dropdown__panel { position: absolute; top: calc(100% + 0.375rem); z-index: 10; min-width: 16rem; padding: 0.375rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); box-shadow: 0 12px 28px rgb(9 38 83 / 0.22); }
+.dropdown__panel--right { right: 0; }
+.dropdown__header { margin: 0; padding: 0.375rem 0.625rem; color: var(--muted); font-size: 0.8125rem; font-weight: 650; }
+.dropdown__list { margin: 0; padding: 0; list-style: none; }
+.dropdown__item { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.5rem 0.625rem; border-radius: 6px; color: var(--text); text-decoration: none; }
+a.dropdown__item:hover { background: var(--row-hover); }
+.dropdown__item.is-disabled { color: var(--muted); cursor: not-allowed; }
+.dropdown__hint { font-size: 0.8125rem; white-space: nowrap; }
+
+/* The filter button and the panel it drops down. */
+.filter-menu { position: relative; }
+.filter-menu__toggle { gap: 0.5rem; max-width: min(22rem, calc(100vw - 2rem)); }
+.filter-menu__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filter-panel { position: absolute; top: calc(100% + 0.5rem); left: 0; z-index: 10; display: grid; grid-template-columns: 15rem minmax(0, 1fr); width: min(62rem, calc(100vw - 2rem)); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: 0 16px 40px rgb(9 38 83 / 0.25); }
+.filter-panel:not(:has(.filter-panel__quick)) { grid-template-columns: minmax(0, 1fr); width: min(46rem, calc(100vw - 2rem)); }
+.filter-panel__quick { padding: 1.25rem 1rem; border-right: 1px solid var(--line); border-radius: 12px 0 0 12px; background: var(--bg); }
+.filter-panel__advanced { min-width: 0; padding: 1.25rem 1.5rem; }
+.filter-panel__heading { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.8125rem; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
+.filter-panel__links { display: grid; gap: 0.125rem; margin: 0; padding: 0; list-style: none; }
+.filter-panel__links a { display: block; padding: 0.5rem 0.625rem; border-radius: 6px; color: var(--text); font-weight: 550; text-decoration: none; }
+.filter-panel__links a:hover { background: var(--row-hover); }
+.filter-panel__links a[aria-current] { background: var(--nav-active); color: var(--white); }
+.filter-form { display: grid; gap: 1.25rem; }
+.filter-form .filter-panel__heading { margin: 0; }
+.filter-form__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.filter-field { display: grid; gap: 0.5rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.filter-field__label { padding: 0; font-weight: 600; }
+.filter-field select { max-width: 23rem; }
+.filter-field--contact .form-input { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+.filter-field--contact .form-input__label { padding-top: 0; font-weight: 600; }
+.tag-options { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.tag-option { position: relative; display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 0.875rem; border: 1px solid var(--input-border); border-radius: 999px; font-size: 0.9375rem; cursor: pointer; }
+/* The radio covers its tag, unseen, so a click anywhere on the tag reaches it. */
+.tag-option input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.tag-option:hover { background: var(--row-hover); }
+.tag-option.is-checked { border-color: var(--blue); background: var(--blue); color: var(--white); font-weight: 600; }
+.tag-option:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* The period over two years, by month, quarter or year. */
+.period-picker__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.period-picker__bar .icon-btn:disabled { opacity: 0.4; cursor: default; }
+.period-picker__chosen { margin: 0 0 0 auto; font-weight: 650; font-variant-numeric: tabular-nums; }
+.period-picker__grid { display: grid; gap: 3px; padding: 0.375rem; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.period-picker__row { display: grid; grid-template-columns: repeat(24, minmax(1.5rem, 1fr)); gap: 2px; }
+.period-picker__cell { min-width: 0; min-height: 2rem; padding: 0; border: 0; border-radius: 4px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.75rem; cursor: pointer; }
+.period-picker__row:last-child .period-picker__cell { font-weight: 650; }
+.period-picker__cell:hover { background: var(--row-hover); }
+.period-picker__cell.is-chosen { background: var(--teal); color: var(--navy); font-weight: 650; }
+.period-picker .hint { margin: 0; }
+
+/* The introduction of a list. */
+.getting-started { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 1.5rem 2rem; margin: 0 0 1.5rem; padding: 1.5rem; border: 1px solid var(--line); border-top: 4px solid var(--teal); border-radius: 12px; background: var(--surface); }
+.getting-started__title { margin: 0 0 0.5rem; font-size: 1.25rem; }
+.getting-started__text { margin: 0; color: var(--muted); }
+.getting-started__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.getting-started__steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1.25rem; margin: 0; padding: 0; list-style: none; }
+.getting-started__step { display: flex; align-items: flex-start; gap: 0.75rem; }
+.getting-started__icon { display: grid; flex: none; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--row-hover); color: var(--link); font-size: 1.125rem; }
+.getting-started__step-title { margin: 0 0 0.25rem; font-size: 1rem; font-weight: 650; }
+.getting-started__step-text { margin: 0; color: var(--muted); font-size: 0.9375rem; }
+
+/* The table of documents. */
+.document-table__scroll { overflow-x: auto; }
+.document-table { margin-bottom: 0; }
+.document-table th:last-child { width: auto; }
+.document-table th.document-table__check { width: 2.75rem; }
+.document-table th.document-table__amount { width: 9rem; text-align: right; }
+.document-table th.document-table__date { width: 8.5rem; }
+.document-table th.document-table__state { width: 10rem; }
+.document-table th.document-table__icons { width: 2.75rem; }
+.document-table .document-table__check { padding-right: 0; }
+.document-table__check input { width: 1.125rem; height: 1.125rem; margin: 0; accent-color: var(--blue); vertical-align: middle; }
+.document-table__amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.document-table__date { white-space: nowrap; }
+.document-table .document-table__icons { padding-inline: 0.25rem; color: var(--muted); text-align: center; }
+.document-table__icon { display: inline-flex; vertical-align: middle; }
+.document-table__row { cursor: pointer; }
+.document-table__row:hover td, .document-table__row.is-selected td { background: var(--row-hover); }
+.document-table__link { color: var(--text); font-weight: 600; text-decoration: none; }
+.document-table__link:hover { color: var(--link); text-decoration: underline; }
+.badge--active { border-color: var(--teal); color: var(--text); }
+
+/* The actions on the ticked rows, kept in view at the bottom of the screen. */
+.bulk-bar { position: sticky; bottom: 1rem; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; margin-top: 1rem; padding: 0.75rem 1rem; border: 1px solid var(--blue); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px rgb(9 38 83 / 0.2); }
+.bulk-bar__count { font-weight: 650; }
+.bulk-bar__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-left: auto; }
+.bulk-bar .problems { margin: 0; }
+.content--wide > .pagination { margin-top: 1.5rem; }
+
+@media (max-width: 52rem) {
+  .document-table .document-table__extra { display: none; }
+  .getting-started { grid-template-columns: minmax(0, 1fr); }
+  .filter-panel { grid-template-columns: minmax(0, 1fr); }
+  .filter-panel__quick { border-right: 0; border-bottom: 1px solid var(--line); border-radius: 12px 12px 0 0; }
+}
+@media (max-width: 44rem) {
+  .document-table .document-table__icons, .document-table .document-table__date { display: none; }
+  .document-table th.document-table__amount { width: 6.5rem; }
+  .document-table th.document-table__state { width: 7.5rem; }
+  .document-table { min-width: 34rem; }
+  .document-table td, .document-table th { padding-inline: 0.5rem; }
+  .filter-panel__advanced { padding: 1rem; }
+}
+@media (forced-colors: active) {
+  .tag-option.is-checked, .period-picker__cell.is-chosen, .filter-panel__links a[aria-current] { outline: 2px solid Highlight; }
+}

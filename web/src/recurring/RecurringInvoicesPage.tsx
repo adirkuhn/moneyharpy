@@ -1,95 +1,145 @@
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { formatAmount } from '../banking/queries'
 import { contactName } from '../contacts/queries'
 import { perPage } from '../invoices/queries'
+import { ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
-import { Pagination } from '../layout/Pagination'
-import { frequencyText, frequencyTypes, type RecurringFilter, recurringFilterTerms, useRecurringInvoices } from './queries'
+import { WorkflowFilter } from '../list/DocumentFilter'
+import { DocumentTable } from '../list/DocumentTable'
+import { AdvancedFilter, ContactFilter, FilterPanel, RadioFilter } from '../list/FilterPanel'
+import { GettingStarted } from '../list/GettingStarted'
+import { ListActions } from '../list/ListActions'
+import {
+  frequencyText, frequencyTypes, type RecurringFilter, recurringFilterOf, recurringFilterTerms, recurringQuery, type RecurringInvoice, useRecurringInvoices,
+} from './queries'
 
 /** Recurring invoices, active ones unless filtered otherwise (/recurring_sales_invoices). */
 export function RecurringInvoicesPage() {
   const { t, i18n } = useTranslation()
   const { administrationId = '' } = useParams()
   const [params, setParams] = useSearchParams()
-  const filter: RecurringFilter = { state: params.get('state') ?? 'active', frequency: params.get('frequency') ?? '', autoSend: params.get('auto_send') ?? '' }
+  const filter = recurringFilterOf(params)
   const page = Math.max(1, Number(params.get('page')) || 1)
   const invoices = useRecurringInvoices(administrationId, recurringFilterTerms(filter), page)
   const base = `/${administrationId}/recurring_sales_invoices`
   const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
-  const isDefault = filter.state === 'active' && !filter.frequency && !filter.autoSend
-
-  const change = (key: 'state' | 'frequency' | 'auto_send', value: string) => {
-    const next = new URLSearchParams(params)
-    if (value === '' || (key === 'state' && value === 'active')) {
-      next.delete(key)
-    } else {
-      next.set(key, value)
-    }
-    next.delete('page')
-    setParams(next, { replace: true })
-  }
+  const narrowed = !!(filter.frequency || filter.autoSend || filter.contactId || filter.workflowId)
+  const view = narrowed || !['active', 'inactive', 'all'].includes(filter.state) ? 'custom' : filter.state
+  const [info, setInfo] = useState<boolean | null>(null)
+  const introId = useId()
+  const shown = invoices.data?.invoices ?? []
+  const firstUse = invoices.data !== undefined && shown.length === 0 && view === 'active' && page === 1
+  const introShown = info ?? firstUse
 
   return (
-    <Page title={t('recurring.title')} actions={<Link className="btn btn--accent" to={`${base}/new`}>{t('recurring.new')}</Link>}>
-      <div className="filter-bar" role="search" aria-label={t('recurring.filters')}>
-        <label className="filter-bar__field">
-          <span>{t('invoices.status')}</span>
-          <select value={filter.state} onChange={(e) => change('state', e.target.value)}>
-            {['active', 'inactive', 'all'].map((s) => <option key={s} value={s}>{t(`recurring.states.${s}`)}</option>)}
-          </select>
-        </label>
-        <label className="filter-bar__field">
-          <span>{t('recurring.frequency')}</span>
-          <select value={filter.frequency} onChange={(e) => change('frequency', e.target.value)}>
-            <option value="">{t('recurring.allFrequencies')}</option>
-            {frequencyTypes.map((f) => <option key={f} value={f}>{t(`recurring.types.${f}`)}</option>)}
-          </select>
-        </label>
-        <label className="filter-bar__field">
-          <span>{t('recurring.autoSend')}</span>
-          <select value={filter.autoSend} onChange={(e) => change('auto_send', e.target.value)}>
-            <option value="">{t('recurring.autoSendAny')}</option>
-            <option value="true">{t('recurring.yes')}</option>
-            <option value="false">{t('recurring.no')}</option>
-          </select>
-        </label>
-      </div>
+    <Page
+      wide
+      title={t('recurring.title')}
+      lead={
+        <FilterPanel label={t(`recurring.views.${view}`)} title={t('recurring.filters')}>
+          <RecurringFilterForm
+            administrationId={administrationId}
+            filter={filter}
+            reset={base}
+            onApply={(next) => setParams(recurringQuery(next, params), { replace: true })}
+          />
+        </FilterPanel>
+      }
+      actions={
+        <ListActions
+          info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
+          exports={[]}
+          primary={{ to: `${base}/new`, label: t('recurring.add') }}
+          more={[
+            { to: `/${administrationId}/sales_invoices`, label: t('invoices.title') },
+            { to: `/${administrationId}/settings/invoices_and_estimates`, label: t('invoices.settings') },
+          ]}
+        />
+      }
+    >
+      {introShown && (
+        <GettingStarted
+          id={introId}
+          title={t('recurring.intro.title')}
+          text={t('recurring.intro.text')}
+          steps={[
+            { icon: 'calendar', title: t('recurring.intro.start'), text: t('recurring.intro.startText') },
+            { icon: 'repeat', title: t('recurring.intro.frequency'), text: t('recurring.intro.frequencyText') },
+            { icon: 'send', title: t('recurring.intro.send'), text: t('recurring.intro.sendText') },
+          ]}
+        />
+      )}
       {!invoices.data ? (
         invoices.error ? <p className="empty">{t('recurring.loadError')}</p> : <Loading />
-      ) : invoices.data.invoices.length === 0 ? (
-        <p className="empty">{isDefault && page === 1 ? t('recurring.empty') : t('recurring.noMatches')}</p>
+      ) : shown.length === 0 ? (
+        <p className="empty">{firstUse ? t('recurring.empty') : t('recurring.noMatches')}</p>
       ) : (
-        <>
-          <table className="data-table invoices" aria-label={t('recurring.title')}>
-            <thead>
-              <tr>
-                <th scope="col">{t('invoices.contact')}</th>
-                <th scope="col">{t('recurring.frequency')}</th>
-                <th scope="col" className="invoices__date">{t('recurring.nextDate')}</th>
-                <th scope="col">{t('recurring.autoSend')}</th>
-                <th scope="col" className="invoices__amount">{t('invoices.amount')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.data.invoices.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <Link to={`${base}/${r.id}`}>{r.contact ? contactName(r.contact) : r.reference || r.id}</Link>
-                    {r.reference && <span className="hint"> · {r.reference}</span>}
-                  </td>
-                  <td>{frequencyText(r, t)}</td>
-                  <td className="invoices__date">{r.active ? date(r.invoice_date) : <span className="badge">{t('recurring.states.inactive')}</span>}</td>
-                  <td>{r.auto_send ? t('recurring.yes') : t('recurring.no')}</td>
-                  <td className="invoices__amount">{formatAmount(r.total_price_incl_tax, r.currency ?? 'EUR', i18n.language)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination total={invoices.data.total} perPage={perPage} />
-        </>
+        <DocumentTable<RecurringInvoice>
+          label={t('recurring.title')}
+          rows={shown}
+          rowKey={(r) => r.id ?? ''}
+          href={(r) => `${base}/${r.id}`}
+          total={invoices.data.total}
+          perPage={perPage}
+          columns={[
+            { key: 'contact', header: t('invoices.contact'), link: true, cell: (r) => (r.contact ? contactName(r.contact) : r.reference || r.id) },
+            { key: 'reference', header: t('invoices.reference'), kind: 'extra', cell: (r) => r.reference },
+            { key: 'icons', header: '', label: t('recurring.autoSend'), kind: 'icons', cell: (r) => r.auto_send && <AutoSendIcon /> },
+            { key: 'frequency', header: t('recurring.frequency'), cell: (r) => frequencyText(r, t) },
+            { key: 'next', header: t('recurring.nextInvoiceDate'), kind: 'date', cell: (r) => (r.active ? date(r.invoice_date) : '') },
+            { key: 'amount', header: t('invoices.amount'), kind: 'amount', cell: (r) => formatAmount(r.total_price_incl_tax, r.currency ?? 'EUR', i18n.language) },
+            {
+              key: 'state', header: t('recurring.status'), kind: 'state',
+              cell: (r) => <span className={`badge badge--${r.active ? 'active' : 'inactive'}`}>{t(`recurring.states.${r.active ? 'active' : 'inactive'}`)}</span>,
+            },
+          ]}
+        />
       )}
     </Page>
+  )
+}
+
+function AutoSendIcon() {
+  const { t } = useTranslation()
+  return (
+    <span className="document-table__icon" role="img" aria-label={t('recurring.autoSend')} title={t('recurring.autoSend')}>
+      <ListIcon kind="send" />
+    </span>
+  )
+}
+
+type FormProps = { administrationId: string; filter: RecurringFilter; reset: string; onApply: (filter: RecurringFilter) => void }
+
+/** Moneybird's filter of recurring invoices: status, frequency, sending, contact and workflow. */
+function RecurringFilterForm({ administrationId, filter, reset, onApply }: FormProps) {
+  const { t } = useTranslation()
+  const [draft, setDraft] = useState(filter)
+  const set = (changes: Partial<RecurringFilter>) => setDraft({ ...draft, ...changes })
+  return (
+    <AdvancedFilter onApply={() => onApply(draft)} footer={<Link className="btn btn--secondary" to={reset}>{t('recurring.showAllActive')}</Link>}>
+      <RadioFilter
+        legend={t('recurring.status')}
+        value={draft.state}
+        onChange={(state) => set({ state })}
+        options={['active', 'inactive', 'all'].map((s) => ({ value: s, label: t(`recurring.filterStates.${s}`) }))}
+      />
+      <RadioFilter
+        legend={t('recurring.frequency')}
+        value={draft.frequency}
+        onChange={(frequency) => set({ frequency })}
+        options={[{ value: '', label: t('list.all') }, ...frequencyTypes.map((f) => ({ value: f, label: t(`recurring.types.${f}`) }))]}
+      />
+      <RadioFilter
+        legend={t('recurring.sendAutomatically')}
+        value={draft.autoSend}
+        onChange={(autoSend) => set({ autoSend })}
+        options={[{ value: '', label: t('list.all') }, { value: 'true', label: t('recurring.yes') }, { value: 'false', label: t('recurring.no') }]}
+      />
+      <ContactFilter administrationId={administrationId} contactId={draft.contactId} onChange={(contactId) => set({ contactId })} />
+      <WorkflowFilter administrationId={administrationId} value={draft.workflowId} onChange={(workflowId) => set({ workflowId })} />
+    </AdvancedFilter>
   )
 }

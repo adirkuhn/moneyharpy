@@ -77,8 +77,32 @@ describe('the external invoice list', () => {
     expect(seen.at(-1)?.searchParams.get('filter')).toBe('period:this_year')
     const nav = screen.getByRole('navigation', { name: 'Administration menu' })
     expect(within(nav).getByRole('link', { name: 'External invoices' })).toHaveAttribute('aria-current', 'page')
-    await userEvent.selectOptions(screen.getByLabelText('Status'), 'new')
+    expect(within(table).getByRole('img', { name: 'Has attachments' })).toBeInTheDocument()
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Reference', '', 'Contact', 'Date', 'Amount', 'Status'])
+
+    const toggle = screen.getByRole('button', { name: 'External invoices from this year' })
+    await userEvent.click(toggle)
+    const panel = screen.getByRole('search', { name: 'External invoice filters' })
+    expect(within(panel).getByRole('link', { name: 'Unpaid external invoices' })).toHaveAttribute('href', '/11/external_sales_invoices?filter=state%3Aopen%7Clate')
+    expect(within(panel).queryByRole('combobox', { name: 'Workflow' })).toBeNull()
+    await userEvent.click(within(panel).getByRole('radio', { name: 'New' }))
+    await userEvent.click(within(panel).getByRole('button', { name: 'Filter' }))
     await waitFor(() => expect(seen.at(-1)?.searchParams.get('filter')).toBe('state:new,period:this_year'))
+    expect(toggle).toHaveTextContent('Filtered external invoices')
+  })
+
+  it('introduces the list and says emailing files is not available yet', async () => {
+    server.use(...loaded([]))
+    renderAt('/11/external_sales_invoices')
+    expect(await screen.findByText(/No external invoices yet/)).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Getting started with external invoices' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Add invoice files' })).toHaveTextContent('Drag files here to add or select files (Maximum size 10 MB per file)')
+    const email = screen.getByRole('button', { name: 'Add external invoice by emailing files' })
+    await userEvent.click(email)
+    const box = screen.getByRole('region', { name: 'E-mail files for external invoices' })
+    expect(box).toHaveTextContent('Not available yet.')
+    await userEvent.click(within(box).getByRole('button', { name: 'Close' }))
+    expect(email).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('makes an invoice of every uploaded file and opens the first', async () => {

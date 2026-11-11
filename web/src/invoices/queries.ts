@@ -370,3 +370,15 @@ export function filterTerms({ state, period, rest }: ListFilter) {
   const terms = [state && `state:${state}`, period && `period:${period}`, ...rest].filter(Boolean)
   return terms.length > 0 ? terms.join(',') : 'state:all'
 }
+
+/** The value of a term other than state and period, such as contact_id; empty without it. */
+export function termOf(rest: string[], key: string) {
+  const term = rest.find((r) => r.startsWith(`${key}:`))
+  return term ? term.slice(key.length + 1) : ''
+}
+
+/** The other terms with one set to a value, or left out when the value is empty. */
+export function withTerm(rest: string[], key: string, value: string) {
+  const others = rest.filter((r) => !r.startsWith(`${key}:`))
+  return value ? [...others, `${key}:${value}`] : others
+}
