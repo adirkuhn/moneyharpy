@@ -174,3 +174,25 @@ export function ListIcon({ kind }: { kind: ListIconKind }) {
     </svg>
   )
 }
+
+export type MenuIconKind = 'current' | 'other' | 'all' | 'new' | 'user' | 'account' | 'instance' | 'docs' | 'signOut'
+
+/** Icons for the top bar menus, drawn for MoneyHarpy. */
+export function MenuIcon({ kind }: { kind: MenuIconKind }) {
+  const shapes: Record<MenuIconKind, React.ReactNode> = {
+    current: <><circle cx="12" cy="12" r="8.5" /><path d="m8.5 12 2.500 2.500 4.500-5" /></>,
+    other: <circle cx="12" cy="12" r="8.5" />,
+    all: <path d="M4 6.5h16M7 12h13M10 17.5h10" />,
+    new: <path d="M12 5v14M5 12h14" />,
+    user: <><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="10" r="3" /><path d="M6.500 18.300c1.200-2 3.200-3 5.500-3s4.300 1 5.500 3" /></>,
+    account: <><circle cx="10" cy="8" r="3.500" /><path d="M3.500 20c.8-3.500 3.300-5.500 6.500-5.500 1.200 0 2.300.3 3.200.8" /><circle cx="17.500" cy="17.500" r="2" /><path d="M17.500 13.500v2m0 4v2m4-4h-2m-4 0h-2" /></>,
+    instance: <><rect x="4" y="4" width="16" height="7" rx="1.500" /><rect x="4" y="13" width="16" height="7" rx="1.500" /><path d="M7.500 7.500h.01M7.500 16.500h.01" strokeWidth={2.500} /></>,
+    docs: <><path d="M4 5.500a1.500 1.500 0 0 1 1.500-1.500H11v16H5.500A1.500 1.500 0 0 1 4 18.500Z" /><path d="M20 5.500A1.500 1.500 0 0 0 18.500 4H13v16h5.500a1.500 1.500 0 0 0 1.500-1.500Z" /></>,
+    signOut: <><path d="M10 4.500H5.500v15H10" /><path d="M14 8l4 4-4 4M18 12H9" /></>,
+  }
+  return (
+    <svg className="menu__icon" viewBox="0 0 24 24" width="1.25em" height="1.25em" aria-hidden="true" {...stroke}>
+      {shapes[kind]}
+    </svg>
+  )
+}

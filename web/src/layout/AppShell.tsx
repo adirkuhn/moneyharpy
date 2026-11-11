@@ -5,7 +5,7 @@ import { useAdministration, useAdministrations } from '../administrations/querie
 import { useCurrentUser, useLogout } from '../auth/queries'
 import { useAdministrationId } from './administrationId'
 import { MenuToggle, SidenavProvider } from './Sidenav'
-import { SearchIcon } from './icons'
+import { MenuIcon, SearchIcon } from './icons'
 import { NotificationsAside } from './NotificationsAside'
 import { LanguageSelect } from './LanguageSelect'
 import { Logo } from './Logo'
@@ -72,13 +72,17 @@ function AdministrationSwitcher() {
       <nav aria-label={t('nav.yours')}>
         <ul className="menu__list">
           {administrations.data?.map((a) => (
-            <li key={a.id}><Link to={a.uri}>{a.name}</Link></li>
+            <li key={a.id}>
+              <Link to={a.uri} aria-current={a.id === currentId ? 'true' : undefined}>
+                <MenuIcon kind={a.id === currentId ? 'current' : 'other'} />{a.name}
+              </Link>
+            </li>
           ))}
         </ul>
         <hr />
         <ul className="menu__list">
-          <li><Link to="/administrations">{t('nav.all')}</Link></li>
-          <li><Link to={createPath}>{t('nav.new')}</Link></li>
+          <li><Link to="/administrations"><MenuIcon kind="all" />{t('nav.all')}</Link></li>
+          <li><Link to={createPath}><MenuIcon kind="new" />{t('nav.new')}</Link></li>
         </ul>
       </nav>
     </Menu>
@@ -116,11 +120,11 @@ function UserMenu() {
   }
 
   return (
-    <Menu label={me.data?.name ?? ''} align="right">
+    <Menu label={<><MenuIcon kind="user" /><span className="topnav__name">{me.data?.name ?? ''}</span></>} align="right">
       <ul className="menu__list">
-        <li><Link to="/user">{t('nav.account')}</Link></li>
-        {me.data?.instance_admin && <li><Link to="/instance/settings">{t('nav.instance')}</Link></li>}
-        <li><a href="/docs/api/">{t('nav.docs')}</a></li>
+        <li><Link to="/user"><MenuIcon kind="account" />{t('nav.account')}</Link></li>
+        {me.data?.instance_admin && <li><Link to="/instance/settings"><MenuIcon kind="instance" />{t('nav.instance')}</Link></li>}
+        <li><a href="/docs/api/"><MenuIcon kind="docs" />{t('nav.docs')}</a></li>
       </ul>
       <label className="menu__theme">
         <span>{t('common.theme')}</span>
@@ -133,7 +137,7 @@ function UserMenu() {
       <LanguageSelect className="menu__theme" />
       <hr />
       <button type="button" className="menu__action" onClick={() => logout.mutate(undefined, { onSuccess: () => navigate('/login') })}>
-        {t('nav.signOut')}
+        <MenuIcon kind="signOut" />{t('nav.signOut')}
       </button>
     </Menu>
   )
