@@ -1,0 +1,48 @@
+# The documentation site. docs/build.sh assembles its pages into
+# build/docs-src and renders them into build/site.
+site_name: MoneyHarpy
+site_description: Open source bookkeeping with an API compatible with the Moneybird v2 API.
+site_url: https://adirkuhn.github.io/moneyharpy/
+repo_url: https://github.com/adirkuhn/moneyharpy
+edit_uri: ""
+docs_dir: build/docs-src
+site_dir: build/site
+strict: true
+
+theme:
+  name: material
+  logo: brand/harpy-mark-dark.svg
+  favicon: brand/harpy-mark.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle: { icon: material/weather-night, name: Dark mode }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle: { icon: material/weather-sunny, name: Light mode }
+  features:
+    - navigation.sections
+    - navigation.top
+    - toc.follow
+    - search.highlight
+    - content.code.copy
+
+extra_css:
+  - brand.css
+
+nav:
+  - Manual: index.md
+  - Adding a country: countries.md
+  - API reference: api/index.html
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
