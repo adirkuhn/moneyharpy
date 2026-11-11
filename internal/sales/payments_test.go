@@ -61,6 +61,12 @@ func TestRegisterPaymentPaysTheInvoice(t *testing.T) {
 	if _, err := h.svc.RegisterPayment(ctx, adminID, inv.ID, owner, PaymentInput{PaymentDate: "2026-11-10"}); !errors.Is(err, ErrNotEditable) {
 		t.Errorf("paid twice: %v", err)
 	}
+	if p, err := h.svc.Payment(ctx, adminID, part.ID, owner); err != nil || p.InvoiceID != inv.ID || p.Price != 2100 {
+		t.Errorf("Payment() = %+v, %v", p, err)
+	}
+	if _, err := h.svc.Payment(ctx, adminID, 9999, owner); !errors.Is(err, ErrPaymentNotFound) {
+		t.Errorf("unknown Payment() = %v", err)
+	}
 	if err := h.svc.DeletePayment(ctx, adminID, inv.ID, rest.ID, owner); err != nil {
 		t.Fatal(err)
 	}

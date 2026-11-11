@@ -86,8 +86,10 @@ func render(doc sales.Document, prices bool) ([]byte, error) {
 	pdf.AddPage()
 	pdf.SetFont("Helvetica", "", fontSize)
 
-	logo(pdf, doc)
-	sender(pdf, tr, doc, l, fontSize)
+	if !doc.Stationery {
+		logo(pdf, doc)
+		sender(pdf, tr, doc, l, fontSize)
+	}
 	recipient(pdf, tr, doc, fontSize)
 
 	pdf.SetY(95)

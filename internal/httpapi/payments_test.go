@@ -84,6 +84,10 @@ func TestSalesInvoicePayments(t *testing.T) {
 		t.Errorf("payment = %+v", part)
 	}
 	wantStatus(t, owner.do(http.MethodPost, invoices+"/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": today, "price": "500"}}), http.StatusUnprocessableEntity)
+	if got := decode[payment](t, owner.do(http.MethodGet, api+"/payments/"+part.ID+".json", nil)); got.ID != part.ID || got.InvoiceID != inv.ID || got.Price != "21.0" {
+		t.Errorf("GET payment = %+v", got)
+	}
+	wantStatus(t, owner.do(http.MethodGet, api+"/payments/1", nil), http.StatusNotFound)
 	r = owner.do(http.MethodPatch, invoices+"/"+inv.ID+"/register_payment", map[string]any{"payment": map[string]any{"payment_date": today + "T10:00:00Z", "price": 100}})
 	wantStatus(t, r, http.StatusOK)
 	rest := decode[payment](t, r)

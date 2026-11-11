@@ -21,6 +21,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
+	"github.com/adirkuhn/moneyharpy/internal/products"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -247,6 +249,17 @@ type Administrations interface {
 	CustomFields(ctx context.Context, admin, user resource.ID) ([]administration.CustomField, error)
 }
 
+// Products gives the products lines name; a line that names one takes its
+// description, price, VAT rate and category unless it says otherwise.
+type Products interface {
+	Product(ctx context.Context, admin, id, user resource.ID) (products.Product, error)
+}
+
+// Projects gives the projects lines are booked on.
+type Projects interface {
+	Project(ctx context.Context, admin, id, user resource.ID) (projects.Project, error)
+}
+
 // Contacts gives the invoice's customer.
 type Contacts interface {
 	Contact(ctx context.Context, admin, id, user resource.ID) (contacts.Contact, error)
@@ -426,6 +439,8 @@ type File struct {
 type Service struct {
 	admins      Administrations
 	contacts    Contacts
+	products    Products
+	projects    Projects
 	invoicing   Invoicing
 	ledger      Ledger
 	notes       Notes
@@ -443,6 +458,8 @@ type Service struct {
 type Deps struct {
 	Administrations Administrations
 	Contacts        Contacts
+	Products        Products
+	Projects        Projects
 	Invoicing       Invoicing
 	Ledger          Ledger
 	Notes           Notes
@@ -461,7 +478,7 @@ type Deps struct {
 // NewService returns a Service.
 func NewService(d Deps) *Service {
 	return &Service{
-		admins: d.Administrations, contacts: d.Contacts, invoicing: d.Invoicing, ledger: d.Ledger, notes: d.Notes,
+		admins: d.Administrations, contacts: d.Contacts, products: d.Products, projects: d.Projects, invoicing: d.Invoicing, ledger: d.Ledger, notes: d.Notes,
 		attachments: d.Attachments, store: d.Store, renderer: d.Renderer, mailer: d.Mailer, bank: d.Bank, notifier: d.Notifier, ids: d.IDs, now: d.Now,
 	}
 }

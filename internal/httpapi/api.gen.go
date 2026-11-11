@@ -1044,6 +1044,165 @@ func (e Permission) Valid() bool {
 	}
 }
 
+// Defines values for ProductFrequencyType.
+const (
+	ProductFrequencyTypeDay     ProductFrequencyType = "day"
+	ProductFrequencyTypeMonth   ProductFrequencyType = "month"
+	ProductFrequencyTypeQuarter ProductFrequencyType = "quarter"
+	ProductFrequencyTypeWeek    ProductFrequencyType = "week"
+	ProductFrequencyTypeYear    ProductFrequencyType = "year"
+)
+
+// Valid indicates whether the value is a known member of the ProductFrequencyType enum.
+func (e ProductFrequencyType) Valid() bool {
+	switch e {
+	case ProductFrequencyTypeDay:
+		return true
+	case ProductFrequencyTypeMonth:
+		return true
+	case ProductFrequencyTypeQuarter:
+		return true
+	case ProductFrequencyTypeWeek:
+		return true
+	case ProductFrequencyTypeYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProductRequestProductCheckoutType.
+const (
+	ProductRequestProductCheckoutTypeEmpty        ProductRequestProductCheckoutType = ""
+	ProductRequestProductCheckoutTypeProduct      ProductRequestProductCheckoutType = "product"
+	ProductRequestProductCheckoutTypeSubscription ProductRequestProductCheckoutType = "subscription"
+)
+
+// Valid indicates whether the value is a known member of the ProductRequestProductCheckoutType enum.
+func (e ProductRequestProductCheckoutType) Valid() bool {
+	switch e {
+	case ProductRequestProductCheckoutTypeEmpty:
+		return true
+	case ProductRequestProductCheckoutTypeProduct:
+		return true
+	case ProductRequestProductCheckoutTypeSubscription:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProductRequestProductFrequencyType.
+const (
+	ProductRequestProductFrequencyTypeDay     ProductRequestProductFrequencyType = "day"
+	ProductRequestProductFrequencyTypeEmpty   ProductRequestProductFrequencyType = ""
+	ProductRequestProductFrequencyTypeMonth   ProductRequestProductFrequencyType = "month"
+	ProductRequestProductFrequencyTypeQuarter ProductRequestProductFrequencyType = "quarter"
+	ProductRequestProductFrequencyTypeWeek    ProductRequestProductFrequencyType = "week"
+	ProductRequestProductFrequencyTypeYear    ProductRequestProductFrequencyType = "year"
+)
+
+// Valid indicates whether the value is a known member of the ProductRequestProductFrequencyType enum.
+func (e ProductRequestProductFrequencyType) Valid() bool {
+	switch e {
+	case ProductRequestProductFrequencyTypeDay:
+		return true
+	case ProductRequestProductFrequencyTypeEmpty:
+		return true
+	case ProductRequestProductFrequencyTypeMonth:
+		return true
+	case ProductRequestProductFrequencyTypeQuarter:
+		return true
+	case ProductRequestProductFrequencyTypeWeek:
+		return true
+	case ProductRequestProductFrequencyTypeYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProductRequestProductProductType.
+const (
+	ProductRequestProductProductTypeDigitalService ProductRequestProductProductType = "digital_service"
+	ProductRequestProductProductTypeEmpty          ProductRequestProductProductType = ""
+	ProductRequestProductProductTypeProduct        ProductRequestProductProductType = "product"
+	ProductRequestProductProductTypeService        ProductRequestProductProductType = "service"
+)
+
+// Valid indicates whether the value is a known member of the ProductRequestProductProductType enum.
+func (e ProductRequestProductProductType) Valid() bool {
+	switch e {
+	case ProductRequestProductProductTypeDigitalService:
+		return true
+	case ProductRequestProductProductTypeEmpty:
+		return true
+	case ProductRequestProductProductTypeProduct:
+		return true
+	case ProductRequestProductProductTypeService:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProductRequestProductVatRateType.
+const (
+	ProductRequestProductVatRateTypeEmpty    ProductRequestProductVatRateType = ""
+	ProductRequestProductVatRateTypeReduced  ProductRequestProductVatRateType = "reduced"
+	ProductRequestProductVatRateTypeStandard ProductRequestProductVatRateType = "standard"
+)
+
+// Valid indicates whether the value is a known member of the ProductRequestProductVatRateType enum.
+func (e ProductRequestProductVatRateType) Valid() bool {
+	switch e {
+	case ProductRequestProductVatRateTypeEmpty:
+		return true
+	case ProductRequestProductVatRateTypeReduced:
+		return true
+	case ProductRequestProductVatRateTypeStandard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProjectState.
+const (
+	ProjectStateActive   ProjectState = "active"
+	ProjectStateArchived ProjectState = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ProjectState enum.
+func (e ProjectState) Valid() bool {
+	switch e {
+	case ProjectStateActive:
+		return true
+	case ProjectStateArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProjectRequestProjectState.
+const (
+	ProjectRequestProjectStateActive   ProjectRequestProjectState = "active"
+	ProjectRequestProjectStateArchived ProjectRequestProjectState = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ProjectRequestProjectState enum.
+func (e ProjectRequestProjectState) Valid() bool {
+	switch e {
+	case ProjectRequestProjectStateActive:
+		return true
+	case ProjectRequestProjectStateArchived:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecurringSalesInvoiceFrequencyType.
 const (
 	RecurringSalesInvoiceFrequencyTypeDay     RecurringSalesInvoiceFrequencyType = "day"
@@ -2343,6 +2502,24 @@ func (e ProductResponseFrequencyType) Valid() bool {
 	}
 }
 
+// Defines values for ProjectResponseState.
+const (
+	ProjectResponseStateActive   ProjectResponseState = "active"
+	ProjectResponseStateArchived ProjectResponseState = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ProjectResponseState enum.
+func (e ProjectResponseState) Valid() bool {
+	switch e {
+	case ProjectResponseStateActive:
+		return true
+	case ProjectResponseStateArchived:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecurringSalesInvoiceResponseFrequencyType.
 const (
 	RecurringSalesInvoiceResponseFrequencyTypeDay     RecurringSalesInvoiceResponseFrequencyType = "day"
@@ -2733,6 +2910,63 @@ func (e ListExternalSalesInvoicesParamsSort) Valid() bool {
 	case ListExternalSalesInvoicesParamsSortDateAsc:
 		return true
 	case ListExternalSalesInvoicesParamsSortDateDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListProductsParamsActive.
+const (
+	ListProductsParamsActiveFalse ListProductsParamsActive = "false"
+	ListProductsParamsActiveTrue  ListProductsParamsActive = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListProductsParamsActive enum.
+func (e ListProductsParamsActive) Valid() bool {
+	switch e {
+	case ListProductsParamsActiveFalse:
+		return true
+	case ListProductsParamsActiveTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListProductsParamsForCheckout.
+const (
+	ListProductsParamsForCheckoutFalse ListProductsParamsForCheckout = "false"
+	ListProductsParamsForCheckoutTrue  ListProductsParamsForCheckout = "true"
+)
+
+// Valid indicates whether the value is a known member of the ListProductsParamsForCheckout enum.
+func (e ListProductsParamsForCheckout) Valid() bool {
+	switch e {
+	case ListProductsParamsForCheckoutFalse:
+		return true
+	case ListProductsParamsForCheckoutTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetBankBalanceParamsGranularity.
+const (
+	GetBankBalanceParamsGranularityMonth   GetBankBalanceParamsGranularity = "month"
+	GetBankBalanceParamsGranularityQuarter GetBankBalanceParamsGranularity = "quarter"
+	GetBankBalanceParamsGranularityYear    GetBankBalanceParamsGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the GetBankBalanceParamsGranularity enum.
+func (e GetBankBalanceParamsGranularity) Valid() bool {
+	switch e {
+	case GetBankBalanceParamsGranularityMonth:
+		return true
+	case GetBankBalanceParamsGranularityQuarter:
+		return true
+	case GetBankBalanceParamsGranularityYear:
 		return true
 	default:
 		return false
@@ -4806,6 +5040,170 @@ type PaymentRequestPaymentManualPaymentAction string
 // Permission Opens the API resources of the scope with the same name; ownership opens managing the administration: its users, security and deletion.
 type Permission string
 
+// Product A Moneybird product with MoneyHarpy extensions.
+type Product struct {
+	// Active MoneyHarpy extension. False once deactivated.
+	Active bool `json:"active"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier `json:"administration_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt     Timestamp             `json:"created_at"`
+	Currency      string                `json:"currency"`
+	Description   *string               `json:"description,omitempty"`
+	Frequency     *int                  `json:"frequency,omitempty"`
+	FrequencyType *ProductFrequencyType `json:"frequency_type,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id         Identifier `json:"id"`
+	Identifier *string    `json:"identifier,omitempty"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	LedgerAccountId Identifier `json:"ledger_account_id"`
+	Price           string     `json:"price"`
+
+	// TaxRateId Moneybird-compatible identifier_nullable.
+	TaxRateId *IdentifierNullable `json:"tax_rate_id,omitempty"`
+	Title     *string             `json:"title,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt Timestamp `json:"updated_at"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// ProductFrequencyType defines model for Product.FrequencyType.
+type ProductFrequencyType string
+
+// ProductRequest defines model for ProductRequest.
+type ProductRequest struct {
+	Product struct {
+		// Active A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		Active *FlexibleBoolean `json:"active,omitempty"`
+
+		// CheckoutDescription Accepted and kept; MoneyHarpy has no online checkout.
+		CheckoutDescription *string                            `json:"checkout_description,omitempty"`
+		CheckoutType        *ProductRequestProductCheckoutType `json:"checkout_type,omitempty"`
+		Currency            *string                            `json:"currency,omitempty"`
+		Description         *string                            `json:"description,omitempty"`
+
+		// DocumentStyleId An id as a string or a number; an empty string clears it.
+		DocumentStyleId *FlexibleIdentifier                 `json:"document_style_id,omitempty"`
+		Frequency       *ProductRequest_Product_Frequency   `json:"frequency,omitempty"`
+		FrequencyPreset *string                             `json:"frequency_preset,omitempty"`
+		FrequencyType   *ProductRequestProductFrequencyType `json:"frequency_type,omitempty"`
+		Identifier      *string                             `json:"identifier,omitempty"`
+
+		// LedgerAccountId An id as a string or a number; an empty string clears it.
+		LedgerAccountId   *FlexibleIdentifier                       `json:"ledger_account_id,omitempty"`
+		MaxAmountPerOrder *ProductRequest_Product_MaxAmountPerOrder `json:"max_amount_per_order,omitempty"`
+
+		// Price An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+		Price       *Money                            `json:"price,omitempty"`
+		ProductType *ProductRequestProductProductType `json:"product_type,omitempty"`
+
+		// TaxRateId An id as a string or a number; an empty string clears it.
+		TaxRateId   *FlexibleIdentifier               `json:"tax_rate_id,omitempty"`
+		Title       *string                           `json:"title,omitempty"`
+		VatRateType *ProductRequestProductVatRateType `json:"vat_rate_type,omitempty"`
+
+		// WorkflowId An id as a string or a number; an empty string clears it.
+		WorkflowId *FlexibleIdentifier `json:"workflow_id,omitempty"`
+	} `json:"product"`
+}
+
+// ProductRequestProductCheckoutType defines model for ProductRequest.Product.CheckoutType.
+type ProductRequestProductCheckoutType string
+
+// ProductRequestProductFrequency0 defines model for ProductRequest.Product.Frequency.0.
+type ProductRequestProductFrequency0 = int
+
+// ProductRequestProductFrequency1 defines model for ProductRequest.Product.Frequency.1.
+type ProductRequestProductFrequency1 = string
+
+// ProductRequest_Product_Frequency defines model for ProductRequest.Product.Frequency.
+type ProductRequest_Product_Frequency struct {
+	union json.RawMessage
+}
+
+// ProductRequestProductFrequencyType defines model for ProductRequest.Product.FrequencyType.
+type ProductRequestProductFrequencyType string
+
+// ProductRequestProductMaxAmountPerOrder0 defines model for ProductRequest.Product.MaxAmountPerOrder.0.
+type ProductRequestProductMaxAmountPerOrder0 = int
+
+// ProductRequestProductMaxAmountPerOrder1 defines model for ProductRequest.Product.MaxAmountPerOrder.1.
+type ProductRequestProductMaxAmountPerOrder1 = string
+
+// ProductRequest_Product_MaxAmountPerOrder defines model for ProductRequest.Product.MaxAmountPerOrder.
+type ProductRequest_Product_MaxAmountPerOrder struct {
+	union json.RawMessage
+}
+
+// ProductRequestProductProductType defines model for ProductRequest.Product.ProductType.
+type ProductRequestProductProductType string
+
+// ProductRequestProductVatRateType defines model for ProductRequest.Product.VatRateType.
+type ProductRequestProductVatRateType string
+
+// Project A Moneybird project with MoneyHarpy extensions.
+type Project struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier `json:"administration_id"`
+	Budget           *int       `json:"budget,omitempty"`
+	CreatedAt        *time.Time `json:"created_at,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id        Identifier   `json:"id"`
+	Name      string       `json:"name"`
+	State     ProjectState `json:"state"`
+	UpdatedAt *time.Time   `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// ProjectState defines model for Project.State.
+type ProjectState string
+
+// ProjectRequest defines model for ProjectRequest.
+type ProjectRequest struct {
+	Project struct {
+		// Budget The budget in hours, as a number or a string; empty or null removes it.
+		Budget *ProjectRequest_Project_Budget `json:"budget,omitempty"`
+		Name   *string                        `json:"name,omitempty"`
+
+		// State MoneyHarpy extension. archived archives the project, active makes it active again.
+		State *ProjectRequestProjectState `json:"state,omitempty"`
+	} `json:"project"`
+}
+
+// ProjectRequestProjectBudget0 defines model for ProjectRequest.Project.Budget.0.
+type ProjectRequestProjectBudget0 = float32
+
+// ProjectRequestProjectBudget1 defines model for ProjectRequest.Project.Budget.1.
+type ProjectRequestProjectBudget1 = string
+
+// ProjectRequest_Project_Budget The budget in hours, as a number or a string; empty or null removes it.
+type ProjectRequest_Project_Budget struct {
+	union json.RawMessage
+}
+
+// ProjectRequestProjectState MoneyHarpy extension. archived archives the project, active makes it active again.
+type ProjectRequestProjectState string
+
 // RecoveryCodes defines model for RecoveryCodes.
 type RecoveryCodes struct {
 	RecoveryCodes []string `json:"recovery_codes"`
@@ -6860,6 +7258,21 @@ type ProductResponse struct {
 // ProductResponseFrequencyType defines model for ProductResponse.FrequencyType.
 type ProductResponseFrequencyType string
 
+// ProjectResponse Moneybird-compatible project_response.
+type ProjectResponse struct {
+	Budget *int `json:"budget,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id    *Identifier           `json:"id,omitempty"`
+	Name  *string               `json:"name,omitempty"`
+	State *ProjectResponseState `json:"state,omitempty"`
+}
+
+// ProjectResponseState defines model for ProjectResponse.State.
+type ProjectResponseState string
+
 // RecurringSalesInvoiceResponse Moneybird-compatible recurring_sales_invoice_response.
 type RecurringSalesInvoiceResponse struct {
 	Active *bool `json:"active,omitempty"`
@@ -7412,6 +7825,9 @@ type Id = Identifier
 // IncludeArchived defines model for include_archived.
 type IncludeArchived string
 
+// Media defines model for media.
+type Media = string
+
 // Page defines model for page.
 type Page = string
 
@@ -7445,11 +7861,23 @@ type OneContact = Contact
 // OneContactPerson Moneybird-compatible contact_person_response.
 type OneContactPerson = ContactPersonResponse
 
+// PaymentRequired defines model for PaymentRequired.
+type PaymentRequired = Error
+
+// ProductPage defines model for ProductPage.
+type ProductPage = []Product
+
+// ProjectPage defines model for ProjectPage.
+type ProjectPage = []Project
+
 // RecurringSalesInvoicePage defines model for RecurringSalesInvoicePage.
 type RecurringSalesInvoicePage = []RecurringSalesInvoice
 
 // SalesInvoicePage defines model for SalesInvoicePage.
 type SalesInvoicePage = []SalesInvoice
+
+// ServiceUnavailable defines model for ServiceUnavailable.
+type ServiceUnavailable = Error
 
 // TooManyRequests Example: Retry later
 type TooManyRequests = string
@@ -7578,6 +8006,9 @@ type ListGeneralJournalDocumentsParams struct {
 	PerPage *PerPage                               `form:"per_page,omitempty" json:"per_page,omitempty"`
 	Sort    *ListGeneralJournalDocumentsParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
 
+	// NewFilter Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+	NewFilter *string `form:"new_filter,omitempty" json:"new_filter,omitempty"`
+
 	// ExcludeNewGeneralJournalDocuments Accepted for compatibility; journal entries are never new.
 	ExcludeNewGeneralJournalDocuments *ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments `form:"exclude_new_general_journal_documents,omitempty" json:"exclude_new_general_journal_documents,omitempty"`
 }
@@ -7637,6 +8068,60 @@ type ListFinancialMutationsParams struct {
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 }
 
+// ListFinancialMutationVersionsParams defines parameters for ListFinancialMutationVersions.
+type ListFinancialMutationVersionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// ListProductsParams defines parameters for ListProducts.
+type ListProductsParams struct {
+	// Query Free-text search across the title, description and identifier.
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Currency Only products in this currency, such as EUR.
+	Currency *string `form:"currency,omitempty" json:"currency,omitempty"`
+
+	// Active true (the default) lists active products only; false includes deactivated ones.
+	Active *ListProductsParamsActive `form:"active,omitempty" json:"active,omitempty"`
+
+	// ForCheckout true keeps the products sold through an online checkout, false those that are not. MoneyHarpy has no online checkout, so true finds none.
+	ForCheckout *ListProductsParamsForCheckout `form:"for_checkout,omitempty" json:"for_checkout,omitempty"`
+
+	// LedgerAccountId Only products booked on this category.
+	LedgerAccountId *Identifier `form:"ledger_account_id,omitempty" json:"ledger_account_id,omitempty"`
+}
+
+// ListProductsParamsActive defines parameters for ListProducts.
+type ListProductsParamsActive string
+
+// ListProductsParamsForCheckout defines parameters for ListProducts.
+type ListProductsParamsForCheckout string
+
+// CreateProductSalesLinkParams defines parameters for CreateProductSalesLink.
+type CreateProductSalesLinkParams struct {
+	// ContactId The contact to fill in on the checkout page.
+	ContactId *Identifier `form:"contact_id,omitempty" json:"contact_id,omitempty"`
+}
+
+// ListProjectsParams defines parameters for ListProjects.
+type ListProjectsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
 // ListRecurringSalesInvoicesParams defines parameters for ListRecurringSalesInvoices.
 type ListRecurringSalesInvoicesParams struct {
 	// Filter Comma-separated key:value terms.
@@ -7654,6 +8139,18 @@ type ListRecurringSalesInvoiceVersionsParams struct {
 	// Filter Comma-separated key:value terms.
 	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
 }
+
+// GetBankBalanceParams defines parameters for GetBankBalance.
+type GetBankBalanceParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+
+	// Granularity Splits the report into months, quarters or years.
+	Granularity *GetBankBalanceParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+}
+
+// GetBankBalanceParamsGranularity defines parameters for GetBankBalance.
+type GetBankBalanceParamsGranularity string
 
 // GetGeneralLedgerReportParams defines parameters for GetGeneralLedgerReport.
 type GetGeneralLedgerReportParams struct {
@@ -7715,10 +8212,28 @@ type CreateSalesInvoiceAttachmentMultipartBody struct {
 	File openapi_types.File `json:"file"`
 }
 
+// DownloadSalesInvoicePackingSlipParams defines parameters for DownloadSalesInvoicePackingSlip.
+type DownloadSalesInvoicePackingSlipParams struct {
+	// Media stationery leaves out the sender's address and logo, for printing on paper that has them.
+	Media *Media `form:"media,omitempty" json:"media,omitempty"`
+}
+
+// DownloadSalesInvoicePdfParams defines parameters for DownloadSalesInvoicePdf.
+type DownloadSalesInvoicePdfParams struct {
+	// Media stationery leaves out the sender's address and logo, for printing on paper that has them.
+	Media *Media `form:"media,omitempty" json:"media,omitempty"`
+}
+
 // ListTaxRatesParams defines parameters for ListTaxRates.
 type ListTaxRatesParams struct {
 	// Filter Comma-separated key:value pairs. Keys are name, partial_name, percentage, tax_rate_type, country, show_tax, active, created_after and updated_after, for example tax_rate_type:sales_invoice,active:true.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
 }
 
 // SearchTaxonomyItemsParams defines parameters for SearchTaxonomyItems.
@@ -7918,6 +8433,18 @@ type UpdateLedgerAccountSchemeJSONRequestBody = LedgerAccountSchemeRequest
 
 // UpdateLedgerAccountJSONRequestBody defines body for UpdateLedgerAccount for application/json ContentType.
 type UpdateLedgerAccountJSONRequestBody = LedgerAccountRequest
+
+// CreateProductJSONRequestBody defines body for CreateProduct for application/json ContentType.
+type CreateProductJSONRequestBody = ProductRequest
+
+// UpdateProductJSONRequestBody defines body for UpdateProduct for application/json ContentType.
+type UpdateProductJSONRequestBody = ProductRequest
+
+// CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
+type CreateProjectJSONRequestBody = ProjectRequest
+
+// UpdateProjectJSONRequestBody defines body for UpdateProject for application/json ContentType.
+type UpdateProjectJSONRequestBody = ProjectRequest
 
 // CreateRecurringSalesInvoiceJSONRequestBody defines body for CreateRecurringSalesInvoice for application/json ContentType.
 type CreateRecurringSalesInvoiceJSONRequestBody = RecurringSalesInvoiceRequest
@@ -9245,6 +9772,192 @@ func (t Money) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Money) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsProductRequestProductFrequency0 returns the union data inside the ProductRequest_Product_Frequency as a ProductRequestProductFrequency0
+func (t ProductRequest_Product_Frequency) AsProductRequestProductFrequency0() (ProductRequestProductFrequency0, error) {
+	var body ProductRequestProductFrequency0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProductRequestProductFrequency0 overwrites any union data inside the ProductRequest_Product_Frequency as the provided ProductRequestProductFrequency0
+func (t *ProductRequest_Product_Frequency) FromProductRequestProductFrequency0(v ProductRequestProductFrequency0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProductRequestProductFrequency0 performs a merge with any union data inside the ProductRequest_Product_Frequency, using the provided ProductRequestProductFrequency0
+func (t *ProductRequest_Product_Frequency) MergeProductRequestProductFrequency0(v ProductRequestProductFrequency0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsProductRequestProductFrequency1 returns the union data inside the ProductRequest_Product_Frequency as a ProductRequestProductFrequency1
+func (t ProductRequest_Product_Frequency) AsProductRequestProductFrequency1() (ProductRequestProductFrequency1, error) {
+	var body ProductRequestProductFrequency1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProductRequestProductFrequency1 overwrites any union data inside the ProductRequest_Product_Frequency as the provided ProductRequestProductFrequency1
+func (t *ProductRequest_Product_Frequency) FromProductRequestProductFrequency1(v ProductRequestProductFrequency1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProductRequestProductFrequency1 performs a merge with any union data inside the ProductRequest_Product_Frequency, using the provided ProductRequestProductFrequency1
+func (t *ProductRequest_Product_Frequency) MergeProductRequestProductFrequency1(v ProductRequestProductFrequency1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ProductRequest_Product_Frequency) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ProductRequest_Product_Frequency) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsProductRequestProductMaxAmountPerOrder0 returns the union data inside the ProductRequest_Product_MaxAmountPerOrder as a ProductRequestProductMaxAmountPerOrder0
+func (t ProductRequest_Product_MaxAmountPerOrder) AsProductRequestProductMaxAmountPerOrder0() (ProductRequestProductMaxAmountPerOrder0, error) {
+	var body ProductRequestProductMaxAmountPerOrder0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProductRequestProductMaxAmountPerOrder0 overwrites any union data inside the ProductRequest_Product_MaxAmountPerOrder as the provided ProductRequestProductMaxAmountPerOrder0
+func (t *ProductRequest_Product_MaxAmountPerOrder) FromProductRequestProductMaxAmountPerOrder0(v ProductRequestProductMaxAmountPerOrder0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProductRequestProductMaxAmountPerOrder0 performs a merge with any union data inside the ProductRequest_Product_MaxAmountPerOrder, using the provided ProductRequestProductMaxAmountPerOrder0
+func (t *ProductRequest_Product_MaxAmountPerOrder) MergeProductRequestProductMaxAmountPerOrder0(v ProductRequestProductMaxAmountPerOrder0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsProductRequestProductMaxAmountPerOrder1 returns the union data inside the ProductRequest_Product_MaxAmountPerOrder as a ProductRequestProductMaxAmountPerOrder1
+func (t ProductRequest_Product_MaxAmountPerOrder) AsProductRequestProductMaxAmountPerOrder1() (ProductRequestProductMaxAmountPerOrder1, error) {
+	var body ProductRequestProductMaxAmountPerOrder1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProductRequestProductMaxAmountPerOrder1 overwrites any union data inside the ProductRequest_Product_MaxAmountPerOrder as the provided ProductRequestProductMaxAmountPerOrder1
+func (t *ProductRequest_Product_MaxAmountPerOrder) FromProductRequestProductMaxAmountPerOrder1(v ProductRequestProductMaxAmountPerOrder1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProductRequestProductMaxAmountPerOrder1 performs a merge with any union data inside the ProductRequest_Product_MaxAmountPerOrder, using the provided ProductRequestProductMaxAmountPerOrder1
+func (t *ProductRequest_Product_MaxAmountPerOrder) MergeProductRequestProductMaxAmountPerOrder1(v ProductRequestProductMaxAmountPerOrder1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ProductRequest_Product_MaxAmountPerOrder) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ProductRequest_Product_MaxAmountPerOrder) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsProjectRequestProjectBudget0 returns the union data inside the ProjectRequest_Project_Budget as a ProjectRequestProjectBudget0
+func (t ProjectRequest_Project_Budget) AsProjectRequestProjectBudget0() (ProjectRequestProjectBudget0, error) {
+	var body ProjectRequestProjectBudget0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProjectRequestProjectBudget0 overwrites any union data inside the ProjectRequest_Project_Budget as the provided ProjectRequestProjectBudget0
+func (t *ProjectRequest_Project_Budget) FromProjectRequestProjectBudget0(v ProjectRequestProjectBudget0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProjectRequestProjectBudget0 performs a merge with any union data inside the ProjectRequest_Project_Budget, using the provided ProjectRequestProjectBudget0
+func (t *ProjectRequest_Project_Budget) MergeProjectRequestProjectBudget0(v ProjectRequestProjectBudget0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsProjectRequestProjectBudget1 returns the union data inside the ProjectRequest_Project_Budget as a ProjectRequestProjectBudget1
+func (t ProjectRequest_Project_Budget) AsProjectRequestProjectBudget1() (ProjectRequestProjectBudget1, error) {
+	var body ProjectRequestProjectBudget1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProjectRequestProjectBudget1 overwrites any union data inside the ProjectRequest_Project_Budget as the provided ProjectRequestProjectBudget1
+func (t *ProjectRequest_Project_Budget) FromProjectRequestProjectBudget1(v ProjectRequestProjectBudget1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProjectRequestProjectBudget1 performs a merge with any union data inside the ProjectRequest_Project_Budget, using the provided ProjectRequestProjectBudget1
+func (t *ProjectRequest_Project_Budget) MergeProjectRequestProjectBudget1(v ProjectRequestProjectBudget1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ProjectRequest_Project_Budget) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ProjectRequest_Project_Budget) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -11279,6 +11992,9 @@ type ServerInterface interface {
 	// CompleteSignIn Finish signing in with a second step
 	// (POST /api/auth/two_factor)
 	CompleteSignIn(w http.ResponseWriter, r *http.Request)
+	// DownloadFile Download a file by a temporary link
+	// (GET /api/files/{token})
+	DownloadFile(w http.ResponseWriter, r *http.Request, token string)
 	// InstanceSettings Get instance settings
 	// (GET /api/instance/settings)
 	InstanceSettings(w http.ResponseWriter, r *http.Request)
@@ -11605,7 +12321,7 @@ type ServerInterface interface {
 	ListFinancialMutations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListFinancialMutationsParams)
 	// ListFinancialMutationVersions List the ids and versions of all financial mutations
 	// (GET /api/v2/{administration_id}/financial_mutations/synchronization)
-	ListFinancialMutationVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	ListFinancialMutationVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListFinancialMutationVersionsParams)
 	// FetchFinancialMutations Fetch financial mutations by id
 	// (POST /api/v2/{administration_id}/financial_mutations/synchronization)
 	FetchFinancialMutations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -11687,6 +12403,45 @@ type ServerInterface interface {
 	// GetOverview Get the administration's overview
 	// (GET /api/v2/{administration_id}/overview)
 	GetOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetPayment Get a payment
+	// (GET /api/v2/{administration_id}/payments/{id})
+	GetPayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListProducts List all products
+	// (GET /api/v2/{administration_id}/products)
+	ListProducts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListProductsParams)
+	// CreateProduct Create a product
+	// (POST /api/v2/{administration_id}/products)
+	CreateProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetProductByIdentifier Get a product by its identifier
+	// (GET /api/v2/{administration_id}/products/identifier/{identifier})
+	GetProductByIdentifier(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, identifier string)
+	// DeleteProduct Delete or deactivate a product
+	// (DELETE /api/v2/{administration_id}/products/{id})
+	DeleteProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetProduct Get a product
+	// (GET /api/v2/{administration_id}/products/{id})
+	GetProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateProduct Update a product
+	// (PATCH /api/v2/{administration_id}/products/{id})
+	UpdateProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateProductSalesLink Create an online sales link
+	// (POST /api/v2/{administration_id}/products/{id}/sales_link)
+	CreateProductSalesLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params CreateProductSalesLinkParams)
+	// ListProjects List all projects
+	// (GET /api/v2/{administration_id}/projects)
+	ListProjects(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListProjectsParams)
+	// CreateProject Create a project
+	// (POST /api/v2/{administration_id}/projects)
+	CreateProject(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteProject Delete or archive a project
+	// (DELETE /api/v2/{administration_id}/projects/{id})
+	DeleteProject(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetProject Get a project
+	// (GET /api/v2/{administration_id}/projects/{id})
+	GetProject(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateProject Update a project
+	// (PATCH /api/v2/{administration_id}/projects/{id})
+	UpdateProject(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListRecurringSalesInvoices List all recurring sales invoices
 	// (GET /api/v2/{administration_id}/recurring_sales_invoices)
 	ListRecurringSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListRecurringSalesInvoicesParams)
@@ -11719,7 +12474,7 @@ type ServerInterface interface {
 	DeleteRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
 	// GetBankBalance Bank balance report
 	// (GET /api/v2/{administration_id}/reports/bank_balance)
-	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetBankBalanceParams)
 	// GetGeneralLedgerReport Get general ledger report
 	// (GET /api/v2/{administration_id}/reports/general_ledger)
 	GetGeneralLedgerReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetGeneralLedgerReportParams)
@@ -11770,10 +12525,10 @@ type ServerInterface interface {
 	DownloadSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
 	// DownloadSalesInvoicePackingSlip Download the packing slip
 	// (GET /api/v2/{administration_id}/sales_invoices/{id}/download_packing_slip_pdf)
-	DownloadSalesInvoicePackingSlip(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	DownloadSalesInvoicePackingSlip(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params DownloadSalesInvoicePackingSlipParams)
 	// DownloadSalesInvoicePdf Download the PDF
 	// (GET /api/v2/{administration_id}/sales_invoices/{id}/download_pdf)
-	DownloadSalesInvoicePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	DownloadSalesInvoicePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params DownloadSalesInvoicePdfParams)
 	// DownloadSalesInvoiceUbl Download the UBL e-invoice
 	// (GET /api/v2/{administration_id}/sales_invoices/{id}/download_ubl)
 	DownloadSalesInvoiceUbl(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -11968,6 +12723,12 @@ func (_ Unimplemented) Register(w http.ResponseWriter, r *http.Request) {
 // CompleteSignIn Finish signing in with a second step
 // (POST /api/auth/two_factor)
 func (_ Unimplemented) CompleteSignIn(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadFile Download a file by a temporary link
+// (GET /api/files/{token})
+func (_ Unimplemented) DownloadFile(w http.ResponseWriter, r *http.Request, token string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -12621,7 +13382,7 @@ func (_ Unimplemented) ListFinancialMutations(w http.ResponseWriter, r *http.Req
 
 // ListFinancialMutationVersions List the ids and versions of all financial mutations
 // (GET /api/v2/{administration_id}/financial_mutations/synchronization)
-func (_ Unimplemented) ListFinancialMutationVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+func (_ Unimplemented) ListFinancialMutationVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListFinancialMutationVersionsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -12787,6 +13548,84 @@ func (_ Unimplemented) GetOverview(w http.ResponseWriter, r *http.Request, admin
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetPayment Get a payment
+// (GET /api/v2/{administration_id}/payments/{id})
+func (_ Unimplemented) GetPayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListProducts List all products
+// (GET /api/v2/{administration_id}/products)
+func (_ Unimplemented) ListProducts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListProductsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateProduct Create a product
+// (POST /api/v2/{administration_id}/products)
+func (_ Unimplemented) CreateProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetProductByIdentifier Get a product by its identifier
+// (GET /api/v2/{administration_id}/products/identifier/{identifier})
+func (_ Unimplemented) GetProductByIdentifier(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, identifier string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteProduct Delete or deactivate a product
+// (DELETE /api/v2/{administration_id}/products/{id})
+func (_ Unimplemented) DeleteProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetProduct Get a product
+// (GET /api/v2/{administration_id}/products/{id})
+func (_ Unimplemented) GetProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateProduct Update a product
+// (PATCH /api/v2/{administration_id}/products/{id})
+func (_ Unimplemented) UpdateProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateProductSalesLink Create an online sales link
+// (POST /api/v2/{administration_id}/products/{id}/sales_link)
+func (_ Unimplemented) CreateProductSalesLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params CreateProductSalesLinkParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListProjects List all projects
+// (GET /api/v2/{administration_id}/projects)
+func (_ Unimplemented) ListProjects(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListProjectsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateProject Create a project
+// (POST /api/v2/{administration_id}/projects)
+func (_ Unimplemented) CreateProject(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteProject Delete or archive a project
+// (DELETE /api/v2/{administration_id}/projects/{id})
+func (_ Unimplemented) DeleteProject(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetProject Get a project
+// (GET /api/v2/{administration_id}/projects/{id})
+func (_ Unimplemented) GetProject(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateProject Update a project
+// (PATCH /api/v2/{administration_id}/projects/{id})
+func (_ Unimplemented) UpdateProject(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListRecurringSalesInvoices List all recurring sales invoices
 // (GET /api/v2/{administration_id}/recurring_sales_invoices)
 func (_ Unimplemented) ListRecurringSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListRecurringSalesInvoicesParams) {
@@ -12849,7 +13688,7 @@ func (_ Unimplemented) DeleteRecurringSalesInvoiceNote(w http.ResponseWriter, r 
 
 // GetBankBalance Bank balance report
 // (GET /api/v2/{administration_id}/reports/bank_balance)
-func (_ Unimplemented) GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+func (_ Unimplemented) GetBankBalance(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetBankBalanceParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -12951,13 +13790,13 @@ func (_ Unimplemented) DownloadSalesInvoiceAttachment(w http.ResponseWriter, r *
 
 // DownloadSalesInvoicePackingSlip Download the packing slip
 // (GET /api/v2/{administration_id}/sales_invoices/{id}/download_packing_slip_pdf)
-func (_ Unimplemented) DownloadSalesInvoicePackingSlip(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+func (_ Unimplemented) DownloadSalesInvoicePackingSlip(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params DownloadSalesInvoicePackingSlipParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // DownloadSalesInvoicePdf Download the PDF
 // (GET /api/v2/{administration_id}/sales_invoices/{id}/download_pdf)
-func (_ Unimplemented) DownloadSalesInvoicePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+func (_ Unimplemented) DownloadSalesInvoicePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params DownloadSalesInvoicePdfParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -13451,6 +14290,32 @@ func (siw *ServerInterfaceWrapper) CompleteSignIn(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CompleteSignIn(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadFile operation middleware
+func (siw *ServerInterfaceWrapper) DownloadFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", chi.URLParam(r, "token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadFile(w, r, token)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -15765,6 +16630,19 @@ func (siw *ServerInterfaceWrapper) ListGeneralJournalDocuments(w http.ResponseWr
 		return
 	}
 
+	// ------------- Optional query parameter "new_filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "new_filter", r.URL.Query(), &params.NewFilter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "new_filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "new_filter", Err: err})
+		}
+		return
+	}
+
 	// ------------- Optional query parameter "exclude_new_general_journal_documents" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "exclude_new_general_journal_documents", r.URL.Query(), &params.ExcludeNewGeneralJournalDocuments, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
@@ -17087,8 +17965,24 @@ func (siw *ServerInterfaceWrapper) ListFinancialMutationVersions(w http.Response
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListFinancialMutationVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListFinancialMutationVersions(w, r, administrationId)
+		siw.Handler.ListFinancialMutationVersions(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -17917,6 +18811,577 @@ func (siw *ServerInterfaceWrapper) GetOverview(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// GetPayment operation middleware
+func (siw *ServerInterfaceWrapper) GetPayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPayment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProducts operation middleware
+func (siw *ServerInterfaceWrapper) ListProducts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListProductsParams
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "currency" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "currency", r.URL.Query(), &params.Currency, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "currency"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "currency", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "active" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "active", r.URL.Query(), &params.Active, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "active"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "active", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "for_checkout" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "for_checkout", r.URL.Query(), &params.ForCheckout, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "for_checkout"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "for_checkout", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "ledger_account_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ledger_account_id", r.URL.Query(), &params.LedgerAccountId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "ledger_account_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ledger_account_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProducts(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateProduct operation middleware
+func (siw *ServerInterfaceWrapper) CreateProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateProduct(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProductByIdentifier operation middleware
+func (siw *ServerInterfaceWrapper) GetProductByIdentifier(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "identifier" -------------
+	var identifier string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "identifier", chi.URLParam(r, "identifier"), &identifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "identifier", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProductByIdentifier(w, r, administrationId, identifier)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteProduct operation middleware
+func (siw *ServerInterfaceWrapper) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteProduct(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProduct operation middleware
+func (siw *ServerInterfaceWrapper) GetProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProduct(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProduct operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProduct(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateProductSalesLink operation middleware
+func (siw *ServerInterfaceWrapper) CreateProductSalesLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateProductSalesLinkParams
+
+	// ------------- Optional query parameter "contact_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_id", r.URL.Query(), &params.ContactId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateProductSalesLink(w, r, administrationId, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProjects operation middleware
+func (siw *ServerInterfaceWrapper) ListProjects(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListProjectsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProjects(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateProject operation middleware
+func (siw *ServerInterfaceWrapper) CreateProject(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateProject(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteProject operation middleware
+func (siw *ServerInterfaceWrapper) DeleteProject(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteProject(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProject operation middleware
+func (siw *ServerInterfaceWrapper) GetProject(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProject(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProject operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProject(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProject(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListRecurringSalesInvoices operation middleware
 func (siw *ServerInterfaceWrapper) ListRecurringSalesInvoices(w http.ResponseWriter, r *http.Request) {
 
@@ -18313,8 +19778,37 @@ func (siw *ServerInterfaceWrapper) GetBankBalance(w http.ResponseWriter, r *http
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetBankBalanceParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "granularity" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "granularity", r.URL.Query(), &params.Granularity, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "granularity"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "granularity", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetBankBalance(w, r, administrationId)
+		siw.Handler.GetBankBalance(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19048,8 +20542,24 @@ func (siw *ServerInterfaceWrapper) DownloadSalesInvoicePackingSlip(w http.Respon
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DownloadSalesInvoicePackingSlipParams
+
+	// ------------- Optional query parameter "media" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "media", r.URL.Query(), &params.Media, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "media"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "media", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DownloadSalesInvoicePackingSlip(w, r, administrationId, id)
+		siw.Handler.DownloadSalesInvoicePackingSlip(w, r, administrationId, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19083,8 +20593,24 @@ func (siw *ServerInterfaceWrapper) DownloadSalesInvoicePdf(w http.ResponseWriter
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DownloadSalesInvoicePdfParams
+
+	// ------------- Optional query parameter "media" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "media", r.URL.Query(), &params.Media, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "media"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "media", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DownloadSalesInvoicePdf(w, r, administrationId, id)
+		siw.Handler.DownloadSalesInvoicePdf(w, r, administrationId, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19620,6 +21146,32 @@ func (siw *ServerInterfaceWrapper) ListTaxRates(w http.ResponseWriter, r *http.R
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
 		}
 		return
 	}
@@ -20940,6 +22492,45 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/payments/{payment_id}", wrapper.DeleteSalesInvoicePayment)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/payments/{id}", wrapper.GetPayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/products", wrapper.ListProducts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/products", wrapper.CreateProduct)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/products/identifier/{identifier}", wrapper.GetProductByIdentifier)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/products/{id}", wrapper.DeleteProduct)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/products/{id}", wrapper.GetProduct)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/products/{id}", wrapper.UpdateProduct)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/products/{id}/sales_link", wrapper.CreateProductSalesLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/projects", wrapper.ListProjects)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/projects", wrapper.CreateProject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/projects/{id}", wrapper.DeleteProject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/projects/{id}", wrapper.GetProject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/projects/{id}", wrapper.UpdateProject)
+	})
+	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/register_payment", wrapper.RegisterSalesInvoicePayment)
 	})
 	r.Group(func(r chi.Router) {
@@ -21169,6 +22760,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/auth/providers", wrapper.AuthProviders)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/files/{token}", wrapper.DownloadFile)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/auth/register", wrapper.Register)

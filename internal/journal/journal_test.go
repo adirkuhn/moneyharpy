@@ -12,6 +12,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -23,6 +24,8 @@ const (
 	debtors         resource.ID = 702
 	closed          resource.ID = 703
 	customer        resource.ID = 900
+	falcon          resource.ID = 950
+	shelved         resource.ID = 951
 )
 
 var now = time.Date(2026, 11, 11, 9, 0, 0, 0, time.UTC)
@@ -204,6 +207,18 @@ func (m *memAttachments) AttachmentsOf(_ context.Context, _ resource.ID, entityT
 	return out, nil
 }
 
+type fakeProjects struct{}
+
+func (fakeProjects) Project(_ context.Context, _, id, _ resource.ID) (projects.Project, error) {
+	switch id {
+	case falcon:
+		return projects.Project{ID: id, Name: "Falcon", State: projects.Active}, nil
+	case shelved:
+		return projects.Project{ID: id, Name: "Shelved", State: projects.Archived}, nil
+	}
+	return projects.Project{}, projects.ErrNotFound
+}
+
 type noFiles struct{}
 
 func (noFiles) Put(context.Context, string, string, []byte) error { return nil }
@@ -217,7 +232,7 @@ func newService() (*Service, *memJournal, *fakeLedger) {
 	ledger := &fakeLedger{}
 	ids := resource.NewGenerator(1)
 	clock := func() time.Time { return now }
-	return NewService(fakeAdmins{}, ledger, fakeContacts{}, store, store, notes.NewService(&memNotes{}, ids, clock),
+	return NewService(fakeAdmins{}, ledger, fakeContacts{}, fakeProjects{}, store, store, notes.NewService(&memNotes{}, ids, clock),
 		attachments.NewService(&memAttachments{}, noFiles{}, ids, clock), ids, clock), store, ledger
 }
 
@@ -259,6 +274,31 @@ func TestJournalEntryPostsBalancedRows(t *testing.T) {
 	}
 	if d.Ref().URI() != "/100/documents/general_journal_documents/"+d.ID.String() {
 		t.Errorf("uri = %s", d.Ref().URI())
+	}
+}
+
+func TestJournalEntryRowsBookOnProjects(t *testing.T) {
+	s, store, _ := newService()
+	ctx := context.Background()
+	in := rows(rent, "100", "", bank, "", "100")
+	in[0].ProjectID = ptr(falcon)
+	d, err := s.CreateDocument(ctx, adminID, owner, DocumentChanges{Reference: ptr("Falcon costs"), Date: ptr("2026-11-01"), Rows: in})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Rows[0].ProjectID == nil || *d.Rows[0].ProjectID != falcon || store.entries[0].ProjectID == nil || *store.entries[0].ProjectID != falcon {
+		t.Errorf("rows = %+v, entries = %+v", d.Rows, store.entries)
+	}
+	for id, problem := range map[resource.ID]string{shelved: "is archived", 5: "does not exist"} {
+		in[0].ProjectID = ptr(id)
+		_, err := s.CreateDocument(ctx, adminID, owner, DocumentChanges{Reference: ptr("x"), Date: ptr("2026-11-01"), Rows: in})
+		if got := fieldsOf(t, err)[rowsField+".0.project_id"]; len(got) != 1 || got[0] != problem {
+			t.Errorf("project %d: %v", id, got)
+		}
+	}
+	cleared, err := s.UpdateDocument(ctx, adminID, d.ID, owner, DocumentChanges{Rows: []RowInput{{ID: &d.Rows[0].ID, ProjectID: ptr(resource.ID(0))}}})
+	if err != nil || cleared.Rows[0].ProjectID != nil {
+		t.Errorf("cleared = %+v, %v", cleared.Rows, err)
 	}
 }
 

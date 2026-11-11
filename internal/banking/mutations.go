@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -262,12 +263,18 @@ func (s *Service) Mutation(ctx context.Context, admin, id, user resource.ID) (Mu
 	return s.store.Mutation(ctx, admin, id)
 }
 
-// MutationVersions lists every transaction's ID and version.
-func (s *Service) MutationVersions(ctx context.Context, admin, user resource.ID) ([]Version, error) {
-	if _, err := s.ensure(ctx, admin, user); err != nil {
+// MutationVersions lists the ID and version of every transaction the
+// filter selects, for synchronization.
+func (s *Service) MutationVersions(ctx context.Context, admin, user resource.ID, f MutationFilter) ([]Version, error) {
+	list, err := s.Mutations(ctx, admin, user, f)
+	if err != nil {
 		return nil, err
 	}
-	return s.store.MutationVersions(ctx, admin)
+	out := make([]Version, len(list))
+	for i, m := range list {
+		out[i] = Version{ID: m.ID, Version: m.Version()}
+	}
+	return out, nil
 }
 
 // MutationsByID returns up to 100 transactions by ID; unknown IDs are left
@@ -531,7 +538,7 @@ func (s *Service) Balances(ctx context.Context, admin, user resource.ID) ([]Bala
 	if err != nil {
 		return nil, 0, err
 	}
-	sums, err := s.store.Balances(ctx, admin)
+	sums, err := s.store.Balances(ctx, admin, nil)
 	if err != nil {
 		return nil, 0, fmt.Errorf("balances: %w", err)
 	}
@@ -544,6 +551,83 @@ func (s *Service) Balances(ctx context.Context, admin, user resource.ID) ([]Bala
 		}
 	}
 	return out, total, nil
+}
+
+// BalancePeriod is the booked balance of financial accounts at the end of a
+// period.
+type BalancePeriod struct {
+	Period   money.Period
+	Balances []Balance
+	Total    Amount
+}
+
+// BalanceReport is the balances at the end of the report's period and, with
+// a granularity, at the end of each month, quarter or year in it.
+type BalanceReport struct {
+	BalancePeriod
+	Periods []BalancePeriod
+}
+
+// MaxReportMonths bounds the period of the bank balance report.
+const MaxReportMonths = 12
+
+// BalanceReport reports every financial account's balance at the end of the
+// period (whole months, this month unless given, at most 12), and at the end
+// of each part of it when granularity is month, quarter or year. Accounts
+// with a zero balance at every end are left out.
+func (s *Service) BalanceReport(ctx context.Context, admin, user resource.ID, period, granularity string) (BalanceReport, error) {
+	a, err := s.ensure(ctx, admin, user)
+	if err != nil {
+		return BalanceReport{}, err
+	}
+	now := s.now()
+	if loc, err := time.LoadLocation(a.TimeZone); err == nil {
+		now = now.In(loc)
+	}
+	p, err := money.ParseReportPeriod(period, now)
+	if err != nil {
+		return BalanceReport{}, invalid("period", "is invalid")
+	}
+	if p.Months() > MaxReportMonths {
+		return BalanceReport{}, invalid("period", fmt.Sprintf("cannot exceed %d months", MaxReportMonths))
+	}
+	parts := []money.Period{}
+	if granularity != "" {
+		if parts, err = p.Split(granularity); err != nil {
+			return BalanceReport{}, invalid("granularity", err.Error())
+		}
+	}
+	accounts, err := s.Accounts(ctx, admin, user)
+	if err != nil {
+		return BalanceReport{}, err
+	}
+	sums := map[money.Period]map[resource.ID]Amount{}
+	used := map[resource.ID]bool{}
+	for _, q := range append([]money.Period{p}, parts...) {
+		until := q.To
+		if sums[q], err = s.store.Balances(ctx, admin, &until); err != nil {
+			return BalanceReport{}, fmt.Errorf("balances: %w", err)
+		}
+		for id, b := range sums[q] {
+			used[id] = used[id] || b != 0
+		}
+	}
+	at := func(q money.Period) BalancePeriod {
+		out := BalancePeriod{Period: q, Balances: []Balance{}}
+		for _, acc := range accounts {
+			if used[acc.ID] {
+				b := sums[q][acc.ID]
+				out.Balances = append(out.Balances, Balance{Account: acc, Balance: b})
+				out.Total += b
+			}
+		}
+		return out
+	}
+	report := BalanceReport{BalancePeriod: at(p)}
+	for _, q := range parts {
+		report.Periods = append(report.Periods, at(q))
+	}
+	return report, nil
 }
 
 // Summary is what the overview shows of the bank.

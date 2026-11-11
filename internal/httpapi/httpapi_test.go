@@ -38,6 +38,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
 	"github.com/adirkuhn/moneyharpy/internal/postgres/postgrestest"
+	"github.com/adirkuhn/moneyharpy/internal/products"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -256,9 +258,12 @@ func newHarness(t *testing.T, opts options) *harness {
 	salesStore := postgres.NewSalesStore(pool)
 	attachmentService := attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now)
 	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
-	ledger := journal.NewService(admins, books, contactService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
+	catalogStore := postgres.NewCatalogStore(pool)
+	productService := products.NewService(admins, books, contactService, catalogStore, salesStore, ids, time.Now)
+	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore}, ids, time.Now)
+	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
-		Administrations: admins, Contacts: contactService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
+		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
 		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, Bank: bank,
 		Notifier: httpapi.SalesNotifier{Webhooks: h.hooks}, IDs: ids, Now: time.Now,
 	})
@@ -276,6 +281,8 @@ func newHarness(t *testing.T, opts options) *harness {
 		Journal:         ledger,
 		Contacts:        contactService,
 		Sales:           invoiceService,
+		Products:        productService,
+		Projects:        projectService,
 		Storage:         files,
 		Identity:        people,
 		Settings:        settle,
@@ -388,6 +395,21 @@ func (c *client) checkContract(req *http.Request, res *http.Response, body []byt
 	}
 }
 
+// follow fetches the temporary link a download redirected to, without the
+// client's session or token, as storage links work at Moneybird.
+func (c *client) follow(r response) response {
+	c.t.Helper()
+	wantStatus(c.t, r, http.StatusFound)
+	to := r.header.Get("Location")
+	if !strings.HasPrefix(to, c.base+"/api/files/") || !strings.Contains(string(r.body), "Location") && !strings.Contains(string(r.body), to) {
+		c.t.Fatalf("redirect to %q, body %s", to, r.body)
+	}
+	anonymous := &client{t: c.t, base: c.base, http: &http.Client{}}
+	got := anonymous.do(http.MethodGet, strings.TrimPrefix(to, c.base), nil)
+	wantStatus(c.t, got, http.StatusOK)
+	return got
+}
+
 func decode[T any](t *testing.T, r response) T {
 	t.Helper()
 	var v T
@@ -401,6 +423,16 @@ func wantStatus(t *testing.T, r response, want int) {
 	t.Helper()
 	if r.status != want {
 		t.Fatalf("status = %d, want %d; body: %s", r.status, want, r.body)
+	}
+}
+
+// wantKept checks a delete that kept the record, as Moneybird's X-Kept-As
+// header tells.
+func wantKept(t *testing.T, r response, as string) {
+	t.Helper()
+	wantStatus(t, r, http.StatusNoContent)
+	if got := r.header.Get("X-Kept-As"); got != as {
+		t.Errorf("X-Kept-As = %q, want %q", got, as)
 	}
 }
 
