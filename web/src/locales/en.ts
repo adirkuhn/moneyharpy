@@ -53,7 +53,7 @@ export const en = {
       newTitle: 'Add contact', editTitle: 'Edit contact', save: 'Save', contactTitle: 'Contact', type: 'Type', company: 'Company', private: 'Private',
       companyName: 'Company name', registerCountry: 'Company register country', registerMatches: 'Companies in the register',
       chamberOfCommerce: 'Netherlands Chamber of Commerce KVK number', taxNumber: 'VAT-id', taxNumberTip: 'The VAT identification number, such as NL000099998B57.',
-      firstname: 'First name', lastname: 'Last name', phone: 'Phone number', customerId: 'Client number', nextNumber: 'Next number',
+      firstname: 'First name', lastname: 'Last name', phone: 'Phone number', customerId: 'Client number',
       contactPerson: 'Contact person', personFirstname: 'Firstname', personLastname: 'Lastname',
       addressTitle: 'Address', address: 'Address', addAddressLine: 'Add address line', address2: 'Additional address details', zipcode: 'Zipcode', city: 'City', country: 'Country',
       sendingTitle: 'Sending', deliveryMethod: 'Delivery method',

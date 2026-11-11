@@ -6957,6 +6957,18 @@ type Money0 = string
 // Money1 defines model for Money.1.
 type Money1 = float32
 
+// NextCustomerId defines model for NextCustomerId.
+type NextCustomerId struct {
+	// CustomerId Example: 43
+	CustomerId string `json:"customer_id"`
+}
+
+// NextDraftId defines model for NextDraftId.
+type NextDraftId struct {
+	// DraftId Example: 12
+	DraftId int `json:"draft_id"`
+}
+
 // NoteRequest defines model for NoteRequest.
 type NoteRequest struct {
 	Note struct {
@@ -19850,6 +19862,9 @@ type ServerInterface interface {
 	// FilterContacts Filter contacts
 	// (GET /api/v2/{administration_id}/contacts/filter)
 	FilterContacts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params FilterContactsParams)
+	// GetNextCustomerId Get the next customer id
+	// (GET /api/v2/{administration_id}/contacts/next_customer_id)
+	GetNextCustomerId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// ListContactVersions List all ids and versions
 	// (GET /api/v2/{administration_id}/contacts/synchronization)
 	ListContactVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactVersionsParams)
@@ -20542,6 +20557,9 @@ type ServerInterface interface {
 	// GetSalesInvoiceByReference Find a sales invoice by reference
 	// (GET /api/v2/{administration_id}/sales_invoices/find_by_reference/{reference})
 	GetSalesInvoiceByReference(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, reference string)
+	// GetNextSalesInvoiceDraftId Get the next draft number
+	// (GET /api/v2/{administration_id}/sales_invoices/next_draft_id)
+	GetNextSalesInvoiceDraftId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// SendSalesInvoiceReminders Send reminders
 	// (POST /api/v2/{administration_id}/sales_invoices/send_reminders)
 	SendSalesInvoiceReminders(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -21296,6 +21314,12 @@ func (_ Unimplemented) ListContactDoubles(w http.ResponseWriter, r *http.Request
 // FilterContacts Filter contacts
 // (GET /api/v2/{administration_id}/contacts/filter)
 func (_ Unimplemented) FilterContacts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params FilterContactsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetNextCustomerId Get the next customer id
+// (GET /api/v2/{administration_id}/contacts/next_customer_id)
+func (_ Unimplemented) GetNextCustomerId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -22672,6 +22696,12 @@ func (_ Unimplemented) GetSalesInvoiceByInvoiceId(w http.ResponseWriter, r *http
 // GetSalesInvoiceByReference Find a sales invoice by reference
 // (GET /api/v2/{administration_id}/sales_invoices/find_by_reference/{reference})
 func (_ Unimplemented) GetSalesInvoiceByReference(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, reference string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetNextSalesInvoiceDraftId Get the next draft number
+// (GET /api/v2/{administration_id}/sales_invoices/next_draft_id)
+func (_ Unimplemented) GetNextSalesInvoiceDraftId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -25462,6 +25492,32 @@ func (siw *ServerInterfaceWrapper) FilterContacts(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.FilterContacts(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetNextCustomerId operation middleware
+func (siw *ServerInterfaceWrapper) GetNextCustomerId(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetNextCustomerId(w, r, administrationId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -34819,6 +34875,32 @@ func (siw *ServerInterfaceWrapper) GetSalesInvoiceByReference(w http.ResponseWri
 	handler.ServeHTTP(w, r)
 }
 
+// GetNextSalesInvoiceDraftId operation middleware
+func (siw *ServerInterfaceWrapper) GetNextSalesInvoiceDraftId(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetNextSalesInvoiceDraftId(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // SendSalesInvoiceReminders operation middleware
 func (siw *ServerInterfaceWrapper) SendSalesInvoiceReminders(w http.ResponseWriter, r *http.Request) {
 
@@ -38908,6 +38990,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/filter", wrapper.FilterContacts)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/next_customer_id", wrapper.GetNextCustomerId)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/synchronization", wrapper.ListContactVersions)
 	})
 	r.Group(func(r chi.Router) {
@@ -39230,6 +39315,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/sales_invoices", wrapper.CreateSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/next_draft_id", wrapper.GetNextSalesInvoiceDraftId)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/synchronization", wrapper.ListSalesInvoiceVersions)

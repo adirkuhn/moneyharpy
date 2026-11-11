@@ -1816,6 +1816,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/contacts/next_customer_id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get the next customer id
+         * @description MoneyHarpy extension. The customer id a contact created now gets when it is given none, which the add contact screen shows prefilled as Moneybird does. Another contact may take it first.
+         */
+        get: operations["getNextCustomerId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/contacts/synchronization": {
         parameters: {
             query?: never;
@@ -3657,6 +3679,28 @@ export interface paths {
          * @description A draft, following the default workflow, document style and identity unless given.
          */
         post: operations["createSalesInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/sales_invoices/next_draft_id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get the next draft number
+         * @description MoneyHarpy extension. The draft number a sales invoice created now gets, which the add invoice screen shows as "Concept #n" as Moneybird does. Another invoice may take it first.
+         */
+        get: operations["getNextSalesInvoiceDraftId"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -7232,6 +7276,14 @@ export interface components {
                 manual?: boolean;
                 financial_mutations_attributes?: components["schemas"]["FinancialMutationInput"][];
             };
+        };
+        NextCustomerId: {
+            /** @example 43 */
+            customer_id: string;
+        };
+        NextDraftId: {
+            /** @example 12 */
+            draft_id: number;
         };
         SynchronizationItem: {
             id: components["schemas"]["Identifier"];
@@ -14102,6 +14154,33 @@ export interface operations {
             429: components["responses"]["TooManyRequests"];
         };
     };
+    getNextCustomerId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The next customer id */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NextCustomerId"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
     listContactVersions: {
         parameters: {
             query?: {
@@ -17416,6 +17495,33 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getNextSalesInvoiceDraftId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The next draft number */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NextDraftId"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };

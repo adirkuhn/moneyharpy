@@ -66,6 +66,7 @@ function loaded(list: SalesInvoice[] = [invoice(), draft], total = list.length, 
       seen.push(new URL(request.url))
       return HttpResponse.json(list, { headers: { 'X-Total-Count': String(total) } })
     }),
+    http.get('*/api/v2/11/sales_invoices/next_draft_id', () => HttpResponse.json({ draft_id: 12 })),
     http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice())),
     http.get('*/api/v2/11/sales_invoices/902', () => HttpResponse.json(draft)),
     http.get('*/api/v2/11/tax_rates', () => HttpResponse.json(rates)),
@@ -221,7 +222,7 @@ describe('the invoice editor', () => {
     expect(recipient).toHaveTextContent('First name Last nameAddress 1231234AB City')
 
     // The document speaks the workflow's language: this one is Dutch.
-    expect(within(paper()).getByRole('heading', { level: 2 })).toHaveTextContent('Factuur Concept')
+    expect(await within(paper()).findByRole('heading', { level: 2, name: 'Factuur Concept #12' })).toBeInTheDocument()
     expect(within(paper()).getByText('Contact:').parentElement).toHaveTextContent('Contact: First name Last name')
     expect(within(paper()).getByRole('button', { name: /Factuurdatum/ })).toHaveTextContent('Factuurdatum:11-11-2026')
     expect(within(paper()).getByRole('button', { name: /Vervaldatum/ })).toHaveTextContent('Vervaldatum:25-11-2026')
