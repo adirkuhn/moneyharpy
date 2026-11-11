@@ -1,7 +1,7 @@
 import type { Messages } from './en'
 
 export const nl: Messages = {
-  common: { loading: 'Laden…', language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt', pagination: 'Paginering', page: 'Pagina {{n}}', previousPage: 'Vorige pagina', nextPage: 'Volgende pagina' },
+  common: { close: 'Sluiten', loading: 'Laden…', language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt', pagination: 'Paginering', page: 'Pagina {{n}}', previousPage: 'Vorige pagina', nextPage: 'Volgende pagina' },
   login: {
     title: 'Inloggen', email: 'E-mailadres', password: 'Wachtwoord', submit: 'Inloggen bij MoneyHarpy', or: 'of', forgot: 'Wachtwoord vergeten?', noAccount: 'Geen account?', passwordChanged: 'Wachtwoord gewijzigd. Log in met je nieuwe wachtwoord.', google: 'Doorgaan met Google', lm2: 'Doorgaan met LM2',
     unreachable: 'MoneyHarpy is niet bereikbaar. Herlaad de pagina om het opnieuw te proberen.',
@@ -213,6 +213,7 @@ export const nl: Messages = {
   overview: {
     title: 'Overzicht', morning: 'Goedemorgen {{name}}!', afternoon: 'Goedemiddag {{name}}!', evening: 'Goedenavond {{name}}!',
     add: 'Toevoegen', addMenu: 'Toevoegen aan deze administratie', addAccount: 'Financiële rekening', addRule: 'Boekingsregel', addCategory: 'Categorie',
+    addInvoice: 'Factuur', addExternal: 'Externe factuur', addRecurring: 'Periodieke factuur', addJournal: 'Memoriaalboeking', addContact: 'Contact',
     summary: 'Samenvatting', bank: 'Bank', balance: 'Saldo', toLink: 'Te koppelen',
     salesInvoices: 'Verkoopfacturen en externe facturen', toReceive: 'Te ontvangen', toRemind: 'Te herinneren',
     incoming: 'Inkomend', toPay: 'Te betalen', toProcess: 'Te verwerken',
@@ -221,7 +222,6 @@ export const nl: Messages = {
     nothing: 'Je hebt geen toegang tot de onderdelen van deze administratie die hier staan. Vraag een eigenaar om rechten.',
     types: { financial_mutation: 'Transactie' }, states: { processed: 'Geboekt' },
     loadError: 'Het overzicht kon niet worden geladen. Laad de pagina opnieuw om het nog eens te proberen.',
-    tally_one: '{{amount}} · {{count}} factuur', tally_other: '{{amount}} · {{count}} facturen',
   },
   onboarding: {
     welcome: 'Welkom {{name}}', subtitle: 'In een paar stappen maken we je financiële administratie aan.',
@@ -247,6 +247,7 @@ export const nl: Messages = {
     bankAccount: 'Bankrekening', bankHolder: 'Rekeninghouder', iban: 'Rekeningnummer', bic: 'BIC',
     editDetails: 'Bedrijfsgegevens bewerken', editSender: 'Afzendadres bewerken', toCompany: 'Naar Bedrijf',
     detailsNotice: 'De bedrijfsgegevens staan op je facturen en offertes.',
+    detailsCheck: 'Controleer na het bewerken of je <styles>huisstijlen</styles> en <workflows>workflows</workflows> nog naar wens zijn.',
     noVat: 'Bedrijf heeft geen btw-nummer', noVatReason: 'Reden',
     reasons: { below_tax_threshold: 'Omzet onder de btw-drempel', industry_exemption: 'Vrijgestelde branche' },
     kor: 'Bedrijf is aangemeld voor de kleineondernemersregeling (KOR)',
@@ -500,9 +501,12 @@ export const nl: Messages = {
     customCss: 'Eigen CSS', customCssHelp: 'Wordt toegepast op pdf’s van je documenten, zodra MoneyHarpy die maakt.',
   },
   user: {
-    title: 'Gebruikersaccount', name: 'Naam', email: 'E-mailadres', tokens: 'API-tokens', tokensHint: 'Stuur een token als bearer-token om de', api: 'API te gebruiken', copy: 'Kopieer dit token nu. Het wordt niet opnieuw getoond.', tokenName: 'Naam van token', create: 'Token aanmaken', list: 'API-tokens', revoke: 'Intrekken', revokeName: '{{name}} intrekken',
+    subtitle: 'Je gegevens, hoe je inlogt en toegang tot de API.', details: 'Accountgegevens', detailsSubtitle: 'De naam en het e-mailadres waarmee je inlogt.',
+    tokensSubtitle: 'Stuur een token als bearer-token om de API te gebruiken.', apiDocs: 'API-documentatie', created: 'Aangemaakt', newToken: 'Nieuw API-token',
+    title: 'Gebruikersaccount', name: 'Naam', email: 'E-mailadres', tokens: 'API-tokens', copy: 'Kopieer dit token nu. Het wordt niet opnieuw getoond.', tokenName: 'Naam van token', create: 'Token aanmaken', list: 'API-tokens', revoke: 'Intrekken', revokeName: '{{name}} intrekken',
   },
   instance: {
+    subtitle: 'Instellingen voor iedereen op deze MoneyHarpy-installatie: inloggen, diensten en toegang voor support.', servicesTitle: 'Inloggen en diensten', servicesSubtitle: 'Hoe mensen zich aanmelden en inloggen, en de diensten waarmee MoneyHarpy verbindt.',
     webhooksLocal: 'Webhooks naar gewoon http en lokale adressen toestaan', webhooksLocalHint: 'Alleen voor ontwikkeling. Uit hebben webhooks openbare https-adressen nodig, zodat ze het eigen netwerk van deze server niet bereiken.',
     storageTitle: 'Bestandsopslag', storageEnable: 'Bewaar geüploade bestanden, zoals logo\u2019s, in S3-compatibele opslag', storageHint: 'Werkt met Amazon S3, Cloudflare R2, Backblaze B2, MinIO, SeaweedFS en andere S3-compatibele diensten. Zolang dit uit staat, worden uploads op de schijf van de server bewaard.', storageEndpoint: 'Endpoint', storageRegion: 'Regio', storageBucket: 'Bucket', storageAccessKey: 'Access key', storageSecretKey: 'Secret key', storagePathStyle: 'Gebruik pad-adressen (nodig voor de meeste eigen installaties)', testStorage: 'Opslag testen', storageWorks: 'De opslag werkt',
     title: 'Instellingen van deze installatie', register: 'Nieuwe gebruikers mogen zich registreren', googleTitle: 'Inloggen met Google', googleEnable: 'Gebruikers kunnen doorgaan met Google', googleId: 'Google client-ID', googleSecret: 'Google client-secret', stored: 'Opgeslagen. Typ om te vervangen.',

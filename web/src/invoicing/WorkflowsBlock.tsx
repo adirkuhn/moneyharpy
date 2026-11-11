@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { ConfirmDelete } from '../forms/ConfirmDelete'
+import { useState } from 'react'
 import { Menu } from '../layout/Menu'
+import { PageIcon } from '../layout/pageIcons'
 import { Block } from '../settings/Block'
 import { useDeleteWorkflow, useWorkflows, type Workflow } from './queries'
 
@@ -42,7 +43,7 @@ function WorkflowTable({ administrationId, title, workflows, invoices }: TablePr
   const { t } = useTranslation()
   const remove = useDeleteWorkflow(administrationId)
   return (
-    <table className="data-table" aria-label={title}>
+    <table className="data-table data-table--rows" aria-label={title}>
       <thead>
         <tr>
           <th scope="col">{title}</th>
@@ -55,21 +56,20 @@ function WorkflowTable({ administrationId, title, workflows, invoices }: TablePr
         {workflows.map((w) => (
           <tr key={w.id}>
             <td>
-              <Link to={`/${administrationId}/workflows/${w.id}`}>{w.name}</Link>
+              <Link className="row-link" to={`/${administrationId}/workflows/${w.id}`}>{w.name}</Link>
               {!w.active && <span className="hint"> · {t('invoicing.deactivated')}</span>}
             </td>
             {invoices && <td className="data-table__extra">{t('invoicing.inactive')}</td>}
             {invoices && <td className="data-table__extra">{w.payment_methods?.length ? w.payment_methods.join(', ') : '-'}</td>}
             <td className="data-table__actions">
               {w.default ? (
-                <button type="button" className="btn btn--secondary btn--small" disabled aria-label={t('invoicing.defaultCannotBeDeleted')} title={t('invoicing.defaultCannotBeDeleted')}>
-                  {t('settings.delete')}
+                <button type="button" className="btn btn--secondary btn--small icon-only" disabled aria-label={t('invoicing.defaultCannotBeDeleted')} title={t('invoicing.defaultCannotBeDeleted')}>
+                  <PageIcon kind="trash" />
                 </button>
               ) : (
-                <ConfirmDelete
+                <TrashButton
                   label={t('invoicing.deleteName', { name: w.name })}
                   confirmLabel={t('invoicing.confirmDeleteName', { name: w.name })}
-                  text={t('settings.delete')}
                   confirmText={t('settings.confirmDelete')}
                   disabled={remove.isPending}
                   onConfirm={() => remove.mutate(w.id ?? '')}
@@ -80,5 +80,24 @@ function WorkflowTable({ administrationId, title, workflows, invoices }: TablePr
         ))}
       </tbody>
     </table>
+  )
+}
+
+type TrashProps = { label: string; confirmLabel: string; confirmText: string; disabled: boolean; onConfirm: () => void }
+
+/** An icon-only delete button, as in Moneybird's tables, that asks once more before deleting. */
+function TrashButton({ label, confirmLabel, confirmText, disabled, onConfirm }: TrashProps) {
+  const [confirming, setConfirming] = useState(false)
+  if (confirming) {
+    return (
+      <button type="button" className="btn btn--danger btn--small" aria-label={confirmLabel} disabled={disabled} onClick={onConfirm} onBlur={() => setConfirming(false)} autoFocus>
+        {confirmText}
+      </button>
+    )
+  }
+  return (
+    <button type="button" className="btn btn--secondary btn--small icon-only" aria-label={label} title={label} disabled={disabled} onClick={() => setConfirming(true)}>
+      <PageIcon kind="trash" />
+    </button>
   )
 }

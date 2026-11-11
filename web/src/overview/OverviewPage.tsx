@@ -39,7 +39,7 @@ export function OverviewPage() {
   const firstName = me.data?.name.trim().split(/\s+/)[0] ?? ''
   const greeting = t(`overview.${partOfDay(new Date(), a.time_zone)}`, { name: firstName })
   const money = (amount: string) => formatAmount(amount, a.currency, i18n.language)
-  const tally = (v: OverviewTally | undefined) => v && t('overview.tally', { count: v.count, amount: money(v.amount) })
+  const count = (v: OverviewTally | undefined) => v?.count.toLocaleString(i18n.language)
   const bank = can(a, 'bank')
   const sales = can(a, 'sales_invoices')
   const documents = can(a, 'documents')
@@ -49,14 +49,26 @@ export function OverviewPage() {
   return (
     <Page
       title={greeting}
-      actions={settings && (
+      actions={(sales || documents || settings) && (
         <Menu label={t('overview.add')} buttonClassName="btn btn--accent">
           <nav aria-label={t('overview.addMenu')}>
-            <ul className="menu__list">
-              <li><Link to={`${base}/financial_accounts/new`}>{t('overview.addAccount')}</Link></li>
-              <li><Link to={`${base}/booking_rules/new`}>{t('overview.addRule')}</Link></li>
-              <li><Link to={`${base}/ledger_accounts/new`}>{t('overview.addCategory')}</Link></li>
-            </ul>
+            {(sales || documents) && (
+              <ul className="menu__list">
+                {sales && <li><Link to={`${base}/sales_invoices/new`}>{t('overview.addInvoice')}</Link></li>}
+                {sales && <li><Link to={`${base}/external_sales_invoices/new`}>{t('overview.addExternal')}</Link></li>}
+                {sales && <li><Link to={`${base}/recurring_sales_invoices/new`}>{t('overview.addRecurring')}</Link></li>}
+                {documents && <li><Link to={`${base}/documents/general_journal_documents/new`}>{t('overview.addJournal')}</Link></li>}
+                <li><Link to={`${base}/contacts/new`}>{t('overview.addContact')}</Link></li>
+              </ul>
+            )}
+            {(sales || documents) && settings && <hr />}
+            {settings && (
+              <ul className="menu__list">
+                <li><Link to={`${base}/financial_accounts/new`}>{t('overview.addAccount')}</Link></li>
+                <li><Link to={`${base}/booking_rules/new`}>{t('overview.addRule')}</Link></li>
+                <li><Link to={`${base}/ledger_accounts/new`}>{t('overview.addCategory')}</Link></li>
+              </ul>
+            )}
           </nav>
         </Menu>
       )}
@@ -72,8 +84,8 @@ export function OverviewPage() {
         )}
         {sales && (
           <Block title={t('overview.salesInvoices')}>
-            <Tile icon="in" title={t('overview.toReceive')} to={`${base}/sales_invoices?filter=${encodeURIComponent(`state:${unpaidStates}`)}`} detail={tally(overview.data?.sales?.to_receive)} />
-            <Tile icon="attention" urgent title={t('overview.toRemind')} to={`${base}/sales_invoices?filter=${encodeURIComponent(`state:${overdueStates}`)}`} detail={tally(overview.data?.sales?.to_remind)} />
+            <Tile icon="in" title={t('overview.toReceive')} count={count(overview.data?.sales?.to_receive)} to={`${base}/sales_invoices?filter=${encodeURIComponent(`state:${unpaidStates}`)}`} detail={overview.data?.sales && money(overview.data.sales.to_receive.amount)} />
+            <Tile icon="attention" urgent title={t('overview.toRemind')} to={`${base}/sales_invoices?filter=${encodeURIComponent(`state:${overdueStates}`)}`} detail={count(overview.data?.sales?.to_remind)} />
           </Block>
         )}
         {documents && (
@@ -97,13 +109,14 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-type TileProps = { icon: Parameters<typeof TileIcon>[0]['kind']; title: string; detail?: string; to: string; urgent?: boolean }
+type TileProps = { icon: Parameters<typeof TileIcon>[0]['kind']; title: string; count?: string; detail?: string; to: string; urgent?: boolean }
 
-function Tile({ icon, title, detail, to, urgent }: TileProps) {
+/** A summary that opens the list behind it; like Moneybird a count follows the title, the amount below. */
+function Tile({ icon, title, count, detail, to, urgent }: TileProps) {
   return (
     <Link className="tile" to={to}>
       <span className={urgent ? 'tile__icon tile__icon--urgent' : 'tile__icon'}><TileIcon kind={icon} /></span>
-      <span className="tile__title">{title}</span>
+      <span className="tile__title">{title}{count !== undefined && <span className="tile__count"> — {count}</span>}</span>
       <span className="tile__detail">{detail ?? '…'}</span>
     </Link>
   )

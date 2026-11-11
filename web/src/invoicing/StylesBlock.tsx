@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { ChevronIcon } from '../layout/icons'
 import { Block } from '../settings/Block'
 import { useIdentities } from '../settings/queries'
 import { useDocumentStyles, useSaveDocumentStyle } from './queries'
@@ -27,6 +28,7 @@ export function StylesBlock({ administrationId }: { administrationId: string }) 
               <span className="hint">{t('invoicing.senderLine', { name: senderName(style.identity_id ?? '') })}</span>
             </span>
             {style.default ? <span className="ledger__state">{t('invoicing.defaultStyle')}</span> : <MakeDefault administrationId={administrationId} id={style.id ?? ''} />}
+            <ChevronIcon className="ledger__chevron" />
           </li>
         ))}
       </ul>

@@ -53,7 +53,8 @@ describe('management settings', () => {
     const name = await screen.findByLabelText('Administration name')
     await userEvent.clear(name)
     await userEvent.type(name, 'Renamed')
-    await userEvent.selectOptions(screen.getByLabelText('Language'), 'nl')
+    expect(screen.getByRole('radiogroup', { name: 'Language' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: 'Nederlands' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent).toEqual({ administration: { name: 'Renamed', country: 'NL', language: 'nl', currency: 'EUR', time_zone: 'Europe/Amsterdam' } }))
   })
@@ -62,8 +63,21 @@ describe('management settings', () => {
     server.use(...loaded(), http.patch('*/api/v2/administrations/11', () => HttpResponse.json({ error: { name: ["can't be blank"] } }, { status: 422 })))
     renderAt('/11/settings/administration')
     const name = await screen.findByLabelText('Administration name')
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
+    await userEvent.clear(name)
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(name).toHaveAccessibleDescription("Administration name can't be blank"))
+  })
+
+  it('undoes unsaved changes with Cancel', async () => {
+    server.use(...loaded())
+    renderAt('/11/settings/administration')
+    const name = await screen.findByLabelText('Administration name')
+    const before = (name as HTMLInputElement).value
+    await userEvent.type(name, ' X')
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(name).toHaveValue(before)
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
   })
 
   it('asks the owner to set up two-step verification before requiring it', async () => {
