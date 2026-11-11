@@ -77,7 +77,7 @@ func TestSubscriptionLifecycle(t *testing.T) {
 	owner.register()
 	stranger.register()
 	api, customer, hosting := subscriptionSetup(t, owner)
-	tomorrow := time.Now().AddDate(0, 0, 1).Format(time.DateOnly)
+	tomorrow := adminNow().AddDate(0, 0, 1).Format(time.DateOnly)
 
 	r := owner.do(http.MethodPost, api+"/subscriptions.json", map[string]any{"subscription": map[string]any{
 		"start_date": tomorrow, "contact_id": customer, "product_id": hosting, "reference": "moneybird.nl", "discount": 10, "amount": "5x",
@@ -90,7 +90,7 @@ func TestSubscriptionLifecycle(t *testing.T) {
 		t.Fatalf("created = %+v", sub)
 	}
 	rec := decode[recurringInvoice](t, owner.do(http.MethodGet, api+"/recurring_sales_invoices/"+sub.RecurringID, nil))
-	if !rec.AutoSend || rec.InvoiceDate != tomorrow || rec.TotalIncl != "108.9" {
+	if !rec.AutoSend || rec.InvoiceDate != tomorrow || rec.TotalIncl != "108.9" || rec.Subscription == nil || rec.Subscription.ID != sub.ID {
 		t.Errorf("recurring = %+v", rec)
 	}
 	if got := decode[[]recurringInvoice](t, owner.do(http.MethodGet, api+"/recurring_sales_invoices", nil)); len(got) != 0 {
@@ -146,17 +146,17 @@ func TestSubscriptionLifecycle(t *testing.T) {
 	}})
 	wantStatus(t, oneOff, http.StatusCreated)
 	scheduled := decode[salesInvoice](t, oneOff)
-	if scheduled.State != "scheduled" || deref(scheduled.InvoiceDate) != tomorrow {
+	if scheduled.State != "scheduled" || deref(scheduled.InvoiceDate) != tomorrow || deref(scheduled.SubscriptionID) != sub.ID {
 		t.Errorf("one-off = %+v", scheduled)
 	}
 
-	today := time.Now().Format(time.DateOnly)
+	today := adminNow().Format(time.DateOnly)
 	wantStatus(t, owner.do(http.MethodPatch, api+"/recurring_sales_invoices/"+sub.RecurringID, map[string]any{"recurring_sales_invoice": map[string]any{"invoice_date": today}}), http.StatusOK)
 	if err := h.sales.Work(context.Background()); err != nil && strings.Contains(err.Error(), strings.TrimPrefix(api, "/api/v2/")) {
 		t.Fatal(err)
 	}
 	made := decode[[]salesInvoice](t, owner.do(http.MethodGet, api+"/sales_invoices?filter=recurring_sales_invoice_id:"+sub.RecurringID, nil))
-	if len(made) != 1 || made[0].State != "open" || len(made[0].Details) != 2 || made[0].TotalIncl != "677.6" {
+	if len(made) != 1 || made[0].State != "open" || len(made[0].Details) != 2 || made[0].TotalIncl != "677.6" || deref(made[0].SubscriptionID) != sub.ID {
 		t.Fatalf("made = %+v", made)
 	}
 	charges := decode[[]additionalCharge](t, owner.do(http.MethodGet, api+"/subscriptions/"+sub.ID+"/additional_charges?include_billed=true", nil))
@@ -171,7 +171,7 @@ func TestSubscriptionLifecycle(t *testing.T) {
 		t.Errorf("one-off = %d", still.status)
 	}
 
-	end := time.Now().AddDate(0, 0, 2).Format(time.DateOnly)
+	end := adminNow().AddDate(0, 0, 2).Format(time.DateOnly)
 	c := owner.do(http.MethodDelete, api+"/subscriptions/"+sub.ID, map[string]any{"subscription": map[string]any{"end_date": end}})
 	wantStatus(t, c, http.StatusOK)
 	if got := decode[subscription](t, c); got.CancelledAt == nil || deref(got.EndDate) != end {
@@ -193,7 +193,7 @@ func TestContactAdditionalCharges(t *testing.T) {
 	})
 	wantStatus(t, r, http.StatusCreated)
 	c := decode[additionalCharge](t, r)
-	if deref(c.ContactID) != customer || c.SubscriptionID != nil || c.Amount != "1 x" || c.Price != "20.0" || c.Period != time.Now().Format("200601")+".."+time.Now().Format("200601") {
+	if deref(c.ContactID) != customer || c.SubscriptionID != nil || c.Amount != "1 x" || c.Price != "20.0" || c.Period != adminNow().Format("200601")+".."+adminNow().Format("200601") {
 		t.Errorf("charge = %+v", c)
 	}
 	wantStatus(t, owner.do(http.MethodPost, api+"/contacts/"+customer+"/additional_charges", map[string]any{
@@ -327,13 +327,13 @@ func TestSubscriptionWebhooks(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodPatch, "/api/instance/settings", map[string]bool{"webhooks_allow_local": true}), http.StatusOK)
 	wantStatus(t, owner.do(http.MethodPost, api+"/webhooks", map[string]any{"url": rc.srv.URL, "enabled_events": []string{"subscription", "sales_invoice_created_based_on_subscription"}}), http.StatusCreated)
 
-	tomorrow := time.Now().AddDate(0, 0, 1).Format(time.DateOnly)
+	tomorrow := adminNow().AddDate(0, 0, 1).Format(time.DateOnly)
 	sub := decode[subscription](t, owner.do(http.MethodPost, api+"/subscriptions", map[string]any{"subscription": map[string]any{
 		"start_date": tomorrow, "contact_id": customer, "product_id": hosting,
 	}}))
 	wantStatus(t, owner.do(http.MethodPatch, api+"/subscriptions/"+sub.ID, map[string]any{"subscription": map[string]any{"reference": "Contract 8"}}), http.StatusOK)
 	wantStatus(t, owner.do(http.MethodPatch, api+"/subscriptions/"+sub.ID, map[string]any{"subscription": map[string]any{"amount": "2"}}), http.StatusOK)
-	wantStatus(t, owner.do(http.MethodPatch, api+"/recurring_sales_invoices/"+sub.RecurringID, map[string]any{"recurring_sales_invoice": map[string]any{"invoice_date": time.Now().Format(time.DateOnly)}}), http.StatusOK)
+	wantStatus(t, owner.do(http.MethodPatch, api+"/recurring_sales_invoices/"+sub.RecurringID, map[string]any{"recurring_sales_invoice": map[string]any{"invoice_date": adminNow().Format(time.DateOnly)}}), http.StatusOK)
 	if err := h.sales.Work(ctx); err != nil {
 		t.Fatal(err)
 	}

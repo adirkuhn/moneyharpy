@@ -243,6 +243,25 @@ func toIdentityChanges(body IdentityRequest) administration.IdentityChanges {
 	}
 }
 
+// toDefaultIdentityChanges converts a default identity update. Moneybird's
+// administration_attributes set the administration's legal entity type, which
+// MoneyHarpy keeps on the default identity.
+func toDefaultIdentityChanges(body DefaultIdentityRequest) (administration.IdentityChanges, error) {
+	raw, err := json.Marshal(body)
+	if err != nil {
+		return administration.IdentityChanges{}, fmt.Errorf("encode identity: %w", err)
+	}
+	var plain IdentityRequest // drops administration_attributes
+	if err := json.Unmarshal(raw, &plain); err != nil {
+		return administration.IdentityChanges{}, fmt.Errorf("decode identity: %w", err)
+	}
+	changes := toIdentityChanges(plain)
+	if a := body.Identity.AdministrationAttributes; a != nil && a.LegalEntityType != nil {
+		changes.LegalEntityType = (*string)(a.LegalEntityType)
+	}
+	return changes, nil
+}
+
 // toCustomFieldChanges converts requested values. The contract guarantees
 // numeric IDs; one that overflows becomes 0, which matches no field and so
 // fails validation.
@@ -355,11 +374,16 @@ func (s *server) UpdateDefaultIdentity(w http.ResponseWriter, r *http.Request, a
 	if !ok {
 		return
 	}
-	body, ok := decodeBody[IdentityRequest](w, r)
+	body, ok := decodeBody[DefaultIdentityRequest](w, r)
 	if !ok {
 		return
 	}
-	updated, err := s.deps.Administrations.UpdateDefaultIdentity(r.Context(), admin, user(r).ID, toIdentityChanges(body))
+	changes, err := toDefaultIdentityChanges(body)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	updated, err := s.deps.Administrations.UpdateDefaultIdentity(r.Context(), admin, user(r).ID, changes)
 	if err != nil {
 		s.fail(w, r, err)
 		return

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -41,6 +42,7 @@ const (
 	cashLedger      resource.ID = 705
 	privateDeposits resource.ID = 706
 	bankLedger      resource.ID = 707
+	settlements     resource.ID = 708
 	bankAccount     resource.ID = 800
 	cashAccount     resource.ID = 801
 	falcon          resource.ID = 850
@@ -94,7 +96,7 @@ func (f *fakeLedger) Bookable(_ context.Context, _, _, id resource.ID, documentT
 func (f *fakeLedger) SystemLedgerAccount(_ context.Context, _, _ resource.ID, role string) (resource.ID, error) {
 	id, ok := map[string]resource.ID{
 		"accounts_payable": creditors, "receivable_vat": receivableVAT, "payable_vat": payableVAT, "uncategorized_expenses": uncategorized,
-		"payments_to_classify": toClassify,
+		"payments_to_classify": toClassify, "settlements": settlements,
 	}[role]
 	if !ok {
 		return 0, errors.New("no such role")
@@ -569,3 +571,25 @@ func newHarness(t *testing.T) harness {
 }
 
 func ptr[T any](v T) *T { return &v }
+
+func (f fakeContacts) List(ctx context.Context, admin, user resource.ID, q contacts.Query) (contacts.Page, error) {
+	var page contacts.Page
+	for _, id := range []resource.ID{supplier, noIBAN} {
+		c, _ := f.Contact(ctx, admin, id, user)
+		if q.Search != "" && strings.Contains(c.SepaIBAN, q.Search) {
+			page.Contacts = append(page.Contacts, c)
+		}
+	}
+	return page, nil
+}
+
+func (f *fakeLedger) TaxRates(ctx context.Context, admin, user resource.ID, filter bookkeeping.TaxRateFilter) ([]bookkeeping.TaxRate, error) {
+	var out []bookkeeping.TaxRate
+	for _, id := range []resource.ID{vat21, reverse21, noVAT, salesVAT} {
+		r, _ := f.TaxRate(ctx, admin, id, user)
+		if (filter.Type == nil || *filter.Type == r.Type) && (filter.Percentage == nil || *filter.Percentage == r.Percentage) && (filter.Active == nil || *filter.Active == r.Active) {
+			out = append(out, r)
+		}
+	}
+	return out, nil
+}

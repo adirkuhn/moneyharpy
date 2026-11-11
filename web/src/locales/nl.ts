@@ -655,6 +655,8 @@ export const nl: Messages = {
     taxRate: 'Btw-tarief', reference: 'Rubriek', turnover: 'Omzet', vat: 'Btw', rateTypes: { sales: 'verkoop', purchases: 'inkoop' },
     openingBalance: 'Beginsaldo', closingBalance: 'Eindsaldo', received: 'Ontvangen', paid: 'Betaald',
     contact: 'Contact', noContact: 'Zonder contact', nothing: 'Niets te tonen voor deze periode.', nothingOpen: 'Er staat niets open.',
+    project: 'Project', noProject: 'Zonder project', asset: 'Activum',
+    assetColumns: { value_at_begin: 'Beginwaarde', investment: 'Investering', value_changes: 'Waardeveranderingen', divestment: 'Desinvestering', value_at_end: 'Eindwaarde' },
   },
 }
 

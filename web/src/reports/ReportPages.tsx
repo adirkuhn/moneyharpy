@@ -10,8 +10,10 @@ import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { PeriodFilter } from '../list/PeriodFilter'
 import { isPeriod } from '../list/period'
+import { useProject } from '../projects/queries'
 import {
-  type AgingKind, amounts, type ContactReportKind, useAgingReport, useBalanceSheet, useCashFlow, useContactReport, useProfitLoss, useTaxReport,
+  type AgingKind, amounts, type ContactReportKind, type ProjectReportKind, useAgingReport, useAssetsReport, useBalanceSheet, useCashFlow,
+  useContactReport, useProfitLoss, useProjectReport, useTaxReport,
 } from './queries'
 
 type Frame = {
@@ -296,6 +298,82 @@ export function AgingReportPage({ kind }: { kind: AgingKind }) {
           <tr key={String(x.contact_id)}>
             <td><ContactCell administrationId={f.administrationId} id={x.contact_id} /></td>
             {(x.aging_buckets ?? []).map((b, i) => <td key={i} className="ledger-report__amount">{f.money(b.amount ?? 0)}</td>)}
+          </tr>
+        ))}
+      </tbody>
+    </table>,
+  )
+}
+
+function ProjectCell({ administrationId, id }: { administrationId: string; id?: string | number | null }) {
+  const { t } = useTranslation()
+  const project = useProject(administrationId, id == null ? undefined : String(id))
+  if (id == null) {
+    return <>{t('reports.noProject')}</>
+  }
+  return <Link to={`/${administrationId}/projects/${id}`}>{project.data?.name ?? String(id)}</Link>
+}
+
+/** The revenue or the costs booked per project in the period. */
+export function ProjectReportPage({ kind }: { kind: ProjectReportKind }) {
+  const { t } = useTranslation()
+  const title = t(kind === 'revenue_by_project' ? 'sidenav.items.revenueByProject' : 'sidenav.items.expensesByProject')
+  const f = useFrame(kind, title)
+  const report = useProjectReport(f.administrationId, kind, f.period)
+  if (!report.data) {
+    return f.page(report.error ? <p className="empty">{t('journal.loadError')}</p> : <Loading />)
+  }
+  if (report.data.length === 0) {
+    return f.page(<p className="empty">{t('reports.nothing')}</p>)
+  }
+  const total = report.data.reduce((sum, x) => sum + Number(x.amount), 0)
+  return f.page(
+    <table className="data-table ledger-report" aria-label={title}>
+      <thead>
+        <tr>
+          <th scope="col">{t('reports.project')}</th>
+          <th scope="col" className="ledger-report__amount">{t('journal.amount')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {report.data.map((x) => (
+          <tr key={String(x.project_id)}>
+            <td><ProjectCell administrationId={f.administrationId} id={x.project_id} /></td>
+            <td className="ledger-report__amount">{f.money(x.amount)}</td>
+          </tr>
+        ))}
+      </tbody>
+      <tfoot><TotalRow label={t('journal.total')} value={String(total)} money={f.money} /></tfoot>
+    </table>,
+  )
+}
+
+/** Each fixed asset: its value at the start of the period, what changed in it and its value at the end. */
+export function AssetsReportPage() {
+  const { t } = useTranslation()
+  const title = t('sidenav.items.assetsReport')
+  const f = useFrame('assets_report', title)
+  const report = useAssetsReport(f.administrationId, f.period)
+  if (!report.data) {
+    return f.page(report.error ? <p className="empty">{t('journal.loadError')}</p> : <Loading />)
+  }
+  if (report.data.length === 0) {
+    return f.page(<p className="empty">{t('reports.nothing')}</p>)
+  }
+  const columns = ['value_at_begin', 'investment', 'value_changes', 'divestment', 'value_at_end'] as const
+  return f.page(
+    <table className="data-table ledger-report" aria-label={title}>
+      <thead>
+        <tr>
+          <th scope="col">{t('reports.asset')}</th>
+          {columns.map((c) => <th key={c} scope="col" className="ledger-report__amount">{t(`reports.assetColumns.${c}`)}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {report.data.map((x) => (
+          <tr key={String(x.asset_id)}>
+            <td><Link to={`/${f.administrationId}/assets/${x.asset_id}`}>{x.name}</Link></td>
+            {columns.map((c) => <td key={c} className="ledger-report__amount">{f.money(x[c])}</td>)}
           </tr>
         ))}
       </tbody>

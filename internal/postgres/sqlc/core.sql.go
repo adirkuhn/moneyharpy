@@ -221,7 +221,7 @@ func (q *Queries) BookingRuleByID(ctx context.Context, arg BookingRuleByIDParams
 }
 
 const bookingsOfMutations = `-- name: BookingsOfMutations :many
-SELECT id, administration_id, financial_mutation_id, ledger_account_id, description, price, booking_rule_id, created_at, updated_at FROM ledger_account_bookings WHERE administration_id = $1 AND financial_mutation_id = ANY($2::bigint[]) ORDER BY created_at, id
+SELECT id, administration_id, financial_mutation_id, ledger_account_id, description, price, booking_rule_id, created_at, updated_at, project_id FROM ledger_account_bookings WHERE administration_id = $1 AND financial_mutation_id = ANY($2::bigint[]) ORDER BY created_at, id
 `
 
 type BookingsOfMutationsParams struct {
@@ -248,6 +248,7 @@ func (q *Queries) BookingsOfMutations(ctx context.Context, arg BookingsOfMutatio
 			&i.BookingRuleID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ProjectID,
 		); err != nil {
 			return nil, err
 		}
@@ -2591,8 +2592,8 @@ func (q *Queries) InsertLedgerAccount(ctx context.Context, arg InsertLedgerAccou
 }
 
 const insertLedgerAccountBooking = `-- name: InsertLedgerAccountBooking :exec
-INSERT INTO ledger_account_bookings (id, administration_id, financial_mutation_id, ledger_account_id, description, price, booking_rule_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO ledger_account_bookings (id, administration_id, financial_mutation_id, ledger_account_id, description, price, booking_rule_id, created_at, updated_at, project_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 `
 
 type InsertLedgerAccountBookingParams struct {
@@ -2605,6 +2606,7 @@ type InsertLedgerAccountBookingParams struct {
 	BookingRuleID       pgtype.Int8
 	CreatedAt           pgtype.Timestamptz
 	UpdatedAt           pgtype.Timestamptz
+	ProjectID           pgtype.Int8
 }
 
 func (q *Queries) InsertLedgerAccountBooking(ctx context.Context, arg InsertLedgerAccountBookingParams) error {
@@ -2618,6 +2620,7 @@ func (q *Queries) InsertLedgerAccountBooking(ctx context.Context, arg InsertLedg
 		arg.BookingRuleID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.ProjectID,
 	)
 	return err
 }
@@ -5454,7 +5457,7 @@ func (q *Queries) ProjectByID(ctx context.Context, arg ProjectByIDParams) (Proje
 }
 
 const projectInJournal = `-- name: ProjectInJournal :one
-SELECT EXISTS (SELECT 1 FROM journal_entries WHERE administration_id = $1 AND project_id = $2)
+SELECT EXISTS (SELECT 1 FROM ledger_entries WHERE administration_id = $1 AND project_id = $2)
 `
 
 type ProjectInJournalParams struct {

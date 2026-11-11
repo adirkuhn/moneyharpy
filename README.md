@@ -462,14 +462,25 @@ lines book on a category, VAT included, to a private category. A document
 without what booking needs is new and books nothing. A receipt created with
 `payment.financial_account_id` is paid at once from that account. Payments
 work as for sales invoices, against payments to classify unless the manual
-payment action says otherwise (invoices settlement is not available for
-documents yet), with `invoice_type` `Document`. A paid document, or one with
-payments, cannot change; nothing changes in the locked period.
+payment action says otherwise, with `invoice_type` `Document`. An invoices
+settlement (`invoice_id`) settles a document against another purchase
+invoice or receipt, such as a credit purchase invoice: a payment on each,
+of opposite signs, against the settlements category; removing one half
+removes the other. A paid document, or one with payments, cannot change;
+nothing changes in the locked period.
 
 Bank transactions pay purchase invoices and receipts with `link_booking`
 and `booking_type` `Document` (or a payment with `financial_mutation_id`):
 the bank posts the payment on the creditors, and `unlink_booking` with the
-payment undoes it. General documents (`/documents/general_documents`) are
+payment undoes it. `NewPurchaseInvoice` and `NewReceipt` make a document for
+(part of) a transaction and pay it with it: dated the transaction's day,
+from the contact with the transaction's IBAN (a purchase invoice needs one),
+one line of the amount including VAT at the 0% purchase rate on expenses
+still to categorize, on the link's `project_id`. `PurchaseTransaction` and
+`PurchaseTransactionBatch` pay the documents the purchase transaction, or
+each transaction of the batch, pays, which makes them paid. `project_id` on
+a `LedgerAccount` booking puts it on the project in the journal, so revenue
+and expenses by project count it. General documents (`/documents/general_documents`) are
 kept for the record and book nothing; typeless documents
 (`/documents/typeless_documents`, "Uploads" in the menu) are uploads still
 to process. The overview shows what open purchase invoices and receipts
@@ -488,9 +499,8 @@ transfers name. A transaction is paid once its document is. Webhooks tell
 `document_saved`, `document_updated`, `document_destroyed`,
 `purchase_transaction_created`, `purchase_transaction_deleted` and
 `purchase_transaction_batch_created`, with the payment events. Documents
-saved from email or Peppol, recurring documents, new documents made from a
-bank transaction (`NewPurchaseInvoice`, `NewReceipt`) and paying through
-Moneybird Banking are not available yet.
+saved from email or Peppol, recurring documents, settling a document against
+a sales invoice and paying through Moneybird Banking are not available yet.
 
 ## Assets
 

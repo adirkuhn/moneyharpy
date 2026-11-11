@@ -221,7 +221,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 	case errors.Is(err, bookkeeping.ErrInUse):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This category is used by transactions or booking rules; keep it deactivated instead"}}))
 	case errors.Is(err, banking.ErrBookingUnavailable):
-		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet; only categories (LedgerAccount) can be booked so far"}}))
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet in MoneyHarpy"}}))
 	case errors.Is(err, purchases.ErrNotEditable):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This document cannot be changed in its state; remove its payments first"}}))
 	case errors.Is(err, sales.ErrNotEditable):
