@@ -42,9 +42,9 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    kind: 'timesheets', key: 'timesheets', to: 'time_entries', ready: false, permissions: ['time_entries'],
+    kind: 'timesheets', key: 'timesheets', to: 'time_entries', ready: true, permissions: ['time_entries'],
     children: [
-      link('register', 'time_entries'),
+      link('register', 'time_entries', true),
       link('hoursReport', 'time_entries_report'),
       link('projectsReport', 'time_entries_report/projects'),
     ],
@@ -81,8 +81,8 @@ export const navItems: NavItem[] = [
   { kind: 'assets', key: 'assets', to: 'assets', ready: false, permissions: ['documents'] },
   { kind: 'projects', key: 'projects', to: 'projects', ready: true, permissions: ['settings', 'sales_invoices', 'documents', 'estimates', 'time_entries'] },
   {
-    kind: 'tasks', key: 'tasks', to: 'task_lists/lists', ready: false, permissions: [],
-    children: [link('taskLists', 'task_lists/lists'), link('taskTemplates', 'task_lists/templates')],
+    kind: 'tasks', key: 'tasks', to: 'task_lists/lists', ready: true, permissions: [],
+    children: [link('taskLists', 'task_lists/lists', true), link('taskTemplates', 'task_lists/templates')],
   },
   { kind: 'settings', key: 'settings', to: 'settings', ready: true, permissions: [] },
 ]

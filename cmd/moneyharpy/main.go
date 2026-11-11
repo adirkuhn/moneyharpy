@@ -46,6 +46,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
 	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
+	"github.com/adirkuhn/moneyharpy/internal/tasklists"
+	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"github.com/adirkuhn/moneyharpy/internal/uploads"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/adirkuhn/moneyharpy/web"
@@ -127,11 +129,12 @@ func run(logger *slog.Logger) error {
 	journalStore := postgres.NewJournalStore(pool)
 	salesStore := postgres.NewSalesStore(pool)
 	attachmentService := attachments.NewService(postgres.NewAttachmentStore(pool), files, ids, time.Now)
-	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
+	timeEntryStore := postgres.NewTimeEntryStore(pool)
+	contactService := contacts.NewService(admins, invoices, admins, contacts.AnyReferences{journalStore, salesStore, timeEntryStore}, noteService, postgres.NewContactStore(pool), ids, time.Now)
 	catalogStore := postgres.NewCatalogStore(pool)
 	subscriptionStore := postgres.NewSubscriptionStore(pool)
 	productService := products.NewService(admins, books, contactService, catalogStore, products.AnyReferences{salesStore, subscriptionStore}, ids, time.Now)
-	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore}, ids, time.Now)
+	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore, timeEntryStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
@@ -160,6 +163,8 @@ func run(logger *slog.Logger) error {
 		Projects:          projectService,
 		Subscriptions:     subscriptionService,
 		Downloads:         downloadService,
+		TimeEntries:       timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now),
+		TaskLists:         tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
 		Storage:           s3,
 		Identity:          people,
 		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),

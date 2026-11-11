@@ -495,6 +495,495 @@ export interface paths {
         patch: operations["updateTaxRate"];
         trace?: never;
     };
+    "/api/v2/{administration_id}/time_entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all time entries
+         * @description Newest start first, 25 a page unless per_page is given, paged with a Link header and X-Total-Count. Filter terms: state (all, open, non_billable; several joined by |), period, contact_id, include_nil_contacts, include_active, project_id, user_id and day (YYYY-MM-DD). Without a filter, period:this_year applies; any filter replaces that default. Running timers are left out unless include_active:true. Periods and days are read in the administration's time zone. Users without the sales_invoices permission see their own entries only.
+         */
+        get: operations["listTimeEntries"];
+        put?: never;
+        /**
+         * Create a time entry
+         * @description started_at and ended_at are rounded down to whole minutes, with at least a minute between them. Without ended_at the entry is a running timer, which stops the user's running one. Entries for another user need the sales_invoices permission too.
+         */
+        post: operations["createTimeEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/time_entries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a time entry by id
+         * @description When the entry is another user's, the user also needs the sales_invoices permission, as at Moneybird; without it the answer is 403.
+         */
+        get: operations["getTimeEntry"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a time entry
+         * @description An entry on a sales invoice cannot be deleted. When the entry is another user's, the user also needs the sales_invoices permission, as at Moneybird; without it the answer is 403.
+         */
+        delete: operations["deleteTimeEntry"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a time entry
+         * @description Omitted fields stay unchanged; null or an empty id clears a reference. An entry on a sales invoice cannot be changed. When the entry is another user's, the user also needs the sales_invoices permission, as at Moneybird; without it the answer is 403.
+         */
+        patch: operations["updateTimeEntry"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/time_entries/{id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Stop a running timer
+         * @description A stopped entry comes back unchanged. When the entry is another user's, the user also needs the sales_invoices permission, as at Moneybird; without it the answer is 403.
+         */
+        patch: operations["stopTimeEntry"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/time_entries/{id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Resume a stopped timer
+         * @description Only timers started today, in the administration's time zone, can be resumed; the time it was stopped counts as paused. The user's running timer stops first. A running entry comes back unchanged. When the entry is another user's, the user also needs the sales_invoices permission, as at Moneybird; without it the answer is 403.
+         */
+        patch: operations["resumeTimeEntry"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/time_entries/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a note to a time entry */
+        post: operations["createTimeEntryNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/time_entries/{id}/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a note from a time entry */
+        delete: operations["deleteTimeEntryNote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_lists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all task lists
+         * @description Newest first, 30 a page unless per_page is given, paged with a Link header and X-Total-Count. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        get: operations["listTaskLists"];
+        put?: never;
+        /**
+         * Create a task list
+         * @description With template_id the list is made from that template. Otherwise it gets a first group, without a name, for tasks outside any group, and covers last month unless period_begin and period_end are given. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        post: operations["createTaskList"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_lists/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a task list
+         * @description With its groups, tasks and subtasks. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        get: operations["getTaskList"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a task list
+         * @description With its groups and tasks. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        delete: operations["deleteTaskList"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a task list
+         * @description Name, description or deadline; null clears the deadline. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        patch: operations["updateTaskList"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_lists/{id}/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a group to a task list
+         * @description The group comes last. With report_type its tasks are generated from that report: a task per main category of the balance sheet or of profit and loss. Debtor, creditor and asset reports have no lines in MoneyHarpy yet. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        post: operations["createTaskListGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_groups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a task list group
+         * @description With its tasks. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        get: operations["getTaskListGroup"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a task list group
+         * @description With its tasks. The first group cannot be deleted. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        delete: operations["deleteTaskListGroup"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a task list group
+         * @description Changing report_type replaces all of its tasks by ones generated from the new report. The first group cannot be changed. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        patch: operations["updateTaskListGroup"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_groups/{id}/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a task to a group
+         * @description The task comes last. A group that follows a report takes no other tasks. With related_entity_id (a category) and generate_subtasks, a subtask is made per sub-category. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        post: operations["createTaskListTask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_tasks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a task
+         * @description With its subtasks, notes and events. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        get: operations["getTaskListTask"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a task
+         * @description With its subtasks. Generated tasks cannot be deleted. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        delete: operations["deleteTaskListTask"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a task
+         * @description Omitted fields stay unchanged; a null related_entity_id unlinks the category. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        patch: operations["updateTaskListTask"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_tasks/{id}/assignment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign a user to a task
+         * @description The assignee must be a user of the administration; otherwise the answer is 404 Assignee not found. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        post: operations["assignTaskListTask"];
+        /**
+         * Unassign the user from a task
+         * @description Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        delete: operations["unassignTaskListTask"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_tasks/{id}/completion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete a task
+         * @description Completes the task and all its subtasks. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        post: operations["completeTaskListTask"];
+        /**
+         * Reopen a task
+         * @description Reopens the task and the tasks above it. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        delete: operations["reopenTaskListTask"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_tasks/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a note to a task
+         * @description Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        post: operations["createTaskListTaskNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all task list templates
+         * @description By name. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        get: operations["listTaskListTemplates"];
+        put?: never;
+        /**
+         * Create a task list template
+         * @description The template gets a first group, without a name, for tasks outside any group. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        post: operations["createTaskListTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a task list template
+         * @description With its groups and tasks. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        get: operations["getTaskListTemplate"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a task list template
+         * @description With its groups and tasks; lists made from it stay. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        delete: operations["deleteTaskListTemplate"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a task list template
+         * @description Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        patch: operations["updateTaskListTemplate"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_templates/{id}/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a group to a task list template
+         * @description As for groups of task lists. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        post: operations["createTaskListTemplateGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/task_list_templates/{id}/task_lists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a task list from a template
+         * @description The list takes the template's name and description unless given, its groups and tasks, the whole period of the template's length before the current one (such as last month for P1M), and a deadline deadline_after past the period's end. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         */
+        post: operations["createTaskListFromTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/ledger_accounts": {
         parameters: {
             query?: never;
@@ -4746,6 +5235,114 @@ export interface components {
             tax_rate_type: components["schemas"]["TaxRateType"];
             ids: components["schemas"]["Identifier"][];
         };
+        /** @description A Moneybird time entry with MoneyHarpy extensions. */
+        TimeEntry: components["schemas"]["time_entry_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        TimeEntryRequest: {
+            time_entry: {
+                /** @description The member the time is for. Required on creation. */
+                user_id?: components["schemas"]["FlexibleIdentifier"];
+                /**
+                 * Format: date-time
+                 * @description Required on creation. Rounded down to whole minutes.
+                 */
+                started_at?: string;
+                /**
+                 * Format: date-time
+                 * @description Rounded down to whole minutes. Leave it out for a running timer.
+                 */
+                ended_at?: string;
+                /** @description Required on creation. */
+                description?: string;
+                contact_id?: components["schemas"]["FlexibleIdentifier"] | null;
+                project_id?: components["schemas"]["FlexibleIdentifier"] | null;
+                sales_invoice_id?: components["schemas"]["FlexibleIdentifier"] | null;
+                billable?: components["schemas"]["FlexibleBoolean"];
+                /** @description Seconds, rounded down to whole minutes. */
+                paused_duration?: number | string;
+            };
+        };
+        /** @description A Moneybird task list with MoneyHarpy extensions. */
+        TaskList: components["schemas"]["task_list_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        /** @description A Moneybird task list group. */
+        TaskListGroup: components["schemas"]["task_list_group_response"] & Record<string, never>;
+        /** @description A Moneybird task of a task list. */
+        TaskListTask: components["schemas"]["task_list_task_response"] & {
+            /** @description MoneyHarpy extension. The category (ledger account) the task is about. */
+            related_entity_id?: components["schemas"]["identifier_nullable"];
+            /** @description MoneyHarpy extension. Generated from a report or a category; such tasks cannot be deleted. */
+            generated?: boolean;
+        };
+        /** @description A Moneybird task list template with MoneyHarpy extensions. */
+        TaskListTemplate: components["schemas"]["task_list_template_response"] & {
+            /** @description MoneyHarpy extension. Canonical path of this resource. */
+            uri: string;
+        };
+        TaskListRequest: {
+            task_list?: {
+                /** @description Required on creation, unless made from a template. */
+                name?: string;
+                description?: string;
+                /** Format: date */
+                deadline_on?: string | null;
+                /**
+                 * Format: date
+                 * @description On creation only.
+                 */
+                period_begin?: string;
+                /**
+                 * Format: date
+                 * @description On creation only.
+                 */
+                period_end?: string;
+                /** @description The template to make the list from; on creation only. */
+                template_id?: components["schemas"]["FlexibleIdentifier"];
+            };
+        };
+        TaskListGroupRequest: {
+            group: {
+                /** @description Required on creation. */
+                name?: string;
+                report_type?: components["schemas"]["TaskListReportType"];
+            };
+        };
+        /**
+         * @description The report the tasks are generated from.
+         * @enum {string}
+         */
+        TaskListReportType: "balance_sheet" | "profit_loss" | "debtor" | "creditor" | "assets";
+        TaskListTaskRequest: {
+            task: {
+                /** @description Required on creation. */
+                name?: string;
+                description?: string;
+                report_type?: components["schemas"]["TaskListReportType"];
+                assignee_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description A category (ledger account) the task is about; null unlinks it. */
+                related_entity_id?: components["schemas"]["FlexibleIdentifier"] | null;
+                /** @description Make a subtask per sub-category of the related category. */
+                generate_subtasks?: components["schemas"]["FlexibleBoolean"];
+            };
+        };
+        TaskListAssignmentRequest: {
+            assignee_id: components["schemas"]["FlexibleIdentifier"];
+        };
+        TaskListTemplateRequest: {
+            task_list_template: {
+                /** @description Required on creation. */
+                name?: string;
+                description?: string;
+                /** @description An ISO 8601 duration (P1M, P3M, P1Y) or monthly, quarterly, yearly or none. */
+                period?: string;
+                /** @description An ISO 8601 duration after the period's end, such as P10D; empty for none. */
+                deadline_after?: string;
+            };
+        };
         /** @description A code of a chart scheme with MoneyHarpy extensions. */
         TaxonomyItem: components["schemas"]["taxonomy_item_response"] & {
             description?: string | null;
@@ -5446,7 +6043,7 @@ export interface components {
                 payment_conditions?: string;
                 /** @description A percentage, such as "10" or "2.5"; empty for none. */
                 discount?: string | number;
-                /** @description Accepted for compatibility; MoneyHarpy has no time entries yet. */
+                /** @description Time entries to bill on this invoice; they are marked as invoiced. They must have stopped and not be on another invoice. */
                 time_entry_ids?: components["schemas"]["FlexibleIdentifier"][];
                 /** @description An array of lines, or an object of lines keyed by position. */
                 details_attributes?: components["schemas"]["SalesInvoiceDetailInput"][] | {
@@ -8732,6 +9329,1041 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaxRate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listTimeEntries: {
+        parameters: {
+            query?: {
+                filter?: string;
+                /** @description Free-text search in the description. */
+                query?: string;
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of time entries */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number selected in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntry"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimeEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description The created time entry */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntry"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The time entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntry"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The time entry is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimeEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description The time entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntry"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    stopTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The time entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntry"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    resumeTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The time entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntry"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTimeEntryNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteRequest"];
+            };
+        };
+        responses: {
+            /** @description The created note */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["note_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteTimeEntryNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                note_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The note is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listTaskLists: {
+        parameters: {
+            query?: {
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of task lists */
+            200: {
+                headers: {
+                    /** @description RFC 8288 links to the first, prev, next and last pages. */
+                    Link?: string;
+                    /** @description The number selected in all. MoneyHarpy extension. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskList"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTaskList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListRequest"];
+            };
+        };
+        responses: {
+            /** @description The created task list */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskList"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getTaskList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The task list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskList"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteTaskList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The task list is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateTaskList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListRequest"];
+            };
+        };
+        responses: {
+            /** @description The task list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskList"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTaskListGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description The created group */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListGroup"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getTaskListGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The group */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListGroup"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteTaskListGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The group is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateTaskListGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description The group */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListGroup"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTaskListTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description The created task */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTask"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getTaskListTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The task */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTask"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteTaskListTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The task is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateTaskListTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description The task */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTask"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    assignTaskListTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListAssignmentRequest"];
+            };
+        };
+        responses: {
+            /** @description The task */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTask"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    unassignTaskListTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The task */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTask"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    completeTaskListTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The task */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTask"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    reopenTaskListTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The task */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTask"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTaskListTaskNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteRequest"];
+            };
+        };
+        responses: {
+            /** @description The created note */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["note_response"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listTaskListTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The templates */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTemplate"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTaskListTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description The created template */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTemplate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getTaskListTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The template */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTemplate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteTaskListTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The template is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    updateTaskListTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description The template */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListTemplate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTaskListTemplateGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description The created group */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListGroup"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    createTaskListFromTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TaskListRequest"];
+            };
+        };
+        responses: {
+            /** @description The created task list */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskList"];
                 };
             };
             400: components["responses"]["BadRequest"];

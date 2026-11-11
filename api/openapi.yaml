@@ -76,6 +76,10 @@ tags:
     description: What is sold, with the price, VAT rate and category lines take from it. Compatible with the Moneybird API.
   - name: Projects
     description: Projects lines and journal entries can be booked on. Compatible with the Moneybird API.
+  - name: Time entries
+    description: Time members spend, with running timers, billed on sales invoices. Compatible with the Moneybird API.
+  - name: Task lists
+    description: Checklists for recurring work, their groups, tasks and templates. Compatible with the Moneybird API.
   - name: Files
     description: Temporary download links the download operations redirect to.
   - name: Booking rules
@@ -1279,6 +1283,1090 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaxRate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/time_entries:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listTimeEntries
+      x-permissions: [time_entries]
+      summary: List all time entries
+      description: >-
+        Newest start first, 25 a page unless per_page is given, paged with a Link header and X-Total-Count. Filter
+        terms: state (all, open, non_billable; several joined by |), period, contact_id, include_nil_contacts,
+        include_active, project_id, user_id and day (YYYY-MM-DD). Without a filter, period:this_year applies; any
+        filter replaces that default. Running timers are left out unless include_active:true. Periods and days are
+        read in the administration's time zone. Users without the sales_invoices permission see their own entries
+        only.
+      tags: [Time entries]
+      parameters:
+        - name: filter
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 1000
+        - name: query
+          in: query
+          required: false
+          description: Free-text search in the description.
+          schema:
+            type: string
+            maxLength: 255
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          description: A page of time entries
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number selected in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createTimeEntry
+      x-permissions: [time_entries]
+      summary: Create a time entry
+      description: >-
+        started_at and ended_at are rounded down to whole minutes, with at least a minute between them. Without
+        ended_at the entry is a running timer, which stops the user's running one. Entries for another user need the
+        sales_invoices permission too.
+      tags: [Time entries]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeEntryRequest'
+      responses:
+        '201':
+          description: The created time entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/time_entries/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getTimeEntry
+      x-permissions: [time_entries]
+      summary: Get a time entry by id
+      description: >-
+        When the entry is another user's, the user also needs the sales_invoices permission, as at Moneybird; without
+        it the answer is 403.
+      tags: [Time entries]
+      responses:
+        '200':
+          description: The time entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateTimeEntry
+      x-permissions: [time_entries]
+      summary: Update a time entry
+      description: >-
+        Omitted fields stay unchanged; null or an empty id clears a reference. An entry on a sales invoice cannot be
+        changed. When the entry is another user's, the user also needs the sales_invoices permission, as at Moneybird;
+        without it the answer is 403.
+      tags: [Time entries]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeEntryRequest'
+      responses:
+        '200':
+          description: The time entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteTimeEntry
+      x-permissions: [time_entries]
+      summary: Delete a time entry
+      description: >-
+        An entry on a sales invoice cannot be deleted. When the entry is another user's, the user also needs the
+        sales_invoices permission, as at Moneybird; without it the answer is 403.
+      tags: [Time entries]
+      responses:
+        '204':
+          description: The time entry is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/time_entries/{id}/stop:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: stopTimeEntry
+      x-permissions: [time_entries]
+      summary: Stop a running timer
+      description: >-
+        A stopped entry comes back unchanged. When the entry is another user's, the user also needs the sales_invoices
+        permission, as at Moneybird; without it the answer is 403.
+      tags: [Time entries]
+      responses:
+        '200':
+          description: The time entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/time_entries/{id}/resume:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: resumeTimeEntry
+      x-permissions: [time_entries]
+      summary: Resume a stopped timer
+      description: >-
+        Only timers started today, in the administration's time zone, can be resumed; the time it was stopped counts
+        as paused. The user's running timer stops first. A running entry comes back unchanged. When the entry is
+        another user's, the user also needs the sales_invoices permission, as at Moneybird; without it the answer is
+        403.
+      tags: [Time entries]
+      responses:
+        '200':
+          description: The time entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/time_entries/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createTimeEntryNote
+      x-permissions: [time_entries]
+      summary: Add a note to a time entry
+      tags: [Time entries]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/time_entries/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteTimeEntryNote
+      x-permissions: [time_entries]
+      summary: Delete a note from a time entry
+      tags: [Time entries]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_lists:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listTaskLists
+      x-permissions: [time_entries]
+      summary: List all task lists
+      description: >-
+        Newest first, 30 a page unless per_page is given, paged with a Link header and X-Total-Count. Moneybird asks
+        for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          description: A page of task lists
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number selected in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createTaskList
+      x-permissions: [time_entries]
+      summary: Create a task list
+      description: >-
+        With template_id the list is made from that template. Otherwise it gets a first group, without a name, for
+        tasks outside any group, and covers last month unless period_begin and period_end are given. Moneybird asks
+        for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListRequest'
+      responses:
+        '201':
+          description: The created task list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_lists/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getTaskList
+      x-permissions: [time_entries]
+      summary: Get a task list
+      description: >-
+        With its groups, tasks and subtasks. Moneybird asks for all of bank, documents, estimates, sales_invoices,
+        settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '200':
+          description: The task list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateTaskList
+      x-permissions: [time_entries]
+      summary: Update a task list
+      description: >-
+        Name, description or deadline; null clears the deadline. Moneybird asks for all of bank, documents, estimates,
+        sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListRequest'
+      responses:
+        '200':
+          description: The task list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteTaskList
+      x-permissions: [time_entries]
+      summary: Delete a task list
+      description: >-
+        With its groups and tasks. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and
+        time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '204':
+          description: The task list is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_lists/{id}/groups:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createTaskListGroup
+      x-permissions: [time_entries]
+      summary: Add a group to a task list
+      description: >-
+        The group comes last. With report_type its tasks are generated from that report: a task per main category of
+        the balance sheet or of profit and loss. Debtor, creditor and asset reports have no lines in MoneyHarpy yet.
+        Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does
+        MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListGroupRequest'
+      responses:
+        '201':
+          description: The created group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_groups/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getTaskListGroup
+      x-permissions: [time_entries]
+      summary: Get a task list group
+      description: >-
+        With its tasks. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and
+        time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '200':
+          description: The group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateTaskListGroup
+      x-permissions: [time_entries]
+      summary: Update a task list group
+      description: >-
+        Changing report_type replaces all of its tasks by ones generated from the new report. The first group cannot
+        be changed. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries;
+        so does MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListGroupRequest'
+      responses:
+        '200':
+          description: The group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteTaskListGroup
+      x-permissions: [time_entries]
+      summary: Delete a task list group
+      description: >-
+        With its tasks. The first group cannot be deleted. Moneybird asks for all of bank, documents, estimates,
+        sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '204':
+          description: The group is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_groups/{id}/tasks:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createTaskListTask
+      x-permissions: [time_entries]
+      summary: Add a task to a group
+      description: >-
+        The task comes last. A group that follows a report takes no other tasks. With related_entity_id (a category)
+        and generate_subtasks, a subtask is made per sub-category. Moneybird asks for all of bank, documents,
+        estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListTaskRequest'
+      responses:
+        '201':
+          description: The created task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTask'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_tasks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getTaskListTask
+      x-permissions: [time_entries]
+      summary: Get a task
+      description: >-
+        With its subtasks, notes and events. Moneybird asks for all of bank, documents, estimates, sales_invoices,
+        settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '200':
+          description: The task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTask'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateTaskListTask
+      x-permissions: [time_entries]
+      summary: Update a task
+      description: >-
+        Omitted fields stay unchanged; a null related_entity_id unlinks the category. Moneybird asks for all of bank,
+        documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListTaskRequest'
+      responses:
+        '200':
+          description: The task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTask'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteTaskListTask
+      x-permissions: [time_entries]
+      summary: Delete a task
+      description: >-
+        With its subtasks. Generated tasks cannot be deleted. Moneybird asks for all of bank, documents, estimates,
+        sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '204':
+          description: The task is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_tasks/{id}/assignment:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: assignTaskListTask
+      x-permissions: [time_entries]
+      summary: Assign a user to a task
+      description: >-
+        The assignee must be a user of the administration; otherwise the answer is 404 Assignee not found. Moneybird
+        asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListAssignmentRequest'
+      responses:
+        '200':
+          description: The task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTask'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: unassignTaskListTask
+      x-permissions: [time_entries]
+      summary: Unassign the user from a task
+      description: >-
+        Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does
+        MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '200':
+          description: The task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTask'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_tasks/{id}/completion:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: completeTaskListTask
+      x-permissions: [time_entries]
+      summary: Complete a task
+      description: >-
+        Completes the task and all its subtasks. Moneybird asks for all of bank, documents, estimates, sales_invoices,
+        settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '200':
+          description: The task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTask'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: reopenTaskListTask
+      x-permissions: [time_entries]
+      summary: Reopen a task
+      description: >-
+        Reopens the task and the tasks above it. Moneybird asks for all of bank, documents, estimates, sales_invoices,
+        settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '200':
+          description: The task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTask'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_tasks/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createTaskListTaskNote
+      x-permissions: [time_entries]
+      summary: Add a note to a task
+      description: >-
+        Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does
+        MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_templates:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listTaskListTemplates
+      x-permissions: [time_entries]
+      summary: List all task list templates
+      description: >-
+        By name. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so
+        does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '200':
+          description: The templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskListTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createTaskListTemplate
+      x-permissions: [time_entries]
+      summary: Create a task list template
+      description: >-
+        The template gets a first group, without a name, for tasks outside any group. Moneybird asks for all of bank,
+        documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListTemplateRequest'
+      responses:
+        '201':
+          description: The created template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_templates/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getTaskListTemplate
+      x-permissions: [time_entries]
+      summary: Get a task list template
+      description: >-
+        With its groups and tasks. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and
+        time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '200':
+          description: The template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateTaskListTemplate
+      x-permissions: [time_entries]
+      summary: Update a task list template
+      description: >-
+        Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does
+        MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListTemplateRequest'
+      responses:
+        '200':
+          description: The template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListTemplate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteTaskListTemplate
+      x-permissions: [time_entries]
+      summary: Delete a task list template
+      description: >-
+        With its groups and tasks; lists made from it stay. Moneybird asks for all of bank, documents, estimates,
+        sales_invoices, settings and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      responses:
+        '204':
+          description: The template is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_templates/{id}/groups:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createTaskListTemplateGroup
+      x-permissions: [time_entries]
+      summary: Add a group to a task list template
+      description: >-
+        As for groups of task lists. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings
+        and time_entries; so does MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListGroupRequest'
+      responses:
+        '201':
+          description: The created group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/task_list_templates/{id}/task_lists:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createTaskListFromTemplate
+      x-permissions: [time_entries]
+      summary: Create a task list from a template
+      description: >-
+        The list takes the template's name and description unless given, its groups and tasks, the whole period of the
+        template's length before the current one (such as last month for P1M), and a deadline deadline_after past the
+        period's end. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries;
+        so does MoneyHarpy.
+      tags: [Task lists]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskListRequest'
+      responses:
+        '201':
+          description: The created task list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -9614,6 +10702,212 @@ components:
           maxItems: 500
           items:
             $ref: '#/components/schemas/Identifier'
+    TimeEntry:
+      description: A Moneybird time entry with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/time_entry_response'
+        - type: object
+          required: [id, administration_id, user_id, started_at, ended_at, description, paused_duration, billable, contact_id, project_id,
+                     sales_invoice_id, contact, project, sales_invoice, user, notes, events, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    TimeEntryRequest:
+      type: object
+      required: [time_entry]
+      additionalProperties: false
+      properties:
+        time_entry:
+          type: object
+          additionalProperties: false
+          properties:
+            user_id:
+              description: The member the time is for. Required on creation.
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            started_at:
+              type: string
+              format: date-time
+              description: Required on creation. Rounded down to whole minutes.
+            ended_at:
+              type: string
+              format: date-time
+              description: Rounded down to whole minutes. Leave it out for a running timer.
+            description:
+              type: string
+              maxLength: 10000
+              description: Required on creation.
+            contact_id:
+              nullable: true
+              oneOf:
+                - $ref: '#/components/schemas/FlexibleIdentifier'
+            project_id:
+              nullable: true
+              oneOf:
+                - $ref: '#/components/schemas/FlexibleIdentifier'
+            sales_invoice_id:
+              nullable: true
+              oneOf:
+                - $ref: '#/components/schemas/FlexibleIdentifier'
+            billable:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            paused_duration:
+              description: Seconds, rounded down to whole minutes.
+              oneOf:
+                - type: integer
+                  minimum: 0
+                  maximum: 31536000
+                - type: string
+                  pattern: '^[0-9]{1,8}$'
+    TaskList:
+      description: A Moneybird task list with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/task_list_response'
+        - type: object
+          required: [id, administration_id, name, description, deadline_on, period_begin, period_end, completed, template_id, total_tasks_count,
+                     completed_tasks_count, groups, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    TaskListGroup:
+      description: A Moneybird task list group.
+      allOf:
+        - $ref: '#/components/schemas/task_list_group_response'
+        - type: object
+          required: [id, name, row_order, report_type, tasks]
+    TaskListTask:
+      description: A Moneybird task of a task list.
+      allOf:
+        - $ref: '#/components/schemas/task_list_task_response'
+        - type: object
+          required: [id, administration_id, name, description, row_order, completed_at, report_type, task_lists_group_id, parent_task_id,
+                     assignee_id, subtasks, notes, events]
+          properties:
+            related_entity_id:
+              description: MoneyHarpy extension. The category (ledger account) the task is about.
+              $ref: '#/components/schemas/identifier_nullable'
+            generated:
+              type: boolean
+              description: MoneyHarpy extension. Generated from a report or a category; such tasks cannot be deleted.
+    TaskListTemplate:
+      description: A Moneybird task list template with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/task_list_template_response'
+        - type: object
+          required: [id, administration_id, name, description, period, deadline_after, groups, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+    TaskListRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        task_list:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+              description: Required on creation, unless made from a template.
+            description:
+              type: string
+              maxLength: 10000
+            deadline_on:
+              type: string
+              format: date
+              nullable: true
+            period_begin:
+              type: string
+              format: date
+              description: On creation only.
+            period_end:
+              type: string
+              format: date
+              description: On creation only.
+            template_id:
+              description: The template to make the list from; on creation only.
+              $ref: '#/components/schemas/FlexibleIdentifier'
+    TaskListGroupRequest:
+      type: object
+      required: [group]
+      additionalProperties: false
+      properties:
+        group:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+              description: Required on creation.
+            report_type:
+              $ref: '#/components/schemas/TaskListReportType'
+    TaskListReportType:
+      type: string
+      description: The report the tasks are generated from.
+      enum: [balance_sheet, profit_loss, debtor, creditor, assets]
+    TaskListTaskRequest:
+      type: object
+      required: [task]
+      additionalProperties: false
+      properties:
+        task:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+              description: Required on creation.
+            description:
+              type: string
+              maxLength: 10000
+            report_type:
+              $ref: '#/components/schemas/TaskListReportType'
+            assignee_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            related_entity_id:
+              description: A category (ledger account) the task is about; null unlinks it.
+              nullable: true
+              oneOf:
+                - $ref: '#/components/schemas/FlexibleIdentifier'
+            generate_subtasks:
+              description: Make a subtask per sub-category of the related category.
+              $ref: '#/components/schemas/FlexibleBoolean'
+    TaskListAssignmentRequest:
+      type: object
+      required: [assignee_id]
+      additionalProperties: false
+      properties:
+        assignee_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+    TaskListTemplateRequest:
+      type: object
+      required: [task_list_template]
+      additionalProperties: false
+      properties:
+        task_list_template:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              maxLength: 255
+              description: Required on creation.
+            description:
+              type: string
+              maxLength: 10000
+            period:
+              type: string
+              maxLength: 32
+              description: An ISO 8601 duration (P1M, P3M, P1Y) or monthly, quarterly, yearly or none.
+            deadline_after:
+              type: string
+              maxLength: 32
+              description: An ISO 8601 duration after the period's end, such as P10D; empty for none.
     TaxonomyItem:
       description: A code of a chart scheme with MoneyHarpy extensions.
       allOf:
@@ -11046,7 +12340,9 @@ components:
                   maxLength: 10
                 - type: number
             time_entry_ids:
-              description: Accepted for compatibility; MoneyHarpy has no time entries yet.
+              description: >-
+                Time entries to bill on this invoice; they are marked as invoiced. They must have stopped and not be on
+                another invoice.
               type: array
               items:
                 $ref: '#/components/schemas/FlexibleIdentifier'

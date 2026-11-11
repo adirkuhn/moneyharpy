@@ -40,6 +40,12 @@ var Events = []string{
 	"payment_registered", "payment_destroyed", "payment_linked_to_financial_mutation",
 	"product_created", "product_updated", "product_activated", "product_deactivated", "product_destroyed",
 	"project_created", "project_updated", "project_activated", "project_archived", "project_destroyed",
+	"time_entry_created", "time_entry_updated", "time_entry_destroyed", "time_entry_sales_invoice_created",
+	"task_lists_list_created", "task_lists_list_updated", "task_lists_list_destroyed", "task_lists_list_completed", "task_lists_list_reopened",
+	"task_lists_list_template_created", "task_lists_list_template_updated", "task_lists_list_template_destroyed",
+	"task_lists_task_created", "task_lists_task_updated", "task_lists_task_destroyed", "task_lists_task_completed", "task_lists_task_reopened",
+	"task_lists_task_assigned", "task_lists_task_unassigned", "task_lists_task_name", "task_lists_task_report_type_linked",
+	"task_lists_task_category_linked", "task_lists_task_unlinked",
 	"user_invited", "user_removed",
 	"access_token_created", "access_token_revoked",
 }
@@ -48,7 +54,7 @@ var Events = []string{
 // matches every event starting with it.
 var Groups = []string{
 	"administration", "identity", "default_identity", "workflow", "document_style", "tax_rate", "ledger_account",
-	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "sales_invoice", "external_sales_invoice", "recurring_sales_invoice", "subscription", "payment", "product", "project", "user", "access_token", "estimate", "estimate_send", "estimate_mark", "estimate_created_from",
+	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "sales_invoice", "external_sales_invoice", "recurring_sales_invoice", "subscription", "payment", "product", "project", "user", "access_token", "estimate", "estimate_send", "estimate_mark", "estimate_created_from", "time_entry", "task_lists", "task_lists_list", "task_lists_list_template", "task_lists_task",
 }
 
 // known reports whether a subscription names an event or a group.
