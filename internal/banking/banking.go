@@ -48,11 +48,13 @@ type Ledger interface {
 	LockedUntil(ctx context.Context, admin, user resource.ID) (string, error)
 }
 
-// Invoices settles invoices with transactions; sales implements it.
+// Invoices settles invoices with transactions; sales implements it for
+// sales invoices, purchases for purchase invoices and receipts.
 type Invoices interface {
-	// RegisterBankPayment pays an invoice of the type (SalesInvoice or
-	// ExternalSalesInvoice) with (part of) the transaction; price is signed
-	// like the invoice, nil pays what both have open. It returns the payment.
+	// RegisterBankPayment pays an invoice of the type (SalesInvoice,
+	// ExternalSalesInvoice or Document) with (part of) the transaction; open
+	// and price are signed like the invoice, nil pays what both have open.
+	// It returns the payment.
 	RegisterBankPayment(ctx context.Context, admin, user resource.ID, invoiceType string, invoice, mutation, account resource.ID, day time.Time, open Amount, price *Amount) (resource.ID, error)
 	// RemoveBankPayment removes a payment made with a transaction.
 	RemoveBankPayment(ctx context.Context, admin, user, payment resource.ID) error
@@ -117,8 +119,10 @@ type Service struct {
 	ledger   Ledger
 	store    Store
 	invoices Invoices
-	ids      *resource.Generator
-	now      func() time.Time
+	// documents pays purchase invoices and receipts.
+	documents Invoices
+	ids       *resource.Generator
+	now       func() time.Time
 }
 
 // NewService returns a Service.
@@ -129,6 +133,21 @@ func NewService(admins Administrations, ledger Ledger, store Store, ids *resourc
 // UseInvoices lets transactions pay invoices. Sales needs the banking
 // service too, so it joins after both exist.
 func (s *Service) UseInvoices(i Invoices) { s.invoices = i }
+
+// UseDocuments lets transactions pay purchase invoices and receipts, which
+// need the banking service too.
+func (s *Service) UseDocuments(d Invoices) { s.documents = d }
+
+// payer is what pays invoices of the type, or nil.
+func (s *Service) payer(invoiceType string) Invoices {
+	switch invoiceType {
+	case "SalesInvoice", "ExternalSalesInvoice":
+		return s.invoices
+	case DocumentType:
+		return s.documents
+	}
+	return nil
+}
 
 // Settings returns the bank preferences.
 func (s *Service) Settings(ctx context.Context, admin, user resource.ID) (Settings, error) {

@@ -113,6 +113,8 @@ func (s *server) openAttachment(r *http.Request, l fileLink) (attachments.Attach
 		return s.deps.Sales.OpenExternalAttachment(r.Context(), l.Admin, l.ID, l.Attachment, l.User)
 	case fileEstimateAttachment:
 		return s.deps.Sales.OpenEstimateAttachment(r.Context(), l.Admin, l.ID, l.Attachment, l.User)
+	case filePurchaseInvoiceAttachment, fileReceiptAttachment, fileGeneralDocumentAttachment, fileTypelessAttachment:
+		return s.openIncomingAttachment(r, l)
 	default:
 		return s.deps.Journal.OpenDocumentAttachment(r.Context(), l.Admin, l.ID, l.Attachment, l.User)
 	}

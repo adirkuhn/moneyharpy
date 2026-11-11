@@ -46,6 +46,8 @@ var Events = []string{
 	"task_lists_task_created", "task_lists_task_updated", "task_lists_task_destroyed", "task_lists_task_completed", "task_lists_task_reopened",
 	"task_lists_task_assigned", "task_lists_task_unassigned", "task_lists_task_name", "task_lists_task_report_type_linked",
 	"task_lists_task_category_linked", "task_lists_task_unlinked",
+	"document_saved", "document_updated", "document_destroyed",
+	"purchase_transaction_created", "purchase_transaction_deleted", "purchase_transaction_batch_created",
 	"user_invited", "user_removed",
 	"access_token_created", "access_token_revoked",
 }
@@ -55,6 +57,7 @@ var Events = []string{
 var Groups = []string{
 	"administration", "identity", "default_identity", "workflow", "document_style", "tax_rate", "ledger_account",
 	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "sales_invoice", "external_sales_invoice", "recurring_sales_invoice", "subscription", "payment", "product", "project", "user", "access_token", "estimate", "estimate_send", "estimate_mark", "estimate_created_from", "time_entry", "task_lists", "task_lists_list", "task_lists_list_template", "task_lists_task",
+	"document", "purchase_transaction", "purchase_transaction_batch",
 }
 
 // known reports whether a subscription names an event or a group.

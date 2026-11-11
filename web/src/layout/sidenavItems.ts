@@ -31,7 +31,14 @@ export const navItems: NavItem[] = [
       link('recurringInvoices', 'recurring_sales_invoices', true),
     ],
   },
-  { kind: 'incoming', key: 'incoming', to: 'documents', ready: false, permissions: ['documents'] },
+  {
+    kind: 'incoming', key: 'incoming', to: 'documents/purchase_invoices', ready: true, permissions: ['documents'],
+    children: [
+      link('purchaseInvoices', 'documents/purchase_invoices', true),
+      link('receipts', 'documents/receipts', true),
+      link('uploads', 'documents/typeless_documents', true),
+    ],
+  },
   { kind: 'quotes', key: 'quotes', to: 'estimates', ready: true, permissions: ['estimates'] },
   {
     kind: 'bank', key: 'bank', to: 'financial_mutations', ready: true, permissions: ['bank'],

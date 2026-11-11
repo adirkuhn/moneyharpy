@@ -293,7 +293,7 @@ export const nl: Messages = {
     label: 'Administratiemenu', menu: 'Menu', collapse: 'Menu inklappen', expand: 'Menu uitklappen', collapseShort: 'Inklappen', later: 'Nog niet beschikbaar',
     items: {
       overview: 'Overzicht', invoices: 'Facturen', salesInvoices: 'Verkoopfacturen', externalInvoices: 'Externe facturen', recurringInvoices: 'Periodieke facturen',
-      incoming: 'Inkomend', quotes: 'Offertes', bank: 'Bank', financialAccounts: 'Rekeningen', transactions: 'Transacties', payments: 'Betalingen',
+      incoming: 'Inkomend', purchaseInvoices: 'Inkoopfacturen', receipts: 'Bonnetjes', uploads: 'Uploads', quotes: 'Offertes', bank: 'Bank', financialAccounts: 'Rekeningen', transactions: 'Transacties', payments: 'Betalingen',
       timesheets: 'Uren', register: 'Registreren', hoursReport: 'Urenrapport', projectsReport: 'Projectenrapport',
       contacts: 'Contacten', vat: 'Btw-aangiftes',
       reports: 'Rapportages', reportsOverview: 'Overzicht', profitLoss: 'Winst-en-verliesrekening', balanceSheet: 'Balans', assetsReport: 'Activarapport',
@@ -622,6 +622,19 @@ export const nl: Messages = {
     kvkTitle: 'Bedrijven zoeken', kvkEnable: 'Zoeken in het Handelsregister', kvkKey: 'KVK API-sleutel', addressTitle: 'Adres opzoeken', addressEnable: 'Vul Nederlandse adressen aan met postcode en huisnummer', addressHint: 'Stuurt postcode en huisnummer naar PDOK, de adresservice van de Nederlandse overheid.',
     smtpTitle: 'E-mail', smtpEnable: 'Verstuur e-mail via deze mailserver', smtpHint: 'Nodig om wachtwoorden te herstellen.', smtpHost: 'SMTP-host', smtpPort: 'SMTP-poort', smtpUser: 'SMTP-gebruikersnaam', smtpPassword: 'SMTP-wachtwoord', smtpFrom: 'Verstuur e-mail vanaf', smtpSecurity: 'Versleuteling', smtpStarttls: 'STARTTLS (meestal poort 587)', smtpTls: 'TLS (meestal poort 465)', smtpNone: 'Geen', testEmail: 'Testmail versturen', testSent: 'Testmail verstuurd naar {{email}}',
     save: 'Instellingen opslaan', saved: 'Instellingen opgeslagen',
+  },
+  purchases: {
+    titles: { purchase_invoices: 'Inkoopfacturen', receipts: 'Bonnetjes', uploads: 'Te verwerken uploads' },
+    views: { this_year: 'Dit jaar', unpaid: 'Onbetaald', paid: 'Betaald', custom: 'Eigen filter' }, filters: 'Filters',
+    untitled: { purchase_invoices: 'Inkoopfactuur {{n}}', receipts: 'Bonnetje {{n}}' },
+    backTo: { purchase_invoices: 'Inkoopfacturen', receipts: 'Bonnetjes' },
+    upload: 'Documenten uploaden', uploadTitle: 'Documentbestanden toevoegen', date: 'Datum', total: 'Totaal', unpaid: 'Onbetaald', details: 'Gegevens', lines: 'Regels', payments: 'Betalingen',
+    description: 'Omschrijving', price: 'Prijs', excl: 'Excl. btw', noLines: 'Nog geen regels.', noPayments: 'Nog geen betalingen.',
+    delete: 'Verwijderen', confirmDelete: 'Dit document verwijderen met wat het boekt? Dit kan niet ongedaan worden gemaakt.',
+    newNotice: 'Dit document is nieuw: het boekt niets tot het regels heeft en, bij een inkoopfactuur, een leverancier.',
+    empty: 'Geen documenten voor dit filter.', loadError: 'De documenten konden niet worden geladen.', noUploads: 'Geen uploads te verwerken.',
+    file: 'Bestand', dropText: 'Sleep facturen en bonnetjes hierheen, of', select: 'kies bestanden', uploadHelp: 'PDF-, afbeelding- of tekstbestanden van maximaal 10 MB per stuk.',
+    tooLarge: 'Te groot (meer dan 10 MB): {{names}}', refused: 'Niet geüpload: {{names}}',
   },
 }
 

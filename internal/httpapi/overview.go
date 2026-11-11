@@ -38,6 +38,12 @@ func toOverview(o overview.Overview) Overview {
 			Currency:  o.Sales.Currency,
 		}
 	}
+	if o.Incoming != nil {
+		out.Incoming = &OverviewIncoming{
+			ToPay:     OverviewTally{Count: o.Incoming.ToPay.Count, Amount: o.Incoming.ToPay.Amount.String()},
+			ToProcess: o.Incoming.ToProcess, Currency: o.Incoming.Currency,
+		}
+	}
 	for i, it := range o.RecentlyProcessed {
 		out.RecentlyProcessed[i] = OverviewItem{
 			Type: OverviewItemType(it.Type), Id: it.ID.String(), Uri: it.Ref.URI(), Title: it.Title, Description: it.Description,
