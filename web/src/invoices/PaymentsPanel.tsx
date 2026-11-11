@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
+import { DetailBlock } from '../detail/Detail'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
 import {
@@ -34,10 +35,7 @@ export function PaymentsPanel({ administrationId, invoice: inv, kind = 'sales' }
   }
 
   return (
-    <section className="settings-block" aria-labelledby="invoice-payments">
-      <div className="settings-block__header">
-        <h2 id="invoice-payments">{t('invoices.payments.title')}</h2>
-      </div>
+    <DetailBlock title={t('invoices.payments.title')}>
       <Problems messages={problems} />
       {payments.length === 0 ? (
         <p className="empty">{t('invoices.payments.none')}</p>
@@ -81,7 +79,7 @@ export function PaymentsPanel({ administrationId, invoice: inv, kind = 'sales' }
         </div>
       )}
       {payable && !credit && <PaymentForm key={inv.total_unpaid} administrationId={administrationId} invoice={inv} kind={kind} />}
-    </section>
+    </DetailBlock>
   )
 }
 

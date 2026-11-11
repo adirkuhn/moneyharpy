@@ -6,13 +6,14 @@ import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { useLedgerAccounts } from '../bookkeeping/queries'
 import { contactName } from '../contacts/queries'
+import { DetailBlock, DetailList } from '../detail/Detail'
 import { FormSection, formErrors, TextInput } from '../forms/Form'
 import { externalTitle, unpaidExternalStates, useExternalInvoice, useExternalInvoices } from '../external/queries'
 import { invoiceTitle, unpaidStates, useSalesInvoice, useSalesInvoices } from '../invoices/queries'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
-import { Block } from '../settings/Block'
+import { MoreMenu } from '../list/ListActions'
 import { CategorySelect } from './CategorySelect'
 import {
   type Booking, formatAmount, type Mutation, useFinancialAccounts, useLinkBooking, useLinkInvoice, useMutationOne, useUnlinkBooking, useUnlinkPayment,
@@ -44,18 +45,34 @@ function Transaction({ administrationId, mutation: m }: { administrationId: stri
   const back = `/${administrationId}/financial_mutations`
 
   return (
-    <Page title={m.contra_account_name || m.message || t('bank.transaction')} subtitle={money(m.amount)} back={{ to: back, label: t('bank.toTransactions') }}>
-      <dl className="details card">
-        <div><dt>{t('bank.date')}</dt><dd>{new Date(`${m.date}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'long' })}</dd></div>
-        <div><dt>{t('bank.account')}</dt><dd>{account?.name ?? '-'}</dd></div>
-        <div><dt>{t('bank.amount')}</dt><dd className={Number(m.amount) < 0 ? 'is-out' : 'is-in'}>{money(m.amount)}</dd></div>
-        {m.contra_account_name && <div><dt>{t('bank.contraName')}</dt><dd>{m.contra_account_name}</dd></div>}
-        {m.contra_account_number && <div><dt>{t('bank.contraAccount')}</dt><dd>{m.contra_account_number}</dd></div>}
-        {m.message && <div><dt>{t('bank.description')}</dt><dd>{m.message}</dd></div>}
-        <div><dt>{t('bank.open')}</dt><dd>{m.state === 'processed' ? t('bank.booked') : money(m.amount_open)}</dd></div>
-      </dl>
+    <Page
+      title={m.contra_account_name || m.message || t('bank.transaction')}
+      subtitle={money(m.amount)}
+      back={{ to: back, label: t('bank.toTransactions') }}
+      actions={
+        <MoreMenu
+          items={[
+            ...(m.financial_account_id ? [{ to: `/${administrationId}/financial_accounts/${m.financial_account_id}`, label: t('bank.accountSettings') }] : []),
+            { to: `/${administrationId}/settings/bank`, label: t('bank.settings') },
+          ]}
+        />
+      }
+    >
+      <DetailBlock title={t('bank.detailsTitle')}>
+        <DetailList
+          rows={[
+            [t('bank.date'), new Date(`${m.date}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'long' })],
+            [t('bank.account'), account?.name ?? '-'],
+            [t('bank.amount'), <span key="amount" className={Number(m.amount) < 0 ? 'is-out' : 'is-in'}>{money(m.amount)}</span>],
+            [t('bank.contraName'), m.contra_account_name],
+            [t('bank.contraAccount'), m.contra_account_number],
+            [t('bank.description'), m.message],
+            [t('bank.open'), m.state === 'processed' ? <span key="state" className="badge badge--paid">{t('bank.booked')}</span> : money(m.amount_open)],
+          ]}
+        />
+      </DetailBlock>
 
-      <Block id="bookings" title={t('bank.bookings')} subtitle={t('bank.bookingsSubtitle')}>
+      <DetailBlock id="bookings" title={t('bank.bookings')} subtitle={t('bank.bookingsSubtitle')}>
         <Problems messages={formErrors(unlink.error, {}).general} />
         {m.ledger_account_bookings.length === 0 ? (
           <p className="empty">{t('bank.noBookings')}</p>
@@ -87,7 +104,7 @@ function Transaction({ administrationId, mutation: m }: { administrationId: stri
             </tbody>
           </table>
         )}
-      </Block>
+      </DetailBlock>
 
       <InvoicePayments administrationId={administrationId} mutation={m} />
       {open !== 0 && <LinkInvoiceForm key={`invoice-${m.amount_open}`} administrationId={administrationId} mutation={m} />}
@@ -111,7 +128,7 @@ function BookForm({ administrationId, mutation: m }: { administrationId: string;
     link.mutate({ ...form, price_base: Number.isFinite(price) ? String(price * sign) : form.price_base })
   }
   return (
-    <Block id="book" title={t('bank.book')} subtitle={t('bank.bookSubtitle')}>
+    <DetailBlock id="book" title={t('bank.book')} subtitle={t('bank.bookSubtitle')}>
       <form className="form-sheet form-sheet--block" onSubmit={submit} noValidate aria-label={t('bank.book')}>
         <Problems messages={errors.general} />
         <FormSection>
@@ -123,7 +140,7 @@ function BookForm({ administrationId, mutation: m }: { administrationId: string;
           <button className="btn btn--primary" disabled={link.isPending || !form.booking_id}>{t('bank.bookButton')}</button>
         </div>
       </form>
-    </Block>
+    </DetailBlock>
   )
 }
 
@@ -136,7 +153,7 @@ function InvoicePayments({ administrationId, mutation: m }: { administrationId: 
     return null
   }
   return (
-    <Block id="invoice-payments" title={t('bank.invoicePayments')} subtitle={t('bank.invoicePaymentsSubtitle')}>
+    <DetailBlock id="invoice-payments" title={t('bank.invoicePayments')} subtitle={t('bank.invoicePaymentsSubtitle')}>
       <Problems messages={formErrors(unlink.error, {}).general} />
       <table className="data-table" aria-label={t('bank.invoicePayments')}>
         <thead>
@@ -152,7 +169,7 @@ function InvoicePayments({ administrationId, mutation: m }: { administrationId: 
           ))}
         </tbody>
       </table>
-    </Block>
+    </DetailBlock>
   )
 }
 
@@ -214,7 +231,7 @@ function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: 
     }
   }
   return (
-    <Block id="link-invoice" title={t('bank.linkInvoice')} subtitle={t('bank.linkInvoiceSubtitle')}>
+    <DetailBlock id="link-invoice" title={t('bank.linkInvoice')} subtitle={t('bank.linkInvoiceSubtitle')}>
       <form className="form-sheet form-sheet--block" onSubmit={submit} noValidate aria-label={t('bank.linkInvoice')}>
         <Problems messages={[...errors.general, ...(errors.field('booking_id') ?? []), ...(errors.field('price_base') ?? []), ...(errors.field('date') ?? [])]} />
         <TextInput label={t('bank.findInvoice')} type="search" maxLength={100} help={t('bank.findInvoiceHelp')} value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -237,6 +254,6 @@ function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: 
           <button className="btn btn--primary" disabled={link.isPending || !chosen}>{t('bank.linkInvoiceButton')}</button>
         </div>
       </form>
-    </Block>
+    </DetailBlock>
   )
 }

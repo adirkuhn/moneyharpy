@@ -7,7 +7,7 @@ import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
 import { type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
 import { contactName } from '../contacts/queries'
-import { ConfirmDelete } from '../forms/ConfirmDelete'
+import { ConfirmPanel, DetailBlock, DetailList, type DetailRow } from '../detail/Detail'
 import { CheckboxInput, FormSection, formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
 import { ContactPicker } from '../invoices/ContactPicker'
 import { type LineRow, LinesEditor } from '../invoices/LinesEditor'
@@ -19,6 +19,7 @@ import { useDocumentStyles, useWorkflows } from '../invoicing/queries'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
+import { type MenuItem, MoreMenu } from '../list/ListActions'
 import {
   frequencyText, frequencyTypes, type FrequencyType, type RecurringChanges, type RecurringInvoice, useDeactivateRecurringInvoice,
   useDeleteRecurringInvoice, useInvoicesOf, useRecurringInvoice, useSaveRecurringInvoice,
@@ -68,25 +69,13 @@ function RecurringView({ administrationId, recurring: rec, rates }: { administra
   const made = rec.invoices_created ?? 0
   const date = (d: string | null | undefined) => d && new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' })
 
-  const actions = (
-    <>
-      {rec.active && (
-        <button type="button" className="btn btn--secondary btn--small" disabled={deactivate.isPending} onClick={() => deactivate.mutate()}>
-          {t('recurring.deactivate')}
-        </button>
-      )}
-      {(made === 0 || rec.active) && (
-        <ConfirmDelete
-          label={t('invoices.delete')}
-          confirmLabel={made > 0 ? t('recurring.confirmDeleteKept') : t('invoices.confirmDelete')}
-          disabled={remove.isPending}
-          onConfirm={() => remove.mutate(undefined, { onSuccess: () => (made > 0 ? undefined : navigate(list)) })}
-        />
-      )}
-    </>
-  )
-  const rows: [string, React.ReactNode][] = [
-    [t('recurring.status'), rec.active ? t('recurring.states.active') : t('recurring.states.inactive')],
+  const [confirming, setConfirming] = useState(false)
+  const more: MenuItem[] = [
+    ...(rec.active ? [{ label: t('recurring.deactivate'), disabled: deactivate.isPending, onSelect: () => deactivate.mutate() }] : []),
+    ...(made === 0 || rec.active ? [{ label: t('invoices.delete'), danger: true, onSelect: () => setConfirming(true) }] : []),
+  ]
+  const rows: DetailRow[] = [
+    [t('recurring.status'), <span key="state" className={`badge badge--${rec.active ? 'active' : 'inactive'}`}>{rec.active ? t('recurring.states.active') : t('recurring.states.inactive')}</span>],
     [t('recurring.frequency'), frequencyText(rec, t)],
     [t('recurring.startDate'), date(rec.start_date)],
     [t('recurring.nextDate'), rec.active && date(rec.invoice_date)],
@@ -96,19 +85,30 @@ function RecurringView({ administrationId, recurring: rec, rates }: { administra
   ]
 
   return (
-    <Page title={rec.contact ? contactName(rec.contact) : t('recurring.untitled')} subtitle={rec.reference ?? undefined} back={{ to: list, label: t('recurring.backToList') }} actions={actions}>
+    <Page
+      title={rec.contact ? contactName(rec.contact) : t('recurring.untitled')}
+      subtitle={rec.reference ?? undefined}
+      back={{ to: list, label: t('recurring.backToList') }}
+      actions={more.length > 0 ? <MoreMenu items={more} /> : undefined}
+    >
       <Problems messages={formErrors(deactivate.error ?? remove.error, {}).general} />
+      {confirming && (
+        <ConfirmPanel
+          message={made > 0 ? t('recurring.confirmDeleteKeptText') : t('recurring.confirmDeleteText')}
+          confirmLabel={made > 0 ? t('recurring.confirmDeleteKept') : t('invoices.confirmDelete')}
+          disabled={remove.isPending}
+          onConfirm={() => remove.mutate(undefined, { onSuccess: () => (made > 0 ? setConfirming(false) : navigate(list)) })}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
       {!rec.active && <p className="notice">{t('recurring.inactiveNotice')}</p>}
-      <dl className="details">
-        {rows.filter(([, v]) => v).map(([label, value]) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
-      {/* A fresh form for every version, so saved lines carry their ids. */}
-      <RecurringForm key={rec.updated_at} administrationId={administrationId} recurring={rec} template={rec} rates={rates} />
+      <DetailBlock title={t('recurring.detailsTitle')}>
+        <DetailList rows={rows} />
+      </DetailBlock>
+      <DetailBlock title={t('recurring.editTitle')}>
+        {/* A fresh form for every version, so saved lines carry their ids. */}
+        <RecurringForm key={rec.updated_at} administrationId={administrationId} recurring={rec} template={rec} rates={rates} />
+      </DetailBlock>
       <InvoicesMade administrationId={administrationId} recurring={rec} />
     </Page>
   )
@@ -119,8 +119,7 @@ function InvoicesMade({ administrationId, recurring: rec }: { administrationId: 
   const invoices = useInvoicesOf(administrationId, rec.id)
   const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
   return (
-    <section className="invoice-view" aria-labelledby="recurring-made">
-      <h2 id="recurring-made">{t('recurring.madeTitle')}</h2>
+    <DetailBlock title={t('recurring.madeTitle')}>
       {!invoices.data ? (
         <Loading />
       ) : invoices.data.length === 0 ? (
@@ -147,7 +146,7 @@ function InvoicesMade({ administrationId, recurring: rec }: { administrationId: 
           </tbody>
         </table>
       )}
-    </section>
+    </DetailBlock>
   )
 }
 
@@ -344,19 +343,21 @@ function RecurringForm({ administrationId, recurring, template, rates }: FormPro
           />
           <TextArea label={labels.payment_conditions ?? ''} maxLength={1000} value={conditions} errors={errors.field('payment_conditions')} onChange={(e) => setConditions(e.target.value)} />
         </FormSection>
-        <p className="hint">{t('recurring.periodHelp')}</p>
-        <LinesEditor
-          rows={rows}
-          rates={rates}
-          accounts={accounts.data ?? []}
-          amounts={totals.lines.map(money)}
-          invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
-          errors={errors}
-          onChange={change}
-          onRemove={remove}
-          onAdd={() => setRows([...rows, blank(defaultRate)])}
-        />
-        <TotalsTable rows={totalRows} />
+        <FormSection title={t('invoices.lines')}>
+          <p className="hint">{t('recurring.periodHelp')}</p>
+          <LinesEditor
+            rows={rows}
+            rates={rates}
+            accounts={accounts.data ?? []}
+            amounts={totals.lines.map(money)}
+            invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
+            errors={errors}
+            onChange={change}
+            onRemove={remove}
+            onAdd={() => setRows([...rows, blank(defaultRate)])}
+          />
+          <TotalsTable rows={totalRows} />
+        </FormSection>
         {!locked && (
           <div className="form-sheet__actions">
             <button className="btn btn--primary" disabled={save.isPending}>{t('recurring.save')}</button>

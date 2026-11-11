@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import type { Contact } from '../contacts/queries'
+import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, documentStyle, listing, server, signedIn, workflow } from '../test/server'
 import type { SalesInvoice } from './queries'
@@ -290,9 +291,13 @@ describe('an invoice', () => {
     expect(within(totals).getByRole('row', { name: /^Total/ })).toHaveTextContent('€242.00')
     expect(within(totals).getByRole('row', { name: /Unpaid/ })).toHaveTextContent('€242.00')
     expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAttribute('href', '/api/v2/11/sales_invoices/901/download_pdf')
+    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/11/sales_invoices/901/edit')
+    // The other actions wait under ⋯.
+    expect(screen.queryByRole('link', { name: 'Download UBL' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
     expect(screen.getByRole('link', { name: 'Download UBL' })).toHaveAttribute('href', '/api/v2/11/sales_invoices/901/download_ubl')
     expect(screen.getByRole('link', { name: 'Packing slip' })).toHaveAttribute('href', '/api/v2/11/sales_invoices/901/download_packing_slip_pdf')
-    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/11/sales_invoices/901/edit')
+    expect(screen.getByRole('button', { name: 'Create credit invoice' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
   })
 
@@ -310,7 +315,9 @@ describe('an invoice', () => {
     )
     renderAt('/11/sales_invoices/902')
     expect(await screen.findByRole('heading', { level: 1, name: 'Draft 3' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
     expect(screen.queryByRole('link', { name: 'Download UBL' })).toBeNull()
+    expect(screen.getByRole('link', { name: 'Make recurring' })).toHaveAttribute('href', '/11/recurring_sales_invoices/new?from=902')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
     const panel = screen.getByRole('region', { name: 'Send invoice' })
     expect(within(panel).getByLabelText('Email address')).toHaveValue('billing@example.com')
@@ -363,7 +370,7 @@ describe('an invoice', () => {
       http.get('*/api/v2/11/sales_invoices/903', () => HttpResponse.json({ ...draft, id: '903', draft_id: 4, original_sales_invoice_id: '901', uri: '/11/sales_invoices/903' })),
     )
     renderAt('/11/sales_invoices/901')
-    await userEvent.click(await screen.findByRole('button', { name: 'Create credit invoice' }))
+    await chooseMore('Create credit invoice')
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/sales_invoices/903'))
     expect(called).toBe(true)
     expect(await screen.findByRole('heading', { level: 1, name: 'Draft 4' })).toBeInTheDocument()
@@ -385,19 +392,20 @@ describe('an invoice', () => {
       }),
     )
     renderAt('/11/sales_invoices/901')
-    await userEvent.click(await screen.findByRole('button', { name: 'Pause reminders' }))
+    await chooseMore('Pause reminders')
     expect(await screen.findByText('Reminders for this invoice are paused.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Resume reminders' }))
-    expect(await screen.findByRole('button', { name: 'Pause reminders' })).toBeInTheDocument()
+    await chooseMore('Resume reminders')
+    await waitFor(() => expect(screen.queryByText('Reminders for this invoice are paused.')).toBeNull())
   })
 
   it('deletes a draft and returns to the list', async () => {
     server.use(...loaded(), http.delete('*/api/v2/11/sales_invoices/902', () => new HttpResponse(null, { status: 204 })))
     renderAt('/11/sales_invoices/902')
     expect(await screen.findByRole('heading', { level: 1, name: 'Draft 3' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
     expect(screen.queryByRole('button', { name: 'Create credit invoice' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Delete permanently' }))
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Delete this draft invoice? This cannot be undone.' })).getByRole('button', { name: 'Delete permanently' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices$/))
   })
 
@@ -563,12 +571,13 @@ describe('getting paid', () => {
       }),
     )
     renderAt('/11/sales_invoices/901')
-    await userEvent.click(await screen.findByRole('button', { name: 'Mark as dubious' }))
+    await chooseMore('Mark as dubious')
     let panel = screen.getByRole('region', { name: 'Mark as dubious' })
     await userEvent.clear(within(panel).getByLabelText('Date'))
     await userEvent.type(within(panel).getByLabelText('Date'), '2026-11-08')
     await userEvent.click(within(panel).getByRole('button', { name: 'Mark as dubious' }))
     expect(await screen.findByText('This invoice is marked as dubious.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
     expect(screen.queryByRole('button', { name: 'Mark as dubious' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Mark as uncollectible' }))
     panel = screen.getByRole('region', { name: 'Mark as uncollectible' })
@@ -578,6 +587,7 @@ describe('getting paid', () => {
     await userEvent.click(within(panel).getByRole('button', { name: 'Write off as uncollectible' }))
     expect(await screen.findByText('Irrecoverable', { selector: '.badge' })).toBeInTheDocument()
     expect(bodies).toEqual([{ dubious_date: '2026-11-08' }, { uncollectible_date: '2026-11-09', book_method: 'revenue' }])
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
     expect(screen.queryByRole('button', { name: 'Send reminder' })).toBeNull()
     expect(screen.queryByRole('form', { name: 'Register payment' })).toBeNull()
   })
@@ -596,7 +606,7 @@ describe('getting paid', () => {
     )
     renderAt('/11/sales_invoices/901')
     expect(await screen.findByText('Nov 22, 2026')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Send reminder' }))
+    await chooseMore('Send reminder')
     const panel = screen.getByRole('region', { name: 'Send reminder' })
     expect(within(panel).getByLabelText('Email address')).toHaveValue('billing@example.com')
     await userEvent.type(within(panel).getByLabelText('Reminder text'), 'Please pay {{invoices}')

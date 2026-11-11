@@ -8,6 +8,8 @@ type Props = {
   value: MonthRange | null
   onChange: (range: MonthRange | null) => void
   today?: Date
+  /** Whether "All periods" can be chosen; a report always covers some period. */
+  allowAll?: boolean
 }
 
 type Cell = MonthRange & { key: string; text: string; label: string }
@@ -17,7 +19,7 @@ type Cell = MonthRange & { key: string; text: string; label: string }
  * range slider: a first choice picks that span, a second one widens it to a
  * range from the one to the other.
  */
-export function PeriodPicker({ value, onChange, today = new Date() }: Props) {
+export function PeriodPicker({ value, onChange, today = new Date(), allowAll = true }: Props) {
   const { t, i18n } = useTranslation()
   const thisYear = today.getFullYear()
   const [first, setFirst] = useState(() => Math.min(value ? yearOfMonth(value.to) : thisYear, thisYear) - 1)
@@ -78,17 +80,19 @@ export function PeriodPicker({ value, onChange, today = new Date() }: Props) {
         <button type="button" className="icon-btn" aria-label={t('list.laterYears')} title={t('list.laterYears')} disabled={first + 1 >= thisYear} onClick={() => setFirst(first + 1)}>
           <ChevronIcon />
         </button>
-        <button
-          type="button"
-          className={`btn btn--small btn--secondary${value === null ? ' is-active' : ''}`}
-          aria-pressed={value === null}
-          onClick={() => {
-            onChange(null)
-            setAnchor(null)
-          }}
-        >
-          {t('list.allPeriods')}
-        </button>
+        {allowAll && (
+          <button
+            type="button"
+            className={`btn btn--small btn--secondary${value === null ? ' is-active' : ''}`}
+            aria-pressed={value === null}
+            onClick={() => {
+              onChange(null)
+              setAnchor(null)
+            }}
+          >
+            {t('list.allPeriods')}
+          </button>
+        )}
         <p className="period-picker__chosen" role="status">{value ? describePeriod(value, i18n.language) : t('list.allPeriods')}</p>
       </div>
       <div className="period-picker__grid">

@@ -147,7 +147,7 @@ function InvoiceForm({ administrationId, invoice, rates }: { administrationId: s
 
   return (
     <Page title={invoice ? t('invoices.editTitle', { name: invoiceTitle(invoice, t) }) : t('invoices.newTitle')} back={{ to: back, label: t('invoices.back') }}>
-      <form className="form-sheet invoice-form" onSubmit={submit} noValidate>
+      <form className="form-sheet invoice-form" onSubmit={submit} noValidate aria-label={invoice ? t('invoices.editTitle', { name: invoiceTitle(invoice, t) }) : t('invoices.newTitle')}>
         <Problems messages={errors.general} />
         <FormSection>
           <ContactPicker
@@ -178,7 +178,7 @@ function InvoiceForm({ administrationId, invoice, rates }: { administrationId: s
             onChange={(e) => setTerm(e.target.value)}
           />
         </FormSection>
-        <FormSection>
+        <FormSection title={t('invoices.settingsTitle')}>
           <SelectInput label={labels.workflow_id ?? ''} width="medium" value={workflowId} errors={errors.field('workflow_id')} onChange={(e) => setWorkflowId(e.target.value)}>
             {!invoice && <option value="">{t('invoices.defaultWorkflow')}</option>}
             {invoiceFlows.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
@@ -201,18 +201,20 @@ function InvoiceForm({ administrationId, invoice, rates }: { administrationId: s
           />
           <TextArea label={labels.payment_conditions ?? ''} maxLength={1000} value={conditions} errors={errors.field('payment_conditions')} onChange={(e) => setConditions(e.target.value)} />
         </FormSection>
-        <LinesEditor
-          rows={rows}
-          rates={rates}
-          accounts={accounts.data ?? []}
-          amounts={totals.lines.map(money)}
-          invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
-          errors={errors}
-          onChange={change}
-          onRemove={remove}
-          onAdd={() => setRows([...rows, blank(defaultRate)])}
-        />
-        <TotalsTable rows={totalRows} />
+        <FormSection title={t('invoices.lines')}>
+          <LinesEditor
+            rows={rows}
+            rates={rates}
+            accounts={accounts.data ?? []}
+            amounts={totals.lines.map(money)}
+            invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
+            errors={errors}
+            onChange={change}
+            onRemove={remove}
+            onAdd={() => setRows([...rows, blank(defaultRate)])}
+          />
+          <TotalsTable rows={totalRows} />
+        </FormSection>
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={save.isPending}>{t('invoices.save')}</button>
           <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>

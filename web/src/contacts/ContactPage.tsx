@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
+import { ConfirmPanel, DetailBlock, DetailList, type DetailRow } from '../detail/Detail'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { CheckboxInput, formErrors, TextArea, TextInput } from '../forms/Form'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
+import { MoreMenu } from '../list/ListActions'
 import { countryName } from '../settings/format'
 import {
   type Contact, contactName, type PersonChanges, useAddNote, useArchiveContact, useContact, useDeleteContact, useDeleteNote,
@@ -23,6 +25,7 @@ export function ContactPage() {
   const archive = useArchiveContact(administrationId, contactId)
   const restore = useSaveContact(administrationId, contactId)
   const remove = useDeleteContact(administrationId, contactId)
+  const [confirming, setConfirming] = useState(false)
 
   if (contact.error instanceof ApiError && contact.error.status < 500) {
     return <NotFoundPage />
@@ -35,19 +38,30 @@ export function ContactPage() {
   const problems = formErrors(archive.error ?? restore.error ?? remove.error, {}).general
   const actions = (
     <>
-      <Link className="btn btn--secondary btn--small" to={`${list}/${c.id}/edit`}>{t('contacts.edit')}</Link>
-      {c.archived ? (
-        <button type="button" className="btn btn--secondary btn--small" disabled={restore.isPending} onClick={() => restore.mutate({ archived: false })}>{t('contacts.restore')}</button>
-      ) : (
-        <button type="button" className="btn btn--secondary btn--small" disabled={archive.isPending} onClick={() => archive.mutate()}>{t('contacts.archive')}</button>
-      )}
-      <ConfirmDelete label={t('contacts.delete')} confirmLabel={t('contacts.confirmDelete')} disabled={remove.isPending} onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })} />
+      <Link className="btn btn--secondary" to={`${list}/${c.id}/edit`}>{t('contacts.edit')}</Link>
+      <MoreMenu
+        items={[
+          c.archived
+            ? { label: t('contacts.restore'), disabled: restore.isPending, onSelect: () => restore.mutate({ archived: false }) }
+            : { label: t('contacts.archive'), disabled: archive.isPending, onSelect: () => archive.mutate() },
+          { label: t('contacts.delete'), danger: true, onSelect: () => setConfirming(true) },
+        ]}
+      />
     </>
   )
 
   return (
     <Page title={contactName(c)} subtitle={t('contacts.number', { id: c.customer_id })} back={{ to: list, label: t('contacts.back') }} actions={actions}>
       <Problems messages={problems} />
+      {confirming && (
+        <ConfirmPanel
+          message={t('contacts.confirmDeleteText')}
+          confirmLabel={t('contacts.confirmDelete')}
+          disabled={remove.isPending}
+          onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
       {c.archived && <p className="notice">{t('contacts.archivedNotice')}</p>}
       <Details contact={c} />
       <People administrationId={administrationId} contact={c} />
@@ -59,7 +73,7 @@ export function ContactPage() {
 function Details({ contact: c }: { contact: Contact }) {
   const { t, i18n } = useTranslation()
   const address = [c.address1, c.address2, [c.zipcode, c.city].filter(Boolean).join(' '), countryName(i18n.language, c.country ?? '')].filter(Boolean)
-  const rows: [string, React.ReactNode][] = [
+  const rows: DetailRow[] = [
     [t('contacts.address'), address.length > 0 && address.map((line) => <span key={line} className="details__line">{line}</span>)],
     [t('contacts.invoiceEmail'), c.send_invoices_to_email],
     [t('contacts.attention'), c.send_invoices_to_attention],
@@ -70,17 +84,12 @@ function Details({ contact: c }: { contact: Contact }) {
     [t('contacts.bankAccount'), c.bank_account],
     [t('contacts.siIdentifier'), c.si_identifier && `${c.si_identifier_type ?? ''} ${c.si_identifier}`.trim()],
     [t('contacts.mandate'), c.sepa_active && [c.sepa_iban, c.sepa_mandate_id, c.sepa_mandate_date].filter(Boolean).join(' · ')],
-    ...(c.custom_fields ?? []).map((f): [string, React.ReactNode] => [f.name ?? '', f.value]),
+    ...(c.custom_fields ?? []).map((f): DetailRow => [f.name ?? '', f.value]),
   ]
   return (
-    <dl className="details">
-      {rows.filter(([, v]) => v).map(([label, value]) => (
-        <div key={label}>
-          <dt>{label}</dt>
-          <dd>{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <DetailBlock title={t('contacts.detailsTitle')}>
+      <DetailList rows={rows} />
+    </DetailBlock>
   )
 }
 
@@ -100,11 +109,10 @@ function People({ administrationId, contact }: { administrationId: string; conta
   }
   const people = contact.contact_people ?? []
   return (
-    <section className="settings-block" aria-labelledby="contact-people">
-      <div className="settings-block__header">
-        <h2 id="contact-people">{t('contacts.people')}</h2>
-        {!adding && <button type="button" className="btn btn--secondary btn--small" onClick={() => setAdding(true)}>{t('contacts.addPerson')}</button>}
-      </div>
+    <DetailBlock
+      title={t('contacts.people')}
+      actions={!adding && <button type="button" className="btn btn--secondary" onClick={() => setAdding(true)}>{t('contacts.addPerson')}</button>}
+    >
       {people.length === 0 && !adding && <p className="empty">{t('contacts.noPeople')}</p>}
       {people.length > 0 && (
         <ul className="people">
@@ -134,7 +142,7 @@ function People({ administrationId, contact }: { administrationId: string; conta
           </div>
         </form>
       )}
-    </section>
+    </DetailBlock>
   )
 }
 
@@ -151,10 +159,7 @@ function Notes({ administrationId, contact }: { administrationId: string; contac
   }
   const notes = contact.notes ?? []
   return (
-    <section className="settings-block" aria-labelledby="contact-notes">
-      <div className="settings-block__header">
-        <h2 id="contact-notes">{t('contacts.notes')}</h2>
-      </div>
+    <DetailBlock title={t('contacts.notes')}>
       {notes.length > 0 && (
         <ul className="notes">
           {notes.map((n) => (
@@ -179,6 +184,6 @@ function Notes({ administrationId, contact }: { administrationId: string; contac
           <button className="btn btn--primary" disabled={add.isPending || !text.trim()}>{t('contacts.addNote')}</button>
         </div>
       </form>
-    </section>
+    </DetailBlock>
   )
 }
