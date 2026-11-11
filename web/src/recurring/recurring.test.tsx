@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import type { Contact } from '../contacts/queries'
 import type { SalesInvoice } from '../invoices/queries'
+import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, documentStyle, listing, server, signedIn, workflow } from '../test/server'
 import type { RecurringInvoice } from './queries'
@@ -170,9 +171,10 @@ describe('a recurring invoice', () => {
       }),
     )
     renderAt('/11/recurring_sales_invoices/941')
-    await userEvent.click(await screen.findByRole('button', { name: 'Deactivate' }))
+    await chooseMore('Deactivate')
     expect(await screen.findByText('This recurring invoice is deactivated and makes no more invoices.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Deactivate' })).toBeNull()
+    // It made invoices, so it can no longer be deleted either: nothing is left to do with it.
+    expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Save recurring invoice' })).toBeNull()
     expect(within(screen.getByRole('form', { name: 'Recurring invoice' })).getByLabelText('Unit')).toBeDisabled()
   })
@@ -185,7 +187,7 @@ describe('a recurring invoice', () => {
       return HttpResponse.json(recurring(), { status: 201 })
     }))
     renderAt('/11/sales_invoices/901')
-    await userEvent.click(await screen.findByRole('link', { name: 'Make recurring' }))
+    await chooseMore('Make recurring')
     const form = await screen.findByRole('form', { name: 'Recurring invoice' })
     expect(screen.getByRole('heading', { name: 'New recurring invoice' })).toBeInTheDocument()
     expect(within(form).getByLabelText('Reference')).toHaveValue('Contract 7')

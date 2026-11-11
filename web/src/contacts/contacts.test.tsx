@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn, workflow } from '../test/server'
 import type { Contact } from './queries'
@@ -71,11 +72,35 @@ describe('contacts list', () => {
     server.use(...loaded(undefined, undefined, seen))
     renderAt('/11/contacts')
     await screen.findByRole('table', { name: 'Contacts' })
-    await userEvent.selectOptions(screen.getByLabelText('Kind'), 'company')
+    await userEvent.click(screen.getByRole('button', { name: 'All contacts' }))
+    const panel = screen.getByRole('search', { name: 'Contact filters' })
+    await userEvent.click(within(panel).getByRole('radio', { name: 'Companies' }))
+    await userEvent.click(within(panel).getByRole('button', { name: 'Filter' }))
     await waitFor(() => expect(seen.at(-1)?.pathname).toBe('/api/v2/11/contacts/filter'))
     expect(seen.at(-1)?.searchParams.get('filter')).toBe('contact_type:company')
+    await userEvent.click(screen.getByRole('button', { name: 'Companies' }))
     await userEvent.click(screen.getByRole('checkbox', { name: 'Show archived contacts' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
     await waitFor(() => expect(seen.at(-1)?.searchParams.get('include_archived')).toBe('true'))
+    expect(screen.getByRole('button', { name: 'Companies, archived included' })).toBeInTheDocument()
+  })
+
+  it('offers quick filters for the kinds of contact', async () => {
+    server.use(...loaded())
+    renderAt('/11/contacts?kind=private_individual')
+    await userEvent.click(await screen.findByRole('button', { name: 'Private individuals' }))
+    const panel = screen.getByRole('search', { name: 'Contact filters' })
+    expect(within(panel).getByRole('link', { name: 'Private individuals' })).toHaveAttribute('aria-current', 'true')
+    expect(within(panel).getByRole('link', { name: 'Companies' })).toHaveAttribute('href', '/11/contacts?kind=company')
+    expect(within(panel).getByRole('link', { name: 'Including archived contacts' })).toHaveAttribute('href', '/11/contacts?archived=1')
+  })
+
+  it('opens a contact from anywhere in its row', async () => {
+    server.use(...loaded())
+    renderAt('/11/contacts')
+    const table = await screen.findByRole('table', { name: 'Contacts' })
+    await userEvent.click(within(table).getByText('Utrecht'))
+    expect(screen.getByTestId('path')).toHaveTextContent('/11/contacts/902')
   })
 
   it('pages through many contacts', async () => {
@@ -158,16 +183,18 @@ describe('a contact', () => {
       }),
     )
     renderAt('/11/contacts/901')
-    await userEvent.click(await screen.findByRole('button', { name: 'Archive' }))
+    await chooseMore('Archive')
     expect(await screen.findByText('This contact is archived. It no longer shows in lists.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Bring back' }))
-    expect(await screen.findByRole('button', { name: 'Archive' })).toBeInTheDocument()
+    await chooseMore('Bring back')
+    await waitFor(() => expect(screen.queryByText('This contact is archived. It no longer shows in lists.')).toBeNull())
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
+    expect(screen.getByRole('button', { name: 'Archive' })).toBeInTheDocument()
   })
 
   it('explains why a contact in use cannot be deleted', async () => {
     server.use(...loaded(), http.delete('*/api/v2/11/contacts/901', () => HttpResponse.json({ error: { base: ['Documents refer to this contact; archive it instead'] } }, { status: 422 })))
     renderAt('/11/contacts/901')
-    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+    await chooseMore('Delete')
     await userEvent.click(screen.getByRole('button', { name: 'Delete permanently' }))
     expect(await screen.findByText('Documents refer to this contact; archive it instead')).toBeInTheDocument()
   })
@@ -175,9 +202,25 @@ describe('a contact', () => {
   it('deletes a contact and returns to the list', async () => {
     server.use(...loaded(), http.delete('*/api/v2/11/contacts/901', () => new HttpResponse(null, { status: 204 })))
     renderAt('/11/contacts/901')
-    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Delete permanently' }))
+    await chooseMore('Delete')
+    const confirm = screen.getByRole('alertdialog', { name: 'Delete this contact? This cannot be undone.' })
+    expect(within(confirm).getByRole('button', { name: 'Delete permanently' })).toHaveFocus()
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete permanently' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/contacts$/))
+  })
+
+  it('asks before deleting and keeps the contact on cancel', async () => {
+    let deleted = false
+    server.use(...loaded(), http.delete('*/api/v2/11/contacts/901', () => {
+      deleted = true
+      return new HttpResponse(null, { status: 204 })
+    }))
+    renderAt('/11/contacts/901')
+    await chooseMore('Delete')
+    await userEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(deleted).toBe(false)
+    expect(screen.getByTestId('path')).toHaveTextContent('/11/contacts/901')
   })
 })
 

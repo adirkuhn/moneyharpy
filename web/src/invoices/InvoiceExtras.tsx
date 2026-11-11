@@ -1,6 +1,7 @@
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Problems } from '../auth/AuthLayout'
+import { DetailBlock } from '../detail/Detail'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { CheckboxInput, formErrors, TextArea } from '../forms/Form'
 import {
@@ -23,10 +24,7 @@ export function InvoiceNotes({ administrationId, invoice, kind = 'sales' }: Prop
   }
   const notes = invoice.notes ?? []
   return (
-    <section className="settings-block" aria-labelledby="invoice-notes">
-      <div className="settings-block__header">
-        <h2 id="invoice-notes">{t('contacts.notes')}</h2>
-      </div>
+    <DetailBlock title={t('contacts.notes')}>
       {notes.length > 0 && (
         <ul className="notes">
           {notes.map((n) => (
@@ -51,7 +49,7 @@ export function InvoiceNotes({ administrationId, invoice, kind = 'sales' }: Prop
           <button className="btn btn--primary" disabled={add.isPending || !text.trim()}>{t('contacts.addNote')}</button>
         </div>
       </form>
-    </section>
+    </DetailBlock>
   )
 }
 
@@ -73,10 +71,7 @@ export function InvoiceAttachments({ administrationId, invoice, kind = 'sales' }
   const problems = [...(tooLarge ? [t('invoices.attachmentTooLarge')] : []), ...formErrors(add.error ?? remove.error, {}).general]
   const attachments = invoice.attachments ?? []
   return (
-    <section className="settings-block" aria-labelledby="invoice-attachments">
-      <div className="settings-block__header">
-        <h2 id="invoice-attachments">{t('invoices.attachments')}</h2>
-      </div>
+    <DetailBlock title={t('invoices.attachments')}>
       <Problems messages={problems} />
       {attachments.length === 0 ? (
         <p className="empty">{t('invoices.noAttachments')}</p>
@@ -123,6 +118,6 @@ export function InvoiceAttachments({ administrationId, invoice, kind = 'sales' }
         />
         <span id={`${id}-help`} className="hint">{add.isPending ? t('invoices.uploading') : t('invoices.attachmentHelp')}</span>
       </div>
-    </section>
+    </DetailBlock>
   )
 }

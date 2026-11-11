@@ -27,7 +27,8 @@ type Props<T> = {
   label: string
   rows: T[]
   rowKey: (row: T) => string
-  href: (row: T) => string
+  /** Where a row leads; a row without a page of its own is not a link. */
+  href: (row: T) => string | undefined
   columns: Column<T>[]
   /** Checkboxes for the actions on several rows at once. */
   selection?: Selection<T>
@@ -44,8 +45,8 @@ export function DocumentTable<T>({ label, rows, rowKey, href, columns, selection
   const allChosen = selection !== undefined && keys.length > 0 && keys.every((k) => selection.selected.has(k))
 
   // The link in the row serves the keyboard and new tabs; this makes the rest of the row a target too.
-  const open = (e: MouseEvent, to: string) => {
-    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || (e.target as Element).closest(interactive)) {
+  const open = (e: MouseEvent, to: string | undefined) => {
+    if (to === undefined || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || (e.target as Element).closest(interactive)) {
       return
     }
     if (window.getSelection()?.toString()) {
@@ -86,7 +87,7 @@ export function DocumentTable<T>({ label, rows, rowKey, href, columns, selection
               const key = rowKey(row)
               const to = href(row)
               return (
-                <tr key={key} className={`document-table__row${selection?.selected.has(key) ? ' is-selected' : ''}`} onClick={(e) => open(e, to)}>
+                <tr key={key} className={`document-table__row${to === undefined ? ' is-plain' : ''}${selection?.selected.has(key) ? ' is-selected' : ''}`} onClick={(e) => open(e, to)}>
                   {selection && (
                     <td className="document-table__check">
                       <input type="checkbox" aria-label={selection.selectLabel(row)} checked={selection.selected.has(key)} onChange={() => toggle(key)} />
@@ -94,7 +95,7 @@ export function DocumentTable<T>({ label, rows, rowKey, href, columns, selection
                   )}
                   {columns.map((c) => (
                     <td key={c.key} className={cellClass(c)}>
-                      {c.link ? <Link className="document-table__link" to={to}>{c.cell(row)}</Link> : c.cell(row)}
+                      {c.link && to !== undefined ? <Link className="document-table__link" to={to}>{c.cell(row)}</Link> : c.cell(row)}
                     </td>
                   ))}
                 </tr>
