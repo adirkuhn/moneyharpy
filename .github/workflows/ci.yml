@@ -67,7 +67,12 @@ jobs:
           cache-dependency-path: e2e/package-lock.json
       - run: npm ci
         working-directory: e2e
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install chromium
+        working-directory: e2e
+      # The runner image already has Chrome's system libraries. Installing
+      # them again goes through Ubuntu's mirrors, which are sometimes down;
+      # that must not fail the tests.
+      - run: npx playwright install-deps chromium || echo "::warning::Could not install Playwright's system dependencies; using the runner's own"
         working-directory: e2e
       - run: make test-e2e
       - uses: actions/upload-artifact@v5
