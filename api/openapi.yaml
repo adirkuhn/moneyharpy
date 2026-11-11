@@ -52,6 +52,8 @@ tags:
     description: Customers and suppliers with their contact people and notes. Compatible with the Moneybird API.
   - name: Journal
     description: Journal entries made by hand and the reports that read the whole journal. Compatible with the Moneybird API.
+  - name: Reports
+    description: The financial reports and the exports that land in the downloads, worked out from the journal. Compatible with the Moneybird API.
   - name: Purchase invoices
     description: Invoices from suppliers, booked when saved and paid by hand or with bank transactions. Compatible with the Moneybird API.
   - name: Receipts
@@ -6876,6 +6878,780 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/reports/profit_loss:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getProfitLossReport
+      x-permissions: [documents]
+      summary: Profit and loss report
+      description: >-
+        The profit and loss categories with bookings in the period, from the journal; nested categories are flat. Revenue and other income and expenses are credit minus debit, direct costs and expenses debit minus credit. With project_id only the bookings on that project count. Also needs the sales_invoices permission. The period holds at most 12 months.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+        - name: project_id
+          in: query
+          description: Only the bookings on this project.
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+      responses:
+        '200':
+          description: The report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfitLossReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/balance_sheet:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getBalanceSheetReport
+      x-permissions: [bank]
+      summary: Balance sheet report
+      description: >-
+        The balance sheet categories with a balance at the end of the period, each top category with its sub-categories as children. A current asset with a credit balance shows with the current liabilities, and the other way round. MoneyHarpy closes no years yet, so the results of every year show as open years.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+      responses:
+        '200':
+          description: The report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceSheetReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/cash_flow:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getCashFlowReport
+      x-permissions: [bank]
+      summary: Cash flow report
+      description: >-
+        What bank transactions in the period booked against the financial accounts, per category: cash received positive, cash paid negative; and the financial accounts' balance at the period's start and end.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+        - name: financial_account_id
+          in: query
+          description: Only this financial account.
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+      responses:
+        '200':
+          description: The report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashFlowReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/creditors:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getCreditorsReport
+      x-permissions: [documents]
+      summary: Creditors report
+      description: >-
+        The balance of each creditor (contact) on the creditors category at the end of the period, the largest first; contact_id null is the bookings without a contact. With granularity, periods gives the balances of the page's creditors at the end of each part.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+        - $ref: '#/components/parameters/page'
+        - name: per_page
+          in: query
+          description: Records per page, 100 unless given, at most 100.
+          schema:
+            type: string
+            pattern: '^(100|[1-9][0-9]?)$'
+      responses:
+        '200':
+          description: The report
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of records in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditorsReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/creditors_aging:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getCreditorsAgingReport
+      x-permissions: [documents]
+      summary: Creditors aging report
+      description: >-
+        Per creditor, what booked purchase invoices and receipts still had open at the end of period_until, by their age from the document date: 0 to 30 days, 30 to 60 days, older, and the total. Bucket names are in the administration's language.
+      tags: [Reports]
+      parameters:
+        - name: period_until
+          in: query
+          description: The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today.
+          schema:
+            type: string
+            maxLength: 20
+        - $ref: '#/components/parameters/page'
+        - name: per_page
+          in: query
+          description: Records per page, 100 unless given, at most 100.
+          schema:
+            type: string
+            pattern: '^(100|[1-9][0-9]?)$'
+      responses:
+        '200':
+          description: The report
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of records in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditorsAgingReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/debtors:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getDebtorsReport
+      x-permissions: [sales_invoices]
+      summary: Debtors report
+      description: >-
+        The balance of each debtor (contact) on the debtors category at the end of the period, the largest first; contact_id null is the bookings without a contact. With granularity, periods gives the balances of the page's debtors at the end of each part.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+        - $ref: '#/components/parameters/page'
+        - name: per_page
+          in: query
+          description: Records per page, 100 unless given, at most 100.
+          schema:
+            type: string
+            pattern: '^(100|[1-9][0-9]?)$'
+      responses:
+        '200':
+          description: The report
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of records in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebtorsReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/debtors_aging:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getDebtorsAgingReport
+      x-permissions: [sales_invoices]
+      summary: Debtors aging report
+      description: >-
+        Per debtor, what booked sales invoices and external sales invoices still had open at the end of period_until, by their age from the invoice date: 0 to 30 days, 30 to 60 days, older, and the total. Bucket names are in the administration's language.
+      tags: [Reports]
+      parameters:
+        - name: period_until
+          in: query
+          description: The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today.
+          schema:
+            type: string
+            maxLength: 20
+        - $ref: '#/components/parameters/page'
+        - name: per_page
+          in: query
+          description: Records per page, 100 unless given, at most 100.
+          schema:
+            type: string
+            pattern: '^(100|[1-9][0-9]?)$'
+      responses:
+        '200':
+          description: The report
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of records in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebtorsAgingReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/expenses_by_contact:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getExpensesByContactReport
+      x-permissions: [documents]
+      summary: Expenses by contact report
+      description: >-
+        The direct costs and expenses booked per contact in the period (debit minus credit), the bookings without a contact first, then the largest. With granularity, periods splits the amounts of the page's contacts per part, listing those with bookings in it.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+        - name: contact_id
+          in: query
+          description: Only the amounts of this contact.
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+        - $ref: '#/components/parameters/page'
+        - name: per_page
+          in: query
+          description: Records per page, 100 unless given, at most 100.
+          schema:
+            type: string
+            pattern: '^(100|[1-9][0-9]?)$'
+      responses:
+        '200':
+          description: The report
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of records in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpensesByContactReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/expenses_by_project:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getExpensesByProjectReport
+      x-permissions: [documents]
+      summary: Expenses by project report
+      description: >-
+        The direct costs and expenses booked per project in the period (debit minus credit), the bookings without a project first, then the largest. With granularity, periods splits the amounts of the page's projects per part, listing those with bookings in it.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+        - $ref: '#/components/parameters/page'
+        - name: per_page
+          in: query
+          description: Records per page, 100 unless given, at most 100.
+          schema:
+            type: string
+            pattern: '^(100|[1-9][0-9]?)$'
+      responses:
+        '200':
+          description: The report
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of records in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpensesByProjectReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/export/auditfile:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: exportAuditfile
+      x-permissions: [bank]
+      summary: Export an auditfile
+      description: >-
+        Makes the year's auditfile (XAF) and adds it to the downloads as auditfile; MoneyHarpy makes it at once and writes the XAF 3.2 format for both versions. Every ledger account needs an account id of its own, and the year needs journal entries. Also needs the documents, estimates, sales_invoices and settings permissions.
+      tags: [Reports]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditfileExportRequest'
+      responses:
+        '204':
+          description: The file is in the downloads
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/export/brugstaat:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: exportBrugstaat
+      x-permissions: [bank]
+      summary: Export a brugstaat
+      description: >-
+        Makes the year's RGS brugstaat (XML: per category with a balance or bookings its RGS code and reference number, its balance at the start, debits, credits and balance at the end) and adds it to the downloads as brugstaat. Every active category needs a code of the administration's RGS scheme. Also needs the documents and sales_invoices permissions.
+      tags: [Reports]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportYearRequest'
+      responses:
+        '204':
+          description: The file is in the downloads
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/export/ledger_accounts:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: exportLedgerAccounts
+      x-permissions: [documents]
+      summary: Export the ledger accounts
+      description: >-
+        Makes the year's ledger cards (grootboekkaarten) as an Excel workbook: per category its balance at the start of the year, every booking and its balance at the end; and adds it to the downloads as export_ledger_account_report. The year needs journal entries. Also needs the sales_invoices permission.
+      tags: [Reports]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportYearRequest'
+      responses:
+        '204':
+          description: The file is in the downloads
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/ledger_accounts/{ledger_account_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - name: ledger_account_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: getLedgerAccountReport
+      x-permissions: [documents]
+      deprecated: true
+      summary: Ledger account report
+      description: >-
+        The journal entries on a ledger account in the period, the newest first. Deprecated at Moneybird in favour of the journal entries report. Also needs the sales_invoices permission.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - $ref: '#/components/parameters/page'
+        - name: per_page
+          in: query
+          description: Records per page, 100 unless given, at most 100.
+          schema:
+            type: string
+            pattern: '^(100|[1-9][0-9]?)$'
+      responses:
+        '200':
+          description: The entries
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of records in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JournalEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/revenue_by_contact:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getRevenueByContactReport
+      x-permissions: [sales_invoices]
+      summary: Revenue by contact report
+      description: >-
+        The revenue booked per contact in the period (credit minus debit), the bookings without a contact first, then the largest. With granularity, periods splits the amounts of the page's contacts per part, listing those with bookings in it.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+        - name: contact_id
+          in: query
+          description: Only the amounts of this contact.
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+        - $ref: '#/components/parameters/page'
+        - name: per_page
+          in: query
+          description: Records per page, 100 unless given, at most 100.
+          schema:
+            type: string
+            pattern: '^(100|[1-9][0-9]?)$'
+      responses:
+        '200':
+          description: The report
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of records in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueByContactReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/revenue_by_project:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getRevenueByProjectReport
+      x-permissions: [sales_invoices]
+      summary: Revenue by project report
+      description: >-
+        The revenue booked per project in the period (credit minus debit), the bookings without a project first, then the largest. With granularity, periods splits the amounts of the page's projects per part, listing those with bookings in it.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+        - $ref: '#/components/parameters/page'
+        - name: per_page
+          in: query
+          description: Records per page, 100 unless given, at most 100.
+          schema:
+            type: string
+            pattern: '^(100|[1-9][0-9]?)$'
+      responses:
+        '200':
+          description: The report
+          headers:
+            Link:
+              description: RFC 8288 links to the first, prev, next and last pages.
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of records in all. MoneyHarpy extension.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueByProjectReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/subscriptions:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getSubscriptionsReport
+      x-permissions: [sales_invoices]
+      summary: Subscriptions report
+      description: >-
+        The subscription figures of the last month of the period: what the subscriptions running at its end bill per month excluding VAT, twelve times that, the percentage of the subscriptions running at its start that ended in it, and the monthly revenue per customer divided by that churn rate.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+      responses:
+        '200':
+          description: The report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionsReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/tax:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getTaxReport
+      x-permissions: [documents]
+      summary: Tax report
+      description: >-
+        Per VAT rate with an amount in the period: what it was charged on and the VAT, from what invoices, receipts and other documents booked; sales rates on payable VAT, purchase rates on receivable VAT. Also needs the sales_invoices permission.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+      responses:
+        '200':
+          description: The report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/working_capital:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getWorkingCapitalReport
+      x-permissions: [bank]
+      summary: Working capital report
+      description: >-
+        Current assets less current liabilities at the end of the period: the financial accounts' balance (zero when negative), the other current assets, and the current liabilities including a negative bank balance.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+        - name: granularity
+          in: query
+          description: Splits the report into months, quarters or years; periods then repeats the report for each, the first and the last cut off at the period's start and end.
+          schema:
+            type: string
+            enum: [month, quarter, year]
+      responses:
+        '200':
+          description: The report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkingCapitalReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/sales_invoices:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -14887,6 +15663,274 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/GeneralLedgerPeriod'
+    ReportPart:
+      type: object
+      required: [period]
+      properties:
+        period:
+          type: string
+          description: The part of the report's period, as 202501..202503.
+    ProfitLossReport:
+      description: The profit and loss report.
+      allOf:
+        - $ref: '#/components/schemas/profit_loss_amounts'
+        - type: object
+          properties:
+            periods:
+              type: array
+              description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/ReportPart'
+                  - $ref: '#/components/schemas/profit_loss_amounts'
+    CashFlowReport:
+      description: The cash flow report.
+      allOf:
+        - $ref: '#/components/schemas/cash_flow_amounts'
+        - type: object
+          properties:
+            periods:
+              type: array
+              description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/ReportPart'
+                  - $ref: '#/components/schemas/cash_flow_amounts'
+    TaxReport:
+      description: The tax report.
+      allOf:
+        - $ref: '#/components/schemas/tax_report_amounts'
+        - type: object
+          properties:
+            periods:
+              type: array
+              description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/ReportPart'
+                  - $ref: '#/components/schemas/tax_report_amounts'
+    WorkingCapitalReport:
+      description: The working capital report.
+      allOf:
+        - $ref: '#/components/schemas/working_capital_amounts'
+        - type: object
+          properties:
+            periods:
+              type: array
+              description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/ReportPart'
+                  - $ref: '#/components/schemas/working_capital_amounts'
+    BalanceSheetAmounts:
+      type: object
+      required: [debit, credit]
+      properties:
+        debit:
+          $ref: '#/components/schemas/balance_sheet_debit'
+        credit:
+          $ref: '#/components/schemas/balance_sheet_credit'
+    BalanceSheetReport:
+      description: The balance sheet report.
+      allOf:
+        - $ref: '#/components/schemas/BalanceSheetAmounts'
+        - type: object
+          properties:
+            periods:
+              type: array
+              description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/ReportPart'
+                  - $ref: '#/components/schemas/BalanceSheetAmounts'
+    DebtorsReport:
+      type: object
+      description: The debtors report.
+      required: [debtors]
+      properties:
+        debtors:
+          type: array
+          items:
+            $ref: '#/components/schemas/debtors_report_item'
+        periods:
+          type: array
+          description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+          items:
+            type: object
+            required: [period, debtors]
+            properties:
+              period:
+                type: string
+                description: The part of the period, as 202501..202503.
+              debtors:
+                type: array
+                items:
+                  $ref: '#/components/schemas/debtors_report_item'
+    CreditorsReport:
+      type: object
+      description: The creditors report.
+      required: [creditors]
+      properties:
+        creditors:
+          type: array
+          items:
+            $ref: '#/components/schemas/creditors_report_item'
+        periods:
+          type: array
+          description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+          items:
+            type: object
+            required: [period, creditors]
+            properties:
+              period:
+                type: string
+                description: The part of the period, as 202501..202503.
+              creditors:
+                type: array
+                items:
+                  $ref: '#/components/schemas/creditors_report_item'
+    RevenueByContactReport:
+      type: object
+      description: The revenue by contact report.
+      required: [revenue_by_contact]
+      properties:
+        revenue_by_contact:
+          type: array
+          items:
+            $ref: '#/components/schemas/contact_report_item'
+        periods:
+          type: array
+          description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+          items:
+            type: object
+            required: [period, revenue_by_contact]
+            properties:
+              period:
+                type: string
+                description: The part of the period, as 202501..202503.
+              revenue_by_contact:
+                type: array
+                items:
+                  $ref: '#/components/schemas/contact_report_item'
+    ExpensesByContactReport:
+      type: object
+      description: The expenses by contact report.
+      required: [expenses_by_contact]
+      properties:
+        expenses_by_contact:
+          type: array
+          items:
+            $ref: '#/components/schemas/contact_report_item'
+        periods:
+          type: array
+          description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+          items:
+            type: object
+            required: [period, expenses_by_contact]
+            properties:
+              period:
+                type: string
+                description: The part of the period, as 202501..202503.
+              expenses_by_contact:
+                type: array
+                items:
+                  $ref: '#/components/schemas/contact_report_item'
+    RevenueByProjectReport:
+      type: object
+      description: The revenue by project report.
+      required: [revenue_by_project]
+      properties:
+        revenue_by_project:
+          type: array
+          items:
+            $ref: '#/components/schemas/project_report_item'
+        periods:
+          type: array
+          description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+          items:
+            type: object
+            required: [period, revenue_by_project]
+            properties:
+              period:
+                type: string
+                description: The part of the period, as 202501..202503.
+              revenue_by_project:
+                type: array
+                items:
+                  $ref: '#/components/schemas/project_report_item'
+    ExpensesByProjectReport:
+      type: object
+      description: The expenses by project report.
+      required: [expenses_by_project]
+      properties:
+        expenses_by_project:
+          type: array
+          items:
+            $ref: '#/components/schemas/project_report_item'
+        periods:
+          type: array
+          description: Only with granularity. One item for each month, quarter or year in the period, oldest first.
+          items:
+            type: object
+            required: [period, expenses_by_project]
+            properties:
+              period:
+                type: string
+                description: The part of the period, as 202501..202503.
+              expenses_by_project:
+                type: array
+                items:
+                  $ref: '#/components/schemas/project_report_item'
+    DebtorsAgingReport:
+      type: object
+      description: The debtors aging report.
+      required: [debtors]
+      properties:
+        debtors:
+          type: array
+          items:
+            $ref: '#/components/schemas/aging_report_item'
+    CreditorsAgingReport:
+      type: object
+      description: The creditors aging report.
+      required: [creditors]
+      properties:
+        creditors:
+          type: array
+          items:
+            $ref: '#/components/schemas/aging_report_item'
+    SubscriptionsReport:
+      type: object
+      required: [monthly_recurring_revenue, annual_run_rate, churn_rate, lifetime_value]
+      properties:
+        monthly_recurring_revenue:
+          type: string
+        annual_run_rate:
+          type: string
+        churn_rate:
+          type: string
+        lifetime_value:
+          type: string
+    ExportYearRequest:
+      type: object
+      required: [year]
+      properties:
+        year:
+          type: string
+          description: The year to export, as 2024.
+          maxLength: 10
+    AuditfileExportRequest:
+      type: object
+      required: [year]
+      properties:
+        year:
+          type: string
+          description: The year to export, as 2024.
+          maxLength: 10
+        version:
+          type: string
+          description: The XAF version; 3.2 unless given. MoneyHarpy writes 3.2 for both.
+          enum: ['3.2', '4.0']
     SalesInvoice:
       description: A Moneybird sales invoice with MoneyHarpy extensions.
       allOf:

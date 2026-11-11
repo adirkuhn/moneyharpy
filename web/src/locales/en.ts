@@ -647,6 +647,13 @@ export const en = {
     empty: 'No assets yet. Add them through the API, linked to the purchase invoices they were bought with.', noMatches: 'No assets match this filter.',
     loadError: 'The assets could not be loaded.',
   },
+  reports: {
+    totalRevenue: 'Total revenue', grossProfit: 'Gross profit', operatingProfit: 'Operating profit', netProfit: 'Net profit',
+    debit: 'Assets', credit: 'Equity and liabilities', totalDebit: 'Total assets', totalCredit: 'Total equity and liabilities', openYears: 'Results of open years',
+    taxRate: 'VAT rate', reference: 'Box', turnover: 'Turnover', vat: 'VAT', rateTypes: { sales: 'sales', purchases: 'purchases' },
+    openingBalance: 'Opening balance', closingBalance: 'Closing balance', received: 'Cash received', paid: 'Cash paid',
+    contact: 'Contact', noContact: 'Without a contact', nothing: 'Nothing to show for this period.', nothingOpen: 'Nothing is open.',
+  },
 }
 
 export type Messages = typeof en

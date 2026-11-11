@@ -649,6 +649,13 @@ export const nl: Messages = {
     empty: 'Nog geen activa. Voeg ze toe via de API, gekoppeld aan de inkoopfacturen waarmee ze zijn gekocht.', noMatches: 'Geen activa voor dit filter.',
     loadError: 'De activa konden niet worden geladen.',
   },
+  reports: {
+    totalRevenue: 'Totale omzet', grossProfit: 'Brutowinst', operatingProfit: 'Bedrijfsresultaat', netProfit: 'Nettowinst',
+    debit: 'Activa', credit: 'Passiva', totalDebit: 'Totaal activa', totalCredit: 'Totaal passiva', openYears: 'Resultaat open boekjaren',
+    taxRate: 'Btw-tarief', reference: 'Rubriek', turnover: 'Omzet', vat: 'Btw', rateTypes: { sales: 'verkoop', purchases: 'inkoop' },
+    openingBalance: 'Beginsaldo', closingBalance: 'Eindsaldo', received: 'Ontvangen', paid: 'Betaald',
+    contact: 'Contact', noContact: 'Zonder contact', nothing: 'Niets te tonen voor deze periode.', nothingOpen: 'Er staat niets open.',
+  },
 }
 
 /** Dutch for the messages the server sends. Unknown ones stay as sent. */

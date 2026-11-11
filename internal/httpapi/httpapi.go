@@ -31,6 +31,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
+	"github.com/adirkuhn/moneyharpy/internal/reports"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
@@ -98,6 +99,7 @@ type Deps struct {
 	Projects        *projects.Service
 	Subscriptions   *subscriptions.Service
 	Downloads       *downloads.Service
+	Reports         *reports.Service
 	TimeEntries     *timeentries.Service
 	TaskLists       *tasklists.Service
 	Membership      *membership.Service
