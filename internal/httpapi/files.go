@@ -111,6 +111,8 @@ func (s *server) openAttachment(r *http.Request, l fileLink) (attachments.Attach
 		return s.deps.Sales.OpenAttachment(r.Context(), l.Admin, l.ID, l.Attachment, l.User)
 	case fileExternalAttachment:
 		return s.deps.Sales.OpenExternalAttachment(r.Context(), l.Admin, l.ID, l.Attachment, l.User)
+	case fileEstimateAttachment:
+		return s.deps.Sales.OpenEstimateAttachment(r.Context(), l.Admin, l.ID, l.Attachment, l.User)
 	default:
 		return s.deps.Journal.OpenDocumentAttachment(r.Context(), l.Admin, l.ID, l.Attachment, l.User)
 	}
@@ -163,6 +165,13 @@ func (s *server) DownloadFile(w http.ResponseWriter, r *http.Request, token stri
 	switch l.Kind {
 	case filePDF:
 		data, name, err := s.deps.Sales.PDF(r.Context(), l.Admin, l.ID, l.User, l.Stationery)
+		if err != nil {
+			s.fail(w, r, err)
+			return
+		}
+		writeDocument(w, "application/pdf", name, data)
+	case fileEstimatePDF:
+		data, name, err := s.deps.Sales.EstimatePDF(r.Context(), l.Admin, l.ID, l.User, l.Stationery)
 		if err != nil {
 			s.fail(w, r, err)
 			return
