@@ -1,5 +1,5 @@
 import { type FormEvent, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { type Administration, ApiError } from '../api/client'
@@ -159,12 +159,23 @@ function IdentityForm({ mode, administration, target, initial, customFields }: F
   return (
     <Page title={title} back={{ to: back, label: t('settings.toCompany') }} actions={deleteAction || undefined}>
       <form className="form-sheet" onSubmit={submit} noValidate>
-        {companyDetails && <FormNotice>{t('settings.detailsNotice')}</FormNotice>}
+        {companyDetails && (
+          <FormNotice>
+            {t('settings.detailsNotice')}{' '}
+            <Trans
+              i18nKey="settings.detailsCheck"
+              components={{
+                styles: <Link to={`/${administration.id}/settings/invoices_and_estimates#document-styles`} />,
+                workflows: <Link to={`/${administration.id}/settings/invoices_and_estimates#workflows`} />,
+              }}
+            />
+          </FormNotice>
+        )}
         <Problems messages={errors.general} />
 
         <FormSection>
           {text('company_name', { required: true })}
-          {text('legal_entity_type', { width: 'medium' })}
+          {text('legal_entity_type', {})}
         </FormSection>
 
         <FormSection>
@@ -204,12 +215,12 @@ function IdentityForm({ mode, administration, target, initial, customFields }: F
 
         <FormSection>
           {text('email', { type: 'email', inputMode: 'email', autoCapitalize: 'off', spellCheck: false })}
-          {text('phone', { type: 'tel', inputMode: 'tel', width: 'medium' })}
+          {text('phone', { type: 'tel', inputMode: 'tel'})}
         </FormSection>
 
         <FormSection>
-          {text('chamber_of_commerce', { width: 'medium' })}
-          {text('tax_number', { width: 'medium' })}
+          {text('chamber_of_commerce', {})}
+          {text('tax_number', {})}
           {!form.tax_number && (
             <CheckboxInput
               label={t('settings.noVat')}
@@ -240,7 +251,7 @@ function IdentityForm({ mode, administration, target, initial, customFields }: F
 
         <FormSection>
           {text('bank_account_number', { autoCapitalize: 'characters', spellCheck: false })}
-          {text('bank_account_bic', { width: 'medium', autoCapitalize: 'characters', spellCheck: false })}
+          {text('bank_account_bic', { autoCapitalize: 'characters', spellCheck: false })}
           {text('bank_account_name')}
         </FormSection>
 

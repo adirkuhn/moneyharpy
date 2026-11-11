@@ -148,7 +148,7 @@ function WebhooksBlock({ administration: a }: { administration: Administration }
       action={<Link className="btn btn--accent" to={`/${a.id}/webhooks/new`}>{t('settings.add')}</Link>}
     >
       {hooks.data?.length ? (
-        <table className="data-table" aria-label={t('integrations.parts.webhooks')}>
+        <table className="data-table data-table--rows" aria-label={t('integrations.parts.webhooks')}>
           <thead>
             <tr>
               <th scope="col">URL</th>
@@ -159,7 +159,7 @@ function WebhooksBlock({ administration: a }: { administration: Administration }
           <tbody>
             {hooks.data.map((h) => (
               <tr key={h.id} className={h.deactivated_at ? 'is-inactive' : undefined}>
-                <td><Link to={`/${a.id}/webhooks/${h.id}`}>{h.url}</Link></td>
+                <td><Link className="row-link" to={`/${a.id}/webhooks/${h.id}`}>{h.url}</Link></td>
                 <td className="data-table__extra" title={(h.enabled_events ?? []).join(', ')}>{t('integrations.eventCount', { count: h.enabled_events?.length ?? 0 })}</td>
                 <td>
                   {h.deactivated_at ? t('integrations.deactivatedOn', { date: new Date(h.deactivated_at).toLocaleDateString(i18n.language) }) : t('integrations.active')}

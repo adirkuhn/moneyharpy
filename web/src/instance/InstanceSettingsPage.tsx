@@ -8,6 +8,7 @@ import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '
 import { useCurrentUser } from '../auth/queries'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
+import { Block } from '../settings/Block'
 import { Loading } from '../layout/Loading'
 import { useSupportGrants } from '../management/queries'
 
@@ -121,8 +122,9 @@ function SettingsForm() {
   )
 
   return (
-    <Page title={t('instance.title')}>
-      <form className="form-sheet" onSubmit={submit} noValidate>
+    <Page title={t('instance.title')} subtitle={t('instance.subtitle')}>
+      <Block id="services" title={t('instance.servicesTitle')} subtitle={t('instance.servicesSubtitle')}>
+      <form className="form-sheet form-sheet--block" onSubmit={submit} noValidate aria-label={t('instance.servicesTitle')}>
         <Problems messages={errors.general} />
         <FormSection>{check('registration_open', t('instance.register'))}</FormSection>
         <FormSection title={t('instance.googleTitle')}>
@@ -231,6 +233,7 @@ function SettingsForm() {
           {save.isSuccess && <p role="status" className="saved">{t('instance.saved')}</p>}
         </div>
       </form>
+      </Block>
       <SupportGrants />
     </Page>
   )
