@@ -1527,6 +1527,33 @@ func (e SubscriptionCreateRequestSubscriptionFrequencyType) Valid() bool {
 	}
 }
 
+// Defines values for TaskListReportType.
+const (
+	TaskListReportTypeAssets       TaskListReportType = "assets"
+	TaskListReportTypeBalanceSheet TaskListReportType = "balance_sheet"
+	TaskListReportTypeCreditor     TaskListReportType = "creditor"
+	TaskListReportTypeDebtor       TaskListReportType = "debtor"
+	TaskListReportTypeProfitLoss   TaskListReportType = "profit_loss"
+)
+
+// Valid indicates whether the value is a known member of the TaskListReportType enum.
+func (e TaskListReportType) Valid() bool {
+	switch e {
+	case TaskListReportTypeAssets:
+		return true
+	case TaskListReportTypeBalanceSheet:
+		return true
+	case TaskListReportTypeCreditor:
+		return true
+	case TaskListReportTypeDebtor:
+		return true
+	case TaskListReportTypeProfitLoss:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TaxNumberAbsenceReason.
 const (
 	TaxNumberAbsenceReasonBelowTaxThreshold TaxNumberAbsenceReason = "below_tax_threshold"
@@ -1589,16 +1616,16 @@ func (e TaxRateType) Valid() bool {
 
 // Defines values for TaxonomyItemSide.
 const (
-	BalanceSheet  TaxonomyItemSide = "balance_sheet"
-	ProfitAndLoss TaxonomyItemSide = "profit_and_loss"
+	TaxonomyItemSideBalanceSheet  TaxonomyItemSide = "balance_sheet"
+	TaxonomyItemSideProfitAndLoss TaxonomyItemSide = "profit_and_loss"
 )
 
 // Valid indicates whether the value is a known member of the TaxonomyItemSide enum.
 func (e TaxonomyItemSide) Valid() bool {
 	switch e {
-	case BalanceSheet:
+	case TaxonomyItemSideBalanceSheet:
 		return true
-	case ProfitAndLoss:
+	case TaxonomyItemSideProfitAndLoss:
 		return true
 	default:
 		return false
@@ -6262,7 +6289,7 @@ type SalesInvoiceRequest struct {
 		// RemoveInvoiceSequenceId A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
 		RemoveInvoiceSequenceId *FlexibleBoolean `json:"remove_invoice_sequence_id,omitempty"`
 
-		// TimeEntryIds Accepted for compatibility; MoneyHarpy has no time entries yet.
+		// TimeEntryIds Time entries to bill on this invoice; they are marked as invoiced. They must have stopped and not be on another invoice.
 		TimeEntryIds *[]FlexibleIdentifier `json:"time_entry_ids,omitempty"`
 
 		// UpdateContact A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
@@ -6573,6 +6600,208 @@ type SynchronizationRequest_Ids_Item struct {
 	union json.RawMessage
 }
 
+// TaskList A Moneybird task list with MoneyHarpy extensions.
+type TaskList struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId    Identifier `json:"administration_id"`
+	Completed           bool       `json:"completed"`
+	CompletedTasksCount int        `json:"completed_tasks_count"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp              `json:"created_at,omitempty"`
+	DeadlineOn  *openapi_types.Date     `json:"deadline_on"`
+	Description *string                 `json:"description"`
+	Groups      []TaskListGroupResponse `json:"groups"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id          Identifier          `json:"id"`
+	Name        string              `json:"name"`
+	PeriodBegin *openapi_types.Date `json:"period_begin"`
+	PeriodEnd   *openapi_types.Date `json:"period_end"`
+
+	// TemplateId Moneybird-compatible identifier_nullable.
+	TemplateId      *IdentifierNullable `json:"template_id"`
+	TotalTasksCount int                 `json:"total_tasks_count"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// TaskListAssignmentRequest defines model for TaskListAssignmentRequest.
+type TaskListAssignmentRequest struct {
+	// AssigneeId An id as a string or a number; an empty string clears it.
+	AssigneeId FlexibleIdentifier `json:"assignee_id"`
+}
+
+// TaskListGroup A Moneybird task list group.
+type TaskListGroup struct {
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id         Identifier             `json:"id"`
+	Name       *string                `json:"name"`
+	ReportType *string                `json:"report_type"`
+	RowOrder   int                    `json:"row_order"`
+	Tasks      []TaskListTaskResponse `json:"tasks"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// TaskListGroupRequest defines model for TaskListGroupRequest.
+type TaskListGroupRequest struct {
+	Group struct {
+		// Name Required on creation.
+		Name *string `json:"name,omitempty"`
+
+		// ReportType The report the tasks are generated from.
+		ReportType *TaskListReportType `json:"report_type,omitempty"`
+	} `json:"group"`
+}
+
+// TaskListReportType The report the tasks are generated from.
+type TaskListReportType string
+
+// TaskListRequest defines model for TaskListRequest.
+type TaskListRequest struct {
+	TaskList *struct {
+		DeadlineOn  *openapi_types.Date `json:"deadline_on,omitempty"`
+		Description *string             `json:"description,omitempty"`
+
+		// Name Required on creation, unless made from a template.
+		Name *string `json:"name,omitempty"`
+
+		// PeriodBegin On creation only.
+		PeriodBegin *openapi_types.Date `json:"period_begin,omitempty"`
+
+		// PeriodEnd On creation only.
+		PeriodEnd *openapi_types.Date `json:"period_end,omitempty"`
+
+		// TemplateId An id as a string or a number; an empty string clears it.
+		TemplateId *FlexibleIdentifier `json:"template_id,omitempty"`
+	} `json:"task_list,omitempty"`
+}
+
+// TaskListTask A Moneybird task of a task list.
+type TaskListTask struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier `json:"administration_id"`
+
+	// AssigneeId Moneybird-compatible identifier_nullable.
+	AssigneeId  *IdentifierNullable `json:"assignee_id"`
+	CompletedAt *time.Time          `json:"completed_at"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp      `json:"created_at,omitempty"`
+	Description *string         `json:"description"`
+	Events      []EventResponse `json:"events"`
+
+	// Generated MoneyHarpy extension. Generated from a report or a category; such tasks cannot be deleted.
+	Generated *bool `json:"generated,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id    Identifier     `json:"id"`
+	Name  string         `json:"name"`
+	Notes []NoteResponse `json:"notes"`
+
+	// ParentTaskId Moneybird-compatible identifier_nullable.
+	ParentTaskId *IdentifierNullable `json:"parent_task_id"`
+
+	// RelatedEntityId Moneybird-compatible identifier_nullable.
+	RelatedEntityId *IdentifierNullable    `json:"related_entity_id,omitempty"`
+	ReportType      *string                `json:"report_type"`
+	RowOrder        int                    `json:"row_order"`
+	Subtasks        []TaskListTaskResponse `json:"subtasks"`
+
+	// TaskListsGroupId Moneybird-compatible identifier_nullable.
+	TaskListsGroupId *IdentifierNullable `json:"task_lists_group_id"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// TaskListTaskRequest defines model for TaskListTaskRequest.
+type TaskListTaskRequest struct {
+	Task struct {
+		// AssigneeId An id as a string or a number; an empty string clears it.
+		AssigneeId  *FlexibleIdentifier `json:"assignee_id,omitempty"`
+		Description *string             `json:"description,omitempty"`
+
+		// GenerateSubtasks A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		GenerateSubtasks *FlexibleBoolean `json:"generate_subtasks,omitempty"`
+
+		// Name Required on creation.
+		Name *string `json:"name,omitempty"`
+
+		// RelatedEntityId A category (ledger account) the task is about; null unlinks it.
+		RelatedEntityId *TaskListTaskRequest_Task_RelatedEntityId `json:"related_entity_id,omitempty"`
+
+		// ReportType The report the tasks are generated from.
+		ReportType *TaskListReportType `json:"report_type,omitempty"`
+	} `json:"task"`
+}
+
+// TaskListTaskRequest_Task_RelatedEntityId A category (ledger account) the task is about; null unlinks it.
+type TaskListTaskRequest_Task_RelatedEntityId struct {
+	union json.RawMessage
+}
+
+// TaskListTemplate A Moneybird task list template with MoneyHarpy extensions.
+type TaskListTemplate struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier `json:"administration_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt     *Timestamp              `json:"created_at,omitempty"`
+	DeadlineAfter *string                 `json:"deadline_after"`
+	Description   *string                 `json:"description"`
+	Groups        []TaskListGroupResponse `json:"groups"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id     Identifier `json:"id"`
+	Name   string     `json:"name"`
+	Period *string    `json:"period"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// TaskListTemplateRequest defines model for TaskListTemplateRequest.
+type TaskListTemplateRequest struct {
+	TaskListTemplate struct {
+		// DeadlineAfter An ISO 8601 duration after the period's end, such as P10D; empty for none.
+		DeadlineAfter *string `json:"deadline_after,omitempty"`
+		Description   *string `json:"description,omitempty"`
+
+		// Name Required on creation.
+		Name *string `json:"name,omitempty"`
+
+		// Period An ISO 8601 duration (P1M, P3M, P1Y) or monthly, quarterly, yearly or none.
+		Period *string `json:"period,omitempty"`
+	} `json:"task_list_template"`
+}
+
 // TaxNumberAbsenceReason defines model for TaxNumberAbsenceReason.
 type TaxNumberAbsenceReason string
 
@@ -6668,6 +6897,129 @@ type TaxonomyItem struct {
 
 // TaxonomyItemSide MoneyHarpy extension.
 type TaxonomyItemSide string
+
+// TimeEntry A Moneybird time entry with MoneyHarpy extensions.
+type TimeEntry struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier         `json:"administration_id"`
+	Billable         *bool              `json:"billable"`
+	Contact          *TimeEntry_Contact `json:"contact"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp         `json:"created_at,omitempty"`
+	Description string             `json:"description"`
+	EndedAt     *TimeEntry_EndedAt `json:"ended_at"`
+	Events      []EventResponse    `json:"events"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id             Identifier         `json:"id"`
+	Notes          []NoteResponse     `json:"notes"`
+	PausedDuration int                `json:"paused_duration"`
+	Project        *TimeEntry_Project `json:"project"`
+
+	// ProjectId Moneybird-compatible identifier_nullable.
+	ProjectId    *IdentifierNullable     `json:"project_id"`
+	SalesInvoice *TimeEntry_SalesInvoice `json:"sales_invoice"`
+
+	// SalesInvoiceId Moneybird-compatible identifier_nullable.
+	SalesInvoiceId *IdentifierNullable `json:"sales_invoice_id"`
+
+	// StartedAt Moneybird-compatible timestamp.
+	StartedAt Timestamp `json:"started_at"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+
+	// User Moneybird-compatible base_user_response.
+	User UserResponse `json:"user"`
+
+	// UserId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	UserId Identifier `json:"user_id"`
+}
+
+// TimeEntry_Contact defines model for TimeEntry.Contact.
+type TimeEntry_Contact struct {
+	union json.RawMessage
+}
+
+// TimeEntry_EndedAt defines model for TimeEntry.EndedAt.
+type TimeEntry_EndedAt struct {
+	union json.RawMessage
+}
+
+// TimeEntry_Project defines model for TimeEntry.Project.
+type TimeEntry_Project struct {
+	union json.RawMessage
+}
+
+// TimeEntry_SalesInvoice defines model for TimeEntry.SalesInvoice.
+type TimeEntry_SalesInvoice struct {
+	union json.RawMessage
+}
+
+// TimeEntryRequest defines model for TimeEntryRequest.
+type TimeEntryRequest struct {
+	TimeEntry struct {
+		// Billable A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		Billable  *FlexibleBoolean                      `json:"billable,omitempty"`
+		ContactId *TimeEntryRequest_TimeEntry_ContactId `json:"contact_id,omitempty"`
+
+		// Description Required on creation.
+		Description *string `json:"description,omitempty"`
+
+		// EndedAt Rounded down to whole minutes. Leave it out for a running timer.
+		EndedAt *time.Time `json:"ended_at,omitempty"`
+
+		// PausedDuration Seconds, rounded down to whole minutes.
+		PausedDuration *TimeEntryRequest_TimeEntry_PausedDuration `json:"paused_duration,omitempty"`
+		ProjectId      *TimeEntryRequest_TimeEntry_ProjectId      `json:"project_id,omitempty"`
+		SalesInvoiceId *TimeEntryRequest_TimeEntry_SalesInvoiceId `json:"sales_invoice_id,omitempty"`
+
+		// StartedAt Required on creation. Rounded down to whole minutes.
+		StartedAt *time.Time `json:"started_at,omitempty"`
+
+		// UserId An id as a string or a number; an empty string clears it.
+		UserId *FlexibleIdentifier `json:"user_id,omitempty"`
+	} `json:"time_entry"`
+}
+
+// TimeEntryRequest_TimeEntry_ContactId defines model for TimeEntryRequest.TimeEntry.ContactId.
+type TimeEntryRequest_TimeEntry_ContactId struct {
+	union json.RawMessage
+}
+
+// TimeEntryRequestTimeEntryPausedDuration0 defines model for TimeEntryRequest.TimeEntry.PausedDuration.0.
+type TimeEntryRequestTimeEntryPausedDuration0 = int
+
+// TimeEntryRequestTimeEntryPausedDuration1 defines model for TimeEntryRequest.TimeEntry.PausedDuration.1.
+type TimeEntryRequestTimeEntryPausedDuration1 = string
+
+// TimeEntryRequest_TimeEntry_PausedDuration Seconds, rounded down to whole minutes.
+type TimeEntryRequest_TimeEntry_PausedDuration struct {
+	union json.RawMessage
+}
+
+// TimeEntryRequest_TimeEntry_ProjectId defines model for TimeEntryRequest.TimeEntry.ProjectId.
+type TimeEntryRequest_TimeEntry_ProjectId struct {
+	union json.RawMessage
+}
+
+// TimeEntryRequest_TimeEntry_SalesInvoiceId defines model for TimeEntryRequest.TimeEntry.SalesInvoiceId.
+type TimeEntryRequest_TimeEntry_SalesInvoiceId struct {
+	union json.RawMessage
+}
 
 // TwoFactorCode defines model for TwoFactorCode.
 type TwoFactorCode struct {
@@ -7934,6 +8286,18 @@ type LedgerAccountResponse_TaxonomyItem struct {
 	union json.RawMessage
 }
 
+// MinimalContactResponse Moneybird-compatible minimal_contact_response.
+type MinimalContactResponse struct {
+	CompanyName *string `json:"company_name,omitempty"`
+	Firstname   *string `json:"firstname,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id       *Identifier `json:"id,omitempty"`
+	Lastname *string     `json:"lastname,omitempty"`
+}
+
 // MinimalTimeEntryResponse Moneybird-compatible minimal_time_entry_response.
 type MinimalTimeEntryResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -8549,6 +8913,55 @@ type SubscriptionTemplateResponse struct {
 	WorkflowId *Identifier `json:"workflow_id,omitempty"`
 }
 
+// TaskListGroupResponse Moneybird-compatible task_list_group_response.
+type TaskListGroupResponse struct {
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id         *Identifier             `json:"id,omitempty"`
+	Name       *string                 `json:"name,omitempty"`
+	ReportType *string                 `json:"report_type,omitempty"`
+	RowOrder   *int                    `json:"row_order,omitempty"`
+	Tasks      *[]TaskListTaskResponse `json:"tasks,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// TaskListResponse Moneybird-compatible task_list_response.
+type TaskListResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId    *Identifier `json:"administration_id,omitempty"`
+	Completed           *bool       `json:"completed,omitempty"`
+	CompletedTasksCount *int        `json:"completed_tasks_count,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp               `json:"created_at,omitempty"`
+	DeadlineOn  *openapi_types.Date      `json:"deadline_on,omitempty"`
+	Description *string                  `json:"description,omitempty"`
+	Groups      *[]TaskListGroupResponse `json:"groups,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id          *Identifier         `json:"id,omitempty"`
+	Name        *string             `json:"name,omitempty"`
+	PeriodBegin *openapi_types.Date `json:"period_begin,omitempty"`
+	PeriodEnd   *openapi_types.Date `json:"period_end,omitempty"`
+
+	// TemplateId Moneybird-compatible identifier_nullable.
+	TemplateId      *IdentifierNullable `json:"template_id,omitempty"`
+	TotalTasksCount *int                `json:"total_tasks_count,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
 // TaskListTaskResponse Moneybird-compatible task_list_task_response.
 type TaskListTaskResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -8580,6 +8993,30 @@ type TaskListTaskResponse struct {
 
 	// TaskListsGroupId Moneybird-compatible identifier_nullable.
 	TaskListsGroupId *IdentifierNullable `json:"task_lists_group_id,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// TaskListTemplateResponse Moneybird-compatible task_list_template_response.
+type TaskListTemplateResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt     *Timestamp               `json:"created_at,omitempty"`
+	DeadlineAfter *string                  `json:"deadline_after,omitempty"`
+	Description   *string                  `json:"description,omitempty"`
+	Groups        *[]TaskListGroupResponse `json:"groups,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id     *Identifier `json:"id,omitempty"`
+	Name   *string     `json:"name,omitempty"`
+	Period *string     `json:"period,omitempty"`
 
 	// UpdatedAt Moneybird-compatible timestamp.
 	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
@@ -8644,8 +9081,79 @@ type TaxonomyItemResponse struct {
 	TaxonomyVersion *string `json:"taxonomy_version,omitempty"`
 }
 
+// TimeEntryResponse Moneybird-compatible time_entry_response.
+type TimeEntryResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier                `json:"administration_id,omitempty"`
+	Billable         *bool                      `json:"billable,omitempty"`
+	Contact          *TimeEntryResponse_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp                 `json:"created_at,omitempty"`
+	Description *string                    `json:"description,omitempty"`
+	EndedAt     *TimeEntryResponse_EndedAt `json:"ended_at,omitempty"`
+	Events      *[]EventResponse           `json:"events,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id             *Identifier                `json:"id,omitempty"`
+	Notes          *[]NoteResponse            `json:"notes,omitempty"`
+	PausedDuration *int                       `json:"paused_duration,omitempty"`
+	Project        *TimeEntryResponse_Project `json:"project,omitempty"`
+
+	// ProjectId Moneybird-compatible identifier_nullable.
+	ProjectId    *IdentifierNullable             `json:"project_id,omitempty"`
+	SalesInvoice *TimeEntryResponse_SalesInvoice `json:"sales_invoice,omitempty"`
+
+	// SalesInvoiceId Moneybird-compatible identifier_nullable.
+	SalesInvoiceId *IdentifierNullable `json:"sales_invoice_id,omitempty"`
+
+	// StartedAt Moneybird-compatible timestamp.
+	StartedAt *Timestamp `json:"started_at,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// User Moneybird-compatible base_user_response.
+	User *UserResponse `json:"user,omitempty"`
+
+	// UserId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	UserId *Identifier `json:"user_id,omitempty"`
+}
+
+// TimeEntryResponse_Contact defines model for TimeEntryResponse.Contact.
+type TimeEntryResponse_Contact struct {
+	union json.RawMessage
+}
+
+// TimeEntryResponse_EndedAt defines model for TimeEntryResponse.EndedAt.
+type TimeEntryResponse_EndedAt struct {
+	union json.RawMessage
+}
+
+// TimeEntryResponse_Project defines model for TimeEntryResponse.Project.
+type TimeEntryResponse_Project struct {
+	union json.RawMessage
+}
+
+// TimeEntryResponse_SalesInvoice defines model for TimeEntryResponse.SalesInvoice.
+type TimeEntryResponse_SalesInvoice struct {
+	union json.RawMessage
+}
+
 // Timestamp Moneybird-compatible timestamp.
 type Timestamp = time.Time
+
+// UserResponse Moneybird-compatible base_user_response.
+type UserResponse = BaseUserResponse
 
 // VerificationResponse Moneybird-compatible verification_response.
 type VerificationResponse struct {
@@ -9353,6 +9861,15 @@ type ListSubscriptionAdditionalChargesParams struct {
 // ListSubscriptionAdditionalChargesParamsIncludeBilled defines parameters for ListSubscriptionAdditionalCharges.
 type ListSubscriptionAdditionalChargesParamsIncludeBilled string
 
+// ListTaskListsParams defines parameters for ListTaskLists.
+type ListTaskListsParams struct {
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
 // ListTaxRatesParams defines parameters for ListTaxRates.
 type ListTaxRatesParams struct {
 	// Filter Comma-separated key:value pairs. Keys are name, partial_name, percentage, tax_rate_type, country, show_tax, active, created_after and updated_after, for example tax_rate_type:sales_invoice,active:true.
@@ -9372,6 +9889,20 @@ type SearchTaxonomyItemsParams struct {
 	// AccountType Only codes on the side of the books this account type is on.
 	AccountType *AccountType `form:"account_type,omitempty" json:"account_type,omitempty"`
 	Limit       *int         `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListTimeEntriesParams defines parameters for ListTimeEntries.
+type ListTimeEntriesParams struct {
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Query Free-text search in the description.
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
 }
 
 // ListUsersParams defines parameters for ListUsers.
@@ -9679,6 +10210,42 @@ type CreateSubscriptionOneOffSalesInvoiceJSONRequestBody = OneOffSalesInvoiceReq
 // UpdateSupportAccessJSONRequestBody defines body for UpdateSupportAccess for application/json ContentType.
 type UpdateSupportAccessJSONRequestBody = SupportAccess
 
+// UpdateTaskListGroupJSONRequestBody defines body for UpdateTaskListGroup for application/json ContentType.
+type UpdateTaskListGroupJSONRequestBody = TaskListGroupRequest
+
+// CreateTaskListTaskJSONRequestBody defines body for CreateTaskListTask for application/json ContentType.
+type CreateTaskListTaskJSONRequestBody = TaskListTaskRequest
+
+// UpdateTaskListTaskJSONRequestBody defines body for UpdateTaskListTask for application/json ContentType.
+type UpdateTaskListTaskJSONRequestBody = TaskListTaskRequest
+
+// AssignTaskListTaskJSONRequestBody defines body for AssignTaskListTask for application/json ContentType.
+type AssignTaskListTaskJSONRequestBody = TaskListAssignmentRequest
+
+// CreateTaskListTaskNoteJSONRequestBody defines body for CreateTaskListTaskNote for application/json ContentType.
+type CreateTaskListTaskNoteJSONRequestBody = NoteRequest
+
+// CreateTaskListTemplateJSONRequestBody defines body for CreateTaskListTemplate for application/json ContentType.
+type CreateTaskListTemplateJSONRequestBody = TaskListTemplateRequest
+
+// UpdateTaskListTemplateJSONRequestBody defines body for UpdateTaskListTemplate for application/json ContentType.
+type UpdateTaskListTemplateJSONRequestBody = TaskListTemplateRequest
+
+// CreateTaskListTemplateGroupJSONRequestBody defines body for CreateTaskListTemplateGroup for application/json ContentType.
+type CreateTaskListTemplateGroupJSONRequestBody = TaskListGroupRequest
+
+// CreateTaskListFromTemplateJSONRequestBody defines body for CreateTaskListFromTemplate for application/json ContentType.
+type CreateTaskListFromTemplateJSONRequestBody = TaskListRequest
+
+// CreateTaskListJSONRequestBody defines body for CreateTaskList for application/json ContentType.
+type CreateTaskListJSONRequestBody = TaskListRequest
+
+// UpdateTaskListJSONRequestBody defines body for UpdateTaskList for application/json ContentType.
+type UpdateTaskListJSONRequestBody = TaskListRequest
+
+// CreateTaskListGroupJSONRequestBody defines body for CreateTaskListGroup for application/json ContentType.
+type CreateTaskListGroupJSONRequestBody = TaskListGroupRequest
+
 // CreateTaxRateJSONRequestBody defines body for CreateTaxRate for application/json ContentType.
 type CreateTaxRateJSONRequestBody = TaxRateRequest
 
@@ -9687,6 +10254,15 @@ type ReorderTaxRatesJSONRequestBody = TaxRateOrderRequest
 
 // UpdateTaxRateJSONRequestBody defines body for UpdateTaxRate for application/json ContentType.
 type UpdateTaxRateJSONRequestBody = TaxRateRequest
+
+// CreateTimeEntryJSONRequestBody defines body for CreateTimeEntry for application/json ContentType.
+type CreateTimeEntryJSONRequestBody = TimeEntryRequest
+
+// UpdateTimeEntryJSONRequestBody defines body for UpdateTimeEntry for application/json ContentType.
+type UpdateTimeEntryJSONRequestBody = TimeEntryRequest
+
+// CreateTimeEntryNoteJSONRequestBody defines body for CreateTimeEntryNote for application/json ContentType.
+type CreateTimeEntryNoteJSONRequestBody = NoteRequest
 
 // CreateUserInvitationJSONRequestBody defines body for CreateUserInvitation for application/json ContentType.
 type CreateUserInvitationJSONRequestBody = UserInvitationRequest
@@ -12533,6 +13109,42 @@ func (t *SynchronizationRequest_Ids_Item) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsFlexibleIdentifier returns the union data inside the TaskListTaskRequest_Task_RelatedEntityId as a FlexibleIdentifier
+func (t TaskListTaskRequest_Task_RelatedEntityId) AsFlexibleIdentifier() (FlexibleIdentifier, error) {
+	var body FlexibleIdentifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleIdentifier overwrites any union data inside the TaskListTaskRequest_Task_RelatedEntityId as the provided FlexibleIdentifier
+func (t *TaskListTaskRequest_Task_RelatedEntityId) FromFlexibleIdentifier(v FlexibleIdentifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleIdentifier performs a merge with any union data inside the TaskListTaskRequest_Task_RelatedEntityId, using the provided FlexibleIdentifier
+func (t *TaskListTaskRequest_Task_RelatedEntityId) MergeFlexibleIdentifier(v FlexibleIdentifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TaskListTaskRequest_Task_RelatedEntityId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TaskListTaskRequest_Task_RelatedEntityId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsNumber returns the union data inside the TaxRate_Percentage as a Number
 func (t TaxRate_Percentage) AsNumber() (Number, error) {
 	var body Number
@@ -12565,6 +13177,320 @@ func (t TaxRate_Percentage) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TaxRate_Percentage) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsMinimalContactResponse returns the union data inside the TimeEntry_Contact as a MinimalContactResponse
+func (t TimeEntry_Contact) AsMinimalContactResponse() (MinimalContactResponse, error) {
+	var body MinimalContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMinimalContactResponse overwrites any union data inside the TimeEntry_Contact as the provided MinimalContactResponse
+func (t *TimeEntry_Contact) FromMinimalContactResponse(v MinimalContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMinimalContactResponse performs a merge with any union data inside the TimeEntry_Contact, using the provided MinimalContactResponse
+func (t *TimeEntry_Contact) MergeMinimalContactResponse(v MinimalContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntry_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntry_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTimestamp returns the union data inside the TimeEntry_EndedAt as a Timestamp
+func (t TimeEntry_EndedAt) AsTimestamp() (Timestamp, error) {
+	var body Timestamp
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTimestamp overwrites any union data inside the TimeEntry_EndedAt as the provided Timestamp
+func (t *TimeEntry_EndedAt) FromTimestamp(v Timestamp) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTimestamp performs a merge with any union data inside the TimeEntry_EndedAt, using the provided Timestamp
+func (t *TimeEntry_EndedAt) MergeTimestamp(v Timestamp) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntry_EndedAt) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntry_EndedAt) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsProjectResponse returns the union data inside the TimeEntry_Project as a ProjectResponse
+func (t TimeEntry_Project) AsProjectResponse() (ProjectResponse, error) {
+	var body ProjectResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProjectResponse overwrites any union data inside the TimeEntry_Project as the provided ProjectResponse
+func (t *TimeEntry_Project) FromProjectResponse(v ProjectResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProjectResponse performs a merge with any union data inside the TimeEntry_Project, using the provided ProjectResponse
+func (t *TimeEntry_Project) MergeProjectResponse(v ProjectResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntry_Project) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntry_Project) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSalesInvoiceResponse returns the union data inside the TimeEntry_SalesInvoice as a SalesInvoiceResponse
+func (t TimeEntry_SalesInvoice) AsSalesInvoiceResponse() (SalesInvoiceResponse, error) {
+	var body SalesInvoiceResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSalesInvoiceResponse overwrites any union data inside the TimeEntry_SalesInvoice as the provided SalesInvoiceResponse
+func (t *TimeEntry_SalesInvoice) FromSalesInvoiceResponse(v SalesInvoiceResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSalesInvoiceResponse performs a merge with any union data inside the TimeEntry_SalesInvoice, using the provided SalesInvoiceResponse
+func (t *TimeEntry_SalesInvoice) MergeSalesInvoiceResponse(v SalesInvoiceResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntry_SalesInvoice) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntry_SalesInvoice) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsFlexibleIdentifier returns the union data inside the TimeEntryRequest_TimeEntry_ContactId as a FlexibleIdentifier
+func (t TimeEntryRequest_TimeEntry_ContactId) AsFlexibleIdentifier() (FlexibleIdentifier, error) {
+	var body FlexibleIdentifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleIdentifier overwrites any union data inside the TimeEntryRequest_TimeEntry_ContactId as the provided FlexibleIdentifier
+func (t *TimeEntryRequest_TimeEntry_ContactId) FromFlexibleIdentifier(v FlexibleIdentifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleIdentifier performs a merge with any union data inside the TimeEntryRequest_TimeEntry_ContactId, using the provided FlexibleIdentifier
+func (t *TimeEntryRequest_TimeEntry_ContactId) MergeFlexibleIdentifier(v FlexibleIdentifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntryRequest_TimeEntry_ContactId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntryRequest_TimeEntry_ContactId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTimeEntryRequestTimeEntryPausedDuration0 returns the union data inside the TimeEntryRequest_TimeEntry_PausedDuration as a TimeEntryRequestTimeEntryPausedDuration0
+func (t TimeEntryRequest_TimeEntry_PausedDuration) AsTimeEntryRequestTimeEntryPausedDuration0() (TimeEntryRequestTimeEntryPausedDuration0, error) {
+	var body TimeEntryRequestTimeEntryPausedDuration0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTimeEntryRequestTimeEntryPausedDuration0 overwrites any union data inside the TimeEntryRequest_TimeEntry_PausedDuration as the provided TimeEntryRequestTimeEntryPausedDuration0
+func (t *TimeEntryRequest_TimeEntry_PausedDuration) FromTimeEntryRequestTimeEntryPausedDuration0(v TimeEntryRequestTimeEntryPausedDuration0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTimeEntryRequestTimeEntryPausedDuration0 performs a merge with any union data inside the TimeEntryRequest_TimeEntry_PausedDuration, using the provided TimeEntryRequestTimeEntryPausedDuration0
+func (t *TimeEntryRequest_TimeEntry_PausedDuration) MergeTimeEntryRequestTimeEntryPausedDuration0(v TimeEntryRequestTimeEntryPausedDuration0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTimeEntryRequestTimeEntryPausedDuration1 returns the union data inside the TimeEntryRequest_TimeEntry_PausedDuration as a TimeEntryRequestTimeEntryPausedDuration1
+func (t TimeEntryRequest_TimeEntry_PausedDuration) AsTimeEntryRequestTimeEntryPausedDuration1() (TimeEntryRequestTimeEntryPausedDuration1, error) {
+	var body TimeEntryRequestTimeEntryPausedDuration1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTimeEntryRequestTimeEntryPausedDuration1 overwrites any union data inside the TimeEntryRequest_TimeEntry_PausedDuration as the provided TimeEntryRequestTimeEntryPausedDuration1
+func (t *TimeEntryRequest_TimeEntry_PausedDuration) FromTimeEntryRequestTimeEntryPausedDuration1(v TimeEntryRequestTimeEntryPausedDuration1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTimeEntryRequestTimeEntryPausedDuration1 performs a merge with any union data inside the TimeEntryRequest_TimeEntry_PausedDuration, using the provided TimeEntryRequestTimeEntryPausedDuration1
+func (t *TimeEntryRequest_TimeEntry_PausedDuration) MergeTimeEntryRequestTimeEntryPausedDuration1(v TimeEntryRequestTimeEntryPausedDuration1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntryRequest_TimeEntry_PausedDuration) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntryRequest_TimeEntry_PausedDuration) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsFlexibleIdentifier returns the union data inside the TimeEntryRequest_TimeEntry_ProjectId as a FlexibleIdentifier
+func (t TimeEntryRequest_TimeEntry_ProjectId) AsFlexibleIdentifier() (FlexibleIdentifier, error) {
+	var body FlexibleIdentifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleIdentifier overwrites any union data inside the TimeEntryRequest_TimeEntry_ProjectId as the provided FlexibleIdentifier
+func (t *TimeEntryRequest_TimeEntry_ProjectId) FromFlexibleIdentifier(v FlexibleIdentifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleIdentifier performs a merge with any union data inside the TimeEntryRequest_TimeEntry_ProjectId, using the provided FlexibleIdentifier
+func (t *TimeEntryRequest_TimeEntry_ProjectId) MergeFlexibleIdentifier(v FlexibleIdentifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntryRequest_TimeEntry_ProjectId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntryRequest_TimeEntry_ProjectId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsFlexibleIdentifier returns the union data inside the TimeEntryRequest_TimeEntry_SalesInvoiceId as a FlexibleIdentifier
+func (t TimeEntryRequest_TimeEntry_SalesInvoiceId) AsFlexibleIdentifier() (FlexibleIdentifier, error) {
+	var body FlexibleIdentifier
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleIdentifier overwrites any union data inside the TimeEntryRequest_TimeEntry_SalesInvoiceId as the provided FlexibleIdentifier
+func (t *TimeEntryRequest_TimeEntry_SalesInvoiceId) FromFlexibleIdentifier(v FlexibleIdentifier) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleIdentifier performs a merge with any union data inside the TimeEntryRequest_TimeEntry_SalesInvoiceId, using the provided FlexibleIdentifier
+func (t *TimeEntryRequest_TimeEntry_SalesInvoiceId) MergeFlexibleIdentifier(v FlexibleIdentifier) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntryRequest_TimeEntry_SalesInvoiceId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntryRequest_TimeEntry_SalesInvoiceId) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -13705,6 +14631,150 @@ func (t TaxRateResponse_Percentage) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TaxRateResponse_Percentage) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsMinimalContactResponse returns the union data inside the TimeEntryResponse_Contact as a MinimalContactResponse
+func (t TimeEntryResponse_Contact) AsMinimalContactResponse() (MinimalContactResponse, error) {
+	var body MinimalContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMinimalContactResponse overwrites any union data inside the TimeEntryResponse_Contact as the provided MinimalContactResponse
+func (t *TimeEntryResponse_Contact) FromMinimalContactResponse(v MinimalContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMinimalContactResponse performs a merge with any union data inside the TimeEntryResponse_Contact, using the provided MinimalContactResponse
+func (t *TimeEntryResponse_Contact) MergeMinimalContactResponse(v MinimalContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntryResponse_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntryResponse_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTimestamp returns the union data inside the TimeEntryResponse_EndedAt as a Timestamp
+func (t TimeEntryResponse_EndedAt) AsTimestamp() (Timestamp, error) {
+	var body Timestamp
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTimestamp overwrites any union data inside the TimeEntryResponse_EndedAt as the provided Timestamp
+func (t *TimeEntryResponse_EndedAt) FromTimestamp(v Timestamp) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTimestamp performs a merge with any union data inside the TimeEntryResponse_EndedAt, using the provided Timestamp
+func (t *TimeEntryResponse_EndedAt) MergeTimestamp(v Timestamp) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntryResponse_EndedAt) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntryResponse_EndedAt) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsProjectResponse returns the union data inside the TimeEntryResponse_Project as a ProjectResponse
+func (t TimeEntryResponse_Project) AsProjectResponse() (ProjectResponse, error) {
+	var body ProjectResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromProjectResponse overwrites any union data inside the TimeEntryResponse_Project as the provided ProjectResponse
+func (t *TimeEntryResponse_Project) FromProjectResponse(v ProjectResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeProjectResponse performs a merge with any union data inside the TimeEntryResponse_Project, using the provided ProjectResponse
+func (t *TimeEntryResponse_Project) MergeProjectResponse(v ProjectResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntryResponse_Project) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntryResponse_Project) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSalesInvoiceResponse returns the union data inside the TimeEntryResponse_SalesInvoice as a SalesInvoiceResponse
+func (t TimeEntryResponse_SalesInvoice) AsSalesInvoiceResponse() (SalesInvoiceResponse, error) {
+	var body SalesInvoiceResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSalesInvoiceResponse overwrites any union data inside the TimeEntryResponse_SalesInvoice as the provided SalesInvoiceResponse
+func (t *TimeEntryResponse_SalesInvoice) FromSalesInvoiceResponse(v SalesInvoiceResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSalesInvoiceResponse performs a merge with any union data inside the TimeEntryResponse_SalesInvoice, using the provided SalesInvoiceResponse
+func (t *TimeEntryResponse_SalesInvoice) MergeSalesInvoiceResponse(v SalesInvoiceResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TimeEntryResponse_SalesInvoice) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TimeEntryResponse_SalesInvoice) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -15044,6 +16114,81 @@ type ServerInterface interface {
 	// UpdateSupportAccess Let the instance admins in
 	// (PUT /api/v2/{administration_id}/support_access)
 	UpdateSupportAccess(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteTaskListGroup Delete a task list group
+	// (DELETE /api/v2/{administration_id}/task_list_groups/{id})
+	DeleteTaskListGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetTaskListGroup Get a task list group
+	// (GET /api/v2/{administration_id}/task_list_groups/{id})
+	GetTaskListGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateTaskListGroup Update a task list group
+	// (PATCH /api/v2/{administration_id}/task_list_groups/{id})
+	UpdateTaskListGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateTaskListTask Add a task to a group
+	// (POST /api/v2/{administration_id}/task_list_groups/{id}/tasks)
+	CreateTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteTaskListTask Delete a task
+	// (DELETE /api/v2/{administration_id}/task_list_tasks/{id})
+	DeleteTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetTaskListTask Get a task
+	// (GET /api/v2/{administration_id}/task_list_tasks/{id})
+	GetTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateTaskListTask Update a task
+	// (PATCH /api/v2/{administration_id}/task_list_tasks/{id})
+	UpdateTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UnassignTaskListTask Unassign the user from a task
+	// (DELETE /api/v2/{administration_id}/task_list_tasks/{id}/assignment)
+	UnassignTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// AssignTaskListTask Assign a user to a task
+	// (POST /api/v2/{administration_id}/task_list_tasks/{id}/assignment)
+	AssignTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ReopenTaskListTask Reopen a task
+	// (DELETE /api/v2/{administration_id}/task_list_tasks/{id}/completion)
+	ReopenTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CompleteTaskListTask Complete a task
+	// (POST /api/v2/{administration_id}/task_list_tasks/{id}/completion)
+	CompleteTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateTaskListTaskNote Add a note to a task
+	// (POST /api/v2/{administration_id}/task_list_tasks/{id}/notes)
+	CreateTaskListTaskNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListTaskListTemplates List all task list templates
+	// (GET /api/v2/{administration_id}/task_list_templates)
+	ListTaskListTemplates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateTaskListTemplate Create a task list template
+	// (POST /api/v2/{administration_id}/task_list_templates)
+	CreateTaskListTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteTaskListTemplate Delete a task list template
+	// (DELETE /api/v2/{administration_id}/task_list_templates/{id})
+	DeleteTaskListTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetTaskListTemplate Get a task list template
+	// (GET /api/v2/{administration_id}/task_list_templates/{id})
+	GetTaskListTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateTaskListTemplate Update a task list template
+	// (PATCH /api/v2/{administration_id}/task_list_templates/{id})
+	UpdateTaskListTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateTaskListTemplateGroup Add a group to a task list template
+	// (POST /api/v2/{administration_id}/task_list_templates/{id}/groups)
+	CreateTaskListTemplateGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateTaskListFromTemplate Create a task list from a template
+	// (POST /api/v2/{administration_id}/task_list_templates/{id}/task_lists)
+	CreateTaskListFromTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListTaskLists List all task lists
+	// (GET /api/v2/{administration_id}/task_lists)
+	ListTaskLists(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTaskListsParams)
+	// CreateTaskList Create a task list
+	// (POST /api/v2/{administration_id}/task_lists)
+	CreateTaskList(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteTaskList Delete a task list
+	// (DELETE /api/v2/{administration_id}/task_lists/{id})
+	DeleteTaskList(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetTaskList Get a task list
+	// (GET /api/v2/{administration_id}/task_lists/{id})
+	GetTaskList(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateTaskList Update a task list
+	// (PATCH /api/v2/{administration_id}/task_lists/{id})
+	UpdateTaskList(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateTaskListGroup Add a group to a task list
+	// (POST /api/v2/{administration_id}/task_lists/{id}/groups)
+	CreateTaskListGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListTaxRates Retrieve tax rates
 	// (GET /api/v2/{administration_id}/tax_rates)
 	ListTaxRates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTaxRatesParams)
@@ -15062,6 +16207,33 @@ type ServerInterface interface {
 	// SearchTaxonomyItems Search the chart scheme
 	// (GET /api/v2/{administration_id}/taxonomy_items)
 	SearchTaxonomyItems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params SearchTaxonomyItemsParams)
+	// ListTimeEntries List all time entries
+	// (GET /api/v2/{administration_id}/time_entries)
+	ListTimeEntries(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTimeEntriesParams)
+	// CreateTimeEntry Create a time entry
+	// (POST /api/v2/{administration_id}/time_entries)
+	CreateTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteTimeEntry Delete a time entry
+	// (DELETE /api/v2/{administration_id}/time_entries/{id})
+	DeleteTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetTimeEntry Get a time entry by id
+	// (GET /api/v2/{administration_id}/time_entries/{id})
+	GetTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateTimeEntry Update a time entry
+	// (PATCH /api/v2/{administration_id}/time_entries/{id})
+	UpdateTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateTimeEntryNote Add a note to a time entry
+	// (POST /api/v2/{administration_id}/time_entries/{id}/notes)
+	CreateTimeEntryNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteTimeEntryNote Delete a note from a time entry
+	// (DELETE /api/v2/{administration_id}/time_entries/{id}/notes/{note_id})
+	DeleteTimeEntryNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
+	// ResumeTimeEntry Resume a stopped timer
+	// (PATCH /api/v2/{administration_id}/time_entries/{id}/resume)
+	ResumeTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// StopTimeEntry Stop a running timer
+	// (PATCH /api/v2/{administration_id}/time_entries/{id}/stop)
+	StopTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListUserInvitations List open invitations
 	// (GET /api/v2/{administration_id}/user_invitations)
 	ListUserInvitations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -16602,6 +17774,156 @@ func (_ Unimplemented) UpdateSupportAccess(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// DeleteTaskListGroup Delete a task list group
+// (DELETE /api/v2/{administration_id}/task_list_groups/{id})
+func (_ Unimplemented) DeleteTaskListGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTaskListGroup Get a task list group
+// (GET /api/v2/{administration_id}/task_list_groups/{id})
+func (_ Unimplemented) GetTaskListGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTaskListGroup Update a task list group
+// (PATCH /api/v2/{administration_id}/task_list_groups/{id})
+func (_ Unimplemented) UpdateTaskListGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTaskListTask Add a task to a group
+// (POST /api/v2/{administration_id}/task_list_groups/{id}/tasks)
+func (_ Unimplemented) CreateTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTaskListTask Delete a task
+// (DELETE /api/v2/{administration_id}/task_list_tasks/{id})
+func (_ Unimplemented) DeleteTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTaskListTask Get a task
+// (GET /api/v2/{administration_id}/task_list_tasks/{id})
+func (_ Unimplemented) GetTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTaskListTask Update a task
+// (PATCH /api/v2/{administration_id}/task_list_tasks/{id})
+func (_ Unimplemented) UpdateTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UnassignTaskListTask Unassign the user from a task
+// (DELETE /api/v2/{administration_id}/task_list_tasks/{id}/assignment)
+func (_ Unimplemented) UnassignTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AssignTaskListTask Assign a user to a task
+// (POST /api/v2/{administration_id}/task_list_tasks/{id}/assignment)
+func (_ Unimplemented) AssignTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ReopenTaskListTask Reopen a task
+// (DELETE /api/v2/{administration_id}/task_list_tasks/{id}/completion)
+func (_ Unimplemented) ReopenTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CompleteTaskListTask Complete a task
+// (POST /api/v2/{administration_id}/task_list_tasks/{id}/completion)
+func (_ Unimplemented) CompleteTaskListTask(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTaskListTaskNote Add a note to a task
+// (POST /api/v2/{administration_id}/task_list_tasks/{id}/notes)
+func (_ Unimplemented) CreateTaskListTaskNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTaskListTemplates List all task list templates
+// (GET /api/v2/{administration_id}/task_list_templates)
+func (_ Unimplemented) ListTaskListTemplates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTaskListTemplate Create a task list template
+// (POST /api/v2/{administration_id}/task_list_templates)
+func (_ Unimplemented) CreateTaskListTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTaskListTemplate Delete a task list template
+// (DELETE /api/v2/{administration_id}/task_list_templates/{id})
+func (_ Unimplemented) DeleteTaskListTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTaskListTemplate Get a task list template
+// (GET /api/v2/{administration_id}/task_list_templates/{id})
+func (_ Unimplemented) GetTaskListTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTaskListTemplate Update a task list template
+// (PATCH /api/v2/{administration_id}/task_list_templates/{id})
+func (_ Unimplemented) UpdateTaskListTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTaskListTemplateGroup Add a group to a task list template
+// (POST /api/v2/{administration_id}/task_list_templates/{id}/groups)
+func (_ Unimplemented) CreateTaskListTemplateGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTaskListFromTemplate Create a task list from a template
+// (POST /api/v2/{administration_id}/task_list_templates/{id}/task_lists)
+func (_ Unimplemented) CreateTaskListFromTemplate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTaskLists List all task lists
+// (GET /api/v2/{administration_id}/task_lists)
+func (_ Unimplemented) ListTaskLists(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTaskListsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTaskList Create a task list
+// (POST /api/v2/{administration_id}/task_lists)
+func (_ Unimplemented) CreateTaskList(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTaskList Delete a task list
+// (DELETE /api/v2/{administration_id}/task_lists/{id})
+func (_ Unimplemented) DeleteTaskList(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTaskList Get a task list
+// (GET /api/v2/{administration_id}/task_lists/{id})
+func (_ Unimplemented) GetTaskList(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTaskList Update a task list
+// (PATCH /api/v2/{administration_id}/task_lists/{id})
+func (_ Unimplemented) UpdateTaskList(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTaskListGroup Add a group to a task list
+// (POST /api/v2/{administration_id}/task_lists/{id}/groups)
+func (_ Unimplemented) CreateTaskListGroup(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListTaxRates Retrieve tax rates
 // (GET /api/v2/{administration_id}/tax_rates)
 func (_ Unimplemented) ListTaxRates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTaxRatesParams) {
@@ -16635,6 +17957,60 @@ func (_ Unimplemented) UpdateTaxRate(w http.ResponseWriter, r *http.Request, adm
 // SearchTaxonomyItems Search the chart scheme
 // (GET /api/v2/{administration_id}/taxonomy_items)
 func (_ Unimplemented) SearchTaxonomyItems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params SearchTaxonomyItemsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTimeEntries List all time entries
+// (GET /api/v2/{administration_id}/time_entries)
+func (_ Unimplemented) ListTimeEntries(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTimeEntriesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTimeEntry Create a time entry
+// (POST /api/v2/{administration_id}/time_entries)
+func (_ Unimplemented) CreateTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTimeEntry Delete a time entry
+// (DELETE /api/v2/{administration_id}/time_entries/{id})
+func (_ Unimplemented) DeleteTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTimeEntry Get a time entry by id
+// (GET /api/v2/{administration_id}/time_entries/{id})
+func (_ Unimplemented) GetTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTimeEntry Update a time entry
+// (PATCH /api/v2/{administration_id}/time_entries/{id})
+func (_ Unimplemented) UpdateTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTimeEntryNote Add a note to a time entry
+// (POST /api/v2/{administration_id}/time_entries/{id}/notes)
+func (_ Unimplemented) CreateTimeEntryNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTimeEntryNote Delete a note from a time entry
+// (DELETE /api/v2/{administration_id}/time_entries/{id}/notes/{note_id})
+func (_ Unimplemented) DeleteTimeEntryNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ResumeTimeEntry Resume a stopped timer
+// (PATCH /api/v2/{administration_id}/time_entries/{id}/resume)
+func (_ Unimplemented) ResumeTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// StopTimeEntry Stop a running timer
+// (PATCH /api/v2/{administration_id}/time_entries/{id}/stop)
+func (_ Unimplemented) StopTimeEntry(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -25524,6 +26900,874 @@ func (siw *ServerInterfaceWrapper) UpdateSupportAccess(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteTaskListGroup operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTaskListGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTaskListGroup(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTaskListGroup operation middleware
+func (siw *ServerInterfaceWrapper) GetTaskListGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTaskListGroup(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTaskListGroup operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTaskListGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTaskListGroup(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTaskListTask operation middleware
+func (siw *ServerInterfaceWrapper) CreateTaskListTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTaskListTask(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTaskListTask operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTaskListTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTaskListTask(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTaskListTask operation middleware
+func (siw *ServerInterfaceWrapper) GetTaskListTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTaskListTask(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTaskListTask operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTaskListTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTaskListTask(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnassignTaskListTask operation middleware
+func (siw *ServerInterfaceWrapper) UnassignTaskListTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnassignTaskListTask(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AssignTaskListTask operation middleware
+func (siw *ServerInterfaceWrapper) AssignTaskListTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AssignTaskListTask(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReopenTaskListTask operation middleware
+func (siw *ServerInterfaceWrapper) ReopenTaskListTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReopenTaskListTask(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CompleteTaskListTask operation middleware
+func (siw *ServerInterfaceWrapper) CompleteTaskListTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CompleteTaskListTask(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTaskListTaskNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateTaskListTaskNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTaskListTaskNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTaskListTemplates operation middleware
+func (siw *ServerInterfaceWrapper) ListTaskListTemplates(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTaskListTemplates(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTaskListTemplate operation middleware
+func (siw *ServerInterfaceWrapper) CreateTaskListTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTaskListTemplate(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTaskListTemplate operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTaskListTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTaskListTemplate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTaskListTemplate operation middleware
+func (siw *ServerInterfaceWrapper) GetTaskListTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTaskListTemplate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTaskListTemplate operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTaskListTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTaskListTemplate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTaskListTemplateGroup operation middleware
+func (siw *ServerInterfaceWrapper) CreateTaskListTemplateGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTaskListTemplateGroup(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTaskListFromTemplate operation middleware
+func (siw *ServerInterfaceWrapper) CreateTaskListFromTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTaskListFromTemplate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTaskLists operation middleware
+func (siw *ServerInterfaceWrapper) ListTaskLists(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTaskListsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTaskLists(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTaskList operation middleware
+func (siw *ServerInterfaceWrapper) CreateTaskList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTaskList(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTaskList operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTaskList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTaskList(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTaskList operation middleware
+func (siw *ServerInterfaceWrapper) GetTaskList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTaskList(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTaskList operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTaskList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTaskList(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTaskListGroup operation middleware
+func (siw *ServerInterfaceWrapper) CreateTaskListGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTaskListGroup(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListTaxRates operation middleware
 func (siw *ServerInterfaceWrapper) ListTaxRates(w http.ResponseWriter, r *http.Request) {
 
@@ -25773,6 +28017,367 @@ func (siw *ServerInterfaceWrapper) SearchTaxonomyItems(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SearchTaxonomyItems(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTimeEntries operation middleware
+func (siw *ServerInterfaceWrapper) ListTimeEntries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTimeEntriesParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTimeEntries(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) CreateTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTimeEntry(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTimeEntry(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) GetTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTimeEntry(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTimeEntry(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTimeEntryNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateTimeEntryNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTimeEntryNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTimeEntryNote operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTimeEntryNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "note_id" -------------
+	var noteId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "note_id", chi.URLParam(r, "note_id"), &noteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "note_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTimeEntryNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResumeTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) ResumeTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResumeTimeEntry(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StopTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) StopTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StopTimeEntry(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -26678,6 +29283,108 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/tax_rates/{id}", wrapper.UpdateTaxRate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/time_entries", wrapper.ListTimeEntries)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/time_entries", wrapper.CreateTimeEntry)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/time_entries/{id}", wrapper.DeleteTimeEntry)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/time_entries/{id}", wrapper.GetTimeEntry)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/time_entries/{id}", wrapper.UpdateTimeEntry)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/time_entries/{id}/stop", wrapper.StopTimeEntry)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/time_entries/{id}/resume", wrapper.ResumeTimeEntry)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/time_entries/{id}/notes", wrapper.CreateTimeEntryNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/time_entries/{id}/notes/{note_id}", wrapper.DeleteTimeEntryNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/task_lists", wrapper.ListTaskLists)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/task_lists", wrapper.CreateTaskList)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/task_lists/{id}", wrapper.DeleteTaskList)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/task_lists/{id}", wrapper.GetTaskList)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/task_lists/{id}", wrapper.UpdateTaskList)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/task_lists/{id}/groups", wrapper.CreateTaskListGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/task_list_groups/{id}", wrapper.DeleteTaskListGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/task_list_groups/{id}", wrapper.GetTaskListGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/task_list_groups/{id}", wrapper.UpdateTaskListGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/task_list_groups/{id}/tasks", wrapper.CreateTaskListTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/task_list_tasks/{id}", wrapper.DeleteTaskListTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/task_list_tasks/{id}", wrapper.GetTaskListTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/task_list_tasks/{id}", wrapper.UpdateTaskListTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/task_list_tasks/{id}/assignment", wrapper.UnassignTaskListTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/task_list_tasks/{id}/assignment", wrapper.AssignTaskListTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/task_list_tasks/{id}/completion", wrapper.ReopenTaskListTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/task_list_tasks/{id}/completion", wrapper.CompleteTaskListTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/task_list_tasks/{id}/notes", wrapper.CreateTaskListTaskNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/task_list_templates", wrapper.ListTaskListTemplates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/task_list_templates", wrapper.CreateTaskListTemplate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/task_list_templates/{id}", wrapper.DeleteTaskListTemplate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/task_list_templates/{id}", wrapper.GetTaskListTemplate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/task_list_templates/{id}", wrapper.UpdateTaskListTemplate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/task_list_templates/{id}/groups", wrapper.CreateTaskListTemplateGroup)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/task_list_templates/{id}/task_lists", wrapper.CreateTaskListFromTemplate)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/ledger_accounts", wrapper.ListLedgerAccounts)

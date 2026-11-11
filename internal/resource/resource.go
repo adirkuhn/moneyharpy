@@ -112,6 +112,10 @@ const (
 	// Catalog.
 	TypeProduct Type = "products"
 	TypeProject Type = "projects"
+	// Time and tasks.
+	TypeTimeEntry        Type = "time_entries"
+	TypeTaskList         Type = "task_lists"
+	TypeTaskListTemplate Type = "task_list_templates"
 	// Journal.
 	TypeGeneralJournalDocument Type = "documents/general_journal_documents"
 )

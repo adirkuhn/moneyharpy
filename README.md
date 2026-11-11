@@ -369,6 +369,51 @@ Deleting a project something is booked on archives it instead
 reactivates one. Webhooks tell `project_created`, `_updated`, `_activated`,
 `_archived` and `_destroyed`.
 
+## Time entries and task lists
+
+Time lives at `/{id}/time_entries`, with Moneybird's time entries API under
+`/api/v2/{administration_id}/time_entries`: a description, a start and an
+end (rounded down to whole minutes, at least a minute apart), a pause in
+seconds, billable or not, for a member (`user_id`) and optionally a contact
+and a project. Without `ended_at` the entry is a running timer; a member has
+one at a time, so starting or resuming one stops the other. `PATCH .../stop`
+ends a timer and `PATCH .../resume` restarts one that started today, counting
+the stop as a pause. Lists are newest first, 25 a page, filtered on `state`
+(`all`, `open` to invoice, `non_billable`), `period` (this year unless any
+filter is sent), `contact_id` with `include_nil_contacts`, `project_id`,
+`user_id`, `day` and `include_active` (running timers are left out unless
+asked), and `query` searches the description. Members without the sales
+invoices permission see and change only their own time, as Moneybird asks
+that permission for other users' entries. A sales invoice created or updated
+with `time_entry_ids` bills those entries: they must have stopped and be on
+no other invoice, they show under the invoice's `time_entries`, and they can
+no longer be changed or deleted; deleting the draft frees them. Contacts and
+projects with time are archived instead of deleted. Notes work as on
+invoices. Webhooks tell `time_entry_created`, `_updated` (also on stop and
+resume), `_destroyed` and `time_entry_sales_invoice_created`.
+
+Task lists live at `/{id}/task_lists/lists`, with Moneybird's task list API
+(`task_lists`, `task_list_groups`, `task_list_tasks`, `task_list_templates`).
+A list has groups of tasks, tasks have subtasks; the first group has no name,
+holds the tasks outside any group and cannot be changed or deleted. A new
+list covers last month unless a period is given. Templates have a `period`
+(ISO 8601 such as `P1M`, or `monthly`, `quarterly`, `yearly`, `none`) and a
+`deadline_after`; a list made from one copies its groups and tasks, covers
+the whole period before the current one and gets the deadline that long after
+it. A group with a `report_type` gets its tasks generated from the report: a
+task per main category of the balance sheet or of profit and loss (debtor,
+creditor and asset reports have no lines yet). A task with a category
+(`related_entity_id`) and `generate_subtasks` gets a subtask per
+sub-category. Generated tasks cannot be deleted and generated groups take no
+other tasks. Tasks are assigned to members, completed with their subtasks
+and reopened with the tasks above them, and take notes. Moneybird asks for
+every permission for task lists, and so does MoneyHarpy. Webhooks tell
+`task_lists_list_created`, `_updated`, `_destroyed`, `_completed` and
+`_reopened`, `task_lists_list_template_created`, `_updated` and
+`_destroyed`, and `task_lists_task_created`, `_updated`, `_name`,
+`_report_type_linked`, `_category_linked`, `_unlinked`, `_assigned`,
+`_unassigned`, `_completed`, `_reopened` and `_destroyed`.
+
 ## Payments
 
 `GET /api/v2/{administration_id}/payments/{id}` returns any payment of a

@@ -266,6 +266,27 @@ export const en = {
     keptNotice: 'Something is booked on this project, so it was archived instead of deleted.',
     archivedNotice: 'This project is archived and is not offered for new bookings.',
   },
+  timeEntries: {
+    title: 'Timesheets', add: 'Add time', newTitle: 'New time', backToList: 'To Timesheets', form: 'Time entry', save: 'Save time',
+    filters: 'Time filters', views: { all: 'All time this year', open: 'Open to invoice', non_billable: 'Not billable' },
+    loadError: 'The time could not be loaded. Reload the page to try again.',
+    empty: 'No time recorded this year yet. Add time, or start a timer by leaving the end empty.',
+    noMatches: 'No time matches this filter. Try another one.',
+    date: 'Date', description: 'Description', contact: 'Contact', project: 'Project', duration: 'Hours', status: 'Status', user: 'User',
+    startedAt: 'Start', endedAt: 'End', endHelp: 'Leave empty to start a timer.', billable: 'Billable to the client', invoice: 'Invoice', draftInvoice: 'Draft invoice',
+    states: { running: 'Running', invoiced: 'Invoiced', open: 'Open', nonBillable: 'Not billable' },
+    detailsTitle: 'Time details', stop: 'Stop timer', resume: 'Resume timer', delete: 'Delete', confirmDelete: 'Delete time',
+    confirmDeleteText: 'Delete this time entry? This cannot be undone.',
+  },
+  taskLists: {
+    title: 'Task lists', add: 'Add task list', newTitle: 'New task list', backToList: 'To Task lists', form: 'Task list', save: 'Save task list',
+    loadError: 'The task lists could not be loaded. Reload the page to try again.',
+    empty: 'No task lists yet. Add one to keep track of recurring work, such as closing a month.',
+    name: 'Name', description: 'Description', period: 'Period', deadline: 'Deadline', progress: 'Done', done: '{{done}} of {{total}}', status: 'Status',
+    states: { open: 'Open', completed: 'Completed' }, detailsTitle: 'Task list details', tasks: 'Tasks',
+    taskName: 'New task', addTask: 'Add task', addTaskTo: 'Add a task to {{group}}',
+    delete: 'Delete', confirmDelete: 'Delete task list', confirmDeleteText: 'Delete this task list with all its tasks? This cannot be undone.',
+  },
   sidenav: {
     label: 'Administration menu', menu: 'Menu', collapse: 'Collapse menu', expand: 'Expand menu', collapseShort: 'Collapse', later: 'Not available yet',
     items: {

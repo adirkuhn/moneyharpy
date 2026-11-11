@@ -13,6 +13,8 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
+	"github.com/adirkuhn/moneyharpy/internal/tasklists"
+	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 )
 
@@ -81,6 +83,44 @@ func (c change) newestPayment(linked bool) []webhooks.Event {
 		events = append(events, webhooks.Event{EntityType: "Payment", EntityID: id, Action: "payment_linked_to_financial_mutation", Entity: raw})
 	}
 	return events
+}
+
+// invoice tells about a sales invoice the request saved, and the time
+// entries it billed.
+func (c change) invoice(action string) []webhooks.Event {
+	return append(c.one("SalesInvoice", action), c.billedTime()...)
+}
+
+// billedTime tells that time entries a sales invoice request names went on
+// the invoice.
+func (c change) billedTime() []webhooks.Event {
+	if ids, _ := c.nested("sales_invoice")["time_entry_ids"].([]any); len(ids) == 0 {
+		return nil
+	}
+	return c.one("SalesInvoice", "time_entry_sales_invoice_created")
+}
+
+// taskUpdated tells what an update of a task changed, as Moneybird does:
+// its name, the report or category it follows, or else anything.
+func (c change) taskUpdated() []webhooks.Event {
+	task := c.nested("task")
+	var out []webhooks.Event
+	if _, ok := task["name"]; ok {
+		out = append(out, c.one(tasklists.NoteEntityType, "task_lists_task_name")...)
+	}
+	for _, key := range []string{"report_type", "related_entity_id"} {
+		v, ok := task[key]
+		switch {
+		case !ok:
+		case v == nil || v == "":
+			out = append(out, c.one(tasklists.NoteEntityType, "task_lists_task_unlinked")...)
+		case key == "report_type":
+			out = append(out, c.one(tasklists.NoteEntityType, "task_lists_task_report_type_linked")...)
+		default:
+			out = append(out, c.one(tasklists.NoteEntityType, "task_lists_task_category_linked")...)
+		}
+	}
+	return append(out, c.one(tasklists.NoteEntityType, "task_lists_task_updated")...)
 }
 
 // toggled picks the event of an update by the active field it sends.
@@ -196,8 +236,8 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 	"createBookingRule":  func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_created") },
 	"updateBookingRule":  func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_updated") },
 	"deleteBookingRule":  func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_destroyed") },
-	"createSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_created") },
-	"updateSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_updated") },
+	"createSalesInvoice": func(c change) []webhooks.Event { return c.invoice("sales_invoice_created") },
+	"updateSalesInvoice": func(c change) []webhooks.Event { return c.invoice("sales_invoice_updated") },
 	"deleteSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_destroyed") },
 	"sendSalesInvoice": func(c change) []webhooks.Event {
 		action := map[string]string{"Email": "sales_invoice_send_email", "Post": "sales_invoice_send_post"}[fmt.Sprint(c.responseMap["delivery_method"])]
@@ -301,6 +341,31 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 			return c.one("Project", "project_archived")
 		}
 		return c.one("Project", "project_destroyed")
+	},
+	"createTimeEntry":            func(c change) []webhooks.Event { return c.one(timeentries.EntityType, "time_entry_created") },
+	"updateTimeEntry":            func(c change) []webhooks.Event { return c.one(timeentries.EntityType, "time_entry_updated") },
+	"stopTimeEntry":              func(c change) []webhooks.Event { return c.one(timeentries.EntityType, "time_entry_updated") },
+	"resumeTimeEntry":            func(c change) []webhooks.Event { return c.one(timeentries.EntityType, "time_entry_updated") },
+	"deleteTimeEntry":            func(c change) []webhooks.Event { return c.one(timeentries.EntityType, "time_entry_destroyed") },
+	"createTaskList":             func(c change) []webhooks.Event { return c.one(tasklists.ListEntityType, "task_lists_list_created") },
+	"createTaskListFromTemplate": func(c change) []webhooks.Event { return c.one(tasklists.ListEntityType, "task_lists_list_created") },
+	"updateTaskList":             func(c change) []webhooks.Event { return c.one(tasklists.ListEntityType, "task_lists_list_updated") },
+	"deleteTaskList":             func(c change) []webhooks.Event { return c.one(tasklists.ListEntityType, "task_lists_list_destroyed") },
+	"createTaskListTask":         func(c change) []webhooks.Event { return c.one(tasklists.NoteEntityType, "task_lists_task_created") },
+	"updateTaskListTask":         func(c change) []webhooks.Event { return c.taskUpdated() },
+	"deleteTaskListTask":         func(c change) []webhooks.Event { return c.one(tasklists.NoteEntityType, "task_lists_task_destroyed") },
+	"completeTaskListTask":       func(c change) []webhooks.Event { return c.one(tasklists.NoteEntityType, "task_lists_task_completed") },
+	"reopenTaskListTask":         func(c change) []webhooks.Event { return c.one(tasklists.NoteEntityType, "task_lists_task_reopened") },
+	"assignTaskListTask":         func(c change) []webhooks.Event { return c.one(tasklists.NoteEntityType, "task_lists_task_assigned") },
+	"unassignTaskListTask":       func(c change) []webhooks.Event { return c.one(tasklists.NoteEntityType, "task_lists_task_unassigned") },
+	"createTaskListTemplate": func(c change) []webhooks.Event {
+		return c.one(tasklists.TemplateEntityType, "task_lists_list_template_created")
+	},
+	"updateTaskListTemplate": func(c change) []webhooks.Event {
+		return c.one(tasklists.TemplateEntityType, "task_lists_list_template_updated")
+	},
+	"deleteTaskListTemplate": func(c change) []webhooks.Event {
+		return c.one(tasklists.TemplateEntityType, "task_lists_list_template_destroyed")
 	},
 	"createContact": func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
 	"updateContact": func(c change) []webhooks.Event {

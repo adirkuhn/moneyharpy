@@ -239,9 +239,20 @@ func (s *server) toSalesInvoices(r *http.Request, admin resource.ID, list []sale
 	if err != nil {
 		return nil, err
 	}
+	invoiceIDs := make([]resource.ID, len(list))
+	for i, inv := range list {
+		invoiceIDs[i] = inv.ID
+	}
+	billed, err := s.billedTimeEntries(r.Context(), admin, invoiceIDs)
+	if err != nil {
+		return nil, err
+	}
 	out := make([]salesInvoiceJSON, len(list))
 	for i, inv := range list {
 		out[i] = s.toSalesInvoice(inv, byID[inv.ContactID], today)
+		if entries := billed[inv.ID]; len(entries) > 0 {
+			out[i].TimeEntries = entries
+		}
 	}
 	return out, nil
 }
@@ -320,6 +331,7 @@ type salesInvoiceBody struct {
 		Discount          *flexString   `json:"discount"`
 		Details           *salesDetails `json:"details_attributes"`
 		CustomFields      *fieldValues  `json:"custom_fields_attributes"`
+		TimeEntryIDs      []flexString  `json:"time_entry_ids"`
 	} `json:"sales_invoice"`
 }
 
@@ -455,9 +467,16 @@ func (s *server) CreateSalesInvoice(w http.ResponseWriter, r *http.Request, admi
 	if !ok {
 		return
 	}
+	timeIDs, ok := readTimeEntryIDs(w, body.Invoice.TimeEntryIDs)
+	if !ok || !s.checkBillable(w, r, admin, 0, timeIDs) {
+		return
+	}
 	inv, err := s.deps.Sales.Create(r.Context(), admin, user(r).ID, c)
 	if err != nil {
 		s.fail(w, r, err)
+		return
+	}
+	if !s.bill(w, r, admin, inv.ID, timeIDs) {
 		return
 	}
 	s.writeSalesInvoice(w, r, admin, http.StatusCreated, inv)
@@ -564,9 +583,16 @@ func (s *server) UpdateSalesInvoice(w http.ResponseWriter, r *http.Request, admi
 	if !ok {
 		return
 	}
+	timeIDs, ok := readTimeEntryIDs(w, body.Invoice.TimeEntryIDs)
+	if !ok || !s.checkBillable(w, r, admin, rid, timeIDs) {
+		return
+	}
 	inv, err := s.deps.Sales.Update(r.Context(), admin, rid, user(r).ID, c)
 	if err != nil {
 		s.fail(w, r, err)
+		return
+	}
+	if !s.bill(w, r, admin, rid, timeIDs) {
 		return
 	}
 	s.writeSalesInvoice(w, r, admin, http.StatusOK, inv)
