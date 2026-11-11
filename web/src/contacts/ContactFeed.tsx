@@ -54,7 +54,7 @@ function FeedRow({ administrationId, contact, entry: e }: { administrationId: st
   const title = [contactName(contact), ...names].join(' · ')
   const sign = amountSign(e.kind)
   const value = Number(e.amount) * (sign === '-' ? -1 : 1)
-  const amount = `${value > 0 && sign ? '+' : ''}${formatAmount(value, e.currency || 'EUR', i18n.language)}`
+  const amount = signedAmount(value, sign !== '', e.currency || 'EUR', i18n.language)
   const state = e.kind === 'quote' ? t(`estimates.states.${e.state}`, { defaultValue: e.state }) : t(`invoices.states.${e.state}`, { defaultValue: e.state })
   return (
     <Link className="feed-row" to={documentPath(administrationId, e)} aria-label={`${kind}: ${title}`}>
@@ -96,4 +96,18 @@ function DoneIllustration() {
       <rect x="164" y="64" width="12" height="5" rx="2" transform="rotate(-20 170 66)" fill="var(--gold)" />
     </svg>
   )
+}
+
+/**
+ * An amount with its sign after the currency symbol, as Moneybird writes
+ * them in a feed ("€+99.21", "€-25.10"); money in carries a plus.
+ */
+export function signedAmount(value: number, signed: boolean, currency: string, language: string) {
+  const plain = formatAmount(Math.abs(value), currency, language)
+  const mark = value < 0 ? '-' : signed && value > 0 ? '+' : ''
+  if (!mark) {
+    return plain
+  }
+  const digit = plain.search(/\d/)
+  return digit < 0 ? mark + plain : plain.slice(0, digit) + mark + plain.slice(digit)
 }

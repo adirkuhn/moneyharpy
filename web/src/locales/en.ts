@@ -78,6 +78,8 @@ export const en = {
       title: 'Contact', clientNumber: 'Client number: {{id}}', export: 'Export', extra: 'Extra', add: 'Add',
       call: 'Call this contact', email: 'Email this contact', map: 'Open address in Google Maps', kvk: 'View the Dutch Chamber of Commerce page of this company',
       emailAddress: 'Email address', phone: 'Phone number', address: 'Address', kvkNumber: 'Netherlands Chamber of Commerce KVK number',
+      taxNumber: 'VAT number', copyTaxNumber: 'Copy VAT number', copied: 'Copied',
+      registerNotice: 'Additional information may be available for this contact.', registerLink: 'Add information from the Dutch Chamber of Commerce',
       cocNumber: 'Chamber of Commerce number', documents: 'Corresponding documents',
       counts: {
         invoice_one: '{{count}} Invoice', invoice_other: '{{count}} Invoices', external_one: '{{count}} External invoice', external_other: '{{count}} External invoices',

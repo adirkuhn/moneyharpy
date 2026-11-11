@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { formErrors, TextInput } from '../forms/Form'
+import { useOnboardingOptions } from '../onboarding/queries'
 import { countryName } from '../settings/format'
 import { ContactIcon, type ContactIconKind } from './ContactIcon'
 import { type ContactDocuments, listPath } from './documents'
@@ -30,6 +31,9 @@ export function ContactCard({ administrationId, contact: c, documents }: Props) 
   const address = addressLines(c, i18n.language)
   const street = [c.address1, c.address2, c.zipcode, c.city].some(Boolean)
   const dutch = c.country === 'NL'
+  const options = useOnboardingOptions()
+  // Moneybird offers the register's details for a Dutch company it cannot place yet.
+  const suggestRegister = company && dutch && !c.chamber_of_commerce && (options.data?.company_search_countries ?? []).includes('NL')
   const counted = documents.filter((d) => d.total > 0)
 
   const quick: { kind: ContactIconKind; label: string; href: string; external?: boolean }[] = [
@@ -63,10 +67,24 @@ export function ContactCard({ administrationId, contact: c, documents }: Props) 
           ))}
         </div>
       )}
+      {suggestRegister && (
+        <p className="contact-card__notice">
+          <ContactIcon kind="info" />
+          <span>
+            {t('contacts.view.registerNotice')}{' '}
+            <Link to={`/${administrationId}/contacts/${c.id}/edit`}>{t('contacts.view.registerLink')}</Link>
+          </span>
+        </p>
+      )}
       {email && <Fact label={t('contacts.view.emailAddress')}>{email}</Fact>}
       {c.phone && <Fact label={t('contacts.view.phone')}>{c.phone}</Fact>}
       {street && <Fact label={t('contacts.view.address')}>{address.map((line) => <span key={line} className="contact-card__line">{line}</span>)}</Fact>}
       {c.chamber_of_commerce && <Fact label={dutch ? t('contacts.view.kvkNumber') : t('contacts.view.cocNumber')}>{c.chamber_of_commerce}</Fact>}
+      {c.tax_number && (
+        <Fact label={t('contacts.view.taxNumber')}>
+          {c.tax_number} <CopyButton value={c.tax_number} label={t('contacts.view.copyTaxNumber')} />
+        </Fact>
+      )}
       {counted.length > 0 && (
         <Fact label={t('contacts.view.documents')}>
           {counted.map((d) => (
@@ -78,6 +96,20 @@ export function ContactCard({ administrationId, contact: c, documents }: Props) 
       )}
       <People administrationId={administrationId} contact={c} company={company} />
     </section>
+  )
+}
+
+/** A small button that puts a value on the clipboard, as Moneybird offers for the VAT number. */
+function CopyButton({ value, label }: { value: string; label: string }) {
+  const { t } = useTranslation()
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    void navigator.clipboard?.writeText(value).then(() => setCopied(true), () => setCopied(false))
+  }
+  return (
+    <button type="button" className="contact-card__copy" aria-label={label} title={copied ? t('contacts.view.copied') : label} onClick={copy}>
+      <ContactIcon kind="copy" />
+    </button>
   )
 }
 
