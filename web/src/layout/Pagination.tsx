@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { ArrowLeftIcon, ChevronIcon } from './icons'
+import { ChevronIcon } from './icons'
 
 /** How many pages to offer either side of the current one, as Moneybird does. */
 const around = 2
@@ -43,9 +43,9 @@ export function Pagination({ total, perPage }: { total: number; perPage: number 
   return (
     <nav className="pagination" aria-label={t('common.pagination')}>
       {current > 1 ? (
-        <Link className="pagination__step" to={to(current - 1)} aria-label={t('common.previousPage')}><ArrowLeftIcon /></Link>
+        <Link className="pagination__step" to={to(current - 1)} aria-label={t('common.previousPage')}><ChevronIcon className="pagination__back" /></Link>
       ) : (
-        <span className="pagination__step is-disabled" aria-hidden="true"><ArrowLeftIcon /></span>
+        <span className="pagination__step is-disabled" aria-hidden="true"><ChevronIcon className="pagination__back" /></span>
       )}
       {pageWindow(current, last).map((p, i) =>
         p === null ? (
