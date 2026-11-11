@@ -4,40 +4,86 @@
  * in styles.css so dark mode and high contrast keep working.
  */
 
-/* Notifications: a panel that slides in from the right. */
-.aside-overlay { position: fixed; inset: 0; z-index: 30; background: rgb(9 38 83 / 0.32); }
+/* Notifications: a panel that floats in from the right, below the top bar, which stays clear. */
+.aside-overlay { position: fixed; inset: 4rem 0 0; z-index: 30; background: rgb(9 38 83 / 0.32); }
 .aside {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  top: 5rem;
+  right: 1rem;
+  bottom: 1rem;
   z-index: 31;
   display: flex;
   flex-direction: column;
-  width: min(26rem, 100vw);
-  border-left: 1px solid var(--line);
-  background: var(--surface);
+  width: min(26rem, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
   color: var(--text);
-  box-shadow: -12px 0 28px rgb(9 38 83 / 0.24);
+  box-shadow: 0 8px 32px rgb(9 38 83 / 0.28);
   animation: aside-in 0.18s ease-out;
 }
 @keyframes aside-in { from { transform: translateX(2rem); opacity: 0; } }
-.aside__header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
-.aside__title { margin: 0; font-size: 1.25rem; }
+.aside__header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 0.75rem 0.75rem 1.25rem; border-bottom: 1px solid var(--line); background: var(--surface); }
+.aside__title { margin: 0; font-size: 1.125rem; font-weight: 600; }
+.aside__header .icon-btn { width: 2.25rem; height: 2.25rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); }
+.aside__header .icon-btn:hover { background: var(--row-hover); }
 .aside__notifications { flex: 1; overflow-y: auto; padding: 1.25rem; }
-.aside__empty { margin: 2rem 0 0; color: var(--muted); text-align: center; }
+.aside__empty { margin: 1rem 0 0; color: var(--muted); text-align: center; }
 
-/* Sign-in and onboarding: the language switch shows only its code, like Moneybird. */
+/* Sign-in and onboarding: one card on an open page. The language switch sits in the window's
+   top-right corner and shows only its code; the brand closes the page at the bottom. */
+.wizard { display: flex; flex-direction: column; padding: 4.5rem 1rem 1.5rem; }
+.auth.wizard { padding-top: 2.5rem; }
+.wizard__language { position: absolute; top: 1rem; right: 1rem; max-width: none; margin: 0; }
 .wizard__language .language-select__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wizard__card, .auth__panel { width: 100%; padding: 2.5rem; border-radius: 1.5rem; }
+.wizard__card { max-width: 45rem; }
+.auth__panel { max-width: 28.125rem; }
+.auth__logo { margin: 0 0 1.5rem; }
+.auth__logo .logo { height: 2.5rem; }
+.wizard__brand { margin: auto 0 0; padding-top: 2.5rem; opacity: 0.7; }
+.auth__actions { flex-direction: column; flex-wrap: nowrap; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.auth__actions .btn { flex: none; width: 100%; }
 
-/* Onboarding cards: icon, text, and the radio on the right. */
-.choice--card { align-items: center; gap: 0.875rem; }
-.choice--card .choice__icon { display: inline-flex; flex: none; justify-content: center; align-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--row-hover); color: var(--blue); }
+/* Onboarding cards: icon in a soft square, text, and the radio at the top right. */
+.choice--card { align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border-radius: 8px; }
+.choice--card .choice__icon { display: inline-flex; flex: none; justify-content: center; align-items: center; width: 2.25rem; height: 2.25rem; border-radius: 8px; background: var(--bg); color: var(--blue); }
 .choice--card .choice__text { flex: 1; }
-.choice--card input { order: 3; margin: 0; }
+.choice--card .choice__text strong { font-weight: 500; }
+.choice--card input { order: 3; margin: 0.25rem 0 0; }
+
+/* Settings pages: a centred column; card headers with a small Edit button; labels in a narrower column. */
+.settings__page .actionbar, .settings__page .content { max-width: 66rem; }
+.settings-block__header { align-items: center; }
+.datalist__header { padding: 0.5rem 1rem; }
+.datalist__header .btn { min-height: 1.75rem; padding: 0 0.625rem; font-size: 0.8125rem; }
+@media (min-width: 52.0625rem) { .datalist__row { grid-template-columns: 13.5rem 1fr; } }
+
+/* The edit form pattern on settings pages: a 50rem form centred on the sheet, short label column,
+   rows close together, Save and Cancel centred under it. */
+.settings__page .form-sheet > * { max-width: 50rem; }
+.settings__page .form-input { --control-width: 18rem; grid-template-columns: 10.625rem minmax(0, 1fr); gap: 0.25rem 1rem; }
+.settings__page .form-input--small { --control-width: 6.5rem; }
+.settings__page .form-input--medium { --control-width: 12rem; }
+.settings__page .form-section { gap: 0.5rem; padding: 1rem 0; }
+.settings__page .form-sheet__actions { justify-content: center; }
+
+/* Select an administration: a wider column; each row an icon box, the name and a boxed settings button. */
+.actionbar:has(+ .content > .ledger--accounts), .content:has(> .ledger--accounts) { max-width: 69rem; }
+.ledger--accounts { padding: 0 1rem; border-radius: 12px; }
+.ledger--accounts .ledger__row { gap: 0.75rem; min-height: 3.25rem; padding: 0.5rem 0; }
+.ledger--accounts .ledger__name { font-weight: 400; }
+.ledger--accounts .icon-btn { width: 1.75rem; height: 1.75rem; border: 1px solid var(--line); border-radius: 6px; font-size: 0.75rem; color: var(--text); }
+.ledger--accounts .star--on { color: var(--star); }
+.ledger--accounts .ledger__row:has(a.ledger__name):hover { background: transparent; }
+.ledger--accounts .ledger__row:has(a.ledger__name):hover .ledger__name { color: var(--link); }
 
 /* Rows that lead somewhere end in a chevron, like Moneybird's link lists. */
-.link-row__icon { display: inline-flex; flex: none; color: var(--muted); }
+.link-row__icon { display: inline-flex; flex: none; justify-content: center; align-items: center; width: 2.25rem; height: 2.25rem; margin-right: 0.5rem; border-radius: 8px; background: var(--bg); color: var(--text); }
+.ledger__row:has(.ledger__name--danger) .link-row__icon { background: var(--danger); color: var(--white); }
+.settings__page .data-table th { color: var(--text); font-weight: 500; }
+.settings__page .data-table td a { font-weight: 400; }
 .ledger__row--disabled { color: var(--muted); }
 .ledger__row--disabled .ledger__name { color: var(--muted); font-weight: 500; }
 .ledger__row--action { cursor: pointer; }
@@ -82,6 +128,20 @@
 /* The overview tiles: count beside the title, amount below. */
 .tile__count { color: var(--muted); font-weight: 400; }
 
+/* Overview: a wider column; one card per part of the books, its title inside and the tiles as ruled rows. */
+.actionbar:has(+ .content > .overview), .content:has(> .overview) { max-width: 69rem; }
+.overview__block { gap: 0; padding: 0 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.overview__title { margin: 0; padding: 0.75rem 0; border-bottom: 1px solid var(--line); color: var(--text); font-size: 0.8125rem; font-weight: 500; }
+.overview__block .tile { padding: 0.75rem 0; border: 0; border-radius: 0; background: transparent; }
+.overview__block .tile + .tile { border-top: 1px solid var(--line); }
+.overview__block a.tile:hover { background: transparent; }
+.overview__block a.tile:hover .tile__title { color: var(--link); }
+.overview__block .tile--later { opacity: 0.75; }
+.overview .tile__icon { border-radius: 8px; background: var(--blue); color: var(--white); }
+.overview .tile__icon--urgent { background: var(--gold); color: var(--navy); }
+.overview .tile--later .tile__icon { background: var(--bg); color: var(--muted); }
+.recent__list { border-radius: 12px; }
+
 /* User account: details in the same card as the settings pages. */
 .account-details { margin-bottom: 0; }
 
@@ -92,3 +152,9 @@
   .aside { border-left: 1px solid CanvasText; }
   .choice--card .choice__icon { border: 1px solid CanvasText; }
 }
+
+/* A little room between the page title and the first block, as on Moneybird. */
+.settings__page .content { padding-top: 1rem; }
+
+/* On a phone the user button shows only the name. */
+@media (max-width: 40rem) { .topnav__btn .menu__icon { display: none; } }

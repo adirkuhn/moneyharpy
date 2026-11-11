@@ -21,7 +21,7 @@ export function AdministrationsPage() {
         <p className="empty">{t('administrations.empty')}</p>
       )}
       {administrations.data && administrations.data.length > 0 && (
-        <ul className="ledger" aria-label={t('administrations.list')}>
+        <ul className="ledger ledger--accounts" aria-label={t('administrations.list')}>
           {administrations.data.map((a) => <Row key={a.id} administration={a} />)}
         </ul>
       )}
