@@ -68,9 +68,9 @@ func checkOperationCoverage(out io.Writer) bool {
 	if len(missing) == 0 {
 		return true
 	}
-	fmt.Fprintf(out, "FAIL: %d contract operations have no successful test call:\n", len(missing))
+	_, _ = fmt.Fprintf(out, "FAIL: %d contract operations have no successful test call:\n", len(missing))
 	for _, op := range missing {
-		fmt.Fprintln(out, "  "+op)
+		_, _ = fmt.Fprintln(out, "  "+op)
 	}
 	return false
 }
