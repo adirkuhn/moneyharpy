@@ -409,6 +409,21 @@ type FinancialStatement struct {
 	UpdatedAt          pgtype.Timestamptz
 }
 
+type GeneralDocument struct {
+	ID               int64
+	AdministrationID int64
+	ContactID        pgtype.Int8
+	EntryNumber      int32
+	Reference        string
+	Date             pgtype.Date
+	DueDate          pgtype.Date
+	ReminderDate     pgtype.Date
+	ReminderMessage  string
+	State            string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type GeneralJournalDocument struct {
 	ID               int64
 	AdministrationID int64
@@ -592,6 +607,93 @@ type Project struct {
 	Budget           pgtype.Int4
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
+}
+
+type PurchaseDocument struct {
+	ID               int64
+	AdministrationID int64
+	Kind             string
+	ContactID        pgtype.Int8
+	EntryNumber      int32
+	Reference        string
+	Date             pgtype.Date
+	DueDate          pgtype.Date
+	State            string
+	Origin           string
+	Currency         string
+	PricesAreInclTax bool
+	RevenueInvoice   bool
+	PaidAt           pgtype.Timestamptz
+	TotalExclTax     int64
+	TotalTax         int64
+	TotalInclTax     int64
+	TaxTotals        []byte
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type PurchaseDocumentDetail struct {
+	ID                 int64
+	AdministrationID   int64
+	PurchaseDocumentID int64
+	Description        string
+	Period             string
+	Price              int64
+	Amount             string
+	Quantity           int64
+	TaxRateID          int64
+	LedgerAccountID    pgtype.Int8
+	ProjectID          pgtype.Int8
+	ProductID          pgtype.Int8
+	RowOrder           int32
+	LineBase           int64
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+}
+
+type PurchaseDocumentFiscalAllocation struct {
+	ID                     int64
+	AdministrationID       int64
+	PurchaseDocumentID     int64
+	LedgerAccountID        int64
+	PrivateLedgerAccountID int64
+	Percentage             int32
+	Price                  int64
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+}
+
+type PurchaseTransaction struct {
+	ID                         int64
+	AdministrationID           int64
+	FinancialAccountID         int64
+	PurchaseTransactionBatchID pgtype.Int8
+	PayableType                pgtype.Text
+	PayableID                  pgtype.Int8
+	ContactID                  pgtype.Int8
+	Amount                     int64
+	Date                       pgtype.Date
+	Description                string
+	EndToEndID                 string
+	SepaIban                   string
+	SepaIbanAccountName        string
+	SepaBic                    string
+	SourceSepaIban             pgtype.Text
+	SourceSepaIbanAccountName  pgtype.Text
+	Cancelled                  bool
+	CreatedAt                  pgtype.Timestamptz
+	UpdatedAt                  pgtype.Timestamptz
+}
+
+type PurchaseTransactionBatch struct {
+	ID                 int64
+	AdministrationID   int64
+	FinancialAccountID int64
+	Identifier         string
+	State              string
+	ExecutionDate      pgtype.Date
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
 }
 
 type RecoveryCode struct {
@@ -864,6 +966,18 @@ type TimeEntry struct {
 	Description      string
 	PausedDuration   int32
 	Billable         bool
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type TypelessDocument struct {
+	ID               int64
+	AdministrationID int64
+	ContactID        pgtype.Int8
+	Reference        string
+	Date             pgtype.Date
+	Origin           string
+	State            string
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
 }

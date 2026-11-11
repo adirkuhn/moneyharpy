@@ -90,8 +90,8 @@ export function OverviewPage() {
         )}
         {documents && (
           <Block title={t('overview.incoming')}>
-            <Later icon="out" title={t('overview.toPay')} />
-            <Later icon="attention" title={t('overview.toProcess')} />
+            <Tile icon="out" title={t('overview.toPay')} count={count(overview.data?.incoming?.to_pay)} to={`${base}/documents/purchase_invoices?filter=${encodeURIComponent('state:open|late|pending_payment')}`} detail={overview.data?.incoming && money(overview.data.incoming.to_pay.amount)} />
+            <Tile icon="attention" urgent title={t('overview.toProcess')} to={`${base}/documents/typeless_documents`} detail={overview.data?.incoming?.to_process.toLocaleString(i18n.language)} />
           </Block>
         )}
       </div>
@@ -119,18 +119,6 @@ function Tile({ icon, title, count, detail, to, urgent }: TileProps) {
       <span className="tile__title">{title}{count !== undefined && <span className="tile__count"> — {count}</span>}</span>
       <span className="tile__detail">{detail ?? '…'}</span>
     </Link>
-  )
-}
-
-/** A tile for a part of MoneyHarpy that is not built yet. */
-function Later({ icon, title }: Pick<TileProps, 'icon' | 'title'>) {
-  const { t } = useTranslation()
-  return (
-    <div className="tile tile--later" title={t('overview.laterHint')}>
-      <span className="tile__icon"><TileIcon kind={icon} /></span>
-      <span className="tile__title">{title}</span>
-      <span className="tile__detail">{t('overview.later')}</span>
-    </div>
   )
 }
 

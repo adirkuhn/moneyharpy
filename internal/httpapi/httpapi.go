@@ -28,6 +28,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/products"
 	"github.com/adirkuhn/moneyharpy/internal/projects"
+	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -90,6 +91,7 @@ type Deps struct {
 	Contacts        *contacts.Service
 	Journal         *journal.Service
 	Sales           *sales.Service
+	Purchases       *purchases.Service
 	Products        *products.Service
 	Projects        *projects.Service
 	Subscriptions   *subscriptions.Service
@@ -130,7 +132,7 @@ type Deps struct {
 }
 
 // uploadTypes are the binary request and response bodies in the contract.
-var uploadTypes = []string{"image/png", "image/jpeg", "image/gif", "application/pdf"}
+var uploadTypes = []string{"image/png", "image/jpeg", "image/gif", "application/pdf", "text/xml"}
 
 func init() {
 	for _, t := range uploadTypes {
@@ -216,6 +218,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This category is used by transactions or booking rules; keep it deactivated instead"}}))
 	case errors.Is(err, banking.ErrBookingUnavailable):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet; only categories (LedgerAccount) can be booked so far"}}))
+	case errors.Is(err, purchases.ErrNotEditable):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This document cannot be changed in its state; remove its payments first"}}))
 	case errors.Is(err, sales.ErrNotEditable):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This invoice cannot be changed in its state; credit it instead"}}))
 	case errors.Is(err, sales.ErrDeliveryUnavailable):
@@ -270,6 +274,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		contacts.IsNotFound(err),
 		journal.IsNotFound(err),
 		sales.IsNotFound(err),
+		purchases.IsNotFound(err),
+		errors.Is(err, purchases.ErrNoSEPAFile),
 		errors.Is(err, products.ErrNotFound),
 		errors.Is(err, projects.ErrNotFound),
 		errors.Is(err, subscriptions.ErrNotFound),

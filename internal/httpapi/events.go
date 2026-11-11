@@ -221,7 +221,7 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		return out
 	},
 	"linkFinancialMutationBooking": func(c change) []webhooks.Event {
-		if t := c.request["booking_type"]; t == "SalesInvoice" || t == "ExternalSalesInvoice" {
+		if t := c.request["booking_type"]; t == "SalesInvoice" || t == "ExternalSalesInvoice" || t == "Document" {
 			return c.newestPayment(true)
 		}
 		return c.one("FinancialMutation", "ledger_account_booking_created")
@@ -396,6 +396,60 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		return c.one("AccessToken", "access_token_created")
 	},
 	"revokeConnection": func(c change) []webhooks.Event { return c.one("AccessToken", "access_token_revoked") },
+	// Incoming documents and purchase transactions.
+	"createPurchaseInvoice":          func(c change) []webhooks.Event { return c.one("Document", "document_saved") },
+	"updatePurchaseInvoice":          func(c change) []webhooks.Event { return c.one("Document", "document_updated") },
+	"deletePurchaseInvoice":          func(c change) []webhooks.Event { return c.destroyed("Document", "document_destroyed") },
+	"createPurchaseInvoicePayment":   func(c change) []webhooks.Event { return c.payment() },
+	"registerPurchaseInvoicePayment": func(c change) []webhooks.Event { return c.payment() },
+	"deletePurchaseInvoicePayment":   func(c change) []webhooks.Event { return c.destroyedPayment() },
+	"createReceipt":                  func(c change) []webhooks.Event { return c.one("Document", "document_saved") },
+	"updateReceipt":                  func(c change) []webhooks.Event { return c.one("Document", "document_updated") },
+	"deleteReceipt":                  func(c change) []webhooks.Event { return c.destroyed("Document", "document_destroyed") },
+	"createReceiptPayment":           func(c change) []webhooks.Event { return c.payment() },
+	"registerReceiptPayment":         func(c change) []webhooks.Event { return c.payment() },
+	"deleteReceiptPayment":           func(c change) []webhooks.Event { return c.destroyedPayment() },
+	"createGeneralDocument":          func(c change) []webhooks.Event { return c.one("Document", "document_saved") },
+	"updateGeneralDocument":          func(c change) []webhooks.Event { return c.one("Document", "document_updated") },
+	"deleteGeneralDocument":          func(c change) []webhooks.Event { return c.destroyed("Document", "document_destroyed") },
+	"createTypelessDocument":         func(c change) []webhooks.Event { return c.one("Document", "document_saved") },
+	"deleteTypelessDocument":         func(c change) []webhooks.Event { return c.destroyed("Document", "document_destroyed") },
+	"createPurchaseTransaction": func(c change) []webhooks.Event {
+		return c.one("PurchaseTransaction", "purchase_transaction_created")
+	},
+	"deletePurchaseTransaction": func(c change) []webhooks.Event {
+		return c.destroyed("PurchaseTransaction", "purchase_transaction_deleted")
+	},
+	"deletePurchaseTransactionDeprecated": func(c change) []webhooks.Event {
+		return c.destroyed("PurchaseTransaction", "purchase_transaction_deleted")
+	},
+	"createPurchaseTransactionBatch": func(c change) []webhooks.Event {
+		return c.one("PurchaseTransactionBatch", "purchase_transaction_batch_created")
+	},
+	"createSepaCreditTransfer": func(c change) []webhooks.Event {
+		var list []json.RawMessage
+		_ = json.Unmarshal(c.response, &list)
+		var out []webhooks.Event
+		for _, raw := range list {
+			var m map[string]any
+			_ = json.Unmarshal(raw, &m)
+			id, _ := m["id"].(string)
+			out = append(out, webhooks.Event{EntityType: "PurchaseTransactionBatch", EntityID: id, Action: "purchase_transaction_batch_created", Entity: raw})
+		}
+		return out
+	},
+}
+
+// destroyed tells about a deleted record, which the response does not hold.
+func (c change) destroyed(entityType, action string) []webhooks.Event {
+	id := c.params["id"]
+	return []webhooks.Event{{EntityType: entityType, EntityID: id, Action: action, Entity: json.RawMessage(`{"id":"` + id + `"}`)}}
+}
+
+// destroyedPayment tells about a deleted payment.
+func (c change) destroyedPayment() []webhooks.Event {
+	id := c.params["payment_id"]
+	return []webhooks.Event{{EntityType: "Payment", EntityID: id, Action: "payment_destroyed", Entity: json.RawMessage(`{"id":"` + id + `"}`)}}
 }
 
 type recordingWriter struct {

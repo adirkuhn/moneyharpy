@@ -684,6 +684,36 @@ func (e FlexibleBoolean1) Valid() bool {
 	}
 }
 
+// Defines values for GeneralDocumentState.
+const (
+	GeneralDocumentStateLate           GeneralDocumentState = "late"
+	GeneralDocumentStateNew            GeneralDocumentState = "new"
+	GeneralDocumentStateOpen           GeneralDocumentState = "open"
+	GeneralDocumentStatePaid           GeneralDocumentState = "paid"
+	GeneralDocumentStatePendingPayment GeneralDocumentState = "pending_payment"
+	GeneralDocumentStateSaved          GeneralDocumentState = "saved"
+)
+
+// Valid indicates whether the value is a known member of the GeneralDocumentState enum.
+func (e GeneralDocumentState) Valid() bool {
+	switch e {
+	case GeneralDocumentStateLate:
+		return true
+	case GeneralDocumentStateNew:
+		return true
+	case GeneralDocumentStateOpen:
+		return true
+	case GeneralDocumentStatePaid:
+		return true
+	case GeneralDocumentStatePendingPayment:
+		return true
+	case GeneralDocumentStateSaved:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GeneralJournalDocumentJournalType.
 const (
 	GeneralJournalDocumentJournalTypeFiscalYearEnding GeneralJournalDocumentJournalType = "fiscal_year_ending"
@@ -762,6 +792,8 @@ const (
 	JournalEntryDocumentTypeFinancialMutation      JournalEntryDocumentType = "FinancialMutation"
 	JournalEntryDocumentTypeGeneralJournalDocument JournalEntryDocumentType = "GeneralJournalDocument"
 	JournalEntryDocumentTypePayment                JournalEntryDocumentType = "Payment"
+	JournalEntryDocumentTypePurchaseInvoice        JournalEntryDocumentType = "PurchaseInvoice"
+	JournalEntryDocumentTypeReceipt                JournalEntryDocumentType = "Receipt"
 	JournalEntryDocumentTypeSalesInvoice           JournalEntryDocumentType = "SalesInvoice"
 )
 
@@ -775,6 +807,10 @@ func (e JournalEntryDocumentType) Valid() bool {
 	case JournalEntryDocumentTypeGeneralJournalDocument:
 		return true
 	case JournalEntryDocumentTypePayment:
+		return true
+	case JournalEntryDocumentTypePurchaseInvoice:
+		return true
+	case JournalEntryDocumentTypeReceipt:
 		return true
 	case JournalEntryDocumentTypeSalesInvoice:
 		return true
@@ -1236,6 +1272,213 @@ func (e ProjectRequestProjectState) Valid() bool {
 	}
 }
 
+// Defines values for PurchaseInvoiceOrigin.
+const (
+	PurchaseInvoiceOriginApi         PurchaseInvoiceOrigin = "api"
+	PurchaseInvoiceOriginEmail       PurchaseInvoiceOrigin = "email"
+	PurchaseInvoiceOriginEndpoint    PurchaseInvoiceOrigin = "endpoint"
+	PurchaseInvoiceOriginMollie      PurchaseInvoiceOrigin = "mollie"
+	PurchaseInvoiceOriginMoneybirdBv PurchaseInvoiceOrigin = "moneybird_bv"
+	PurchaseInvoiceOriginSi          PurchaseInvoiceOrigin = "si"
+	PurchaseInvoiceOriginSiLocal     PurchaseInvoiceOrigin = "si_local"
+	PurchaseInvoiceOriginSiPeppol    PurchaseInvoiceOrigin = "si_peppol"
+	PurchaseInvoiceOriginUpload      PurchaseInvoiceOrigin = "upload"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseInvoiceOrigin enum.
+func (e PurchaseInvoiceOrigin) Valid() bool {
+	switch e {
+	case PurchaseInvoiceOriginApi:
+		return true
+	case PurchaseInvoiceOriginEmail:
+		return true
+	case PurchaseInvoiceOriginEndpoint:
+		return true
+	case PurchaseInvoiceOriginMollie:
+		return true
+	case PurchaseInvoiceOriginMoneybirdBv:
+		return true
+	case PurchaseInvoiceOriginSi:
+		return true
+	case PurchaseInvoiceOriginSiLocal:
+		return true
+	case PurchaseInvoiceOriginSiPeppol:
+		return true
+	case PurchaseInvoiceOriginUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PurchaseInvoiceState.
+const (
+	PurchaseInvoiceStateLate           PurchaseInvoiceState = "late"
+	PurchaseInvoiceStateNew            PurchaseInvoiceState = "new"
+	PurchaseInvoiceStateOpen           PurchaseInvoiceState = "open"
+	PurchaseInvoiceStatePaid           PurchaseInvoiceState = "paid"
+	PurchaseInvoiceStatePendingPayment PurchaseInvoiceState = "pending_payment"
+	PurchaseInvoiceStateSaved          PurchaseInvoiceState = "saved"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseInvoiceState enum.
+func (e PurchaseInvoiceState) Valid() bool {
+	switch e {
+	case PurchaseInvoiceStateLate:
+		return true
+	case PurchaseInvoiceStateNew:
+		return true
+	case PurchaseInvoiceStateOpen:
+		return true
+	case PurchaseInvoiceStatePaid:
+		return true
+	case PurchaseInvoiceStatePendingPayment:
+		return true
+	case PurchaseInvoiceStateSaved:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PurchaseTransactionState.
+const (
+	PurchaseTransactionStateAwaitingAuthorization PurchaseTransactionState = "awaiting_authorization"
+	PurchaseTransactionStateCancelled             PurchaseTransactionState = "cancelled"
+	PurchaseTransactionStateError                 PurchaseTransactionState = "error"
+	PurchaseTransactionStateOpen                  PurchaseTransactionState = "open"
+	PurchaseTransactionStatePaid                  PurchaseTransactionState = "paid"
+	PurchaseTransactionStatePendingPayment        PurchaseTransactionState = "pending_payment"
+	PurchaseTransactionStatePreparing             PurchaseTransactionState = "preparing"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseTransactionState enum.
+func (e PurchaseTransactionState) Valid() bool {
+	switch e {
+	case PurchaseTransactionStateAwaitingAuthorization:
+		return true
+	case PurchaseTransactionStateCancelled:
+		return true
+	case PurchaseTransactionStateError:
+		return true
+	case PurchaseTransactionStateOpen:
+		return true
+	case PurchaseTransactionStatePaid:
+		return true
+	case PurchaseTransactionStatePendingPayment:
+		return true
+	case PurchaseTransactionStatePreparing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PurchaseTransactionBatchState.
+const (
+	PurchaseTransactionBatchStateCancelled PurchaseTransactionBatchState = "cancelled"
+	PurchaseTransactionBatchStateExported  PurchaseTransactionBatchState = "exported"
+	PurchaseTransactionBatchStateOpen      PurchaseTransactionBatchState = "open"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseTransactionBatchState enum.
+func (e PurchaseTransactionBatchState) Valid() bool {
+	switch e {
+	case PurchaseTransactionBatchStateCancelled:
+		return true
+	case PurchaseTransactionBatchStateExported:
+		return true
+	case PurchaseTransactionBatchStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PurchaseTransactionRequestPurchaseTransactionPayableType.
+const (
+	PurchaseTransactionRequestPurchaseTransactionPayableTypeDocument PurchaseTransactionRequestPurchaseTransactionPayableType = "Document"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseTransactionRequestPurchaseTransactionPayableType enum.
+func (e PurchaseTransactionRequestPurchaseTransactionPayableType) Valid() bool {
+	switch e {
+	case PurchaseTransactionRequestPurchaseTransactionPayableTypeDocument:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReceiptOrigin.
+const (
+	ReceiptOriginApi         ReceiptOrigin = "api"
+	ReceiptOriginEmail       ReceiptOrigin = "email"
+	ReceiptOriginEndpoint    ReceiptOrigin = "endpoint"
+	ReceiptOriginMollie      ReceiptOrigin = "mollie"
+	ReceiptOriginMoneybirdBv ReceiptOrigin = "moneybird_bv"
+	ReceiptOriginSi          ReceiptOrigin = "si"
+	ReceiptOriginSiLocal     ReceiptOrigin = "si_local"
+	ReceiptOriginSiPeppol    ReceiptOrigin = "si_peppol"
+	ReceiptOriginUpload      ReceiptOrigin = "upload"
+)
+
+// Valid indicates whether the value is a known member of the ReceiptOrigin enum.
+func (e ReceiptOrigin) Valid() bool {
+	switch e {
+	case ReceiptOriginApi:
+		return true
+	case ReceiptOriginEmail:
+		return true
+	case ReceiptOriginEndpoint:
+		return true
+	case ReceiptOriginMollie:
+		return true
+	case ReceiptOriginMoneybirdBv:
+		return true
+	case ReceiptOriginSi:
+		return true
+	case ReceiptOriginSiLocal:
+		return true
+	case ReceiptOriginSiPeppol:
+		return true
+	case ReceiptOriginUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReceiptState.
+const (
+	ReceiptStateLate           ReceiptState = "late"
+	ReceiptStateNew            ReceiptState = "new"
+	ReceiptStateOpen           ReceiptState = "open"
+	ReceiptStatePaid           ReceiptState = "paid"
+	ReceiptStatePendingPayment ReceiptState = "pending_payment"
+	ReceiptStateSaved          ReceiptState = "saved"
+)
+
+// Valid indicates whether the value is a known member of the ReceiptState enum.
+func (e ReceiptState) Valid() bool {
+	switch e {
+	case ReceiptStateLate:
+		return true
+	case ReceiptStateNew:
+		return true
+	case ReceiptStateOpen:
+		return true
+	case ReceiptStatePaid:
+		return true
+	case ReceiptStatePendingPayment:
+		return true
+	case ReceiptStateSaved:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecurringSalesInvoiceFrequencyType.
 const (
 	RecurringSalesInvoiceFrequencyTypeDay     RecurringSalesInvoiceFrequencyType = "day"
@@ -1641,6 +1884,75 @@ const (
 func (e TwoFactorRequiredTwoFactorRequired) Valid() bool {
 	switch e {
 	case TwoFactorRequiredTwoFactorRequiredTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TypelessDocumentOrigin.
+const (
+	TypelessDocumentOriginApi         TypelessDocumentOrigin = "api"
+	TypelessDocumentOriginEmail       TypelessDocumentOrigin = "email"
+	TypelessDocumentOriginEndpoint    TypelessDocumentOrigin = "endpoint"
+	TypelessDocumentOriginMollie      TypelessDocumentOrigin = "mollie"
+	TypelessDocumentOriginMoneybirdBv TypelessDocumentOrigin = "moneybird_bv"
+	TypelessDocumentOriginSi          TypelessDocumentOrigin = "si"
+	TypelessDocumentOriginSiLocal     TypelessDocumentOrigin = "si_local"
+	TypelessDocumentOriginSiPeppol    TypelessDocumentOrigin = "si_peppol"
+	TypelessDocumentOriginUpload      TypelessDocumentOrigin = "upload"
+)
+
+// Valid indicates whether the value is a known member of the TypelessDocumentOrigin enum.
+func (e TypelessDocumentOrigin) Valid() bool {
+	switch e {
+	case TypelessDocumentOriginApi:
+		return true
+	case TypelessDocumentOriginEmail:
+		return true
+	case TypelessDocumentOriginEndpoint:
+		return true
+	case TypelessDocumentOriginMollie:
+		return true
+	case TypelessDocumentOriginMoneybirdBv:
+		return true
+	case TypelessDocumentOriginSi:
+		return true
+	case TypelessDocumentOriginSiLocal:
+		return true
+	case TypelessDocumentOriginSiPeppol:
+		return true
+	case TypelessDocumentOriginUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TypelessDocumentState.
+const (
+	TypelessDocumentStateLate           TypelessDocumentState = "late"
+	TypelessDocumentStateNew            TypelessDocumentState = "new"
+	TypelessDocumentStateOpen           TypelessDocumentState = "open"
+	TypelessDocumentStatePaid           TypelessDocumentState = "paid"
+	TypelessDocumentStatePendingPayment TypelessDocumentState = "pending_payment"
+	TypelessDocumentStateSaved          TypelessDocumentState = "saved"
+)
+
+// Valid indicates whether the value is a known member of the TypelessDocumentState enum.
+func (e TypelessDocumentState) Valid() bool {
+	switch e {
+	case TypelessDocumentStateLate:
+		return true
+	case TypelessDocumentStateNew:
+		return true
+	case TypelessDocumentStateOpen:
+		return true
+	case TypelessDocumentStatePaid:
+		return true
+	case TypelessDocumentStatePendingPayment:
+		return true
+	case TypelessDocumentStateSaved:
 		return true
 	default:
 		return false
@@ -2253,6 +2565,36 @@ func (e FinancialMutationResponseState) Valid() bool {
 	}
 }
 
+// Defines values for GeneralDocumentResponseState.
+const (
+	GeneralDocumentResponseStateLate           GeneralDocumentResponseState = "late"
+	GeneralDocumentResponseStateNew            GeneralDocumentResponseState = "new"
+	GeneralDocumentResponseStateOpen           GeneralDocumentResponseState = "open"
+	GeneralDocumentResponseStatePaid           GeneralDocumentResponseState = "paid"
+	GeneralDocumentResponseStatePendingPayment GeneralDocumentResponseState = "pending_payment"
+	GeneralDocumentResponseStateSaved          GeneralDocumentResponseState = "saved"
+)
+
+// Valid indicates whether the value is a known member of the GeneralDocumentResponseState enum.
+func (e GeneralDocumentResponseState) Valid() bool {
+	switch e {
+	case GeneralDocumentResponseStateLate:
+		return true
+	case GeneralDocumentResponseStateNew:
+		return true
+	case GeneralDocumentResponseStateOpen:
+		return true
+	case GeneralDocumentResponseStatePaid:
+		return true
+	case GeneralDocumentResponseStatePendingPayment:
+		return true
+	case GeneralDocumentResponseStateSaved:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GeneralJournalDocumentResponseJournalType.
 const (
 	GeneralJournalDocumentResponseJournalTypeFiscalYearEnding GeneralJournalDocumentResponseJournalType = "fiscal_year_ending"
@@ -2685,6 +3027,198 @@ func (e ProjectResponseState) Valid() bool {
 	}
 }
 
+// Defines values for PurchaseInvoiceResponseOrigin.
+const (
+	PurchaseInvoiceResponseOriginApi         PurchaseInvoiceResponseOrigin = "api"
+	PurchaseInvoiceResponseOriginEmail       PurchaseInvoiceResponseOrigin = "email"
+	PurchaseInvoiceResponseOriginEndpoint    PurchaseInvoiceResponseOrigin = "endpoint"
+	PurchaseInvoiceResponseOriginMollie      PurchaseInvoiceResponseOrigin = "mollie"
+	PurchaseInvoiceResponseOriginMoneybirdBv PurchaseInvoiceResponseOrigin = "moneybird_bv"
+	PurchaseInvoiceResponseOriginSi          PurchaseInvoiceResponseOrigin = "si"
+	PurchaseInvoiceResponseOriginSiLocal     PurchaseInvoiceResponseOrigin = "si_local"
+	PurchaseInvoiceResponseOriginSiPeppol    PurchaseInvoiceResponseOrigin = "si_peppol"
+	PurchaseInvoiceResponseOriginUpload      PurchaseInvoiceResponseOrigin = "upload"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseInvoiceResponseOrigin enum.
+func (e PurchaseInvoiceResponseOrigin) Valid() bool {
+	switch e {
+	case PurchaseInvoiceResponseOriginApi:
+		return true
+	case PurchaseInvoiceResponseOriginEmail:
+		return true
+	case PurchaseInvoiceResponseOriginEndpoint:
+		return true
+	case PurchaseInvoiceResponseOriginMollie:
+		return true
+	case PurchaseInvoiceResponseOriginMoneybirdBv:
+		return true
+	case PurchaseInvoiceResponseOriginSi:
+		return true
+	case PurchaseInvoiceResponseOriginSiLocal:
+		return true
+	case PurchaseInvoiceResponseOriginSiPeppol:
+		return true
+	case PurchaseInvoiceResponseOriginUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PurchaseInvoiceResponseState.
+const (
+	PurchaseInvoiceResponseStateLate           PurchaseInvoiceResponseState = "late"
+	PurchaseInvoiceResponseStateNew            PurchaseInvoiceResponseState = "new"
+	PurchaseInvoiceResponseStateOpen           PurchaseInvoiceResponseState = "open"
+	PurchaseInvoiceResponseStatePaid           PurchaseInvoiceResponseState = "paid"
+	PurchaseInvoiceResponseStatePendingPayment PurchaseInvoiceResponseState = "pending_payment"
+	PurchaseInvoiceResponseStateSaved          PurchaseInvoiceResponseState = "saved"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseInvoiceResponseState enum.
+func (e PurchaseInvoiceResponseState) Valid() bool {
+	switch e {
+	case PurchaseInvoiceResponseStateLate:
+		return true
+	case PurchaseInvoiceResponseStateNew:
+		return true
+	case PurchaseInvoiceResponseStateOpen:
+		return true
+	case PurchaseInvoiceResponseStatePaid:
+		return true
+	case PurchaseInvoiceResponseStatePendingPayment:
+		return true
+	case PurchaseInvoiceResponseStateSaved:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PurchaseTransactionBatchResponseState.
+const (
+	PurchaseTransactionBatchResponseStateCancelled PurchaseTransactionBatchResponseState = "cancelled"
+	PurchaseTransactionBatchResponseStateExported  PurchaseTransactionBatchResponseState = "exported"
+	PurchaseTransactionBatchResponseStateOpen      PurchaseTransactionBatchResponseState = "open"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseTransactionBatchResponseState enum.
+func (e PurchaseTransactionBatchResponseState) Valid() bool {
+	switch e {
+	case PurchaseTransactionBatchResponseStateCancelled:
+		return true
+	case PurchaseTransactionBatchResponseStateExported:
+		return true
+	case PurchaseTransactionBatchResponseStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PurchaseTransactionResponseState.
+const (
+	PurchaseTransactionResponseStateAwaitingAuthorization PurchaseTransactionResponseState = "awaiting_authorization"
+	PurchaseTransactionResponseStateCancelled             PurchaseTransactionResponseState = "cancelled"
+	PurchaseTransactionResponseStateError                 PurchaseTransactionResponseState = "error"
+	PurchaseTransactionResponseStateOpen                  PurchaseTransactionResponseState = "open"
+	PurchaseTransactionResponseStatePaid                  PurchaseTransactionResponseState = "paid"
+	PurchaseTransactionResponseStatePendingPayment        PurchaseTransactionResponseState = "pending_payment"
+	PurchaseTransactionResponseStatePreparing             PurchaseTransactionResponseState = "preparing"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseTransactionResponseState enum.
+func (e PurchaseTransactionResponseState) Valid() bool {
+	switch e {
+	case PurchaseTransactionResponseStateAwaitingAuthorization:
+		return true
+	case PurchaseTransactionResponseStateCancelled:
+		return true
+	case PurchaseTransactionResponseStateError:
+		return true
+	case PurchaseTransactionResponseStateOpen:
+		return true
+	case PurchaseTransactionResponseStatePaid:
+		return true
+	case PurchaseTransactionResponseStatePendingPayment:
+		return true
+	case PurchaseTransactionResponseStatePreparing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReceiptResponseOrigin.
+const (
+	ReceiptResponseOriginApi         ReceiptResponseOrigin = "api"
+	ReceiptResponseOriginEmail       ReceiptResponseOrigin = "email"
+	ReceiptResponseOriginEndpoint    ReceiptResponseOrigin = "endpoint"
+	ReceiptResponseOriginMollie      ReceiptResponseOrigin = "mollie"
+	ReceiptResponseOriginMoneybirdBv ReceiptResponseOrigin = "moneybird_bv"
+	ReceiptResponseOriginSi          ReceiptResponseOrigin = "si"
+	ReceiptResponseOriginSiLocal     ReceiptResponseOrigin = "si_local"
+	ReceiptResponseOriginSiPeppol    ReceiptResponseOrigin = "si_peppol"
+	ReceiptResponseOriginUpload      ReceiptResponseOrigin = "upload"
+)
+
+// Valid indicates whether the value is a known member of the ReceiptResponseOrigin enum.
+func (e ReceiptResponseOrigin) Valid() bool {
+	switch e {
+	case ReceiptResponseOriginApi:
+		return true
+	case ReceiptResponseOriginEmail:
+		return true
+	case ReceiptResponseOriginEndpoint:
+		return true
+	case ReceiptResponseOriginMollie:
+		return true
+	case ReceiptResponseOriginMoneybirdBv:
+		return true
+	case ReceiptResponseOriginSi:
+		return true
+	case ReceiptResponseOriginSiLocal:
+		return true
+	case ReceiptResponseOriginSiPeppol:
+		return true
+	case ReceiptResponseOriginUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReceiptResponseState.
+const (
+	ReceiptResponseStateLate           ReceiptResponseState = "late"
+	ReceiptResponseStateNew            ReceiptResponseState = "new"
+	ReceiptResponseStateOpen           ReceiptResponseState = "open"
+	ReceiptResponseStatePaid           ReceiptResponseState = "paid"
+	ReceiptResponseStatePendingPayment ReceiptResponseState = "pending_payment"
+	ReceiptResponseStateSaved          ReceiptResponseState = "saved"
+)
+
+// Valid indicates whether the value is a known member of the ReceiptResponseState enum.
+func (e ReceiptResponseState) Valid() bool {
+	switch e {
+	case ReceiptResponseStateLate:
+		return true
+	case ReceiptResponseStateNew:
+		return true
+	case ReceiptResponseStateOpen:
+		return true
+	case ReceiptResponseStatePaid:
+		return true
+	case ReceiptResponseStatePendingPayment:
+		return true
+	case ReceiptResponseStateSaved:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecurringSalesInvoiceResponseFrequencyType.
 const (
 	RecurringSalesInvoiceResponseFrequencyTypeDay     RecurringSalesInvoiceResponseFrequencyType = "day"
@@ -2859,6 +3393,75 @@ func (e TaxRateResponseTaxRateType) Valid() bool {
 	case TaxRateResponseTaxRateTypePurchaseInvoice:
 		return true
 	case TaxRateResponseTaxRateTypeSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TypelessDocumentResponseOrigin.
+const (
+	TypelessDocumentResponseOriginApi         TypelessDocumentResponseOrigin = "api"
+	TypelessDocumentResponseOriginEmail       TypelessDocumentResponseOrigin = "email"
+	TypelessDocumentResponseOriginEndpoint    TypelessDocumentResponseOrigin = "endpoint"
+	TypelessDocumentResponseOriginMollie      TypelessDocumentResponseOrigin = "mollie"
+	TypelessDocumentResponseOriginMoneybirdBv TypelessDocumentResponseOrigin = "moneybird_bv"
+	TypelessDocumentResponseOriginSi          TypelessDocumentResponseOrigin = "si"
+	TypelessDocumentResponseOriginSiLocal     TypelessDocumentResponseOrigin = "si_local"
+	TypelessDocumentResponseOriginSiPeppol    TypelessDocumentResponseOrigin = "si_peppol"
+	TypelessDocumentResponseOriginUpload      TypelessDocumentResponseOrigin = "upload"
+)
+
+// Valid indicates whether the value is a known member of the TypelessDocumentResponseOrigin enum.
+func (e TypelessDocumentResponseOrigin) Valid() bool {
+	switch e {
+	case TypelessDocumentResponseOriginApi:
+		return true
+	case TypelessDocumentResponseOriginEmail:
+		return true
+	case TypelessDocumentResponseOriginEndpoint:
+		return true
+	case TypelessDocumentResponseOriginMollie:
+		return true
+	case TypelessDocumentResponseOriginMoneybirdBv:
+		return true
+	case TypelessDocumentResponseOriginSi:
+		return true
+	case TypelessDocumentResponseOriginSiLocal:
+		return true
+	case TypelessDocumentResponseOriginSiPeppol:
+		return true
+	case TypelessDocumentResponseOriginUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TypelessDocumentResponseState.
+const (
+	TypelessDocumentResponseStateLate           TypelessDocumentResponseState = "late"
+	TypelessDocumentResponseStateNew            TypelessDocumentResponseState = "new"
+	TypelessDocumentResponseStateOpen           TypelessDocumentResponseState = "open"
+	TypelessDocumentResponseStatePaid           TypelessDocumentResponseState = "paid"
+	TypelessDocumentResponseStatePendingPayment TypelessDocumentResponseState = "pending_payment"
+	TypelessDocumentResponseStateSaved          TypelessDocumentResponseState = "saved"
+)
+
+// Valid indicates whether the value is a known member of the TypelessDocumentResponseState enum.
+func (e TypelessDocumentResponseState) Valid() bool {
+	switch e {
+	case TypelessDocumentResponseStateLate:
+		return true
+	case TypelessDocumentResponseStateNew:
+		return true
+	case TypelessDocumentResponseStateOpen:
+		return true
+	case TypelessDocumentResponseStatePaid:
+		return true
+	case TypelessDocumentResponseStatePendingPayment:
+		return true
+	case TypelessDocumentResponseStateSaved:
 		return true
 	default:
 		return false
@@ -3045,6 +3648,24 @@ func (e ListContactAdditionalChargesParamsIncludeBilled) Valid() bool {
 	}
 }
 
+// Defines values for ListGeneralDocumentsParamsSort.
+const (
+	ListGeneralDocumentsParamsSortDateAsc  ListGeneralDocumentsParamsSort = "date_asc"
+	ListGeneralDocumentsParamsSortDateDesc ListGeneralDocumentsParamsSort = "date_desc"
+)
+
+// Valid indicates whether the value is a known member of the ListGeneralDocumentsParamsSort enum.
+func (e ListGeneralDocumentsParamsSort) Valid() bool {
+	switch e {
+	case ListGeneralDocumentsParamsSortDateAsc:
+		return true
+	case ListGeneralDocumentsParamsSortDateDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListGeneralJournalDocumentsParamsSort.
 const (
 	ListGeneralJournalDocumentsParamsSortDateAsc  ListGeneralJournalDocumentsParamsSort = "date_asc"
@@ -3075,6 +3696,60 @@ func (e ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments) Vali
 	case ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsFalse:
 		return true
 	case ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPurchaseInvoicesParamsSort.
+const (
+	ListPurchaseInvoicesParamsSortDateAsc  ListPurchaseInvoicesParamsSort = "date_asc"
+	ListPurchaseInvoicesParamsSortDateDesc ListPurchaseInvoicesParamsSort = "date_desc"
+)
+
+// Valid indicates whether the value is a known member of the ListPurchaseInvoicesParamsSort enum.
+func (e ListPurchaseInvoicesParamsSort) Valid() bool {
+	switch e {
+	case ListPurchaseInvoicesParamsSortDateAsc:
+		return true
+	case ListPurchaseInvoicesParamsSortDateDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListReceiptsParamsSort.
+const (
+	ListReceiptsParamsSortDateAsc  ListReceiptsParamsSort = "date_asc"
+	ListReceiptsParamsSortDateDesc ListReceiptsParamsSort = "date_desc"
+)
+
+// Valid indicates whether the value is a known member of the ListReceiptsParamsSort enum.
+func (e ListReceiptsParamsSort) Valid() bool {
+	switch e {
+	case ListReceiptsParamsSortDateAsc:
+		return true
+	case ListReceiptsParamsSortDateDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListTypelessDocumentsParamsSort.
+const (
+	ListTypelessDocumentsParamsSortDateAsc  ListTypelessDocumentsParamsSort = "date_asc"
+	ListTypelessDocumentsParamsSortDateDesc ListTypelessDocumentsParamsSort = "date_desc"
+)
+
+// Valid indicates whether the value is a known member of the ListTypelessDocumentsParamsSort enum.
+func (e ListTypelessDocumentsParamsSort) Valid() bool {
+	switch e {
+	case ListTypelessDocumentsParamsSortDateAsc:
+		return true
+	case ListTypelessDocumentsParamsSortDateDesc:
 		return true
 	default:
 		return false
@@ -4723,6 +5398,35 @@ type FinancialStatementRequest_FinancialStatement_FinancialAccountId struct {
 	union json.RawMessage
 }
 
+// FiscalAllocationInput defines model for FiscalAllocationInput.
+type FiscalAllocationInput struct {
+	// UnderscoreDestroy A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	UnderscoreDestroy *FlexibleBoolean `json:"_destroy,omitempty"`
+
+	// Id An id as a string or a number; an empty string clears it.
+	Id *FlexibleIdentifier `json:"id,omitempty"`
+
+	// LedgerAccountId An id as a string or a number; an empty string clears it.
+	LedgerAccountId *FlexibleIdentifier `json:"ledger_account_id,omitempty"`
+
+	// Percentage A percentage such as "25" or "12.5".
+	Percentage *FiscalAllocationInput_Percentage `json:"percentage,omitempty"`
+
+	// PrivateLedgerAccountId An id as a string or a number; an empty string clears it.
+	PrivateLedgerAccountId *FlexibleIdentifier `json:"private_ledger_account_id,omitempty"`
+}
+
+// FiscalAllocationInputPercentage0 defines model for FiscalAllocationInput.Percentage.0.
+type FiscalAllocationInputPercentage0 = string
+
+// FiscalAllocationInputPercentage1 defines model for FiscalAllocationInput.Percentage.1.
+type FiscalAllocationInputPercentage1 = float32
+
+// FiscalAllocationInput_Percentage A percentage such as "25" or "12.5".
+type FiscalAllocationInput_Percentage struct {
+	union json.RawMessage
+}
+
 // FlexibleBoolean A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
 type FlexibleBoolean struct {
 	union json.RawMessage
@@ -4744,6 +5448,81 @@ type FlexibleIdentifier0 = string
 
 // FlexibleIdentifier1 defines model for FlexibleIdentifier.1.
 type FlexibleIdentifier1 = int
+
+// GeneralDocument A Moneybird general document with MoneyHarpy extensions.
+type GeneralDocument struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier               `json:"administration_id"`
+	Attachments      []AttachmentResponse     `json:"attachments"`
+	Contact          *GeneralDocument_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt    *Timestamp          `json:"created_at,omitempty"`
+	Date         openapi_types.Date  `json:"date"`
+	DueDate      *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber  *int                `json:"entry_number"`
+	Events       []EventResponse     `json:"events"`
+	ExchangeRate *string             `json:"exchange_rate,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id        Identifier     `json:"id"`
+	Notes     []NoteResponse `json:"notes"`
+	Reference *string        `json:"reference,omitempty"`
+
+	// ReminderDate MoneyHarpy extension. When to be reminded.
+	ReminderDate *openapi_types.Date `json:"reminder_date,omitempty"`
+
+	// ReminderMessage MoneyHarpy extension. What to be reminded of.
+	ReminderMessage *string              `json:"reminder_message,omitempty"`
+	State           GeneralDocumentState `json:"state"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+
+	// Version Moneybird-compatible version.
+	Version Version `json:"version"`
+}
+
+// GeneralDocument_Contact defines model for GeneralDocument.Contact.
+type GeneralDocument_Contact struct {
+	union json.RawMessage
+}
+
+// GeneralDocumentState defines model for GeneralDocument.State.
+type GeneralDocumentState string
+
+// GeneralDocumentRequest defines model for GeneralDocumentRequest.
+type GeneralDocumentRequest struct {
+	GeneralDocument struct {
+		// ContactId An id as a string or a number; an empty string clears it.
+		ContactId *FlexibleIdentifier `json:"contact_id,omitempty"`
+		Date      *openapi_types.Date `json:"date,omitempty"`
+
+		// DueDate yyyy-mm-dd; empty removes it.
+		DueDate   *string `json:"due_date,omitempty"`
+		Reference *string `json:"reference,omitempty"`
+		Reminder  *struct {
+			Date    string  `json:"date"`
+			Message *string `json:"message,omitempty"`
+		} `json:"reminder,omitempty"`
+
+		// ReminderDate yyyy-mm-dd; empty removes it.
+		ReminderDate *string `json:"reminder_date,omitempty"`
+	} `json:"general_document"`
+
+	// RemoveContact A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	RemoveContact *FlexibleBoolean `json:"remove_contact,omitempty"`
+}
 
 // GeneralJournalDocument A Moneybird general journal document with MoneyHarpy extensions.
 type GeneralJournalDocument struct {
@@ -5461,6 +6240,9 @@ type Overview struct {
 	// Bank Present only with the bank permission.
 	Bank *OverviewBank `json:"bank,omitempty"`
 
+	// Incoming MoneyHarpy extension. Present only with the documents permission.
+	Incoming *OverviewIncoming `json:"incoming,omitempty"`
+
 	// RecentlyProcessed The records processed last, newest first, at most 25.
 	RecentlyProcessed []OverviewItem `json:"recently_processed"`
 
@@ -5480,6 +6262,18 @@ type OverviewBank struct {
 
 	// UnprocessedCount Transactions of active accounts still to link.
 	UnprocessedCount int `json:"unprocessed_count"`
+}
+
+// OverviewIncoming MoneyHarpy extension. Present only with the documents permission.
+type OverviewIncoming struct {
+	// Currency Example: EUR
+	Currency string `json:"currency"`
+
+	// ToPay Sent invoices still to be paid; to_remind holds those past their due date and not paused.
+	ToPay OverviewTally `json:"to_pay"`
+
+	// ToProcess Uploads still to process into documents, and purchase invoices and receipts still new.
+	ToProcess int `json:"to_process"`
 }
 
 // OverviewItem One recently processed record.
@@ -5798,6 +6592,455 @@ type ProjectRequest_Project_Budget struct {
 
 // ProjectRequestProjectState MoneyHarpy extension. archived archives the project, active makes it active again.
 type ProjectRequestProjectState string
+
+// PurchaseDetailInput defines model for PurchaseDetailInput.
+type PurchaseDetailInput struct {
+	// UnderscoreDestroy A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	UnderscoreDestroy *FlexibleBoolean `json:"_destroy,omitempty"`
+
+	// Amount The quantity, such as "2" or "1,5 hours"; it must start with a number.
+	Amount *PurchaseDetailInput_Amount `json:"amount,omitempty"`
+
+	// AutomatedTaxEnabled A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	AutomatedTaxEnabled *FlexibleBoolean `json:"automated_tax_enabled,omitempty"`
+	Description         *string          `json:"description,omitempty"`
+
+	// Id An id as a string or a number; an empty string clears it.
+	Id *FlexibleIdentifier `json:"id,omitempty"`
+
+	// IsOptional A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	IsOptional *FlexibleBoolean `json:"is_optional,omitempty"`
+
+	// IsSelected A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	IsSelected *FlexibleBoolean `json:"is_selected,omitempty"`
+
+	// LedgerAccountId An id as a string or a number; an empty string clears it.
+	LedgerAccountId *FlexibleIdentifier `json:"ledger_account_id,omitempty"`
+
+	// Period The days the line is about, as yyyymmdd..yyyymmdd; empty clears it.
+	Period *string `json:"period,omitempty"`
+
+	// Price An amount of money, such as "10.95" or "-3,5". A number is accepted too.
+	Price *Money `json:"price,omitempty"`
+
+	// ProductId An id as a string or a number; an empty string clears it.
+	ProductId *FlexibleIdentifier `json:"product_id,omitempty"`
+
+	// ProjectId An id as a string or a number; an empty string clears it.
+	ProjectId *FlexibleIdentifier           `json:"project_id,omitempty"`
+	RowOrder  *PurchaseDetailInput_RowOrder `json:"row_order,omitempty"`
+
+	// TaxRateId An id as a string or a number; an empty string clears it.
+	TaxRateId *FlexibleIdentifier `json:"tax_rate_id,omitempty"`
+}
+
+// PurchaseDetailInputAmount0 defines model for PurchaseDetailInput.Amount.0.
+type PurchaseDetailInputAmount0 = string
+
+// PurchaseDetailInputAmount1 defines model for PurchaseDetailInput.Amount.1.
+type PurchaseDetailInputAmount1 = float32
+
+// PurchaseDetailInput_Amount The quantity, such as "2" or "1,5 hours"; it must start with a number.
+type PurchaseDetailInput_Amount struct {
+	union json.RawMessage
+}
+
+// PurchaseDetailInputRowOrder0 defines model for PurchaseDetailInput.RowOrder.0.
+type PurchaseDetailInputRowOrder0 = int
+
+// PurchaseDetailInputRowOrder1 defines model for PurchaseDetailInput.RowOrder.1.
+type PurchaseDetailInputRowOrder1 = string
+
+// PurchaseDetailInput_RowOrder defines model for PurchaseDetailInput.RowOrder.
+type PurchaseDetailInput_RowOrder struct {
+	union json.RawMessage
+}
+
+// PurchaseDocumentFields defines model for PurchaseDocumentFields.
+type PurchaseDocumentFields struct {
+	// TaxTotals MoneyHarpy extension. The VAT per rate.
+	TaxTotals *[]struct {
+		TaxAmount     string  `json:"tax_amount"`
+		TaxAmountBase *string `json:"tax_amount_base,omitempty"`
+
+		// TaxRateId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		TaxRateId         Identifier `json:"tax_rate_id"`
+		TaxableAmount     string     `json:"taxable_amount"`
+		TaxableAmountBase *string    `json:"taxable_amount_base,omitempty"`
+	} `json:"tax_totals,omitempty"`
+
+	// TotalPaid MoneyHarpy extension. What payments settled.
+	TotalPaid string `json:"total_paid"`
+
+	// TotalTax MoneyHarpy extension. The VAT charged; reverse-charged VAT is not part of it.
+	TotalTax *string `json:"total_tax,omitempty"`
+
+	// TotalUnpaid MoneyHarpy extension. What is still to be paid; negative for a revenue invoice.
+	TotalUnpaid string `json:"total_unpaid"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// PurchaseDocumentInput defines model for PurchaseDocumentInput.
+type PurchaseDocumentInput struct {
+	// ContactId An id as a string or a number; an empty string clears it.
+	ContactId *FlexibleIdentifier `json:"contact_id,omitempty"`
+	Currency  *string             `json:"currency,omitempty"`
+	Date      *openapi_types.Date `json:"date,omitempty"`
+
+	// DetailsAttributes An array of lines, or an object of lines keyed by position.
+	DetailsAttributes *PurchaseDocumentInput_DetailsAttributes `json:"details_attributes,omitempty"`
+
+	// DueDate yyyy-mm-dd; empty removes it.
+	DueDate *string `json:"due_date,omitempty"`
+
+	// FiscalAllocationsAttributes An array of fiscal allocations, or an object of them keyed by position.
+	FiscalAllocationsAttributes *PurchaseDocumentInput_FiscalAllocationsAttributes `json:"fiscal_allocations_attributes,omitempty"`
+
+	// PricesAreInclTax A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	PricesAreInclTax *FlexibleBoolean `json:"prices_are_incl_tax,omitempty"`
+
+	// Reference The document's number at the supplier.
+	Reference *string `json:"reference,omitempty"`
+
+	// RevenueInvoice A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	RevenueInvoice *FlexibleBoolean `json:"revenue_invoice,omitempty"`
+}
+
+// PurchaseDocumentInputDetailsAttributes0 defines model for PurchaseDocumentInput.DetailsAttributes.0.
+type PurchaseDocumentInputDetailsAttributes0 = []PurchaseDetailInput
+
+// PurchaseDocumentInputDetailsAttributes1 defines model for PurchaseDocumentInput.DetailsAttributes.1.
+type PurchaseDocumentInputDetailsAttributes1 map[string]PurchaseDetailInput
+
+// PurchaseDocumentInput_DetailsAttributes An array of lines, or an object of lines keyed by position.
+type PurchaseDocumentInput_DetailsAttributes struct {
+	union json.RawMessage
+}
+
+// PurchaseDocumentInputFiscalAllocationsAttributes0 defines model for PurchaseDocumentInput.FiscalAllocationsAttributes.0.
+type PurchaseDocumentInputFiscalAllocationsAttributes0 = []FiscalAllocationInput
+
+// PurchaseDocumentInputFiscalAllocationsAttributes1 defines model for PurchaseDocumentInput.FiscalAllocationsAttributes.1.
+type PurchaseDocumentInputFiscalAllocationsAttributes1 map[string]FiscalAllocationInput
+
+// PurchaseDocumentInput_FiscalAllocationsAttributes An array of fiscal allocations, or an object of them keyed by position.
+type PurchaseDocumentInput_FiscalAllocationsAttributes struct {
+	union json.RawMessage
+}
+
+// PurchaseInvoice A Moneybird purchase invoice with MoneyHarpy extensions.
+type PurchaseInvoice struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier               `json:"administration_id"`
+	Attachments      []AttachmentResponse     `json:"attachments"`
+	Contact          *PurchaseInvoice_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Currency Moneybird-compatible currency.
+	Currency          Currency                   `json:"currency"`
+	Date              openapi_types.Date         `json:"date"`
+	Details           []DetailResponse           `json:"details"`
+	DueDate           *openapi_types.Date        `json:"due_date,omitempty"`
+	EntryNumber       *int                       `json:"entry_number"`
+	Events            []EventResponse            `json:"events"`
+	ExchangeRate      *string                    `json:"exchange_rate,omitempty"`
+	FiscalAllocations []FiscalAllocationResponse `json:"fiscal_allocations"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id               Identifier             `json:"id"`
+	Notes            []NoteResponse         `json:"notes"`
+	Origin           *PurchaseInvoiceOrigin `json:"origin,omitempty"`
+	PaidAt           *openapi_types.Date    `json:"paid_at,omitempty"`
+	Payments         []PaymentResponse      `json:"payments"`
+	PricesAreInclTax *bool                  `json:"prices_are_incl_tax,omitempty"`
+	Reference        *string                `json:"reference,omitempty"`
+	RevenueInvoice   *bool                  `json:"revenue_invoice,omitempty"`
+	State            PurchaseInvoiceState   `json:"state"`
+	TaxNumber        *string                `json:"tax_number,omitempty"`
+
+	// TaxTotals MoneyHarpy extension. The VAT per rate.
+	TaxTotals *[]struct {
+		TaxAmount     string  `json:"tax_amount"`
+		TaxAmountBase *string `json:"tax_amount_base,omitempty"`
+
+		// TaxRateId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		TaxRateId         Identifier `json:"tax_rate_id"`
+		TaxableAmount     string     `json:"taxable_amount"`
+		TaxableAmountBase *string    `json:"taxable_amount_base,omitempty"`
+	} `json:"tax_totals,omitempty"`
+
+	// TotalPaid MoneyHarpy extension. What payments settled.
+	TotalPaid             string  `json:"total_paid"`
+	TotalPriceExclTax     *string `json:"total_price_excl_tax"`
+	TotalPriceExclTaxBase *string `json:"total_price_excl_tax_base,omitempty"`
+	TotalPriceInclTax     *string `json:"total_price_incl_tax"`
+	TotalPriceInclTaxBase *string `json:"total_price_incl_tax_base,omitempty"`
+
+	// TotalTax MoneyHarpy extension. The VAT charged; reverse-charged VAT is not part of it.
+	TotalTax *string `json:"total_tax,omitempty"`
+
+	// TotalUnpaid MoneyHarpy extension. What is still to be paid; negative for a revenue invoice.
+	TotalUnpaid string `json:"total_unpaid"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+
+	// Version Moneybird-compatible version.
+	Version Version `json:"version"`
+}
+
+// PurchaseInvoice_Contact defines model for PurchaseInvoice.Contact.
+type PurchaseInvoice_Contact struct {
+	union json.RawMessage
+}
+
+// PurchaseInvoiceOrigin defines model for PurchaseInvoice.Origin.
+type PurchaseInvoiceOrigin string
+
+// PurchaseInvoiceState defines model for PurchaseInvoice.State.
+type PurchaseInvoiceState string
+
+// PurchaseInvoiceRequest defines model for PurchaseInvoiceRequest.
+type PurchaseInvoiceRequest struct {
+	PurchaseInvoice PurchaseDocumentInput `json:"purchase_invoice"`
+}
+
+// PurchaseTransaction A Moneybird purchase transaction with MoneyHarpy extensions.
+type PurchaseTransaction struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier                   `json:"administration_id"`
+	Amount           string                       `json:"amount"`
+	Contact          *PurchaseTransaction_Contact `json:"contact,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   Timestamp           `json:"created_at"`
+	Date        *openapi_types.Date `json:"date,omitempty"`
+	Description string              `json:"description"`
+	EndToEndId  string              `json:"end_to_end_id"`
+
+	// FinancialAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	FinancialAccountId Identifier `json:"financial_account_id"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// PayableId Moneybird-compatible identifier_nullable.
+	PayableId   *IdentifierNullable `json:"payable_id,omitempty"`
+	PayableType *string             `json:"payable_type,omitempty"`
+
+	// PaymentInstrumentId Moneybird-compatible identifier_nullable.
+	PaymentInstrumentId *IdentifierNullable `json:"payment_instrument_id,omitempty"`
+	PaymentMethod       *string             `json:"payment_method,omitempty"`
+
+	// PurchaseTransactionBatchId Moneybird-compatible identifier_nullable.
+	PurchaseTransactionBatchId *IdentifierNullable      `json:"purchase_transaction_batch_id,omitempty"`
+	SepaBic                    string                   `json:"sepa_bic"`
+	SepaIban                   string                   `json:"sepa_iban"`
+	SepaIbanAccountName        string                   `json:"sepa_iban_account_name"`
+	SourceSepaIban             *string                  `json:"source_sepa_iban,omitempty"`
+	SourceSepaIbanAccountName  *string                  `json:"source_sepa_iban_account_name,omitempty"`
+	State                      PurchaseTransactionState `json:"state"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt Timestamp `json:"updated_at"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// PurchaseTransaction_Contact defines model for PurchaseTransaction.Contact.
+type PurchaseTransaction_Contact struct {
+	union json.RawMessage
+}
+
+// PurchaseTransactionState defines model for PurchaseTransaction.State.
+type PurchaseTransactionState string
+
+// PurchaseTransactionBatch A Moneybird purchase transaction batch with MoneyHarpy extensions.
+type PurchaseTransactionBatch struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier `json:"administration_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt Timestamp `json:"created_at"`
+
+	// ExecutionDate MoneyHarpy extension. When the bank pays.
+	ExecutionDate *openapi_types.Date `json:"execution_date,omitempty"`
+
+	// FinancialAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	FinancialAccountId Identifier `json:"financial_account_id"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id         Identifier                    `json:"id"`
+	Identifier string                        `json:"identifier"`
+	State      PurchaseTransactionBatchState `json:"state"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt Timestamp `json:"updated_at"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+}
+
+// PurchaseTransactionBatchState defines model for PurchaseTransactionBatch.State.
+type PurchaseTransactionBatchState string
+
+// PurchaseTransactionBatchRequest MoneyHarpy extension.
+type PurchaseTransactionBatchRequest struct {
+	PurchaseTransactionBatch struct {
+		// ExecutionDate yyyy-mm-dd; today when left out.
+		ExecutionDate *string `json:"execution_date,omitempty"`
+
+		// FinancialAccountId An id as a string or a number; an empty string clears it.
+		FinancialAccountId FlexibleIdentifier `json:"financial_account_id"`
+
+		// PurchaseTransactionIds The transactions to batch; left out, every open one of the account outside a batch.
+		PurchaseTransactionIds *[]FlexibleIdentifier `json:"purchase_transaction_ids,omitempty"`
+	} `json:"purchase_transaction_batch"`
+}
+
+// PurchaseTransactionRequest MoneyHarpy extension.
+type PurchaseTransactionRequest struct {
+	PurchaseTransaction struct {
+		// Date yyyy-mm-dd; when to pay. Empty pays when the batch is executed.
+		Date *string `json:"date,omitempty"`
+
+		// FinancialAccountId An id as a string or a number; an empty string clears it.
+		FinancialAccountId FlexibleIdentifier `json:"financial_account_id"`
+
+		// PayableId An id as a string or a number; an empty string clears it.
+		PayableId   FlexibleIdentifier                                        `json:"payable_id"`
+		PayableType *PurchaseTransactionRequestPurchaseTransactionPayableType `json:"payable_type,omitempty"`
+	} `json:"purchase_transaction"`
+}
+
+// PurchaseTransactionRequestPurchaseTransactionPayableType defines model for PurchaseTransactionRequest.PurchaseTransaction.PayableType.
+type PurchaseTransactionRequestPurchaseTransactionPayableType string
+
+// Receipt A Moneybird receipt with MoneyHarpy extensions.
+type Receipt struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier           `json:"administration_id"`
+	Attachments      []AttachmentResponse `json:"attachments"`
+	Contact          *Receipt_Contact     `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp          `json:"created_at,omitempty"`
+	Currency    *string             `json:"currency"`
+	Date        openapi_types.Date  `json:"date"`
+	Details     []DetailResponse    `json:"details"`
+	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber *int                `json:"entry_number"`
+	Events      []EventResponse     `json:"events"`
+
+	// ExchangeRate Moneybird-compatible number.
+	ExchangeRate      *Number                    `json:"exchange_rate,omitempty"`
+	FiscalAllocations []FiscalAllocationResponse `json:"fiscal_allocations"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id               Identifier          `json:"id"`
+	Notes            []NoteResponse      `json:"notes"`
+	Origin           *ReceiptOrigin      `json:"origin,omitempty"`
+	PaidAt           *openapi_types.Date `json:"paid_at,omitempty"`
+	Payments         []PaymentResponse   `json:"payments"`
+	PricesAreInclTax *bool               `json:"prices_are_incl_tax,omitempty"`
+	Reference        *string             `json:"reference,omitempty"`
+	RevenueInvoice   *bool               `json:"revenue_invoice,omitempty"`
+	State            ReceiptState        `json:"state"`
+	TaxNumber        *string             `json:"tax_number,omitempty"`
+
+	// TaxTotals MoneyHarpy extension. The VAT per rate.
+	TaxTotals *[]struct {
+		TaxAmount     string  `json:"tax_amount"`
+		TaxAmountBase *string `json:"tax_amount_base,omitempty"`
+
+		// TaxRateId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		TaxRateId         Identifier `json:"tax_rate_id"`
+		TaxableAmount     string     `json:"taxable_amount"`
+		TaxableAmountBase *string    `json:"taxable_amount_base,omitempty"`
+	} `json:"tax_totals,omitempty"`
+
+	// TotalPaid MoneyHarpy extension. What payments settled.
+	TotalPaid             string  `json:"total_paid"`
+	TotalPriceExclTax     *string `json:"total_price_excl_tax"`
+	TotalPriceExclTaxBase *string `json:"total_price_excl_tax_base,omitempty"`
+	TotalPriceInclTax     *string `json:"total_price_incl_tax"`
+	TotalPriceInclTaxBase *string `json:"total_price_incl_tax_base,omitempty"`
+
+	// TotalTax MoneyHarpy extension. The VAT charged; reverse-charged VAT is not part of it.
+	TotalTax *string `json:"total_tax,omitempty"`
+
+	// TotalUnpaid MoneyHarpy extension. What is still to be paid; negative for a revenue invoice.
+	TotalUnpaid string `json:"total_unpaid"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+
+	// Version Moneybird-compatible version.
+	Version Version `json:"version"`
+}
+
+// Receipt_Contact defines model for Receipt.Contact.
+type Receipt_Contact struct {
+	union json.RawMessage
+}
+
+// ReceiptOrigin defines model for Receipt.Origin.
+type ReceiptOrigin string
+
+// ReceiptState defines model for Receipt.State.
+type ReceiptState string
+
+// ReceiptRequest defines model for ReceiptRequest.
+type ReceiptRequest struct {
+	Payment *struct {
+		// FinancialAccountId An id as a string or a number; an empty string clears it.
+		FinancialAccountId *FlexibleIdentifier `json:"financial_account_id,omitempty"`
+	} `json:"payment,omitempty"`
+	Receipt PurchaseDocumentInput `json:"receipt"`
+}
 
 // RecoveryCodes defines model for RecoveryCodes.
 type RecoveryCodes struct {
@@ -7055,6 +8298,62 @@ type TwoFactorStatus struct {
 	Required bool `json:"required"`
 }
 
+// TypelessDocument A Moneybird typeless document with MoneyHarpy extensions.
+type TypelessDocument struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier                `json:"administration_id"`
+	Attachments      []AttachmentResponse      `json:"attachments"`
+	Contact          *TypelessDocument_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp         `json:"created_at,omitempty"`
+	Date      openapi_types.Date `json:"date"`
+	Events    []EventResponse    `json:"events"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id        Identifier              `json:"id"`
+	Origin    *TypelessDocumentOrigin `json:"origin,omitempty"`
+	Reference *string                 `json:"reference,omitempty"`
+	State     TypelessDocumentState   `json:"state"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+
+	// Version Moneybird-compatible version.
+	Version Version `json:"version"`
+}
+
+// TypelessDocument_Contact defines model for TypelessDocument.Contact.
+type TypelessDocument_Contact struct {
+	union json.RawMessage
+}
+
+// TypelessDocumentOrigin defines model for TypelessDocument.Origin.
+type TypelessDocumentOrigin string
+
+// TypelessDocumentState defines model for TypelessDocument.State.
+type TypelessDocumentState string
+
+// TypelessDocumentRequest defines model for TypelessDocumentRequest.
+type TypelessDocumentRequest struct {
+	TypelessDocument struct {
+		// ContactId An id as a string or a number; an empty string clears it.
+		ContactId *FlexibleIdentifier `json:"contact_id,omitempty"`
+		Date      *openapi_types.Date `json:"date,omitempty"`
+		Reference *string             `json:"reference,omitempty"`
+	} `json:"typeless_document"`
+}
+
 // UnlinkBookingRequest defines model for UnlinkBookingRequest.
 type UnlinkBookingRequest struct {
 	BookingId   UnlinkBookingRequest_BookingId  `json:"booking_id"`
@@ -8132,6 +9431,87 @@ type FinancialStatementResponse struct {
 	Reference       *string             `json:"reference,omitempty"`
 }
 
+// FiscalAllocationResponse Moneybird-compatible fiscal_allocation_response.
+type FiscalAllocationResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	LedgerAccountId *Identifier `json:"ledger_account_id,omitempty"`
+
+	// Percentage Moneybird-compatible number.
+	Percentage *Number `json:"percentage,omitempty"`
+
+	// Price Moneybird-compatible number.
+	Price *Number `json:"price,omitempty"`
+
+	// PriceBase Moneybird-compatible number.
+	PriceBase *Number `json:"price_base,omitempty"`
+
+	// PrivateLedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	PrivateLedgerAccountId *Identifier `json:"private_ledger_account_id,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// GeneralDocumentResponse Moneybird-compatible general_document_response.
+type GeneralDocumentResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier                      `json:"administration_id,omitempty"`
+	Attachments      *[]AttachmentResponse            `json:"attachments,omitempty"`
+	Contact          *GeneralDocumentResponse_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt    *Timestamp          `json:"created_at,omitempty"`
+	Date         *openapi_types.Date `json:"date,omitempty"`
+	DueDate      *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber  *int                `json:"entry_number,omitempty"`
+	Events       *[]EventResponse    `json:"events,omitempty"`
+	ExchangeRate *string             `json:"exchange_rate,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id        *Identifier                   `json:"id,omitempty"`
+	Notes     *[]NoteResponse               `json:"notes,omitempty"`
+	Reference *string                       `json:"reference,omitempty"`
+	State     *GeneralDocumentResponseState `json:"state,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Version Moneybird-compatible version.
+	Version *Version `json:"version,omitempty"`
+}
+
+// GeneralDocumentResponse_Contact defines model for GeneralDocumentResponse.Contact.
+type GeneralDocumentResponse_Contact struct {
+	union json.RawMessage
+}
+
+// GeneralDocumentResponseState defines model for GeneralDocumentResponse.State.
+type GeneralDocumentResponseState string
+
 // GeneralJournalDocumentEntryResponse Moneybird-compatible general_journal_document_entry_response.
 type GeneralJournalDocumentEntryResponse struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -8512,6 +9892,211 @@ type ProjectResponse struct {
 
 // ProjectResponseState defines model for ProjectResponse.State.
 type ProjectResponseState string
+
+// PurchaseInvoiceResponse Moneybird-compatible purchase_invoice_response.
+type PurchaseInvoiceResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier                      `json:"administration_id,omitempty"`
+	Attachments      *[]AttachmentResponse            `json:"attachments,omitempty"`
+	Contact          *PurchaseInvoiceResponse_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Currency Moneybird-compatible currency.
+	Currency          *Currency                   `json:"currency,omitempty"`
+	Date              *openapi_types.Date         `json:"date,omitempty"`
+	Details           *[]DetailResponse           `json:"details,omitempty"`
+	DueDate           *openapi_types.Date         `json:"due_date,omitempty"`
+	EntryNumber       *int                        `json:"entry_number,omitempty"`
+	Events            *[]EventResponse            `json:"events,omitempty"`
+	ExchangeRate      *string                     `json:"exchange_rate,omitempty"`
+	FiscalAllocations *[]FiscalAllocationResponse `json:"fiscal_allocations,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id                    *Identifier                    `json:"id,omitempty"`
+	Notes                 *[]NoteResponse                `json:"notes,omitempty"`
+	Origin                *PurchaseInvoiceResponseOrigin `json:"origin,omitempty"`
+	PaidAt                *openapi_types.Date            `json:"paid_at,omitempty"`
+	Payments              *[]PaymentResponse             `json:"payments,omitempty"`
+	PricesAreInclTax      *bool                          `json:"prices_are_incl_tax,omitempty"`
+	Reference             *string                        `json:"reference,omitempty"`
+	RevenueInvoice        *bool                          `json:"revenue_invoice,omitempty"`
+	State                 *PurchaseInvoiceResponseState  `json:"state,omitempty"`
+	TaxNumber             *string                        `json:"tax_number,omitempty"`
+	TotalPriceExclTax     *string                        `json:"total_price_excl_tax,omitempty"`
+	TotalPriceExclTaxBase *string                        `json:"total_price_excl_tax_base,omitempty"`
+	TotalPriceInclTax     *string                        `json:"total_price_incl_tax,omitempty"`
+	TotalPriceInclTaxBase *string                        `json:"total_price_incl_tax_base,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Version Moneybird-compatible version.
+	Version *Version `json:"version,omitempty"`
+}
+
+// PurchaseInvoiceResponse_Contact defines model for PurchaseInvoiceResponse.Contact.
+type PurchaseInvoiceResponse_Contact struct {
+	union json.RawMessage
+}
+
+// PurchaseInvoiceResponseOrigin defines model for PurchaseInvoiceResponse.Origin.
+type PurchaseInvoiceResponseOrigin string
+
+// PurchaseInvoiceResponseState defines model for PurchaseInvoiceResponse.State.
+type PurchaseInvoiceResponseState string
+
+// PurchaseTransactionBatchResponse Moneybird-compatible purchase_transaction_batch_response.
+type PurchaseTransactionBatchResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// FinancialAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	FinancialAccountId *Identifier `json:"financial_account_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id         *Identifier                            `json:"id,omitempty"`
+	Identifier *string                                `json:"identifier,omitempty"`
+	State      *PurchaseTransactionBatchResponseState `json:"state,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// PurchaseTransactionBatchResponseState defines model for PurchaseTransactionBatchResponse.State.
+type PurchaseTransactionBatchResponseState string
+
+// PurchaseTransactionResponse Moneybird-compatible purchase_transaction_response.
+type PurchaseTransactionResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier                          `json:"administration_id,omitempty"`
+	Amount           *string                              `json:"amount,omitempty"`
+	Contact          *PurchaseTransactionResponse_Contact `json:"contact,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp          `json:"created_at,omitempty"`
+	Date        *openapi_types.Date `json:"date,omitempty"`
+	Description *string             `json:"description,omitempty"`
+	EndToEndId  *string             `json:"end_to_end_id,omitempty"`
+
+	// FinancialAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	FinancialAccountId *Identifier `json:"financial_account_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+
+	// PayableId Moneybird-compatible identifier_nullable.
+	PayableId   *IdentifierNullable `json:"payable_id,omitempty"`
+	PayableType *string             `json:"payable_type,omitempty"`
+
+	// PaymentInstrumentId Moneybird-compatible identifier_nullable.
+	PaymentInstrumentId *IdentifierNullable `json:"payment_instrument_id,omitempty"`
+	PaymentMethod       *string             `json:"payment_method,omitempty"`
+
+	// PurchaseTransactionBatchId Moneybird-compatible identifier_nullable.
+	PurchaseTransactionBatchId *IdentifierNullable               `json:"purchase_transaction_batch_id,omitempty"`
+	SepaBic                    *string                           `json:"sepa_bic,omitempty"`
+	SepaIban                   *string                           `json:"sepa_iban,omitempty"`
+	SepaIbanAccountName        *string                           `json:"sepa_iban_account_name,omitempty"`
+	SourceSepaIban             *string                           `json:"source_sepa_iban,omitempty"`
+	SourceSepaIbanAccountName  *string                           `json:"source_sepa_iban_account_name,omitempty"`
+	State                      *PurchaseTransactionResponseState `json:"state,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+}
+
+// PurchaseTransactionResponse_Contact defines model for PurchaseTransactionResponse.Contact.
+type PurchaseTransactionResponse_Contact struct {
+	union json.RawMessage
+}
+
+// PurchaseTransactionResponseState defines model for PurchaseTransactionResponse.State.
+type PurchaseTransactionResponseState string
+
+// ReceiptResponse Moneybird-compatible receipt_response.
+type ReceiptResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier              `json:"administration_id,omitempty"`
+	Attachments      *[]AttachmentResponse    `json:"attachments,omitempty"`
+	Contact          *ReceiptResponse_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt   *Timestamp          `json:"created_at,omitempty"`
+	Currency    *string             `json:"currency,omitempty"`
+	Date        *openapi_types.Date `json:"date,omitempty"`
+	Details     *[]DetailResponse   `json:"details,omitempty"`
+	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber *int                `json:"entry_number,omitempty"`
+	Events      *[]EventResponse    `json:"events,omitempty"`
+
+	// ExchangeRate Moneybird-compatible number.
+	ExchangeRate      *Number                     `json:"exchange_rate,omitempty"`
+	FiscalAllocations *[]FiscalAllocationResponse `json:"fiscal_allocations,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id                    *Identifier            `json:"id,omitempty"`
+	Notes                 *[]NoteResponse        `json:"notes,omitempty"`
+	Origin                *ReceiptResponseOrigin `json:"origin,omitempty"`
+	PaidAt                *openapi_types.Date    `json:"paid_at,omitempty"`
+	Payments              *[]PaymentResponse     `json:"payments,omitempty"`
+	PricesAreInclTax      *bool                  `json:"prices_are_incl_tax,omitempty"`
+	Reference             *string                `json:"reference,omitempty"`
+	RevenueInvoice        *bool                  `json:"revenue_invoice,omitempty"`
+	State                 *ReceiptResponseState  `json:"state,omitempty"`
+	TaxNumber             *string                `json:"tax_number,omitempty"`
+	TotalPriceExclTax     *string                `json:"total_price_excl_tax,omitempty"`
+	TotalPriceExclTaxBase *string                `json:"total_price_excl_tax_base,omitempty"`
+	TotalPriceInclTax     *string                `json:"total_price_incl_tax,omitempty"`
+	TotalPriceInclTaxBase *string                `json:"total_price_incl_tax_base,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Version Moneybird-compatible version.
+	Version *Version `json:"version,omitempty"`
+}
+
+// ReceiptResponse_Contact defines model for ReceiptResponse.Contact.
+type ReceiptResponse_Contact struct {
+	union json.RawMessage
+}
+
+// ReceiptResponseOrigin defines model for ReceiptResponse.Origin.
+type ReceiptResponseOrigin string
+
+// ReceiptResponseState defines model for ReceiptResponse.State.
+type ReceiptResponseState string
 
 // RecurringContractResponse Moneybird-compatible recurring_contract_response.
 type RecurringContractResponse struct {
@@ -9152,6 +10737,49 @@ type TimeEntryResponse_SalesInvoice struct {
 // Timestamp Moneybird-compatible timestamp.
 type Timestamp = time.Time
 
+// TypelessDocumentResponse Moneybird-compatible typeless_document_response.
+type TypelessDocumentResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier                       `json:"administration_id,omitempty"`
+	Attachments      *[]AttachmentResponse             `json:"attachments,omitempty"`
+	Contact          *TypelessDocumentResponse_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp          `json:"created_at,omitempty"`
+	Date      *openapi_types.Date `json:"date,omitempty"`
+	Events    *[]EventResponse    `json:"events,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id        *Identifier                     `json:"id,omitempty"`
+	Origin    *TypelessDocumentResponseOrigin `json:"origin,omitempty"`
+	Reference *string                         `json:"reference,omitempty"`
+	State     *TypelessDocumentResponseState  `json:"state,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Version Moneybird-compatible version.
+	Version *Version `json:"version,omitempty"`
+}
+
+// TypelessDocumentResponse_Contact defines model for TypelessDocumentResponse.Contact.
+type TypelessDocumentResponse_Contact struct {
+	union json.RawMessage
+}
+
+// TypelessDocumentResponseOrigin defines model for TypelessDocumentResponse.Origin.
+type TypelessDocumentResponseOrigin string
+
+// TypelessDocumentResponseState defines model for TypelessDocumentResponse.State.
+type TypelessDocumentResponseState string
+
 // UserResponse Moneybird-compatible base_user_response.
 type UserResponse = BaseUserResponse
 
@@ -9317,6 +10945,9 @@ type ExternalSalesInvoicePage = []ExternalSalesInvoice
 // Forbidden defines model for Forbidden.
 type Forbidden = Error
 
+// GeneralDocumentPage defines model for GeneralDocumentPage.
+type GeneralDocumentPage = []GeneralDocument
+
 // GeneralJournalDocumentPage defines model for GeneralJournalDocumentPage.
 type GeneralJournalDocumentPage = []GeneralJournalDocument
 
@@ -9338,6 +10969,15 @@ type ProductPage = []Product
 // ProjectPage defines model for ProjectPage.
 type ProjectPage = []Project
 
+// PurchaseInvoicePage defines model for PurchaseInvoicePage.
+type PurchaseInvoicePage = []PurchaseInvoice
+
+// PurchaseTransactionPage defines model for PurchaseTransactionPage.
+type PurchaseTransactionPage = []PurchaseTransaction
+
+// ReceiptPage defines model for ReceiptPage.
+type ReceiptPage = []Receipt
+
 // RecurringSalesInvoicePage defines model for RecurringSalesInvoicePage.
 type RecurringSalesInvoicePage = []RecurringSalesInvoice
 
@@ -9349,6 +10989,9 @@ type ServiceUnavailable = Error
 
 // TooManyRequests Example: Retry later
 type TooManyRequests = string
+
+// TypelessDocumentPage defines model for TypelessDocumentPage.
+type TypelessDocumentPage = []TypelessDocument
 
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = Error
@@ -9535,6 +11178,36 @@ type ListContactAdditionalChargesParams struct {
 // ListContactAdditionalChargesParamsIncludeBilled defines parameters for ListContactAdditionalCharges.
 type ListContactAdditionalChargesParamsIncludeBilled string
 
+// ListGeneralDocumentsParams defines parameters for ListGeneralDocuments.
+type ListGeneralDocumentsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage                        `form:"per_page,omitempty" json:"per_page,omitempty"`
+	Sort    *ListGeneralDocumentsParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// NewFilter Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+	NewFilter *string `form:"new_filter,omitempty" json:"new_filter,omitempty"`
+}
+
+// ListGeneralDocumentsParamsSort defines parameters for ListGeneralDocuments.
+type ListGeneralDocumentsParamsSort string
+
+// ListGeneralDocumentVersionsParams defines parameters for ListGeneralDocumentVersions.
+type ListGeneralDocumentVersionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// CreateGeneralDocumentAttachmentMultipartBody defines parameters for CreateGeneralDocumentAttachment.
+type CreateGeneralDocumentAttachmentMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
 // ListGeneralJournalDocumentsParams defines parameters for ListGeneralJournalDocuments.
 type ListGeneralJournalDocumentsParams struct {
 	// Filter Comma-separated key:value terms.
@@ -9568,6 +11241,96 @@ type ListGeneralJournalDocumentVersionsParams struct {
 
 // CreateGeneralJournalDocumentAttachmentMultipartBody defines parameters for CreateGeneralJournalDocumentAttachment.
 type CreateGeneralJournalDocumentAttachmentMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
+// ListPurchaseInvoicesParams defines parameters for ListPurchaseInvoices.
+type ListPurchaseInvoicesParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage                        `form:"per_page,omitempty" json:"per_page,omitempty"`
+	Sort    *ListPurchaseInvoicesParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// NewFilter Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+	NewFilter *string `form:"new_filter,omitempty" json:"new_filter,omitempty"`
+}
+
+// ListPurchaseInvoicesParamsSort defines parameters for ListPurchaseInvoices.
+type ListPurchaseInvoicesParamsSort string
+
+// ListPurchaseInvoiceVersionsParams defines parameters for ListPurchaseInvoiceVersions.
+type ListPurchaseInvoiceVersionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// CreatePurchaseInvoiceAttachmentMultipartBody defines parameters for CreatePurchaseInvoiceAttachment.
+type CreatePurchaseInvoiceAttachmentMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
+// ListReceiptsParams defines parameters for ListReceipts.
+type ListReceiptsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage                `form:"per_page,omitempty" json:"per_page,omitempty"`
+	Sort    *ListReceiptsParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// NewFilter Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+	NewFilter *string `form:"new_filter,omitempty" json:"new_filter,omitempty"`
+}
+
+// ListReceiptsParamsSort defines parameters for ListReceipts.
+type ListReceiptsParamsSort string
+
+// ListReceiptVersionsParams defines parameters for ListReceiptVersions.
+type ListReceiptVersionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// CreateReceiptAttachmentMultipartBody defines parameters for CreateReceiptAttachment.
+type CreateReceiptAttachmentMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
+// ListTypelessDocumentsParams defines parameters for ListTypelessDocuments.
+type ListTypelessDocumentsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage                         `form:"per_page,omitempty" json:"per_page,omitempty"`
+	Sort    *ListTypelessDocumentsParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// NewFilter Moneybird's newer filter parameter, in the same key:value grammar. When given, it is used instead of filter.
+	NewFilter *string `form:"new_filter,omitempty" json:"new_filter,omitempty"`
+}
+
+// ListTypelessDocumentsParamsSort defines parameters for ListTypelessDocuments.
+type ListTypelessDocumentsParamsSort string
+
+// ListTypelessDocumentVersionsParams defines parameters for ListTypelessDocumentVersions.
+type ListTypelessDocumentVersionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// CreateTypelessDocumentAttachmentMultipartBody defines parameters for CreateTypelessDocumentAttachment.
+type CreateTypelessDocumentAttachmentMultipartBody struct {
 	File openapi_types.File `json:"file"`
 }
 
@@ -9718,6 +11481,18 @@ type ListProjectsParams struct {
 	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
 }
 
+// ListPurchaseTransactionsParams defines parameters for ListPurchaseTransactions.
+type ListPurchaseTransactionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
 // ListRecurringSalesInvoicesParams defines parameters for ListRecurringSalesInvoices.
 type ListRecurringSalesInvoicesParams struct {
 	// Filter Comma-separated key:value terms.
@@ -9818,6 +11593,13 @@ type DownloadSalesInvoicePackingSlipParams struct {
 type DownloadSalesInvoicePdfParams struct {
 	// Media stationery leaves out the sender's address and logo, for printing on paper that has them.
 	Media *Media `form:"media,omitempty" json:"media,omitempty"`
+}
+
+// CreateSepaCreditTransferMultipartBody defines parameters for CreateSepaCreditTransfer.
+type CreateSepaCreditTransferMultipartBody struct {
+	File               openapi_types.File `json:"file"`
+	FinancialAccountId *string            `json:"financial_account_id,omitempty"`
+	LedgerAccountId    *string            `json:"ledger_account_id,omitempty"`
 }
 
 // ListSubscriptionTemplatesParams defines parameters for ListSubscriptionTemplates.
@@ -10016,6 +11798,21 @@ type CreateDocumentStyleJSONRequestBody = DocumentStyleRequest
 // UpdateDocumentStyleJSONRequestBody defines body for UpdateDocumentStyle for application/json ContentType.
 type UpdateDocumentStyleJSONRequestBody = DocumentStyleRequest
 
+// CreateGeneralDocumentJSONRequestBody defines body for CreateGeneralDocument for application/json ContentType.
+type CreateGeneralDocumentJSONRequestBody = GeneralDocumentRequest
+
+// FetchGeneralDocumentsJSONRequestBody defines body for FetchGeneralDocuments for application/json ContentType.
+type FetchGeneralDocumentsJSONRequestBody = SynchronizationRequest
+
+// UpdateGeneralDocumentJSONRequestBody defines body for UpdateGeneralDocument for application/json ContentType.
+type UpdateGeneralDocumentJSONRequestBody = GeneralDocumentRequest
+
+// CreateGeneralDocumentAttachmentMultipartRequestBody defines body for CreateGeneralDocumentAttachment for multipart/form-data ContentType.
+type CreateGeneralDocumentAttachmentMultipartRequestBody CreateGeneralDocumentAttachmentMultipartBody
+
+// CreateGeneralDocumentNoteJSONRequestBody defines body for CreateGeneralDocumentNote for application/json ContentType.
+type CreateGeneralDocumentNoteJSONRequestBody = NoteRequest
+
 // CreateGeneralJournalDocumentJSONRequestBody defines body for CreateGeneralJournalDocument for application/json ContentType.
 type CreateGeneralJournalDocumentJSONRequestBody = GeneralJournalDocumentRequest
 
@@ -10030,6 +11827,61 @@ type CreateGeneralJournalDocumentAttachmentMultipartRequestBody CreateGeneralJou
 
 // CreateGeneralJournalDocumentNoteJSONRequestBody defines body for CreateGeneralJournalDocumentNote for application/json ContentType.
 type CreateGeneralJournalDocumentNoteJSONRequestBody = NoteRequest
+
+// CreatePurchaseInvoiceJSONRequestBody defines body for CreatePurchaseInvoice for application/json ContentType.
+type CreatePurchaseInvoiceJSONRequestBody = PurchaseInvoiceRequest
+
+// FetchPurchaseInvoicesJSONRequestBody defines body for FetchPurchaseInvoices for application/json ContentType.
+type FetchPurchaseInvoicesJSONRequestBody = SynchronizationRequest
+
+// UpdatePurchaseInvoiceJSONRequestBody defines body for UpdatePurchaseInvoice for application/json ContentType.
+type UpdatePurchaseInvoiceJSONRequestBody = PurchaseInvoiceRequest
+
+// CreatePurchaseInvoiceAttachmentMultipartRequestBody defines body for CreatePurchaseInvoiceAttachment for multipart/form-data ContentType.
+type CreatePurchaseInvoiceAttachmentMultipartRequestBody CreatePurchaseInvoiceAttachmentMultipartBody
+
+// CreatePurchaseInvoiceNoteJSONRequestBody defines body for CreatePurchaseInvoiceNote for application/json ContentType.
+type CreatePurchaseInvoiceNoteJSONRequestBody = NoteRequest
+
+// CreatePurchaseInvoicePaymentJSONRequestBody defines body for CreatePurchaseInvoicePayment for application/json ContentType.
+type CreatePurchaseInvoicePaymentJSONRequestBody = PaymentRequest
+
+// RegisterPurchaseInvoicePaymentJSONRequestBody defines body for RegisterPurchaseInvoicePayment for application/json ContentType.
+//
+// Deprecated: this type has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+type RegisterPurchaseInvoicePaymentJSONRequestBody = PaymentRequest
+
+// CreateReceiptJSONRequestBody defines body for CreateReceipt for application/json ContentType.
+type CreateReceiptJSONRequestBody = ReceiptRequest
+
+// FetchReceiptsJSONRequestBody defines body for FetchReceipts for application/json ContentType.
+type FetchReceiptsJSONRequestBody = SynchronizationRequest
+
+// UpdateReceiptJSONRequestBody defines body for UpdateReceipt for application/json ContentType.
+type UpdateReceiptJSONRequestBody = ReceiptRequest
+
+// CreateReceiptAttachmentMultipartRequestBody defines body for CreateReceiptAttachment for multipart/form-data ContentType.
+type CreateReceiptAttachmentMultipartRequestBody CreateReceiptAttachmentMultipartBody
+
+// CreateReceiptNoteJSONRequestBody defines body for CreateReceiptNote for application/json ContentType.
+type CreateReceiptNoteJSONRequestBody = NoteRequest
+
+// CreateReceiptPaymentJSONRequestBody defines body for CreateReceiptPayment for application/json ContentType.
+type CreateReceiptPaymentJSONRequestBody = PaymentRequest
+
+// RegisterReceiptPaymentJSONRequestBody defines body for RegisterReceiptPayment for application/json ContentType.
+//
+// Deprecated: this type has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+type RegisterReceiptPaymentJSONRequestBody = PaymentRequest
+
+// CreateTypelessDocumentJSONRequestBody defines body for CreateTypelessDocument for application/json ContentType.
+type CreateTypelessDocumentJSONRequestBody = TypelessDocumentRequest
+
+// FetchTypelessDocumentsJSONRequestBody defines body for FetchTypelessDocuments for application/json ContentType.
+type FetchTypelessDocumentsJSONRequestBody = SynchronizationRequest
+
+// CreateTypelessDocumentAttachmentMultipartRequestBody defines body for CreateTypelessDocumentAttachment for multipart/form-data ContentType.
+type CreateTypelessDocumentAttachmentMultipartRequestBody CreateTypelessDocumentAttachmentMultipartBody
 
 // CreateEstimateJSONRequestBody defines body for CreateEstimate for application/json ContentType.
 type CreateEstimateJSONRequestBody = EstimateRequest
@@ -10139,6 +11991,12 @@ type CreateProjectJSONRequestBody = ProjectRequest
 // UpdateProjectJSONRequestBody defines body for UpdateProject for application/json ContentType.
 type UpdateProjectJSONRequestBody = ProjectRequest
 
+// CreatePurchaseTransactionBatchJSONRequestBody defines body for CreatePurchaseTransactionBatch for application/json ContentType.
+type CreatePurchaseTransactionBatchJSONRequestBody = PurchaseTransactionBatchRequest
+
+// CreatePurchaseTransactionJSONRequestBody defines body for CreatePurchaseTransaction for application/json ContentType.
+type CreatePurchaseTransactionJSONRequestBody = PurchaseTransactionRequest
+
 // CreateRecurringSalesInvoiceJSONRequestBody defines body for CreateRecurringSalesInvoice for application/json ContentType.
 type CreateRecurringSalesInvoiceJSONRequestBody = RecurringSalesInvoiceRequest
 
@@ -10191,6 +12049,9 @@ type SettleSalesCreditInvoiceJSONRequestBody = EmptyRequest
 
 // SendSalesInvoiceJSONRequestBody defines body for SendSalesInvoice for application/json ContentType.
 type SendSalesInvoiceJSONRequestBody = SendSalesInvoiceRequest
+
+// CreateSepaCreditTransferMultipartRequestBody defines body for CreateSepaCreditTransfer for multipart/form-data ContentType.
+type CreateSepaCreditTransferMultipartRequestBody CreateSepaCreditTransferMultipartBody
 
 // CreateSubscriptionJSONRequestBody defines body for CreateSubscription for application/json ContentType.
 type CreateSubscriptionJSONRequestBody = SubscriptionCreateRequest
@@ -11255,6 +13116,68 @@ func (t *FinancialStatementRequest_FinancialStatement_FinancialAccountId) Unmars
 	return err
 }
 
+// AsFiscalAllocationInputPercentage0 returns the union data inside the FiscalAllocationInput_Percentage as a FiscalAllocationInputPercentage0
+func (t FiscalAllocationInput_Percentage) AsFiscalAllocationInputPercentage0() (FiscalAllocationInputPercentage0, error) {
+	var body FiscalAllocationInputPercentage0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFiscalAllocationInputPercentage0 overwrites any union data inside the FiscalAllocationInput_Percentage as the provided FiscalAllocationInputPercentage0
+func (t *FiscalAllocationInput_Percentage) FromFiscalAllocationInputPercentage0(v FiscalAllocationInputPercentage0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFiscalAllocationInputPercentage0 performs a merge with any union data inside the FiscalAllocationInput_Percentage, using the provided FiscalAllocationInputPercentage0
+func (t *FiscalAllocationInput_Percentage) MergeFiscalAllocationInputPercentage0(v FiscalAllocationInputPercentage0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFiscalAllocationInputPercentage1 returns the union data inside the FiscalAllocationInput_Percentage as a FiscalAllocationInputPercentage1
+func (t FiscalAllocationInput_Percentage) AsFiscalAllocationInputPercentage1() (FiscalAllocationInputPercentage1, error) {
+	var body FiscalAllocationInputPercentage1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFiscalAllocationInputPercentage1 overwrites any union data inside the FiscalAllocationInput_Percentage as the provided FiscalAllocationInputPercentage1
+func (t *FiscalAllocationInput_Percentage) FromFiscalAllocationInputPercentage1(v FiscalAllocationInputPercentage1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFiscalAllocationInputPercentage1 performs a merge with any union data inside the FiscalAllocationInput_Percentage, using the provided FiscalAllocationInputPercentage1
+func (t *FiscalAllocationInput_Percentage) MergeFiscalAllocationInputPercentage1(v FiscalAllocationInputPercentage1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t FiscalAllocationInput_Percentage) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *FiscalAllocationInput_Percentage) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsFlexibleBoolean0 returns the union data inside the FlexibleBoolean as a FlexibleBoolean0
 func (t FlexibleBoolean) AsFlexibleBoolean0() (FlexibleBoolean0, error) {
 	var body FlexibleBoolean0
@@ -11375,6 +13298,42 @@ func (t FlexibleIdentifier) MarshalJSON() ([]byte, error) {
 }
 
 func (t *FlexibleIdentifier) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the GeneralDocument_Contact as a SimpleContactResponse
+func (t GeneralDocument_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the GeneralDocument_Contact as the provided SimpleContactResponse
+func (t *GeneralDocument_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the GeneralDocument_Contact, using the provided SimpleContactResponse
+func (t *GeneralDocument_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GeneralDocument_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GeneralDocument_Contact) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -12155,6 +14114,362 @@ func (t ProjectRequest_Project_Budget) MarshalJSON() ([]byte, error) {
 }
 
 func (t *ProjectRequest_Project_Budget) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsPurchaseDetailInputAmount0 returns the union data inside the PurchaseDetailInput_Amount as a PurchaseDetailInputAmount0
+func (t PurchaseDetailInput_Amount) AsPurchaseDetailInputAmount0() (PurchaseDetailInputAmount0, error) {
+	var body PurchaseDetailInputAmount0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPurchaseDetailInputAmount0 overwrites any union data inside the PurchaseDetailInput_Amount as the provided PurchaseDetailInputAmount0
+func (t *PurchaseDetailInput_Amount) FromPurchaseDetailInputAmount0(v PurchaseDetailInputAmount0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePurchaseDetailInputAmount0 performs a merge with any union data inside the PurchaseDetailInput_Amount, using the provided PurchaseDetailInputAmount0
+func (t *PurchaseDetailInput_Amount) MergePurchaseDetailInputAmount0(v PurchaseDetailInputAmount0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPurchaseDetailInputAmount1 returns the union data inside the PurchaseDetailInput_Amount as a PurchaseDetailInputAmount1
+func (t PurchaseDetailInput_Amount) AsPurchaseDetailInputAmount1() (PurchaseDetailInputAmount1, error) {
+	var body PurchaseDetailInputAmount1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPurchaseDetailInputAmount1 overwrites any union data inside the PurchaseDetailInput_Amount as the provided PurchaseDetailInputAmount1
+func (t *PurchaseDetailInput_Amount) FromPurchaseDetailInputAmount1(v PurchaseDetailInputAmount1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePurchaseDetailInputAmount1 performs a merge with any union data inside the PurchaseDetailInput_Amount, using the provided PurchaseDetailInputAmount1
+func (t *PurchaseDetailInput_Amount) MergePurchaseDetailInputAmount1(v PurchaseDetailInputAmount1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PurchaseDetailInput_Amount) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PurchaseDetailInput_Amount) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsPurchaseDetailInputRowOrder0 returns the union data inside the PurchaseDetailInput_RowOrder as a PurchaseDetailInputRowOrder0
+func (t PurchaseDetailInput_RowOrder) AsPurchaseDetailInputRowOrder0() (PurchaseDetailInputRowOrder0, error) {
+	var body PurchaseDetailInputRowOrder0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPurchaseDetailInputRowOrder0 overwrites any union data inside the PurchaseDetailInput_RowOrder as the provided PurchaseDetailInputRowOrder0
+func (t *PurchaseDetailInput_RowOrder) FromPurchaseDetailInputRowOrder0(v PurchaseDetailInputRowOrder0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePurchaseDetailInputRowOrder0 performs a merge with any union data inside the PurchaseDetailInput_RowOrder, using the provided PurchaseDetailInputRowOrder0
+func (t *PurchaseDetailInput_RowOrder) MergePurchaseDetailInputRowOrder0(v PurchaseDetailInputRowOrder0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPurchaseDetailInputRowOrder1 returns the union data inside the PurchaseDetailInput_RowOrder as a PurchaseDetailInputRowOrder1
+func (t PurchaseDetailInput_RowOrder) AsPurchaseDetailInputRowOrder1() (PurchaseDetailInputRowOrder1, error) {
+	var body PurchaseDetailInputRowOrder1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPurchaseDetailInputRowOrder1 overwrites any union data inside the PurchaseDetailInput_RowOrder as the provided PurchaseDetailInputRowOrder1
+func (t *PurchaseDetailInput_RowOrder) FromPurchaseDetailInputRowOrder1(v PurchaseDetailInputRowOrder1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePurchaseDetailInputRowOrder1 performs a merge with any union data inside the PurchaseDetailInput_RowOrder, using the provided PurchaseDetailInputRowOrder1
+func (t *PurchaseDetailInput_RowOrder) MergePurchaseDetailInputRowOrder1(v PurchaseDetailInputRowOrder1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PurchaseDetailInput_RowOrder) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PurchaseDetailInput_RowOrder) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsPurchaseDocumentInputDetailsAttributes0 returns the union data inside the PurchaseDocumentInput_DetailsAttributes as a PurchaseDocumentInputDetailsAttributes0
+func (t PurchaseDocumentInput_DetailsAttributes) AsPurchaseDocumentInputDetailsAttributes0() (PurchaseDocumentInputDetailsAttributes0, error) {
+	var body PurchaseDocumentInputDetailsAttributes0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPurchaseDocumentInputDetailsAttributes0 overwrites any union data inside the PurchaseDocumentInput_DetailsAttributes as the provided PurchaseDocumentInputDetailsAttributes0
+func (t *PurchaseDocumentInput_DetailsAttributes) FromPurchaseDocumentInputDetailsAttributes0(v PurchaseDocumentInputDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePurchaseDocumentInputDetailsAttributes0 performs a merge with any union data inside the PurchaseDocumentInput_DetailsAttributes, using the provided PurchaseDocumentInputDetailsAttributes0
+func (t *PurchaseDocumentInput_DetailsAttributes) MergePurchaseDocumentInputDetailsAttributes0(v PurchaseDocumentInputDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPurchaseDocumentInputDetailsAttributes1 returns the union data inside the PurchaseDocumentInput_DetailsAttributes as a PurchaseDocumentInputDetailsAttributes1
+func (t PurchaseDocumentInput_DetailsAttributes) AsPurchaseDocumentInputDetailsAttributes1() (PurchaseDocumentInputDetailsAttributes1, error) {
+	var body PurchaseDocumentInputDetailsAttributes1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPurchaseDocumentInputDetailsAttributes1 overwrites any union data inside the PurchaseDocumentInput_DetailsAttributes as the provided PurchaseDocumentInputDetailsAttributes1
+func (t *PurchaseDocumentInput_DetailsAttributes) FromPurchaseDocumentInputDetailsAttributes1(v PurchaseDocumentInputDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePurchaseDocumentInputDetailsAttributes1 performs a merge with any union data inside the PurchaseDocumentInput_DetailsAttributes, using the provided PurchaseDocumentInputDetailsAttributes1
+func (t *PurchaseDocumentInput_DetailsAttributes) MergePurchaseDocumentInputDetailsAttributes1(v PurchaseDocumentInputDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PurchaseDocumentInput_DetailsAttributes) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PurchaseDocumentInput_DetailsAttributes) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsPurchaseDocumentInputFiscalAllocationsAttributes0 returns the union data inside the PurchaseDocumentInput_FiscalAllocationsAttributes as a PurchaseDocumentInputFiscalAllocationsAttributes0
+func (t PurchaseDocumentInput_FiscalAllocationsAttributes) AsPurchaseDocumentInputFiscalAllocationsAttributes0() (PurchaseDocumentInputFiscalAllocationsAttributes0, error) {
+	var body PurchaseDocumentInputFiscalAllocationsAttributes0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPurchaseDocumentInputFiscalAllocationsAttributes0 overwrites any union data inside the PurchaseDocumentInput_FiscalAllocationsAttributes as the provided PurchaseDocumentInputFiscalAllocationsAttributes0
+func (t *PurchaseDocumentInput_FiscalAllocationsAttributes) FromPurchaseDocumentInputFiscalAllocationsAttributes0(v PurchaseDocumentInputFiscalAllocationsAttributes0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePurchaseDocumentInputFiscalAllocationsAttributes0 performs a merge with any union data inside the PurchaseDocumentInput_FiscalAllocationsAttributes, using the provided PurchaseDocumentInputFiscalAllocationsAttributes0
+func (t *PurchaseDocumentInput_FiscalAllocationsAttributes) MergePurchaseDocumentInputFiscalAllocationsAttributes0(v PurchaseDocumentInputFiscalAllocationsAttributes0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPurchaseDocumentInputFiscalAllocationsAttributes1 returns the union data inside the PurchaseDocumentInput_FiscalAllocationsAttributes as a PurchaseDocumentInputFiscalAllocationsAttributes1
+func (t PurchaseDocumentInput_FiscalAllocationsAttributes) AsPurchaseDocumentInputFiscalAllocationsAttributes1() (PurchaseDocumentInputFiscalAllocationsAttributes1, error) {
+	var body PurchaseDocumentInputFiscalAllocationsAttributes1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPurchaseDocumentInputFiscalAllocationsAttributes1 overwrites any union data inside the PurchaseDocumentInput_FiscalAllocationsAttributes as the provided PurchaseDocumentInputFiscalAllocationsAttributes1
+func (t *PurchaseDocumentInput_FiscalAllocationsAttributes) FromPurchaseDocumentInputFiscalAllocationsAttributes1(v PurchaseDocumentInputFiscalAllocationsAttributes1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePurchaseDocumentInputFiscalAllocationsAttributes1 performs a merge with any union data inside the PurchaseDocumentInput_FiscalAllocationsAttributes, using the provided PurchaseDocumentInputFiscalAllocationsAttributes1
+func (t *PurchaseDocumentInput_FiscalAllocationsAttributes) MergePurchaseDocumentInputFiscalAllocationsAttributes1(v PurchaseDocumentInputFiscalAllocationsAttributes1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PurchaseDocumentInput_FiscalAllocationsAttributes) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PurchaseDocumentInput_FiscalAllocationsAttributes) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the PurchaseInvoice_Contact as a SimpleContactResponse
+func (t PurchaseInvoice_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the PurchaseInvoice_Contact as the provided SimpleContactResponse
+func (t *PurchaseInvoice_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the PurchaseInvoice_Contact, using the provided SimpleContactResponse
+func (t *PurchaseInvoice_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PurchaseInvoice_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PurchaseInvoice_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the PurchaseTransaction_Contact as a SimpleContactResponse
+func (t PurchaseTransaction_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the PurchaseTransaction_Contact as the provided SimpleContactResponse
+func (t *PurchaseTransaction_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the PurchaseTransaction_Contact, using the provided SimpleContactResponse
+func (t *PurchaseTransaction_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PurchaseTransaction_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PurchaseTransaction_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the Receipt_Contact as a SimpleContactResponse
+func (t Receipt_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the Receipt_Contact as the provided SimpleContactResponse
+func (t *Receipt_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the Receipt_Contact, using the provided SimpleContactResponse
+func (t *Receipt_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Receipt_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Receipt_Contact) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -13495,6 +15810,42 @@ func (t *TimeEntryRequest_TimeEntry_SalesInvoiceId) UnmarshalJSON(b []byte) erro
 	return err
 }
 
+// AsSimpleContactResponse returns the union data inside the TypelessDocument_Contact as a SimpleContactResponse
+func (t TypelessDocument_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the TypelessDocument_Contact as the provided SimpleContactResponse
+func (t *TypelessDocument_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the TypelessDocument_Contact, using the provided SimpleContactResponse
+func (t *TypelessDocument_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TypelessDocument_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TypelessDocument_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsIdentifier returns the union data inside the UnlinkBookingRequest_BookingId as a Identifier
 func (t UnlinkBookingRequest_BookingId) AsIdentifier() (Identifier, error) {
 	var body Identifier
@@ -14233,6 +16584,42 @@ func (t *ExternalSalesInvoiceResponse_Contact) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsSimpleContactResponse returns the union data inside the GeneralDocumentResponse_Contact as a SimpleContactResponse
+func (t GeneralDocumentResponse_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the GeneralDocumentResponse_Contact as the provided SimpleContactResponse
+func (t *GeneralDocumentResponse_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the GeneralDocumentResponse_Contact, using the provided SimpleContactResponse
+func (t *GeneralDocumentResponse_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GeneralDocumentResponse_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GeneralDocumentResponse_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsIdentifierNullable0 returns the union data inside the IdentifierNullable as a IdentifierNullable0
 func (t IdentifierNullable) AsIdentifierNullable0() (IdentifierNullable0, error) {
 	var body IdentifierNullable0
@@ -14451,6 +16838,114 @@ func (t Number) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Number) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the PurchaseInvoiceResponse_Contact as a SimpleContactResponse
+func (t PurchaseInvoiceResponse_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the PurchaseInvoiceResponse_Contact as the provided SimpleContactResponse
+func (t *PurchaseInvoiceResponse_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the PurchaseInvoiceResponse_Contact, using the provided SimpleContactResponse
+func (t *PurchaseInvoiceResponse_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PurchaseInvoiceResponse_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PurchaseInvoiceResponse_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the PurchaseTransactionResponse_Contact as a SimpleContactResponse
+func (t PurchaseTransactionResponse_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the PurchaseTransactionResponse_Contact as the provided SimpleContactResponse
+func (t *PurchaseTransactionResponse_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the PurchaseTransactionResponse_Contact, using the provided SimpleContactResponse
+func (t *PurchaseTransactionResponse_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PurchaseTransactionResponse_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PurchaseTransactionResponse_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the ReceiptResponse_Contact as a SimpleContactResponse
+func (t ReceiptResponse_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the ReceiptResponse_Contact as the provided SimpleContactResponse
+func (t *ReceiptResponse_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the ReceiptResponse_Contact, using the provided SimpleContactResponse
+func (t *ReceiptResponse_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ReceiptResponse_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ReceiptResponse_Contact) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -14775,6 +17270,42 @@ func (t TimeEntryResponse_SalesInvoice) MarshalJSON() ([]byte, error) {
 }
 
 func (t *TimeEntryResponse_SalesInvoice) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the TypelessDocumentResponse_Contact as a SimpleContactResponse
+func (t TypelessDocumentResponse_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the TypelessDocumentResponse_Contact as the provided SimpleContactResponse
+func (t *TypelessDocumentResponse_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the TypelessDocumentResponse_Contact, using the provided SimpleContactResponse
+func (t *TypelessDocumentResponse_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TypelessDocumentResponse_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TypelessDocumentResponse_Contact) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -15657,6 +18188,42 @@ type ServerInterface interface {
 	// UploadDocumentStyleFile Upload a logo or background
 	// (PUT /api/v2/{administration_id}/document_styles/{id}/{file})
 	UploadDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string)
+	// ListGeneralDocuments List all general documents
+	// (GET /api/v2/{administration_id}/documents/general_documents)
+	ListGeneralDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralDocumentsParams)
+	// CreateGeneralDocument Create a general document
+	// (POST /api/v2/{administration_id}/documents/general_documents)
+	CreateGeneralDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListGeneralDocumentVersions List all ids and versions
+	// (GET /api/v2/{administration_id}/documents/general_documents/synchronization)
+	ListGeneralDocumentVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralDocumentVersionsParams)
+	// FetchGeneralDocuments Fetch general documents with given ids
+	// (POST /api/v2/{administration_id}/documents/general_documents/synchronization)
+	FetchGeneralDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteGeneralDocument Delete a general document
+	// (DELETE /api/v2/{administration_id}/documents/general_documents/{id})
+	DeleteGeneralDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetGeneralDocument Get a general document
+	// (GET /api/v2/{administration_id}/documents/general_documents/{id})
+	GetGeneralDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateGeneralDocument Update a general document
+	// (PATCH /api/v2/{administration_id}/documents/general_documents/{id})
+	UpdateGeneralDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateGeneralDocumentAttachment Add attachment to a general document
+	// (POST /api/v2/{administration_id}/documents/general_documents/{id}/attachments)
+	CreateGeneralDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteGeneralDocumentAttachment Delete an attachment from a general document
+	// (DELETE /api/v2/{administration_id}/documents/general_documents/{id}/attachments/{attachment_id})
+	DeleteGeneralDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// DownloadGeneralDocumentAttachment Download an attachment
+	// (GET /api/v2/{administration_id}/documents/general_documents/{id}/attachments/{attachment_id}/download)
+	DownloadGeneralDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// CreateGeneralDocumentNote Add note to a general document
+	// (POST /api/v2/{administration_id}/documents/general_documents/{id}/notes)
+	CreateGeneralDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteGeneralDocumentNote Delete a note from a general document
+	// (DELETE /api/v2/{administration_id}/documents/general_documents/{id}/notes/{note_id})
+	DeleteGeneralDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
 	// ListGeneralJournalDocuments List all journal entries
 	// (GET /api/v2/{administration_id}/documents/general_journal_documents)
 	ListGeneralJournalDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralJournalDocumentsParams)
@@ -15693,6 +18260,127 @@ type ServerInterface interface {
 	// DeleteGeneralJournalDocumentNote Delete a note from a journal entry
 	// (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id})
 	DeleteGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
+	// ListPurchaseInvoices List all purchase invoices
+	// (GET /api/v2/{administration_id}/documents/purchase_invoices)
+	ListPurchaseInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListPurchaseInvoicesParams)
+	// CreatePurchaseInvoice Create a purchase invoice
+	// (POST /api/v2/{administration_id}/documents/purchase_invoices)
+	CreatePurchaseInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListPurchaseInvoiceVersions List all ids and versions
+	// (GET /api/v2/{administration_id}/documents/purchase_invoices/synchronization)
+	ListPurchaseInvoiceVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListPurchaseInvoiceVersionsParams)
+	// FetchPurchaseInvoices Fetch purchase invoices with given ids
+	// (POST /api/v2/{administration_id}/documents/purchase_invoices/synchronization)
+	FetchPurchaseInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeletePurchaseInvoice Delete a purchase invoice
+	// (DELETE /api/v2/{administration_id}/documents/purchase_invoices/{id})
+	DeletePurchaseInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetPurchaseInvoice Get a purchase invoice
+	// (GET /api/v2/{administration_id}/documents/purchase_invoices/{id})
+	GetPurchaseInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdatePurchaseInvoice Update a purchase invoice
+	// (PATCH /api/v2/{administration_id}/documents/purchase_invoices/{id})
+	UpdatePurchaseInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreatePurchaseInvoiceAttachment Add attachment to a purchase invoice
+	// (POST /api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments)
+	CreatePurchaseInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeletePurchaseInvoiceAttachment Delete an attachment from a purchase invoice
+	// (DELETE /api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments/{attachment_id})
+	DeletePurchaseInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// DownloadPurchaseInvoiceAttachment Download an attachment
+	// (GET /api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments/{attachment_id}/download)
+	DownloadPurchaseInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// CreatePurchaseInvoiceNote Add note to a purchase invoice
+	// (POST /api/v2/{administration_id}/documents/purchase_invoices/{id}/notes)
+	CreatePurchaseInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeletePurchaseInvoiceNote Delete a note from a purchase invoice
+	// (DELETE /api/v2/{administration_id}/documents/purchase_invoices/{id}/notes/{note_id})
+	DeletePurchaseInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
+	// CreatePurchaseInvoicePayment Create a payment
+	// (POST /api/v2/{administration_id}/documents/purchase_invoices/{id}/payments)
+	CreatePurchaseInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeletePurchaseInvoicePayment Delete a payment
+	// (DELETE /api/v2/{administration_id}/documents/purchase_invoices/{id}/payments/{payment_id})
+	DeletePurchaseInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, paymentId Identifier)
+	// RegisterPurchaseInvoicePayment Register a payment
+	// (PATCH /api/v2/{administration_id}/documents/purchase_invoices/{id}/register_payment)
+	//
+	// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	RegisterPurchaseInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListReceipts List all receipts
+	// (GET /api/v2/{administration_id}/documents/receipts)
+	ListReceipts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListReceiptsParams)
+	// CreateReceipt Create a receipt
+	// (POST /api/v2/{administration_id}/documents/receipts)
+	CreateReceipt(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListReceiptVersions List all ids and versions
+	// (GET /api/v2/{administration_id}/documents/receipts/synchronization)
+	ListReceiptVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListReceiptVersionsParams)
+	// FetchReceipts Fetch receipts with given ids
+	// (POST /api/v2/{administration_id}/documents/receipts/synchronization)
+	FetchReceipts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteReceipt Delete a receipt
+	// (DELETE /api/v2/{administration_id}/documents/receipts/{id})
+	DeleteReceipt(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetReceipt Get a receipt
+	// (GET /api/v2/{administration_id}/documents/receipts/{id})
+	GetReceipt(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateReceipt Update a receipt
+	// (PATCH /api/v2/{administration_id}/documents/receipts/{id})
+	UpdateReceipt(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateReceiptAttachment Add attachment to a receipt
+	// (POST /api/v2/{administration_id}/documents/receipts/{id}/attachments)
+	CreateReceiptAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteReceiptAttachment Delete an attachment from a receipt
+	// (DELETE /api/v2/{administration_id}/documents/receipts/{id}/attachments/{attachment_id})
+	DeleteReceiptAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// DownloadReceiptAttachment Download an attachment
+	// (GET /api/v2/{administration_id}/documents/receipts/{id}/attachments/{attachment_id}/download)
+	DownloadReceiptAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// CreateReceiptNote Add note to a receipt
+	// (POST /api/v2/{administration_id}/documents/receipts/{id}/notes)
+	CreateReceiptNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteReceiptNote Delete a note from a receipt
+	// (DELETE /api/v2/{administration_id}/documents/receipts/{id}/notes/{note_id})
+	DeleteReceiptNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
+	// CreateReceiptPayment Create a payment
+	// (POST /api/v2/{administration_id}/documents/receipts/{id}/payments)
+	CreateReceiptPayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteReceiptPayment Delete a payment
+	// (DELETE /api/v2/{administration_id}/documents/receipts/{id}/payments/{payment_id})
+	DeleteReceiptPayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, paymentId Identifier)
+	// RegisterReceiptPayment Register a payment
+	// (PATCH /api/v2/{administration_id}/documents/receipts/{id}/register_payment)
+	//
+	// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	RegisterReceiptPayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListTypelessDocuments List all typeless documents
+	// (GET /api/v2/{administration_id}/documents/typeless_documents)
+	ListTypelessDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTypelessDocumentsParams)
+	// CreateTypelessDocument Create a typeless document
+	// (POST /api/v2/{administration_id}/documents/typeless_documents)
+	CreateTypelessDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListTypelessDocumentVersions List all ids and versions
+	// (GET /api/v2/{administration_id}/documents/typeless_documents/synchronization)
+	ListTypelessDocumentVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTypelessDocumentVersionsParams)
+	// FetchTypelessDocuments Fetch typeless documents with given ids
+	// (POST /api/v2/{administration_id}/documents/typeless_documents/synchronization)
+	FetchTypelessDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteTypelessDocument Delete a typeless document
+	// (DELETE /api/v2/{administration_id}/documents/typeless_documents/{id})
+	DeleteTypelessDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetTypelessDocument Get a typeless document
+	// (GET /api/v2/{administration_id}/documents/typeless_documents/{id})
+	GetTypelessDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateTypelessDocumentAttachment Add attachment to a typeless document
+	// (POST /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments)
+	CreateTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteTypelessDocumentAttachment Delete an attachment from a typeless document
+	// (DELETE /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id})
+	DeleteTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// DownloadTypelessDocumentAttachment Download an attachment
+	// (GET /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id}/download)
+	DownloadTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
 	// ListDownloads List all downloads
 	// (GET /api/v2/{administration_id}/downloads)
 	ListDownloads(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListDownloadsParams)
@@ -15948,6 +18636,32 @@ type ServerInterface interface {
 	// UpdateProject Update a project
 	// (PATCH /api/v2/{administration_id}/projects/{id})
 	UpdateProject(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreatePurchaseTransactionBatch Batch purchase transactions
+	// (POST /api/v2/{administration_id}/purchase_transaction_batches)
+	CreatePurchaseTransactionBatch(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetPurchaseTransactionBatch Get a purchase transaction batch
+	// (GET /api/v2/{administration_id}/purchase_transaction_batches/{id})
+	GetPurchaseTransactionBatch(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DownloadPurchaseTransactionBatch Download a purchase transaction batch as SEPA credit transfer file
+	// (POST /api/v2/{administration_id}/purchase_transaction_batches/{id}/download)
+	DownloadPurchaseTransactionBatch(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListPurchaseTransactions List all purchase transactions
+	// (GET /api/v2/{administration_id}/purchase_transactions)
+	ListPurchaseTransactions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListPurchaseTransactionsParams)
+	// CreatePurchaseTransaction Pay a purchase invoice or receipt by credit transfer
+	// (POST /api/v2/{administration_id}/purchase_transactions)
+	CreatePurchaseTransaction(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeletePurchaseTransaction Delete a purchase transaction
+	// (DELETE /api/v2/{administration_id}/purchase_transactions/{id})
+	DeletePurchaseTransaction(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetPurchaseTransaction Get a purchase transaction
+	// (GET /api/v2/{administration_id}/purchase_transactions/{id})
+	GetPurchaseTransaction(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeletePurchaseTransactionDeprecated Delete a purchase transaction
+	// (DELETE /api/v2/{administration_id}/purchase_transactions/{id}/delete)
+	//
+	// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	DeletePurchaseTransactionDeprecated(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListRecurringSalesInvoices List all recurring sales invoices
 	// (GET /api/v2/{administration_id}/recurring_sales_invoices)
 	ListRecurringSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListRecurringSalesInvoicesParams)
@@ -16076,6 +18790,9 @@ type ServerInterface interface {
 	// SendSalesInvoice Send a sales invoice
 	// (PATCH /api/v2/{administration_id}/sales_invoices/{id}/send_invoice)
 	SendSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateSepaCreditTransfer Upload a SEPA credit transfer file
+	// (POST /api/v2/{administration_id}/sepa_credit_transfer)
+	CreateSepaCreditTransfer(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// ListSubscriptionTemplates List all subscription templates
 	// (GET /api/v2/{administration_id}/subscription_templates)
 	ListSubscriptionTemplates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListSubscriptionTemplatesParams)
@@ -16864,6 +19581,78 @@ func (_ Unimplemented) UploadDocumentStyleFile(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListGeneralDocuments List all general documents
+// (GET /api/v2/{administration_id}/documents/general_documents)
+func (_ Unimplemented) ListGeneralDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralDocumentsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateGeneralDocument Create a general document
+// (POST /api/v2/{administration_id}/documents/general_documents)
+func (_ Unimplemented) CreateGeneralDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListGeneralDocumentVersions List all ids and versions
+// (GET /api/v2/{administration_id}/documents/general_documents/synchronization)
+func (_ Unimplemented) ListGeneralDocumentVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralDocumentVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchGeneralDocuments Fetch general documents with given ids
+// (POST /api/v2/{administration_id}/documents/general_documents/synchronization)
+func (_ Unimplemented) FetchGeneralDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGeneralDocument Delete a general document
+// (DELETE /api/v2/{administration_id}/documents/general_documents/{id})
+func (_ Unimplemented) DeleteGeneralDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetGeneralDocument Get a general document
+// (GET /api/v2/{administration_id}/documents/general_documents/{id})
+func (_ Unimplemented) GetGeneralDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateGeneralDocument Update a general document
+// (PATCH /api/v2/{administration_id}/documents/general_documents/{id})
+func (_ Unimplemented) UpdateGeneralDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateGeneralDocumentAttachment Add attachment to a general document
+// (POST /api/v2/{administration_id}/documents/general_documents/{id}/attachments)
+func (_ Unimplemented) CreateGeneralDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGeneralDocumentAttachment Delete an attachment from a general document
+// (DELETE /api/v2/{administration_id}/documents/general_documents/{id}/attachments/{attachment_id})
+func (_ Unimplemented) DeleteGeneralDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadGeneralDocumentAttachment Download an attachment
+// (GET /api/v2/{administration_id}/documents/general_documents/{id}/attachments/{attachment_id}/download)
+func (_ Unimplemented) DownloadGeneralDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateGeneralDocumentNote Add note to a general document
+// (POST /api/v2/{administration_id}/documents/general_documents/{id}/notes)
+func (_ Unimplemented) CreateGeneralDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGeneralDocumentNote Delete a note from a general document
+// (DELETE /api/v2/{administration_id}/documents/general_documents/{id}/notes/{note_id})
+func (_ Unimplemented) DeleteGeneralDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListGeneralJournalDocuments List all journal entries
 // (GET /api/v2/{administration_id}/documents/general_journal_documents)
 func (_ Unimplemented) ListGeneralJournalDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralJournalDocumentsParams) {
@@ -16933,6 +19722,244 @@ func (_ Unimplemented) CreateGeneralJournalDocumentNote(w http.ResponseWriter, r
 // DeleteGeneralJournalDocumentNote Delete a note from a journal entry
 // (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id})
 func (_ Unimplemented) DeleteGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPurchaseInvoices List all purchase invoices
+// (GET /api/v2/{administration_id}/documents/purchase_invoices)
+func (_ Unimplemented) ListPurchaseInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListPurchaseInvoicesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePurchaseInvoice Create a purchase invoice
+// (POST /api/v2/{administration_id}/documents/purchase_invoices)
+func (_ Unimplemented) CreatePurchaseInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPurchaseInvoiceVersions List all ids and versions
+// (GET /api/v2/{administration_id}/documents/purchase_invoices/synchronization)
+func (_ Unimplemented) ListPurchaseInvoiceVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListPurchaseInvoiceVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchPurchaseInvoices Fetch purchase invoices with given ids
+// (POST /api/v2/{administration_id}/documents/purchase_invoices/synchronization)
+func (_ Unimplemented) FetchPurchaseInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePurchaseInvoice Delete a purchase invoice
+// (DELETE /api/v2/{administration_id}/documents/purchase_invoices/{id})
+func (_ Unimplemented) DeletePurchaseInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetPurchaseInvoice Get a purchase invoice
+// (GET /api/v2/{administration_id}/documents/purchase_invoices/{id})
+func (_ Unimplemented) GetPurchaseInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdatePurchaseInvoice Update a purchase invoice
+// (PATCH /api/v2/{administration_id}/documents/purchase_invoices/{id})
+func (_ Unimplemented) UpdatePurchaseInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePurchaseInvoiceAttachment Add attachment to a purchase invoice
+// (POST /api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments)
+func (_ Unimplemented) CreatePurchaseInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePurchaseInvoiceAttachment Delete an attachment from a purchase invoice
+// (DELETE /api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments/{attachment_id})
+func (_ Unimplemented) DeletePurchaseInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadPurchaseInvoiceAttachment Download an attachment
+// (GET /api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments/{attachment_id}/download)
+func (_ Unimplemented) DownloadPurchaseInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePurchaseInvoiceNote Add note to a purchase invoice
+// (POST /api/v2/{administration_id}/documents/purchase_invoices/{id}/notes)
+func (_ Unimplemented) CreatePurchaseInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePurchaseInvoiceNote Delete a note from a purchase invoice
+// (DELETE /api/v2/{administration_id}/documents/purchase_invoices/{id}/notes/{note_id})
+func (_ Unimplemented) DeletePurchaseInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePurchaseInvoicePayment Create a payment
+// (POST /api/v2/{administration_id}/documents/purchase_invoices/{id}/payments)
+func (_ Unimplemented) CreatePurchaseInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePurchaseInvoicePayment Delete a payment
+// (DELETE /api/v2/{administration_id}/documents/purchase_invoices/{id}/payments/{payment_id})
+func (_ Unimplemented) DeletePurchaseInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, paymentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RegisterPurchaseInvoicePayment Register a payment
+// (PATCH /api/v2/{administration_id}/documents/purchase_invoices/{id}/register_payment)
+//
+// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+func (_ Unimplemented) RegisterPurchaseInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListReceipts List all receipts
+// (GET /api/v2/{administration_id}/documents/receipts)
+func (_ Unimplemented) ListReceipts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListReceiptsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateReceipt Create a receipt
+// (POST /api/v2/{administration_id}/documents/receipts)
+func (_ Unimplemented) CreateReceipt(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListReceiptVersions List all ids and versions
+// (GET /api/v2/{administration_id}/documents/receipts/synchronization)
+func (_ Unimplemented) ListReceiptVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListReceiptVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchReceipts Fetch receipts with given ids
+// (POST /api/v2/{administration_id}/documents/receipts/synchronization)
+func (_ Unimplemented) FetchReceipts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteReceipt Delete a receipt
+// (DELETE /api/v2/{administration_id}/documents/receipts/{id})
+func (_ Unimplemented) DeleteReceipt(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetReceipt Get a receipt
+// (GET /api/v2/{administration_id}/documents/receipts/{id})
+func (_ Unimplemented) GetReceipt(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateReceipt Update a receipt
+// (PATCH /api/v2/{administration_id}/documents/receipts/{id})
+func (_ Unimplemented) UpdateReceipt(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateReceiptAttachment Add attachment to a receipt
+// (POST /api/v2/{administration_id}/documents/receipts/{id}/attachments)
+func (_ Unimplemented) CreateReceiptAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteReceiptAttachment Delete an attachment from a receipt
+// (DELETE /api/v2/{administration_id}/documents/receipts/{id}/attachments/{attachment_id})
+func (_ Unimplemented) DeleteReceiptAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadReceiptAttachment Download an attachment
+// (GET /api/v2/{administration_id}/documents/receipts/{id}/attachments/{attachment_id}/download)
+func (_ Unimplemented) DownloadReceiptAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateReceiptNote Add note to a receipt
+// (POST /api/v2/{administration_id}/documents/receipts/{id}/notes)
+func (_ Unimplemented) CreateReceiptNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteReceiptNote Delete a note from a receipt
+// (DELETE /api/v2/{administration_id}/documents/receipts/{id}/notes/{note_id})
+func (_ Unimplemented) DeleteReceiptNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateReceiptPayment Create a payment
+// (POST /api/v2/{administration_id}/documents/receipts/{id}/payments)
+func (_ Unimplemented) CreateReceiptPayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteReceiptPayment Delete a payment
+// (DELETE /api/v2/{administration_id}/documents/receipts/{id}/payments/{payment_id})
+func (_ Unimplemented) DeleteReceiptPayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, paymentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RegisterReceiptPayment Register a payment
+// (PATCH /api/v2/{administration_id}/documents/receipts/{id}/register_payment)
+//
+// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+func (_ Unimplemented) RegisterReceiptPayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTypelessDocuments List all typeless documents
+// (GET /api/v2/{administration_id}/documents/typeless_documents)
+func (_ Unimplemented) ListTypelessDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTypelessDocumentsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTypelessDocument Create a typeless document
+// (POST /api/v2/{administration_id}/documents/typeless_documents)
+func (_ Unimplemented) CreateTypelessDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTypelessDocumentVersions List all ids and versions
+// (GET /api/v2/{administration_id}/documents/typeless_documents/synchronization)
+func (_ Unimplemented) ListTypelessDocumentVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTypelessDocumentVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchTypelessDocuments Fetch typeless documents with given ids
+// (POST /api/v2/{administration_id}/documents/typeless_documents/synchronization)
+func (_ Unimplemented) FetchTypelessDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTypelessDocument Delete a typeless document
+// (DELETE /api/v2/{administration_id}/documents/typeless_documents/{id})
+func (_ Unimplemented) DeleteTypelessDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTypelessDocument Get a typeless document
+// (GET /api/v2/{administration_id}/documents/typeless_documents/{id})
+func (_ Unimplemented) GetTypelessDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTypelessDocumentAttachment Add attachment to a typeless document
+// (POST /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments)
+func (_ Unimplemented) CreateTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTypelessDocumentAttachment Delete an attachment from a typeless document
+// (DELETE /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id})
+func (_ Unimplemented) DeleteTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadTypelessDocumentAttachment Download an attachment
+// (GET /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id}/download)
+func (_ Unimplemented) DownloadTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -17446,6 +20473,56 @@ func (_ Unimplemented) UpdateProject(w http.ResponseWriter, r *http.Request, adm
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// CreatePurchaseTransactionBatch Batch purchase transactions
+// (POST /api/v2/{administration_id}/purchase_transaction_batches)
+func (_ Unimplemented) CreatePurchaseTransactionBatch(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetPurchaseTransactionBatch Get a purchase transaction batch
+// (GET /api/v2/{administration_id}/purchase_transaction_batches/{id})
+func (_ Unimplemented) GetPurchaseTransactionBatch(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadPurchaseTransactionBatch Download a purchase transaction batch as SEPA credit transfer file
+// (POST /api/v2/{administration_id}/purchase_transaction_batches/{id}/download)
+func (_ Unimplemented) DownloadPurchaseTransactionBatch(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPurchaseTransactions List all purchase transactions
+// (GET /api/v2/{administration_id}/purchase_transactions)
+func (_ Unimplemented) ListPurchaseTransactions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListPurchaseTransactionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePurchaseTransaction Pay a purchase invoice or receipt by credit transfer
+// (POST /api/v2/{administration_id}/purchase_transactions)
+func (_ Unimplemented) CreatePurchaseTransaction(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePurchaseTransaction Delete a purchase transaction
+// (DELETE /api/v2/{administration_id}/purchase_transactions/{id})
+func (_ Unimplemented) DeletePurchaseTransaction(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetPurchaseTransaction Get a purchase transaction
+// (GET /api/v2/{administration_id}/purchase_transactions/{id})
+func (_ Unimplemented) GetPurchaseTransaction(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePurchaseTransactionDeprecated Delete a purchase transaction
+// (DELETE /api/v2/{administration_id}/purchase_transactions/{id}/delete)
+//
+// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+func (_ Unimplemented) DeletePurchaseTransactionDeprecated(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListRecurringSalesInvoices List all recurring sales invoices
 // (GET /api/v2/{administration_id}/recurring_sales_invoices)
 func (_ Unimplemented) ListRecurringSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListRecurringSalesInvoicesParams) {
@@ -17697,6 +20774,12 @@ func (_ Unimplemented) ResumeSalesInvoice(w http.ResponseWriter, r *http.Request
 // SendSalesInvoice Send a sales invoice
 // (PATCH /api/v2/{administration_id}/sales_invoices/{id}/send_invoice)
 func (_ Unimplemented) SendSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateSepaCreditTransfer Upload a SEPA credit transfer file
+// (POST /api/v2/{administration_id}/sepa_credit_transfer)
+func (_ Unimplemented) CreateSepaCreditTransfer(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -20998,6 +24081,501 @@ func (siw *ServerInterfaceWrapper) UploadDocumentStyleFile(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ListGeneralDocuments operation middleware
+func (siw *ServerInterfaceWrapper) ListGeneralDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGeneralDocumentsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "new_filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "new_filter", r.URL.Query(), &params.NewFilter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "new_filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "new_filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGeneralDocuments(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGeneralDocument operation middleware
+func (siw *ServerInterfaceWrapper) CreateGeneralDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGeneralDocument(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGeneralDocumentVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListGeneralDocumentVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGeneralDocumentVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGeneralDocumentVersions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchGeneralDocuments operation middleware
+func (siw *ServerInterfaceWrapper) FetchGeneralDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchGeneralDocuments(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGeneralDocument operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGeneralDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGeneralDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGeneralDocument operation middleware
+func (siw *ServerInterfaceWrapper) GetGeneralDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGeneralDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateGeneralDocument operation middleware
+func (siw *ServerInterfaceWrapper) UpdateGeneralDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateGeneralDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGeneralDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) CreateGeneralDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGeneralDocumentAttachment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGeneralDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGeneralDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGeneralDocumentAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadGeneralDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DownloadGeneralDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadGeneralDocumentAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGeneralDocumentNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateGeneralDocumentNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGeneralDocumentNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGeneralDocumentNote operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGeneralDocumentNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "note_id" -------------
+	var noteId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "note_id", chi.URLParam(r, "note_id"), &noteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "note_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGeneralDocumentNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListGeneralJournalDocuments operation middleware
 func (siw *ServerInterfaceWrapper) ListGeneralJournalDocuments(w http.ResponseWriter, r *http.Request) {
 
@@ -21497,6 +25075,1605 @@ func (siw *ServerInterfaceWrapper) DeleteGeneralJournalDocumentNote(w http.Respo
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteGeneralJournalDocumentNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPurchaseInvoices operation middleware
+func (siw *ServerInterfaceWrapper) ListPurchaseInvoices(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPurchaseInvoicesParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "new_filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "new_filter", r.URL.Query(), &params.NewFilter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "new_filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "new_filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPurchaseInvoices(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePurchaseInvoice operation middleware
+func (siw *ServerInterfaceWrapper) CreatePurchaseInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePurchaseInvoice(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPurchaseInvoiceVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListPurchaseInvoiceVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPurchaseInvoiceVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPurchaseInvoiceVersions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchPurchaseInvoices operation middleware
+func (siw *ServerInterfaceWrapper) FetchPurchaseInvoices(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchPurchaseInvoices(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePurchaseInvoice operation middleware
+func (siw *ServerInterfaceWrapper) DeletePurchaseInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePurchaseInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPurchaseInvoice operation middleware
+func (siw *ServerInterfaceWrapper) GetPurchaseInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPurchaseInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePurchaseInvoice operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePurchaseInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePurchaseInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePurchaseInvoiceAttachment operation middleware
+func (siw *ServerInterfaceWrapper) CreatePurchaseInvoiceAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePurchaseInvoiceAttachment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePurchaseInvoiceAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DeletePurchaseInvoiceAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePurchaseInvoiceAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadPurchaseInvoiceAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DownloadPurchaseInvoiceAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadPurchaseInvoiceAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePurchaseInvoiceNote operation middleware
+func (siw *ServerInterfaceWrapper) CreatePurchaseInvoiceNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePurchaseInvoiceNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePurchaseInvoiceNote operation middleware
+func (siw *ServerInterfaceWrapper) DeletePurchaseInvoiceNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "note_id" -------------
+	var noteId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "note_id", chi.URLParam(r, "note_id"), &noteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "note_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePurchaseInvoiceNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePurchaseInvoicePayment operation middleware
+func (siw *ServerInterfaceWrapper) CreatePurchaseInvoicePayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePurchaseInvoicePayment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePurchaseInvoicePayment operation middleware
+func (siw *ServerInterfaceWrapper) DeletePurchaseInvoicePayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "payment_id" -------------
+	var paymentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "payment_id", chi.URLParam(r, "payment_id"), &paymentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "payment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePurchaseInvoicePayment(w, r, administrationId, id, paymentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RegisterPurchaseInvoicePayment operation middleware
+func (siw *ServerInterfaceWrapper) RegisterPurchaseInvoicePayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RegisterPurchaseInvoicePayment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListReceipts operation middleware
+func (siw *ServerInterfaceWrapper) ListReceipts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListReceiptsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "new_filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "new_filter", r.URL.Query(), &params.NewFilter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "new_filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "new_filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListReceipts(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateReceipt operation middleware
+func (siw *ServerInterfaceWrapper) CreateReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateReceipt(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListReceiptVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListReceiptVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListReceiptVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListReceiptVersions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchReceipts operation middleware
+func (siw *ServerInterfaceWrapper) FetchReceipts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchReceipts(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteReceipt operation middleware
+func (siw *ServerInterfaceWrapper) DeleteReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteReceipt(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetReceipt operation middleware
+func (siw *ServerInterfaceWrapper) GetReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetReceipt(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateReceipt operation middleware
+func (siw *ServerInterfaceWrapper) UpdateReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateReceipt(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateReceiptAttachment operation middleware
+func (siw *ServerInterfaceWrapper) CreateReceiptAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateReceiptAttachment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteReceiptAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteReceiptAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteReceiptAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadReceiptAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DownloadReceiptAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadReceiptAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateReceiptNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateReceiptNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateReceiptNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteReceiptNote operation middleware
+func (siw *ServerInterfaceWrapper) DeleteReceiptNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "note_id" -------------
+	var noteId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "note_id", chi.URLParam(r, "note_id"), &noteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "note_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteReceiptNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateReceiptPayment operation middleware
+func (siw *ServerInterfaceWrapper) CreateReceiptPayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateReceiptPayment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteReceiptPayment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteReceiptPayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "payment_id" -------------
+	var paymentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "payment_id", chi.URLParam(r, "payment_id"), &paymentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "payment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteReceiptPayment(w, r, administrationId, id, paymentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RegisterReceiptPayment operation middleware
+func (siw *ServerInterfaceWrapper) RegisterReceiptPayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RegisterReceiptPayment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTypelessDocuments operation middleware
+func (siw *ServerInterfaceWrapper) ListTypelessDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTypelessDocumentsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "new_filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "new_filter", r.URL.Query(), &params.NewFilter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "new_filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "new_filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTypelessDocuments(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTypelessDocument operation middleware
+func (siw *ServerInterfaceWrapper) CreateTypelessDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTypelessDocument(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTypelessDocumentVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListTypelessDocumentVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTypelessDocumentVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTypelessDocumentVersions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchTypelessDocuments operation middleware
+func (siw *ServerInterfaceWrapper) FetchTypelessDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchTypelessDocuments(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTypelessDocument operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTypelessDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTypelessDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTypelessDocument operation middleware
+func (siw *ServerInterfaceWrapper) GetTypelessDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTypelessDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTypelessDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) CreateTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTypelessDocumentAttachment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTypelessDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTypelessDocumentAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadTypelessDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DownloadTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadTypelessDocumentAttachment(w, r, administrationId, id, attachmentId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -24660,6 +29837,301 @@ func (siw *ServerInterfaceWrapper) UpdateProject(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// CreatePurchaseTransactionBatch operation middleware
+func (siw *ServerInterfaceWrapper) CreatePurchaseTransactionBatch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePurchaseTransactionBatch(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPurchaseTransactionBatch operation middleware
+func (siw *ServerInterfaceWrapper) GetPurchaseTransactionBatch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPurchaseTransactionBatch(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadPurchaseTransactionBatch operation middleware
+func (siw *ServerInterfaceWrapper) DownloadPurchaseTransactionBatch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadPurchaseTransactionBatch(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPurchaseTransactions operation middleware
+func (siw *ServerInterfaceWrapper) ListPurchaseTransactions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPurchaseTransactionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPurchaseTransactions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePurchaseTransaction operation middleware
+func (siw *ServerInterfaceWrapper) CreatePurchaseTransaction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePurchaseTransaction(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePurchaseTransaction operation middleware
+func (siw *ServerInterfaceWrapper) DeletePurchaseTransaction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePurchaseTransaction(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPurchaseTransaction operation middleware
+func (siw *ServerInterfaceWrapper) GetPurchaseTransaction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPurchaseTransaction(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePurchaseTransactionDeprecated operation middleware
+func (siw *ServerInterfaceWrapper) DeletePurchaseTransactionDeprecated(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePurchaseTransactionDeprecated(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListRecurringSalesInvoices operation middleware
 func (siw *ServerInterfaceWrapper) ListRecurringSalesInvoices(w http.ResponseWriter, r *http.Request) {
 
@@ -26362,6 +31834,32 @@ func (siw *ServerInterfaceWrapper) SendSalesInvoice(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SendSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSepaCreditTransfer operation middleware
+func (siw *ServerInterfaceWrapper) CreateSepaCreditTransfer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSepaCreditTransfer(w, r, administrationId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -29559,6 +35057,186 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents/{id}/attachments/{attachment_id}/download", wrapper.DownloadGeneralJournalDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices", wrapper.ListPurchaseInvoices)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices", wrapper.CreatePurchaseInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/synchronization", wrapper.ListPurchaseInvoiceVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/synchronization", wrapper.FetchPurchaseInvoices)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}", wrapper.DeletePurchaseInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}", wrapper.GetPurchaseInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}", wrapper.UpdatePurchaseInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}/notes", wrapper.CreatePurchaseInvoiceNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}/notes/{note_id}", wrapper.DeletePurchaseInvoiceNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments", wrapper.CreatePurchaseInvoiceAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments/{attachment_id}", wrapper.DeletePurchaseInvoiceAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}/attachments/{attachment_id}/download", wrapper.DownloadPurchaseInvoiceAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}/payments", wrapper.CreatePurchaseInvoicePayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}/payments/{payment_id}", wrapper.DeletePurchaseInvoicePayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/documents/purchase_invoices/{id}/register_payment", wrapper.RegisterPurchaseInvoicePayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/receipts", wrapper.ListReceipts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/receipts", wrapper.CreateReceipt)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/synchronization", wrapper.ListReceiptVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/synchronization", wrapper.FetchReceipts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}", wrapper.DeleteReceipt)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}", wrapper.GetReceipt)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}", wrapper.UpdateReceipt)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}/notes", wrapper.CreateReceiptNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}/notes/{note_id}", wrapper.DeleteReceiptNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}/attachments", wrapper.CreateReceiptAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}/attachments/{attachment_id}", wrapper.DeleteReceiptAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}/attachments/{attachment_id}/download", wrapper.DownloadReceiptAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}/payments", wrapper.CreateReceiptPayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}/payments/{payment_id}", wrapper.DeleteReceiptPayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/documents/receipts/{id}/register_payment", wrapper.RegisterReceiptPayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents", wrapper.ListGeneralDocuments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents", wrapper.CreateGeneralDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/synchronization", wrapper.ListGeneralDocumentVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/synchronization", wrapper.FetchGeneralDocuments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/{id}", wrapper.DeleteGeneralDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/{id}", wrapper.GetGeneralDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/{id}", wrapper.UpdateGeneralDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/{id}/notes", wrapper.CreateGeneralDocumentNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/{id}/notes/{note_id}", wrapper.DeleteGeneralDocumentNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/{id}/attachments", wrapper.CreateGeneralDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/{id}/attachments/{attachment_id}", wrapper.DeleteGeneralDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_documents/{id}/attachments/{attachment_id}/download", wrapper.DownloadGeneralDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/typeless_documents", wrapper.ListTypelessDocuments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/typeless_documents", wrapper.CreateTypelessDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/typeless_documents/synchronization", wrapper.ListTypelessDocumentVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/typeless_documents/synchronization", wrapper.FetchTypelessDocuments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/typeless_documents/{id}", wrapper.DeleteTypelessDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/typeless_documents/{id}", wrapper.GetTypelessDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/typeless_documents/{id}/attachments", wrapper.CreateTypelessDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id}", wrapper.DeleteTypelessDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id}/download", wrapper.DownloadTypelessDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/purchase_transactions", wrapper.ListPurchaseTransactions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/purchase_transactions", wrapper.CreatePurchaseTransaction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/purchase_transactions/{id}", wrapper.DeletePurchaseTransaction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/purchase_transactions/{id}", wrapper.GetPurchaseTransaction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/purchase_transactions/{id}/delete", wrapper.DeletePurchaseTransactionDeprecated)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/purchase_transaction_batches", wrapper.CreatePurchaseTransactionBatch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/purchase_transaction_batches/{id}", wrapper.GetPurchaseTransactionBatch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/purchase_transaction_batches/{id}/download", wrapper.DownloadPurchaseTransactionBatch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/sepa_credit_transfer", wrapper.CreateSepaCreditTransfer)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/journal_entries", wrapper.GetJournalEntriesReport)
