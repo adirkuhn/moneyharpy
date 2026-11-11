@@ -824,19 +824,6 @@ a.sidenav__link:active, button.sidenav__link:active { filter: brightness(0.92); 
 
 /* Contacts: a searchable list, paged like Moneybird, and a page per contact. */
 .details__line { display: block; }
-/* A centred pager on a small sheet, after Moneybird: previous, the pages around the current one, next. */
-.pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; width: fit-content; max-width: 100%; margin: 1rem auto 0; padding: 2px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-.pagination__page, .pagination__step { display: inline-grid; place-items: center; min-width: 2rem; height: 2rem; padding: 0 0.5rem; border-radius: 8px; color: var(--text); font-size: 0.8125rem; font-variant-numeric: tabular-nums; text-decoration: none; }
-.pagination__step { position: relative; }
-.pagination__step:first-child { margin-right: 0.375rem; }
-.pagination__step:last-child { margin-left: 0.375rem; }
-.pagination__step:first-child::after, .pagination__step:last-child::before { content: ''; position: absolute; top: 0.375rem; bottom: 0.375rem; width: 1px; background: var(--line); }
-.pagination__step:first-child::after { right: -0.25rem; }
-.pagination__step:last-child::before { left: -0.25rem; }
-a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover); }
-.pagination__page.is-current { background: var(--row-hover); color: var(--link); font-weight: 650; }
-.pagination__step.is-disabled { color: var(--muted); opacity: 0.5; }
-.pagination__gap { min-width: 1.5rem; color: var(--muted); text-align: center; }
 .people, .notes { margin: 0 0 1rem; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .people__row, .notes__row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 0.75rem 1rem; }
 .people__row + .people__row, .notes__row + .notes__row { border-top: 1px solid var(--line); }
@@ -900,10 +887,6 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
 .data-table.invoice-view__lines th:last-child { width: 8rem; }
 .send-panel .form-sheet { border-color: var(--blue); }
 .send-panel__hint { margin: 1rem 0 0; }
-.invoice-choice { border: 0; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.25rem; }
-.invoice-choice__row { display: grid; grid-template-columns: auto minmax(6rem, 10rem) 1fr auto; gap: 0.75rem; align-items: center; padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 0.5rem; cursor: pointer; }
-.invoice-choice__row:has(input:checked) { border-color: var(--blue); }
-@media (max-width: 40rem) { .invoice-choice__row { grid-template-columns: auto 1fr; } }
 .file-field .hint { margin: 0; }
 
 /* On phones each line is a card of labelled fields instead of a table row. */
@@ -940,7 +923,6 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
  * left of the action bar, the list's actions on the right, an introduction,
  * a table whose rows open their document and a bar for ticked rows.
  */
-.actionbar--wide, .content--wide { max-width: 80rem; }
 .actionbar__heading { flex-wrap: wrap; }
 .btn--icon { width: 2.375rem; padding: 0; }
 .btn--with-icon { gap: 0.5rem; }
@@ -1051,27 +1033,10 @@ a.dropdown__item:hover { background: var(--row-hover); }
 .document-table__icon { display: inline-flex; vertical-align: middle; }
 .document-table__row { cursor: pointer; }
 .document-table__row:hover td, .document-table__row.is-selected td { background: var(--row-hover); }
-.document-table th { color: var(--text); font-weight: 400; }
 .document-table td a.document-table__link { color: var(--text); font-weight: 400; text-decoration: none; }
 .document-table .draft-id { font-style: italic; }
 .document-table td a.document-table__link:hover { color: var(--link); text-decoration: underline; }
 .badge--active { border-color: var(--teal); color: var(--text); }
-/* In a list a state is a solid label of fixed width, coloured by state, after Moneybird. */
-.document-table td.document-table__state { padding-block: 0.375rem; }
-.document-table__state .badge { display: flex; justify-content: center; align-items: center; min-height: 1.75rem; padding: 0 0.5rem; overflow: hidden; border: 0; border-radius: 8px; background: var(--state-neutral); color: var(--white); font-size: 0.75rem; text-overflow: ellipsis; }
-.document-table__state .badge::before { content: none; }
-.document-table__state :is(.badge--scheduled, .badge--open, .badge--pending_payment) { background: var(--state-open); }
-.document-table__state .badge--late { background: var(--state-late); }
-.document-table__state .badge--reminded { background: var(--state-reminded); }
-.document-table__state :is(.badge--paid, .badge--active) { background: var(--state-paid); }
-.document-table__state .badge--uncollectible { background: var(--state-dark); }
-
-/* The actions on the ticked rows, kept in view at the bottom of the screen. */
-.bulk-bar { position: sticky; bottom: 1rem; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; margin-top: 1rem; padding: 0.75rem 1rem; border: 1px solid var(--blue); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px rgb(9 38 83 / 0.2); }
-.bulk-bar__count { font-weight: 650; }
-.bulk-bar__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-left: auto; }
-.bulk-bar .problems { margin: 0; }
-.content--wide > .pagination { margin-top: 1.5rem; }
 
 @media (max-width: 52rem) {
   .document-table .document-table__extra { display: none; }
@@ -1091,5 +1056,4 @@ a.dropdown__item:hover { background: var(--row-hover); }
   .tag-option.is-checked, .filter-panel__links a[aria-current] { outline: 2px solid Highlight; }
   .period-picker__band { border: 2px solid Highlight; }
   .period-picker__handle { background: Highlight; }
-  .document-table__state .badge { border: 1px solid CanvasText; }
 }

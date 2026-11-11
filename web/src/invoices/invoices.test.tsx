@@ -648,7 +648,7 @@ describe('bulk actions in the list', () => {
     await userEvent.click(within(table).getByRole('checkbox', { name: 'Select 2026-0004' }))
     await userEvent.click(within(table).getByRole('checkbox', { name: 'Select Draft #3' }))
     let bar = screen.getByRole('group', { name: 'Selected invoices' })
-    expect(within(bar).getByText('2 selected')).toBeInTheDocument()
+    expect(within(bar).getByText('2 invoices selected:')).toBeInTheDocument()
     await userEvent.click(within(bar).getByRole('button', { name: 'Send reminders (1)' }))
     await waitFor(() => expect(reminders).toEqual({ sales_invoice_reminders: [{ contact_id: '701', workflow_id: '601', document_style_id: '701', identity_id: '461', sales_invoice_ids: ['904'] }] }))
     expect(await screen.findByText('Sent a reminder for 1 invoice.')).toBeInTheDocument()
