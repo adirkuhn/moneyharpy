@@ -144,3 +144,33 @@ export function TileIcon({ kind }: { kind: 'balance' | 'attention' | 'in' | 'out
     </svg>
   )
 }
+
+/** Line icons for the actions and steps of the document lists, drawn for MoneyHarpy. */
+export type ListIconKind =
+  | 'plus' | 'chart' | 'export' | 'more' | 'paperclip' | 'at' | 'send' | 'file' | 'palette' | 'flow'
+  | 'coins' | 'upload' | 'plug' | 'calendar' | 'repeat'
+
+export function ListIcon({ kind }: { kind: ListIconKind }) {
+  const shapes: Record<ListIconKind, React.ReactNode> = {
+    plus: <path d="M12 5v14M5 12h14" />,
+    chart: <path d="M4 20.5h16M7 17v-6m5 6V6.5m5 10.5v-8" />,
+    export: <><path d="M12 15V4m-4 4 4-4 4 4" /><path d="M5 12.5v7h14v-7" /></>,
+    more: <path d="M6 12h.01M12 12h.01M18 12h.01" strokeWidth={3} />,
+    paperclip: <path d="m19 11.5-7.200 7.200a4.500 4.500 0 0 1-6.400-6.400l7.800-7.800a3 3 0 0 1 4.200 4.200l-7.700 7.700a1.500 1.500 0 0 1-2.100-2.100l7-7" />,
+    at: <><circle cx="12" cy="12" r="3.500" /><path d="M15.500 12v1.500a2.500 2.500 0 0 0 5 0V12a8.500 8.500 0 1 0-3.500 6.900" /></>,
+    send: <><path d="M20.500 3.500 10 14" /><path d="m20.500 3.500-6.500 17-4-6.500-6.500-4Z" /></>,
+    file: <><path d="M6.500 3.500h8l3.500 3.500v13.500h-11.500Z" /><path d="M14.500 3.500V7H18M12 10.500v6m-3-3h6" /></>,
+    palette: <><path d="M12 3.500a8.500 8.500 0 0 0 0 17c1.200 0 1.800-.8 1.800-1.700 0-1.200-1-1.600-1-2.600 0-1 .8-1.700 1.800-1.700h2.200a3.700 3.700 0 0 0 3.700-3.700c0-4-3.800-7.300-8.500-7.300Z" /><path d="M7.500 12h.01M9.500 8h.01M14 7.500h.01" strokeWidth={2.500} /></>,
+    flow: <><rect x="3.500" y="4" width="6" height="5" rx="1" /><rect x="14.500" y="15" width="6" height="5" rx="1" /><path d="M6.500 9v4.500a2 2 0 0 0 2 2h6" /></>,
+    coins: <><ellipse cx="9" cy="7" rx="5.500" ry="2.500" /><path d="M3.500 7v4c0 1.400 2.500 2.500 5.500 2.500S14.500 12.400 14.500 11V7" /><path d="M9.500 16.400c.6 1.200 2.800 2.100 5.500 2.100 3 0 5.500-1.100 5.500-2.500v-4c0-1.300-2.100-2.300-4.800-2.500" /></>,
+    upload: <><path d="M12 16V4.500m-4.500 4.500L12 4.500 16.500 9" /><path d="M4 15.500v4h16v-4" /></>,
+    plug: <><path d="M9 3.500V8m6-4.500V8M6.500 8h11v3a5.500 5.500 0 0 1-11 0Z" /><path d="M12 16.500v4" /></>,
+    calendar: <><rect x="3.500" y="5" width="17" height="15.500" rx="2" /><path d="M3.500 10h17M8 3v4m8-4v4" /></>,
+    repeat: <><path d="M4 11V9.500a3 3 0 0 1 3-3h12.500M16.500 3.500l3 3-3 3" /><path d="M20 13v1.500a3 3 0 0 1-3 3H4.500m3 3-3-3 3-3" /></>,
+  }
+  return (
+    <svg viewBox="0 0 24 24" width="1.125em" height="1.125em" aria-hidden="true" {...stroke}>
+      {shapes[kind]}
+    </svg>
+  )
+}

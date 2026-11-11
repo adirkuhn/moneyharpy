@@ -13,6 +13,8 @@ type Props = {
   value: string
   onChange: (contact: Contact) => void
   errors?: string[]
+  /** A control beside the picker, such as a button that clears it. */
+  action?: React.ReactNode
 }
 
 /** The contacts matching what is typed, asked of the server after a pause in typing. */
@@ -32,7 +34,7 @@ function useContactSearch(administrationId: string, query: string, enabled: bool
 }
 
 /** Picks a contact by searching all of them, like the searchable selects elsewhere. */
-export function ContactPicker({ administrationId, label, value, onChange, errors }: Props) {
+export function ContactPicker({ administrationId, label, value, onChange, errors, action }: Props) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -84,7 +86,7 @@ export function ContactPicker({ administrationId, label, value, onChange, errors
   }
 
   return (
-    <FormRow label={label} errors={errors}>
+    <FormRow label={label} errors={errors} action={action}>
       {({ id, labelId, ...described }) => (
         <div className="picker" ref={root}>
           <button
