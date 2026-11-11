@@ -31,6 +31,13 @@ func toOverview(o overview.Overview) Overview {
 	if o.Bank != nil {
 		out.Bank = &OverviewBank{Balance: o.Bank.Balance.String(), Currency: o.Bank.Currency, UnprocessedCount: o.Bank.Unprocessed}
 	}
+	if o.Sales != nil {
+		out.Sales = &OverviewSales{
+			ToReceive: OverviewTally{Count: o.Sales.ToReceive.Count, Amount: o.Sales.ToReceive.Amount.String()},
+			ToRemind:  OverviewTally{Count: o.Sales.ToRemind.Count, Amount: o.Sales.ToRemind.Amount.String()},
+			Currency:  o.Sales.Currency,
+		}
+	}
 	for i, it := range o.RecentlyProcessed {
 		out.RecentlyProcessed[i] = OverviewItem{
 			Type: OverviewItemType(it.Type), Id: it.ID.String(), Uri: it.Ref.URI(), Title: it.Title, Description: it.Description,

@@ -4,6 +4,7 @@ import type { components } from '../api/schema'
 
 export type Overview = components['schemas']['Overview']
 export type OverviewItem = components['schemas']['OverviewItem']
+export type OverviewTally = components['schemas']['OverviewTally']
 
 export function useOverview(administrationId: string) {
   return useQuery({

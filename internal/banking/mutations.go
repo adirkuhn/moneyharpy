@@ -3,6 +3,7 @@ package banking
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -41,8 +42,27 @@ type Mutation struct {
 	State       string
 	ProcessedAt *time.Time
 	Bookings    []Booking
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	// Payments are the invoice payments the transaction makes.
+	Payments  []PaymentLink
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// PaymentLink is an invoice payment made with (part of) a transaction.
+type PaymentLink struct {
+	ID          resource.ID
+	InvoiceType string
+	InvoiceID   resource.ID
+	// Price is signed like the invoice: positive for money received for an
+	// invoice, negative for money paid back on a credit invoice.
+	Price                 Amount
+	PriceBase             Amount
+	PaymentDate           time.Time
+	ManualPaymentAction   string
+	TransactionIdentifier string
+	UserID                resource.ID
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
 }
 
 // Ref locates the mutation.
@@ -58,14 +78,21 @@ func (m Mutation) direction() Amount {
 	return 1
 }
 
-// Open is the part of the amount that is not booked yet.
+// Open is the part of the amount that is not booked or paying an invoice
+// yet.
 func (m Mutation) Open() Amount {
 	open := m.Amount
 	for _, b := range m.Bookings {
 		open -= b.Price * m.direction()
 	}
+	for _, p := range m.Payments {
+		open -= p.Price
+	}
 	return open
 }
+
+// Booked reports a transaction with bookings or invoice payments.
+func (m Mutation) Booked() bool { return len(m.Bookings) > 0 || len(m.Payments) > 0 }
 
 // Version changes whenever the mutation does, for synchronization.
 func (m Mutation) Version() int64 { return m.UpdatedAt.Unix() }
@@ -77,7 +104,7 @@ func (m Mutation) AutoBooked() bool {
 
 // settle sets the state from the open amount.
 func (m *Mutation) settle(now time.Time) {
-	if len(m.Bookings) > 0 && m.Open() == 0 {
+	if m.Booked() && m.Open() == 0 {
 		if m.State != Processed {
 			m.State, m.ProcessedAt = Processed, &now
 		}
@@ -283,6 +310,9 @@ func (s *Service) LinkBooking(ctx context.Context, admin, id, user resource.ID, 
 	var verr resource.ValidationError
 	switch {
 	case l.Type == "LedgerAccount":
+	case l.Type == "SalesInvoice" && s.invoices != nil:
+		m, _, err := s.linkInvoice(ctx, admin, user, m, l)
+		return m, err
 	case slices.Contains(bookingTypes, l.Type):
 		return Mutation{}, ErrBookingUnavailable
 	default:
@@ -336,7 +366,10 @@ func (s *Service) UnlinkBooking(ctx context.Context, admin, id, user resource.ID
 	switch bookingType {
 	case "LedgerAccountBooking":
 	case "Payment":
-		return Mutation{}, ErrBookingUnavailable
+		if s.invoices == nil {
+			return Mutation{}, ErrBookingUnavailable
+		}
+		return s.unlinkPayment(ctx, admin, user, m, bookingID)
 	default:
 		var verr resource.ValidationError
 		verr.Add("booking_type", "is not included in the list")
@@ -355,6 +388,108 @@ func (s *Service) UnlinkBooking(ctx context.Context, admin, id, user resource.ID
 		return Mutation{}, fmt.Errorf("remove booking: %w", err)
 	}
 	return m, nil
+}
+
+// linkInvoice pays an invoice with (part of) the transaction. Link.Price
+// is in the transaction's direction; nil pays what both have open.
+func (s *Service) linkInvoice(ctx context.Context, admin, user resource.ID, m Mutation, l Link) (Mutation, resource.ID, error) {
+	var verr resource.ValidationError
+	if l.BookingID == nil {
+		verr.Add("booking_id", "can't be blank")
+		return Mutation{}, 0, &verr
+	}
+	var price *Amount
+	if l.Price != nil {
+		p, err := ParseAmount(*l.Price)
+		if err != nil {
+			verr.Add("price_base", err.Error())
+			return Mutation{}, 0, &verr
+		}
+		p *= m.direction()
+		price = &p
+	}
+	return s.payInvoice(ctx, admin, user, m, *l.BookingID, price)
+}
+
+func (s *Service) payInvoice(ctx context.Context, admin, user resource.ID, m Mutation, invoice resource.ID, price *Amount) (Mutation, resource.ID, error) {
+	if m.Open() == 0 {
+		var verr resource.ValidationError
+		verr.Add("price_base", "is more than the transaction has open, which is nothing")
+		return Mutation{}, 0, &verr
+	}
+	if err := s.checkUnlocked(ctx, admin, user, m.Date); err != nil {
+		return Mutation{}, 0, err
+	}
+	id, err := s.invoices.RegisterBankPayment(ctx, admin, user, invoice, m.ID, m.AccountID, m.Date, m.Open(), price)
+	if err != nil {
+		return Mutation{}, 0, err
+	}
+	m, err = s.resettle(ctx, admin, m.ID)
+	return m, id, err
+}
+
+func (s *Service) unlinkPayment(ctx context.Context, admin, user resource.ID, m Mutation, payment resource.ID) (Mutation, error) {
+	if !slices.ContainsFunc(m.Payments, func(p PaymentLink) bool { return p.ID == payment }) {
+		return Mutation{}, ErrBookingNotFound
+	}
+	if err := s.checkUnlocked(ctx, admin, user, m.Date); err != nil {
+		return Mutation{}, err
+	}
+	if err := s.invoices.RemoveBankPayment(ctx, admin, user, payment); err != nil {
+		return Mutation{}, err
+	}
+	return s.resettle(ctx, admin, m.ID)
+}
+
+// resettle sets the state of a transaction whose payments changed.
+func (s *Service) resettle(ctx context.Context, admin, id resource.ID) (Mutation, error) {
+	m, err := s.store.Mutation(ctx, admin, id)
+	if err != nil {
+		return Mutation{}, err
+	}
+	m.settle(s.now())
+	if err := s.store.SaveBookings(ctx, m, nil, nil); err != nil {
+		return Mutation{}, fmt.Errorf("store transaction: %w", err)
+	}
+	return m, nil
+}
+
+// LinkInvoicePayment pays an invoice with (part of) a transaction, for
+// sales; price is signed like the invoice, nil pays what both have open.
+func (s *Service) LinkInvoicePayment(ctx context.Context, admin, mutation, user, invoice resource.ID, price *Amount) (resource.ID, error) {
+	if _, err := s.ensure(ctx, admin, user); err != nil {
+		return 0, err
+	}
+	if s.invoices == nil {
+		return 0, ErrBookingUnavailable
+	}
+	m, err := s.store.Mutation(ctx, admin, mutation)
+	if errors.Is(err, ErrMutationNotFound) {
+		var verr resource.ValidationError
+		verr.Add("financial_mutation_id", "is not a transaction of this administration")
+		return 0, &verr
+	}
+	if err != nil {
+		return 0, err
+	}
+	_, id, err := s.payInvoice(ctx, admin, user, m, invoice, price)
+	return id, err
+}
+
+// UnlinkPayment removes an invoice payment from a transaction, for sales.
+func (s *Service) UnlinkPayment(ctx context.Context, admin, mutation, user, payment resource.ID) error {
+	_, err := s.UnlinkBooking(ctx, admin, mutation, user, "Payment", payment)
+	return err
+}
+
+// AccountLedger returns the category a financial account's money is in,
+// for sales.
+func (s *Service) AccountLedger(ctx context.Context, admin, account, user resource.ID) (resource.ID, error) {
+	a, err := s.Account(ctx, admin, account, user)
+	if err != nil {
+		return 0, err
+	}
+	return a.LedgerAccountID, nil
 }
 
 // checkUnlocked refuses changes dated in the locked period.

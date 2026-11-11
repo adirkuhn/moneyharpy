@@ -1,13 +1,20 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { formatAmount } from '../banking/queries'
 import { contactName } from '../contacts/queries'
+import { ConfirmDelete } from '../forms/ConfirmDelete'
+import { formErrors } from '../forms/Form'
+import { Problems } from '../auth/AuthLayout'
 import { reportPeriods } from '../journal/queries'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { Pagination } from '../layout/Pagination'
-import { filterTerms, invoiceTitle, type ListFilter, parseFilter, perPage, states, unpaidStates, useSalesInvoices } from './queries'
+import {
+  filterTerms, invoiceTitle, isPayable, type ListFilter, parseFilter, perPage, remindersFor, type SalesInvoice, states, unpaidStates,
+  useDeleteDrafts, useRegisterFullPayments, useSalesInvoices, useSendReminders,
+} from './queries'
 import { StateBadge } from './StateBadge'
 
 /** The quick filters at the top of Moneybird's invoice list. */
@@ -35,6 +42,17 @@ export function InvoicesPage() {
   const quick = quickOf(filter)
   const base = `/${administrationId}/sales_invoices`
   const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const shown = invoices.data?.invoices ?? []
+  const chosen = shown.filter((inv) => selected.has(inv.id ?? ''))
+  const allChosen = shown.length > 0 && chosen.length === shown.length
+  const toggle = (id: string) => {
+    const next = new Set(selected)
+    if (!next.delete(id)) {
+      next.add(id)
+    }
+    setSelected(next)
+  }
 
   const change = (changes: Partial<ListFilter>) => {
     const nextFilter = { ...filter, ...changes }
@@ -46,6 +64,7 @@ export function InvoicesPage() {
     }
     next.delete('page')
     setParams(next, { replace: true })
+    setSelected(new Set())
   }
 
   return (
@@ -80,9 +99,13 @@ export function InvoicesPage() {
         <p className="empty">{quick === 'this_year' && page === 1 ? t('invoices.empty') : t('invoices.noMatches')}</p>
       ) : (
         <>
+          <BulkActions administrationId={administrationId} invoices={chosen} onDone={() => setSelected(new Set())} />
           <table className="data-table invoices" aria-label={t('invoices.title')}>
             <thead>
               <tr>
+                <th scope="col" className="invoices__select">
+                  <input type="checkbox" aria-label={t('invoices.bulk.selectAll')} checked={allChosen} onChange={() => setSelected(allChosen ? new Set() : new Set(shown.map((inv) => inv.id ?? '')))} />
+                </th>
                 <th scope="col" className="invoices__number">{t('invoices.number')}</th>
                 <th scope="col" className="data-table__extra">{t('invoices.reference')}</th>
                 <th scope="col" className="invoices__date data-table__extra">{t('invoices.invoiceDate')}</th>
@@ -94,6 +117,9 @@ export function InvoicesPage() {
             <tbody>
               {invoices.data.invoices.map((inv) => (
                 <tr key={inv.id}>
+                  <td className="invoices__select">
+                    <input type="checkbox" aria-label={t('invoices.bulk.select', { name: invoiceTitle(inv, t) })} checked={selected.has(inv.id ?? '')} onChange={() => toggle(inv.id ?? '')} />
+                  </td>
                   <td className="invoices__number"><Link to={`${base}/${inv.id}`}>{invoiceTitle(inv, t)}</Link></td>
                   <td className="data-table__extra">{inv.reference}</td>
                   <td className="invoices__date data-table__extra">{date(inv.invoice_date)}</td>
@@ -108,5 +134,46 @@ export function InvoicesPage() {
         </>
       )}
     </Page>
+  )
+}
+
+/** What can be done with the invoices ticked in the list at once. */
+function BulkActions({ administrationId, invoices, onDone }: { administrationId: string; invoices: SalesInvoice[]; onDone: () => void }) {
+  const { t } = useTranslation()
+  const pay = useRegisterFullPayments(administrationId)
+  const remind = useSendReminders(administrationId)
+  const remove = useDeleteDrafts(administrationId)
+  const [result, setResult] = useState('')
+  const payable = invoices.filter((inv) => isPayable(inv.state))
+  const drafts = invoices.filter((inv) => inv.state === 'draft')
+  const busy = pay.isPending || remind.isPending || remove.isPending
+  const report = (done: number, failed: SalesInvoice[], key: string) => {
+    setResult(failed.length > 0 ? t('invoices.bulk.failed', { names: failed.map((inv) => invoiceTitle(inv, t)).join(', ') }) : t(key, { count: done }))
+    onDone()
+  }
+  if (invoices.length === 0) {
+    return result ? <p className="notice" role="status">{result}</p> : null
+  }
+  return (
+    <div className="filter-bar invoices__bulk" role="group" aria-label={t('invoices.bulk.label')}>
+      <span role="status">{t('invoices.bulk.selected', { count: invoices.length })}</span>
+      <Problems messages={formErrors(remind.error, {}).general} />
+      <button type="button" className="btn btn--secondary btn--small" disabled={busy || payable.length === 0}
+        onClick={() => pay.mutate(payable, { onSuccess: (failed) => report(payable.length - failed.length, failed, 'invoices.bulk.paid') })}>
+        {t('invoices.bulk.pay', { count: payable.length })}
+      </button>
+      <button type="button" className="btn btn--secondary btn--small" disabled={busy || payable.length === 0}
+        onClick={() => remind.mutate(remindersFor(payable), { onSuccess: (list) => report(list.length, [], 'invoices.bulk.reminded') })}>
+        {t('invoices.bulk.remind', { count: payable.length })}
+      </button>
+      {drafts.length > 0 && (
+        <ConfirmDelete
+          label={t('invoices.bulk.delete', { count: drafts.length })}
+          confirmLabel={t('invoices.bulk.confirmDelete', { count: drafts.length })}
+          disabled={busy}
+          onConfirm={() => remove.mutate(drafts, { onSuccess: (failed) => report(drafts.length - failed.length, failed, 'invoices.bulk.deleted') })}
+        />
+      )}
+    </div>
   )
 }

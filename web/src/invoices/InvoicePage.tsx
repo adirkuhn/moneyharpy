@@ -12,9 +12,11 @@ import { useWorkflows } from '../invoicing/queries'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
+import { ReminderPanel, WriteOffPanel } from './CollectPanels'
 import { InvoiceAttachments, InvoiceNotes } from './InvoiceExtras'
+import { PaymentsPanel } from './PaymentsPanel'
 import {
-  invoiceFileURL, invoiceTitle, isClosed, isSent, type SalesInvoice, useCreditSalesInvoice, useDeleteSalesInvoice, usePauseSalesInvoice, useSalesInvoice,
+  invoiceFileURL, invoiceTitle, isClosed, isPayable, isSent, type SalesInvoice, useCreditSalesInvoice, useDeleteSalesInvoice, usePauseSalesInvoice, useSalesInvoice,
 } from './queries'
 import { SendPanel } from './SendPanel'
 import { StateBadge } from './StateBadge'
@@ -34,7 +36,7 @@ function InvoiceView({ administrationId, invoiceId }: { administrationId: string
   const remove = useDeleteSalesInvoice(administrationId, invoiceId)
   const credit = useCreditSalesInvoice(administrationId, invoiceId)
   const pause = usePauseSalesInvoice(administrationId, invoiceId)
-  const [sending, setSending] = useState(false)
+  const [panel, setPanel] = useState<'send' | 'remind' | 'dubious' | 'uncollectible' | null>(null)
 
   if (invoice.error instanceof ApiError && invoice.error.status < 500) {
     return <NotFoundPage />
@@ -46,14 +48,19 @@ function InvoiceView({ administrationId, invoiceId }: { administrationId: string
   const list = `/${administrationId}/sales_invoices`
   const sent = isSent(inv.state)
   const closed = isClosed(inv.state)
+  const payable = isPayable(inv.state)
+  const done = () => setPanel(null)
   const file = (kind: Parameters<typeof invoiceFileURL>[2]) => invoiceFileURL(administrationId, inv.id ?? '', kind)
   const problems = formErrors(remove.error ?? credit.error ?? pause.error, {}).general
 
   const actions = (
     <>
       {!closed && <Link className="btn btn--secondary btn--small" to={`${list}/${inv.id}/edit`}>{t('invoices.edit')}</Link>}
-      {inv.state !== 'uncollectible' && !sending && (
-        <button type="button" className="btn btn--primary btn--small" onClick={() => setSending(true)}>{sent ? t('invoices.sendAgain') : t('invoices.send')}</button>
+      {inv.state !== 'uncollectible' && panel !== 'send' && (
+        <button type="button" className="btn btn--primary btn--small" onClick={() => setPanel('send')}>{sent ? t('invoices.sendAgain') : t('invoices.send')}</button>
+      )}
+      {payable && panel !== 'remind' && (
+        <button type="button" className="btn btn--secondary btn--small" onClick={() => setPanel('remind')}>{t('invoices.reminders.action')}</button>
       )}
       <a className="btn btn--secondary btn--small" href={file('download_pdf')} download>{t('invoices.downloadPdf')}</a>
       {sent && <a className="btn btn--secondary btn--small" href={file('download_ubl')} download>{t('invoices.downloadUbl')}</a>}
@@ -68,6 +75,12 @@ function InvoiceView({ administrationId, invoiceId }: { administrationId: string
           {inv.paused ? t('invoices.resume') : t('invoices.pause')}
         </button>
       )}
+      {payable && !inv.marked_dubious_on && (
+        <button type="button" className="btn btn--secondary btn--small" onClick={() => setPanel('dubious')}>{t('invoices.writeOff.dubious')}</button>
+      )}
+      {payable && (
+        <button type="button" className="btn btn--secondary btn--small" onClick={() => setPanel('uncollectible')}>{t('invoices.writeOff.uncollectible')}</button>
+      )}
       {!sent && <ConfirmDelete label={t('invoices.delete')} confirmLabel={t('invoices.confirmDelete')} disabled={remove.isPending} onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })} />}
     </>
   )
@@ -81,9 +94,13 @@ function InvoiceView({ administrationId, invoiceId }: { administrationId: string
         </p>
       )}
       {inv.paused && sent && !closed && <p className="notice">{t('invoices.paused')}</p>}
-      {sending && <SendPanel administrationId={administrationId} invoice={inv} onDone={() => setSending(false)} />}
+      {panel === 'send' && <SendPanel administrationId={administrationId} invoice={inv} onDone={done} />}
+      {panel === 'remind' && <ReminderPanel administrationId={administrationId} invoice={inv} onDone={done} />}
+      {(panel === 'dubious' || panel === 'uncollectible') && <WriteOffPanel key={panel} administrationId={administrationId} invoice={inv} kind={panel} onDone={done} />}
+      {inv.marked_dubious_on && inv.state !== 'paid' && inv.state !== 'uncollectible' && <p className="notice">{t('invoices.writeOff.dubiousNotice')}</p>}
       <Details administrationId={administrationId} invoice={inv} />
       <Lines administrationId={administrationId} invoice={inv} />
+      {sent && <PaymentsPanel administrationId={administrationId} invoice={inv} />}
       <InvoiceNotes administrationId={administrationId} invoice={inv} />
       <InvoiceAttachments administrationId={administrationId} invoice={inv} />
     </Page>
@@ -99,6 +116,11 @@ function Details({ administrationId, invoice: inv }: { administrationId: string;
     [t('invoices.contact'), inv.contact && <Link to={`/${administrationId}/contacts/${inv.contact_id}`}>{contactName(inv.contact)}</Link>],
     [t('invoices.invoiceDate'), date(inv.invoice_date) || t('invoices.dateOnSend')],
     [t('invoices.dueDate'), sentDue(inv) && date(inv.due_date)],
+    [t('invoices.paidAt'), date(inv.paid_at)],
+    [t('invoices.nextReminder'), date(inv.next_reminder)],
+    [t('invoices.reminderCount'), inv.reminder_count ? String(inv.reminder_count) : ''],
+    [t('invoices.markedDubiousOn'), date(inv.marked_dubious_on)],
+    [t('invoices.markedUncollectibleOn'), date(inv.marked_uncollectible_on)],
     [t('invoices.reference'), inv.reference],
     [t('invoices.paymentReference'), inv.payment_reference],
     [t('invoices.workflow'), (workflows.data ?? []).find((w) => w.id === inv.workflow_id)?.name],

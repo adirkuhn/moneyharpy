@@ -396,6 +396,26 @@ type PasswordResetToken struct {
 	ExpiresAt pgtype.Timestamptz
 }
 
+type Payment struct {
+	ID                    int64
+	AdministrationID      int64
+	InvoiceType           string
+	InvoiceID             int64
+	FinancialAccountID    pgtype.Int8
+	FinancialMutationID   pgtype.Int8
+	LedgerAccountID       pgtype.Int8
+	CreditInvoiceID       pgtype.Int8
+	LinkedPaymentID       pgtype.Int8
+	ManualPaymentAction   string
+	Price                 int64
+	PriceBase             int64
+	PaymentDate           pgtype.Date
+	TransactionIdentifier string
+	UserID                pgtype.Int8
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+}
+
 type RecoveryCode struct {
 	UserID   int64
 	CodeHash string

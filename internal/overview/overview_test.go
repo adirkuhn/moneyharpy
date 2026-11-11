@@ -10,6 +10,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
+	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
 
 const (
@@ -48,9 +49,29 @@ func (f *fakeBank) Summary(_ context.Context, _, _ resource.ID, recent int) (ban
 	}}, nil
 }
 
+type fakeSales struct{ calls int }
+
+func (f *fakeSales) Summary(context.Context, resource.ID, resource.ID) (sales.Summary, error) {
+	f.calls++
+	return sales.Summary{Receivables: sales.Receivables{ToReceive: sales.Tally{Count: 3, Amount: 36300}, ToRemind: sales.Tally{Count: 1, Amount: 12100}}, Currency: "EUR"}, nil
+}
+
+func TestSalesBlock(t *testing.T) {
+	sum := &fakeSales{}
+	svc := NewService(fakeAdmins{}, &fakeBank{}, sum)
+	got, err := svc.Get(context.Background(), adminID, clerk, nil)
+	if err != nil || got.Sales == nil || got.Sales.ToReceive.Count != 3 || got.Sales.ToReceive.Amount != 36300 || got.Sales.ToRemind.Count != 1 || got.Sales.Currency != "EUR" {
+		t.Fatalf("clerk sales = %+v, %v", got.Sales, err)
+	}
+	got, err = svc.Get(context.Background(), adminID, owner, []administration.Permission{administration.Bank})
+	if err != nil || got.Sales != nil || sum.calls != 1 {
+		t.Errorf("bank-scoped token sees sales: %+v, %v", got.Sales, err)
+	}
+}
+
 func TestOwnerSeesTheBank(t *testing.T) {
 	bank := &fakeBank{}
-	got, err := NewService(fakeAdmins{}, bank).Get(context.Background(), adminID, owner, nil)
+	got, err := NewService(fakeAdmins{}, bank, &fakeSales{}).Get(context.Background(), adminID, owner, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +93,7 @@ func TestOwnerSeesTheBank(t *testing.T) {
 
 func TestBankNeedsThePermissionAndTheScope(t *testing.T) {
 	bank := &fakeBank{}
-	svc := NewService(fakeAdmins{}, bank)
+	svc := NewService(fakeAdmins{}, bank, &fakeSales{})
 	got, err := svc.Get(context.Background(), adminID, clerk, nil)
 	if err != nil || got.Bank != nil || len(got.RecentlyProcessed) != 0 || got.RecentlyProcessed == nil {
 		t.Errorf("clerk = %+v, %v", got, err)
@@ -87,7 +108,7 @@ func TestBankNeedsThePermissionAndTheScope(t *testing.T) {
 }
 
 func TestStrangersGetNotFound(t *testing.T) {
-	if _, err := NewService(fakeAdmins{}, &fakeBank{}).Get(context.Background(), adminID, outsider, nil); !errors.Is(err, administration.ErrNotFound) {
+	if _, err := NewService(fakeAdmins{}, &fakeBank{}, &fakeSales{}).Get(context.Background(), adminID, outsider, nil); !errors.Is(err, administration.ErrNotFound) {
 		t.Errorf("error = %v", err)
 	}
 }
