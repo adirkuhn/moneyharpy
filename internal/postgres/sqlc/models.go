@@ -83,6 +83,48 @@ type ApiToken struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type Asset struct {
+	ID                       int64
+	AdministrationID         int64
+	LedgerAccountID          int64
+	Name                     string
+	PurchaseDate             pgtype.Date
+	PurchaseValue            int64
+	LifespanMonths           pgtype.Int4
+	ResidualValue            int64
+	DisposalID               pgtype.Int8
+	DisposalDate             pgtype.Date
+	DisposalReason           pgtype.Text
+	DisposalExternallyBooked bool
+	ReserveSaleID            pgtype.Int8
+	ReserveSaleAmount        pgtype.Int8
+	ReservePurchaseID        pgtype.Int8
+	ReservePurchaseAmount    pgtype.Int8
+	CreatedAt                pgtype.Timestamptz
+	UpdatedAt                pgtype.Timestamptz
+}
+
+type AssetSource struct {
+	ID                            int64
+	AdministrationID              int64
+	AssetID                       int64
+	DetailID                      pgtype.Int8
+	GeneralJournalDocumentEntryID pgtype.Int8
+	CreatedAt                     pgtype.Timestamptz
+}
+
+type AssetValueChange struct {
+	ID               int64
+	AdministrationID int64
+	AssetID          int64
+	Type             string
+	Date             pgtype.Date
+	Amount           int64
+	Description      pgtype.Text
+	ExternallyBooked bool
+	CreatedAt        pgtype.Timestamptz
+}
+
 type Attachment struct {
 	ID               int64
 	AdministrationID int64

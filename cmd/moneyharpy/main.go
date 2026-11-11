@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/assets"
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
@@ -159,6 +160,8 @@ func run(logger *slog.Logger) error {
 		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
 	})
 	bank.UseDocuments(documentService)
+	// Fixed assets, depreciated each month by a background job.
+	assetService := assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: hooks, Logger: logger}, ids, time.Now)
 	home := overview.NewService(admins, bank, invoiceService)
 	home.UseIncoming(documentService)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
@@ -171,6 +174,7 @@ func run(logger *slog.Logger) error {
 		Contacts:          contactService,
 		Sales:             invoiceService,
 		Purchases:         documentService,
+		Assets:            assetService,
 		Products:          productService,
 		Projects:          projectService,
 		Subscriptions:     subscriptionService,
@@ -214,6 +218,7 @@ func run(logger *slog.Logger) error {
 	go hooks.Run(ctx, 5*time.Second, func(err error) { logger.Error("deliver webhooks", "error", err) })
 	go invoiceService.Run(ctx, time.Minute, func(err error) { logger.Error("sales invoice background work", "error", err) })
 	go subscriptionService.Run(ctx, time.Minute, func(err error) { logger.Error("subscription charge billing", "error", err) })
+	go assetService.Run(ctx, time.Hour, func(err error) { logger.Error("asset depreciation", "error", err) })
 
 	errs := make(chan error, 1)
 	go func() { errs <- srv.ListenAndServe() }()

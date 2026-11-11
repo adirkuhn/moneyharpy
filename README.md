@@ -465,6 +465,57 @@ saved from email or Peppol, recurring documents, new documents made from a
 bank transaction (`NewPurchaseInvoice`, `NewReceipt`) and paying through
 Moneybird Banking are not available yet.
 
+## Assets
+
+Fixed assets live at `/{id}/assets` ("Assets" in the menu), with Moneybird's
+assets API under `/api/v2/{administration_id}/assets`: a paged list (active
+ones, without a disposal, unless `active=false`; `ledger_account_id`),
+create, update, delete, sources, value changes, disposals and the
+reinvestment reserve, plus the assets report at `/reports/assets`. An asset
+sits on a fixed asset category (non-current assets) that is not a
+sub-category. It has a linear depreciation plan (lifespan in years, rounded
+to months, and a residual value), except on land and buildings (chart scheme
+codes `BMvaTer` and `BMvaBeg`), which never depreciate. The monthly
+depreciation spreads what is left above the residual value over the months
+left, from the purchase or the last arbitrary value change; the plan's last
+month takes the rest. Creating an asset books nothing: sources link the
+purchase invoice or receipt lines (`detail_id`) or journal entry rows
+(`general_journal_document_entry_id`) on its category that bought it. Once it
+has value changes, a disposal or a reinvestment reserve purchase, only its
+name can change.
+
+What an asset books follows from its state, as one journal document of type
+`Asset`: each value change not booked externally on the category's
+accumulated depreciation sub-category (added when missing, with the scheme's
+`Cae` code) against depreciation costs, or against the book result for a
+divestment; a disposal clears the accumulated depreciation against the
+asset's category; a reinvestment reserve ("herinvesteringsreserve") purchase
+books the reserve against the asset's category on the purchase date,
+lowering the calculated purchase value the plan depreciates; a reinvestment
+reserve sale books the book result against the reserve on the disposal date.
+The Dutch seed has the system categories depreciation costs (`WAfsAmv`),
+book result on fixed assets (`WAfsRvm`), the reinvestment reserve
+(`BEivFirHer`) and the equipment's accumulated depreciation (`BMvaBeiCae`).
+Nothing booked in the locked period changes, and an asset with bookings
+there is not deleted.
+
+Value changes: `manual` and `arbitrary` (an arbitrary one restarts the plan
+and removes the linear ones after it), `divestment` and `full_depreciation`
+(the value on the day to zero, disposing of the asset), and
+`retroactive_linear_value_changes`, which books the plan's missing months up
+to today (at once; Moneybird does it in the background). A background job
+books each month's linear value change at its end, from the month the asset
+was added in; it runs per administration under a lock and skips months
+already booked. `POST .../disposals` needs the value on the day to be zero. A
+reinvestment reserve purchase is at most the purchase value less the residual
+value and what the reserve holds (sales less purchases). The assets report
+gives per asset its value at the start of the period, investment,
+depreciation, divestment and value at the end, for at most 12 months.
+Webhooks tell Moneybird's `company_assets_*` events: asset created, updated
+and destroyed, sources, disposals, the value changes by type (linear ones
+booked or removed by MoneyHarpy too) and the plan's created, updated and
+deactivated.
+
 ## Payments
 
 `GET /api/v2/{administration_id}/payments/{id}` returns any payment of a

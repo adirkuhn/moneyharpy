@@ -1132,3 +1132,30 @@ test('a purchase invoice is booked through the API, paid by a bank transaction a
   await page.goto(`${uri}/feed`)
   await expect(page.getByRole('region', { name: 'Incoming' }).getByRole('link', { name: /To process\s*1/ })).toBeVisible()
 })
+
+test('an asset is added through the API, depreciated and shown with its value changes', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Asset Co')
+  const uri = administrationUri(page)
+  const api = `/api/v2${uri}`
+  const categories = await (await page.request.get(`${api}/ledger_accounts`)).json()
+  const equipment = categories.find((c: { name: string }) => c.name === 'Equipment and furniture').id
+  const purchaseDate = `${new Date().getFullYear() - 1}-01-01`
+  const created = await page.request.post(`${api}/assets.json`, { data: { asset: {
+    name: 'Office laptop', ledger_account_id: equipment, purchase_date: purchaseDate, purchase_value: 1200,
+    value_change_plan_attributes: { lifespan_in_years: 4, residual_value: 0 },
+  } } })
+  expect(created.status()).toBe(201)
+  const asset = await created.json()
+  expect((await page.request.post(`${api}/assets/${asset.id}/value_changes/retroactive_linear_value_changes`)).status()).toBe(204)
+
+  const menu = page.getByRole('navigation', { name: 'Administration menu' })
+  await menu.getByRole('link', { name: 'Assets' }).click()
+  const table = page.getByRole('table', { name: 'Assets' })
+  await expect(table.getByRole('link', { name: 'Office laptop' })).toBeVisible()
+  await expect(table.locator('.badge', { hasText: 'Depreciating' })).toBeVisible()
+  await table.getByRole('link', { name: 'Office laptop' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Office laptop' })).toBeVisible()
+  const changes = page.getByRole('table', { name: 'Value changes' })
+  await expect(changes.getByRole('row').nth(1)).toContainText('Depreciation')
+})

@@ -22,6 +22,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/api"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/assets"
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
@@ -306,6 +307,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Contacts:        contactService,
 		Sales:           invoiceService,
 		Purchases:       documentService,
+		Assets:          assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: h.hooks}, ids, time.Now),
 		Products:        productService,
 		Projects:        projectService,
 		Subscriptions:   h.subscriptions,

@@ -125,6 +125,8 @@ const (
 	TypeTypelessDocument         Type = "documents/typeless_documents"
 	TypePurchaseTransaction      Type = "purchase_transactions"
 	TypePurchaseTransactionBatch Type = "purchase_transaction_batches"
+	// Fixed assets.
+	TypeAsset Type = "assets"
 )
 
 // Ref locates one resource.
