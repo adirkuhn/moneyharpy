@@ -848,6 +848,8 @@ a.sidenav__link:active, button.sidenav__link:active { filter: brightness(0.92); 
 .badge--late, .badge--reminded, .badge--uncollectible { border-color: var(--danger); background: var(--danger-bg); color: var(--danger-text); }
 .badge--paid { border-color: var(--teal); color: var(--text); }
 .badge--paid::before { content: '\2713\00a0'; color: var(--teal); }
+.badge--accepted, .badge--billed { border-color: var(--teal); color: var(--text); }
+.badge--rejected { border-color: var(--danger); color: var(--danger-text); }
 .invoices__number { width: 10rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .invoices__date { width: 8.5rem; white-space: nowrap; }
 .invoices__amount { width: 8rem; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }

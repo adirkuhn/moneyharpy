@@ -477,6 +477,39 @@ func (e DocumentType) Valid() bool {
 	}
 }
 
+// Defines values for EstimateState.
+const (
+	EstimateStateAccepted EstimateState = "accepted"
+	EstimateStateArchived EstimateState = "archived"
+	EstimateStateBilled   EstimateState = "billed"
+	EstimateStateDraft    EstimateState = "draft"
+	EstimateStateLate     EstimateState = "late"
+	EstimateStateOpen     EstimateState = "open"
+	EstimateStateRejected EstimateState = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the EstimateState enum.
+func (e EstimateState) Valid() bool {
+	switch e {
+	case EstimateStateAccepted:
+		return true
+	case EstimateStateArchived:
+		return true
+	case EstimateStateBilled:
+		return true
+	case EstimateStateDraft:
+		return true
+	case EstimateStateLate:
+		return true
+	case EstimateStateOpen:
+		return true
+	case EstimateStateRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExternalSalesInvoiceOrigin.
 const (
 	ExternalSalesInvoiceOriginApi         ExternalSalesInvoiceOrigin = "api"
@@ -1377,6 +1410,24 @@ func (e Scope) Valid() bool {
 	}
 }
 
+// Defines values for SendEstimateRequestEstimateSendingDeliveryMethod.
+const (
+	SendEstimateRequestEstimateSendingDeliveryMethodEmail  SendEstimateRequestEstimateSendingDeliveryMethod = "Email"
+	SendEstimateRequestEstimateSendingDeliveryMethodManual SendEstimateRequestEstimateSendingDeliveryMethod = "Manual"
+)
+
+// Valid indicates whether the value is a known member of the SendEstimateRequestEstimateSendingDeliveryMethod enum.
+func (e SendEstimateRequestEstimateSendingDeliveryMethod) Valid() bool {
+	switch e {
+	case SendEstimateRequestEstimateSendingDeliveryMethodEmail:
+		return true
+	case SendEstimateRequestEstimateSendingDeliveryMethodManual:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SendRemindersRequestSalesInvoiceRemindersDeliveryMethod.
 const (
 	SendRemindersRequestSalesInvoiceRemindersDeliveryMethodEmail  SendRemindersRequestSalesInvoiceRemindersDeliveryMethod = "Email"
@@ -1938,6 +1989,39 @@ func (e DocumentStyleResponsePaperSize) Valid() bool {
 	case DocumentStyleResponsePaperSizeA4:
 		return true
 	case DocumentStyleResponsePaperSizeLetter:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EstimateResponseState.
+const (
+	EstimateResponseStateAccepted EstimateResponseState = "accepted"
+	EstimateResponseStateArchived EstimateResponseState = "archived"
+	EstimateResponseStateBilled   EstimateResponseState = "billed"
+	EstimateResponseStateDraft    EstimateResponseState = "draft"
+	EstimateResponseStateLate     EstimateResponseState = "late"
+	EstimateResponseStateOpen     EstimateResponseState = "open"
+	EstimateResponseStateRejected EstimateResponseState = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the EstimateResponseState enum.
+func (e EstimateResponseState) Valid() bool {
+	switch e {
+	case EstimateResponseStateAccepted:
+		return true
+	case EstimateResponseStateArchived:
+		return true
+	case EstimateResponseStateBilled:
+		return true
+	case EstimateResponseStateDraft:
+		return true
+	case EstimateResponseStateLate:
+		return true
+	case EstimateResponseStateOpen:
+		return true
+	case EstimateResponseStateRejected:
 		return true
 	default:
 		return false
@@ -3368,6 +3452,9 @@ type BankSettingsRequest struct {
 	} `json:"bank_settings"`
 }
 
+// BillEstimateRequest defines model for BillEstimateRequest.
+type BillEstimateRequest = map[string]interface{}
+
 // BookingRule MoneyHarpy extension. Books matching transactions on a category.
 type BookingRule struct {
 	Active bool `json:"active"`
@@ -3455,6 +3542,12 @@ type BookkeepingSettingsRequest struct {
 		PeriodLockedUntil  *string            `json:"period_locked_until,omitempty"`
 		VatDocumentsPeriod *DeclarationPeriod `json:"vat_documents_period,omitempty"`
 	} `json:"bookkeeping_settings"`
+}
+
+// ChangeEstimateStateRequest defines model for ChangeEstimateStateRequest.
+type ChangeEstimateStateRequest struct {
+	// State accepted, rejected, open, late, billed or archived.
+	State string `json:"state"`
 }
 
 // ChartScheme MoneyHarpy extension. A standard chart of accounts categories can map to.
@@ -4066,6 +4159,229 @@ type EmptyRequest = map[string]interface{}
 type Error struct {
 	Error    string                  `json:"error"`
 	Symbolic *map[string]interface{} `json:"symbolic,omitempty"`
+}
+
+// Estimate A Moneybird estimate with MoneyHarpy extensions.
+type Estimate struct {
+	AcceptedAt *openapi_types.Date `json:"accepted_at,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier           `json:"administration_id"`
+	ArchivedAt       *openapi_types.Date  `json:"archived_at,omitempty"`
+	Attachments      []AttachmentResponse `json:"attachments"`
+	Contact          *Estimate_Contact    `json:"contact,omitempty"`
+
+	// ContactId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ContactId     Identifier              `json:"contact_id"`
+	ContactPerson *Estimate_ContactPerson `json:"contact_person,omitempty"`
+
+	// ContactPersonId Moneybird-compatible identifier_nullable.
+	ContactPersonId *IdentifierNullable        `json:"contact_person_id,omitempty"`
+	CreatedAt       *time.Time                 `json:"created_at,omitempty"`
+	Currency        string                     `json:"currency"`
+	CustomFields    []CustomFieldValueResponse `json:"custom_fields"`
+
+	// DeliveryMethod MoneyHarpy extension. How the estimate was last sent.
+	DeliveryMethod *string          `json:"delivery_method,omitempty"`
+	Details        []DetailResponse `json:"details"`
+
+	// Discount Moneybird-compatible number.
+	Discount *Number `json:"discount,omitempty"`
+
+	// DocumentStyleId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DocumentStyleId    *Identifier         `json:"document_style_id,omitempty"`
+	DraftId            *int                `json:"draft_id,omitempty"`
+	DueDate            *openapi_types.Date `json:"due_date,omitempty"`
+	EstimateDate       *openapi_types.Date `json:"estimate_date,omitempty"`
+	EstimateId         *string             `json:"estimate_id,omitempty"`
+	EstimateSequenceId *string             `json:"estimate_sequence_id,omitempty"`
+	Events             []EventResponse     `json:"events"`
+
+	// ExchangeRate Moneybird-compatible number.
+	ExchangeRate *Number `json:"exchange_rate,omitempty"`
+
+	// FirstDueInterval MoneyHarpy extension. Days from the estimate date to the due date.
+	FirstDueInterval *int `json:"first_due_interval,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// IdentityId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	IdentityId *Identifier    `json:"identity_id,omitempty"`
+	Language   *string        `json:"language,omitempty"`
+	Notes      []NoteResponse `json:"notes"`
+
+	// OriginalEstimateId Moneybird-compatible identifier_nullable.
+	OriginalEstimateId *IdentifierNullable `json:"original_estimate_id,omitempty"`
+
+	// OriginalSalesInvoiceId MoneyHarpy extension. The sales invoice the estimate was made from.
+	OriginalSalesInvoiceId  *Identifier           `json:"original_sales_invoice_id,omitempty"`
+	PostText                *string               `json:"post_text,omitempty"`
+	PreText                 *string               `json:"pre_text,omitempty"`
+	PricesAreInclTax        *bool                 `json:"prices_are_incl_tax,omitempty"`
+	PublicViewCode          *string               `json:"public_view_code,omitempty"`
+	PublicViewCodeExpiresAt *time.Time            `json:"public_view_code_expires_at,omitempty"`
+	Reference               *string               `json:"reference,omitempty"`
+	RejectedAt              *openapi_types.Date   `json:"rejected_at,omitempty"`
+	SentAt                  *openapi_types.Date   `json:"sent_at,omitempty"`
+	ShowTax                 *bool                 `json:"show_tax,omitempty"`
+	SignOnline              *bool                 `json:"sign_online,omitempty"`
+	State                   EstimateState         `json:"state"`
+	TaxTotals               []TaxSubtotalResponse `json:"tax_totals"`
+
+	// TotalDiscount Moneybird-compatible number.
+	TotalDiscount *Number `json:"total_discount,omitempty"`
+
+	// TotalPriceExclTax Moneybird-compatible number.
+	TotalPriceExclTax *Number `json:"total_price_excl_tax"`
+
+	// TotalPriceExclTaxBase Moneybird-compatible number.
+	TotalPriceExclTaxBase *Number `json:"total_price_excl_tax_base,omitempty"`
+
+	// TotalPriceInclTax Moneybird-compatible number.
+	TotalPriceInclTax *Number `json:"total_price_incl_tax"`
+
+	// TotalPriceInclTaxBase Moneybird-compatible number.
+	TotalPriceInclTaxBase *Number `json:"total_price_incl_tax_base,omitempty"`
+
+	// TotalTax MoneyHarpy extension. The VAT of all lines.
+	TotalTax  *string    `json:"total_tax,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri     string  `json:"uri"`
+	Url     *string `json:"url,omitempty"`
+	Version int     `json:"version"`
+
+	// WorkflowId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	WorkflowId *Identifier `json:"workflow_id,omitempty"`
+}
+
+// Estimate_Contact defines model for Estimate.Contact.
+type Estimate_Contact struct {
+	union json.RawMessage
+}
+
+// Estimate_ContactPerson defines model for Estimate.ContactPerson.
+type Estimate_ContactPerson struct {
+	union json.RawMessage
+}
+
+// EstimateState defines model for Estimate.State.
+type EstimateState string
+
+// EstimateRequest defines model for EstimateRequest.
+type EstimateRequest struct {
+	Estimate struct {
+		// ContactId An id as a string or a number; an empty string clears it.
+		ContactId *FlexibleIdentifier `json:"contact_id,omitempty"`
+
+		// ContactPersonId An id as a string or a number; an empty string clears it.
+		ContactPersonId *FlexibleIdentifier `json:"contact_person_id,omitempty"`
+		Currency        *string             `json:"currency,omitempty"`
+
+		// CustomFieldsAttributes Moneybird-compatible custom_fields_attributes.
+		CustomFieldsAttributes *CustomFieldsAttributes `json:"custom_fields_attributes,omitempty"`
+
+		// DetailsAttributes An array of lines, or an object of lines keyed by position.
+		DetailsAttributes *EstimateRequest_Estimate_DetailsAttributes `json:"details_attributes,omitempty"`
+
+		// Discount A percentage, such as "10" or "2.5"; empty for none.
+		Discount *EstimateRequest_Estimate_Discount `json:"discount,omitempty"`
+
+		// DocumentStyleId An id as a string or a number; an empty string clears it.
+		DocumentStyleId *FlexibleIdentifier `json:"document_style_id,omitempty"`
+
+		// EstimateDate yyyy-mm-dd; empty clears it on a draft, which then gets the day it is sent.
+		EstimateDate *string `json:"estimate_date,omitempty"`
+
+		// EstimateSequenceId Sets the {id} part of the number this estimate gets when sent.
+		EstimateSequenceId *EstimateRequest_Estimate_EstimateSequenceId `json:"estimate_sequence_id,omitempty"`
+
+		// FirstDueInterval Days from the estimate date until it expires.
+		FirstDueInterval *EstimateRequest_Estimate_FirstDueInterval `json:"first_due_interval,omitempty"`
+
+		// IdentityId An id as a string or a number; an empty string clears it.
+		IdentityId *FlexibleIdentifier `json:"identity_id,omitempty"`
+		Language   *string             `json:"language,omitempty"`
+
+		// OriginalSalesInvoiceId An id as a string or a number; an empty string clears it.
+		OriginalSalesInvoiceId *FlexibleIdentifier `json:"original_sales_invoice_id,omitempty"`
+		PostText               *string             `json:"post_text,omitempty"`
+		PreText                *string             `json:"pre_text,omitempty"`
+
+		// PricesAreInclTax A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		PricesAreInclTax *FlexibleBoolean `json:"prices_are_incl_tax,omitempty"`
+		Reference        *string          `json:"reference,omitempty"`
+
+		// RemoveEstimateSequenceId A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		RemoveEstimateSequenceId *FlexibleBoolean `json:"remove_estimate_sequence_id,omitempty"`
+
+		// ShowTax A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		ShowTax *FlexibleBoolean `json:"show_tax,omitempty"`
+
+		// UpdateContact A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		UpdateContact *FlexibleBoolean `json:"update_contact,omitempty"`
+
+		// WorkflowId An id as a string or a number; an empty string clears it.
+		WorkflowId *FlexibleIdentifier `json:"workflow_id,omitempty"`
+	} `json:"estimate"`
+}
+
+// EstimateRequestEstimateDetailsAttributes0 defines model for EstimateRequest.Estimate.DetailsAttributes.0.
+type EstimateRequestEstimateDetailsAttributes0 = []SalesInvoiceDetailInput
+
+// EstimateRequestEstimateDetailsAttributes1 defines model for EstimateRequest.Estimate.DetailsAttributes.1.
+type EstimateRequestEstimateDetailsAttributes1 map[string]SalesInvoiceDetailInput
+
+// EstimateRequest_Estimate_DetailsAttributes An array of lines, or an object of lines keyed by position.
+type EstimateRequest_Estimate_DetailsAttributes struct {
+	union json.RawMessage
+}
+
+// EstimateRequestEstimateDiscount0 defines model for EstimateRequest.Estimate.Discount.0.
+type EstimateRequestEstimateDiscount0 = string
+
+// EstimateRequestEstimateDiscount1 defines model for EstimateRequest.Estimate.Discount.1.
+type EstimateRequestEstimateDiscount1 = float32
+
+// EstimateRequest_Estimate_Discount A percentage, such as "10" or "2.5"; empty for none.
+type EstimateRequest_Estimate_Discount struct {
+	union json.RawMessage
+}
+
+// EstimateRequestEstimateEstimateSequenceId0 defines model for EstimateRequest.Estimate.EstimateSequenceId.0.
+type EstimateRequestEstimateEstimateSequenceId0 = string
+
+// EstimateRequestEstimateEstimateSequenceId1 defines model for EstimateRequest.Estimate.EstimateSequenceId.1.
+type EstimateRequestEstimateEstimateSequenceId1 = int
+
+// EstimateRequest_Estimate_EstimateSequenceId Sets the {id} part of the number this estimate gets when sent.
+type EstimateRequest_Estimate_EstimateSequenceId struct {
+	union json.RawMessage
+}
+
+// EstimateRequestEstimateFirstDueInterval0 defines model for EstimateRequest.Estimate.FirstDueInterval.0.
+type EstimateRequestEstimateFirstDueInterval0 = int
+
+// EstimateRequestEstimateFirstDueInterval1 defines model for EstimateRequest.Estimate.FirstDueInterval.1.
+type EstimateRequestEstimateFirstDueInterval1 = string
+
+// EstimateRequest_Estimate_FirstDueInterval Days from the estimate date until it expires.
+type EstimateRequest_Estimate_FirstDueInterval struct {
+	union json.RawMessage
 }
 
 // ExternalSalesInvoice A Moneybird external sales invoice with MoneyHarpy extensions.
@@ -5993,6 +6309,34 @@ type SalesInvoiceRequest_SalesInvoice_FirstDueInterval struct {
 // Scope defines model for Scope.
 type Scope string
 
+// SendEstimateRequest defines model for SendEstimateRequest.
+type SendEstimateRequest struct {
+	// AuditTrail Accepted for compatibility; MoneyHarpy has no online signing yet.
+	AuditTrail      *string `json:"audit_trail,omitempty"`
+	EstimateSending *struct {
+		DeliveryMethod *SendEstimateRequestEstimateSendingDeliveryMethod `json:"delivery_method,omitempty"`
+		EmailAddress   *string                                           `json:"email_address,omitempty"`
+
+		// EmailMessage Replaces the workflow's email text; {estimate_id}, {estimate_date}, {due_date}, {total}, {contact_name}, {company_name} and {reference} work.
+		EmailMessage *string `json:"email_message,omitempty"`
+
+		// SignOnline A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		SignOnline *FlexibleBoolean `json:"sign_online,omitempty"`
+	} `json:"estimate_sending,omitempty"`
+
+	// IpAddress Accepted for compatibility; MoneyHarpy has no online signing yet.
+	IpAddress *string `json:"ip_address,omitempty"`
+
+	// Sender A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+	Sender *FlexibleBoolean `json:"sender,omitempty"`
+
+	// SignatureOutput Accepted for compatibility; MoneyHarpy has no online signing yet.
+	SignatureOutput *string `json:"signature_output,omitempty"`
+}
+
+// SendEstimateRequestEstimateSendingDeliveryMethod defines model for SendEstimateRequest.EstimateSending.DeliveryMethod.
+type SendEstimateRequestEstimateSendingDeliveryMethod string
+
 // SendRemindersRequest defines model for SendRemindersRequest.
 type SendRemindersRequest struct {
 	SalesInvoiceReminders []struct {
@@ -7105,6 +7449,112 @@ type DownloadResponse struct {
 	// UserId Moneybird-compatible identifier_nullable.
 	UserId *IdentifierNullable `json:"user_id,omitempty"`
 }
+
+// EstimateResponse Moneybird-compatible estimate_response.
+type EstimateResponse struct {
+	AcceptedAt *openapi_types.Date `json:"accepted_at,omitempty"`
+
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier               `json:"administration_id,omitempty"`
+	ArchivedAt       *openapi_types.Date       `json:"archived_at,omitempty"`
+	Attachments      *[]AttachmentResponse     `json:"attachments,omitempty"`
+	Contact          *EstimateResponse_Contact `json:"contact,omitempty"`
+
+	// ContactId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ContactId     *Identifier                     `json:"contact_id,omitempty"`
+	ContactPerson *EstimateResponse_ContactPerson `json:"contact_person,omitempty"`
+
+	// ContactPersonId Moneybird-compatible identifier_nullable.
+	ContactPersonId *IdentifierNullable         `json:"contact_person_id,omitempty"`
+	CreatedAt       *time.Time                  `json:"created_at,omitempty"`
+	Currency        *string                     `json:"currency,omitempty"`
+	CustomFields    *[]CustomFieldValueResponse `json:"custom_fields,omitempty"`
+	Details         *[]DetailResponse           `json:"details,omitempty"`
+
+	// Discount Moneybird-compatible number.
+	Discount *Number `json:"discount,omitempty"`
+
+	// DocumentStyleId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DocumentStyleId    *Identifier         `json:"document_style_id,omitempty"`
+	DraftId            *int                `json:"draft_id,omitempty"`
+	DueDate            *openapi_types.Date `json:"due_date,omitempty"`
+	EstimateDate       *openapi_types.Date `json:"estimate_date,omitempty"`
+	EstimateId         *string             `json:"estimate_id,omitempty"`
+	EstimateSequenceId *string             `json:"estimate_sequence_id,omitempty"`
+	Events             *[]EventResponse    `json:"events,omitempty"`
+
+	// ExchangeRate Moneybird-compatible number.
+	ExchangeRate *Number `json:"exchange_rate,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+
+	// IdentityId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	IdentityId *Identifier     `json:"identity_id,omitempty"`
+	Language   *string         `json:"language,omitempty"`
+	Notes      *[]NoteResponse `json:"notes,omitempty"`
+
+	// OriginalEstimateId Moneybird-compatible identifier_nullable.
+	OriginalEstimateId      *IdentifierNullable    `json:"original_estimate_id,omitempty"`
+	PostText                *string                `json:"post_text,omitempty"`
+	PreText                 *string                `json:"pre_text,omitempty"`
+	PricesAreInclTax        *bool                  `json:"prices_are_incl_tax,omitempty"`
+	PublicViewCode          *string                `json:"public_view_code,omitempty"`
+	PublicViewCodeExpiresAt *time.Time             `json:"public_view_code_expires_at,omitempty"`
+	Reference               *string                `json:"reference,omitempty"`
+	RejectedAt              *openapi_types.Date    `json:"rejected_at,omitempty"`
+	SentAt                  *openapi_types.Date    `json:"sent_at,omitempty"`
+	ShowTax                 *bool                  `json:"show_tax,omitempty"`
+	SignOnline              *bool                  `json:"sign_online,omitempty"`
+	State                   *EstimateResponseState `json:"state,omitempty"`
+	TaxTotals               *[]TaxSubtotalResponse `json:"tax_totals,omitempty"`
+
+	// TotalDiscount Moneybird-compatible number.
+	TotalDiscount *Number `json:"total_discount,omitempty"`
+
+	// TotalPriceExclTax Moneybird-compatible number.
+	TotalPriceExclTax *Number `json:"total_price_excl_tax,omitempty"`
+
+	// TotalPriceExclTaxBase Moneybird-compatible number.
+	TotalPriceExclTaxBase *Number `json:"total_price_excl_tax_base,omitempty"`
+
+	// TotalPriceInclTax Moneybird-compatible number.
+	TotalPriceInclTax *Number `json:"total_price_incl_tax,omitempty"`
+
+	// TotalPriceInclTaxBase Moneybird-compatible number.
+	TotalPriceInclTaxBase *Number    `json:"total_price_incl_tax_base,omitempty"`
+	UpdatedAt             *time.Time `json:"updated_at,omitempty"`
+	Url                   *string    `json:"url,omitempty"`
+	Version               *int       `json:"version,omitempty"`
+
+	// WorkflowId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	WorkflowId *Identifier `json:"workflow_id,omitempty"`
+}
+
+// EstimateResponse_Contact defines model for EstimateResponse.Contact.
+type EstimateResponse_Contact struct {
+	union json.RawMessage
+}
+
+// EstimateResponse_ContactPerson defines model for EstimateResponse.ContactPerson.
+type EstimateResponse_ContactPerson struct {
+	union json.RawMessage
+}
+
+// EstimateResponseState defines model for EstimateResponse.State.
+type EstimateResponseState string
 
 // EventResponse Moneybird-compatible event_response.
 type EventResponse struct {
@@ -8350,6 +8800,9 @@ type BadRequest = Error
 // ContactPage defines model for ContactPage.
 type ContactPage = []Contact
 
+// EstimatePage defines model for EstimatePage.
+type EstimatePage = []Estimate
+
 // ExternalSalesInvoicePage defines model for ExternalSalesInvoicePage.
 type ExternalSalesInvoicePage = []ExternalSalesInvoice
 
@@ -8629,6 +9082,41 @@ type ListDownloadsParamsDownloaded string
 
 // ListDownloadsParamsFailed defines parameters for ListDownloads.
 type ListDownloadsParamsFailed string
+
+// ListEstimatesParams defines parameters for ListEstimates.
+type ListEstimatesParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// ListEstimateVersionsParams defines parameters for ListEstimateVersions.
+type ListEstimateVersionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// GetEstimateParams defines parameters for GetEstimate.
+type GetEstimateParams struct {
+	// Includes Accepted for compatibility.
+	Includes *string `form:"includes,omitempty" json:"includes,omitempty"`
+}
+
+// CreateEstimateAttachmentMultipartBody defines parameters for CreateEstimateAttachment.
+type CreateEstimateAttachmentMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
+// DownloadEstimatePdfParams defines parameters for DownloadEstimatePdf.
+type DownloadEstimatePdfParams struct {
+	// Media stationery leaves out the sender's address and logo, for printing on paper that has them.
+	Media *Media `form:"media,omitempty" json:"media,omitempty"`
+}
 
 // ListExternalSalesInvoicesParams defines parameters for ListExternalSalesInvoices.
 type ListExternalSalesInvoicesParams struct {
@@ -9011,6 +9499,30 @@ type CreateGeneralJournalDocumentAttachmentMultipartRequestBody CreateGeneralJou
 
 // CreateGeneralJournalDocumentNoteJSONRequestBody defines body for CreateGeneralJournalDocumentNote for application/json ContentType.
 type CreateGeneralJournalDocumentNoteJSONRequestBody = NoteRequest
+
+// CreateEstimateJSONRequestBody defines body for CreateEstimate for application/json ContentType.
+type CreateEstimateJSONRequestBody = EstimateRequest
+
+// FetchEstimatesJSONRequestBody defines body for FetchEstimates for application/json ContentType.
+type FetchEstimatesJSONRequestBody = SynchronizationRequest
+
+// UpdateEstimateJSONRequestBody defines body for UpdateEstimate for application/json ContentType.
+type UpdateEstimateJSONRequestBody = EstimateRequest
+
+// CreateEstimateAttachmentMultipartRequestBody defines body for CreateEstimateAttachment for multipart/form-data ContentType.
+type CreateEstimateAttachmentMultipartRequestBody CreateEstimateAttachmentMultipartBody
+
+// BillEstimateJSONRequestBody defines body for BillEstimate for application/json ContentType.
+type BillEstimateJSONRequestBody = BillEstimateRequest
+
+// ChangeEstimateStateJSONRequestBody defines body for ChangeEstimateState for application/json ContentType.
+type ChangeEstimateStateJSONRequestBody = ChangeEstimateStateRequest
+
+// CreateEstimateNoteJSONRequestBody defines body for CreateEstimateNote for application/json ContentType.
+type CreateEstimateNoteJSONRequestBody = NoteRequest
+
+// SendEstimateJSONRequestBody defines body for SendEstimate for application/json ContentType.
+type SendEstimateJSONRequestBody = SendEstimateRequest
 
 // CreateExternalSalesInvoiceJSONRequestBody defines body for CreateExternalSalesInvoice for application/json ContentType.
 type CreateExternalSalesInvoiceJSONRequestBody = ExternalSalesInvoiceRequest
@@ -9621,6 +10133,326 @@ func (t DocumentStyle_InvoiceSenderAddress_AdditionalProperties) MarshalJSON() (
 }
 
 func (t *DocumentStyle_InvoiceSenderAddress_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the Estimate_Contact as a SimpleContactResponse
+func (t Estimate_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the Estimate_Contact as the provided SimpleContactResponse
+func (t *Estimate_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the Estimate_Contact, using the provided SimpleContactResponse
+func (t *Estimate_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Estimate_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Estimate_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsContactPersonResponse returns the union data inside the Estimate_ContactPerson as a ContactPersonResponse
+func (t Estimate_ContactPerson) AsContactPersonResponse() (ContactPersonResponse, error) {
+	var body ContactPersonResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromContactPersonResponse overwrites any union data inside the Estimate_ContactPerson as the provided ContactPersonResponse
+func (t *Estimate_ContactPerson) FromContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeContactPersonResponse performs a merge with any union data inside the Estimate_ContactPerson, using the provided ContactPersonResponse
+func (t *Estimate_ContactPerson) MergeContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Estimate_ContactPerson) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Estimate_ContactPerson) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsEstimateRequestEstimateDetailsAttributes0 returns the union data inside the EstimateRequest_Estimate_DetailsAttributes as a EstimateRequestEstimateDetailsAttributes0
+func (t EstimateRequest_Estimate_DetailsAttributes) AsEstimateRequestEstimateDetailsAttributes0() (EstimateRequestEstimateDetailsAttributes0, error) {
+	var body EstimateRequestEstimateDetailsAttributes0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEstimateRequestEstimateDetailsAttributes0 overwrites any union data inside the EstimateRequest_Estimate_DetailsAttributes as the provided EstimateRequestEstimateDetailsAttributes0
+func (t *EstimateRequest_Estimate_DetailsAttributes) FromEstimateRequestEstimateDetailsAttributes0(v EstimateRequestEstimateDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEstimateRequestEstimateDetailsAttributes0 performs a merge with any union data inside the EstimateRequest_Estimate_DetailsAttributes, using the provided EstimateRequestEstimateDetailsAttributes0
+func (t *EstimateRequest_Estimate_DetailsAttributes) MergeEstimateRequestEstimateDetailsAttributes0(v EstimateRequestEstimateDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsEstimateRequestEstimateDetailsAttributes1 returns the union data inside the EstimateRequest_Estimate_DetailsAttributes as a EstimateRequestEstimateDetailsAttributes1
+func (t EstimateRequest_Estimate_DetailsAttributes) AsEstimateRequestEstimateDetailsAttributes1() (EstimateRequestEstimateDetailsAttributes1, error) {
+	var body EstimateRequestEstimateDetailsAttributes1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEstimateRequestEstimateDetailsAttributes1 overwrites any union data inside the EstimateRequest_Estimate_DetailsAttributes as the provided EstimateRequestEstimateDetailsAttributes1
+func (t *EstimateRequest_Estimate_DetailsAttributes) FromEstimateRequestEstimateDetailsAttributes1(v EstimateRequestEstimateDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEstimateRequestEstimateDetailsAttributes1 performs a merge with any union data inside the EstimateRequest_Estimate_DetailsAttributes, using the provided EstimateRequestEstimateDetailsAttributes1
+func (t *EstimateRequest_Estimate_DetailsAttributes) MergeEstimateRequestEstimateDetailsAttributes1(v EstimateRequestEstimateDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t EstimateRequest_Estimate_DetailsAttributes) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *EstimateRequest_Estimate_DetailsAttributes) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsEstimateRequestEstimateDiscount0 returns the union data inside the EstimateRequest_Estimate_Discount as a EstimateRequestEstimateDiscount0
+func (t EstimateRequest_Estimate_Discount) AsEstimateRequestEstimateDiscount0() (EstimateRequestEstimateDiscount0, error) {
+	var body EstimateRequestEstimateDiscount0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEstimateRequestEstimateDiscount0 overwrites any union data inside the EstimateRequest_Estimate_Discount as the provided EstimateRequestEstimateDiscount0
+func (t *EstimateRequest_Estimate_Discount) FromEstimateRequestEstimateDiscount0(v EstimateRequestEstimateDiscount0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEstimateRequestEstimateDiscount0 performs a merge with any union data inside the EstimateRequest_Estimate_Discount, using the provided EstimateRequestEstimateDiscount0
+func (t *EstimateRequest_Estimate_Discount) MergeEstimateRequestEstimateDiscount0(v EstimateRequestEstimateDiscount0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsEstimateRequestEstimateDiscount1 returns the union data inside the EstimateRequest_Estimate_Discount as a EstimateRequestEstimateDiscount1
+func (t EstimateRequest_Estimate_Discount) AsEstimateRequestEstimateDiscount1() (EstimateRequestEstimateDiscount1, error) {
+	var body EstimateRequestEstimateDiscount1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEstimateRequestEstimateDiscount1 overwrites any union data inside the EstimateRequest_Estimate_Discount as the provided EstimateRequestEstimateDiscount1
+func (t *EstimateRequest_Estimate_Discount) FromEstimateRequestEstimateDiscount1(v EstimateRequestEstimateDiscount1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEstimateRequestEstimateDiscount1 performs a merge with any union data inside the EstimateRequest_Estimate_Discount, using the provided EstimateRequestEstimateDiscount1
+func (t *EstimateRequest_Estimate_Discount) MergeEstimateRequestEstimateDiscount1(v EstimateRequestEstimateDiscount1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t EstimateRequest_Estimate_Discount) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *EstimateRequest_Estimate_Discount) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsEstimateRequestEstimateEstimateSequenceId0 returns the union data inside the EstimateRequest_Estimate_EstimateSequenceId as a EstimateRequestEstimateEstimateSequenceId0
+func (t EstimateRequest_Estimate_EstimateSequenceId) AsEstimateRequestEstimateEstimateSequenceId0() (EstimateRequestEstimateEstimateSequenceId0, error) {
+	var body EstimateRequestEstimateEstimateSequenceId0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEstimateRequestEstimateEstimateSequenceId0 overwrites any union data inside the EstimateRequest_Estimate_EstimateSequenceId as the provided EstimateRequestEstimateEstimateSequenceId0
+func (t *EstimateRequest_Estimate_EstimateSequenceId) FromEstimateRequestEstimateEstimateSequenceId0(v EstimateRequestEstimateEstimateSequenceId0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEstimateRequestEstimateEstimateSequenceId0 performs a merge with any union data inside the EstimateRequest_Estimate_EstimateSequenceId, using the provided EstimateRequestEstimateEstimateSequenceId0
+func (t *EstimateRequest_Estimate_EstimateSequenceId) MergeEstimateRequestEstimateEstimateSequenceId0(v EstimateRequestEstimateEstimateSequenceId0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsEstimateRequestEstimateEstimateSequenceId1 returns the union data inside the EstimateRequest_Estimate_EstimateSequenceId as a EstimateRequestEstimateEstimateSequenceId1
+func (t EstimateRequest_Estimate_EstimateSequenceId) AsEstimateRequestEstimateEstimateSequenceId1() (EstimateRequestEstimateEstimateSequenceId1, error) {
+	var body EstimateRequestEstimateEstimateSequenceId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEstimateRequestEstimateEstimateSequenceId1 overwrites any union data inside the EstimateRequest_Estimate_EstimateSequenceId as the provided EstimateRequestEstimateEstimateSequenceId1
+func (t *EstimateRequest_Estimate_EstimateSequenceId) FromEstimateRequestEstimateEstimateSequenceId1(v EstimateRequestEstimateEstimateSequenceId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEstimateRequestEstimateEstimateSequenceId1 performs a merge with any union data inside the EstimateRequest_Estimate_EstimateSequenceId, using the provided EstimateRequestEstimateEstimateSequenceId1
+func (t *EstimateRequest_Estimate_EstimateSequenceId) MergeEstimateRequestEstimateEstimateSequenceId1(v EstimateRequestEstimateEstimateSequenceId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t EstimateRequest_Estimate_EstimateSequenceId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *EstimateRequest_Estimate_EstimateSequenceId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsEstimateRequestEstimateFirstDueInterval0 returns the union data inside the EstimateRequest_Estimate_FirstDueInterval as a EstimateRequestEstimateFirstDueInterval0
+func (t EstimateRequest_Estimate_FirstDueInterval) AsEstimateRequestEstimateFirstDueInterval0() (EstimateRequestEstimateFirstDueInterval0, error) {
+	var body EstimateRequestEstimateFirstDueInterval0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEstimateRequestEstimateFirstDueInterval0 overwrites any union data inside the EstimateRequest_Estimate_FirstDueInterval as the provided EstimateRequestEstimateFirstDueInterval0
+func (t *EstimateRequest_Estimate_FirstDueInterval) FromEstimateRequestEstimateFirstDueInterval0(v EstimateRequestEstimateFirstDueInterval0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEstimateRequestEstimateFirstDueInterval0 performs a merge with any union data inside the EstimateRequest_Estimate_FirstDueInterval, using the provided EstimateRequestEstimateFirstDueInterval0
+func (t *EstimateRequest_Estimate_FirstDueInterval) MergeEstimateRequestEstimateFirstDueInterval0(v EstimateRequestEstimateFirstDueInterval0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsEstimateRequestEstimateFirstDueInterval1 returns the union data inside the EstimateRequest_Estimate_FirstDueInterval as a EstimateRequestEstimateFirstDueInterval1
+func (t EstimateRequest_Estimate_FirstDueInterval) AsEstimateRequestEstimateFirstDueInterval1() (EstimateRequestEstimateFirstDueInterval1, error) {
+	var body EstimateRequestEstimateFirstDueInterval1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEstimateRequestEstimateFirstDueInterval1 overwrites any union data inside the EstimateRequest_Estimate_FirstDueInterval as the provided EstimateRequestEstimateFirstDueInterval1
+func (t *EstimateRequest_Estimate_FirstDueInterval) FromEstimateRequestEstimateFirstDueInterval1(v EstimateRequestEstimateFirstDueInterval1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEstimateRequestEstimateFirstDueInterval1 performs a merge with any union data inside the EstimateRequest_Estimate_FirstDueInterval, using the provided EstimateRequestEstimateFirstDueInterval1
+func (t *EstimateRequest_Estimate_FirstDueInterval) MergeEstimateRequestEstimateFirstDueInterval1(v EstimateRequestEstimateFirstDueInterval1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t EstimateRequest_Estimate_FirstDueInterval) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *EstimateRequest_Estimate_FirstDueInterval) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -12331,6 +13163,78 @@ func (t *DocumentStyleResponse_InvoiceSenderAddress_AdditionalProperties) Unmars
 	return err
 }
 
+// AsSimpleContactResponse returns the union data inside the EstimateResponse_Contact as a SimpleContactResponse
+func (t EstimateResponse_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the EstimateResponse_Contact as the provided SimpleContactResponse
+func (t *EstimateResponse_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the EstimateResponse_Contact, using the provided SimpleContactResponse
+func (t *EstimateResponse_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t EstimateResponse_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *EstimateResponse_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsContactPersonResponse returns the union data inside the EstimateResponse_ContactPerson as a ContactPersonResponse
+func (t EstimateResponse_ContactPerson) AsContactPersonResponse() (ContactPersonResponse, error) {
+	var body ContactPersonResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromContactPersonResponse overwrites any union data inside the EstimateResponse_ContactPerson as the provided ContactPersonResponse
+func (t *EstimateResponse_ContactPerson) FromContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeContactPersonResponse performs a merge with any union data inside the EstimateResponse_ContactPerson, using the provided ContactPersonResponse
+func (t *EstimateResponse_ContactPerson) MergeContactPersonResponse(v ContactPersonResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t EstimateResponse_ContactPerson) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *EstimateResponse_ContactPerson) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsIdentifier returns the union data inside the EventResponse_AdministrationId as a Identifier
 func (t EventResponse_AdministrationId) AsIdentifier() (Identifier, error) {
 	var body Identifier
@@ -13725,6 +14629,60 @@ type ServerInterface interface {
 	// DownloadDownload Download a file
 	// (POST /api/v2/{administration_id}/downloads/{id}/download)
 	DownloadDownload(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListEstimates List all estimates
+	// (GET /api/v2/{administration_id}/estimates)
+	ListEstimates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListEstimatesParams)
+	// CreateEstimate Create a new estimate
+	// (POST /api/v2/{administration_id}/estimates)
+	CreateEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetEstimateByEstimateId Find an estimate by estimate number
+	// (GET /api/v2/{administration_id}/estimates/find_by_estimate_id/{estimate_id})
+	GetEstimateByEstimateId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, estimateId string)
+	// ListEstimateVersions List all ids and versions
+	// (GET /api/v2/{administration_id}/estimates/synchronization)
+	ListEstimateVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListEstimateVersionsParams)
+	// FetchEstimates Fetch estimates with given ids
+	// (POST /api/v2/{administration_id}/estimates/synchronization)
+	FetchEstimates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteEstimate Delete an estimate
+	// (DELETE /api/v2/{administration_id}/estimates/{id})
+	DeleteEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetEstimate Get an estimate
+	// (GET /api/v2/{administration_id}/estimates/{id})
+	GetEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params GetEstimateParams)
+	// UpdateEstimate Update an estimate
+	// (PATCH /api/v2/{administration_id}/estimates/{id})
+	UpdateEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateEstimateAttachment Add attachment to an estimate
+	// (POST /api/v2/{administration_id}/estimates/{id}/attachments)
+	CreateEstimateAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteEstimateAttachment Delete an attachment from an estimate
+	// (DELETE /api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id})
+	DeleteEstimateAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// DownloadEstimateAttachment Download an attachment
+	// (GET /api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id}/download)
+	DownloadEstimateAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// BillEstimate Bill an estimate
+	// (PATCH /api/v2/{administration_id}/estimates/{id}/bill_estimate)
+	BillEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ChangeEstimateState Change the state of an estimate
+	// (PATCH /api/v2/{administration_id}/estimates/{id}/change_state)
+	ChangeEstimateState(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DownloadEstimatePdf Download the PDF
+	// (GET /api/v2/{administration_id}/estimates/{id}/download_pdf)
+	DownloadEstimatePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params DownloadEstimatePdfParams)
+	// DownloadSignedEstimatePdf Download the signed PDF
+	// (GET /api/v2/{administration_id}/estimates/{id}/download_signed_pdf)
+	DownloadSignedEstimatePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateEstimateNote Add note to an estimate
+	// (POST /api/v2/{administration_id}/estimates/{id}/notes)
+	CreateEstimateNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteEstimateNote Delete a note from an estimate
+	// (DELETE /api/v2/{administration_id}/estimates/{id}/notes/{note_id})
+	DeleteEstimateNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
+	// SendEstimate Send an estimate
+	// (PATCH /api/v2/{administration_id}/estimates/{id}/send_estimate)
+	SendEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListExternalSalesInvoices List all external sales invoices
 	// (GET /api/v2/{administration_id}/external_sales_invoices)
 	ListExternalSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListExternalSalesInvoicesParams)
@@ -14815,6 +15773,114 @@ func (_ Unimplemented) ListDownloads(w http.ResponseWriter, r *http.Request, adm
 // DownloadDownload Download a file
 // (POST /api/v2/{administration_id}/downloads/{id}/download)
 func (_ Unimplemented) DownloadDownload(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListEstimates List all estimates
+// (GET /api/v2/{administration_id}/estimates)
+func (_ Unimplemented) ListEstimates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListEstimatesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateEstimate Create a new estimate
+// (POST /api/v2/{administration_id}/estimates)
+func (_ Unimplemented) CreateEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetEstimateByEstimateId Find an estimate by estimate number
+// (GET /api/v2/{administration_id}/estimates/find_by_estimate_id/{estimate_id})
+func (_ Unimplemented) GetEstimateByEstimateId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, estimateId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListEstimateVersions List all ids and versions
+// (GET /api/v2/{administration_id}/estimates/synchronization)
+func (_ Unimplemented) ListEstimateVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListEstimateVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchEstimates Fetch estimates with given ids
+// (POST /api/v2/{administration_id}/estimates/synchronization)
+func (_ Unimplemented) FetchEstimates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteEstimate Delete an estimate
+// (DELETE /api/v2/{administration_id}/estimates/{id})
+func (_ Unimplemented) DeleteEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetEstimate Get an estimate
+// (GET /api/v2/{administration_id}/estimates/{id})
+func (_ Unimplemented) GetEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params GetEstimateParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateEstimate Update an estimate
+// (PATCH /api/v2/{administration_id}/estimates/{id})
+func (_ Unimplemented) UpdateEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateEstimateAttachment Add attachment to an estimate
+// (POST /api/v2/{administration_id}/estimates/{id}/attachments)
+func (_ Unimplemented) CreateEstimateAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteEstimateAttachment Delete an attachment from an estimate
+// (DELETE /api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id})
+func (_ Unimplemented) DeleteEstimateAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadEstimateAttachment Download an attachment
+// (GET /api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id}/download)
+func (_ Unimplemented) DownloadEstimateAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// BillEstimate Bill an estimate
+// (PATCH /api/v2/{administration_id}/estimates/{id}/bill_estimate)
+func (_ Unimplemented) BillEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ChangeEstimateState Change the state of an estimate
+// (PATCH /api/v2/{administration_id}/estimates/{id}/change_state)
+func (_ Unimplemented) ChangeEstimateState(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadEstimatePdf Download the PDF
+// (GET /api/v2/{administration_id}/estimates/{id}/download_pdf)
+func (_ Unimplemented) DownloadEstimatePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params DownloadEstimatePdfParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadSignedEstimatePdf Download the signed PDF
+// (GET /api/v2/{administration_id}/estimates/{id}/download_signed_pdf)
+func (_ Unimplemented) DownloadSignedEstimatePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateEstimateNote Add note to an estimate
+// (POST /api/v2/{administration_id}/estimates/{id}/notes)
+func (_ Unimplemented) CreateEstimateNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteEstimateNote Delete a note from an estimate
+// (DELETE /api/v2/{administration_id}/estimates/{id}/notes/{note_id})
+func (_ Unimplemented) DeleteEstimateNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SendEstimate Send an estimate
+// (PATCH /api/v2/{administration_id}/estimates/{id}/send_estimate)
+func (_ Unimplemented) SendEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -19184,6 +20250,717 @@ func (siw *ServerInterfaceWrapper) DownloadDownload(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadDownload(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListEstimates operation middleware
+func (siw *ServerInterfaceWrapper) ListEstimates(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListEstimatesParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListEstimates(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateEstimate operation middleware
+func (siw *ServerInterfaceWrapper) CreateEstimate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateEstimate(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetEstimateByEstimateId operation middleware
+func (siw *ServerInterfaceWrapper) GetEstimateByEstimateId(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "estimate_id" -------------
+	var estimateId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "estimate_id", chi.URLParam(r, "estimate_id"), &estimateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "estimate_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetEstimateByEstimateId(w, r, administrationId, estimateId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListEstimateVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListEstimateVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListEstimateVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListEstimateVersions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchEstimates operation middleware
+func (siw *ServerInterfaceWrapper) FetchEstimates(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchEstimates(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteEstimate operation middleware
+func (siw *ServerInterfaceWrapper) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteEstimate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetEstimate operation middleware
+func (siw *ServerInterfaceWrapper) GetEstimate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetEstimateParams
+
+	// ------------- Optional query parameter "includes" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "includes", r.URL.Query(), &params.Includes, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "includes"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "includes", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetEstimate(w, r, administrationId, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateEstimate operation middleware
+func (siw *ServerInterfaceWrapper) UpdateEstimate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateEstimate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateEstimateAttachment operation middleware
+func (siw *ServerInterfaceWrapper) CreateEstimateAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateEstimateAttachment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteEstimateAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteEstimateAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteEstimateAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadEstimateAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DownloadEstimateAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadEstimateAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// BillEstimate operation middleware
+func (siw *ServerInterfaceWrapper) BillEstimate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.BillEstimate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ChangeEstimateState operation middleware
+func (siw *ServerInterfaceWrapper) ChangeEstimateState(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ChangeEstimateState(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadEstimatePdf operation middleware
+func (siw *ServerInterfaceWrapper) DownloadEstimatePdf(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DownloadEstimatePdfParams
+
+	// ------------- Optional query parameter "media" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "media", r.URL.Query(), &params.Media, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "media"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "media", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadEstimatePdf(w, r, administrationId, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadSignedEstimatePdf operation middleware
+func (siw *ServerInterfaceWrapper) DownloadSignedEstimatePdf(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadSignedEstimatePdf(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateEstimateNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateEstimateNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateEstimateNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteEstimateNote operation middleware
+func (siw *ServerInterfaceWrapper) DeleteEstimateNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "note_id" -------------
+	var noteId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "note_id", chi.URLParam(r, "note_id"), &noteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "note_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteEstimateNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SendEstimate operation middleware
+func (siw *ServerInterfaceWrapper) SendEstimate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SendEstimate(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -25204,6 +26981,60 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/attachments/{attachment_id}/download", wrapper.DownloadSalesInvoiceAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates", wrapper.ListEstimates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/estimates", wrapper.CreateEstimate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates/synchronization", wrapper.ListEstimateVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/estimates/synchronization", wrapper.FetchEstimates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates/find_by_estimate_id/{estimate_id}", wrapper.GetEstimateByEstimateId)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}", wrapper.DeleteEstimate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}", wrapper.GetEstimate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}", wrapper.UpdateEstimate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/send_estimate", wrapper.SendEstimate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/change_state", wrapper.ChangeEstimateState)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/bill_estimate", wrapper.BillEstimate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/download_pdf", wrapper.DownloadEstimatePdf)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/download_signed_pdf", wrapper.DownloadSignedEstimatePdf)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/notes", wrapper.CreateEstimateNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/notes/{note_id}", wrapper.DeleteEstimateNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/attachments", wrapper.CreateEstimateAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id}", wrapper.DeleteEstimateAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id}/download", wrapper.DownloadEstimateAttachment)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices", wrapper.ListExternalSalesInvoices)

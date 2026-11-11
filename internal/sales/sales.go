@@ -44,7 +44,7 @@ var (
 
 // IsNotFound reports whether err means a sales invoice resource is missing.
 func IsNotFound(err error) bool {
-	return errors.Is(err, ErrNotFound) || errors.Is(err, ErrPaymentNotFound) || errors.Is(err, notes.ErrNotFound) || errors.Is(err, attachments.ErrNotFound)
+	return errors.Is(err, ErrNotFound) || errors.Is(err, ErrPaymentNotFound) || errors.Is(err, ErrEstimateNotFound) || errors.Is(err, notes.ErrNotFound) || errors.Is(err, attachments.ErrNotFound)
 }
 
 // States, with Moneybird's names.
@@ -106,6 +106,8 @@ type Invoice struct {
 	// OriginalID is the invoice a credit invoice credits.
 	OriginalID              *resource.ID
 	RecurringSalesInvoiceID *resource.ID
+	// OriginalEstimateID is the estimate the invoice was billed from.
+	OriginalEstimateID *resource.ID
 	// Delivery remembers how a scheduled invoice will be sent.
 	Delivery     *Delivery
 	Lines        []Detail
@@ -321,8 +323,9 @@ type Attachments interface {
 	Of(ctx context.Context, admin resource.ID, entityType string, entities []resource.ID) (map[resource.ID][]attachments.Attachment, error)
 }
 
-// Store persists invoices with what they post.
+// Store persists invoices with what they post, and estimates.
 type Store interface {
+	EstimateStore
 	Invoices(ctx context.Context, admin resource.ID, q Query) ([]Invoice, int, error)
 	Invoice(ctx context.Context, admin, id resource.ID) (Invoice, error)
 	InvoicesByID(ctx context.Context, admin resource.ID, ids []resource.ID) ([]Invoice, error)

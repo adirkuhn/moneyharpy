@@ -120,7 +120,7 @@ func (fakeContacts) Contact(_ context.Context, _, id, _ resource.ID) (contacts.C
 type fakeInvoicing struct{}
 
 func (f *fakeInvoicing) Settings(context.Context, resource.ID, resource.ID) (invoicing.SettingsView, error) {
-	return invoicing.SettingsView{Settings: invoicing.Settings{InvoiceIDTemplate: "{year}-{id}", InvoiceBCC: "copy@example.com"}}, nil
+	return invoicing.SettingsView{Settings: invoicing.Settings{InvoiceIDTemplate: "{year}-{id}", InvoiceBCC: "copy@example.com", EstimateIDTemplate: "Q{year}-{id}", EstimateBCC: "quotes@example.com"}}, nil
 }
 
 func (f *fakeInvoicing) workflows() []invoicing.Workflow {
@@ -130,7 +130,7 @@ func (f *fakeInvoicing) workflows() []invoicing.Workflow {
 			{StepOrder: 2, ReminderDelay: 7, ReminderText: "Please pay {invoice_id}.\n\n{invoices}", ReminderAutoSend: true},
 			{StepOrder: 3, ReminderDelay: 14},
 		}},
-		{ID: estimateFlow, Type: invoicing.EstimateWorkflow, Default: true, Active: true},
+		{ID: estimateFlow, Type: invoicing.EstimateWorkflow, Default: true, Active: true, Currency: "EUR", Language: "en", Steps: []invoicing.WorkflowStep{{StepOrder: 1, DueInterval: 30}}},
 	}
 }
 
@@ -243,8 +243,11 @@ type memStore struct {
 	paid map[resource.ID][]journal.Entry
 	// recurring holds recurring invoices.
 	recurring map[resource.ID]Recurring
-	sequence  int
-	locked    map[resource.ID]bool
+	// estimates holds estimates.
+	estimates        map[resource.ID]Estimate
+	estimateSequence int
+	sequence         int
+	locked           map[resource.ID]bool
 }
 
 func (m *memStore) RecurringInvoices(_ context.Context, _ resource.ID, q RecurringQuery) ([]Recurring, int, error) {
@@ -697,7 +700,7 @@ type harness struct {
 func newHarness(t *testing.T) harness {
 	t.Helper()
 	store := &memStore{invoices: map[resource.ID]Invoice{}, entries: map[resource.ID][]journal.Entry{}, paid: map[resource.ID][]journal.Entry{}, locked: map[resource.ID]bool{},
-		externals: map[resource.ID]ExternalInvoice{}, externalEntries: map[resource.ID][]journal.Entry{}, recurring: map[resource.ID]Recurring{}}
+		externals: map[resource.ID]ExternalInvoice{}, externalEntries: map[resource.ID][]journal.Entry{}, recurring: map[resource.ID]Recurring{}, estimates: map[resource.ID]Estimate{}}
 	ledger := &fakeLedger{}
 	mailer := &fakeMailer{}
 	ids := resource.NewGenerator(1)

@@ -214,12 +214,20 @@ func (s *CatalogStore) DeleteProject(ctx context.Context, admin, id resource.ID)
 // ProductInUse implements products.References: invoice lines keep the
 // products they name.
 func (s *SalesStore) ProductInUse(ctx context.Context, admin, product resource.ID) (bool, error) {
-	return s.q.ProductOnInvoices(ctx, sqlc.ProductOnInvoicesParams{AdministrationID: int64(admin), ProductID: pgtype.Int8{Int64: int64(product), Valid: true}})
+	used, err := s.q.ProductOnInvoices(ctx, sqlc.ProductOnInvoicesParams{AdministrationID: int64(admin), ProductID: pgtype.Int8{Int64: int64(product), Valid: true}})
+	if err != nil || used {
+		return used, err
+	}
+	return s.productOnEstimates(ctx, admin, product)
 }
 
 // ProjectInUse implements projects.References for invoice lines.
 func (s *SalesStore) ProjectInUse(ctx context.Context, admin, project resource.ID) (bool, error) {
-	return s.q.ProjectOnInvoices(ctx, sqlc.ProjectOnInvoicesParams{AdministrationID: int64(admin), ProjectID: pgtype.Int8{Int64: int64(project), Valid: true}})
+	used, err := s.q.ProjectOnInvoices(ctx, sqlc.ProjectOnInvoicesParams{AdministrationID: int64(admin), ProjectID: pgtype.Int8{Int64: int64(project), Valid: true}})
+	if err != nil || used {
+		return used, err
+	}
+	return s.projectOnEstimates(ctx, admin, project)
 }
 
 // ProjectInUse implements projects.References for journal entries.

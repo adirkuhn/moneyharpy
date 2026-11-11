@@ -181,6 +181,13 @@ func saveInvoice(ctx context.Context, q *sqlc.Queries, inv sales.Invoice, delive
 			return err
 		}
 	}
+	if inv.OriginalEstimateID != nil {
+		if err := q.SetSalesInvoiceOriginalEstimate(ctx, sqlc.SetSalesInvoiceOriginalEstimateParams{
+			AdministrationID: int64(inv.AdministrationID), ID: int64(inv.ID), OriginalEstimateID: optionalID(inv.OriginalEstimateID),
+		}); err != nil {
+			return err
+		}
+	}
 	if err := q.DeleteSalesInvoiceDetails(ctx, int64(inv.ID)); err != nil {
 		return err
 	}
@@ -390,7 +397,11 @@ func (s *SalesStore) TouchInvoice(ctx context.Context, admin, id resource.ID, at
 
 // ContactInUse implements sales.Store and contacts.References.
 func (s *SalesStore) ContactInUse(ctx context.Context, admin, contact resource.ID) (bool, error) {
-	return s.q.ContactOnSalesInvoice(ctx, sqlc.ContactOnSalesInvoiceParams{AdministrationID: int64(admin), ContactID: int64(contact)})
+	used, err := s.q.ContactOnSalesInvoice(ctx, sqlc.ContactOnSalesInvoiceParams{AdministrationID: int64(admin), ContactID: int64(contact)})
+	if err != nil || used {
+		return used, err
+	}
+	return s.contactOnEstimate(ctx, admin, contact)
 }
 
 // complete converts rows and loads their lines and custom fields.
@@ -450,6 +461,7 @@ func toInvoice(r sqlc.SalesInvoice) (sales.Invoice, error) {
 		DueDate: dateOf(r.DueDate), FirstDueInterval: int(r.FirstDueInterval), State: r.State, Paused: r.Paused, PaymentReference: r.PaymentReference,
 		SentAt: timeOf(r.SentAt), PaidAt: timeOf(r.PaidAt), MarkedDubiousOn: dateOf(r.MarkedDubiousOn), MarkedUncollectibleOn: dateOf(r.MarkedUncollectibleOn),
 		ReminderCount: int(r.ReminderCount), OriginalID: idOf(r.OriginalID), RecurringSalesInvoiceID: idOf(r.RecurringSalesInvoiceID),
+		OriginalEstimateID: idOf(r.OriginalEstimateID),
 		Totals: sales.Totals{
 			ExclTax: money.Amount(r.TotalExclTax), Tax: money.Amount(r.TotalTax), InclTax: money.Amount(r.TotalInclTax), Discount: money.Amount(r.TotalDiscount),
 		},

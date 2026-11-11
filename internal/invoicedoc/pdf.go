@@ -1,5 +1,6 @@
 // Package invoicedoc renders sales invoices: the PDF people receive, a
-// packing slip without prices, and the UBL 2.1 e-invoice.
+// packing slip without prices, and the UBL 2.1 e-invoice; and estimates,
+// which look like invoices with their own title and texts.
 package invoicedoc
 
 import (
@@ -23,6 +24,8 @@ func New() Renderer { return Renderer{} }
 type labels struct {
 	Invoice, Credit, Draft, PackingSlip, Number, Date, Due, Reference, Customer, Description, Quantity, Price, VAT, Amount,
 	Subtotal, Discount, VATOver, Total, PayBefore, Page, CoC, VATNumber, IBAN string
+	// Estimate, EstimateNumber, EstimateDate and ValidUntil label estimates.
+	Estimate, EstimateNumber, EstimateDate, ValidUntil string
 }
 
 var dutch = labels{
@@ -31,6 +34,7 @@ var dutch = labels{
 	VAT: "Btw", Amount: "Bedrag", Subtotal: "Subtotaal", Discount: "Korting", VATOver: "%s btw over %s", Total: "Totaal",
 	PayBefore: "Graag ontvangen we %s vóór %s op rekening %s ten name van %s, onder vermelding van %s.", Page: "Pagina %d van {nb}",
 	CoC: "KVK", VATNumber: "Btw-nummer", IBAN: "IBAN",
+	Estimate: "Offerte", EstimateNumber: "Offertenummer", EstimateDate: "Offertedatum", ValidUntil: "Geldig tot",
 }
 
 var english = labels{
@@ -39,6 +43,7 @@ var english = labels{
 	VAT: "VAT", Amount: "Amount", Subtotal: "Subtotal", Discount: "Discount", VATOver: "%s VAT on %s", Total: "Total",
 	PayBefore: "Please pay %s before %s to account %s in the name of %s, quoting %s.", Page: "Page %d of {nb}",
 	CoC: "CoC", VATNumber: "VAT number", IBAN: "IBAN",
+	Estimate: "Quote", EstimateNumber: "Quote number", EstimateDate: "Quote date", ValidUntil: "Valid until",
 }
 
 func labelsFor(language string) labels {
@@ -98,8 +103,20 @@ func render(doc sales.Document, prices bool) ([]byte, error) {
 	pdf.SetFont("Helvetica", "", fontSize)
 	meta(pdf, tr, doc, l, prices)
 	pdf.Ln(6)
+	if doc.Estimate != nil && doc.Estimate.PreText != "" {
+		pdf.MultiCell(0, 5, tr(doc.Estimate.PreText), "", "L", false)
+		pdf.Ln(4)
+	}
 	table(pdf, tr, doc, l, prices, fontSize)
-	if prices {
+	switch {
+	case doc.Estimate != nil:
+		totals(pdf, tr, doc, l, fontSize)
+		if doc.Estimate.PostText != "" {
+			pdf.Ln(8)
+			pdf.SetFont("Helvetica", "", fontSize-1)
+			pdf.MultiCell(0, 5, tr(doc.Estimate.PostText), "", "L", false)
+		}
+	case prices:
 		totals(pdf, tr, doc, l, fontSize)
 		payment(pdf, tr, doc, l, fontSize)
 	}
@@ -112,6 +129,10 @@ func render(doc sales.Document, prices bool) ([]byte, error) {
 
 func title(doc sales.Document, l labels, prices bool) string {
 	switch {
+	case doc.Estimate != nil && doc.Invoice.InvoiceID == "":
+		return l.Draft + " " + strings.ToLower(l.Estimate)
+	case doc.Estimate != nil:
+		return l.Estimate
 	case !prices:
 		return l.PackingSlip
 	case doc.Totals.InclTax < 0 || doc.Invoice.OriginalID != nil:
@@ -181,6 +202,9 @@ func sender(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, l labels
 func recipient(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, size float64) {
 	c := doc.Contact
 	attention := c.SendInvoicesToAttention
+	if doc.Estimate != nil {
+		attention = c.SendEstimatesToAttention
+	}
 	if doc.ContactPerson != nil {
 		attention = strings.TrimSpace(doc.ContactPerson.Firstname + " " + doc.ContactPerson.Lastname)
 	}
@@ -211,7 +235,10 @@ func meta(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, l labels, 
 		return t.Format("02-01-2006")
 	}
 	rows := [][2]string{{l.Number, inv.InvoiceID}, {l.Date, day(inv.InvoiceDate)}}
-	if prices {
+	switch {
+	case doc.Estimate != nil:
+		rows = [][2]string{{l.EstimateNumber, inv.InvoiceID}, {l.EstimateDate, day(inv.InvoiceDate)}, {l.ValidUntil, day(inv.DueDate)}}
+	case prices:
 		rows = append(rows, [2]string{l.Due, day(inv.DueDate)})
 	}
 	rows = append(rows, [2]string{l.Reference, inv.Reference}, [2]string{l.Customer, doc.Contact.CustomerID})
@@ -292,6 +319,9 @@ func totals(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, l labels
 		row(l.Discount, "-"+m(tot.Discount), false)
 	}
 	for _, r := range tot.ByRate {
+		if doc.Estimate != nil && !doc.Estimate.ShowTax {
+			break
+		}
 		pct := strings.TrimSuffix(strings.TrimSuffix(doc.Rates[r.TaxRateID].Percentage, ".0"), ".00") + "%"
 		row(fmt.Sprintf(l.VATOver, pct, m(r.Taxable)), m(r.Tax), false)
 	}

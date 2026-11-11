@@ -51,6 +51,9 @@ type Document struct {
 	// Stationery leaves out the sender's address and logo, for printing
 	// on paper that has them.
 	Stationery bool
+	// Estimate is set when the document is an estimate; Invoice then holds
+	// its lines, number and dates as an invoice would.
+	Estimate *Estimate
 }
 
 // Send sends an invoice: a draft gets its number and is booked, a sent one
@@ -360,7 +363,7 @@ func (s *Service) Credit(ctx context.Context, admin, id, user resource.ID, lineI
 	credit.InvoiceDate, credit.DueDate, credit.SentAt, credit.PaidAt, credit.PaymentReference = nil, nil, nil, nil, ""
 	credit.MarkedDubiousOn, credit.MarkedUncollectibleOn, credit.Paused, credit.ReminderCount = nil, nil, false, 0
 	credit.Delivery, credit.Payments, credit.Notes, credit.Attachments = nil, nil, nil, nil
-	credit.OriginalID, credit.RecurringSalesInvoiceID = &orig.ID, nil
+	credit.OriginalID, credit.RecurringSalesInvoiceID, credit.OriginalEstimateID = &orig.ID, nil, nil
 	credit.CreatedAt, credit.UpdatedAt = now, now
 	credit.Lines = nil
 	for _, d := range orig.Lines {

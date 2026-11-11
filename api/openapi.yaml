@@ -68,6 +68,8 @@ tags:
     description: What the administration has verified about itself. Compatible with the Moneybird API.
   - name: Downloads
     description: The files exports made. Compatible with the Moneybird API.
+  - name: Estimates
+    description: Quotes that contacts accept or reject, and that are billed as sales invoices. Compatible with the Moneybird API.
   - name: Payments
     description: Payments of invoices, looked up by id. Compatible with the Moneybird API.
   - name: Products
@@ -4542,6 +4544,561 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/estimates:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listEstimates
+      x-permissions: [estimates]
+      summary: List all estimates
+      description: >-
+        Newest first. Filter terms: state (all, draft, open, late, accepted, rejected, billed, archived; several separated by |; all unless given), period (on the estimate date; this year when no filter is given), contact_id, workflow_id; reference (several separated by |), created_after and updated_after are MoneyHarpy extensions. Late estimates are open estimates past their due date. Paged with a Link header and X-Total-Count.
+      tags: [Estimates]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          $ref: '#/components/responses/EstimatePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createEstimate
+      x-permissions: [estimates]
+      summary: Create a new estimate
+      description: >-
+        A draft, following the contact's estimate workflow, else the default one, and the default document style and identity unless given.
+      tags: [Estimates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateRequest'
+      responses:
+        '201':
+          description: The created draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/estimates/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listEstimateVersions
+      x-permissions: [estimates]
+      summary: List all ids and versions
+      tags: [Estimates]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The ids and versions of the estimates the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchEstimates
+      x-permissions: [estimates]
+      summary: Fetch estimates with given ids
+      tags: [Estimates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The estimates with these ids, at most 100
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Estimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/estimates/find_by_estimate_id/{estimate_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - name: estimate_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    get:
+      operationId: getEstimateByEstimateId
+      x-permissions: [estimates]
+      summary: Find an estimate by estimate number
+      tags: [Estimates]
+      responses:
+        '200':
+          description: The estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/estimates/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getEstimate
+      x-permissions: [estimates]
+      summary: Get an estimate
+      tags: [Estimates]
+      parameters:
+        - name: includes
+          in: query
+          description: Accepted for compatibility.
+          schema:
+            type: string
+            maxLength: 1000
+      responses:
+        '200':
+          description: The estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateEstimate
+      x-permissions: [estimates]
+      summary: Update an estimate
+      description: >-
+        Lines with an id change, lines with _destroy go, lines without an id are added. A sent estimate gets a new due date when its date or validity changes. Billed and archived estimates cannot change (422).
+      tags: [Estimates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateRequest'
+      responses:
+        '200':
+          description: The estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      operationId: deleteEstimate
+      x-permissions: [estimates]
+      summary: Delete an estimate
+      description: >-
+        In any state; invoices billed from it stay.
+      tags: [Estimates]
+      responses:
+        '204':
+          description: The estimate is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/estimates/{id}/send_estimate:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: sendEstimate
+      x-permissions: [estimates]
+      summary: Send an estimate
+      description: >-
+        A draft gets its number from the estimate numbering, its date and due date, and becomes open; a sent estimate goes out again in its state. Email sends the PDF; Manual marks it sent. Empty fields take the previous sending's settings, then the contact's. Without lines the answer is 400. When the email fails the estimate stays sent (422), so it can be sent again.
+      tags: [Estimates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendEstimateRequest'
+      responses:
+        '200':
+          description: The estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/estimates/{id}/change_state:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: changeEstimateState
+      x-permissions: [estimates]
+      summary: Change the state of an estimate
+      description: >-
+        Only changes the state, without sending or billing. A draft only leaves draft by being sent; open and late go to accepted, rejected, billed or archived; accepted to open, rejected, billed or archived; rejected to open, accepted or archived; billed to open, accepted or archived; archived back to open, accepted, rejected or billed. Other changes answer 400 with a symbolic error such as can_not_change_draft_to_open.
+      tags: [Estimates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeEstimateStateRequest'
+      responses:
+        '200':
+          description: The estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/estimates/{id}/bill_estimate:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: billEstimate
+      x-permissions: [estimates]
+      summary: Bill an estimate
+      description: >-
+        Makes a draft sales invoice of an open, late or accepted estimate, with original_estimate_id naming it, and marks the estimate billed. It follows the default invoice workflow and keeps the estimate's lines, language, currency and prices. Needs the sales_invoices permission too. Other states, or a contact that is gone, answer 400.
+      tags: [Estimates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillEstimateRequest'
+      responses:
+        '200':
+          description: The draft sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+  /api/v2/{administration_id}/estimates/{id}/download_pdf:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: downloadEstimatePdf
+      x-permissions: [estimates]
+      summary: Download the PDF
+      description: >-
+        Redirects to a link to the file, as Moneybird does; the link works for 30 seconds without signing in.
+      tags: [Estimates]
+      parameters:
+        - $ref: '#/components/parameters/media'
+      responses:
+        '302':
+          $ref: '#/components/responses/FileRedirect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/estimates/{id}/download_signed_pdf:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: downloadSignedEstimatePdf
+      x-permissions: [estimates]
+      summary: Download the signed PDF
+      description: >-
+        The PDF the contact signed online. MoneyHarpy has no online signing yet, so every estimate answers 422: it is not signed.
+      tags: [Estimates]
+      responses:
+        '302':
+          $ref: '#/components/responses/FileRedirect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/estimates/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createEstimateNote
+      x-permissions: [estimates]
+      summary: Add note to an estimate
+      tags: [Estimates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/estimates/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteEstimateNote
+      x-permissions: [estimates]
+      summary: Delete a note from an estimate
+      tags: [Estimates]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/estimates/{id}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createEstimateAttachment
+      x-permissions: [estimates]
+      summary: Add attachment to an estimate
+      description: >-
+        A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+      tags: [Estimates]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/attachment_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteEstimateAttachment
+      x-permissions: [estimates]
+      summary: Delete an attachment from an estimate
+      tags: [Estimates]
+      responses:
+        '204':
+          description: The attachment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: downloadEstimateAttachment
+      x-permissions: [estimates]
+      summary: Download an attachment
+      tags: [Estimates]
+      responses:
+        '302':
+          $ref: '#/components/responses/FileRedirect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/external_sales_invoices:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -8014,6 +8571,23 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/ExternalSalesInvoice'
+    EstimatePage:
+      description: A page of estimates
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number of estimates selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Estimate'
     RecurringSalesInvoicePage:
       description: A page of recurring sales invoices
       headers:
@@ -10429,7 +11003,7 @@ components:
               description: Accepted for compatibility.
               $ref: '#/components/schemas/FlexibleBoolean'
             original_estimate_id:
-              description: Accepted for compatibility; MoneyHarpy has no estimates yet.
+              description: Accepted for compatibility; bill an estimate to make an invoice that names it.
               $ref: '#/components/schemas/FlexibleIdentifier'
             document_style_id:
               $ref: '#/components/schemas/FlexibleIdentifier'
@@ -10518,6 +11092,162 @@ components:
             invoice_date:
               type: string
               pattern: '^(\d{4}-\d{2}-\d{2})?$'
+    Estimate:
+      description: A Moneybird estimate with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/estimate_response'
+        - type: object
+          required: [id, administration_id, contact_id, state, currency, details, tax_totals, notes, attachments, events, custom_fields,
+                     total_price_excl_tax, total_price_incl_tax, version, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            first_due_interval:
+              type: integer
+              description: MoneyHarpy extension. Days from the estimate date to the due date.
+            total_tax:
+              type: string
+              description: MoneyHarpy extension. The VAT of all lines.
+            original_sales_invoice_id:
+              description: MoneyHarpy extension. The sales invoice the estimate was made from.
+              allOf:
+                - $ref: '#/components/schemas/Identifier'
+              nullable: true
+            delivery_method:
+              type: string
+              nullable: true
+              description: MoneyHarpy extension. How the estimate was last sent.
+    EstimateRequest:
+      type: object
+      required: [estimate]
+      additionalProperties: false
+      properties:
+        estimate:
+          type: object
+          additionalProperties: false
+          properties:
+            contact_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            contact_person_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            update_contact:
+              description: Accepted for compatibility; the PDF always shows the contact as it is.
+              $ref: '#/components/schemas/FlexibleBoolean'
+            document_style_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            workflow_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            identity_id:
+              description: MoneyHarpy extension.
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            reference:
+              type: string
+              maxLength: 1000
+            estimate_date:
+              type: string
+              description: yyyy-mm-dd; empty clears it on a draft, which then gets the day it is sent.
+              pattern: '^(\d{4}-\d{2}-\d{2})?$'
+            estimate_sequence_id:
+              description: Sets the {id} part of the number this estimate gets when sent.
+              oneOf:
+                - type: string
+                  maxLength: 10
+                - type: integer
+                  minimum: 0
+            remove_estimate_sequence_id:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            language:
+              type: string
+              maxLength: 50
+            currency:
+              type: string
+              maxLength: 3
+            prices_are_incl_tax:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            show_tax:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            first_due_interval:
+              description: Days from the estimate date until it expires.
+              oneOf:
+                - type: integer
+                  minimum: 0
+                  maximum: 365
+                - type: string
+                  pattern: '^[0-9]{1,3}$'
+            pre_text:
+              type: string
+              maxLength: 10000
+            post_text:
+              type: string
+              maxLength: 10000
+            discount:
+              description: A percentage, such as "10" or "2.5"; empty for none.
+              oneOf:
+                - type: string
+                  maxLength: 10
+                - type: number
+            original_sales_invoice_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            details_attributes:
+              description: An array of lines, or an object of lines keyed by position.
+              oneOf:
+                - type: array
+                  maxItems: 500
+                  items:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
+                - type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
+            custom_fields_attributes:
+              $ref: '#/components/schemas/custom_fields_attributes'
+    SendEstimateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        estimate_sending:
+          type: object
+          additionalProperties: false
+          properties:
+            delivery_method:
+              type: string
+              enum: [Email, Manual]
+            email_address:
+              type: string
+              maxLength: 1000
+            email_message:
+              type: string
+              maxLength: 10000
+              description: Replaces the workflow's email text; {estimate_id}, {estimate_date}, {due_date}, {total}, {contact_name}, {company_name} and {reference} work.
+            sign_online:
+              $ref: '#/components/schemas/FlexibleBoolean'
+        sender:
+          description: Accepted for compatibility; MoneyHarpy has no online signing yet.
+          $ref: '#/components/schemas/FlexibleBoolean'
+        signature_output:
+          description: Accepted for compatibility; MoneyHarpy has no online signing yet.
+          type: string
+          maxLength: 100000
+        audit_trail:
+          description: Accepted for compatibility; MoneyHarpy has no online signing yet.
+          type: string
+          maxLength: 100000
+        ip_address:
+          description: Accepted for compatibility; MoneyHarpy has no online signing yet.
+          type: string
+          maxLength: 100
+    ChangeEstimateStateRequest:
+      type: object
+      required: [state]
+      additionalProperties: false
+      properties:
+        state:
+          type: string
+          maxLength: 20
+          description: accepted, rejected, open, late, billed or archived.
+    BillEstimateRequest:
+      type: object
+      additionalProperties: false
     CreditInvoiceRequest:
       type: object
       additionalProperties: false
