@@ -21,6 +21,9 @@ var Events = []string{
 	"booking_rule_created", "booking_rule_updated", "booking_rule_destroyed",
 	"contact_created", "contact_changed", "contact_archived", "contact_activated", "contact_destroyed",
 	"contact_person_created", "contact_person_updated", "contact_person_destroyed",
+	"sales_invoice_created", "sales_invoice_created_from_original", "sales_invoice_updated", "sales_invoice_destroyed",
+	"sales_invoice_send_email", "sales_invoice_send_post", "sales_invoice_send_manually", "sales_invoice_state_changed_to_open",
+	"sales_invoice_state_changed_to_scheduled", "sales_invoice_paused", "sales_invoice_unpaused",
 	"user_invited", "user_removed",
 	"access_token_created", "access_token_revoked",
 }
@@ -29,7 +32,7 @@ var Events = []string{
 // matches every event starting with it.
 var Groups = []string{
 	"administration", "identity", "default_identity", "workflow", "document_style", "tax_rate", "ledger_account",
-	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "user", "access_token",
+	"ledger_account_booking", "financial_account", "financial_statement", "booking_rule", "contact", "contact_person", "sales_invoice", "user", "access_token",
 }
 
 // known reports whether a subscription names an event or a group.

@@ -40,6 +40,10 @@ type Workflow struct {
 	Active           bool
 	PricesAreInclTax bool
 	ShowQRCode       bool
+	// InvoiceEmailSubject and InvoiceEmailBody are the email invoices go
+	// out with; empty means MoneyHarpy's default in the invoice's language.
+	InvoiceEmailSubject string
+	InvoiceEmailBody    string
 	// Steps hold the payment term or validity first, then the reminders.
 	Steps     []WorkflowStep
 	CreatedAt time.Time
@@ -84,6 +88,10 @@ type WorkflowChanges struct {
 	PricesAreInclTax *bool
 	ShowQRCode       *bool
 	Steps            *[]StepInput
+	// InvoiceEmailSubject and InvoiceEmailBody set the invoice email; empty
+	// returns to MoneyHarpy's default.
+	InvoiceEmailSubject *string
+	InvoiceEmailBody    *string
 }
 
 // Workflows lists the administration's workflows, creating the default ones
@@ -219,6 +227,12 @@ func (s *Service) apply(w *Workflow, c WorkflowChanges) error {
 			*f.dst = *f.src
 		}
 	}
+	if c.InvoiceEmailSubject != nil {
+		w.InvoiceEmailSubject = strings.TrimSpace(*c.InvoiceEmailSubject)
+	}
+	if c.InvoiceEmailBody != nil {
+		w.InvoiceEmailBody = strings.TrimSpace(*c.InvoiceEmailBody)
+	}
 	if c.Steps != nil {
 		w.Steps = make([]WorkflowStep, len(*c.Steps))
 		for i, in := range *c.Steps {
@@ -233,6 +247,12 @@ func (s *Service) apply(w *Workflow, c WorkflowChanges) error {
 
 func validateWorkflow(w Workflow) error {
 	var verr resource.ValidationError
+	if len(w.InvoiceEmailSubject) > 255 {
+		verr.Add("invoice_email_subject", "is too long (maximum is 255 characters)")
+	}
+	if len(w.InvoiceEmailBody) > 10000 {
+		verr.Add("invoice_email_body", "is too long (maximum is 10000 characters)")
+	}
 	if w.Name == "" || len(w.Name) > 255 {
 		verr.Add("name", "can't be blank")
 	}

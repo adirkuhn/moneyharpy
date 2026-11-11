@@ -52,6 +52,8 @@ tags:
     description: Customers and suppliers with their contact people and notes. Compatible with the Moneybird API.
   - name: Journal
     description: Journal entries made by hand and the reports that read the whole journal. Compatible with the Moneybird API.
+  - name: Sales invoices
+    description: Invoices to customers, from draft to sent, with their PDF, e-invoice, bookings and credit invoices. Compatible with the Moneybird API.
   - name: Booking rules
     description: Rules that book matching transactions automatically. MoneyHarpy extension.
   - name: Management
@@ -3143,6 +3145,661 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listSalesInvoices
+      x-permissions: [sales_invoices]
+      summary: List all sales invoices
+      description: >-
+        Newest first unless sort is date_asc. Filter terms: state (all, draft, scheduled, open, pending_payment, late, reminded, paid, uncollectible; several separated by |), period (this year unless a filter is given), reference (several separated by |), contact_id, recurring_sales_invoice_id, workflow_id, created_after, updated_after. Late invoices are open invoices past their due date. Paged with a Link header and X-Total-Count.
+      tags: [Sales invoices]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+      responses:
+        '200':
+          $ref: '#/components/responses/SalesInvoicePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: createSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Create a new sales invoice
+      description: >-
+        A draft, following the default workflow, document style and identity unless given.
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesInvoiceRequest'
+      responses:
+        '201':
+          description: The created draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/synchronization:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listSalesInvoiceVersions
+      x-permissions: [sales_invoices]
+      summary: List all ids and versions
+      tags: [Sales invoices]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The ids and versions of the invoices the filter selects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SynchronizationItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: fetchSalesInvoices
+      x-permissions: [sales_invoices]
+      summary: Fetch sales invoices with given ids
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynchronizationRequest'
+      responses:
+        '200':
+          description: The invoices with these ids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/find_by_invoice_id/{invoice_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - name: invoice_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    get:
+      operationId: getSalesInvoiceByInvoiceId
+      x-permissions: [sales_invoices]
+      summary: Find a sales invoice by invoice number
+      tags: [Sales invoices]
+      responses:
+        '200':
+          description: The sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/sales_invoices/find_by_reference/{reference}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - name: reference
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    get:
+      operationId: getSalesInvoiceByReference
+      x-permissions: [sales_invoices]
+      summary: Find a sales invoice by reference
+      tags: [Sales invoices]
+      responses:
+        '200':
+          description: The sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/sales_invoices/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Get a sales invoice
+      tags: [Sales invoices]
+      responses:
+        '200':
+          description: The sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    patch:
+      operationId: updateSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Update a sales invoice
+      description: >-
+        A sent invoice can change until it is paid and is booked again; lines with an id change, lines with _destroy go, lines without an id are added. Not in the locked period.
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesInvoiceRequest'
+      responses:
+        '200':
+          description: The sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      operationId: deleteSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Delete a sales invoice
+      description: >-
+        Only drafts and scheduled invoices; credit a sent one instead.
+      tags: [Sales invoices]
+      responses:
+        '204':
+          description: The invoice is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/send_invoice:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: sendSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Send a sales invoice
+      description: >-
+        A draft gets its number, its due date and its bookings, and goes out by email with its PDF (and UBL file when asked), or is marked sent when delivery is Manual or Post. A sent invoice goes out again. With sending_scheduled and a future invoice_date it waits until then. Empty fields take the previous sending's settings, then the contact's and the workflow's. Peppol and Simplerinvoicing are not available yet (422). When the email fails the invoice stays sent and booked (422), so it can be sent again.
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendSalesInvoiceRequest'
+      responses:
+        '200':
+          description: The sales invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/download_pdf:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: downloadSalesInvoicePdf
+      x-permissions: [sales_invoices]
+      summary: Download the PDF
+      description: >-
+        Answers with the file itself; Moneybird redirects to it instead.
+      tags: [Sales invoices]
+      responses:
+        '200':
+          description: The file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/download_packing_slip_pdf:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: downloadSalesInvoicePackingSlip
+      x-permissions: [sales_invoices]
+      summary: Download the packing slip
+      description: >-
+        Answers with the file itself; Moneybird redirects to it instead.
+      tags: [Sales invoices]
+      responses:
+        '200':
+          description: The file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/download_ubl:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: downloadSalesInvoiceUbl
+      x-permissions: [sales_invoices]
+      summary: Download the UBL e-invoice
+      description: >-
+        A UBL 2.1 invoice after Peppol BIS Billing 3.0. Only for sent invoices.
+      tags: [Sales invoices]
+      responses:
+        '200':
+          description: The file
+          content:
+            application/xml:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/duplicate_creditinvoice:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    patch:
+      operationId: duplicateCreditSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Create a credit invoice
+      description: >-
+        A draft crediting the sent invoice: its lines, or those in detail_ids, with negative quantities.
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditInvoiceRequest'
+      responses:
+        '200':
+          description: The credit invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/pause:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: pauseSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Pause a sales invoice
+      description: >-
+        Stops or restarts the reminders of a sent invoice.
+      tags: [Sales invoices]
+      responses:
+        '201':
+          description: The invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/resume:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: resumeSalesInvoice
+      x-permissions: [sales_invoices]
+      summary: Resume a sales invoice
+      description: >-
+        Stops or restarts the reminders of a sent invoice.
+      tags: [Sales invoices]
+      responses:
+        '201':
+          description: The invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createSalesInvoiceNote
+      x-permissions: [sales_invoices]
+      summary: Add note to a sales invoice
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteSalesInvoiceNote
+      x-permissions: [sales_invoices]
+      summary: Delete a note from a sales invoice
+      tags: [Sales invoices]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/sales_invoices/{id}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createSalesInvoiceAttachment
+      x-permissions: [sales_invoices]
+      summary: Add attachment to a sales invoice
+      description: >-
+        A PDF, image or text file of at most 10 MB, sent as multipart/form-data in the field file.
+      tags: [Sales invoices]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The attachment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/attachment_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/sales_invoices/{id}/attachments/{attachment_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteSalesInvoiceAttachment
+      x-permissions: [sales_invoices]
+      summary: Delete an attachment from a sales invoice
+      tags: [Sales invoices]
+      responses:
+        '204':
+          description: The attachment is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/sales_invoices/{id}/attachments/{attachment_id}/download:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: downloadSalesInvoiceAttachment
+      x-permissions: [sales_invoices]
+      summary: Download an attachment
+      tags: [Sales invoices]
+      responses:
+        '200':
+          description: The file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/booking_rules:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -4797,6 +5454,23 @@ components:
         type: string
         maxLength: 1000
   responses:
+    SalesInvoicePage:
+      description: A page of sales invoices
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number of invoices selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SalesInvoice'
     GeneralJournalDocumentPage:
       description: A page of journal entries
       headers:
@@ -5568,10 +6242,20 @@ components:
       - type: object
         required:
         - uri
+        - invoice_email_subject
+        - invoice_email_body
         properties:
           uri:
             type: string
             description: MoneyHarpy extension. Canonical path of this resource.
+          invoice_email_subject:
+            type: string
+            description: >-
+              MoneyHarpy extension. The subject invoices are emailed with; empty uses the default. Placeholders:
+              {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference}, {reference}.
+          invoice_email_body:
+            type: string
+            description: MoneyHarpy extension. The text invoices are emailed with; empty uses the default. Same placeholders.
     DocumentStyle:
       description: A Moneybird document style with MoneyHarpy extensions.
       allOf:
@@ -5615,6 +6299,14 @@ components:
               type: boolean
             show_qr_code:
               type: boolean
+            invoice_email_subject:
+              type: string
+              maxLength: 255
+              description: MoneyHarpy extension. Empty uses the default.
+            invoice_email_body:
+              type: string
+              maxLength: 10000
+              description: MoneyHarpy extension. Empty uses the default.
             steps_attributes:
               type: array
               maxItems: 11
@@ -6578,6 +7270,184 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/GeneralLedgerPeriod'
+    SalesInvoice:
+      description: A Moneybird sales invoice with MoneyHarpy extensions.
+      allOf:
+        - $ref: '#/components/schemas/sales_invoice_response'
+        - type: object
+          required: [id, administration_id, contact_id, state, currency, details, tax_totals, payments, notes, attachments, events,
+                     total_price_excl_tax, total_price_incl_tax, total_unpaid, version, uri]
+          properties:
+            uri:
+              type: string
+              description: MoneyHarpy extension. Canonical path of this resource.
+            first_due_interval:
+              type: integer
+              description: MoneyHarpy extension. Days from the invoice date to the due date.
+            total_tax:
+              type: string
+              description: MoneyHarpy extension. The VAT of all lines.
+            delivery_method:
+              type: string
+              nullable: true
+              description: MoneyHarpy extension. How the invoice was or will be sent.
+    SalesInvoiceDetailInput:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        description:
+          type: string
+          maxLength: 10000
+        period:
+          type: string
+          description: The days the line is about, as yyyymmdd..yyyymmdd; empty clears it.
+          pattern: '^(\d{8}\.\.\d{8})?$'
+        price:
+          $ref: '#/components/schemas/Money'
+        amount:
+          description: The quantity, such as "2" or "1,5 hours"; it must start with a number.
+          oneOf:
+            - type: string
+              maxLength: 255
+            - type: number
+        tax_rate_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        ledger_account_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        project_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        product_id:
+          $ref: '#/components/schemas/FlexibleIdentifier'
+        row_order:
+          oneOf:
+            - type: integer
+            - type: string
+              pattern: '^[0-9]{1,6}$'
+        is_optional:
+          $ref: '#/components/schemas/FlexibleBoolean'
+        is_selected:
+          $ref: '#/components/schemas/FlexibleBoolean'
+        automated_tax_enabled:
+          description: Accepted for compatibility.
+          $ref: '#/components/schemas/FlexibleBoolean'
+        _destroy:
+          $ref: '#/components/schemas/FlexibleBoolean'
+    SalesInvoiceRequest:
+      type: object
+      required: [sales_invoice]
+      additionalProperties: false
+      properties:
+        sales_invoice:
+          type: object
+          additionalProperties: false
+          properties:
+            contact_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            contact_person_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            update_contact:
+              description: Accepted for compatibility.
+              $ref: '#/components/schemas/FlexibleBoolean'
+            original_estimate_id:
+              description: Accepted for compatibility; MoneyHarpy has no estimates yet.
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            document_style_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            workflow_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            identity_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            reference:
+              type: string
+              maxLength: 1000
+            invoice_sequence_id:
+              type: string
+              description: Sets the {id} part of the number this invoice gets when sent.
+              maxLength: 10
+            remove_invoice_sequence_id:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            invoice_date:
+              type: string
+              description: yyyy-mm-dd; empty clears it on a draft.
+              pattern: '^(\d{4}-\d{2}-\d{2})?$'
+            first_due_interval:
+              oneOf:
+                - type: integer
+                  minimum: 0
+                  maximum: 365
+                - type: string
+                  pattern: '^[0-9]{1,3}$'
+            currency:
+              type: string
+              maxLength: 3
+            prices_are_incl_tax:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            payment_conditions:
+              type: string
+              maxLength: 1000
+            discount:
+              description: A percentage, such as "10" or "2.5"; empty for none.
+              oneOf:
+                - type: string
+                  maxLength: 10
+                - type: number
+            time_entry_ids:
+              description: Accepted for compatibility; MoneyHarpy has no time entries yet.
+              type: array
+              items:
+                $ref: '#/components/schemas/FlexibleIdentifier'
+            details_attributes:
+              description: An array of lines, or an object of lines keyed by position.
+              oneOf:
+                - type: array
+                  maxItems: 500
+                  items:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
+                - type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/SalesInvoiceDetailInput'
+            custom_fields_attributes:
+              $ref: '#/components/schemas/custom_fields_attributes'
+        from_payment_request:
+          description: Accepted for compatibility.
+          $ref: '#/components/schemas/FlexibleBoolean'
+    SendSalesInvoiceRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        sales_invoice_sending:
+          type: object
+          additionalProperties: false
+          properties:
+            delivery_method:
+              type: string
+              enum: [Email, Manual, Post, Peppol, Simplerinvoicing]
+            sending_scheduled:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            deliver_ubl:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            mergeable:
+              $ref: '#/components/schemas/FlexibleBoolean'
+            email_address:
+              type: string
+              maxLength: 1000
+            email_message:
+              type: string
+              maxLength: 10000
+              description: Replaces the workflow's email text; the same placeholders work.
+            invoice_date:
+              type: string
+              pattern: '^(\d{4}-\d{2}-\d{2})?$'
+    CreditInvoiceRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        detail_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlexibleIdentifier'
     BookingRuleRequest:
       type: object
       required: [booking_rule]

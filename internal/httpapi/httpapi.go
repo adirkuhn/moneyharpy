@@ -27,6 +27,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
+	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -82,6 +83,7 @@ type Deps struct {
 	Overview        *overview.Service
 	Contacts        *contacts.Service
 	Journal         *journal.Service
+	Sales           *sales.Service
 	Membership      *membership.Service
 	Connections     *connections.Service
 	Webhooks        *webhooks.Service
@@ -197,6 +199,12 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This category is used by transactions or booking rules; keep it deactivated instead"}}))
 	case errors.Is(err, banking.ErrBookingUnavailable):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet; only categories (LedgerAccount) can be booked so far"}}))
+	case errors.Is(err, sales.ErrNotEditable):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This invoice cannot be changed in its state; credit it instead"}}))
+	case errors.Is(err, sales.ErrDeliveryUnavailable):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"delivery_method": {"is not available yet; send the invoice by email or yourself"}}))
+	case errors.Is(err, sales.ErrDelivery):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The invoice is booked but could not be emailed; check the mail settings and send it again"}}))
 	case errors.Is(err, contacts.ErrInUse):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Documents refer to this contact; archive it instead"}}))
 	case errors.Is(err, banking.ErrStatementBooked):
@@ -246,6 +254,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		banking.IsNotFound(err),
 		contacts.IsNotFound(err),
 		journal.IsNotFound(err),
+		sales.IsNotFound(err),
 		errors.Is(err, membership.ErrUserNotFound),
 		errors.Is(err, connections.ErrNotFound),
 		errors.Is(err, webhooks.ErrNotFound),

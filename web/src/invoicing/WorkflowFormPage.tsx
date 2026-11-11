@@ -25,6 +25,8 @@ type Form = {
   show_qr_code: boolean
   term: number
   reminders: Reminder[]
+  email_subject: string
+  email_body: string
 }
 
 const newKinds: Record<string, Kind> = { invoice_workflow: 'InvoiceWorkflow', estimate_workflow: 'EstimateWorkflow' }
@@ -40,6 +42,8 @@ function toForm(w: Workflow | null, a: Administration, kind: Kind): Form {
     prices_are_incl_tax: w?.prices_are_incl_tax ?? false,
     show_qr_code: w?.show_qr_code ?? kind === 'InvoiceWorkflow',
     term: steps[0]?.due_interval ?? (kind === 'InvoiceWorkflow' ? 14 : 30),
+    email_subject: w?.invoice_email_subject ?? '',
+    email_body: w?.invoice_email_body ?? '',
     reminders: steps.slice(1).map((s) => ({ reminder_delay: s.reminder_delay ?? 7, reminder_text: s.reminder_text ?? '', reminder_auto_send: s.reminder_auto_send ?? false })),
   }
 }
@@ -69,7 +73,10 @@ function WorkflowForm({ administration, workflow, kind }: { administration: Admi
   const back = `/${administration.id}/settings/invoices_and_estimates#workflows`
   const invoices = kind === 'InvoiceWorkflow'
   const isDefault = workflow?.default ?? false
-  const labels = { name: t('workflow.name'), language: t('workflow.language'), currency: t('workflow.currency'), active: t('workflow.active'), steps: invoices ? t('workflow.reminders') : t('workflow.validity') }
+  const labels = {
+    name: t('workflow.name'), language: t('workflow.language'), currency: t('workflow.currency'), active: t('workflow.active'), steps: invoices ? t('workflow.reminders') : t('workflow.validity'),
+    invoice_email_subject: t('workflow.emailSubject'), invoice_email_body: t('workflow.emailBody'),
+  }
   const errors = formErrors(save.error ?? remove.error, labels)
 
   const currencyOptions = useMemo(() => {
@@ -88,6 +95,7 @@ function WorkflowForm({ administration, workflow, kind }: { administration: Admi
         name: form.name, language: form.language as 'en', currency: form.currency,
         prices_are_incl_tax: form.prices_are_incl_tax, show_qr_code: form.show_qr_code,
         ...(isDefault ? {} : { active: form.active, default: form.default }),
+        ...(invoices ? { invoice_email_subject: form.email_subject.trim(), invoice_email_body: form.email_body } : {}),
         steps_attributes: [{ due_interval: form.term }, ...(invoices ? form.reminders : [])],
       },
       { onSuccess: () => navigate(back) },
@@ -145,6 +153,29 @@ function WorkflowForm({ administration, workflow, kind }: { administration: Admi
             onChange={(e) => setForm({ ...form, term: Number(e.target.value) })}
           />
         </FormSection>
+
+        {invoices && (
+          <FormSection title={t('workflow.email')}>
+            <TextInput
+              label={labels.invoice_email_subject}
+              maxLength={255}
+              autoComplete="off"
+              help={t('workflow.emailSubjectHelp')}
+              value={form.email_subject}
+              errors={errors.field('invoice_email_subject')}
+              onChange={(e) => setForm({ ...form, email_subject: e.target.value })}
+            />
+            <TextArea
+              label={labels.invoice_email_body}
+              rows={6}
+              maxLength={10000}
+              help={t('workflow.emailBodyHelp')}
+              value={form.email_body}
+              errors={errors.field('invoice_email_body')}
+              onChange={(e) => setForm({ ...form, email_body: e.target.value })}
+            />
+          </FormSection>
+        )}
 
         {invoices && (
           <FormSection title={t('workflow.reminders')}>

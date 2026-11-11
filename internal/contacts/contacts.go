@@ -330,3 +330,17 @@ func (s *Service) Versions(ctx context.Context, admin, user resource.ID, q Query
 	}
 	return s.store.Versions(ctx, admin, q)
 }
+
+// AnyReferences reports a contact in use when any of its references does.
+type AnyReferences []References
+
+// ContactInUse implements References.
+func (refs AnyReferences) ContactInUse(ctx context.Context, admin, contact resource.ID) (bool, error) {
+	for _, r := range refs {
+		used, err := r.ContactInUse(ctx, admin, contact)
+		if err != nil || used {
+			return used, err
+		}
+	}
+	return false, nil
+}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -147,7 +148,24 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 	"createBookingRule":              func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_created") },
 	"updateBookingRule":              func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_updated") },
 	"deleteBookingRule":              func(c change) []webhooks.Event { return c.one("BookingRule", "booking_rule_destroyed") },
-	"createContact":                  func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
+	"createSalesInvoice":             func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_created") },
+	"updateSalesInvoice":             func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_updated") },
+	"deleteSalesInvoice":             func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_destroyed") },
+	"sendSalesInvoice": func(c change) []webhooks.Event {
+		action := map[string]string{"Email": "sales_invoice_send_email", "Post": "sales_invoice_send_post"}[fmt.Sprint(c.responseMap["delivery_method"])]
+		if action == "" {
+			action = "sales_invoice_send_manually"
+		}
+		events := c.one("SalesInvoice", action)
+		if state, _ := c.responseMap["state"].(string); state == "open" || state == "scheduled" {
+			events = append(events, c.one("SalesInvoice", "sales_invoice_state_changed_to_"+state)...)
+		}
+		return events
+	},
+	"duplicateCreditSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_created_from_original") },
+	"pauseSalesInvoice":           func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_paused") },
+	"resumeSalesInvoice":          func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_unpaused") },
+	"createContact":               func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
 	"updateContact": func(c change) []webhooks.Event {
 		switch c.nested("contact")["archived"] {
 		case true:
