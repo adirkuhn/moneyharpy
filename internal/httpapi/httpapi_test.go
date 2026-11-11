@@ -89,6 +89,9 @@ func TestMain(m *testing.M) {
 	}
 
 	code := m.Run()
+	if code == 0 && fullRun() && !checkOperationCoverage(os.Stderr) {
+		code = 1
+	}
 	cleanup()
 	os.Exit(code)
 }
@@ -418,6 +421,7 @@ func (c *client) checkContract(req *http.Request, res *http.Response, body []byt
 	if err != nil {
 		return // Paths outside the contract are asserted by their own tests.
 	}
+	recordCoverage(req.Method, route.Path, res.StatusCode)
 	input := &openapi3filter.ResponseValidationInput{
 		RequestValidationInput: &openapi3filter.RequestValidationInput{Request: lookup, PathParams: params, Route: route},
 		Status:                 res.StatusCode,
@@ -965,6 +969,9 @@ func TestIdentities(t *testing.T) {
 	if extra.BankAccountNumber == nil || *extra.BankAccountNumber != "NL91ABNA0417164300" {
 		t.Errorf("bank_account_number = %v", extra.BankAccountNumber)
 	}
+	if got := decode[httpapi.Identity](t, owner.do(http.MethodGet, base+"/"+extra.Id, nil)); got.Id != extra.Id || got.Default {
+		t.Errorf("fetched = %+v", got)
+	}
 
 	listed := decode[[]httpapi.Identity](t, owner.do(http.MethodGet, base, nil))
 	if len(listed) != 2 || !listed[0].Default {
@@ -1077,6 +1084,9 @@ func TestCustomFields(t *testing.T) {
 		t.Errorf("created = %+v", slogan)
 	}
 	contact := decode[httpapi.CustomField](t, owner.do(http.MethodPost, base, field("Ref", "contact")))
+	if got := decode[httpapi.CustomField](t, owner.do(http.MethodGet, base+"/"+slogan.Id, nil)); got.Name != "Slogan" {
+		t.Errorf("fetched = %+v", got)
+	}
 
 	listed := decode[[]httpapi.CustomField](t, owner.do(http.MethodGet, base+".json", nil))
 	if len(listed) != 2 || listed[0].Id != slogan.Id {
@@ -1465,6 +1475,9 @@ func TestWorkflows(t *testing.T) {
 	}})
 	wantStatus(t, r, http.StatusCreated)
 	w := decode[httpapi.Workflow](t, r)
+	if got := decode[httpapi.Workflow](t, owner.do(http.MethodGet, base+"/"+*w.Id, nil)); *got.Name != "Export" || len(*got.Steps) != 2 {
+		t.Errorf("fetched = %+v", got)
+	}
 	if *w.Name != "Export" || *w.Default || w.Uri != "/"+a.Id+"/workflows/"+*w.Id || len(*w.Steps) != 2 {
 		t.Errorf("created = %+v", w)
 	}
@@ -1511,6 +1524,11 @@ func TestDocumentStyles(t *testing.T) {
 	}
 	if created["uri"] != "/"+a.Id+"/document_styles/"+id || created["logo_hash"] != nil {
 		t.Errorf("created = %v", created)
+	}
+	r = owner.do(http.MethodPatch, base+"/"+id, map[string]any{"document_style": map[string]any{"name": "The Very Best"}})
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[httpapi.DocumentStyle](t, owner.do(http.MethodGet, base+"/"+id, nil)); got.Name == nil || *got.Name != "The Very Best" || *got.PaperSize != "letter" {
+		t.Errorf("updated style = %+v", got)
 	}
 
 	logo := base + "/" + id + "/logo"
