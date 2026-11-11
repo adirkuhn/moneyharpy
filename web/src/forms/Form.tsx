@@ -20,6 +20,8 @@ type RowProps = {
   width?: Width
   /** A small button placed right after the control, such as "add a line". */
   action?: ReactNode
+  /** Something beside the label that is not part of it, such as an information button. */
+  labelExtra?: ReactNode
 }
 
 type FormRowProps = RowProps & {
@@ -31,14 +33,21 @@ type FormRowProps = RowProps & {
  * One labelled control: the label beside it on wide screens and above it on
  * narrow ones, with its error or help text underneath.
  */
-export function FormRow({ label, errors, help, width = 'long', action, children }: FormRowProps) {
+export function FormRow({ label, errors, help, width = 'long', action, labelExtra, children }: FormRowProps) {
   const id = useId()
   const messageId = `${id}-message`
   const invalid = errors !== undefined && errors.length > 0
   const message = invalid ? errors.join(' ') : help
   return (
     <div className={`form-input form-input--${width}${invalid ? ' form-input--invalid' : ''}`}>
-      <label className="form-input__label" id={`${id}-label`} htmlFor={id}>{label}</label>
+      {labelExtra ? (
+        <div className="form-input__label-row">
+          <label className="form-input__label" id={`${id}-label`} htmlFor={id}>{label}</label>
+          {labelExtra}
+        </div>
+      ) : (
+        <label className="form-input__label" id={`${id}-label`} htmlFor={id}>{label}</label>
+      )}
       <div className="form-input__body">
         <div className="form-input__control">
           {children({
@@ -57,9 +66,9 @@ export function FormRow({ label, errors, help, width = 'long', action, children 
   )
 }
 
-export function TextInput({ label, errors, help, width, action, ...input }: RowProps & React.InputHTMLAttributes<HTMLInputElement>) {
+export function TextInput({ label, errors, help, width, action, labelExtra, ...input }: RowProps & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <FormRow label={label} errors={errors} help={help} width={width} action={action}>
+    <FormRow label={label} errors={errors} help={help} width={width} action={action} labelExtra={labelExtra}>
       {({ labelId: _, ...control }) => <input type="text" {...input} {...control} />}
     </FormRow>
   )

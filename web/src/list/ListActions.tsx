@@ -11,6 +11,8 @@ type Props = {
   exports: string[]
   /** Actions of this list only, placed before the export menu. */
   extra?: ReactNode
+  /** Actions of this list only, placed after the export menu, such as Moneybird's Import. */
+  trailing?: ReactNode
   primary: { to: string; label: string }
 }
 
@@ -24,7 +26,7 @@ export type MenuItem =
  * The actions on the right of a list's action bar, after Moneybird: information,
  * statistics, export and the primary action. Lists have no ⋯ menu there.
  */
-export function ListActions({ info, exports, extra, primary }: Props) {
+export function ListActions({ info, exports, extra, trailing, primary }: Props) {
   const { t } = useTranslation()
   return (
     <>
@@ -44,6 +46,7 @@ export function ListActions({ info, exports, extra, primary }: Props) {
       <Unavailable icon="chart" label={t('list.statistics')} />
       {extra}
       {exports.length > 0 ? <ExportMenu entries={exports} /> : <Unavailable icon="export" label={t('list.export')} text />}
+      {trailing}
       <Link className="btn btn--accent btn--with-icon" to={primary.to}>
         <ListIcon kind="plus" />
         <span>{primary.label}</span>
