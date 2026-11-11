@@ -268,6 +268,27 @@ export const nl: Messages = {
     keptNotice: 'Er is iets op dit project geboekt, dus het is gearchiveerd in plaats van verwijderd.',
     archivedNotice: 'Dit project is gearchiveerd en wordt niet aangeboden voor nieuwe boekingen.',
   },
+  timeEntries: {
+    title: 'Urenregistratie', add: 'Uren toevoegen', newTitle: 'Nieuwe uren', backToList: 'Naar Urenregistratie', form: 'Uren', save: 'Uren opslaan',
+    filters: 'Filters voor uren', views: { all: 'Alle uren dit jaar', open: 'Te factureren', non_billable: 'Niet factureerbaar' },
+    loadError: 'De uren konden niet worden geladen. Herlaad de pagina om het opnieuw te proberen.',
+    empty: 'Nog geen uren geregistreerd dit jaar. Voeg uren toe, of start een timer door het einde leeg te laten.',
+    noMatches: 'Geen uren gevonden voor dit filter. Probeer een ander.',
+    date: 'Datum', description: 'Omschrijving', contact: 'Contact', project: 'Project', duration: 'Uren', status: 'Status', user: 'Gebruiker',
+    startedAt: 'Begin', endedAt: 'Einde', endHelp: 'Laat leeg om een timer te starten.', billable: 'Factureerbaar aan de klant', invoice: 'Factuur', draftInvoice: 'Conceptfactuur',
+    states: { running: 'Loopt', invoiced: 'Gefactureerd', open: 'Open', nonBillable: 'Niet factureerbaar' },
+    detailsTitle: 'Gegevens van de uren', stop: 'Timer stoppen', resume: 'Timer hervatten', delete: 'Verwijderen', confirmDelete: 'Uren verwijderen',
+    confirmDeleteText: 'Deze uren verwijderen? Dit kan niet ongedaan worden gemaakt.',
+  },
+  taskLists: {
+    title: 'Takenlijsten', add: 'Takenlijst toevoegen', newTitle: 'Nieuwe takenlijst', backToList: 'Naar Takenlijsten', form: 'Takenlijst', save: 'Takenlijst opslaan',
+    loadError: 'De takenlijsten konden niet worden geladen. Herlaad de pagina om het opnieuw te proberen.',
+    empty: 'Nog geen takenlijsten. Voeg er een toe om terugkerend werk bij te houden, zoals het afsluiten van een maand.',
+    name: 'Naam', description: 'Omschrijving', period: 'Periode', deadline: 'Deadline', progress: 'Klaar', done: '{{done}} van {{total}}', status: 'Status',
+    states: { open: 'Open', completed: 'Afgerond' }, detailsTitle: 'Gegevens van de takenlijst', tasks: 'Taken',
+    taskName: 'Nieuwe taak', addTask: 'Taak toevoegen', addTaskTo: 'Een taak toevoegen aan {{group}}',
+    delete: 'Verwijderen', confirmDelete: 'Takenlijst verwijderen', confirmDeleteText: 'Deze takenlijst met al haar taken verwijderen? Dit kan niet ongedaan worden gemaakt.',
+  },
   sidenav: {
     label: 'Administratiemenu', menu: 'Menu', collapse: 'Menu inklappen', expand: 'Menu uitklappen', collapseShort: 'Inklappen', later: 'Nog niet beschikbaar',
     items: {

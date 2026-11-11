@@ -33,6 +33,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
 	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
+	"github.com/adirkuhn/moneyharpy/internal/tasklists"
+	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -92,6 +94,8 @@ type Deps struct {
 	Projects        *projects.Service
 	Subscriptions   *subscriptions.Service
 	Downloads       *downloads.Service
+	TimeEntries     *timeentries.Service
+	TaskLists       *tasklists.Service
 	Membership      *membership.Service
 	Connections     *connections.Service
 	Webhooks        *webhooks.Service

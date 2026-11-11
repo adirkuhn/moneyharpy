@@ -64,6 +64,10 @@ import { ProductPage } from './products/ProductPage'
 import { ProductsPage } from './products/ProductsPage'
 import { ProjectPage } from './projects/ProjectPage'
 import { ProjectsPage } from './projects/ProjectsPage'
+import { TaskListPage } from './tasklists/TaskListPage'
+import { TaskListsPage } from './tasklists/TaskListsPage'
+import { TimeEntriesPage } from './timeentries/TimeEntriesPage'
+import { TimeEntryPage } from './timeentries/TimeEntryPage'
 
 export function AppRoutes() {
   return (
@@ -113,6 +117,12 @@ export function AppRoutes() {
           <Route path="/:administrationId/projects" element={<ProjectsPage />} />
           <Route path="/:administrationId/projects/new" element={<ProjectPage />} />
           <Route path="/:administrationId/projects/:projectId" element={<ProjectPage />} />
+          <Route path="/:administrationId/time_entries" element={<TimeEntriesPage />} />
+          <Route path="/:administrationId/time_entries/new" element={<TimeEntryPage />} />
+          <Route path="/:administrationId/time_entries/:timeEntryId" element={<TimeEntryPage />} />
+          <Route path="/:administrationId/task_lists/lists" element={<TaskListsPage />} />
+          <Route path="/:administrationId/task_lists/new" element={<TaskListPage />} />
+          <Route path="/:administrationId/task_lists/:taskListId" element={<TaskListPage />} />
           <Route path="/:administrationId/report/general_ledger" element={<TrialBalancePage />} />
           <Route path="/:administrationId/report/journal_entries" element={<LedgerEntriesPage />} />
           <Route path="/:administrationId/documents/general_journal_documents" element={<JournalDocumentsPage />} />
