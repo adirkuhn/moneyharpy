@@ -53,21 +53,28 @@ export function DetailList({ rows, header }: { rows: DetailRow[]; header?: React
 type ConfirmProps = {
   /** What will happen, such as "Delete this invoice? This cannot be undone." */
   message: string
+  /** What follows from it, such as "You cannot undo this.", under the question. */
+  description?: string
   confirmLabel: string
+  /** Something that can be undone, such as archiving, is asked without the colours of danger. */
+  danger?: boolean
   disabled?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
 
 /** Asks once more before something that cannot be undone, chosen from the ⋯ menu. */
-export function ConfirmPanel({ message, confirmLabel, disabled, onConfirm, onCancel }: ConfirmProps) {
+export function ConfirmPanel({ message, description, confirmLabel, danger = true, disabled, onConfirm, onCancel }: ConfirmProps) {
   const { t } = useTranslation()
   const id = useId()
   return (
-    <div className="confirm-panel" role="alertdialog" aria-labelledby={id}>
-      <p id={id} className="confirm-panel__message">{message}</p>
+    <div className={`confirm-panel${danger ? '' : ' confirm-panel--calm'}`} role="alertdialog" aria-labelledby={id} aria-describedby={description ? `${id}-text` : undefined}>
+      <div>
+        <p id={id} className="confirm-panel__message">{message}</p>
+        {description && <p id={`${id}-text`} className="confirm-panel__text">{description}</p>}
+      </div>
       <div className="confirm-panel__buttons">
-        <button type="button" className="btn btn--danger" disabled={disabled} onClick={onConfirm} autoFocus>{confirmLabel}</button>
+        <button type="button" className={`btn ${danger ? 'btn--danger' : 'btn--primary'}`} disabled={disabled} onClick={onConfirm} autoFocus>{confirmLabel}</button>
         <button type="button" className="btn btn--secondary" onClick={onCancel}>{t('common.cancel')}</button>
       </div>
     </div>
