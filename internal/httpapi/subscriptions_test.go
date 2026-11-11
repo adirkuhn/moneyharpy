@@ -89,6 +89,9 @@ func TestSubscriptionLifecycle(t *testing.T) {
 		sub.Products[0].Discount != "10.0" || sub.URI != strings.TrimPrefix(api, "/api/v2")+"/subscriptions/"+sub.ID {
 		t.Fatalf("created = %+v", sub)
 	}
+	if got := decode[subscription](t, owner.do(http.MethodGet, api+"/subscriptions/"+sub.ID, nil)); got.ID != sub.ID || got.RecurringID != sub.RecurringID {
+		t.Errorf("fetched = %+v", got)
+	}
 	rec := decode[recurringInvoice](t, owner.do(http.MethodGet, api+"/recurring_sales_invoices/"+sub.RecurringID, nil))
 	if !rec.AutoSend || rec.InvoiceDate != tomorrow || rec.TotalIncl != "108.9" || rec.Subscription == nil || rec.Subscription.ID != sub.ID {
 		t.Errorf("recurring = %+v", rec)

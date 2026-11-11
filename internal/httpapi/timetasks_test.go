@@ -238,6 +238,9 @@ func TestTaskListsLifecycle(t *testing.T) {
 	if deref(tpl.Period) != "P1M" || deref(tpl.DeadlineAfter) != "P10D" || len(tpl.Groups) != 1 || tpl.Groups[0].Name != nil || tpl.URI != "/"+a.Id+"/task_list_templates/"+tpl.ID {
 		t.Fatalf("template = %+v", tpl)
 	}
+	if got := decode[taskTemplate](t, owner.do(http.MethodGet, api+"/task_list_templates/"+tpl.ID, nil)); got.ID != tpl.ID || len(got.Groups) != 1 {
+		t.Errorf("fetched = %+v", got)
+	}
 	wantStatus(t, owner.do(http.MethodPost, api+"/task_list_templates", map[string]any{"task_list_template": map[string]any{"name": ""}}), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodPatch, api+"/task_list_templates/"+tpl.ID, map[string]any{"task_list_template": map[string]any{"period": "P1X"}}), http.StatusUnprocessableEntity)
 	r = owner.do(http.MethodPost, api+"/task_list_groups/"+tpl.Groups[0].ID+"/tasks", map[string]any{"task": map[string]any{"name": "Reconcile the bank", "description": "Every account"}})

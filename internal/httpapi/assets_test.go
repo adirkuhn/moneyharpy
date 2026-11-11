@@ -148,6 +148,9 @@ func TestAssetLifecycle(t *testing.T) {
 	if sale := decode[map[string]any](t, r); sale["amount"] != "300.0" || sale["disposal_id"] == nil {
 		t.Errorf("sale = %v", sale)
 	}
+	wantStatus(t, owner.do(http.MethodDelete, api+"/assets/"+a.ID+"/reinvestment_reserve_sale", nil), http.StatusNoContent)
+	wantStatus(t, owner.do(http.MethodDelete, api+"/assets/"+a.ID+"/reinvestment_reserve_sale", nil), http.StatusNotFound)
+	wantStatus(t, owner.do(http.MethodPost, api+"/assets/"+a.ID+"/reinvestment_reserve_sale", map[string]any{"amount": "300"}), http.StatusCreated)
 
 	// The list shows active assets unless asked for all.
 	r = owner.do(http.MethodGet, api+"/assets", nil)

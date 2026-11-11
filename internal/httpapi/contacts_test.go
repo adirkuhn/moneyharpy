@@ -117,8 +117,15 @@ func TestContactsLifecycle(t *testing.T) {
 		t.Errorf("fetched = %d", len(fetched))
 	}
 
+	if got := decode[contact](t, owner.do(http.MethodGet, api+"/contacts/"+c.ID, nil)); got.ID != c.ID || len(got.People) != 1 {
+		t.Errorf("fetched contact = %+v", got)
+	}
+
 	// Contact people and notes.
 	zoe := c.People[0]
+	if got := decode[contactPerson](t, owner.do(http.MethodGet, api+"/contacts/"+c.ID+"/contact_people/"+zoe.ID, nil)); got.ID != zoe.ID || deref(got.Firstname) != "Zoë" {
+		t.Errorf("fetched person = %+v", got)
+	}
 	p := decode[contactPerson](t, owner.do(http.MethodPatch, api+"/contacts/"+c.ID+"/contact_people/"+zoe.ID, map[string]any{"contact_person": map[string]any{"department": "Finance"}}))
 	if deref(p.Department) != "Finance" || deref(p.Firstname) != "Zoë" || p.ContactID != c.ID {
 		t.Errorf("person = %+v", p)

@@ -141,6 +141,9 @@ func TestLedgerAccounts(t *testing.T) {
 	if *hosting.ParentID != office.ID || hosting.TaxonomyItem.Code != "WBedKanSof" || hosting.URI != "/"+a.Id+"/ledger_accounts/"+hosting.ID {
 		t.Errorf("created = %+v", hosting)
 	}
+	if got := decode[ledgerAccount](t, owner.do(http.MethodGet, base+"/"+hosting.ID, nil)); got.ID != hosting.ID || got.TaxonomyItem == nil || got.TaxonomyItem.Code != "WBedKanSof" {
+		t.Errorf("fetched = %+v", got)
+	}
 	wantStatus(t, owner.do(http.MethodPost, base, map[string]any{"ledger_account": map[string]any{"name": "No code", "account_type": "expenses"}}), http.StatusUnprocessableEntity)
 
 	items := decode[[]httpapi.TaxonomyItem](t, owner.do(http.MethodGet, "/api/v2/"+a.Id+"/taxonomy_items?query=WBedKan&account_type=expenses&limit=5", nil))
