@@ -30,7 +30,8 @@ function open(admin = harpy, overview: Overview = full) {
 }
 
 beforeEach(() => {
-  vi.useFakeTimers({ toFake: ['Date'] })
+  // Afternoon in Amsterdam, set before anything renders.
+  vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true })
   vi.setSystemTime(new Date('2026-11-10T13:30:00Z'))
 })
 afterEach(() => vi.useRealTimers())

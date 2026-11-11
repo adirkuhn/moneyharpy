@@ -551,6 +551,7 @@ type LedgerAccountBooking struct {
 	BookingRuleID       pgtype.Int8
 	CreatedAt           pgtype.Timestamptz
 	UpdatedAt           pgtype.Timestamptz
+	ProjectID           pgtype.Int8
 }
 
 type LedgerEntry struct {

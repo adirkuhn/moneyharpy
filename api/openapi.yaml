@@ -987,7 +987,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/IdentityRequest'
+              $ref: '#/components/schemas/DefaultIdentityRequest'
       responses:
         '200':
           description: The updated identity
@@ -3198,8 +3198,11 @@ paths:
       summary: Link a booking to a financial mutation
       description: >-
         Books on a category (LedgerAccount), pays a sales invoice (SalesInvoice, ExternalSalesInvoice) or a purchase
-        invoice or receipt (Document), whose payment the bank posts on the creditors; other booking types answer
-        422 until their documents exist. price_base is the amount; positive books in the direction of the
+        invoice or receipt (Document), whose payment the bank posts on the creditors, makes and pays a new purchase
+        invoice or receipt (NewPurchaseInvoice, NewReceipt; price_base signed like the document, the contact found by
+        the transaction's IBAN) or pays what a purchase transaction or batch pays (PurchaseTransaction,
+        PurchaseTransactionBatch). project_id puts a category booking or the new document's line on a project.
+        Payment, PaymentTransaction, PaymentTransactionBatch and VatDocument answer 422 until they exist. price_base is the amount; positive books in the direction of the
         transaction, negative against it. Without it, the open amount is booked, and for an invoice at most
         what it has unpaid. A payment registered by hand that waits for its transaction is taken over by it.
         Split a transaction with one request per part. Not in the locked period.
@@ -5224,8 +5227,8 @@ paths:
         Registers a payment on a booked purchase invoice, at most what is unpaid: the manual_payment_action chooses
         the account it is booked against (payments to classify for bank_transfer, payment_without_proof or none; cash
         for cash_payment, or the financial account given; private deposits for private_payment; rounding differences
-        for rounding_error; the category given for balance_settlement); invoices_settlement is not available for
-        purchase documents yet. With financial_mutation_id a bank transaction pays it instead, which needs the bank
+        for rounding_error; the category given for balance_settlement; settlements for invoices_settlement, which
+        pays the purchase invoice or receipt in invoice_id the opposite way). With financial_mutation_id a bank transaction pays it instead, which needs the bank
         permission too. A payment that covers what is unpaid makes it paid. Not in the locked period or the future.
       tags: [Purchase invoices]
       requestBody:
@@ -5725,8 +5728,8 @@ paths:
         Registers a payment on a booked receipt, at most what is unpaid: the manual_payment_action chooses the account
         it is booked against (payments to classify for bank_transfer, payment_without_proof or none; cash for
         cash_payment, or the financial account given; private deposits for private_payment; rounding differences for
-        rounding_error; the category given for balance_settlement); invoices_settlement is not available for purchase
-        documents yet. With financial_mutation_id a bank transaction pays it instead, which needs the bank permission
+        rounding_error; the category given for balance_settlement; settlements for invoices_settlement, which pays
+        the purchase invoice or receipt in invoice_id the opposite way). With financial_mutation_id a bank transaction pays it instead, which needs the bank permission
         too. A payment that covers what is unpaid makes it paid. Not in the locked period or the future.
       tags: [Receipts]
       requestBody:
@@ -13502,6 +13505,84 @@ components:
                   value:
                     type: string
                     maxLength: 255
+    DefaultIdentityRequest:
+      description: Like IdentityRequest, plus the administration attributes only the default identity takes.
+      type: object
+      required: [identity]
+      additionalProperties: false
+      properties:
+        identity:
+          type: object
+          additionalProperties: false
+          properties:
+            company_name:
+              type: string
+              maxLength: 255
+            country:
+              type: string
+              maxLength: 255
+            city:
+              type: string
+              maxLength: 255
+            zipcode:
+              type: string
+              maxLength: 255
+            address1:
+              type: string
+              maxLength: 255
+            address2:
+              type: string
+              maxLength: 255
+            email:
+              type: string
+              maxLength: 255
+            phone:
+              type: string
+              maxLength: 255
+            bank_account_name:
+              type: string
+              maxLength: 255
+            bank_account_number:
+              type: string
+              maxLength: 255
+            bank_account_bic:
+              type: string
+              maxLength: 255
+            chamber_of_commerce:
+              type: string
+              maxLength: 255
+            tax_number:
+              type: string
+              maxLength: 255
+            legal_entity_type:
+              type: string
+              maxLength: 255
+            tax_number_absence_reason:
+              type: string
+              enum: ['', below_tax_threshold, industry_exemption]
+              description: MoneyHarpy extension. Empty clears it. Ignored while a VAT number is set.
+            custom_fields_attributes:
+              type: array
+              description: Custom field values to set. An empty value removes it.
+              maxItems: 100
+              items:
+                type: object
+                required: [id, value]
+                additionalProperties: false
+                properties:
+                  id:
+                    $ref: '#/components/schemas/Identifier'
+                  value:
+                    type: string
+                    maxLength: 255
+            administration_attributes:
+              type: object
+              additionalProperties: false
+              description: Updates the administration the default identity belongs to.
+              properties:
+                legal_entity_type:
+                  type: string
+                  enum: [eenmanszaak, maatschap, vof, bv, cv, nv, stichting, vereniging, coöperatie, geen_kvk_inschrijving]
     TaxNumberAbsenceReason:
       type: string
       enum: [below_tax_threshold, industry_exemption]

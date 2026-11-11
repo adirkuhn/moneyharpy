@@ -1387,7 +1387,7 @@ export interface paths {
         head?: never;
         /**
          * Link a booking to a financial mutation
-         * @description Books on a category (LedgerAccount), pays a sales invoice (SalesInvoice, ExternalSalesInvoice) or a purchase invoice or receipt (Document), whose payment the bank posts on the creditors; other booking types answer 422 until their documents exist. price_base is the amount; positive books in the direction of the transaction, negative against it. Without it, the open amount is booked, and for an invoice at most what it has unpaid. A payment registered by hand that waits for its transaction is taken over by it. Split a transaction with one request per part. Not in the locked period.
+         * @description Books on a category (LedgerAccount), pays a sales invoice (SalesInvoice, ExternalSalesInvoice) or a purchase invoice or receipt (Document), whose payment the bank posts on the creditors, makes and pays a new purchase invoice or receipt (NewPurchaseInvoice, NewReceipt; price_base signed like the document, the contact found by the transaction's IBAN) or pays what a purchase transaction or batch pays (PurchaseTransaction, PurchaseTransactionBatch). project_id puts a category booking or the new document's line on a project. Payment, PaymentTransaction, PaymentTransactionBatch and VatDocument answer 422 until they exist. price_base is the amount; positive books in the direction of the transaction, negative against it. Without it, the open amount is booked, and for an invoice at most what it has unpaid. A payment registered by hand that waits for its transaction is taken over by it. Split a transaction with one request per part. Not in the locked period.
          */
         patch: operations["linkFinancialMutationBooking"];
         trace?: never;
@@ -2396,7 +2396,7 @@ export interface paths {
         put?: never;
         /**
          * Create a payment
-         * @description Registers a payment on a booked purchase invoice, at most what is unpaid: the manual_payment_action chooses the account it is booked against (payments to classify for bank_transfer, payment_without_proof or none; cash for cash_payment, or the financial account given; private deposits for private_payment; rounding differences for rounding_error; the category given for balance_settlement); invoices_settlement is not available for purchase documents yet. With financial_mutation_id a bank transaction pays it instead, which needs the bank permission too. A payment that covers what is unpaid makes it paid. Not in the locked period or the future.
+         * @description Registers a payment on a booked purchase invoice, at most what is unpaid: the manual_payment_action chooses the account it is booked against (payments to classify for bank_transfer, payment_without_proof or none; cash for cash_payment, or the financial account given; private deposits for private_payment; rounding differences for rounding_error; the category given for balance_settlement; settlements for invoices_settlement, which pays the purchase invoice or receipt in invoice_id the opposite way). With financial_mutation_id a bank transaction pays it instead, which needs the bank permission too. A payment that covers what is unpaid makes it paid. Not in the locked period or the future.
          */
         post: operations["createPurchaseInvoicePayment"];
         delete?: never;
@@ -2653,7 +2653,7 @@ export interface paths {
         put?: never;
         /**
          * Create a payment
-         * @description Registers a payment on a booked receipt, at most what is unpaid: the manual_payment_action chooses the account it is booked against (payments to classify for bank_transfer, payment_without_proof or none; cash for cash_payment, or the financial account given; private deposits for private_payment; rounding differences for rounding_error; the category given for balance_settlement); invoices_settlement is not available for purchase documents yet. With financial_mutation_id a bank transaction pays it instead, which needs the bank permission too. A payment that covers what is unpaid makes it paid. Not in the locked period or the future.
+         * @description Registers a payment on a booked receipt, at most what is unpaid: the manual_payment_action chooses the account it is booked against (payments to classify for bank_transfer, payment_without_proof or none; cash for cash_payment, or the financial account given; private deposits for private_payment; rounding differences for rounding_error; the category given for balance_settlement; settlements for invoices_settlement, which pays the purchase invoice or receipt in invoice_id the opposite way). With financial_mutation_id a bank transaction pays it instead, which needs the bank permission too. A payment that covers what is unpaid makes it paid. Not in the locked period or the future.
          */
         post: operations["createReceiptPayment"];
         delete?: never;
@@ -6643,6 +6643,40 @@ export interface components {
                     id: components["schemas"]["Identifier"];
                     value: string;
                 }[];
+            };
+        };
+        /** @description Like IdentityRequest, plus the administration attributes only the default identity takes. */
+        DefaultIdentityRequest: {
+            identity: {
+                company_name?: string;
+                country?: string;
+                city?: string;
+                zipcode?: string;
+                address1?: string;
+                address2?: string;
+                email?: string;
+                phone?: string;
+                bank_account_name?: string;
+                bank_account_number?: string;
+                bank_account_bic?: string;
+                chamber_of_commerce?: string;
+                tax_number?: string;
+                legal_entity_type?: string;
+                /**
+                 * @description MoneyHarpy extension. Empty clears it. Ignored while a VAT number is set.
+                 * @enum {string}
+                 */
+                tax_number_absence_reason?: "" | "below_tax_threshold" | "industry_exemption";
+                /** @description Custom field values to set. An empty value removes it. */
+                custom_fields_attributes?: {
+                    id: components["schemas"]["Identifier"];
+                    value: string;
+                }[];
+                /** @description Updates the administration the default identity belongs to. */
+                administration_attributes?: {
+                    /** @enum {string} */
+                    legal_entity_type?: "eenmanszaak" | "maatschap" | "vof" | "bv" | "cv" | "nv" | "stichting" | "vereniging" | "coöperatie" | "geen_kvk_inschrijving";
+                };
             };
         };
         /** @enum {string} */
@@ -11160,7 +11194,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["IdentityRequest"];
+                "application/json": components["schemas"]["DefaultIdentityRequest"];
             };
         };
         responses: {

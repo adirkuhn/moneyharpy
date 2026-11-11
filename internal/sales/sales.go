@@ -106,6 +106,9 @@ type Invoice struct {
 	// OriginalID is the invoice a credit invoice credits.
 	OriginalID              *resource.ID
 	RecurringSalesInvoiceID *resource.ID
+	// SubscriptionID is the subscription the invoice bills; the store fills
+	// it in.
+	SubscriptionID *resource.ID
 	// OriginalEstimateID is the estimate the invoice was billed from.
 	OriginalEstimateID *resource.ID
 	// Delivery remembers how a scheduled invoice will be sent.

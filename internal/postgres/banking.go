@@ -371,6 +371,7 @@ func (s *BankingStore) SaveBookings(ctx context.Context, m banking.Mutation, add
 			if err := q.InsertLedgerAccountBooking(ctx, sqlc.InsertLedgerAccountBookingParams{
 				ID: int64(b.ID), AdministrationID: int64(b.AdministrationID), FinancialMutationID: int64(b.MutationID), LedgerAccountID: int64(b.LedgerAccountID),
 				Description: b.Description, Price: int64(b.Price), BookingRuleID: rule, CreatedAt: timestamp(b.CreatedAt), UpdatedAt: timestamp(b.UpdatedAt),
+				ProjectID: optionalID(b.ProjectID),
 			}); err != nil {
 				return err
 			}
@@ -401,7 +402,7 @@ func (s *BankingStore) withBookings(ctx context.Context, admin resource.ID, rows
 		bk := banking.Booking{
 			ID: resource.ID(b.ID), AdministrationID: resource.ID(b.AdministrationID), MutationID: resource.ID(b.FinancialMutationID),
 			LedgerAccountID: resource.ID(b.LedgerAccountID), Description: b.Description, Price: banking.Amount(b.Price),
-			CreatedAt: b.CreatedAt.Time, UpdatedAt: b.UpdatedAt.Time,
+			ProjectID: idOf(b.ProjectID), CreatedAt: b.CreatedAt.Time, UpdatedAt: b.UpdatedAt.Time,
 		}
 		if b.BookingRuleID.Valid {
 			rule := resource.ID(b.BookingRuleID.Int64)

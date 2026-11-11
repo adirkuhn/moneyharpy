@@ -28,8 +28,11 @@ type recurringInvoice struct {
 	TotalIncl       string  `json:"total_price_incl_tax"`
 	InvoicesCreated int     `json:"invoices_created"`
 	ScheduledUserID *string `json:"sending_scheduled_user_id"`
-	URI             string  `json:"uri"`
-	Contact         *struct {
+	Subscription    *struct {
+		ID string `json:"id"`
+	} `json:"subscription"`
+	URI     string `json:"uri"`
+	Contact *struct {
 		ID string `json:"id"`
 	} `json:"contact"`
 	Details []struct {
@@ -74,7 +77,7 @@ func TestRecurringSalesInvoiceLifecycle(t *testing.T) {
 	owner := h.client()
 	owner.register()
 	api, recurrings, create := recurringSetup(t, owner)
-	today := time.Now().Format(time.DateOnly)
+	today := adminNow().Format(time.DateOnly)
 
 	r := create("100", map[string]any{"frequency": "3", "has_desired_count": true, "desired_count": 4, "auto_send": "true"})
 	if !r.Active || r.FrequencyType != "month" || r.Frequency != 3 || r.InvoiceDate != today || r.StartDate != today || r.TotalIncl != "121.0" ||
@@ -88,7 +91,7 @@ func TestRecurringSalesInvoiceLifecycle(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodPost, recurrings, map[string]any{"recurring_sales_invoice": map[string]any{"invoice_date": "2020-01-01"}}), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodPost, recurrings, map[string]any{"recurring_sales_invoice": map[string]any{"colour": "red"}}), http.StatusBadRequest)
 
-	next := time.Now().AddDate(0, 1, 0).Format(time.DateOnly)
+	next := adminNow().AddDate(0, 1, 0).Format(time.DateOnly)
 	r2 := owner.do(http.MethodPatch, recurrings+"/"+r.ID, map[string]any{"recurring_sales_invoice": map[string]any{
 		"invoice_date": next, "frequency_type": "year", "frequency": 1, "auto_send": false, "last_date": "",
 		"details_attributes": []map[string]any{{"id": r.Details[0].ID, "price": "200"}},
@@ -210,7 +213,7 @@ func TestRecurringSalesInvoiceWebhooks(t *testing.T) {
 		t.Fatal(err)
 	}
 	wantStatus(t, owner.do(http.MethodDelete, recurrings+"/"+r.ID, nil), http.StatusNoContent)
-	other := create("10", map[string]any{"invoice_date": time.Now().AddDate(0, 0, 7).Format(time.DateOnly)})
+	other := create("10", map[string]any{"invoice_date": adminNow().AddDate(0, 0, 7).Format(time.DateOnly)})
 	wantStatus(t, owner.do(http.MethodDelete, recurrings+"/"+other.ID, nil), http.StatusNoContent)
 	if _, err := h.hooks.Deliver(ctx, 20); err != nil {
 		t.Fatal(err)

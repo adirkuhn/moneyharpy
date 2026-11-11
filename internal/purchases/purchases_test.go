@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -225,7 +226,52 @@ func TestPaymentsMakeTheDocumentPaid(t *testing.T) {
 		t.Errorf("DeletePayment() on the wrong kind error = %v", err)
 	}
 	_, err = h.svc.RegisterPayment(ctx, adminID, owner, PurchaseInvoice, d.ID, sales.PaymentInput{PaymentDate: "2026-11-11", ManualPaymentAction: sales.InvoicesSettlement})
-	wantInvalid(t, err, "manual_payment_action")
+	wantInvalid(t, err, "invoice_id")
+}
+
+func TestInvoicesSettlementSettlesAgainstAnotherDocument(t *testing.T) {
+	h := newHarness(t)
+	d, _ := h.svc.Create(ctx, adminID, owner, PurchaseInvoice, invoice(line("100", vat21, costs)))
+	credit, _ := h.svc.Create(ctx, adminID, owner, PurchaseInvoice, invoice(line("-50", vat21, costs)))
+	settle := func(id, other resource.ID, price string) (sales.Payment, error) {
+		return h.svc.RegisterPayment(ctx, adminID, owner, PurchaseInvoice, id, sales.PaymentInput{
+			PaymentDate: "2026-11-11", Price: ptr(price), ManualPaymentAction: sales.InvoicesSettlement, InvoiceID: &other,
+		})
+	}
+	_, err := settle(d.ID, d.ID, "10")
+	wantInvalid(t, err, "invoice_id")
+	_, err = settle(d.ID, 999, "10")
+	wantInvalid(t, err, "invoice_id")
+	_, err = settle(d.ID, credit.ID, "61")
+	wantInvalid(t, err, "price")
+
+	p, err := settle(d.ID, credit.ID, "60.5")
+	if err != nil {
+		t.Fatalf("RegisterPayment() error = %v", err)
+	}
+	if p.ManualPaymentAction != sales.InvoicesSettlement || p.LinkedPaymentID == nil || p.CreditInvoiceID == nil || *p.CreditInvoiceID != credit.ID {
+		t.Errorf("payment = %+v", p)
+	}
+	other, _ := h.svc.Document(ctx, adminID, PurchaseInvoice, credit.ID, owner)
+	if other.State != Paid || len(other.Payments) != 1 || other.Payments[0].Price != -6050 || *other.Payments[0].LinkedPaymentID != p.ID {
+		t.Errorf("credit after settlement = %+v", other)
+	}
+	if diff := cmp.Diff([]posting{{creditors, 6050}, {settlements, -6050}}, postings(h.store.paid[p.ID]), cmp.AllowUnexported(posting{})); diff != "" {
+		t.Errorf("payment entries diff (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff([]posting{{creditors, -6050}, {settlements, 6050}}, postings(h.store.paid[*p.LinkedPaymentID]), cmp.AllowUnexported(posting{})); diff != "" {
+		t.Errorf("linked payment entries diff (-want +got):\n%s", diff)
+	}
+
+	// Removing one half takes the other along.
+	if err := h.svc.DeletePayment(ctx, adminID, owner, PurchaseInvoice, credit.ID, *p.LinkedPaymentID); err != nil {
+		t.Fatalf("DeletePayment() error = %v", err)
+	}
+	got, _ := h.svc.Document(ctx, adminID, PurchaseInvoice, d.ID, owner)
+	other, _ = h.svc.Document(ctx, adminID, PurchaseInvoice, credit.ID, owner)
+	if len(got.Payments) != 0 || len(other.Payments) != 0 || other.State != Open || h.store.paid[p.ID] != nil {
+		t.Errorf("after removing a settlement: %+v / %+v", got, other)
+	}
 }
 
 func TestReceiptPaidFromAFinancialAccountOnCreation(t *testing.T) {
@@ -497,4 +543,58 @@ func TestParseTransactionFilter(t *testing.T) {
 			t.Errorf("ParseTransactionFilter(%q) accepted", bad)
 		}
 	}
+}
+
+func TestCreateBankDocument(t *testing.T) {
+	h := newHarness(t)
+	day := time.Date(2026, 11, 2, 0, 0, 0, 0, time.UTC)
+	in := banking.NewDocument{Kind: PurchaseInvoice, Date: day, Amount: 2550, Description: "Hosting November", ContraName: "Hosting", ContraAccount: "NL44 RABO 0123 4567 89", ProjectID: ptr(falcon)}
+	id, err := h.svc.CreateBankDocument(ctx, adminID, owner, in)
+	if err != nil {
+		t.Fatalf("CreateBankDocument() error = %v", err)
+	}
+	d, _ := h.svc.Document(ctx, adminID, PurchaseInvoice, id, owner)
+	if d.State != Open || d.ContactID != supplier || !d.Date.Equal(day) || d.Total() != 2550 || len(d.Lines) != 1 ||
+		d.Lines[0].TaxRateID != noVAT || *d.Lines[0].ProjectID != falcon || *d.Lines[0].LedgerAccountID != uncategorized || d.Lines[0].Description != "Hosting November" {
+		t.Errorf("document = %+v", d)
+	}
+	// Without a contact with the IBAN, only a receipt can be made.
+	in.ContraAccount, in.ProjectID = "NL91ABNA0417164300", nil
+	_, err = h.svc.CreateBankDocument(ctx, adminID, owner, in)
+	wantInvalid(t, err, "booking_type")
+	in.Kind = Receipt
+	id, err = h.svc.CreateBankDocument(ctx, adminID, owner, in)
+	if err != nil {
+		t.Fatalf("CreateBankDocument() of a receipt error = %v", err)
+	}
+	if d, _ := h.svc.Document(ctx, adminID, Receipt, id, owner); d.State != Open || d.ContactID != 0 {
+		t.Errorf("receipt = %+v", d)
+	}
+}
+
+func TestPayables(t *testing.T) {
+	h := newHarness(t)
+	inv, _ := h.svc.Create(ctx, adminID, owner, PurchaseInvoice, invoice(line("100", vat21, costs)))
+	tx, err := h.svc.Pay(ctx, adminID, owner, PayInput{DocumentID: inv.ID, FinancialAccountID: bankAccount})
+	if err != nil {
+		t.Fatalf("Pay() error = %v", err)
+	}
+	got, err := h.svc.Payables(ctx, adminID, owner, "PurchaseTransaction", tx.ID)
+	if err != nil || len(got) != 1 || got[0].DocumentID != inv.ID || got[0].Amount != 12100 {
+		t.Errorf("Payables() = %+v, %v", got, err)
+	}
+	_, err = h.svc.Payables(ctx, adminID, owner, "PurchaseTransaction", 999)
+	wantInvalid(t, err, "booking_id")
+	b, err := h.svc.CreateBatch(ctx, adminID, owner, BatchInput{FinancialAccountID: bankAccount})
+	if err != nil {
+		t.Fatalf("CreateBatch() error = %v", err)
+	}
+	if got, err := h.svc.Payables(ctx, adminID, owner, "PurchaseTransactionBatch", b.ID); err != nil || len(got) != 1 {
+		t.Errorf("Payables() of a batch = %+v, %v", got, err)
+	}
+	if _, err := h.svc.RegisterPayment(ctx, adminID, owner, PurchaseInvoice, inv.ID, sales.PaymentInput{PaymentDate: "2026-11-11"}); err != nil {
+		t.Fatal(err)
+	}
+	_, err = h.svc.Payables(ctx, adminID, owner, "PurchaseTransactionBatch", b.ID)
+	wantInvalid(t, err, "booking_id")
 }

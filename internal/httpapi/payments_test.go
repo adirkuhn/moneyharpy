@@ -24,6 +24,7 @@ type payment struct {
 	LedgerAccountID     *string `json:"ledger_account_id"`
 	ManualPaymentAction *string `json:"manual_payment_action"`
 	LinkedPaymentID     *string `json:"linked_payment_id"`
+	CreditInvoiceID     *string `json:"credit_invoice_id"`
 }
 
 type paidInvoice struct {
@@ -61,7 +62,7 @@ func salesSetup(t *testing.T, owner *client) (string, string, func(price string,
 			"details_attributes": []map[string]any{{"description": "Consulting", "amount": "1", "price": price, "tax_rate_id": vat21, "ledger_account_id": revenue}},
 		}}))
 		r := owner.do(http.MethodPatch, invoices+"/"+inv.ID+"/send_invoice", map[string]any{"sales_invoice_sending": map[string]any{
-			"delivery_method": "Manual", "invoice_date": time.Now().AddDate(0, 0, -daysAgo).Format(time.DateOnly),
+			"delivery_method": "Manual", "invoice_date": adminNow().AddDate(0, 0, -daysAgo).Format(time.DateOnly),
 		}})
 		wantStatus(t, r, http.StatusOK)
 		return decode[paidInvoice](t, r)
@@ -74,7 +75,7 @@ func TestSalesInvoicePayments(t *testing.T) {
 	owner := h.client()
 	owner.register()
 	api, invoices, send := salesSetup(t, owner)
-	today := time.Now().Format(time.DateOnly)
+	today := adminNow().Format(time.DateOnly)
 
 	inv := send("100", false, 2)
 	r := owner.do(http.MethodPost, invoices+"/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": today, "price": "21", "manual_payment_action": "cash_payment"}})
@@ -119,8 +120,8 @@ func TestSalesInvoicePayments(t *testing.T) {
 
 	// Dubious, then uncollectible.
 	late := send("100", false, 40)
-	wantStatus(t, owner.do(http.MethodPatch, invoices+"/"+late.ID+"/mark_as_dubious", map[string]any{"dubious_date": time.Now().AddDate(0, 0, -41).Format(time.DateOnly)}), http.StatusUnprocessableEntity)
-	r = owner.do(http.MethodPatch, invoices+"/"+late.ID+"/mark_as_dubious", map[string]any{"dubious_date": time.Now().AddDate(0, 0, -5).Format(time.DateOnly)})
+	wantStatus(t, owner.do(http.MethodPatch, invoices+"/"+late.ID+"/mark_as_dubious", map[string]any{"dubious_date": adminNow().AddDate(0, 0, -41).Format(time.DateOnly)}), http.StatusUnprocessableEntity)
+	r = owner.do(http.MethodPatch, invoices+"/"+late.ID+"/mark_as_dubious", map[string]any{"dubious_date": adminNow().AddDate(0, 0, -5).Format(time.DateOnly)})
 	wantStatus(t, r, http.StatusOK)
 	if d := decode[paidInvoice](t, r); d.MarkedDubiousOn == nil || d.State != "late" {
 		t.Errorf("dubious = %+v", d)
@@ -238,7 +239,7 @@ func TestPaymentWebhooks(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodPost, api+"/webhooks", map[string]any{"url": rc.srv.URL, "enabled_events": []string{"payment", "sales_invoice_state_changed_to_paid", "sales_invoice_marked_as_dubious"}}), http.StatusCreated)
 
 	inv := send("100", false, 3)
-	r := owner.do(http.MethodPost, invoices+"/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": time.Now().Format(time.DateOnly), "price": "121"}})
+	r := owner.do(http.MethodPost, invoices+"/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": adminNow().Format(time.DateOnly), "price": "121"}})
 	wantStatus(t, r, http.StatusCreated)
 	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID+"/payments/"+decode[payment](t, r).ID, nil), http.StatusNoContent)
 	wantStatus(t, owner.do(http.MethodPatch, invoices+"/"+inv.ID+"/mark_as_dubious", map[string]any{}), http.StatusOK)

@@ -66,7 +66,7 @@ func TestAssetLifecycle(t *testing.T) {
 	owner.register()
 	adminID, api, supplier, vat21 := purchaseSetup(t, owner)
 	equipment := category(t, owner, adminID, "Equipment and furniture")
-	purchase := time.Date(time.Now().Year()-1, 1, 1, 0, 0, 0, 0, time.UTC).Format(time.DateOnly)
+	purchase := time.Date(adminNow().Year()-1, 1, 1, 0, 0, 0, 0, time.UTC).Format(time.DateOnly)
 
 	r := owner.do(http.MethodPost, api+"/assets.json", assetInput("Laptop", equipment, purchase, map[string]any{"lifespan_in_years": "1", "residual_value": 0}))
 	wantStatus(t, r, http.StatusCreated)
@@ -140,7 +140,7 @@ func TestAssetLifecycle(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodGet, api+"/reports/assets?period=202401..202512", nil), http.StatusBadRequest)
 
 	wantStatus(t, owner.do(http.MethodPost, api+"/assets/"+a.ID+"/disposals", map[string]any{"date": purchase, "reason": "lost"}), http.StatusBadRequest)
-	r = owner.do(http.MethodPost, api+"/assets/"+a.ID+"/disposals", map[string]any{"date": time.Now().Format(time.DateOnly), "reason": "sold"})
+	r = owner.do(http.MethodPost, api+"/assets/"+a.ID+"/disposals", map[string]any{"date": adminNow().Format(time.DateOnly), "reason": "sold"})
 	wantStatus(t, r, http.StatusCreated)
 	wantStatus(t, owner.do(http.MethodPost, api+"/assets/"+a.ID+"/reinvestment_reserve_sale", map[string]any{"amount": -5}), http.StatusBadRequest)
 	r = owner.do(http.MethodPost, api+"/assets/"+a.ID+"/reinvestment_reserve_sale", map[string]any{"amount": "300"})
@@ -217,7 +217,7 @@ func TestAssetWebhookEvents(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodPatch, "/api/instance/settings", map[string]bool{"webhooks_allow_local": true}), http.StatusOK)
 	wantStatus(t, owner.do(http.MethodPost, api+"/webhooks", map[string]any{"url": rc.srv.URL, "enabled_events": []string{"company_assets"}}), http.StatusCreated)
 
-	day := time.Now().AddDate(0, -2, 0).Format(time.DateOnly)
+	day := adminNow().AddDate(0, -2, 0).Format(time.DateOnly)
 	a := decode[assetJSON](t, owner.do(http.MethodPost, api+"/assets", assetInput("Desk", equipment, day, map[string]any{"lifespan_in_years": 5})))
 	wantStatus(t, owner.do(http.MethodPatch, api+"/assets/"+a.ID, map[string]any{"asset": map[string]any{"value_change_plan_attributes": map[string]any{"residual_value": 100}}}), http.StatusOK)
 	wantStatus(t, owner.do(http.MethodPost, api+"/assets/"+a.ID+"/value_changes/retroactive_linear_value_changes", nil), http.StatusNoContent)

@@ -10,6 +10,9 @@ const randomClient = () => ({
   'X-Forwarded-For': `10.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
 })
 const mailpit = process.env.E2E_MAILPIT_URL ?? 'http://localhost:18025'
+// Today as the server sees it: administrations are in Amsterdam, so dates
+// made from the UTC day would be yesterday's just after midnight.
+const serverToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date())
 const admin = { email: 'admin@example.com', name: 'Instance Admin', password }
 
 // Runs before every other test registers, so this account is the instance admin.
@@ -425,7 +428,7 @@ test('bank statements are imported, booked by rules and by hand', async ({ page 
   await page.getByRole('button', { name: 'Save' }).click()
   await expect(page.getByRole('heading', { name: 'Main bank', level: 1 })).toBeVisible()
   // The example statement, dated today so it falls in this year's transactions.
-  const today = new Date().toISOString().slice(0, 10)
+  const today = serverToday()
   const camt = readFileSync(join(__dirname, '../../internal/bankfile/testdata/camt053.xml'), 'utf8').replace(/2026-1[01]-\d\d/g, today)
   await page.getByLabel('Choose file').setInputFiles({ name: 'statement.xml', mimeType: 'text/xml', buffer: Buffer.from(camt) })
   await expect(page.getByRole('status')).toContainText('2 new transactions.')
@@ -830,7 +833,7 @@ test('sales invoices are paid by hand and by a bank transaction, and the overvie
 
   // A bank transaction of the same amount pays it.
   const account = await (await page.request.post(`${api}/financial_accounts`, { data: { financial_account: { name: 'Main bank', identifier: 'NL91ABNA0417164300' } } })).json()
-  const today = new Date().toISOString().slice(0, 10)
+  const today = serverToday()
   const camt = readFileSync(join(__dirname, '../../internal/bankfile/testdata/camt053.xml'), 'utf8').replace(/2026-1[01]-\d\d/g, today)
   const imported = await page.request.post(`${api}/financial_accounts/${account.id}/import`, { data: Buffer.from(camt), headers: { 'Content-Type': 'application/octet-stream' } })
   expect(imported.status()).toBe(201)
@@ -886,7 +889,7 @@ test('an external invoice is uploaded, filled in, booked and paid by a bank tran
 
   // A bank transaction of the same amount pays it.
   const account = await (await page.request.post(`${api}/financial_accounts`, { data: { financial_account: { name: 'Main bank', identifier: 'NL91ABNA0417164300' } } })).json()
-  const today = new Date().toISOString().slice(0, 10)
+  const today = serverToday()
   const camt = readFileSync(join(__dirname, '../../internal/bankfile/testdata/camt053.xml'), 'utf8').replace(/2026-1[01]-\d\d/g, today)
   const imported = await page.request.post(`${api}/financial_accounts/${account.id}/import`, { data: Buffer.from(camt), headers: { 'Content-Type': 'application/octet-stream' } })
   expect(imported.status()).toBe(201)
@@ -1097,7 +1100,7 @@ test('a purchase invoice is booked through the API, paid by a bank transaction a
   const supplier = await (await page.request.post(`${api}/contacts`, { data: { contact: { company_name: 'Supplier B.V.' } } })).json()
   const rates = await (await page.request.get(`${api}/tax_rates`)).json()
   const vat21 = rates.find((r: { tax_rate_type: string; percentage: string }) => r.tax_rate_type === 'purchase_invoice' && r.percentage.startsWith('21')).id
-  const today = new Date().toISOString().slice(0, 10)
+  const today = serverToday()
   const created = await page.request.post(`${api}/documents/purchase_invoices.json`, { data: { purchase_invoice: {
     contact_id: supplier.id, reference: 'INV-2026-77', date: today, prices_are_incl_tax: true,
     details_attributes: [{ description: 'Paper', price: '25.50', tax_rate_id: vat21 }],
@@ -1168,10 +1171,11 @@ test('a booked purchase invoice shows in the reports and an auditfile lands in t
   const supplier = await (await page.request.post(`${api}/contacts`, { data: { contact: { company_name: 'Supplier B.V.' } } })).json()
   const rates = await (await page.request.get(`${api}/tax_rates`)).json()
   const vat21 = rates.find((r: { tax_rate_type: string; percentage: string }) => r.tax_rate_type === 'purchase_invoice' && r.percentage.startsWith('21')).id
-  const today = new Date().toISOString().slice(0, 10)
+  const today = serverToday()
+  const falcon = await (await page.request.post(`${api}/projects`, { data: { project: { name: 'Falcon' } } })).json()
   const created = await page.request.post(`${api}/documents/purchase_invoices`, { data: { purchase_invoice: {
     contact_id: supplier.id, reference: 'INV-2026-88', date: today, prices_are_incl_tax: false,
-    details_attributes: [{ description: 'Paper', price: '100', tax_rate_id: vat21 }],
+    details_attributes: [{ description: 'Paper', price: '100', tax_rate_id: vat21, project_id: falcon.id }],
   } } })
   expect(created.status()).toBe(201)
 
@@ -1184,6 +1188,8 @@ test('a booked purchase invoice shows in the reports and an auditfile lands in t
   await expect(page.getByRole('table', { name: 'Payable overview' }).getByRole('link', { name: 'Supplier B.V.' })).toBeVisible()
   await menu.getByRole('link', { name: 'VAT summary' }).click()
   await expect(page.getByRole('table', { name: 'VAT summary' }).getByRole('row', { name: /21/ })).toContainText('€21.00')
+  await menu.getByRole('link', { name: 'Expenses by project' }).click()
+  await expect(page.getByRole('table', { name: 'Expenses by project' }).getByRole('row', { name: /Falcon/ })).toContainText('€100.00')
 
   const exported = await page.request.post(`${api}/reports/export/auditfile`, { data: { year: today.slice(0, 4) } })
   expect(exported.status()).toBe(204)

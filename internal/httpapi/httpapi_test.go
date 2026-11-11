@@ -286,6 +286,8 @@ func newHarness(t *testing.T, opts options) *harness {
 		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
 	})
 	bank.UseDocuments(documentService)
+	bank.UsePurchases(documentService)
+	bank.UseProjects(projectService)
 	home := overview.NewService(admins, bank, invoiceService)
 	home.UseIncoming(documentService)
 	h.sales = invoiceService
@@ -509,7 +511,7 @@ func TestListAdministrationsMoneybirdShape(t *testing.T) {
 			want := map[string]any{
 				"id": created.Id, "name": "Harpy B.V.", "language": "en", "currency": "EUR", "country": "NL",
 				"time_zone": "Europe/Amsterdam", "access": "user", "suspended": false,
-				"period_locked_until": nil, "period_start_date": time.Now().Format("2006") + "-01-01",
+				"period_locked_until": nil, "period_start_date": adminNow().Format("2006") + "-01-01",
 				"favorite": false, "uri": "/" + created.Id,
 				"small_business_scheme": false, "company_activities_description": "", "company_website_url": "",
 				"company_website_absent": false, "user_type": "owner", "require_two_factor": false, "support_access_until": nil,
@@ -1103,6 +1105,19 @@ func TestCustomFields(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodPatch, identity, set(contact.Id, "x", nil)), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodPatch, identity, map[string]any{"identity": map[string]string{"tax_number_absence_reason": "lazy"}}), http.StatusBadRequest)
+
+	// Like Moneybird, the default identity also updates the administration's
+	// legal entity type, which MoneyHarpy keeps on that identity.
+	entity := func(kind string) map[string]any {
+		return map[string]any{"identity": map[string]any{"administration_attributes": map[string]string{"legal_entity_type": kind}}}
+	}
+	r = owner.do(http.MethodPatch, identity+".json", entity("bv"))
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[httpapi.Identity](t, r); got.LegalEntityType == nil || *got.LegalEntityType != "bv" {
+		t.Errorf("legal_entity_type = %v, want bv", got.LegalEntityType)
+	}
+	wantStatus(t, owner.do(http.MethodPatch, identity, entity("llc")), http.StatusBadRequest)
+	wantStatus(t, owner.do(http.MethodPatch, "/api/v2/"+a.Id+"/identities/"+got.Id, entity("bv")), http.StatusBadRequest)
 }
 
 func TestOnboardingLookups(t *testing.T) {
@@ -1413,7 +1428,7 @@ func TestInvoiceSettings(t *testing.T) {
 	path := "/api/v2/" + a.Id + "/invoice_settings"
 
 	got := decode[httpapi.InvoiceSettings](t, owner.do(http.MethodGet, path, nil))
-	if got.InvoiceIdTemplate != "{year}-{id}" || got.InvoiceSequenceId != "0001" || got.InvoiceIdExample != time.Now().Format("2006")+"-0001" {
+	if got.InvoiceIdTemplate != "{year}-{id}" || got.InvoiceSequenceId != "0001" || got.InvoiceIdExample != adminNow().Format("2006")+"-0001" {
 		t.Errorf("settings = %+v", got)
 	}
 	r := owner.do(http.MethodPatch, path, map[string]any{"invoice_settings": map[string]any{

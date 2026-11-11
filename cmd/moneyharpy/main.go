@@ -161,6 +161,8 @@ func run(logger *slog.Logger) error {
 		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
 	})
 	bank.UseDocuments(documentService)
+	bank.UsePurchases(documentService)
+	bank.UseProjects(projectService)
 	// Fixed assets, depreciated each month by a background job.
 	assetService := assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: hooks, Logger: logger}, ids, time.Now)
 	home := overview.NewService(admins, bank, invoiceService)

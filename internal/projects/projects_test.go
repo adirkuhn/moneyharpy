@@ -131,6 +131,15 @@ func TestCreateUpdateAndList(t *testing.T) {
 	if _, err := s.Project(ctx, adminID, p.ID, 99); !errors.Is(err, administration.ErrNotFound) {
 		t.Errorf("other user = %v", err)
 	}
+	if err := s.CheckProject(ctx, adminID, owner, active[0].ID); err != nil {
+		t.Errorf("CheckProject() of an active project = %v", err)
+	}
+	if fieldsOf(t, s.CheckProject(ctx, adminID, owner, p.ID))["project_id"] == nil {
+		t.Error("CheckProject() accepted an archived project")
+	}
+	if fieldsOf(t, s.CheckProject(ctx, adminID, owner, 12345))["project_id"] == nil {
+		t.Error("CheckProject() accepted an unknown project")
+	}
 }
 
 func TestParseFilter(t *testing.T) {

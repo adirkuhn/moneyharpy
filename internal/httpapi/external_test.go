@@ -58,7 +58,7 @@ func externalSetup(t *testing.T, owner *client) (string, string, func(price stri
 	vat21 := salesRate(t, owner, a.Id, "21")
 	create := func(price string, daysAgo int) externalInvoice {
 		t.Helper()
-		day := time.Now().AddDate(0, 0, -daysAgo).Format(time.DateOnly)
+		day := adminNow().AddDate(0, 0, -daysAgo).Format(time.DateOnly)
 		r := owner.do(http.MethodPost, externals, map[string]any{"external_sales_invoice": map[string]any{
 			"contact_id": customer.ID, "reference": "WEB-1001", "date": day, "due_date": day, "source": "Example webshop",
 			"source_url":         "https://shop.example.com/orders/1001",
@@ -99,7 +99,7 @@ func TestExternalSalesInvoiceLifecycle(t *testing.T) {
 	}
 	wantStatus(t, owner.attach(externals+"/attachment", "tool.exe", "application/octet-stream", []byte{0x4d, 0x5a, 0x90, 0x00}), http.StatusUnprocessableEntity)
 	r = owner.do(http.MethodPatch, externals+"/"+fresh.ID, map[string]any{"external_sales_invoice": map[string]any{
-		"contact_id": deref(e.ContactID), "date": time.Now().Format(time.DateOnly), "prices_are_incl_tax": true,
+		"contact_id": deref(e.ContactID), "date": adminNow().Format(time.DateOnly), "prices_are_incl_tax": true,
 		"details_attributes": map[string]any{"0": map[string]any{"description": "Chair", "price": "60.50", "tax_rate_id": salesRate(t, owner, strings.TrimPrefix(api, "/api/v2/"), "21")}},
 	}})
 	wantStatus(t, r, http.StatusOK)
@@ -141,7 +141,7 @@ func TestExternalSalesInvoiceLifecycle(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodGet, api+"/sales_invoices/"+e.ID, nil), http.StatusNotFound)
 
 	// Payments, write-offs and the overview.
-	today := time.Now().Format(time.DateOnly)
+	today := adminNow().Format(time.DateOnly)
 	r = owner.do(http.MethodPost, externals+"/"+e.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": today, "price": "21", "manual_payment_action": "cash_payment"}})
 	wantStatus(t, r, http.StatusCreated)
 	part := decode[payment](t, r)
@@ -153,7 +153,7 @@ func TestExternalSalesInvoiceLifecycle(t *testing.T) {
 	if ov.Sales == nil || ov.Sales.ToReceive.Count != 2 || ov.Sales.ToReceive.Amount != "160.5" {
 		t.Errorf("overview sales = %+v", ov.Sales)
 	}
-	r = owner.do(http.MethodPatch, externals+"/"+e.ID+"/mark_as_dubious", map[string]any{"dubious_date": time.Now().AddDate(0, 0, -1).Format(time.DateOnly)})
+	r = owner.do(http.MethodPatch, externals+"/"+e.ID+"/mark_as_dubious", map[string]any{"dubious_date": adminNow().AddDate(0, 0, -1).Format(time.DateOnly)})
 	wantStatus(t, r, http.StatusOK)
 	if d := decode[externalInvoice](t, r); d.MarkedDubiousOn == nil {
 		t.Errorf("dubious = %+v", d)
@@ -256,7 +256,7 @@ func TestExternalSalesInvoiceWebhooks(t *testing.T) {
 
 	e := create("100", 0)
 	wantStatus(t, owner.do(http.MethodPatch, externals+"/"+e.ID, map[string]any{"external_sales_invoice": map[string]any{"reference": "WEB-1002"}}), http.StatusOK)
-	wantStatus(t, owner.do(http.MethodPost, externals+"/"+e.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": time.Now().Format(time.DateOnly), "price": "121"}}), http.StatusCreated)
+	wantStatus(t, owner.do(http.MethodPost, externals+"/"+e.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": adminNow().Format(time.DateOnly), "price": "121"}}), http.StatusCreated)
 	other := create("10", 0)
 	wantStatus(t, owner.do(http.MethodPatch, externals+"/"+other.ID+"/mark_as_dubious", nil), http.StatusUnprocessableEntity) // Not after the invoice date.
 	wantStatus(t, owner.do(http.MethodDelete, externals+"/"+other.ID, nil), http.StatusNoContent)
