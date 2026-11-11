@@ -78,7 +78,7 @@ when a plan's limit is reached and `503` when finding duplicate contacts
 takes too long; the contract declares both, but MoneyHarpy has no plans and
 groups contacts in one pass, so it answers neither.
 
-The schemas follow Moneybird's published API description. `go run ./cmd/mbschemas` copies their structure (field names, types and enums, without Moneybird's text) into the contract. The *Moneybird compatibility* workflow reports when Moneybird's API changes.
+The schemas follow Moneybird's published API description. `go run ./cmd/mbschemas` copies their structure (field names, types and enums, without Moneybird's text) into the contract. The *Moneybird compatibility* workflow downloads Moneybird's description every day and on every pull request, and fails when Moneybird has an operation, query parameter, status code, request field or response field the contract lacks, or when the mirrored schemas changed. A failing daily run opens an issue. Run it locally with `go test -tags moneybird ./cmd/mbschemas`.
 
 ## URIs
 
