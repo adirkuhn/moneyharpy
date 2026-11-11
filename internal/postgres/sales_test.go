@@ -260,3 +260,110 @@ func TestSalesWorkLock(t *testing.T) {
 	}
 	release2()
 }
+
+func TestExternalInvoicesAreStoredPostedAndPaid(t *testing.T) {
+	ctx := context.Background()
+	f := newSalesFixture(t)
+	empty, err := f.svc.CreateExternalFromFile(ctx, f.admin, f.owner, "order.pdf", "application/pdf", []byte("%PDF-1.4 order"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if empty.State != sales.New || empty.EntryNumber != 1 || empty.Origin != sales.OriginUpload || len(empty.Attachments) != 1 {
+		t.Fatalf("new = %+v", empty)
+	}
+	e, err := f.svc.UpdateExternal(ctx, f.admin, empty.ID, f.owner, sales.ExternalChanges{
+		ContactID: &f.customer, Reference: ptr("WEB-1001"), Date: ptr("2026-10-20"), DueDate: ptr("2026-11-03"), Source: ptr("Example webshop"),
+		SourceURL: ptr("https://shop.example.com/orders/1001"), PricesAreInclTax: ptr(true),
+		Details: []sales.DetailInput{{Description: ptr("Sofa"), Price: ptr("1000"), Amount: ptr("1"), TaxRateID: &f.vat21, LedgerAccountID: &f.revenue}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := f.store.ExternalInvoice(ctx, f.admin, e.ID)
+	if err != nil || got.ContactID != f.customer || got.Reference != "WEB-1001" || got.SourceURL != "https://shop.example.com/orders/1001" ||
+		got.Totals.InclTax != 100000 || len(got.Totals.ByRate) != 1 || len(got.Lines) != 1 || got.Lines[0].Description != "Sofa" || got.DueDate.Format(time.DateOnly) != "2026-11-03" {
+		t.Fatalf("stored = %+v, %v", got, err)
+	}
+	debtors := categoryByKey(t, f.books, f.admin, f.owner, "accounts_receivable")
+	if sums := f.ledger(t); sums[debtors] != 100000 || sums[f.revenue] != -82645 {
+		t.Errorf("booked: debtors %s, revenue %s", sums[debtors], sums[f.revenue])
+	}
+	q, _ := sales.ParseExternalFilter("state:late,period:202610..202610", time.Now())
+	list, total, err := f.store.ExternalInvoices(ctx, f.admin, sales.Query{States: q.States, Period: q.Period, Today: time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC), PerPage: 10})
+	if err != nil || total != 1 || list[0].ID != e.ID {
+		t.Errorf("late in October = %d, %v", total, err)
+	}
+	if byID, err := f.store.ExternalInvoicesByID(ctx, f.admin, []resource.ID{e.ID, 1}); err != nil || len(byID) != 1 {
+		t.Errorf("by id = %+v, %v", byID, err)
+	}
+	r, err := f.store.Receivables(ctx, f.admin, time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC))
+	if err != nil || r.ToReceive.Count != 1 || r.ToReceive.Amount != 100000 {
+		t.Errorf("receivables = %+v, %v", r, err)
+	}
+	if used, err := f.store.ContactInUse(ctx, f.admin, f.customer); err != nil || !used {
+		t.Errorf("contact in use = %v, %v", used, err)
+	}
+	// Only open external invoices give the background job work: marking
+	// them late. This one is late already.
+	work, err := f.store.Workload(ctx)
+	if err != nil || slices.ContainsFunc(work, func(w sales.Workload) bool { return w.AdministrationID == f.admin }) {
+		t.Errorf("workload = %+v, %v", work, err)
+	}
+
+	acc, err := f.bank.CreateAccount(ctx, f.admin, f.owner, banking.AccountChanges{Name: ptr("Main bank"), Identifier: ptr("NL91ABNA0417164300")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile("../bankfile/testdata/camt053.xml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := f.bank.Import(ctx, f.admin, acc.ID, f.owner, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var incoming banking.Mutation
+	for _, m := range result.Statements[0].Mutations {
+		if m.Amount == 100000 {
+			incoming = m
+		}
+	}
+	m, err := f.bank.LinkBooking(ctx, f.admin, incoming.ID, f.owner, banking.Link{Type: "ExternalSalesInvoice", BookingID: &e.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Payments) != 1 || m.Payments[0].InvoiceType != "ExternalSalesInvoice" || m.State != banking.Processed {
+		t.Fatalf("mutation = %+v", m)
+	}
+	if paid, _ := f.svc.ExternalInvoice(ctx, f.admin, e.ID, f.owner); paid.State != sales.Paid || len(paid.Payments) != 1 {
+		t.Errorf("paid = %+v", paid)
+	}
+	var contact *int64
+	var description string
+	if err := testPool.QueryRow(ctx, "SELECT contact_id, description FROM bank_journal_entries WHERE id = $1", int64(m.Payments[0].ID)).Scan(&contact, &description); err != nil {
+		t.Fatal(err)
+	}
+	if contact == nil || resource.ID(*contact) != f.customer || description != "WEB-1001" {
+		t.Errorf("bank posting: contact %v, description %q", contact, description)
+	}
+	if sums := f.ledger(t); sums[debtors] != 0 {
+		t.Errorf("paid: debtors %s", sums[debtors])
+	}
+
+	// Deleting the invoice unlinks the transaction and removes its postings.
+	if err := f.svc.DeleteExternal(ctx, f.admin, e.ID, f.owner); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.store.ExternalInvoice(ctx, f.admin, e.ID); !errors.Is(err, sales.ErrNotFound) {
+		t.Errorf("deleted = %v", err)
+	}
+	if m, _ := f.bank.Mutation(ctx, f.admin, incoming.ID, f.owner); m.State != banking.Unprocessed || len(m.Payments) != 0 {
+		t.Errorf("after delete: mutation %+v", m)
+	}
+	if sums := f.ledger(t); sums[debtors] != 0 || sums[f.revenue] != 0 {
+		t.Errorf("after delete: debtors %s, revenue %s", sums[debtors], sums[f.revenue])
+	}
+	if n, err := f.store.NextEntryNumber(ctx, f.admin); err != nil || n != 1 {
+		t.Errorf("next entry number = %d, %v", n, err)
+	}
+}

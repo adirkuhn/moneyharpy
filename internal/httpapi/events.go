@@ -179,7 +179,7 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		return out
 	},
 	"linkFinancialMutationBooking": func(c change) []webhooks.Event {
-		if c.request["booking_type"] == "SalesInvoice" {
+		if t := c.request["booking_type"]; t == "SalesInvoice" || t == "ExternalSalesInvoice" {
 			return c.newestPayment(true)
 		}
 		return c.one("FinancialMutation", "ledger_account_booking_created")
@@ -220,7 +220,30 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 	"markSalesInvoiceAsUncollectible": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_marked_as_uncollectible") },
 	"pauseSalesInvoice":               func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_paused") },
 	"resumeSalesInvoice":              func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_unpaused") },
-	"createContact":                   func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
+	"createExternalSalesInvoice": func(c change) []webhooks.Event {
+		return c.one("ExternalSalesInvoice", "external_sales_invoice_created")
+	},
+	"createExternalSalesInvoiceFromAttachment": func(c change) []webhooks.Event {
+		return c.one("ExternalSalesInvoice", "external_sales_invoice_created")
+	},
+	"updateExternalSalesInvoice": func(c change) []webhooks.Event {
+		return c.one("ExternalSalesInvoice", "external_sales_invoice_updated")
+	},
+	"deleteExternalSalesInvoice": func(c change) []webhooks.Event {
+		return c.one("ExternalSalesInvoice", "external_sales_invoice_destroyed")
+	},
+	"createExternalSalesInvoicePayment": func(c change) []webhooks.Event { return c.payment() },
+	"deleteExternalSalesInvoicePayment": func(c change) []webhooks.Event {
+		id := c.params["payment_id"]
+		return []webhooks.Event{{EntityType: "Payment", EntityID: id, Action: "payment_destroyed", Entity: json.RawMessage(`{"id":"` + id + `"}`)}}
+	},
+	"markExternalSalesInvoiceAsDubious": func(c change) []webhooks.Event {
+		return c.one("ExternalSalesInvoice", "external_sales_invoice_marked_as_dubious")
+	},
+	"markExternalSalesInvoiceAsUncollectible": func(c change) []webhooks.Event {
+		return c.one("ExternalSalesInvoice", "external_sales_invoice_marked_as_uncollectible")
+	},
+	"createContact": func(c change) []webhooks.Event { return c.one("Contact", "contact_created") },
 	"updateContact": func(c change) []webhooks.Event {
 		switch c.nested("contact")["archived"] {
 		case true:
@@ -312,14 +335,22 @@ type SalesNotifier struct {
 	Logger   *slog.Logger
 }
 
-// Notify implements sales.Notifier.
+// Notify implements sales.Notifier, for sales and external invoices.
 func (n SalesNotifier) Notify(ctx context.Context, admin resource.ID, action string, inv sales.Invoice) {
-	entity, _ := json.Marshal(map[string]any{
+	fields := map[string]any{
 		"id": inv.ID.String(), "administration_id": admin.String(), "contact_id": inv.ContactID.String(), "invoice_id": nz(inv.InvoiceID),
 		"state": inv.State, "total_price_incl_tax": inv.Totals.InclTax.String(), "total_unpaid": inv.Unpaid().String(),
 		"reminder_count": inv.ReminderCount, "version": inv.Version(), "uri": inv.Ref().URI(),
-	})
-	e := webhooks.Event{EntityType: "SalesInvoice", EntityID: inv.ID.String(), Action: action, State: inv.State, Entity: entity}
+	}
+	entityType := "SalesInvoice"
+	if inv.Type == sales.ExternalEntityType {
+		entityType = sales.ExternalEntityType
+		delete(fields, "invoice_id")
+		delete(fields, "reminder_count")
+		fields["reference"] = nz(inv.Reference)
+	}
+	entity, _ := json.Marshal(fields)
+	e := webhooks.Event{EntityType: entityType, EntityID: inv.ID.String(), Action: action, State: inv.State, Entity: entity}
 	if err := n.Webhooks.Publish(context.WithoutCancel(ctx), admin, e); err != nil && n.Logger != nil {
 		n.Logger.ErrorContext(ctx, "publish webhook event", "action", action, "error", err)
 	}

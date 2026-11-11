@@ -14,15 +14,28 @@ export type PaymentAction = NonNullable<PaymentChanges['manual_payment_action']>
 
 export const perPage = 50
 
+/** Sales invoices are made in MoneyHarpy; external ones in other software. */
+export type InvoiceKind = 'sales' | 'external'
+
+/** What the payment, write-off, note and attachment panels need of an invoice of either kind. */
+export type Collectable = Pick<SalesInvoice, 'id' | 'currency' | 'payments' | 'total_unpaid' | 'total_price_incl_tax' | 'notes' | 'attachments' | 'marked_dubious_on'> & {
+  state?: string
+  original_sales_invoice_id?: SalesInvoice['original_sales_invoice_id']
+}
+
+/** The query keys of one invoice and of the lists, per kind. */
+export const invoiceKeys = (kind: InvoiceKind) =>
+  kind === 'external' ? { one: 'external-invoice', list: 'external-invoices' } : { one: 'sales-invoice', list: 'sales-invoices' }
+
 export const states: InvoiceState[] = ['draft', 'scheduled', 'open', 'pending_payment', 'late', 'reminded', 'paid', 'uncollectible']
 export const unpaidStates = 'open|late|reminded|pending_payment'
 
 /** Sent invoices have a number and are booked. */
-export const isSent = (state: InvoiceState | undefined) => state !== 'draft' && state !== 'scheduled'
+export const isSent = (state: string | undefined) => state !== 'draft' && state !== 'scheduled'
 /** Paid and uncollectible invoices are finished and no longer change. */
-export const isClosed = (state: InvoiceState | undefined) => state === 'paid' || state === 'uncollectible'
+export const isClosed = (state: string | undefined) => state === 'paid' || state === 'uncollectible'
 /** Sent invoices waiting for their money take payments and reminders. */
-export const isPayable = (state: InvoiceState | undefined) => state === 'open' || state === 'late' || state === 'reminded' || state === 'pending_payment'
+export const isPayable = (state: string | undefined) => state === 'open' || state === 'late' || state === 'reminded' || state === 'pending_payment'
 /** Overdue invoices, which the overview counts as to remind. */
 export const overdueStates = 'late|reminded'
 
@@ -64,21 +77,23 @@ export function useSalesInvoice(administrationId: string, id?: string) {
 }
 
 /** Keeps the invoice the server answered with and has lists load again. */
-function useSaved(administrationId: string) {
+export function useSaved(administrationId: string, kind: InvoiceKind = 'sales') {
   const client = useQueryClient()
-  return (saved?: SalesInvoice) => {
+  const keys = invoiceKeys(kind)
+  return (saved?: { id?: string }) => {
     if (saved?.id) {
-      client.setQueryData(['sales-invoice', administrationId, saved.id], saved)
+      client.setQueryData([keys.one, administrationId, saved.id], saved)
     }
-    void client.invalidateQueries({ queryKey: ['sales-invoices', administrationId] })
+    void client.invalidateQueries({ queryKey: [keys.list, administrationId] })
   }
 }
 
-function useRefetch(administrationId: string, id: string) {
+function useRefetch(administrationId: string, id: string, kind: InvoiceKind = 'sales') {
   const client = useQueryClient()
+  const keys = invoiceKeys(kind)
   return () => {
-    void client.invalidateQueries({ queryKey: ['sales-invoice', administrationId, id] })
-    void client.invalidateQueries({ queryKey: ['sales-invoices', administrationId] })
+    void client.invalidateQueries({ queryKey: [keys.one, administrationId, id] })
+    void client.invalidateQueries({ queryKey: [keys.list, administrationId] })
   }
 }
 
@@ -133,20 +148,26 @@ export function usePauseSalesInvoice(administrationId: string, id: string) {
   })
 }
 
-export function useRegisterPayment(administrationId: string, id: string) {
-  const refetch = useRefetch(administrationId, id)
+export function useRegisterPayment(administrationId: string, id: string, kind: InvoiceKind = 'sales') {
+  const refetch = useRefetch(administrationId, id, kind)
   return useMutation({
     mutationFn: (payment: PaymentChanges) =>
-      unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/{id}/payments', { ...one(administrationId, id), body: { payment } })),
+      kind === 'external'
+        ? unwrap(api.POST('/api/v2/{administration_id}/external_sales_invoices/{id}/payments', { ...one(administrationId, id), body: { payment } }))
+        : unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/{id}/payments', { ...one(administrationId, id), body: { payment } })),
     onSuccess: refetch,
   })
 }
 
-export function useDeletePayment(administrationId: string, id: string) {
-  const refetch = useRefetch(administrationId, id)
+export function useDeletePayment(administrationId: string, id: string, kind: InvoiceKind = 'sales') {
+  const refetch = useRefetch(administrationId, id, kind)
   return useMutation({
-    mutationFn: (paymentId: string) =>
-      unwrap(api.DELETE('/api/v2/{administration_id}/sales_invoices/{id}/payments/{payment_id}', { params: { path: { ...admin(administrationId), id, payment_id: paymentId } } })),
+    mutationFn: (paymentId: string) => {
+      const params = { params: { path: { ...admin(administrationId), id, payment_id: paymentId } } }
+      return kind === 'external'
+        ? unwrap(api.DELETE('/api/v2/{administration_id}/external_sales_invoices/{id}/payments/{payment_id}', params))
+        : unwrap(api.DELETE('/api/v2/{administration_id}/sales_invoices/{id}/payments/{payment_id}', params))
+    },
     onSuccess: refetch,
   })
 }
@@ -167,13 +188,20 @@ export function useSettleCredit(administrationId: string, id: string) {
 export type WriteOff = { kind: 'dubious' | 'uncollectible'; date: string }
 
 /** Marks an invoice dubious or, for good, uncollectible. */
-export function useWriteOff(administrationId: string, id: string) {
-  const saved = useSaved(administrationId)
+export function useWriteOff(administrationId: string, id: string, invoiceKind: InvoiceKind = 'sales') {
+  const saved = useSaved(administrationId, invoiceKind)
   return useMutation({
-    mutationFn: ({ kind, date }: WriteOff) =>
-      kind === 'dubious'
-        ? unwrap(api.PATCH('/api/v2/{administration_id}/sales_invoices/{id}/mark_as_dubious', { ...one(administrationId, id), body: { dubious_date: date } }))
-        : unwrap(api.PATCH('/api/v2/{administration_id}/sales_invoices/{id}/mark_as_uncollectible', { ...one(administrationId, id), body: { uncollectible_date: date, book_method: 'revenue' } })),
+    mutationFn: ({ kind, date }: WriteOff): Promise<{ id?: string }> => {
+      const path = one(administrationId, id)
+      if (invoiceKind === 'external') {
+        return kind === 'dubious'
+          ? unwrap(api.PATCH('/api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_dubious', { ...path, body: { dubious_date: date } }))
+          : unwrap(api.PATCH('/api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_uncollectible', { ...path, body: { uncollectible_date: date, book_method: 'revenue' } }))
+      }
+      return kind === 'dubious'
+        ? unwrap(api.PATCH('/api/v2/{administration_id}/sales_invoices/{id}/mark_as_dubious', { ...path, body: { dubious_date: date } }))
+        : unwrap(api.PATCH('/api/v2/{administration_id}/sales_invoices/{id}/mark_as_uncollectible', { ...path, body: { uncollectible_date: date, book_method: 'revenue' } }))
+    },
     onSuccess: saved,
   })
 }
@@ -245,48 +273,58 @@ export function useDeleteDrafts(administrationId: string) {
   })
 }
 
-export function useAddInvoiceNote(administrationId: string, id: string) {
-  const refetch = useRefetch(administrationId, id)
+export function useAddInvoiceNote(administrationId: string, id: string, kind: InvoiceKind = 'sales') {
+  const refetch = useRefetch(administrationId, id, kind)
   return useMutation({
     mutationFn: (note: { note: string; todo: boolean }) =>
-      unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/{id}/notes', { ...one(administrationId, id), body: { note } })),
+      kind === 'external'
+        ? unwrap(api.POST('/api/v2/{administration_id}/external_sales_invoices/{id}/notes', { ...one(administrationId, id), body: { note } }))
+        : unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/{id}/notes', { ...one(administrationId, id), body: { note } })),
     onSuccess: refetch,
   })
 }
 
-export function useDeleteInvoiceNote(administrationId: string, id: string) {
-  const refetch = useRefetch(administrationId, id)
+export function useDeleteInvoiceNote(administrationId: string, id: string, kind: InvoiceKind = 'sales') {
+  const refetch = useRefetch(administrationId, id, kind)
   return useMutation({
-    mutationFn: (noteId: string) =>
-      unwrap(api.DELETE('/api/v2/{administration_id}/sales_invoices/{id}/notes/{note_id}', { params: { path: { ...admin(administrationId), id, note_id: noteId } } })),
-    onSuccess: refetch,
-  })
-}
-
-/** Uploads a file as multipart/form-data in the field "file". */
-export function useAddInvoiceAttachment(administrationId: string, id: string) {
-  const refetch = useRefetch(administrationId, id)
-  return useMutation({
-    mutationFn: (file: File) => {
-      const form = new FormData()
-      form.append('file', file)
-      return unwrap(
-        api.POST('/api/v2/{administration_id}/sales_invoices/{id}/attachments', {
-          ...one(administrationId, id),
-          body: form as unknown as { file: string },
-          bodySerializer: (body: unknown) => body as FormData,
-        }),
-      )
+    mutationFn: (noteId: string) => {
+      const params = { params: { path: { ...admin(administrationId), id, note_id: noteId } } }
+      return kind === 'external'
+        ? unwrap(api.DELETE('/api/v2/{administration_id}/external_sales_invoices/{id}/notes/{note_id}', params))
+        : unwrap(api.DELETE('/api/v2/{administration_id}/sales_invoices/{id}/notes/{note_id}', params))
     },
     onSuccess: refetch,
   })
 }
 
-export function useDeleteInvoiceAttachment(administrationId: string, id: string) {
-  const refetch = useRefetch(administrationId, id)
+/** A file as the multipart/form-data body the API takes, in the field "file". */
+export function fileBody(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  return { body: form as unknown as { file: string }, bodySerializer: (body: unknown) => body as FormData }
+}
+
+/** Uploads a file to the invoice. */
+export function useAddInvoiceAttachment(administrationId: string, id: string, kind: InvoiceKind = 'sales') {
+  const refetch = useRefetch(administrationId, id, kind)
   return useMutation({
-    mutationFn: (attachmentId: string) =>
-      unwrap(api.DELETE('/api/v2/{administration_id}/sales_invoices/{id}/attachments/{attachment_id}', { params: { path: { ...admin(administrationId), id, attachment_id: attachmentId } } })),
+    mutationFn: (file: File) =>
+      kind === 'external'
+        ? unwrap(api.POST('/api/v2/{administration_id}/external_sales_invoices/{id}/attachment', { ...one(administrationId, id), ...fileBody(file) }))
+        : unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/{id}/attachments', { ...one(administrationId, id), ...fileBody(file) })),
+    onSuccess: refetch,
+  })
+}
+
+export function useDeleteInvoiceAttachment(administrationId: string, id: string, kind: InvoiceKind = 'sales') {
+  const refetch = useRefetch(administrationId, id, kind)
+  return useMutation({
+    mutationFn: (attachmentId: string) => {
+      const params = { params: { path: { ...admin(administrationId), id, attachment_id: attachmentId } } }
+      return kind === 'external'
+        ? unwrap(api.DELETE('/api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id}', params))
+        : unwrap(api.DELETE('/api/v2/{administration_id}/sales_invoices/{id}/attachments/{attachment_id}', params))
+    },
     onSuccess: refetch,
   })
 }
@@ -296,8 +334,9 @@ export function invoiceFileURL(administrationId: string, id: string, file: 'down
   return `/api/v2/${administrationId}/sales_invoices/${id}/${file}`
 }
 
-export function attachmentURL(administrationId: string, id: string, attachmentId: string) {
-  return `/api/v2/${administrationId}/sales_invoices/${id}/attachments/${attachmentId}/download`
+export function attachmentURL(administrationId: string, id: string, attachmentId: string, kind: InvoiceKind = 'sales') {
+  const path = kind === 'external' ? 'external_sales_invoices' : 'sales_invoices'
+  return `/api/v2/${administrationId}/${path}/${id}/attachments/${attachmentId}/download`
 }
 
 /** What the invoice is called: its number once sent, "Draft N" before. */

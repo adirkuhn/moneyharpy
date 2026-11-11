@@ -477,6 +477,75 @@ func (e DocumentType) Valid() bool {
 	}
 }
 
+// Defines values for ExternalSalesInvoiceOrigin.
+const (
+	ExternalSalesInvoiceOriginApi         ExternalSalesInvoiceOrigin = "api"
+	ExternalSalesInvoiceOriginEmail       ExternalSalesInvoiceOrigin = "email"
+	ExternalSalesInvoiceOriginEndpoint    ExternalSalesInvoiceOrigin = "endpoint"
+	ExternalSalesInvoiceOriginMollie      ExternalSalesInvoiceOrigin = "mollie"
+	ExternalSalesInvoiceOriginMoneybirdBv ExternalSalesInvoiceOrigin = "moneybird_bv"
+	ExternalSalesInvoiceOriginSi          ExternalSalesInvoiceOrigin = "si"
+	ExternalSalesInvoiceOriginSiLocal     ExternalSalesInvoiceOrigin = "si_local"
+	ExternalSalesInvoiceOriginSiPeppol    ExternalSalesInvoiceOrigin = "si_peppol"
+	ExternalSalesInvoiceOriginUpload      ExternalSalesInvoiceOrigin = "upload"
+)
+
+// Valid indicates whether the value is a known member of the ExternalSalesInvoiceOrigin enum.
+func (e ExternalSalesInvoiceOrigin) Valid() bool {
+	switch e {
+	case ExternalSalesInvoiceOriginApi:
+		return true
+	case ExternalSalesInvoiceOriginEmail:
+		return true
+	case ExternalSalesInvoiceOriginEndpoint:
+		return true
+	case ExternalSalesInvoiceOriginMollie:
+		return true
+	case ExternalSalesInvoiceOriginMoneybirdBv:
+		return true
+	case ExternalSalesInvoiceOriginSi:
+		return true
+	case ExternalSalesInvoiceOriginSiLocal:
+		return true
+	case ExternalSalesInvoiceOriginSiPeppol:
+		return true
+	case ExternalSalesInvoiceOriginUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalSalesInvoiceState.
+const (
+	ExternalSalesInvoiceStateLate           ExternalSalesInvoiceState = "late"
+	ExternalSalesInvoiceStateNew            ExternalSalesInvoiceState = "new"
+	ExternalSalesInvoiceStateOpen           ExternalSalesInvoiceState = "open"
+	ExternalSalesInvoiceStatePaid           ExternalSalesInvoiceState = "paid"
+	ExternalSalesInvoiceStatePendingPayment ExternalSalesInvoiceState = "pending_payment"
+	ExternalSalesInvoiceStateUncollectible  ExternalSalesInvoiceState = "uncollectible"
+)
+
+// Valid indicates whether the value is a known member of the ExternalSalesInvoiceState enum.
+func (e ExternalSalesInvoiceState) Valid() bool {
+	switch e {
+	case ExternalSalesInvoiceStateLate:
+		return true
+	case ExternalSalesInvoiceStateNew:
+		return true
+	case ExternalSalesInvoiceStateOpen:
+		return true
+	case ExternalSalesInvoiceStatePaid:
+		return true
+	case ExternalSalesInvoiceStatePendingPayment:
+		return true
+	case ExternalSalesInvoiceStateUncollectible:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for FinancialAccountType.
 const (
 	FinancialAccountTypeBankAccount           FinancialAccountType = "BankAccount"
@@ -1677,6 +1746,75 @@ func (e ExtendedUserResponseUserType) Valid() bool {
 	}
 }
 
+// Defines values for ExternalSalesInvoiceResponseOrigin.
+const (
+	ExternalSalesInvoiceResponseOriginApi         ExternalSalesInvoiceResponseOrigin = "api"
+	ExternalSalesInvoiceResponseOriginEmail       ExternalSalesInvoiceResponseOrigin = "email"
+	ExternalSalesInvoiceResponseOriginEndpoint    ExternalSalesInvoiceResponseOrigin = "endpoint"
+	ExternalSalesInvoiceResponseOriginMollie      ExternalSalesInvoiceResponseOrigin = "mollie"
+	ExternalSalesInvoiceResponseOriginMoneybirdBv ExternalSalesInvoiceResponseOrigin = "moneybird_bv"
+	ExternalSalesInvoiceResponseOriginSi          ExternalSalesInvoiceResponseOrigin = "si"
+	ExternalSalesInvoiceResponseOriginSiLocal     ExternalSalesInvoiceResponseOrigin = "si_local"
+	ExternalSalesInvoiceResponseOriginSiPeppol    ExternalSalesInvoiceResponseOrigin = "si_peppol"
+	ExternalSalesInvoiceResponseOriginUpload      ExternalSalesInvoiceResponseOrigin = "upload"
+)
+
+// Valid indicates whether the value is a known member of the ExternalSalesInvoiceResponseOrigin enum.
+func (e ExternalSalesInvoiceResponseOrigin) Valid() bool {
+	switch e {
+	case ExternalSalesInvoiceResponseOriginApi:
+		return true
+	case ExternalSalesInvoiceResponseOriginEmail:
+		return true
+	case ExternalSalesInvoiceResponseOriginEndpoint:
+		return true
+	case ExternalSalesInvoiceResponseOriginMollie:
+		return true
+	case ExternalSalesInvoiceResponseOriginMoneybirdBv:
+		return true
+	case ExternalSalesInvoiceResponseOriginSi:
+		return true
+	case ExternalSalesInvoiceResponseOriginSiLocal:
+		return true
+	case ExternalSalesInvoiceResponseOriginSiPeppol:
+		return true
+	case ExternalSalesInvoiceResponseOriginUpload:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalSalesInvoiceResponseState.
+const (
+	ExternalSalesInvoiceResponseStateLate           ExternalSalesInvoiceResponseState = "late"
+	ExternalSalesInvoiceResponseStateNew            ExternalSalesInvoiceResponseState = "new"
+	ExternalSalesInvoiceResponseStateOpen           ExternalSalesInvoiceResponseState = "open"
+	ExternalSalesInvoiceResponseStatePaid           ExternalSalesInvoiceResponseState = "paid"
+	ExternalSalesInvoiceResponseStatePendingPayment ExternalSalesInvoiceResponseState = "pending_payment"
+	ExternalSalesInvoiceResponseStateUncollectible  ExternalSalesInvoiceResponseState = "uncollectible"
+)
+
+// Valid indicates whether the value is a known member of the ExternalSalesInvoiceResponseState enum.
+func (e ExternalSalesInvoiceResponseState) Valid() bool {
+	switch e {
+	case ExternalSalesInvoiceResponseStateLate:
+		return true
+	case ExternalSalesInvoiceResponseStateNew:
+		return true
+	case ExternalSalesInvoiceResponseStateOpen:
+		return true
+	case ExternalSalesInvoiceResponseStatePaid:
+		return true
+	case ExternalSalesInvoiceResponseStatePendingPayment:
+		return true
+	case ExternalSalesInvoiceResponseStateUncollectible:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for FinancialMutationResponseSettlementState.
 const (
 	FinancialMutationResponseSettlementStateAuthorised FinancialMutationResponseSettlementState = "authorised"
@@ -2442,6 +2580,24 @@ func (e ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocuments) Vali
 	case ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsFalse:
 		return true
 	case ListGeneralJournalDocumentsParamsExcludeNewGeneralJournalDocumentsTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListExternalSalesInvoicesParamsSort.
+const (
+	ListExternalSalesInvoicesParamsSortDateAsc  ListExternalSalesInvoicesParamsSort = "date_asc"
+	ListExternalSalesInvoicesParamsSortDateDesc ListExternalSalesInvoicesParamsSort = "date_desc"
+)
+
+// Valid indicates whether the value is a known member of the ListExternalSalesInvoicesParamsSort enum.
+func (e ListExternalSalesInvoicesParamsSort) Valid() bool {
+	switch e {
+	case ListExternalSalesInvoicesParamsSortDateAsc:
+		return true
+	case ListExternalSalesInvoicesParamsSortDateDesc:
 		return true
 	default:
 		return false
@@ -3324,6 +3480,116 @@ type EmptyRequest = map[string]interface{}
 type Error struct {
 	Error    string                  `json:"error"`
 	Symbolic *map[string]interface{} `json:"symbolic,omitempty"`
+}
+
+// ExternalSalesInvoice A Moneybird external sales invoice with MoneyHarpy extensions.
+type ExternalSalesInvoice struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier                    `json:"administration_id"`
+	Attachments      []AttachmentResponse          `json:"attachments"`
+	Contact          *ExternalSalesInvoice_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Currency Moneybird-compatible currency.
+	Currency    Currency            `json:"currency"`
+	Date        openapi_types.Date  `json:"date"`
+	Details     []DetailResponse    `json:"details"`
+	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber int                 `json:"entry_number"`
+	Events      []EventResponse     `json:"events"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id                    Identifier                  `json:"id"`
+	MarkedDubiousOn       *openapi_types.Date         `json:"marked_dubious_on,omitempty"`
+	MarkedUncollectibleOn *openapi_types.Date         `json:"marked_uncollectible_on,omitempty"`
+	Notes                 []NoteResponse              `json:"notes"`
+	Origin                *ExternalSalesInvoiceOrigin `json:"origin,omitempty"`
+	PaidAt                *openapi_types.Date         `json:"paid_at,omitempty"`
+	Payments              []PaymentResponse           `json:"payments"`
+	PricesAreInclTax      *bool                       `json:"prices_are_incl_tax,omitempty"`
+	Reference             *string                     `json:"reference,omitempty"`
+	Source                *string                     `json:"source,omitempty"`
+	SourceUrl             *string                     `json:"source_url,omitempty"`
+	State                 ExternalSalesInvoiceState   `json:"state"`
+	TaxTotals             []TaxSubtotalResponse       `json:"tax_totals"`
+	TotalPaid             string                      `json:"total_paid"`
+	TotalPriceExclTax     string                      `json:"total_price_excl_tax"`
+	TotalPriceExclTaxBase *string                     `json:"total_price_excl_tax_base,omitempty"`
+	TotalPriceInclTax     string                      `json:"total_price_incl_tax"`
+	TotalPriceInclTaxBase *string                     `json:"total_price_incl_tax_base,omitempty"`
+
+	// TotalTax MoneyHarpy extension. The VAT of all lines.
+	TotalTax        *string `json:"total_tax,omitempty"`
+	TotalUnpaid     string  `json:"total_unpaid"`
+	TotalUnpaidBase *string `json:"total_unpaid_base,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Uri MoneyHarpy extension. Canonical path of this resource.
+	Uri string `json:"uri"`
+
+	// Version Moneybird-compatible version.
+	Version Version `json:"version"`
+}
+
+// ExternalSalesInvoice_Contact defines model for ExternalSalesInvoice.Contact.
+type ExternalSalesInvoice_Contact struct {
+	union json.RawMessage
+}
+
+// ExternalSalesInvoiceOrigin defines model for ExternalSalesInvoice.Origin.
+type ExternalSalesInvoiceOrigin string
+
+// ExternalSalesInvoiceState defines model for ExternalSalesInvoice.State.
+type ExternalSalesInvoiceState string
+
+// ExternalSalesInvoiceRequest defines model for ExternalSalesInvoiceRequest.
+type ExternalSalesInvoiceRequest struct {
+	ExternalSalesInvoice struct {
+		// ContactId An id as a string or a number; an empty string clears it.
+		ContactId *FlexibleIdentifier `json:"contact_id,omitempty"`
+		Currency  *string             `json:"currency,omitempty"`
+		Date      *openapi_types.Date `json:"date,omitempty"`
+
+		// DetailsAttributes An array of lines, or an object of lines keyed by position. is_optional and is_selected do not apply to external invoices.
+		DetailsAttributes *ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes `json:"details_attributes,omitempty"`
+
+		// DueDate yyyy-mm-dd; empty removes it.
+		DueDate *string `json:"due_date,omitempty"`
+
+		// PricesAreInclTax A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		PricesAreInclTax *FlexibleBoolean `json:"prices_are_incl_tax,omitempty"`
+
+		// Reference The invoice's number in the other software, such as a webshop order number.
+		Reference *string `json:"reference,omitempty"`
+
+		// Source The software the invoice comes from.
+		Source *string `json:"source,omitempty"`
+
+		// SourceUrl An http or https link to the invoice in that software.
+		SourceUrl *string `json:"source_url,omitempty"`
+	} `json:"external_sales_invoice"`
+}
+
+// ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0 defines model for ExternalSalesInvoiceRequest.ExternalSalesInvoice.DetailsAttributes.0.
+type ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0 = []SalesInvoiceDetailInput
+
+// ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1 defines model for ExternalSalesInvoiceRequest.ExternalSalesInvoice.DetailsAttributes.1.
+type ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1 map[string]SalesInvoiceDetailInput
+
+// ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes An array of lines, or an object of lines keyed by position. is_optional and is_selected do not apply to external invoices.
+type ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes struct {
+	union json.RawMessage
 }
 
 // FinancialAccount A Moneybird financial account with MoneyHarpy extensions.
@@ -5714,6 +5980,71 @@ type ExtendedUserResponsePermissions string
 // ExtendedUserResponseUserType defines model for ExtendedUserResponse.UserType.
 type ExtendedUserResponseUserType string
 
+// ExternalSalesInvoiceResponse Moneybird-compatible external_sales_invoice_response.
+type ExternalSalesInvoiceResponse struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId *Identifier                           `json:"administration_id,omitempty"`
+	Attachments      *[]AttachmentResponse                 `json:"attachments,omitempty"`
+	Contact          *ExternalSalesInvoiceResponse_Contact `json:"contact,omitempty"`
+
+	// ContactId Moneybird-compatible identifier_nullable.
+	ContactId *IdentifierNullable `json:"contact_id,omitempty"`
+
+	// CreatedAt Moneybird-compatible timestamp.
+	CreatedAt *Timestamp `json:"created_at,omitempty"`
+
+	// Currency Moneybird-compatible currency.
+	Currency    *Currency           `json:"currency,omitempty"`
+	Date        *openapi_types.Date `json:"date,omitempty"`
+	Details     *[]DetailResponse   `json:"details,omitempty"`
+	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber *int                `json:"entry_number,omitempty"`
+	Events      *[]EventResponse    `json:"events,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id                    *Identifier                         `json:"id,omitempty"`
+	MarkedDubiousOn       *openapi_types.Date                 `json:"marked_dubious_on,omitempty"`
+	MarkedUncollectibleOn *openapi_types.Date                 `json:"marked_uncollectible_on,omitempty"`
+	Notes                 *[]NoteResponse                     `json:"notes,omitempty"`
+	Origin                *ExternalSalesInvoiceResponseOrigin `json:"origin,omitempty"`
+	PaidAt                *openapi_types.Date                 `json:"paid_at,omitempty"`
+	Payments              *[]PaymentResponse                  `json:"payments,omitempty"`
+	PricesAreInclTax      *bool                               `json:"prices_are_incl_tax,omitempty"`
+	Reference             *string                             `json:"reference,omitempty"`
+	Source                *string                             `json:"source,omitempty"`
+	SourceUrl             *string                             `json:"source_url,omitempty"`
+	State                 *ExternalSalesInvoiceResponseState  `json:"state,omitempty"`
+	TaxTotals             *[]TaxSubtotalResponse              `json:"tax_totals,omitempty"`
+	TotalPaid             *string                             `json:"total_paid,omitempty"`
+	TotalPriceExclTax     *string                             `json:"total_price_excl_tax,omitempty"`
+	TotalPriceExclTaxBase *string                             `json:"total_price_excl_tax_base,omitempty"`
+	TotalPriceInclTax     *string                             `json:"total_price_incl_tax,omitempty"`
+	TotalPriceInclTaxBase *string                             `json:"total_price_incl_tax_base,omitempty"`
+	TotalUnpaid           *string                             `json:"total_unpaid,omitempty"`
+	TotalUnpaidBase       *string                             `json:"total_unpaid_base,omitempty"`
+
+	// UpdatedAt Moneybird-compatible timestamp.
+	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
+
+	// Version Moneybird-compatible version.
+	Version *Version `json:"version,omitempty"`
+}
+
+// ExternalSalesInvoiceResponse_Contact defines model for ExternalSalesInvoiceResponse.Contact.
+type ExternalSalesInvoiceResponse_Contact struct {
+	union json.RawMessage
+}
+
+// ExternalSalesInvoiceResponseOrigin defines model for ExternalSalesInvoiceResponse.Origin.
+type ExternalSalesInvoiceResponseOrigin string
+
+// ExternalSalesInvoiceResponseState defines model for ExternalSalesInvoiceResponse.State.
+type ExternalSalesInvoiceResponseState string
+
 // FinancialAccountResponse Moneybird-compatible financial_account_response.
 type FinancialAccountResponse struct {
 	Active *bool `json:"active,omitempty"`
@@ -6559,6 +6890,9 @@ type BadRequest = Error
 // ContactPage defines model for ContactPage.
 type ContactPage = []Contact
 
+// ExternalSalesInvoicePage defines model for ExternalSalesInvoicePage.
+type ExternalSalesInvoicePage = []ExternalSalesInvoice
+
 // Forbidden defines model for Forbidden.
 type Forbidden = Error
 
@@ -6722,6 +7056,38 @@ type ListGeneralJournalDocumentVersionsParams struct {
 
 // CreateGeneralJournalDocumentAttachmentMultipartBody defines parameters for CreateGeneralJournalDocumentAttachment.
 type CreateGeneralJournalDocumentAttachmentMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
+// ListExternalSalesInvoicesParams defines parameters for ListExternalSalesInvoices.
+type ListExternalSalesInvoicesParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage                             `form:"per_page,omitempty" json:"per_page,omitempty"`
+	Sort    *ListExternalSalesInvoicesParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+}
+
+// ListExternalSalesInvoicesParamsSort defines parameters for ListExternalSalesInvoices.
+type ListExternalSalesInvoicesParamsSort string
+
+// CreateExternalSalesInvoiceFromAttachmentMultipartBody defines parameters for CreateExternalSalesInvoiceFromAttachment.
+type CreateExternalSalesInvoiceFromAttachmentMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
+// ListExternalSalesInvoiceVersionsParams defines parameters for ListExternalSalesInvoiceVersions.
+type ListExternalSalesInvoiceVersionsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// CreateExternalSalesInvoiceAttachmentMultipartBody defines parameters for CreateExternalSalesInvoiceAttachment.
+type CreateExternalSalesInvoiceAttachmentMultipartBody struct {
 	File openapi_types.File `json:"file"`
 }
 
@@ -6922,6 +7288,33 @@ type CreateGeneralJournalDocumentAttachmentMultipartRequestBody CreateGeneralJou
 
 // CreateGeneralJournalDocumentNoteJSONRequestBody defines body for CreateGeneralJournalDocumentNote for application/json ContentType.
 type CreateGeneralJournalDocumentNoteJSONRequestBody = NoteRequest
+
+// CreateExternalSalesInvoiceJSONRequestBody defines body for CreateExternalSalesInvoice for application/json ContentType.
+type CreateExternalSalesInvoiceJSONRequestBody = ExternalSalesInvoiceRequest
+
+// CreateExternalSalesInvoiceFromAttachmentMultipartRequestBody defines body for CreateExternalSalesInvoiceFromAttachment for multipart/form-data ContentType.
+type CreateExternalSalesInvoiceFromAttachmentMultipartRequestBody CreateExternalSalesInvoiceFromAttachmentMultipartBody
+
+// FetchExternalSalesInvoicesJSONRequestBody defines body for FetchExternalSalesInvoices for application/json ContentType.
+type FetchExternalSalesInvoicesJSONRequestBody = SynchronizationRequest
+
+// UpdateExternalSalesInvoiceJSONRequestBody defines body for UpdateExternalSalesInvoice for application/json ContentType.
+type UpdateExternalSalesInvoiceJSONRequestBody = ExternalSalesInvoiceRequest
+
+// CreateExternalSalesInvoiceAttachmentMultipartRequestBody defines body for CreateExternalSalesInvoiceAttachment for multipart/form-data ContentType.
+type CreateExternalSalesInvoiceAttachmentMultipartRequestBody CreateExternalSalesInvoiceAttachmentMultipartBody
+
+// MarkExternalSalesInvoiceAsDubiousJSONRequestBody defines body for MarkExternalSalesInvoiceAsDubious for application/json ContentType.
+type MarkExternalSalesInvoiceAsDubiousJSONRequestBody = MarkDubiousRequest
+
+// MarkExternalSalesInvoiceAsUncollectibleJSONRequestBody defines body for MarkExternalSalesInvoiceAsUncollectible for application/json ContentType.
+type MarkExternalSalesInvoiceAsUncollectibleJSONRequestBody = MarkUncollectibleRequest
+
+// CreateExternalSalesInvoiceNoteJSONRequestBody defines body for CreateExternalSalesInvoiceNote for application/json ContentType.
+type CreateExternalSalesInvoiceNoteJSONRequestBody = NoteRequest
+
+// CreateExternalSalesInvoicePaymentJSONRequestBody defines body for CreateExternalSalesInvoicePayment for application/json ContentType.
+type CreateExternalSalesInvoicePaymentJSONRequestBody = PaymentRequest
 
 // CreateFinancialAccountJSONRequestBody defines body for CreateFinancialAccount for application/json ContentType.
 type CreateFinancialAccountJSONRequestBody = FinancialAccountRequest
@@ -7404,6 +7797,104 @@ func (t DocumentStyle_InvoiceSenderAddress_AdditionalProperties) MarshalJSON() (
 }
 
 func (t *DocumentStyle_InvoiceSenderAddress_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsSimpleContactResponse returns the union data inside the ExternalSalesInvoice_Contact as a SimpleContactResponse
+func (t ExternalSalesInvoice_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the ExternalSalesInvoice_Contact as the provided SimpleContactResponse
+func (t *ExternalSalesInvoice_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the ExternalSalesInvoice_Contact, using the provided SimpleContactResponse
+func (t *ExternalSalesInvoice_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ExternalSalesInvoice_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ExternalSalesInvoice_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0 returns the union data inside the ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes as a ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0
+func (t ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes) AsExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0() (ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0, error) {
+	var body ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0 overwrites any union data inside the ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes as the provided ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0
+func (t *ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes) FromExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0(v ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0 performs a merge with any union data inside the ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes, using the provided ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0
+func (t *ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes) MergeExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0(v ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1 returns the union data inside the ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes as a ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1
+func (t ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes) AsExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1() (ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1, error) {
+	var body ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1 overwrites any union data inside the ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes as the provided ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1
+func (t *ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes) FromExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1(v ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1 performs a merge with any union data inside the ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes, using the provided ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1
+func (t *ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes) MergeExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1(v ExternalSalesInvoiceRequestExternalSalesInvoiceDetailsAttributes1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ExternalSalesInvoiceRequest_ExternalSalesInvoice_DetailsAttributes) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -9262,6 +9753,42 @@ func (t *EventResponse_AdministrationId) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsSimpleContactResponse returns the union data inside the ExternalSalesInvoiceResponse_Contact as a SimpleContactResponse
+func (t ExternalSalesInvoiceResponse_Contact) AsSimpleContactResponse() (SimpleContactResponse, error) {
+	var body SimpleContactResponse
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleContactResponse overwrites any union data inside the ExternalSalesInvoiceResponse_Contact as the provided SimpleContactResponse
+func (t *ExternalSalesInvoiceResponse_Contact) FromSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleContactResponse performs a merge with any union data inside the ExternalSalesInvoiceResponse_Contact, using the provided SimpleContactResponse
+func (t *ExternalSalesInvoiceResponse_Contact) MergeSimpleContactResponse(v SimpleContactResponse) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ExternalSalesInvoiceResponse_Contact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ExternalSalesInvoiceResponse_Contact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsIdentifierNullable0 returns the union data inside the IdentifierNullable as a IdentifierNullable0
 func (t IdentifierNullable) AsIdentifierNullable0() (IdentifierNullable0, error) {
 	var body IdentifierNullable0
@@ -9944,6 +10471,57 @@ type ServerInterface interface {
 	// DeleteGeneralJournalDocumentNote Delete a note from a journal entry
 	// (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id})
 	DeleteGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
+	// ListExternalSalesInvoices List all external sales invoices
+	// (GET /api/v2/{administration_id}/external_sales_invoices)
+	ListExternalSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListExternalSalesInvoicesParams)
+	// CreateExternalSalesInvoice Create an external sales invoice
+	// (POST /api/v2/{administration_id}/external_sales_invoices)
+	CreateExternalSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateExternalSalesInvoiceFromAttachment Create an external sales invoice from an attachment
+	// (POST /api/v2/{administration_id}/external_sales_invoices/attachment)
+	CreateExternalSalesInvoiceFromAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListExternalSalesInvoiceVersions List all ids and versions
+	// (GET /api/v2/{administration_id}/external_sales_invoices/synchronization)
+	ListExternalSalesInvoiceVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListExternalSalesInvoiceVersionsParams)
+	// FetchExternalSalesInvoices Fetch external sales invoices with given ids
+	// (POST /api/v2/{administration_id}/external_sales_invoices/synchronization)
+	FetchExternalSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// DeleteExternalSalesInvoice Delete an external sales invoice
+	// (DELETE /api/v2/{administration_id}/external_sales_invoices/{id})
+	DeleteExternalSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetExternalSalesInvoice Get an external sales invoice
+	// (GET /api/v2/{administration_id}/external_sales_invoices/{id})
+	GetExternalSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// UpdateExternalSalesInvoice Update an external sales invoice
+	// (PATCH /api/v2/{administration_id}/external_sales_invoices/{id})
+	UpdateExternalSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateExternalSalesInvoiceAttachment Add attachment to an external sales invoice
+	// (POST /api/v2/{administration_id}/external_sales_invoices/{id}/attachment)
+	CreateExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteExternalSalesInvoiceAttachment Delete an attachment from an external sales invoice
+	// (DELETE /api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id})
+	DeleteExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// DownloadExternalSalesInvoiceAttachment Download an attachment
+	// (GET /api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id}/download)
+	DownloadExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// MarkExternalSalesInvoiceAsDubious Mark as dubious
+	// (PATCH /api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_dubious)
+	MarkExternalSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// MarkExternalSalesInvoiceAsUncollectible Mark as uncollectible
+	// (PATCH /api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_uncollectible)
+	MarkExternalSalesInvoiceAsUncollectible(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateExternalSalesInvoiceNote Add note to an external sales invoice
+	// (POST /api/v2/{administration_id}/external_sales_invoices/{id}/notes)
+	CreateExternalSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteExternalSalesInvoiceNote Delete a note from an external sales invoice
+	// (DELETE /api/v2/{administration_id}/external_sales_invoices/{id}/notes/{note_id})
+	DeleteExternalSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
+	// CreateExternalSalesInvoicePayment Create a payment
+	// (POST /api/v2/{administration_id}/external_sales_invoices/{id}/payments)
+	CreateExternalSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteExternalSalesInvoicePayment Delete a payment
+	// (DELETE /api/v2/{administration_id}/external_sales_invoices/{id}/payments/{payment_id})
+	DeleteExternalSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, paymentId Identifier)
 	// ListFinancialAccounts Retrieve financial accounts
 	// (GET /api/v2/{administration_id}/financial_accounts)
 	ListFinancialAccounts(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -10804,6 +11382,108 @@ func (_ Unimplemented) CreateGeneralJournalDocumentNote(w http.ResponseWriter, r
 // DeleteGeneralJournalDocumentNote Delete a note from a journal entry
 // (DELETE /api/v2/{administration_id}/documents/general_journal_documents/{id}/notes/{note_id})
 func (_ Unimplemented) DeleteGeneralJournalDocumentNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListExternalSalesInvoices List all external sales invoices
+// (GET /api/v2/{administration_id}/external_sales_invoices)
+func (_ Unimplemented) ListExternalSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListExternalSalesInvoicesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateExternalSalesInvoice Create an external sales invoice
+// (POST /api/v2/{administration_id}/external_sales_invoices)
+func (_ Unimplemented) CreateExternalSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateExternalSalesInvoiceFromAttachment Create an external sales invoice from an attachment
+// (POST /api/v2/{administration_id}/external_sales_invoices/attachment)
+func (_ Unimplemented) CreateExternalSalesInvoiceFromAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListExternalSalesInvoiceVersions List all ids and versions
+// (GET /api/v2/{administration_id}/external_sales_invoices/synchronization)
+func (_ Unimplemented) ListExternalSalesInvoiceVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListExternalSalesInvoiceVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// FetchExternalSalesInvoices Fetch external sales invoices with given ids
+// (POST /api/v2/{administration_id}/external_sales_invoices/synchronization)
+func (_ Unimplemented) FetchExternalSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteExternalSalesInvoice Delete an external sales invoice
+// (DELETE /api/v2/{administration_id}/external_sales_invoices/{id})
+func (_ Unimplemented) DeleteExternalSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetExternalSalesInvoice Get an external sales invoice
+// (GET /api/v2/{administration_id}/external_sales_invoices/{id})
+func (_ Unimplemented) GetExternalSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateExternalSalesInvoice Update an external sales invoice
+// (PATCH /api/v2/{administration_id}/external_sales_invoices/{id})
+func (_ Unimplemented) UpdateExternalSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateExternalSalesInvoiceAttachment Add attachment to an external sales invoice
+// (POST /api/v2/{administration_id}/external_sales_invoices/{id}/attachment)
+func (_ Unimplemented) CreateExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteExternalSalesInvoiceAttachment Delete an attachment from an external sales invoice
+// (DELETE /api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id})
+func (_ Unimplemented) DeleteExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadExternalSalesInvoiceAttachment Download an attachment
+// (GET /api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id}/download)
+func (_ Unimplemented) DownloadExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// MarkExternalSalesInvoiceAsDubious Mark as dubious
+// (PATCH /api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_dubious)
+func (_ Unimplemented) MarkExternalSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// MarkExternalSalesInvoiceAsUncollectible Mark as uncollectible
+// (PATCH /api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_uncollectible)
+func (_ Unimplemented) MarkExternalSalesInvoiceAsUncollectible(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateExternalSalesInvoiceNote Add note to an external sales invoice
+// (POST /api/v2/{administration_id}/external_sales_invoices/{id}/notes)
+func (_ Unimplemented) CreateExternalSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteExternalSalesInvoiceNote Delete a note from an external sales invoice
+// (DELETE /api/v2/{administration_id}/external_sales_invoices/{id}/notes/{note_id})
+func (_ Unimplemented) DeleteExternalSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateExternalSalesInvoicePayment Create a payment
+// (POST /api/v2/{administration_id}/external_sales_invoices/{id}/payments)
+func (_ Unimplemented) CreateExternalSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteExternalSalesInvoicePayment Delete a payment
+// (DELETE /api/v2/{administration_id}/external_sales_invoices/{id}/payments/{payment_id})
+func (_ Unimplemented) DeleteExternalSalesInvoicePayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, paymentId Identifier) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -14351,6 +15031,663 @@ func (siw *ServerInterfaceWrapper) DeleteGeneralJournalDocumentNote(w http.Respo
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteGeneralJournalDocumentNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListExternalSalesInvoices operation middleware
+func (siw *ServerInterfaceWrapper) ListExternalSalesInvoices(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListExternalSalesInvoicesParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListExternalSalesInvoices(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateExternalSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) CreateExternalSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateExternalSalesInvoice(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateExternalSalesInvoiceFromAttachment operation middleware
+func (siw *ServerInterfaceWrapper) CreateExternalSalesInvoiceFromAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateExternalSalesInvoiceFromAttachment(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListExternalSalesInvoiceVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListExternalSalesInvoiceVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListExternalSalesInvoiceVersionsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListExternalSalesInvoiceVersions(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FetchExternalSalesInvoices operation middleware
+func (siw *ServerInterfaceWrapper) FetchExternalSalesInvoices(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FetchExternalSalesInvoices(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteExternalSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) DeleteExternalSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteExternalSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetExternalSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) GetExternalSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetExternalSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateExternalSalesInvoice operation middleware
+func (siw *ServerInterfaceWrapper) UpdateExternalSalesInvoice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateExternalSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateExternalSalesInvoiceAttachment operation middleware
+func (siw *ServerInterfaceWrapper) CreateExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateExternalSalesInvoiceAttachment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteExternalSalesInvoiceAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteExternalSalesInvoiceAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadExternalSalesInvoiceAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DownloadExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadExternalSalesInvoiceAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MarkExternalSalesInvoiceAsDubious operation middleware
+func (siw *ServerInterfaceWrapper) MarkExternalSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MarkExternalSalesInvoiceAsDubious(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MarkExternalSalesInvoiceAsUncollectible operation middleware
+func (siw *ServerInterfaceWrapper) MarkExternalSalesInvoiceAsUncollectible(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MarkExternalSalesInvoiceAsUncollectible(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateExternalSalesInvoiceNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateExternalSalesInvoiceNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateExternalSalesInvoiceNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteExternalSalesInvoiceNote operation middleware
+func (siw *ServerInterfaceWrapper) DeleteExternalSalesInvoiceNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "note_id" -------------
+	var noteId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "note_id", chi.URLParam(r, "note_id"), &noteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "note_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteExternalSalesInvoiceNote(w, r, administrationId, id, noteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateExternalSalesInvoicePayment operation middleware
+func (siw *ServerInterfaceWrapper) CreateExternalSalesInvoicePayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateExternalSalesInvoicePayment(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteExternalSalesInvoicePayment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteExternalSalesInvoicePayment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "payment_id" -------------
+	var paymentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "payment_id", chi.URLParam(r, "payment_id"), &paymentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "payment_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteExternalSalesInvoicePayment(w, r, administrationId, id, paymentId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -18091,6 +19428,57 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/attachments/{attachment_id}/download", wrapper.DownloadSalesInvoiceAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices", wrapper.ListExternalSalesInvoices)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices", wrapper.CreateExternalSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/synchronization", wrapper.ListExternalSalesInvoiceVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/synchronization", wrapper.FetchExternalSalesInvoices)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/attachment", wrapper.CreateExternalSalesInvoiceFromAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}", wrapper.DeleteExternalSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}", wrapper.GetExternalSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}", wrapper.UpdateExternalSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/attachment", wrapper.CreateExternalSalesInvoiceAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id}", wrapper.DeleteExternalSalesInvoiceAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id}/download", wrapper.DownloadExternalSalesInvoiceAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/notes", wrapper.CreateExternalSalesInvoiceNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/notes/{note_id}", wrapper.DeleteExternalSalesInvoiceNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/payments", wrapper.CreateExternalSalesInvoicePayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/payments/{payment_id}", wrapper.DeleteExternalSalesInvoicePayment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_dubious", wrapper.MarkExternalSalesInvoiceAsDubious)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_uncollectible", wrapper.MarkExternalSalesInvoiceAsUncollectible)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/booking_rules", wrapper.ListBookingRules)

@@ -2,14 +2,16 @@ import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Problems } from '../auth/AuthLayout'
 import { formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
-import { remindersFor, type SalesInvoice, today, useSendReminders, useWriteOff, type WriteOff } from './queries'
+import { type Collectable, type InvoiceKind, remindersFor, type SalesInvoice, today, useSendReminders, useWriteOff, type WriteOff } from './queries'
 
 type Props = { administrationId: string; invoice: SalesInvoice; onDone: () => void }
 
+type WriteOffProps = { administrationId: string; invoice: Collectable; kind: WriteOff['kind']; invoiceKind?: InvoiceKind; onDone: () => void }
+
 /** Marks an invoice dubious, or writes it off for good as uncollectible, on a date. */
-export function WriteOffPanel({ administrationId, invoice, kind, onDone }: Props & { kind: WriteOff['kind'] }) {
+export function WriteOffPanel({ administrationId, invoice, kind, invoiceKind = 'sales', onDone }: WriteOffProps) {
   const { t } = useTranslation()
-  const writeOff = useWriteOff(administrationId, invoice.id ?? '')
+  const writeOff = useWriteOff(administrationId, invoice.id ?? '', invoiceKind)
   const [date, setDate] = useState(today)
   const field = kind === 'dubious' ? 'dubious_date' : 'uncollectible_date'
   const errors = formErrors(writeOff.error, { [field]: t('invoices.writeOff.date') })

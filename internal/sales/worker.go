@@ -43,8 +43,8 @@ func (s *Service) Summary(ctx context.Context, admin, user resource.ID) (Summary
 }
 
 // Run does the background work every interval until ctx ends: sending
-// scheduled invoices, marking invoices late and sending the reminders
-// their workflows send automatically.
+// scheduled invoices, marking invoices (external ones too) late and sending
+// the reminders their workflows send automatically.
 func (s *Service) Run(ctx context.Context, interval time.Duration, onError func(error)) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
@@ -142,7 +142,30 @@ func (s *Service) workOn(ctx context.Context, admin, user resource.ID) []error {
 		}
 		s.notify(ctx, admin, "sales_invoice_state_changed_to_late", inv)
 	}
+	if err := s.markExternalLate(ctx, admin, today); err != nil {
+		errs = append(errs, fmt.Errorf("administration %s, mark external invoices late: %w", admin, err))
+	}
 	return append(errs, s.remind(ctx, admin, user, today)...)
+}
+
+// markExternalLate marks open external invoices past their due date late.
+func (s *Service) markExternalLate(ctx context.Context, admin resource.ID, today time.Time) error {
+	late, _, err := s.store.ExternalInvoices(ctx, admin, Query{States: []string{Late}, Today: today})
+	if err != nil {
+		return err
+	}
+	for _, e := range late {
+		if e.State != Open {
+			continue
+		}
+		inv := e.invoice()
+		inv.State, inv.UpdatedAt = Late, s.now()
+		if err := s.store.SavePayments(ctx, PaymentChange{Invoices: []Posting{{Invoice: inv}}}); err != nil {
+			return err
+		}
+		s.notify(ctx, admin, "external_sales_invoice_state_changed_to_late", inv)
+	}
+	return nil
 }
 
 // remind sends the reminders that are due and that the workflow sends by

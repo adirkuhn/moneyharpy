@@ -4,18 +4,18 @@ import { Problems } from '../auth/AuthLayout'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { CheckboxInput, formErrors, TextArea } from '../forms/Form'
 import {
-  attachmentURL, type SalesInvoice, useAddInvoiceAttachment, useAddInvoiceNote, useDeleteInvoiceAttachment, useDeleteInvoiceNote,
+  attachmentURL, type Collectable, type InvoiceKind, useAddInvoiceAttachment, useAddInvoiceNote, useDeleteInvoiceAttachment, useDeleteInvoiceNote,
 } from './queries'
 
-type Props = { administrationId: string; invoice: SalesInvoice }
+type Props = { administrationId: string; invoice: Collectable; kind?: InvoiceKind }
 
 /** Notes and to-dos kept with an invoice. */
-export function InvoiceNotes({ administrationId, invoice }: Props) {
+export function InvoiceNotes({ administrationId, invoice, kind = 'sales' }: Props) {
   const { t, i18n } = useTranslation()
   const [text, setText] = useState('')
   const [todo, setTodo] = useState(false)
-  const add = useAddInvoiceNote(administrationId, invoice.id ?? '')
-  const remove = useDeleteInvoiceNote(administrationId, invoice.id ?? '')
+  const add = useAddInvoiceNote(administrationId, invoice.id ?? '', kind)
+  const remove = useDeleteInvoiceNote(administrationId, invoice.id ?? '', kind)
   const errors = formErrors(add.error ?? remove.error, { note: t('contacts.newNote') })
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -64,12 +64,12 @@ function size(bytes: number, language: string) {
 }
 
 /** Files that go with an invoice, such as an order or a timesheet. */
-export function InvoiceAttachments({ administrationId, invoice }: Props) {
+export function InvoiceAttachments({ administrationId, invoice, kind = 'sales' }: Props) {
   const { t, i18n } = useTranslation()
   const id = useId()
   const [tooLarge, setTooLarge] = useState(false)
-  const add = useAddInvoiceAttachment(administrationId, invoice.id ?? '')
-  const remove = useDeleteInvoiceAttachment(administrationId, invoice.id ?? '')
+  const add = useAddInvoiceAttachment(administrationId, invoice.id ?? '', kind)
+  const remove = useDeleteInvoiceAttachment(administrationId, invoice.id ?? '', kind)
   const problems = [...(tooLarge ? [t('invoices.attachmentTooLarge')] : []), ...formErrors(add.error ?? remove.error, {}).general]
   const attachments = invoice.attachments ?? []
   return (
@@ -85,7 +85,7 @@ export function InvoiceAttachments({ administrationId, invoice }: Props) {
           {attachments.map((a) => (
             <li key={a.id} className="notes__row">
               <div>
-                <a href={attachmentURL(administrationId, invoice.id ?? '', a.id ?? '')} download={a.filename}>{a.filename}</a>
+                <a href={attachmentURL(administrationId, invoice.id ?? '', a.id ?? '', kind)} download={a.filename}>{a.filename}</a>
                 <p className="hint">{size(a.size ?? 0, i18n.language)}</p>
               </div>
               <ConfirmDelete

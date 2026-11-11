@@ -207,6 +207,9 @@ func (f *fakeLedger) LockedUntil(context.Context, resource.ID, resource.ID) (str
 type memStore struct {
 	invoices map[resource.ID]Invoice
 	entries  map[resource.ID][]journal.Entry
+	// externals and externalEntries hold external invoices and what they post.
+	externals       map[resource.ID]ExternalInvoice
+	externalEntries map[resource.ID][]journal.Entry
 	// paid holds what payments post, by payment.
 	paid     map[resource.ID][]journal.Entry
 	sequence int
@@ -214,11 +217,16 @@ type memStore struct {
 }
 
 func (m *memStore) Payment(_ context.Context, _, id resource.ID) (Payment, error) {
+	var all []Payment
 	for _, inv := range m.invoices {
-		for _, p := range inv.Payments {
-			if p.ID == id {
-				return p, nil
-			}
+		all = append(all, inv.Payments...)
+	}
+	for _, e := range m.externals {
+		all = append(all, e.Payments...)
+	}
+	for _, p := range all {
+		if p.ID == id {
+			return p, nil
 		}
 	}
 	return Payment{}, ErrPaymentNotFound
@@ -226,6 +234,15 @@ func (m *memStore) Payment(_ context.Context, _, id resource.ID) (Payment, error
 
 func (m *memStore) SavePayments(_ context.Context, c PaymentChange) error {
 	for _, p := range c.Invoices {
+		if p.Invoice.Type == ExternalEntityType {
+			e := m.externals[p.Invoice.ID]
+			e.Settled(p.Invoice)
+			m.externals[e.ID] = e
+			if p.Entries != nil {
+				m.externalEntries[e.ID] = p.Entries
+			}
+			continue
+		}
 		m.invoices[p.Invoice.ID] = p.Invoice
 		if p.Entries != nil {
 			m.entries[p.Invoice.ID] = p.Entries
@@ -242,6 +259,12 @@ func (m *memStore) SavePayments(_ context.Context, c PaymentChange) error {
 
 func (m *memStore) Receivables(_ context.Context, _ resource.ID, today time.Time) (Receivables, error) {
 	var r Receivables
+	for _, e := range m.externals {
+		if payable(e.invoice()) {
+			r.ToReceive.Count++
+			r.ToReceive.Amount += e.Unpaid()
+		}
+	}
 	for _, inv := range m.invoices {
 		if !payable(inv) {
 			continue
@@ -358,6 +381,74 @@ func (m *memStore) ContactInUse(_ context.Context, _, contact resource.ID) (bool
 	return err == nil, nil
 }
 
+func (m *memStore) ExternalInvoices(_ context.Context, _ resource.ID, q Query) ([]ExternalInvoice, int, error) {
+	var out []ExternalInvoice
+	for _, e := range m.externals {
+		if q.MatchesExternal(e) {
+			out = append(out, e)
+		}
+	}
+	slices.SortFunc(out, func(a, b ExternalInvoice) int { return int(a.ID - b.ID) })
+	return out, len(out), nil
+}
+
+func (m *memStore) ExternalInvoice(_ context.Context, _, id resource.ID) (ExternalInvoice, error) {
+	e, ok := m.externals[id]
+	if !ok {
+		return ExternalInvoice{}, ErrNotFound
+	}
+	return e, nil
+}
+
+func (m *memStore) ExternalInvoicesByID(ctx context.Context, admin resource.ID, ids []resource.ID) ([]ExternalInvoice, error) {
+	var out []ExternalInvoice
+	for _, id := range ids {
+		if e, err := m.ExternalInvoice(ctx, admin, id); err == nil {
+			out = append(out, e)
+		}
+	}
+	return out, nil
+}
+
+func (m *memStore) NextEntryNumber(context.Context, resource.ID) (int, error) {
+	highest := 0
+	for _, e := range m.externals {
+		highest = max(highest, e.EntryNumber)
+	}
+	return highest + 1, nil
+}
+
+func (m *memStore) SaveExternalInvoice(_ context.Context, e ExternalInvoice, entries []journal.Entry, _ bool) error {
+	m.externals[e.ID] = e
+	if entries != nil {
+		m.externalEntries[e.ID] = entries
+	}
+	return nil
+}
+
+func (m *memStore) DeleteExternalInvoice(_ context.Context, _, id resource.ID) error {
+	for _, p := range m.externals[id].Payments {
+		delete(m.paid, p.ID)
+	}
+	delete(m.externals, id)
+	delete(m.externalEntries, id)
+	return nil
+}
+
+func (m *memStore) TouchExternalInvoice(_ context.Context, _, id resource.ID, at time.Time) error {
+	e := m.externals[id]
+	e.UpdatedAt = at
+	m.externals[id] = e
+	return nil
+}
+
+// setExternalState stores a state as if the invoice had it before.
+func (m *memStore) setExternalState(id resource.ID, state string) {
+	e := m.externals[id]
+	e.State = state
+	m.externals[id] = e
+}
+
 // fakeBank keeps what transactions have open and links them through the
 // service, as banking does.
 type fakeBank struct {
@@ -366,12 +457,12 @@ type fakeBank struct {
 	day  time.Time
 }
 
-func (f *fakeBank) LinkInvoicePayment(ctx context.Context, admin, mutation, user, invoice resource.ID, price *money.Amount) (resource.ID, error) {
+func (f *fakeBank) LinkInvoicePayment(ctx context.Context, admin, mutation, user resource.ID, invoiceType string, invoice resource.ID, price *money.Amount) (resource.ID, error) {
 	open, ok := f.open[mutation]
 	if !ok {
 		return 0, errors.New("no such transaction")
 	}
-	id, err := f.svc.RegisterBankPayment(ctx, admin, user, invoice, mutation, bankAccount, f.day, open, price)
+	id, err := f.svc.RegisterBankPayment(ctx, admin, user, invoiceType, invoice, mutation, bankAccount, f.day, open, price)
 	if err != nil {
 		return 0, err
 	}
@@ -491,7 +582,8 @@ type harness struct {
 
 func newHarness(t *testing.T) harness {
 	t.Helper()
-	store := &memStore{invoices: map[resource.ID]Invoice{}, entries: map[resource.ID][]journal.Entry{}, paid: map[resource.ID][]journal.Entry{}, locked: map[resource.ID]bool{}}
+	store := &memStore{invoices: map[resource.ID]Invoice{}, entries: map[resource.ID][]journal.Entry{}, paid: map[resource.ID][]journal.Entry{}, locked: map[resource.ID]bool{},
+		externals: map[resource.ID]ExternalInvoice{}, externalEntries: map[resource.ID][]journal.Entry{}}
 	ledger := &fakeLedger{}
 	mailer := &fakeMailer{}
 	ids := resource.NewGenerator(1)

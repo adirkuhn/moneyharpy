@@ -510,11 +510,11 @@ func (s *Service) post(ctx context.Context, admin, user resource.ID, inv Invoice
 	contact := inv.ContactID
 	entry := func(ledger resource.ID, amount money.Amount, description string, rate *resource.ID) journal.Entry {
 		return journal.Entry{
-			ID: s.ids.Next(), AdministrationID: admin, DocumentType: EntityType, DocumentID: inv.ID, Date: *inv.InvoiceDate,
+			ID: s.ids.Next(), AdministrationID: admin, DocumentType: inv.kind(), DocumentID: inv.ID, Date: *inv.InvoiceDate,
 			LedgerAccountID: ledger, ContactID: &contact, TaxRateID: rate, Amount: amount, Description: description,
 		}
 	}
-	number := cmpString(inv.InvoiceID, fmt.Sprintf("draft %d", inv.DraftID))
+	number := inv.label()
 	entries := []journal.Entry{entry(debtors, tot.InclTax, number, nil)}
 	for i, d := range inv.Lines {
 		if tot.LineBases[i] == 0 {

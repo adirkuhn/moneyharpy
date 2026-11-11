@@ -19,64 +19,97 @@ var BookMethods = []string{"revenue"}
 // excluding VAT goes into the provision for doubtful debtors. The state
 // stays as it is.
 func (s *Service) MarkDubious(ctx context.Context, admin, id, user resource.ID, date string) (Invoice, error) {
-	a, err := s.admins.Get(ctx, admin, user)
-	if err != nil {
-		return Invoice{}, err
-	}
-	inv, err := s.store.Invoice(ctx, admin, id)
-	if err != nil {
-		return Invoice{}, err
-	}
-	if !payable(inv) || inv.MarkedDubiousOn != nil {
-		return Invoice{}, ErrNotEditable
-	}
-	day, err := s.writeOffDay(ctx, a, user, inv, date, "dubious_date", nil)
-	if err != nil {
-		return Invoice{}, err
-	}
-	inv.MarkedDubiousOn, inv.UpdatedAt = &day, s.now()
-	if err := s.repost(ctx, admin, user, &inv); err != nil {
+	if err := s.markDubious(ctx, admin, user, EntityType, id, date); err != nil {
 		return Invoice{}, err
 	}
 	return s.Invoice(ctx, admin, id, user)
+}
+
+// MarkExternalDubious marks an external invoice dubious, as MarkDubious
+// does.
+func (s *Service) MarkExternalDubious(ctx context.Context, admin, id, user resource.ID, date string) (ExternalInvoice, error) {
+	if err := s.markDubious(ctx, admin, user, ExternalEntityType, id, date); err != nil {
+		return ExternalInvoice{}, err
+	}
+	return s.ExternalInvoice(ctx, admin, id, user)
+}
+
+func (s *Service) markDubious(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, date string) error {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
+		return err
+	}
+	inv, err := s.loadInvoice(ctx, admin, kind, id)
+	if err != nil {
+		return err
+	}
+	if !payable(inv) || inv.MarkedDubiousOn != nil {
+		return ErrNotEditable
+	}
+	day, err := s.writeOffDay(ctx, a, user, inv, date, "dubious_date", nil)
+	if err != nil {
+		return err
+	}
+	inv.MarkedDubiousOn, inv.UpdatedAt = &day, s.now()
+	return s.repost(ctx, admin, user, &inv)
 }
 
 // MarkUncollectible writes off what is still open of an invoice, for good:
 // excluding VAT on uncollectible revenue (or the provision, when the
 // invoice was dubious) and the VAT back off payable VAT.
 func (s *Service) MarkUncollectible(ctx context.Context, admin, id, user resource.ID, date, bookMethod string) (Invoice, error) {
-	a, err := s.admins.Get(ctx, admin, user)
-	if err != nil {
+	if err := s.markUncollectible(ctx, admin, user, EntityType, id, date, bookMethod); err != nil {
 		return Invoice{}, err
 	}
-	if bookMethod = strings.TrimSpace(bookMethod); bookMethod != "" && bookMethod != "revenue" {
-		return Invoice{}, invalid("book_method", "is not included in the list")
-	}
-	inv, err := s.store.Invoice(ctx, admin, id)
-	if err != nil {
-		return Invoice{}, err
-	}
-	if !payable(inv) {
-		return Invoice{}, ErrNotEditable
-	}
-	day, err := s.writeOffDay(ctx, a, user, inv, date, "uncollectible_date", inv.MarkedDubiousOn)
-	if err != nil {
-		return Invoice{}, err
-	}
-	inv.MarkedUncollectibleOn, inv.State, inv.UpdatedAt = &day, Uncollectible, s.now()
-	if err := s.repost(ctx, admin, user, &inv); err != nil {
-		return Invoice{}, err
-	}
-	s.notify(ctx, admin, "sales_invoice_state_changed_to_uncollectible", inv)
 	return s.Invoice(ctx, admin, id, user)
 }
 
+// MarkExternalUncollectible writes off an external invoice, as
+// MarkUncollectible does.
+func (s *Service) MarkExternalUncollectible(ctx context.Context, admin, id, user resource.ID, date, bookMethod string) (ExternalInvoice, error) {
+	if err := s.markUncollectible(ctx, admin, user, ExternalEntityType, id, date, bookMethod); err != nil {
+		return ExternalInvoice{}, err
+	}
+	return s.ExternalInvoice(ctx, admin, id, user)
+}
+
+func (s *Service) markUncollectible(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, date, bookMethod string) error {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
+		return err
+	}
+	if bookMethod = strings.TrimSpace(bookMethod); bookMethod != "" && bookMethod != "revenue" {
+		return invalid("book_method", "is not included in the list")
+	}
+	inv, err := s.loadInvoice(ctx, admin, kind, id)
+	if err != nil {
+		return err
+	}
+	if !payable(inv) {
+		return ErrNotEditable
+	}
+	day, err := s.writeOffDay(ctx, a, user, inv, date, "uncollectible_date", inv.MarkedDubiousOn)
+	if err != nil {
+		return err
+	}
+	inv.MarkedUncollectibleOn, inv.State, inv.UpdatedAt = &day, Uncollectible, s.now()
+	if err := s.repost(ctx, admin, user, &inv); err != nil {
+		return err
+	}
+	s.notify(ctx, admin, inv.events()+"_state_changed_to_uncollectible", inv)
+	return nil
+}
+
+// repost stores an invoice of either kind with what it posts again.
 func (s *Service) repost(ctx context.Context, admin, user resource.ID, inv *Invoice) error {
 	entries, err := s.post(ctx, admin, user, *inv)
 	if err != nil {
 		return err
 	}
-	return s.save(ctx, admin, user, inv, entries, false)
+	if !inv.external() {
+		return s.save(ctx, admin, user, inv, entries, false)
+	}
+	return wrap("store invoice", s.store.SavePayments(ctx, PaymentChange{Invoices: []Posting{{Invoice: *inv, Entries: entries}}}))
 }
 
 // writeOffDay reads the date of a write-off: today when empty, after the
@@ -136,6 +169,9 @@ func (s *Service) writeOffs(ctx context.Context, admin, user resource.ID, inv In
 		accounts[role] = id
 	}
 	number := cmpString(inv.InvoiceID, inv.Reference)
+	if inv.external() {
+		number = inv.label()
+	}
 	var out []journal.Entry
 	add := func(day time.Time, role string, amount money.Amount, rate *resource.ID) {
 		if amount == 0 {

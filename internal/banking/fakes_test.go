@@ -308,7 +308,7 @@ type fakeInvoices struct {
 	next   resource.ID
 }
 
-func (f *fakeInvoices) RegisterBankPayment(_ context.Context, _, user, invoice, mutation, _ resource.ID, day time.Time, open Amount, price *Amount) (resource.ID, error) {
+func (f *fakeInvoices) RegisterBankPayment(_ context.Context, _, user resource.ID, invoiceType string, invoice, mutation, _ resource.ID, day time.Time, open Amount, price *Amount) (resource.ID, error) {
 	unpaid, ok := f.unpaid[invoice]
 	if !ok {
 		var verr resource.ValidationError
@@ -322,7 +322,7 @@ func (f *fakeInvoices) RegisterBankPayment(_ context.Context, _, user, invoice, 
 	f.next++
 	id := 5000 + f.next
 	mu := f.store.mutations[mutation]
-	mu.Payments = append(mu.Payments, PaymentLink{ID: id, InvoiceType: "SalesInvoice", InvoiceID: invoice, Price: amount, PaymentDate: day, UserID: user})
+	mu.Payments = append(mu.Payments, PaymentLink{ID: id, InvoiceType: invoiceType, InvoiceID: invoice, Price: amount, PaymentDate: day, UserID: user})
 	f.store.mutations[mutation] = mu
 	f.unpaid[invoice] -= amount
 	return id, nil

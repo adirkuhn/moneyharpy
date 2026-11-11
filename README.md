@@ -175,6 +175,30 @@ automatically, acting as the administration's owner. An advisory lock per
 administration keeps two instances from doing the same work twice. The
 overview shows what is still to receive and to remind.
 
+## External sales invoices
+
+Invoices made in other software, such as a webshop or a till, live at
+`/{id}/external_sales_invoices`, with Moneybird's external sales invoices API
+under `/api/v2/{administration_id}/external_sales_invoices`. MoneyHarpy does
+not number, render or send them; it books them and follows their payment.
+Dropping files on the list (or `POST .../attachment`) makes a new invoice of
+each, dated today and holding the file, to fill in. An invoice with a contact
+and at least one line is booked when it is saved: the total on the debtors,
+each line on its category (or uncategorized income), the VAT per rate on
+payable VAT, with document type `ExternalSalesInvoice`. Its `reference` is
+the number the other software gave it; `entry_number` counts the
+administration's external invoices. It can change until it has payments or is
+marked dubious, and not in the locked period.
+
+Payments, bank linking (`link_booking` with `ExternalSalesInvoice`, or a
+payment with `financial_mutation_id`, which needs the bank permission too),
+`mark_as_dubious` and `mark_as_uncollectible` work as for sales invoices,
+and so does the background job that marks overdue invoices late. Deleting an
+invoice unlinks its bank transactions first and removes what it and its
+payments post. The overview counts open external invoices as to receive, and
+the transaction page offers them for linking. The email-in address that
+Moneybird offers for forwarding invoices is not available yet.
+
 ## Users and permissions
 
 Each user of an administration is an owner, employee or accountant, with

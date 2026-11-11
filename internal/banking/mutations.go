@@ -284,8 +284,8 @@ func (s *Service) MutationsByID(ctx context.Context, admin, user resource.ID, id
 	return s.store.MutationsByID(ctx, admin, ids)
 }
 
-// Booking types Moneybird links transactions to. Only ledger accounts exist
-// in MoneyHarpy so far.
+// Booking types Moneybird links transactions to. Categories, sales invoices
+// and external sales invoices exist in MoneyHarpy so far.
 var bookingTypes = []string{"SalesInvoice", "Document", "LedgerAccount", "PaymentTransactionBatch", "PurchaseTransaction", "NewPurchaseInvoice", "NewReceipt", "PaymentTransaction", "PurchaseTransactionBatch", "ExternalSalesInvoice", "Payment", "VatDocument"}
 
 // Link books a transaction.
@@ -310,7 +310,7 @@ func (s *Service) LinkBooking(ctx context.Context, admin, id, user resource.ID, 
 	var verr resource.ValidationError
 	switch {
 	case l.Type == "LedgerAccount":
-	case l.Type == "SalesInvoice" && s.invoices != nil:
+	case (l.Type == "SalesInvoice" || l.Type == "ExternalSalesInvoice") && s.invoices != nil:
 		m, _, err := s.linkInvoice(ctx, admin, user, m, l)
 		return m, err
 	case slices.Contains(bookingTypes, l.Type):
@@ -408,10 +408,10 @@ func (s *Service) linkInvoice(ctx context.Context, admin, user resource.ID, m Mu
 		p *= m.direction()
 		price = &p
 	}
-	return s.payInvoice(ctx, admin, user, m, *l.BookingID, price)
+	return s.payInvoice(ctx, admin, user, m, l.Type, *l.BookingID, price)
 }
 
-func (s *Service) payInvoice(ctx context.Context, admin, user resource.ID, m Mutation, invoice resource.ID, price *Amount) (Mutation, resource.ID, error) {
+func (s *Service) payInvoice(ctx context.Context, admin, user resource.ID, m Mutation, invoiceType string, invoice resource.ID, price *Amount) (Mutation, resource.ID, error) {
 	if m.Open() == 0 {
 		var verr resource.ValidationError
 		verr.Add("price_base", "is more than the transaction has open, which is nothing")
@@ -420,7 +420,7 @@ func (s *Service) payInvoice(ctx context.Context, admin, user resource.ID, m Mut
 	if err := s.checkUnlocked(ctx, admin, user, m.Date); err != nil {
 		return Mutation{}, 0, err
 	}
-	id, err := s.invoices.RegisterBankPayment(ctx, admin, user, invoice, m.ID, m.AccountID, m.Date, m.Open(), price)
+	id, err := s.invoices.RegisterBankPayment(ctx, admin, user, invoiceType, invoice, m.ID, m.AccountID, m.Date, m.Open(), price)
 	if err != nil {
 		return Mutation{}, 0, err
 	}
@@ -454,9 +454,10 @@ func (s *Service) resettle(ctx context.Context, admin, id resource.ID) (Mutation
 	return m, nil
 }
 
-// LinkInvoicePayment pays an invoice with (part of) a transaction, for
-// sales; price is signed like the invoice, nil pays what both have open.
-func (s *Service) LinkInvoicePayment(ctx context.Context, admin, mutation, user, invoice resource.ID, price *Amount) (resource.ID, error) {
+// LinkInvoicePayment pays an invoice of the type (SalesInvoice or
+// ExternalSalesInvoice) with (part of) a transaction, for sales; price is
+// signed like the invoice, nil pays what both have open.
+func (s *Service) LinkInvoicePayment(ctx context.Context, admin, mutation, user resource.ID, invoiceType string, invoice resource.ID, price *Amount) (resource.ID, error) {
 	if _, err := s.ensure(ctx, admin, user); err != nil {
 		return 0, err
 	}
@@ -472,7 +473,7 @@ func (s *Service) LinkInvoicePayment(ctx context.Context, admin, mutation, user,
 	if err != nil {
 		return 0, err
 	}
-	_, id, err := s.payInvoice(ctx, admin, user, m, invoice, price)
+	_, id, err := s.payInvoice(ctx, admin, user, m, invoiceType, invoice, price)
 	return id, err
 }
 
