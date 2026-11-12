@@ -55,7 +55,10 @@ func TestTimeEntriesLifecycle(t *testing.T) {
 	customer := decode[contact](t, owner.do(http.MethodPost, api+"/contacts", map[string]any{"contact": map[string]any{"company_name": "Example Shop B.V."}}))
 	falcon := decode[project](t, owner.do(http.MethodPost, api+"/projects", map[string]any{"project": map[string]any{"name": "Falcon"}}))
 	today := time.Now().UTC().Truncate(time.Minute)
-	yesterday := today.AddDate(0, 0, -1)
+	// Noon yesterday in the administration's time zone, so the entry and the
+	// day filter fall on the same day whatever the hour the test runs.
+	n := adminNow()
+	yesterday := time.Date(n.Year(), n.Month(), n.Day()-1, 12, 0, 0, 0, adminZone).UTC()
 
 	r := owner.do(http.MethodPost, api+"/time_entries.json", map[string]any{"time_entry": map[string]any{
 		"user_id": me.Id, "started_at": yesterday.Add(-2 * time.Hour).Add(42 * time.Second), "ended_at": yesterday, "description": "Designing the website",
@@ -80,7 +83,6 @@ func TestTimeEntriesLifecycle(t *testing.T) {
 	// A timer: the clerk starts one, stops it and resumes it. Only a timer
 	// started today can be resumed, so it starts an hour ago, or at midnight
 	// when that was yesterday.
-	n := adminNow()
 	timerStart := today.Add(-time.Hour)
 	if midnight := time.Date(n.Year(), n.Month(), n.Day(), 0, 0, 0, 0, adminZone).UTC(); timerStart.Before(midnight) {
 		timerStart = midnight
