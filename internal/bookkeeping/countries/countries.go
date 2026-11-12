@@ -30,7 +30,16 @@ type Account struct {
 	// System marks accounts the books rely on, which cannot be removed or
 	// change type. The value names the role.
 	System string
+	// Selected ticks the account when its template's page opens.
+	Selected bool
+	// Choices are the options of the template's Choice the account is shown
+	// for; empty for all of them.
+	Choices []string
 }
+
+// IsRef reports whether a template account only refers to an account
+// defined elsewhere in the seed, by its Key.
+func (a Account) IsRef() bool { return a.Type == "" }
 
 // TaxRate seeds one VAT rate.
 type TaxRate struct {
@@ -47,12 +56,85 @@ type Box struct {
 	Name Text
 }
 
-// Template adds a group of categories in one go, such as for a company car.
+// Template is a theme of Moneybird's Add category: a group of categories to
+// pick from, such as for a company car, or one category the user names, such
+// as a kind of revenue.
 type Template struct {
-	Key         string
-	Name        Text
+	Key  string
+	Name Text
+	// Description says what the theme is for, in the list of themes.
 	Description Text
-	Accounts    []Account
+	// Intro and Warning head the theme's page.
+	Intro, Warning Text
+	// Choice shows some accounts only for one of its options, such as how the
+	// car is financed.
+	Choice *Choice
+	// NameLabel asks for a name that fills {name} in the accounts' names, such
+	// as the entrepreneur's. Empty when the names are fixed.
+	NameLabel Text
+	// Single makes the theme add one category the user names, instead of
+	// picking from Accounts.
+	Single *Single
+	// Accounts are the categories to pick from. An account with only a Key
+	// refers to one of the seed's accounts or of another template's.
+	Accounts []Account
+}
+
+// Choice is a question on a template's page whose answer decides which of
+// its accounts show.
+type Choice struct {
+	Label, Prompt Text
+	Options       []Option
+}
+
+// Option is an answer of a Choice, or a kind of category a Single adds, with
+// its chart scheme code.
+type Option struct {
+	Key      string
+	Name     Text
+	Taxonomy string
+}
+
+// Single describes the one category a template adds.
+type Single struct {
+	Type                    string
+	NameLabel, OptionsLabel Text
+	OptionsHelp             Text
+	// Parent offers a parent category of the same type.
+	Parent  bool
+	Options []Option
+}
+
+// Placeholder is replaced by the name a template asks for (NameLabel).
+const Placeholder = "{name}"
+
+// TemplateAccounts returns the template's accounts with references replaced
+// by the accounts they refer to, ticked and shown as the template says.
+func (s Seed) TemplateAccounts(t Template) []Account {
+	defs := map[string]Account{}
+	for _, a := range s.Accounts {
+		defs[a.Key] = a
+	}
+	for _, other := range s.Templates {
+		for _, a := range other.Accounts {
+			if !a.IsRef() {
+				defs[a.Key] = a
+			}
+		}
+	}
+	out := make([]Account, 0, len(t.Accounts))
+	for _, a := range t.Accounts {
+		if a.IsRef() {
+			def, ok := defs[a.Key]
+			if !ok {
+				continue
+			}
+			def.Selected, def.Choices = a.Selected, a.Choices
+			a = def
+		}
+		out = append(out, a)
+	}
+	return out
 }
 
 // Seed is what an administration in a country starts with.
@@ -102,6 +184,15 @@ func generic(country string) Seed {
 	templates := make([]Template, len(netherlands.Templates))
 	for i, t := range netherlands.Templates {
 		t.Accounts = strip(t.Accounts)
+		if t.Single != nil {
+			single := *t.Single
+			single.Options = make([]Option, len(t.Single.Options))
+			for j, o := range t.Single.Options {
+				o.Taxonomy = ""
+				single.Options[j] = o
+			}
+			t.Single = &single
+		}
 		templates[i] = t
 	}
 	return Seed{Country: country, Accounts: strip(netherlands.Accounts), Templates: templates}

@@ -12,6 +12,8 @@ export type LedgerAccountRequest = components['schemas']['LedgerAccountRequest']
 export type AccountType = components['schemas']['AccountType']
 export type DocumentType = components['schemas']['DocumentType']
 export type Template = components['schemas']['LedgerAccountTemplate']
+export type TemplateAccount = components['schemas']['LedgerAccountTemplateAccount']
+export type TemplateRequest = components['schemas']['LedgerAccountTemplateRequest']
 export type TaxonomyItem = components['schemas']['TaxonomyItem']
 
 export const taxRateTypes: TaxRateType[] = ['sales_invoice', 'purchase_invoice', 'general_journal_document']
@@ -126,8 +128,8 @@ export function useTemplates(administrationId: string) {
 export function useApplyTemplate(administrationId: string) {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (key: string) =>
-      unwrap(api.POST('/api/v2/{administration_id}/ledger_account_templates/{key}', { params: { path: { administration_id: administrationId, key } } })),
+    mutationFn: ({ key, body }: { key: string; body?: TemplateRequest }) =>
+      unwrap(api.POST('/api/v2/{administration_id}/ledger_account_templates/{key}', { params: { path: { administration_id: administrationId, key } }, body })),
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ['ledger-accounts', administrationId] })
       void client.invalidateQueries({ queryKey: ['ledger-account-templates', administrationId] })

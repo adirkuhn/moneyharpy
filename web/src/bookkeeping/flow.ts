@@ -5,6 +5,11 @@ import { returnPath } from '../settings/CustomFieldFormPage'
 export type CategoryFlow = {
   /** The page to go back to: the one that asked, or the categories of the bookkeeping settings. */
   returnTo: string
+  /**
+   * What the page gone back to opens: an invoice opens its details again, as
+   * Moneybird's return_to with ?open=details does.
+   */
+  returnState?: { details: true }
   /** Started from an invoice, as with Moneybird's "Add Category..." in the invoice details. */
   forInvoice: boolean
   /** The query that carries the flow to the next page, with its "?", or empty. */
@@ -30,5 +35,10 @@ export function useCategoryFlow(administrationId: string): CategoryFlow {
     carried.set('source', 'sales_invoice')
   }
   const query = carried.toString()
-  return { returnTo: returnTo || fallback, forInvoice, query: query ? `?${query}` : '' }
+  return {
+    returnTo: returnTo || fallback,
+    ...(forInvoice && returnTo ? { returnState: { details: true as const } } : {}),
+    forInvoice,
+    query: query ? `?${query}` : '',
+  }
 }
