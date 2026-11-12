@@ -380,7 +380,7 @@ func (s *Service) Credit(ctx context.Context, admin, id, user resource.ID, lineI
 	credit := orig
 	credit.ID, credit.InvoiceID, credit.SequenceID, credit.State = s.ids.Next(), "", "", Draft
 	credit.InvoiceDate, credit.DueDate, credit.SentAt, credit.PaidAt, credit.PaymentReference = nil, nil, nil, nil, ""
-	credit.MarkedDubiousOn, credit.MarkedUncollectibleOn, credit.Paused, credit.ReminderCount = nil, nil, false, 0
+	credit.MarkedDubiousOn, credit.MarkedUncollectibleOn, credit.Paused, credit.ReminderCount, credit.LastReminderOn = nil, nil, false, 0, nil
 	credit.Delivery, credit.Payments, credit.Notes, credit.Attachments = nil, nil, nil, nil
 	credit.OriginalID, credit.RecurringSalesInvoiceID, credit.OriginalEstimateID = &orig.ID, nil, nil
 	credit.CreatedAt, credit.UpdatedAt = now, now

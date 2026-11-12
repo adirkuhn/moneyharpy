@@ -111,7 +111,9 @@ type Inputs = {
 export function buildPreviewData({ dt, currency, invoice, workflows, rates, products, invoiceNumber, estimateNumber }: Inputs): PreviewData {
   const flow = defaultWorkflow(workflows, 'InvoiceWorkflow')
   const quoteFlow = defaultWorkflow(workflows, 'EstimateWorkflow')
-  const days = (w: Workflow | undefined, fallback: number) => w?.steps?.find((s) => s.step_order === 1)?.due_interval ?? fallback
+  // The first step (step_order 0, as on Moneybird) holds the payment term or validity.
+  const days = (w: Workflow | undefined, fallback: number) =>
+    [...(w?.steps ?? [])].sort((a, b) => (a.step_order ?? 0) - (b.step_order ?? 0))[0]?.due_interval ?? fallback
   const date = today()
   const percentageOf = (id: string | null | undefined) => Number(rates?.find((r) => r.id === id)?.percentage ?? 0)
   const shop = (products ?? []).slice(0, 3).map((p) => ({ title: p.title ?? p.description ?? '', description: p.description ?? '', price: Number(p.price ?? 0), frequency: p.frequency_type ?? '' }))

@@ -1470,12 +1470,25 @@ func TestWorkflows(t *testing.T) {
 	if len(list) != 2 || *list[1].Type != "InvoiceWorkflow" || !*list[1].Default || len(*list[1].Steps) != 3 {
 		t.Fatalf("list = %+v", list)
 	}
+	// Moneybird's steps: step_order from 0, each expiring after its
+	// due_interval, reminder_delay 0.
+	for i, st := range *list[1].Steps {
+		if want := []int{14, 7, 7}[i]; *st.StepOrder != i || *st.DueInterval != want || *st.ReminderDelay != 0 {
+			t.Errorf("default step %d = order %d, due interval %d, delay %d", i, *st.StepOrder, *st.DueInterval, *st.ReminderDelay)
+		}
+	}
 	r := owner.do(http.MethodPost, base, map[string]any{"workflow": map[string]any{
 		"type": "InvoiceWorkflow", "name": "Export", "currency": "USD", "language": "en",
-		"steps_attributes": []map[string]any{{"due_interval": 30}, {"reminder_delay": 10, "reminder_text": "Pay", "reminder_auto_send": true}},
+		"steps_attributes": []map[string]any{{"due_interval": 30}, {"due_interval": 10, "reminder_text": "Pay", "reminder_auto_send": true}},
 	}})
 	wantStatus(t, r, http.StatusCreated)
 	w := decode[httpapi.Workflow](t, r)
+	if st := (*w.Steps)[1]; *st.StepOrder != 1 || *st.DueInterval != 10 || *st.ReminderDelay != 0 {
+		t.Errorf("reminder step = %+v", st)
+	}
+	wantStatus(t, owner.do(http.MethodPost, base, map[string]any{"workflow": map[string]any{
+		"type": "InvoiceWorkflow", "name": "Expiring", "steps_attributes": []map[string]any{{"due_interval": 30}, {"due_interval": 0, "reminder_text": "Pay"}},
+	}}), http.StatusUnprocessableEntity)
 	if got := decode[httpapi.Workflow](t, owner.do(http.MethodGet, base+"/"+*w.Id, nil)); *got.Name != "Export" || len(*got.Steps) != 2 {
 		t.Errorf("fetched = %+v", got)
 	}
