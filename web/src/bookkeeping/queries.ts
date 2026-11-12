@@ -166,3 +166,9 @@ export function tree(accounts: LedgerAccount[]): { account: LedgerAccount; depth
   walk('', 0)
   return out
 }
+
+/**
+ * A category as an option in a select: its name, indented under its parent.
+ * Moneybird shows no account number there.
+ */
+export const categoryOption = ({ account, depth }: { account: LedgerAccount; depth: number }) => `${'\u2003'.repeat(depth)}${account.name}`

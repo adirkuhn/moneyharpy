@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { SelectInput } from '../forms/Form'
-import { type DocumentType, useLedgerAccounts } from '../bookkeeping/queries'
+import { type DocumentType, useLedgerAccounts, categoryOption } from '../bookkeeping/queries'
 import { bookable } from './queries'
 
 type Props = {
@@ -24,7 +24,7 @@ export function CategorySelect({ administrationId, label, value, errors, onChang
       {bookable(accounts.data ?? [], documentType).map((g) => (
         <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>
           {g.rows.map(({ account: a, depth }) => (
-            <option key={a.id} value={a.id}>{`${' '.repeat(depth)}${a.account_id ? `${a.account_id} ` : ''}${a.name}`}</option>
+            <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>
           ))}
         </optgroup>
       ))}

@@ -8,7 +8,7 @@ import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { type CategoryFlow, useCategoryFlow } from './flow'
-import { type AccountType, balanceSheetTypes, type LedgerAccount, profitAndLossTypes, type Template, type TemplateAccount, tree, useApplyTemplate, useLedgerAccounts, useTemplates } from './queries'
+import { type AccountType, balanceSheetTypes, type LedgerAccount, profitAndLossTypes, type Template, type TemplateAccount, tree, useApplyTemplate, useLedgerAccounts, useTemplates, categoryOption } from './queries'
 import './categories.css'
 
 /** Where the name a theme asks for goes in its categories' names. */
@@ -240,7 +240,7 @@ function SingleTheme({ administrationId, template, single, accounts, flow }: Sin
         {single.parent && (
           <SelectInput label={t('bookkeeping.parent')} width="medium" value={form.parent_id} errors={errors.field('parent_id')} onChange={(e) => setForm({ ...form, parent_id: e.target.value })}>
             <option value="">{t('bookkeeping.noParent')}</option>
-            {parents.map(({ account: a, depth }) => <option key={a.id} value={a.id}>{`${' '.repeat(depth)}${a.account_id ? `${a.account_id} ` : ''}${a.name}`}</option>)}
+            {parents.map(({ account: a, depth }) => <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>)}
           </SelectInput>
         )}
         {single.options_label && (

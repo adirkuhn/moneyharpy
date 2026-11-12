@@ -103,7 +103,7 @@ describe('a product', () => {
     await userEvent.type(within(form).getByLabelText('Title'), 'Website hosting')
     await userEvent.type(within(form).getByLabelText('Price'), '50.5')
     await userEvent.selectOptions(rate, '9% btw')
-    await userEvent.selectOptions(within(form).getByLabelText('Category'), '8000 Sales')
+    await userEvent.selectOptions(within(form).getByLabelText('Category'), 'Sales')
     await userEvent.selectOptions(within(form).getByLabelText('Frequency'), 'Monthly')
     await userEvent.type(within(form).getByLabelText('Every'), '3')
     await userEvent.click(within(form).getByRole('button', { name: 'Save product' }))

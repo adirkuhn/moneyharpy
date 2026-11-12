@@ -6,7 +6,7 @@ import { formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { type CategoryFlow, useCategoryFlow } from './flow'
-import { type AccountType, balanceSheetTypes, type LedgerAccount, profitAndLossTypes, type TaxonomyItem, tree, useBookkeepingSettings, useLedgerAccounts, useSaveLedgerAccount, useTaxonomySearch } from './queries'
+import { type AccountType, balanceSheetTypes, type LedgerAccount, profitAndLossTypes, type TaxonomyItem, tree, useBookkeepingSettings, useLedgerAccounts, useSaveLedgerAccount, useTaxonomySearch, categoryOption } from './queries'
 import { TaxonomyPicker } from './TaxonomyPicker'
 import './categories.css'
 
@@ -86,7 +86,7 @@ function SingleCategory({ administrationId, hasScheme, accounts, flow }: Props) 
           <TextArea label={labels.description} maxLength={1000} value={form.description} help={b('single.optional')} errors={errors.field('description')} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           <SelectInput label={labels.parent_id} value={form.parent_id} errors={errors.field('parent_id')} onChange={(e) => setForm({ ...form, parent_id: e.target.value })}>
             <option value="">{b('noParent')}</option>
-            {parents.map(({ account: a, depth }) => <option key={a.id} value={a.id}>{`${' '.repeat(depth)}${a.account_id ? `${a.account_id} ` : ''}${a.name}`}</option>)}
+            {parents.map(({ account: a, depth }) => <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>)}
           </SelectInput>
           <TextInput label={labels.account_id} width="small" maxLength={20} autoComplete="off" value={form.account_id} help={b('single.optional')} errors={errors.field('account_id')} onChange={(e) => setForm({ ...form, account_id: e.target.value })} />
           <div className="category-card__actions">
