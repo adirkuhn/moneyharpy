@@ -1,7 +1,10 @@
 package httpapi
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -541,25 +544,76 @@ func (s *server) ListLedgerAccountTemplates(w http.ResponseWriter, r *http.Reque
 	}
 	out := make([]LedgerAccountTemplate, len(list))
 	for i, t := range list {
-		out[i] = LedgerAccountTemplate{Key: t.Key, Name: t.Name, Description: t.Description, Applied: t.Applied}
-		for _, a := range t.Accounts {
-			out[i].LedgerAccounts = append(out[i].LedgerAccounts, struct {
-				AccountId   string      `json:"account_id"`
-				AccountType AccountType `json:"account_type"`
-				Name        string      `json:"name"`
-			}{AccountId: a.Code, AccountType: AccountType(a.Type), Name: a.Name})
-		}
+		out[i] = toLedgerAccountTemplate(t)
 	}
 	writeJSON(w, http.StatusOK, out)
 }
 
-// ApplyLedgerAccountTemplate implements ServerInterface.
+func toLedgerAccountTemplate(t bookkeeping.Template) LedgerAccountTemplate {
+	options := func(in []bookkeeping.TemplateOption) []LedgerAccountTemplateOption {
+		out := make([]LedgerAccountTemplateOption, len(in))
+		for i, o := range in {
+			out[i] = LedgerAccountTemplateOption{Key: o.Key, Name: o.Name, RgsCode: o.Taxonomy}
+		}
+		return out
+	}
+	out := LedgerAccountTemplate{
+		Key: t.Key, Name: t.Name, Description: t.Description, Intro: t.Intro, Warning: t.Warning, NameLabel: t.NameLabel,
+		Applied: t.Applied, LedgerAccounts: make([]LedgerAccountTemplateAccount, len(t.Accounts)),
+	}
+	if t.Choice != nil {
+		out.Choice = &LedgerAccountTemplateChoice{Label: t.Choice.Label, Prompt: t.Choice.Prompt, Options: options(t.Choice.Options)}
+	}
+	if t.Single != nil {
+		out.Single = &LedgerAccountTemplateSingle{
+			AccountType: AccountType(t.Single.Type), NameLabel: t.Single.NameLabel, OptionsLabel: t.Single.OptionsLabel,
+			OptionsHelp: t.Single.OptionsHelp, Parent: t.Single.Parent, Options: options(t.Single.Options),
+		}
+	}
+	for i, a := range t.Accounts {
+		choices := a.Choices
+		if choices == nil {
+			choices = []string{}
+		}
+		out.LedgerAccounts[i] = LedgerAccountTemplateAccount{
+			Key: a.Key, Parent: emptyNil(a.Parent), Name: a.Name, AccountType: AccountType(a.Type), AccountId: a.Code, RgsCode: a.Taxonomy,
+			Description: a.Description, Exists: a.Exists, Selected: a.Selected, Choices: choices,
+		}
+	}
+	return out
+}
+
+// ApplyLedgerAccountTemplate implements ServerInterface. The body is
+// optional: without it, all of the theme's missing ledger accounts are added.
 func (s *server) ApplyLedgerAccountTemplate(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, key string) {
 	admin, ok := parseID(w, administrationID)
 	if !ok {
 		return
 	}
-	added, err := s.deps.Bookkeeping.ApplyTemplate(r.Context(), admin, user(r).ID, key)
+	var body LedgerAccountTemplateRequest
+	raw, err := io.ReadAll(r.Body)
+	if err != nil || len(bytes.TrimSpace(raw)) > 0 && json.Unmarshal(raw, &body) != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	in := bookkeeping.TemplateInput{}
+	if body.LedgerAccounts != nil {
+		in.Accounts = *body.LedgerAccounts
+	}
+	if body.Name != nil {
+		in.Name = *body.Name
+	}
+	if body.Option != nil {
+		in.Option = *body.Option
+	}
+	if body.ParentId != nil && *body.ParentId != "" {
+		parent, ok := parseID(w, *body.ParentId)
+		if !ok {
+			return
+		}
+		in.ParentID = &parent
+	}
+	added, err := s.deps.Bookkeeping.ApplyTemplate(r.Context(), admin, user(r).ID, key, in)
 	if err != nil {
 		s.fail(w, r, err)
 		return

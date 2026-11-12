@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { renderAt } from '../test/render'
-import { administration, listing, server, signedIn } from '../test/server'
-import type { BookkeepingSettings, LedgerAccount, TaxRate, Template } from './queries'
+import { administration, identity, listing, server, signedIn } from '../test/server'
+import type { BookkeepingSettings, LedgerAccount, TaxRate, Template, TemplateAccount } from './queries'
 import { tree } from './queries'
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
@@ -155,24 +155,71 @@ describe('VAT rate form', () => {
 
 const fromInvoice = `return_to=${encodeURIComponent('/11/sales_invoices/5/edit')}&source=sales_invoice`
 
-const car: Template = {
-  key: 'company_car', name: 'Company car', description: 'Costs of a company car', applied: false,
+const entry = (over: Partial<TemplateAccount> & Pick<TemplateAccount, 'key' | 'name'>): TemplateAccount => ({
+  parent: null, account_type: 'expenses', account_id: '', rgs_code: '', description: '', exists: false, selected: false, choices: [], ...over,
+})
+const theme = (over: Partial<Template> & Pick<Template, 'key' | 'name'>): Template => ({
+  description: '', intro: '', warning: '', name_label: '', choice: null, single: null, applied: false, ledger_accounts: [], ...over,
+})
+const leased = ['financial_lease', 'asset']
+const car = theme({
+  key: 'car_set', name: 'Company car', description: 'Ledger accounts related to the company car',
+  intro: 'When you want to breakdown the car costs, you can use the following categories.', warning: 'with private use, you also have tax for aggregation.',
+  choice: {
+    label: 'Financing of the car', prompt: 'Based on the financing we will show possible categories.',
+    options: [{ key: 'operational_lease', name: 'Operational lease', rgs_code: '' }, { key: 'financial_lease', name: 'Financial lease', rgs_code: '' }, { key: 'asset', name: 'Paid with own money', rgs_code: '' }],
+  },
   ledger_accounts: [
-    { name: 'Office costs', account_type: 'expenses', account_id: '4400' },
-    { name: 'Fuel', account_type: 'expenses', account_id: '4251' },
-    { name: 'Company car', account_type: 'non_current_assets', account_id: '0300' },
+    entry({ key: 'company_car', name: 'Company car', account_type: 'non_current_assets', selected: true, choices: leased }),
+    entry({ key: 'depreciation', name: 'Depreciation costs', exists: true, selected: true, choices: leased }),
+    entry({ key: 'company_car_depreciation', parent: 'depreciation', name: 'Company car depreciation', description: 'The total of depreciation for the car.', selected: true, choices: leased }),
+    entry({ key: 'company_car_book_result', parent: 'depreciation', name: 'Book result company car' }),
+    entry({ key: 'company_car_costs', name: 'Company car costs', exists: true, choices: ['operational_lease', ...leased] }),
+    entry({ key: 'company_car_lease_costs', parent: 'company_car_costs', name: 'Company car lease costs', selected: true, choices: ['operational_lease'] }),
   ],
-}
-const loan: Template = {
-  key: 'loan', name: 'Loan', description: 'A long-term loan and its interest', applied: true,
-  ledger_accounts: [{ name: 'Loan', account_type: 'non_current_liabilities', account_id: '0800' }],
-}
+})
+const staff = theme({
+  key: 'staff_set', name: 'Staff', description: 'Personnel costs and debts', intro: 'These categories are used for entering staff costs.',
+  ledger_accounts: [
+    entry({ key: 'staff', name: 'Staff', selected: true }),
+    entry({ key: 'wages', parent: 'staff', name: 'Gross wages', selected: true }),
+    entry({ key: 'hiring', parent: 'staff', name: 'Hiring' }),
+  ],
+})
+const entrepreneur = theme({
+  key: 'entrepreneur', name: 'Entrepreneur', description: 'The entrepreneur and the company', intro: 'Privately paid invoices.', name_label: 'Name entrepreneur',
+  ledger_accounts: [
+    entry({ key: 'entrepreneur_capital', name: 'Private {name} (capital)', account_type: 'equity', selected: true }),
+    entry({ key: 'entrepreneur_withdrawals', parent: 'entrepreneur_capital', name: 'Private withdrawals {name}', account_type: 'equity', selected: true }),
+  ],
+})
+const revenue = theme({
+  key: 'revenue', name: 'Revenue', description: 'Income generated from the sale of your products or services.', intro: 'By breaking down your revenue by origin, you gain more insight.',
+  single: {
+    account_type: 'revenue', name_label: 'Name', options_label: '', options_help: '', parent: true,
+    options: [{ key: 'net_sales_of_trade_goods', name: 'Revenue from trade goods', rgs_code: 'WOmzNoh' }, { key: 'revenue_from_provision_of_services', name: 'Revenue from services', rgs_code: 'WOmzNod' }],
+  },
+})
+const fixedAssets = theme({
+  key: 'fixed_assets', name: 'Fixed assets', description: 'Ledger accounts for the processing of your investments.', intro: 'Large purchases that will last for a long time.',
+  single: {
+    account_type: 'non_current_assets', name_label: 'Category name', options_label: 'Group', options_help: 'Select the group to which the category belongs', parent: false,
+    options: [{ key: 'fixed_asset', name: 'Fixed assets', rgs_code: 'BMvaObe' }, { key: 'inventory', name: 'Inventory', rgs_code: 'BMvaBei' }],
+  },
+})
+const housing = theme({
+  key: 'housing', name: 'Housing', description: 'Housing costs', intro: 'If you want to breakdown housing costs.', applied: true,
+  ledger_accounts: [entry({ key: 'housing', name: 'Housing costs', exists: true, selected: true })],
+})
+const sales = account({ id: '1010', name: 'Revenue', account_type: 'revenue', account_id: '8000', uri: '/11/ledger_accounts/1010', taxonomy_item: null })
 
-const withTemplates = (applied: string[] = []) => [
+const withTemplates = (applied: { key: string; body: unknown }[] = [], legalForm: string | null = null) => [
+  http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([payable, office, software, old, sales])),
   ...loaded(),
-  http.get('*/api/v2/11/ledger_account_templates', () => HttpResponse.json([car, loan])),
-  http.post('*/api/v2/11/ledger_account_templates/:key', ({ params }) => {
-    applied.push(String(params.key))
+  http.get('*/api/v2/11/identities', () => HttpResponse.json([identity({ default: true, legal_entity_type: legalForm })])),
+  http.get('*/api/v2/11/ledger_account_templates', () => HttpResponse.json([revenue, car, housing, staff, entrepreneur, fixedAssets])),
+  http.post('*/api/v2/11/ledger_account_templates/:key', async ({ params, request }) => {
+    applied.push({ key: String(params.key), body: await request.json() })
     return HttpResponse.json([], { status: 201 })
   }),
 ]
@@ -191,19 +238,28 @@ describe('add category', () => {
     expect(within(categories).getByRole('link', { name: 'Add category' })).toHaveAttribute('href', '/11/ledger_accounts/blueprints')
   })
 
-  it('offers the themes of the country and a single category, after Moneybird', async () => {
+  it('offers the themes and a single category, after Moneybird', async () => {
     server.use(...withTemplates())
     renderAt(`/11/ledger_accounts/blueprints?${fromInvoice}`)
     expect(await screen.findByRole('heading', { name: 'Add category for Invoice', level: 1 })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'To invoice' })).toHaveAttribute('href', '/11/sales_invoices/5/edit')
     expect(screen.getByText(/determined by the country of your administration/)).toBeInTheDocument()
     const themes = screen.getByRole('list', { name: 'Themes' })
-    const carLink = within(themes).getByRole('link', { name: /Company car/ })
-    expect(carLink).toHaveAttribute('href', `/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=company_car&${fromInvoice}`)
-    expect(carLink).toHaveTextContent('Costs of a company car')
-    expect(within(themes).getByRole('link', { name: /Loan/ })).toHaveTextContent('Added')
+    expect(within(themes).getAllByRole('link').map((l) => l.getAttribute('aria-label'))).toEqual(['Revenue', 'Company car', 'Housing', 'Staff', 'Entrepreneur', 'Fixed assets'])
+    const carLink = within(themes).getByRole('link', { name: 'Company car' })
+    expect(carLink).toHaveAttribute('href', `/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=car_set&${fromInvoice}`)
+    expect(carLink).toHaveTextContent('Ledger accounts related to the company car')
+    expect(within(themes).getByRole('link', { name: 'Housing' })).toHaveTextContent('Added')
     expect(screen.getByText(/add it separately based on the Referentie Grootboekschema \(RGS\)/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Add single category' })).toHaveAttribute('href', `/11/ledger_accounts/new?${fromInvoice}`)
+  })
+
+  it('names the legal form the categories are determined by, when the company has one', async () => {
+    server.use(...withTemplates([], 'VOF - Vennootschap onder firma'))
+    renderAt('/11/ledger_accounts/blueprints')
+    expect(await screen.findByText(/Below categories are determined by your chosen legal form:/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'VOF - Vennootschap onder firma' })).toHaveAttribute('href', '/11/identities/edit_default')
+    expect(screen.queryByText(/country of your administration/)).not.toBeInTheDocument()
   })
 
   it('goes back to the settings, and never to another site', async () => {
@@ -223,36 +279,107 @@ describe('add category', () => {
 })
 
 describe('add categories from a theme', () => {
-  it('lists the categories by part of the books and adds the missing ones, then goes back to the invoice', async () => {
-    const applied: string[] = []
+  it('shows the categories for the financing chosen, ticked one by one, then goes back to the invoice', async () => {
+    const applied: { key: string; body: unknown }[] = []
     server.use(...withTemplates(applied))
-    renderAt(`/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=company_car&${fromInvoice}`)
+    renderAt(`/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=car_set&${fromInvoice}`)
     expect(await screen.findByRole('heading', { name: 'Add category for Invoice from Company car', level: 1 })).toBeInTheDocument()
-    expect(screen.getByText('Costs of a company car')).toBeInTheDocument()
+    expect(screen.getByText('When you want to breakdown the car costs, you can use the following categories.')).toBeInTheDocument()
+    expect(screen.getByText('Warning:')).toBeInTheDocument()
+    expect(screen.getByText('Based on the financing we will show possible categories.')).toBeInTheDocument()
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByLabelText('Financing of the car'), 'Operational lease')
+    expect(screen.queryByRole('checkbox', { name: 'Company car' })).not.toBeInTheDocument()
+    const costs = screen.getByRole('checkbox', { name: 'Company car costs' })
+    expect(costs).toBeChecked()
+    expect(costs).toBeDisabled()
+    expect(costs).toHaveAccessibleDescription('Category already exists')
+    expect(screen.getByRole('checkbox', { name: 'Company car lease costs' })).toBeChecked()
+
+    await userEvent.selectOptions(screen.getByLabelText('Financing of the car'), 'Financial lease')
     const balance = screen.getByRole('group', { name: 'Balance sheet' })
-    expect(within(balance).getByRole('heading', { name: 'Fixed assets' })).toBeInTheDocument()
-    expect(within(balance).getByRole('checkbox', { name: /Company car/ })).toBeChecked()
+    expect(within(balance).getByRole('heading', { name: 'Non-current assets' })).toBeInTheDocument()
+    expect(within(balance).getByRole('checkbox', { name: 'Company car' })).toBeChecked()
     const pl = screen.getByRole('group', { name: 'Profit and loss statement' })
-    const existing = within(pl).getByRole('checkbox', { name: /Office costs/ })
-    expect(existing).toBeChecked()
-    expect(existing).toBeDisabled()
-    expect(existing).toHaveAccessibleDescription('Category already exists')
-    expect(within(pl).getByRole('checkbox', { name: /Fuel/ })).toBeChecked()
+    // Sub-categories sit in their parent's list.
+    const depreciation = within(pl).getByRole('checkbox', { name: 'Depreciation costs' }).closest('li')!
+    const bookResult = within(depreciation).getByRole('checkbox', { name: 'Book result company car' })
+    expect(bookResult).not.toBeChecked()
+    expect(within(depreciation).getByRole('button', { name: 'More information' })).toHaveAccessibleDescription('The total of depreciation for the car.')
+    expect(screen.queryByRole('checkbox', { name: 'Company car lease costs' })).not.toBeInTheDocument()
+
+    await userEvent.click(bookResult)
+    await userEvent.click(within(balance).getByRole('checkbox', { name: 'Company car' }))
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/11/sales_invoices/5/edit')
     await userEvent.click(screen.getByRole('button', { name: 'Save and go back to the invoice' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/5\/edit$/))
-    expect(applied).toEqual(['company_car'])
+    expect(applied).toEqual([{ key: 'car_set', body: { ledger_accounts: ['company_car_depreciation', 'company_car_book_result'] } }])
   })
 
-  it('adds nothing when the theme is there already', async () => {
-    const applied: string[] = []
+  it('adds a parent along with its sub-categories, and keeps it ticked', async () => {
+    const applied: { key: string; body: unknown }[] = []
     server.use(...withTemplates(applied))
-    renderAt('/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=loan')
-    expect(await screen.findByRole('heading', { name: 'Add category from Loan', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('checkbox', { name: /Loan/ })).toHaveAccessibleDescription('Category already exists')
+    renderAt('/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=staff_set')
+    expect(await screen.findByRole('heading', { name: 'Add category from Staff', level: 1 })).toBeInTheDocument()
+    const parent = screen.getByRole('checkbox', { name: 'Staff' })
+    expect(parent).toBeChecked()
+    expect(parent).toBeDisabled()
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Gross wages' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Hiring' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(applied).toEqual([{ key: 'staff_set', body: { ledger_accounts: ['staff', 'hiring'] } }]))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/settings\/bookkeeping$/))
+  })
+
+  it('completes the names with the entrepreneur', async () => {
+    const applied: { key: string; body: unknown }[] = []
+    server.use(...withTemplates(applied))
+    renderAt('/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=entrepreneur')
+    expect(await screen.findByRole('checkbox', { name: 'Private {name} (capital)' })).toBeChecked()
+    await userEvent.type(screen.getByLabelText('Name entrepreneur'), 'Ann')
+    expect(screen.getByRole('checkbox', { name: 'Private Ann (capital)' })).toBeDisabled()
+    expect(screen.getByRole('checkbox', { name: 'Private withdrawals Ann' })).toBeChecked()
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(applied).toEqual([{ key: 'entrepreneur', body: { ledger_accounts: ['entrepreneur_capital', 'entrepreneur_withdrawals'], name: 'Ann' } }]))
+  })
+
+  it('adds nothing when every category is there already', async () => {
+    const applied: { key: string; body: unknown }[] = []
+    server.use(...withTemplates(applied))
+    renderAt('/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=housing')
+    expect(await screen.findByRole('heading', { name: 'Add category from Housing', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Housing costs' })).toHaveAccessibleDescription('Category already exists')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/settings\/bookkeeping$/))
     expect(applied).toEqual([])
+  })
+
+  it('adds one revenue category of the kind chosen, under the parent chosen', async () => {
+    const applied: { key: string; body: unknown }[] = []
+    server.use(...withTemplates(applied))
+    renderAt(`/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=revenue&${fromInvoice}`)
+    expect(await screen.findByRole('heading', { name: 'Add category for Invoice from Revenue', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Revenue from trade goods' })).toBeChecked()
+    const parent = screen.getByLabelText('Parent category')
+    expect(within(parent).getAllByRole('option').map((o) => o.textContent)).toEqual(['None', '8000 Revenue'])
+    await userEvent.type(screen.getByLabelText('Name'), 'Workshops')
+    await userEvent.selectOptions(parent, '8000 Revenue')
+    await userEvent.click(screen.getByRole('radio', { name: 'Revenue from services' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save and go back to the invoice' }))
+    await waitFor(() => expect(applied).toEqual([{ key: 'revenue', body: { name: 'Workshops', option: 'revenue_from_provision_of_services', parent_id: '1010' } }]))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/5\/edit$/))
+  })
+
+  it('adds a fixed asset category to the group chosen', async () => {
+    const applied: { key: string; body: unknown }[] = []
+    server.use(...withTemplates(applied))
+    renderAt('/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=fixed_assets')
+    await userEvent.type(await screen.findByLabelText('Category name'), 'Laptops')
+    expect(screen.queryByLabelText('Parent category')).not.toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText('Group'), 'Inventory')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(applied).toEqual([{ key: 'fixed_assets', body: { name: 'Laptops', option: 'inventory' } }]))
   })
 
   it('does not know other themes', async () => {
