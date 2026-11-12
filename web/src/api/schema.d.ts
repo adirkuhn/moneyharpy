@@ -3228,7 +3228,7 @@ export interface paths {
         };
         /**
          * Get journal entries report
-         * @description Every booking in the period, oldest first, on a ledger account, for a contact or for a project; one of them is required. account_type needs a contact_id or project_id. Bank transactions post too: the whole amount on the account, each booking against its category, and the part not booked yet against unprocessed transactions.
+         * @description Every booking in the period, oldest first, on a ledger account, for a contact or for a project; one of them is required. account_type needs a contact_id or project_id. Bank transactions post too: the whole amount on the account, each booking against its category, and the part not booked yet against unprocessed transactions. MoneyHarpy extension: document_type with document_id selects the bookings of one document, such as a sales invoice or a payment, which is subject enough; without a period they cover every date.
          */
         get: operations["getJournalEntriesReport"];
         put?: never;
@@ -16736,6 +16736,10 @@ export interface operations {
                 /** @description A project's id, or null for entries without a project. */
                 project_id?: string;
                 account_type?: "non_current_assets" | "current_assets" | "equity" | "provisions" | "non_current_liabilities" | "current_liabilities" | "revenue" | "direct_costs" | "expenses" | "other_income_expenses" | "other" | "temporary";
+                /** @description MoneyHarpy extension. The kind of document whose bookings to list; needs document_id. */
+                document_type?: "FinancialMutation" | "GeneralJournalDocument" | "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt" | "Payment" | "Asset";
+                /** @description MoneyHarpy extension. The document whose bookings to list; needs document_type. */
+                document_id?: string;
             };
             header?: never;
             path: {

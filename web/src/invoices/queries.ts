@@ -430,3 +430,30 @@ export function withTerm(rest: string[], key: string, value: string) {
   const others = rest.filter((r) => !r.startsWith(`${key}:`))
   return value ? [...others, `${key}:${value}`] : others
 }
+
+export type JournalEntry = components['schemas']['JournalEntry']
+type JournalDocument = { type: JournalEntry['document_type']; id: string }
+
+/**
+ * The bookings behind an invoice, as its Journal entries view shows them:
+ * the invoice's own and those of each payment on it, oldest first. The
+ * report's document filter is a MoneyHarpy extension.
+ */
+export function useInvoiceJournalEntries(administrationId: string, inv: SalesInvoice, enabled: boolean) {
+  const documents: JournalDocument[] = [
+    { type: 'SalesInvoice', id: inv.id ?? '' },
+    ...(inv.payments ?? []).map((p): JournalDocument => ({ type: 'Payment', id: String(p.id ?? '') })),
+  ]
+  return useQuery({
+    queryKey: ['journal-entries', administrationId, inv.id, inv.version, documents.map((d) => d.id).join(',')],
+    enabled,
+    queryFn: async () => {
+      const lists = await Promise.all(documents.map((d) =>
+        unwrap(api.GET('/api/v2/{administration_id}/reports/journal_entries', {
+          params: { path: admin(administrationId), query: { document_type: d.type, document_id: d.id, per_page: '100' } },
+        }))))
+      // Stable, so each document's entries keep their order within a day.
+      return lists.flat().sort((a, b) => a.date.localeCompare(b.date))
+    },
+  })
+}
