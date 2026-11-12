@@ -297,7 +297,7 @@ export const nl: Messages = {
     journal: {
       title: 'Journaalposten', intro: 'Op de achtergrond heeft MoneyHarpy de volgende boekingen gemaakt, ook wel journaalposten genoemd.',
       category: 'Categorie', debit: 'Debet', credit: 'Credit', vat: 'Btw', balanceSheet: 'Balans', profitAndLoss: 'Winst- en verliesrekening',
-      documents: { SalesInvoice: 'Factuur', ExternalSalesInvoice: 'Externe factuur', Payment: 'Betaling' },
+      documents: { SalesInvoice: 'Factuur', ExternalSalesInvoice: 'Externe factuur', Payment: 'Betaling', FinancialMutation: 'Betaling' },
       empty: 'Nog geen boekingen.', failed: 'De journaalposten konden niet worden geladen.',
     },
     attachments: 'Bijlagen', noAttachments: 'Nog geen bijlagen.', addAttachment: 'Bijlage toevoegen', attachmentHelp: 'Een PDF, afbeelding of tekstbestand van maximaal 10 MB.',
