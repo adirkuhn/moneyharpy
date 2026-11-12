@@ -3835,7 +3835,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a sales invoice
-         * @description Deletes the invoice with its bookings and history. As at Moneybird, it must have no payments and not be in the locked period; crediting a sent invoice is the regular way.
+         * @description Deletes the invoice with its bookings, payments and history, as Moneybird does. It must have no pending payments and not be in the locked period; crediting a sent invoice is the regular way.
          */
         delete: operations["deleteSalesInvoice"];
         options?: never;
