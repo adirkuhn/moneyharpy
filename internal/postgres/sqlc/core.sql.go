@@ -3049,8 +3049,8 @@ func (q *Queries) InsertWebhookDelivery(ctx context.Context, arg InsertWebhookDe
 
 const insertWorkflow = `-- name: InsertWorkflow :one
 INSERT INTO workflows (id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax,
-                       show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                       show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body, payment_conditions)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 ON CONFLICT (administration_id, type) WHERE is_default DO NOTHING
 RETURNING id
 `
@@ -3070,6 +3070,7 @@ type InsertWorkflowParams struct {
 	UpdatedAt           pgtype.Timestamptz
 	InvoiceEmailSubject string
 	InvoiceEmailBody    string
+	PaymentConditions   string
 }
 
 func (q *Queries) InsertWorkflow(ctx context.Context, arg InsertWorkflowParams) (int64, error) {
@@ -3088,6 +3089,7 @@ func (q *Queries) InsertWorkflow(ctx context.Context, arg InsertWorkflowParams) 
 		arg.UpdatedAt,
 		arg.InvoiceEmailSubject,
 		arg.InvoiceEmailBody,
+		arg.PaymentConditions,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -4909,7 +4911,7 @@ func (q *Queries) ListWorkflowSteps(ctx context.Context, administrationID int64)
 }
 
 const listWorkflows = `-- name: ListWorkflows :many
-SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body FROM workflows WHERE administration_id = $1 ORDER BY id
+SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body, payment_conditions FROM workflows WHERE administration_id = $1 ORDER BY id
 `
 
 func (q *Queries) ListWorkflows(ctx context.Context, administrationID int64) ([]Workflow, error) {
@@ -4936,6 +4938,7 @@ func (q *Queries) ListWorkflows(ctx context.Context, administrationID int64) ([]
 			&i.UpdatedAt,
 			&i.InvoiceEmailSubject,
 			&i.InvoiceEmailBody,
+			&i.PaymentConditions,
 		); err != nil {
 			return nil, err
 		}
@@ -5202,6 +5205,22 @@ func (q *Queries) PaymentByID(ctx context.Context, arg PaymentByIDParams) (Payme
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const paymentReferenceTaken = `-- name: PaymentReferenceTaken :one
+SELECT EXISTS (SELECT 1 FROM sales_invoices WHERE administration_id = $1 AND payment_reference = $2 AND payment_reference <> '')
+`
+
+type PaymentReferenceTakenParams struct {
+	AdministrationID int64
+	PaymentReference string
+}
+
+func (q *Queries) PaymentReferenceTaken(ctx context.Context, arg PaymentReferenceTakenParams) (bool, error) {
+	row := q.db.QueryRow(ctx, paymentReferenceTaken, arg.AdministrationID, arg.PaymentReference)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const paymentsOfInvoice = `-- name: PaymentsOfInvoice :many
@@ -7232,7 +7251,7 @@ func (q *Queries) UpdateTaxRate(ctx context.Context, arg UpdateTaxRateParams) er
 const updateWorkflow = `-- name: UpdateWorkflow :exec
 UPDATE workflows
 SET name = $3, is_default = $4, currency = $5, language = $6, active = $7, prices_are_incl_tax = $8,
-    show_qr_code = $9, updated_at = $10, invoice_email_subject = $11, invoice_email_body = $12
+    show_qr_code = $9, updated_at = $10, invoice_email_subject = $11, invoice_email_body = $12, payment_conditions = $13
 WHERE administration_id = $1 AND id = $2
 `
 
@@ -7249,6 +7268,7 @@ type UpdateWorkflowParams struct {
 	UpdatedAt           pgtype.Timestamptz
 	InvoiceEmailSubject string
 	InvoiceEmailBody    string
+	PaymentConditions   string
 }
 
 func (q *Queries) UpdateWorkflow(ctx context.Context, arg UpdateWorkflowParams) error {
@@ -7265,6 +7285,7 @@ func (q *Queries) UpdateWorkflow(ctx context.Context, arg UpdateWorkflowParams) 
 		arg.UpdatedAt,
 		arg.InvoiceEmailSubject,
 		arg.InvoiceEmailBody,
+		arg.PaymentConditions,
 	)
 	return err
 }
@@ -8006,7 +8027,7 @@ func (q *Queries) WebhookByID(ctx context.Context, arg WebhookByIDParams) (Webho
 }
 
 const workflowByID = `-- name: WorkflowByID :one
-SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body FROM workflows WHERE administration_id = $1 AND id = $2
+SELECT id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax, show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body, payment_conditions FROM workflows WHERE administration_id = $1 AND id = $2
 `
 
 type WorkflowByIDParams struct {
@@ -8032,6 +8053,7 @@ func (q *Queries) WorkflowByID(ctx context.Context, arg WorkflowByIDParams) (Wor
 		&i.UpdatedAt,
 		&i.InvoiceEmailSubject,
 		&i.InvoiceEmailBody,
+		&i.PaymentConditions,
 	)
 	return i, err
 }

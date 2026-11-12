@@ -5,9 +5,10 @@ import { DateView, DetailsView, Paper } from '../invoices/InvoicePaper'
 import { addressLines, documentDate } from '../invoices/paper'
 import { TotalsTable } from '../invoices/TotalsTable'
 import type { Identity } from '../settings/queries'
-import type { PreviewData } from './previewData'
+import { type PreviewData, previewTagValues } from './previewData'
 import { type DocumentStyle, type Line, styleFileURL } from './queries'
 import { customFieldId } from './styleLayout'
+import { TextileText } from '../forms/TextileEditor'
 
 type Lines = 'invoice_sender_address' | 'invoice_metadata_left' | 'invoice_metadata_right' | 'estimate_sender_address' | 'estimate_metadata_left'
   | 'estimate_metadata_right' | 'invoice_recipient_address' | 'estimate_recipient_address'
@@ -193,15 +194,7 @@ function PreviewDocument({ administrationId, style, layout, sender, language, da
         {kind === 'invoice' && (
           <div className="style-preview__payment">
             <div>
-              {data.paymentConditions && <p>{data.paymentConditions}</p>}
-              {iban && (
-                <p>
-                  {dt('documentStyle.payBefore', {
-                    amount: money(data.totals.total), date: documentDate(data.dueDate, language), iban,
-                    name: sender?.bank_account_name || sender?.company_name || '', reference: data.paymentReference,
-                  })}
-                </p>
-              )}
+              {data.paymentConditions && <p className="invoice-paper__conditions"><TextileText text={data.paymentConditions} values={previewTagValues(data, language, sender)} /></p>}
             </div>
             {layout.show_epc_code && iban && data.currency === 'EUR' && <QrMark label={dt('documentStyle.qrCode')} />}
           </div>

@@ -342,6 +342,9 @@ type Store interface {
 	// counter on, at once, so two invoices never share a number.
 	ReserveNumber(ctx context.Context, admin resource.ID) (string, error)
 	NumberTaken(ctx context.Context, admin resource.ID, number string, except resource.ID) (bool, error)
+	// PaymentReferenceTaken reports whether an invoice of the administration
+	// has the payment reference.
+	PaymentReferenceTaken(ctx context.Context, admin resource.ID, ref string) (bool, error)
 	// SaveInvoice stores the invoice and replaces what it posts.
 	SaveInvoice(ctx context.Context, inv Invoice, entries []journal.Entry, created bool) error
 	DeleteInvoice(ctx context.Context, admin, id resource.ID) error

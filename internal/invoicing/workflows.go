@@ -25,7 +25,21 @@ const (
 	maxDays       = 365
 	maxReminders  = 10
 	maxReminderTx = 5000
+	maxConditions = 1000
 )
+
+// DefaultPaymentConditions is the payment conditions text a new invoice
+// workflow starts with, in the workflow's language: Moneybird's default text
+// in Dutch, and its translation otherwise. Its tags are filled in where an
+// invoice is shown.
+func DefaultPaymentConditions(language string) string {
+	if strings.HasPrefix(language, "nl") {
+		return "We verzoeken u vriendelijk het bovenstaande bedrag van {document.total_price} voor {document.due_date} te voldoen op onze bankrekening " +
+			"onder vermelding van de omschrijving {document.payment_reference}. Voor vragen kunt u contact opnemen per e-mail."
+	}
+	return "We kindly request you to pay the above amount of {document.total_price} before {document.due_date} to our bank account, " +
+		"stating the description {document.payment_reference}. If you have any questions, please contact us by email."
+}
 
 // Workflow is how invoices or estimates of one kind are handled: currency,
 // language, payment term and reminders.
@@ -44,6 +58,10 @@ type Workflow struct {
 	// out with; empty means MoneyHarpy's default in the invoice's language.
 	InvoiceEmailSubject string
 	InvoiceEmailBody    string
+	// PaymentConditions is the text new invoices of an invoice workflow
+	// start with, as Moneybird's "Payment conditions on invoice"; it may
+	// hold Moneybird's tags and textile.
+	PaymentConditions string
 	// Steps hold the payment term or validity first, then the reminders.
 	Steps     []WorkflowStep
 	CreatedAt time.Time
@@ -92,6 +110,9 @@ type WorkflowChanges struct {
 	// returns to MoneyHarpy's default.
 	InvoiceEmailSubject *string
 	InvoiceEmailBody    *string
+	// PaymentConditions sets the text new invoices start with; estimate
+	// workflows have none.
+	PaymentConditions *string
 }
 
 // Workflows lists the administration's workflows, creating the default ones
@@ -155,6 +176,10 @@ func (s *Service) CreateWorkflow(ctx context.Context, admin, user resource.ID, t
 	w := s.defaultWorkflow(a.Administration, t)
 	w.Default = false
 	w.Name = ""
+	// A workflow in another language starts with that language's conditions.
+	if t == InvoiceWorkflow && c.Language != nil && c.PaymentConditions == nil {
+		w.PaymentConditions = DefaultPaymentConditions(*c.Language)
+	}
 	if err := s.apply(&w, c); err != nil {
 		return Workflow{}, err
 	}
@@ -233,6 +258,12 @@ func (s *Service) apply(w *Workflow, c WorkflowChanges) error {
 	if c.InvoiceEmailBody != nil {
 		w.InvoiceEmailBody = strings.TrimSpace(*c.InvoiceEmailBody)
 	}
+	if c.PaymentConditions != nil {
+		w.PaymentConditions = strings.TrimSpace(*c.PaymentConditions)
+	}
+	if w.Type != InvoiceWorkflow {
+		w.PaymentConditions = ""
+	}
 	if c.Steps != nil {
 		w.Steps = make([]WorkflowStep, len(*c.Steps))
 		for i, in := range *c.Steps {
@@ -252,6 +283,9 @@ func validateWorkflow(w Workflow) error {
 	}
 	if len(w.InvoiceEmailBody) > 10000 {
 		verr.Add("invoice_email_body", "is too long (maximum is 10000 characters)")
+	}
+	if len([]rune(w.PaymentConditions)) > maxConditions {
+		verr.Add("payment_conditions", fmt.Sprintf("is too long (maximum is %d characters)", maxConditions))
 	}
 	if w.Name == "" || len(w.Name) > 255 {
 		verr.Add("name", "can't be blank")
@@ -331,6 +365,7 @@ func (s *Service) defaultWorkflow(a administration.Administration, t WorkflowTyp
 		w.Steps = []WorkflowStep{{StepOrder: 1, DueInterval: 30}}
 		return w
 	}
+	w.PaymentConditions = DefaultPaymentConditions(a.Language)
 	first, second := "We have not received payment for this invoice yet. Please pay the outstanding amount as soon as possible.",
 		"This is a second reminder: we still have not received payment for this invoice. Please pay the outstanding amount within 7 days."
 	if dutch {

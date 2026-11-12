@@ -36,7 +36,8 @@ func EmailText(doc Document) (string, string) {
 	return Expand(subject, doc), Expand(body, doc)
 }
 
-// Expand fills in an email template's placeholders.
+// Expand fills in an email template's placeholders, and Moneybird's tags
+// such as {document.total_price} as the payment conditions do.
 func Expand(template string, doc Document) string {
 	inv := doc.Invoice
 	date := func(t *time.Time) string {
@@ -56,9 +57,9 @@ func Expand(template string, doc Document) string {
 		"{total}", FormatMoney(doc.Totals.InclTax, inv.Currency, inv.Language),
 		"{contact_name}", name,
 		"{company_name}", doc.Identity.CompanyName,
-		"{payment_reference}", inv.PaymentReference,
+		"{payment_reference}", ShortPaymentReference(inv.PaymentReference),
 		"{reference}", inv.Reference,
-	).Replace(template)
+	).Replace(RenderTags(template, TagValues(doc, time.Now().UTC())))
 }
 
 // FormatMoney writes an amount for people, such as "€ 1.234,50" in Dutch

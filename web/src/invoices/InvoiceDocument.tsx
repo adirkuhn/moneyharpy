@@ -7,6 +7,8 @@ import { contactName } from '../contacts/queries'
 import { styleFileURL, useDocumentStyles, useWorkflows } from '../invoicing/queries'
 import { ListIcon } from '../layout/icons'
 import { useIdentities } from '../settings/queries'
+import { TextileText } from '../forms/TextileEditor'
+import { conditionTagValues } from './conditions'
 import { quantityLabel } from './details'
 import type { Opening } from './InvoiceFormPage'
 import { DateView, DetailsView, Paper, RecipientContent, SenderAddress, type ShownLine } from './InvoicePaper'
@@ -75,10 +77,10 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
   const invoiceDate = inv.invoice_date || today()
   const dueDate = inv.due_date || addDays(invoiceDate, inv.first_due_interval ?? flow?.steps?.[0]?.due_interval ?? 0)
   const number = inv.invoice_id || dt('invoices.document.draftNumber', { id: inv.draft_id ?? '' })
-  const bank = sender?.bank_account_number
-  const payBefore = bank && dt('invoices.document.payBefore', {
-    amount: money(inv.total_price_incl_tax), date: documentDate(dueDate, language), account: bank,
-    holder: sender.bank_account_name || sender.company_name || '', reference: inv.payment_reference || dt('invoices.document.numberOnSend'),
+  const toCents = (v: string | null | undefined) => Math.round(Number(v ?? 0) * 100)
+  const tagValues = conditionTagValues({
+    language, currency, total: toCents(inv.total_price_incl_tax), unpaid: toCents(inv.total_unpaid), invoiceDate, dueDate, invoiceId: inv.invoice_id,
+    draftId: inv.draft_id, reference: inv.reference, paymentReference: inv.payment_reference, contact: inv.contact, contactPerson: inv.contact_person, sender,
   })
   const contact = inv.contact
   const recipient = contact ? [contactName(contact), ...addressLines(contact)] : []
@@ -155,10 +157,9 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
         <Block
           editable={editable}
           className="invoice-paper__footer"
-          marker={<button className="invoice-document__marker" aria-label={t('invoices.view.editConditions')} title={t('invoices.view.editConditions')} {...open(null)}><ListIcon kind="edit" /></button>}
+          marker={<button className="invoice-document__marker" aria-label={t('invoices.view.editConditions')} title={t('invoices.view.editConditions')} {...open({ conditions: true })}><ListIcon kind="edit" /></button>}
         >
-          {inv.payment_conditions && <p className="invoice-paper__conditions">{inv.payment_conditions}</p>}
-          {payBefore && <p className="invoice-paper__pay">{payBefore}</p>}
+          {inv.payment_conditions && <p className="invoice-paper__conditions"><TextileText text={inv.payment_conditions} values={tagValues} /></p>}
         </Block>
       </div>
     </Paper>

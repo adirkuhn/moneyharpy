@@ -10124,16 +10124,19 @@ type Workflow struct {
 	// InvoiceEmailBody MoneyHarpy extension. The text invoices are emailed with; empty uses the default. Same placeholders.
 	InvoiceEmailBody string `json:"invoice_email_body"`
 
-	// InvoiceEmailSubject MoneyHarpy extension. The subject invoices are emailed with; empty uses the default. Placeholders: {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference}, {reference}.
-	InvoiceEmailSubject string                  `json:"invoice_email_subject"`
-	Language            *string                 `json:"language,omitempty"`
-	Name                *string                 `json:"name,omitempty"`
-	NumberOfCollections *int                    `json:"number_of_collections,omitempty"`
-	PaymentMethods      *[]string               `json:"payment_methods,omitempty"`
-	PricesAreInclTax    *bool                   `json:"prices_are_incl_tax,omitempty"`
-	ShowQrCode          *bool                   `json:"show_qr_code,omitempty"`
-	Steps               *[]WorkflowStepResponse `json:"steps,omitempty"`
-	Type                *string                 `json:"type,omitempty"`
+	// InvoiceEmailSubject MoneyHarpy extension. The subject invoices are emailed with; empty uses the default. Placeholders: {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference}, {reference}, and Moneybird's tags of the payment conditions, such as {document.total_price} and {recipient.contact_name}.
+	InvoiceEmailSubject string  `json:"invoice_email_subject"`
+	Language            *string `json:"language,omitempty"`
+	Name                *string `json:"name,omitempty"`
+	NumberOfCollections *int    `json:"number_of_collections,omitempty"`
+
+	// PaymentConditions MoneyHarpy extension, after the "Payment conditions on invoice" of the Send invoice step of Moneybird's workflow. New invoices of the workflow start with this text. Textile (_italic_, *bold*, +underline+) and Moneybird's tags, such as {document.total_price}, {document.due_date} and {document.payment_reference}, are filled in where the invoice is shown. Empty for estimate workflows.
+	PaymentConditions string                  `json:"payment_conditions"`
+	PaymentMethods    *[]string               `json:"payment_methods,omitempty"`
+	PricesAreInclTax  *bool                   `json:"prices_are_incl_tax,omitempty"`
+	ShowQrCode        *bool                   `json:"show_qr_code,omitempty"`
+	Steps             *[]WorkflowStepResponse `json:"steps,omitempty"`
+	Type              *string                 `json:"type,omitempty"`
 
 	// UpdatedAt Moneybird-compatible timestamp.
 	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
@@ -10156,10 +10159,13 @@ type WorkflowRequest struct {
 		InvoiceEmailSubject *string `json:"invoice_email_subject,omitempty"`
 
 		// Language The language code used in the administration
-		Language         *Language `json:"language,omitempty"`
-		Name             *string   `json:"name,omitempty"`
-		PricesAreInclTax *bool     `json:"prices_are_incl_tax,omitempty"`
-		ShowQrCode       *bool     `json:"show_qr_code,omitempty"`
+		Language *Language `json:"language,omitempty"`
+		Name     *string   `json:"name,omitempty"`
+
+		// PaymentConditions MoneyHarpy extension. The payment conditions new invoices of the workflow start with; ignored for estimate workflows.
+		PaymentConditions *string `json:"payment_conditions,omitempty"`
+		PricesAreInclTax  *bool   `json:"prices_are_incl_tax,omitempty"`
+		ShowQrCode        *bool   `json:"show_qr_code,omitempty"`
 
 		// StepsAttributes The payment term or validity first, then the reminders.
 		StepsAttributes *[]struct {

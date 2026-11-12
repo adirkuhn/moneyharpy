@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import type { LedgerAccount } from '../bookkeeping/queries'
 import { renderAt } from '../test/render'
-import { server, workflow } from '../test/server'
+import { defaultConditions, server, workflow } from '../test/server'
 import { cells, choose, contactCounts, creating, draft, invoice, invoicePaper, loaded, sales, senderStyle, sidebar, stamp, stateLabel } from './testkit'
 
 describe('an invoice', () => {
@@ -239,16 +239,17 @@ describe('an invoice', () => {
     // Nothing changed yet, so nothing to save.
     expect(screen.queryByRole('button', { name: 'Save invoice' })).toBeNull()
     await userEvent.click(within(doc).getByRole('button', { name: /payment conditions/i }))
-    await userEvent.type(within(doc).getByLabelText('Payment conditions'), 'Pay within 30 days.')
-    await userEvent.tab()
+    let card = within(doc).getByRole('region', { name: 'Payment conditions' })
+    await userEvent.type(within(card).getByLabelText('Payment conditions'), 'Pay within 30 days.')
     // Cancel puts it back as it was.
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await userEvent.click(within(card).getByRole('button', { name: 'Cancel' }))
     expect(within(invoicePaper('Invoice Draft #3')).queryByText('Pay within 30 days.')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Save invoice' })).toBeNull()
 
     await userEvent.click(within(invoicePaper('Invoice Draft #3')).getByRole('button', { name: /payment conditions/i }))
-    await userEvent.type(within(invoicePaper('Invoice Draft #3')).getByLabelText('Payment conditions'), 'Pay within 30 days.')
-    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    card = within(invoicePaper('Invoice Draft #3')).getByRole('region', { name: 'Payment conditions' })
+    await userEvent.type(within(card).getByLabelText('Payment conditions'), 'Pay within 30 days.')
+    await userEvent.click(within(card).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent.patch).toMatchObject({ payment_conditions: 'Pay within 30 days.' }))
     expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/)
     // The sidebar stays beside it.
@@ -309,6 +310,45 @@ describe('an invoice', () => {
     expect(within(doc).getByText('Order 12')).toBeInTheDocument()
     expect(await within(doc).findByText('Klantnummer:')).toBeInTheDocument()
     expect(within(doc).getByText('Klantnummer:').parentElement).toHaveTextContent('Klantnummer: 1')
+  })
+
+  it('prints the payment conditions with their tags filled in and their textile styled, as Moneybird does', async () => {
+    const conditions = `*Let op:* ${defaultConditions}`
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice({ payment_conditions: conditions, payment_reference: 'RF130000000000000PV96X5KP' }))))
+    renderAt('/11/sales_invoices/901')
+    const doc = await screen.findByRole('document', { name: 'Invoice 2026-0001' })
+    const text = await within(doc).findByText(/We verzoeken u vriendelijk/)
+    expect(text).toHaveTextContent('Let op: We verzoeken u vriendelijk het bovenstaande bedrag van € 242,00 voor 15-11-2026 te voldoen op onze bankrekening onder vermelding van de omschrijving RF13PV96X5KP.')
+    expect(within(text).getByText('Let op:').tagName).toBe('STRONG')
+  })
+
+  it("shows Moneybird's placeholder payment reference on a draft", async () => {
+    server.use(...loaded())
+    server.use(...creating({}, invoice({ ...draft, payment_conditions: 'Kenmerk {document.payment_reference}' })))
+    renderAt('/11/sales_invoices/902')
+    const doc = await screen.findByRole('document', { name: 'Invoice Draft #3' })
+    expect(within(doc).getByText('Kenmerk RF94CONCEPT3')).toBeInTheDocument()
+  })
+
+  it('edits the payment conditions of a sent invoice from its document, after the warning', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(http.patch('*/api/v2/11/sales_invoices/901', async ({ request }) => {
+      sent.patch = ((await request.json()) as { sales_invoice: Record<string, unknown> }).sales_invoice
+      return HttpResponse.json(invoice({ payment_conditions: 'Pay {document.total_price}' }))
+    }))
+    renderAt('/11/sales_invoices/901')
+    await screen.findByRole('heading', { level: 1, name: '2026-0001' })
+    await userEvent.click(within(invoicePaper('Invoice 2026-0001')).getByRole('button', { name: 'Edit payment conditions' }))
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'This invoice has been sent' })).getByRole('button', { name: 'Continue editing' }))
+    const card = await screen.findByRole('region', { name: 'Payment conditions' })
+    const area = within(card).getByLabelText('Payment conditions')
+    await userEvent.type(area, 'Pay ')
+    await userEvent.selectOptions(within(card).getByRole('combobox', { name: 'Insert tag' }), 'Amount')
+    expect(area).toHaveValue('Pay {document.total_price}')
+    await userEvent.click(within(card).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent.patch).toMatchObject({ payment_conditions: 'Pay {document.total_price}' }))
   })
 
   it('can still be edited and deleted with a payment registered, its payments going along as at Moneybird', async () => {
