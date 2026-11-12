@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { renderAt } from '../test/render'
 import { server } from '../test/server'
-import { creating, detailRows, draft, editLines, editorCard, empty, invoice, invoicePaper, loaded, paper, pickContact, popup, sales } from './testkit'
+import { contactCounts, creating, detailRows, draft, editLines, editorCard, empty, invoice, invoicePaper, loaded, paper, pickContact, popup, sales } from './testkit'
 
 describe('the invoice details editor', () => {
   it('adds details with their totals, discount and VAT, after Moneybird', async () => {
@@ -250,15 +250,85 @@ describe('the invoice details editor', () => {
     expect(within(totals).getByRole('row', { name: /^Total/ })).toHaveTextContent('€121.00')
   })
 
-  it('reopens the Add invoice popup from the document of a draft, and saves it', async () => {
+  it('sets whether prices include VAT and the currency above the details, after Moneybird', async () => {
     const sent: { patch?: Record<string, unknown> } = {}
     server.use(...loaded())
     server.use(...creating(sent))
     renderAt('/11/sales_invoices/902')
     await screen.findByRole('document', { name: 'Invoice Draft #12' })
+    await editLines()
+    await userEvent.type(within(detailRows()[0]!).getByLabelText('Description'), 'Consulting')
+    await userEvent.type(within(detailRows()[0]!).getByLabelText('Price'), '121')
+    const totals = () => within(editorCard()).getByRole('table', { name: 'Totals' })
+    expect(within(totals()).getByRole('row', { name: /^Total/ })).toHaveTextContent('€146.41')
+
+    const prices = within(editorCard()).getByRole('radiogroup', { name: 'Prices are' })
+    expect(within(prices).getByRole('radio', { name: 'Excluding VAT' })).toBeChecked()
+    await userEvent.click(within(prices).getByRole('radio', { name: 'Including VAT' }))
+    expect(within(prices).getByRole('radio', { name: 'Including VAT' })).toBeChecked()
+    expect(within(totals()).getByRole('row', { name: /21% btw/ })).toHaveTextContent('€21.00')
+    expect(within(totals()).getByRole('row', { name: /^Total/ })).toHaveTextContent('€121.00')
+
+    const currency = within(editorCard()).getByRole('combobox', { name: 'Currency' })
+    expect(currency).toHaveValue('EUR')
+    const options = within(currency).getAllByRole('option')
+    expect(options.slice(0, 5).map((o) => o.textContent)).toEqual(['EUR - Euro', 'USD - United States Dollar', 'GBP - British Pound', '----------', 'AED - United Arab Emirates Dirham'])
+    expect(options[3]).toBeDisabled()
+    expect(options.at(-1)).toHaveTextContent('ZWL - Zimbabwean Dollar')
+    expect(within(currency).getByRole('option', { name: 'XAU - Gold (Troy Ounce)' })).toBeInTheDocument()
+    // The popular ones are not listed twice.
+    expect(within(currency).getAllByRole('option', { name: 'EUR - Euro' })).toHaveLength(1)
+    await userEvent.selectOptions(currency, 'USD')
+    expect(within(detailRows()[0]!).getByTestId('detail-total')).toHaveTextContent('$121.00')
+    expect(within(totals()).getByRole('row', { name: /^Total/ })).toHaveTextContent('$121.00')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    await waitFor(() => expect(sent.patch).toMatchObject({ currency: 'USD', prices_are_incl_tax: true }))
+  })
+
+  it("prints the document's amounts in the invoice's currency", async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/sales_invoices/902', () => HttpResponse.json({ ...draft, currency: 'USD' })))
+    renderAt('/11/sales_invoices/902')
+    const doc = await screen.findByRole('document', { name: 'Invoice Draft #3' })
+    const totals = within(doc).getByRole('table', { name: 'Totals' })
+    expect(within(totals).getByRole('row', { name: /^Totaal/ })).toHaveTextContent('US$ 242,00')
+    await editLines()
+    expect(within(editorCard()).getByRole('combobox', { name: 'Currency' })).toHaveValue('USD')
+  })
+
+  it('keeps the currency of a sent invoice, as Moneybird does', async () => {
+    server.use(...loaded())
+    renderAt('/11/sales_invoices/901')
+    await screen.findByRole('heading', { level: 1, name: '2026-0001' })
+    await userEvent.click(within(invoicePaper('Invoice 2026-0001')).getByRole('button', { name: 'Edit invoice details' }))
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'This invoice has been sent' })).getByRole('button', { name: 'Continue editing' }))
+    expect(await within(editorCard()).findByRole('combobox', { name: 'Currency' })).toBeDisabled()
+    expect(within(editorCard()).getByRole('radio', { name: 'Including VAT' })).toBeEnabled()
+  })
+
+  it('reopens the popup as "Edit invoice" from the document of a draft, and saves it', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded(), ...contactCounts)
+    server.use(...creating(sent))
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #12' })
     expect(screen.queryByRole('dialog')).toBeNull()
     await userEvent.click(within(paper()).getByRole('button', { name: 'Contact' }))
-    const dialog = popup()
+    const dialog = screen.getByRole('dialog', { name: 'Edit invoice' })
+    expect(within(dialog).queryByText('Add the basic details to your invoice. Select the contact you are invoicing.')).toBeNull()
+    expect(within(dialog).getByRole('note')).toHaveTextContent('The invoice uses workflow Standaard (NL) and expires after 14 days.')
+    // The contact shows its hover card.
+    const contact = within(dialog).getByRole('combobox', { name: 'Contact' })
+    expect(contact).toHaveTextContent('Example Shop B.V.')
+    await userEvent.hover(contact)
+    expect(await screen.findByRole('dialog', { name: 'Example Shop B.V.' })).toBeInTheDocument()
+    await userEvent.unhover(contact)
+    // No layouts nor prices including VAT: the details editor and Change layout set those.
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Edit' }))
+    expect(within(dialog).getByLabelText('Workflow')).toHaveValue('601')
+    expect(within(dialog).queryByRole('radiogroup', { name: 'Layout' })).toBeNull()
+    expect(within(dialog).queryByRole('checkbox', { name: 'Prices include VAT' })).toBeNull()
     expect(within(dialog).getByLabelText('Reference')).toHaveValue('Order 12')
     await userEvent.clear(within(dialog).getByLabelText('Reference'))
     await userEvent.type(within(dialog).getByLabelText('Reference'), 'Order 13')

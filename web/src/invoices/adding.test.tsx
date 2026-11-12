@@ -61,7 +61,7 @@ describe('adding an invoice', () => {
       ...creating(sent),
       http.get('*/api/v2/11/invoice_settings', () => HttpResponse.json(invoiceSettings({ invoice_sequence_id: '0007', invoice_id_example: '2026-0007' }))),
       http.get('*/api/v2/11/document_styles', () => HttpResponse.json([senderStyle, documentStyle({ id: '702', name: 'Modern', default: false, uri: '/11/document_styles/702' })])),
-      http.get('*/api/v2/11/workflows', () => HttpResponse.json([workflow(), workflow({ id: '603', name: 'English', default: false, language: 'en', uri: '/11/workflows/603' })])),
+      http.get('*/api/v2/11/workflows', () => HttpResponse.json([workflow(), workflow({ id: '603', name: 'English', default: false, language: 'en', currency: 'GBP', prices_are_incl_tax: true, uri: '/11/workflows/603' })])),
     )
     renderAt('/11/sales_invoices/new')
     await pickContact()
@@ -109,7 +109,8 @@ describe('adding an invoice', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Decrease value (min)' }))
     expect(days).toHaveValue(15)
 
-    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Prices include VAT' }))
+    // Whether prices include VAT is set above the details, as on Moneybird.
+    expect(within(dialog).queryByRole('checkbox', { name: 'Prices include VAT' })).toBeNull()
 
     const layout = within(dialog).getByRole('radiogroup', { name: 'Layout' })
     expect(within(layout).getByRole('radio', { name: 'Standaard' })).toBeChecked()
@@ -122,7 +123,8 @@ describe('adding an invoice', () => {
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
     expect(sent.post).toEqual({
       contact_id: '701', reference: '', invoice_date: '2026-12-01', invoice_sequence_id: '0100', workflow_id: '603', first_due_interval: 15,
-      document_style_id: '702', prices_are_incl_tax: true, details_attributes: [],
+      // The currency and prices follow the workflow chosen.
+      document_style_id: '702', prices_are_incl_tax: true, currency: 'GBP', details_attributes: [],
     })
     expect(screen.queryByRole('dialog')).toBeNull()
   })

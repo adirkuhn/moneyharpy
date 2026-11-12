@@ -2,6 +2,7 @@ import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { bookable, formatAmount } from '../banking/queries'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
+import { currencyOptions } from '../forms/currencies'
 import type { FormErrors } from '../forms/Form'
 import { ListIcon } from '../layout/icons'
 import { ActionMenu } from '../list/ListActions'
@@ -28,6 +29,12 @@ type Props = {
   rates: TaxRate[]
   accounts: LedgerAccount[]
   currency: string
+  /** Whether the prices typed include VAT, Moneybird's "Prices are". */
+  pricesInclTax: boolean
+  onPricesInclTax: (inclTax: boolean) => void
+  onCurrency: (currency: string) => void
+  /** A sent invoice keeps its currency, as Moneybird's select is disabled then. */
+  currencyLocked?: boolean
   /** Each row's total in cents, in the order of rows. */
   lineTotals: number[]
   /** Whether each row's price and amount can be read. */
@@ -136,6 +143,32 @@ export function DetailsEditor(props: Props) {
 
   return (
     <section className="details-editor" aria-label={d('title')}>
+      <div className="details-editor__header">
+        <fieldset className="segmented details-editor__prices" role="radiogroup" aria-labelledby={`${hintId}-prices`}>
+          <legend id={`${hintId}-prices`} className="segmented__legend">{d('pricesAre')}</legend>
+          <div className="segmented__options">
+            {[false, true].map((incl) => (
+              <label key={String(incl)} className={`segmented__option${props.pricesInclTax === incl ? ' is-checked' : ''}`}>
+                <input type="radio" name={`${hintId}-prices`} value={String(incl)} checked={props.pricesInclTax === incl} onChange={() => props.onPricesInclTax(incl)} />
+                {d(incl ? 'inclVat' : 'exclVat')}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <div className="details-editor__currency">
+          <label htmlFor={`${hintId}-currency`}>{d('currency')}</label>
+          <select
+            id={`${hintId}-currency`}
+            value={currency}
+            disabled={props.currencyLocked}
+            aria-invalid={!!errors.field('currency') || undefined}
+            onChange={(e) => props.onCurrency(e.target.value)}
+          >
+            {currencyOptions(t, currency).map((o, i) => <option key={`${o.value}-${i}`} value={o.value} disabled={o.disabled}>{o.label}</option>)}
+          </select>
+          {errors.field('currency') && <p className="form-input__message form-input__message--error">{errors.field('currency')?.join(' ')}</p>}
+        </div>
+      </div>
       <p id={hintId} className="sr-only">{d('moveHint')}</p>
       <table className="details-editor__table" aria-label={d('title')}>
         <thead>

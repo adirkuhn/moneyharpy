@@ -10,6 +10,7 @@ import { CaretIcon, ListIcon } from '../layout/icons'
 import { PageIcon } from '../layout/pageIcons'
 import { useOnboardingOptions } from '../onboarding/queries'
 import { countryName } from '../settings/format'
+import { HoverCard } from './ContactHoverCard'
 import { useContactSearch } from './ContactPicker'
 import { needsVatId } from './details'
 
@@ -23,18 +24,20 @@ type Props = {
   /** Where the full Add contact page comes back to, with the new contact. */
   returnTo: string
   onChange: (contact: Contact) => void
+  /** The chosen contact of a saved invoice, whose card shows while it is hovered, as on Moneybird's Edit invoice. */
+  hoverCard?: { id: string; name: string }
 }
 
 /**
  * Moneybird's contact selector of the "Add invoice" popup: a search of all
  * contacts, and a short form to add a new one without leaving the invoice.
  */
-export function ContactSelect({ administrationId, value, errors, homeCountry, returnTo, onChange }: Props) {
+export function ContactSelect({ administrationId, value, errors, homeCountry, returnTo, onChange, hoverCard }: Props) {
   const { t } = useTranslation()
   return (
     <FormRow label={t('invoices.contact')} errors={errors}>
       {({ labelId, ...control }) => (
-        <Selector administrationId={administrationId} labelId={labelId} control={control} value={value} homeCountry={homeCountry} returnTo={returnTo} onChange={onChange} />
+        <Selector administrationId={administrationId} labelId={labelId} control={control} value={value} homeCountry={homeCountry} returnTo={returnTo} onChange={onChange} hoverCard={hoverCard} />
       )}
     </FormRow>
   )
@@ -42,7 +45,7 @@ export function ContactSelect({ administrationId, value, errors, homeCountry, re
 
 type SelectorProps = Omit<Props, 'errors'> & { labelId: string; control: ControlProps }
 
-function Selector({ administrationId, labelId, control, value, homeCountry, returnTo, onChange }: SelectorProps) {
+function Selector({ administrationId, labelId, control, value, homeCountry, returnTo, onChange, hoverCard }: SelectorProps) {
   const { t } = useTranslation()
   const [pane, setPane] = useState<'closed' | 'select' | 'add'>('closed')
   const [query, setQuery] = useState('')
@@ -100,23 +103,34 @@ function Selector({ administrationId, labelId, control, value, homeCountry, retu
     }
   }
 
+  const trigger = (describedBy?: string) => (
+    <button
+      ref={button}
+      type="button"
+      role="combobox"
+      className="picker__button"
+      aria-labelledby={labelId}
+      aria-expanded={pane !== 'closed'}
+      aria-haspopup="listbox"
+      aria-controls={listId}
+      {...control}
+      aria-describedby={[control['aria-describedby'], describedBy].filter(Boolean).join(' ') || undefined}
+      onClick={() => setPane(pane === 'closed' ? 'select' : 'closed')}
+    >
+      <span className={`picker__value${value ? '' : ' is-placeholder'}`}>{value || t('invoices.popup.selectContact')}</span>
+      <CaretIcon />
+    </button>
+  )
+
   return (
     <div className="contact-select" ref={root}>
-      <button
-        ref={button}
-        type="button"
-        role="combobox"
-        className="picker__button"
-        aria-labelledby={labelId}
-        aria-expanded={pane !== 'closed'}
-        aria-haspopup="listbox"
-        aria-controls={listId}
-        {...control}
-        onClick={() => setPane(pane === 'closed' ? 'select' : 'closed')}
-      >
-        <span className={`picker__value${value ? '' : ' is-placeholder'}`}>{value || t('invoices.popup.selectContact')}</span>
-        <CaretIcon />
-      </button>
+      {hoverCard && pane === 'closed'
+        ? (
+          <HoverCard className="hover-card--block" administrationId={administrationId} contact={{ id: hoverCard.id, company_name: hoverCard.name, firstname: null, lastname: null, address1: null, address2: null, zipcode: null, city: null }}>
+            {trigger}
+          </HoverCard>
+        )
+        : trigger()}
       {pane === 'select' && (
         <div className="contact-select__panel">
           <div className="contact-select__search">

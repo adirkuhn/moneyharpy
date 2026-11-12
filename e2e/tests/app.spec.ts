@@ -766,6 +766,10 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   // The editor shows its totals in the user's language.
   const totals = page.getByRole('region', { name: 'Invoice details' }).getByRole('table', { name: 'Totals' })
   await expect(totals.getByRole('row', { name: /^Total\b/ })).toContainText(/302[.,]50/)
+  // Above the details, as on Moneybird: whether the prices include VAT, and the currency.
+  const detailsCard = page.getByRole('region', { name: 'Invoice details' })
+  await expect(detailsCard.getByRole('radio', { name: 'Excluding VAT' })).toBeChecked()
+  await expect(detailsCard.getByRole('combobox', { name: 'Currency' })).toHaveValue('EUR')
   await page.getByRole('button', { name: 'Save invoice' }).click()
   // As on Moneybird, the invoice's page shows it as its document; its title is for screen readers.
   await expect(page.getByRole('heading', { level: 1, name: 'Draft #1' })).toBeAttached()
