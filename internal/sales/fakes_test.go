@@ -7,6 +7,7 @@ import (
 	"io"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -152,14 +153,28 @@ func (f *fakeInvoicing) DocumentStyle(_ context.Context, _, id, _ resource.ID) (
 	if id != style {
 		return invoicing.DocumentStyle{}, invoicing.ErrDocumentStyleNotFound
 	}
-	return invoicing.DocumentStyle{ID: style, Default: true}, nil
+	return testStyle(), nil
+}
+
+// testStyle emails with a coloured header showing its email logo and the
+// sender's contact details under the text.
+func testStyle() invoicing.DocumentStyle {
+	email := invoicing.DefaultEmailStyle()
+	email.HeaderType, email.HeaderBackgroundColor, email.FooterType, email.FontFamily = "background_color_with_logo", "#112233", "contact_information", "georgia"
+	return invoicing.DocumentStyle{
+		ID: style, Default: true, Email: email,
+		Files: map[invoicing.FileKind]invoicing.StoredFile{invoicing.EmailLogo: {Hash: "e1", ContentType: "image/gif"}},
+	}
 }
 
 func (f *fakeInvoicing) DocumentStyles(context.Context, resource.ID, resource.ID) ([]invoicing.DocumentStyle, error) {
 	return []invoicing.DocumentStyle{{ID: style, Default: true}}, nil
 }
 
-func (f *fakeInvoicing) OpenFile(context.Context, resource.ID, resource.ID, resource.ID, invoicing.FileKind) (io.ReadCloser, string, error) {
+func (f *fakeInvoicing) OpenFile(_ context.Context, _, _, _ resource.ID, kind invoicing.FileKind) (io.ReadCloser, string, error) {
+	if kind == invoicing.EmailLogo {
+		return io.NopCloser(strings.NewReader("GIF89a logo")), "image/gif", nil
+	}
 	return nil, "", invoicing.ErrFileNotFound
 }
 

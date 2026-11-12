@@ -1563,6 +1563,81 @@ func TestDocumentStyles(t *testing.T) {
 	wantStatus(t, stranger.do(http.MethodGet, base, nil), http.StatusNotFound)
 }
 
+func TestDocumentStyleChannels(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, stranger := h.client(), h.client()
+	owner.register()
+	stranger.register()
+	a := owner.createAdministration("Harpy")
+	base := "/api/v2/" + a.Id + "/document_styles"
+	id := *decode[[]httpapi.DocumentStyle](t, owner.do(http.MethodGet, base, nil))[0].Id
+	field := decode[httpapi.CustomField](t, owner.do(http.MethodPost, "/api/v2/"+a.Id+"/custom_fields",
+		map[string]any{"custom_field": map[string]string{"name": "Brand", "source": "identity"}}))
+
+	r := owner.do(http.MethodPatch, base+"/"+id, map[string]any{"document_style": map[string]any{
+		"hide_sender_address": true, "sender_address_width": 250, "show_epc_code": false,
+		"invoice_sender_address":    []map[string]any{{"field": "custom_field_" + field.Id, "italic": true}},
+		"invoice_recipient_address": []map[string]any{{"field": "customer_tax_number", "label": true}},
+		"email_header_type":         "background_color_with_text", "email_header_text": "Hello", "email_header_background_color": "#112233",
+		"email_footer_type": "contact_information", "email_font_family": "georgia", "email_label_enabled": false,
+		"public_view_background_color": "#D5E8FA", "public_view_logo_display_size": 70,
+		"checkout_show_phone_field": true, "checkout_favorite_label": "Most chosen",
+	}})
+	wantStatus(t, r, http.StatusOK)
+	var got map[string]any
+	if err := json.Unmarshal(r.body, &got); err != nil {
+		t.Fatal(err)
+	}
+	for k, v := range map[string]any{
+		"hide_sender_address": true, "sender_address_width": 250.0, "show_epc_code": false, "email_header_type": "background_color_with_text",
+		"email_header_text": "Hello", "email_header_background_color": "#112233", "email_footer_type": "contact_information",
+		"email_font_family": "georgia", "email_label_enabled": false, "public_view_background_color": "#D5E8FA",
+		"public_view_logo_display_size": 70.0, "checkout_show_phone_field": true, "checkout_show_address": true,
+		"checkout_favorite_label": "Most chosen", "email_logo_hash": nil,
+	} {
+		if diff := cmp.Diff(v, got[k]); diff != "" {
+			t.Errorf("%s diff (-want +got):\n%s", k, diff)
+		}
+	}
+	if diff := cmp.Diff([]any{map[string]any{"field": "custom_field_" + field.Id, "italic": true}}, got["invoice_sender_address"]); diff != "" {
+		t.Errorf("invoice_sender_address diff (-want +got):\n%s", diff)
+	}
+	wantStatus(t, owner.do(http.MethodPatch, base+"/"+id, map[string]any{"document_style": map[string]any{"email_header_background_color": "red"}}), http.StatusBadRequest)
+	wantStatus(t, owner.do(http.MethodPatch, base+"/"+id, map[string]any{"document_style": map[string]any{
+		"invoice_recipient_address": []map[string]any{{"field": "custom_field_" + field.Id}},
+	}}), http.StatusUnprocessableEntity)
+
+	emailLogo := base + "/" + id + "/email_logo"
+	r = owner.do(http.MethodPut, emailLogo, string(pngBytes), [2]string{"Content-Type", "image/png"})
+	wantStatus(t, r, http.StatusOK)
+	if style := decode[httpapi.DocumentStyle](t, r); style.EmailLogoHash == nil || len(*style.EmailLogoHash) != 64 {
+		t.Errorf("email_logo_hash = %v", style.EmailLogoHash)
+	}
+	wantStatus(t, owner.do(http.MethodGet, emailLogo, nil), http.StatusOK)
+
+	images := base + "/" + id + "/images"
+	r = owner.do(http.MethodPost, images, string(pngBytes), [2]string{"Content-Type", "image/png"})
+	wantStatus(t, r, http.StatusOK)
+	style := decode[httpapi.DocumentStyle](t, r)
+	if len(style.Images) != 1 || style.Images[0].Url != "/api/v2/"+a.Id+"/document_styles/"+id+"/images/"+style.Images[0].Id {
+		t.Fatalf("images = %+v", style.Images)
+	}
+	image := images + "/" + style.Images[0].Id
+	r = owner.do(http.MethodGet, image, nil)
+	wantStatus(t, r, http.StatusOK)
+	if !bytes.Equal(r.body, pngBytes) || r.header.Get("Content-Type") != "image/png" {
+		t.Errorf("image = %d bytes, %s", len(r.body), r.header.Get("Content-Type"))
+	}
+	wantStatus(t, stranger.do(http.MethodGet, image, nil), http.StatusNotFound)
+	wantStatus(t, owner.do(http.MethodPost, images, "<html></html>", [2]string{"Content-Type", "image/gif"}), http.StatusUnprocessableEntity)
+	r = owner.do(http.MethodDelete, image, nil)
+	wantStatus(t, r, http.StatusOK)
+	if style := decode[httpapi.DocumentStyle](t, r); len(style.Images) != 0 {
+		t.Errorf("images after delete = %+v", style.Images)
+	}
+	wantStatus(t, owner.do(http.MethodGet, image, nil), http.StatusNotFound)
+}
+
 func TestCustomFieldEditing(t *testing.T) {
 	h := newHarness(t, options{})
 	owner, stranger := h.client(), h.client()

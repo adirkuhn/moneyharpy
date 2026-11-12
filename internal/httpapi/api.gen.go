@@ -459,6 +459,114 @@ func (e DocumentStyleAddressPosition) Valid() bool {
 	}
 }
 
+// Defines values for DocumentStyleEmailFontFamily.
+const (
+	DocumentStyleEmailFontFamilyArial         DocumentStyleEmailFontFamily = "arial"
+	DocumentStyleEmailFontFamilyCourier       DocumentStyleEmailFontFamily = "courier"
+	DocumentStyleEmailFontFamilyGeorgia       DocumentStyleEmailFontFamily = "georgia"
+	DocumentStyleEmailFontFamilyHelvetica     DocumentStyleEmailFontFamily = "helvetica"
+	DocumentStyleEmailFontFamilyLucidaGrande  DocumentStyleEmailFontFamily = "lucida_grande"
+	DocumentStyleEmailFontFamilyTimesNewRoman DocumentStyleEmailFontFamily = "times_new_roman"
+	DocumentStyleEmailFontFamilyVerdana       DocumentStyleEmailFontFamily = "verdana"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleEmailFontFamily enum.
+func (e DocumentStyleEmailFontFamily) Valid() bool {
+	switch e {
+	case DocumentStyleEmailFontFamilyArial:
+		return true
+	case DocumentStyleEmailFontFamilyCourier:
+		return true
+	case DocumentStyleEmailFontFamilyGeorgia:
+		return true
+	case DocumentStyleEmailFontFamilyHelvetica:
+		return true
+	case DocumentStyleEmailFontFamilyLucidaGrande:
+		return true
+	case DocumentStyleEmailFontFamilyTimesNewRoman:
+		return true
+	case DocumentStyleEmailFontFamilyVerdana:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleEmailFooterType.
+const (
+	DocumentStyleEmailFooterTypeBackgroundImage    DocumentStyleEmailFooterType = "background_image"
+	DocumentStyleEmailFooterTypeContactInformation DocumentStyleEmailFooterType = "contact_information"
+	DocumentStyleEmailFooterTypeEmpty              DocumentStyleEmailFooterType = ""
+	DocumentStyleEmailFooterTypeSignature          DocumentStyleEmailFooterType = "signature"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleEmailFooterType enum.
+func (e DocumentStyleEmailFooterType) Valid() bool {
+	switch e {
+	case DocumentStyleEmailFooterTypeBackgroundImage:
+		return true
+	case DocumentStyleEmailFooterTypeContactInformation:
+		return true
+	case DocumentStyleEmailFooterTypeEmpty:
+		return true
+	case DocumentStyleEmailFooterTypeSignature:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleEmailHeaderContentPosition.
+const (
+	DocumentStyleEmailHeaderContentPositionCenter DocumentStyleEmailHeaderContentPosition = "center"
+	DocumentStyleEmailHeaderContentPositionLeft   DocumentStyleEmailHeaderContentPosition = "left"
+	DocumentStyleEmailHeaderContentPositionRight  DocumentStyleEmailHeaderContentPosition = "right"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleEmailHeaderContentPosition enum.
+func (e DocumentStyleEmailHeaderContentPosition) Valid() bool {
+	switch e {
+	case DocumentStyleEmailHeaderContentPositionCenter:
+		return true
+	case DocumentStyleEmailHeaderContentPositionLeft:
+		return true
+	case DocumentStyleEmailHeaderContentPositionRight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleEmailHeaderType.
+const (
+	DocumentStyleEmailHeaderTypeBackgroundColorWithLogo DocumentStyleEmailHeaderType = "background_color_with_logo"
+	DocumentStyleEmailHeaderTypeBackgroundColorWithText DocumentStyleEmailHeaderType = "background_color_with_text"
+	DocumentStyleEmailHeaderTypeBackgroundImage         DocumentStyleEmailHeaderType = "background_image"
+	DocumentStyleEmailHeaderTypeBackgroundImageWithLogo DocumentStyleEmailHeaderType = "background_image_with_logo"
+	DocumentStyleEmailHeaderTypeBackgroundImageWithText DocumentStyleEmailHeaderType = "background_image_with_text"
+	DocumentStyleEmailHeaderTypeEmpty                   DocumentStyleEmailHeaderType = ""
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleEmailHeaderType enum.
+func (e DocumentStyleEmailHeaderType) Valid() bool {
+	switch e {
+	case DocumentStyleEmailHeaderTypeBackgroundColorWithLogo:
+		return true
+	case DocumentStyleEmailHeaderTypeBackgroundColorWithText:
+		return true
+	case DocumentStyleEmailHeaderTypeBackgroundImage:
+		return true
+	case DocumentStyleEmailHeaderTypeBackgroundImageWithLogo:
+		return true
+	case DocumentStyleEmailHeaderTypeBackgroundImageWithText:
+		return true
+	case DocumentStyleEmailHeaderTypeEmpty:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DocumentStyleLogoPosition.
 const (
 	DocumentStyleLogoPositionCenter DocumentStyleLogoPosition = "center"
@@ -498,6 +606,48 @@ func (e DocumentStylePaperSize) Valid() bool {
 	}
 }
 
+// Defines values for DocumentStylePublicViewBackgroundColor.
+const (
+	DocumentStylePublicViewBackgroundColorHashD5E8FA DocumentStylePublicViewBackgroundColor = "#D5E8FA"
+	DocumentStylePublicViewBackgroundColorHashD7ECEA DocumentStylePublicViewBackgroundColor = "#D7ECEA"
+	DocumentStylePublicViewBackgroundColorHashDEF4F8 DocumentStylePublicViewBackgroundColor = "#DEF4F8"
+	DocumentStylePublicViewBackgroundColorHashE4E9EB DocumentStylePublicViewBackgroundColor = "#E4E9EB"
+	DocumentStylePublicViewBackgroundColorHashE7F3E6 DocumentStylePublicViewBackgroundColor = "#E7F3E6"
+	DocumentStylePublicViewBackgroundColorHashEDE8F7 DocumentStylePublicViewBackgroundColor = "#EDE8F7"
+	DocumentStylePublicViewBackgroundColorHashF6E4E2 DocumentStylePublicViewBackgroundColor = "#F6E4E2"
+	DocumentStylePublicViewBackgroundColorHashF7F9FC DocumentStylePublicViewBackgroundColor = "#F7F9FC"
+	DocumentStylePublicViewBackgroundColorHashFBE0D5 DocumentStylePublicViewBackgroundColor = "#FBE0D5"
+	DocumentStylePublicViewBackgroundColorHashFCF1DB DocumentStylePublicViewBackgroundColor = "#FCF1DB"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStylePublicViewBackgroundColor enum.
+func (e DocumentStylePublicViewBackgroundColor) Valid() bool {
+	switch e {
+	case DocumentStylePublicViewBackgroundColorHashD5E8FA:
+		return true
+	case DocumentStylePublicViewBackgroundColorHashD7ECEA:
+		return true
+	case DocumentStylePublicViewBackgroundColorHashDEF4F8:
+		return true
+	case DocumentStylePublicViewBackgroundColorHashE4E9EB:
+		return true
+	case DocumentStylePublicViewBackgroundColorHashE7F3E6:
+		return true
+	case DocumentStylePublicViewBackgroundColorHashEDE8F7:
+		return true
+	case DocumentStylePublicViewBackgroundColorHashF6E4E2:
+		return true
+	case DocumentStylePublicViewBackgroundColorHashF7F9FC:
+		return true
+	case DocumentStylePublicViewBackgroundColorHashFBE0D5:
+		return true
+	case DocumentStylePublicViewBackgroundColorHashFCF1DB:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DocumentStyleRequestDocumentStyleAddressPosition.
 const (
 	DocumentStyleRequestDocumentStyleAddressPositionLeft  DocumentStyleRequestDocumentStyleAddressPosition = "left"
@@ -510,6 +660,114 @@ func (e DocumentStyleRequestDocumentStyleAddressPosition) Valid() bool {
 	case DocumentStyleRequestDocumentStyleAddressPositionLeft:
 		return true
 	case DocumentStyleRequestDocumentStyleAddressPositionRight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleRequestDocumentStyleEmailFontFamily.
+const (
+	DocumentStyleRequestDocumentStyleEmailFontFamilyArial         DocumentStyleRequestDocumentStyleEmailFontFamily = "arial"
+	DocumentStyleRequestDocumentStyleEmailFontFamilyCourier       DocumentStyleRequestDocumentStyleEmailFontFamily = "courier"
+	DocumentStyleRequestDocumentStyleEmailFontFamilyGeorgia       DocumentStyleRequestDocumentStyleEmailFontFamily = "georgia"
+	DocumentStyleRequestDocumentStyleEmailFontFamilyHelvetica     DocumentStyleRequestDocumentStyleEmailFontFamily = "helvetica"
+	DocumentStyleRequestDocumentStyleEmailFontFamilyLucidaGrande  DocumentStyleRequestDocumentStyleEmailFontFamily = "lucida_grande"
+	DocumentStyleRequestDocumentStyleEmailFontFamilyTimesNewRoman DocumentStyleRequestDocumentStyleEmailFontFamily = "times_new_roman"
+	DocumentStyleRequestDocumentStyleEmailFontFamilyVerdana       DocumentStyleRequestDocumentStyleEmailFontFamily = "verdana"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleRequestDocumentStyleEmailFontFamily enum.
+func (e DocumentStyleRequestDocumentStyleEmailFontFamily) Valid() bool {
+	switch e {
+	case DocumentStyleRequestDocumentStyleEmailFontFamilyArial:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailFontFamilyCourier:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailFontFamilyGeorgia:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailFontFamilyHelvetica:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailFontFamilyLucidaGrande:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailFontFamilyTimesNewRoman:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailFontFamilyVerdana:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleRequestDocumentStyleEmailFooterType.
+const (
+	DocumentStyleRequestDocumentStyleEmailFooterTypeBackgroundImage    DocumentStyleRequestDocumentStyleEmailFooterType = "background_image"
+	DocumentStyleRequestDocumentStyleEmailFooterTypeContactInformation DocumentStyleRequestDocumentStyleEmailFooterType = "contact_information"
+	DocumentStyleRequestDocumentStyleEmailFooterTypeEmpty              DocumentStyleRequestDocumentStyleEmailFooterType = ""
+	DocumentStyleRequestDocumentStyleEmailFooterTypeSignature          DocumentStyleRequestDocumentStyleEmailFooterType = "signature"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleRequestDocumentStyleEmailFooterType enum.
+func (e DocumentStyleRequestDocumentStyleEmailFooterType) Valid() bool {
+	switch e {
+	case DocumentStyleRequestDocumentStyleEmailFooterTypeBackgroundImage:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailFooterTypeContactInformation:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailFooterTypeEmpty:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailFooterTypeSignature:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleRequestDocumentStyleEmailHeaderContentPosition.
+const (
+	DocumentStyleRequestDocumentStyleEmailHeaderContentPositionCenter DocumentStyleRequestDocumentStyleEmailHeaderContentPosition = "center"
+	DocumentStyleRequestDocumentStyleEmailHeaderContentPositionLeft   DocumentStyleRequestDocumentStyleEmailHeaderContentPosition = "left"
+	DocumentStyleRequestDocumentStyleEmailHeaderContentPositionRight  DocumentStyleRequestDocumentStyleEmailHeaderContentPosition = "right"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleRequestDocumentStyleEmailHeaderContentPosition enum.
+func (e DocumentStyleRequestDocumentStyleEmailHeaderContentPosition) Valid() bool {
+	switch e {
+	case DocumentStyleRequestDocumentStyleEmailHeaderContentPositionCenter:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailHeaderContentPositionLeft:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailHeaderContentPositionRight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleRequestDocumentStyleEmailHeaderType.
+const (
+	DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundColorWithLogo DocumentStyleRequestDocumentStyleEmailHeaderType = "background_color_with_logo"
+	DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundColorWithText DocumentStyleRequestDocumentStyleEmailHeaderType = "background_color_with_text"
+	DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundImage         DocumentStyleRequestDocumentStyleEmailHeaderType = "background_image"
+	DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundImageWithLogo DocumentStyleRequestDocumentStyleEmailHeaderType = "background_image_with_logo"
+	DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundImageWithText DocumentStyleRequestDocumentStyleEmailHeaderType = "background_image_with_text"
+	DocumentStyleRequestDocumentStyleEmailHeaderTypeEmpty                   DocumentStyleRequestDocumentStyleEmailHeaderType = ""
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleRequestDocumentStyleEmailHeaderType enum.
+func (e DocumentStyleRequestDocumentStyleEmailHeaderType) Valid() bool {
+	switch e {
+	case DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundColorWithLogo:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundColorWithText:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundImage:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundImageWithLogo:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailHeaderTypeBackgroundImageWithText:
+		return true
+	case DocumentStyleRequestDocumentStyleEmailHeaderTypeEmpty:
 		return true
 	default:
 		return false
@@ -549,6 +807,48 @@ func (e DocumentStyleRequestDocumentStylePaperSize) Valid() bool {
 	case DocumentStyleRequestDocumentStylePaperSizeA4:
 		return true
 	case DocumentStyleRequestDocumentStylePaperSizeLetter:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentStyleRequestDocumentStylePublicViewBackgroundColor.
+const (
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashD5E8FA DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#D5E8FA"
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashD7ECEA DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#D7ECEA"
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashDEF4F8 DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#DEF4F8"
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashE4E9EB DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#E4E9EB"
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashE7F3E6 DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#E7F3E6"
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashEDE8F7 DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#EDE8F7"
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashF6E4E2 DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#F6E4E2"
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashF7F9FC DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#F7F9FC"
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashFBE0D5 DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#FBE0D5"
+	DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashFCF1DB DocumentStyleRequestDocumentStylePublicViewBackgroundColor = "#FCF1DB"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStyleRequestDocumentStylePublicViewBackgroundColor enum.
+func (e DocumentStyleRequestDocumentStylePublicViewBackgroundColor) Valid() bool {
+	switch e {
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashD5E8FA:
+		return true
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashD7ECEA:
+		return true
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashDEF4F8:
+		return true
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashE4E9EB:
+		return true
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashE7F3E6:
+		return true
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashEDE8F7:
+		return true
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashF6E4E2:
+		return true
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashF7F9FC:
+		return true
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashFBE0D5:
+		return true
+	case DocumentStyleRequestDocumentStylePublicViewBackgroundColorHashFCF1DB:
 		return true
 	default:
 		return false
@@ -5433,23 +5733,101 @@ type DeleteAdministrationRequest struct {
 	Name string `json:"name"`
 }
 
-// DocumentStyle A Moneybird document style with MoneyHarpy extensions.
+// DocumentStyle A Moneybird document style with MoneyHarpy extensions. Moneybird's API has no fields for the look of emails, public views and the online sales checkout or for the layout options below; MoneyHarpy names them after Moneybird's editor form.
 type DocumentStyle struct {
 	AddressPosition *DocumentStyleAddressPosition `json:"address_position,omitempty"`
 
 	// AdministrationId A unique record identifier. Parse as a string.
 	//
 	// Example: 123456789012345678
-	AdministrationId      *Identifier                                                            `json:"administration_id,omitempty"`
-	BackgroundHash        *string                                                                `json:"background_hash,omitempty"`
-	CreatedAt             *time.Time                                                             `json:"created_at,omitempty"`
-	CustomCss             *string                                                                `json:"custom_css,omitempty"`
-	Default               *bool                                                                  `json:"default,omitempty"`
+	AdministrationId *Identifier `json:"administration_id,omitempty"`
+	BackgroundHash   *string     `json:"background_hash,omitempty"`
+
+	// BodyBackgroundColor MoneyHarpy extension. The colour around the email.
+	BodyBackgroundColor string `json:"body_background_color"`
+
+	// CheckoutFavoriteLabel MoneyHarpy extension. The label on the subscription marked as favourite.
+	CheckoutFavoriteLabel string `json:"checkout_favorite_label"`
+
+	// CheckoutForBusiness MoneyHarpy extension. The checkout starts as a business purchase, with prices excluding VAT and a company name field.
+	CheckoutForBusiness bool `json:"checkout_for_business"`
+
+	// CheckoutShowAddress MoneyHarpy extension. The online sales checkout asks for an address.
+	CheckoutShowAddress bool `json:"checkout_show_address"`
+
+	// CheckoutShowIdentity MoneyHarpy extension. The checkout shows the company details.
+	CheckoutShowIdentity bool `json:"checkout_show_identity"`
+
+	// CheckoutShowPhoneField MoneyHarpy extension. The checkout asks for a phone number.
+	CheckoutShowPhoneField bool `json:"checkout_show_phone_field"`
+
+	// CheckoutShowWithdrawalButton MoneyHarpy extension. The checkout lets consumers withdraw a purchase within 14 days of payment.
+	CheckoutShowWithdrawalButton bool       `json:"checkout_show_withdrawal_button"`
+	CreatedAt                    *time.Time `json:"created_at,omitempty"`
+	CustomCss                    *string    `json:"custom_css,omitempty"`
+	Default                      *bool      `json:"default,omitempty"`
+
+	// EmailFontFamily MoneyHarpy extension.
+	EmailFontFamily DocumentStyleEmailFontFamily `json:"email_font_family"`
+
+	// EmailFooterBackgroundColor MoneyHarpy extension.
+	EmailFooterBackgroundColor string `json:"email_footer_background_color"`
+
+	// EmailFooterBackgroundHash MoneyHarpy extension. The SHA-256 of the file, or null without one.
+	EmailFooterBackgroundHash *string `json:"email_footer_background_hash"`
+
+	// EmailFooterProfilePictureHash MoneyHarpy extension. The SHA-256 of the file, or null without one.
+	EmailFooterProfilePictureHash *string `json:"email_footer_profile_picture_hash"`
+
+	// EmailFooterProfileSubtitle MoneyHarpy extension. The line under the name in a signature footer.
+	EmailFooterProfileSubtitle string `json:"email_footer_profile_subtitle"`
+
+	// EmailFooterProfileTitle MoneyHarpy extension. The name in a signature footer.
+	EmailFooterProfileTitle string `json:"email_footer_profile_title"`
+
+	// EmailFooterTextColor MoneyHarpy extension.
+	EmailFooterTextColor string `json:"email_footer_text_color"`
+
+	// EmailFooterType MoneyHarpy extension. The footer of emails; empty for none.
+	EmailFooterType DocumentStyleEmailFooterType `json:"email_footer_type"`
+
+	// EmailHeaderBackgroundColor MoneyHarpy extension.
+	EmailHeaderBackgroundColor string `json:"email_header_background_color"`
+
+	// EmailHeaderBackgroundHash MoneyHarpy extension. The SHA-256 of the file, or null without one.
+	EmailHeaderBackgroundHash *string `json:"email_header_background_hash"`
+
+	// EmailHeaderContentPosition MoneyHarpy extension.
+	EmailHeaderContentPosition DocumentStyleEmailHeaderContentPosition `json:"email_header_content_position"`
+
+	// EmailHeaderText MoneyHarpy extension. The text of a header with text.
+	EmailHeaderText string `json:"email_header_text"`
+
+	// EmailHeaderTextColor MoneyHarpy extension.
+	EmailHeaderTextColor string `json:"email_header_text_color"`
+
+	// EmailHeaderType MoneyHarpy extension. The header of emails; empty for none.
+	EmailHeaderType DocumentStyleEmailHeaderType `json:"email_header_type"`
+
+	// EmailLabelEnabled MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails (Moneybird's email_moneybird_label_enabled).
+	EmailLabelEnabled bool `json:"email_label_enabled"`
+
+	// EmailLogoDisplayWidth MoneyHarpy extension. Width of the email logo in percent, 10 to 100.
+	EmailLogoDisplayWidth int `json:"email_logo_display_width"`
+
+	// EmailLogoHash MoneyHarpy extension. The SHA-256 of the file, or null without one.
+	EmailLogoHash         *string                                                                `json:"email_logo_hash"`
 	EstimateMetadataLeft  *[]map[string]DocumentStyle_EstimateMetadataLeft_AdditionalProperties  `json:"estimate_metadata_left,omitempty"`
 	EstimateMetadataRight *[]map[string]DocumentStyle_EstimateMetadataRight_AdditionalProperties `json:"estimate_metadata_right,omitempty"`
-	EstimateSenderAddress *[]map[string]DocumentStyle_EstimateSenderAddress_AdditionalProperties `json:"estimate_sender_address,omitempty"`
-	FontFamily            *string                                                                `json:"font_family,omitempty"`
-	FontSize              *int                                                                   `json:"font_size,omitempty"`
+
+	// EstimateRecipientAddress MoneyHarpy extension. Details under the customer address on quotes.
+	EstimateRecipientAddress []DocumentStyleLine                                                    `json:"estimate_recipient_address"`
+	EstimateSenderAddress    *[]map[string]DocumentStyle_EstimateSenderAddress_AdditionalProperties `json:"estimate_sender_address,omitempty"`
+	FontFamily               *string                                                                `json:"font_family,omitempty"`
+	FontSize                 *int                                                                   `json:"font_size,omitempty"`
+
+	// HideSenderAddress MoneyHarpy extension. Leave the sender address off invoices and quotes, for a background image that has it.
+	HideSenderAddress bool `json:"hide_sender_address"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -5459,18 +5837,50 @@ type DocumentStyle struct {
 	// IdentityId A unique record identifier. Parse as a string.
 	//
 	// Example: 123456789012345678
-	IdentityId             *Identifier                                                           `json:"identity_id,omitempty"`
-	InvoiceMetadataLeft    *[]map[string]DocumentStyle_InvoiceMetadataLeft_AdditionalProperties  `json:"invoice_metadata_left,omitempty"`
-	InvoiceMetadataRight   *[]map[string]DocumentStyle_InvoiceMetadataRight_AdditionalProperties `json:"invoice_metadata_right,omitempty"`
-	InvoiceSenderAddress   *[]map[string]DocumentStyle_InvoiceSenderAddress_AdditionalProperties `json:"invoice_sender_address,omitempty"`
-	LogoContainerFullWidth *bool                                                                 `json:"logo_container_full_width,omitempty"`
-	LogoDisplayWidth       *int                                                                  `json:"logo_display_width,omitempty"`
-	LogoHash               *string                                                               `json:"logo_hash,omitempty"`
-	LogoPosition           *DocumentStyleLogoPosition                                            `json:"logo_position,omitempty"`
-	Name                   *string                                                               `json:"name,omitempty"`
-	PaperSize              *DocumentStylePaperSize                                               `json:"paper_size,omitempty"`
-	PrintOnStationery      *bool                                                                 `json:"print_on_stationery,omitempty"`
-	UpdatedAt              *time.Time                                                            `json:"updated_at,omitempty"`
+	IdentityId *Identifier `json:"identity_id,omitempty"`
+
+	// Images MoneyHarpy extension. The images custom CSS can use, in upload order.
+	Images []struct {
+		ContentType string `json:"content_type"`
+
+		// Id The SHA-256 of the image.
+		Id string `json:"id"`
+
+		// Url Where the image is served, for url() in custom CSS.
+		Url string `json:"url"`
+	} `json:"images"`
+	InvoiceMetadataLeft  *[]map[string]DocumentStyle_InvoiceMetadataLeft_AdditionalProperties  `json:"invoice_metadata_left,omitempty"`
+	InvoiceMetadataRight *[]map[string]DocumentStyle_InvoiceMetadataRight_AdditionalProperties `json:"invoice_metadata_right,omitempty"`
+
+	// InvoiceRecipientAddress MoneyHarpy extension. Details under the customer address on invoices.
+	InvoiceRecipientAddress []DocumentStyleLine                                                   `json:"invoice_recipient_address"`
+	InvoiceSenderAddress    *[]map[string]DocumentStyle_InvoiceSenderAddress_AdditionalProperties `json:"invoice_sender_address,omitempty"`
+	LogoContainerFullWidth  *bool                                                                 `json:"logo_container_full_width,omitempty"`
+	LogoDisplayWidth        *int                                                                  `json:"logo_display_width,omitempty"`
+	LogoHash                *string                                                               `json:"logo_hash,omitempty"`
+	LogoPosition            *DocumentStyleLogoPosition                                            `json:"logo_position,omitempty"`
+	Name                    *string                                                               `json:"name,omitempty"`
+	PaperSize               *DocumentStylePaperSize                                               `json:"paper_size,omitempty"`
+	PrintOnStationery       *bool                                                                 `json:"print_on_stationery,omitempty"`
+
+	// PublicViewBackgroundColor MoneyHarpy extension. The page colour of public views.
+	PublicViewBackgroundColor DocumentStylePublicViewBackgroundColor `json:"public_view_background_color"`
+
+	// PublicViewLabelEnabled MoneyHarpy extension. Show "Made with MoneyHarpy" on public views (Moneybird's public_view_moneybird_label_enabled).
+	PublicViewLabelEnabled bool `json:"public_view_label_enabled"`
+
+	// PublicViewLogoDisplaySize MoneyHarpy extension. Size of the public view logo in percent, 10 to 100.
+	PublicViewLogoDisplaySize int `json:"public_view_logo_display_size"`
+
+	// PublicViewLogoHash MoneyHarpy extension. The SHA-256 of the file, or null without one.
+	PublicViewLogoHash *string `json:"public_view_logo_hash"`
+
+	// SenderAddressWidth MoneyHarpy extension. Width of the sender address in pixels, 100 to 400.
+	SenderAddressWidth int `json:"sender_address_width"`
+
+	// ShowEpcCode MoneyHarpy extension. Print a QR code (EPC) customers can pay an invoice with from their banking app.
+	ShowEpcCode bool       `json:"show_epc_code"`
+	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
 
 	// Uri MoneyHarpy extension. Canonical path of this resource.
 	Uri string `json:"uri"`
@@ -5478,6 +5888,18 @@ type DocumentStyle struct {
 
 // DocumentStyleAddressPosition defines model for DocumentStyle.AddressPosition.
 type DocumentStyleAddressPosition string
+
+// DocumentStyleEmailFontFamily MoneyHarpy extension.
+type DocumentStyleEmailFontFamily string
+
+// DocumentStyleEmailFooterType MoneyHarpy extension. The footer of emails; empty for none.
+type DocumentStyleEmailFooterType string
+
+// DocumentStyleEmailHeaderContentPosition MoneyHarpy extension.
+type DocumentStyleEmailHeaderContentPosition string
+
+// DocumentStyleEmailHeaderType MoneyHarpy extension. The header of emails; empty for none.
+type DocumentStyleEmailHeaderType string
 
 // DocumentStyleEstimateMetadataLeft0 defines model for DocumentStyle.EstimateMetadataLeft.0.
 type DocumentStyleEstimateMetadataLeft0 = string
@@ -5551,35 +5973,108 @@ type DocumentStyleLogoPosition string
 // DocumentStylePaperSize defines model for DocumentStyle.PaperSize.
 type DocumentStylePaperSize string
 
-// DocumentStyleLine One entry of a block on a document. bold prints it bold; label prints its name before it.
+// DocumentStylePublicViewBackgroundColor MoneyHarpy extension. The page colour of public views.
+type DocumentStylePublicViewBackgroundColor string
+
+// DocumentStyleLine One entry of a block on a document. bold prints it bold, italic in italics; label prints its name before it. Custom fields are named custom_field_ followed by their id.
 type DocumentStyleLine struct {
-	Bold  *bool  `json:"bold,omitempty"`
-	Field string `json:"field"`
-	Label *bool  `json:"label,omitempty"`
+	Bold   *bool  `json:"bold,omitempty"`
+	Field  string `json:"field"`
+	Italic *bool  `json:"italic,omitempty"`
+	Label  *bool  `json:"label,omitempty"`
 }
 
 // DocumentStyleRequest defines model for DocumentStyleRequest.
 type DocumentStyleRequest struct {
 	DocumentStyle struct {
-		AddressPosition       *DocumentStyleRequestDocumentStyleAddressPosition `json:"address_position,omitempty"`
-		CustomCss             *string                                           `json:"custom_css,omitempty"`
-		Default               *bool                                             `json:"default,omitempty"`
-		EstimateMetadataLeft  *[]DocumentStyleLine                              `json:"estimate_metadata_left,omitempty"`
-		EstimateMetadataRight *[]DocumentStyleLine                              `json:"estimate_metadata_right,omitempty"`
-		EstimateSenderAddress *[]DocumentStyleLine                              `json:"estimate_sender_address,omitempty"`
-		FontFamily            *string                                           `json:"font_family,omitempty"`
+		AddressPosition *DocumentStyleRequestDocumentStyleAddressPosition `json:"address_position,omitempty"`
+
+		// BodyBackgroundColor MoneyHarpy extension. The colour around the email.
+		BodyBackgroundColor *string `json:"body_background_color,omitempty"`
+
+		// CheckoutFavoriteLabel MoneyHarpy extension. The label on the subscription marked as favourite.
+		CheckoutFavoriteLabel *string `json:"checkout_favorite_label,omitempty"`
+
+		// CheckoutForBusiness MoneyHarpy extension. The checkout starts as a business purchase, with prices excluding VAT and a company name field.
+		CheckoutForBusiness *bool `json:"checkout_for_business,omitempty"`
+
+		// CheckoutShowAddress MoneyHarpy extension. The online sales checkout asks for an address.
+		CheckoutShowAddress *bool `json:"checkout_show_address,omitempty"`
+
+		// CheckoutShowIdentity MoneyHarpy extension. The checkout shows the company details.
+		CheckoutShowIdentity *bool `json:"checkout_show_identity,omitempty"`
+
+		// CheckoutShowPhoneField MoneyHarpy extension. The checkout asks for a phone number.
+		CheckoutShowPhoneField *bool `json:"checkout_show_phone_field,omitempty"`
+
+		// CheckoutShowWithdrawalButton MoneyHarpy extension. The checkout lets consumers withdraw a purchase within 14 days of payment.
+		CheckoutShowWithdrawalButton *bool   `json:"checkout_show_withdrawal_button,omitempty"`
+		CustomCss                    *string `json:"custom_css,omitempty"`
+		Default                      *bool   `json:"default,omitempty"`
+
+		// EmailFontFamily MoneyHarpy extension.
+		EmailFontFamily *DocumentStyleRequestDocumentStyleEmailFontFamily `json:"email_font_family,omitempty"`
+
+		// EmailFooterBackgroundColor MoneyHarpy extension.
+		EmailFooterBackgroundColor *string `json:"email_footer_background_color,omitempty"`
+
+		// EmailFooterProfileSubtitle MoneyHarpy extension. The line under the name in a signature footer.
+		EmailFooterProfileSubtitle *string `json:"email_footer_profile_subtitle,omitempty"`
+
+		// EmailFooterProfileTitle MoneyHarpy extension. The name in a signature footer.
+		EmailFooterProfileTitle *string `json:"email_footer_profile_title,omitempty"`
+
+		// EmailFooterTextColor MoneyHarpy extension.
+		EmailFooterTextColor *string `json:"email_footer_text_color,omitempty"`
+
+		// EmailFooterType MoneyHarpy extension. The footer of emails; empty for none.
+		EmailFooterType *DocumentStyleRequestDocumentStyleEmailFooterType `json:"email_footer_type,omitempty"`
+
+		// EmailHeaderBackgroundColor MoneyHarpy extension.
+		EmailHeaderBackgroundColor *string `json:"email_header_background_color,omitempty"`
+
+		// EmailHeaderContentPosition MoneyHarpy extension.
+		EmailHeaderContentPosition *DocumentStyleRequestDocumentStyleEmailHeaderContentPosition `json:"email_header_content_position,omitempty"`
+
+		// EmailHeaderText MoneyHarpy extension. The text of a header with text.
+		EmailHeaderText *string `json:"email_header_text,omitempty"`
+
+		// EmailHeaderTextColor MoneyHarpy extension.
+		EmailHeaderTextColor *string `json:"email_header_text_color,omitempty"`
+
+		// EmailHeaderType MoneyHarpy extension. The header of emails; empty for none.
+		EmailHeaderType *DocumentStyleRequestDocumentStyleEmailHeaderType `json:"email_header_type,omitempty"`
+
+		// EmailLabelEnabled MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails (Moneybird's email_moneybird_label_enabled).
+		EmailLabelEnabled *bool `json:"email_label_enabled,omitempty"`
+
+		// EmailLogoDisplayWidth MoneyHarpy extension. Width of the email logo in percent, 10 to 100.
+		EmailLogoDisplayWidth *int                 `json:"email_logo_display_width,omitempty"`
+		EstimateMetadataLeft  *[]DocumentStyleLine `json:"estimate_metadata_left,omitempty"`
+		EstimateMetadataRight *[]DocumentStyleLine `json:"estimate_metadata_right,omitempty"`
+
+		// EstimateRecipientAddress MoneyHarpy extension. The same for quotes.
+		EstimateRecipientAddress *[]DocumentStyleLine `json:"estimate_recipient_address,omitempty"`
+		EstimateSenderAddress    *[]DocumentStyleLine `json:"estimate_sender_address,omitempty"`
+		FontFamily               *string              `json:"font_family,omitempty"`
 
 		// FontSize 8 to 14 points.
 		FontSize *int `json:"font_size,omitempty"`
 
+		// HideSenderAddress MoneyHarpy extension. Leave the sender address off invoices and quotes, for a background image that has it.
+		HideSenderAddress *bool `json:"hide_sender_address,omitempty"`
+
 		// IdentityId A unique record identifier. Parse as a string.
 		//
 		// Example: 123456789012345678
-		IdentityId             *Identifier          `json:"identity_id,omitempty"`
-		InvoiceMetadataLeft    *[]DocumentStyleLine `json:"invoice_metadata_left,omitempty"`
-		InvoiceMetadataRight   *[]DocumentStyleLine `json:"invoice_metadata_right,omitempty"`
-		InvoiceSenderAddress   *[]DocumentStyleLine `json:"invoice_sender_address,omitempty"`
-		LogoContainerFullWidth *bool                `json:"logo_container_full_width,omitempty"`
+		IdentityId           *Identifier          `json:"identity_id,omitempty"`
+		InvoiceMetadataLeft  *[]DocumentStyleLine `json:"invoice_metadata_left,omitempty"`
+		InvoiceMetadataRight *[]DocumentStyleLine `json:"invoice_metadata_right,omitempty"`
+
+		// InvoiceRecipientAddress MoneyHarpy extension. Details under the customer address on invoices: customer_tax_number, customer_chamber_of_commerce, customer_id, customer_email, customer_phone or a contact custom field (custom_field_<id>).
+		InvoiceRecipientAddress *[]DocumentStyleLine `json:"invoice_recipient_address,omitempty"`
+		InvoiceSenderAddress    *[]DocumentStyleLine `json:"invoice_sender_address,omitempty"`
+		LogoContainerFullWidth  *bool                `json:"logo_container_full_width,omitempty"`
 
 		// LogoDisplayWidth Logo width in percent of the available space, 10 to 100.
 		LogoDisplayWidth *int                                           `json:"logo_display_width,omitempty"`
@@ -5589,17 +6084,47 @@ type DocumentStyleRequest struct {
 
 		// PrintOnStationery Leave the background out of PDFs because you print on pre-printed paper.
 		PrintOnStationery *bool `json:"print_on_stationery,omitempty"`
+
+		// PublicViewBackgroundColor MoneyHarpy extension. The page colour of public views.
+		PublicViewBackgroundColor *DocumentStyleRequestDocumentStylePublicViewBackgroundColor `json:"public_view_background_color,omitempty"`
+
+		// PublicViewLabelEnabled MoneyHarpy extension. Show "Made with MoneyHarpy" on public views (Moneybird's public_view_moneybird_label_enabled).
+		PublicViewLabelEnabled *bool `json:"public_view_label_enabled,omitempty"`
+
+		// PublicViewLogoDisplaySize MoneyHarpy extension. Size of the public view logo in percent, 10 to 100.
+		PublicViewLogoDisplaySize *int `json:"public_view_logo_display_size,omitempty"`
+
+		// SenderAddressWidth MoneyHarpy extension. Width of the sender address in pixels, 100 to 400.
+		SenderAddressWidth *int `json:"sender_address_width,omitempty"`
+
+		// ShowEpcCode MoneyHarpy extension. Print a QR code (EPC) customers can pay an invoice with from their banking app.
+		ShowEpcCode *bool `json:"show_epc_code,omitempty"`
 	} `json:"document_style"`
 }
 
 // DocumentStyleRequestDocumentStyleAddressPosition defines model for DocumentStyleRequest.DocumentStyle.AddressPosition.
 type DocumentStyleRequestDocumentStyleAddressPosition string
 
+// DocumentStyleRequestDocumentStyleEmailFontFamily MoneyHarpy extension.
+type DocumentStyleRequestDocumentStyleEmailFontFamily string
+
+// DocumentStyleRequestDocumentStyleEmailFooterType MoneyHarpy extension. The footer of emails; empty for none.
+type DocumentStyleRequestDocumentStyleEmailFooterType string
+
+// DocumentStyleRequestDocumentStyleEmailHeaderContentPosition MoneyHarpy extension.
+type DocumentStyleRequestDocumentStyleEmailHeaderContentPosition string
+
+// DocumentStyleRequestDocumentStyleEmailHeaderType MoneyHarpy extension. The header of emails; empty for none.
+type DocumentStyleRequestDocumentStyleEmailHeaderType string
+
 // DocumentStyleRequestDocumentStyleLogoPosition defines model for DocumentStyleRequest.DocumentStyle.LogoPosition.
 type DocumentStyleRequestDocumentStyleLogoPosition string
 
 // DocumentStyleRequestDocumentStylePaperSize defines model for DocumentStyleRequest.DocumentStyle.PaperSize.
 type DocumentStyleRequestDocumentStylePaperSize string
+
+// DocumentStyleRequestDocumentStylePublicViewBackgroundColor MoneyHarpy extension. The page colour of public views.
+type DocumentStyleRequestDocumentStylePublicViewBackgroundColor string
 
 // DocumentType defines model for DocumentType.
 type DocumentType string
@@ -20091,6 +20616,15 @@ type ServerInterface interface {
 	// UpdateDocumentStyle Update a document style
 	// (PATCH /api/v2/{administration_id}/document_styles/{id})
 	UpdateDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// AddDocumentStyleImage Add an image for custom CSS
+	// (POST /api/v2/{administration_id}/document_styles/{id}/images)
+	AddDocumentStyleImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// RemoveDocumentStyleImage Remove an image for custom CSS
+	// (DELETE /api/v2/{administration_id}/document_styles/{id}/images/{image_id})
+	RemoveDocumentStyleImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, imageId string)
+	// GetDocumentStyleImage Download an image for custom CSS
+	// (GET /api/v2/{administration_id}/document_styles/{id}/images/{image_id})
+	GetDocumentStyleImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, imageId string)
 	// RemoveDocumentStyleFile Remove a logo or background
 	// (DELETE /api/v2/{administration_id}/document_styles/{id}/{file})
 	RemoveDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string)
@@ -21642,6 +22176,24 @@ func (_ Unimplemented) GetDocumentStyle(w http.ResponseWriter, r *http.Request, 
 // UpdateDocumentStyle Update a document style
 // (PATCH /api/v2/{administration_id}/document_styles/{id})
 func (_ Unimplemented) UpdateDocumentStyle(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AddDocumentStyleImage Add an image for custom CSS
+// (POST /api/v2/{administration_id}/document_styles/{id}/images)
+func (_ Unimplemented) AddDocumentStyleImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RemoveDocumentStyleImage Remove an image for custom CSS
+// (DELETE /api/v2/{administration_id}/document_styles/{id}/images/{image_id})
+func (_ Unimplemented) RemoveDocumentStyleImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, imageId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDocumentStyleImage Download an image for custom CSS
+// (GET /api/v2/{administration_id}/document_styles/{id}/images/{image_id})
+func (_ Unimplemented) GetDocumentStyleImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, imageId string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -26811,6 +27363,129 @@ func (siw *ServerInterfaceWrapper) UpdateDocumentStyle(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateDocumentStyle(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddDocumentStyleImage operation middleware
+func (siw *ServerInterfaceWrapper) AddDocumentStyleImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddDocumentStyleImage(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveDocumentStyleImage operation middleware
+func (siw *ServerInterfaceWrapper) RemoveDocumentStyleImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "image_id" -------------
+	var imageId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "image_id", chi.URLParam(r, "image_id"), &imageId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "image_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveDocumentStyleImage(w, r, administrationId, id, imageId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDocumentStyleImage operation middleware
+func (siw *ServerInterfaceWrapper) GetDocumentStyleImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "image_id" -------------
+	var imageId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "image_id", chi.URLParam(r, "image_id"), &imageId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "image_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDocumentStyleImage(w, r, administrationId, id, imageId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -38829,6 +39504,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}", wrapper.UpdateDocumentStyle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}/images", wrapper.AddDocumentStyleImage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}/images/{image_id}", wrapper.RemoveDocumentStyleImage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}/images/{image_id}", wrapper.GetDocumentStyleImage)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/v2/{administration_id}/document_styles/{id}/{file}", wrapper.RemoveDocumentStyleFile)

@@ -4,7 +4,11 @@ import { formErrors } from '../forms/Form'
 import { ListIcon } from '../layout/icons'
 import { type DocumentStyle, type FileKind, styleFileURL, useRemoveStyleFile, useUploadStyleFile } from './queries'
 
-const accepted: Record<FileKind, string> = { logo: 'image/png,image/jpeg,image/gif', background: 'image/png,image/jpeg,application/pdf' }
+const images = 'image/png,image/jpeg,image/gif'
+const accepted: Record<FileKind, string> = {
+  logo: images, background: 'image/png,image/jpeg,application/pdf', email_logo: images, email_header_background: images,
+  email_footer_profile_picture: images, email_footer_background: images, public_view_logo: images,
+}
 
 type Props = { administrationId: string; style: DocumentStyle; kind: FileKind; onChange: (style: DocumentStyle) => void }
 
@@ -18,8 +22,8 @@ export function StyleFileField({ administrationId, style, kind, onChange }: Prop
   const upload = useUploadStyleFile(administrationId, style.id ?? '')
   const remove = useRemoveStyleFile(administrationId, style.id ?? '')
   const [dragging, setDragging] = useState(false)
-  const what = t(`documentStyle.${kind}`)
-  const hash = kind === 'logo' ? style.logo_hash : style.background_hash
+  const what = t(`documentStyle.files.${kind}`)
+  const hash = (style as Record<string, unknown>)[`${kind}_hash`] as string | null | undefined
   const url = hash ? styleFileURL(administrationId, style.id ?? '', kind, hash) : ''
   const errors = formErrors(upload.error ?? remove.error, { [kind]: what })
   const problems = [...(errors.field(kind) ?? []), ...errors.general]
@@ -29,7 +33,7 @@ export function StyleFileField({ administrationId, style, kind, onChange }: Prop
     <div className="style-file">
       {hash && (
         <div className="style-file__current">
-          {kind === 'logo' ? <img className="style-file__image" src={url} alt={t('documentStyle.preview', { what })} /> : <span className="style-file__name">{t('documentStyle.preview', { what })}</span>}
+          {kind !== 'background' ? <img className="style-file__image" src={url} alt={t('documentStyle.preview', { what })} /> : <span className="style-file__name">{t('documentStyle.preview', { what })}</span>}
           <span className="style-file__actions">
             <a className="btn btn--secondary btn--small btn--icon" href={url} target="_blank" rel="noreferrer" aria-label={t('documentStyle.open', { what })} title={t('documentStyle.open', { what })}>
               <svg viewBox="0 0 24 24" width="1.125em" height="1.125em" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden="true"><path d="M2.500 12S6 5.500 12 5.500 21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12Z" /><circle cx="12" cy="12" r="3" /></svg>
@@ -70,7 +74,7 @@ export function StyleFileField({ administrationId, style, kind, onChange }: Prop
         }}
       />
       <p id={`${id}-help`} className={`form-input__message form-input__message--${problems.length ? 'error' : 'help'}`}>
-        {problems.length ? problems.join(' ') : t(`documentStyle.${kind}Help`)}
+        {problems.length ? problems.join(' ') : t(`documentStyle.fileHelp.${kind}`)}
       </p>
     </div>
   )
