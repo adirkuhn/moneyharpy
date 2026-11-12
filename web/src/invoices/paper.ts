@@ -14,7 +14,22 @@ export const defaultSenderLines: Line[] = [
 /** One entry of the sender block: a blank line, or a field's text over one or more lines. */
 export type SenderEntry = { field: 'newline' } | { field: string; bold: boolean; label: boolean; text: string[] }
 
-type Sender = Partial<Pick<Identity, 'company_name' | 'address1' | 'address2' | 'zipcode' | 'city' | 'email' | 'phone' | 'chamber_of_commerce' | 'tax_number' | 'bank_account_number' | 'bank_account_bic' | 'bank_account_name'>> & { website?: string | null }
+type Sender = Partial<Pick<Identity, 'company_name' | 'address1' | 'address2' | 'zipcode' | 'city' | 'email' | 'phone' | 'chamber_of_commerce' | 'tax_number' | 'bank_account_number' | 'bank_account_bic' | 'bank_account_name'>> & {
+  company_website_url?: string | null
+}
+
+/**
+ * The sender a document prints: the identity, with the administration's
+ * website, which Moneybird's sender line company_website_url shows (an
+ * identity has no website of its own).
+ */
+export function withWebsite<T extends object>(identity: T | undefined, administration: { company_website_url?: string | null } | undefined): (T & { company_website_url?: string }) | undefined {
+  if (!identity) {
+    return undefined
+  }
+  const website = administration?.company_website_url ?? ''
+  return website ? { ...identity, company_website_url: website } : identity
+}
 
 /** The lines of an address: street lines, then the postcode with the city. */
 export function addressLines(a: { address1?: string | null; address2?: string | null; zipcode?: string | null; city?: string | null }) {
@@ -42,6 +57,26 @@ export function senderEntries(lines: Array<Record<string, string | boolean>> | u
     }
     const text = sender ? fieldText(field, sender) : []
     return text.length ? [{ field, bold: l.bold === true, label: l.label === true, text }] : []
+  })
+}
+
+/** One detail beside the document's title, such as "Reference: Order 12". */
+export type MetadataEntry = { field: string; label: string; value: string }
+
+/**
+ * A metadata column as the style lays it out, or as `fallback` (Moneybird's
+ * default) without a style: fields with a value, blank lines left out.
+ */
+export function metadataEntries(
+  lines: Array<Record<string, string | boolean>> | undefined,
+  fallback: Line[],
+  values: Record<string, string | null | undefined>,
+  label: (field: string) => string,
+): MetadataEntry[] {
+  return (lines ?? fallback).flatMap((l) => {
+    const field = String(l.field ?? '')
+    const value = values[field]
+    return field !== 'newline' && value ? [{ field, label: label(field), value }] : []
   })
 }
 

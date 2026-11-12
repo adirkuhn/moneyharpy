@@ -8,7 +8,7 @@ import type { Line } from './queries'
 export type Place = { column: number; index: number }
 
 /** The fields of a sender block, in the order the hidden column lists them. */
-export const senderFields = ['company_name', 'address', 'email', 'phone', 'website', 'chamber_of_commerce', 'tax_number', 'bank_account_number', 'bank_account_bic', 'bank_account_name'] as const
+export const senderFields = ['company_name', 'address', 'email', 'phone', 'company_website_url', 'chamber_of_commerce', 'tax_number', 'bank_account_number', 'bank_account_bic', 'bank_account_name'] as const
 /** The customer's details a document can show under its address or among its metadata. */
 export const customerFields = ['customer_tax_number', 'customer_chamber_of_commerce', 'customer_id', 'customer_email', 'customer_phone'] as const
 export const invoiceMetadataFields = ['invoice_id', 'invoice_date', 'due_date', 'reference', ...customerFields] as const

@@ -66,7 +66,7 @@ var (
 	FontFamilies     = []string{"lucida_grande", "helvetica", "arial", "verdana", "georgia", "times_new_roman", "courier"}
 	// SenderFields are the parts of the sender block on a document, besides
 	// the identity's custom fields.
-	SenderFields = []string{"company_name", "address", "newline", "email", "phone", "website", "chamber_of_commerce", "tax_number", "bank_account_number", "bank_account_bic", "bank_account_name"}
+	SenderFields = []string{"company_name", "address", "newline", "email", "phone", "company_website_url", "chamber_of_commerce", "tax_number", "bank_account_number", "bank_account_bic", "bank_account_name"}
 	// CustomerFields are the customer's details a document can show under
 	// its address or among its metadata, besides the contact's custom fields.
 	CustomerFields = []string{"customer_tax_number", "customer_chamber_of_commerce", "customer_id", "customer_email", "customer_phone"}

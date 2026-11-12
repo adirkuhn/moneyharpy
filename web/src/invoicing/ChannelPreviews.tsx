@@ -11,8 +11,8 @@ import { fontStacks } from './StylePreview'
 /** The settings of the Email, Public views and Online sales tabs the previews follow before they are saved. */
 export type ChannelForm = Pick<DocumentStyle, 'email_header_type' | 'email_header_content_position' | 'email_header_background_color' | 'email_header_text'
   | 'email_header_text_color' | 'email_logo_display_width' | 'email_footer_type' | 'email_footer_text_color' | 'email_footer_background_color'
-  | 'email_footer_profile_title' | 'email_footer_profile_subtitle' | 'body_background_color' | 'email_font_family' | 'email_label_enabled'
-  | 'public_view_logo_display_size' | 'public_view_background_color' | 'public_view_label_enabled' | 'checkout_show_address' | 'checkout_show_phone_field'
+  | 'email_footer_profile_title' | 'email_footer_profile_subtitle' | 'body_background_color' | 'email_font_family' | 'email_moneybird_label_enabled'
+  | 'public_view_logo_display_size' | 'public_view_background_color' | 'public_view_moneybird_label_enabled' | 'checkout_show_address' | 'checkout_show_phone_field'
   | 'checkout_for_business' | 'checkout_show_identity' | 'checkout_show_withdrawal_button' | 'checkout_favorite_label'>
 
 type Props = {
@@ -105,7 +105,7 @@ export function EmailPreview({ administrationId, style, form, sender, language, 
           </div>
           <EmailFooter administrationId={administrationId} style={style} form={form} sender={sender} />
         </article>
-        {form.email_label_enabled && <p className="email-preview__label">{dt('documentStyle.sentWith')}</p>}
+        {form.email_moneybird_label_enabled && <p className="email-preview__label">{dt('documentStyle.sentWith')}</p>}
       </div>
     </div>
   )
@@ -189,7 +189,7 @@ export function PublicViewPreview({ administrationId, style, form, sender, langu
           )}
         </article>
         <aside className="public-preview__pay">{dt('documentStyle.payPanel')}</aside>
-        {form.public_view_label_enabled && <p className="email-preview__label">{dt('documentStyle.madeWith')}</p>}
+        {form.public_view_moneybird_label_enabled && <p className="email-preview__label">{dt('documentStyle.madeWith')}</p>}
       </div>
     </div>
   )

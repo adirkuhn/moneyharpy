@@ -250,7 +250,7 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 		}
 		return events
 	},
-	"duplicateCreditSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "sales_invoice_created_from_original") },
+	"duplicateCreditSalesInvoice": func(c change) []webhooks.Event { return c.one("SalesInvoice", "credit_invoice_created_from_original") },
 	"createSalesInvoicePayment":   func(c change) []webhooks.Event { return c.payment() },
 	"registerSalesInvoicePayment": func(c change) []webhooks.Event { return c.payment() },
 	"deleteSalesInvoicePayment": func(c change) []webhooks.Event {

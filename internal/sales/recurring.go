@@ -578,7 +578,11 @@ func (s *Service) recur(ctx context.Context, a administration.Listed, user resou
 				errs = append(errs, fmt.Errorf("administration %s, recurring invoice %s: %w", a.ID, r.ID, err))
 				break
 			}
-			s.notify(ctx, a.ID, "sales_invoice_created", inv)
+			// A subscription's invoice is announced by the subscriptions
+			// service once it is complete.
+			if r.SubscriptionID == nil {
+				s.notify(ctx, a.ID, createdBy(r), inv)
+			}
 			s.notifyRecurring(ctx, a.ID, "recurring_sales_invoice_invoice_created", r)
 			if s.hook != nil {
 				completed, err := s.hook.Generated(ctx, a.ID, user, inv, r)
@@ -633,11 +637,20 @@ func (s *Service) generate(ctx context.Context, a administration.Listed, user re
 	if err := s.store.SaveGenerated(ctx, inv, moved); err != nil {
 		return Invoice{}, wrap("store generated invoice", err)
 	}
-	if err := s.record(ctx, user, on(inv, "sales_invoice_created_based_on_recurring")); err != nil {
+	if err := s.record(ctx, user, on(inv, createdBy(*r))); err != nil {
 		return Invoice{}, err
 	}
 	*r = moved
 	return inv, nil
+}
+
+// createdBy is Moneybird's event of an invoice a recurring invoice made:
+// based on the subscription it bills, or on the recurring invoice.
+func createdBy(r Recurring) string {
+	if r.SubscriptionID != nil {
+		return "sales_invoice_created_based_on_subscription"
+	}
+	return "sales_invoice_created_based_on_recurring"
 }
 
 // RecurringHook completes an invoice a recurring invoice made, before it is
