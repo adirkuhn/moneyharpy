@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
+import { containsPaymentReference } from './paymentReference'
 import { formatAmount, useFinancialAccounts, useLinkInvoice, useMutations, type Mutation } from '../banking/queries'
 import { useLedgerAccounts } from '../bookkeeping/queries'
 import { formErrors, SelectInput, TextInput } from '../forms/Form'
@@ -122,16 +123,22 @@ function Bottom({ back, children }: { back: string; children?: ReactNode }) {
   )
 }
 
-/** A transaction pays an invoice when it has the invoice's open amount, or names its number or payment reference. */
-function matches(m: Mutation, inv: SalesInvoice) {
+/**
+ * How well a transaction fits the invoice: 2 when it quotes the invoice's
+ * payment reference, 1 when it has the open amount or names the number, 0
+ * when it does not fit.
+ */
+function fit(m: Mutation, inv: SalesInvoice) {
   if (m.state === 'processed') {
-    return false
+    return 0
+  }
+  if (containsPaymentReference(m.message, inv.payment_reference)) {
+    return 2
   }
   const open = Number(inv.total_unpaid ?? 0)
   const amount = Number(m.amount_open ?? m.amount ?? 0)
-  const message = (m.message ?? '').toLowerCase()
-  const names = [inv.invoice_id, inv.payment_reference].filter((n): n is string => !!n).map((n) => n.toLowerCase())
-  return (open !== 0 && amount === open) || names.some((n) => message.includes(n))
+  const number = inv.invoice_id?.toLowerCase()
+  return (open !== 0 && amount === open) || (!!number && (m.message ?? '').toLowerCase().includes(number)) ? 1 : 0
 }
 
 function BankTransfer({ administrationId, invoice: inv }: { administrationId: string; invoice: SalesInvoice }) {
@@ -142,7 +149,8 @@ function BankTransfer({ administrationId, invoice: inv }: { administrationId: st
   if (!mutations.data && !mutations.error) {
     return <Loading />
   }
-  const found = (mutations.data ?? []).filter((m) => matches(m, inv))
+  // A transaction that quotes the payment reference comes first.
+  const found = (mutations.data ?? []).map((m) => ({ m, fit: fit(m, inv) })).filter((f) => f.fit > 0).sort((a, b) => b.fit - a.fit).map((f) => f.m)
   if (found.length === 0) {
     return (
       <ContentPage

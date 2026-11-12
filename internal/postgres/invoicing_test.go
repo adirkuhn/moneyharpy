@@ -61,6 +61,7 @@ func newWorkflow(a administration.Administration, def bool, name string) invoici
 	return invoicing.Workflow{
 		ID: ids.Next(), AdministrationID: a.ID, Type: invoicing.InvoiceWorkflow, Name: name, Default: def,
 		Currency: "EUR", Language: "nl", Active: true, ShowQRCode: true, CreatedAt: now, UpdatedAt: now,
+		PaymentConditions: invoicing.DefaultPaymentConditions("nl"),
 		Steps: []invoicing.WorkflowStep{
 			{ID: ids.Next(), StepOrder: 1, DueInterval: 14, CreatedAt: now, UpdatedAt: now},
 			{ID: ids.Next(), StepOrder: 2, ReminderDelay: 7, ReminderText: "Pay", ReminderAutoSend: true, CreatedAt: now, UpdatedAt: now},
@@ -94,6 +95,7 @@ func TestWorkflowStore(t *testing.T) {
 	}
 	other.Default = true
 	other.Steps = other.Steps[:1]
+	other.PaymentConditions = "Pay *now*."
 	if err := s.UpdateWorkflow(ctx, other); err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +107,7 @@ func TestWorkflowStore(t *testing.T) {
 		if w.ID == def.ID && w.Default {
 			t.Error("old default kept its default flag")
 		}
-		if w.ID == other.ID && (!w.Default || len(w.Steps) != 1) {
+		if w.ID == other.ID && (!w.Default || len(w.Steps) != 1 || w.PaymentConditions != "Pay *now*.") {
 			t.Errorf("updated workflow = %+v", w)
 		}
 	}

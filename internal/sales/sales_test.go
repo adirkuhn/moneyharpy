@@ -327,6 +327,12 @@ func TestEmailTemplates(t *testing.T) {
 	if subject, _ := EmailText(doc); subject != "Harpy B.V.: 2026-0001" {
 		t.Errorf("custom = %q", subject)
 	}
+	// Moneybird's tags work too.
+	doc.Invoice.PaymentReference = "RF130000000000000PV96X5KP"
+	doc.Workflow.InvoiceEmailBody = "{recipient.name} pays {document.total_price} quoting {document.payment_reference} ({payment_reference})"
+	if _, body := EmailText(doc); body != "Example Shop pays €1,234.50 quoting RF13PV96X5KP (RF13PV96X5KP)" {
+		t.Errorf("tags = %q", body)
+	}
 	if FormatMoney(-123450, "EUR", "nl") != "-€ 1.234,50" {
 		t.Errorf("nl = %q", FormatMoney(-123450, "EUR", "nl"))
 	}

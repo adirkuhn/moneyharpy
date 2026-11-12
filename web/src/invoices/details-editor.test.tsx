@@ -52,7 +52,6 @@ describe('the invoice details editor', () => {
     expect(within(totals).getByRole('row', { name: /21% btw/ })).toHaveTextContent('€37.80')
     expect(within(totals).getByRole('row', { name: /9% btw/ })).toHaveTextContent('€4.05')
     expect(within(totals).getByRole('row', { name: /^Total/ })).toHaveTextContent('€266.85')
-    expect(within(paper()).getByText(/Graag ontvangen we € 266,85/)).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
@@ -195,14 +194,48 @@ describe('the invoice details editor', () => {
     await userEvent.keyboard('{Enter}')
     expect(within(paper()).getByRole('button', { name: /Vervaldatum/ })).toHaveTextContent('31-12-2026')
 
+    // As on Moneybird, the payment conditions open a card with the textile editor, its workflow and Save.
     await userEvent.click(within(paper()).getByRole('button', { name: /payment conditions/i }))
-    await userEvent.type(within(paper()).getByLabelText('Payment conditions'), 'Pay within 30 days.')
-    await userEvent.tab()
-    expect(within(paper()).getByText('Pay within 30 days.')).toBeInTheDocument()
+    const card = within(paper()).getByRole('region', { name: 'Payment conditions' })
+    expect(within(card).getByRole('link', { name: 'Edit in workflow Standaard (NL)' })).toHaveAttribute('href', '/11/workflows/601?return_to=%2F11%2Fsales_invoices%2F902')
+    await userEvent.type(within(card).getByLabelText('Payment conditions'), 'Pay within 30 days.')
+    const save = within(card).getByRole('button', { name: 'Save' })
+    expect(save).toHaveClass('btn--primary')
+    await userEvent.click(save)
+    await waitFor(() => expect(sent.patch).toMatchObject({ invoice_date: '2026-12-01', first_due_interval: 30, payment_conditions: 'Pay within 30 days.' }))
+    await waitFor(() => expect(within(paper()).queryByRole('region', { name: 'Payment conditions' })).toBeNull())
+  })
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
-    expect(sent.patch).toMatchObject({ invoice_date: '2026-12-01', first_due_interval: 30, payment_conditions: 'Pay within 30 days.' })
+  it("starts a new invoice with its workflow's payment conditions, filled in on the preview", async () => {
+    const sent: { post?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(...creating(sent))
+    renderAt('/11/sales_invoices/new')
+    await pickContact()
+    const text = within(paper()).getByText(/We verzoeken u vriendelijk/)
+    expect(text).toHaveTextContent(/het bovenstaande bedrag van € 0,00 voor \d{2}-\d{2}-\d{4} te voldoen .* omschrijving RF\d{2}CONCEPT12\./)
+    await userEvent.click(within(popup()).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent.post).toBeDefined())
+    // The server gives the draft its workflow's text.
+    expect(sent.post).not.toHaveProperty('payment_conditions')
+  })
+
+  it('saves the invoice with the blue Save of the details editor and closes it', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(...creating(sent))
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #12' })
+    await editLines()
+    await userEvent.type(within(detailRows()[0]!).getByLabelText('Description'), 'Consulting')
+    await userEvent.type(within(detailRows()[0]!).getByLabelText('Price'), '100')
+    expect(within(editorCard()).queryByRole('button', { name: 'Done' })).toBeNull()
+    const save = within(editorCard()).getByRole('button', { name: 'Save' })
+    expect(save).toHaveClass('btn--primary')
+    expect(within(editorCard()).getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+    await userEvent.click(save)
+    await waitFor(() => expect(sent.patch?.details_attributes).toEqual([expect.objectContaining({ description: 'Consulting', price: '100' })]))
+    await waitFor(() => expect(screen.queryByRole('table', { name: 'Invoice details' })).toBeNull())
   })
 
   it('takes VAT out of prices that include it', async () => {

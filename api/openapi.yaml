@@ -14170,15 +14170,24 @@ components:
         - uri
         - invoice_email_subject
         - invoice_email_body
+        - payment_conditions
         properties:
           uri:
             type: string
             description: MoneyHarpy extension. Canonical path of this resource.
+          payment_conditions:
+            type: string
+            description: >-
+              MoneyHarpy extension, after the "Payment conditions on invoice" of the Send invoice step of Moneybird's
+              workflow. New invoices of the workflow start with this text. Textile (_italic_, *bold*, +underline+) and
+              Moneybird's tags, such as {document.total_price}, {document.due_date} and {document.payment_reference},
+              are filled in where the invoice is shown. Empty for estimate workflows.
           invoice_email_subject:
             type: string
             description: >-
               MoneyHarpy extension. The subject invoices are emailed with; empty uses the default. Placeholders:
-              {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference}, {reference}.
+              {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference}, {reference},
+              and Moneybird's tags of the payment conditions, such as {document.total_price} and {recipient.contact_name}.
           invoice_email_body:
             type: string
             description: MoneyHarpy extension. The text invoices are emailed with; empty uses the default. Same placeholders.
@@ -14364,6 +14373,10 @@ components:
               type: boolean
             show_qr_code:
               type: boolean
+            payment_conditions:
+              type: string
+              maxLength: 1000
+              description: MoneyHarpy extension. The payment conditions new invoices of the workflow start with; ignored for estimate workflows.
             invoice_email_subject:
               type: string
               maxLength: 255

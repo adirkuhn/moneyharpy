@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
+	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
 
 type salesInvoice struct {
@@ -22,7 +23,12 @@ type salesInvoice struct {
 	TotalUnpaid    string  `json:"total_unpaid"`
 	OriginalID     *string `json:"original_sales_invoice_id"`
 	Paused         bool    `json:"paused"`
-	Contact        struct {
+	// PaymentConditions start as the workflow's; PaymentReference and
+	// ShortPaymentReference are given when the invoice is sent.
+	PaymentConditions     *string `json:"payment_conditions"`
+	PaymentReference      *string `json:"payment_reference"`
+	ShortPaymentReference *string `json:"short_payment_reference"`
+	Contact               struct {
 		ID string `json:"id"`
 	} `json:"contact"`
 	Details []struct {
@@ -93,6 +99,9 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 	if inv.State != "draft" || inv.InvoiceID != nil || inv.DraftID == nil || inv.TotalExcl != "225.5" || inv.TotalIncl != "272.86" || inv.Contact.ID != customer.ID {
 		t.Fatalf("draft = %+v", inv)
 	}
+	if inv.PaymentReference != nil || inv.ShortPaymentReference != nil || inv.PaymentConditions == nil || !strings.Contains(*inv.PaymentConditions, "{document.payment_reference}") {
+		t.Errorf("draft conditions %v, references %v / %v", inv.PaymentConditions, inv.PaymentReference, inv.ShortPaymentReference)
+	}
 	if inv.Details[1].LedgerAccountID == "" || inv.Details[1].LedgerAccountID == revenue {
 		t.Errorf("uncategorized line = %+v", inv.Details[1])
 	}
@@ -122,6 +131,10 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 	inv = decode[salesInvoice](t, sent)
 	if inv.State != "open" || inv.InvoiceID == nil || !strings.HasSuffix(*inv.InvoiceID, "-0001") || inv.TotalUnpaid != "272.86" {
 		t.Fatalf("sent = %+v", inv)
+	}
+	if inv.PaymentReference == nil || !sales.ValidRF(*inv.PaymentReference) || len(*inv.PaymentReference) != 25 || inv.ShortPaymentReference == nil ||
+		*inv.ShortPaymentReference != sales.ShortPaymentReference(*inv.PaymentReference) {
+		t.Errorf("sent references = %v / %v", inv.PaymentReference, inv.ShortPaymentReference)
 	}
 	h.mailer.mu.Lock()
 	mails := h.mailer.documents

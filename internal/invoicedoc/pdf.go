@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-pdf/fpdf"
 
@@ -22,7 +23,7 @@ func New() Renderer { return Renderer{} }
 
 type labels struct {
 	Invoice, Credit, Draft, PackingSlip, Number, Date, Due, Reference, Description, Quantity, Price, VAT, Amount,
-	Subtotal, Discount, VATOver, Total, PayBefore, Page, CoC, VATNumber, IBAN string
+	Subtotal, Discount, VATOver, Total, Page, CoC, VATNumber, IBAN string
 	// Estimate, EstimateNumber, EstimateDate and ValidUntil label estimates.
 	Estimate, EstimateNumber, EstimateDate, ValidUntil string
 }
@@ -31,8 +32,7 @@ var dutch = labels{
 	Invoice: "Factuur", Credit: "Creditfactuur", Draft: "Concept", PackingSlip: "Pakbon", Number: "Factuurnummer", Date: "Factuurdatum",
 	Due: "Vervaldatum", Reference: "Referentie", Description: "Omschrijving", Quantity: "Aantal", Price: "Prijs",
 	VAT: "Btw", Amount: "Bedrag", Subtotal: "Subtotaal", Discount: "Korting", VATOver: "%s btw over %s", Total: "Totaal",
-	PayBefore: "Graag ontvangen we %s vóór %s op rekening %s ten name van %s, onder vermelding van %s.", Page: "Pagina %d van {nb}",
-	CoC: "KVK", VATNumber: "Btw-nummer", IBAN: "IBAN",
+	Page: "Pagina %d van {nb}", CoC: "KVK", VATNumber: "Btw-nummer", IBAN: "IBAN",
 	Estimate: "Offerte", EstimateNumber: "Offertenummer", EstimateDate: "Offertedatum", ValidUntil: "Geldig tot",
 }
 
@@ -40,8 +40,7 @@ var english = labels{
 	Invoice: "Invoice", Credit: "Credit invoice", Draft: "Draft", PackingSlip: "Packing slip", Number: "Invoice number", Date: "Invoice date",
 	Due: "Due date", Reference: "Reference", Description: "Description", Quantity: "Quantity", Price: "Price",
 	VAT: "VAT", Amount: "Amount", Subtotal: "Subtotal", Discount: "Discount", VATOver: "%s VAT on %s", Total: "Total",
-	PayBefore: "Please pay %s before %s to account %s in the name of %s, quoting %s.", Page: "Page %d of {nb}",
-	CoC: "CoC", VATNumber: "VAT number", IBAN: "IBAN",
+	Page: "Page %d of {nb}", CoC: "CoC", VATNumber: "VAT number", IBAN: "IBAN",
 	Estimate: "Quote", EstimateNumber: "Quote number", EstimateDate: "Quote date", ValidUntil: "Valid until",
 }
 
@@ -119,7 +118,7 @@ func render(doc sales.Document, prices bool) ([]byte, error) {
 		}
 	case prices:
 		totals(pdf, tr, doc, l, fontSize)
-		payment(pdf, tr, doc, l, fontSize)
+		payment(pdf, tr, doc, fontSize)
 	}
 	var out bytes.Buffer
 	if err := pdf.Output(&out); err != nil {
@@ -319,35 +318,50 @@ func boolInt(b bool) money.Amount {
 	return 0
 }
 
-func payment(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, l labels, size float64) {
-	inv, id := doc.Invoice, doc.Identity
+// payment prints the payment conditions, styled by their textile and with
+// their tags filled in, as Moneybird prints them; the payment QR code goes
+// beside them.
+func payment(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, size float64) {
 	pdf.Ln(8)
+	_, qrCode := epcPayload(doc)
+	y := pdf.GetY()
+	if qrCode && y+30 > 270 {
+		pdf.AddPage()
+		y = pdf.GetY()
+	}
+	marginLeft, marginTop, marginRight, _ := pdf.GetMargins()
+	if qrCode {
+		pdf.SetRightMargin(marginRight + 34)
+	}
+	pdf.SetX(marginLeft)
+	if spans := sales.PaymentConditionsSpans(doc, time.Now().UTC()); len(spans) > 0 {
+		writeSpans(pdf, tr, spans, size-1)
+		pdf.Ln(5)
+	}
+	pdf.SetMargins(marginLeft, marginTop, marginRight)
 	pdf.SetFont("Helvetica", "", size-1)
-	if inv.PaymentConditions != "" {
-		pdf.MultiCell(0, 5, tr(inv.PaymentConditions), "", "L", false)
-		pdf.Ln(2)
-	}
-	if id.BankAccountNumber == "" || inv.DueDate == nil || doc.Totals.InclTax <= 0 {
-		return
-	}
-	holder := id.BankAccountName
-	if holder == "" {
-		holder = id.CompanyName
-	}
-	text := fmt.Sprintf(l.PayBefore, sales.FormatMoney(doc.Totals.InclTax, inv.Currency, inv.Language), inv.DueDate.Format("02-01-2006"),
-		id.BankAccountNumber, holder, inv.PaymentReference)
-	if _, ok := epcPayload(doc); ok {
-		y := pdf.GetY()
-		pdf.MultiCell(width-34, 5, tr(text), "", "L", false)
-		if y+30 > 270 {
-			pdf.AddPage()
-			y = pdf.GetY()
-		}
+	if qrCode {
 		epcCode(pdf, doc, right, y)
 		pdf.SetY(max(pdf.GetY(), y+30))
-		return
 	}
-	pdf.MultiCell(0, 5, tr(text), "", "L", false)
+}
+
+// writeSpans writes textile spans as flowing text, each in its style.
+func writeSpans(pdf *fpdf.Fpdf, tr func(string) string, spans []sales.Span, size float64) {
+	for _, sp := range spans {
+		style := ""
+		if sp.Bold {
+			style += "B"
+		}
+		if sp.Italic {
+			style += "I"
+		}
+		if sp.Underline {
+			style += "U"
+		}
+		pdf.SetFont("Helvetica", style, size)
+		pdf.Write(5, tr(sp.Text))
+	}
 }
 
 func divRound(n, d int64) int64 {

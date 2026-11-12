@@ -315,6 +315,14 @@ test('invoices and estimates are set up in settings', async ({ page }) => {
   const invoiceFlows = page.getByRole('table', { name: 'Invoice workflows' })
   await expect(invoiceFlows.getByRole('link', { name: 'Export' })).toBeVisible()
   await expect(invoiceFlows.getByRole('button', { name: 'Default workflow cannot be deleted' })).toBeDisabled()
+  // As on Moneybird, a workflow opens as its page of settings and steps; the Send invoice step holds the payment conditions.
+  await invoiceFlows.getByRole('link', { name: 'Export' }).click()
+  await expect(page.getByRole('heading', { name: 'Invoice workflow: Export', level: 1 })).toBeVisible()
+  await page.getByRole('button', { name: 'Edit Send invoice' }).click()
+  const sendStep = page.getByRole('form', { name: 'Send invoice' })
+  await expect(sendStep.getByRole('textbox', { name: 'Payment conditions on invoice' })).toHaveValue(/\{document\.payment_reference\}/)
+  await sendStep.getByRole('button', { name: 'Cancel' }).click()
+  await page.goto(`${uri}/settings/invoices_and_estimates`)
 
   const styles = page.getByRole('region', { name: 'Document styles' })
   await styles.getByRole('link', { name: 'Add' }).click()
@@ -764,6 +772,8 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   await expect(page.getByRole('document', { name: 'Invoice Draft #1' })).toBeVisible()
   // Saved, there is nothing left to save.
   await expect(page.getByRole('button', { name: 'Save invoice' })).toHaveCount(0)
+  // The payment conditions come from the workflow, with a draft's placeholder payment reference as Moneybird shows it.
+  await expect(page.getByRole('document', { name: 'Invoice Draft #1' })).toContainText(/RF\d{2}CONCEPT1\b/)
 
   await page.getByRole('button', { name: 'Send', exact: true }).click()
   await page.getByRole('button', { name: 'Send invoice', exact: true }).click()
@@ -775,6 +785,8 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   await expect(page.locator('.badge', { hasText: 'Open' })).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).not.toHaveText(/Draft/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/\d/)
+  // Sent, it has its own payment reference (ISO 11649), printed in its payment conditions.
+  await expect(page.getByRole('document', { name: /^Invoice / })).toContainText(/RF\d{2}[0-9A-Z]{8}\b/)
   // The document is written in the workflow's language.
   await expect(page.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText(/302[.,]50/)
   await expect(page.getByRole('complementary', { name: 'Invoice information' }).getByRole('list', { name: 'Payment summary' })).toContainText('€302.50')
