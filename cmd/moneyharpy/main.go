@@ -25,6 +25,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/diskstore"
 	"github.com/adirkuhn/moneyharpy/internal/downloads"
 	"github.com/adirkuhn/moneyharpy/internal/google"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
@@ -142,7 +143,7 @@ func run(logger *slog.Logger) error {
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
-		Store: salesStore, Renderer: invoicedoc.New(), Mailer: sales.MailClient{Client: mailer}, Bank: bank,
+		Store: salesStore, Renderer: invoicedoc.New(), Mailer: sales.MailClient{Client: mailer}, Bank: bank, History: history.NewService(postgres.NewEventStore(pool), ids, time.Now),
 		Notifier: httpapi.SalesNotifier{Webhooks: hooks, Logger: logger}, IDs: ids, Now: time.Now,
 	})
 	bank.UseInvoices(invoiceService)

@@ -356,6 +356,20 @@ type EstimateDetail struct {
 	UpdatedAt        pgtype.Timestamptz
 }
 
+type Event struct {
+	ID               int64
+	AdministrationID int64
+	EntityType       string
+	EntityID         int64
+	UserID           pgtype.Int8
+	Action           string
+	LinkEntityType   pgtype.Text
+	LinkEntityID     pgtype.Int8
+	Data             []byte
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type ExternalSalesInvoice struct {
 	ID                    int64
 	AdministrationID      int64

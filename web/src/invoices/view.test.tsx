@@ -50,8 +50,8 @@ describe('an invoice', () => {
     expect(screen.getByRole('button', { name: 'Pause reminders' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mark as dubious' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mark as uncollectible' })).toBeInTheDocument()
-    // A sent invoice is credited, not deleted.
-    expect(screen.queryByRole('button', { name: 'Delete invoice' })).toBeNull()
+    // A sent invoice is usually credited, but can be deleted after a warning.
+    expect(screen.getByRole('button', { name: 'Delete invoice' })).toBeInTheDocument()
 
     // The sidebar.
     const side = sidebar()
@@ -174,7 +174,7 @@ describe('an invoice', () => {
     const panel = screen.getByRole('region', { name: 'Send invoice Draft #3' })
     const methods = within(panel).getByRole('radiogroup', { name: 'Delivery method' })
     expect(within(methods).getAllByRole('radio').map((r) => r.closest('label')?.querySelector('.send-methods__title')?.textContent)).toEqual([
-      'Send by email', 'Send via Peppol', 'Send manually', 'Send by post',
+      'Send by email', 'Send via Peppol', 'Send manually',
     ])
     expect(within(methods).getByRole('radio', { name: /Send by email/ })).toBeChecked()
     expect(within(methods).getByRole('radio', { name: /Send via Peppol/ })).toBeDisabled()
@@ -286,6 +286,9 @@ describe('an invoice', () => {
     await userEvent.click(within(invoicePaper('Invoice 2026-0001')).getByRole('button', { name: 'Edit invoice details' }))
     const warning = screen.getByRole('alertdialog', { name: 'This invoice has been sent' })
     expect(warning).toHaveTextContent('When you make changes, make sure to inform the recipient. Are you sure you want to edit this invoice?')
+    // It points to the regular way first.
+    expect(warning).toHaveTextContent('The regular way to correct a sent invoice is to cancel or refund it with a credit note.')
+    expect(within(warning).getByRole('button', { name: 'Duplicate to credit note' })).toBeInTheDocument()
     await userEvent.click(within(warning).getByRole('button', { name: 'Cancel' }))
     expect(screen.queryByRole('alertdialog')).toBeNull()
     await userEvent.click(within(invoicePaper('Invoice 2026-0001')).getByRole('button', { name: 'Edit contact' }))
@@ -294,7 +297,7 @@ describe('an invoice', () => {
     expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/901$/)
   })
 
-  it('cannot be edited once a payment is registered', async () => {
+  it('can still be edited with a payment registered, but not deleted', async () => {
     server.use(...loaded())
     server.use(http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice({
       total_unpaid: '142.0',
@@ -302,8 +305,53 @@ describe('an invoice', () => {
     }))))
     renderAt('/11/sales_invoices/901')
     await screen.findByRole('heading', { level: 1, name: '2026-0001' })
-    expect(within(invoicePaper('Invoice 2026-0001')).queryByRole('button', { name: 'Edit invoice details' })).toBeNull()
+    expect(within(invoicePaper('Invoice 2026-0001')).getByRole('button', { name: 'Edit invoice details' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Register payment' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Extra' }))
+    expect(screen.queryByRole('button', { name: 'Delete invoice' })).toBeNull()
+  })
+
+  it('warns before a sent invoice is deleted, offering a credit note instead', async () => {
+    let deleted = false
+    let credited = false
+    server.use(...loaded())
+    server.use(
+      http.delete('*/api/v2/11/sales_invoices/901', () => {
+        deleted = true
+        return new HttpResponse(null, { status: 204 })
+      }),
+      http.patch('*/api/v2/11/sales_invoices/901/duplicate_creditinvoice', () => {
+        credited = true
+        return HttpResponse.json({ ...draft, id: '903', draft_id: 4, original_sales_invoice_id: '901', uri: '/11/sales_invoices/903' })
+      }),
+      http.get('*/api/v2/11/sales_invoices/903', () => HttpResponse.json({ ...draft, id: '903', draft_id: 4, original_sales_invoice_id: '901', uri: '/11/sales_invoices/903' })),
+    )
+    renderAt('/11/sales_invoices/901')
+    await choose('Extra', 'Delete invoice')
+    const warning = screen.getByRole('alertdialog', { name: 'Delete this sent invoice?' })
+    expect(warning).toHaveTextContent('The regular way to correct a sent invoice is to cancel or refund it with a credit note.')
+    await userEvent.click(within(warning).getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+
+    await choose('Extra', 'Delete invoice')
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Delete this sent invoice?' })).getByRole('button', { name: 'Duplicate to credit note' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/903$/))
+    expect(credited).toBe(true)
+    expect(deleted).toBe(false)
+  })
+
+  it('deletes a sent invoice when told to anyway', async () => {
+    let deleted = false
+    server.use(...loaded())
+    server.use(http.delete('*/api/v2/11/sales_invoices/901', () => {
+      deleted = true
+      return new HttpResponse(null, { status: 204 })
+    }))
+    renderAt('/11/sales_invoices/901')
+    await choose('Extra', 'Delete invoice')
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Delete this sent invoice?' })).getByRole('button', { name: 'Delete anyway' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices$/))
+    expect(deleted).toBe(true)
   })
 
   it('sends a draft in the future, by the way the contact prefers', async () => {
@@ -451,14 +499,17 @@ describe('an invoice', () => {
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices$/))
   })
 
-  it('cannot be edited once paid', async () => {
+  it('warns before a paid invoice is edited, pointing to a refund', async () => {
     server.use(...loaded())
     server.use(http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice({ state: 'paid', total_unpaid: '0.0', paid_at: '2026-11-05' }))))
     renderAt('/11/sales_invoices/901')
     expect(await stateLabel('Paid')).toBeInTheDocument()
     const doc = invoicePaper('Invoice 2026-0001')
-    expect(within(doc).queryByRole('link', { name: 'Edit contact' })).toBeNull()
-    expect(within(doc).queryByRole('button', { name: 'Edit invoice details' })).toBeNull()
+    await userEvent.click(within(doc).getByRole('button', { name: 'Edit invoice details' }))
+    const warning = screen.getByRole('alertdialog', { name: 'This invoice has been paid' })
+    expect(warning).toHaveTextContent('A refund is registered as the payment of a credit note.')
+    expect(within(warning).getByRole('button', { name: 'Continue editing' })).toBeInTheDocument()
+    await userEvent.click(within(warning).getByRole('button', { name: 'Cancel' }))
     expect(screen.queryByRole('link', { name: 'Register payment' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Download as...' }))
     expect(screen.getByText('Payment receipt (PDF)').closest('.dropdown__item')).toHaveAttribute('aria-disabled', 'true')

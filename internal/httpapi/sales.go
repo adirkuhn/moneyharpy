@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
@@ -100,12 +101,43 @@ type salesInvoiceJSON struct {
 	CustomFields            []customFieldValueJSON `json:"custom_fields"`
 	Notes                   []noteJSON             `json:"notes"`
 	Attachments             []attachmentJSON       `json:"attachments"`
-	Events                  []any                  `json:"events"`
+	Events                  []eventJSON            `json:"events"`
 	TaxTotals               []taxTotalJSON         `json:"tax_totals"`
 	TimeEntries             []any                  `json:"time_entries"`
 	FirstDueInterval        int                    `json:"first_due_interval"`
 	DeliveryMethod          *string                `json:"delivery_method"`
 	URI                     string                 `json:"uri"`
+}
+
+// eventJSON is Moneybird's event_response.
+type eventJSON struct {
+	AdministrationID string         `json:"administration_id"`
+	UserID           *string        `json:"user_id"`
+	Action           string         `json:"action"`
+	LinkEntityID     *string        `json:"link_entity_id"`
+	LinkEntityType   *string        `json:"link_entity_type"`
+	Data             map[string]any `json:"data"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+}
+
+// toEvents answers with what happened to a record, oldest first.
+func toEvents(list []history.Event) []eventJSON {
+	out := make([]eventJSON, 0, len(list))
+	for _, e := range list {
+		j := eventJSON{
+			AdministrationID: e.AdministrationID.String(), Action: e.Action, LinkEntityID: idString(e.LinkEntityID), LinkEntityType: nz(e.LinkEntityType),
+			Data: e.Data, CreatedAt: e.CreatedAt, UpdatedAt: e.UpdatedAt,
+		}
+		if e.UserID != 0 {
+			j.UserID = ptr(e.UserID.String())
+		}
+		if j.Data == nil {
+			j.Data = map[string]any{}
+		}
+		out = append(out, j)
+	}
+	return out
 }
 
 // percentText writes a percentage kept in hundredths, such as "2.5".
@@ -165,7 +197,7 @@ func (s *server) toSalesInvoice(inv sales.Invoice, contact *contacts.Contact, to
 		MarkedDubiousOn: date(inv.MarkedDubiousOn), MarkedUncollectibleOn: date(inv.MarkedUncollectibleOn), ReminderCount: inv.ReminderCount,
 		NextReminder: date(inv.NextReminder),
 		URL:          strings.TrimSuffix(s.deps.BaseURL, "/") + inv.Ref().URI(), CustomFields: []customFieldValueJSON{}, Notes: []noteJSON{},
-		Attachments: []attachmentJSON{}, Events: []any{}, TaxTotals: []taxTotalJSON{}, TimeEntries: []any{}, FirstDueInterval: inv.FirstDueInterval,
+		Attachments: []attachmentJSON{}, Events: toEvents(inv.Events), TaxTotals: []taxTotalJSON{}, TimeEntries: []any{}, FirstDueInterval: inv.FirstDueInterval,
 		URI: inv.Ref().URI(),
 	}
 	if inv.DraftID > 0 {

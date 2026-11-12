@@ -21,6 +21,7 @@ import {
   usePauseSalesInvoice, useSalesInvoice,
 } from './queries'
 import { SchedulePanel, SendPanel } from './SendPanel'
+import { SentWarning } from './SentWarning'
 import { StateBadge } from './StateBadge'
 import './view.css'
 
@@ -75,8 +76,11 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
   const sent = isSent(inv.state)
   const closed = isClosed(inv.state)
   const payable = isPayable(inv.state)
-  // The server keeps an invoice as it is once it is paid, or a payment is registered on it.
-  const editable = !closed && (inv.payments ?? []).length === 0
+  // As at Moneybird a sent or paid invoice can still change, after a warning; one written off cannot.
+  const editable = inv.state !== 'uncollectible'
+  // The server deletes an invoice only without payments.
+  const deletable = (inv.payments ?? []).length === 0
+  const toCredit = () => credit.mutate(undefined, { onSuccess: (c) => navigate(`${list}/${c.id}`) })
   const done = () => setPanel(null)
   const here = `${list}/${inv.id}`
   const toggle = (p: Panel) => setPanel(panel === p ? null : p)
@@ -102,7 +106,7 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
     },
     { label: t('invoices.view.duplicateQuote'), unavailable: true },
     ...(sent
-      ? [{ label: t('invoices.view.duplicateCredit'), disabled: credit.isPending, onSelect: () => credit.mutate(undefined, { onSuccess: (c) => navigate(`${list}/${c.id}`) }) }]
+      ? [{ label: t('invoices.view.duplicateCredit'), disabled: credit.isPending, onSelect: toCredit }]
       : []),
     { label: t('invoices.view.duplicateRecurring'), to: `/${administrationId}/recurring_sales_invoices/new?from=${inv.id}` },
     ...(!sent
@@ -112,8 +116,8 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
     ...(sent && !closed ? [{ label: inv.paused ? t('invoices.resume') : t('invoices.pause'), disabled: pause.isPending, onSelect: () => pause.mutate(!inv.paused) }] : []),
     ...(payable && !inv.marked_dubious_on ? [{ label: t('invoices.writeOff.dubious'), onSelect: () => setPanel('dubious') }] : []),
     ...(payable ? [{ label: t('invoices.writeOff.uncollectible'), onSelect: () => setPanel('uncollectible') }] : []),
-    // A sent invoice is credited instead, as the server keeps it.
-    ...(!sent ? [{ label: t('invoices.view.delete'), danger: true, onSelect: () => setConfirming(true) }] : []),
+    // A sent invoice is usually credited instead; deleting it warns first.
+    ...(deletable ? [{ label: t('invoices.view.delete'), danger: true, onSelect: () => setConfirming(true) }] : []),
   ]
 
   const actions = (
@@ -145,7 +149,17 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
       <div className="invoice-view">
         <div className="invoice-view__main">
           <Problems messages={problems} />
-          {confirming && (
+          {confirming && sent && (
+            <SentWarning
+              kind="delete"
+              paid={inv.state === 'paid'}
+              busy={remove.isPending || credit.isPending}
+              onCredit={toCredit}
+              onContinue={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })}
+              onCancel={() => setConfirming(false)}
+            />
+          )}
+          {confirming && !sent && (
             <ConfirmPanel
               message={t('invoices.confirmDeleteText')}
               confirmLabel={t('invoices.confirmDelete')}
@@ -167,12 +181,12 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
           {panel === 'remind' && <ReminderPanel administrationId={administrationId} invoice={inv} onDone={done} />}
           {(panel === 'dubious' || panel === 'uncollectible') && <WriteOffPanel key={panel} administrationId={administrationId} invoice={inv} kind={panel} onDone={done} />}
           {asking !== undefined && (
-            <ConfirmPanel
-              danger={false}
-              message={t('invoices.view.sentWarning.title')}
-              description={t('invoices.view.sentWarning.text')}
-              confirmLabel={t('invoices.view.sentWarning.continue')}
-              onConfirm={() => {
+            <SentWarning
+              kind="edit"
+              paid={inv.state === 'paid'}
+              busy={credit.isPending}
+              onCredit={toCredit}
+              onContinue={() => {
                 setEditing(asking)
                 setAsking(undefined)
               }}

@@ -151,8 +151,13 @@ func (s *Service) SendReminders(ctx context.Context, admin, user resource.ID, in
 				return nil, err
 			}
 			s.notify(ctx, admin, action, inv)
+			events := []event{on(inv, action)}
 			if was != Reminded {
 				s.notify(ctx, admin, "sales_invoice_state_changed_to_reminded", inv)
+				events = append(events, stateChanged(inv, Reminded))
+			}
+			if err := s.record(ctx, user, events...); err != nil {
+				return nil, err
 			}
 			ids = append(ids, inv.ID)
 		}

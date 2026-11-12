@@ -48,11 +48,10 @@ describe('adding an invoice', () => {
       'href', `/11/custom_fields/new?source=sales_invoice&return_to=${encodeURIComponent('/11/sales_invoices/new')}`,
     )
 
-    // Closing it leaves the document; the recipient opens it again.
+    // Closing it, like Cancel, goes back to the invoices: nothing was made yet.
     await userEvent.click(within(dialog).getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices$/))
     expect(screen.queryByRole('dialog', { name: 'Add invoice' })).toBeNull()
-    await userEvent.click(within(paper()).getByRole('button', { name: 'Contact' }))
-    expect(popup()).toBeInTheDocument()
   })
 
   it('sets the invoice id, date, workflow, term and layout behind Edit', async () => {

@@ -93,6 +93,9 @@ func (s *Service) Create(ctx context.Context, admin, user resource.ID, c Changes
 	if err := s.save(ctx, admin, user, &inv, nil, true); err != nil {
 		return Invoice{}, err
 	}
+	if err := s.record(ctx, user, on(inv, "sales_invoice_created")); err != nil {
+		return Invoice{}, err
+	}
 	return inv, nil
 }
 
@@ -136,8 +139,10 @@ func (s *Service) followWorkflow(inv *Invoice, w invoicing.Workflow) {
 	}
 }
 
-// Update changes an invoice. A sent invoice can change until it is paid and
-// is booked again; a payment or a locked period stops it.
+// Update changes an invoice. A sent invoice, even a paid one, can change as
+// at Moneybird and is booked again; its state follows what is still to be
+// paid. An invoice written off as uncollectible, or one in the locked
+// period, stays as it is.
 func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, c Changes) (Invoice, error) {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
@@ -147,9 +152,12 @@ func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, c Cha
 	if err != nil {
 		return Invoice{}, err
 	}
-	if inv.State == Paid || inv.State == Uncollectible || len(inv.Payments) > 0 {
+	if inv.State == Uncollectible {
 		return Invoice{}, ErrNotEditable
 	}
+	before := inv
+	before.Lines = slices.Clone(inv.Lines)
+	today := s.today(a)
 	was := inv.InvoiceDate
 	if inv.Sent() {
 		if err := s.checkUnlocked(ctx, admin, user, was); err != nil {
@@ -170,11 +178,15 @@ func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, c Cha
 			inv.DueDate = &due
 		}
 		if inv.State == Late {
-			inv.State = reopened(inv, s.today(a))
+			inv.State = reopened(inv, today)
 		}
 		if err := s.checkUnlocked(ctx, admin, user, inv.InvoiceDate); err != nil {
 			return Invoice{}, err
 		}
+		if inv.Totals, err = s.Totals(ctx, admin, user, inv); err != nil {
+			return Invoice{}, err
+		}
+		settleState(&inv, today)
 		if entries, err = s.post(ctx, admin, user, inv); err != nil {
 			return Invoice{}, err
 		}
@@ -182,18 +194,37 @@ func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, c Cha
 	if err := s.save(ctx, admin, user, &inv, entries, false); err != nil {
 		return Invoice{}, err
 	}
+	var events []event
+	// A draft is still being written; only changes to a sent invoice are
+	// history.
+	if changed := changes(before, inv); len(changed) > 0 && before.Sent() {
+		events = append(events, on(inv, "sales_invoice_updated").with(map[string]any{"changes": changed}))
+	}
+	if state := effective(inv, today); state != effective(before, today) {
+		events = append(events, stateChanged(inv, state))
+		s.notify(ctx, admin, inv.events()+"_state_changed_to_"+state, inv)
+	}
+	if err := s.record(ctx, user, events...); err != nil {
+		return Invoice{}, err
+	}
 	return s.Invoice(ctx, admin, id, user)
 }
 
-// Delete removes a draft or scheduled invoice; a sent one is credited
-// instead, as at Moneybird.
+// Delete removes an invoice with what it booked. As at Moneybird a sent
+// invoice can go too, though crediting it is the regular way; one with
+// payments, or in the locked period, cannot.
 func (s *Service) Delete(ctx context.Context, admin, id, user resource.ID) error {
 	inv, err := s.Invoice(ctx, admin, id, user)
 	if err != nil {
 		return err
 	}
+	if len(inv.Payments) > 0 {
+		return invalid("base", "Remove the payments of this invoice first")
+	}
 	if inv.Sent() {
-		return ErrNotEditable
+		if err := s.checkUnlocked(ctx, admin, user, inv.InvoiceDate); err != nil {
+			return err
+		}
 	}
 	if err := s.attachments.DeleteAll(ctx, admin, EntityType, id); err != nil {
 		return wrap("delete attachments", err)

@@ -101,9 +101,15 @@ func (s *Service) Send(ctx context.Context, admin, id, user resource.ID, in Send
 			if !day.After(today) {
 				return Invoice{}, invalid("invoice_date", "must lie in the future to schedule sending")
 			}
+			was := inv.State
 			inv.State, inv.UpdatedAt = Scheduled, s.now()
 			if err := s.save(ctx, admin, user, &inv, nil, false); err != nil {
 				return Invoice{}, err
+			}
+			if was != Scheduled {
+				if err := s.record(ctx, user, stateChanged(inv, Scheduled)); err != nil {
+					return Invoice{}, err
+				}
 			}
 			return s.Invoice(ctx, admin, id, user)
 		}
@@ -123,6 +129,9 @@ func (s *Service) Send(ctx context.Context, admin, id, user resource.ID, in Send
 		if err := s.save(ctx, admin, user, &inv, entries, false); err != nil {
 			return Invoice{}, err
 		}
+		if err := s.record(ctx, user, stateChanged(inv, Open)); err != nil {
+			return Invoice{}, err
+		}
 	} else {
 		inv.Delivery, inv.UpdatedAt = &delivery, s.now()
 		if err := s.save(ctx, admin, user, &inv, nil, false); err != nil {
@@ -131,6 +140,9 @@ func (s *Service) Send(ctx context.Context, admin, id, user resource.ID, in Send
 	}
 	if err := s.deliver(ctx, a, user, inv, delivery, settings.Settings); err != nil {
 		return Invoice{}, fmt.Errorf("%w: %v", ErrDelivery, err)
+	}
+	if err := s.record(ctx, user, sentEvent(inv)); err != nil {
+		return Invoice{}, err
 	}
 	return s.Invoice(ctx, admin, id, user)
 }
@@ -384,6 +396,12 @@ func (s *Service) Credit(ctx context.Context, admin, id, user resource.ID, lineI
 	if err := s.save(ctx, admin, user, &credit, nil, true); err != nil {
 		return Invoice{}, err
 	}
+	if err := s.record(ctx, user,
+		on(credit, "credit_invoice_created_from_original").with(map[string]any{"original_invoice": orig.InvoiceID}),
+		on(orig, "credit_invoice_created").linked(EntityType, credit.ID),
+	); err != nil {
+		return Invoice{}, err
+	}
 	return s.one(ctx, a.ID, user, func() (Invoice, error) { return s.store.Invoice(ctx, admin, credit.ID) })
 }
 
@@ -409,9 +427,19 @@ func (s *Service) Pause(ctx context.Context, admin, id, user resource.ID, paused
 	if err != nil {
 		return Invoice{}, err
 	}
+	was := raw.Paused
 	raw.Paused, raw.UpdatedAt = paused, s.now()
 	if err := s.save(ctx, admin, user, &raw, nil, false); err != nil {
 		return Invoice{}, err
+	}
+	if was != paused {
+		action := "sales_invoice_unpaused"
+		if paused {
+			action = "sales_invoice_paused"
+		}
+		if err := s.record(ctx, user, on(raw, action)); err != nil {
+			return Invoice{}, err
+		}
 	}
 	return s.Invoice(ctx, admin, id, user)
 }
