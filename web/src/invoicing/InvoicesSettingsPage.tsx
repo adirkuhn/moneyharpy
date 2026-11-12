@@ -8,6 +8,7 @@ import { Block } from '../settings/Block'
 import { CustomFieldsBlock } from './CustomFieldsBlock'
 import { ForwardingBlock } from './ForwardingBlock'
 import { NumberingBlock } from './NumberingBlock'
+import { PaymentMethodsBlock } from './PaymentMethodsBlock'
 import { useInvoiceSettings, useUpdateInvoiceSettings } from './queries'
 import { StylesBlock } from './StylesBlock'
 import { SwitchRow } from './Switch'
@@ -39,9 +40,13 @@ export function InvoicesSettingsPage() {
       <WorkflowsBlock administrationId={administrationId} />
       <NumberingBlock key={`${s.invoice_id_template}${s.invoice_sequence_id}${s.estimate_id_template}${s.estimate_sequence_id}`} administrationId={administrationId} settings={s} language={administration.data.language} />
       <Block id="peppol-ubl" title={t('invoicing.parts.peppol')} subtitle={t('invoicing.peppolSubtitle')}>
-        <div className="card">
-          <p className="card__title">{t('invoicing.peppol')}</p>
-          <p className="empty">{t('invoicing.peppolUnavailable')}</p>
+        <div className="card switch-row">
+          <div>
+            <p className="switch-row__label">{t('invoicing.peppol')}</p>
+            <p className="hint">{t('invoicing.peppolHelp')}</p>
+            <p className="hint">{t('invoicing.peppolUnavailable')}</p>
+          </div>
+          <button type="button" className="btn btn--secondary btn--small" disabled title={t('list.notAvailable')}>{t('invoicing.activatePeppol')}</button>
         </div>
         <div className="card">
           <SwitchRow label={t('invoicing.ubl')} help={t('invoicing.ublHelp')} checked={s.default_email_ubl} disabled={update.isPending} onChange={(on) => update.mutate({ default_email_ubl: on })} />
@@ -49,12 +54,11 @@ export function InvoicesSettingsPage() {
       </Block>
       <CustomFieldsBlock administrationId={administrationId} />
       <ForwardingBlock key={s.invoice_bcc_email_address + s.estimate_bcc_email_address + s.order_bcc_email_address + String(s.invoice_reminders_bcc_enabled)} administrationId={administrationId} settings={s} />
-      <Block id="payment-methods" title={t('invoicing.parts.payments')} subtitle={t('invoicing.paymentsSubtitle')}>
-        <p className="empty">{t('invoicing.paymentsUnavailable')}</p>
-      </Block>
+      <PaymentMethodsBlock administrationId={administrationId} />
       <Block id="payments-without-proof" title={t('invoicing.parts.withoutProof')} subtitle={t('invoicing.withoutProofSubtitle')}>
-        <div className="card">
-          <SwitchRow label={t('invoicing.allow')} help={t('invoicing.withoutProofHelp')} checked={s.payments_without_proof} disabled={update.isPending} onChange={(on) => update.mutate({ payments_without_proof: on })} />
+        <div className="card card--with-footer">
+          <SwitchRow label={t('invoicing.allow')} checked={s.payments_without_proof} disabled={update.isPending} onChange={(on) => update.mutate({ payments_without_proof: on })} />
+          <p className="card__footer">{t('invoicing.withoutProofHelp')}</p>
         </div>
       </Block>
     </Page>

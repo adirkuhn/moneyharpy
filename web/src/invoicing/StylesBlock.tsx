@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { ChevronIcon } from '../layout/icons'
+import { ChevronIcon, ListIcon } from '../layout/icons'
 import { Block } from '../settings/Block'
 import { useIdentities } from '../settings/queries'
 import { useDocumentStyles, useSaveDocumentStyle } from './queries'
@@ -23,6 +23,7 @@ export function StylesBlock({ administrationId }: { administrationId: string }) 
       <ul className="ledger" aria-label={t('invoicing.parts.styles')}>
         {styles.data?.map((style) => (
           <li className="ledger__row" key={style.id}>
+            <span className="link-row__icon"><ListIcon kind="palette" /></span>
             <span className="ledger__text">
               <Link className="ledger__name" to={`${base}/document_styles/${style.id}/edit`}>{style.name}</Link>
               <span className="hint">{t('invoicing.senderLine', { name: senderName(style.identity_id ?? '') })}</span>
