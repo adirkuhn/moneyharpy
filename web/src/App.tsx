@@ -35,11 +35,13 @@ import { BookingRuleFormPage } from './banking/BookingRuleFormPage'
 import { FinancialAccountPage } from './banking/FinancialAccountPage'
 import { TransactionPage } from './banking/TransactionPage'
 import { TransactionsPage } from './banking/TransactionsPage'
+import { AddCategoryPage, TemplatesRedirect } from './bookkeeping/AddCategoryPage'
 import { BookkeepingSettingsPage } from './bookkeeping/BookkeepingSettingsPage'
 import { LedgerAccountFormPage } from './bookkeeping/LedgerAccountFormPage'
 import { SchemePage } from './bookkeeping/SchemePage'
+import { SingleCategoryPage } from './bookkeeping/SingleCategoryPage'
 import { TaxRateFormPage } from './bookkeeping/TaxRateFormPage'
-import { TemplatesPage } from './bookkeeping/TemplatesPage'
+import { ThemePage } from './bookkeeping/ThemePage'
 import { SettingsLayout } from './settings/SettingsLayout'
 import { UserPage } from './user/UserPage'
 import { OverviewPage } from './overview/OverviewPage'
@@ -217,13 +219,13 @@ export function AppRoutes() {
           <Route path=":taxRateId" element={<TaxRateFormPage />} />
         </Route>
         <Route path="/:administrationId/ledger_accounts" element={<SettingsLayout />}>
-          <Route path="new" element={<LedgerAccountFormPage />} />
+          <Route path="blueprints" element={<AddCategoryPage />} />
+          <Route path="blueprint_ledger_accounts/new" element={<ThemePage />} />
+          <Route path="new" element={<SingleCategoryPage />} />
           <Route path="scheme" element={<SchemePage />} />
           <Route path=":ledgerAccountId" element={<LedgerAccountFormPage />} />
         </Route>
-        <Route path="/:administrationId/ledger_account_templates" element={<SettingsLayout />}>
-          <Route index element={<TemplatesPage />} />
-        </Route>
+        <Route path="/:administrationId/ledger_account_templates" element={<TemplatesRedirect />} />
         <Route path="/:administrationId/identities" element={<SettingsLayout />}>
           <Route path="new" element={<IdentityFormPage mode="new" />} />
           <Route path="edit_default" element={<IdentityFormPage mode="default" />} />

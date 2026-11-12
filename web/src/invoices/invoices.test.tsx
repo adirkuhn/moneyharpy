@@ -479,6 +479,12 @@ describe('the invoice details editor', () => {
     await userEvent.type(within(rows[1]!).getByLabelText('Price'), '50')
     await userEvent.selectOptions(within(rows[1]!).getByLabelText('VAT rate'), '2109')
     await userEvent.selectOptions(within(rows[1]!).getByLabelText('Category'), '8001')
+    // "Add Category..." opens Moneybird's Add category in a new tab, which comes back to this invoice.
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    await userEvent.selectOptions(within(rows[1]!).getByLabelText('Category'), 'Add Category...')
+    expect(open).toHaveBeenCalledWith(`/11/ledger_accounts/blueprints?return_to=${encodeURIComponent('/11/sales_invoices/902/edit')}&source=sales_invoice`, '_blank', 'noopener')
+    expect(within(rows[1]!).getByLabelText('Category')).toHaveValue('8001')
+    open.mockRestore()
 
     await userEvent.click(screen.getByRole('button', { name: 'Discount' }))
     await userEvent.click(screen.getByRole('button', { name: 'Discount over total price' }))
