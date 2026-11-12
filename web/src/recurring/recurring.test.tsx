@@ -187,7 +187,9 @@ describe('a recurring invoice', () => {
       return HttpResponse.json(recurring(), { status: 201 })
     }))
     renderAt('/11/sales_invoices/901')
-    await chooseMore('Make recurring')
+    // Moneybird's Extra menu on the invoice.
+    await userEvent.click(await screen.findByRole('button', { name: 'Extra' }))
+    await userEvent.click(screen.getByRole('link', { name: 'Duplicate to recurring invoice' }))
     const form = await screen.findByRole('form', { name: 'Recurring invoice' })
     expect(screen.getByRole('heading', { name: 'New recurring invoice' })).toBeInTheDocument()
     expect(within(form).getByLabelText('Reference')).toHaveValue('Contract 7')
