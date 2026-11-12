@@ -13,6 +13,8 @@ type Props = {
   blankLines?: boolean
   /** What a field prints, such as the lines of the address; without it only its name shows. */
   value?: (field: string) => string[]
+  /** Names of fields the translations do not know, such as custom fields. */
+  names?: Record<string, string>
   onChange: (columns: Line[][]) => void
 }
 
@@ -21,7 +23,7 @@ type Props = {
  * the ones it does not. Fields are dragged with the mouse or moved with the
  * arrow keys on their handle.
  */
-export function FieldColumns({ titles, columns, fields, blankLines = false, value, onChange }: Props) {
+export function FieldColumns({ titles, columns, fields, blankLines = false, value, names = {}, onChange }: Props) {
   const { t } = useTranslation()
   const helpId = useId()
   const hidden = hiddenFields(columns, fields, blankLines)
@@ -73,14 +75,14 @@ export function FieldColumns({ titles, columns, fields, blankLines = false, valu
     }
   }
 
-  const name = (field: string) => t(`documentStyle.fields.${field}`)
+  const name = (field: string) => names[field] ?? t(`documentStyle.fields.${field}`)
   const item = (field: string, place: Place, length: number, line?: Line) => {
     const isBlank = field === 'newline'
     const lines = isBlank ? [] : value?.(field)
     return (
       <li
         key={`${place.column}:${place.index}:${field}`}
-        className={`field-columns__item${line?.bold ? ' is-bold' : ''}`}
+        className={`field-columns__item${line?.bold ? ' is-bold' : ''}${line?.italic ? ' is-italic' : ''}`}
         draggable
         onDragStart={(e) => {
           dragged.current = place
@@ -126,6 +128,9 @@ export function FieldColumns({ titles, columns, fields, blankLines = false, valu
           <span className="field-columns__toggles">
             <button type="button" className="field-columns__toggle" aria-label={t('documentStyle.boldOf', { name: name(field) })} title={t('documentStyle.boldOf', { name: name(field) })} aria-pressed={line.bold ?? false} onClick={() => setLine(place, { bold: !line.bold })}>
               <b aria-hidden="true">B</b>
+            </button>
+            <button type="button" className="field-columns__toggle" aria-label={t('documentStyle.italicOf', { name: name(field) })} title={t('documentStyle.italicOf', { name: name(field) })} aria-pressed={line.italic ?? false} onClick={() => setLine(place, { italic: !line.italic })}>
+              <i aria-hidden="true">I</i>
             </button>
             <button type="button" className="field-columns__toggle" aria-label={t('documentStyle.labelOf', { name: name(field) })} title={t('documentStyle.labelOf', { name: name(field) })} aria-pressed={line.label ?? false} onClick={() => setLine(place, { label: !line.label })}>
               <span aria-hidden="true">Aa:</span>

@@ -9,7 +9,7 @@ export type WorkflowChanges = components['schemas']['WorkflowRequest']['workflow
 export type DocumentStyle = components['schemas']['DocumentStyle']
 export type DocumentStyleChanges = components['schemas']['DocumentStyleRequest']['document_style']
 export type Line = components['schemas']['DocumentStyleLine']
-export type FileKind = 'logo' | 'background'
+export type FileKind = 'logo' | 'background' | 'email_logo' | 'email_header_background' | 'email_footer_profile_picture' | 'email_footer_background' | 'public_view_logo'
 
 const admin = (administrationId: string) => ({ params: { path: { administration_id: administrationId } } })
 const one = (administrationId: string, id: string) => ({ params: { path: { administration_id: administrationId, id } } })
@@ -124,6 +124,34 @@ export function useUploadStyleFile(administrationId: string, id: string) {
       client.setQueryData(['document-styles', administrationId, id], saved)
       void client.invalidateQueries({ queryKey: ['document-styles', administrationId] })
     },
+  })
+}
+
+const imagesPath = '/api/v2/{administration_id}/document_styles/{id}/images'
+
+/** Adds an image for the style's custom CSS, sending the file itself as the body. */
+export function useAddStyleImage(administrationId: string, id: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (data: File) =>
+      unwrap(
+        api.POST(imagesPath, {
+          params: { path: { administration_id: administrationId, id } },
+          body: data as unknown as string,
+          bodySerializer: (body: unknown) => body as Blob,
+          headers: { 'Content-Type': data.type || 'application/octet-stream' },
+        }),
+      ),
+    onSuccess: (saved) => client.setQueryData(['document-styles', administrationId, id], saved),
+  })
+}
+
+export function useRemoveStyleImage(administrationId: string, id: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (imageId: string) =>
+      unwrap(api.DELETE('/api/v2/{administration_id}/document_styles/{id}/images/{image_id}', { params: { path: { administration_id: administrationId, id, image_id: imageId } } })),
+    onSuccess: (saved) => client.setQueryData(['document-styles', administrationId, id], saved),
   })
 }
 

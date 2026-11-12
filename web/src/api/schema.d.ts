@@ -240,6 +240,58 @@ export interface paths {
         patch: operations["updateDocumentStyle"];
         trace?: never;
     };
+    "/api/v2/{administration_id}/document_styles/{id}/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add an image for custom CSS
+         * @description MoneyHarpy extension. Send a PNG, JPEG or GIF of at most 2 MB as the request body; a style holds at most 20. Custom CSS refers to the image by the url in the style's images.
+         */
+        post: operations["addDocumentStyleImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/document_styles/{id}/images/{image_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                /** @description The image's id from the style's images. */
+                image_id: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Download an image for custom CSS
+         * @description MoneyHarpy extension.
+         */
+        get: operations["getDocumentStyleImage"];
+        put?: never;
+        post?: never;
+        /**
+         * Remove an image for custom CSS
+         * @description MoneyHarpy extension.
+         */
+        delete: operations["removeDocumentStyleImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/document_styles/{id}/{file}": {
         parameters: {
             query?: never;
@@ -247,8 +299,8 @@ export interface paths {
             path: {
                 administration_id: components["parameters"]["administration_id"];
                 id: components["parameters"]["id"];
-                /** @description The logo, or the background (stationery) printed behind documents. */
-                file: "logo" | "background";
+                /** @description The logo, or the background (stationery) printed behind documents; or, as MoneyHarpy extensions, the email's logo, header background, footer profile picture and footer background, or the public view's logo. */
+                file: "logo" | "background" | "email_logo" | "email_header_background" | "email_footer_profile_picture" | "email_footer_background" | "public_view_logo";
             };
             cookie?: never;
         };
@@ -259,7 +311,7 @@ export interface paths {
         get: operations["getDocumentStyleFile"];
         /**
          * Upload a logo or background
-         * @description MoneyHarpy extension. Send the file as the request body. Logos are PNG, JPEG or GIF up to 2 MB; backgrounds are PNG, JPEG or PDF up to 10 MB. Files go to the S3-compatible storage configured for the installation, or to the server's disk when none is.
+         * @description MoneyHarpy extension. Send the file as the request body. Logos are PNG, JPEG or GIF up to 2 MB; backgrounds are PNG, JPEG or PDF up to 10 MB; the email and public view images are PNG, JPEG or GIF up to 2 MB, the email header and footer backgrounds up to 5 MB. Files go to the S3-compatible storage configured for the installation, or to the server's disk when none is.
          */
         put: operations["uploadDocumentStyleFile"];
         post?: never;
@@ -6908,10 +6960,99 @@ export interface components {
             /** @description MoneyHarpy extension. The text invoices are emailed with; empty uses the default. Same placeholders. */
             invoice_email_body: string;
         };
-        /** @description A Moneybird document style with MoneyHarpy extensions. */
+        /** @description A Moneybird document style with MoneyHarpy extensions. Moneybird's API has no fields for the look of emails, public views and the online sales checkout or for the layout options below; MoneyHarpy names them after Moneybird's editor form. */
         DocumentStyle: components["schemas"]["document_style_response"] & {
             /** @description MoneyHarpy extension. Canonical path of this resource. */
             uri: string;
+            /** @description MoneyHarpy extension. Leave the sender address off invoices and quotes, for a background image that has it. */
+            hide_sender_address: boolean;
+            /** @description MoneyHarpy extension. Width of the sender address in pixels, 100 to 400. */
+            sender_address_width: number;
+            /** @description MoneyHarpy extension. Print a QR code (EPC) customers can pay an invoice with from their banking app. */
+            show_epc_code: boolean;
+            /** @description MoneyHarpy extension. Details under the customer address on invoices. */
+            invoice_recipient_address: components["schemas"]["DocumentStyleLine"][];
+            /** @description MoneyHarpy extension. Details under the customer address on quotes. */
+            estimate_recipient_address: components["schemas"]["DocumentStyleLine"][];
+            /**
+             * @description MoneyHarpy extension. The header of emails; empty for none.
+             * @enum {string}
+             */
+            email_header_type: "" | "background_image_with_text" | "background_image_with_logo" | "background_image" | "background_color_with_logo" | "background_color_with_text";
+            /**
+             * @description MoneyHarpy extension.
+             * @enum {string}
+             */
+            email_header_content_position: "left" | "center" | "right";
+            /** @description MoneyHarpy extension. */
+            email_header_background_color: string;
+            /** @description MoneyHarpy extension. The text of a header with text. */
+            email_header_text: string;
+            /** @description MoneyHarpy extension. */
+            email_header_text_color: string;
+            /** @description MoneyHarpy extension. Width of the email logo in percent, 10 to 100. */
+            email_logo_display_width: number;
+            /**
+             * @description MoneyHarpy extension. The footer of emails; empty for none.
+             * @enum {string}
+             */
+            email_footer_type: "" | "contact_information" | "signature" | "background_image";
+            /** @description MoneyHarpy extension. */
+            email_footer_text_color: string;
+            /** @description MoneyHarpy extension. */
+            email_footer_background_color: string;
+            /** @description MoneyHarpy extension. The name in a signature footer. */
+            email_footer_profile_title: string;
+            /** @description MoneyHarpy extension. The line under the name in a signature footer. */
+            email_footer_profile_subtitle: string;
+            /** @description MoneyHarpy extension. The colour around the email. */
+            body_background_color: string;
+            /**
+             * @description MoneyHarpy extension.
+             * @enum {string}
+             */
+            email_font_family: "lucida_grande" | "helvetica" | "arial" | "verdana" | "georgia" | "times_new_roman" | "courier";
+            /** @description MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails (Moneybird's email_moneybird_label_enabled). */
+            email_label_enabled: boolean;
+            /** @description MoneyHarpy extension. Size of the public view logo in percent, 10 to 100. */
+            public_view_logo_display_size: number;
+            /**
+             * @description MoneyHarpy extension. The page colour of public views.
+             * @enum {string}
+             */
+            public_view_background_color: "#F7F9FC" | "#F6E4E2" | "#EDE8F7" | "#D5E8FA" | "#DEF4F8" | "#FBE0D5" | "#FCF1DB" | "#D7ECEA" | "#E7F3E6" | "#E4E9EB";
+            /** @description MoneyHarpy extension. Show "Made with MoneyHarpy" on public views (Moneybird's public_view_moneybird_label_enabled). */
+            public_view_label_enabled: boolean;
+            /** @description MoneyHarpy extension. The online sales checkout asks for an address. */
+            checkout_show_address: boolean;
+            /** @description MoneyHarpy extension. The checkout asks for a phone number. */
+            checkout_show_phone_field: boolean;
+            /** @description MoneyHarpy extension. The checkout starts as a business purchase, with prices excluding VAT and a company name field. */
+            checkout_for_business: boolean;
+            /** @description MoneyHarpy extension. The checkout shows the company details. */
+            checkout_show_identity: boolean;
+            /** @description MoneyHarpy extension. The checkout lets consumers withdraw a purchase within 14 days of payment. */
+            checkout_show_withdrawal_button: boolean;
+            /** @description MoneyHarpy extension. The label on the subscription marked as favourite. */
+            checkout_favorite_label: string;
+            /** @description MoneyHarpy extension. The SHA-256 of the file, or null without one. */
+            email_logo_hash: string | null;
+            /** @description MoneyHarpy extension. The SHA-256 of the file, or null without one. */
+            email_header_background_hash: string | null;
+            /** @description MoneyHarpy extension. The SHA-256 of the file, or null without one. */
+            email_footer_profile_picture_hash: string | null;
+            /** @description MoneyHarpy extension. The SHA-256 of the file, or null without one. */
+            email_footer_background_hash: string | null;
+            /** @description MoneyHarpy extension. The SHA-256 of the file, or null without one. */
+            public_view_logo_hash: string | null;
+            /** @description MoneyHarpy extension. The images custom CSS can use, in upload order. */
+            images: {
+                /** @description The SHA-256 of the image. */
+                id: string;
+                content_type: string;
+                /** @description Where the image is served, for url() in custom CSS. */
+                url: string;
+            }[];
         };
         WorkflowRequest: {
             workflow: {
@@ -8530,10 +8671,11 @@ export interface components {
                 message: string;
             };
         };
-        /** @description One entry of a block on a document. bold prints it bold; label prints its name before it. */
+        /** @description One entry of a block on a document. bold prints it bold, italic in italics; label prints its name before it. Custom fields are named custom_field_ followed by their id. */
         DocumentStyleLine: {
             field: string;
             bold?: boolean;
+            italic?: boolean;
             label?: boolean;
         };
         DocumentStyleRequest: {
@@ -8562,6 +8704,77 @@ export interface components {
                 estimate_sender_address?: components["schemas"]["DocumentStyleLine"][];
                 estimate_metadata_left?: components["schemas"]["DocumentStyleLine"][];
                 estimate_metadata_right?: components["schemas"]["DocumentStyleLine"][];
+                /** @description MoneyHarpy extension. Leave the sender address off invoices and quotes, for a background image that has it. */
+                hide_sender_address?: boolean;
+                /** @description MoneyHarpy extension. Width of the sender address in pixels, 100 to 400. */
+                sender_address_width?: number;
+                /** @description MoneyHarpy extension. Print a QR code (EPC) customers can pay an invoice with from their banking app. */
+                show_epc_code?: boolean;
+                /** @description MoneyHarpy extension. Details under the customer address on invoices: customer_tax_number, customer_chamber_of_commerce, customer_id, customer_email, customer_phone or a contact custom field (custom_field_<id>). */
+                invoice_recipient_address?: components["schemas"]["DocumentStyleLine"][];
+                /** @description MoneyHarpy extension. The same for quotes. */
+                estimate_recipient_address?: components["schemas"]["DocumentStyleLine"][];
+                /**
+                 * @description MoneyHarpy extension. The header of emails; empty for none.
+                 * @enum {string}
+                 */
+                email_header_type?: "" | "background_image_with_text" | "background_image_with_logo" | "background_image" | "background_color_with_logo" | "background_color_with_text";
+                /**
+                 * @description MoneyHarpy extension.
+                 * @enum {string}
+                 */
+                email_header_content_position?: "left" | "center" | "right";
+                /** @description MoneyHarpy extension. */
+                email_header_background_color?: string;
+                /** @description MoneyHarpy extension. The text of a header with text. */
+                email_header_text?: string;
+                /** @description MoneyHarpy extension. */
+                email_header_text_color?: string;
+                /** @description MoneyHarpy extension. Width of the email logo in percent, 10 to 100. */
+                email_logo_display_width?: number;
+                /**
+                 * @description MoneyHarpy extension. The footer of emails; empty for none.
+                 * @enum {string}
+                 */
+                email_footer_type?: "" | "contact_information" | "signature" | "background_image";
+                /** @description MoneyHarpy extension. */
+                email_footer_text_color?: string;
+                /** @description MoneyHarpy extension. */
+                email_footer_background_color?: string;
+                /** @description MoneyHarpy extension. The name in a signature footer. */
+                email_footer_profile_title?: string;
+                /** @description MoneyHarpy extension. The line under the name in a signature footer. */
+                email_footer_profile_subtitle?: string;
+                /** @description MoneyHarpy extension. The colour around the email. */
+                body_background_color?: string;
+                /**
+                 * @description MoneyHarpy extension.
+                 * @enum {string}
+                 */
+                email_font_family?: "lucida_grande" | "helvetica" | "arial" | "verdana" | "georgia" | "times_new_roman" | "courier";
+                /** @description MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails (Moneybird's email_moneybird_label_enabled). */
+                email_label_enabled?: boolean;
+                /** @description MoneyHarpy extension. Size of the public view logo in percent, 10 to 100. */
+                public_view_logo_display_size?: number;
+                /**
+                 * @description MoneyHarpy extension. The page colour of public views.
+                 * @enum {string}
+                 */
+                public_view_background_color?: "#F7F9FC" | "#F6E4E2" | "#EDE8F7" | "#D5E8FA" | "#DEF4F8" | "#FBE0D5" | "#FCF1DB" | "#D7ECEA" | "#E7F3E6" | "#E4E9EB";
+                /** @description MoneyHarpy extension. Show "Made with MoneyHarpy" on public views (Moneybird's public_view_moneybird_label_enabled). */
+                public_view_label_enabled?: boolean;
+                /** @description MoneyHarpy extension. The online sales checkout asks for an address. */
+                checkout_show_address?: boolean;
+                /** @description MoneyHarpy extension. The checkout asks for a phone number. */
+                checkout_show_phone_field?: boolean;
+                /** @description MoneyHarpy extension. The checkout starts as a business purchase, with prices excluding VAT and a company name field. */
+                checkout_for_business?: boolean;
+                /** @description MoneyHarpy extension. The checkout shows the company details. */
+                checkout_show_identity?: boolean;
+                /** @description MoneyHarpy extension. The checkout lets consumers withdraw a purchase within 14 days of payment. */
+                checkout_show_withdrawal_button?: boolean;
+                /** @description MoneyHarpy extension. The label on the subscription marked as favourite. */
+                checkout_favorite_label?: string;
             };
         };
         /** @description MoneyHarpy extension. */
@@ -10931,6 +11144,103 @@ export interface operations {
             429: components["responses"]["TooManyRequests"];
         };
     };
+    addDocumentStyleImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/png": string;
+                "image/jpeg": string;
+                "image/gif": string;
+            };
+        };
+        responses: {
+            /** @description The updated document style */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentStyle"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getDocumentStyleImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                /** @description The image's id from the style's images. */
+                image_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                    "image/jpeg": string;
+                    "image/gif": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    removeDocumentStyleImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                /** @description The image's id from the style's images. */
+                image_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The updated document style */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentStyle"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
     getDocumentStyleFile: {
         parameters: {
             query?: never;
@@ -10938,8 +11248,8 @@ export interface operations {
             path: {
                 administration_id: components["parameters"]["administration_id"];
                 id: components["parameters"]["id"];
-                /** @description The logo, or the background (stationery) printed behind documents. */
-                file: "logo" | "background";
+                /** @description The logo, or the background (stationery) printed behind documents; or, as MoneyHarpy extensions, the email's logo, header background, footer profile picture and footer background, or the public view's logo. */
+                file: "logo" | "background" | "email_logo" | "email_header_background" | "email_footer_profile_picture" | "email_footer_background" | "public_view_logo";
             };
             cookie?: never;
         };
@@ -10971,8 +11281,8 @@ export interface operations {
             path: {
                 administration_id: components["parameters"]["administration_id"];
                 id: components["parameters"]["id"];
-                /** @description The logo, or the background (stationery) printed behind documents. */
-                file: "logo" | "background";
+                /** @description The logo, or the background (stationery) printed behind documents; or, as MoneyHarpy extensions, the email's logo, header background, footer profile picture and footer background, or the public view's logo. */
+                file: "logo" | "background" | "email_logo" | "email_header_background" | "email_footer_profile_picture" | "email_footer_background" | "public_view_logo";
             };
             cookie?: never;
         };
@@ -11009,8 +11319,8 @@ export interface operations {
             path: {
                 administration_id: components["parameters"]["administration_id"];
                 id: components["parameters"]["id"];
-                /** @description The logo, or the background (stationery) printed behind documents. */
-                file: "logo" | "background";
+                /** @description The logo, or the background (stationery) printed behind documents; or, as MoneyHarpy extensions, the email's logo, header background, footer profile picture and footer background, or the public view's logo. */
+                file: "logo" | "background" | "email_logo" | "email_header_background" | "email_footer_profile_picture" | "email_footer_background" | "public_view_logo";
             };
             cookie?: never;
         };

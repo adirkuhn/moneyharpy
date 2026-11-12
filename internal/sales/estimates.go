@@ -537,6 +537,7 @@ func (s *Service) deliverEstimate(ctx context.Context, a administration.Listed, 
 	return s.mailer.SendDocument(ctx, Mail{
 		To: splitAddresses(d.EmailAddress), BCC: splitAddresses(settings.EstimateBCC), ReplyTo: doc.Identity.Email, FromName: doc.Identity.CompanyName,
 		Subject: subject, Body: body, Files: []File{{Name: estimateFileName(e, "pdf"), ContentType: "application/pdf", Data: pdf}},
+		Look: s.emailLook(ctx, a.ID, user, doc, EstimateDetails(doc)),
 	})
 }
 
