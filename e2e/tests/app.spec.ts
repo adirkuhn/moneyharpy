@@ -374,7 +374,7 @@ test('bookkeeping starts from the Dutch standard and is adjusted in settings', a
   const single = page.getByRole('form', { name: 'Add single category' })
   await single.getByLabel('Name', { exact: true }).fill('Hosting')
   await single.getByLabel('Account number').fill('4460')
-  await single.getByLabel('Parent category').selectOption({ label: '4400 Office costs' })
+  await single.getByLabel('Parent category').selectOption({ label: 'Office costs' })
   await page.getByRole('button', { name: 'Select a category manually' }).click()
   await page.getByLabel('Chart scheme code').fill('WBedKanSof')
   await single.getByRole('button', { name: 'Save' }).click()

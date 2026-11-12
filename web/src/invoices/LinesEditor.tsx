@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { bookable } from '../banking/queries'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import type { FormErrors } from '../forms/Form'
+import { categoryOption } from '../bookkeeping/queries'
 
 export type LineRow = { key: string; id?: string; description: string; amount: string; price: string; tax_rate_id: string; ledger_account_id: string }
 
@@ -82,7 +83,7 @@ export function LinesEditor({ rows, rates, accounts, amounts, invalid, errors, o
                     {groups.map((g) => (
                       <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>
                         {g.rows.map(({ account: a, depth }) => (
-                          <option key={a.id} value={a.id}>{`${' '.repeat(depth)}${a.account_id ? `${a.account_id} ` : ''}${a.name}`}</option>
+                          <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>
                         ))}
                       </optgroup>
                     ))}

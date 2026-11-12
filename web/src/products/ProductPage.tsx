@@ -5,7 +5,7 @@ import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { bookable, formatAmount } from '../banking/queries'
-import { type LedgerAccount, type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
+import { type LedgerAccount, type TaxRate, useLedgerAccounts, useTaxRates, categoryOption } from '../bookkeeping/queries'
 import { ConfirmPanel, DetailBlock, DetailList, type DetailRow } from '../detail/Detail'
 import { FormSection, formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
 import { Loading } from '../layout/Loading'
@@ -183,7 +183,7 @@ function ProductForm({ administrationId, product, rates, accounts }: FormProps) 
           {groups.map((g) => (
             <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>
               {g.rows.map(({ account: a, depth }) => (
-                <option key={a.id} value={a.id}>{`${' '.repeat(depth)}${a.account_id ? `${a.account_id} ` : ''}${a.name}`}</option>
+                <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>
               ))}
             </optgroup>
           ))}

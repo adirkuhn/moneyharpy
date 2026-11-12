@@ -123,9 +123,41 @@ describe('the invoice details editor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
     await waitFor(() => expect(sent.patch).toBeDefined())
     expect(sent.patch?.details_attributes).toEqual([
-      { description: 'Discount', amount: '1 x', price: '-10', tax_rate_id: '2101', row_order: 1 },
+      { description: 'Discount', amount: '1 x', price: '-10', tax_rate_id: '2109', row_order: 1 },
       { description: 'Advice per hour', amount: '1 x', price: '80', tax_rate_id: '2109', ledger_account_id: '8001', product_id: '301', period: '20261101..20261130', row_order: 2 },
     ])
+  })
+
+  it("starts a new detail with the VAT rate and category of the one above, and names categories without their code", async () => {
+    server.use(...loaded())
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: /Draft/ })
+    await editLines()
+    const first = detailRows()[0]!
+    await userEvent.selectOptions(within(first).getByLabelText('VAT rate'), '2109')
+    await userEvent.selectOptions(within(first).getByLabelText('Category'), '8001')
+    expect(within(within(first).getByLabelText('Category')).getByRole('option', { name: 'Sales' })).toBeInTheDocument()
+    expect(within(within(first).getByLabelText('Category')).queryByRole('option', { name: /8000/ })).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add detail' }))
+    const added = detailRows().at(-1)!
+    expect(within(added).getByLabelText('VAT rate')).toHaveValue('2109')
+    expect(within(added).getByLabelText('Category')).toHaveValue('8001')
+  })
+
+  it('cancels the changes to the details and closes the editor, as Moneybird does', async () => {
+    server.use(...loaded())
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: /Draft/ })
+    await editLines()
+    const description = within(detailRows()[0]!).getByLabelText('Description')
+    await userEvent.clear(description)
+    await userEvent.type(description, 'Something else')
+    await userEvent.click(screen.getByRole('button', { name: 'Add detail' }))
+    await userEvent.click(within(editorCard()).getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('table', { name: 'Invoice details' })).toBeNull()
+    expect(within(paper()).getByText('Consulting')).toBeInTheDocument()
+    expect(within(paper()).queryByText('Something else')).toBeNull()
   })
 
   it('shows what is wrong beside the fields', async () => {

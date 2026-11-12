@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
-import { useLedgerAccounts } from '../bookkeeping/queries'
+import { useLedgerAccounts, categoryOption } from '../bookkeeping/queries'
 import { bookable, formatAmount } from '../banking/queries'
 import { ConfirmPanel } from '../detail/Detail'
 import { FormSection, formErrors, TextInput } from '../forms/Form'
@@ -118,7 +118,7 @@ function JournalForm({ administrationId, doc }: { administrationId: string; doc:
                     {groups.map((g) => (
                       <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>
                         {g.rows.map(({ account: a, depth }) => (
-                          <option key={a.id} value={a.id}>{`${' '.repeat(depth)}${a.account_id ? `${a.account_id} ` : ''}${a.name}`}</option>
+                          <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>
                         ))}
                       </optgroup>
                     ))}
