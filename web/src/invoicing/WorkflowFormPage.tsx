@@ -16,7 +16,8 @@ import { useDeleteWorkflow, useSaveWorkflow, useWorkflow, type Workflow } from '
 import { WorkflowPage } from './WorkflowPage'
 
 type Kind = 'InvoiceWorkflow' | 'EstimateWorkflow'
-type Reminder = { reminder_delay: number; reminder_text: string; reminder_auto_send: boolean }
+/** A reminder step: it expires after due_interval days, when the next reminder is due, as on Moneybird. */
+type Reminder = { due_interval: number; reminder_delay: number; reminder_text: string; reminder_auto_send: boolean }
 type Form = {
   name: string
   language: string
@@ -36,7 +37,7 @@ type Form = {
 const newKinds: Record<string, Kind> = { invoice_workflow: 'InvoiceWorkflow', estimate_workflow: 'EstimateWorkflow' }
 
 function toForm(w: Workflow | null, a: Administration, kind: Kind): Form {
-  const steps = w?.steps ?? []
+  const steps = [...(w?.steps ?? [])].sort((a, b) => (a.step_order ?? 0) - (b.step_order ?? 0))
   return {
     name: w?.name ?? '',
     language: w?.language ?? a.language,
@@ -49,7 +50,7 @@ function toForm(w: Workflow | null, a: Administration, kind: Kind): Form {
     email_subject: w?.invoice_email_subject ?? '',
     email_body: w?.invoice_email_body ?? '',
     payment_conditions: w?.payment_conditions ?? null,
-    reminders: steps.slice(1).map((s) => ({ reminder_delay: s.reminder_delay ?? 7, reminder_text: s.reminder_text ?? '', reminder_auto_send: s.reminder_auto_send ?? false })),
+    reminders: steps.slice(1).map((s) => ({ due_interval: s.due_interval ?? 7, reminder_delay: s.reminder_delay ?? 0, reminder_text: s.reminder_text ?? '', reminder_auto_send: s.reminder_auto_send ?? false })),
   }
 }
 
@@ -208,14 +209,15 @@ function WorkflowForm({ administration, workflow, kind }: { administration: Admi
               <fieldset className="reminder" key={i}>
                 <legend className="reminder__title">{t('workflow.reminder', { n: i + 1 })}</legend>
                 <TextInput
-                  label={t('workflow.reminderDelay')}
+                  label={t('workflow.page.expiresAfter')}
+                  help={t('workflow.page.expiresAfterHelp')}
                   type="number"
                   inputMode="numeric"
                   min={1}
                   max={365}
                   width="small"
-                  value={String(r.reminder_delay)}
-                  onChange={(e) => setReminder(i, { reminder_delay: Number(e.target.value) })}
+                  value={String(r.due_interval)}
+                  onChange={(e) => setReminder(i, { due_interval: Number(e.target.value) })}
                 />
                 <TextArea label={t('workflow.reminderText')} maxLength={5000} value={r.reminder_text} onChange={(e) => setReminder(i, { reminder_text: e.target.value })} />
                 <CheckboxInput label={t('workflow.autoSend')} checked={r.reminder_auto_send} onChange={(e) => setReminder(i, { reminder_auto_send: e.target.checked })} />
@@ -228,7 +230,7 @@ function WorkflowForm({ administration, workflow, kind }: { administration: Admi
               <button
                 type="button"
                 className="icon-link icon-link--button"
-                onClick={() => setForm({ ...form, reminders: [...form.reminders, { reminder_delay: 7, reminder_text: '', reminder_auto_send: false }] })}
+                onClick={() => setForm({ ...form, reminders: [...form.reminders, { due_interval: 7, reminder_delay: 0, reminder_text: '', reminder_auto_send: false }] })}
               >
                 {t('workflow.addReminder')}
               </button>

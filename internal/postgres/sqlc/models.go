@@ -870,6 +870,7 @@ type SalesInvoice struct {
 	CreatedAt               pgtype.Timestamptz
 	UpdatedAt               pgtype.Timestamptz
 	OriginalEstimateID      pgtype.Int8
+	LastReminderOn          pgtype.Date
 }
 
 type SalesInvoiceCustomFieldValue struct {

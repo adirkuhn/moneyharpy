@@ -63,8 +63,8 @@ func newWorkflow(a administration.Administration, def bool, name string) invoici
 		Currency: "EUR", Language: "nl", Active: true, ShowQRCode: true, CreatedAt: now, UpdatedAt: now,
 		PaymentConditions: invoicing.DefaultPaymentConditions("nl"),
 		Steps: []invoicing.WorkflowStep{
-			{ID: ids.Next(), StepOrder: 1, DueInterval: 14, CreatedAt: now, UpdatedAt: now},
-			{ID: ids.Next(), StepOrder: 2, ReminderDelay: 7, ReminderText: "Pay", ReminderAutoSend: true, CreatedAt: now, UpdatedAt: now},
+			{ID: ids.Next(), StepOrder: 0, DueInterval: 14, CreatedAt: now, UpdatedAt: now},
+			{ID: ids.Next(), StepOrder: 1, DueInterval: 7, ReminderText: "Pay", ReminderAutoSend: true, CreatedAt: now, UpdatedAt: now},
 		},
 	}
 }
