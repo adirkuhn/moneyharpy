@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
 import type { Contact } from '../contacts/queries'
-import { CheckboxInput, type FormErrors, FormRow, TextInput } from '../forms/Form'
+import { type FormErrors, FormRow, TextInput } from '../forms/Form'
 import { InfoIcon, ListIcon } from '../layout/icons'
 import { ConfirmDialog, Modal } from '../layout/Modal'
 import { PageIcon } from '../layout/pageIcons'
@@ -30,7 +30,10 @@ export type InvoiceSetup = {
   /** Days until due; empty for the workflow's term. */
   term: string
   styleId: string
+  /** Null while the workflow's price mode applies; set above the details. */
   inclTax: boolean | null
+  /** Null while the workflow's currency applies; set above the details. */
+  currency: string | null
   custom: Record<string, string>
 }
 
@@ -44,7 +47,8 @@ type Props = {
   flow: Workflow | undefined
   styles: DocumentStyle[]
   style: DocumentStyle | undefined
-  pricesInclTax: boolean
+  /** A saved invoice opens it as Moneybird's "Edit invoice": no subtitle nor layouts, and the contact's hover card. */
+  existing: boolean
   dueTerm: number
   /** The number of an invoice that was sent already; it no longer changes. */
   sentNumber?: string | null
@@ -66,10 +70,11 @@ type Confirm = 'number' | 'date' | null
 /**
  * Moneybird's "Add invoice" popup: the contact, a reference, and behind Edit
  * the invoice id, date, workflow, term and layout. Save creates the draft;
- * Invoice details creates it and opens its details.
+ * Invoice details creates it and opens its details. Over a saved invoice it is
+ * "Edit invoice", without the layouts, which Change layout sets.
  */
 export function AddInvoiceDialog(props: Props) {
-  const { administrationId, value, onChange, flows, flow, styles, style, pricesInclTax, dueTerm, sentNumber, numbering, customFields, errors, pending, cancel, onSave, onClose } = props
+  const { administrationId, value, onChange, flows, flow, styles, style, existing, dueTerm, sentNumber, numbering, customFields, errors, pending, cancel, onSave, onClose } = props
   const { t } = useTranslation()
   const formId = useId()
   const advancedId = useId()
@@ -103,7 +108,7 @@ export function AddInvoiceDialog(props: Props) {
   )
 
   return (
-    <Modal title={t('invoices.newTitle')} subtitle={p('subtitle')} onClose={onClose} footer={footer} className="add-invoice">
+    <Modal title={existing ? p('editTitle') : t('invoices.newTitle')} subtitle={existing ? undefined : p('subtitle')} onClose={onClose} footer={footer} className="add-invoice">
       <form
         id={formId}
         className="add-invoice__form"
@@ -121,11 +126,12 @@ export function AddInvoiceDialog(props: Props) {
           homeCountry={props.homeCountry}
           returnTo={props.here}
           onChange={props.onPickContact}
+          hoverCard={existing && value.contact.id ? { id: value.contact.id, name: value.contact.name } : undefined}
         />
         <TextInput label={t('invoices.reference')} maxLength={1000} value={value.reference} errors={errors.field('reference')} onChange={(e) => onChange({ reference: e.target.value })} />
 
         <div className="add-invoice__summary">
-          <p role="note">{p('summary', { workflow: flow?.name ?? '', style: style?.name ?? '', count: days })}</p>
+          <p role="note">{existing ? p('editSummary', { workflow: flow?.name ?? '', count: days }) : p('summary', { workflow: flow?.name ?? '', style: style?.name ?? '', count: days })}</p>
           <button
             type="button"
             className="btn btn--secondary btn--small btn--with-icon"
@@ -222,18 +228,19 @@ export function AddInvoiceDialog(props: Props) {
               )}
             </FormRow>
 
-            <CheckboxInput label={t('invoices.pricesInclTax')} checked={pricesInclTax} errors={errors.field('prices_are_incl_tax')} onChange={(e) => onChange({ inclTax: e.target.checked })} />
-
-            <hr className="add-invoice__rule" />
-
-            <LayoutCards
-              label={p('layout')}
-              administrationId={administrationId}
-              styles={styles}
-              current={style?.id ?? ''}
-              errors={errors.field('document_style_id')}
-              onPick={(id) => onChange({ styleId: id })}
-            />
+            {!existing && (
+              <>
+                <hr className="add-invoice__rule" />
+                <LayoutCards
+                  label={p('layout')}
+                  administrationId={administrationId}
+                  styles={styles}
+                  current={style?.id ?? ''}
+                  errors={errors.field('document_style_id')}
+                  onPick={(id) => onChange({ styleId: id })}
+                />
+              </>
+            )}
           </fieldset>
         )}
 

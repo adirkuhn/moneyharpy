@@ -176,6 +176,7 @@ function InvoiceForm(props: FormProps) {
       term: invoice?.first_due_interval === undefined ? '' : String(invoice.first_due_interval),
       styleId: invoice?.document_style_id ?? '',
       inclTax: invoice?.prices_are_incl_tax ?? null,
+      currency: invoice?.currency ?? null,
       custom: Object.fromEntries((invoice?.custom_fields ?? []).map((f) => [String(f.id ?? ''), f.value ?? ''])),
     }
   })
@@ -202,16 +203,17 @@ function InvoiceForm(props: FormProps) {
   })
   const [removed, setRemoved] = useState<string[]>([])
   const [editingLines, setEditingLines] = useState(!!opening?.details)
-  // The details as they were when the editor opened, for its Cancel.
-  const [beforeEditing, setBeforeEditing] = useState(() => ({ rows, discount, removed }))
+  // The details as they were when the editor opened, for its Cancel, with the prices and currency set above them.
+  const [beforeEditing, setBeforeEditing] = useState(() => ({ rows, discount, removed, inclTax: setup.inclTax, currency: setup.currency }))
   const editLines = () => {
-    setBeforeEditing({ rows, discount, removed })
+    setBeforeEditing({ rows, discount, removed, inclTax: setup.inclTax, currency: setup.currency })
     setEditingLines(true)
   }
   const cancelLines = () => {
     setRows(beforeEditing.rows)
     setDiscount(beforeEditing.discount)
     setRemoved(beforeEditing.removed)
+    change({ inclTax: beforeEditing.inclTax, currency: beforeEditing.currency })
     setEditingLines(false)
   }
   // A new detail takes the VAT rate and category of the one above it.
@@ -222,7 +224,9 @@ function InvoiceForm(props: FormProps) {
   // A new invoice starts in the popup, as on Moneybird.
   const [dialogOpen, setDialogOpen] = useState(!invoice || !!opening?.dialog)
   const before = useRef<InvoiceSetup>(setup)
-  const change = (c: Partial<InvoiceSetup>) => setSetup((s) => ({ ...s, ...c }))
+  // Another workflow brings its own currency and price mode, as the server takes them from it.
+  const change = (c: Partial<InvoiceSetup>) =>
+    setSetup((s) => ({ ...s, ...(c.workflowId !== undefined && c.workflowId !== s.workflowId ? { inclTax: null, currency: null } : {}), ...c }))
 
   const invoiceFlows = (workflows.data ?? []).filter((w) => w.type === 'InvoiceWorkflow' && (w.active || w.id === setup.workflowId))
   const flow = invoiceFlows.find((w) => w.id === setup.workflowId) ?? invoiceFlows.find((w) => w.default)
@@ -232,7 +236,7 @@ function InvoiceForm(props: FormProps) {
   const sender = withWebsite(allIdentities.find((i) => i.id === style?.identity_id) ?? allIdentities.find((i) => i.default) ?? allIdentities[0], administration.data)
   const shownConditions = invoice || conditionsTouched ? conditions : (flow?.payment_conditions ?? '')
   const pricesInclTax = setup.inclTax ?? flow?.prices_are_incl_tax ?? false
-  const currency = invoice?.currency ?? flow?.currency ?? administration.data?.currency ?? 'EUR'
+  const currency = setup.currency ?? flow?.currency ?? administration.data?.currency ?? 'EUR'
   const customFields = (fields.data ?? []).filter((f) => f.source === 'sales_invoice')
   // The document is written in the workflow's language, as Moneybird prints it.
   const language = flow?.language ?? invoice?.language ?? i18n.language
@@ -258,7 +262,7 @@ function InvoiceForm(props: FormProps) {
   const labels: Record<string, string> = {
     contact_id: t('invoices.contact'), reference: t('invoices.reference'), invoice_date: t('invoices.invoiceDate'), first_due_interval: t('invoices.popup.dueAfter'),
     workflow_id: t('invoices.workflow'), document_style_id: t('invoices.popup.layout'), discount: t('invoices.discount'), payment_conditions: t('invoices.paymentConditions'),
-    prices_are_incl_tax: t('invoices.pricesInclTax'), invoice_sequence_id: t('invoices.popup.invoiceId'),
+    prices_are_incl_tax: t('invoices.details.pricesAre'), invoice_sequence_id: t('invoices.popup.invoiceId'), currency: t('invoices.details.currency'),
   }
   customFields.forEach((c, i) => {
     labels[`custom_fields_attributes.${i}`] = c.name
@@ -296,6 +300,7 @@ function InvoiceForm(props: FormProps) {
       ...(setup.term.trim() !== '' ? { first_due_interval: Number(setup.term) } : {}),
       ...(setup.styleId ? { document_style_id: setup.styleId } : {}),
       prices_are_incl_tax: pricesInclTax,
+      currency,
       // A new invoice leaves out what is empty; a saved one sends it to clear it.
       ...(invoice || discount.trim() ? { discount: discount.trim() } : {}),
       ...(invoice || conditionsTouched ? { payment_conditions: conditions.trim() } : {}),
@@ -526,6 +531,10 @@ function InvoiceForm(props: FormProps) {
                 rates={rates}
                 accounts={accounts.data ?? []}
                 currency={currency}
+                pricesInclTax={pricesInclTax}
+                onPricesInclTax={(inclTax) => change({ inclTax })}
+                onCurrency={(c) => change({ currency: c })}
+                currencyLocked={!!invoice && invoice.state !== 'draft'}
                 lineTotals={parsed.map((p) => grossCents(p.price ?? 0, p.quantity ?? 0))}
                 invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
                 totals={totalRows(t, uiMoney, 'editor')}
@@ -594,7 +603,7 @@ function InvoiceForm(props: FormProps) {
           flow={flow}
           styles={allStyles}
           style={style}
-          pricesInclTax={pricesInclTax}
+          existing={!!invoice}
           dueTerm={flowTerm}
           sentNumber={invoice?.invoice_id}
           numbering={numbering.data}

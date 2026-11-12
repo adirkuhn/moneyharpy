@@ -95,6 +95,22 @@ func TestCreateValidates(t *testing.T) {
 	}
 }
 
+func TestInvoiceCurrencyIsOneMoneybirdOffers(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	inv := draft(t, h, line("100", "1", vat21, revenue))
+	for _, code := range []string{"usd", "BTC", "XAU", "ZWL"} {
+		got, err := h.svc.Update(ctx, adminID, inv.ID, owner, Changes{Currency: ptr(code)})
+		if err != nil || got.Currency != strings.ToUpper(code) {
+			t.Errorf("Update(currency %s) = %q, %v", code, got.Currency, err)
+		}
+	}
+	_, err := h.svc.Update(ctx, adminID, inv.ID, owner, Changes{Currency: ptr("ABC")})
+	if f := fieldsOf(t, err); len(f["currency"]) == 0 {
+		t.Errorf("unknown currency errors = %v", f)
+	}
+}
+
 func TestSendNumbersBooksAndEmails(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()

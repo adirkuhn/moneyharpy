@@ -357,7 +357,7 @@ func (s *Service) apply(ctx context.Context, a administration.Listed, user resou
 	} else if inv.ContactPersonID != nil && !slices.ContainsFunc(contact.People, func(p contacts.Person) bool { return p.ID == *inv.ContactPersonID }) {
 		verr.Add("contact_person_id", "is not a person of this contact")
 	}
-	if !currencyPattern.MatchString(inv.Currency) {
+	if !slices.Contains(administration.Currencies(), inv.Currency) {
 		verr.Add("currency", "is not a currency")
 	}
 	if inv.FirstDueInterval < 0 || inv.FirstDueInterval > 365 {
