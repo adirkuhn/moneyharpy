@@ -180,6 +180,19 @@ func TestPaymentsAreStoredAndPosted(t *testing.T) {
 	if err != nil || r.ToReceive.Count != 1 || r.ToReceive.Amount != 10000 || r.ToRemind.Count != 1 {
 		t.Errorf("receivables = %+v, %v", r, err)
 	}
+	// The day of the last reminder is kept: the next one counts from it.
+	raw, err := f.store.Invoice(ctx, f.admin, inv.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reminded := time.Date(2026, 10, 20, 0, 0, 0, 0, time.UTC)
+	raw.State, raw.ReminderCount, raw.LastReminderOn = sales.Reminded, 1, &reminded
+	if err := f.store.SaveInvoice(ctx, raw, nil, false); err != nil {
+		t.Fatal(err)
+	}
+	if again, _ := f.store.Invoice(ctx, f.admin, inv.ID); again.LastReminderOn == nil || again.LastReminderOn.Format(time.DateOnly) != "2026-10-20" {
+		t.Errorf("last reminder on %v", again.LastReminderOn)
+	}
 	if err := f.svc.DeletePayment(ctx, f.admin, inv.ID, p.ID, f.owner); err != nil {
 		t.Fatal(err)
 	}

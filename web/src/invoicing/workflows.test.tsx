@@ -33,11 +33,15 @@ describe('workflow form', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add reminder' }))
     const reminder = screen.getByRole('group', { name: 'Reminder 1' })
     await userEvent.type(within(reminder).getByLabelText('Reminder text'), 'Please pay')
+    const expires = within(reminder).getByLabelText('Reminder expires after')
+    expect(expires).toHaveValue(7)
+    await userEvent.clear(expires)
+    await userEvent.type(expires, '10')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/settings/invoices_and_estimates'))
     expect(sent.workflow).toMatchObject({
       type: 'InvoiceWorkflow', name: 'Export',
-      steps_attributes: [{ due_interval: 30 }, { reminder_delay: 7, reminder_text: 'Please pay', reminder_auto_send: false }],
+      steps_attributes: [{ due_interval: 30 }, { due_interval: 10, reminder_delay: 0, reminder_text: 'Please pay', reminder_auto_send: false }],
     })
     // Untouched, the server gives the workflow Moneybird's text in its language.
     expect(sent.workflow).not.toHaveProperty('payment_conditions')
@@ -72,18 +76,37 @@ describe('workflow page', () => {
     expect(send).toHaveTextContent('Reminder expires after14 days')
     expect(within(send).getByText(/We verzoeken u vriendelijk het bovenstaande bedrag van € 1\.210,00 voor \d{2}-\d{2}-\d{4} .* omschrijving RF89CONCEPT\./)).toBeInTheDocument()
     // Reminders fold shut until Show more, as on Moneybird.
+    // As on Moneybird the first reminder comes when the payment term expires.
     const first = screen.getByRole('region', { name: /^1st reminder/ })
-    expect(first).toHaveTextContent('Day 22')
+    expect(first).toHaveTextContent('Day 15')
     expect(within(first).queryByText('Manual')).toBeNull()
     await userEvent.click(within(first).getByRole('button', { name: 'Show more' }))
     expect(within(first).getByText('Automatic')).toBeInTheDocument()
     expect(within(first).getByText('Please pay')).toBeInTheDocument()
+    expect(first).toHaveTextContent('Reminder expires afterseven days')
 
     await userEvent.click(screen.getByRole('tab', { name: 'Payment' }))
     const panel = screen.getByRole('tabpanel', { name: 'Payment' })
     expect(within(panel).getByRole('region', { name: 'Payment succeeded' })).toHaveTextContent('No email is sent after payment.')
     expect(within(panel).getByRole('region', { name: 'Payment failed' })).toBeInTheDocument()
     expect(within(panel).getByRole('region', { name: 'Changed IBAN service' })).toBeInTheDocument()
+  })
+
+  it("numbers the days as Moneybird does: each step's expiry brings the next reminder", async () => {
+    const step = (order: number, days: number) => ({ ...exportFlow.steps![0]!, id: String(order + 1), step_order: order, due_interval: days, reminder_text: order ? `Reminder ${order}` : null })
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/workflows/603', () => HttpResponse.json({ ...exportFlow, steps: [step(2, 5), step(0, 14), step(3, 5), step(1, 10)] })))
+    renderAt('/11/workflows/603')
+    const send = await screen.findByRole('region', { name: /^Send invoice/ })
+    expect(send).toHaveTextContent('Day 1')
+    expect(send).toHaveTextContent('Reminder expires after14 days')
+    const reminders = ['1st', '2nd', '3rd'].map((n) => screen.getByRole('region', { name: new RegExp(`^${n} reminder`) }))
+    expect(reminders.map((r) => r.querySelector('.workflow-card__day')?.textContent)).toEqual(['Day 15', 'Day 25', 'Day 30'])
+    for (const r of reminders) await userEvent.click(within(r).getByRole('button', { name: 'Show more' }))
+    expect(reminders[0]).toHaveTextContent('Reminder 1')
+    expect(reminders[0]).toHaveTextContent('Reminder expires after10 days')
+    expect(reminders[1]).toHaveTextContent('Reminder expires afterfive days')
+    expect(reminders[2]).toHaveTextContent('Reminder expires afterfive days')
   })
 
   it('goes back to the invoice it was opened from', async () => {
@@ -108,7 +131,7 @@ describe('workflow page', () => {
     await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent.workflow).toMatchObject({
       payment_conditions: 'Pay *soon*', invoice_email_subject: 'Invoice {invoice_id}',
-      steps_attributes: [{ due_interval: 14 }, { due_interval: 0, reminder_delay: 7, reminder_text: 'Please pay', reminder_auto_send: true }],
+      steps_attributes: [{ due_interval: 14 }, { due_interval: 7, reminder_delay: 0, reminder_text: 'Please pay', reminder_auto_send: true }],
     }))
     await waitFor(() => expect(screen.queryByRole('form', { name: 'Send invoice' })).toBeNull())
   })
@@ -120,15 +143,19 @@ describe('workflow page', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Edit 1st reminder' }))
     let form = screen.getByRole('form', { name: '1st reminder' })
     await userEvent.click(within(form).getByRole('radio', { name: 'Manual' }))
+    const expires = within(form).getByLabelText('Reminder expires after')
+    expect(expires).toHaveValue(7)
+    await userEvent.clear(expires)
+    await userEvent.type(expires, '10')
     await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(sent.workflow?.steps_attributes).toEqual([{ due_interval: 14 }, { due_interval: 0, reminder_delay: 7, reminder_text: 'Please pay', reminder_auto_send: false }]))
+    await waitFor(() => expect(sent.workflow?.steps_attributes).toEqual([{ due_interval: 14 }, { due_interval: 10, reminder_delay: 0, reminder_text: 'Please pay', reminder_auto_send: false }]))
 
     await userEvent.click(await screen.findByRole('button', { name: 'Add reminder' }))
     form = screen.getByRole('form', { name: '2nd reminder' })
     await userEvent.type(within(form).getByLabelText('Email message for this reminder'), 'Second notice')
     await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent.workflow?.steps_attributes).toHaveLength(3))
-    expect((sent.workflow?.steps_attributes as unknown[])[2]).toMatchObject({ reminder_delay: 7, reminder_text: 'Second notice', reminder_auto_send: false })
+    expect((sent.workflow?.steps_attributes as unknown[])[2]).toMatchObject({ due_interval: 7, reminder_delay: 0, reminder_text: 'Second notice', reminder_auto_send: false })
 
     await userEvent.click(await screen.findByRole('button', { name: 'Edit 1st reminder' }))
     await userEvent.click(within(screen.getByRole('form', { name: '1st reminder' })).getByRole('button', { name: 'Remove reminder 1' }))

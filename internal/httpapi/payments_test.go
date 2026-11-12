@@ -144,6 +144,11 @@ func TestSalesInvoicePayments(t *testing.T) {
 
 	// Reminders.
 	overdue := send("50", false, 30)
+	// As on Moneybird the first reminder is due when the 14-day term expires,
+	// on the due date; the default first reminder then expires after 7 days.
+	if want := adminNow().AddDate(0, 0, -16).Format(time.DateOnly); deref(overdue.NextReminder) != want {
+		t.Errorf("next reminder = %v, want %s", deref(overdue.NextReminder), want)
+	}
 	r = owner.do(http.MethodPost, invoices+"/send_reminders", map[string]any{"sales_invoice_reminders": []map[string]any{{
 		"contact_id": overdue.ContactID, "workflow_id": overdue.WorkflowID, "document_style_id": overdue.DocumentStyleID,
 		"identity_id": overdue.IdentityID, "sales_invoice_ids": []string{overdue.ID}, "reminder_text": "Please pay:\n{invoices}",
@@ -152,6 +157,9 @@ func TestSalesInvoicePayments(t *testing.T) {
 	reminded := decode[[]paidInvoice](t, r)
 	if len(reminded) != 1 || reminded[0].State != "reminded" || reminded[0].ReminderCount != 1 {
 		t.Fatalf("reminded = %+v", reminded)
+	}
+	if want := adminNow().AddDate(0, 0, 7).Format(time.DateOnly); deref(reminded[0].NextReminder) != want {
+		t.Errorf("next reminder after the first = %v, want %s", deref(reminded[0].NextReminder), want)
 	}
 	h.mailer.mu.Lock()
 	last := h.mailer.documents[len(h.mailer.documents)-1]

@@ -96,8 +96,8 @@ export function workflow(over: Partial<Workflow> = {}): Workflow {
     invoice_email_subject: '', invoice_email_body: '',
     payment_conditions: over.type === 'EstimateWorkflow' ? '' : defaultConditions,
     steps: [
-      { id: '1', administration_id: '11', step_order: 1, due_interval: 14, reminder_delay: 0, reminder_text: null, reminder_auto_send: false, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-      { id: '2', administration_id: '11', step_order: 2, due_interval: 0, reminder_delay: 7, reminder_text: 'Please pay', reminder_auto_send: true, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+      { id: '1', administration_id: '11', step_order: 0, due_interval: 14, reminder_delay: 0, reminder_text: null, reminder_auto_send: false, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+      { id: '2', administration_id: '11', step_order: 1, due_interval: 7, reminder_delay: 0, reminder_text: 'Please pay', reminder_auto_send: true, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
     ],
     created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', uri: `/11/workflows/${id}`,
     ...over,

@@ -29,7 +29,8 @@ type ReminderInput struct {
 	EmailAddress   string
 }
 
-// steps are a workflow's steps in order: the payment term, then reminders.
+// steps are a workflow's steps in order: sending with the payment term,
+// then the reminders.
 func steps(w invoicing.Workflow) []invoicing.WorkflowStep {
 	out := slices.Clone(w.Steps)
 	slices.SortStableFunc(out, func(a, b invoicing.WorkflowStep) int { return a.StepOrder - b.StepOrder })
@@ -37,8 +38,10 @@ func steps(w invoicing.Workflow) []invoicing.WorkflowStep {
 }
 
 // nextReminder is when the workflow's next reminder for the invoice is due,
-// and that step: reminder n is due the sum of the delays of reminders 1 to
-// n after the due date.
+// and that step. As on Moneybird each step expires after its due interval
+// and the next reminder is due when it does: the first reminder on the
+// invoice's due date, every later one the due interval of the reminder
+// before it after the day that reminder went out.
 func nextReminder(inv Invoice, w invoicing.Workflow) (time.Time, invoicing.WorkflowStep, bool) {
 	if !payable(inv) || inv.Paused || inv.DueDate == nil || w.ID != inv.WorkflowID {
 		return time.Time{}, invoicing.WorkflowStep{}, false
@@ -48,9 +51,17 @@ func nextReminder(inv Invoice, w invoicing.Workflow) (time.Time, invoicing.Workf
 	if next >= len(list) {
 		return time.Time{}, invoicing.WorkflowStep{}, false
 	}
+	if inv.ReminderCount == 0 {
+		return *inv.DueDate, list[next], true
+	}
+	if inv.LastReminderOn != nil {
+		return inv.LastReminderOn.AddDate(0, 0, list[inv.ReminderCount].DueInterval), list[next], true
+	}
+	// Without the day of the last reminder, the reminders are taken to have
+	// gone out on the days the workflow plans them.
 	day := *inv.DueDate
-	for _, st := range list[1 : next+1] {
-		day = day.AddDate(0, 0, st.ReminderDelay)
+	for _, st := range list[1:next] {
+		day = day.AddDate(0, 0, st.DueInterval)
 	}
 	return day, list[next], true
 }
@@ -136,6 +147,7 @@ func (s *Service) SendReminders(ctx context.Context, admin, user resource.ID, in
 		return nil, err
 	}
 	var ids []resource.ID
+	today := s.today(a)
 	for _, j := range jobs {
 		if err := s.deliverReminder(ctx, a, user, j, settings.Settings); err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrDelivery, err)
@@ -146,7 +158,7 @@ func (s *Service) SendReminders(ctx context.Context, admin, user resource.ID, in
 		}
 		for _, inv := range j.invoices {
 			was := inv.State
-			inv.State, inv.ReminderCount, inv.UpdatedAt = Reminded, inv.ReminderCount+1, s.now()
+			inv.State, inv.ReminderCount, inv.LastReminderOn, inv.UpdatedAt = Reminded, inv.ReminderCount+1, &today, s.now()
 			if err := s.save(ctx, admin, user, &inv, nil, false); err != nil {
 				return nil, err
 			}
