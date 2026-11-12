@@ -180,20 +180,62 @@ func TestLedgerAccountTemplates(t *testing.T) {
 	a := owner.createAdministration("Harpy")
 	base := "/api/v2/" + a.Id + "/ledger_account_templates"
 
-	list := decode[[]httpapi.LedgerAccountTemplate](t, owner.do(http.MethodGet, base, nil))
-	if len(list) == 0 || list[0].Applied || len(list[0].LedgerAccounts) == 0 {
-		t.Fatalf("templates = %+v", list)
+	themes := func() map[string]httpapi.LedgerAccountTemplate {
+		out := map[string]httpapi.LedgerAccountTemplate{}
+		for _, tpl := range decode[[]httpapi.LedgerAccountTemplate](t, owner.do(http.MethodGet, base, nil)) {
+			out[tpl.Key] = tpl
+		}
+		return out
 	}
-	r := owner.do(http.MethodPost, base+"/"+list[0].Key, nil)
+	list := themes()
+	housing, ok := list["housing"]
+	if !ok || housing.Applied || len(housing.LedgerAccounts) == 0 || housing.Intro == "" || housing.Single != nil {
+		t.Fatalf("housing = %+v", housing)
+	}
+	var missing int
+	for _, a := range housing.LedgerAccounts {
+		if a.Key == "housing_tax" && (a.Exists || a.Parent == nil || *a.Parent != "housing" || a.RgsCode == "") {
+			t.Errorf("housing tax = %+v", a)
+		}
+		if !a.Exists {
+			missing++
+		}
+	}
+	if car := list["car_set"]; car.Choice == nil || len(car.Choice.Options) != 3 {
+		t.Errorf("car choice = %+v", car.Choice)
+	}
+	if revenue := list["revenue"]; revenue.Single == nil || !revenue.Single.Parent || len(revenue.Single.Options) == 0 {
+		t.Errorf("revenue single = %+v", revenue.Single)
+	}
+
+	// Without a body, the theme's missing ledger accounts are added.
+	r := owner.do(http.MethodPost, base+"/housing", nil)
 	wantStatus(t, r, http.StatusCreated)
-	if added := decode[[]ledgerAccount](t, r); len(added) != len(list[0].LedgerAccounts) {
-		t.Errorf("added %d, want %d", len(added), len(list[0].LedgerAccounts))
+	if added := decode[[]ledgerAccount](t, r); len(added) != missing {
+		t.Errorf("added %d, want %d", len(added), missing)
 	}
-	if again := decode[[]ledgerAccount](t, owner.do(http.MethodPost, base+"/"+list[0].Key, nil)); len(again) != 0 {
+	if again := decode[[]ledgerAccount](t, owner.do(http.MethodPost, base+"/housing", nil)); len(again) != 0 {
 		t.Errorf("second apply added %d", len(again))
 	}
-	if got := decode[[]httpapi.LedgerAccountTemplate](t, owner.do(http.MethodGet, base, nil)); !got[0].Applied {
+	if !themes()["housing"].Applied {
 		t.Error("template not marked applied")
 	}
+
+	// With a body, only the ticked ones and their parents.
+	r = owner.do(http.MethodPost, base+"/staff_set", map[string]any{"ledger_accounts": []string{"wages"}})
+	wantStatus(t, r, http.StatusCreated)
+	if added := decode[[]ledgerAccount](t, r); len(added) != 2 {
+		t.Errorf("staff added %d, want wages and staff", len(added))
+	}
+	wantStatus(t, owner.do(http.MethodPost, base+"/staff_set", map[string]any{"ledger_accounts": []string{"rent"}}), http.StatusUnprocessableEntity)
+
+	// A single theme adds the one ledger account named.
+	r = owner.do(http.MethodPost, base+"/revenue", map[string]any{"name": "Workshops", "option": "revenue_from_provision_of_services", "parent_id": ""})
+	wantStatus(t, r, http.StatusCreated)
+	if added := decode[[]ledgerAccount](t, r); len(added) != 1 || added[0].Name != "Workshops" {
+		t.Errorf("revenue added %+v", added)
+	}
+	wantStatus(t, owner.do(http.MethodPost, base+"/revenue", nil), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPost, base+"/revenue", map[string]any{"name": "X", "option": "net_sales_of_trade_goods", "parent_id": "x"}), http.StatusBadRequest)
 	wantStatus(t, owner.do(http.MethodPost, base+"/spaceship", nil), http.StatusNotFound)
 }

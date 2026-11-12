@@ -1096,7 +1096,7 @@ export interface paths {
         put?: never;
         /**
          * Add a template's ledger accounts
-         * @description MoneyHarpy extension. Adds the ledger accounts the administration does not have yet and returns them.
+         * @description MoneyHarpy extension. Adds the picked ledger accounts the administration does not have yet, with their parents, or the one ledger account a single theme adds, and returns them. Without a body, all of the theme's missing ledger accounts are added.
          */
         post: operations["applyLedgerAccountTemplate"];
         delete?: never;
@@ -7171,18 +7171,78 @@ export interface components {
                 rgs_code: string;
             }[];
         };
-        /** @description MoneyHarpy extension. A group of ledger accounts for a common situation. */
+        /** @description MoneyHarpy extension. A theme of Moneybird's Add category: ledger accounts to pick from for a common situation, such as a company car, or one ledger account the user names (single). */
         LedgerAccountTemplate: {
             key: string;
             name: string;
+            /** @description What the theme is for, in the list of themes. */
             description: string;
-            /** @description The administration has all of the template's ledger accounts. */
+            /** @description The text that heads the theme's page. */
+            intro: string;
+            /** @description A warning under the intro; empty for none. */
+            warning: string;
+            /** @description Label of the name the ledger accounts' names are completed with, such as the entrepreneur's; their names hold {name} for it. Empty when the names are fixed. */
+            name_label: string;
+            /** @description A question whose answer decides which ledger accounts show, such as how the car is financed. */
+            choice: components["schemas"]["LedgerAccountTemplateChoice"] | null;
+            /** @description Set when the theme adds one ledger account the user names, instead of picking from ledger_accounts. */
+            single: components["schemas"]["LedgerAccountTemplateSingle"] | null;
+            /** @description The administration has all of the template's ledger accounts. Never for single themes or names. */
             applied: boolean;
-            ledger_accounts: {
-                name: string;
-                account_type: components["schemas"]["AccountType"];
-                account_id: string;
-            }[];
+            ledger_accounts: components["schemas"]["LedgerAccountTemplateAccount"][];
+        };
+        /** @description MoneyHarpy extension. A ledger account a theme can add. */
+        LedgerAccountTemplateAccount: {
+            key: string;
+            /** @description Key of the ledger account in the theme it goes under. */
+            parent: string | null;
+            name: string;
+            account_type: components["schemas"]["AccountType"];
+            account_id: string;
+            /** @description Code in the chart scheme; empty when the administration does not use the country's scheme. */
+            rgs_code: string;
+            description: string;
+            /** @description The administration has this ledger account already. */
+            exists: boolean;
+            /** @description Ticked when the theme's page opens. */
+            selected: boolean;
+            /** @description The keys of the choice's options it shows for; empty for all. */
+            choices: string[];
+        };
+        /** @description MoneyHarpy extension. An answer of a theme's choice, or a kind of ledger account a single theme adds. */
+        LedgerAccountTemplateOption: {
+            key: string;
+            name: string;
+            rgs_code: string;
+        };
+        /** @description MoneyHarpy extension. */
+        LedgerAccountTemplateChoice: {
+            label: string;
+            /** @description Shown until an option is chosen. */
+            prompt: string;
+            options: components["schemas"]["LedgerAccountTemplateOption"][];
+        };
+        /** @description MoneyHarpy extension. The one ledger account a single theme adds. */
+        LedgerAccountTemplateSingle: {
+            account_type: components["schemas"]["AccountType"];
+            name_label: string;
+            /** @description Empty when the options have no label of their own. */
+            options_label: string;
+            options_help: string;
+            /** @description Whether a parent ledger account of the same type can be chosen. */
+            parent: boolean;
+            options: components["schemas"]["LedgerAccountTemplateOption"][];
+        };
+        /** @description MoneyHarpy extension. What was filled in on a theme's page. Without ledger_accounts, all of the theme's ledger accounts the administration does not have are added. */
+        LedgerAccountTemplateRequest: {
+            /** @description Keys of the ledger accounts to add; their parents in the theme come along. */
+            ledger_accounts?: string[];
+            /** @description Completes the names (name_label), or names the single ledger account. */
+            name?: string;
+            /** @description The kind of single ledger account. */
+            option?: string;
+            /** @description The single ledger account's parent; empty for none. */
+            parent_id?: string | null;
         };
         /** @description An amount of money, such as "10.95" or "-3,5". A number is accepted too. */
         Money: string | number;
@@ -12835,7 +12895,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["LedgerAccountTemplateRequest"];
+            };
+        };
         responses: {
             /** @description The added ledger accounts */
             201: {
@@ -12850,6 +12914,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };
     };

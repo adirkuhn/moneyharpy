@@ -141,6 +141,7 @@ function InvoiceForm(props: FormProps) {
   const nextDraftId = useNextDraftId(administrationId, !invoice)
   const { t, i18n } = useTranslation()
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const [ownLayoutsOpen, setOwnLayoutsOpen] = useState(false)
   const layoutsOpen = view ? view.layoutsOpen : ownLayoutsOpen
   const closeLayouts = view ? view.onLayoutsClose : () => setOwnLayoutsOpen(false)
@@ -315,6 +316,26 @@ function InvoiceForm(props: FormProps) {
       },
     })
   }
+  /**
+   * "Add Category..." in the details: Moneybird's Add category in this tab,
+   * which comes back to the invoice with its details open. Moneybird keeps a
+   * draft as it is typed; here the invoice is saved first, so nothing typed is
+   * lost, and stays put when it can't be saved.
+   */
+  const addCategory = () => {
+    const go = (id: string) =>
+      navigate(`/${administrationId}/ledger_accounts/blueprints?${new URLSearchParams({ return_to: `/${administrationId}/sales_invoices/${id}`, source: 'sales_invoice' })}`)
+    if (invoice?.id && !dirty) {
+      go(invoice.id)
+      return
+    }
+    save.mutate(body(), {
+      onSuccess: (s) => {
+        saved.current = sent
+        go(String(s.id))
+      },
+    })
+  }
   const openDialog = () => {
     before.current = setup
     save.reset()
@@ -460,6 +481,7 @@ function InvoiceForm(props: FormProps) {
                 onApplyBelow={(i, c) => setRows(applyBelow(rows, i, c))}
                 onDiscount={setDiscount}
                 onDone={linesInvalid ? undefined : () => setEditingLines(false)}
+                onAddCategory={addCategory}
               />
             ) : (
               <>

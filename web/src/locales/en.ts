@@ -576,9 +576,9 @@ export const en = {
     schemeCodeHelp: 'Type a code or a name to find a code.',
     deactivate: 'Deactivate', deactivateName: 'Deactivate {{name}}', reactivate: 'Reactivate', reactivateName: 'Reactivate {{name}}',
     accountTypes: {
-      non_current_assets: 'Fixed assets', current_assets: 'Current assets', equity: 'Equity', provisions: 'Provisions',
-      non_current_liabilities: 'Long-term liabilities', current_liabilities: 'Current liabilities',
-      revenue: 'Revenue', direct_costs: 'Cost of sales', expenses: 'Expenses', other_income_expenses: 'Other income and expenses',
+      non_current_assets: 'Non-current assets', current_assets: 'Current assets', equity: 'Equity', provisions: 'Provisions',
+      non_current_liabilities: 'Non-current liabilities', current_liabilities: 'Current liabilities',
+      revenue: 'Revenue', direct_costs: 'Direct costs', expenses: 'Expenses', other_income_expenses: 'Other income and expenses',
     },
     editCategory: 'Edit category', categoryName: 'Name', accountType: 'Type', accountNumber: 'Account number',
     parent: 'Parent category', noParent: 'None', description: 'Description', documentTypes: 'Can be used on',
@@ -594,12 +594,13 @@ export const en = {
     noTemplates: 'There are no themes for your country yet.', added: 'Added',
     addCategoryFor: 'Add category for Invoice', toInvoice: 'To invoice',
     themesIntro: 'Below categories are determined by the country of your administration.', themes: 'Themes',
+    legalFormIntro: 'Below categories are determined by your chosen legal form:',
     singleIntro: 'Are you still looking for a specific category for your business? Then add it separately.',
     singleIntroScheme: 'Are you still looking for a specific category for your business? Then add it separately based on the {{scheme}}.',
     theme: {
       title: 'Add category from {{name}}', titleFor: 'Add category for Invoice from {{name}}',
       profitAndLoss: 'Profit and loss statement', balanceSheet: 'Balance sheet', exists: 'Category already exists',
-      together: 'The categories you do not have yet are added together.', saveBack: 'Save and go back to the invoice',
+      saveBack: 'Save and go back to the invoice', warning: 'Warning:', choose: 'Select...', kind: 'Kind of category',
     },
     single: {
       title: 'Add single category', back: 'To Add category', optional: 'Optional',

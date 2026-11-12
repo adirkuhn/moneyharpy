@@ -1,6 +1,5 @@
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
 import { bookable, formatAmount } from '../banking/queries'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import type { FormErrors } from '../forms/Form'
@@ -43,6 +42,11 @@ type Props = {
   onDiscount: (value: string) => void
   /** Closes the editor; absent while something in it is wrong. */
   onDone?: () => void
+  /**
+   * "Add Category...": goes to Moneybird's Add category in this tab, which
+   * comes back to the invoice; the editor around makes sure nothing typed is lost.
+   */
+  onAddCategory: () => void
 }
 
 /**
@@ -53,8 +57,6 @@ type Props = {
 export function DetailsEditor(props: Props) {
   const { administrationId, rows, rates, accounts, currency, lineTotals, invalid, totals, discount, discountInvalid, errors } = props
   const { t, i18n } = useTranslation()
-  // Categories added from "Add Category..." come back to this invoice.
-  const { pathname } = useLocation()
   const d = (key: string, options: Record<string, unknown> = {}) => t(`invoices.details.${key}`, options)
   const hintId = useId()
   const [changed, setChanged] = useState<Record<string, Applicable[]>>({})
@@ -108,7 +110,7 @@ export function DetailsEditor(props: Props) {
       message: problems && <p id={id} className="form-input__message form-input__message--error">{problems.join(' ')}</p>,
     }
   }
-  const choose = (i: number, row: DetailRow, field: 'tax_rate_id' | 'ledger_account_id', value: string, addPath: string) => {
+  const choose = (i: number, row: DetailRow, field: 'tax_rate_id', value: string, addPath: string) => {
     if (value === addOption) {
       window.open(`/${administrationId}/${addPath}`, '_blank', 'noopener')
       return
@@ -220,7 +222,7 @@ export function DetailsEditor(props: Props) {
                   </select>
                   {rate.message}
                   {applyLink(i, r, 'tax_rate_id')}
-                  <select aria-label={t('invoices.category')} value={r.ledger_account_id} {...category.control} onChange={(e) => choose(i, r, 'ledger_account_id', e.target.value, `ledger_accounts/blueprints?${new URLSearchParams({ return_to: pathname, source: 'sales_invoice' })}`)}>
+                  <select aria-label={t('invoices.category')} value={r.ledger_account_id} {...category.control} onChange={(e) => (e.target.value === addOption ? props.onAddCategory() : set(i, r, 'ledger_account_id', e.target.value))}>
                     <option value="">{t('invoices.uncategorized')}</option>
                     {groups.map((g) => (
                       <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>
