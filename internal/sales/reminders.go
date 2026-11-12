@@ -259,6 +259,11 @@ func (s *Service) deliverReminder(ctx context.Context, a administration.Listed, 
 	subject, body := ReminderEmail(docs, j.text)
 	m := Mail{To: splitAddresses(j.delivery.EmailAddress), BCC: splitAddresses(settings.InvoiceBCC), ReplyTo: docs[0].Identity.Email,
 		FromName: docs[0].Identity.CompanyName, Subject: subject, Body: body, Files: files}
+	if len(docs) == 1 {
+		m.Look = s.emailLook(ctx, a.ID, user, docs[0], InvoiceDetails(docs[0]))
+	} else {
+		m.Look = s.emailLook(ctx, a.ID, user, docs[0], nil)
+	}
 	return s.mailer.SendDocument(ctx, m)
 }
 

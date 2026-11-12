@@ -327,6 +327,13 @@ test('invoices and estimates are set up in settings', async ({ page }) => {
   const logo = page.getByRole('img', { name: 'Current Logo' })
   await expect(logo).toBeVisible()
   await expect.poll(() => logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(1)
+  await page.getByRole('navigation', { name: 'Document style' }).getByRole('link', { name: 'Email' }).click()
+  await page.getByRole('button', { name: 'Header', exact: true }).click()
+  await page.getByLabel('Header type').selectOption('background_color_with_text')
+  await page.getByLabel('Text', { exact: true }).fill('Thanks for your order')
+  await expect(page.getByRole('article', { name: 'Email preview' })).toContainText('Thanks for your order')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page).toHaveURL(/\/settings\/invoices_and_estimates/)
 
   await page.goto(`${uri}/settings/invoices_and_estimates`)
   await page.getByRole('region', { name: 'Custom fields' }).getByRole('link', { name: 'Add' }).click()

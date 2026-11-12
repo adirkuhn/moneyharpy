@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { hiddenFields, moveField } from './styleLayout'
+import { customerFields, customFieldId, hiddenFields, moveField, withCustomFields } from './styleLayout'
 
 const fields = ['company_name', 'address', 'email'] as const
-const line = (field: string, bold = false) => ({ field, bold, label: false })
+const line = (field: string, bold = false) => ({ field, bold, italic: false, label: false })
 
 describe('document style columns', () => {
   it('lists the fields no column shows, with a blank line to add', () => {
@@ -29,6 +29,14 @@ describe('document style columns', () => {
     const { columns } = moveField([[line('address')]], fields, true, { column: 1, index: 2 }, { column: 0, index: 0 })
     expect(columns).toEqual([[line('newline'), line('address')]])
     expect(hiddenFields(columns, fields, true)).toContain('newline')
+  })
+
+  it('offers the custom fields of the records a block shows', () => {
+    const custom = [{ id: '7', source: 'identity' }, { id: '8', source: 'contact' }, { id: '9', source: 'sales_invoice' }]
+    expect(withCustomFields(['email'], custom, ['identity'])).toEqual(['email', 'custom_field_7'])
+    expect(withCustomFields(customerFields, custom, ['sales_invoice', 'contact'])).toEqual([...customerFields, 'custom_field_8', 'custom_field_9'])
+    expect(customFieldId('custom_field_8')).toBe('8')
+    expect(customFieldId('customer_id')).toBeUndefined()
   })
 
   it('moves a field between shown columns', () => {

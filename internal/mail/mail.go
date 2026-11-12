@@ -3,23 +3,17 @@
 package mail
 
 import (
-	"bytes"
 	"cmp"
 	"context"
-	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
-	"mime"
-	"mime/multipart"
 	"mime/quotedprintable"
 	"net"
 	stdmail "net/mail"
 	"net/smtp"
-	"net/textproto"
 	"net/url"
 	"strconv"
 	"strings"
@@ -59,6 +53,8 @@ type message struct {
 	replyTo  string
 	fromName string
 	files    []Attachment
+	// look styles the message as HTML besides the plain text.
+	look *Look
 }
 
 // Attachment is a file sent along with a document.
@@ -74,6 +70,8 @@ type Document struct {
 	FromName      string
 	Subject, Body string
 	Files         []Attachment
+	// Look, when set, adds an HTML version styled after the document style.
+	Look *Look
 }
 
 // SendDocument emails documents in the name of the sender. The first To
@@ -83,7 +81,7 @@ func (c *Client) SendDocument(ctx context.Context, d Document) error {
 		return errors.New("no recipient")
 	}
 	body := strings.ReplaceAll(strings.ReplaceAll(d.Body, "\r\n", "\n"), "\n", "\r\n")
-	return c.send(ctx, d.To[0], message{subject: d.Subject, body: body, cc: d.To[1:], bcc: d.BCC, replyTo: d.ReplyTo, fromName: d.FromName, files: d.Files})
+	return c.send(ctx, d.To[0], message{subject: d.Subject, body: body, cc: d.To[1:], bcc: d.BCC, replyTo: d.ReplyTo, fromName: d.FromName, files: d.Files, look: d.Look})
 }
 
 // SendPasswordReset emails a link for choosing a new password.
@@ -249,69 +247,6 @@ func (c *Client) hostname() string {
 		return cmp.Or(u.Hostname(), "localhost")
 	}
 	return "localhost"
-}
-
-func (c *Client) compose(from, to string, m message) ([]byte, error) {
-	var out bytes.Buffer
-	header := func(name, value string) { fmt.Fprintf(&out, "%s: %s\r\n", name, value) }
-	if m.fromName != "" {
-		from = (&stdmail.Address{Name: m.fromName, Address: from}).String()
-	}
-	header("From", from)
-	header("To", to)
-	if len(m.cc) > 0 {
-		header("Cc", strings.Join(m.cc, ", "))
-	}
-	if m.replyTo != "" {
-		header("Reply-To", m.replyTo)
-	}
-	header("Subject", mime.QEncoding.Encode("utf-8", m.subject))
-	header("Date", time.Now().Format(time.RFC1123Z))
-	header("Message-ID", "<"+rand.Text()+"@"+c.hostname()+">")
-	header("MIME-Version", "1.0")
-	if len(m.files) == 0 {
-		header("Content-Type", "text/plain; charset=utf-8")
-		header("Content-Transfer-Encoding", "quoted-printable")
-		out.WriteString("\r\n")
-		if err := writeQuoted(&out, m.body); err != nil {
-			return nil, err
-		}
-		return out.Bytes(), nil
-	}
-	parts := multipart.NewWriter(&out)
-	header("Content-Type", "multipart/mixed; boundary="+parts.Boundary())
-	out.WriteString("\r\n")
-	text, err := parts.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/plain; charset=utf-8"}, "Content-Transfer-Encoding": {"quoted-printable"}})
-	if err != nil {
-		return nil, fmt.Errorf("start body: %w", err)
-	}
-	if err := writeQuoted(text, m.body); err != nil {
-		return nil, err
-	}
-	for _, f := range m.files {
-		part, err := parts.CreatePart(textproto.MIMEHeader{
-			"Content-Type":              {mime.FormatMediaType(f.ContentType, map[string]string{"name": f.Name})},
-			"Content-Disposition":       {mime.FormatMediaType("attachment", map[string]string{"filename": f.Name})},
-			"Content-Transfer-Encoding": {"base64"},
-		})
-		if err != nil {
-			return nil, fmt.Errorf("start attachment: %w", err)
-		}
-		encoded := base64.StdEncoding.EncodeToString(f.Data)
-		var lines strings.Builder
-		for len(encoded) > 76 {
-			lines.WriteString(encoded[:76] + "\r\n")
-			encoded = encoded[76:]
-		}
-		lines.WriteString(encoded + "\r\n")
-		if _, err := io.WriteString(part, lines.String()); err != nil {
-			return nil, fmt.Errorf("write attachment: %w", err)
-		}
-	}
-	if err := parts.Close(); err != nil {
-		return nil, fmt.Errorf("finish message: %w", err)
-	}
-	return out.Bytes(), nil
 }
 
 func writeQuoted(dst io.Writer, body string) error {

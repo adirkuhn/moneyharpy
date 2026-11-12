@@ -341,7 +341,8 @@ func (s *Service) deliver(ctx context.Context, a administration.Listed, user res
 	if strings.TrimSpace(d.EmailMessage) != "" {
 		body = Expand(d.EmailMessage, doc)
 	}
-	m := Mail{To: splitAddresses(d.EmailAddress), BCC: splitAddresses(settings.InvoiceBCC), ReplyTo: doc.Identity.Email, FromName: doc.Identity.CompanyName, Subject: subject, Body: body, Files: files}
+	m := Mail{To: splitAddresses(d.EmailAddress), BCC: splitAddresses(settings.InvoiceBCC), ReplyTo: doc.Identity.Email, FromName: doc.Identity.CompanyName, Subject: subject, Body: body, Files: files,
+		Look: s.emailLook(ctx, a.ID, user, doc, InvoiceDetails(doc))}
 	return s.mailer.SendDocument(ctx, m)
 }
 
