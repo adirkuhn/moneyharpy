@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ListIcon } from '../layout/icons'
 import { type SenderEntry } from './paper'
@@ -11,9 +11,9 @@ import { type SenderEntry } from './paper'
  */
 
 /** The sheet itself. */
-export function Paper({ label, fontSize, children }: { label: string; fontSize?: number; children: ReactNode }) {
+export function Paper({ label, fontSize, children, ref }: { label: string; fontSize?: number; children: ReactNode; ref?: Ref<HTMLDivElement> }) {
   return (
-    <div className="invoice-paper" role="document" aria-label={label} style={fontSize ? { fontSize: `${Math.min(Math.max(fontSize, 8), 14) / 10}em` } : undefined}>
+    <div ref={ref} className="invoice-paper" role="document" aria-label={label} style={fontSize ? { fontSize: `${Math.min(Math.max(fontSize, 8), 14) / 10}em` } : undefined}>
       {children}
     </div>
   )

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useId, useRef } from 'react'
+import { type CSSProperties, type ReactNode, type RefObject, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PageIcon } from './pageIcons'
 import './modal.css'
@@ -16,6 +16,11 @@ type Props = {
   /** An alert dialog asks to confirm something and has no close button. */
   alert?: boolean
   className?: string
+  /**
+   * The document the popup is laid over, as Moneybird's popup--align-document:
+   * the popup takes its width and place, a little wider, without dimming the page.
+   */
+  anchor?: RefObject<HTMLElement | null>
 }
 
 /**
@@ -23,12 +28,13 @@ type Props = {
  * button, a body and buttons at the bottom. Focus moves into it and stays
  * there; Escape closes it and gives focus back to where it came from.
  */
-export function Modal({ title, subtitle, onClose, children, footer, alert = false, className = '' }: Props) {
+export function Modal({ title, subtitle, onClose, children, footer, alert = false, className = '', anchor }: Props) {
   const { t } = useTranslation()
   const id = useId()
   const box = useRef<HTMLDivElement>(null)
   const close = useRef(onClose)
   close.current = onClose
+  const place = useAnchor(anchor)
 
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null
@@ -66,7 +72,7 @@ export function Modal({ title, subtitle, onClose, children, footer, alert = fals
   }
 
   return (
-    <div className={`modal${alert ? ' modal--alert' : ''}`}>
+    <div className={`modal${alert ? ' modal--alert' : ''}${anchor ? ' modal--document' : ''}`} style={place}>
       <div className="modal__overlay" aria-hidden="true" onClick={alert ? undefined : onClose} />
       <div
         ref={box}
@@ -94,6 +100,25 @@ export function Modal({ title, subtitle, onClose, children, footer, alert = fals
       </div>
     </div>
   )
+}
+
+/** Where the document a popup is laid over sits, as CSS variables, kept up when the window is resized. */
+function useAnchor(anchor: RefObject<HTMLElement | null> | undefined): CSSProperties | undefined {
+  const [place, setPlace] = useState<CSSProperties>()
+  useLayoutEffect(() => {
+    const el = anchor?.current
+    if (!el) {
+      return
+    }
+    const measure = () => {
+      const r = el.getBoundingClientRect()
+      setPlace({ '--anchor-left': `${r.left}px`, '--anchor-width': `${r.width}px` } as CSSProperties)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [anchor])
+  return place
 }
 
 type ConfirmProps = {
