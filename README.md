@@ -702,6 +702,11 @@ those operations, and screens.
 
 ### Features not built
 
+- [ ] Matching bank transactions to invoices by payment reference: every sent
+  invoice has a unique RF payment reference, and a transaction quoting it
+  belongs to that invoice. Today such transactions are only suggested first
+  (Register payment → Bank transfer, and on the transaction's page); a real
+  matching mechanism that links them is still to be built.
 - [ ] Peppol sending and receiving (sending answers "not available yet").
 - [ ] Email-in addresses for external invoices and incoming documents;
   documents from email or Peppol; recurring purchase documents.
