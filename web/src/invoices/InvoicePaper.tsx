@@ -38,7 +38,7 @@ export function SenderAddress({ entries, dt }: { entries: SenderEntry[]; dt: TFu
 }
 
 /** What the recipient block shows: the contact's name and address, or Moneybird's placeholder and first step. */
-export function RecipientContent({ lines, chosen }: { lines: string[]; chosen: boolean }) {
+export function RecipientContent({ lines, chosen, editable = true }: { lines: string[]; chosen: boolean; editable?: boolean }) {
   const { t } = useTranslation()
   const shown = chosen ? lines : [t('invoices.editor.placeholderName'), t('invoices.editor.placeholderAddress'), t('invoices.editor.placeholderCity')]
   return (
@@ -47,7 +47,7 @@ export function RecipientContent({ lines, chosen }: { lines: string[]; chosen: b
       <span className={`invoice-paper__recipient-text${chosen ? '' : ' is-placeholder'}`}>
         {shown.map((l, i) => <span key={i} className="invoice-paper__line">{l}</span>)}
       </span>
-      <span className="invoice-paper__edit"><ListIcon kind="edit" /></span>
+      {editable && <span className="invoice-paper__edit"><ListIcon kind="edit" /></span>}
     </>
   )
 }
@@ -69,18 +69,23 @@ type DetailsProps = {
   lines: ShownLine[]
   /** The empty state's single row, as Moneybird shows it before any details are added. */
   empty: ShownLine
-  onEdit: () => void
+  /** Opens the lines for editing; without it they are only shown. */
+  onEdit?: () => void
+  /** Classes of each line, such as the one of the category the sidebar points at. */
+  rowClass?: (index: number) => string | undefined
 }
 
 /** The lines as the document prints them; a click on them opens them for editing. */
-export function DetailsView({ dt, lines, empty, onEdit }: DetailsProps) {
+export function DetailsView({ dt, lines, empty, onEdit, rowClass }: DetailsProps) {
   const { t } = useTranslation()
   const shown = lines.length ? lines : [empty]
   return (
-    <div className={`invoice-paper__details-view${lines.length ? '' : ' is-empty'}`} onClick={onEdit}>
-      <button type="button" className={lines.length ? 'invoice-paper__edit-details' : 'invoice-paper__step'} onClick={(e) => { e.stopPropagation(); onEdit() }}>
-        {lines.length ? <><ListIcon kind="edit" /><span className="sr-only">{t('invoices.editor.editDetails')}</span></> : t('invoices.editor.addDetails')}
-      </button>
+    <div className={`invoice-paper__details-view${lines.length ? '' : ' is-empty'}${onEdit ? '' : ' is-read-only'}`} onClick={onEdit}>
+      {onEdit && (
+        <button type="button" className={lines.length ? 'invoice-paper__edit-details' : 'invoice-paper__step'} onClick={(e) => { e.stopPropagation(); onEdit() }}>
+          {lines.length ? <><ListIcon kind="edit" /><span className="sr-only">{t('invoices.editor.editDetails')}</span></> : t('invoices.editor.addDetails')}
+        </button>
+      )}
       <table className="invoice-paper__lines" aria-label={dt('invoices.document.lines')}>
         <thead>
           <tr>
@@ -93,7 +98,7 @@ export function DetailsView({ dt, lines, empty, onEdit }: DetailsProps) {
         </thead>
         <tbody>
           {shown.map((l, i) => (
-            <tr key={i} className={lines.length ? undefined : 'is-placeholder'}>
+            <tr key={i} className={lines.length ? rowClass?.(i) : 'is-placeholder'}>
               <td className="invoice-paper__quantity">{l.quantity}</td>
               <td className="invoice-paper__description">{l.description}</td>
               <td className="invoice-paper__money">{l.price}</td>

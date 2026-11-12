@@ -56,6 +56,7 @@ import { IncomingListPage } from './incoming/IncomingListPage'
 import { UploadsPage } from './incoming/UploadsPage'
 import { InvoiceFormPage } from './invoices/InvoiceFormPage'
 import { InvoicePage } from './invoices/InvoicePage'
+import { RegisterPaymentPage } from './invoices/RegisterPaymentPage'
 import { InvoicesPage } from './invoices/InvoicesPage'
 import { JournalDocumentPage } from './journal/JournalDocumentPage'
 import { JournalDocumentsPage } from './journal/JournalDocumentsPage'
@@ -110,6 +111,7 @@ export function AppRoutes() {
           <Route path="/:administrationId/sales_invoices/new" element={<InvoiceFormPage />} />
           <Route path="/:administrationId/sales_invoices/:invoiceId" element={<InvoicePage />} />
           <Route path="/:administrationId/sales_invoices/:invoiceId/edit" element={<InvoiceFormPage />} />
+          <Route path="/:administrationId/sales_invoices/:invoiceId/payments/:way" element={<RegisterPaymentPage />} />
           <Route path="/:administrationId/external_sales_invoices" element={<ExternalInvoicesPage />} />
           <Route path="/:administrationId/external_sales_invoices/new" element={<ExternalInvoicePage />} />
           <Route path="/:administrationId/external_sales_invoices/:invoiceId" element={<ExternalInvoicePage />} />

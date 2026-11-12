@@ -148,6 +148,43 @@ export function useCreditSalesInvoice(administrationId: string, id: string) {
   })
 }
 
+/**
+ * What a copy of an invoice starts with, as Moneybird's "Duplicate invoice":
+ * the contact, settings and lines, as a new draft.
+ */
+export function duplicateOf(inv: SalesInvoice): SalesInvoiceChanges {
+  return {
+    contact_id: inv.contact_id ?? '',
+    reference: inv.reference ?? '',
+    ...(inv.workflow_id ? { workflow_id: inv.workflow_id } : {}),
+    ...(inv.document_style_id ? { document_style_id: inv.document_style_id } : {}),
+    prices_are_incl_tax: inv.prices_are_incl_tax ?? false,
+    ...(Number(inv.discount ?? 0) ? { discount: String(inv.discount) } : {}),
+    payment_conditions: inv.payment_conditions ?? '',
+    details_attributes: [...(inv.details ?? [])]
+      .sort((a, b) => (a.row_order ?? 0) - (b.row_order ?? 0))
+      .map((d, i) => ({
+        description: d.description ?? '',
+        amount: d.amount ?? '1',
+        price: String(d.price ?? '0'),
+        tax_rate_id: d.tax_rate_id ?? '',
+        ...(d.ledger_account_id ? { ledger_account_id: d.ledger_account_id } : {}),
+        ...(d.product_id ? { product_id: String(d.product_id) } : {}),
+        ...(d.period ? { period: d.period } : {}),
+        row_order: i + 1,
+      })),
+  }
+}
+
+export function useDuplicateSalesInvoice(administrationId: string) {
+  const saved = useSaved(administrationId)
+  return useMutation({
+    mutationFn: (inv: SalesInvoice) =>
+      unwrap(api.POST('/api/v2/{administration_id}/sales_invoices', { params: { path: admin(administrationId) }, body: { sales_invoice: duplicateOf(inv) } })),
+    onSuccess: saved,
+  })
+}
+
 export function usePauseSalesInvoice(administrationId: string, id: string) {
   const saved = useSaved(administrationId)
   return useMutation({
@@ -287,7 +324,7 @@ export function useDeleteDrafts(administrationId: string) {
 export function useAddInvoiceNote(administrationId: string, id: string, kind: InvoiceKind = 'sales') {
   const refetch = useRefetch(administrationId, id, kind)
   return useMutation({
-    mutationFn: (note: { note: string; todo: boolean }) =>
+    mutationFn: (note: { note: string; todo: boolean; assignee_id?: string }) =>
       kind === 'external'
         ? unwrap(api.POST('/api/v2/{administration_id}/external_sales_invoices/{id}/notes', { ...one(administrationId, id), body: { note } }))
         : unwrap(api.POST('/api/v2/{administration_id}/sales_invoices/{id}/notes', { ...one(administrationId, id), body: { note } })),
