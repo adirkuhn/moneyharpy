@@ -672,6 +672,14 @@ those operations, and screens.
 
 ### API behaviour still missing
 
+- [ ] **Foreign currencies:** an invoice's currency is stored and printed, but
+  nothing is converted. Moneybird books it in the administration's currency
+  with an `exchange_rate` and the `*_base` totals, takes `price_base` on
+  payments and books exchange rate differences; MoneyHarpy returns
+  `exchange_rate` 1.0, books 1:1 and leaves "Exchange rate differences"
+  unused. Needs a rate source. PDFs and emails print symbols only for €, $
+  and £ (others as "USD 12.34"); estimates, recurring and external invoices
+  still accept any three letters as a currency.
 - [ ] Settling a purchase invoice or receipt against a sales invoice.
 - [ ] `link_booking` types `Payment`, `PaymentTransaction`,
   `PaymentTransactionBatch` and `VatDocument`.

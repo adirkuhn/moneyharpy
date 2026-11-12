@@ -258,6 +258,40 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 	}
 }
 
+func TestSalesInvoiceKeepsItsCurrencyAndPriceMode(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	a := owner.createAdministration("Harpy")
+	invoices := "/api/v2/" + a.Id + "/sales_invoices"
+	customer := decode[contact](t, owner.do(http.MethodPost, "/api/v2/"+a.Id+"/contacts", map[string]any{"contact": map[string]any{"company_name": "Example Shop B.V."}}))
+	vat21 := salesRate(t, owner, a.Id, "21")
+	type priced struct {
+		ID               string `json:"id"`
+		Currency         string `json:"currency"`
+		PricesAreInclTax bool   `json:"prices_are_incl_tax"`
+		TotalIncl        string `json:"total_price_incl_tax"`
+	}
+	created := owner.do(http.MethodPost, invoices, map[string]any{"sales_invoice": map[string]any{
+		"contact_id": customer.ID, "currency": "USD", "prices_are_incl_tax": true,
+		"details_attributes": []map[string]any{{"description": "Consulting", "price": "121", "tax_rate_id": vat21}},
+	}})
+	wantStatus(t, created, http.StatusCreated)
+	inv := decode[priced](t, created)
+	if inv.Currency != "USD" || !inv.PricesAreInclTax || inv.TotalIncl != "121.0" {
+		t.Errorf("created = %+v", inv)
+	}
+	got := decode[priced](t, owner.do(http.MethodGet, invoices+"/"+inv.ID, nil))
+	if got.Currency != "USD" {
+		t.Errorf("stored currency = %q", got.Currency)
+	}
+	wrong := owner.do(http.MethodPatch, invoices+"/"+inv.ID, map[string]any{"sales_invoice": map[string]any{"currency": "ABC"}})
+	wantStatus(t, wrong, http.StatusUnprocessableEntity)
+	if !strings.Contains(string(wrong.body), "currency") {
+		t.Errorf("unknown currency body = %s", wrong.body)
+	}
+}
+
 func TestSalesInvoicesFollowPermissions(t *testing.T) {
 	h := newHarness(t, options{})
 	owner, banker := h.client(), h.client()

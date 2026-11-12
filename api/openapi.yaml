@@ -17107,6 +17107,7 @@ components:
                 - type: string
                   pattern: '^[0-9]{1,3}$'
             currency:
+              description: ISO three-character currency code, e.g. EUR or USD, one of the currencies the onboarding options list. Defaults to the workflow's currency.
               type: string
               maxLength: 3
             prices_are_incl_tax:
