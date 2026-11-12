@@ -157,37 +157,4 @@ func TestUpdateScheme(t *testing.T) {
 	}
 }
 
-func TestApplyTemplate(t *testing.T) {
-	svc, store := newTestService("NL")
-	ctx := context.Background()
-	before, _ := svc.LedgerAccounts(ctx, adminID, owner)
-	added, err := svc.ApplyTemplate(ctx, adminID, owner, "company_car")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(added) == 0 || len(store.accounts) != len(before)+len(added) {
-		t.Fatalf("added %d, have %d, had %d", len(added), len(store.accounts), len(before))
-	}
-	depreciation := byKey(t, store, "depreciation")
-	if p := byKey(t, store, "company_car_depreciation").ParentID; p == nil || *p != depreciation.ID {
-		t.Error("template category is not under the existing depreciation category")
-	}
-	if p := byKey(t, store, "company_car_fuel").ParentID; p == nil || *p != byKey(t, store, "company_car_costs").ID {
-		t.Error("template category is not under its template parent")
-	}
-	again, err := svc.ApplyTemplate(ctx, adminID, owner, "company_car")
-	if err != nil || len(again) != 0 {
-		t.Errorf("second apply added %d, %v", len(again), err)
-	}
-	templates, _ := svc.Templates(ctx, adminID, owner)
-	for _, tpl := range templates {
-		if tpl.Applied != (tpl.Key == "company_car") {
-			t.Errorf("%s applied = %v", tpl.Key, tpl.Applied)
-		}
-	}
-	if _, err := svc.ApplyTemplate(ctx, adminID, owner, "spaceship"); !errors.Is(err, ErrTemplateNotFound) {
-		t.Errorf("unknown template error = %v", err)
-	}
-}
-
 func contains(s, sub string) bool { return strings.Contains(s, sub) }

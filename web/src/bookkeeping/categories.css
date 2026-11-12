@@ -31,7 +31,7 @@
 .category-theme__list { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
 .category-theme__account { display: inline-flex; align-items: center; gap: 0.625rem; }
 .category-theme__account input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--blue); }
-.category-theme__account.is-there { color: var(--muted); }
+.category-theme__account.is-there input { cursor: default; }
 
 /* The single category: the form on the left and choosing its code on the right. */
 .single-category { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 1rem; align-items: start; }
@@ -58,3 +58,22 @@
 }
 .single-category .link-button { padding: 0; border: 0; background: none; color: var(--link); font: inherit; cursor: pointer; }
 .single-category .link-button:hover { text-decoration: underline; }
+
+/* A theme's page: what it asks first, the categories as trees, the information marks. */
+.category-theme__asked { display: grid; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.category-theme__asked--stacked .form-input { grid-template-columns: minmax(0, 1fr); gap: 0.375rem; }
+.category-theme__sides { display: grid; gap: 1rem; }
+.category-theme__list--sub { padding-left: 2rem; margin-top: 0.25rem; }
+.category-theme__check { display: inline-flex; align-items: center; gap: 0.625rem; cursor: pointer; }
+.category-theme__check input { flex: none; width: 1rem; height: 1rem; margin: 0; accent-color: var(--blue); }
+.category-theme__account.is-there .category-theme__check { cursor: default; }
+.category-theme__kinds { display: grid; gap: 0.375rem; }
+.category-theme__asked--last { padding-bottom: 0; border-bottom: 0; }
+.category-theme__kind { display: inline-flex; align-items: center; gap: 0.625rem; cursor: pointer; }
+.category-theme__kind input { flex: none; width: 1rem; height: 1rem; margin: 0; accent-color: var(--blue); }
+.category-add__legal-form { color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; }
+.category-tip { position: relative; display: inline-flex; flex: none; }
+.category-tip__button { display: inline-flex; padding: 0.125rem; border: 0; border-radius: 4px; background: none; color: var(--blue); cursor: help; }
+.category-tip__button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.category-tip__text { position: absolute; bottom: calc(100% + 0.375rem); left: 50%; z-index: 20; width: max-content; max-width: 18rem; padding: 0.5rem 0.625rem; border-radius: 6px; background: var(--navy); color: var(--white); font-size: 0.75rem; line-height: 1.4; white-space: normal; visibility: hidden; transform: translateX(-50%); }
+.category-tip:hover .category-tip__text, .category-tip__button:focus-visible + .category-tip__text { visibility: visible; }

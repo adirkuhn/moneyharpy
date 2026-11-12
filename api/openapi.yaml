@@ -2615,8 +2615,17 @@ paths:
       operationId: applyLedgerAccountTemplate
       x-permissions: [settings]
       summary: Add a template's ledger accounts
-      description: MoneyHarpy extension. Adds the ledger accounts the administration does not have yet and returns them.
+      description: >-
+        MoneyHarpy extension. Adds the picked ledger accounts the administration does not have yet, with their
+        parents, or the one ledger account a single theme adds, and returns them. Without a body, all of the
+        theme's missing ledger accounts are added.
       tags: [Ledger accounts]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LedgerAccountTemplateRequest'
       responses:
         '201':
           description: The added ledger accounts
@@ -2634,6 +2643,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/taxonomy_items:
@@ -14576,8 +14587,10 @@ components:
                 maxLength: 32
     LedgerAccountTemplate:
       type: object
-      description: MoneyHarpy extension. A group of ledger accounts for a common situation.
-      required: [key, name, description, applied, ledger_accounts]
+      description: >-
+        MoneyHarpy extension. A theme of Moneybird's Add category: ledger accounts to pick from for a common
+        situation, such as a company car, or one ledger account the user names (single).
+      required: [key, name, description, intro, warning, name_label, choice, single, applied, ledger_accounts]
       properties:
         key:
           type: string
@@ -14585,21 +14598,140 @@ components:
           type: string
         description:
           type: string
+          description: What the theme is for, in the list of themes.
+        intro:
+          type: string
+          description: The text that heads the theme's page.
+        warning:
+          type: string
+          description: A warning under the intro; empty for none.
+        name_label:
+          type: string
+          description: >-
+            Label of the name the ledger accounts' names are completed with, such as the entrepreneur's; their
+            names hold {name} for it. Empty when the names are fixed.
+        choice:
+          nullable: true
+          description: A question whose answer decides which ledger accounts show, such as how the car is financed.
+          allOf:
+            - $ref: '#/components/schemas/LedgerAccountTemplateChoice'
+        single:
+          nullable: true
+          description: Set when the theme adds one ledger account the user names, instead of picking from ledger_accounts.
+          allOf:
+            - $ref: '#/components/schemas/LedgerAccountTemplateSingle'
         applied:
           type: boolean
-          description: The administration has all of the template's ledger accounts.
+          description: The administration has all of the template's ledger accounts. Never for single themes or names.
         ledger_accounts:
           type: array
           items:
-            type: object
-            required: [name, account_type, account_id]
-            properties:
-              name:
-                type: string
-              account_type:
-                $ref: '#/components/schemas/AccountType'
-              account_id:
-                type: string
+            $ref: '#/components/schemas/LedgerAccountTemplateAccount'
+    LedgerAccountTemplateAccount:
+      type: object
+      description: MoneyHarpy extension. A ledger account a theme can add.
+      required: [key, parent, name, account_type, account_id, rgs_code, description, exists, selected, choices]
+      properties:
+        key:
+          type: string
+        parent:
+          type: string
+          nullable: true
+          description: Key of the ledger account in the theme it goes under.
+        name:
+          type: string
+        account_type:
+          $ref: '#/components/schemas/AccountType'
+        account_id:
+          type: string
+        rgs_code:
+          type: string
+          description: Code in the chart scheme; empty when the administration does not use the country's scheme.
+        description:
+          type: string
+        exists:
+          type: boolean
+          description: The administration has this ledger account already.
+        selected:
+          type: boolean
+          description: Ticked when the theme's page opens.
+        choices:
+          type: array
+          description: The keys of the choice's options it shows for; empty for all.
+          items:
+            type: string
+    LedgerAccountTemplateOption:
+      type: object
+      description: MoneyHarpy extension. An answer of a theme's choice, or a kind of ledger account a single theme adds.
+      required: [key, name, rgs_code]
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        rgs_code:
+          type: string
+    LedgerAccountTemplateChoice:
+      type: object
+      description: MoneyHarpy extension.
+      required: [label, prompt, options]
+      properties:
+        label:
+          type: string
+        prompt:
+          type: string
+          description: Shown until an option is chosen.
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/LedgerAccountTemplateOption'
+    LedgerAccountTemplateSingle:
+      type: object
+      description: MoneyHarpy extension. The one ledger account a single theme adds.
+      required: [account_type, name_label, options_label, options_help, parent, options]
+      properties:
+        account_type:
+          $ref: '#/components/schemas/AccountType'
+        name_label:
+          type: string
+        options_label:
+          type: string
+          description: Empty when the options have no label of their own.
+        options_help:
+          type: string
+        parent:
+          type: boolean
+          description: Whether a parent ledger account of the same type can be chosen.
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/LedgerAccountTemplateOption'
+    LedgerAccountTemplateRequest:
+      type: object
+      description: >-
+        MoneyHarpy extension. What was filled in on a theme's page. Without ledger_accounts, all of the theme's
+        ledger accounts the administration does not have are added.
+      properties:
+        ledger_accounts:
+          type: array
+          description: Keys of the ledger accounts to add; their parents in the theme come along.
+          maxItems: 200
+          items:
+            type: string
+            maxLength: 128
+        name:
+          type: string
+          maxLength: 255
+          description: Completes the names (name_label), or names the single ledger account.
+        option:
+          type: string
+          maxLength: 64
+          description: The kind of single ledger account.
+        parent_id:
+          type: string
+          pattern: '^[0-9]{0,19}$'
+          nullable: true
+          description: The single ledger account's parent; empty for none.
     Money:
       description: An amount of money, such as "10.95" or "-3,5". A number is accepted too.
       oneOf:

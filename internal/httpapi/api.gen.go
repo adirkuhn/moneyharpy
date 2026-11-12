@@ -6878,18 +6878,100 @@ type LedgerAccountSchemeRequest struct {
 	} `json:"ledger_accounts"`
 }
 
-// LedgerAccountTemplate MoneyHarpy extension. A group of ledger accounts for a common situation.
+// LedgerAccountTemplate MoneyHarpy extension. A theme of Moneybird's Add category: ledger accounts to pick from for a common situation, such as a company car, or one ledger account the user names (single).
 type LedgerAccountTemplate struct {
-	// Applied The administration has all of the template's ledger accounts.
-	Applied        bool   `json:"applied"`
-	Description    string `json:"description"`
-	Key            string `json:"key"`
-	LedgerAccounts []struct {
-		AccountId   string      `json:"account_id"`
-		AccountType AccountType `json:"account_type"`
-		Name        string      `json:"name"`
-	} `json:"ledger_accounts"`
-	Name string `json:"name"`
+	// Applied The administration has all of the template's ledger accounts. Never for single themes or names.
+	Applied bool `json:"applied"`
+
+	// Choice A question whose answer decides which ledger accounts show, such as how the car is financed.
+	Choice *LedgerAccountTemplateChoice `json:"choice"`
+
+	// Description What the theme is for, in the list of themes.
+	Description string `json:"description"`
+
+	// Intro The text that heads the theme's page.
+	Intro          string                         `json:"intro"`
+	Key            string                         `json:"key"`
+	LedgerAccounts []LedgerAccountTemplateAccount `json:"ledger_accounts"`
+	Name           string                         `json:"name"`
+
+	// NameLabel Label of the name the ledger accounts' names are completed with, such as the entrepreneur's; their names hold {name} for it. Empty when the names are fixed.
+	NameLabel string `json:"name_label"`
+
+	// Single Set when the theme adds one ledger account the user names, instead of picking from ledger_accounts.
+	Single *LedgerAccountTemplateSingle `json:"single"`
+
+	// Warning A warning under the intro; empty for none.
+	Warning string `json:"warning"`
+}
+
+// LedgerAccountTemplateAccount MoneyHarpy extension. A ledger account a theme can add.
+type LedgerAccountTemplateAccount struct {
+	AccountId   string      `json:"account_id"`
+	AccountType AccountType `json:"account_type"`
+
+	// Choices The keys of the choice's options it shows for; empty for all.
+	Choices     []string `json:"choices"`
+	Description string   `json:"description"`
+
+	// Exists The administration has this ledger account already.
+	Exists bool   `json:"exists"`
+	Key    string `json:"key"`
+	Name   string `json:"name"`
+
+	// Parent Key of the ledger account in the theme it goes under.
+	Parent *string `json:"parent"`
+
+	// RgsCode Code in the chart scheme; empty when the administration does not use the country's scheme.
+	RgsCode string `json:"rgs_code"`
+
+	// Selected Ticked when the theme's page opens.
+	Selected bool `json:"selected"`
+}
+
+// LedgerAccountTemplateChoice MoneyHarpy extension.
+type LedgerAccountTemplateChoice struct {
+	Label   string                        `json:"label"`
+	Options []LedgerAccountTemplateOption `json:"options"`
+
+	// Prompt Shown until an option is chosen.
+	Prompt string `json:"prompt"`
+}
+
+// LedgerAccountTemplateOption MoneyHarpy extension. An answer of a theme's choice, or a kind of ledger account a single theme adds.
+type LedgerAccountTemplateOption struct {
+	Key     string `json:"key"`
+	Name    string `json:"name"`
+	RgsCode string `json:"rgs_code"`
+}
+
+// LedgerAccountTemplateRequest MoneyHarpy extension. What was filled in on a theme's page. Without ledger_accounts, all of the theme's ledger accounts the administration does not have are added.
+type LedgerAccountTemplateRequest struct {
+	// LedgerAccounts Keys of the ledger accounts to add; their parents in the theme come along.
+	LedgerAccounts *[]string `json:"ledger_accounts,omitempty"`
+
+	// Name Completes the names (name_label), or names the single ledger account.
+	Name *string `json:"name,omitempty"`
+
+	// Option The kind of single ledger account.
+	Option *string `json:"option,omitempty"`
+
+	// ParentId The single ledger account's parent; empty for none.
+	ParentId *string `json:"parent_id,omitempty"`
+}
+
+// LedgerAccountTemplateSingle MoneyHarpy extension. The one ledger account a single theme adds.
+type LedgerAccountTemplateSingle struct {
+	AccountType AccountType                   `json:"account_type"`
+	NameLabel   string                        `json:"name_label"`
+	Options     []LedgerAccountTemplateOption `json:"options"`
+	OptionsHelp string                        `json:"options_help"`
+
+	// OptionsLabel Empty when the options have no label of their own.
+	OptionsLabel string `json:"options_label"`
+
+	// Parent Whether a parent ledger account of the same type can be chosen.
+	Parent bool `json:"parent"`
 }
 
 // LedgerAccountValues defines model for LedgerAccountValues.
@@ -13491,6 +13573,9 @@ type UpdateIdentityJSONRequestBody = IdentityRequest
 
 // UpdateInvoiceSettingsJSONRequestBody defines body for UpdateInvoiceSettings for application/json ContentType.
 type UpdateInvoiceSettingsJSONRequestBody = InvoiceSettingsRequest
+
+// ApplyLedgerAccountTemplateJSONRequestBody defines body for ApplyLedgerAccountTemplate for application/json ContentType.
+type ApplyLedgerAccountTemplateJSONRequestBody = LedgerAccountTemplateRequest
 
 // CreateLedgerAccountJSONRequestBody defines body for CreateLedgerAccount for application/json ContentType.
 type CreateLedgerAccountJSONRequestBody = LedgerAccountRequest

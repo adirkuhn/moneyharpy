@@ -1,10 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { renderAt } from '../test/render'
 import { server } from '../test/server'
-import { creating, detailRows, editLines, editorCard, empty, invoice, invoicePaper, loaded, paper, pickContact, popup } from './testkit'
+import { creating, detailRows, draft, editLines, editorCard, empty, invoice, invoicePaper, loaded, paper, pickContact, popup } from './testkit'
 
 describe('the invoice details editor', () => {
   it('adds details with their totals, discount and VAT, after Moneybird', async () => {
@@ -41,12 +41,6 @@ describe('the invoice details editor', () => {
     await userEvent.type(within(rows[1]!).getByLabelText('Price'), '50')
     await userEvent.selectOptions(within(rows[1]!).getByLabelText('VAT rate'), '2109')
     await userEvent.selectOptions(within(rows[1]!).getByLabelText('Category'), '8001')
-    // "Add Category..." opens Moneybird's Add category in a new tab, which comes back to this invoice.
-    const open = vi.spyOn(window, 'open').mockReturnValue(null)
-    await userEvent.selectOptions(within(rows[1]!).getByLabelText('Category'), 'Add Category...')
-    expect(open).toHaveBeenCalledWith(`/11/ledger_accounts/blueprints?return_to=${encodeURIComponent('/11/sales_invoices/902')}&source=sales_invoice`, '_blank', 'noopener')
-    expect(within(rows[1]!).getByLabelText('Category')).toHaveValue('8001')
-    open.mockRestore()
 
     await userEvent.click(screen.getByRole('button', { name: 'Discount' }))
     await userEvent.click(screen.getByRole('button', { name: 'Discount over total price' }))
@@ -254,5 +248,42 @@ describe('the invoice details editor', () => {
       { id: '951', description: 'Consulting', amount: '2', price: '120', tax_rate_id: '2101', ledger_account_id: '8001', row_order: 1 },
       { id: '952', _destroy: true },
     ])
+  })
+
+  it('saves the draft before "Add Category..." opens Add category in this tab, which comes back to the invoice', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(
+      ...creating(sent, draft),
+      http.get('*/api/v2/11/bookkeeping_settings', () => HttpResponse.json({ chart_scheme: '', chart_schemes: [] })),
+      http.get('*/api/v2/11/ledger_account_templates', () => HttpResponse.json([])),
+    )
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: /^Invoice Draft #3$/ })
+    await editLines()
+    const row = detailRows()[0]!
+    await userEvent.clear(within(row).getByLabelText('Description'))
+    await userEvent.type(within(row).getByLabelText('Description'), 'Coaching')
+    await userEvent.selectOptions(within(row).getByLabelText('Category'), 'Add Category...')
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/ledger_accounts\/blueprints$/))
+    expect(sent.patch?.details_attributes).toEqual([expect.objectContaining({ description: 'Coaching' })])
+    expect(await screen.findByRole('heading', { name: 'Add category for Invoice', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'To invoice' })).toHaveAttribute('href', '/11/sales_invoices/902')
+  })
+
+  it('goes to Add category straight away when nothing changed', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(
+      ...creating(sent, draft),
+      http.get('*/api/v2/11/bookkeeping_settings', () => HttpResponse.json({ chart_scheme: '', chart_schemes: [] })),
+      http.get('*/api/v2/11/ledger_account_templates', () => HttpResponse.json([])),
+    )
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: /^Invoice Draft #3$/ })
+    await editLines()
+    await userEvent.selectOptions(within(detailRows()[0]!).getByLabelText('Category'), 'Add Category...')
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/ledger_accounts\/blueprints$/))
+    expect(sent.patch).toBeUndefined()
   })
 })
