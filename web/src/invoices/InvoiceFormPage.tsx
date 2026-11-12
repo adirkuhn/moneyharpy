@@ -27,8 +27,12 @@ import { computeTotals, parseCents, parsePercentage, parseQuantity } from './tot
 import { type TotalRow, TotalsTable } from './TotalsTable'
 import './editor.css'
 
-/** What a page that just saved the invoice hands to its editor: open the details, keep a number filled in by hand. */
-type Opening = { details?: boolean; sequenceId?: string } | null
+/**
+ * What a page hands to the editor: open the details or the popup, as the
+ * invoice's page does from the blocks of its document, and keep a number
+ * filled in by hand after a save.
+ */
+export type Opening = { details?: boolean; dialog?: boolean; sequenceId?: string } | null
 
 /**
  * Creates an invoice (/sales_invoices/new, ?contact_id= to start with that
@@ -141,7 +145,7 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates, openin
   const [editingLines, setEditingLines] = useState(!!opening?.details)
   const [layoutsOpen, setLayoutsOpen] = useState(false)
   // A new invoice starts in the popup, as on Moneybird.
-  const [dialogOpen, setDialogOpen] = useState(!invoice)
+  const [dialogOpen, setDialogOpen] = useState(!invoice || !!opening?.dialog)
   const before = useRef<InvoiceSetup>(setup)
   const change = (c: Partial<InvoiceSetup>) => setSetup((s) => ({ ...s, ...c }))
 

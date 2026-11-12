@@ -764,16 +764,21 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   const totals = page.getByRole('region', { name: 'Invoice details' }).getByRole('table', { name: 'Totals' })
   await expect(totals.getByRole('row', { name: /^Total\b/ })).toContainText(/302[.,]50/)
   await page.getByRole('button', { name: 'Save invoice' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Draft #1' })).toBeVisible()
+  // As on Moneybird, the invoice's page shows it as its document; its title is for screen readers.
+  await expect(page.getByRole('heading', { level: 1, name: 'Draft #1' })).toBeAttached()
+  await expect(page.getByRole('document', { name: 'Invoice Draft #1' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Send', exact: true }).click()
+  await page.getByRole('button', { name: 'Send invoice', exact: true }).click()
   const sending = page.getByRole('region', { name: 'Send invoice' })
   await expect(sending.getByLabel('Email address')).toHaveValue(customer)
   await sending.getByRole('button', { name: 'Send invoice' }).click()
   await expect(page.locator('.badge', { hasText: 'Open' })).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).not.toHaveText(/Draft/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/\d/)
-  await expect(page.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText('€302.50')
+  // The document is written in the workflow's language.
+  await expect(page.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText(/302[.,]50/)
+  await expect(page.getByRole('complementary', { name: 'Invoice information' }).getByRole('list', { name: 'Payment summary' })).toContainText('€302.50')
 
   const mail = await playwrightRequest.newContext()
   await expect
@@ -781,22 +786,32 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
     .toBe(1)
   await mail.dispose()
 
-  const pdf = await page.request.get((await page.getByRole('link', { name: 'Download PDF' }).getAttribute('href')) ?? '')
+  await page.getByRole('button', { name: 'Download as...' }).click()
+  const pdf = await page.request.get((await page.getByRole('link', { name: 'Invoice (PDF)' }).getAttribute('href')) ?? '')
   expect(pdf.status()).toBe(200)
   expect(pdf.headers()['content-type']).toContain('application/pdf')
+  await page.keyboard.press('Escape')
 
   const attachments = page.getByRole('region', { name: 'Attachments' })
-  await attachments.getByLabel('Add attachment').setInputFiles({ name: 'order.txt', mimeType: 'text/plain', buffer: Buffer.from('Order 12') })
+  await expect(attachments).toContainText('Drag files here to add or select files (Maximum 10 MB total)')
+  await attachments.getByLabel('select files').setInputFiles({ name: 'order.txt', mimeType: 'text/plain', buffer: Buffer.from('Order 12') })
   await expect(attachments.getByRole('link', { name: 'order.txt' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'More actions' }).click()
-  await page.getByRole('button', { name: 'Create credit invoice' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: /^Draft/ })).toBeVisible()
+  // A note goes into the history beside the invoice, under today.
+  const notes = page.getByRole('region', { name: 'Notes and tasks' })
+  await notes.getByRole('textbox', { name: 'Add a note or to-do' }).fill('Called about the order')
+  await notes.getByRole('button', { name: 'Save' }).click()
+  await expect(notes.getByRole('listitem').filter({ hasText: 'Called about the order' })).toBeVisible()
+  await expect(notes.getByRole('heading', { level: 3, name: 'Today' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Extra' }).click()
+  await page.getByRole('button', { name: 'Duplicate to credit note' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: /^Draft/ })).toBeAttached()
   await expect(page.locator('.badge', { hasText: 'Draft' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'the original invoice' })).toBeVisible()
-  await expect(page.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText('-€302.50')
+  await expect(page.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText(/-\s*€\s*302[.,]50|€\s*-\s*302[.,]50/)
 
-  await page.getByRole('link', { name: 'To Invoices' }).click()
+  await page.goto(`${uri}/sales_invoices`)
   await page.getByRole('button', { name: 'Invoices from this year' }).click()
   await page.getByRole('search', { name: 'Invoice filters' }).getByRole('link', { name: 'Unpaid invoices' }).click()
   await expect(page.getByRole('button', { name: 'Unpaid invoices' })).toBeVisible()
@@ -832,16 +847,23 @@ test('sales invoices are paid by hand and by a bank transaction, and the overvie
   const first = await draft('121')
   await page.goto(`${uri}/sales_invoices/${first}`)
   await page.getByRole('button', { name: 'Send', exact: true }).click()
+  await page.getByRole('button', { name: 'Send invoice', exact: true }).click()
   const sending = page.getByRole('region', { name: 'Send invoice' })
   await sending.getByLabel('Send by').selectOption('Manual')
   await sending.getByRole('button', { name: 'Send invoice' }).click()
   await expect(page.locator('.badge', { hasText: 'Open' })).toBeVisible()
-  const payments = page.getByRole('region', { name: 'Payments' })
-  const form = payments.getByRole('form', { name: 'Register payment' })
-  await expect(form.getByLabel('Amount')).toHaveValue('121')
-  await form.getByRole('button', { name: 'Register payment' }).click()
+  // Moneybird's Register payment asks how the invoice was paid first.
+  await page.getByRole('link', { name: 'Register payment' }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'How was the invoice paid?' })).toBeVisible()
+  await page.getByRole('link', { name: 'Mark as paid without proof' }).click()
+  const form = page.getByRole('form', { name: 'Register payment' })
+  await expect(form.getByLabel('Amount')).toHaveValue('121.00')
+  await form.getByRole('button', { name: 'Save' }).click()
   await expect(page.locator('.badge', { hasText: 'Paid' })).toBeVisible()
-  await expect(payments.getByRole('table', { name: 'Payments' }).getByRole('row', { name: /Bank transfer/ })).toContainText('€121.00')
+  const sidebar = page.getByRole('complementary', { name: 'Invoice information' })
+  await sidebar.getByRole('button', { name: 'View registered payment' }).click()
+  await expect(sidebar.getByRole('list', { name: 'Registered payments' }).getByRole('listitem')).toContainText(/€121\.00.*Without proof/)
+  await expect(sidebar.getByRole('region', { name: 'Notes and tasks' })).toContainText('Received payment of €121.00')
 
   // The second waits for its money, which the overview counts.
   const second = await draft('1000')
@@ -869,7 +891,8 @@ test('sales invoices are paid by hand and by a bank transaction, and the overvie
   await expect(page.getByRole('form', { name: 'Link to an invoice' })).toBeHidden()
   await paid.getByRole('link', { name: number }).click()
   await expect(page.locator('.badge', { hasText: 'Paid' })).toBeVisible()
-  await expect(page.getByRole('table', { name: 'Payments' }).getByRole('link', { name: 'Bank transaction' })).toBeVisible()
+  await sidebar.getByRole('button', { name: 'View registered payment' }).click()
+  await expect(sidebar.getByRole('list', { name: 'Registered payments' }).getByRole('link', { name: 'Bank transaction' })).toBeVisible()
 
   await page.goto(`${uri}/feed`)
   await expect(sales.getByRole('link', { name: /To receive\s*— 0\s*€0\.00/ })).toBeVisible()
@@ -950,8 +973,8 @@ test('a draft invoice is made recurring, scheduled and deactivated', async ({ pa
 
   // The draft is the template: its contact, reference and lines are copied.
   await page.goto(`${uri}/sales_invoices/${draft}`)
-  await page.getByRole('button', { name: 'More actions' }).click()
-  await page.getByRole('link', { name: 'Make recurring' }).click()
+  await page.getByRole('button', { name: 'Extra' }).click()
+  await page.getByRole('link', { name: 'Duplicate to recurring invoice' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'New recurring invoice' })).toBeVisible()
   const form = page.getByRole('form', { name: 'Recurring invoice' })
   await expect(form.getByLabel('Reference')).toHaveValue('Contract 7')
@@ -1068,8 +1091,8 @@ test('a quote is written, sent, accepted and billed as an invoice', async ({ pag
 
   await page.getByRole('button', { name: 'Bill', exact: true }).click()
   await expect(page).toHaveURL(/\/\d+\/sales_invoices\/\d+$/)
-  await expect(page.getByRole('heading', { level: 1, name: /^Draft/ })).toBeVisible()
-  await expect(page.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText('€363.00')
+  await expect(page.getByRole('heading', { level: 1, name: /^Draft/ })).toBeAttached()
+  await expect(page.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText(/363[.,]00/)
 
   await menu.getByRole('link', { name: 'Quotes' }).click()
   const table = page.getByRole('table', { name: 'Quotes' })

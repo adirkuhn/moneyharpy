@@ -12,6 +12,8 @@ type Props = {
   actions?: ReactNode
   /** Lists use the width of the screen. */
   wide?: boolean
+  /** The title is for screen readers only, as on Moneybird's document pages, where the document says what it is. */
+  hideTitle?: boolean
   children: ReactNode
 }
 
@@ -19,8 +21,8 @@ type Props = {
  * A page with its action bar. Beside a filter button the title is for screen
  * readers only, as on Moneybird's lists: the button already says what is shown.
  */
-export function Page({ title, subtitle, back, lead, actions, wide = false, children }: Props) {
-  const titleHidden = lead !== undefined && back === undefined
+export function Page({ title, subtitle, back, lead, actions, wide = false, hideTitle = false, children }: Props) {
+  const titleHidden = hideTitle || (lead !== undefined && back === undefined)
   return (
     <>
       <header className={`actionbar${wide ? ' actionbar--wide' : ''}`}>
