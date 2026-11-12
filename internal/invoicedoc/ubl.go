@@ -39,7 +39,7 @@ func (Renderer) UBL(doc sales.Document) ([]byte, error) {
 		x.TypeCode = "381"
 	}
 	if doc.Identity.BankAccountNumber != "" {
-		x.PaymentMeans = &paymentMeans{Code: "30", PaymentID: inv.PaymentReference, Account: &account{ID: doc.Identity.BankAccountNumber, Name: cmp(doc.Identity.BankAccountName, doc.Identity.CompanyName)}}
+		x.PaymentMeans = &paymentMeans{Code: "30", PaymentID: sales.ShortPaymentReference(inv.PaymentReference), Account: &account{ID: doc.Identity.BankAccountNumber, Name: cmp(doc.Identity.BankAccountName, doc.Identity.CompanyName)}}
 	}
 	x.TaxTotal.TaxAmount = amt(tot.Tax)
 	for _, r := range tot.ByRate {

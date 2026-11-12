@@ -187,7 +187,7 @@ func (s *server) toSalesInvoice(inv sales.Invoice, contact *contacts.Contact, to
 		ID: inv.ID.String(), AdministrationID: inv.AdministrationID.String(), ContactID: inv.ContactID.String(), ContactPersonID: idString(inv.ContactPersonID),
 		InvoiceID: nz(inv.InvoiceID), RecurringSalesInvoiceID: idString(inv.RecurringSalesInvoiceID), SubscriptionID: idString(inv.SubscriptionID), WorkflowID: inv.WorkflowID.String(),
 		DocumentStyleID: inv.DocumentStyleID.String(), IdentityID: inv.IdentityID.String(), State: inv.State, InvoiceDate: date(inv.InvoiceDate),
-		DueDate: due.Format(time.DateOnly), PaymentConditions: nz(inv.PaymentConditions), PaymentReference: nz(inv.PaymentReference),
+		DueDate: due.Format(time.DateOnly), PaymentConditions: nz(inv.PaymentConditions), PaymentReference: nz(inv.PaymentReference), ShortPaymentReference: nz(sales.ShortPaymentReference(inv.PaymentReference)),
 		Reference: nz(inv.Reference), Language: inv.Language, Currency: inv.Currency, Discount: percentText(inv.Discount),
 		OriginalSalesInvoiceID: idString(inv.OriginalID), OriginalEstimateID: idString(inv.OriginalEstimateID), Paused: inv.Paused, PaidAt: date(inv.PaidAt), SentAt: date(inv.SentAt),
 		CreatedAt: inv.CreatedAt, UpdatedAt: inv.UpdatedAt, Version: inv.Version(), Details: []salesDetailJSON{}, Payments: []paymentJSON{},

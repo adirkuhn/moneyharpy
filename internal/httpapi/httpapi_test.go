@@ -1482,9 +1482,12 @@ func TestWorkflows(t *testing.T) {
 	if *w.Name != "Export" || *w.Default || w.Uri != "/"+a.Id+"/workflows/"+*w.Id || len(*w.Steps) != 2 {
 		t.Errorf("created = %+v", w)
 	}
-	r = owner.do(http.MethodPatch, base+"/"+*w.Id, map[string]any{"workflow": map[string]any{"default": true, "prices_are_incl_tax": true}})
+	if !strings.HasPrefix(w.PaymentConditions, "We kindly request") || list[1].PaymentConditions != invoicing.DefaultPaymentConditions(*list[1].Language) || list[0].PaymentConditions != "" {
+		t.Errorf("payment conditions = %q, %q, %q", w.PaymentConditions, list[1].PaymentConditions, list[0].PaymentConditions)
+	}
+	r = owner.do(http.MethodPatch, base+"/"+*w.Id, map[string]any{"workflow": map[string]any{"default": true, "prices_are_incl_tax": true, "payment_conditions": "Pay *{document.total_price}*"}})
 	wantStatus(t, r, http.StatusOK)
-	if got := decode[httpapi.Workflow](t, r); !*got.Default || !*got.PricesAreInclTax {
+	if got := decode[httpapi.Workflow](t, r); !*got.Default || !*got.PricesAreInclTax || got.PaymentConditions != "Pay *{document.total_price}*" {
 		t.Errorf("updated = %+v", got)
 	}
 	wantStatus(t, owner.do(http.MethodDelete, base+"/"+*w.Id, nil), http.StatusUnprocessableEntity)

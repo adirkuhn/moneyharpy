@@ -1116,6 +1116,7 @@ type Workflow struct {
 	UpdatedAt           pgtype.Timestamptz
 	InvoiceEmailSubject string
 	InvoiceEmailBody    string
+	PaymentConditions   string
 }
 
 type WorkflowStep struct {

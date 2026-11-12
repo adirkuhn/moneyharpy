@@ -199,8 +199,8 @@ ORDER BY s.workflow_id, s.step_order;
 
 -- name: InsertWorkflow :one
 INSERT INTO workflows (id, administration_id, type, name, is_default, currency, language, active, prices_are_incl_tax,
-                       show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                       show_qr_code, created_at, updated_at, invoice_email_subject, invoice_email_body, payment_conditions)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 ON CONFLICT (administration_id, type) WHERE is_default DO NOTHING
 RETURNING id;
 
@@ -210,7 +210,7 @@ UPDATE workflows SET is_default = false WHERE administration_id = $1 AND type = 
 -- name: UpdateWorkflow :exec
 UPDATE workflows
 SET name = $3, is_default = $4, currency = $5, language = $6, active = $7, prices_are_incl_tax = $8,
-    show_qr_code = $9, updated_at = $10, invoice_email_subject = $11, invoice_email_body = $12
+    show_qr_code = $9, updated_at = $10, invoice_email_subject = $11, invoice_email_body = $12, payment_conditions = $13
 WHERE administration_id = $1 AND id = $2;
 
 -- name: DeleteWorkflow :execrows
@@ -843,6 +843,9 @@ SELECT * FROM sales_invoices WHERE administration_id = $1 AND invoice_id = $2 AN
 
 -- name: SalesInvoiceByReference :one
 SELECT * FROM sales_invoices WHERE administration_id = $1 AND reference = $2 ORDER BY created_at DESC LIMIT 1;
+
+-- name: PaymentReferenceTaken :one
+SELECT EXISTS (SELECT 1 FROM sales_invoices WHERE administration_id = $1 AND payment_reference = $2 AND payment_reference <> '');
 
 -- name: NextSalesInvoiceDraftID :one
 SELECT coalesce(max(draft_id), 0)::integer + 1 FROM sales_invoices WHERE administration_id = $1;
