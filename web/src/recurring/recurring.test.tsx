@@ -5,9 +5,8 @@ import { describe, expect, it } from 'vitest'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import type { Contact } from '../contacts/queries'
 import type { SalesInvoice } from '../invoices/queries'
-import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
-import { administration, documentStyle, listing, server, signedIn, workflow } from '../test/server'
+import { administration, documentStyle, identity, invoiceSettings, listing, server, signedIn, workflow } from '../test/server'
 import type { RecurringInvoice } from './queries'
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
@@ -129,81 +128,208 @@ describe('the recurring invoice list', () => {
   })
 })
 
-describe('a recurring invoice', () => {
-  it('shows its schedule and the invoices it made, and changes', async () => {
-    const seen: URL[] = []
-    let sent: unknown
-    server.use(...loaded(undefined, seen))
-    server.use(http.patch('*/api/v2/11/recurring_sales_invoices/941', async ({ request }) => {
-      sent = await request.json()
-      return HttpResponse.json(recurring({ frequency_type: 'quarter', updated_at: '2026-11-11T09:00:00Z' }))
-    }))
-    renderAt('/11/recurring_sales_invoices/941')
-    expect(await screen.findByRole('heading', { name: 'Example Shop B.V.' })).toBeInTheDocument()
-    expect(screen.getByText('Next invoice on', { selector: 'dt' }).nextSibling).toHaveTextContent('Dec 1, 2026')
-    const madeTable = await screen.findByRole('table', { name: 'Invoices made' })
-    expect(within(madeTable).getByRole('link', { name: 'Draft #4' })).toHaveAttribute('href', '/11/sales_invoices/901')
-    expect(seen.some((u) => u.pathname.endsWith('/sales_invoices') && u.searchParams.get('filter') === 'recurring_sales_invoice_id:941')).toBe(true)
+/** What the document and its popup ask for besides the recurring invoices. */
+function documentHandlers(current: () => RecurringInvoice = () => recurring()) {
+  // The first handler that matches answers, so these come before the list's.
+  return [
+    http.get('*/api/v2/11/recurring_sales_invoices/941', () => HttpResponse.json(current())),
+    http.get('*/api/v2/11/identities', () => HttpResponse.json([identity({ id: '500' })])),
+    http.get('*/api/v2/11/invoice_settings', () => HttpResponse.json(invoiceSettings())),
+    http.get('*/api/v2/11/custom_fields', () => HttpResponse.json([])),
+    http.get('*/api/v2/11/users', () => HttpResponse.json([])),
+    http.get('*/api/v2/11/products', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
+    http.get('*/api/v2/11/sales_invoices/next_draft_id', () => HttpResponse.json({ draft_id: 12 })),
+    http.get('*/api/v2/11/document_styles', () => HttpResponse.json([documentStyle({ id: '701' }), documentStyle({ id: '702', name: 'Modern', default: false })])),
+    ...loaded(),
+  ]
+}
 
-    const form = screen.getByRole('form', { name: 'Recurring invoice' })
-    await userEvent.selectOptions(within(form).getByLabelText('Unit'), 'quarter')
-    await userEvent.type(within(form).getByLabelText('Last invoice on or before'), '2027-12-31')
-    await userEvent.click(within(form).getByLabelText('Send each invoice automatically'))
-    await userEvent.click(within(form).getByRole('button', { name: 'Save recurring invoice' }))
-    await waitFor(() => expect(sent).toEqual({
-      recurring_sales_invoice: {
-        contact_id: '701', reference: 'Contract 7', frequency: 1, frequency_type: 'quarter', last_date: '2027-12-31', auto_send: true,
-        prices_are_incl_tax: false, discount: '', payment_conditions: '', first_due_interval: 14, workflow_id: '601', document_style_id: '701',
-        details_attributes: [{ id: '961', description: 'Hosting {period}', amount: '1', price: '100', tax_rate_id: '2101', ledger_account_id: '8001' }],
-      },
+const scheduleCard = () => screen.getByRole('region', { name: 'Schedule' })
+
+describe('adding a recurring invoice', () => {
+  it('sets the schedule first, as Moneybird asks, then the contact in the popup, whose Save makes it', async () => {
+    let sent: Record<string, unknown> | undefined
+    server.use(...documentHandlers(), http.post('*/api/v2/11/recurring_sales_invoices', async ({ request }) => {
+      sent = ((await request.json()) as { recurring_sales_invoice: Record<string, unknown> }).recurring_sales_invoice
+      return HttpResponse.json(recurring(), { status: 201 })
     }))
-    expect(await screen.findByText('Every quarter', { selector: 'dd' })).toBeInTheDocument()
+    renderAt('/11/recurring_sales_invoices/new')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Add recurring invoice' })).toBeInTheDocument()
+    const form = within(scheduleCard()).getByRole('form', { name: 'Recurring invoice schedule' })
+    expect(within(form).getByLabelText('Start date')).toHaveValue('2026-11-11')
+    const frequency = within(form).getByRole('radiogroup', { name: 'Frequency' })
+    expect(within(frequency).getAllByRole('radio').map((r) => r.closest('label')?.querySelector('span')?.textContent)).toEqual(['Every month', 'Every quarter', 'Every six months', 'Every year', 'Every'])
+    expect(within(frequency).getByRole('radio', { name: 'Every month' })).toBeChecked()
+    // The document is shown as it will look, not yet to be changed.
+    expect(await screen.findByRole('document', { name: 'Invoice preview' })).toBeInTheDocument()
+
+    // The layout is chosen above the schedule, as Moneybird's Change layout shows.
+    await userEvent.click(screen.getByRole('button', { name: 'Change layout' }))
+    await userEvent.click(within(screen.getByRole('region', { name: 'Select layout' })).getByRole('button', { name: 'Modern' }))
+
+    await userEvent.click(within(frequency).getByRole('radio', { name: 'Every six months' }))
+    await userEvent.click(within(form).getByRole('checkbox', { name: 'Add another' }))
+    await userEvent.type(within(form).getByRole('textbox', { name: 'Number of invoices' }), '4')
+    await userEvent.click(within(form).getByRole('checkbox', { name: 'Automatically send invoice on scheduled dates.' }))
+    expect(within(form).getByRole('checkbox', { name: /^Send one invoice to this contact/ })).not.toBeChecked()
+    await userEvent.click(within(form).getByRole('button', { name: 'Continue' }))
+
+    // The schedule is told in a sentence and the popup asks for the contact.
+    expect(scheduleCard()).toHaveTextContent('This recurring invoice will be created every 6 months, 4 more times.')
+    const dialog = await screen.findByRole('dialog', { name: 'Add recurring invoice' })
+    expect(within(dialog).queryByText('Invoice id')).toBeNull()
+    await userEvent.click(within(dialog).getByRole('combobox', { name: 'Contact' }))
+    await userEvent.type(within(dialog).getByRole('searchbox', { name: 'Query' }), 'shop')
+    await userEvent.click(await within(dialog).findByRole('option', { name: 'Example Shop B.V.' }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent).toMatchObject({
+      contact_id: '701', invoice_date: '2026-11-11', frequency: 6, frequency_type: 'month', has_desired_count: true, desired_count: 4,
+      auto_send: true, mergeable: false, document_style_id: '702',
+    }))
+    expect(sent).not.toHaveProperty('invoice_sequence_id')
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/recurring_sales_invoices/941'))
   })
 
-  it('deactivates, after which it no longer changes', async () => {
-    let current = recurring()
-    server.use(...loaded())
-    server.use(
-      http.get('*/api/v2/11/recurring_sales_invoices/941', () => HttpResponse.json(current)),
-      http.patch('*/api/v2/11/recurring_sales_invoices/941/deactivate', () => {
-        current = recurring({ active: false, updated_at: '2026-11-11T09:00:00Z' })
-        return HttpResponse.json(current)
-      }),
-    )
-    renderAt('/11/recurring_sales_invoices/941')
-    await chooseMore('Deactivate')
-    expect(await screen.findByText('This recurring invoice is deactivated and makes no more invoices.')).toBeInTheDocument()
-    // It made invoices, so it can no longer be deleted either: nothing is left to do with it.
-    expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Save recurring invoice' })).toBeNull()
-    expect(within(screen.getByRole('form', { name: 'Recurring invoice' })).getByLabelText('Unit')).toBeDisabled()
+  it('goes back to the schedule when the popup is cancelled', async () => {
+    server.use(...documentHandlers())
+    renderAt('/11/recurring_sales_invoices/new')
+    await userEvent.click(await screen.findByRole('button', { name: 'Continue' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Add recurring invoice' })
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(within(scheduleCard()).getByRole('button', { name: 'Continue' })).toBeInTheDocument()
   })
 
-  it('is made from a draft invoice', async () => {
-    let sent: unknown
-    server.use(...loaded())
-    server.use(http.post('*/api/v2/11/recurring_sales_invoices', async ({ request }) => {
-      sent = await request.json()
+  it('starts from a sales invoice, as its "Duplicate to recurring invoice" does', async () => {
+    let sent: Record<string, unknown> | undefined
+    server.use(...documentHandlers(), http.post('*/api/v2/11/recurring_sales_invoices', async ({ request }) => {
+      sent = ((await request.json()) as { recurring_sales_invoice: Record<string, unknown> }).recurring_sales_invoice
       return HttpResponse.json(recurring(), { status: 201 })
     }))
     renderAt('/11/sales_invoices/901')
-    // Moneybird's Extra menu on the invoice.
     await userEvent.click(await screen.findByRole('button', { name: 'Extra' }))
     await userEvent.click(screen.getByRole('link', { name: 'Duplicate to recurring invoice' }))
-    const form = await screen.findByRole('form', { name: 'Recurring invoice' })
-    expect(screen.getByRole('heading', { name: 'New recurring invoice' })).toBeInTheDocument()
-    expect(within(form).getByLabelText('Reference')).toHaveValue('Contract 7')
-    expect(within(form).getByLabelText('Description')).toHaveValue('Hosting 2026-11-01 – 2026-11-30')
-    await userEvent.clear(within(form).getByLabelText('Description'))
-    await userEvent.type(within(form).getByLabelText('Description'), 'Hosting {{period}')
-    await userEvent.click(within(form).getByRole('button', { name: 'Save recurring invoice' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Continue' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Add recurring invoice' })
+    expect(within(dialog).getByLabelText('Reference')).toHaveValue('Contract 7')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent).toMatchObject({
-      recurring_sales_invoice: {
-        contact_id: '701', reference: 'Contract 7', frequency: 1, frequency_type: 'month', auto_send: false, last_date: '',
-        details_attributes: [{ description: 'Hosting {period}', amount: '1', price: '100', tax_rate_id: '2101', ledger_account_id: '8001' }],
-      },
+      contact_id: '701', reference: 'Contract 7', frequency: 1, frequency_type: 'month', has_desired_count: false,
+      details_attributes: [{ description: 'Hosting 2026-11-01 – 2026-11-30', amount: '1', price: '100', tax_rate_id: '2101', ledger_account_id: '8001', row_order: 1 }],
     }))
-    expect((sent as { recurring_sales_invoice: { invoice_date?: string } }).recurring_sales_invoice.invoice_date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/recurring_sales_invoices/941'))
+    expect((sent?.details_attributes as Record<string, unknown>[])[0]).not.toHaveProperty('id')
+  })
+})
+
+describe('a recurring invoice', () => {
+  it('is named by its schedule and contact, tells its schedule over the document, and shows its contact, workflow and history', async () => {
+    server.use(...documentHandlers())
+    renderAt('/11/recurring_sales_invoices/941')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Every month to Example Shop B.V.' })).toBeInTheDocument()
+    expect(scheduleCard()).toHaveTextContent('This recurring invoice will be created every month indefinitely.')
+    const timeline = within(scheduleCard()).getByRole('list', { name: 'Planned invoices' })
+    // The invoice it made leads, linked; then its next dates, numbered after it.
+    const made = await within(timeline).findByRole('link', { name: 'Draft #4' })
+    expect(made).toHaveAttribute('href', '/11/sales_invoices/901')
+    expect(timeline).toHaveTextContent('2026-12-01')
+    expect(timeline).toHaveTextContent('2027-01-01')
+    expect(timeline).toHaveTextContent('2027-02-01')
+    expect(within(timeline).getByLabelText('And more')).toBeInTheDocument()
+    // The document is the invoice it makes next, in the workflow's language.
+    const paper = await screen.findByRole('document', { name: 'Recurring invoice' })
+    expect(paper).toHaveTextContent('Periodieke factuur #2')
+    expect(paper).toHaveTextContent('Hosting {period}')
+    const side = screen.getByRole('complementary', { name: 'Recurring invoice information' })
+    expect(within(side).getByRole('link', { name: 'Standaard (NL)' })).toHaveAttribute('href', '/11/workflows/601')
+    expect(within(side).getByText('Example Shop B.V.')).toBeInTheDocument()
+    expect(within(side).getByText('Recurring invoice created')).toBeInTheDocument()
+  })
+
+  it('changes its schedule behind Edit', async () => {
+    let sent: Record<string, unknown> | undefined
+    server.use(...documentHandlers(), http.patch('*/api/v2/11/recurring_sales_invoices/941', async ({ request }) => {
+      sent = ((await request.json()) as { recurring_sales_invoice: Record<string, unknown> }).recurring_sales_invoice
+      return HttpResponse.json(recurring({ frequency_type: 'quarter', last_date: '2027-06-01', updated_at: '2026-11-11T09:00:00Z', version: 2 }))
+    }))
+    renderAt('/11/recurring_sales_invoices/941')
+    await userEvent.click(await within(await screen.findByRole('region', { name: 'Schedule' })).findByRole('button', { name: 'Edit' }))
+    const form = within(scheduleCard()).getByRole('form', { name: 'Recurring invoice schedule' })
+    expect(within(form).getByLabelText('Start date')).toHaveValue('2026-12-01')
+    await userEvent.click(within(form).getByRole('radio', { name: /^Every$/ }))
+    await userEvent.clear(within(form).getByRole('textbox', { name: 'Every how many' }))
+    await userEvent.type(within(form).getByRole('textbox', { name: 'Every how many' }), '1')
+    await userEvent.selectOptions(within(form).getByRole('combobox', { name: 'Frequency' }), 'quarters')
+    await userEvent.click(within(form).getByRole('checkbox', { name: 'Add another' }))
+    await userEvent.type(within(form).getByRole('textbox', { name: 'Number of invoices' }), '3')
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    // "Add another" counts from now on; the server counts the invoice made already too.
+    await waitFor(() => expect(sent).toEqual({ frequency: 1, frequency_type: 'quarter', has_desired_count: true, desired_count: 4, auto_send: false, mergeable: false }))
+    expect(await within(scheduleCard()).findByText(/every quarter, 3 more times\./)).toBeInTheDocument()
+  })
+
+  it('saves its details from the document, as a draft invoice does', async () => {
+    let sent: Record<string, unknown> | undefined
+    server.use(...documentHandlers(), http.patch('*/api/v2/11/recurring_sales_invoices/941', async ({ request }) => {
+      sent = ((await request.json()) as { recurring_sales_invoice: Record<string, unknown> }).recurring_sales_invoice
+      return HttpResponse.json(recurring({ version: 2 }))
+    }))
+    renderAt('/11/recurring_sales_invoices/941')
+    const paper = await screen.findByRole('document', { name: 'Recurring invoice' })
+    await userEvent.click(within(paper).getByRole('button', { name: /invoice details/ }))
+    const editor = screen.getByRole('table', { name: 'Invoice details' })
+    const description = within(editor).getAllByRole('combobox', { name: 'Description' })[0] as HTMLElement
+    await userEvent.clear(description)
+    await userEvent.type(description, 'Hosting')
+    await userEvent.click(within(screen.getByRole('region', { name: 'Invoice details' })).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent).toMatchObject({ contact_id: '701', details_attributes: [{ id: '961', description: 'Hosting' }] }))
+    expect(sent).not.toHaveProperty('invoice_date')
+  })
+
+  it('changes its layout from Extra', async () => {
+    let sent: Record<string, unknown> | undefined
+    server.use(...documentHandlers(), http.patch('*/api/v2/11/recurring_sales_invoices/941', async ({ request }) => {
+      sent = ((await request.json()) as { recurring_sales_invoice: Record<string, unknown> }).recurring_sales_invoice
+      return HttpResponse.json(recurring({ document_style_id: '702', version: 2 }))
+    }))
+    renderAt('/11/recurring_sales_invoices/941')
+    await userEvent.click(await screen.findByRole('button', { name: 'Extra' }))
+    expect(screen.getByRole('link', { name: 'Duplicate to recurring invoice' })).toHaveAttribute('href', '/11/recurring_sales_invoices/new?recurring=941')
+    await userEvent.click(screen.getByRole('button', { name: 'Change layout' }))
+    const layouts = await screen.findByRole('region', { name: 'Change layout' })
+    expect(layouts).toHaveTextContent('The layout determines the style and sender address on the recurring invoice.')
+    await userEvent.click(within(layouts).getByRole('radio', { name: 'Modern' }))
+    await userEvent.click(within(layouts).getByRole('button', { name: 'Change layout' }))
+    await waitFor(() => expect(sent).toMatchObject({ document_style_id: '702' }))
+  })
+
+  it('stops, after which it makes no more invoices', async () => {
+    let current = recurring()
+    server.use(...documentHandlers(() => current), http.patch('*/api/v2/11/recurring_sales_invoices/941/deactivate', () => {
+      current = recurring({ active: false, updated_at: '2026-11-11T09:00:00Z', version: 2 })
+      return HttpResponse.json(current)
+    }))
+    renderAt('/11/recurring_sales_invoices/941')
+    await userEvent.click(await screen.findByRole('button', { name: 'Stop' }))
+    const ask = screen.getByRole('alertdialog', { name: 'Are you sure you want to stop this recurring invoice?' })
+    await userEvent.click(within(ask).getByRole('button', { name: 'Stop' }))
+    expect(await screen.findAllByText('This recurring invoice has been stopped and creates no more invoices.')).not.toHaveLength(0)
+    expect(screen.queryByRole('button', { name: 'Stop' })).toBeNull()
+    expect(within(scheduleCard()).queryByRole('button', { name: 'Edit' })).toBeNull()
+  })
+
+  it('is deleted after Moneybird’s question', async () => {
+    let deleted = false
+    server.use(...documentHandlers(() => recurring({ invoices_created: 0 })), http.delete('*/api/v2/11/recurring_sales_invoices/941', () => {
+      deleted = true
+      return new HttpResponse(null, { status: 204 })
+    }))
+    renderAt('/11/recurring_sales_invoices/941')
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete recurring invoice' }))
+    const ask = screen.getByRole('dialog', { name: 'Are you sure you want to delete this recurring invoice? This cannot be undone.' })
+    await userEvent.click(within(ask).getByRole('button', { name: 'Cancel' }))
+    expect(deleted).toBe(false)
+    await userEvent.click(screen.getByRole('button', { name: 'Delete recurring invoice' }))
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/recurring_sales_invoices$/))
+    expect(deleted).toBe(true)
   })
 })

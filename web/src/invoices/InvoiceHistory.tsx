@@ -12,6 +12,13 @@ import { type SalesInvoice, useAddInvoiceNote, useDeleteInvoiceNote } from './qu
 
 type Props = { administrationId: string; invoice: SalesInvoice }
 
+type NoteChange = { note: string; todo: boolean; assignee_id?: string }
+/** Adding and deleting the notes of a document: a sales invoice's, or a recurring invoice's. */
+export type NoteMutations = {
+  add: { mutate: (note: NoteChange, o: { onSuccess: () => void }) => void; isPending: boolean; error: unknown }
+  remove: { mutate: (noteId: string) => void; isPending: boolean; error: unknown }
+}
+
 /** The people of the administration by id, as far as the user may see them; the user is always known. */
 function usePeople(administrationId: string) {
   const users = useUsers(administrationId)
@@ -33,11 +40,19 @@ function usePeople(administrationId: string) {
  * to-do, and what happened to the invoice by day.
  */
 export function InvoiceHistory({ administrationId, invoice }: Props) {
+  const add = useAddInvoiceNote(administrationId, invoice.id ?? '')
+  const remove = useDeleteInvoiceNote(administrationId, invoice.id ?? '')
+  return <NotesAndHistory administrationId={administrationId} items={historyOf(invoice)} currency={invoice.currency ?? 'EUR'} add={add} remove={remove} />
+}
+
+type HistoryProps = NoteMutations & { administrationId: string; items: HistoryItem[]; currency: string }
+
+/** The notes field and the history by day, for any document. */
+export function NotesAndHistory({ administrationId, items, currency, add, remove }: HistoryProps) {
   const { t, i18n } = useTranslation()
   const heading = useId()
   const people = usePeople(administrationId)
-  const days = byDay(historyOf(invoice), new Date())
-  const remove = useDeleteInvoiceNote(administrationId, invoice.id ?? '')
+  const days = byDay(items, new Date())
   const dayName = (label: string) =>
     label === 'today' || label === 'yesterday'
       ? t(`invoices.view.notes.${label}`)
@@ -45,7 +60,7 @@ export function InvoiceHistory({ administrationId, invoice }: Props) {
   return (
     <section className="invoice-history" aria-labelledby={heading}>
       <h2 id={heading} className="invoice-history__title">{t('invoices.view.notes.title')}</h2>
-      <NoteForm administrationId={administrationId} invoice={invoice} people={people} />
+      <NoteForm add={add} people={people} />
       <Problems messages={formErrors(remove.error, {}).general} />
       {days.map((d) => (
         <div key={d.label} className="history">
@@ -55,7 +70,7 @@ export function InvoiceHistory({ administrationId, invoice }: Props) {
               <HistoryRow
                 key={item.id}
                 item={item}
-                invoice={invoice}
+                currency={currency}
                 person={item.userId ? people.get(item.userId) : undefined}
                 removing={remove.isPending}
                 onRemoveNote={(id) => remove.mutate(id)}
@@ -68,9 +83,9 @@ export function InvoiceHistory({ administrationId, invoice }: Props) {
   )
 }
 
-type RowProps = { item: HistoryItem; invoice: SalesInvoice; person?: string; removing: boolean; onRemoveNote: (id: string) => void }
+type RowProps = { item: HistoryItem; currency: string; person?: string; removing: boolean; onRemoveNote: (id: string) => void }
 
-function HistoryRow({ item, invoice, person, removing, onRemoveNote }: RowProps) {
+function HistoryRow({ item, currency, person, removing, onRemoveNote }: RowProps) {
   const { t, i18n } = useTranslation()
   const [open, setOpen] = useState(false)
   const details = useId()
@@ -79,7 +94,7 @@ function HistoryRow({ item, invoice, person, removing, onRemoveNote }: RowProps)
   return (
     <li className={`history__row history__row--${item.kind}`}>
       <span className="history__avatar" title={person} aria-hidden={!person}>{person ? person.trim().charAt(0).toUpperCase() : ''}</span>
-      <p className="history__text"><Sentence item={item} invoice={invoice} /></p>
+      <p className="history__text"><Sentence item={item} currency={currency} /></p>
       {item.timed ? <time className="history__time" dateTime={item.at}>{time}</time> : <span className="history__time" />}
       {hasDetails && (
         <button type="button" className="history__caret" aria-label={t('invoices.view.notes.details')} title={t('invoices.view.notes.details')} aria-expanded={open} aria-controls={details} onClick={() => setOpen(!open)}>
@@ -105,7 +120,7 @@ function HistoryRow({ item, invoice, person, removing, onRemoveNote }: RowProps)
   )
 }
 
-function Sentence({ item, invoice }: { item: HistoryItem; invoice: SalesInvoice }) {
+function Sentence({ item, currency }: { item: HistoryItem; currency: string }) {
   const { t, i18n } = useTranslation()
   if (item.kind === 'note') {
     const n = item.note
@@ -123,7 +138,7 @@ function Sentence({ item, invoice }: { item: HistoryItem; invoice: SalesInvoice 
     const action = p.manual_payment_action
     return (
       <>
-        <span>{t('invoices.view.events.payment', { amount: formatAmount(p.price, invoice.currency ?? 'EUR', i18n.language) })}</span>
+        <span>{t('invoices.view.events.payment', { amount: formatAmount(p.price, currency, i18n.language) })}</span>
         {!p.financial_mutation_id && (!action || action === 'bank_transfer') && <><br /><span className="history__quiet">{t('invoices.view.events.notLinked')}</span></>}
         {!p.financial_mutation_id && action && action !== 'bank_transfer' && (
           <><br /><span className="history__quiet">{t(`invoices.payments.actions.${action}`, { defaultValue: action })}</span></>
@@ -139,13 +154,12 @@ function Sentence({ item, invoice }: { item: HistoryItem; invoice: SalesInvoice 
 /** Note, to-do, or a to-do for someone, as Moneybird's select under the field. */
 type Kind = 'note' | 'todo' | `user:${string}`
 
-function NoteForm({ administrationId, invoice, people }: Props & { people: Map<string, string> }) {
+function NoteForm({ add, people }: Pick<NoteMutations, 'add'> & { people: Map<string, string> }) {
   const { t } = useTranslation()
   const id = useId()
   const [text, setText] = useState('')
   const [kind, setKind] = useState<Kind>('note')
   const [focused, setFocused] = useState(false)
-  const add = useAddInvoiceNote(administrationId, invoice.id ?? '')
   const errors = formErrors(add.error, { note: t('invoices.view.notes.label') })
   const expanded = focused || text !== ''
 

@@ -49,6 +49,11 @@ type Props = {
   style: DocumentStyle | undefined
   /** A saved invoice opens it as Moneybird's "Edit invoice": no subtitle nor layouts, and the contact's hover card. */
   existing: boolean
+  /**
+   * Over a recurring invoice: no invoice id nor date, which belong to the
+   * invoices it makes, and no layouts, which its page sets.
+   */
+  recurring?: boolean
   /** Whether the settings behind Edit show from the start, as when the document's dates open it. */
   advancedOpen?: boolean
   /** The document the popup is laid over, aligned with it as Moneybird's popup--align-document. */
@@ -78,7 +83,7 @@ type Confirm = 'number' | 'date' | null
  * "Edit invoice", without the layouts, which Change layout sets.
  */
 export function AddInvoiceDialog(props: Props) {
-  const { administrationId, value, onChange, flows, flow, styles, style, existing, dueTerm, sentNumber, numbering, customFields, errors, pending, cancel, onSave, onClose } = props
+  const { administrationId, value, onChange, flows, flow, styles, style, existing, recurring = false, dueTerm, sentNumber, numbering, customFields, errors, pending, cancel, onSave, onClose } = props
   const { t } = useTranslation()
   const formId = useId()
   const advancedId = useId()
@@ -115,7 +120,7 @@ export function AddInvoiceDialog(props: Props) {
   )
 
   return (
-    <Modal title={existing ? p('editTitle') : t('invoices.newTitle')} subtitle={existing ? undefined : p('subtitle')} onClose={onClose} footer={footer} className="add-invoice" anchor={props.anchor}>
+    <Modal title={existing ? p('editTitle') : recurring ? t('recurring.add') : t('invoices.newTitle')} subtitle={existing ? undefined : p('subtitle')} onClose={onClose} footer={footer} className="add-invoice" anchor={props.anchor}>
       <form
         id={formId}
         className="add-invoice__form"
@@ -165,48 +170,52 @@ export function AddInvoiceDialog(props: Props) {
           {advanced && (
             <fieldset id={advancedId} className="add-invoice__advanced">
               <legend className="sr-only">{t('invoices.settingsTitle')}</legend>
-              <FormRow
-                label={p('invoiceId')}
-                errors={errors.field('invoice_sequence_id')}
-                labelExtra={!sentNumber && <Tip text={p('numberTip')}>{p('numberTip')} <Link to={settingsLink}>{p('companySettings')}</Link>.</Tip>}
-                action={!sentNumber && (value.numberUnlocked
-                  ? lockButton(p('lockNumber'), () => onChange({ numberUnlocked: false, sequenceId: '' }))
-                  : lockButton(p('unlockNumber'), () => setConfirm('number')))}
-              >
-                {({ labelId: _, ...control }) => (
-                  <span className="add-invoice__number">
-                    {!sentNumber && parts.prefix && <span className="add-invoice__affix">{parts.prefix}</span>}
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={10}
-                      {...control}
-                      disabled={!!sentNumber || !value.numberUnlocked}
-                      value={sentNumber || (value.numberUnlocked ? value.sequenceId : next)}
-                      onChange={(e) => onChange({ sequenceId: e.target.value })}
-                    />
-                    {!sentNumber && parts.suffix && <span className="add-invoice__affix">{parts.suffix}</span>}
-                  </span>
-                )}
-              </FormRow>
+              {!recurring && (
+                <>
+                  <FormRow
+                    label={p('invoiceId')}
+                    errors={errors.field('invoice_sequence_id')}
+                    labelExtra={!sentNumber && <Tip text={p('numberTip')}>{p('numberTip')} <Link to={settingsLink}>{p('companySettings')}</Link>.</Tip>}
+                    action={!sentNumber && (value.numberUnlocked
+                      ? lockButton(p('lockNumber'), () => onChange({ numberUnlocked: false, sequenceId: '' }))
+                      : lockButton(p('unlockNumber'), () => setConfirm('number')))}
+                  >
+                    {({ labelId: _, ...control }) => (
+                      <span className="add-invoice__number">
+                        {!sentNumber && parts.prefix && <span className="add-invoice__affix">{parts.prefix}</span>}
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={10}
+                          {...control}
+                          disabled={!!sentNumber || !value.numberUnlocked}
+                          value={sentNumber || (value.numberUnlocked ? value.sequenceId : next)}
+                          onChange={(e) => onChange({ sequenceId: e.target.value })}
+                        />
+                        {!sentNumber && parts.suffix && <span className="add-invoice__affix">{parts.suffix}</span>}
+                      </span>
+                    )}
+                  </FormRow>
 
-              <FormRow
-                label={t('invoices.invoiceDate')}
-                width="medium"
-                errors={errors.field('invoice_date')}
-                action={!sentNumber && (value.dateUnlocked
-                  ? lockButton(p('lockDate'), () => onChange({ dateUnlocked: false, invoiceDate: '' }))
-                  : lockButton(p('unlockDate'), () => setConfirm('date')))}
-              >
-                {({ labelId: _, ...control }) => value.dateUnlocked || sentNumber
-                  ? <input type="date" {...control} disabled={!!sentNumber} value={value.invoiceDate} onChange={(e) => onChange({ invoiceDate: e.target.value })} />
-                  : (
-                    <span className="add-invoice__date">
-                      <input type="text" {...control} disabled placeholder="YYYY-MM-DD" value="" />
-                      <ListIcon kind="calendar" />
-                    </span>
-                  )}
-              </FormRow>
+                  <FormRow
+                    label={t('invoices.invoiceDate')}
+                    width="medium"
+                    errors={errors.field('invoice_date')}
+                    action={!sentNumber && (value.dateUnlocked
+                      ? lockButton(p('lockDate'), () => onChange({ dateUnlocked: false, invoiceDate: '' }))
+                      : lockButton(p('unlockDate'), () => setConfirm('date')))}
+                  >
+                    {({ labelId: _, ...control }) => value.dateUnlocked || sentNumber
+                      ? <input type="date" {...control} disabled={!!sentNumber} value={value.invoiceDate} onChange={(e) => onChange({ invoiceDate: e.target.value })} />
+                      : (
+                        <span className="add-invoice__date">
+                          <input type="text" {...control} disabled placeholder="YYYY-MM-DD" value="" />
+                          <ListIcon kind="calendar" />
+                        </span>
+                      )}
+                  </FormRow>
+                </>
+              )}
 
               <FormRow
                 label={t('invoices.workflow')}
@@ -248,7 +257,7 @@ export function AddInvoiceDialog(props: Props) {
                 )}
               </FormRow>
 
-              {!existing && (
+              {!existing && !recurring && (
                 <>
                   <hr className="add-invoice__rule" />
                   <LayoutCards

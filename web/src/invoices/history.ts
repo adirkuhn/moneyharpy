@@ -108,6 +108,7 @@ const sentences: Record<string, string> = {
   sales_invoice_marked_as_dubious: 'dubious',
   sales_invoice_marked_as_uncollectible: 'uncollectible',
   payment_destroyed: 'paymentDeleted',
+  recurring_sales_invoice_created: 'recurringCreated',
 }
 
 /** Which sentence tells an event, as a key under invoices.view.events. */

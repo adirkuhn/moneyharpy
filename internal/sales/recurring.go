@@ -238,10 +238,8 @@ func (s *Service) applyRecurring(ctx context.Context, a administration.Listed, u
 		}
 		verr = *invalid
 	}
+	// As on Moneybird, its details may follow later.
 	r.take(inv)
-	if len(r.Lines) == 0 {
-		verr.Add(detailsField, "can't be empty; add a line")
-	}
 	rescheduled := false
 	if c.FrequencyType != nil {
 		if t := strings.TrimSpace(*c.FrequencyType); !slices.Contains(FrequencyTypes, t) {
