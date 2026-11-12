@@ -66,14 +66,12 @@ func TestOfGroupsEventsByRecordOldestFirst(t *testing.T) {
 	store := &memStore{}
 	svc := NewService(store, resource.NewGenerator(1), time.Now)
 	ctx := context.Background()
-	for _, e := range []Event{
-		{AdministrationID: admin, EntityType: "SalesInvoice", EntityID: record, Action: "b", CreatedAt: time.Unix(20, 0)},
-		{AdministrationID: admin, EntityType: "SalesInvoice", EntityID: record, Action: "a", CreatedAt: time.Unix(10, 0)},
-		{AdministrationID: admin, EntityType: "SalesInvoice", EntityID: other, Action: "c", CreatedAt: time.Unix(5, 0)},
-		{AdministrationID: admin, EntityType: "Contact", EntityID: record, Action: "d", CreatedAt: time.Unix(1, 0)},
-	} {
-		store.events = append(store.events, e)
-	}
+	store.events = append(store.events,
+		Event{AdministrationID: admin, EntityType: "SalesInvoice", EntityID: record, Action: "b", CreatedAt: time.Unix(20, 0)},
+		Event{AdministrationID: admin, EntityType: "SalesInvoice", EntityID: record, Action: "a", CreatedAt: time.Unix(10, 0)},
+		Event{AdministrationID: admin, EntityType: "SalesInvoice", EntityID: other, Action: "c", CreatedAt: time.Unix(5, 0)},
+		Event{AdministrationID: admin, EntityType: "Contact", EntityID: record, Action: "d", CreatedAt: time.Unix(1, 0)},
+	)
 	got, err := svc.Of(ctx, admin, "SalesInvoice", []resource.ID{record, other})
 	if err != nil {
 		t.Fatal(err)
