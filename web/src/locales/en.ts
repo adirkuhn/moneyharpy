@@ -170,6 +170,7 @@ export const en = {
     registerPage: {
       title: 'Register payment', question: 'How was the invoice paid?',
       intro: 'You have indicated that you want to register a payment for invoice {{number}}. Please indicate below how this invoice was paid.',
+      externalIntro: 'You have indicated that you want to register a payment for external invoice {{number}}. Please indicate below how this invoice was paid.',
       ways: {
         bank_transfer: 'Bank transfer', cash_payment: 'Business cash payment', rounding_error: 'Rounding difference', balance_settlement: 'Balance settlement',
         payment_without_proof: 'Mark as paid without proof',
@@ -221,6 +222,9 @@ export const en = {
         sentManually: 'Invoice manually marked as sent', reminderEmail: 'Reminder sent by email', reminderManually: 'Reminder manually marked as sent',
         paused: 'Reminders paused', resumed: 'Reminders resumed', dubious: 'Invoice marked as dubious', uncollectible: 'Invoice marked as uncollectible',
         paymentDeleted: 'Payment deleted', other: '{{action}}', payment: 'Received payment of {{amount}}', notLinked: 'Payment is not yet linked to a financial mutation',
+        externalCreated: 'External invoice created', externalUpdated: 'External invoice edited', externalPaid: 'External invoice has been paid',
+        externalStateChanged: 'State of external invoice changed to {{state}}', externalDubious: 'External invoice marked as dubious',
+        externalUncollectible: 'External invoice marked as uncollectible',
       },
       attachments: {
         title: 'Attachments', drag: 'Drag files here to add or', select: 'select files', max: '(Maximum 10 MB total)',
@@ -290,7 +294,7 @@ export const en = {
     journal: {
       title: 'Journal entries', intro: 'In the background, MoneyHarpy has created the following bookings, also called Journal Entries.',
       category: 'Category', debit: 'Debit', credit: 'Credit', vat: 'VAT', balanceSheet: 'Balance sheet', profitAndLoss: 'Profit and loss statement',
-      documents: { SalesInvoice: 'Invoice', Payment: 'Payment' },
+      documents: { SalesInvoice: 'Invoice', ExternalSalesInvoice: 'External invoice', Payment: 'Payment' },
       empty: 'No bookings yet.', failed: 'The journal entries could not be loaded.',
     },
     attachments: 'Attachments', noAttachments: 'No attachments yet.', addAttachment: 'Add attachment', attachmentHelp: 'A PDF, image or text file of at most 10 MB.',
@@ -330,13 +334,13 @@ export const en = {
     },
   },
   external: {
-    detailsTitle: 'Invoice details', confirmDeleteText: 'Delete this external invoice? This cannot be undone.',
-    title: 'External invoices', new: 'New external invoice', newTitle: 'New external invoice', backToList: 'To External invoices',
-    untitled: 'External invoice {{n}}', form: 'External invoice', save: 'Save', filters: 'External invoice filters',
+    confirmDeleteText: 'Delete this external invoice? This cannot be undone.',
+    title: 'External invoices', new: 'New external invoice',
+    untitled: 'External invoice {{n}}', filters: 'External invoice filters',
     loadError: 'The external invoices could not be loaded. Reload the page to try again.',
     empty: 'No external invoices yet. Upload the invoices your webshop or till made, or type one in.',
     uploadTitle: 'Add invoice files', upload: 'Upload invoices', dropText: 'Drag files here to add or', select: 'select files', maxSize: '(Maximum size 10 MB per file)',
-    uploadHelp: 'Every file becomes a new invoice to fill in.', date: 'Date', noMatches: 'No external invoices match this filter. Try another one.',
+    date: 'Date', noMatches: 'No external invoices match this filter. Try another one.',
     quick: { this_year: "This year's external invoices", unpaid: 'Unpaid external invoices', paid: 'Paid external invoices' },
     views: { this_year: 'External invoices from this year', unpaid: 'Unpaid external invoices', paid: 'Paid external invoices', custom: 'Filtered external invoices' },
     add: 'Add', emailFiles: 'Add external invoice by emailing files', emailTitle: 'E-mail files for external invoices',
@@ -348,10 +352,28 @@ export const en = {
       api: 'Connect through the API', apiText: 'Let another system send its invoices to MoneyHarpy directly.',
     },
     tooLarge: 'These files are larger than 10 MB: {{names}}.', refused: 'These files could not be uploaded: {{names}}.',
-    viewFile: 'View {{name}}', newNotice: 'This invoice is not booked yet. Fill in the contact and at least one line to book it.',
-    bookHint: 'With a contact and at least one line the invoice is booked.',
-    referenceHelp: 'The invoice number in the software that made it, such as an order number.', source: 'Source', currency: 'Currency',
     salesInvoice: 'Sales invoice', externalInvoice: 'External invoice',
+    view: { title: 'External invoice {{name}}', registerPayment: 'Register payment', edit: 'Edit', delete: 'Delete external invoice', sidebar: 'About this invoice' },
+    document: {
+      contact: 'Contact', invoiceDate: 'Invoice date', dueDate: 'Due date', source: 'Source', facts: 'Invoice facts', lines: 'Invoice lines',
+      description: 'Description', price: 'Amount', total: 'Total', vat: 'VAT', subtotal: 'Subtotal',
+    },
+    edit: {
+      editTitle: 'Edit external invoice', newTitle: 'New external invoice', contact: 'Contact', changeContact: 'Change contact', addDetails: 'Add details',
+      invoiceId: 'Invoice id', date: 'Date', dueDate: 'Due date', days: 'Days', daysUntilDue: 'Days until due', dueAs: 'Due date as',
+      source: 'Source (optional)', sourceUrl: 'Source URL (optional)', filesLater: 'Files can be added once the invoice is saved.',
+      currencyLocked: 'The currency cannot be edited because there are existing transactions associated with the current currency.',
+    },
+    attachments: {
+      max: '(Maximum 10 MB per file and 15 MB total)', tooLarge: 'This attachment exceeds 10 MB. A maximum of 10 MB is permitted.',
+      totalTooLarge: 'The attachments exceed the 15 MB. A maximum of 15 MB is permitted.',
+    },
+    bulk: {
+      label: 'Selected external invoices', selectAll: 'Select all external invoices', select: 'Select external invoice {{name}}',
+      selected_one: '{{count}} external invoice selected:', selected_other: '{{count}} external invoices selected:',
+      delete: 'Delete ({{count}})', confirmDelete_one: 'Delete {{count}} external invoice permanently', confirmDelete_other: 'Delete {{count}} external invoices permanently',
+      deleted_one: 'Deleted {{count}} external invoice.', deleted_other: 'Deleted {{count}} external invoices.', failed: 'These invoices could not be deleted: {{names}}.',
+    },
   },
   estimates: {
     title: 'Quotes', add: 'New quote', newTitle: 'New quote', backToList: 'To Quotes', form: 'Quote', save: 'Save quote', filters: 'Quote filters',
@@ -623,7 +645,7 @@ export const en = {
     },
   },
   bank: {
-    quotesReference: 'quotes payment reference {{reference}}', 
+    quotesReference: 'quotes payment reference {{reference}}',
     views: { unprocessed: 'Transactions to book', processed: 'Booked transactions', all: 'All transactions', custom: 'Filtered transactions' },
     importStatement: 'Import statement', accountSettings: 'Account settings', detailsTitle: 'Transaction details',
     intro: {

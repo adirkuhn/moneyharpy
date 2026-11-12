@@ -61,6 +61,7 @@ function loaded(list: ExternalInvoice[] = [external(), fresh], seen: URL[] = [])
     http.get('*/api/v2/11/tax_rates', () => HttpResponse.json([vat21])),
     http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales])),
     http.get('*/api/v2/11/contacts', () => HttpResponse.json([shop as unknown as Contact], { headers: { 'X-Total-Count': '1' } })),
+    http.get('*/api/v2/11/users', () => HttpResponse.json([])),
   ]
 }
 
@@ -70,7 +71,8 @@ describe('the external invoice list', () => {
     server.use(...loaded(undefined, seen))
     renderAt('/11/external_sales_invoices')
     const table = await screen.findByRole('table', { name: 'External invoices' })
-    expect(within(table).getByRole('link', { name: 'WEB-1001' })).toHaveAttribute('href', '/11/external_sales_invoices/931')
+    // As at Moneybird the reference follows the software the invoice comes from.
+    expect(within(table).getByRole('link', { name: 'Example webshop › WEB-1001' })).toHaveAttribute('href', '/11/external_sales_invoices/931')
     expect(within(table).getByRole('link', { name: 'External invoice 2' })).toHaveAttribute('href', '/11/external_sales_invoices/932')
     expect(within(table).getByText('Example Shop B.V.')).toBeInTheDocument()
     expect(within(table).getByText('€121.00')).toBeInTheDocument()
@@ -79,7 +81,8 @@ describe('the external invoice list', () => {
     const nav = screen.getByRole('navigation', { name: 'Administration menu' })
     expect(within(nav).getByRole('link', { name: 'External invoices' })).toHaveAttribute('aria-current', 'page')
     expect(within(table).getByRole('img', { name: 'Has attachments' })).toBeInTheDocument()
-    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Reference', '', 'Contact', 'Date', 'Amount', 'Status'])
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['', 'Reference', '', 'Contact', 'Date', 'Amount', 'Status'])
+    expect(within(table).getByRole('checkbox', { name: 'Select all external invoices' })).toBeInTheDocument()
 
     const toggle = screen.getByRole('button', { name: 'External invoices from this year' })
     await userEvent.click(toggle)
@@ -126,49 +129,95 @@ describe('the external invoice list', () => {
   })
 })
 
-describe('an external invoice', () => {
-  it('fills in an uploaded invoice so it is booked', async () => {
-    let sent: unknown
+describe('the selection of external invoices', () => {
+  it('deletes the ticked invoices', async () => {
+    const deleted: string[] = []
     server.use(...loaded())
-    server.use(http.patch('*/api/v2/11/external_sales_invoices/932', async ({ request }) => {
-      sent = await request.json()
-      return HttpResponse.json(external({ id: '932', reference: 'WEB-1002', uri: '/11/external_sales_invoices/932' }))
+    server.use(http.delete('*/api/v2/11/external_sales_invoices/:id', ({ params }) => {
+      deleted.push(String(params.id))
+      return new HttpResponse(null, { status: 204 })
     }))
-    renderAt('/11/external_sales_invoices/932')
-    expect(await screen.findByRole('link', { name: 'View order.pdf' })).toHaveAttribute('href', '/api/v2/11/external_sales_invoices/932/attachments/971/download')
-    const form = screen.getByRole('form', { name: 'External invoice' })
-    await userEvent.click(within(form).getByRole('combobox', { name: 'Contact' }))
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Find a contact' }), 'shop')
-    await userEvent.click(await screen.findByRole('option', { name: 'Example Shop B.V.' }))
-    await userEvent.type(within(form).getByLabelText('Reference'), 'WEB-1002')
-    await userEvent.type(within(form).getByLabelText('Due date'), '2026-11-25')
-    await userEvent.type(within(form).getByLabelText('Description'), 'Chair')
-    await userEvent.type(within(form).getByLabelText('Price'), '50')
-    expect(within(form).getByText('€60.50')).toBeInTheDocument()
-    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(sent).toEqual({
-      external_sales_invoice: {
-        contact_id: '701', reference: 'WEB-1002', date: '2026-11-11', due_date: '2026-11-25', prices_are_incl_tax: false,
-        details_attributes: [{ description: 'Chair', amount: '1', price: '50', tax_rate_id: '2101' }],
-      },
-    }))
-    expect(await screen.findByRole('heading', { name: 'WEB-1002' })).toBeInTheDocument()
+    renderAt('/11/external_sales_invoices')
+    const table = await screen.findByRole('table', { name: 'External invoices' })
+    await userEvent.click(within(table).getByRole('checkbox', { name: 'Select external invoice Example webshop › WEB-1001' }))
+    const bar = screen.getByRole('group', { name: 'Selected external invoices' })
+    expect(bar).toHaveTextContent('1 external invoice selected')
+    await userEvent.click(within(bar).getByRole('button', { name: 'Delete (1)' }))
+    await userEvent.click(within(bar).getByRole('button', { name: 'Delete 1 external invoice permanently' }))
+    await waitFor(() => expect(deleted).toEqual(['931']))
+  })
+})
+
+const created = { administration_id: '11', user_id: '1', action: 'external_sales_invoice_created', link_entity_id: null, link_entity_type: null, data: {}, created_at: stamp, updated_at: stamp }
+
+describe('an external invoice', () => {
+  it('reads as Moneybird’s document, with the action bar and the sidebar', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/external_sales_invoices/931', () => HttpResponse.json(external({ events: [created] }))))
+    renderAt('/11/external_sales_invoices/931')
+    const document = await screen.findByRole('article', { name: 'External invoice' })
+    expect(within(document).getByRole('heading', { level: 1, name: 'WEB-1001' })).toBeInTheDocument()
+    const facts = within(document).getByRole('list', { name: 'Invoice facts' })
+    expect(within(facts).getByRole('link', { name: 'Example Shop B.V.' })).toHaveAttribute('href', '/11/contacts/701')
+    expect(facts).toHaveTextContent('Invoice date2026-11-01')
+    expect(facts).toHaveTextContent('Due date2026-11-15')
+    expect(within(facts).getByRole('link', { name: 'Example webshop' })).toHaveAttribute('href', 'https://shop.example.com/orders/1001')
+    const lines = within(document).getByRole('table', { name: 'Invoice lines' })
+    expect(within(lines).getAllByRole('row').map((r) => r.textContent)).toEqual([
+      'DescriptionAmountTotalVAT',
+      '1Sofa€100.00€100.0021%',
+      'Subtotal€100.00',
+      '21% btw€21.00',
+      'Total€121.00',
+    ])
+
+    expect(screen.getByRole('link', { name: 'Register payment' })).toHaveAttribute('href', '/11/external_sales_invoices/931/payments/new')
+    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/11/external_sales_invoices/931/edit')
+    expect(screen.getByRole('button', { name: 'Journal entries' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: 'Delete external invoice' })).toBeInTheDocument()
+    expect(screen.getByText('Open')).toHaveClass('badge')
+
+    const sidebar = screen.getByRole('complementary', { name: 'About this invoice' })
+    expect(await within(within(sidebar).getByRole('list', { name: 'Category' })).findByText('Sales')).toBeInTheDocument()
+    expect(within(sidebar).getByRole('heading', { name: 'Notes and tasks' })).toBeInTheDocument()
+    expect(within(sidebar).getByText('External invoice created')).toBeInTheDocument()
   })
 
-  it('takes a payment and can be marked dubious', async () => {
-    let paid: unknown
+  it('shows its journal entries as Moneybird heads them', async () => {
+    const seen: string[] = []
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/reports/journal_entries', ({ request }) => {
+      const url = new URL(request.url)
+      seen.push(`${url.searchParams.get('document_type')}/${url.searchParams.get('document_id')}`)
+      return HttpResponse.json([
+        { id: '1', date: '2026-11-01', document_type: 'ExternalSalesInvoice', document_id: '931', ledger_account_id: '8001', amount: '-100.0', tax_rate_id: '2101', contact_id: '701', project_id: null, financial_account_id: null, description: null },
+      ])
+    }))
+    renderAt('/11/external_sales_invoices/931')
+    const button = await screen.findByRole('button', { name: 'Journal entries' })
+    await userEvent.click(button)
+    expect(button).toHaveAttribute('aria-pressed', 'true')
+    const table = await screen.findByRole('table', { name: 'Journal entries' })
+    await waitFor(() => expect(within(table).getAllByRole('row').map((r) => r.textContent)).toEqual([
+      'CategoryDebitCreditVAT', 'External invoice - 2026-11-01', 'Sales (Profit and loss statement)100.0021% btw',
+    ]))
+    expect(seen).toEqual(['ExternalSalesInvoice/931'])
+  })
+
+  it('shows its files under the document', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/external_sales_invoices/931', () => HttpResponse.json(external({ attachments: fresh.attachments }))))
+    renderAt('/11/external_sales_invoices/931')
+    const files = await screen.findByRole('region', { name: 'Attachments' })
+    expect(within(files).getByRole('link', { name: 'order.pdf' })).toHaveAttribute('href', '/api/v2/11/external_sales_invoices/931/attachments/971/download')
+  })
+
+  it('can be marked dubious while it is unpaid', async () => {
     let dubious: unknown
     let current = external({ state: 'late' })
     server.use(...loaded())
     server.use(
       http.get('*/api/v2/11/external_sales_invoices/931', () => HttpResponse.json(current)),
-      http.post('*/api/v2/11/external_sales_invoices/931/payments', async ({ request }) => {
-        paid = await request.json()
-        current = external({ state: 'late', total_unpaid: '100.0', total_paid: '21.0', payments: [
-          { id: '981', administration_id: '11', invoice_type: 'ExternalSalesInvoice', invoice_id: '931', price: '21.0', price_base: '21.0', payment_date: '2026-11-05', manual_payment_action: 'cash_payment', created_at: stamp, updated_at: stamp },
-        ] })
-        return HttpResponse.json(current.payments?.[0], { status: 201 })
-      }),
       http.patch('*/api/v2/11/external_sales_invoices/931/mark_as_dubious', async ({ request }) => {
         dubious = await request.json()
         current = { ...current, marked_dubious_on: '2026-11-08' }
@@ -176,19 +225,6 @@ describe('an external invoice', () => {
       }),
     )
     renderAt('/11/external_sales_invoices/931')
-    const block = await screen.findByRole('region', { name: 'Payments' })
-    const form = within(block).getByRole('form', { name: 'Register payment' })
-    await userEvent.clear(within(form).getByLabelText('Amount'))
-    await userEvent.type(within(form).getByLabelText('Amount'), '21')
-    await userEvent.clear(within(form).getByLabelText('Payment date'))
-    await userEvent.type(within(form).getByLabelText('Payment date'), '2026-11-05')
-    await userEvent.selectOptions(within(form).getByLabelText('Paid by'), 'cash_payment')
-    await userEvent.click(within(form).getByRole('button', { name: 'Register payment' }))
-    await waitFor(() => expect(paid).toEqual({ payment: { payment_date: '2026-11-05', price: '21', manual_payment_action: 'cash_payment' } }))
-    expect(await within(block).findByRole('row', { name: /Cash/ })).toHaveTextContent('€21.00')
-    // With a payment it can no longer change.
-    expect(screen.queryByRole('form', { name: 'External invoice' })).toBeNull()
-
     await chooseMore('Mark as dubious')
     const panel = screen.getByRole('region', { name: 'Mark as dubious' })
     await userEvent.clear(within(panel).getByLabelText('Date'))
@@ -196,6 +232,105 @@ describe('an external invoice', () => {
     await userEvent.click(within(panel).getByRole('button', { name: 'Mark as dubious' }))
     await waitFor(() => expect(dubious).toEqual({ dubious_date: '2026-11-08' }))
     expect(await screen.findByText('This invoice is marked as dubious.')).toBeInTheDocument()
+  })
+
+  it('registers a payment through Moneybird’s pages', async () => {
+    let paid: unknown
+    server.use(...loaded())
+    server.use(http.post('*/api/v2/11/external_sales_invoices/931/payments', async ({ request }) => {
+      paid = await request.json()
+      return HttpResponse.json({ id: '981' }, { status: 201 })
+    }))
+    renderAt('/11/external_sales_invoices/931')
+    await userEvent.click(await screen.findByRole('link', { name: 'Register payment' }))
+    expect(await screen.findByText(/external invoice WEB-1001/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('link', { name: 'Business cash payment' }))
+    const form = await screen.findByRole('form', { name: 'Register payment' })
+    await userEvent.clear(within(form).getByLabelText('Amount'))
+    await userEvent.type(within(form).getByLabelText('Amount'), '21')
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(paid).toMatchObject({ payment: { price: '21', manual_payment_action: 'cash_payment' } }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/external_sales_invoices\/931$/))
+  })
+
+  it('deletes after asking and returns to the list', async () => {
+    let deleted = false
+    server.use(...loaded())
+    server.use(http.delete('*/api/v2/11/external_sales_invoices/931', () => {
+      deleted = true
+      return new HttpResponse(null, { status: 204 })
+    }))
+    renderAt('/11/external_sales_invoices/931')
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete external invoice' }))
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Delete this external invoice? This cannot be undone.' })).getByRole('button', { name: 'Delete permanently' }))
+    await waitFor(() => expect(deleted).toBe(true))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/external_sales_invoices$/))
+  })
+})
+
+describe('editing an external invoice', () => {
+  it('changes its details on Moneybird’s edit page', async () => {
+    let sent: unknown
+    server.use(...loaded())
+    server.use(http.patch('*/api/v2/11/external_sales_invoices/931', async ({ request }) => {
+      sent = await request.json()
+      return HttpResponse.json(external({ reference: 'WEB-1009' }))
+    }))
+    renderAt('/11/external_sales_invoices/931/edit')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Edit external invoice' })).toBeInTheDocument()
+    const form = screen.getByRole('form', { name: 'Edit external invoice' })
+    expect(within(form).getByRole('group', { name: 'Contact' })).toHaveTextContent('Example Shop B.V.')
+    const details = within(form).getByRole('group', { name: 'Add details' })
+    expect(within(details).getByLabelText('Invoice id')).toHaveValue('WEB-1001')
+    expect(within(details).getByLabelText('Date', { selector: 'input[type="date"]' })).toHaveValue('2026-11-01')
+    expect(within(details).getByLabelText('Source (optional)')).toHaveValue('Example webshop')
+    expect(within(details).getByLabelText('Source URL (optional)')).toHaveValue('https://shop.example.com/orders/1001')
+    await userEvent.clear(within(details).getByLabelText('Invoice id'))
+    await userEvent.type(within(details).getByLabelText('Invoice id'), 'WEB-1009')
+    // The due date can be given as a number of days after the date.
+    await userEvent.click(within(details).getByRole('radio', { name: 'Days' }))
+    await userEvent.type(within(details).getByLabelText('Days until due'), '30')
+    await userEvent.click(within(form).getByRole('radio', { name: 'Including VAT' }))
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent).toEqual({
+      external_sales_invoice: {
+        contact_id: '701', reference: 'WEB-1009', date: '2026-11-01', due_date: '2026-12-01', source: 'Example webshop', source_url: 'https://shop.example.com/orders/1001',
+        currency: 'EUR', prices_are_incl_tax: true,
+        details_attributes: [{ id: '961', description: 'Sofa', amount: '1', price: '100', tax_rate_id: '2101', ledger_account_id: '8001', row_order: 1 }],
+      },
+    }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/external_sales_invoices\/931$/))
+  })
+
+  it('fills in an uploaded invoice beside its file', async () => {
+    let sent: unknown
+    server.use(...loaded())
+    server.use(http.patch('*/api/v2/11/external_sales_invoices/932', async ({ request }) => {
+      sent = await request.json()
+      return HttpResponse.json(external({ id: '932', reference: 'WEB-1002', uri: '/11/external_sales_invoices/932' }))
+    }))
+    renderAt('/11/external_sales_invoices/932')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Edit external invoice' })).toBeInTheDocument()
+    const files = screen.getByRole('region', { name: 'Attachments' })
+    expect(within(files).getByRole('link', { name: 'order.pdf' })).toHaveAttribute('href', '/api/v2/11/external_sales_invoices/932/attachments/971/download')
+    expect(files).toHaveTextContent('(Maximum 10 MB per file and 15 MB total)')
+    const form = screen.getByRole('form', { name: 'Edit external invoice' })
+    await userEvent.click(within(form).getByRole('combobox', { name: 'Contact' }))
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Find a contact' }), 'shop')
+    await userEvent.click(await screen.findByRole('option', { name: 'Example Shop B.V.' }))
+    expect(within(form).getByRole('group', { name: 'Contact' })).toHaveTextContent('Example Shop B.V.')
+    await userEvent.type(within(form).getByLabelText('Invoice id'), 'WEB-1002')
+    await userEvent.type(within(form).getByLabelText('Description'), 'Chair')
+    await userEvent.type(within(form).getByLabelText('Price'), '50')
+    expect(within(form).getByText('€60.50')).toBeInTheDocument()
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent).toMatchObject({
+      external_sales_invoice: {
+        contact_id: '701', reference: 'WEB-1002', date: '2026-11-11', due_date: '', prices_are_incl_tax: false,
+        details_attributes: [{ description: 'Chair', amount: '1', price: '50', tax_rate_id: '2101' }],
+      },
+    }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/external_sales_invoices\/932$/))
   })
 
   it('creates an invoice typed in by hand', async () => {
@@ -206,9 +341,11 @@ describe('an external invoice', () => {
       return HttpResponse.json(external(), { status: 201 })
     }))
     renderAt('/11/external_sales_invoices/new')
-    const form = await screen.findByRole('form', { name: 'External invoice' })
-    await userEvent.type(within(form).getByLabelText('Reference'), 'WEB-1001')
-    await userEvent.click(within(form).getByLabelText('Prices include VAT'))
+    expect(await screen.findByRole('heading', { level: 1, name: 'New external invoice' })).toBeInTheDocument()
+    const form = screen.getByRole('form', { name: 'New external invoice' })
+    expect(screen.queryByRole('button', { name: 'Delete external invoice' })).toBeNull()
+    await userEvent.type(within(form).getByLabelText('Invoice id'), 'WEB-1001')
+    await userEvent.click(within(form).getByRole('radio', { name: 'Including VAT' }))
     await userEvent.type(within(form).getByLabelText('Price'), '121')
     await userEvent.selectOptions(within(form).getByLabelText('Category'), '8001')
     await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
@@ -216,19 +353,5 @@ describe('an external invoice', () => {
       external_sales_invoice: { reference: 'WEB-1001', prices_are_incl_tax: true, details_attributes: [{ price: '121', tax_rate_id: '2101', ledger_account_id: '8001' }] },
     }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/external_sales_invoices/931'))
-  })
-
-  it('deletes an invoice and returns to the list', async () => {
-    let deleted = false
-    server.use(...loaded())
-    server.use(http.delete('*/api/v2/11/external_sales_invoices/931', () => {
-      deleted = true
-      return new HttpResponse(null, { status: 204 })
-    }))
-    renderAt('/11/external_sales_invoices/931')
-    await chooseMore('Delete')
-    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Delete this external invoice? This cannot be undone.' })).getByRole('button', { name: 'Delete permanently' }))
-    await waitFor(() => expect(deleted).toBe(true))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/external_sales_invoices$/))
   })
 })

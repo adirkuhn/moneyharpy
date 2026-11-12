@@ -4856,7 +4856,7 @@ export interface paths {
         head?: never;
         /**
          * Update an external sales invoice
-         * @description Lines with an id change, lines with _destroy go, lines without an id are added; the invoice is booked again. A booked invoice keeps its contact and at least one line. Not once it has payments or is marked dubious, nor in the locked period.
+         * @description Lines with an id change, lines with _destroy go, lines without an id are added; the invoice is booked again. A booked invoice keeps its contact and at least one line. As at Moneybird a paid invoice, or one with payments, changes too and keeps its currency; what is left to pay sets its state. Not once it is uncollectible, nor in the locked period.
          */
         patch: operations["updateExternalSalesInvoice"];
         trace?: never;
