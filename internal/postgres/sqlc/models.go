@@ -273,6 +273,8 @@ type DocumentStyle struct {
 	Layout                 []byte
 	CreatedAt              pgtype.Timestamptz
 	UpdatedAt              pgtype.Timestamptz
+	Channels               []byte
+	Files                  []byte
 }
 
 type Download struct {

@@ -141,8 +141,20 @@ func TestDocumentStyleStore(t *testing.T) {
 			InvoiceSenderAddress: []invoicing.Line{{Field: "company_name", Bold: true}, {Field: "tax_number", Label: true}},
 			InvoiceMetadataLeft:  []invoicing.Line{}, InvoiceMetadataRight: []invoicing.Line{{Field: "invoice_date"}},
 			EstimateSenderAddress: []invoicing.Line{}, EstimateMetadataLeft: []invoicing.Line{}, EstimateMetadataRight: []invoicing.Line{},
+			InvoiceRecipientAddress:  []invoicing.Line{{Field: "customer_tax_number", Italic: true, Label: true}},
+			EstimateRecipientAddress: []invoicing.Line{}, HideSenderAddress: true, SenderAddressWidth: 240, ShowEPCCode: false,
 		},
-		CreatedAt: now, UpdatedAt: now,
+		Email: invoicing.EmailStyle{
+			HeaderType: "background_color_with_logo", HeaderContentPosition: "right", HeaderBackgroundColor: "#112233", HeaderText: "Hi",
+			HeaderTextColor: "#FFFFFF", LogoDisplayWidth: 30, FooterType: "signature", FooterTextColor: "#000000",
+			FooterBackgroundColor: "#EEEEEE", FooterProfileTitle: "Ann", FooterProfileSubtitle: "Owner", BodyBackgroundColor: "#FAFAFA",
+			FontFamily: "arial",
+		},
+		PublicView: invoicing.PublicViewStyle{LogoDisplaySize: 80, BackgroundColor: "#D5E8FA"},
+		Checkout:   invoicing.CheckoutStyle{ShowPhoneField: true, FavoriteLabel: "Best"},
+		Files:      map[invoicing.FileKind]invoicing.StoredFile{invoicing.EmailLogo: {Hash: "def", ContentType: "image/gif"}},
+		Images:     []invoicing.StoredFile{{Hash: "ghi", ContentType: "image/jpeg"}},
+		CreatedAt:  now, UpdatedAt: now,
 	}
 	if created, err := s.CreateDocumentStyle(ctx, d); err != nil || !created {
 		t.Fatalf("CreateDocumentStyle() = %v, %v", created, err)
@@ -154,8 +166,20 @@ func TestDocumentStyleStore(t *testing.T) {
 	if diff := cmp.Diff(d, got, approxTime); diff != "" {
 		t.Errorf("DocumentStyle() diff (-want +got):\n%s", diff)
 	}
-	if used, err := s.FileInUse(ctx, a.ID, "abc"); err != nil || !used {
-		t.Errorf("FileInUse(abc) = %v, %v", used, err)
+	for _, hash := range []string{"abc", "def", "ghi"} {
+		if used, err := s.FileInUse(ctx, a.ID, hash); err != nil || !used {
+			t.Errorf("FileInUse(%s) = %v, %v", hash, used, err)
+		}
+	}
+	if _, err := testPool.Exec(ctx, `UPDATE document_styles SET layout = '{}', channels = '{}' WHERE id = $1`, int64(d.ID)); err != nil {
+		t.Fatal(err)
+	}
+	old, err := s.DocumentStyle(ctx, a.ID, d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if old.Email != invoicing.DefaultEmailStyle() || old.PublicView != invoicing.DefaultPublicViewStyle() || old.Checkout != invoicing.DefaultCheckoutStyle() || !old.ShowEPCCode || old.SenderAddressWidth != 200 {
+		t.Errorf("a style stored before the settings existed = %+v", old)
 	}
 	if used, _ := s.FileInUse(ctx, a.ID, "other"); used {
 		t.Error("FileInUse(other) = true")

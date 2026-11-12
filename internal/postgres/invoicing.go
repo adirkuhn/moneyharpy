@@ -2,9 +2,7 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -194,57 +192,6 @@ func (s *InvoicingStore) DeleteWorkflow(ctx context.Context, admin, id resource.
 	})
 }
 
-// line and layout are how Layout is stored, in Moneybird's JSON shape.
-type line struct {
-	Field string `json:"field"`
-	Bold  bool   `json:"bold,omitempty"`
-	Label bool   `json:"label,omitempty"`
-}
-
-type layout struct {
-	InvoiceSenderAddress  []line `json:"invoice_sender_address"`
-	InvoiceMetadataLeft   []line `json:"invoice_metadata_left"`
-	InvoiceMetadataRight  []line `json:"invoice_metadata_right"`
-	EstimateSenderAddress []line `json:"estimate_sender_address"`
-	EstimateMetadataLeft  []line `json:"estimate_metadata_left"`
-	EstimateMetadataRight []line `json:"estimate_metadata_right"`
-}
-
-func toLines(in []invoicing.Line) []line {
-	out := make([]line, len(in))
-	for i, l := range in {
-		out[i] = line(l)
-	}
-	return out
-}
-
-func fromLines(in []line) []invoicing.Line {
-	out := make([]invoicing.Line, len(in))
-	for i, l := range in {
-		out[i] = invoicing.Line(l)
-	}
-	return out
-}
-
-func encodeLayout(l invoicing.Layout) ([]byte, error) {
-	return json.Marshal(layout{
-		toLines(l.InvoiceSenderAddress), toLines(l.InvoiceMetadataLeft), toLines(l.InvoiceMetadataRight),
-		toLines(l.EstimateSenderAddress), toLines(l.EstimateMetadataLeft), toLines(l.EstimateMetadataRight),
-	})
-}
-
-func decodeLayout(raw []byte) (invoicing.Layout, error) {
-	var l layout
-	if err := json.Unmarshal(raw, &l); err != nil {
-		return invoicing.Layout{}, fmt.Errorf("decode layout: %w", err)
-	}
-	return invoicing.Layout{
-		InvoiceSenderAddress: fromLines(l.InvoiceSenderAddress), InvoiceMetadataLeft: fromLines(l.InvoiceMetadataLeft),
-		InvoiceMetadataRight: fromLines(l.InvoiceMetadataRight), EstimateSenderAddress: fromLines(l.EstimateSenderAddress),
-		EstimateMetadataLeft: fromLines(l.EstimateMetadataLeft), EstimateMetadataRight: fromLines(l.EstimateMetadataRight),
-	}, nil
-}
-
 func fileColumns(f *invoicing.StoredFile) (hash, contentType pgtype.Text) {
 	if f == nil {
 		return pgtype.Text{}, pgtype.Text{}
@@ -264,7 +211,7 @@ func toDocumentStyle(r sqlc.DocumentStyle) (invoicing.DocumentStyle, error) {
 	if err != nil {
 		return invoicing.DocumentStyle{}, err
 	}
-	return invoicing.DocumentStyle{
+	d := invoicing.DocumentStyle{
 		ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), Name: r.Name,
 		IdentityID: resource.ID(r.IdentityID), Default: r.IsDefault, Logo: storedFile(r.LogoHash, r.LogoContentType),
 		LogoContainerFullWidth: r.LogoContainerFullWidth, LogoDisplayWidth: int(r.LogoDisplayWidth),
@@ -272,7 +219,26 @@ func toDocumentStyle(r sqlc.DocumentStyle) (invoicing.DocumentStyle, error) {
 		PrintOnStationery: r.PrintOnStationery, PaperSize: r.PaperSize, AddressPosition: r.AddressPosition,
 		FontSize: int(r.FontSize), FontFamily: r.FontFamily, CustomCSS: r.CustomCss, Layout: l,
 		CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
-	}, nil
+	}
+	if err := decodeChannels(r.Channels, &d); err != nil {
+		return invoicing.DocumentStyle{}, err
+	}
+	if err := decodeFiles(r.Files, &d); err != nil {
+		return invoicing.DocumentStyle{}, err
+	}
+	return d, nil
+}
+
+// styleColumns encodes the JSON columns of a document style.
+func styleColumns(d invoicing.DocumentStyle) (layout, channels, files []byte, err error) {
+	if layout, err = encodeLayout(d.Layout); err != nil {
+		return nil, nil, nil, err
+	}
+	if channels, err = encodeChannels(d); err != nil {
+		return nil, nil, nil, err
+	}
+	files, err = encodeFiles(d)
+	return layout, channels, files, err
 }
 
 // DocumentStyles implements invoicing.Store.
@@ -304,7 +270,7 @@ func (s *InvoicingStore) DocumentStyle(ctx context.Context, admin, id resource.I
 
 // CreateDocumentStyle implements invoicing.Store.
 func (s *InvoicingStore) CreateDocumentStyle(ctx context.Context, d invoicing.DocumentStyle) (bool, error) {
-	raw, err := encodeLayout(d.Layout)
+	raw, channels, files, err := styleColumns(d)
 	if err != nil {
 		return false, err
 	}
@@ -320,7 +286,7 @@ func (s *InvoicingStore) CreateDocumentStyle(ctx context.Context, d invoicing.Do
 			LogoPosition: d.LogoPosition, BackgroundHash: bgHash, BackgroundContentType: bgType,
 			PrintOnStationery: d.PrintOnStationery, PaperSize: d.PaperSize, AddressPosition: d.AddressPosition,
 			FontSize: int32(d.FontSize), FontFamily: d.FontFamily, CustomCss: d.CustomCSS, Layout: raw,
-			CreatedAt: timestamp(d.CreatedAt), UpdatedAt: timestamp(d.UpdatedAt),
+			CreatedAt: timestamp(d.CreatedAt), UpdatedAt: timestamp(d.UpdatedAt), Channels: channels, Files: files,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil // The administration has a default already.
@@ -338,7 +304,7 @@ func (s *InvoicingStore) CreateDocumentStyle(ctx context.Context, d invoicing.Do
 
 // UpdateDocumentStyle implements invoicing.Store.
 func (s *InvoicingStore) UpdateDocumentStyle(ctx context.Context, d invoicing.DocumentStyle) error {
-	raw, err := encodeLayout(d.Layout)
+	raw, channels, files, err := styleColumns(d)
 	if err != nil {
 		return err
 	}
@@ -360,7 +326,7 @@ func (s *InvoicingStore) UpdateDocumentStyle(ctx context.Context, d invoicing.Do
 			LogoPosition: d.LogoPosition, BackgroundHash: bgHash, BackgroundContentType: bgType,
 			PrintOnStationery: d.PrintOnStationery, PaperSize: d.PaperSize, AddressPosition: d.AddressPosition,
 			FontSize: int32(d.FontSize), FontFamily: d.FontFamily, CustomCss: d.CustomCSS, Layout: raw,
-			UpdatedAt: timestamp(d.UpdatedAt),
+			UpdatedAt: timestamp(d.UpdatedAt), Channels: channels, Files: files,
 		})
 	})
 }
@@ -382,5 +348,5 @@ func (s *InvoicingStore) DeleteDocumentStyle(ctx context.Context, admin, id reso
 
 // FileInUse implements invoicing.Store.
 func (s *InvoicingStore) FileInUse(ctx context.Context, admin resource.ID, hash string) (bool, error) {
-	return s.q.DocumentFileInUse(ctx, sqlc.DocumentFileInUseParams{AdministrationID: int64(admin), LogoHash: pgtype.Text{String: hash, Valid: true}})
+	return s.q.DocumentFileInUse(ctx, sqlc.DocumentFileInUseParams{AdministrationID: int64(admin), Hash: hash})
 }

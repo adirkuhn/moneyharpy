@@ -3,11 +3,13 @@ package sales
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -128,6 +130,18 @@ func TestSendNumbersBooksAndEmails(t *testing.T) {
 	}
 	if !strings.HasPrefix(string(m.Files[0].Data), "%PDF 2026-0001") || m.Files[0].Name != "invoice-2026-0001.pdf" {
 		t.Errorf("file = %s %q", m.Files[0].Name, m.Files[0].Data)
+	}
+	if m.Look == nil || m.Look.Style.HeaderType != "background_color_with_logo" || m.Look.Style.FontFamily != "georgia" || m.Look.Sender.CompanyName == "" {
+		t.Fatalf("look = %+v", m.Look)
+	}
+	if logo := m.Look.Images[invoicing.EmailLogo]; string(logo.Data) != "GIF89a logo" || logo.ContentType != "image/gif" {
+		t.Errorf("email logo = %+v", logo)
+	}
+	if want := [2]string{"Factuur", "2026-0001"}; len(m.Look.Details) == 0 || m.Look.Details[0] != want {
+		t.Errorf("details = %v", m.Look.Details)
+	}
+	if !slices.Contains(m.Look.Details, [2]string{"Openstaand bedrag", "€ 296,50"}) {
+		t.Errorf("details = %v, want the amount due", m.Look.Details)
 	}
 
 	// Sending again delivers a copy without a new number or booking.
