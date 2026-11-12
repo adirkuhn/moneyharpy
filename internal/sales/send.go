@@ -2,6 +2,7 @@ package sales
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/mail"
@@ -119,9 +120,14 @@ func (s *Service) Send(ctx context.Context, admin, id, user resource.ID, in Send
 		if err := s.number(ctx, admin, user, &inv, contact, settings.Settings); err != nil {
 			return Invoice{}, err
 		}
+		if inv.PaymentReference == "" {
+			if inv.PaymentReference, err = s.paymentReference(ctx, admin); err != nil {
+				return Invoice{}, err
+			}
+		}
 		due := day.AddDate(0, 0, inv.FirstDueInterval)
 		now := s.now()
-		inv.DueDate, inv.PaymentReference, inv.State, inv.SentAt, inv.UpdatedAt = &due, inv.InvoiceID, Open, &now, now
+		inv.DueDate, inv.State, inv.SentAt, inv.UpdatedAt = &due, Open, &now, now
 		entries, err := s.post(ctx, admin, user, inv)
 		if err != nil {
 			return Invoice{}, err
@@ -500,4 +506,20 @@ func (s *Service) DeleteAttachment(ctx context.Context, admin, id, attachment, u
 // ContactInUse reports whether invoices refer to a contact.
 func (s *Service) ContactInUse(ctx context.Context, admin, contact resource.ID) (bool, error) {
 	return s.store.ContactInUse(ctx, admin, contact)
+}
+
+// paymentReference gives a new payment reference no other invoice of the
+// administration has, as Moneybird gives an invoice when it is sent.
+func (s *Service) paymentReference(ctx context.Context, admin resource.ID) (string, error) {
+	for range 5 {
+		ref := NewPaymentReference()
+		taken, err := s.store.PaymentReferenceTaken(ctx, admin, ref)
+		if err != nil {
+			return "", fmt.Errorf("check payment reference: %w", err)
+		}
+		if !taken {
+			return ref, nil
+		}
+	}
+	return "", errors.New("no free payment reference")
 }

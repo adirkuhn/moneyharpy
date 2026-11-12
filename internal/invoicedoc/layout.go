@@ -269,7 +269,7 @@ func epcPayload(doc sales.Document) (string, bool) {
 	if len([]rune(name)) > 70 {
 		name = string([]rune(name)[:70])
 	}
-	reference := inv.PaymentReference
+	reference := sales.ShortPaymentReference(inv.PaymentReference)
 	if reference == "" {
 		reference = inv.InvoiceID
 	}

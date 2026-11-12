@@ -9,6 +9,7 @@ import { contactName } from '../contacts/queries'
 import { DetailBlock, DetailList } from '../detail/Detail'
 import { FormSection, formErrors, TextInput } from '../forms/Form'
 import { externalTitle, unpaidExternalStates, useExternalInvoice, useExternalInvoices } from '../external/queries'
+import { containsPaymentReference, shortPaymentReference } from '../invoices/paymentReference'
 import { invoiceTitle, unpaidStates, useSalesInvoice, useSalesInvoices } from '../invoices/queries'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
@@ -198,7 +199,10 @@ function PaymentRow({ administrationId, payment: p, currency, disabled, onUnlink
 }
 
 /** An open invoice of either kind the transaction can pay. */
-type Payable = { key: string; type: 'SalesInvoice' | 'ExternalSalesInvoice'; id: string; title: string; contact: string; reference: string; unpaid: string | undefined; currency: string }
+type Payable = {
+  key: string; type: 'SalesInvoice' | 'ExternalSalesInvoice'; id: string; title: string; contact: string; reference: string; paymentReference: string
+  unpaid: string | undefined; currency: string
+}
 
 /** Pays an open sales or external invoice with the transaction, found by its number, reference or contact. */
 function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: string; mutation: Mutation }) {
@@ -214,18 +218,23 @@ function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: 
   const all: Payable[] = [
     ...(invoices.data?.invoices ?? []).map((inv): Payable => ({
       key: `SalesInvoice:${inv.id}`, type: 'SalesInvoice', id: inv.id ?? '', title: invoiceTitle(inv, t), contact: inv.contact ? contactName(inv.contact) : '',
-      reference: inv.reference ?? '', unpaid: inv.total_unpaid, currency: inv.currency ?? 'EUR',
+      reference: inv.reference ?? '', paymentReference: inv.payment_reference ?? '', unpaid: inv.total_unpaid, currency: inv.currency ?? 'EUR',
     })),
     ...(externals.data?.invoices ?? []).map((inv): Payable => ({
       key: `ExternalSalesInvoice:${inv.id}`, type: 'ExternalSalesInvoice', id: inv.id ?? '', title: externalTitle(inv, t), contact: inv.contact ? contactName(inv.contact) : '',
-      reference: inv.reference ?? '', unpaid: inv.total_unpaid, currency: inv.currency ?? 'EUR',
+      reference: inv.reference ?? '', paymentReference: '', unpaid: inv.total_unpaid, currency: inv.currency ?? 'EUR',
     })),
   ]
-  const matches = all.filter((inv) => !term || [inv.title, inv.reference, inv.contact].some((v) => v.toLowerCase().includes(term)))
+  // An invoice whose payment reference the transaction quotes is suggested first, and chosen.
+  const quoted = (inv: Payable) => containsPaymentReference(m.message, inv.paymentReference)
+  all.sort((a, b) => Number(quoted(b)) - Number(quoted(a)))
+  const suggested = all.find(quoted)
+  const matches = all.filter((inv) => !term || [inv.title, inv.reference, inv.contact, shortPaymentReference(inv.paymentReference)].some((v) => v.toLowerCase().includes(term)))
+  const picked = chosen || suggested?.key || ''
   const loaded = !!invoices.data || !!externals.data
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    const inv = all.find((i) => i.key === chosen)
+    const inv = all.find((i) => i.key === picked)
     if (inv) {
       link.mutate({ booking_type: inv.type, booking_id: inv.id })
     }
@@ -242,8 +251,12 @@ function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: 
             <legend className="sr-only">{t('bank.invoice')}</legend>
             {matches.slice(0, 10).map((inv) => (
               <label key={inv.key} className="invoice-choice__row" htmlFor={`${id}-${inv.key}`}>
-                <input id={`${id}-${inv.key}`} type="radio" name={`${id}-invoice`} value={inv.key} checked={chosen === inv.key} onChange={() => setChosen(inv.key)} />
-                <span>{inv.title}{inv.type === 'ExternalSalesInvoice' && <span className="hint"> · {t('external.externalInvoice')}</span>}</span>
+                <input id={`${id}-${inv.key}`} type="radio" name={`${id}-invoice`} value={inv.key} checked={picked === inv.key} onChange={() => setChosen(inv.key)} />
+                <span>
+                  {inv.title}
+                  {inv.type === 'ExternalSalesInvoice' && <span className="hint"> · {t('external.externalInvoice')}</span>}
+                  {quoted(inv) && <span className="hint"> · {t('bank.quotesReference', { reference: shortPaymentReference(inv.paymentReference) })}</span>}
+                </span>
                 <span>{inv.contact}</span>
                 <span className="transactions__amount">{formatAmount(inv.unpaid, inv.currency, i18n.language)}</span>
               </label>
@@ -251,7 +264,7 @@ function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: 
           </fieldset>
         )}
         <div className="form-sheet__actions">
-          <button className="btn btn--primary" disabled={link.isPending || !chosen}>{t('bank.linkInvoiceButton')}</button>
+          <button className="btn btn--primary" disabled={link.isPending || !picked}>{t('bank.linkInvoiceButton')}</button>
         </div>
       </form>
     </DetailBlock>

@@ -1,0 +1,23 @@
+/* Moneybird's textile editor: a toolbar over a text area that grows with its text. */
+.textile { display: grid; gap: 0.375rem; }
+.textile__header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.25rem 1rem; }
+.textile__label { font-weight: 600; }
+.textile__toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; padding: 0.25rem; border: 1px solid var(--input-border); border-bottom: 0;
+  border-radius: 8px 8px 0 0; background: var(--bg);
+}
+.textile__button {
+  min-width: 2.25rem; height: 28px; padding: 0 0.5rem; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--text);
+  font: inherit; cursor: pointer;
+}
+.textile__button:hover { border-color: var(--line); background: var(--surface); }
+.textile__button:focus-visible, .textile__tags:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.textile__tags {
+  width: auto; max-width: 14rem; height: 28px; margin-left: auto; padding: 0 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); font: inherit;
+}
+.textile__area {
+  width: 100%; min-height: 5rem; margin-top: -0.375rem; padding: 0.5rem 0.75rem; overflow: hidden; resize: none; border: 1px solid var(--input-border);
+  border-radius: 0 0 8px 8px; background: var(--surface); color: var(--text); font: inherit; line-height: 1.5;
+}
+.textile__area:focus { outline: 2px solid var(--focus); outline-offset: -1px; }
+.textile.is-invalid .textile__area { border-color: var(--danger); }

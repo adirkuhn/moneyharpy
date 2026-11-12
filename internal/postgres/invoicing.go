@@ -104,7 +104,7 @@ func toWorkflow(r sqlc.Workflow, steps []invoicing.WorkflowStep) invoicing.Workf
 		ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), Type: invoicing.WorkflowType(r.Type),
 		Name: r.Name, Default: r.IsDefault, Currency: r.Currency, Language: r.Language, Active: r.Active,
 		PricesAreInclTax: r.PricesAreInclTax, ShowQRCode: r.ShowQrCode, Steps: steps,
-		InvoiceEmailSubject: r.InvoiceEmailSubject, InvoiceEmailBody: r.InvoiceEmailBody,
+		InvoiceEmailSubject: r.InvoiceEmailSubject, InvoiceEmailBody: r.InvoiceEmailBody, PaymentConditions: r.PaymentConditions,
 		CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
 	}
 }
@@ -118,7 +118,7 @@ func (s *InvoicingStore) CreateWorkflow(ctx context.Context, w invoicing.Workflo
 			ID: int64(w.ID), AdministrationID: int64(w.AdministrationID), Type: string(w.Type), Name: w.Name,
 			IsDefault: w.Default, Currency: w.Currency, Language: w.Language, Active: w.Active,
 			PricesAreInclTax: w.PricesAreInclTax, ShowQrCode: w.ShowQRCode,
-			InvoiceEmailSubject: w.InvoiceEmailSubject, InvoiceEmailBody: w.InvoiceEmailBody,
+			InvoiceEmailSubject: w.InvoiceEmailSubject, InvoiceEmailBody: w.InvoiceEmailBody, PaymentConditions: w.PaymentConditions,
 			CreatedAt: timestamp(w.CreatedAt), UpdatedAt: timestamp(w.UpdatedAt),
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -153,7 +153,7 @@ func (s *InvoicingStore) UpdateWorkflow(ctx context.Context, w invoicing.Workflo
 			AdministrationID: int64(w.AdministrationID), ID: int64(w.ID), Name: w.Name, IsDefault: w.Default,
 			Currency: w.Currency, Language: w.Language, Active: w.Active, PricesAreInclTax: w.PricesAreInclTax,
 			ShowQrCode: w.ShowQRCode, UpdatedAt: timestamp(w.UpdatedAt),
-			InvoiceEmailSubject: w.InvoiceEmailSubject, InvoiceEmailBody: w.InvoiceEmailBody,
+			InvoiceEmailSubject: w.InvoiceEmailSubject, InvoiceEmailBody: w.InvoiceEmailBody, PaymentConditions: w.PaymentConditions,
 		}); err != nil {
 			return err
 		}

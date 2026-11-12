@@ -15,6 +15,8 @@ import { addDays, addressLines, today } from '../invoices/paper'
 import { useProducts, type Product } from '../products/queries'
 import { useInvoiceSettings, useWorkflows, type Workflow } from './queries'
 import { customFieldName } from './styleLayout'
+import { conditionTagValues } from '../invoices/conditions'
+import { draftPaymentReference } from '../invoices/paymentReference'
 
 type SalesInvoice = components['schemas']['SalesInvoice']
 
@@ -147,9 +149,9 @@ export function buildPreviewData({ dt, currency, invoice, workflows, rates, prod
     return {
       ...common, source: 'invoice', currency: invoice.currency ?? currency,
       customer: { name, contactName: person || name, address: [c?.attention ?? '', ...addressLines(c ?? {})].filter((l) => l && l !== name), values },
-      documentValues, lines, totals, reference: invoice.reference ?? '', paymentReference: invoice.payment_reference ?? invoice.invoice_id ?? '',
+      documentValues, lines, totals, reference: invoice.reference ?? '', paymentReference: invoice.payment_reference || draftPaymentReference(invoice.draft_id),
       invoiceNumber: invoice.invoice_id ?? invoiceNumber, invoiceDate: invoice.invoice_date ?? date,
-      dueDate: invoice.due_date ?? addDays(invoice.invoice_date ?? date, days(flow, 14)), paymentConditions: invoice.payment_conditions ?? '',
+      dueDate: invoice.due_date ?? addDays(invoice.invoice_date ?? date, days(flow, 14)), paymentConditions: invoice.payment_conditions ?? flow?.payment_conditions ?? '',
     }
   }
 
@@ -165,8 +167,8 @@ export function buildPreviewData({ dt, currency, invoice, workflows, rates, prod
       address: [dt('documentStyle.sample.contactName'), dt('documentStyle.sample.street'), dt('documentStyle.sample.city')],
       values: { customer_tax_number: 'NL000099998B57', customer_chamber_of_commerce: '12345678', customer_id: '1', customer_email: 'ann@example.com', customer_phone: '+31 20 123 4567' },
     },
-    documentValues: {}, lines, totals: computeTotals(lines), reference: dt('documentStyle.sample.reference'), paymentReference: invoiceNumber,
-    invoiceNumber, invoiceDate: date, dueDate: addDays(date, days(flow, 14)), paymentConditions: '',
+    documentValues: {}, lines, totals: computeTotals(lines), reference: dt('documentStyle.sample.reference'), paymentReference: draftPaymentReference(null),
+    invoiceNumber, invoiceDate: date, dueDate: addDays(date, days(flow, 14)), paymentConditions: flow?.payment_conditions ?? '',
   }
 }
 
@@ -185,5 +187,14 @@ export function usePreviewData(administrationId: string, dt: TFunction): Preview
   return buildPreviewData({
     dt, currency: administration.data?.currency ?? 'EUR', invoice: latest.data, workflows: workflows.data, rates: rates.data,
     products: products.data?.products, invoiceNumber: settings.data?.invoice_id_example ?? '', estimateNumber: settings.data?.estimate_id_example ?? '',
+  })
+}
+
+/** What the tags of the payment conditions stand for in the previews, as on the invoice. */
+export function previewTagValues(data: PreviewData, language: string, sender: Parameters<typeof conditionTagValues>[0]['sender']) {
+  const cents = Math.round(data.totals.total * 100)
+  return conditionTagValues({
+    language, currency: data.currency, total: cents, unpaid: cents, invoiceDate: data.invoiceDate, dueDate: data.dueDate, invoiceId: data.invoiceNumber,
+    reference: data.reference, paymentReference: data.paymentReference, contact: { company_name: data.customer.name }, sender,
   })
 }

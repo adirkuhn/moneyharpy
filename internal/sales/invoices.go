@@ -107,7 +107,7 @@ func (s *Service) defaults(ctx context.Context, a administration.Listed, user re
 			return wrap("load workflows", err)
 		}
 		if i := slices.IndexFunc(flows, func(w invoicing.Workflow) bool { return w.Type == workflowType(*inv) && w.Default && w.Active }); i >= 0 {
-			s.followWorkflow(inv, flows[i])
+			s.followWorkflow(inv, flows[i], "")
 		}
 	}
 	if c.DocumentStyleID == nil {
@@ -130,8 +130,12 @@ func (s *Service) defaults(ctx context.Context, a administration.Listed, user re
 }
 
 // followWorkflow takes the workflow's language, currency, price mode and
-// payment term.
-func (s *Service) followWorkflow(inv *Invoice, w invoicing.Workflow) {
+// payment term. A draft takes its payment conditions too, unless they were
+// written for it rather than taken from previous, the workflow it had.
+func (s *Service) followWorkflow(inv *Invoice, w invoicing.Workflow, previous string) {
+	if !inv.Sent() && (inv.PaymentConditions == "" || inv.PaymentConditions == previous) {
+		inv.PaymentConditions = w.PaymentConditions
+	}
 	inv.WorkflowID = w.ID
 	inv.Language, inv.Currency, inv.PricesAreInclTax = w.Language, w.Currency, w.PricesAreInclTax
 	if len(w.Steps) > 0 {
@@ -281,7 +285,13 @@ func (s *Service) apply(ctx context.Context, a administration.Listed, user resou
 		case !w.Active:
 			verr.Add("workflow_id", "is deactivated")
 		default:
-			s.followWorkflow(inv, w)
+			previous := ""
+			if inv.WorkflowID != 0 && inv.WorkflowID != w.ID {
+				if old, err := s.invoicing.Workflow(ctx, admin, inv.WorkflowID, user); err == nil {
+					previous = old.PaymentConditions
+				}
+			}
+			s.followWorkflow(inv, w, previous)
 		}
 	}
 	if c.DocumentStyleID != nil {

@@ -6955,7 +6955,9 @@ export interface components {
         Workflow: components["schemas"]["workflow_response"] & {
             /** @description MoneyHarpy extension. Canonical path of this resource. */
             uri: string;
-            /** @description MoneyHarpy extension. The subject invoices are emailed with; empty uses the default. Placeholders: {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference}, {reference}. */
+            /** @description MoneyHarpy extension, after the "Payment conditions on invoice" of the Send invoice step of Moneybird's workflow. New invoices of the workflow start with this text. Textile (_italic_, *bold*, +underline+) and Moneybird's tags, such as {document.total_price}, {document.due_date} and {document.payment_reference}, are filled in where the invoice is shown. Empty for estimate workflows. */
+            payment_conditions: string;
+            /** @description MoneyHarpy extension. The subject invoices are emailed with; empty uses the default. Placeholders: {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference}, {reference}, and Moneybird's tags of the payment conditions, such as {document.total_price} and {recipient.contact_name}. */
             invoice_email_subject: string;
             /** @description MoneyHarpy extension. The text invoices are emailed with; empty uses the default. Same placeholders. */
             invoice_email_body: string;
@@ -7068,6 +7070,8 @@ export interface components {
                 default?: boolean;
                 prices_are_incl_tax?: boolean;
                 show_qr_code?: boolean;
+                /** @description MoneyHarpy extension. The payment conditions new invoices of the workflow start with; ignored for estimate workflows. */
+                payment_conditions?: string;
                 /** @description MoneyHarpy extension. Empty uses the default. */
                 invoice_email_subject?: string;
                 /** @description MoneyHarpy extension. Empty uses the default. */

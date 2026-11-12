@@ -4,9 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { formatAmount } from '../banking/queries'
 import { addressLines, documentDate } from '../invoices/paper'
 import type { Identity } from '../settings/queries'
-import type { PreviewData } from './previewData'
+import { type PreviewData, previewTagValues } from './previewData'
 import { type DocumentStyle, type FileKind, styleFileURL } from './queries'
 import { fontStacks } from './StylePreview'
+import { TextileText } from '../forms/TextileEditor'
+import { renderTags, type TagValues } from '../forms/textile'
+import { shortPaymentReference } from '../invoices/paymentReference'
 
 /** The settings of the Email, Public views and Online sales tabs the previews follow before they are saved. */
 export type ChannelForm = Pick<DocumentStyle, 'email_header_type' | 'email_header_content_position' | 'email_header_background_color' | 'email_header_text'
@@ -38,8 +41,8 @@ function imageURL(administrationId: string, style: DocumentStyle, ...kinds: File
 }
 
 /** Fills in an email text's placeholders, as the server does when it sends. */
-export function expandEmail(template: string, values: Record<string, string>) {
-  return template.replace(/\{(\w+)\}/g, (all, key: string) => values[key] ?? all)
+export function expandEmail(template: string, values: Record<string, string>, tags: TagValues = {}) {
+  return renderTags(template, tags).replace(/\{(\w+)\}/g, (all, key: string) => values[key] ?? all)
 }
 
 function useDocumentT(language: string): TFunction {
@@ -55,10 +58,11 @@ export function EmailPreview({ administrationId, style, form, sender, language, 
   const values = {
     invoice_id: data.invoiceNumber, invoice_date: documentDate(data.invoiceDate, language), due_date: documentDate(data.dueDate, language),
     total: money(data.totals.total), contact_name: data.customer.contactName, company_name: sender?.company_name ?? '',
-    payment_reference: data.paymentReference, reference: data.reference,
+    payment_reference: shortPaymentReference(data.paymentReference), reference: data.reference,
   }
-  const subject = expandEmail(data.emailSubject || dt('documentStyle.emailSubject'), values)
-  const body = expandEmail(data.emailBody || dt('invoices.sendForm.defaultMessage'), values)
+  const tags = previewTagValues(data, language, sender)
+  const subject = expandEmail(data.emailSubject || dt('documentStyle.emailSubject'), values, tags)
+  const body = expandEmail(data.emailBody || dt('invoices.sendForm.defaultMessage'), values, tags)
   const details: Array<[string, string]> = (
     [
       [dt('documentStyle.emailDetails.invoice'), data.invoiceNumber],
@@ -181,10 +185,7 @@ export function PublicViewPreview({ administrationId, style, form, sender, langu
           {(data.paymentConditions || iban) && (
             <section className="public-preview__conditions">
               <h3>{dt('documentStyle.paymentConditions')}</h3>
-              {data.paymentConditions && <p>{data.paymentConditions}</p>}
-              {iban && (
-                <p>{dt('documentStyle.payBefore', { amount: money(data.totals.total), date: documentDate(data.dueDate, language), iban, name: sender?.bank_account_name || sender?.company_name || '', reference: data.paymentReference })}</p>
-              )}
+              {data.paymentConditions && <p className="invoice-paper__conditions"><TextileText text={data.paymentConditions} values={previewTagValues(data, language, sender)} /></p>}
             </section>
           )}
         </article>
