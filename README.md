@@ -104,6 +104,8 @@ make generate   # after changing api/openapi.yaml or SQL queries
 make test       # backend, needs Docker
 make test-web   # frontend, run npm ci in web/ first
 make test-e2e   # whole stack, run npm ci in e2e/ first
+make lint       # gofmt, go vet and golangci-lint, as CI runs them
+make check      # everything CI checks, locally, on a clean tree
 make docs       # documentation site into build/site, needs pip install -r docs/requirements.txt
 ```
 
