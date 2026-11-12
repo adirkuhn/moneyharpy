@@ -58,7 +58,6 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
   const location = useLocation()
   const [layoutsOpen, setLayoutsOpen] = useState(false)
   // Cancel starts the draft's editor again from the invoice as it is.
-  const [fresh, setFresh] = useState(0)
   const remove = useDeleteSalesInvoice(administrationId, inv.id ?? '')
   const credit = useCreditSalesInvoice(administrationId, inv.id ?? '')
   const pause = usePauseSalesInvoice(administrationId, inv.id ?? '')
@@ -199,7 +198,6 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
           )}
           {editable && (!sent || editing !== undefined) ? (
             <InvoiceEditor
-              key={fresh}
               mode="view"
               administrationId={administrationId}
               invoice={inv}
@@ -207,7 +205,8 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
               layoutsOpen={layoutsOpen}
               onLayoutsClose={() => setLayoutsOpen(false)}
               highlight={highlight}
-              onCancel={() => (sent ? setEditing(undefined) : setFresh(fresh + 1))}
+              // A part closed without saving: a sent invoice shows its document again.
+              onCancel={() => setEditing(undefined)}
               onSaved={(_, opening) => {
                 if (sent) {
                   // A sent invoice shows its document again, unless its details were being edited.

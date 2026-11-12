@@ -1,20 +1,59 @@
-/* Moneybird's "Add invoice" popup. */
-.add-invoice__form { display: grid; gap: 1rem; }
-.add-invoice .form-input { grid-template-columns: 11rem minmax(0, 1fr); }
-.add-invoice__summary { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 0.75rem 1rem; border-radius: 8px; background: var(--bg); }
-.add-invoice__summary p { margin: 0; color: var(--muted); }
-.add-invoice__summary .btn { flex: none; }
-.add-invoice__advanced { display: grid; gap: 1rem; min-width: 0; margin: 0; padding: 0; border: 0; }
-.add-invoice__rule { width: 100%; margin: 0.25rem 0; border: 0; border-top: 1px solid var(--line); }
-.add-invoice__number, .add-invoice__date, .add-invoice__days { display: flex; flex: 1; align-items: center; gap: 0.375rem; max-width: var(--control-width); }
-.add-invoice__number input, .add-invoice__date input { flex: 1; min-width: 0; }
+/*
+ * Moneybird's "Add invoice" and "Edit invoice" popup: compact fields with
+ * their labels beside them, and the settings in a grey box behind Edit.
+ */
+.add-invoice { --field: 290px; }
+.add-invoice__form { display: grid; gap: 0.25rem; }
+.add-invoice .form-input { --control-width: var(--field); grid-template-columns: 162px minmax(0, 1fr); gap: 0.25rem 0.5rem; align-items: start; }
+.add-invoice .form-input__label { display: flex; align-items: center; min-height: 28px; padding: 0 1rem 1px 0; font-weight: 400; }
+.add-invoice .form-input__label-row { min-height: 28px; align-items: center; padding-right: 1rem; }
+.add-invoice .form-input__label-row .form-input__label { min-height: 0; padding-right: 0; }
+.add-invoice .form-input__control { gap: 0.5rem; max-width: none; }
+.add-invoice :is(input[type='text'], input[type='number'], input[type='date'], input[type='search'], select, .picker__button) { min-height: 28px; height: 28px; padding: 0 0.5rem; border-radius: 8px; font-size: 0.875rem; }
+.add-invoice .form-input__control > :is(input, select) { flex: 0 1 var(--field); }
+.add-invoice .contact-select { flex: 1; max-width: none; }
+.add-invoice .form-input__control .btn--icon { flex: none; width: 28px; min-height: 28px; height: 28px; }
+.add-invoice .btn--small { min-height: 28px; padding: 0 0.5rem; font-size: 0.875rem; }
 .add-invoice input:disabled { background: var(--bg); color: var(--muted); cursor: not-allowed; }
-.add-invoice__affix { color: var(--muted); white-space: nowrap; }
-.add-invoice__date svg { margin-left: -1.75rem; color: var(--muted); pointer-events: none; }
-.add-invoice__days input { width: 4.5rem; text-align: center; }
-.add-invoice__days .btn--icon, .add-invoice .form-input__control > .btn--icon { flex: none; width: 2.25rem; }
-.add-invoice__tip { display: inline-flex; color: var(--muted); cursor: help; }
-.add-invoice__custom { padding-left: 12.5rem; }
+.add-invoice__box { display: grid; gap: 1.25rem; margin-top: 0.375rem; padding: 1rem; border-radius: 12px; background: var(--bg); box-shadow: 0 0 0 1px var(--line); }
+.add-invoice__summary { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.add-invoice__summary p { margin: 0; }
+.add-invoice__summary .btn--icon { flex: none; width: 2.25rem; }
+.add-invoice__advanced { display: grid; gap: 0.25rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.add-invoice__rule { width: 100%; margin: 0.5rem 0; border: 0; border-top: 1px solid var(--line); }
+/* The invoice id with its fixed parts in grey boxes joined to it, as Moneybird's prepended text. */
+.add-invoice__number { display: flex; flex: 0 1 var(--field); min-width: 0; }
+.add-invoice__number input { flex: 1; min-width: 0; }
+.add-invoice__affix { display: inline-flex; align-items: center; height: 28px; padding: 0 0.5rem; border: 1px solid var(--input-border); background: var(--track); color: var(--muted); white-space: nowrap; }
+.add-invoice__affix:first-child { border-right: 0; border-radius: 8px 0 0 8px; }
+.add-invoice__affix:last-child { border-left: 0; border-radius: 0 8px 8px 0; }
+.add-invoice__number .add-invoice__affix:first-child + input { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.add-invoice__number input:has(+ .add-invoice__affix) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.add-invoice__date { position: relative; display: flex; flex: 0 1 var(--field); align-items: center; }
+.add-invoice .add-invoice__date input { flex: 1; min-width: 0; padding-right: 2rem; }
+.add-invoice__date svg { position: absolute; right: 0.5rem; color: var(--muted); pointer-events: none; }
+/* The days with − and + inside the field, as Moneybird's number field. */
+.add-invoice__days { display: flex; align-items: center; gap: 0.5rem; }
+.add-invoice__number-field { position: relative; display: inline-flex; width: 118px; }
+.add-invoice .add-invoice__number-field input { width: 100%; padding: 0 2.25rem; text-align: center; -moz-appearance: textfield; }
+.add-invoice__number-field input::-webkit-inner-spin-button, .add-invoice__number-field input::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
+.add-invoice__step {
+  position: absolute; top: 1px; bottom: 1px; display: inline-flex; justify-content: center; align-items: center; width: 2rem; padding: 0; border: 0; border-radius: 8px;
+  background: none; color: var(--muted); font: inherit; font-size: 1rem; cursor: pointer;
+}
+.add-invoice__step:hover { color: var(--text); }
+.add-invoice__step:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.add-invoice__step--down { left: 1px; }
+.add-invoice__step--up { right: 1px; }
+.add-invoice__tip { position: relative; display: inline-flex; color: var(--muted); cursor: help; }
+/* A tooltip with a link: out of sight until the mark is hovered or the link has focus. */
+.add-invoice__bubble { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.add-invoice__tip--bubble:is(:hover, :focus-within) .add-invoice__bubble {
+  bottom: calc(100% + 0.375rem); left: -1rem; z-index: 5; width: 18rem; height: auto; padding: 0.5rem 0.75rem; overflow: visible; clip: auto; border-radius: 8px;
+  background: var(--navy); color: var(--white); font-size: 0.8125rem; font-weight: 400; line-height: 1.4; white-space: normal; cursor: auto;
+}
+.add-invoice__bubble a { color: inherit; }
+.add-invoice__custom { padding-left: calc(162px + 0.5rem); }
 .form-input__label-row { display: flex; gap: 0.375rem; align-items: baseline; }
 
 /* The document styles as radio cards. */
@@ -57,44 +96,52 @@
   border: 0; border-radius: 3px; background: var(--blue); color: var(--white); cursor: pointer; opacity: 0;
 }
 .invoice-paper__heading-text:hover .invoice-paper__settings, .invoice-paper__settings:focus-visible { opacity: 1; }
-.invoice-editor__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; }
 
-/* Moneybird's invoice details editor, a card inside the document. */
-.details-editor {
-  margin-inline: -1.5rem; padding: 1rem 1.5rem 1.25rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
-  box-shadow: 0 8px 24px rgb(9 38 83 / 0.12); font-size: 0.875rem;
+/*
+ * The cards that edit a part of the document, after Moneybird's
+ * editable-document-form: laid over the document, a little wider than it,
+ * at the place of the part they edit, with Save and Cancel centred underneath.
+ */
+.editable-document-form {
+  position: absolute; right: -0.5rem; left: -0.5rem; z-index: 6; border-radius: 12px; background: var(--surface); color: var(--text);
+  box-shadow: 0 0 0 1px var(--line), 0 4px 8px -2px rgb(9 38 83 / 0.07), 0 1px 2px rgb(9 38 83 / 0.05); font: 400 0.875rem/1.5 var(--font); text-align: left;
 }
-/* "Prices are" and "Currency" above the details, as Moneybird's horizontal fields. */
-.details-editor__header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 2rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
-.details-editor__prices { display: flex; align-items: center; gap: 0.75rem; }
-.details-editor__prices .segmented__legend { float: left; margin: 0; font-weight: 550; }
-.details-editor__prices .segmented__option { min-height: 2.25rem; }
-.details-editor__currency { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
-.details-editor__currency label { font-weight: 550; }
-.details-editor__currency select { width: 18rem; max-width: 100%; }
-.details-editor__currency .form-input__message { flex-basis: 100%; }
+.editable-document-form__header { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.5rem; padding: 1.25rem; border-bottom: 1px solid var(--line); }
+.editable-document-form__buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; padding: 0 1.25rem 1.25rem; }
+.editable-document-form :is(input[type='text'], input[type='date'], select) { min-height: 28px; height: 28px; padding: 0 0.5rem; border-radius: 8px; font-size: 0.875rem; }
+.editable-document-form textarea { padding: 0.25rem 0.5rem; border-radius: 8px; font-size: 0.875rem; }
+/* What a card covers stays on the document, out of reach. */
+.invoice-paper__under-edit { pointer-events: none; }
+
+/* The details editor: Moneybird's has-many editor with its header, rows and footer. */
+.details-editor__currency { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.25rem; }
+.details-editor__currency select { min-width: 120px; max-width: 16rem; field-sizing: content; }
+.details-editor__currency .form-input__message { flex-basis: 100%; margin: 0; text-align: right; }
+.details-editor__body { padding: 0 1.25rem; }
 .details-editor__table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.details-editor__table th { padding: 0 0.375rem 0.5rem; color: var(--muted); font-weight: 600; text-align: left; }
-.details-editor__table td { padding: 0.5rem 0.375rem; border-top: 1px solid var(--line); vertical-align: top; }
+.details-editor__table th { padding: 0.75rem 0.25rem; border-bottom: 1px solid var(--line); color: var(--muted); font-weight: 500; text-align: left; white-space: nowrap; }
+.details-editor__table td { padding: 0.75rem 0.25rem; border-bottom: 1px solid var(--line); vertical-align: top; }
 .details-editor__table input, .details-editor__table select, .details-editor__table textarea { width: 100%; min-width: 0; }
-.details-editor__table select + select, .details-editor__table .details-editor__apply + select { margin-top: 0.375rem; }
+.details-editor__table select + select, .details-editor__table .details-editor__apply + select { margin-top: 0.25rem; }
 .details-editor__table tr.is-dragging { opacity: 0.5; }
-th.details-editor__grip, td.details-editor__grip { width: 1.75rem; padding-inline: 0; }
-.details-editor__amount { width: 4rem; }
-.details-editor__price { width: 5.5rem; }
-.details-editor__total { width: 5.75rem; text-align: right; font-variant-numeric: tabular-nums; }
-.details-editor__table th.details-editor__total { text-align: right; }
-td.details-editor__total { padding-top: 0.9375rem; white-space: nowrap; }
-.details-editor__rate { width: 9.5rem; }
-th.details-editor__remove, td.details-editor__remove { width: 1.75rem; padding-inline: 0; }
+th.details-editor__grip, td.details-editor__grip { width: 1.5rem; padding-inline: 0; }
+.details-editor__amount { width: 4.5rem; }
+.details-editor__price { width: 6.25rem; }
+.details-editor__price input { text-align: right; }
+.details-editor__total { width: 6.25rem; text-align: right; font-variant-numeric: tabular-nums; }
+.details-editor__table th.details-editor__total, .details-editor__table th.details-editor__price { text-align: right; }
+td.details-editor__total { line-height: 28px; white-space: nowrap; }
+.details-editor__rate { width: 14rem; }
+th.details-editor__remove, td.details-editor__remove { width: 1.75rem; padding-inline: 0; text-align: right; }
 .details-editor__handle, .details-editor__remove-button {
-  display: inline-flex; justify-content: center; align-items: center; width: 1.5rem; height: 2.25rem; padding: 0; border: 0; border-radius: 4px;
+  display: inline-flex; justify-content: center; align-items: center; width: 1.5rem; height: 28px; padding: 0; border: 0; border-radius: 6px;
   background: none; color: var(--muted); font: inherit; font-size: 1rem; cursor: grab;
 }
-.details-editor__remove-button { font-size: 1.25rem; cursor: pointer; }
+.details-editor__remove-button { cursor: pointer; }
 .details-editor__handle:hover, .details-editor__remove-button:hover { background: var(--row-hover); color: var(--text); }
 .details-editor__product { position: relative; }
-.details-editor__product textarea { resize: vertical; }
+/* The description with its period bar attached underneath, in one box. */
+.details-editor__product textarea { display: block; min-height: 50px; border-bottom-right-radius: 0; border-bottom-left-radius: 0; resize: none; field-sizing: content; }
 .details-editor__products {
   position: absolute; top: calc(100% + 0.25rem); left: 0; z-index: 15; width: max(100%, 22rem); max-height: 16rem; margin: 0; padding: 0.25rem; overflow-y: auto;
   list-style: none; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 12px 28px rgb(9 38 83 / 0.22);
@@ -103,11 +150,14 @@ th.details-editor__remove, td.details-editor__remove { width: 1.75rem; padding-i
 .details-editor__products li .hint { grid-column: 1; margin: 0; }
 .details-editor__product-price { grid-row: 1; grid-column: 2; font-variant-numeric: tabular-nums; }
 .details-editor__products li:hover, .details-editor__products li.is-active { background: var(--row-hover); }
-.details-editor__period { position: relative; margin-top: 0.375rem; }
-.details-editor__period-button { padding: 0.125rem 0.25rem; border: 0; border-radius: 4px; background: none; color: var(--muted); font: inherit; font-size: 0.8125rem; cursor: pointer; }
-.details-editor__period-button:hover { background: var(--row-hover); color: var(--text); }
-.details-editor__period-button .is-placeholder { font-style: italic; }
-.details-editor__period-button.is-invalid { box-shadow: inset 0 0 0 1px var(--danger); }
+.details-editor__period { position: relative; }
+.details-editor__period-button {
+  display: block; width: 100%; padding: 0.125rem 0.5rem; border: 1px solid var(--input-border); border-top: 0; border-radius: 0 0 8px 8px; background: var(--surface);
+  color: var(--muted); font: inherit; font-size: 0.75rem; text-align: left; cursor: pointer;
+}
+.details-editor__period-button > :last-child { color: var(--link); }
+.details-editor__period-button:hover > :last-child { text-decoration: underline; }
+.details-editor__period-button.is-invalid { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
 .details-editor__period-panel {
   position: absolute; top: calc(100% + 0.25rem); left: 0; z-index: 15; display: grid; gap: 0.5rem; width: 17rem; padding: 0.5rem; border: 1px solid var(--line);
   border-radius: 8px; background: var(--surface); box-shadow: 0 12px 28px rgb(9 38 83 / 0.22);
@@ -120,24 +170,28 @@ th.details-editor__remove, td.details-editor__remove { width: 1.75rem; padding-i
   display: block; margin-top: 0.25rem; padding: 0; border: 0; background: none; color: var(--link); font: inherit; font-size: 0.75rem; text-align: left; cursor: pointer;
 }
 .details-editor__apply:hover, .details-editor__period-panel .link-button:hover { text-decoration: underline; }
-.details-editor__footer {
-  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-top: 0.25rem; padding-top: 0.75rem;
-  border-top: 1px solid var(--line);
+/* The footer: the buttons, a discount over the total and the totals, with a line underneath. */
+.details-editor__footer { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0.75rem 0; border-bottom: 1px solid var(--line); }
+.details-editor__discount {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.375rem; align-self: stretch; padding: 0.25rem calc(30% + 0.25rem) 0.75rem 0;
+  border-bottom: 1px solid var(--line);
 }
-.details-editor__buttons { display: grid; gap: 0.75rem; }
-.details-editor__add { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.details-editor__discount { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; }
-.details-editor__discount label { margin-right: 0.375rem; font-weight: 550; }
-.details-editor__discount input { width: 4.5rem; }
-.details-editor__discount .form-input__message { flex-basis: 100%; }
-.details-editor .invoice-totals { width: min(100%, 16rem); margin: 0; }
-.details-editor .invoice-totals th { padding-right: 1.5rem; color: var(--muted); font-weight: 600; text-align: right; }
+.details-editor__discount label { margin-right: 0.375rem; font-weight: 500; }
+.details-editor__discount input { width: 4.5rem; text-align: right; }
+.details-editor__discount .form-input__message { flex-basis: 100%; text-align: right; }
+/* The totals, as Moneybird's totals list: labels and amounts right-aligned, the amounts ending under the Total column. */
+.details-editor .invoice-totals { width: calc(70% - 0.25rem); margin: 0; }
+.details-editor .invoice-totals th { width: 70%; padding: 0.1875rem 0.25rem; color: var(--text); font-weight: 400; text-align: right; line-height: 26px; }
+.details-editor .invoice-totals td { padding: 0.1875rem 0; line-height: 26px; }
+.details-editor .invoice-totals__strong th, .details-editor .invoice-totals__strong td { padding-top: 0.1875rem; border-top: 0; font-weight: 400; }
 
 @media (max-width: 44rem) {
   .add-invoice .form-input, .contact-select__add .form-input { grid-template-columns: minmax(0, 1fr); }
   .add-invoice .form-input__label { padding-top: 0; }
   .add-invoice__custom { padding-left: 0; }
-  .details-editor { margin-inline: 0; padding: 0.75rem; }
+  .editable-document-form { position: relative; right: auto; left: auto; margin-inline: -0.5rem; }
+  .invoice-paper__under-edit:has(+ .editable-document-form), .editable-document-form + .invoice-paper__under-edit { display: none; }
+  .details-editor__body { padding: 0 0.75rem; }
   .details-editor__table thead { display: none; }
   .details-editor__table, .details-editor__table tbody, .details-editor__table tr, .details-editor__table td { display: block; width: auto; }
   .details-editor__table tr { position: relative; padding: 0.5rem 2rem; border-top: 1px solid var(--line); }
@@ -152,11 +206,30 @@ th.details-editor__remove, td.details-editor__remove { width: 1.75rem; padding-i
   .layout-cards__card.is-checked { outline: 2px solid Highlight; }
 }
 
-/* The payment conditions as an editable part of the document, and the card that edits them, after Moneybird's editable-document-form. */
+/* The payment conditions as an editable part of the document, and their card with Moneybird's textile editor. */
 .invoice-paper__conditions-button { min-height: 1.5rem; }
-.editable-document-form {
-  display: grid; gap: 0.75rem; margin: 0 -1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
-  box-shadow: 0 6px 24px rgb(9 38 83 / 0.12); font-size: 14px;
+.conditions-form .textile { gap: 0.5rem; padding: 1.25rem; }
+.conditions-form .textile__header { align-items: center; }
+.conditions-form .textile__label { font-weight: 500; }
+.editable-document-form__link { text-decoration: none; }
+.editable-document-form__link:hover { text-decoration: underline; }
+.conditions-form .textile__toolbar {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; padding: 0; border: 1px solid var(--input-border); border-bottom: 1px solid var(--line);
+  border-radius: 4px 4px 0 0; background: var(--track);
 }
-.editable-document-form__link { font-size: 0.875rem; }
-.editable-document-form__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.conditions-form .textile__button { height: 30px; border: 0; border-right: 1px solid var(--line); border-radius: 0; font-size: 0.875rem; }
+.conditions-form .textile__button:first-child { border-top-left-radius: 4px; }
+.conditions-form .textile__button:hover { border-color: var(--line); background: var(--surface); color: var(--blue); }
+.conditions-form .textile__button em::before, .conditions-form .textile__button em::after { content: '_'; }
+.conditions-form .textile__button strong { font-weight: 500; }
+.conditions-form .textile__button strong::before, .conditions-form .textile__button strong::after { content: '*'; }
+.conditions-form .textile__button u { text-decoration: none; box-shadow: inset 0 -1px 0 currentcolor; }
+.conditions-form .textile__button u::before, .conditions-form .textile__button u::after { content: '+'; }
+.conditions-form .textile__tags { width: 100%; max-width: none; height: 30px; min-height: 30px; margin: 0; border: 0; border-radius: 0 4px 0 0; background-color: var(--surface); }
+.conditions-form .textile__area { min-height: 150px; margin-top: -0.5rem; padding: 0.25rem 0.5rem; border-top: 0; border-radius: 0 0 4px 4px; }
+
+/* Touch screens keep the 44px targets fingers need in the compact cards and popup. */
+@media (pointer: coarse) {
+  .editable-document-form :is(input[type='text'], input[type='date'], select, .btn),
+  .add-invoice :is(input[type='text'], input[type='number'], input[type='date'], input[type='search'], select, .picker__button, .btn) { min-height: 2.75rem; height: auto; }
+}

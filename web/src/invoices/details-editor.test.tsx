@@ -53,13 +53,17 @@ describe('the invoice details editor', () => {
     expect(within(totals).getByRole('row', { name: /9% btw/ })).toHaveTextContent('€4.05')
     expect(within(totals).getByRole('row', { name: /^Total/ })).toHaveTextContent('€266.85')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    await userEvent.click(within(editorCard()).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
     expect(sent.patch).toMatchObject({ contact_id: '701', reference: 'Order 12', discount: '10', prices_are_incl_tax: false })
     expect(sent.patch?.details_attributes).toEqual([
       { description: 'Consulting', amount: '2 x', price: '100', tax_rate_id: '2101', row_order: 1 },
       { description: 'Book', amount: '1 x', price: '50', tax_rate_id: '2109', ledger_account_id: '8001', row_order: 2 },
     ])
+    // Saved, the card closes and stays closed.
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Invoice details' })).toBeNull())
+    await new Promise((r) => setTimeout(r, 200))
+    expect(screen.queryByRole('region', { name: 'Invoice details' })).toBeNull()
   })
 
   it('fills a detail from a product, sets its period and applies it to the details below', async () => {
@@ -119,7 +123,7 @@ describe('the invoice details editor', () => {
     expect(within(rows[0]!).getByLabelText('Description')).toHaveValue('Discount')
     expect(within(rows[0]!).getByRole('button', { name: 'Move row 1' })).toHaveFocus()
     await userEvent.click(within(rows[3]!).getByRole('button', { name: 'Remove row 4' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    await userEvent.click(within(editorCard()).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent.patch).toBeDefined())
     expect(sent.patch?.details_attributes).toEqual([
       { description: 'Discount', amount: '1 x', price: '-10', tax_rate_id: '2109', row_order: 1 },
@@ -159,6 +163,21 @@ describe('the invoice details editor', () => {
     expect(within(paper()).queryByText('Something else')).toBeNull()
   })
 
+  it('removes the only detail with its ×, leaving an empty one, as Moneybird shows the × on every row', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(...creating(sent, draft))
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #3' })
+    await editLines()
+    expect(detailRows()).toHaveLength(1)
+    await userEvent.click(within(detailRows()[0]!).getByRole('button', { name: 'Remove row 1' }))
+    expect(detailRows()).toHaveLength(1)
+    expect(within(detailRows()[0]!).getByLabelText('Description')).toHaveValue('')
+    await userEvent.click(within(editorCard()).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent.patch?.details_attributes).toEqual([{ id: draft.details?.[0]?.id, _destroy: true }]))
+  })
+
   it('shows what is wrong beside the fields', async () => {
     server.use(...loaded())
     server.use(...creating({}))
@@ -167,32 +186,46 @@ describe('the invoice details editor', () => {
     await screen.findByRole('document', { name: 'Invoice Draft #12' })
     await editLines()
     await userEvent.type(within(detailRows()[0]!).getByLabelText('Description'), 'Consulting')
-    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    await userEvent.click(within(editorCard()).getByRole('button', { name: 'Save' }))
     expect(await screen.findByText('Price on line 1 is not an amount')).toBeInTheDocument()
     expect(within(detailRows()[0]!).getByLabelText('Price')).toHaveAttribute('aria-invalid', 'true')
   })
 
-  it('edits the dates and the payment conditions in place', async () => {
+  it('edits the dates in the popup with its settings open, as the heading of the document does on Moneybird, and saves them', async () => {
     const sent: { patch?: Record<string, unknown> } = {}
     server.use(...loaded())
     server.use(...creating(sent))
     renderAt('/11/sales_invoices/902')
     await screen.findByRole('document', { name: 'Invoice Draft #12' })
+    // Nothing to save under the document: every part saves itself.
+    expect(screen.queryByRole('button', { name: 'Save invoice' })).toBeNull()
 
     await userEvent.click(within(paper()).getByRole('button', { name: /Factuurdatum/ }))
-    const date = within(paper()).getByLabelText('Invoice date')
-    expect(date).toHaveFocus()
-    await userEvent.type(date, '2026-12-01')
-    await userEvent.keyboard('{Enter}')
+    const dialog = popup()
+    // Its settings are open.
+    expect(within(dialog).getByLabelText('Workflow')).toHaveValue('601')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Unlock invoice date' }))
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Set the invoice date yourself?' })).getByRole('button', { name: 'Fill it in myself' }))
+    await userEvent.type(within(dialog).getByLabelText('Invoice date'), '2026-12-01')
     expect(within(paper()).getByRole('button', { name: /Factuurdatum/ })).toHaveTextContent('01-12-2026')
     expect(within(paper()).getByRole('button', { name: /Vervaldatum/ })).toHaveTextContent('15-12-2026')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Increase value (plus)' }))
+    expect(within(paper()).getByRole('button', { name: /Vervaldatum/ })).toHaveTextContent('16-12-2026')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent.patch).toMatchObject({ invoice_date: '2026-12-01', first_due_interval: 15 }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 
+    // The due date opens it too.
     await userEvent.click(within(paper()).getByRole('button', { name: /Vervaldatum/ }))
-    const due = within(paper()).getByLabelText('Due date')
-    await userEvent.clear(due)
-    await userEvent.type(due, '2026-12-31')
-    await userEvent.keyboard('{Enter}')
-    expect(within(paper()).getByRole('button', { name: /Vervaldatum/ })).toHaveTextContent('31-12-2026')
+    expect(within(popup()).getByRole('spinbutton', { name: 'Number of days after expiration' })).toBeInTheDocument()
+  })
+
+  it('edits the payment conditions in a card of their own, which saves them', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(...creating(sent))
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #12' })
 
     // As on Moneybird, the payment conditions open a card with the textile editor, its workflow and Save.
     await userEvent.click(within(paper()).getByRole('button', { name: /payment conditions/i }))
@@ -202,7 +235,7 @@ describe('the invoice details editor', () => {
     const save = within(card).getByRole('button', { name: 'Save' })
     expect(save).toHaveClass('btn--primary')
     await userEvent.click(save)
-    await waitFor(() => expect(sent.patch).toMatchObject({ invoice_date: '2026-12-01', first_due_interval: 30, payment_conditions: 'Pay within 30 days.' }))
+    await waitFor(() => expect(sent.patch).toMatchObject({ payment_conditions: 'Pay within 30 days.' }))
     await waitFor(() => expect(within(paper()).queryByRole('region', { name: 'Payment conditions' })).toBeNull())
   })
 
@@ -282,7 +315,7 @@ describe('the invoice details editor', () => {
     expect(within(detailRows()[0]!).getByTestId('detail-total')).toHaveTextContent('$121.00')
     expect(within(totals()).getByRole('row', { name: /^Total/ })).toHaveTextContent('$121.00')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    await userEvent.click(within(editorCard()).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent.patch).toMatchObject({ currency: 'USD', prices_are_incl_tax: true }))
   })
 
@@ -374,7 +407,7 @@ describe('the invoice details editor', () => {
     await userEvent.type(price, '120')
     await userEvent.click(screen.getByRole('button', { name: 'Remove row 2' }))
     expect(within(within(editorCard()).getByRole('table', { name: 'Totals' })).getByRole('row', { name: /^Total/ })).toHaveTextContent('€290.40')
-    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    await userEvent.click(within(editorCard()).getByRole('button', { name: 'Save' }))
     // Saved, the document is read again.
     expect(await within(doc()).findByRole('button', { name: 'Edit contact' })).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Invoice details' })).toBeNull()

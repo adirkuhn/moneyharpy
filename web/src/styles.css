@@ -27,6 +27,8 @@
   --state-paid: #0b7a6a;
   --state-dark: #092653;
   --period-band: rgb(19 189 181 / 0.18);
+  /* The grey track of segmented controls. */
+  --track: #e8edf4;
 
   --font: 'Inter Variable', system-ui, sans-serif;
   color-scheme: light;
@@ -48,6 +50,7 @@
   --focus: #5aa6f0;
   --state-dark: #3d4f6b;
   --period-band: rgb(19 189 181 / 0.24);
+  --track: #082046;
   color-scheme: dark;
 }
 
@@ -68,6 +71,7 @@
     --focus: #5aa6f0;
     --state-dark: #3d4f6b;
     --period-band: rgb(19 189 181 / 0.24);
+    --track: #082046;
     color-scheme: dark;
   }
 }
@@ -931,6 +935,34 @@ a.sidenav__link:active, button.sidenav__link:active { filter: brightness(0.92); 
 .btn--secondary.is-active { border-color: var(--blue); background: var(--row-hover); }
 .btn[aria-disabled='true'] { opacity: 0.55; cursor: not-allowed; }
 .btn[aria-disabled='true']:active { filter: none; }
+/* A button without a border, such as the lock beside a field. */
+.btn--inline { border-color: transparent; background: none; color: var(--muted); }
+.btn--inline:hover { background: var(--row-hover); color: var(--text); }
+
+/* Buttons joined into one, after Moneybird's button group; a menu button joins in through its dropdown. */
+.btn-group { display: inline-flex; }
+.btn-group > .btn, .btn-group > .dropdown > .btn { border-radius: 0; }
+.btn-group > :first-child, .btn-group > :first-child > .btn { border-radius: 8px 0 0 8px; }
+.btn-group > :last-child, .btn-group > :last-child > .btn { border-radius: 0 8px 8px 0; }
+.btn-group > :only-child, .btn-group > :only-child > .btn { border-radius: 8px; }
+.btn-group > * + .btn--secondary, .btn-group > * + .dropdown > .btn--secondary { margin-left: -1px; }
+.btn-group > .btn--primary + .btn--primary { border-left-color: rgb(255 255 255 / 0.35); }
+.btn-group > .btn:focus-visible, .btn-group > .dropdown > .btn:focus-visible { position: relative; z-index: 1; }
+
+/* Choices side by side on a grey track, the chosen one raised, after Moneybird's segmented radio group. */
+.segmented-control {
+  display: inline-grid; grid-auto-columns: 1fr; grid-auto-flow: column; gap: 2px; min-width: 0; min-height: 28px; margin: 0; padding: 2px; border: 0;
+  border-radius: 8px; background: var(--track);
+}
+.segmented-control__option {
+  display: inline-flex; justify-content: center; align-items: center; min-width: 2rem; padding: 2px 0.5rem; border-radius: 6px; color: var(--muted);
+  font-size: 0.75rem; font-weight: 600; white-space: nowrap; cursor: pointer;
+}
+.segmented-control__option input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented-control__option:hover { color: var(--text); }
+.segmented-control__option.is-checked { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px 0.5px rgb(0 0 0 / 0.05), 0 1px 4px rgb(0 0 0 / 0.05), 0 0 1px rgb(0 0 0 / 0.1); }
+.segmented-control__option:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 1px; }
+.segmented-control__option:has(input:disabled) { cursor: default; opacity: 0.6; }
 
 .unavailable { position: relative; display: inline-flex; }
 .unavailable__tip { display: none; position: absolute; top: calc(100% + 0.375rem); right: 0; z-index: 11; padding: 0.25rem 0.5rem; border-radius: 6px; background: var(--text); color: var(--surface); font-size: 0.75rem; font-weight: 550; white-space: nowrap; }
