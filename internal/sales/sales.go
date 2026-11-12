@@ -433,6 +433,8 @@ type Mail struct {
 	FromName      string
 	Subject, Body string
 	Files         []File
+	// Look styles the email after the document's style; nil sends plain text.
+	Look *EmailLook
 }
 
 // File is a document attached to an email.

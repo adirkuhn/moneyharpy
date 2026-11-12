@@ -38,6 +38,18 @@ func (f fakeAdmins) Identity(ctx context.Context, admin, id, user resource.ID) (
 	return administration.Identity{ID: id, AdministrationID: admin, Default: id == 500}, nil
 }
 
+func (f fakeAdmins) CustomFields(ctx context.Context, admin, user resource.ID) ([]administration.CustomField, error) {
+	if _, err := f.Get(ctx, admin, user); err != nil {
+		return nil, err
+	}
+	return []administration.CustomField{
+		{ID: 700, AdministrationID: admin, Name: "Brand", Source: administration.SourceIdentity},
+		{ID: 701, AdministrationID: admin, Name: "Project", Source: administration.SourceSalesInvoice},
+		{ID: 702, AdministrationID: admin, Name: "Site", Source: administration.SourceContact},
+		{ID: 703, AdministrationID: admin, Name: "Offer", Source: administration.SourceEstimate},
+	}, nil
+}
+
 type memStore struct {
 	settings  Settings
 	workflows map[resource.ID]Workflow
@@ -136,8 +148,10 @@ func (m *memStore) DeleteDocumentStyle(_ context.Context, _ resource.ID, id reso
 
 func (m *memStore) FileInUse(_ context.Context, _ resource.ID, hash string) (bool, error) {
 	for _, d := range m.styles {
-		if (d.Logo != nil && d.Logo.Hash == hash) || (d.Background != nil && d.Background.Hash == hash) {
-			return true, nil
+		for _, f := range d.StoredFiles() {
+			if f.Hash == hash {
+				return true, nil
+			}
 		}
 	}
 	return false, nil

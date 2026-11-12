@@ -234,8 +234,8 @@ SELECT * FROM document_styles WHERE administration_id = $1 AND id = $2;
 INSERT INTO document_styles (id, administration_id, name, identity_id, is_default, logo_hash, logo_content_type,
                              logo_container_full_width, logo_display_width, logo_position, background_hash,
                              background_content_type, print_on_stationery, paper_size, address_position, font_size,
-                             font_family, custom_css, layout, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                             font_family, custom_css, layout, created_at, updated_at, channels, files)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
 ON CONFLICT (administration_id) WHERE is_default DO NOTHING
 RETURNING id;
 
@@ -247,14 +247,16 @@ UPDATE document_styles
 SET name = $3, identity_id = $4, is_default = $5, logo_hash = $6, logo_content_type = $7,
     logo_container_full_width = $8, logo_display_width = $9, logo_position = $10, background_hash = $11,
     background_content_type = $12, print_on_stationery = $13, paper_size = $14, address_position = $15,
-    font_size = $16, font_family = $17, custom_css = $18, layout = $19, updated_at = $20
+    font_size = $16, font_family = $17, custom_css = $18, layout = $19, updated_at = $20, channels = $21, files = $22
 WHERE administration_id = $1 AND id = $2;
 
 -- name: DeleteDocumentStyle :execrows
 DELETE FROM document_styles WHERE administration_id = $1 AND id = $2;
 
 -- name: DocumentFileInUse :one
-SELECT EXISTS (SELECT 1 FROM document_styles WHERE administration_id = $1 AND (logo_hash = $2 OR background_hash = $2));
+SELECT EXISTS (SELECT 1 FROM document_styles WHERE administration_id = @administration_id AND (
+    logo_hash = @hash::text OR background_hash = @hash::text
+    OR jsonb_path_exists(files, '$.**.hash ? (@ == $h)', jsonb_build_object('h', @hash::text))));
 
 -- name: MoveDocumentStylesToDefaultIdentity :exec
 UPDATE document_styles d SET identity_id = i.id

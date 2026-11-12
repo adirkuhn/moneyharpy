@@ -667,6 +667,121 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/document_styles/{id}/images:
+    parameters:
+    - *id002
+    - *id004
+    post:
+      operationId: addDocumentStyleImage
+      x-permissions: [settings]
+      summary: Add an image for custom CSS
+      description: >-
+        MoneyHarpy extension. Send a PNG, JPEG or GIF of at most 2 MB as the request body; a style holds at most 20.
+        Custom CSS refers to the image by the url in the style's images.
+      tags:
+      - Document styles
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/gif:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: The updated document style
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStyle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/document_styles/{id}/images/{image_id}:
+    parameters:
+    - *id002
+    - *id004
+    - name: image_id
+      in: path
+      required: true
+      description: The image's id from the style's images.
+      schema:
+        type: string
+        pattern: '^[0-9a-f]{64}$'
+    get:
+      operationId: getDocumentStyleImage
+      x-permissions: [settings, sales_invoices, estimates]
+      summary: Download an image for custom CSS
+      description: MoneyHarpy extension.
+      tags:
+      - Document styles
+      responses:
+        '200':
+          description: The image
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: removeDocumentStyleImage
+      x-permissions: [settings]
+      summary: Remove an image for custom CSS
+      description: MoneyHarpy extension.
+      tags:
+      - Document styles
+      responses:
+        '200':
+          description: The updated document style
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentStyle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/document_styles/{id}/{file}:
     parameters:
     - *id002
@@ -674,12 +789,19 @@ paths:
     - name: file
       in: path
       required: true
-      description: The logo, or the background (stationery) printed behind documents.
+      description: >-
+        The logo, or the background (stationery) printed behind documents; or, as MoneyHarpy extensions, the email's
+        logo, header background, footer profile picture and footer background, or the public view's logo.
       schema:
         type: string
         enum:
         - logo
         - background
+        - email_logo
+        - email_header_background
+        - email_footer_profile_picture
+        - email_footer_background
+        - public_view_logo
     get:
       operationId: getDocumentStyleFile
       x-permissions: [settings, sales_invoices, estimates]
@@ -721,7 +843,7 @@ paths:
       operationId: uploadDocumentStyleFile
       x-permissions: [settings]
       summary: Upload a logo or background
-      description: MoneyHarpy extension. Send the file as the request body. Logos are PNG, JPEG or GIF up to 2 MB; backgrounds are PNG, JPEG or PDF up to 10 MB. Files go to the S3-compatible storage configured for the installation, or to the server's disk when none is.
+      description: MoneyHarpy extension. Send the file as the request body. Logos are PNG, JPEG or GIF up to 2 MB; backgrounds are PNG, JPEG or PDF up to 10 MB; the email and public view images are PNG, JPEG or GIF up to 2 MB, the email header and footer backgrounds up to 5 MB. Files go to the S3-compatible storage configured for the installation, or to the server's disk when none is.
       tags:
       - Document styles
       requestBody:
@@ -14050,16 +14172,155 @@ components:
             type: string
             description: MoneyHarpy extension. The text invoices are emailed with; empty uses the default. Same placeholders.
     DocumentStyle:
-      description: A Moneybird document style with MoneyHarpy extensions.
+      description: >-
+        A Moneybird document style with MoneyHarpy extensions. Moneybird's API has no fields for the look of emails,
+        public views and the online sales checkout or for the layout options below; MoneyHarpy names them after
+        Moneybird's editor form.
       allOf:
       - $ref: '#/components/schemas/document_style_response'
       - type: object
-        required:
-        - uri
+        required: [uri, hide_sender_address, sender_address_width, show_epc_code, invoice_recipient_address, estimate_recipient_address,
+          email_header_type, email_header_content_position, email_header_background_color, email_header_text, email_header_text_color,
+          email_logo_display_width, email_footer_type, email_footer_text_color, email_footer_background_color, email_footer_profile_title,
+          email_footer_profile_subtitle, body_background_color, email_font_family, email_label_enabled, public_view_logo_display_size,
+          public_view_background_color, public_view_label_enabled, checkout_show_address, checkout_show_phone_field, checkout_for_business,
+          checkout_show_identity, checkout_show_withdrawal_button, checkout_favorite_label, email_logo_hash, email_header_background_hash,
+          email_footer_profile_picture_hash, email_footer_background_hash, public_view_logo_hash, images]
         properties:
           uri:
             type: string
             description: MoneyHarpy extension. Canonical path of this resource.
+          hide_sender_address:
+            type: boolean
+            description: "MoneyHarpy extension. Leave the sender address off invoices and quotes, for a background image that has it."
+          sender_address_width:
+            type: integer
+            minimum: 100
+            maximum: 400
+            description: "MoneyHarpy extension. Width of the sender address in pixels, 100 to 400."
+          show_epc_code:
+            type: boolean
+            description: "MoneyHarpy extension. Print a QR code (EPC) customers can pay an invoice with from their banking app."
+          invoice_recipient_address:
+            type: array
+            items:
+              $ref: '#/components/schemas/DocumentStyleLine'
+            description: "MoneyHarpy extension. Details under the customer address on invoices."
+          estimate_recipient_address:
+            type: array
+            items:
+              $ref: '#/components/schemas/DocumentStyleLine'
+            description: "MoneyHarpy extension. Details under the customer address on quotes."
+          email_header_type:
+            type: string
+            enum: ["", background_image_with_text, background_image_with_logo, background_image, background_color_with_logo, background_color_with_text]
+            description: "MoneyHarpy extension. The header of emails; empty for none."
+          email_header_content_position:
+            type: string
+            enum: [left, center, right]
+            description: "MoneyHarpy extension."
+          email_header_background_color:
+            type: string
+            pattern: '^#[0-9A-Fa-f]{6}$'
+            description: "MoneyHarpy extension."
+          email_header_text:
+            type: string
+            maxLength: 500
+            description: "MoneyHarpy extension. The text of a header with text."
+          email_header_text_color:
+            type: string
+            pattern: '^#[0-9A-Fa-f]{6}$'
+            description: "MoneyHarpy extension."
+          email_logo_display_width:
+            type: integer
+            minimum: 10
+            maximum: 100
+            description: "MoneyHarpy extension. Width of the email logo in percent, 10 to 100."
+          email_footer_type:
+            type: string
+            enum: ["", contact_information, signature, background_image]
+            description: "MoneyHarpy extension. The footer of emails; empty for none."
+          email_footer_text_color:
+            type: string
+            pattern: '^#[0-9A-Fa-f]{6}$'
+            description: "MoneyHarpy extension."
+          email_footer_background_color:
+            type: string
+            pattern: '^#[0-9A-Fa-f]{6}$'
+            description: "MoneyHarpy extension."
+          email_footer_profile_title:
+            type: string
+            maxLength: 100
+            description: "MoneyHarpy extension. The name in a signature footer."
+          email_footer_profile_subtitle:
+            type: string
+            maxLength: 100
+            description: "MoneyHarpy extension. The line under the name in a signature footer."
+          body_background_color:
+            type: string
+            pattern: '^#[0-9A-Fa-f]{6}$'
+            description: "MoneyHarpy extension. The colour around the email."
+          email_font_family:
+            type: string
+            enum: [lucida_grande, helvetica, arial, verdana, georgia, times_new_roman, courier]
+            description: "MoneyHarpy extension."
+          email_label_enabled:
+            type: boolean
+            description: "MoneyHarpy extension. Show \"Sent with MoneyHarpy\" under emails (Moneybird's email_moneybird_label_enabled)."
+          public_view_logo_display_size:
+            type: integer
+            minimum: 10
+            maximum: 100
+            description: "MoneyHarpy extension. Size of the public view logo in percent, 10 to 100."
+          public_view_background_color:
+            type: string
+            enum: ['#F7F9FC', '#F6E4E2', '#EDE8F7', '#D5E8FA', '#DEF4F8', '#FBE0D5', '#FCF1DB', '#D7ECEA', '#E7F3E6', '#E4E9EB']
+            description: "MoneyHarpy extension. The page colour of public views."
+          public_view_label_enabled:
+            type: boolean
+            description: "MoneyHarpy extension. Show \"Made with MoneyHarpy\" on public views (Moneybird's public_view_moneybird_label_enabled)."
+          checkout_show_address:
+            type: boolean
+            description: "MoneyHarpy extension. The online sales checkout asks for an address."
+          checkout_show_phone_field:
+            type: boolean
+            description: "MoneyHarpy extension. The checkout asks for a phone number."
+          checkout_for_business:
+            type: boolean
+            description: "MoneyHarpy extension. The checkout starts as a business purchase, with prices excluding VAT and a company name field."
+          checkout_show_identity:
+            type: boolean
+            description: "MoneyHarpy extension. The checkout shows the company details."
+          checkout_show_withdrawal_button:
+            type: boolean
+            description: "MoneyHarpy extension. The checkout lets consumers withdraw a purchase within 14 days of payment."
+          checkout_favorite_label:
+            type: string
+            maxLength: 20
+            description: "MoneyHarpy extension. The label on the subscription marked as favourite."
+          email_logo_hash: &styleHash
+            type: string
+            nullable: true
+            description: MoneyHarpy extension. The SHA-256 of the file, or null without one.
+          email_header_background_hash: *styleHash
+          email_footer_profile_picture_hash: *styleHash
+          email_footer_background_hash: *styleHash
+          public_view_logo_hash: *styleHash
+          images:
+            type: array
+            description: MoneyHarpy extension. The images custom CSS can use, in upload order.
+            items:
+              type: object
+              required: [id, content_type, url]
+              properties:
+                id:
+                  type: string
+                  description: The SHA-256 of the image.
+                content_type:
+                  type: string
+                url:
+                  type: string
+                  description: Where the image is served, for url() in custom CSS.
     WorkflowRequest:
       type: object
       required:
@@ -17402,9 +17663,13 @@ components:
           maxLength: 64
         bold:
           type: boolean
+        italic:
+          type: boolean
         label:
           type: boolean
-      description: One entry of a block on a document. bold prints it bold; label prints its name before it.
+      description: >-
+        One entry of a block on a document. bold prints it bold, italic in italics; label prints its name before it.
+        Custom fields are named custom_field_ followed by their id.
     DocumentStyleRequest:
       type: object
       required:
@@ -17465,6 +17730,116 @@ components:
             estimate_sender_address: *id001
             estimate_metadata_left: *id001
             estimate_metadata_right: *id001
+            hide_sender_address:
+              type: boolean
+              description: "MoneyHarpy extension. Leave the sender address off invoices and quotes, for a background image that has it."
+            sender_address_width:
+              type: integer
+              minimum: 100
+              maximum: 400
+              description: "MoneyHarpy extension. Width of the sender address in pixels, 100 to 400."
+            show_epc_code:
+              type: boolean
+              description: "MoneyHarpy extension. Print a QR code (EPC) customers can pay an invoice with from their banking app."
+            invoice_recipient_address:
+              type: array
+              maxItems: 20
+              items:
+                $ref: '#/components/schemas/DocumentStyleLine'
+              description: "MoneyHarpy extension. Details under the customer address on invoices: customer_tax_number, customer_chamber_of_commerce, customer_id, customer_email, customer_phone or a contact custom field (custom_field_<id>)."
+            estimate_recipient_address:
+              type: array
+              maxItems: 20
+              items:
+                $ref: '#/components/schemas/DocumentStyleLine'
+              description: "MoneyHarpy extension. The same for quotes."
+            email_header_type:
+              type: string
+              enum: ["", background_image_with_text, background_image_with_logo, background_image, background_color_with_logo, background_color_with_text]
+              description: "MoneyHarpy extension. The header of emails; empty for none."
+            email_header_content_position:
+              type: string
+              enum: [left, center, right]
+              description: "MoneyHarpy extension."
+            email_header_background_color:
+              type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+              description: "MoneyHarpy extension."
+            email_header_text:
+              type: string
+              maxLength: 500
+              description: "MoneyHarpy extension. The text of a header with text."
+            email_header_text_color:
+              type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+              description: "MoneyHarpy extension."
+            email_logo_display_width:
+              type: integer
+              minimum: 10
+              maximum: 100
+              description: "MoneyHarpy extension. Width of the email logo in percent, 10 to 100."
+            email_footer_type:
+              type: string
+              enum: ["", contact_information, signature, background_image]
+              description: "MoneyHarpy extension. The footer of emails; empty for none."
+            email_footer_text_color:
+              type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+              description: "MoneyHarpy extension."
+            email_footer_background_color:
+              type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+              description: "MoneyHarpy extension."
+            email_footer_profile_title:
+              type: string
+              maxLength: 100
+              description: "MoneyHarpy extension. The name in a signature footer."
+            email_footer_profile_subtitle:
+              type: string
+              maxLength: 100
+              description: "MoneyHarpy extension. The line under the name in a signature footer."
+            body_background_color:
+              type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+              description: "MoneyHarpy extension. The colour around the email."
+            email_font_family:
+              type: string
+              enum: [lucida_grande, helvetica, arial, verdana, georgia, times_new_roman, courier]
+              description: "MoneyHarpy extension."
+            email_label_enabled:
+              type: boolean
+              description: "MoneyHarpy extension. Show \"Sent with MoneyHarpy\" under emails (Moneybird's email_moneybird_label_enabled)."
+            public_view_logo_display_size:
+              type: integer
+              minimum: 10
+              maximum: 100
+              description: "MoneyHarpy extension. Size of the public view logo in percent, 10 to 100."
+            public_view_background_color:
+              type: string
+              enum: ['#F7F9FC', '#F6E4E2', '#EDE8F7', '#D5E8FA', '#DEF4F8', '#FBE0D5', '#FCF1DB', '#D7ECEA', '#E7F3E6', '#E4E9EB']
+              description: "MoneyHarpy extension. The page colour of public views."
+            public_view_label_enabled:
+              type: boolean
+              description: "MoneyHarpy extension. Show \"Made with MoneyHarpy\" on public views (Moneybird's public_view_moneybird_label_enabled)."
+            checkout_show_address:
+              type: boolean
+              description: "MoneyHarpy extension. The online sales checkout asks for an address."
+            checkout_show_phone_field:
+              type: boolean
+              description: "MoneyHarpy extension. The checkout asks for a phone number."
+            checkout_for_business:
+              type: boolean
+              description: "MoneyHarpy extension. The checkout starts as a business purchase, with prices excluding VAT and a company name field."
+            checkout_show_identity:
+              type: boolean
+              description: "MoneyHarpy extension. The checkout shows the company details."
+            checkout_show_withdrawal_button:
+              type: boolean
+              description: "MoneyHarpy extension. The checkout lets consumers withdraw a purchase within 14 days of payment."
+            checkout_favorite_label:
+              type: string
+              maxLength: 20
+              description: "MoneyHarpy extension. The label on the subscription marked as favourite."
     InvoiceSettings:
       type: object
       description: MoneyHarpy extension.

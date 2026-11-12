@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/go-pdf/fpdf"
 
@@ -93,9 +92,11 @@ func render(doc sales.Document, prices bool) ([]byte, error) {
 
 	if !doc.Stationery {
 		logo(pdf, doc)
-		sender(pdf, tr, doc, l, fontSize)
+		if !layout(doc).HideSenderAddress {
+			sender(pdf, tr, doc, l, fontSize)
+		}
 	}
-	recipient(pdf, tr, doc, fontSize)
+	recipient(pdf, tr, doc, l, fontSize)
 
 	pdf.SetY(95)
 	pdf.SetFont("Helvetica", "B", fontSize+8)
@@ -175,31 +176,16 @@ func logo(pdf *fpdf.Fpdf, doc sales.Document) {
 	pdf.ImageOptions("logo", x, 15, w, h, false, opts, 0, "")
 }
 
+// sender prints the sender block as the style lays it out, at the style's
+// width against the right margin.
 func sender(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, l labels, size float64) {
-	id := doc.Identity
-	lines := []string{id.Address1, id.Address2, strings.TrimSpace(id.Zipcode + " " + id.City), countryName(id.Country, doc.Invoice.Language), id.Email, id.Phone}
-	if id.ChamberOfCommerce != "" {
-		lines = append(lines, l.CoC+" "+id.ChamberOfCommerce)
-	}
-	if id.TaxNumber != "" {
-		lines = append(lines, l.VATNumber+" "+id.TaxNumber)
-	}
-	if id.BankAccountNumber != "" {
-		lines = append(lines, l.IBAN+" "+id.BankAccountNumber)
-	}
-	x := 130.0
+	w := senderWidth(doc)
+	x := right - w
 	pdf.SetXY(x, 48)
-	pdf.SetFont("Helvetica", "B", size)
-	pdf.CellFormat(right-x, 5, tr(id.CompanyName), "", 2, "L", false, 0, "")
-	pdf.SetFont("Helvetica", "", size-1)
-	for _, line := range lines {
-		if line != "" {
-			pdf.CellFormat(right-x, 4.5, tr(line), "", 2, "L", false, 0, "")
-		}
-	}
+	drawStyled(pdf, tr, senderLines(doc, l), x, w, size-1)
 }
 
-func recipient(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, size float64) {
+func recipient(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, l labels, size float64) {
 	c := doc.Contact
 	attention := c.SendInvoicesToAttention
 	if doc.Estimate != nil {
@@ -224,25 +210,17 @@ func recipient(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, size 
 		pdf.SetFont("Helvetica", style, size)
 		pdf.CellFormat(95, 5, tr(line), "", 2, "L", false, 0, "")
 	}
+	if info := recipientInfo(doc, l); len(info) > 0 {
+		pdf.SetX(left)
+		pdf.CellFormat(95, 2, "", "", 2, "L", false, 0, "")
+		drawStyled(pdf, tr, info, left, 95, size-1)
+	}
 }
 
+// meta prints the document's details as the style's metadata columns list
+// them.
 func meta(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, l labels, prices bool) {
-	inv := doc.Invoice
-	day := func(t *time.Time) string {
-		if t == nil {
-			return ""
-		}
-		return t.Format("02-01-2006")
-	}
-	rows := [][2]string{{l.Number, inv.InvoiceID}, {l.Date, day(inv.InvoiceDate)}}
-	switch {
-	case doc.Estimate != nil:
-		rows = [][2]string{{l.EstimateNumber, inv.InvoiceID}, {l.EstimateDate, day(inv.InvoiceDate)}, {l.ValidUntil, day(inv.DueDate)}}
-	case prices:
-		rows = append(rows, [2]string{l.Due, day(inv.DueDate)})
-	}
-	rows = append(rows, [2]string{l.Reference, inv.Reference}, [2]string{l.Customer, doc.Contact.CustomerID})
-	for _, r := range rows {
+	for _, r := range metaRows(doc, l, prices) {
 		if r[1] == "" {
 			continue
 		}
@@ -354,6 +332,17 @@ func payment(pdf *fpdf.Fpdf, tr func(string) string, doc sales.Document, l label
 	}
 	text := fmt.Sprintf(l.PayBefore, sales.FormatMoney(doc.Totals.InclTax, inv.Currency, inv.Language), inv.DueDate.Format("02-01-2006"),
 		id.BankAccountNumber, holder, inv.PaymentReference)
+	if _, ok := epcPayload(doc); ok {
+		y := pdf.GetY()
+		pdf.MultiCell(width-34, 5, tr(text), "", "L", false)
+		if y+30 > 270 {
+			pdf.AddPage()
+			y = pdf.GetY()
+		}
+		epcCode(pdf, doc, right, y)
+		pdf.SetY(max(pdf.GetY(), y+30))
+		return
+	}
 	pdf.MultiCell(0, 5, tr(text), "", "L", false)
 }
 

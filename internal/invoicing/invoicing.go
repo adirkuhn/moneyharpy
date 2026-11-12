@@ -32,6 +32,7 @@ type Administrations interface {
 	Get(ctx context.Context, id, user resource.ID) (administration.Listed, error)
 	DefaultIdentity(ctx context.Context, admin, user resource.ID) (administration.Identity, error)
 	Identity(ctx context.Context, admin, id, user resource.ID) (administration.Identity, error)
+	CustomFields(ctx context.Context, admin, user resource.ID) ([]administration.CustomField, error)
 }
 
 // Files keeps uploaded files.

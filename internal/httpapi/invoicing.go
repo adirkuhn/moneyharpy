@@ -202,9 +202,17 @@ func (s *server) DeleteWorkflow(w http.ResponseWriter, r *http.Request, administ
 // documentStyleLine is a layout entry in Moneybird's JSON shape: options that
 // are off are left out.
 type documentStyleLine struct {
-	Field string `json:"field"`
-	Bold  bool   `json:"bold,omitempty"`
-	Label bool   `json:"label,omitempty"`
+	Field  string `json:"field"`
+	Bold   bool   `json:"bold,omitempty"`
+	Italic bool   `json:"italic,omitempty"`
+	Label  bool   `json:"label,omitempty"`
+}
+
+// documentStyleImage is one of a style's images for custom CSS.
+type documentStyleImage struct {
+	ID          string `json:"id"`
+	ContentType string `json:"content_type"`
+	URL         string `json:"url"`
 }
 
 // documentStyleJSON is the DocumentStyle response. The generated type models
@@ -236,6 +244,41 @@ type documentStyleJSON struct {
 	CreatedAt              time.Time           `json:"created_at"`
 	UpdatedAt              time.Time           `json:"updated_at"`
 	URI                    string              `json:"uri"`
+
+	HideSenderAddress            bool                 `json:"hide_sender_address"`
+	SenderAddressWidth           int                  `json:"sender_address_width"`
+	ShowEPCCode                  bool                 `json:"show_epc_code"`
+	InvoiceRecipientAddress      []documentStyleLine  `json:"invoice_recipient_address"`
+	EstimateRecipientAddress     []documentStyleLine  `json:"estimate_recipient_address"`
+	EmailHeaderType              string               `json:"email_header_type"`
+	EmailHeaderContentPosition   string               `json:"email_header_content_position"`
+	EmailHeaderBackgroundColor   string               `json:"email_header_background_color"`
+	EmailHeaderText              string               `json:"email_header_text"`
+	EmailHeaderTextColor         string               `json:"email_header_text_color"`
+	EmailLogoDisplayWidth        int                  `json:"email_logo_display_width"`
+	EmailFooterType              string               `json:"email_footer_type"`
+	EmailFooterTextColor         string               `json:"email_footer_text_color"`
+	EmailFooterBackgroundColor   string               `json:"email_footer_background_color"`
+	EmailFooterProfileTitle      string               `json:"email_footer_profile_title"`
+	EmailFooterProfileSubtitle   string               `json:"email_footer_profile_subtitle"`
+	BodyBackgroundColor          string               `json:"body_background_color"`
+	EmailFontFamily              string               `json:"email_font_family"`
+	EmailLabelEnabled            bool                 `json:"email_label_enabled"`
+	PublicViewLogoDisplaySize    int                  `json:"public_view_logo_display_size"`
+	PublicViewBackgroundColor    string               `json:"public_view_background_color"`
+	PublicViewLabelEnabled       bool                 `json:"public_view_label_enabled"`
+	CheckoutShowAddress          bool                 `json:"checkout_show_address"`
+	CheckoutShowPhoneField       bool                 `json:"checkout_show_phone_field"`
+	CheckoutForBusiness          bool                 `json:"checkout_for_business"`
+	CheckoutShowIdentity         bool                 `json:"checkout_show_identity"`
+	CheckoutShowWithdrawalButton bool                 `json:"checkout_show_withdrawal_button"`
+	CheckoutFavoriteLabel        string               `json:"checkout_favorite_label"`
+	EmailLogoHash                *string              `json:"email_logo_hash"`
+	EmailHeaderBackgroundHash    *string              `json:"email_header_background_hash"`
+	EmailFooterProfilePicture    *string              `json:"email_footer_profile_picture_hash"`
+	EmailFooterBackgroundHash    *string              `json:"email_footer_background_hash"`
+	PublicViewLogoHash           *string              `json:"public_view_logo_hash"`
+	Images                       []documentStyleImage `json:"images"`
 }
 
 func lines(in []invoicing.Line) []documentStyleLine {
@@ -253,6 +296,11 @@ func toDocumentStyle(d invoicing.DocumentStyle) documentStyleJSON {
 		}
 		return &f.Hash
 	}
+	e, k := d.Email, d.Checkout
+	images := make([]documentStyleImage, len(d.Images))
+	for i, f := range d.Images {
+		images[i] = documentStyleImage{ID: f.Hash, ContentType: f.ContentType, URL: "/api/v2" + d.Ref().URI() + "/images/" + f.Hash}
+	}
 	return documentStyleJSON{
 		ID: d.ID.String(), AdministrationID: d.AdministrationID.String(), Name: d.Name, IdentityID: d.IdentityID.String(),
 		Default: d.Default, LogoHash: hash(d.Logo), LogoContainerFullWidth: d.LogoContainerFullWidth,
@@ -263,6 +311,21 @@ func toDocumentStyle(d invoicing.DocumentStyle) documentStyleJSON {
 		InvoiceMetadataRight: lines(d.InvoiceMetadataRight), EstimateSenderAddress: lines(d.EstimateSenderAddress),
 		EstimateMetadataLeft: lines(d.EstimateMetadataLeft), EstimateMetadataRight: lines(d.EstimateMetadataRight),
 		CreatedAt: d.CreatedAt, UpdatedAt: d.UpdatedAt, URI: d.Ref().URI(),
+
+		HideSenderAddress: d.HideSenderAddress, SenderAddressWidth: d.SenderAddressWidth, ShowEPCCode: d.ShowEPCCode,
+		InvoiceRecipientAddress: lines(d.InvoiceRecipientAddress), EstimateRecipientAddress: lines(d.EstimateRecipientAddress),
+		EmailHeaderType: e.HeaderType, EmailHeaderContentPosition: e.HeaderContentPosition, EmailHeaderBackgroundColor: e.HeaderBackgroundColor,
+		EmailHeaderText: e.HeaderText, EmailHeaderTextColor: e.HeaderTextColor, EmailLogoDisplayWidth: e.LogoDisplayWidth,
+		EmailFooterType: e.FooterType, EmailFooterTextColor: e.FooterTextColor, EmailFooterBackgroundColor: e.FooterBackgroundColor,
+		EmailFooterProfileTitle: e.FooterProfileTitle, EmailFooterProfileSubtitle: e.FooterProfileSubtitle,
+		BodyBackgroundColor: e.BodyBackgroundColor, EmailFontFamily: e.FontFamily, EmailLabelEnabled: e.LabelEnabled,
+		PublicViewLogoDisplaySize: d.PublicView.LogoDisplaySize, PublicViewBackgroundColor: d.PublicView.BackgroundColor,
+		PublicViewLabelEnabled: d.PublicView.LabelEnabled,
+		CheckoutShowAddress:    k.ShowAddress, CheckoutShowPhoneField: k.ShowPhoneField, CheckoutForBusiness: k.ForBusiness,
+		CheckoutShowIdentity: k.ShowIdentity, CheckoutShowWithdrawalButton: k.ShowWithdrawalButton, CheckoutFavoriteLabel: k.FavoriteLabel,
+		EmailLogoHash: hash(d.File(invoicing.EmailLogo)), EmailHeaderBackgroundHash: hash(d.File(invoicing.EmailHeaderBackground)),
+		EmailFooterProfilePicture: hash(d.File(invoicing.EmailFooterProfilePicture)), EmailFooterBackgroundHash: hash(d.File(invoicing.EmailFooterBackground)),
+		PublicViewLogoHash: hash(d.File(invoicing.PublicViewLogo)), Images: images,
 	}
 }
 
@@ -272,7 +335,7 @@ func toLines(in *[]DocumentStyleLine) *[]invoicing.Line {
 	}
 	out := make([]invoicing.Line, len(*in))
 	for i, l := range *in {
-		out[i] = invoicing.Line{Field: l.Field, Bold: deref(l.Bold), Label: deref(l.Label)}
+		out[i] = invoicing.Line{Field: l.Field, Bold: deref(l.Bold), Italic: deref(l.Italic), Label: deref(l.Label)}
 	}
 	return &out
 }
@@ -287,6 +350,23 @@ func toDocumentStyleChanges(body DocumentStyleRequest) invoicing.DocumentStyleCh
 		InvoiceSenderAddress: toLines(in.InvoiceSenderAddress), InvoiceMetadataLeft: toLines(in.InvoiceMetadataLeft),
 		InvoiceMetadataRight: toLines(in.InvoiceMetadataRight), EstimateSenderAddress: toLines(in.EstimateSenderAddress),
 		EstimateMetadataLeft: toLines(in.EstimateMetadataLeft), EstimateMetadataRight: toLines(in.EstimateMetadataRight),
+		InvoiceRecipientAddress: toLines(in.InvoiceRecipientAddress), EstimateRecipientAddress: toLines(in.EstimateRecipientAddress),
+		HideSenderAddress: in.HideSenderAddress, SenderAddressWidth: in.SenderAddressWidth, ShowEPCCode: in.ShowEpcCode,
+		Email: invoicing.EmailChanges{
+			HeaderType: (*string)(in.EmailHeaderType), HeaderContentPosition: (*string)(in.EmailHeaderContentPosition),
+			HeaderBackgroundColor: in.EmailHeaderBackgroundColor, HeaderText: in.EmailHeaderText, HeaderTextColor: in.EmailHeaderTextColor,
+			LogoDisplayWidth: in.EmailLogoDisplayWidth, FooterType: (*string)(in.EmailFooterType), FooterTextColor: in.EmailFooterTextColor,
+			FooterBackgroundColor: in.EmailFooterBackgroundColor, FooterProfileTitle: in.EmailFooterProfileTitle,
+			FooterProfileSubtitle: in.EmailFooterProfileSubtitle, BodyBackgroundColor: in.BodyBackgroundColor,
+			FontFamily: (*string)(in.EmailFontFamily), LabelEnabled: in.EmailLabelEnabled,
+		},
+		PublicView: invoicing.PublicViewChanges{
+			LogoDisplaySize: in.PublicViewLogoDisplaySize, BackgroundColor: (*string)(in.PublicViewBackgroundColor), LabelEnabled: in.PublicViewLabelEnabled,
+		},
+		Checkout: invoicing.CheckoutChanges{
+			ShowAddress: in.CheckoutShowAddress, ShowPhoneField: in.CheckoutShowPhoneField, ForBusiness: in.CheckoutForBusiness,
+			ShowIdentity: in.CheckoutShowIdentity, ShowWithdrawalButton: in.CheckoutShowWithdrawalButton, FavoriteLabel: in.CheckoutFavoriteLabel,
+		},
 	}
 	if in.IdentityId != nil {
 		// The contract guarantees digits; an overflow becomes 0, which no
@@ -424,6 +504,59 @@ func (s *server) RemoveDocumentStyleFile(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	d, err := s.deps.Invoicing.RemoveFile(r.Context(), admin, rid, user(r).ID, invoicing.FileKind(file))
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toDocumentStyle(d))
+}
+
+// AddDocumentStyleImage implements ServerInterface.
+func (s *server) AddDocumentStyleImage(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeError(w, http.StatusRequestEntityTooLarge, "The file is too large")
+		return
+	}
+	d, err := s.deps.Invoicing.AddImage(r.Context(), admin, rid, user(r).ID, data)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toDocumentStyle(d))
+}
+
+// GetDocumentStyleImage implements ServerInterface.
+func (s *server) GetDocumentStyleImage(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, imageID string) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	body, contentType, err := s.deps.Invoicing.OpenImage(r.Context(), admin, rid, user(r).ID, imageID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	defer func() { _ = body.Close() }()
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", "inline")
+	w.Header().Set("Cache-Control", "private, max-age=86400, immutable")
+	w.WriteHeader(http.StatusOK)
+	// The client went away if this fails; there is nobody left to tell.
+	_, _ = io.Copy(w, body)
+}
+
+// RemoveDocumentStyleImage implements ServerInterface.
+func (s *server) RemoveDocumentStyleImage(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, imageID string) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	d, err := s.deps.Invoicing.RemoveImage(r.Context(), admin, rid, user(r).ID, imageID)
 	if err != nil {
 		s.fail(w, r, err)
 		return
