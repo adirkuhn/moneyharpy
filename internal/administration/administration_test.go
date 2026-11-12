@@ -481,6 +481,15 @@ func TestReferenceListsAreUsableChoices(t *testing.T) {
 			t.Errorf("Currencies() lacks popular currency %q", code)
 		}
 	}
+	// Moneybird's list: EUR, USD, GBP and 166 others, old ones such as BYR and ZWL and gold and Bitcoin among them.
+	if n := len(Currencies()); n != 169 {
+		t.Errorf("len(Currencies()) = %d, want Moneybird's 169", n)
+	}
+	for _, code := range []string{"BTC", "BYR", "XAU", "ZWL"} {
+		if !slices.Contains(Currencies(), code) {
+			t.Errorf("Currencies() lacks %q", code)
+		}
+	}
 	if !slices.IsSorted(Countries()) || !slices.IsSorted(Currencies()) {
 		t.Error("reference lists are not sorted")
 	}

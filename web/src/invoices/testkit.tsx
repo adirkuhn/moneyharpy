@@ -84,8 +84,8 @@ export function loaded(list: SalesInvoice[] = [invoice(), draft], total = list.l
 }
 
 
-/** The "Add invoice" popup that opens over a new invoice, and again from the document. */
-export const popup = () => screen.getByRole('dialog', { name: 'Add invoice' })
+/** The "Add invoice" popup that opens over a new invoice, and the "Edit invoice" one it is from the document of a saved one. */
+export const popup = () => screen.getByRole('dialog', { name: /^(Add|Edit) invoice$/ })
 
 /** Chooses the contact in the popup's contact selector by searching for it. */
 export async function pickContact() {

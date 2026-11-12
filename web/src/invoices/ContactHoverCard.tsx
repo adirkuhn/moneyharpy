@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react'
+import { type ReactNode, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useContactDocuments } from '../contacts/documents'
@@ -28,6 +28,18 @@ export function timeAgo(iso: string, language: string, now = new Date()) {
  * address and email, and how many invoices and documents it has.
  */
 export function ContactHoverCard({ administrationId, contact }: Props) {
+  return (
+    <HoverCard administrationId={administrationId} contact={contact}>
+      {(describedBy) => <Link to={`/${administrationId}/contacts/${contact.id}`} aria-describedby={describedBy}>{contactName(contact)}</Link>}
+    </HoverCard>
+  )
+}
+
+/**
+ * Shows the card of a contact while what it wraps is hovered or focused,
+ * such as the chosen contact of the invoice popup's selector.
+ */
+export function HoverCard({ administrationId, contact, className, children }: Props & { className?: string; children: (describedBy: string | undefined) => ReactNode }) {
   const [open, setOpen] = useState(false)
   const id = useId()
   const timer = useRef<number | undefined>(undefined)
@@ -43,7 +55,7 @@ export function ContactHoverCard({ administrationId, contact }: Props) {
   const to = `/${administrationId}/contacts/${contact.id}`
   return (
     <span
-      className="hover-card"
+      className={`hover-card${className ? ` ${className}` : ''}`}
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocus={show}
@@ -58,7 +70,7 @@ export function ContactHoverCard({ administrationId, contact }: Props) {
         }
       }}
     >
-      <Link to={to} aria-describedby={open ? id : undefined}>{contactName(contact)}</Link>
+      {children(open ? id : undefined)}
       {open && <Card id={id} administrationId={administrationId} contact={contact} to={to} />}
     </span>
   )
