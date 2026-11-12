@@ -11,6 +11,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -62,6 +63,8 @@ type ExternalInvoice struct {
 	Payments              []Payment
 	Notes                 []notes.Note
 	Attachments           []attachments.Attachment
+	// Events are what happened to the invoice, oldest first.
+	Events []history.Event
 	// Totals are the amounts worked out when the invoice was last saved.
 	Totals    Totals
 	CreatedAt time.Time
@@ -138,6 +141,9 @@ func (s *Service) CreateExternal(ctx context.Context, admin, user resource.ID, c
 	if err := s.saveExternal(ctx, a, user, &e, true); err != nil {
 		return ExternalInvoice{}, err
 	}
+	if err := s.record(ctx, user, on(e.invoice(), "external_sales_invoice_created")); err != nil {
+		return ExternalInvoice{}, err
+	}
 	return s.ExternalInvoice(ctx, admin, e.ID, user)
 }
 
@@ -161,6 +167,9 @@ func (s *Service) CreateExternalFromFile(ctx context.Context, admin, user resour
 		}
 		return ExternalInvoice{}, err
 	}
+	if err := s.record(ctx, user, on(e.invoice(), "external_sales_invoice_created")); err != nil {
+		return ExternalInvoice{}, err
+	}
 	return s.ExternalInvoice(ctx, admin, e.ID, user)
 }
 
@@ -176,8 +185,10 @@ func (s *Service) newExternal(ctx context.Context, a administration.Listed, orig
 	}, nil
 }
 
-// UpdateExternal changes an external invoice and books it again. Payments,
-// write-offs or a locked period stop it.
+// UpdateExternal changes an external invoice and books it again. As at
+// Moneybird one with payments changes too, keeping its currency, and what is
+// left to pay sets its state; one written off as uncollectible, or in the
+// locked period, stays as it is.
 func (s *Service) UpdateExternal(ctx context.Context, admin, id, user resource.ID, c ExternalChanges) (ExternalInvoice, error) {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
@@ -187,9 +198,13 @@ func (s *Service) UpdateExternal(ctx context.Context, admin, id, user resource.I
 	if err != nil {
 		return ExternalInvoice{}, err
 	}
-	if e.State == Paid || e.State == Uncollectible || len(e.Payments) > 0 || e.MarkedDubiousOn != nil {
+	if e.State == Uncollectible {
 		return ExternalInvoice{}, ErrNotEditable
 	}
+	if c.Currency != nil && len(e.Payments) > 0 && !strings.EqualFold(strings.TrimSpace(*c.Currency), e.Currency) {
+		return ExternalInvoice{}, invalid("currency", "can't change on an invoice with payments")
+	}
+	booked, was := e.Booked(), effective(e.invoice(), s.today(a))
 	if e.Booked() {
 		if err := s.checkDay(ctx, admin, user, e.Date, "date"); err != nil {
 			return ExternalInvoice{}, err
@@ -200,6 +215,18 @@ func (s *Service) UpdateExternal(ctx context.Context, admin, id, user resource.I
 	}
 	e.UpdatedAt = s.now()
 	if err := s.saveExternal(ctx, a, user, &e, false); err != nil {
+		return ExternalInvoice{}, err
+	}
+	// A new invoice is still being filled in; only changes to a booked one are history.
+	var events []event
+	if booked {
+		events = append(events, on(e.invoice(), "external_sales_invoice_updated"))
+	}
+	if state := effective(e.invoice(), s.today(a)); booked && state != was {
+		events = append(events, stateChanged(e.invoice(), state))
+		s.notify(ctx, admin, "external_sales_invoice_state_changed_to_"+state, e.invoice())
+	}
+	if err := s.record(ctx, user, events...); err != nil {
 		return ExternalInvoice{}, err
 	}
 	return s.ExternalInvoice(ctx, admin, id, user)
@@ -218,7 +245,13 @@ func (s *Service) saveExternal(ctx context.Context, a administration.Listed, use
 		if err := s.checkDay(ctx, a.ID, user, e.Date, "date"); err != nil {
 			return err
 		}
-		e.State = reopened(e.invoice(), s.today(a))
+		inv := e.invoice()
+		// A paid one stays paid while its payments cover it.
+		if inv.State != Paid {
+			inv.State = reopened(inv, s.today(a))
+		}
+		settleState(&inv, s.today(a))
+		e.State, e.PaidAt = inv.State, inv.PaidAt
 		if entries, err = s.post(ctx, a.ID, user, e.invoice()); err != nil {
 			return err
 		}
@@ -428,8 +461,14 @@ func (s *Service) completeExternal(ctx context.Context, admin resource.ID, list 
 	if err != nil {
 		return nil, err
 	}
+	events := map[resource.ID][]history.Event{}
+	if s.history != nil {
+		if events, err = s.history.Of(ctx, admin, ExternalEntityType, ids); err != nil {
+			return nil, err
+		}
+	}
 	for i := range list {
-		list[i].Notes, list[i].Attachments = byInvoice[list[i].ID], files[list[i].ID]
+		list[i].Notes, list[i].Attachments, list[i].Events = byInvoice[list[i].ID], files[list[i].ID], events[list[i].ID]
 		list[i].State = effective(list[i].invoice(), today)
 	}
 	return list, nil

@@ -933,25 +933,30 @@ test('an external invoice is uploaded, filled in, booked and paid by a bank tran
   await menu.getByRole('link', { name: 'External invoices' }).click()
   await expect(page.getByText(/No external invoices yet/)).toBeVisible()
 
-  // The webshop's PDF becomes a new invoice to fill in.
+  // The webshop's PDF becomes a new invoice, filled in on Moneybird's edit page beside its file.
   await page.getByLabel('Upload invoices').setInputFiles({ name: 'order-1001.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n% order 1001\n') })
-  await expect(page.locator('.badge', { hasText: 'New' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'View order-1001.pdf' })).toBeVisible()
-  const form = page.getByRole('form', { name: 'External invoice' })
+  await expect(page.getByRole('heading', { level: 1, name: 'Edit external invoice' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Attachments' }).getByRole('link', { name: 'order-1001.pdf' })).toBeVisible()
+  const form = page.getByRole('form', { name: 'Edit external invoice' })
   await form.getByRole('combobox', { name: 'Contact' }).click()
   await page.getByRole('searchbox', { name: 'Find a contact' }).fill('Example')
   await page.getByRole('option', { name: 'Example Shop B.V.' }).click()
-  await form.getByLabel('Reference').fill('WEB-1001')
-  await form.getByLabel('Prices include VAT').check()
-  const row = form.getByRole('table', { name: 'Lines' }).getByRole('row').nth(1)
+  await expect(form.getByRole('group', { name: 'Contact' })).toContainText('Example Shop B.V.')
+  await form.getByLabel('Invoice id').fill('WEB-1001')
+  await form.locator('label', { hasText: 'Including VAT' }).click()
+  await expect(form.getByRole('radio', { name: 'Including VAT' })).toBeChecked()
+  const row = form.getByRole('table', { name: 'Invoice details' }).getByRole('row').nth(1)
   await row.getByLabel('Description').fill('Sofa')
   await row.getByLabel('Price').fill('1000')
   const vat21 = (await row.getByLabel('VAT rate').locator('option', { hasText: '21%' }).first().getAttribute('value')) ?? ''
   await row.getByLabel('VAT rate').selectOption(vat21)
   await form.getByRole('button', { name: 'Save' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'WEB-1001' })).toBeVisible()
+  // Booked, it reads as Moneybird's document.
+  const document = page.getByRole('article', { name: 'External invoice' })
+  await expect(document.getByRole('heading', { level: 1, name: 'WEB-1001' })).toBeVisible()
   await expect(page.locator('.badge', { hasText: 'Open' })).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Payments' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Register payment' })).toBeVisible()
+  await expect(page.getByRole('complementary', { name: 'About this invoice' })).toContainText('External invoice created')
 
   // A bank transaction of the same amount pays it.
   const account = await (await page.request.post(`${api}/financial_accounts`, { data: { financial_account: { name: 'Main bank', identifier: 'NL91ABNA0417164300' } } })).json()
@@ -968,7 +973,10 @@ test('an external invoice is uploaded, filled in, booked and paid by a bank tran
   const paid = page.getByRole('table', { name: 'Invoices paid' })
   await paid.getByRole('link', { name: 'WEB-1001' }).click()
   await expect(page.locator('.badge', { hasText: 'Paid' })).toBeVisible()
-  await expect(page.getByRole('table', { name: 'Payments' }).getByRole('link', { name: 'Bank transaction' })).toBeVisible()
+  await expect(page.getByRole('complementary', { name: 'About this invoice' })).toContainText('Received payment of')
+  await page.getByRole('button', { name: 'Journal entries' }).click()
+  await expect(page.getByRole('table', { name: 'Journal entries' })).toContainText('External invoice - ')
+  await expect(page.getByRole('table', { name: 'Journal entries' })).toContainText('Payment - ')
 
   await page.goto(`${uri}/external_sales_invoices`)
   await expect(page.getByRole('table', { name: 'External invoices' }).getByRole('link', { name: 'WEB-1001' })).toBeVisible()

@@ -67,13 +67,14 @@
 .journal-panel__text, .journal-panel__empty { margin: 0; }
 .journal-panel__empty { padding: 0 1rem 1.25rem; color: var(--muted); }
 .journal-panel__table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.journal-panel__table th, .journal-panel__table td { padding: 0.75rem 1rem; text-align: left; font-weight: 400; }
+.journal-panel__table th, .journal-panel__table td { padding: 0.5625rem 1rem; text-align: left; font-weight: 400; }
 .journal-panel__table thead th { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.journal-panel__table thead th:nth-child(2), .journal-panel__table thead th:nth-child(3) { width: 7rem; }
-.journal-panel__table thead th:nth-child(4) { width: 8rem; }
+.journal-panel__table thead th:nth-child(2), .journal-panel__table thead th:nth-child(3) { width: 8rem; padding-right: 0; }
+.journal-panel__table thead th:nth-child(4) { width: 8.5rem; }
+.journal-panel__table td.journal-panel__amount { padding-right: 0; }
 .journal-panel__group th { border-bottom: 1px solid var(--line); background: var(--bg); }
 .journal-panel__table tbody + tbody .journal-panel__group th { border-top: 1px solid var(--line); }
-.journal-panel__category { overflow: hidden; padding-left: 5.5rem !important; text-overflow: ellipsis; white-space: nowrap; }
+.journal-panel__category { overflow: hidden; padding-left: 6.5rem !important; text-overflow: ellipsis; white-space: nowrap; }
 .journal-panel__quiet { color: var(--muted); font-size: 0.8125rem; }
 .journal-panel__amount { text-align: right !important; font-variant-numeric: tabular-nums; }
 

@@ -1,0 +1,110 @@
+/* External invoices after Moneybird's: the list's reference, the document page and the edit page. */
+
+/* The list: "Example POS › POS-1001", under Moneybird's one-line drop zone. */
+.external-reference__arrow { color: var(--muted); }
+.upload-area--bar {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.25rem 1rem; margin-bottom: 0.875rem; padding: 0.75rem 1rem;
+  border: 1px dashed var(--teal); border-radius: 8px; background: color-mix(in srgb, var(--teal) 6%, var(--surface)); font-size: 0.8125rem;
+}
+.upload-area--bar.is-over { border-style: solid; border-color: var(--teal); background: color-mix(in srgb, var(--teal) 14%, var(--surface)); }
+.upload-area--bar .upload-area__text { color: var(--text); }
+.upload-area--bar .upload-area__pick { color: var(--text); font-weight: 400; }
+
+/* The document: a summary of the invoice over its lines, on a white page. */
+.invoice-view.external-view { grid-template-columns: minmax(0, 1fr) 16.25rem; }
+.actionbar:has(.invoice-actions--external) .invoice-actions { padding-right: calc(16.25rem + 1.5rem); }
+.external-view .invoice-sidebar.invoice-sidebar { gap: 1rem; }
+.external-document {
+  padding: 1.875rem 3.125rem 2.25rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text);
+}
+.external-document__summary { padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.external-document__type { margin: 0; color: var(--muted); font-size: 0.8125rem; font-weight: 700; }
+.external-document__title { overflow: hidden; margin: 0 0 0.875rem; font-size: 1.25rem; font-weight: 700; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.external-document__meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin: 0; padding: 0; list-style: none; }
+.external-document__item { display: grid; }
+.external-document__label { color: var(--muted); font-size: 0.8125rem; }
+.external-document__value { font-size: 0.9375rem; }
+.external-document__value a { text-decoration: none; }
+.external-document__value a:hover { text-decoration: underline; }
+.external-document__details { width: 100%; margin-top: 1rem; border-collapse: collapse; }
+.external-document__details th, .external-document__details td { padding: 0.375rem; text-align: left; vertical-align: top; }
+.external-document__details tbody td { padding-block: 0.4375rem; }
+.external-document__details thead th { padding-top: 0.25rem; border-bottom: 1px solid var(--text); font-weight: 700; }
+.external-document__details tbody td { border-bottom: 1px solid var(--line); }
+.external-document__details tbody tr:last-child td { border-bottom-color: var(--text); }
+.external-document__details .external-document__amount { width: 1.5rem; }
+.external-document__details .external-document__price { width: 1%; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.external-document__details thead .external-document__price { padding-left: 2rem; }
+.external-document__details tfoot :is(th, td) { padding-block: 0.1875rem; }
+.external-document__details tfoot th { padding-left: 2rem; text-align: right; font-weight: 400; white-space: nowrap; }
+.external-document__subtotal th { font-weight: 700 !important; }
+.external-document__subtotal :is(th, td) { padding-top: 0.5rem !important; }
+.external-document__tax :is(th, td) { padding-bottom: 0.5rem !important; }
+.external-document__total th, .external-document__total td.external-document__price { padding-top: 0.5rem !important; border-top: 1px solid var(--text); font-weight: 700 !important; }
+.external-document__details tr.is-highlighted td { background: var(--highlight, #fff5d6); }
+
+/* Its files under it. */
+.attachment-previews { display: grid; gap: 0.5rem; }
+.attachment-previews__file { margin: 0; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.attachment-previews__caption { display: flex; align-items: center; gap: 0.5rem; }
+
+/* The journal entries button carries Moneybird's caret. */
+.invoice-actions__toggle { gap: 0.375rem; width: auto; padding-inline: 0.75rem; }
+
+/* The edit page: the form with its files beside it, over the full width. */
+.external-edit { display: grid; grid-template-columns: minmax(0, 1fr) 20.625rem; gap: 0.5rem; align-items: start; padding: 1.5rem 1rem 4rem; }
+.external-edit__main { display: grid; gap: 0.75rem; min-width: 0; }
+.external-edit__bar { display: flex; min-height: 2.25rem; justify-content: space-between; align-items: center; gap: 1rem; padding-left: 1rem; }
+.external-edit__bar h1 { margin: 0; font-size: 1.25rem; }
+.external-edit__form { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.external-edit__files { padding-top: 3.5rem; }
+.external-edit__later { margin: 0; padding: 1rem; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); }
+.external-edit__fields { display: grid; gap: 0.25rem; }
+.external-edit__fields .form-input { margin: 0; }
+.external-edit__due { display: flex; align-items: center; gap: 1rem; }
+.external-edit__due .form-input { flex: 1; }
+.external-edit hr { margin: 1rem 0; border: 0; border-top: 1px solid var(--line); }
+
+/* The details editor stands in the form rather than over a document. */
+.external-edit .editable-document-form { position: static; margin: 0; border-radius: 0; background: none; box-shadow: none; }
+.external-edit .editable-document-form__header { padding: 0 0 1rem; border-bottom: 0; }
+.external-edit .details-editor__body { padding: 0; }
+.external-edit .editable-document-form__buttons { margin-top: 1rem; padding: 1.25rem 0 0; border-top: 1px solid var(--line); }
+.details-editor__tip { display: inline-flex; color: var(--blue); }
+
+/* Moneybird's vertical stepper: a circle per step, checked once done. */
+.vertical-stepper { margin: 0; padding: 0; list-style: none; }
+.vertical-stepper__step + .vertical-stepper__step { border-top: 1px solid var(--line); }
+.vertical-stepper__header { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; }
+.vertical-stepper__circle {
+  display: inline-flex; flex: none; justify-content: center; align-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  background: var(--bg); box-shadow: inset 0 0 0 6px var(--line);
+}
+.vertical-stepper__step--checked .vertical-stepper__circle { background: var(--teal); box-shadow: none; color: var(--white); }
+.vertical-stepper__title { flex: 1; margin: 0; font-size: 1.0625rem; font-weight: 700; }
+.vertical-stepper__action { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0; border: 0; background: none; color: var(--link); font: inherit; font-size: 0.9375rem; cursor: pointer; }
+.vertical-stepper__action:hover span { text-decoration: underline; }
+.vertical-stepper__body { padding: 0 1rem 1.75rem; }
+
+@media (max-width: 64rem) {
+  .external-edit { grid-template-columns: minmax(0, 1fr); }
+  .external-edit__files { padding-top: 0; }
+}
+@media (max-width: 40rem) {
+  .external-document { padding: 1.25rem 1rem; }
+  .external-edit { padding-inline: 0.5rem; }
+  .external-edit__due { flex-wrap: wrap; }
+}
+
+/* Moneybird's compact fields: the label in 170px beside a 240px control of 28px high. */
+.external-edit__fields .form-input { --control-width: 15rem; grid-template-columns: 10.625rem minmax(0, 1fr); gap: 0.25rem 0; }
+.external-edit__fields .form-input__label { display: flex; align-items: center; min-height: 28px; padding: 0; }
+.external-edit__fields :is(input[type='text'], input[type='date'], .picker__button) { min-height: 28px; height: 28px; padding: 0 0.5rem; border-radius: 8px; font-size: 0.875rem; }
+.external-edit__fields .form-input--small { --control-width: 4rem; }
+.external-edit .segmented-control { flex: none; }
+.external-edit .details-editor__footer { margin-bottom: 0; border-bottom: 0; }
+
+/* The files beside the form: Moneybird's centred drop zone. */
+.external-edit__files .attachment-zone__drop { display: block; padding: 1rem; color: var(--text); text-align: center; }
+.external-edit__files .attachment-zone__drop > svg { display: inline; margin-right: 0.375rem; vertical-align: -0.1875rem; }
+.external-edit__files .attachment-zone__drop > span { display: inline; }
