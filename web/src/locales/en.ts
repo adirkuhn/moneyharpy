@@ -294,7 +294,7 @@ export const en = {
     journal: {
       title: 'Journal entries', intro: 'In the background, MoneyHarpy has created the following bookings, also called Journal Entries.',
       category: 'Category', debit: 'Debit', credit: 'Credit', vat: 'VAT', balanceSheet: 'Balance sheet', profitAndLoss: 'Profit and loss statement',
-      documents: { SalesInvoice: 'Invoice', ExternalSalesInvoice: 'External invoice', Payment: 'Payment' },
+      documents: { SalesInvoice: 'Invoice', ExternalSalesInvoice: 'External invoice', Payment: 'Payment', FinancialMutation: 'Payment' },
       empty: 'No bookings yet.', failed: 'The journal entries could not be loaded.',
     },
     attachments: 'Attachments', noAttachments: 'No attachments yet.', addAttachment: 'Add attachment', attachmentHelp: 'A PDF, image or text file of at most 10 MB.',

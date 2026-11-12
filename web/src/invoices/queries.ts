@@ -443,9 +443,11 @@ export type JournalSource = Pick<SalesInvoice, 'id' | 'version' | 'payments'>
  */
 export function useInvoiceJournalEntries(administrationId: string, inv: JournalSource, enabled: boolean, kind: InvoiceKind = 'sales') {
   const documents: JournalDocument[] = [
-    { type: kind === 'external' ? 'ExternalSalesInvoice' : 'SalesInvoice', id: inv.id ?? '' },
-    ...(inv.payments ?? []).map((p): JournalDocument => ({ type: 'Payment', id: String(p.id ?? '') })),
-  ]
+    { type: kind === 'external' ? 'ExternalSalesInvoice' : 'SalesInvoice', id: inv.id ?? '' } satisfies JournalDocument,
+    // A payment made by a bank transaction is booked by that transaction.
+    ...(inv.payments ?? []).map((p): JournalDocument =>
+      p.financial_mutation_id ? { type: 'FinancialMutation', id: String(p.financial_mutation_id) } : { type: 'Payment', id: String(p.id ?? '') }),
+  ].filter((d, i, all) => all.findIndex((o) => o.type === d.type && o.id === d.id) === i)
   return useQuery({
     queryKey: ['journal-entries', administrationId, inv.id, inv.version, documents.map((d) => d.id).join(',')],
     enabled,
