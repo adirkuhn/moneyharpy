@@ -175,8 +175,8 @@ func saveInvoice(ctx context.Context, q *sqlc.Queries, inv sales.Invoice, delive
 		InvoiceDate: optionalDate(inv.InvoiceDate), DueDate: optionalDate(inv.DueDate), FirstDueInterval: int32(inv.FirstDueInterval),
 		State: inv.State, Paused: inv.Paused, PaymentReference: inv.PaymentReference, SentAt: optionalTime(inv.SentAt), PaidAt: optionalTime(inv.PaidAt),
 		MarkedDubiousOn: optionalDate(inv.MarkedDubiousOn), MarkedUncollectibleOn: optionalDate(inv.MarkedUncollectibleOn),
-		ReminderCount: int32(inv.ReminderCount), OriginalID: optionalID(inv.OriginalID), RecurringSalesInvoiceID: optionalID(inv.RecurringSalesInvoiceID),
-		Delivery: delivery, TotalExclTax: int64(inv.Totals.ExclTax), TotalTax: int64(inv.Totals.Tax), TotalInclTax: int64(inv.Totals.InclTax),
+		ReminderCount: int32(inv.ReminderCount), LastReminderOn: optionalDate(inv.LastReminderOn), OriginalID: optionalID(inv.OriginalID),
+		RecurringSalesInvoiceID: optionalID(inv.RecurringSalesInvoiceID), Delivery: delivery, TotalExclTax: int64(inv.Totals.ExclTax), TotalTax: int64(inv.Totals.Tax), TotalInclTax: int64(inv.Totals.InclTax),
 		TotalDiscount: int64(inv.Totals.Discount), TaxTotals: taxTotals, CreatedAt: timestamp(inv.CreatedAt), UpdatedAt: timestamp(inv.UpdatedAt),
 	}); err != nil {
 		return err
@@ -476,8 +476,8 @@ func toInvoice(r sqlc.SalesInvoice) (sales.Invoice, error) {
 		PricesAreInclTax: r.PricesAreInclTax, PaymentConditions: r.PaymentConditions, Discount: int64(r.Discount), InvoiceDate: dateOf(r.InvoiceDate),
 		DueDate: dateOf(r.DueDate), FirstDueInterval: int(r.FirstDueInterval), State: r.State, Paused: r.Paused, PaymentReference: r.PaymentReference,
 		SentAt: timeOf(r.SentAt), PaidAt: timeOf(r.PaidAt), MarkedDubiousOn: dateOf(r.MarkedDubiousOn), MarkedUncollectibleOn: dateOf(r.MarkedUncollectibleOn),
-		ReminderCount: int(r.ReminderCount), OriginalID: idOf(r.OriginalID), RecurringSalesInvoiceID: idOf(r.RecurringSalesInvoiceID),
-		OriginalEstimateID: idOf(r.OriginalEstimateID),
+		ReminderCount: int(r.ReminderCount), LastReminderOn: dateOf(r.LastReminderOn), OriginalID: idOf(r.OriginalID),
+		RecurringSalesInvoiceID: idOf(r.RecurringSalesInvoiceID), OriginalEstimateID: idOf(r.OriginalEstimateID),
 		Totals: sales.Totals{
 			ExclTax: money.Amount(r.TotalExclTax), Tax: money.Amount(r.TotalTax), InclTax: money.Amount(r.TotalInclTax), Discount: money.Amount(r.TotalDiscount),
 		},

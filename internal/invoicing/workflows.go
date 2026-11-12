@@ -68,9 +68,14 @@ type Workflow struct {
 	UpdatedAt time.Time
 }
 
-// WorkflowStep is one stage of a workflow. For the first step DueInterval is
-// the payment term (invoices) or validity (estimates) in days; later steps
-// are reminders sent ReminderDelay days after the previous stage.
+// WorkflowStep is one stage of a workflow, as Moneybird's workflow steps.
+// StepOrder counts from 0: step 0 sends the invoice (or estimate), steps 1
+// and on are the reminders. Each step expires DueInterval days after it was
+// taken ("Reminder expires after" on Moneybird): for step 0 that is the
+// payment term or validity, and when a step expires unpaid the next reminder
+// is due. So on the workflow's page reminder n is on Day 1 plus the due
+// intervals of the steps before it. ReminderDelay is kept for Moneybird's
+// API, whose workflows always hold 0; it does not move a reminder.
 type WorkflowStep struct {
 	ID               resource.ID
 	StepOrder        int
@@ -268,7 +273,7 @@ func (s *Service) apply(w *Workflow, c WorkflowChanges) error {
 		w.Steps = make([]WorkflowStep, len(*c.Steps))
 		for i, in := range *c.Steps {
 			w.Steps[i] = WorkflowStep{
-				StepOrder: i + 1, DueInterval: in.DueInterval, ReminderDelay: in.ReminderDelay,
+				StepOrder: i, DueInterval: in.DueInterval, ReminderDelay: in.ReminderDelay,
 				ReminderText: strings.TrimSpace(in.ReminderText), ReminderAutoSend: in.ReminderAutoSend,
 			}
 		}
@@ -311,8 +316,11 @@ func validateWorkflow(w Workflow) error {
 		if i == 0 && (st.DueInterval < 0 || st.DueInterval > maxDays) {
 			verr.Add("steps", fmt.Sprintf("must have a term between 0 and %d days", maxDays))
 		}
-		if i > 0 && (st.ReminderDelay < 1 || st.ReminderDelay > maxDays) {
-			verr.Add("steps", fmt.Sprintf("must send reminders between 1 and %d days apart", maxDays))
+		if i > 0 && (st.DueInterval < 1 || st.DueInterval > maxDays) {
+			verr.Add("steps", fmt.Sprintf("must have reminders that expire after between 1 and %d days", maxDays))
+		}
+		if st.ReminderDelay < 0 || st.ReminderDelay > maxDays {
+			verr.Add("steps", fmt.Sprintf("must have a reminder delay between 0 and %d days", maxDays))
 		}
 		if len(st.ReminderText) > maxReminderTx {
 			verr.Add("steps", fmt.Sprintf("must have reminder texts of at most %d characters", maxReminderTx))
@@ -350,7 +358,8 @@ func (s *Service) ensureWorkflows(ctx context.Context, a administration.Administ
 }
 
 // defaultWorkflow is the starting point for a workflow of type t: a 14-day
-// payment term with two reminders a week apart, or a 30-day estimate.
+// payment term, then two reminders that each expire after a week (Day 15
+// and Day 22), or a 30-day estimate.
 func (s *Service) defaultWorkflow(a administration.Administration, t WorkflowType) Workflow {
 	dutch := strings.HasPrefix(a.Language, "nl")
 	name := "Default (EN)"
@@ -362,7 +371,7 @@ func (s *Service) defaultWorkflow(a administration.Administration, t WorkflowTyp
 		Active: true, ShowQRCode: t == InvoiceWorkflow,
 	}
 	if t == EstimateWorkflow {
-		w.Steps = []WorkflowStep{{StepOrder: 1, DueInterval: 30}}
+		w.Steps = []WorkflowStep{{StepOrder: 0, DueInterval: 30}}
 		return w
 	}
 	w.PaymentConditions = DefaultPaymentConditions(a.Language)
@@ -373,9 +382,9 @@ func (s *Service) defaultWorkflow(a administration.Administration, t WorkflowTyp
 			"Dit is een tweede herinnering: we hebben de betaling voor deze factuur nog steeds niet ontvangen. Wil je het openstaande bedrag binnen 7 dagen betalen?"
 	}
 	w.Steps = []WorkflowStep{
-		{StepOrder: 1, DueInterval: 14},
-		{StepOrder: 2, ReminderDelay: 7, ReminderText: first},
-		{StepOrder: 3, ReminderDelay: 7, ReminderText: second},
+		{StepOrder: 0, DueInterval: 14},
+		{StepOrder: 1, DueInterval: 7, ReminderText: first},
+		{StepOrder: 2, DueInterval: 7, ReminderText: second},
 	}
 	return w
 }

@@ -864,9 +864,9 @@ INSERT INTO sales_invoices (
     id, administration_id, contact_id, contact_person_id, identity_id, document_style_id, workflow_id, draft_id, invoice_id, sequence_id,
     reference, language, currency, prices_are_incl_tax, payment_conditions, discount, invoice_date, due_date, first_due_interval, state,
     paused, payment_reference, sent_at, paid_at, marked_dubious_on, marked_uncollectible_on, reminder_count, original_id,
-    recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at)
+    recurring_sales_invoice_id, delivery, total_excl_tax, total_tax, total_incl_tax, total_discount, tax_totals, created_at, updated_at, last_reminder_on)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
-    $29, $30, $31, $32, $33, $34, $35, $36, $37)
+    $29, $30, $31, $32, $33, $34, $35, $36, $37, $38)
 ON CONFLICT (id) DO UPDATE SET
     contact_id = EXCLUDED.contact_id, contact_person_id = EXCLUDED.contact_person_id, identity_id = EXCLUDED.identity_id,
     document_style_id = EXCLUDED.document_style_id, workflow_id = EXCLUDED.workflow_id, invoice_id = EXCLUDED.invoice_id,
@@ -875,8 +875,8 @@ ON CONFLICT (id) DO UPDATE SET
     invoice_date = EXCLUDED.invoice_date, due_date = EXCLUDED.due_date, first_due_interval = EXCLUDED.first_due_interval,
     state = EXCLUDED.state, paused = EXCLUDED.paused, payment_reference = EXCLUDED.payment_reference, sent_at = EXCLUDED.sent_at,
     paid_at = EXCLUDED.paid_at, marked_dubious_on = EXCLUDED.marked_dubious_on, marked_uncollectible_on = EXCLUDED.marked_uncollectible_on,
-    reminder_count = EXCLUDED.reminder_count, original_id = EXCLUDED.original_id, recurring_sales_invoice_id = EXCLUDED.recurring_sales_invoice_id,
-    delivery = EXCLUDED.delivery, total_excl_tax = EXCLUDED.total_excl_tax, total_tax = EXCLUDED.total_tax,
+    reminder_count = EXCLUDED.reminder_count, last_reminder_on = EXCLUDED.last_reminder_on, original_id = EXCLUDED.original_id,
+    recurring_sales_invoice_id = EXCLUDED.recurring_sales_invoice_id, delivery = EXCLUDED.delivery, total_excl_tax = EXCLUDED.total_excl_tax, total_tax = EXCLUDED.total_tax,
     total_incl_tax = EXCLUDED.total_incl_tax, total_discount = EXCLUDED.total_discount, tax_totals = EXCLUDED.tax_totals,
     updated_at = EXCLUDED.updated_at;
 
