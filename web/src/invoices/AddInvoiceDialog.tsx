@@ -1,4 +1,4 @@
-import { type ReactNode, useId, useState } from 'react'
+import { type ReactNode, type RefObject, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
@@ -49,6 +49,10 @@ type Props = {
   style: DocumentStyle | undefined
   /** A saved invoice opens it as Moneybird's "Edit invoice": no subtitle nor layouts, and the contact's hover card. */
   existing: boolean
+  /** Whether the settings behind Edit show from the start, as when the document's dates open it. */
+  advancedOpen?: boolean
+  /** The document the popup is laid over, aligned with it as Moneybird's popup--align-document. */
+  anchor?: RefObject<HTMLElement | null>
   dueTerm: number
   /** The number of an invoice that was sent already; it no longer changes. */
   sentNumber?: string | null
@@ -78,7 +82,7 @@ export function AddInvoiceDialog(props: Props) {
   const { t } = useTranslation()
   const formId = useId()
   const advancedId = useId()
-  const [advanced, setAdvanced] = useState(false)
+  const [advanced, setAdvanced] = useState(!!props.advancedOpen)
   const [confirm, setConfirm] = useState<Confirm>(null)
   const p = (key: string, options: Record<string, unknown> = {}) => t(`invoices.popup.${key}`, options)
 
@@ -88,7 +92,7 @@ export function AddInvoiceDialog(props: Props) {
   const days = value.term.trim() !== '' && Number.isFinite(Number(value.term)) ? Number(value.term) : dueTerm
   const setDays = (n: number) => onChange({ term: String(Math.min(365, Math.max(0, n))) })
   const lockButton = (label: string, onClick: () => void) => (
-    <button type="button" className="btn btn--secondary btn--icon" aria-label={label} title={label} onClick={onClick}>
+    <button type="button" className="btn btn--inline btn--icon" aria-label={label} title={label} onClick={onClick}>
       <PageIcon kind="lock" />
     </button>
   )
@@ -96,11 +100,14 @@ export function AddInvoiceDialog(props: Props) {
 
   const footer = (
     <>
-      <button type="submit" form={formId} className="btn btn--primary" disabled={pending}>{p('save')}</button>
-      <button type="button" className="btn btn--primary btn--with-icon" disabled={pending} onClick={() => onSave('details')}>
-        <ListIcon kind="plus" />
-        <span>{p('details')}</span>
-      </button>
+      {/* Save and Invoice details joined, as Moneybird's button group. */}
+      <div className="btn-group">
+        <button type="submit" form={formId} className="btn btn--primary" disabled={pending}>{p('save')}</button>
+        <button type="button" className="btn btn--primary btn--with-icon" disabled={pending} onClick={() => onSave('details')}>
+          <ListIcon kind="plus" />
+          <span>{p('details')}</span>
+        </button>
+      </div>
       {'to' in cancel
         ? <Link className="btn btn--secondary" to={cancel.to}>{t('common.cancel')}</Link>
         : <button type="button" className="btn btn--secondary" onClick={cancel.onClick}>{t('common.cancel')}</button>}
@@ -108,7 +115,7 @@ export function AddInvoiceDialog(props: Props) {
   )
 
   return (
-    <Modal title={existing ? p('editTitle') : t('invoices.newTitle')} subtitle={existing ? undefined : p('subtitle')} onClose={onClose} footer={footer} className="add-invoice">
+    <Modal title={existing ? p('editTitle') : t('invoices.newTitle')} subtitle={existing ? undefined : p('subtitle')} onClose={onClose} footer={footer} className="add-invoice" anchor={props.anchor}>
       <form
         id={formId}
         className="add-invoice__form"
@@ -130,120 +137,6 @@ export function AddInvoiceDialog(props: Props) {
         />
         <TextInput label={t('invoices.reference')} maxLength={1000} value={value.reference} errors={errors.field('reference')} onChange={(e) => onChange({ reference: e.target.value })} />
 
-        <div className="add-invoice__summary">
-          <p role="note">{existing ? p('editSummary', { workflow: flow?.name ?? '', count: days }) : p('summary', { workflow: flow?.name ?? '', style: style?.name ?? '', count: days })}</p>
-          <button
-            type="button"
-            className="btn btn--secondary btn--small btn--with-icon"
-            aria-expanded={advanced}
-            aria-controls={advancedId}
-            onClick={() => setAdvanced(!advanced)}
-          >
-            {advanced ? <PageIcon kind="close" /> : <ListIcon kind="edit" />}
-            <span>{advanced ? t('common.close') : t('invoices.edit')}</span>
-          </button>
-        </div>
-
-        {advanced && (
-          <fieldset id={advancedId} className="add-invoice__advanced">
-            <legend className="sr-only">{t('invoices.settingsTitle')}</legend>
-            <FormRow
-              label={p('invoiceId')}
-              errors={errors.field('invoice_sequence_id')}
-              help={!sentNumber && <>{p('numberTip')} <Link to={settingsLink}>{p('companySettings')}</Link>.</>}
-              action={!sentNumber && (value.numberUnlocked
-                ? lockButton(p('lockNumber'), () => onChange({ numberUnlocked: false, sequenceId: '' }))
-                : lockButton(p('unlockNumber'), () => setConfirm('number')))}
-            >
-              {({ labelId: _, ...control }) => (
-                <span className="add-invoice__number">
-                  {!sentNumber && parts.prefix && <span className="add-invoice__affix">{parts.prefix}</span>}
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={10}
-                    {...control}
-                    disabled={!!sentNumber || !value.numberUnlocked}
-                    value={sentNumber || (value.numberUnlocked ? value.sequenceId : next)}
-                    onChange={(e) => onChange({ sequenceId: e.target.value })}
-                  />
-                  {!sentNumber && parts.suffix && <span className="add-invoice__affix">{parts.suffix}</span>}
-                </span>
-              )}
-            </FormRow>
-
-            <FormRow
-              label={t('invoices.invoiceDate')}
-              width="medium"
-              errors={errors.field('invoice_date')}
-              action={!sentNumber && (value.dateUnlocked
-                ? lockButton(p('lockDate'), () => onChange({ dateUnlocked: false, invoiceDate: '' }))
-                : lockButton(p('unlockDate'), () => setConfirm('date')))}
-            >
-              {({ labelId: _, ...control }) => value.dateUnlocked || sentNumber
-                ? <input type="date" {...control} disabled={!!sentNumber} value={value.invoiceDate} onChange={(e) => onChange({ invoiceDate: e.target.value })} />
-                : (
-                  <span className="add-invoice__date">
-                    <input type="text" {...control} disabled placeholder="YYYY-MM-DD" value="" />
-                    <ListIcon kind="calendar" />
-                  </span>
-                )}
-            </FormRow>
-
-            <FormRow
-              label={t('invoices.workflow')}
-              width="medium"
-              errors={errors.field('workflow_id')}
-              labelExtra={<Tip text={p('workflowTip')} />}
-              action={flow?.id && (
-                <Link className="btn btn--secondary btn--icon" to={`/${administrationId}/workflows/${flow.id}`} aria-label={p('editWorkflow')} title={p('editWorkflow')}>
-                  <ListIcon kind="edit" />
-                </Link>
-              )}
-            >
-              {({ labelId: _, ...control }) => (
-                <select {...control} value={value.workflowId || flow?.id || ''} onChange={(e) => onChange({ workflowId: e.target.value })}>
-                  {flows.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
-              )}
-            </FormRow>
-
-            <FormRow label={p('dueAfter')} width="small" errors={errors.field('first_due_interval')}>
-              {({ labelId: _, ...control }) => (
-                <span className="add-invoice__days">
-                  <button type="button" className="btn btn--secondary btn--icon" aria-label={p('decrease')} onClick={() => setDays(days - 1)}>−</button>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={365}
-                    {...control}
-                    aria-label={p('daysLabel')}
-                    value={value.term.trim() === '' ? String(dueTerm) : value.term}
-                    onChange={(e) => onChange({ term: e.target.value })}
-                  />
-                  <button type="button" className="btn btn--secondary btn--icon" aria-label={p('increase')} onClick={() => setDays(days + 1)}>+</button>
-                  <span>{p('days')}</span>
-                </span>
-              )}
-            </FormRow>
-
-            {!existing && (
-              <>
-                <hr className="add-invoice__rule" />
-                <LayoutCards
-                  label={p('layout')}
-                  administrationId={administrationId}
-                  styles={styles}
-                  current={style?.id ?? ''}
-                  errors={errors.field('document_style_id')}
-                  onPick={(id) => onChange({ styleId: id })}
-                />
-              </>
-            )}
-          </fieldset>
-        )}
-
         {customFields.map((c, i) => (
           <TextInput
             key={c.id}
@@ -254,11 +147,128 @@ export function AddInvoiceDialog(props: Props) {
             onChange={(e) => onChange({ custom: { ...value.custom, [c.id]: e.target.value } })}
           />
         ))}
-        <div className="add-invoice__custom">
-          <Link className="btn btn--secondary btn--small btn--with-icon" to={newField}>
-            <ListIcon kind="plus" />
-            <span>{p('addCustomField')}</span>
-          </Link>
+        <div className="add-invoice__box">
+          <div className="add-invoice__summary">
+            <p role="note">{existing ? p('editSummary', { workflow: flow?.name ?? '', count: days }) : p('summary', { workflow: flow?.name ?? '', style: style?.name ?? '', count: days })}</p>
+            <button
+              type="button"
+              className="btn btn--secondary btn--icon"
+              title={advanced ? t('common.close') : t('invoices.edit')}
+              aria-expanded={advanced}
+              aria-controls={advancedId}
+              onClick={() => setAdvanced(!advanced)}
+            >
+              {advanced ? <PageIcon kind="close" /> : <ListIcon kind="edit" />}
+              <span className="sr-only">{advanced ? t('common.close') : t('invoices.edit')}</span>
+            </button>
+          </div>
+          {advanced && (
+            <fieldset id={advancedId} className="add-invoice__advanced">
+              <legend className="sr-only">{t('invoices.settingsTitle')}</legend>
+              <FormRow
+                label={p('invoiceId')}
+                errors={errors.field('invoice_sequence_id')}
+                labelExtra={!sentNumber && <Tip text={p('numberTip')}>{p('numberTip')} <Link to={settingsLink}>{p('companySettings')}</Link>.</Tip>}
+                action={!sentNumber && (value.numberUnlocked
+                  ? lockButton(p('lockNumber'), () => onChange({ numberUnlocked: false, sequenceId: '' }))
+                  : lockButton(p('unlockNumber'), () => setConfirm('number')))}
+              >
+                {({ labelId: _, ...control }) => (
+                  <span className="add-invoice__number">
+                    {!sentNumber && parts.prefix && <span className="add-invoice__affix">{parts.prefix}</span>}
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={10}
+                      {...control}
+                      disabled={!!sentNumber || !value.numberUnlocked}
+                      value={sentNumber || (value.numberUnlocked ? value.sequenceId : next)}
+                      onChange={(e) => onChange({ sequenceId: e.target.value })}
+                    />
+                    {!sentNumber && parts.suffix && <span className="add-invoice__affix">{parts.suffix}</span>}
+                  </span>
+                )}
+              </FormRow>
+
+              <FormRow
+                label={t('invoices.invoiceDate')}
+                width="medium"
+                errors={errors.field('invoice_date')}
+                action={!sentNumber && (value.dateUnlocked
+                  ? lockButton(p('lockDate'), () => onChange({ dateUnlocked: false, invoiceDate: '' }))
+                  : lockButton(p('unlockDate'), () => setConfirm('date')))}
+              >
+                {({ labelId: _, ...control }) => value.dateUnlocked || sentNumber
+                  ? <input type="date" {...control} disabled={!!sentNumber} value={value.invoiceDate} onChange={(e) => onChange({ invoiceDate: e.target.value })} />
+                  : (
+                    <span className="add-invoice__date">
+                      <input type="text" {...control} disabled placeholder="YYYY-MM-DD" value="" />
+                      <ListIcon kind="calendar" />
+                    </span>
+                  )}
+              </FormRow>
+
+              <FormRow
+                label={t('invoices.workflow')}
+                width="medium"
+                errors={errors.field('workflow_id')}
+                labelExtra={<Tip text={p('workflowTip')} />}
+                action={flow?.id && (
+                  <Link className="btn btn--secondary btn--icon" to={`/${administrationId}/workflows/${flow.id}`} aria-label={p('editWorkflow')} title={p('editWorkflow')}>
+                    <ListIcon kind="edit" />
+                  </Link>
+                )}
+              >
+                {({ labelId: _, ...control }) => (
+                  <select {...control} value={value.workflowId || flow?.id || ''} onChange={(e) => onChange({ workflowId: e.target.value })}>
+                    {flows.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  </select>
+                )}
+              </FormRow>
+
+              <FormRow label={p('dueAfter')} width="small" errors={errors.field('first_due_interval')}>
+                {({ labelId: _, ...control }) => (
+                  <span className="add-invoice__days">
+                    <span className="add-invoice__number-field">
+                      <button type="button" className="add-invoice__step add-invoice__step--down" aria-label={p('decrease')} onClick={() => setDays(days - 1)}>−</button>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={365}
+                        {...control}
+                        aria-label={p('daysLabel')}
+                        value={value.term.trim() === '' ? String(dueTerm) : value.term}
+                        onChange={(e) => onChange({ term: e.target.value })}
+                      />
+                      <button type="button" className="add-invoice__step add-invoice__step--up" aria-label={p('increase')} onClick={() => setDays(days + 1)}>+</button>
+                    </span>
+                    <span>{p('days')}</span>
+                  </span>
+                )}
+              </FormRow>
+
+              {!existing && (
+                <>
+                  <hr className="add-invoice__rule" />
+                  <LayoutCards
+                    label={p('layout')}
+                    administrationId={administrationId}
+                    styles={styles}
+                    current={style?.id ?? ''}
+                    errors={errors.field('document_style_id')}
+                    onPick={(id) => onChange({ styleId: id })}
+                  />
+                </>
+              )}
+              <div className="add-invoice__custom">
+                <Link className="btn btn--secondary btn--small btn--with-icon" to={newField}>
+                  <ListIcon kind="plus" />
+                  <span>{p('addCustomField')}</span>
+                </Link>
+              </div>
+            </fieldset>
+          )}
         </div>
       </form>
 
@@ -290,8 +300,20 @@ export function AddInvoiceDialog(props: Props) {
   )
 }
 
-/** A short explanation behind an information mark, as Moneybird's tooltips. */
-export function Tip({ text }: { text: string }) {
+/**
+ * A short explanation behind an information mark, as Moneybird's tooltips.
+ * With content of its own, such as a link, it shows in a bubble while the
+ * mark is hovered or what it holds has focus.
+ */
+export function Tip({ text, children }: { text: string; children?: ReactNode }) {
+  if (children) {
+    return (
+      <span className="add-invoice__tip add-invoice__tip--bubble">
+        <InfoIcon />
+        <span className="add-invoice__bubble">{children}</span>
+      </span>
+    )
+  }
   return (
     <span className="add-invoice__tip" title={text}>
       <InfoIcon />

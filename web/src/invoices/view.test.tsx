@@ -256,12 +256,17 @@ describe('an invoice', () => {
     expect(sidebar()).toBeInTheDocument()
   })
 
-  it('changes the layout of a draft from Extra', async () => {
-    server.use(...loaded())
+  it('changes the layout of a draft from Extra, saved as soon as it is picked', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded(), ...creating(sent, draft))
+    server.use(http.get('*/api/v2/11/document_styles', () => HttpResponse.json([senderStyle, { ...senderStyle, id: '702', name: 'Modern', default: false, uri: '/11/document_styles/702' }])))
     renderAt('/11/sales_invoices/902')
     await screen.findByRole('document', { name: 'Invoice Draft #3' })
     await choose('Extra', 'Change layout')
-    expect(await screen.findByRole('region', { name: 'Select layout' })).toBeInTheDocument()
+    const layouts = await screen.findByRole('region', { name: 'Select layout' })
+    await userEvent.click(within(layouts).getByRole('button', { name: 'Modern' }))
+    await waitFor(() => expect(sent.patch).toMatchObject({ document_style_id: '702' }))
+    expect(screen.queryByRole('button', { name: 'Save invoice' })).toBeNull()
   })
 
   it("opens the editor's popup and details from the document of a draft", async () => {

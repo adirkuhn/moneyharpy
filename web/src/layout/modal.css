@@ -14,6 +14,32 @@
 .modal__close { flex: none; }
 .modal__body { padding: 0.75rem 1.5rem 1.25rem; }
 .modal__footer { display: flex; flex-wrap: wrap; gap: 0.75rem; padding: 1rem 1.5rem; border-top: 1px solid var(--line); }
+
+/*
+ * A popup laid over the document, after Moneybird's popup--align-document and
+ * popup--design-modern: as wide as the document and a little more, centred in
+ * the window, the page not dimmed; its title over a line, its buttons centred.
+ */
+.modal--document { justify-content: flex-start; padding: 1rem 0; }
+.modal--document .modal__overlay { background: none; }
+.modal--document .modal__box {
+  width: calc(var(--anchor-width, 48rem) + 1rem); max-width: calc(100vw - 1rem); margin: auto 0 auto calc(var(--anchor-left, 50vw - 24rem) - 0.5rem); border: 0;
+  background: linear-gradient(var(--bg), var(--surface)); box-shadow: 0 0 0 1px var(--line), 0 4px 8px -2px rgb(9 38 83 / 0.07), 0 1px 2px rgb(9 38 83 / 0.05);
+  font-size: 0.875rem;
+}
+.modal--document .modal__header { position: relative; padding: 1.25rem; border-bottom: 1px solid var(--line); border-radius: 12px 12px 0 0; background: var(--surface); }
+.modal--document .modal__title { font-size: 1.125rem; font-weight: 600; line-height: 1.25; }
+.modal--document .modal__close {
+  position: absolute; top: 0.5rem; right: 0.5rem; display: inline-flex; justify-content: center; align-items: center; width: 1.5rem; min-width: 0; height: 1.5rem; min-height: 0;
+  padding: 0; border-radius: 50%; background: var(--track); color: var(--muted); font-size: 0.75rem;
+}
+.modal--document .modal__close:hover { color: var(--text); }
+.modal--document .modal__body { padding: 1.25rem; }
+.modal--document .modal__footer { justify-content: center; gap: 0.5rem; padding: 0 1.25rem 1.25rem; border-top: 0; }
+@media (max-width: 44rem) {
+  .modal--document { justify-content: center; padding: 1rem; }
+  .modal--document .modal__box { width: 100%; max-width: none; margin: auto 0; }
+}
 @media (forced-colors: active) {
   .modal__box { border: 1px solid CanvasText; }
 }
