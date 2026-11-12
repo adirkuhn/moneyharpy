@@ -100,14 +100,13 @@ func TestCreateRecurringValidates(t *testing.T) {
 		return RecurringChanges{ContactID: ptr(customer), InvoiceDate: ptr("2026-12-01"), FrequencyType: ptr(Month), Details: []DetailInput{line("10", "1", vat21, 0)}}
 	}
 	for field, change := range map[string]func(c *RecurringChanges){
-		"contact_id":         func(c *RecurringChanges) { c.ContactID = ptr(resource.ID(999)) },
-		"frequency_type":     func(c *RecurringChanges) { c.FrequencyType = ptr("fortnight") },
-		"frequency":          func(c *RecurringChanges) { c.Frequency = ptr(0) },
-		"invoice_date":       func(c *RecurringChanges) { c.InvoiceDate = ptr("2026-11-01") },
-		"desired_count":      func(c *RecurringChanges) { c.HasDesiredCount, c.DesiredCount = ptr(true), ptr(0) },
-		"last_date":          func(c *RecurringChanges) { c.LastDate = ptr("2026-11-20") },
-		"details_attributes": func(c *RecurringChanges) { c.Details = []DetailInput{} },
-		"discount":           func(c *RecurringChanges) { c.Discount = ptr("200") },
+		"contact_id":     func(c *RecurringChanges) { c.ContactID = ptr(resource.ID(999)) },
+		"frequency_type": func(c *RecurringChanges) { c.FrequencyType = ptr("fortnight") },
+		"frequency":      func(c *RecurringChanges) { c.Frequency = ptr(0) },
+		"invoice_date":   func(c *RecurringChanges) { c.InvoiceDate = ptr("2026-11-01") },
+		"desired_count":  func(c *RecurringChanges) { c.HasDesiredCount, c.DesiredCount = ptr(true), ptr(0) },
+		"last_date":      func(c *RecurringChanges) { c.LastDate = ptr("2026-11-20") },
+		"discount":       func(c *RecurringChanges) { c.Discount = ptr("200") },
 	} {
 		c := good()
 		change(&c)
@@ -120,6 +119,19 @@ func TestCreateRecurringValidates(t *testing.T) {
 	}
 	if _, err := h.svc.CreateRecurring(ctx, adminID, stranger, good()); err == nil {
 		t.Error("a stranger made a recurring invoice")
+	}
+}
+
+// As on Moneybird, a recurring invoice is made before its details are added:
+// its document then says "You didn't add any details yet".
+func TestCreateRecurringWithoutDetails(t *testing.T) {
+	h := newHarness(t)
+	r, err := h.svc.CreateRecurring(context.Background(), adminID, owner, RecurringChanges{ContactID: ptr(customer), InvoiceDate: ptr("2026-12-01"), FrequencyType: ptr(Month)})
+	if err != nil {
+		t.Fatalf("create without details: %v", err)
+	}
+	if len(r.Lines) != 0 || r.Totals.InclTax != 0 {
+		t.Errorf("lines = %+v, totals = %+v", r.Lines, r.Totals)
 	}
 }
 

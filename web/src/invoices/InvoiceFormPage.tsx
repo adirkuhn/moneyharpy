@@ -20,9 +20,10 @@ import { detailField, detailOf, type NewEntity, type NewEntityKey } from './newE
 import { conditionTagValues } from './conditions'
 import { PaymentConditions } from './PaymentConditions'
 import { DateView, DetailsView, Paper, RecipientContent, SenderAddress, type ShownLine } from './InvoicePaper'
-import { LayoutPicker } from './LayoutPicker'
+import { ChangeLayoutPanel, LayoutPicker } from './LayoutPicker'
 import { addDays, addressLines, documentDate, percentText, senderEntries, today, withWebsite } from './paper'
 import { invoiceTitle, type SalesInvoice, type SalesInvoiceChanges, useNextDraftId, useSaveSalesInvoice } from './queries'
+import { type RecurringChanges, type RecurringInvoice, useSaveRecurringInvoice } from '../recurring/queries'
 import { computeTotals, parseCents, parsePercentage, parseQuantity } from './totals'
 import { type TotalRow, TotalsTable } from './TotalsTable'
 import './editor.css'
@@ -83,21 +84,46 @@ type ViewMode = {
   highlight?: string
 }
 
+/** What the editor and a recurring invoice's document have in common. */
+type EditedFields = 'id' | 'version' | 'contact' | 'contact_id' | 'contact_person' | 'reference' | 'workflow_id' | 'first_due_interval' | 'document_style_id'
+  | 'prices_are_incl_tax' | 'currency' | 'custom_fields' | 'discount' | 'payment_conditions' | 'details' | 'language'
+export type EditedInvoice = Pick<SalesInvoice, EditedFields>
+
+/**
+ * A recurring invoice is edited with the same editor, as Moneybird draws it
+ * as the invoice it makes: its schedule is set above the document, and the
+ * document has no date or number of its own to set.
+ */
+export type RecurringEditing = {
+  /** The saved recurring invoice; null while it is being added. */
+  invoice: RecurringInvoice | null
+  /** For a new one: the schedule its Continue chose, sent along when it is made. */
+  schedule?: RecurringChanges
+}
+
 type EditorProps = {
   administrationId: string
   invoice: SalesInvoice | null
+  /** A recurring invoice instead of a sales invoice. */
+  recurring?: RecurringEditing
+  /** What a new invoice starts from, such as the invoice "Duplicate to recurring invoice" copies. */
+  template?: EditedInvoice | null
   contact?: Contact
   opening: Opening
   /** After a save: the saved invoice, and what the editor should open again. */
-  onSaved: (saved: SalesInvoice, opening: Opening) => void
+  onSaved: (saved: { id?: string }, opening: Opening) => void
 } & ({ mode: 'new' } | ViewMode)
+
+/** The invoice the editor changes: a sales invoice or a recurring one. */
+const editedOf = (props: Pick<EditorProps, 'invoice' | 'recurring'>): EditedInvoice | null => (props.recurring ? props.recurring.invoice : props.invoice)
 
 /**
  * The invoice editor once what it draws with is loaded: the rates, the
  * workflows, the layouts and the senders.
  */
 export function InvoiceEditor(props: EditorProps) {
-  const { administrationId, invoice: inv } = props
+  const { administrationId } = props
+  const inv = editedOf(props)
   const rates = useTaxRates(administrationId)
   // The document's language, layout and sender come from these, so it waits for them.
   const workflows = useWorkflows(administrationId)
@@ -118,7 +144,8 @@ export function InvoiceEditor(props: EditorProps) {
  * unless something new is asked to open.
  */
 function KeyedForm(props: EditorProps & { rates: TaxRate[] }) {
-  const { invoice: inv, opening } = props
+  const { opening } = props
+  const inv = editedOf(props)
   const key = inv ? `${inv.id}-${inv.version ?? ''}` : 'new'
   const opened = useRef({ opening, key })
   if (opened.current.opening !== opening) {
@@ -150,16 +177,35 @@ type FormProps = EditorProps & { rates: TaxRate[] }
  * contact and settings, and the details editor for its lines.
  */
 function InvoiceForm(props: FormProps) {
-  const { administrationId, invoice, contact: preset, rates, opening, onSaved } = props
+  const { administrationId, invoice, recurring, contact: preset, rates, opening, onSaved } = props
   const view = props.mode === 'view' ? props : null
-  const nextDraftId = useNextDraftId(administrationId, !invoice)
+  // The invoice being edited, sales or recurring; a new one starts from its template.
+  const doc = editedOf(props)
+  const init = doc ?? props.template ?? null
+  const nextDraftId = useNextDraftId(administrationId, !doc)
   const { t, i18n } = useTranslation()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [ownLayoutsOpen, setOwnLayoutsOpen] = useState(false)
   const layoutsOpen = view ? view.layoutsOpen : ownLayoutsOpen
   const closeLayouts = view ? view.onLayoutsClose : () => setOwnLayoutsOpen(false)
-  const save = useSaveSalesInvoice(administrationId, invoice?.id)
+  const saveSales = useSaveSalesInvoice(administrationId, recurring ? undefined : invoice?.id)
+  const saveRecurring = useSaveRecurringInvoice(administrationId, recurring?.invoice?.id)
+  const mutation = recurring ? saveRecurring : saveSales
+  /** Saves the sales invoice, or the recurring one without what only an invoice has: its date and number belong to the invoices it makes. */
+  const save = {
+    isPending: mutation.isPending,
+    error: mutation.error,
+    reset: mutation.reset,
+    mutate: (b: SalesInvoiceChanges, o: { onSuccess: (s: { id?: string }) => void }) => {
+      if (!recurring) {
+        saveSales.mutate(b, o)
+        return
+      }
+      const { invoice_date: _date, invoice_sequence_id: _number, ...rest } = b
+      saveRecurring.mutate({ ...rest, ...(recurring.invoice ? {} : recurring.schedule) } as RecurringChanges, o)
+    },
+  }
   const administration = useAdministration(administrationId)
   const accounts = useLedgerAccounts(administrationId)
   const workflows = useWorkflows(administrationId)
@@ -172,34 +218,35 @@ function InvoiceForm(props: FormProps) {
   const paperRef = useRef<HTMLDivElement>(null)
 
   const [setup, setSetup] = useState<InvoiceSetup>(() => {
-    const known = preset ?? invoice?.contact
+    const known = preset ?? init?.contact
     return {
-      contact: known ? chosen(known) : { id: invoice?.contact_id ?? '', name: '', address: [] },
-      reference: invoice?.reference ?? '',
+      contact: known ? chosen({ ...known, id: known.id ?? init?.contact_id }) : { id: init?.contact_id ?? '', name: '', address: [] },
+      reference: init?.reference ?? '',
       invoiceDate: invoice?.invoice_date ?? '',
       dateUnlocked: !!invoice?.invoice_date,
       sequenceId: opening?.sequenceId ?? '',
       numberUnlocked: !!opening?.sequenceId,
-      workflowId: invoice?.workflow_id ?? '',
-      term: invoice?.first_due_interval === undefined ? '' : String(invoice.first_due_interval),
-      styleId: invoice?.document_style_id ?? '',
-      inclTax: invoice?.prices_are_incl_tax ?? null,
-      currency: invoice?.currency ?? null,
-      custom: Object.fromEntries((invoice?.custom_fields ?? []).map((f) => [String(f.id ?? ''), f.value ?? ''])),
+      workflowId: init?.workflow_id ?? '',
+      term: init?.first_due_interval === undefined ? '' : String(init.first_due_interval),
+      styleId: init?.document_style_id ?? '',
+      inclTax: init?.prices_are_incl_tax ?? null,
+      currency: init?.currency ?? null,
+      custom: Object.fromEntries((init?.custom_fields ?? []).map((f) => [String(f.id ?? ''), f.value ?? ''])),
     }
   })
-  const [discount, setDiscount] = useState(Number(invoice?.discount ?? 0) ? String(Number(invoice?.discount)) : '')
-  const [conditions, setConditions] = useState(invoice?.payment_conditions ?? '')
-  // A new invoice takes its workflow's payment conditions until they are edited, as the server does.
-  const [conditionsTouched, setConditionsTouched] = useState(false)
+  const [discount, setDiscount] = useState(Number(init?.discount ?? 0) ? String(Number(init?.discount)) : '')
+  const [conditions, setConditions] = useState(init?.payment_conditions ?? '')
+  // A new invoice takes its workflow's payment conditions until they are edited, as the server does; a copy keeps its own.
+  const [conditionsTouched, setConditionsTouched] = useState(!doc && !!props.template?.payment_conditions)
   const [editingConditions, setEditingConditions] = useState(!!opening?.conditions)
   const [conditionsBefore, setConditionsBefore] = useState(conditions)
   const [rows, setRows] = useState<DetailRow[]>(() => {
-    const loaded = invoice?.details?.length
-      ? [...invoice.details]
+    const loaded = init?.details?.length
+      ? [...init.details]
           .sort((a, b) => (a.row_order ?? 0) - (b.row_order ?? 0))
           .map((d) => ({
-            key: d.id ?? newKey(), id: d.id, description: d.description ?? '', amount: d.amount ?? '1', price: priceText(d.price),
+            // The lines of a template are new lines of this invoice.
+            key: (doc && d.id) || newKey(), id: doc ? d.id : undefined, description: d.description ?? '', amount: d.amount ?? '1', price: priceText(d.price),
             tax_rate_id: d.tax_rate_id ?? defaultRate, ledger_account_id: d.ledger_account_id ?? '', period: d.period ?? '', savedPeriod: d.period ?? '',
             product_id: d.product_id ? String(d.product_id) : '',
           }))
@@ -230,8 +277,8 @@ function InvoiceForm(props: FormProps) {
     const above = rows.at(-1)
     setRows([...rows, blank(above?.tax_rate_id || defaultRate, { ledger_account_id: above?.ledger_account_id ?? '', ...over })])
   }
-  // A new invoice starts in the popup, as on Moneybird.
-  const [dialogOpen, setDialogOpen] = useState(!invoice || !!opening?.dialog)
+  // A new invoice starts in the popup, as on Moneybird; a new recurring one after its schedule's Continue.
+  const [dialogOpen, setDialogOpen] = useState(opening?.dialog ?? (!doc && !recurring))
   // The dates open the popup with its settings shown, as the heading of Moneybird's document does.
   const [dialogAdvanced, setDialogAdvanced] = useState(false)
   const before = useRef<InvoiceSetup>(setup)
@@ -245,12 +292,12 @@ function InvoiceForm(props: FormProps) {
   const style = allStyles.find((s) => s.id === setup.styleId) ?? allStyles.find((s) => s.default) ?? allStyles[0]
   const allIdentities = identities.data ?? []
   const sender = withWebsite(allIdentities.find((i) => i.id === style?.identity_id) ?? allIdentities.find((i) => i.default) ?? allIdentities[0], administration.data)
-  const shownConditions = invoice || conditionsTouched ? conditions : (flow?.payment_conditions ?? '')
+  const shownConditions = doc || conditionsTouched ? conditions : (flow?.payment_conditions ?? '')
   const pricesInclTax = setup.inclTax ?? flow?.prices_are_incl_tax ?? false
   const currency = setup.currency ?? flow?.currency ?? administration.data?.currency ?? 'EUR'
   const customFields = (fields.data ?? []).filter((f) => f.source === 'sales_invoice')
   // The document is written in the workflow's language, as Moneybird prints it.
-  const language = flow?.language ?? invoice?.language ?? i18n.language
+  const language = flow?.language ?? doc?.language ?? i18n.language
   const dt = i18n.getFixedT(language)
   const money = (cents: number) => formatAmount(cents / 100, currency, language)
   const uiMoney = (cents: number) => formatAmount(cents / 100, currency, i18n.language)
@@ -265,7 +312,9 @@ function InvoiceForm(props: FormProps) {
     pricesInclTax,
   )
 
-  const shownDate = setup.invoiceDate || today()
+  // A recurring invoice is dated as the next invoice it makes.
+  const scheduled = recurring && (recurring.invoice?.invoice_date ?? recurring.schedule?.invoice_date)
+  const shownDate = scheduled || setup.invoiceDate || today()
   const flowTerm = flow?.steps?.[0]?.due_interval ?? 0
   const dueTerm = setup.term.trim() !== '' && Number.isFinite(Number(setup.term)) ? Number(setup.term) : flowTerm
   const dueDate = addDays(shownDate, dueTerm)
@@ -303,7 +352,7 @@ function InvoiceForm(props: FormProps) {
     setRows(left.length ? left : [blank(defaultRate)])
   }
   const pickContact = (c: Contact) => {
-    change({ contact: chosen(c), ...(!invoice && !setup.workflowId && c.invoice_workflow_id ? { workflowId: String(c.invoice_workflow_id) } : {}) })
+    change({ contact: chosen(c), ...(!doc && !setup.workflowId && c.invoice_workflow_id ? { workflowId: String(c.invoice_workflow_id) } : {}) })
   }
 
   const body = (setup: InvoiceSetup = current): SalesInvoiceChanges => {
@@ -319,8 +368,8 @@ function InvoiceForm(props: FormProps) {
       prices_are_incl_tax: pricesInclTax,
       currency,
       // A new invoice leaves out what is empty; a saved one sends it to clear it.
-      ...(invoice || discount.trim() ? { discount: discount.trim() } : {}),
-      ...(invoice || conditionsTouched ? { payment_conditions: conditions.trim() } : {}),
+      ...(doc || discount.trim() ? { discount: discount.trim() } : {}),
+      ...(doc || conditionsTouched ? { payment_conditions: conditions.trim() } : {}),
       ...(customFields.length > 0 ? { custom_fields_attributes: customFields.map((c) => ({ id: c.id, value: setup.custom[c.id] ?? '' })) } : {}),
       details_attributes: [
         ...kept.map((r, i) => ({
@@ -339,7 +388,7 @@ function InvoiceForm(props: FormProps) {
     }
   }
 
-  const list = `/${administrationId}/sales_invoices`
+  const list = `/${administrationId}/${recurring ? 'recurring_sales_invoices' : 'sales_invoices'}`
   // What the invoice was when the editor opened, so Add category knows whether to save it first.
   const sent = JSON.stringify(body())
   const saved = useRef(sent)
@@ -373,7 +422,7 @@ function InvoiceForm(props: FormProps) {
     const next = { ...setup, styleId }
     setSetup(next)
     closeLayouts()
-    if (invoice) {
+    if (doc) {
       save.mutate(body(next), {
         onSuccess: (s) => {
           saved.current = JSON.stringify(body(next))
@@ -391,7 +440,7 @@ function InvoiceForm(props: FormProps) {
         setDialogOpen(false)
         const details = then === 'details' || editingLines
         // A new invoice opens its details in the editor of the saved draft, not in this one that goes away.
-        if (then === 'details' && invoice) {
+        if (then === 'details' && doc) {
           editLines()
         }
         onSaved(s, { details, ...(sequenceId ? { sequenceId } : {}) })
@@ -407,11 +456,11 @@ function InvoiceForm(props: FormProps) {
    */
   const addEntity = (index: number, key: NewEntityKey) => {
     const go = (id: string) => {
-      const query = new URLSearchParams({ return_to: `/${administrationId}/sales_invoices/${id}`, ...(key === 'ledger_account_id' ? { source: 'sales_invoice' } : {}), new_entity_field: detailField(index, key) })
+      const query = new URLSearchParams({ return_to: `${list}/${id}`, ...(key === 'ledger_account_id' ? { source: 'sales_invoice' } : {}), new_entity_field: detailField(index, key) })
       navigate(`/${administrationId}/${key === 'ledger_account_id' ? 'ledger_accounts/blueprints' : 'tax_rates/new'}?${query}`)
     }
-    if (invoice?.id && !dirty) {
-      go(invoice.id)
+    if (doc?.id && !dirty) {
+      go(doc.id)
       return
     }
     save.mutate(body(), {
@@ -434,9 +483,14 @@ function InvoiceForm(props: FormProps) {
   }
 
   const title = invoice ? t('invoices.editTitle', { name: invoiceTitle(invoice, t) }) : t('invoices.newTitle')
-  const paperLabel = invoice ? t('invoices.view.document', { name: invoiceTitle(invoice, t) }) : t('invoices.editor.preview')
+  const paperLabel = recurring?.invoice
+    ? t('recurring.document.label')
+    : invoice ? t('invoices.view.document', { name: invoiceTitle(invoice, t) }) : t('invoices.editor.preview')
   const draftId = invoice ? invoice.draft_id : nextDraftId.data
-  const draftLabel = invoice?.invoice_id || (draftId ? dt('invoices.document.draftNumber', { id: draftId }) : dt('invoices.document.draft'))
+  // A recurring invoice shows the number of the invoice it makes next, as Moneybird's "Periodieke factuur #1".
+  const draftLabel = recurring?.invoice
+    ? dt('recurring.document.number', { n: (recurring.invoice.invoices_created ?? 0) + 1 })
+    : invoice?.invoice_id || (draftId ? dt('invoices.document.draftNumber', { id: draftId }) : dt('invoices.document.draft'))
   const rateName = (id: string) => rateOf(id)?.name ?? ''
   const totalRows = (tt: typeof t, format: (cents: number) => string, words: 'document' | 'editor'): TotalRow[] => {
     const key = (k: string) => (words === 'document' ? `invoices.document.${k}` : `invoices.${k === 'discount' ? 'discountAmount' : k}`)
@@ -459,17 +513,30 @@ function InvoiceForm(props: FormProps) {
   )
   const zero = money(0)
   const emptyLine: ShownLine = { quantity: '1 x', description: t('invoices.editor.noDetails'), price: zero, total: zero, vat: percentText(rateOf(defaultRate)?.percentage) }
-  const recipient = preset ?? invoice?.contact
+  const recipient = preset ?? init?.contact
   const tagValues = conditionTagValues({
     language, currency, total: totals.inclTax, unpaid: totals.inclTax - Math.round(Number(invoice?.total_paid ?? 0) * 100),
     invoiceDate: shownDate, dueDate, invoiceId: invoice?.invoice_id, draftId, reference: setup.reference, paymentReference: invoice?.payment_reference,
-    contact: recipient?.id === setup.contact.id ? recipient : null, contactPerson: invoice?.contact_person, sender,
+    contact: (recipient?.id ?? init?.contact_id) === setup.contact.id ? recipient : null, contactPerson: doc?.contact_person, sender,
   })
   const senderTags = (sender?.custom_fields ?? []).map((f) => ({ group: 'company' as const, name: `custom_field_${f.id}`, label: f.name ?? '' }))
 
   const content = (
     <>
-      {layoutsOpen && (
+      {/* A saved invoice asks to confirm the layout, as Moneybird's Extra › Change layout; a new one picks it straight away. */}
+      {layoutsOpen && doc && (
+        <ChangeLayoutPanel
+          id={layoutsId}
+          administrationId={administrationId}
+          styles={allStyles}
+          current={style?.id ?? ''}
+          text={recurring ? t('recurring.layoutText') : t('invoices.editor.layoutText')}
+          saving={save.isPending}
+          onPick={pickLayout}
+          onCancel={closeLayouts}
+        />
+      )}
+      {layoutsOpen && !doc && (
         <LayoutPicker
           id={layoutsId}
           administrationId={administrationId}
@@ -521,7 +588,7 @@ function InvoiceForm(props: FormProps) {
             </div>
             <div className="invoice-paper__dates">
               {[
-                { label: dt('invoices.document.invoiceDate'), value: documentDate(shownDate, language), tentative: !setup.invoiceDate },
+                { label: dt('invoices.document.invoiceDate'), value: documentDate(shownDate, language), tentative: !scheduled && !setup.invoiceDate },
                 { label: dt('invoices.document.dueDate'), value: documentDate(dueDate, language), tentative: false },
               ].map((d) => (
                 <button key={d.label} type="button" className={`in-place__button${dateErrors ? ' is-invalid' : ''}`} aria-haspopup="dialog" onClick={() => openDialog(true)}>
@@ -604,7 +671,8 @@ function InvoiceForm(props: FormProps) {
           flow={flow}
           styles={allStyles}
           style={style}
-          existing={!!invoice}
+          existing={!!doc}
+          recurring={!!recurring}
           advancedOpen={dialogAdvanced}
           anchor={paperRef}
           dueTerm={flowTerm}
@@ -615,10 +683,10 @@ function InvoiceForm(props: FormProps) {
           here={pathname}
           errors={errors}
           pending={save.isPending}
-          cancel={invoice ? { onClick: cancelDialog } : { to: list }}
+          cancel={doc || recurring ? { onClick: cancelDialog } : { to: list }}
           onSave={saveSetup}
-          // On a new invoice the × does what Cancel does: back to the invoices, as nothing was made yet.
-          onClose={invoice ? cancelDialog : () => navigate(list)}
+          // On a new invoice the × does what Cancel does: back to the invoices, as nothing was made yet; a new recurring one goes back to its schedule.
+          onClose={doc || recurring ? cancelDialog : () => navigate(list)}
         />
       )}
     </>

@@ -256,16 +256,21 @@ describe('an invoice', () => {
     expect(sidebar()).toBeInTheDocument()
   })
 
-  it('changes the layout of a draft from Extra, saved as soon as it is picked', async () => {
+  it('changes the layout of a draft from Extra, as Moneybird asks: the styles under a notice and Change layout', async () => {
     const sent: { patch?: Record<string, unknown> } = {}
     server.use(...loaded(), ...creating(sent, draft))
     server.use(http.get('*/api/v2/11/document_styles', () => HttpResponse.json([senderStyle, { ...senderStyle, id: '702', name: 'Modern', default: false, uri: '/11/document_styles/702' }])))
     renderAt('/11/sales_invoices/902')
     await screen.findByRole('document', { name: 'Invoice Draft #3' })
     await choose('Extra', 'Change layout')
-    const layouts = await screen.findByRole('region', { name: 'Select layout' })
-    await userEvent.click(within(layouts).getByRole('button', { name: 'Modern' }))
+    const layouts = await screen.findByRole('region', { name: 'Change layout' })
+    expect(layouts).toHaveTextContent('The layout determines the style and sender address on the invoice. You can change the language on the invoice in the workflow.')
+    expect(within(layouts).getByRole('radio', { name: 'Standaard' })).toBeChecked()
+    await userEvent.click(within(layouts).getByRole('radio', { name: 'Modern' }))
+    expect(sent.patch).toBeUndefined()
+    await userEvent.click(within(layouts).getByRole('button', { name: 'Change layout' }))
     await waitFor(() => expect(sent.patch).toMatchObject({ document_style_id: '702' }))
+    expect(screen.queryByRole('region', { name: 'Change layout' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Save invoice' })).toBeNull()
   })
 

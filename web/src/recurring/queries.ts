@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
 import type { components } from '../api/schema'
+import type { HistoryItem } from '../invoices/history'
 import { perPage } from '../invoices/queries'
 
 export type RecurringInvoice = components['schemas']['RecurringSalesInvoice']
@@ -130,4 +131,44 @@ export function useDeleteRecurringInvoice(administrationId: string, id: string) 
 /** How often it makes an invoice, such as "Every month" or "Every 2 weeks". */
 export function frequencyText(r: Pick<RecurringInvoice, 'frequency' | 'frequency_type'>, t: TFunction) {
   return t(`recurring.every.${r.frequency_type ?? 'month'}`, { count: r.frequency ?? 1 })
+}
+
+/** The name of a recurring invoice, as Moneybird's title: "Every month to Example Shop B.V.". */
+export function recurringTitle(r: Pick<RecurringInvoice, 'frequency' | 'frequency_type'>, contact: string, t: TFunction) {
+  return contact ? t('recurring.titleTo', { frequency: frequencyText(r, t), contact }) : frequencyText(r, t)
+}
+
+function useRefetchRecurring(administrationId: string, id: string) {
+  const client = useQueryClient()
+  return () => client.invalidateQueries({ queryKey: ['recurring-invoice', administrationId, id] })
+}
+
+export function useAddRecurringNote(administrationId: string, id: string) {
+  const refetch = useRefetchRecurring(administrationId, id)
+  return useMutation({
+    mutationFn: (note: { note: string; todo: boolean; assignee_id?: string }) =>
+      unwrap(api.POST('/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes', { ...one(administrationId, id), body: { note } })),
+    onSuccess: refetch,
+  })
+}
+
+export function useDeleteRecurringNote(administrationId: string, id: string) {
+  const refetch = useRefetchRecurring(administrationId, id)
+  return useMutation({
+    mutationFn: (noteId: string) =>
+      unwrap(api.DELETE('/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes/{note_id}', { params: { path: { ...admin(administrationId), id, note_id: noteId } } })),
+    onSuccess: refetch,
+  })
+}
+
+/**
+ * What the sidebar tells of a recurring invoice: when it was made, as
+ * Moneybird's "Recurring invoice created", and its notes, newest first.
+ */
+export function recurringHistory(r: RecurringInvoice): HistoryItem[] {
+  const created: HistoryItem[] = r.created_at
+    ? [{ kind: 'event', id: 'created', action: 'recurring_sales_invoice_created', at: r.created_at, timed: true, data: {} }]
+    : []
+  const notes: HistoryItem[] = (r.notes ?? []).map((n) => ({ kind: 'note', id: `note-${n.id}`, at: n.created_at ?? '', userId: n.user_id ?? undefined, timed: true, note: n }))
+  return [...created, ...notes].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
 }
