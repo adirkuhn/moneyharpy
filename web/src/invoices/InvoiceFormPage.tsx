@@ -18,6 +18,8 @@ import { applyBelow, moveRow, quantityLabel } from './details'
 import { type DetailRow, DetailsEditor } from './DetailsEditor'
 import { detailField, detailOf, type NewEntity, type NewEntityKey } from './newEntity'
 import { closeOnEnter, InPlace } from './InPlace'
+import { conditionTagValues } from './conditions'
+import { PaymentConditions } from './PaymentConditions'
 import { DateView, DetailsView, Paper, RecipientContent, SenderAddress, type ShownLine } from './InvoicePaper'
 import { LayoutPicker } from './LayoutPicker'
 import { addDays, addressLines, daysBetween, documentDate, percentText, senderEntries, today, withWebsite } from './paper'
@@ -35,7 +37,7 @@ import './editor.css'
  * What the editor opens with: its details or popup, a sequence number chosen,
  * and a category or VAT rate added for one of its rows.
  */
-export type Opening = { details?: boolean; dialog?: boolean; sequenceId?: string; newEntity?: NewEntity } | null
+export type Opening = { details?: boolean; dialog?: boolean; conditions?: boolean; sequenceId?: string; newEntity?: NewEntity } | null
 
 /**
  * Creates an invoice (/sales_invoices/new, ?contact_id= to start with that
@@ -179,6 +181,10 @@ function InvoiceForm(props: FormProps) {
   })
   const [discount, setDiscount] = useState(Number(invoice?.discount ?? 0) ? String(Number(invoice?.discount)) : '')
   const [conditions, setConditions] = useState(invoice?.payment_conditions ?? '')
+  // A new invoice takes its workflow's payment conditions until they are edited, as the server does.
+  const [conditionsTouched, setConditionsTouched] = useState(false)
+  const [editingConditions, setEditingConditions] = useState(!!opening?.conditions)
+  const [conditionsBefore, setConditionsBefore] = useState(conditions)
   const [rows, setRows] = useState<DetailRow[]>(() => {
     const loaded = invoice?.details?.length
       ? [...invoice.details]
@@ -224,6 +230,7 @@ function InvoiceForm(props: FormProps) {
   const style = allStyles.find((s) => s.id === setup.styleId) ?? allStyles.find((s) => s.default) ?? allStyles[0]
   const allIdentities = identities.data ?? []
   const sender = withWebsite(allIdentities.find((i) => i.id === style?.identity_id) ?? allIdentities.find((i) => i.default) ?? allIdentities[0], administration.data)
+  const shownConditions = invoice || conditionsTouched ? conditions : (flow?.payment_conditions ?? '')
   const pricesInclTax = setup.inclTax ?? flow?.prices_are_incl_tax ?? false
   const currency = invoice?.currency ?? flow?.currency ?? administration.data?.currency ?? 'EUR'
   const customFields = (fields.data ?? []).filter((f) => f.source === 'sales_invoice')
@@ -291,7 +298,7 @@ function InvoiceForm(props: FormProps) {
       prices_are_incl_tax: pricesInclTax,
       // A new invoice leaves out what is empty; a saved one sends it to clear it.
       ...(invoice || discount.trim() ? { discount: discount.trim() } : {}),
-      ...(invoice || conditions.trim() ? { payment_conditions: conditions.trim() } : {}),
+      ...(invoice || conditionsTouched ? { payment_conditions: conditions.trim() } : {}),
       ...(customFields.length > 0 ? { custom_fields_attributes: customFields.map((c) => ({ id: c.id, value: setup.custom[c.id] ?? '' })) } : {}),
       details_attributes: [
         ...kept.map((r, i) => ({
@@ -325,6 +332,26 @@ function InvoiceForm(props: FormProps) {
         onSaved(s, null)
       },
     })
+  }
+  /** The blue Save of the details editor and of the payment conditions: the invoice is saved and the editor closes. */
+  const saveAndClose = (close: () => void) => {
+    save.mutate(body(), {
+      onSuccess: (s) => {
+        saved.current = sent
+        close()
+        onSaved(s, null)
+      },
+    })
+  }
+  const editConditions = () => {
+    setConditionsBefore(shownConditions)
+    setConditions(shownConditions)
+    setConditionsTouched(true)
+    setEditingConditions(true)
+  }
+  const cancelConditions = () => {
+    setConditions(conditionsBefore)
+    setEditingConditions(false)
   }
   /** The popup's Save and Invoice details: the draft is saved and its document shown, with its details open for the latter. */
   const saveSetup = (then: 'save' | 'details') => {
@@ -401,11 +428,13 @@ function InvoiceForm(props: FormProps) {
   )
   const zero = money(0)
   const emptyLine: ShownLine = { quantity: '1 x', description: t('invoices.editor.noDetails'), price: zero, total: zero, vat: percentText(rateOf(defaultRate)?.percentage) }
-  const bank = sender?.bank_account_number
-  const payBefore = bank && dt('invoices.document.payBefore', {
-    amount: money(totals.inclTax), date: documentDate(dueDate, language), account: bank,
-    holder: sender.bank_account_name || sender.company_name || '', reference: invoice?.payment_reference || dt('invoices.document.numberOnSend'),
+  const recipient = preset ?? invoice?.contact
+  const tagValues = conditionTagValues({
+    language, currency, total: totals.inclTax, unpaid: totals.inclTax - Math.round(Number(invoice?.total_paid ?? 0) * 100),
+    invoiceDate: shownDate, dueDate, invoiceId: invoice?.invoice_id, draftId, reference: setup.reference, paymentReference: invoice?.payment_reference,
+    contact: recipient?.id === setup.contact.id ? recipient : null, contactPerson: invoice?.contact_person, sender,
   })
+  const senderTags = (sender?.custom_fields ?? []).map((f) => ({ group: 'company' as const, name: `custom_field_${f.id}`, label: f.name ?? '' }))
 
   const content = (
     <>
@@ -509,7 +538,8 @@ function InvoiceForm(props: FormProps) {
                 onMove={(from, to) => setRows(moveRow(rows, from, to))}
                 onApplyBelow={(i, c) => setRows(applyBelow(rows, i, c))}
                 onDiscount={setDiscount}
-                onDone={linesInvalid ? undefined : () => setEditingLines(false)}
+                onSave={() => saveAndClose(() => setEditingLines(false))}
+                saving={save.isPending}
                 onCancel={cancelLines}
                 onAddEntity={addEntity}
               />
@@ -528,15 +558,19 @@ function InvoiceForm(props: FormProps) {
           </div>
 
           <div className="invoice-paper__footer">
-            <InPlace
-              label={conditions ? t('invoices.editor.editConditions') : t('invoices.editor.addConditions')}
+            <PaymentConditions
+              value={shownConditions}
+              values={tagValues}
+              editing={editingConditions}
+              onEdit={editConditions}
+              onChange={setConditions}
+              onSave={() => saveAndClose(() => setEditingConditions(false))}
+              onCancel={cancelConditions}
+              saving={save.isPending}
               errors={errors.field('payment_conditions')}
-              view={conditions ? <span className="invoice-paper__conditions">{conditions}</span> : <span className="invoice-paper__placeholder">{t('invoices.editor.addConditions')}</span>}
-              editor={() => <textarea rows={3} autoFocus maxLength={1000} aria-label={t('invoices.paymentConditions')} value={conditions} onChange={(e) => setConditions(e.target.value)} />}
+              extraTags={senderTags}
+              workflow={flow?.id ? { name: flow.name ?? '', to: `/${administrationId}/workflows/${flow.id}?${new URLSearchParams({ return_to: pathname })}` } : undefined}
             />
-            {payBefore && (
-              <p className="invoice-paper__pay">{payBefore}</p>
-            )}
           </div>
         </Paper>
 

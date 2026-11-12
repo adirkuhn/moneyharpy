@@ -150,6 +150,11 @@ func (s *SalesStore) NumberTaken(ctx context.Context, admin resource.ID, number 
 	return s.q.SalesInvoiceNumberTaken(ctx, sqlc.SalesInvoiceNumberTakenParams{AdministrationID: int64(admin), InvoiceID: number, ID: int64(except)})
 }
 
+// PaymentReferenceTaken implements sales.Store.
+func (s *SalesStore) PaymentReferenceTaken(ctx context.Context, admin resource.ID, ref string) (bool, error) {
+	return s.q.PaymentReferenceTaken(ctx, sqlc.PaymentReferenceTakenParams{AdministrationID: int64(admin), PaymentReference: ref})
+}
+
 // SaveInvoice implements sales.Store.
 func (s *SalesStore) SaveInvoice(ctx context.Context, inv sales.Invoice, entries []journal.Entry, created bool) error {
 	delivery, taxTotals, err := encodeInvoice(inv)

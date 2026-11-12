@@ -84,12 +84,17 @@ export type Workflow = components['schemas']['Workflow']
 export type DocumentStyle = components['schemas']['DocumentStyle']
 export type InvoiceSettings = components['schemas']['InvoiceSettings']
 
+/** Moneybird's Dutch payment conditions, which a new workflow starts with. */
+export const defaultConditions =
+  'We verzoeken u vriendelijk het bovenstaande bedrag van {document.total_price} voor {document.due_date} te voldoen op onze bankrekening onder vermelding van de omschrijving {document.payment_reference}. Voor vragen kunt u contact opnemen per e-mail.'
+
 export function workflow(over: Partial<Workflow> = {}): Workflow {
   const id = over.id ?? '601'
   return {
     id, administration_id: '11', type: 'InvoiceWorkflow', name: 'Standaard (NL)', default: true, currency: 'EUR', language: 'nl',
     active: true, prices_are_incl_tax: false, payment_methods: null, collection_method: null, number_of_collections: 0, show_qr_code: true,
     invoice_email_subject: '', invoice_email_body: '',
+    payment_conditions: over.type === 'EstimateWorkflow' ? '' : defaultConditions,
     steps: [
       { id: '1', administration_id: '11', step_order: 1, due_interval: 14, reminder_delay: 0, reminder_text: null, reminder_auto_send: false, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
       { id: '2', administration_id: '11', step_order: 2, due_interval: 0, reminder_delay: 7, reminder_text: 'Please pay', reminder_auto_send: true, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },

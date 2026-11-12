@@ -11,7 +11,9 @@ import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { useOnboardingOptions } from '../onboarding/queries'
 import { SearchableSelect } from '../onboarding/SearchableSelect'
+import { TextileEditor } from '../forms/TextileEditor'
 import { useDeleteWorkflow, useSaveWorkflow, useWorkflow, type Workflow } from './queries'
+import { WorkflowPage } from './WorkflowPage'
 
 type Kind = 'InvoiceWorkflow' | 'EstimateWorkflow'
 type Reminder = { reminder_delay: number; reminder_text: string; reminder_auto_send: boolean }
@@ -27,6 +29,8 @@ type Form = {
   reminders: Reminder[]
   email_subject: string
   email_body: string
+  /** The payment conditions new invoices start with; empty takes the default of the language. */
+  payment_conditions: string | null
 }
 
 const newKinds: Record<string, Kind> = { invoice_workflow: 'InvoiceWorkflow', estimate_workflow: 'EstimateWorkflow' }
@@ -44,6 +48,7 @@ function toForm(w: Workflow | null, a: Administration, kind: Kind): Form {
     term: steps[0]?.due_interval ?? (kind === 'InvoiceWorkflow' ? 14 : 30),
     email_subject: w?.invoice_email_subject ?? '',
     email_body: w?.invoice_email_body ?? '',
+    payment_conditions: w?.payment_conditions ?? null,
     reminders: steps.slice(1).map((s) => ({ reminder_delay: s.reminder_delay ?? 7, reminder_text: s.reminder_text ?? '', reminder_auto_send: s.reminder_auto_send ?? false })),
   }
 }
@@ -60,7 +65,10 @@ export function WorkflowFormPage() {
     return <Loading />
   }
   const w = existing.data ?? null
-  return <WorkflowForm key={w?.id ?? kind} administration={administration.data} workflow={w} kind={(w?.type as Kind) ?? newKinds[kind]} />
+  if (w) {
+    return <WorkflowPage key={w.id} administration={administration.data} workflow={w} />
+  }
+  return <WorkflowForm key={kind} administration={administration.data} workflow={null} kind={newKinds[kind]!} />
 }
 
 function WorkflowForm({ administration, workflow, kind }: { administration: Administration; workflow: Workflow | null; kind: Kind }) {
@@ -75,7 +83,7 @@ function WorkflowForm({ administration, workflow, kind }: { administration: Admi
   const isDefault = workflow?.default ?? false
   const labels = {
     name: t('workflow.name'), language: t('workflow.language'), currency: t('workflow.currency'), active: t('workflow.active'), steps: invoices ? t('workflow.reminders') : t('workflow.validity'),
-    invoice_email_subject: t('workflow.emailSubject'), invoice_email_body: t('workflow.emailBody'),
+    invoice_email_subject: t('workflow.emailSubject'), invoice_email_body: t('workflow.emailBody'), payment_conditions: t('workflow.page.conditions'),
   }
   const errors = formErrors(save.error ?? remove.error, labels)
 
@@ -96,6 +104,8 @@ function WorkflowForm({ administration, workflow, kind }: { administration: Admi
         prices_are_incl_tax: form.prices_are_incl_tax, show_qr_code: form.show_qr_code,
         ...(isDefault ? {} : { active: form.active, default: form.default }),
         ...(invoices ? { invoice_email_subject: form.email_subject.trim(), invoice_email_body: form.email_body } : {}),
+        // Left out, the server starts the workflow with Moneybird's text in its language.
+        ...(invoices && form.payment_conditions !== null ? { payment_conditions: form.payment_conditions.trim() } : {}),
         steps_attributes: [{ due_interval: form.term }, ...(invoices ? form.reminders : [])],
       },
       { onSuccess: () => navigate(back) },
@@ -153,6 +163,19 @@ function WorkflowForm({ administration, workflow, kind }: { administration: Admi
             onChange={(e) => setForm({ ...form, term: Number(e.target.value) })}
           />
         </FormSection>
+
+        {invoices && (
+          <FormSection title={t('workflow.page.conditions')}>
+            <TextileEditor
+              label={t('workflow.page.conditions')}
+              value={form.payment_conditions ?? t('workflow.defaultConditions', { lng: form.language.startsWith('nl') ? 'nl' : 'en' })}
+              maxLength={1000}
+              errors={errors.field('payment_conditions')}
+              onChange={(payment_conditions) => setForm({ ...form, payment_conditions })}
+            />
+            <p className="form-input__message form-input__message--help">{t('workflow.conditionsHelp')}</p>
+          </FormSection>
+        )}
 
         {invoices && (
           <FormSection title={t('workflow.email')}>

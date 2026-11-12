@@ -299,6 +299,34 @@ describe('transactions', () => {
     expect(await screen.findByRole('form', { name: 'Link to an invoice' })).toBeInTheDocument()
   })
 
+  it('suggests first the invoice whose payment reference the transaction quotes', async () => {
+    let sent: unknown
+    const shop = { id: '801', company_name: 'Example Shop B.V.', firstname: null, lastname: null }
+    const invoice = (id: string, number: string, paymentReference: string) => ({
+      id, administration_id: '11', contact_id: '801', contact: shop, invoice_id: number, reference: '', payment_reference: paymentReference, state: 'open', currency: 'EUR',
+      total_unpaid: '242.0', details: [], tax_totals: [], payments: [], notes: [], attachments: [], events: [], total_price_excl_tax: '200.0', total_price_incl_tax: '242.0',
+      version: 1, uri: `/11/sales_invoices/${id}`,
+    })
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/financial_mutations/701', () => HttpResponse.json(mutation({ amount: '242.0', amount_open: '242.0', message: 'Betaling rf13 pv96 x5kp' }))),
+      http.get('*/api/v2/11/sales_invoices', () => HttpResponse.json([
+        invoice('901', '2026-0001', 'RF180000000000000SKE5TSYN'), invoice('902', '2026-0002', 'RF130000000000000PV96X5KP'),
+      ], { headers: { 'X-Total-Count': '2' } })),
+      http.patch('*/api/v2/11/financial_mutations/701/link_booking', async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json(mutation())
+      }),
+    )
+    renderAt('/11/financial_mutations/701')
+    const form = await screen.findByRole('form', { name: 'Link to an invoice' })
+    const radios = await within(form).findAllByRole('radio')
+    expect(radios[0]).toHaveAccessibleName(/2026-0002.*quotes payment reference RF13PV96X5KP/)
+    expect(radios[0]).toBeChecked()
+    await userEvent.click(within(form).getByRole('button', { name: 'Link invoice' }))
+    await waitFor(() => expect(sent).toEqual({ booking_type: 'SalesInvoice', booking_id: '902' }))
+  })
+
   it('pays an open external invoice too', async () => {
     let sent: unknown
     const incoming = mutation({ amount: '121.0', amount_open: '121.0', contra_account_name: 'Example Shop B.V.', message: 'Order WEB-1001' })

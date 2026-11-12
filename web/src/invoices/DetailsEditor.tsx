@@ -44,8 +44,10 @@ type Props = {
   onMove: (from: number, to: number) => void
   onApplyBelow: (index: number, change: Partial<DetailRow>) => void
   onDiscount: (value: string) => void
-  /** Closes the editor; absent while something in it is wrong. */
-  onDone?: () => void
+  /** Saves the invoice and closes the editor, as Moneybird's blue Save. */
+  onSave: () => void
+  /** While the invoice is being saved. */
+  saving?: boolean
   /**
    * "Add Category..." and "Add VAT rate..." of a row: go to Moneybird's Add
    * category or Add VAT rate in this tab, which comes back to the invoice with
@@ -303,7 +305,7 @@ export function DetailsEditor(props: Props) {
                 },
               ]}
             />
-            {props.onDone && <button type="button" className="btn btn--secondary" onClick={props.onDone}>{t('invoices.editor.done')}</button>}
+            <button type="button" className="btn btn--primary" disabled={props.saving} onClick={props.onSave}>{t('invoices.editor.save')}</button>
             <button type="button" className="btn btn--secondary" onClick={props.onCancel}>{t('common.cancel')}</button>
           </div>
         </div>

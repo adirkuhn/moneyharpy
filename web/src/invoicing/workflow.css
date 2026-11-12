@@ -1,0 +1,33 @@
+/* A workflow's page, after Moneybird's: settings cards on the left, the steps on the right. */
+.workflow-page { display: grid; grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); align-items: start; gap: 1rem; }
+.workflow-page__side, .workflow-page__main, .workflow-page__steps { display: grid; gap: 1rem; min-width: 0; }
+
+.workflow-card { padding: 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.workflow-card__header { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.workflow-card__title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0; font-size: 1rem; font-weight: 400; }
+.workflow-card__day { padding: 0.125rem 0.5rem; border-radius: 6px; background: var(--bg); font-size: 0.8125rem; font-weight: 650; }
+.workflow-card__actions { display: flex; align-items: center; gap: 0.25rem; }
+.workflow-card__body { margin-top: 1rem; }
+.workflow-card p { margin: 0.25rem 0 0; }
+.workflow-card .form-sheet { margin-top: 0.75rem; }
+
+.workflow-page__label { margin: 1rem 0 0.25rem; font-size: 0.875rem; font-weight: 400; color: var(--text); }
+.workflow-page__label:first-child { margin-top: 0.75rem; }
+.workflow-page__rule { margin: 1rem 0; border: 0; border-top: 1px solid var(--line); }
+.workflow-page__chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 8px; }
+.workflow-page__chip { display: inline-block; padding: 0.125rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; font-weight: 650; }
+.workflow-page__chip--accent { border-color: transparent; background: var(--row-hover); color: var(--link); }
+.workflow-page__preview { padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 8px; }
+.workflow-page__paragraph { white-space: pre-wrap; }
+.workflow-page__preview .workflow-page__paragraph + .workflow-page__paragraph { margin-top: 0.75rem; }
+.workflow-page__unavailable { color: var(--muted); font-size: 0.8125rem; font-style: italic; }
+
+.workflow-tabs { display: flex; gap: 0.25rem; padding: 0 1rem; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.workflow-tabs__tab { flex: none; padding: 0.625rem 0.5rem 0.5rem; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--text); font: inherit; cursor: pointer; }
+.workflow-tabs__tab:hover { color: var(--link); }
+.workflow-tabs__tab[aria-selected='true'] { border-bottom-color: var(--blue); color: var(--link); }
+.workflow-tabs__tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; border-radius: 4px; }
+
+@media (max-width: 56rem) {
+  .workflow-page { grid-template-columns: minmax(0, 1fr); }
+}

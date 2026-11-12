@@ -32,6 +32,7 @@ const (
 	noEmail         resource.ID = 301
 	flow            resource.ID = 400
 	estimateFlow    resource.ID = 401
+	exportFlow      resource.ID = 402
 	style           resource.ID = 450
 	identity        resource.ID = 460
 	vat21, vat9     resource.ID = 500, 501
@@ -127,12 +128,13 @@ func (f *fakeInvoicing) Settings(context.Context, resource.ID, resource.ID) (inv
 
 func (f *fakeInvoicing) workflows() []invoicing.Workflow {
 	return []invoicing.Workflow{
-		{ID: flow, Type: invoicing.InvoiceWorkflow, Default: true, Active: true, Currency: "EUR", Language: "nl", Steps: []invoicing.WorkflowStep{
+		{ID: flow, Type: invoicing.InvoiceWorkflow, Default: true, Active: true, Currency: "EUR", Language: "nl", PaymentConditions: "Betaal {document.total_price} voor {document.due_date}.", Steps: []invoicing.WorkflowStep{
 			{StepOrder: 1, DueInterval: 14},
 			{StepOrder: 2, ReminderDelay: 7, ReminderText: "Please pay {invoice_id}.\n\n{invoices}", ReminderAutoSend: true},
 			{StepOrder: 3, ReminderDelay: 14},
 		}},
 		{ID: estimateFlow, Type: invoicing.EstimateWorkflow, Default: true, Active: true, Currency: "EUR", Language: "en", Steps: []invoicing.WorkflowStep{{StepOrder: 1, DueInterval: 30}}},
+		{ID: exportFlow, Type: invoicing.InvoiceWorkflow, Active: true, Currency: "EUR", Language: "en", PaymentConditions: "Pay within 30 days.", Steps: []invoicing.WorkflowStep{{StepOrder: 1, DueInterval: 30}}},
 	}
 }
 
@@ -471,6 +473,11 @@ func (m *memStore) ReserveNumber(context.Context, resource.ID) (string, error) {
 
 func (m *memStore) NumberTaken(_ context.Context, _ resource.ID, number string, except resource.ID) (bool, error) {
 	_, err := m.find(func(i Invoice) bool { return i.InvoiceID == number && i.ID != except })
+	return err == nil, nil
+}
+
+func (m *memStore) PaymentReferenceTaken(_ context.Context, _ resource.ID, ref string) (bool, error) {
+	_, err := m.find(func(i Invoice) bool { return ref != "" && i.PaymentReference == ref })
 	return err == nil, nil
 }
 
