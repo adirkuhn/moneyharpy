@@ -1576,10 +1576,10 @@ func TestDocumentStyleChannels(t *testing.T) {
 
 	r := owner.do(http.MethodPatch, base+"/"+id, map[string]any{"document_style": map[string]any{
 		"hide_sender_address": true, "sender_address_width": 250, "show_epc_code": false,
-		"invoice_sender_address":    []map[string]any{{"field": "custom_field_" + field.Id, "italic": true}},
+		"invoice_sender_address":    []map[string]any{{"field": "custom_field_" + field.Id, "italic": true}, {"field": "company_website_url", "label": true}},
 		"invoice_recipient_address": []map[string]any{{"field": "customer_tax_number", "label": true}},
 		"email_header_type":         "background_color_with_text", "email_header_text": "Hello", "email_header_background_color": "#112233",
-		"email_footer_type": "contact_information", "email_font_family": "georgia", "email_label_enabled": false,
+		"email_footer_type": "contact_information", "email_font_family": "georgia", "email_moneybird_label_enabled": false,
 		"public_view_background_color": "#D5E8FA", "public_view_logo_display_size": 70,
 		"checkout_show_phone_field": true, "checkout_favorite_label": "Most chosen",
 	}})
@@ -1591,7 +1591,7 @@ func TestDocumentStyleChannels(t *testing.T) {
 	for k, v := range map[string]any{
 		"hide_sender_address": true, "sender_address_width": 250.0, "show_epc_code": false, "email_header_type": "background_color_with_text",
 		"email_header_text": "Hello", "email_header_background_color": "#112233", "email_footer_type": "contact_information",
-		"email_font_family": "georgia", "email_label_enabled": false, "public_view_background_color": "#D5E8FA",
+		"email_font_family": "georgia", "email_moneybird_label_enabled": false, "public_view_background_color": "#D5E8FA",
 		"public_view_logo_display_size": 70.0, "checkout_show_phone_field": true, "checkout_show_address": true,
 		"checkout_favorite_label": "Most chosen", "email_logo_hash": nil,
 	} {
@@ -1599,12 +1599,15 @@ func TestDocumentStyleChannels(t *testing.T) {
 			t.Errorf("%s diff (-want +got):\n%s", k, diff)
 		}
 	}
-	if diff := cmp.Diff([]any{map[string]any{"field": "custom_field_" + field.Id, "italic": true}}, got["invoice_sender_address"]); diff != "" {
+	if diff := cmp.Diff([]any{map[string]any{"field": "custom_field_" + field.Id, "italic": true}, map[string]any{"field": "company_website_url", "label": true}}, got["invoice_sender_address"]); diff != "" {
 		t.Errorf("invoice_sender_address diff (-want +got):\n%s", diff)
 	}
 	wantStatus(t, owner.do(http.MethodPatch, base+"/"+id, map[string]any{"document_style": map[string]any{"email_header_background_color": "red"}}), http.StatusBadRequest)
 	wantStatus(t, owner.do(http.MethodPatch, base+"/"+id, map[string]any{"document_style": map[string]any{
 		"invoice_recipient_address": []map[string]any{{"field": "custom_field_" + field.Id}},
+	}}), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPatch, base+"/"+id, map[string]any{"document_style": map[string]any{
+		"invoice_sender_address": []map[string]any{{"field": "website"}},
 	}}), http.StatusUnprocessableEntity)
 
 	emailLogo := base + "/" + id + "/email_logo"

@@ -123,7 +123,7 @@ func TestUBL(t *testing.T) {
 func TestEstimatePDF(t *testing.T) {
 	for _, tc := range []struct {
 		language, number, want string
-	}{{"nl", "Q2026-0001", "Offerte"}, {"en", "Q2026-0001", "Quote"}, {"en", "", "Draft quote"}} {
+	}{{"nl", "Q2026-0001", "Offerte Q2026-0001"}, {"en", "Q2026-0001", "Quote Q2026-0001"}, {"en", "", "Draft quote"}} {
 		doc := document(t, tc.language)
 		doc.Invoice.InvoiceID = tc.number
 		doc.Estimate = &sales.Estimate{PreText: "Here is our quote.", PostText: "Please sign it.", ShowTax: false}

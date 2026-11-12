@@ -245,40 +245,40 @@ type documentStyleJSON struct {
 	UpdatedAt              time.Time           `json:"updated_at"`
 	URI                    string              `json:"uri"`
 
-	HideSenderAddress            bool                 `json:"hide_sender_address"`
-	SenderAddressWidth           int                  `json:"sender_address_width"`
-	ShowEPCCode                  bool                 `json:"show_epc_code"`
-	InvoiceRecipientAddress      []documentStyleLine  `json:"invoice_recipient_address"`
-	EstimateRecipientAddress     []documentStyleLine  `json:"estimate_recipient_address"`
-	EmailHeaderType              string               `json:"email_header_type"`
-	EmailHeaderContentPosition   string               `json:"email_header_content_position"`
-	EmailHeaderBackgroundColor   string               `json:"email_header_background_color"`
-	EmailHeaderText              string               `json:"email_header_text"`
-	EmailHeaderTextColor         string               `json:"email_header_text_color"`
-	EmailLogoDisplayWidth        int                  `json:"email_logo_display_width"`
-	EmailFooterType              string               `json:"email_footer_type"`
-	EmailFooterTextColor         string               `json:"email_footer_text_color"`
-	EmailFooterBackgroundColor   string               `json:"email_footer_background_color"`
-	EmailFooterProfileTitle      string               `json:"email_footer_profile_title"`
-	EmailFooterProfileSubtitle   string               `json:"email_footer_profile_subtitle"`
-	BodyBackgroundColor          string               `json:"body_background_color"`
-	EmailFontFamily              string               `json:"email_font_family"`
-	EmailLabelEnabled            bool                 `json:"email_label_enabled"`
-	PublicViewLogoDisplaySize    int                  `json:"public_view_logo_display_size"`
-	PublicViewBackgroundColor    string               `json:"public_view_background_color"`
-	PublicViewLabelEnabled       bool                 `json:"public_view_label_enabled"`
-	CheckoutShowAddress          bool                 `json:"checkout_show_address"`
-	CheckoutShowPhoneField       bool                 `json:"checkout_show_phone_field"`
-	CheckoutForBusiness          bool                 `json:"checkout_for_business"`
-	CheckoutShowIdentity         bool                 `json:"checkout_show_identity"`
-	CheckoutShowWithdrawalButton bool                 `json:"checkout_show_withdrawal_button"`
-	CheckoutFavoriteLabel        string               `json:"checkout_favorite_label"`
-	EmailLogoHash                *string              `json:"email_logo_hash"`
-	EmailHeaderBackgroundHash    *string              `json:"email_header_background_hash"`
-	EmailFooterProfilePicture    *string              `json:"email_footer_profile_picture_hash"`
-	EmailFooterBackgroundHash    *string              `json:"email_footer_background_hash"`
-	PublicViewLogoHash           *string              `json:"public_view_logo_hash"`
-	Images                       []documentStyleImage `json:"images"`
+	HideSenderAddress               bool                 `json:"hide_sender_address"`
+	SenderAddressWidth              int                  `json:"sender_address_width"`
+	ShowEPCCode                     bool                 `json:"show_epc_code"`
+	InvoiceRecipientAddress         []documentStyleLine  `json:"invoice_recipient_address"`
+	EstimateRecipientAddress        []documentStyleLine  `json:"estimate_recipient_address"`
+	EmailHeaderType                 string               `json:"email_header_type"`
+	EmailHeaderContentPosition      string               `json:"email_header_content_position"`
+	EmailHeaderBackgroundColor      string               `json:"email_header_background_color"`
+	EmailHeaderText                 string               `json:"email_header_text"`
+	EmailHeaderTextColor            string               `json:"email_header_text_color"`
+	EmailLogoDisplayWidth           int                  `json:"email_logo_display_width"`
+	EmailFooterType                 string               `json:"email_footer_type"`
+	EmailFooterTextColor            string               `json:"email_footer_text_color"`
+	EmailFooterBackgroundColor      string               `json:"email_footer_background_color"`
+	EmailFooterProfileTitle         string               `json:"email_footer_profile_title"`
+	EmailFooterProfileSubtitle      string               `json:"email_footer_profile_subtitle"`
+	BodyBackgroundColor             string               `json:"body_background_color"`
+	EmailFontFamily                 string               `json:"email_font_family"`
+	EmailMoneybirdLabelEnabled      bool                 `json:"email_moneybird_label_enabled"`
+	PublicViewLogoDisplaySize       int                  `json:"public_view_logo_display_size"`
+	PublicViewBackgroundColor       string               `json:"public_view_background_color"`
+	PublicViewMoneybirdLabelEnabled bool                 `json:"public_view_moneybird_label_enabled"`
+	CheckoutShowAddress             bool                 `json:"checkout_show_address"`
+	CheckoutShowPhoneField          bool                 `json:"checkout_show_phone_field"`
+	CheckoutForBusiness             bool                 `json:"checkout_for_business"`
+	CheckoutShowIdentity            bool                 `json:"checkout_show_identity"`
+	CheckoutShowWithdrawalButton    bool                 `json:"checkout_show_withdrawal_button"`
+	CheckoutFavoriteLabel           string               `json:"checkout_favorite_label"`
+	EmailLogoHash                   *string              `json:"email_logo_hash"`
+	EmailHeaderBackgroundHash       *string              `json:"email_header_background_hash"`
+	EmailFooterProfilePicture       *string              `json:"email_footer_profile_picture_hash"`
+	EmailFooterBackgroundHash       *string              `json:"email_footer_background_hash"`
+	PublicViewLogoHash              *string              `json:"public_view_logo_hash"`
+	Images                          []documentStyleImage `json:"images"`
 }
 
 func lines(in []invoicing.Line) []documentStyleLine {
@@ -318,10 +318,10 @@ func toDocumentStyle(d invoicing.DocumentStyle) documentStyleJSON {
 		EmailHeaderText: e.HeaderText, EmailHeaderTextColor: e.HeaderTextColor, EmailLogoDisplayWidth: e.LogoDisplayWidth,
 		EmailFooterType: e.FooterType, EmailFooterTextColor: e.FooterTextColor, EmailFooterBackgroundColor: e.FooterBackgroundColor,
 		EmailFooterProfileTitle: e.FooterProfileTitle, EmailFooterProfileSubtitle: e.FooterProfileSubtitle,
-		BodyBackgroundColor: e.BodyBackgroundColor, EmailFontFamily: e.FontFamily, EmailLabelEnabled: e.LabelEnabled,
+		BodyBackgroundColor: e.BodyBackgroundColor, EmailFontFamily: e.FontFamily, EmailMoneybirdLabelEnabled: e.LabelEnabled,
 		PublicViewLogoDisplaySize: d.PublicView.LogoDisplaySize, PublicViewBackgroundColor: d.PublicView.BackgroundColor,
-		PublicViewLabelEnabled: d.PublicView.LabelEnabled,
-		CheckoutShowAddress:    k.ShowAddress, CheckoutShowPhoneField: k.ShowPhoneField, CheckoutForBusiness: k.ForBusiness,
+		PublicViewMoneybirdLabelEnabled: d.PublicView.LabelEnabled,
+		CheckoutShowAddress:             k.ShowAddress, CheckoutShowPhoneField: k.ShowPhoneField, CheckoutForBusiness: k.ForBusiness,
 		CheckoutShowIdentity: k.ShowIdentity, CheckoutShowWithdrawalButton: k.ShowWithdrawalButton, CheckoutFavoriteLabel: k.FavoriteLabel,
 		EmailLogoHash: hash(d.File(invoicing.EmailLogo)), EmailHeaderBackgroundHash: hash(d.File(invoicing.EmailHeaderBackground)),
 		EmailFooterProfilePicture: hash(d.File(invoicing.EmailFooterProfilePicture)), EmailFooterBackgroundHash: hash(d.File(invoicing.EmailFooterBackground)),
@@ -358,10 +358,10 @@ func toDocumentStyleChanges(body DocumentStyleRequest) invoicing.DocumentStyleCh
 			LogoDisplayWidth: in.EmailLogoDisplayWidth, FooterType: (*string)(in.EmailFooterType), FooterTextColor: in.EmailFooterTextColor,
 			FooterBackgroundColor: in.EmailFooterBackgroundColor, FooterProfileTitle: in.EmailFooterProfileTitle,
 			FooterProfileSubtitle: in.EmailFooterProfileSubtitle, BodyBackgroundColor: in.BodyBackgroundColor,
-			FontFamily: (*string)(in.EmailFontFamily), LabelEnabled: in.EmailLabelEnabled,
+			FontFamily: (*string)(in.EmailFontFamily), LabelEnabled: in.EmailMoneybirdLabelEnabled,
 		},
 		PublicView: invoicing.PublicViewChanges{
-			LogoDisplaySize: in.PublicViewLogoDisplaySize, BackgroundColor: (*string)(in.PublicViewBackgroundColor), LabelEnabled: in.PublicViewLabelEnabled,
+			LogoDisplaySize: in.PublicViewLogoDisplaySize, BackgroundColor: (*string)(in.PublicViewBackgroundColor), LabelEnabled: in.PublicViewMoneybirdLabelEnabled,
 		},
 		Checkout: invoicing.CheckoutChanges{
 			ShowAddress: in.CheckoutShowAddress, ShowPhoneField: in.CheckoutShowPhoneField, ForBusiness: in.CheckoutForBusiness,

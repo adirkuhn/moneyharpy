@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -158,11 +159,13 @@ func TestEventsTellAboutRemindersWriteOffsAndCredit(t *testing.T) {
 	if e := eventOf(t, h, credit.ID, "credit_invoice_created_from_original"); e.Data["original_invoice"] != other.InvoiceID {
 		t.Errorf("credit event = %+v", e)
 	}
-	if e := eventOf(t, h, other.ID, "credit_invoice_created"); e.LinkEntityType != EntityType || e.LinkEntityID == nil || *e.LinkEntityID != credit.ID {
-		t.Errorf("original's event = %+v", e)
+	// As at Moneybird the credit invoice records only where it came from;
+	// Moneybird has no event for the original.
+	if got := actions(t, h, credit.ID); !slices.Equal(got, []string{"credit_invoice_created_from_original"}) {
+		t.Errorf("credit events = %v", got)
 	}
-	if got := actions(t, h, credit.ID); slices.Contains(got, "sales_invoice_created") {
-		t.Errorf("credit tells it was created twice: %v", got)
+	if got := actions(t, h, other.ID); slices.ContainsFunc(got, func(a string) bool { return strings.HasPrefix(a, "credit_invoice") }) {
+		t.Errorf("original's events = %v", got)
 	}
 }
 
@@ -210,16 +213,40 @@ func TestEditingAPaidInvoiceReopensItWhenItAsksMore(t *testing.T) {
 	}
 }
 
+// Moneybird's DELETE refuses an invoice with pending payments.
+func TestAnInvoiceWithPendingPaymentsStays(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	inv := sent(t, h, "2026-11-01")
+	stored := h.store.invoices[inv.ID]
+	stored.State = PendingPayment
+	h.store.invoices[inv.ID] = stored
+	if err := h.svc.Delete(ctx, adminID, inv.ID, owner); fieldsOf(t, err)["base"] == nil {
+		t.Errorf("deleted with pending payments: %v", err)
+	}
+}
+
 func TestDeletingASentInvoiceRemovesWhatItBooked(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()
 	inv := sent(t, h, "2026-11-01")
 	paid := sent(t, h, "2026-11-01")
-	if _, err := h.svc.RegisterPayment(ctx, adminID, paid.ID, owner, PaymentInput{PaymentDate: "2026-11-05"}); err != nil {
+	payment, err := h.svc.RegisterPayment(ctx, adminID, paid.ID, owner, PaymentInput{PaymentDate: "2026-11-05"})
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := h.svc.Delete(ctx, adminID, paid.ID, owner); fieldsOf(t, err)["base"] == nil {
-		t.Errorf("deleted an invoice with payments: %v", err)
+	// Moneybird deletes an invoice with its payments; only pending ones stop it.
+	if err := h.svc.Delete(ctx, adminID, paid.ID, owner); err != nil {
+		t.Fatalf("deleting a paid invoice: %v", err)
+	}
+	if _, err := h.svc.Invoice(ctx, adminID, paid.ID, owner); !errors.Is(err, ErrNotFound) {
+		t.Errorf("paid invoice deleted = %v", err)
+	}
+	if h.store.entries[paid.ID] != nil {
+		t.Error("the paid invoice's bookings stay")
+	}
+	if _, ok := h.store.paid[payment.ID]; ok {
+		t.Error("the payment's bookings stay")
 	}
 	h.ledger.locked = "2026-11-15"
 	if err := h.svc.Delete(ctx, adminID, inv.ID, owner); fieldsOf(t, err)["invoice_date"] == nil {

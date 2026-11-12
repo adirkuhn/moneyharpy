@@ -134,7 +134,7 @@ export function EmailParts({ administrationId, style, onFile, form, set, errors 
               <SelectInput label={t('documentStyle.fontFamily')} value={form.email_font_family} errors={errors.field('email_font_family')} onChange={(e) => set('email_font_family', e.target.value as ChannelForm['email_font_family'])}>
                 {fonts.map((f) => <option key={f} value={f}>{t(`documentStyle.fonts.${f}`)}</option>)}
               </SelectInput>
-              <Toggle label={t('documentStyle.label')} tip={t('documentStyle.email.labelHelp')} checked={form.email_label_enabled} onChange={(on) => set('email_label_enabled', on)} />
+              <Toggle label={t('documentStyle.label')} tip={t('documentStyle.email.labelHelp')} checked={form.email_moneybird_label_enabled} onChange={(on) => set('email_moneybird_label_enabled', on)} />
             </>
           ),
         },
@@ -167,7 +167,7 @@ export function PublicViewParts({ administrationId, style, onFile, form, set, er
               <SelectInput label={t('documentStyle.email.backgroundColor')} value={form.public_view_background_color} errors={errors.field('public_view_background_color')} onChange={(e) => set('public_view_background_color', e.target.value as ChannelForm['public_view_background_color'])}>
                 {publicViewColors.map((c, i) => <option key={c} value={c}>{t(`documentStyle.colors.${i}`)}</option>)}
               </SelectInput>
-              <Toggle label={t('documentStyle.label')} tip={t('documentStyle.publicLabelHelp')} checked={form.public_view_label_enabled} onChange={(on) => set('public_view_label_enabled', on)} />
+              <Toggle label={t('documentStyle.label')} tip={t('documentStyle.publicLabelHelp')} checked={form.public_view_moneybird_label_enabled} onChange={(on) => set('public_view_moneybird_label_enabled', on)} />
             </>
           ),
         },

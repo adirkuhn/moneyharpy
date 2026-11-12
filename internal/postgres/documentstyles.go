@@ -93,10 +93,10 @@ type channels struct {
 	EmailFooterProfileSubtitle   string `json:"email_footer_profile_subtitle"`
 	BodyBackgroundColor          string `json:"body_background_color"`
 	EmailFontFamily              string `json:"email_font_family"`
-	EmailLabelEnabled            bool   `json:"email_label_enabled"`
+	EmailLabelEnabled            bool   `json:"email_moneybird_label_enabled"`
 	PublicViewLogoDisplaySize    int    `json:"public_view_logo_display_size"`
 	PublicViewBackgroundColor    string `json:"public_view_background_color"`
-	PublicViewLabelEnabled       bool   `json:"public_view_label_enabled"`
+	PublicViewLabelEnabled       bool   `json:"public_view_moneybird_label_enabled"`
 	CheckoutShowAddress          bool   `json:"checkout_show_address"`
 	CheckoutShowPhoneField       bool   `json:"checkout_show_phone_field"`
 	CheckoutForBusiness          bool   `json:"checkout_for_business"`

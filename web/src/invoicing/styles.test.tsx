@@ -171,7 +171,7 @@ describe('document style editor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent.document_style).toMatchObject({
       email_header_type: 'background_color_with_text', email_header_text: 'Thanks for your order', email_footer_type: 'signature',
-      email_footer_profile_title: 'Ann de Vries', email_font_family: 'georgia', email_label_enabled: false,
+      email_footer_profile_title: 'Ann de Vries', email_font_family: 'georgia', email_moneybird_label_enabled: false,
     }))
   })
 

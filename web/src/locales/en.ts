@@ -210,7 +210,7 @@ export const en = {
       },
       events: {
         created: 'Invoice created', createdFromQuote: 'Invoice created from a quote', createdFromRecurring: 'Invoice created by a recurring invoice',
-        createdFromSubscription: 'Invoice created by a subscription', createdFromOriginal: 'Credit invoice created', creditCreated: 'Credit invoice made for this invoice', updated: 'Invoice edited',
+        createdFromSubscription: 'Invoice created by a subscription', createdFromOriginal: 'Credit invoice created', createdFromCopy: 'Invoice created from another invoice', updated: 'Invoice edited',
         stateChanged: 'State of invoice changed to {{state}}', paid: 'Invoice has been paid', sentEmail: 'Invoice sent by email', sentPost: 'Invoice sent by post',
         sentManually: 'Invoice manually marked as sent', reminderEmail: 'Reminder sent by email', reminderManually: 'Reminder manually marked as sent',
         paused: 'Reminders paused', resumed: 'Reminders resumed', dubious: 'Invoice marked as dubious', uncollectible: 'Invoice marked as uncollectible',
@@ -229,7 +229,7 @@ export const en = {
       payBefore: 'Please pay {{amount}} before {{date}} to account {{account}} in the name of {{holder}}, quoting {{reference}}.',
       numberOnSend: 'the invoice number',
       fields: {
-        company_name: 'Company name', address: 'Address', email: 'Email', phone: 'Phone', website: 'Website', chamber_of_commerce: 'CoC', tax_number: 'VAT',
+        company_name: 'Company name', address: 'Address', email: 'Email', phone: 'Phone', company_website_url: 'Website', chamber_of_commerce: 'CoC', tax_number: 'VAT',
         bank_account_number: 'Bank', bank_account_bic: 'BIC', bank_account_name: 'Account holder',
       },
     }, editTitle: 'Edit invoice {{name}}', draftTitle: 'Draft #{{id}}',
@@ -811,7 +811,7 @@ export const en = {
     move: 'Move {{name}}', moveHelp: 'Use the arrow keys to move this field: up and down change the order, left and right move it to the next column.',
     boldOf: 'Bold {{name}}', labelOf: 'Show label of {{name}}', noValue: 'This field has no value. You can add this in Settings > Company.',
     fields: {
-      company_name: 'Company name', address: 'Address', newline: 'Blank line', email: 'Email address', phone: 'Phone number', website: 'Website', chamber_of_commerce: 'CoC', tax_number: 'VAT',
+      company_name: 'Company name', address: 'Address', newline: 'Blank line', email: 'Email address', phone: 'Phone number', company_website_url: 'Website', chamber_of_commerce: 'CoC', tax_number: 'VAT',
       bank_account_number: 'Bank', bank_account_bic: 'BIC', bank_account_name: 'Name', invoice_id: 'Invoice number', invoice_date: 'Invoice date', due_date: 'Due date', reference: 'Reference',
       customer_id: 'Client number', estimate_id: 'Quote number', estimate_date: 'Quote date', customer_tax_number: 'VAT number',
       customer_chamber_of_commerce: 'CoC number', customer_email: 'Email address customer', customer_phone: 'Phone number customer',

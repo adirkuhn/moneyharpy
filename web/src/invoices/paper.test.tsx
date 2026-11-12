@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, addressLines, daysBetween, documentDate, percentText, senderEntries } from './paper'
+import { addDays, addressLines, daysBetween, documentDate, percentText, senderEntries, withWebsite } from './paper'
 
 const sender = {
   company_name: 'Example Shop B.V.', address1: 'Dam 1', address2: null, zipcode: '1012JS', city: 'Amsterdam', email: 'books@example.com',
@@ -24,6 +24,14 @@ describe('the sender block', () => {
       { field: 'tax_number', bold: false, label: true, text: ['NL000099998B57'] },
       { field: 'company_name', bold: false, label: false, text: ['Example Shop B.V.'] },
     ])
+  })
+
+  it("prints the administration's website on Moneybird's company_website_url line", () => {
+    const withSite = withWebsite(sender, { company_website_url: 'https://example.com' })
+    expect(senderEntries([{ field: 'company_website_url', label: true }], withSite)).toEqual([
+      { field: 'company_website_url', bold: false, label: true, text: ['https://example.com'] },
+    ])
+    expect(senderEntries([{ field: 'company_website_url' }], withWebsite(sender, { company_website_url: '' }))).toEqual([])
   })
 
   it('shows nothing but blank lines before the sender is known', () => {

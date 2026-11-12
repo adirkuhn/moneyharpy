@@ -8,6 +8,7 @@ import { ActionMenu } from '../list/ListActions'
 import { type Product, useProductSearch } from '../products/queries'
 import { periodPresets, periodRange, periodText, presetPeriod, toPeriod } from './details'
 import type { LineRow } from './LinesEditor'
+import type { NewEntityKey } from './newEntity'
 import { today } from './paper'
 import { type TotalRow, TotalsTable } from './TotalsTable'
 
@@ -43,10 +44,11 @@ type Props = {
   /** Closes the editor; absent while something in it is wrong. */
   onDone?: () => void
   /**
-   * "Add Category...": goes to Moneybird's Add category in this tab, which
-   * comes back to the invoice; the editor around makes sure nothing typed is lost.
+   * "Add Category..." and "Add VAT rate..." of a row: go to Moneybird's Add
+   * category or Add VAT rate in this tab, which comes back to the invoice with
+   * the new one on that row; the editor around makes sure nothing typed is lost.
    */
-  onAddCategory: () => void
+  onAddEntity: (index: number, field: NewEntityKey) => void
 }
 
 /**
@@ -110,9 +112,9 @@ export function DetailsEditor(props: Props) {
       message: problems && <p id={id} className="form-input__message form-input__message--error">{problems.join(' ')}</p>,
     }
   }
-  const choose = (i: number, row: DetailRow, field: 'tax_rate_id', value: string, addPath: string) => {
+  const choose = (i: number, row: DetailRow, field: NewEntityKey, value: string) => {
     if (value === addOption) {
-      window.open(`/${administrationId}/${addPath}`, '_blank', 'noopener')
+      props.onAddEntity(i, field)
       return
     }
     set(i, row, field, value)
@@ -216,13 +218,13 @@ export function DetailsEditor(props: Props) {
                 </td>
                 <td className="details-editor__total" data-label={d('total')} data-testid="detail-total">{money(lineTotals[i] ?? 0)}</td>
                 <td className="details-editor__rate" data-label={d('rateAndCategory')}>
-                  <select aria-label={t('invoices.vatRate')} value={r.tax_rate_id} {...rate.control} onChange={(e) => choose(i, r, 'tax_rate_id', e.target.value, 'tax_rates/new')}>
+                  <select aria-label={t('invoices.vatRate')} value={r.tax_rate_id} {...rate.control} onChange={(e) => choose(i, r, 'tax_rate_id', e.target.value)}>
                     {rates.map((tr) => <option key={tr.id} value={tr.id}>{tr.name}</option>)}
                     <option value={addOption}>{d('addRate')}</option>
                   </select>
                   {rate.message}
                   {applyLink(i, r, 'tax_rate_id')}
-                  <select aria-label={t('invoices.category')} value={r.ledger_account_id} {...category.control} onChange={(e) => (e.target.value === addOption ? props.onAddCategory() : set(i, r, 'ledger_account_id', e.target.value))}>
+                  <select aria-label={t('invoices.category')} value={r.ledger_account_id} {...category.control} onChange={(e) => choose(i, r, 'ledger_account_id', e.target.value)}>
                     <option value="">{t('invoices.uncategorized')}</option>
                     {groups.map((g) => (
                       <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>

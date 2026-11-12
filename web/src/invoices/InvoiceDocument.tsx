@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAdministration } from '../administrations/queries'
 import { formatAmount } from '../banking/queries'
 import { useTaxRates } from '../bookkeeping/queries'
 import { contactName } from '../contacts/queries'
@@ -9,7 +10,7 @@ import { useIdentities } from '../settings/queries'
 import { quantityLabel } from './details'
 import type { Opening } from './InvoiceFormPage'
 import { DateView, DetailsView, Paper, RecipientContent, SenderAddress, type ShownLine } from './InvoicePaper'
-import { addDays, addressLines, documentDate, percentText, senderEntries, today } from './paper'
+import { addDays, addressLines, documentDate, metadataEntries, percentText, senderEntries, today, withWebsite } from './paper'
 import { invoiceTitle, type SalesInvoice } from './queries'
 import { computeTotals, parseCents, parsePercentage, parseQuantity } from './totals'
 import { type TotalRow, TotalsTable } from './TotalsTable'
@@ -35,12 +36,13 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
   const workflows = useWorkflows(administrationId)
   const styles = useDocumentStyles(administrationId)
   const identities = useIdentities(administrationId)
+  const administration = useAdministration(administrationId)
 
   const flow = (workflows.data ?? []).find((w) => w.id === inv.workflow_id)
   const allStyles = styles.data ?? []
   const style = allStyles.find((s) => s.id === inv.document_style_id) ?? allStyles.find((s) => s.default) ?? allStyles[0]
   const allIdentities = identities.data ?? []
-  const sender = allIdentities.find((i) => i.id === style?.identity_id) ?? allIdentities.find((i) => i.default) ?? allIdentities[0]
+  const sender = withWebsite(allIdentities.find((i) => i.id === style?.identity_id) ?? allIdentities.find((i) => i.default) ?? allIdentities[0], administration.data)
   // The document is written in the invoice's language, as Moneybird prints it.
   const language = inv.language || flow?.language || i18n.language
   const dt = i18n.getFixedT(language)
@@ -80,6 +82,22 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
   })
   const contact = inv.contact
   const recipient = contact ? [contactName(contact), ...addressLines(contact)] : []
+  // Beside the title, what the style's metadata columns list, as Moneybird prints them.
+  const custom = [...(inv.custom_fields ?? []), ...(contact?.custom_fields ?? [])]
+  const values: Record<string, string | null | undefined> = {
+    reference: inv.reference, invoice_id: inv.invoice_id, invoice_date: documentDate(invoiceDate, language), due_date: documentDate(dueDate, language),
+    customer_id: contact?.customer_id, customer_tax_number: contact?.tax_number, customer_chamber_of_commerce: contact?.chamber_of_commerce,
+    customer_email: contact?.send_invoices_to_email || contact?.email, customer_phone: contact?.phone,
+    ...Object.fromEntries(custom.map((f) => [`custom_field_${f.id}`, f.value])),
+  }
+  const names: Record<string, string> = {
+    reference: dt('invoices.document.reference'), invoice_date: dt('invoices.document.invoiceDate'), due_date: dt('invoices.document.dueDate'),
+    ...Object.fromEntries(custom.map((f) => [`custom_field_${f.id}`, f.name ?? ''])),
+  }
+  const meta = {
+    left: metadataEntries(style?.invoice_metadata_left, [{ field: 'reference' }], values, (f) => names[f] ?? dt(`documentStyle.fields.${f}`)),
+    right: metadataEntries(style?.invoice_metadata_right, [{ field: 'invoice_date' }, { field: 'due_date' }], values, (f) => names[f] ?? dt(`documentStyle.fields.${f}`)),
+  }
   // The page asks first, as Moneybird warns before a sent invoice is edited, then edits it in place.
   const open = (opening: Opening) => ({ type: 'button' as const, onClick: () => onEdit?.(opening) })
   const ledger = (i: number) => details[i]?.ledger_account_id ?? ''
@@ -111,15 +129,14 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
           <div className="invoice-paper__heading">
             <div className="invoice-paper__heading-text">
               <h2 className="invoice-paper__title">{dt('invoices.document.invoice')} {inv.invoice_id ? number : <em className="invoice-paper__draft">{number}</em>}</h2>
-              {inv.reference && (
-                <p className="invoice-document__reference">
-                  <span>{dt('invoices.document.reference')}:</span> <span>{inv.reference}</span>
+              {meta.left.map((m) => (
+                <p key={m.field} className="invoice-document__reference">
+                  <span>{m.label}:</span> <span>{m.value}</span>
                 </p>
-              )}
+              ))}
             </div>
             <div className="invoice-paper__dates">
-              <DateView label={dt('invoices.document.invoiceDate')} value={documentDate(invoiceDate, language)} tentative={!inv.invoice_date} />
-              <DateView label={dt('invoices.document.dueDate')} value={documentDate(dueDate, language)} />
+              {meta.right.map((m) => <DateView key={m.field} label={m.label} value={m.value} tentative={m.field === 'invoice_date' && !inv.invoice_date} />)}
             </div>
           </div>
         </Block>

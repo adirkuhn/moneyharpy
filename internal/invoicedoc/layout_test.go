@@ -3,6 +3,7 @@ package invoicedoc
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
@@ -18,6 +19,7 @@ func styled(t *testing.T) sales.Document {
 	doc.Style.ID = 9
 	doc.Style.Layout = invoicing.DefaultLayout()
 	doc.Identity.Email, doc.Identity.ChamberOfCommerce = "info@example.com", "12345678"
+	doc.Administration.CompanyWebsiteURL = "https://example.com"
 	doc.Identity.CustomFields = []administration.CustomFieldValue{{ID: 700, Name: "Brand", Value: "Harpy Shop"}}
 	doc.Contact.TaxNumber, doc.Contact.SendInvoicesToEmail = "BE0123456789", "billing@example.com"
 	doc.Contact.CustomFields = []contacts.FieldValue{{FieldID: 702, Name: "Site", Value: "Antwerp"}}
@@ -28,7 +30,7 @@ func styled(t *testing.T) sales.Document {
 func TestSenderFollowsTheLayout(t *testing.T) {
 	doc := styled(t)
 	doc.Style.InvoiceSenderAddress = []invoicing.Line{
-		{Field: "custom_field_700", Bold: true, Italic: true}, {Field: "address"}, {Field: "newline"}, {Field: "website"},
+		{Field: "custom_field_700", Bold: true, Italic: true}, {Field: "address"}, {Field: "newline"}, {Field: "company_website_url"},
 		{Field: "email", Label: true}, {Field: "chamber_of_commerce", Label: true},
 	}
 	got := senderLines(doc, english)
@@ -36,6 +38,7 @@ func TestSenderFollowsTheLayout(t *testing.T) {
 		{Text: []string{"Harpy Shop"}, Bold: true, Italic: true},
 		{Text: []string{"Oosterwal 1", "Lochem", "Netherlands"}},
 		{},
+		{Text: []string{"https://example.com"}},
 		{Label: "Email", Text: []string{"info@example.com"}},
 		{Label: "CoC", Text: []string{"12345678"}},
 	}
@@ -57,14 +60,33 @@ func TestRecipientInfoAndMetadata(t *testing.T) {
 	doc.Style.InvoiceMetadataLeft = []invoicing.Line{{Field: "reference"}, {Field: "custom_field_701"}, {Field: "customer_email"}}
 	doc.Style.InvoiceMetadataRight = []invoicing.Line{{Field: "invoice_date"}, {Field: "due_date"}}
 	want := [][2]string{
-		{"Invoice number", "2026-0001"}, {"Reference", "Order 7"}, {"Project", "Shop"}, {"Email address", "billing@example.com"},
+		{"Reference", "Order 7"}, {"Project", "Shop"}, {"Email address", "billing@example.com"},
 		{"Invoice date", "11-11-2026"}, {"Due date", "25-11-2026"},
 	}
 	if diff := gocmp.Diff(want, metaRows(doc, english, true)); diff != "" {
 		t.Errorf("metaRows() diff (-want +got):\n%s", diff)
 	}
-	if rows := metaRows(doc, english, false); len(rows) != 5 {
+	if rows := metaRows(doc, english, false); len(rows) != 4 {
 		t.Errorf("packing slip rows = %v, want no due date", rows)
+	}
+}
+
+// Moneybird's default layout prints the reference and the dates beside the
+// title, which carries the number; the customer number only when the layout
+// asks for it.
+func TestDefaultMetadataIsMoneybirds(t *testing.T) {
+	doc := styled(t)
+	doc.Contact.CustomerID = "7"
+	want := [][2]string{{"Reference", "Order 7"}, {"Invoice date", "11-11-2026"}, {"Due date", "25-11-2026"}}
+	if diff := gocmp.Diff(want, metaRows(doc, english, true)); diff != "" {
+		t.Errorf("default metaRows() diff (-want +got):\n%s", diff)
+	}
+	if got := title(doc, english, true); got != "Invoice 2026-0001" {
+		t.Errorf("title = %q, want the number in it", got)
+	}
+	doc.Style.InvoiceMetadataLeft = append(doc.Style.InvoiceMetadataLeft, invoicing.Line{Field: "customer_id"})
+	if rows := metaRows(doc, english, true); !slices.Contains(rows, [2]string{"Client number", "7"}) {
+		t.Errorf("rows = %v, want the customer number the layout asks for", rows)
 	}
 }
 

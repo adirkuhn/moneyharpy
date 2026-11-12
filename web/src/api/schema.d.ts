@@ -7012,8 +7012,8 @@ export interface components {
              * @enum {string}
              */
             email_font_family: "lucida_grande" | "helvetica" | "arial" | "verdana" | "georgia" | "times_new_roman" | "courier";
-            /** @description MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails (Moneybird's email_moneybird_label_enabled). */
-            email_label_enabled: boolean;
+            /** @description MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails. Named as in Moneybird's document style form. */
+            email_moneybird_label_enabled: boolean;
             /** @description MoneyHarpy extension. Size of the public view logo in percent, 10 to 100. */
             public_view_logo_display_size: number;
             /**
@@ -7021,8 +7021,8 @@ export interface components {
              * @enum {string}
              */
             public_view_background_color: "#F7F9FC" | "#F6E4E2" | "#EDE8F7" | "#D5E8FA" | "#DEF4F8" | "#FBE0D5" | "#FCF1DB" | "#D7ECEA" | "#E7F3E6" | "#E4E9EB";
-            /** @description MoneyHarpy extension. Show "Made with MoneyHarpy" on public views (Moneybird's public_view_moneybird_label_enabled). */
-            public_view_label_enabled: boolean;
+            /** @description MoneyHarpy extension. Show "Made with MoneyHarpy" on public views. Named as in Moneybird's document style form. */
+            public_view_moneybird_label_enabled: boolean;
             /** @description MoneyHarpy extension. The online sales checkout asks for an address. */
             checkout_show_address: boolean;
             /** @description MoneyHarpy extension. The checkout asks for a phone number. */
@@ -8731,7 +8731,7 @@ export interface components {
                 message: string;
             };
         };
-        /** @description One entry of a block on a document. bold prints it bold, italic in italics; label prints its name before it. Custom fields are named custom_field_ followed by their id. */
+        /** @description One entry of a block on a document. bold prints it bold, italic in italics; label prints its name before it. Custom fields are named custom_field_ followed by their id. As at Moneybird, company_website_url prints the administration's website. */
         DocumentStyleLine: {
             field: string;
             bold?: boolean;
@@ -8812,8 +8812,8 @@ export interface components {
                  * @enum {string}
                  */
                 email_font_family?: "lucida_grande" | "helvetica" | "arial" | "verdana" | "georgia" | "times_new_roman" | "courier";
-                /** @description MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails (Moneybird's email_moneybird_label_enabled). */
-                email_label_enabled?: boolean;
+                /** @description MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails. Named as in Moneybird's document style form. */
+                email_moneybird_label_enabled?: boolean;
                 /** @description MoneyHarpy extension. Size of the public view logo in percent, 10 to 100. */
                 public_view_logo_display_size?: number;
                 /**
@@ -8821,8 +8821,8 @@ export interface components {
                  * @enum {string}
                  */
                 public_view_background_color?: "#F7F9FC" | "#F6E4E2" | "#EDE8F7" | "#D5E8FA" | "#DEF4F8" | "#FBE0D5" | "#FCF1DB" | "#D7ECEA" | "#E7F3E6" | "#E4E9EB";
-                /** @description MoneyHarpy extension. Show "Made with MoneyHarpy" on public views (Moneybird's public_view_moneybird_label_enabled). */
-                public_view_label_enabled?: boolean;
+                /** @description MoneyHarpy extension. Show "Made with MoneyHarpy" on public views. Named as in Moneybird's document style form. */
+                public_view_moneybird_label_enabled?: boolean;
                 /** @description MoneyHarpy extension. The online sales checkout asks for an address. */
                 checkout_show_address?: boolean;
                 /** @description MoneyHarpy extension. The checkout asks for a phone number. */

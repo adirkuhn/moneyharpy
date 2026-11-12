@@ -21,7 +21,7 @@ type Renderer struct{}
 func New() Renderer { return Renderer{} }
 
 type labels struct {
-	Invoice, Credit, Draft, PackingSlip, Number, Date, Due, Reference, Customer, Description, Quantity, Price, VAT, Amount,
+	Invoice, Credit, Draft, PackingSlip, Number, Date, Due, Reference, Description, Quantity, Price, VAT, Amount,
 	Subtotal, Discount, VATOver, Total, PayBefore, Page, CoC, VATNumber, IBAN string
 	// Estimate, EstimateNumber, EstimateDate and ValidUntil label estimates.
 	Estimate, EstimateNumber, EstimateDate, ValidUntil string
@@ -29,7 +29,7 @@ type labels struct {
 
 var dutch = labels{
 	Invoice: "Factuur", Credit: "Creditfactuur", Draft: "Concept", PackingSlip: "Pakbon", Number: "Factuurnummer", Date: "Factuurdatum",
-	Due: "Vervaldatum", Reference: "Referentie", Customer: "Klantnummer", Description: "Omschrijving", Quantity: "Aantal", Price: "Prijs",
+	Due: "Vervaldatum", Reference: "Referentie", Description: "Omschrijving", Quantity: "Aantal", Price: "Prijs",
 	VAT: "Btw", Amount: "Bedrag", Subtotal: "Subtotaal", Discount: "Korting", VATOver: "%s btw over %s", Total: "Totaal",
 	PayBefore: "Graag ontvangen we %s vóór %s op rekening %s ten name van %s, onder vermelding van %s.", Page: "Pagina %d van {nb}",
 	CoC: "KVK", VATNumber: "Btw-nummer", IBAN: "IBAN",
@@ -38,7 +38,7 @@ var dutch = labels{
 
 var english = labels{
 	Invoice: "Invoice", Credit: "Credit invoice", Draft: "Draft", PackingSlip: "Packing slip", Number: "Invoice number", Date: "Invoice date",
-	Due: "Due date", Reference: "Reference", Customer: "Customer number", Description: "Description", Quantity: "Quantity", Price: "Price",
+	Due: "Due date", Reference: "Reference", Description: "Description", Quantity: "Quantity", Price: "Price",
 	VAT: "VAT", Amount: "Amount", Subtotal: "Subtotal", Discount: "Discount", VATOver: "%s VAT on %s", Total: "Total",
 	PayBefore: "Please pay %s before %s to account %s in the name of %s, quoting %s.", Page: "Page %d of {nb}",
 	CoC: "CoC", VATNumber: "VAT number", IBAN: "IBAN",
@@ -128,20 +128,24 @@ func render(doc sales.Document, prices bool) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
+// title names the document with its number, as Moneybird's heading
+// "Invoice 2026-0001" does; a draft has no number yet.
 func title(doc sales.Document, l labels, prices bool) string {
+	number := doc.Invoice.InvoiceID
+	name := l.Invoice
 	switch {
-	case doc.Estimate != nil && doc.Invoice.InvoiceID == "":
+	case doc.Estimate != nil && number == "":
 		return l.Draft + " " + strings.ToLower(l.Estimate)
 	case doc.Estimate != nil:
-		return l.Estimate
+		name = l.Estimate
 	case !prices:
-		return l.PackingSlip
+		name = l.PackingSlip
 	case doc.Totals.InclTax < 0 || doc.Invoice.OriginalID != nil:
-		return l.Credit
-	case doc.Invoice.InvoiceID == "":
+		name = l.Credit
+	case number == "":
 		return l.Draft + " " + strings.ToLower(l.Invoice)
 	}
-	return l.Invoice
+	return strings.TrimSpace(name + " " + number)
 }
 
 func logo(pdf *fpdf.Fpdf, doc sales.Document) {
