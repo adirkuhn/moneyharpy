@@ -21,6 +21,8 @@ type Props = {
    * the popup takes its width and place, a little wider, without dimming the page.
    */
   anchor?: RefObject<HTMLElement | null>
+  /** A picture above the title, as the round icon of Moneybird's confirmations. */
+  icon?: ReactNode
 }
 
 /**
@@ -28,7 +30,7 @@ type Props = {
  * button, a body and buttons at the bottom. Focus moves into it and stays
  * there; Escape closes it and gives focus back to where it came from.
  */
-export function Modal({ title, subtitle, onClose, children, footer, alert = false, className = '', anchor }: Props) {
+export function Modal({ title, subtitle, onClose, children, footer, alert = false, className = '', anchor, icon }: Props) {
   const { t } = useTranslation()
   const id = useId()
   const box = useRef<HTMLDivElement>(null)
@@ -86,6 +88,7 @@ export function Modal({ title, subtitle, onClose, children, footer, alert = fals
       >
         <header className="modal__header">
           <div>
+            {icon && <span className="modal__icon" aria-hidden="true">{icon}</span>}
             <h2 id={`${id}-title`} className="modal__title">{title}</h2>
             {subtitle && <p id={`${id}-subtitle`} className="modal__subtitle">{subtitle}</p>}
           </div>
@@ -141,6 +144,33 @@ export function ConfirmDialog({ title, description, confirmLabel, onConfirm, onC
       footer={
         <>
           <button type="button" className="btn btn--primary" data-autofocus onClick={onConfirm}>{confirmLabel}</button>
+          <button type="button" className="btn btn--secondary" onClick={onCancel}>{t('common.cancel')}</button>
+        </>
+      }
+    >
+      {null}
+    </Modal>
+  )
+}
+
+type DangerProps = { question: string; busy?: boolean; onConfirm: () => void; onCancel: () => void }
+
+/**
+ * Moneybird's confirmation before something that cannot be undone, such as
+ * deleting: a red icon over the question, then Confirm and Cancel, one under
+ * the other.
+ */
+export function DangerDialog({ question, busy = false, onConfirm, onCancel }: DangerProps) {
+  const { t } = useTranslation()
+  return (
+    <Modal
+      title={question}
+      onClose={onCancel}
+      className="danger-dialog"
+      icon={<PageIcon kind="trash" />}
+      footer={
+        <>
+          <button type="button" className="btn btn--danger" data-autofocus disabled={busy} onClick={onConfirm}>{t('common.confirm')}</button>
           <button type="button" className="btn btn--secondary" onClick={onCancel}>{t('common.cancel')}</button>
         </>
       }

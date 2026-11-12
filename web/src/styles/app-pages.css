@@ -204,6 +204,15 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
 .layout-picker__title-bar { top: 4rem; left: 0.5rem; width: 2rem; height: 0.3125rem; background: var(--navy); opacity: 0.6; }
 .layout-picker__rows { top: 4.875rem; right: 0.5rem; left: 0.5rem; height: 1.75rem; background: repeating-linear-gradient(#d9e1ed 0 1px, transparent 1px 6px); }
 .layout-picker__name { font-size: 0.8125rem; }
+/* Moneybird's Change layout: the styles under a notice, the buttons centred under a line. */
+.layout-picker--change .layout-picker__list { margin-top: 0.625rem; }
+.layout-picker--change .layout-picker__style { padding: 0; border: 0; cursor: pointer; }
+.layout-picker--change .layout-picker__style:hover { background: none; }
+.layout-picker--change .layout-picker__style.is-checked .layout-picker__preview { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+.layout-picker--change .layout-picker__style:focus-within .layout-picker__preview { outline: 2px solid var(--focus); outline-offset: 2px; }
+.layout-picker--change .layout-picker__name { color: var(--muted); font-weight: 700; }
+.layout-picker--change .is-checked .layout-picker__name { color: var(--link); }
+.layout-picker__actions { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 
 /* The sheet. */
 .invoice-paper {

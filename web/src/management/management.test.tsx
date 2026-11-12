@@ -195,6 +195,25 @@ describe('leave, delete and support access', () => {
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/administrations'))
   })
 
+  it('does not load the deleted administration again, which would show "Page not found"', async () => {
+    let reads = 0
+    server.use(
+      ...loaded(),
+      http.get('*/api/v2/administrations/11', () => {
+        reads += 1
+        return reads > 1 ? HttpResponse.json({ error: 'Not found' }, { status: 404 }) : HttpResponse.json(administration({ id: '11', name: 'Harpy B.V.' }))
+      }),
+      http.post('*/api/v2/administrations/11/delete', () => new HttpResponse(null, { status: 204 })),
+    )
+    renderAt('/11/delete')
+    await userEvent.type(await screen.findByLabelText('Administration name'), 'Harpy B.V.')
+    const before = reads
+    await userEvent.click(screen.getByRole('button', { name: 'Delete permanently' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/administrations'))
+    expect(reads).toBe(before)
+    expect(screen.queryByRole('heading', { name: 'Page not found' })).toBeNull()
+  })
+
   it('grants support access for a number of days', async () => {
     let until = ''
     server.use(...loaded(), http.put('*/api/v2/11/support_access', async ({ request }) => {
