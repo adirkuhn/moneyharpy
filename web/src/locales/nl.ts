@@ -197,6 +197,10 @@ export const nl: Messages = {
       showOnline: 'Factuur online bekijken', delete: 'Factuur verwijderen', editContact: 'Contact bewerken', editConditions: 'Betalingsvoorwaarden bewerken',
       sentWarning: {
         title: 'Deze factuur is al verstuurd', text: 'Laat de ontvanger weten wat je wijzigt. Weet je zeker dat je deze factuur wilt bewerken?', continue: 'Doorgaan met bewerken',
+        paidTitle: 'Deze factuur is al betaald', regular: 'De gebruikelijke manier om een verstuurde factuur te corrigeren is haar te annuleren of terug te betalen met een creditfactuur.',
+        refund: 'Een terugbetaling registreer je als betaling van de creditfactuur.',
+        deleteTitle: 'Deze verstuurde factuur verwijderen?', deleteText: 'De boekingen en geschiedenis worden mee verwijderd en het factuurnummer blijft gebruikt. Dit kan niet ongedaan worden gemaakt.',
+        deleteAnyway: 'Toch verwijderen',
       },
       tip: { title: 'Producten', text: 'Je gebruikt vaak dezelfde factuurregels. Voorkom dubbel werk en gebruik producten.', action: 'Product toevoegen', close: 'Sluiten' },
       summary: 'Betaaloverzicht', total: 'Totaal', viewPayments_one: 'Geregistreerde betaling bekijken', viewPayments_other: 'Geregistreerde betalingen bekijken',
@@ -209,7 +213,7 @@ export const nl: Messages = {
       },
       events: {
         created: 'Factuur aangemaakt', createdFromQuote: 'Factuur aangemaakt vanuit een offerte', createdFromRecurring: 'Factuur aangemaakt door een periodieke factuur',
-        createdFromSubscription: 'Factuur aangemaakt door een abonnement', createdFromOriginal: 'Creditfactuur aangemaakt', updated: 'Factuur bewerkt',
+        createdFromSubscription: 'Factuur aangemaakt door een abonnement', createdFromOriginal: 'Creditfactuur aangemaakt', creditCreated: 'Creditfactuur voor deze factuur gemaakt', updated: 'Factuur bewerkt',
         stateChanged: 'Status van factuur gewijzigd naar {{state}}', paid: 'Factuur is betaald', sentEmail: 'Factuur per e-mail verstuurd', sentPost: 'Factuur per post verstuurd',
         sentManually: 'Factuur handmatig als verstuurd gemarkeerd', reminderEmail: 'Herinnering per e-mail verstuurd', reminderManually: 'Herinnering handmatig als verstuurd gemarkeerd',
         paused: 'Herinneringen gepauzeerd', resumed: 'Herinneringen hervat', dubious: 'Factuur als dubieus gemarkeerd', uncollectible: 'Factuur als oninbaar gemarkeerd',
@@ -260,19 +264,17 @@ export const nl: Messages = {
     sendBy: 'Versturen via', emailAddress: 'E-mailadres',
     sendForm: {
       title: 'Factuur {{name}} versturen', method: 'Verzendmethode', submit: 'Factuur versturen',
-      methods: { Email: 'Versturen per e-mail', Peppol: 'Versturen via Peppol', Manual: 'Handmatig versturen', Post: 'Versturen per post' },
+      methods: { Email: 'Versturen per e-mail', Peppol: 'Versturen via Peppol', Manual: 'Handmatig versturen' },
       methodsText: {
         Email: 'De factuur wordt als bijlage aan het e-mailbericht toegevoegd',
         Peppol: 'De facturen worden direct in de boekhoudsoftware van de ontvanger afgeleverd.',
         Manual: 'De factuur wordt als verstuurd gemarkeerd.',
-        Post: 'De factuur wordt als verstuurd gemarkeerd, zodat je hem zelf print en post.',
       },
       emailAddress: 'E-mailadres', emailAddressN: 'E-mailadres {{n}}', addEmail: 'E-mailadres toevoegen', removeEmail: 'E-mailadres {{n}} verwijderen',
       message: 'E-mailbericht',
       messageHelp: 'Je kunt {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference} en {reference} gebruiken.',
       defaultMessage: 'Beste {contact_name},\n\nIn de bijlage vind je factuur {invoice_id} van {invoice_date} voor {total}. We ontvangen de betaling graag uiterlijk {due_date} onder vermelding van {payment_reference}.\n\nMet vriendelijke groet,\n{company_name}',
       ubl: 'UBL-factuur', ublTip: 'Met een UBL-factuur kan je klant de factuur automatisch verwerken', attachUbl: 'UBL-factuur bijvoegen',
-      postHint: 'Download de PDF om hem te printen en te posten.',
     },
     scheduleForm: {
       title: 'Factuur in de toekomst versturen',

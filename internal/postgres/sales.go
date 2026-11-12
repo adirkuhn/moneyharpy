@@ -383,6 +383,9 @@ func (s *SalesStore) DeleteInvoice(ctx context.Context, admin, id resource.ID) e
 		if err := q.DeleteNotesOf(ctx, sqlc.DeleteNotesOfParams{AdministrationID: int64(admin), EntityID: int64(id)}); err != nil {
 			return err
 		}
+		if err := q.DeleteEventsOf(ctx, sqlc.DeleteEventsOfParams{AdministrationID: int64(admin), EntityID: int64(id)}); err != nil {
+			return err
+		}
 		if err := q.DeleteSalesInvoice(ctx, sqlc.DeleteSalesInvoiceParams{AdministrationID: int64(admin), ID: int64(id)}); err != nil {
 			return err
 		}

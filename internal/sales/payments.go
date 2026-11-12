@@ -371,7 +371,7 @@ func (s *Service) removePayment(ctx context.Context, a administration.Listed, us
 		inv.Payments = slices.DeleteFunc(slices.Clone(inv.Payments), func(p Payment) bool { return p.ID == id })
 	}
 	drop(&inv, p.ID)
-	invoices, removed := []*Invoice{&inv}, []resource.ID{p.ID}
+	invoices, removed := []*Invoice{&inv}, []Payment{p}
 	if p.LinkedPaymentID != nil {
 		linked, err := s.store.Payment(ctx, a.ID, *p.LinkedPaymentID)
 		if err != nil && !errors.Is(err, ErrPaymentNotFound) {
@@ -386,7 +386,7 @@ func (s *Service) removePayment(ctx context.Context, a administration.Listed, us
 				return ErrNotEditable
 			}
 			drop(&other, linked.ID)
-			invoices, removed = append(invoices, &other), append(removed, linked.ID)
+			invoices, removed = append(invoices, &other), append(removed, linked)
 		}
 	}
 	return s.commit(ctx, a, user, invoices, nil, removed)
@@ -489,14 +489,19 @@ func (s *Service) RemoveBankPayment(ctx context.Context, admin, user, paymentID 
 }
 
 // commit stores changed payments: what added payments post, the invoices'
-// new states, and their write-offs again where a payment changes them.
-func (s *Service) commit(ctx context.Context, a administration.Listed, user resource.ID, invoices []*Invoice, added []Payment, removed []resource.ID) error {
+// new states, and their write-offs again where a payment changes them. It
+// records on each invoice what happened: payments registered (and linked,
+// when a bank transaction made them), payments removed, states reached.
+func (s *Service) commit(ctx context.Context, a administration.Listed, user resource.ID, invoices []*Invoice, added, removed []Payment) error {
 	today := s.today(a)
 	byID := map[resource.ID]Invoice{}
 	for _, inv := range invoices {
 		byID[inv.ID] = *inv
 	}
-	c := PaymentChange{Removed: removed}
+	c := PaymentChange{}
+	for _, p := range removed {
+		c.Removed = append(c.Removed, p.ID)
+	}
 	for _, p := range added {
 		entries, err := s.paymentEntries(ctx, a.ID, user, p, byID[p.InvoiceID])
 		if err != nil {
@@ -505,6 +510,7 @@ func (s *Service) commit(ctx context.Context, a administration.Listed, user reso
 		c.Payments = append(c.Payments, PaymentPosting{Payment: p, Entries: entries})
 	}
 	var changed []Invoice
+	var events []event
 	for _, inv := range invoices {
 		was := effective(*inv, today)
 		settleState(inv, today)
@@ -517,8 +523,10 @@ func (s *Service) commit(ctx context.Context, a administration.Listed, user reso
 			}
 		}
 		c.Invoices = append(c.Invoices, Posting{Invoice: *inv, Entries: entries})
-		if effective(*inv, today) != was {
+		events = append(events, paymentEvents(*inv, added, removed)...)
+		if state := effective(*inv, today); state != was {
 			changed = append(changed, *inv)
+			events = append(events, stateChanged(*inv, state))
 		}
 	}
 	if err := s.store.SavePayments(ctx, c); err != nil {
@@ -527,7 +535,31 @@ func (s *Service) commit(ctx context.Context, a administration.Listed, user reso
 	for _, inv := range changed {
 		s.notify(ctx, a.ID, inv.events()+"_state_changed_to_"+effective(inv, today), inv)
 	}
-	return nil
+	return s.record(ctx, user, events...)
+}
+
+// paymentEvents tells what payments added to and removed from an invoice
+// did. A payment registered by hand that a bank transaction takes over was
+// there before: it is only linked.
+func paymentEvents(inv Invoice, added, removed []Payment) []event {
+	var out []event
+	for _, p := range added {
+		if p.InvoiceID != inv.ID {
+			continue
+		}
+		if p.FinancialMutationID == nil || p.CreatedAt.Equal(p.UpdatedAt) {
+			out = append(out, on(inv, "payment_registered").linked("Payment", p.ID))
+		}
+		if p.FinancialMutationID != nil {
+			out = append(out, on(inv, "payment_linked_to_financial_mutation").linked("Payment", p.ID))
+		}
+	}
+	for _, p := range removed {
+		if p.InvoiceID == inv.ID {
+			out = append(out, on(inv, "payment_destroyed").linked("Payment", p.ID))
+		}
+	}
+	return out
 }
 
 // paymentEntries is what a payment made by hand posts: the contra account

@@ -37,6 +37,19 @@ describe('the history of an invoice', () => {
     expect(items.map((h) => h.timed)).toEqual([false, true, false, true])
   })
 
+  it('tells who wrote a note', () => {
+    const inv = { ...base, notes: [{ id: '971', note: 'Called', user_id: '7', created_at: '2026-11-11T09:00:00Z' }] } as unknown as SalesInvoice
+    expect(historyOf(inv)[0]).toMatchObject({ kind: 'note', userId: '7' })
+  })
+
+  it('keeps to the real events once there are any, without guessing from dates', () => {
+    const inv = {
+      ...base, state: 'paid', delivery_method: 'Manual', sent_at: '2026-11-10', paid_at: '2026-11-10',
+      events: [event('sales_invoice_created', '2026-11-10T10:15:00Z')],
+    } as unknown as SalesInvoice
+    expect(historyOf(inv).map((h) => (h.kind === 'event' ? h.action : h.kind))).toEqual(['sales_invoice_created'])
+  })
+
   it('groups by day, as Today, Yesterday and the date', () => {
     const now = new Date('2026-11-11T11:00:00Z')
     const days = byDay([{ at: '2026-11-11T08:00:00Z' }, { at: '2026-11-10T22:30:00Z' }, { at: '2026-11-09T08:00:00Z' }], now)
@@ -48,6 +61,9 @@ describe('the history of an invoice', () => {
     expect(eventText('sales_invoice_state_changed_to_open')).toEqual({ key: 'stateChanged', state: 'open' })
     expect(eventText('sales_invoice_state_changed_to_paid')).toEqual({ key: 'paid' })
     expect(eventText('sales_invoice_send_manually')).toEqual({ key: 'sentManually' })
+    expect(eventText('credit_invoice_created_from_original')).toEqual({ key: 'createdFromOriginal' })
+    expect(eventText('credit_invoice_created')).toEqual({ key: 'creditCreated' })
+    expect(eventText('sales_invoice_state_changed_to_late')).toEqual({ key: 'stateChanged', state: 'late' })
     expect(eventText('something_new')).toEqual({ key: 'other', action: 'something new' })
   })
 })

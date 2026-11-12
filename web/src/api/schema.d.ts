@@ -3783,14 +3783,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a sales invoice
-         * @description Only drafts and scheduled invoices; credit a sent one instead.
+         * @description Deletes the invoice with its bookings and history. As at Moneybird, it must have no payments and not be in the locked period; crediting a sent invoice is the regular way.
          */
         delete: operations["deleteSalesInvoice"];
         options?: never;
         head?: never;
         /**
          * Update a sales invoice
-         * @description A sent invoice can change until it is paid and is booked again; lines with an id change, lines with _destroy go, lines without an id are added. Not in the locked period.
+         * @description As at Moneybird any invoice can change, sent and paid ones too, except one written off as uncollectible; a sent invoice is booked again and its state follows what is still unpaid (paid again, or open). Lines with an id change, lines with _destroy go, lines without an id are added. Not in the locked period. A change to a sent invoice is recorded as a sales_invoice_updated event with its changes.
          */
         patch: operations["updateSalesInvoice"];
         trace?: never;

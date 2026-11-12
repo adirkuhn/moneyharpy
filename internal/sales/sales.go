@@ -17,6 +17,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
@@ -118,6 +119,8 @@ type Invoice struct {
 	Notes        []notes.Note
 	Attachments  []attachments.Attachment
 	Payments     []Payment
+	// Events are what happened to the invoice, oldest first.
+	Events []history.Event
 	// Totals are the amounts worked out when the invoice was last saved.
 	Totals    Totals
 	CreatedAt time.Time
@@ -456,6 +459,7 @@ type Service struct {
 	mailer      Mailer
 	bank        Bank
 	notifier    Notifier
+	history     History
 	hook        RecurringHook
 	ids         *resource.Generator
 	now         func() time.Time
@@ -478,15 +482,17 @@ type Deps struct {
 	Bank Bank
 	// Notifier may be nil.
 	Notifier Notifier
-	IDs      *resource.Generator
-	Now      func() time.Time
+	// History may be nil; nothing is then kept of what happened.
+	History History
+	IDs     *resource.Generator
+	Now     func() time.Time
 }
 
 // NewService returns a Service.
 func NewService(d Deps) *Service {
 	return &Service{
 		admins: d.Administrations, contacts: d.Contacts, products: d.Products, projects: d.Projects, invoicing: d.Invoicing, ledger: d.Ledger, notes: d.Notes,
-		attachments: d.Attachments, store: d.Store, renderer: d.Renderer, mailer: d.Mailer, bank: d.Bank, notifier: d.Notifier, ids: d.IDs, now: d.Now,
+		attachments: d.Attachments, store: d.Store, renderer: d.Renderer, mailer: d.Mailer, bank: d.Bank, notifier: d.Notifier, history: d.History, ids: d.IDs, now: d.Now,
 	}
 }
 

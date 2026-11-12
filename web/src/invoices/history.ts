@@ -22,7 +22,8 @@ const dayStart = (date: string) => new Date(`${date}T00:00:00`).toISOString()
 
 /**
  * What an invoice without events of its own can tell from its dates: when it
- * was created, sent and paid, in that order.
+ * was created, sent and paid, in that order. Only invoices made before the
+ * server kept events need this.
  */
 function derived(inv: SalesInvoice, payments: Payment[]): HistoryItem[] {
   const items: HistoryItem[] = []
@@ -56,7 +57,9 @@ export function historyOf(inv: SalesInvoice): HistoryItem[] {
         }))
     : derived(inv, payments)
   const paid: HistoryItem[] = payments.map((p) => ({ kind: 'payment', id: `payment-${p.id}`, at: p.created_at ?? '', userId: p.user_id ?? undefined, timed: true, payment: p }))
-  const notes: HistoryItem[] = (inv.notes ?? []).map((n) => ({ kind: 'note', id: `note-${n.id}`, at: n.created_at ?? '', timed: true, note: n }))
+  const notes: HistoryItem[] = (inv.notes ?? []).map((n) => ({
+    kind: 'note', id: `note-${n.id}`, at: n.created_at ?? '', userId: n.user_id ?? undefined, timed: true, note: n,
+  }))
   // A stable sort keeps the order of things that happened at the same moment, newest first.
   return [...events, ...paid, ...notes].map((h, i) => ({ h, i })).sort((a, b) => ms(b.h.at) - ms(a.h.at) || b.i - a.i).map(({ h }) => h)
 }
@@ -92,6 +95,8 @@ const sentences: Record<string, string> = {
   sales_invoice_created_based_on_recurring: 'createdFromRecurring',
   sales_invoice_created_based_on_subscription: 'createdFromSubscription',
   sales_invoice_created_from_original: 'createdFromOriginal',
+  credit_invoice_created_from_original: 'createdFromOriginal',
+  credit_invoice_created: 'creditCreated',
   sales_invoice_updated: 'updated',
   sales_invoice_state_changed_to_paid: 'paid',
   sales_invoice_send_email: 'sentEmail',

@@ -130,6 +130,9 @@ func (s *Service) workOn(ctx context.Context, admin, user resource.ID) []error {
 			continue
 		}
 		s.notify(ctx, admin, "sales_invoice_state_changed_to_late", inv)
+		if err := s.record(ctx, user, stateChanged(inv, Late)); err != nil {
+			fail("mark late", inv.ID, err)
+		}
 	}
 	if err := s.markExternalLate(ctx, admin, today); err != nil {
 		errs = append(errs, fmt.Errorf("administration %s, mark external invoices late: %w", admin, err))
