@@ -13,7 +13,7 @@ import {
 } from './queries'
 import { TaxonomyPicker } from './TaxonomyPicker'
 
-/** Adds a category (/ledger_accounts/new) or edits one (/ledger_accounts/:id). */
+/** Edits a category (/ledger_accounts/:id); Add single category adds one. */
 export function LedgerAccountFormPage() {
   const { administrationId = '', ledgerAccountId } = useParams()
   const settings = useBookkeepingSettings(administrationId)
@@ -88,7 +88,7 @@ function LedgerAccountForm({ administrationId, hasScheme, accounts, account }: P
   )
 
   return (
-    <Page title={account ? t('bookkeeping.editCategory') : t('bookkeeping.newCategory')} back={{ to: back, label: t('bookkeeping.back') }} actions={deleteAction || undefined}>
+    <Page title={t('bookkeeping.editCategory')} back={{ to: back, label: t('bookkeeping.back') }} actions={deleteAction || undefined}>
       <form className="form-sheet" onSubmit={submit} noValidate>
         {system && <FormNotice>{t('bookkeeping.systemCategory')}</FormNotice>}
         <Problems messages={errors.general} />

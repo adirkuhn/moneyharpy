@@ -66,7 +66,7 @@ export function OverviewPage() {
               <ul className="menu__list">
                 <li><Link to={`${base}/financial_accounts/new`}>{t('overview.addAccount')}</Link></li>
                 <li><Link to={`${base}/booking_rules/new`}>{t('overview.addRule')}</Link></li>
-                <li><Link to={`${base}/ledger_accounts/new`}>{t('overview.addCategory')}</Link></li>
+                <li><Link to={`${base}/ledger_accounts/blueprints`}>{t('overview.addCategory')}</Link></li>
               </ul>
             )}
           </nav>

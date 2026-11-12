@@ -142,7 +142,7 @@ describe('administration overview', () => {
     expect(within(menu).getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/11/contacts/new')
     expect(within(menu).getByRole('link', { name: 'Financial account' })).toHaveAttribute('href', '/11/financial_accounts/new')
     expect(within(menu).getByRole('link', { name: 'Booking rule' })).toHaveAttribute('href', '/11/booking_rules/new')
-    expect(within(menu).getByRole('link', { name: 'Category' })).toHaveAttribute('href', '/11/ledger_accounts/new')
+    expect(within(menu).getByRole('link', { name: 'Category' })).toHaveAttribute('href', '/11/ledger_accounts/blueprints')
   })
 
   it('reports an overview that failed to load', async () => {
