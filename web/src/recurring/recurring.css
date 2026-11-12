@@ -1,0 +1,67 @@
+/*
+ * A recurring invoice's pages, after Moneybird's: the schedule in a card over
+ * the document. As there, the page keeps the width of a document with its
+ * sidebar, also when adding one, and the buttons end where the document does.
+ */
+.recurring-page { display: grid; gap: 1rem; }
+.recurring-page--new { padding-right: calc(17.5rem + 1rem); }
+.recurring-page > .layout-picker, .invoice-view__main > .layout-picker { margin: 0; }
+.recurring-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.actionbar__actions:has(.recurring-actions) { margin-right: calc(17.5rem + 1rem); }
+
+/* Until Continue the document is only shown, without its marks to edit, as Moneybird's preview. */
+.recurring-page__preview { pointer-events: none; }
+.recurring-page__preview :is(.invoice-paper__step, .invoice-paper__edit, .invoice-paper__edit-details, .invoice-paper__settings, .in-place__indicator, .invoice-paper__contact) {
+  display: none;
+}
+.recurring-page__preview .invoice-paper__recipient-button { border-left-color: transparent; }
+
+
+.recurring-schedule { padding: 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.recurring-schedule hr { margin: 1rem 0; border: 0; border-top: 1px solid var(--line); }
+
+/* The form: labels in a column of their own, as Moneybird's form-element. */
+.recurring-schedule__form .form-input { grid-template-columns: 10.625rem minmax(0, 1fr); }
+.recurring-schedule__date { position: relative; display: inline-flex; align-items: center; width: 11.625rem; }
+.recurring-schedule__date input { width: 100%; padding-right: 2rem; }
+.recurring-schedule__date svg { position: absolute; right: 0.625rem; color: var(--muted); pointer-events: none; }
+.recurring-schedule__presets { display: grid; gap: 0.375rem; justify-items: start; padding-top: 0.25rem; }
+.recurring-schedule__presets .radio-option { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+.recurring-schedule__presets input[type='radio'] { width: 1rem; height: 1rem; min-height: 0; margin: 0; padding: 0; accent-color: var(--blue); }
+.recurring-schedule__custom select { width: 11.625rem; min-height: 1.75rem; height: 1.75rem; }
+.recurring-schedule__tiny { width: 2.25rem; min-width: 0; min-height: 1.75rem; height: 1.75rem; padding: 0 0.5rem; text-align: left; }
+.recurring-schedule__count { display: flex; align-items: center; gap: 0.5rem; }
+.recurring-schedule__count input[type='checkbox'] { margin: 0; }
+.recurring-schedule__message { margin: 0.25rem 0 0; }
+.recurring-schedule__checks { display: grid; gap: 0.5rem; }
+.recurring-schedule__form .form-input--check { margin-top: 0.75rem; }
+.recurring-schedule__actions { display: flex; justify-content: center; gap: 0.5rem; }
+
+/* The sentence and the timeline of the next invoices. */
+.recurring-schedule__sentence { margin: 0; font-size: 1rem; font-weight: 700; line-height: 1.5; text-align: center; }
+.recurring-schedule__edit { padding: 0; border: 0; background: none; color: var(--link); font: inherit; cursor: pointer; }
+.recurring-schedule__edit:hover { text-decoration: underline; }
+.recurring-timeline { display: flex; justify-content: center; align-items: flex-end; margin: 0; padding: 0.25rem 0 2.25rem; list-style: none; }
+.recurring-timeline__item { position: relative; display: grid; justify-items: center; gap: 0.5rem; width: 9.375rem; }
+.recurring-timeline__item + .recurring-timeline__item::before {
+  content: ''; position: absolute; bottom: 0.625rem; right: 50%; width: 100%; height: 0.375rem; border-radius: 3px; background: var(--line);
+}
+.recurring-timeline__date { color: var(--muted); font-size: 0.8125rem; }
+.recurring-timeline__step {
+  position: relative; z-index: 1; display: inline-flex; justify-content: center; align-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  background: var(--gold); color: var(--navy); font-size: 0.875rem; font-weight: 600; text-decoration: none;
+}
+/* The invoices made already, each a link to it. */
+.recurring-timeline__item.is-made .recurring-timeline__step { background: var(--teal); color: var(--white); }
+.recurring-timeline__more { display: flex; gap: 0.5625rem; margin: 0 0 0.5rem 0.5rem; }
+.recurring-timeline__more span { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--line); }
+
+@media (max-width: 60rem) {
+  .recurring-page--new { padding-right: 0; }
+  .actionbar__actions:has(.recurring-actions) { margin-right: 0; }
+}
+@media (max-width: 44rem) {
+  .recurring-schedule__form .form-input { grid-template-columns: minmax(0, 1fr); }
+  .recurring-timeline__item { width: 6rem; }
+  .recurring-timeline__more { display: none; }
+}

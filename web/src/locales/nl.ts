@@ -1,7 +1,7 @@
 import type { Messages } from './en'
 
 export const nl: Messages = {
-  common: { close: 'Sluiten', loading: 'Laden…', language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt', pagination: 'Paginering', page: 'Pagina {{n}}', previousPage: 'Vorige pagina', nextPage: 'Volgende pagina' },
+  common: { close: 'Sluiten', loading: 'Laden…', language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', confirm: 'Bevestigen', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt', pagination: 'Paginering', page: 'Pagina {{n}}', previousPage: 'Vorige pagina', nextPage: 'Volgende pagina' },
   login: {
     title: 'Inloggen', email: 'E-mailadres', password: 'Wachtwoord', submit: 'Inloggen bij MoneyHarpy', or: 'of', forgot: 'Wachtwoord vergeten?', noAccount: 'Geen account?', passwordChanged: 'Wachtwoord gewijzigd. Log in met je nieuwe wachtwoord.', google: 'Doorgaan met Google', lm2: 'Doorgaan met LM2',
     unreachable: 'MoneyHarpy is niet bereikbaar. Herlaad de pagina om het opnieuw te proberen.',
@@ -164,6 +164,7 @@ export const nl: Messages = {
     detailsTitle: 'Factuurgegevens', settingsTitle: 'Factuurinstellingen', confirmDeleteText: 'Deze conceptfactuur verwijderen? Dit kan niet ongedaan worden gemaakt.',
     title: 'Facturen', new: 'Nieuwe factuur', newTitle: 'Factuur toevoegen',
     editor: {
+      layoutText: 'De huisstijl bepaalt de stijl en het afzenderadres op de factuur. De taal van de factuur wijzig je in de workflow.',
       changeLayout: 'Opmaak wijzigen', selectLayout: 'Kies een opmaak', preview: 'Voorbeeld van de factuur', logo: 'Logo',
       selectContact: '1. Selecteer contact', addDetails: '2. Voeg factuurregels toe', editDetails: 'Factuurregels bewerken', noDetails: 'Je hebt nog geen regels toegevoegd',
       placeholderName: 'Voornaam Achternaam', placeholderAddress: 'Adres 123', placeholderCity: '1234AB Plaats',
@@ -216,6 +217,7 @@ export const nl: Messages = {
         delete: 'Verwijderen', confirmDelete: 'Definitief verwijderen', done: 'Afgerond',
       },
       events: {
+        recurringCreated: 'Periodieke factuur aangemaakt',
         created: 'Factuur aangemaakt', createdFromQuote: 'Factuur aangemaakt vanuit een offerte', createdFromRecurring: 'Factuur aangemaakt door een periodieke factuur',
         createdFromSubscription: 'Factuur aangemaakt door een abonnement', createdFromOriginal: 'Creditfactuur aangemaakt', createdFromCopy: 'Factuur aangemaakt vanuit een andere factuur', updated: 'Factuur bewerkt',
         stateChanged: 'Status van factuur gewijzigd naar {{state}}', paid: 'Factuur is betaald', sentEmail: 'Factuur per e-mail verstuurd', sentPost: 'Factuur per post verstuurd',
@@ -371,10 +373,7 @@ export const nl: Messages = {
     lockedNotice: 'Deze offerte is gefactureerd of gearchiveerd en kan niet meer wijzigen.',
   },
   recurring: {
-    detailsTitle: 'Gegevens periodieke factuur', editTitle: 'Factuur en schema', confirmDeleteText: 'Deze periodieke factuur verwijderen? Dit kan niet ongedaan worden gemaakt.',
-    confirmDeleteKeptText: 'Deze periodieke factuur heeft facturen gemaakt, dus ze wordt definitief gedeactiveerd en de facturen blijven bewaard.',
-    title: 'Periodieke facturen', new: 'Nieuwe periodieke factuur', newTitle: 'Nieuwe periodieke factuur', backToList: 'Naar Periodieke facturen',
-    untitled: 'Periodieke factuur', form: 'Periodieke factuur', save: 'Periodieke factuur opslaan', filters: 'Filters voor periodieke facturen',
+        title: 'Periodieke facturen', filters: 'Filters voor periodieke facturen',
     loadError: 'De periodieke facturen konden niet worden geladen. Laad de pagina opnieuw.',
     empty: 'Nog geen periodieke facturen. Maak er een voor abonnementen, huur of iets anders dat je volgens een schema factureert.',
     noMatches: 'Geen periodieke facturen voor dit filter. Probeer een ander filter.',
@@ -394,15 +393,23 @@ export const nl: Messages = {
       year_one: 'Elk jaar', year_other: 'Elke {{count}} jaar',
     },
     autoSend: 'Automatisch verstuurd', yes: 'Ja', no: 'Nee',
-    startDate: 'Eerste factuur', firstDate: 'Eerste factuur op', nextDate: 'Volgende factuur op', lastDate: 'Laatste factuur op of voor',
-    nextDateHelp: 'Een andere datum laat het schema vanaf die datum opnieuw beginnen.', lastDateHelp: 'Laat leeg om te blijven factureren tot je haar deactiveert.',
-    interval: 'Elke', unit: 'Eenheid', units: { day: 'Dagen', week: 'Weken', month: 'Maanden', quarter: 'Kwartalen', year: 'Jaren' },
-    autoSendLabel: 'Elke factuur automatisch versturen', autoSendHelp: 'Elke factuur gaat zoals het contact facturen ontvangt. Anders wacht ze als concept.',
-    referenceHelp: 'Staat op elke factuur, zoals een contractnummer.', schedule: 'Schema', invoiceSettings: 'Factuurinstellingen',
-    periodHelp: 'Schrijf {period} in een omschrijving om de periode van elke factuur te tonen. Regels met een periode krijgen de periode van de factuur.',
-    invoicesMade: 'Gemaakte facturen', madeTitle: 'Gemaakte facturen', noneMade: 'Nog geen facturen gemaakt.',
-    deactivate: 'Deactiveren', confirmDeleteKept: 'Voorgoed deactiveren: er zijn facturen mee gemaakt',
-    inactiveNotice: 'Deze periodieke factuur is gedeactiveerd en maakt geen facturen meer.', makeRecurring: 'Periodiek maken',
+    titleTo: '{{frequency}} aan {{contact}}', schedule: 'Schema', scheduleForm: 'Schema van de periodieke factuur',
+    startDate: 'Startdatum', presets: { '1_month': 'Elke maand', '1_quarter': 'Elk kwartaal', '6_month': 'Elk half jaar', '1_year': 'Elk jaar', custom: 'Elke' },
+    interval: 'Om de hoeveel', unit: 'Frequentie', units: { day: 'dagen', week: 'weken', month: 'maanden', quarter: 'kwartalen', year: 'jaren' },
+    addAnother: 'Nog', countLabel: 'Aantal facturen', times: 'keer toevoegen', autoSendText: 'Factuur automatisch versturen op geplande datums.',
+    mergeable: 'Stuur dit contact één factuur met alle geplande facturen die vandaag verstuurd worden. Alle factuurregels en bijlagen worden samengevoegd tot één factuur.',
+    continue: 'Doorgaan', save: 'Opslaan', edit: 'Wijzigen', timeline: 'Geplande facturen', andMore: 'En meer',
+    sentence: {
+      indefinitely: 'Deze periodieke factuur wordt {{frequency}} aangemaakt, voor onbepaalde tijd.',
+      times_one: 'Deze periodieke factuur wordt {{frequency}} aangemaakt, nog {{count}} keer.',
+      times_other: 'Deze periodieke factuur wordt {{frequency}} aangemaakt, nog {{count}} keer.',
+      stopped: 'Deze periodieke factuur is gestopt en maakt geen facturen meer.',
+    },
+    document: { label: 'Periodieke factuur', number: 'Periodieke factuur #{{n}}' },
+    layoutText: 'De huisstijl bepaalt de stijl en het afzenderadres op de periodieke factuur. De taal van de periodieke factuur wijzig je in de workflow.',
+    stop: 'Stoppen', confirmStop: 'Weet je zeker dat je deze periodieke factuur wilt stoppen?', confirmStopText: 'Er worden geen facturen meer aangemaakt. De facturen die al zijn aangemaakt blijven bewaard.',
+    delete: 'Periodieke factuur verwijderen', confirmDelete: 'Weet je zeker dat je deze periodieke factuur wilt verwijderen? Dit kan niet ongedaan worden gemaakt.',
+    sidebar: 'Informatie over de periodieke factuur', inactiveNotice: 'Deze periodieke factuur is gestopt en maakt geen facturen meer.',
   },
   products: {
     title: 'Producten', add: 'Product toevoegen', newTitle: 'Nieuw product', backToList: 'Naar Producten', untitled: 'Product', form: 'Product', save: 'Product opslaan',
