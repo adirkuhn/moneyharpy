@@ -4239,6 +4239,42 @@ func (e GetJournalEntriesReportParamsAccountType) Valid() bool {
 	}
 }
 
+// Defines values for GetJournalEntriesReportParamsDocumentType.
+const (
+	GetJournalEntriesReportParamsDocumentTypeAsset                  GetJournalEntriesReportParamsDocumentType = "Asset"
+	GetJournalEntriesReportParamsDocumentTypeExternalSalesInvoice   GetJournalEntriesReportParamsDocumentType = "ExternalSalesInvoice"
+	GetJournalEntriesReportParamsDocumentTypeFinancialMutation      GetJournalEntriesReportParamsDocumentType = "FinancialMutation"
+	GetJournalEntriesReportParamsDocumentTypeGeneralJournalDocument GetJournalEntriesReportParamsDocumentType = "GeneralJournalDocument"
+	GetJournalEntriesReportParamsDocumentTypePayment                GetJournalEntriesReportParamsDocumentType = "Payment"
+	GetJournalEntriesReportParamsDocumentTypePurchaseInvoice        GetJournalEntriesReportParamsDocumentType = "PurchaseInvoice"
+	GetJournalEntriesReportParamsDocumentTypeReceipt                GetJournalEntriesReportParamsDocumentType = "Receipt"
+	GetJournalEntriesReportParamsDocumentTypeSalesInvoice           GetJournalEntriesReportParamsDocumentType = "SalesInvoice"
+)
+
+// Valid indicates whether the value is a known member of the GetJournalEntriesReportParamsDocumentType enum.
+func (e GetJournalEntriesReportParamsDocumentType) Valid() bool {
+	switch e {
+	case GetJournalEntriesReportParamsDocumentTypeAsset:
+		return true
+	case GetJournalEntriesReportParamsDocumentTypeExternalSalesInvoice:
+		return true
+	case GetJournalEntriesReportParamsDocumentTypeFinancialMutation:
+		return true
+	case GetJournalEntriesReportParamsDocumentTypeGeneralJournalDocument:
+		return true
+	case GetJournalEntriesReportParamsDocumentTypePayment:
+		return true
+	case GetJournalEntriesReportParamsDocumentTypePurchaseInvoice:
+		return true
+	case GetJournalEntriesReportParamsDocumentTypeReceipt:
+		return true
+	case GetJournalEntriesReportParamsDocumentTypeSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetProfitLossReportParamsGranularity.
 const (
 	GetProfitLossReportParamsGranularityMonth   GetProfitLossReportParamsGranularity = "month"
@@ -12902,10 +12938,19 @@ type GetJournalEntriesReportParams struct {
 	// ProjectId A project's id, or null for entries without a project.
 	ProjectId   *string                                   `form:"project_id,omitempty" json:"project_id,omitempty"`
 	AccountType *GetJournalEntriesReportParamsAccountType `form:"account_type,omitempty" json:"account_type,omitempty"`
+
+	// DocumentType MoneyHarpy extension. The kind of document whose bookings to list; needs document_id.
+	DocumentType *GetJournalEntriesReportParamsDocumentType `form:"document_type,omitempty" json:"document_type,omitempty"`
+
+	// DocumentId MoneyHarpy extension. The document whose bookings to list; needs document_type.
+	DocumentId *string `form:"document_id,omitempty" json:"document_id,omitempty"`
 }
 
 // GetJournalEntriesReportParamsAccountType defines parameters for GetJournalEntriesReport.
 type GetJournalEntriesReportParamsAccountType string
+
+// GetJournalEntriesReportParamsDocumentType defines parameters for GetJournalEntriesReport.
+type GetJournalEntriesReportParamsDocumentType string
 
 // GetLedgerAccountReportParams defines parameters for GetLedgerAccountReport.
 type GetLedgerAccountReportParams struct {
@@ -34185,6 +34230,32 @@ func (siw *ServerInterfaceWrapper) GetJournalEntriesReport(w http.ResponseWriter
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "account_type"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "account_type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "document_type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "document_type", r.URL.Query(), &params.DocumentType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "document_type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "document_type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "document_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "document_id", r.URL.Query(), &params.DocumentId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "document_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "document_id", Err: err})
 		}
 		return
 	}

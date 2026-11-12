@@ -132,7 +132,8 @@ func (m *memJournal) TouchDocument(_ context.Context, _, id resource.ID, at time
 func (m *memJournal) Entries(_ context.Context, _ resource.ID, q EntryQuery) ([]Entry, int, error) {
 	var out []Entry
 	for _, e := range m.entries {
-		if q.Period.Contains(e.Date) && (q.LedgerAccountID == nil || e.LedgerAccountID == *q.LedgerAccountID) {
+		if q.Period.Contains(e.Date) && (q.LedgerAccountID == nil || e.LedgerAccountID == *q.LedgerAccountID) &&
+			(q.DocumentID == nil || (e.DocumentType == q.DocumentType && e.DocumentID == *q.DocumentID)) {
 			out = append(out, e)
 		}
 	}
@@ -419,6 +420,32 @@ func TestEntriesReportNeedsASubject(t *testing.T) {
 	}
 	if _, _, err := s.Entries(ctx, adminID, owner, "this_year", EntryQuery{LedgerAccountID: ptr(rent)}); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestEntriesOfADocumentCoverEveryDate(t *testing.T) {
+	s, store, _ := newService()
+	ctx := context.Background()
+	old := time.Date(2019, 3, 1, 0, 0, 0, 0, time.UTC)
+	store.entries = append(store.entries,
+		Entry{ID: 1, DocumentType: SalesInvoice, DocumentID: 42, Date: old, LedgerAccountID: debtors, Amount: 1210},
+		Entry{ID: 2, DocumentType: SalesInvoice, DocumentID: 42, Date: old, LedgerAccountID: rent, Amount: -1210},
+		Entry{ID: 3, DocumentType: SalesInvoice, DocumentID: 43, Date: old, LedgerAccountID: debtors, Amount: 500},
+	)
+	// A document is a subject of its own, and without a period every date counts.
+	list, total, err := s.Entries(ctx, adminID, owner, "", EntryQuery{DocumentType: SalesInvoice, DocumentID: ptr(resource.ID(42))})
+	if err != nil || total != 2 || len(list) != 2 || list[0].ID != 1 {
+		t.Fatalf("entries = %+v (%d), %v", list, total, err)
+	}
+	// A period still narrows it down.
+	if list, _, err := s.Entries(ctx, adminID, owner, "this_year", EntryQuery{DocumentType: SalesInvoice, DocumentID: ptr(resource.ID(42))}); err != nil || len(list) != 0 {
+		t.Errorf("this year = %+v, %v", list, err)
+	}
+	if _, _, err := s.Entries(ctx, adminID, owner, "", EntryQuery{DocumentID: ptr(resource.ID(42))}); fieldsOf(t, err)["document_type"] == nil {
+		t.Error("document id without its type")
+	}
+	if _, _, err := s.Entries(ctx, adminID, owner, "", EntryQuery{DocumentType: SalesInvoice}); fieldsOf(t, err)["document_id"] == nil {
+		t.Error("document type without its id")
 	}
 }
 

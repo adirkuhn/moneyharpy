@@ -4210,8 +4210,9 @@ WHERE e.administration_id = $1 AND e.date >= $2 AND e.date <= $3
   AND ($7::bigint IS NULL OR e.project_id = $7)
   AND (NOT $8::boolean OR e.project_id IS NULL)
   AND ($9::text = '' OR l.account_type = $9)
+  AND ($10::bigint IS NULL OR (e.document_type = $11::text AND e.document_id = $10))
 ORDER BY e.date, e.document_id, e.row_order, e.id
-LIMIT $11 OFFSET $10
+LIMIT $13 OFFSET $12
 `
 
 type ListLedgerEntriesParams struct {
@@ -4224,6 +4225,8 @@ type ListLedgerEntriesParams struct {
 	ProjectID        pgtype.Int8
 	NoProject        bool
 	AccountType      string
+	DocumentID       pgtype.Int8
+	DocumentType     string
 	Skip             int32
 	MaxRows          int32
 }
@@ -4256,6 +4259,8 @@ func (q *Queries) ListLedgerEntries(ctx context.Context, arg ListLedgerEntriesPa
 		arg.ProjectID,
 		arg.NoProject,
 		arg.AccountType,
+		arg.DocumentID,
+		arg.DocumentType,
 		arg.Skip,
 		arg.MaxRows,
 	)

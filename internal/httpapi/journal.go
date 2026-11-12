@@ -561,6 +561,16 @@ func (s *server) GetJournalEntriesReport(w http.ResponseWriter, r *http.Request,
 	if params.AccountType != nil {
 		q.AccountType = string(*params.AccountType)
 	}
+	if params.DocumentType != nil {
+		q.DocumentType = string(*params.DocumentType)
+	}
+	if params.DocumentId != nil {
+		id, ok := parseID(w, *params.DocumentId)
+		if !ok {
+			return
+		}
+		q.DocumentID = &id
+	}
 	q.Page, q.PerPage = pageNumbers(params.Page, params.PerPage)
 	list, total, err := s.deps.Journal.Entries(r.Context(), admin, user(r).ID, deref((*string)(params.Period)), q)
 	if err != nil {
