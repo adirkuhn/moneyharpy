@@ -158,3 +158,16 @@
 
 /* On a phone the user button shows only the name. */
 @media (max-width: 40rem) { .topnav__btn .menu__icon { display: none; } }
+
+/* Invoices and estimates: cards with a grey footer note, forwarding as label and address side by side. */
+.card--with-footer { padding: 0; overflow: hidden; }
+.card--with-footer > .switch-row, .card--with-footer > .form-section { padding: 0.875rem 1rem; }
+.card__footer { margin: 0; padding: 0.625rem 1rem; border-top: 1px solid var(--line); background: var(--bg); color: var(--muted); font-size: 0.8125rem; }
+.card__footer a { color: var(--link); }
+.switch-row.is-disabled { color: var(--muted); }
+.forwarding .form-section + .form-section { border-top: 1px solid var(--line); }
+.settings__page .forwarding .form-input { --control-width: 100%; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.forwarding__actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0 1rem 0.875rem; }
+.numbering-card__label { display: inline-flex; align-items: center; gap: 0.25rem; }
+#payment-methods > .empty { margin-top: 0; }
+p.switch-row__label { margin: 0; }
