@@ -783,7 +783,7 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   const sending = page.getByRole('region', { name: 'Send invoice Draft #1' })
   await expect(sending.getByRole('radio', { name: /Send by email/ })).toBeChecked()
   await expect(sending.getByLabel('Email address', { exact: true })).toHaveValue(customer)
-  await expect(sending.getByLabel('Email message')).toHaveValue(/\{invoice_id\}/)
+  await expect(sending.getByRole('textbox', { name: 'Email message' })).toHaveValue(/\{invoice_id\}/)
   await sending.getByRole('button', { name: 'Send invoice' }).click()
   await expect(page.locator('.badge', { hasText: 'Open' })).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).not.toHaveText(/Draft/)

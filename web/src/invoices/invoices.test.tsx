@@ -483,7 +483,7 @@ describe('the invoice details editor', () => {
     // "Add Category..." opens Moneybird's Add category in a new tab, which comes back to this invoice.
     const open = vi.spyOn(window, 'open').mockReturnValue(null)
     await userEvent.selectOptions(within(rows[1]!).getByLabelText('Category'), 'Add Category...')
-    expect(open).toHaveBeenCalledWith(`/11/ledger_accounts/blueprints?return_to=${encodeURIComponent('/11/sales_invoices/902/edit')}&source=sales_invoice`, '_blank', 'noopener')
+    expect(open).toHaveBeenCalledWith(`/11/ledger_accounts/blueprints?return_to=${encodeURIComponent('/11/sales_invoices/902')}&source=sales_invoice`, '_blank', 'noopener')
     expect(within(rows[1]!).getByLabelText('Category')).toHaveValue('8001')
     open.mockRestore()
 
