@@ -269,7 +269,7 @@ describe('an invoice', () => {
     renderAt('/11/sales_invoices/902')
     await screen.findByRole('document', { name: 'Invoice Draft #3' })
     await userEvent.click(within(invoicePaper('Invoice Draft #3')).getByRole('button', { name: 'Contact' }))
-    expect(await screen.findByRole('dialog', { name: 'Add invoice' })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'Edit invoice' })).toBeInTheDocument()
     expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/)
   })
 
@@ -296,7 +296,7 @@ describe('an invoice', () => {
     expect(screen.queryByRole('alertdialog')).toBeNull()
     await userEvent.click(within(invoicePaper('Invoice 2026-0001')).getByRole('button', { name: 'Edit contact' }))
     await userEvent.click(within(screen.getByRole('alertdialog', { name: 'This invoice has been sent' })).getByRole('button', { name: 'Continue editing' }))
-    expect(await screen.findByRole('dialog', { name: 'Add invoice' })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'Edit invoice' })).toBeInTheDocument()
     expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/901$/)
   })
 

@@ -8414,6 +8414,7 @@ export interface components {
                 /** @description yyyy-mm-dd; empty clears it on a draft. */
                 invoice_date?: string;
                 first_due_interval?: number | string;
+                /** @description ISO three-character currency code, e.g. EUR or USD, one of the currencies the onboarding options list. Defaults to the workflow's currency. */
                 currency?: string;
                 prices_are_incl_tax?: components["schemas"]["FlexibleBoolean"];
                 payment_conditions?: string;

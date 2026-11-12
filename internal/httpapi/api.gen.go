@@ -8995,7 +8995,9 @@ type SalesInvoiceRequest struct {
 
 		// ContactPersonId An id as a string or a number; an empty string clears it.
 		ContactPersonId *FlexibleIdentifier `json:"contact_person_id,omitempty"`
-		Currency        *string             `json:"currency,omitempty"`
+
+		// Currency ISO three-character currency code, e.g. EUR or USD, one of the currencies the onboarding options list. Defaults to the workflow's currency.
+		Currency *string `json:"currency,omitempty"`
 
 		// CustomFieldsAttributes Moneybird-compatible custom_fields_attributes.
 		CustomFieldsAttributes *CustomFieldsAttributes `json:"custom_fields_attributes,omitempty"`
