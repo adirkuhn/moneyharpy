@@ -101,6 +101,9 @@ type Invoice struct {
 	MarkedDubiousOn       *time.Time
 	MarkedUncollectibleOn *time.Time
 	ReminderCount         int
+	// LastReminderOn is the day the last reminder went out; the next
+	// reminder is due when that one expires.
+	LastReminderOn *time.Time
 	// NextReminder is when the workflow's next reminder is due; it is
 	// worked out on reading and empty when no reminder follows.
 	NextReminder *time.Time
