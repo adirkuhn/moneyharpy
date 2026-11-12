@@ -229,8 +229,8 @@ func TestUpdateRebooksAndRespectsTheLock(t *testing.T) {
 	if _, err := h.svc.Update(ctx, adminID, inv.ID, owner, Changes{Reference: ptr("x")}); fieldsOf(t, err)["invoice_date"] == nil {
 		t.Error("changed in the locked period")
 	}
-	if err := h.svc.Delete(ctx, adminID, inv.ID, owner); !errors.Is(err, ErrNotEditable) {
-		t.Errorf("delete sent = %v", err)
+	if err := h.svc.Delete(ctx, adminID, inv.ID, owner); fieldsOf(t, err)["invoice_date"] == nil {
+		t.Errorf("deleted in the locked period: %v", err)
 	}
 }
 

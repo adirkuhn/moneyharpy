@@ -194,6 +194,10 @@ export const en = {
       showOnline: 'Show invoice online', delete: 'Delete invoice', editContact: 'Edit contact', editConditions: 'Edit payment conditions',
       sentWarning: {
         title: 'This invoice has been sent', text: 'When you make changes, make sure to inform the recipient. Are you sure you want to edit this invoice?', continue: 'Continue editing',
+        paidTitle: 'This invoice has been paid', regular: 'The regular way to correct a sent invoice is to cancel or refund it with a credit note.',
+        refund: 'A refund is registered as the payment of a credit note.',
+        deleteTitle: 'Delete this sent invoice?', deleteText: 'Its bookings and history are deleted with it, and its invoice number stays used. This cannot be undone.',
+        deleteAnyway: 'Delete anyway',
       },
       tip: { title: 'Products', text: 'You often use the same invoice lines. Avoid duplication and use products.', action: 'Add product', close: 'Close' },
       summary: 'Payment summary', total: 'Total', viewPayments_one: 'View registered payment', viewPayments_other: 'View registered payments',
@@ -206,7 +210,7 @@ export const en = {
       },
       events: {
         created: 'Invoice created', createdFromQuote: 'Invoice created from a quote', createdFromRecurring: 'Invoice created by a recurring invoice',
-        createdFromSubscription: 'Invoice created by a subscription', createdFromOriginal: 'Credit invoice created', updated: 'Invoice edited',
+        createdFromSubscription: 'Invoice created by a subscription', createdFromOriginal: 'Credit invoice created', creditCreated: 'Credit invoice made for this invoice', updated: 'Invoice edited',
         stateChanged: 'State of invoice changed to {{state}}', paid: 'Invoice has been paid', sentEmail: 'Invoice sent by email', sentPost: 'Invoice sent by post',
         sentManually: 'Invoice manually marked as sent', reminderEmail: 'Reminder sent by email', reminderManually: 'Reminder manually marked as sent',
         paused: 'Reminders paused', resumed: 'Reminders resumed', dubious: 'Invoice marked as dubious', uncollectible: 'Invoice marked as uncollectible',
@@ -257,19 +261,17 @@ export const en = {
     sendBy: 'Send by', emailAddress: 'Email address',
     sendForm: {
       title: 'Send invoice {{name}}', method: 'Delivery method', submit: 'Send invoice',
-      methods: { Email: 'Send by email', Peppol: 'Send via Peppol', Manual: 'Send manually', Post: 'Send by post' },
+      methods: { Email: 'Send by email', Peppol: 'Send via Peppol', Manual: 'Send manually' },
       methodsText: {
         Email: 'The invoice will be added as an attachment to the email message',
         Peppol: 'The invoices will be delivered directly to the accounting software of the recipient.',
         Manual: 'The invoice will be marked as sent.',
-        Post: 'The invoice will be marked as sent, for you to print and post.',
       },
       emailAddress: 'Email address', emailAddressN: 'Email address {{n}}', addEmail: 'Add email address', removeEmail: 'Remove email address {{n}}',
       message: 'Email message',
       messageHelp: 'You can use {invoice_id}, {invoice_date}, {due_date}, {total}, {contact_name}, {company_name}, {payment_reference} and {reference}.',
       defaultMessage: 'Dear {contact_name},\n\nPlease find attached invoice {invoice_id} of {invoice_date} for {total}. We would like to receive your payment by {due_date}, quoting {payment_reference}.\n\nKind regards,\n{company_name}',
       ubl: 'UBL invoice', ublTip: 'Your customer can process the invoice automatically with a UBL invoice', attachUbl: 'Attach UBL invoice',
-      postHint: 'Download the PDF to print and post it.',
     },
     scheduleForm: {
       title: 'Send invoice in the future',

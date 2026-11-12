@@ -51,7 +51,10 @@ func (s *Service) markDubious(ctx context.Context, admin, user resource.ID, kind
 		return err
 	}
 	inv.MarkedDubiousOn, inv.UpdatedAt = &day, s.now()
-	return s.repost(ctx, admin, user, &inv)
+	if err := s.repost(ctx, admin, user, &inv); err != nil {
+		return err
+	}
+	return s.record(ctx, user, on(inv, inv.events()+"_marked_as_dubious"))
 }
 
 // MarkUncollectible writes off what is still open of an invoice, for good:
@@ -97,7 +100,7 @@ func (s *Service) markUncollectible(ctx context.Context, admin, user resource.ID
 		return err
 	}
 	s.notify(ctx, admin, inv.events()+"_state_changed_to_uncollectible", inv)
-	return nil
+	return s.record(ctx, user, stateChanged(inv, Uncollectible), on(inv, inv.events()+"_marked_as_uncollectible"))
 }
 
 // repost stores an invoice of either kind with what it posts again.

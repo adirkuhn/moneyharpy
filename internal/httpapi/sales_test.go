@@ -33,6 +33,18 @@ type salesInvoice struct {
 	TaxTotals []struct {
 		TaxAmount string `json:"tax_amount"`
 	} `json:"tax_totals"`
+	Events []struct {
+		Action           string         `json:"action"`
+		UserID           string         `json:"user_id"`
+		AdministrationID string         `json:"administration_id"`
+		LinkEntityType   *string        `json:"link_entity_type"`
+		LinkEntityID     *string        `json:"link_entity_id"`
+		Data             map[string]any `json:"data"`
+		CreatedAt        string         `json:"created_at"`
+	} `json:"events"`
+	Notes []struct {
+		UserID string `json:"user_id"`
+	} `json:"notes"`
 }
 
 type salesTaxRate struct {
@@ -165,8 +177,27 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodGet, api+"/reports/journal_entries?document_id="+inv.ID, nil), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodGet, api+"/reports/journal_entries?document_type=Invoice&document_id="+inv.ID, nil), http.StatusBadRequest)
 
-	// Sent invoices cannot be deleted but can be credited.
-	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID, nil), http.StatusUnprocessableEntity)
+	// What happened is told as Moneybird's events, by whom.
+	var told []string
+	for _, e := range inv.Events {
+		told = append(told, e.Action)
+		if e.UserID == "" || e.AdministrationID != a.Id || e.CreatedAt == "" || e.Data == nil {
+			t.Errorf("event = %+v", e)
+		}
+	}
+	if strings.Join(told, ",") != "sales_invoice_created,sales_invoice_state_changed_to_open,sales_invoice_send_email" {
+		t.Errorf("events = %v", told)
+	}
+	if inv.Events[2].Data["email_address"] != "billing@example.com" {
+		t.Errorf("email event data = %v", inv.Events[2].Data)
+	}
+	edited = owner.do(http.MethodPatch, invoices+"/"+inv.ID, map[string]any{"sales_invoice": map[string]any{"reference": "Order 8"}})
+	wantStatus(t, edited, http.StatusOK)
+	if last := decode[salesInvoice](t, edited).Events; last[len(last)-1].Action != "sales_invoice_updated" {
+		t.Errorf("edit of a sent invoice = %+v", last)
+	}
+
+	// Crediting is the regular way, but a sent invoice can be deleted too (below).
 	credit := decode[salesInvoice](t, owner.do(http.MethodPatch, invoices+"/"+inv.ID+"/duplicate_creditinvoice", map[string]any{"detail_ids": []string{inv.Details[0].ID}}))
 	if credit.State != "draft" || credit.OriginalID == nil || *credit.OriginalID != inv.ID || credit.TotalIncl != "-242.0" || credit.Details[0].Amount != "-2 hours" {
 		t.Errorf("credit = %+v", credit)
@@ -196,12 +227,22 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 		t.Errorf("attachment = %q", got.body)
 	}
 	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID+"/attachments/"+attID, nil), http.StatusNoContent)
+	if withNote := decode[salesInvoice](t, owner.do(http.MethodGet, invoices+"/"+inv.ID, nil)); len(withNote.Notes) != 1 || withNote.Notes[0].UserID == "" {
+		t.Errorf("note author = %+v", withNote.Notes)
+	}
 	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID+"/notes/"+noteID, nil), http.StatusNoContent)
 
 	// Peppol is not there yet, and the contact now has invoices.
 	wantStatus(t, owner.do(http.MethodPatch, invoices+"/"+credit.ID+"/send_invoice", map[string]any{"sales_invoice_sending": map[string]any{"delivery_method": "Peppol"}}), http.StatusUnprocessableEntity)
 	wantKept(t, owner.do(http.MethodDelete, api+"/contacts/"+customer.ID, nil), "archived")
 	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+credit.ID, nil), http.StatusNoContent)
+
+	// Deleting the sent invoice takes its bookings along.
+	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID, nil), http.StatusNoContent)
+	wantStatus(t, owner.do(http.MethodGet, invoices+"/"+inv.ID, nil), http.StatusNotFound)
+	if left := decode[[]struct{}](t, owner.do(http.MethodGet, api+"/reports/journal_entries?document_type=SalesInvoice&document_id="+inv.ID, nil)); len(left) != 0 {
+		t.Errorf("entries left = %d", len(left))
+	}
 }
 
 func TestSalesInvoicesFollowPermissions(t *testing.T) {

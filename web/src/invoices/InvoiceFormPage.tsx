@@ -141,6 +141,7 @@ function InvoiceForm(props: FormProps) {
   const nextDraftId = useNextDraftId(administrationId, !invoice)
   const { t, i18n } = useTranslation()
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const [ownLayoutsOpen, setOwnLayoutsOpen] = useState(false)
   const layoutsOpen = view ? view.layoutsOpen : ownLayoutsOpen
   const closeLayouts = view ? view.onLayoutsClose : () => setOwnLayoutsOpen(false)
@@ -519,7 +520,8 @@ function InvoiceForm(props: FormProps) {
           pending={save.isPending}
           cancel={invoice ? { onClick: cancelDialog } : { to: list }}
           onSave={saveSetup}
-          onClose={invoice ? cancelDialog : () => setDialogOpen(false)}
+          // On a new invoice the × does what Cancel does: back to the invoices, as nothing was made yet.
+          onClose={invoice ? cancelDialog : () => navigate(list)}
         />
       )}
     </>

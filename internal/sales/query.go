@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -229,6 +230,12 @@ func (s *Service) complete(ctx context.Context, admin, user resource.ID, list []
 	if err != nil {
 		return nil, err
 	}
+	events := map[resource.ID][]history.Event{}
+	if s.history != nil {
+		if events, err = s.history.Of(ctx, admin, EntityType, ids); err != nil {
+			return nil, err
+		}
+	}
 	var flows map[resource.ID]invoicing.Workflow
 	if slices.ContainsFunc(list, payable) {
 		all, err := s.invoicing.Workflows(ctx, admin, user)
@@ -241,7 +248,7 @@ func (s *Service) complete(ctx context.Context, admin, user resource.ID, list []
 		}
 	}
 	for i := range list {
-		list[i].Notes, list[i].Attachments = byInvoice[list[i].ID], files[list[i].ID]
+		list[i].Notes, list[i].Attachments, list[i].Events = byInvoice[list[i].ID], files[list[i].ID], events[list[i].ID]
 		list[i].State = effective(list[i], today)
 		if day, _, ok := nextReminder(list[i], flows[list[i].WorkflowID]); ok {
 			list[i].NextReminder = &day

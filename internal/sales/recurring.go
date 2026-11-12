@@ -633,6 +633,9 @@ func (s *Service) generate(ctx context.Context, a administration.Listed, user re
 	if err := s.store.SaveGenerated(ctx, inv, moved); err != nil {
 		return Invoice{}, wrap("store generated invoice", err)
 	}
+	if err := s.record(ctx, user, on(inv, "sales_invoice_created_based_on_recurring")); err != nil {
+		return Invoice{}, err
+	}
 	*r = moved
 	return inv, nil
 }

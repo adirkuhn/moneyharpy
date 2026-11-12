@@ -6,8 +6,8 @@ import { useInvoiceSettings, useWorkflows } from '../invoicing/queries'
 import { Tip } from './AddInvoiceDialog'
 import { invoiceTitle, type SalesInvoice, type Sending, useSendSalesInvoice } from './queries'
 
-/** The ways Moneybird's send form offers, in its order; Post stays from MoneyHarpy's own sending. */
-const methods = ['Email', 'Peppol', 'Manual', 'Post'] as const
+/** The ways Moneybird's send form offers, in its order. */
+const methods = ['Email', 'Peppol', 'Manual'] as const
 type Method = (typeof methods)[number]
 const available = (m: Method) => m !== 'Peppol'
 
@@ -167,7 +167,6 @@ export function SendPanel({ administrationId, invoice: inv, onDone }: PanelProps
           </FormRow>
         </div>
       )}
-      {method === 'Post' && <p className="hint send-form__hint">{t('invoices.sendForm.postHint')}</p>}
     </SendForm>
   )
 }
