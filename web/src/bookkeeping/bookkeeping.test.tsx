@@ -153,26 +153,191 @@ describe('VAT rate form', () => {
   })
 })
 
-describe('category form', () => {
-  it('creates a category under a parent with a chart scheme code', async () => {
-    let sent: unknown
-    server.use(...loaded(), http.post('*/api/v2/11/ledger_accounts', async ({ request }) => {
-      sent = await request.json()
-      return HttpResponse.json(account({ id: '1005' }), { status: 201 })
-    }))
-    renderAt('/11/ledger_accounts/new')
-    await userEvent.type(await screen.findByLabelText('Name'), 'Hosting')
-    await userEvent.selectOptions(screen.getByLabelText('Part of'), '1001')
-    await userEvent.type(screen.getByLabelText('Chart scheme code'), 'WBedKanSof')
+const fromInvoice = `return_to=${encodeURIComponent('/11/sales_invoices/5/edit')}&source=sales_invoice`
+
+const car: Template = {
+  key: 'company_car', name: 'Company car', description: 'Costs of a company car', applied: false,
+  ledger_accounts: [
+    { name: 'Office costs', account_type: 'expenses', account_id: '4400' },
+    { name: 'Fuel', account_type: 'expenses', account_id: '4251' },
+    { name: 'Company car', account_type: 'non_current_assets', account_id: '0300' },
+  ],
+}
+const loan: Template = {
+  key: 'loan', name: 'Loan', description: 'A long-term loan and its interest', applied: true,
+  ledger_accounts: [{ name: 'Loan', account_type: 'non_current_liabilities', account_id: '0800' }],
+}
+
+const withTemplates = (applied: string[] = []) => [
+  ...loaded(),
+  http.get('*/api/v2/11/ledger_account_templates', () => HttpResponse.json([car, loan])),
+  http.post('*/api/v2/11/ledger_account_templates/:key', ({ params }) => {
+    applied.push(String(params.key))
+    return HttpResponse.json([], { status: 201 })
+  }),
+]
+
+const creating = (sink: { body?: unknown }) =>
+  http.post('*/api/v2/11/ledger_accounts', async ({ request }) => {
+    sink.body = await request.json()
+    return HttpResponse.json(account({ id: '1005' }), { status: 201 })
+  })
+
+describe('add category', () => {
+  it('is reached from the categories of the bookkeeping settings', async () => {
+    server.use(...loaded())
+    renderAt('/11/settings/bookkeeping')
+    const categories = await screen.findByRole('region', { name: 'Categories' })
+    expect(within(categories).getByRole('link', { name: 'Add category' })).toHaveAttribute('href', '/11/ledger_accounts/blueprints')
+  })
+
+  it('offers the themes of the country and a single category, after Moneybird', async () => {
+    server.use(...withTemplates())
+    renderAt(`/11/ledger_accounts/blueprints?${fromInvoice}`)
+    expect(await screen.findByRole('heading', { name: 'Add category for Invoice', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'To invoice' })).toHaveAttribute('href', '/11/sales_invoices/5/edit')
+    expect(screen.getByText(/determined by the country of your administration/)).toBeInTheDocument()
+    const themes = screen.getByRole('list', { name: 'Themes' })
+    const carLink = within(themes).getByRole('link', { name: /Company car/ })
+    expect(carLink).toHaveAttribute('href', `/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=company_car&${fromInvoice}`)
+    expect(carLink).toHaveTextContent('Costs of a company car')
+    expect(within(themes).getByRole('link', { name: /Loan/ })).toHaveTextContent('Added')
+    expect(screen.getByText(/add it separately based on the Referentie Grootboekschema \(RGS\)/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Add single category' })).toHaveAttribute('href', `/11/ledger_accounts/new?${fromInvoice}`)
+  })
+
+  it('goes back to the settings, and never to another site', async () => {
+    server.use(...withTemplates())
+    renderAt(`/11/ledger_accounts/blueprints?return_to=${encodeURIComponent('https://example.com/11/')}`)
+    expect(await screen.findByRole('heading', { name: 'Add category', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'To Bookkeeping' })).toHaveAttribute('href', '/11/settings/bookkeeping#categories')
+    expect(screen.getByRole('link', { name: 'Add single category' })).toHaveAttribute('href', '/11/ledger_accounts/new')
+  })
+
+  it('still opens from the old templates address', async () => {
+    server.use(...withTemplates())
+    renderAt('/11/ledger_account_templates')
+    expect(await screen.findByRole('heading', { name: 'Add category', level: 1 })).toBeInTheDocument()
+    expect(screen.getByTestId('path')).toHaveTextContent('/11/ledger_accounts/blueprints')
+  })
+})
+
+describe('add categories from a theme', () => {
+  it('lists the categories by part of the books and adds the missing ones, then goes back to the invoice', async () => {
+    const applied: string[] = []
+    server.use(...withTemplates(applied))
+    renderAt(`/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=company_car&${fromInvoice}`)
+    expect(await screen.findByRole('heading', { name: 'Add category for Invoice from Company car', level: 1 })).toBeInTheDocument()
+    expect(screen.getByText('Costs of a company car')).toBeInTheDocument()
+    const balance = screen.getByRole('group', { name: 'Balance sheet' })
+    expect(within(balance).getByRole('heading', { name: 'Fixed assets' })).toBeInTheDocument()
+    expect(within(balance).getByRole('checkbox', { name: /Company car/ })).toBeChecked()
+    const pl = screen.getByRole('group', { name: 'Profit and loss statement' })
+    const existing = within(pl).getByRole('checkbox', { name: /Office costs/ })
+    expect(existing).toBeChecked()
+    expect(existing).toBeDisabled()
+    expect(existing).toHaveAccessibleDescription('Category already exists')
+    expect(within(pl).getByRole('checkbox', { name: /Fuel/ })).toBeChecked()
+    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/11/sales_invoices/5/edit')
+    await userEvent.click(screen.getByRole('button', { name: 'Save and go back to the invoice' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/5\/edit$/))
+    expect(applied).toEqual(['company_car'])
+  })
+
+  it('adds nothing when the theme is there already', async () => {
+    const applied: string[] = []
+    server.use(...withTemplates(applied))
+    renderAt('/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=loan')
+    expect(await screen.findByRole('heading', { name: 'Add category from Loan', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /Loan/ })).toHaveAccessibleDescription('Category already exists')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/settings\/bookkeeping$/))
+    expect(applied).toEqual([])
+  })
+
+  it('does not know other themes', async () => {
+    server.use(...withTemplates())
+    renderAt('/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=spaceship')
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+  })
+})
+
+describe('add single category', () => {
+  it('suggests chart scheme codes for the name and goes back to the invoice, after Moneybird', async () => {
+    const sent: { body?: unknown } = {}
+    server.use(
+      http.get('*/api/v2/11/taxonomy_items', ({ request }) => {
+        const url = new URL(request.url)
+        const found = url.searchParams.get('query') === 'Consulting' && url.searchParams.get('account_type') === 'revenue'
+        return HttpResponse.json(found ? [{ taxonomy_version: '3.8', code: 'WOmzNodOdh', name: 'Netto-omzet diensten', name_english: null, reference: null, level: 4, side: 'profit_and_loss' }] : [])
+      }),
+      ...loaded(), creating(sent),
+    )
+    renderAt(`/11/ledger_accounts/new?${fromInvoice}`)
+    expect(await screen.findByRole('heading', { name: 'Add single category', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'To Add category' })).toHaveAttribute('href', `/11/ledger_accounts/blueprints?${fromInvoice}`)
+    const form = screen.getByRole('form', { name: 'Add single category' })
+    expect(within(form).getByText('Profit and loss statement')).toBeInTheDocument()
+    expect(within(form).getByText('Revenue')).toBeInTheDocument()
+    expect(screen.getByText('Enter a name on the left, we will suggest the most appropriate category.')).toBeInTheDocument()
+    await userEvent.type(within(form).getByLabelText('Name'), 'Consulting')
+    const suggestions = await screen.findByRole('radiogroup', { name: 'Suggested categories' })
+    await userEvent.click(await within(suggestions).findByRole('radio', { name: /WOmzNodOdh/ }))
+    expect(within(form).getByText(/Netto-omzet diensten/)).toBeInTheDocument()
+    expect(within(form).getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/11/sales_invoices/5/edit')
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
     await waitFor(() =>
-      expect(sent).toEqual({
-        ledger_account: { name: 'Hosting', account_type: 'expenses', account_id: '', parent_id: '1001', description: '', active: true },
+      expect(sent.body).toEqual({
+        ledger_account: { name: 'Consulting', account_type: 'revenue', account_id: '', parent_id: '', description: '' },
+        rgs_code: 'WOmzNodOdh',
+      }),
+    )
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/5\/edit$/))
+  })
+
+  it('takes a type, parent, number and code chosen by hand', async () => {
+    const sent: { body?: unknown } = {}
+    server.use(...loaded(), creating(sent))
+    renderAt('/11/ledger_accounts/new')
+    const form = await screen.findByRole('form', { name: 'Add single category' })
+    expect(within(form).getByText('Expenses')).toBeInTheDocument()
+    await userEvent.type(within(form).getByLabelText('Name'), 'Hosting')
+    await userEvent.click(screen.getByRole('button', { name: 'Select a category manually' }))
+    expect(screen.getByRole('heading', { name: 'Select a category' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: 'Balance sheet' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Current liabilities' }))
+    expect(within(form).getByText('Current liabilities')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: 'Profit and loss statement' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Expenses' }))
+    await userEvent.selectOptions(within(form).getByLabelText('Parent category'), '1001')
+    await userEvent.type(within(form).getByLabelText('Account number'), '4460')
+    await userEvent.type(within(form).getByLabelText('Description'), 'Servers')
+    await userEvent.type(screen.getByLabelText('Chart scheme code'), 'WBedKanSof')
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    await waitFor(() =>
+      expect(sent.body).toEqual({
+        ledger_account: { name: 'Hosting', account_type: 'expenses', account_id: '4460', parent_id: '1001', description: 'Servers' },
         rgs_code: 'WBedKanSof',
       }),
     )
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/settings\/bookkeeping$/))
   })
 
+  it('only asks for the type without a chart scheme', async () => {
+    const sent: { body?: unknown } = {}
+    server.use(...loaded(settings({ chart_scheme: '' })), creating(sent))
+    renderAt('/11/ledger_accounts/new')
+    const form = await screen.findByRole('form', { name: 'Add single category' })
+    expect(screen.queryByText(/we will suggest/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Chart scheme code')).not.toBeInTheDocument()
+    await userEvent.type(within(form).getByLabelText('Name'), 'Rent')
+    await userEvent.click(screen.getByRole('radio', { name: 'Expenses' }))
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent.body).toEqual({ ledger_account: { name: 'Rent', account_type: 'expenses', account_id: '', parent_id: '', description: '' } }))
+  })
+})
+
+describe('category form', () => {
   it('locks the type of a system category and offers no parent loops', async () => {
     server.use(...loaded())
     renderAt('/11/ledger_accounts/1003')
@@ -184,28 +349,10 @@ describe('category form', () => {
   it('does not offer a category or its children as its parent', async () => {
     server.use(...loaded())
     renderAt('/11/ledger_accounts/1001')
-    const parent = await screen.findByLabelText('Part of')
+    const parent = await screen.findByLabelText('Parent category')
     const options = within(parent).getAllByRole('option').map((o) => o.textContent)
     expect(options.some((o) => o?.includes('Software'))).toBe(false)
     expect(options.some((o) => o?.includes('Office costs'))).toBe(false)
-  })
-})
-
-describe('templates', () => {
-  it('adds a template once', async () => {
-    let applied = ''
-    const car: Template = { key: 'company_car', name: 'Company car', description: 'Costs of a company car', applied: false, ledger_accounts: [{ name: 'Fuel', account_type: 'expenses', account_id: '4251' }] }
-    server.use(...loaded(),
-      http.get('*/api/v2/11/ledger_account_templates', () => HttpResponse.json([car, { ...car, key: 'loan', name: 'Loan', applied: true }])),
-      http.post('*/api/v2/11/ledger_account_templates/:key', ({ params }) => {
-        applied = String(params.key)
-        return HttpResponse.json([], { status: 201 })
-      }))
-    renderAt('/11/ledger_account_templates')
-    const loan = await screen.findByRole('region', { name: 'Loan' })
-    expect(within(loan).getByText('Added')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Add Company car' }))
-    await waitFor(() => expect(applied).toBe('company_car'))
   })
 })
 

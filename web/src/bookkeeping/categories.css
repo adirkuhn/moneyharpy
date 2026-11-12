@@ -1,0 +1,60 @@
+/* Moneybird's Add category pages: the chooser, a theme's categories and the single category, in MoneyHarpy's own styles. */
+
+.category-card { padding: 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.category-card p { margin: 0; }
+.category-card__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.category-card__actions--center { justify-content: center; padding-top: 1rem; border-top: 1px solid var(--line); }
+
+/* The chooser: a card with a list of themes and, under a rule, the single category. */
+.category-add { display: grid; gap: 1.5rem; padding: 2rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.category-add__item { display: grid; gap: 1rem; width: 100%; max-width: 50rem; margin: 0 auto; }
+.category-add__item + .category-add__item { padding-top: 1.5rem; border-top: 1px solid var(--line); }
+.category-add__text { margin: 0; line-height: 1.5; }
+.category-links { display: grid; margin: 0; padding: 0 1rem; border: 1px solid var(--line); border-radius: 10px; list-style: none; }
+.category-links > li + li { border-top: 1px solid var(--line); }
+.category-links__item { display: flex; align-items: center; gap: 1.25rem; padding: 0.875rem 0; color: var(--text); text-decoration: none; }
+.category-links__item:hover .category-links__title { color: var(--link); }
+.category-links__item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+.category-links__icon { flex: none; color: var(--muted); }
+.category-links__body { display: grid; flex: 1; gap: 0.125rem; min-width: 0; }
+.category-links__title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.category-links__subtitle { color: var(--muted); font-size: 0.8125rem; line-height: 1.4; }
+.category-links__state { padding: 0 0.5rem; border-radius: 999px; background: var(--row-hover); color: var(--muted); font-size: 0.75rem; }
+.category-links__chevron { flex: none; color: var(--muted); }
+
+/* A theme's categories: per part of the books, the type on the left and its categories on the right. */
+.category-theme { display: grid; gap: 1rem; }
+.category-theme__side { display: grid; gap: 0.5rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.category-theme__side-title { margin: 0; color: var(--link); font-size: inherit; font-weight: 400; }
+.category-theme__type { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: 0.5rem 1.5rem; }
+.category-theme__type-title { margin: 0; font-size: inherit; font-weight: 400; }
+.category-theme__list { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+.category-theme__account { display: inline-flex; align-items: center; gap: 0.625rem; }
+.category-theme__account input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--blue); }
+.category-theme__account.is-there { color: var(--muted); }
+
+/* The single category: the form on the left and choosing its code on the right. */
+.single-category { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 1rem; align-items: start; }
+.single-category__form { display: grid; gap: 0.75rem; }
+.single-category__form .form-input { --control-width: 100%; grid-template-columns: minmax(0, 1fr); gap: 0.375rem; }
+.single-category__chosen { display: grid; gap: 0.125rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.single-category__side { font-weight: 600; }
+.single-category__picker { min-height: 16rem; }
+.single-category__empty { display: grid; justify-items: center; gap: 0.5rem; max-width: 24rem; margin: 3rem auto; text-align: center; line-height: 1.5; }
+.single-category__suggestions, .single-category__manual { display: grid; gap: 1rem; }
+.single-category__manual-header { display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.single-category__title { margin: 0; font-size: 1rem; font-weight: 600; }
+.single-category__options { display: grid; gap: 0.25rem; }
+.single-category__option { display: flex; align-items: center; gap: 0.625rem; padding: 0.375rem 0.625rem; border-radius: 8px; cursor: pointer; }
+.single-category__option:hover { background: var(--row-hover); }
+.single-category__option.is-checked { background: var(--row-hover); font-weight: 600; }
+.single-category__option input { flex: none; width: 1rem; height: 1rem; min-height: 0; margin: 0; padding: 0; accent-color: var(--blue); }
+.single-category__manual .form-input { grid-template-columns: minmax(0, 1fr); }
+
+@media (max-width: 760px) {
+  .single-category { grid-template-columns: minmax(0, 1fr); }
+  .category-theme__type { grid-template-columns: minmax(0, 1fr); }
+  .category-add { padding: 1rem; }
+}
+.single-category .link-button { padding: 0; border: 0; background: none; color: var(--link); font: inherit; cursor: pointer; }
+.single-category .link-button:hover { text-decoration: underline; }
