@@ -5809,16 +5809,16 @@ type DocumentStyle struct {
 	// EmailHeaderType MoneyHarpy extension. The header of emails; empty for none.
 	EmailHeaderType DocumentStyleEmailHeaderType `json:"email_header_type"`
 
-	// EmailLabelEnabled MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails (Moneybird's email_moneybird_label_enabled).
-	EmailLabelEnabled bool `json:"email_label_enabled"`
-
 	// EmailLogoDisplayWidth MoneyHarpy extension. Width of the email logo in percent, 10 to 100.
 	EmailLogoDisplayWidth int `json:"email_logo_display_width"`
 
 	// EmailLogoHash MoneyHarpy extension. The SHA-256 of the file, or null without one.
-	EmailLogoHash         *string                                                                `json:"email_logo_hash"`
-	EstimateMetadataLeft  *[]map[string]DocumentStyle_EstimateMetadataLeft_AdditionalProperties  `json:"estimate_metadata_left,omitempty"`
-	EstimateMetadataRight *[]map[string]DocumentStyle_EstimateMetadataRight_AdditionalProperties `json:"estimate_metadata_right,omitempty"`
+	EmailLogoHash *string `json:"email_logo_hash"`
+
+	// EmailMoneybirdLabelEnabled MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails. Named as in Moneybird's document style form.
+	EmailMoneybirdLabelEnabled bool                                                                   `json:"email_moneybird_label_enabled"`
+	EstimateMetadataLeft       *[]map[string]DocumentStyle_EstimateMetadataLeft_AdditionalProperties  `json:"estimate_metadata_left,omitempty"`
+	EstimateMetadataRight      *[]map[string]DocumentStyle_EstimateMetadataRight_AdditionalProperties `json:"estimate_metadata_right,omitempty"`
 
 	// EstimateRecipientAddress MoneyHarpy extension. Details under the customer address on quotes.
 	EstimateRecipientAddress []DocumentStyleLine                                                    `json:"estimate_recipient_address"`
@@ -5866,14 +5866,14 @@ type DocumentStyle struct {
 	// PublicViewBackgroundColor MoneyHarpy extension. The page colour of public views.
 	PublicViewBackgroundColor DocumentStylePublicViewBackgroundColor `json:"public_view_background_color"`
 
-	// PublicViewLabelEnabled MoneyHarpy extension. Show "Made with MoneyHarpy" on public views (Moneybird's public_view_moneybird_label_enabled).
-	PublicViewLabelEnabled bool `json:"public_view_label_enabled"`
-
 	// PublicViewLogoDisplaySize MoneyHarpy extension. Size of the public view logo in percent, 10 to 100.
 	PublicViewLogoDisplaySize int `json:"public_view_logo_display_size"`
 
 	// PublicViewLogoHash MoneyHarpy extension. The SHA-256 of the file, or null without one.
 	PublicViewLogoHash *string `json:"public_view_logo_hash"`
+
+	// PublicViewMoneybirdLabelEnabled MoneyHarpy extension. Show "Made with MoneyHarpy" on public views. Named as in Moneybird's document style form.
+	PublicViewMoneybirdLabelEnabled bool `json:"public_view_moneybird_label_enabled"`
 
 	// SenderAddressWidth MoneyHarpy extension. Width of the sender address in pixels, 100 to 400.
 	SenderAddressWidth int `json:"sender_address_width"`
@@ -5976,7 +5976,7 @@ type DocumentStylePaperSize string
 // DocumentStylePublicViewBackgroundColor MoneyHarpy extension. The page colour of public views.
 type DocumentStylePublicViewBackgroundColor string
 
-// DocumentStyleLine One entry of a block on a document. bold prints it bold, italic in italics; label prints its name before it. Custom fields are named custom_field_ followed by their id.
+// DocumentStyleLine One entry of a block on a document. bold prints it bold, italic in italics; label prints its name before it. Custom fields are named custom_field_ followed by their id. As at Moneybird, company_website_url prints the administration's website.
 type DocumentStyleLine struct {
 	Bold   *bool  `json:"bold,omitempty"`
 	Field  string `json:"field"`
@@ -6045,13 +6045,13 @@ type DocumentStyleRequest struct {
 		// EmailHeaderType MoneyHarpy extension. The header of emails; empty for none.
 		EmailHeaderType *DocumentStyleRequestDocumentStyleEmailHeaderType `json:"email_header_type,omitempty"`
 
-		// EmailLabelEnabled MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails (Moneybird's email_moneybird_label_enabled).
-		EmailLabelEnabled *bool `json:"email_label_enabled,omitempty"`
-
 		// EmailLogoDisplayWidth MoneyHarpy extension. Width of the email logo in percent, 10 to 100.
-		EmailLogoDisplayWidth *int                 `json:"email_logo_display_width,omitempty"`
-		EstimateMetadataLeft  *[]DocumentStyleLine `json:"estimate_metadata_left,omitempty"`
-		EstimateMetadataRight *[]DocumentStyleLine `json:"estimate_metadata_right,omitempty"`
+		EmailLogoDisplayWidth *int `json:"email_logo_display_width,omitempty"`
+
+		// EmailMoneybirdLabelEnabled MoneyHarpy extension. Show "Sent with MoneyHarpy" under emails. Named as in Moneybird's document style form.
+		EmailMoneybirdLabelEnabled *bool                `json:"email_moneybird_label_enabled,omitempty"`
+		EstimateMetadataLeft       *[]DocumentStyleLine `json:"estimate_metadata_left,omitempty"`
+		EstimateMetadataRight      *[]DocumentStyleLine `json:"estimate_metadata_right,omitempty"`
 
 		// EstimateRecipientAddress MoneyHarpy extension. The same for quotes.
 		EstimateRecipientAddress *[]DocumentStyleLine `json:"estimate_recipient_address,omitempty"`
@@ -6088,11 +6088,11 @@ type DocumentStyleRequest struct {
 		// PublicViewBackgroundColor MoneyHarpy extension. The page colour of public views.
 		PublicViewBackgroundColor *DocumentStyleRequestDocumentStylePublicViewBackgroundColor `json:"public_view_background_color,omitempty"`
 
-		// PublicViewLabelEnabled MoneyHarpy extension. Show "Made with MoneyHarpy" on public views (Moneybird's public_view_moneybird_label_enabled).
-		PublicViewLabelEnabled *bool `json:"public_view_label_enabled,omitempty"`
-
 		// PublicViewLogoDisplaySize MoneyHarpy extension. Size of the public view logo in percent, 10 to 100.
 		PublicViewLogoDisplaySize *int `json:"public_view_logo_display_size,omitempty"`
+
+		// PublicViewMoneybirdLabelEnabled MoneyHarpy extension. Show "Made with MoneyHarpy" on public views. Named as in Moneybird's document style form.
+		PublicViewMoneybirdLabelEnabled *bool `json:"public_view_moneybird_label_enabled,omitempty"`
 
 		// SenderAddressWidth MoneyHarpy extension. Width of the sender address in pixels, 100 to 400.
 		SenderAddressWidth *int `json:"sender_address_width,omitempty"`

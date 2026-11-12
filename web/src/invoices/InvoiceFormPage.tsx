@@ -16,10 +16,11 @@ import { useCustomFields, useIdentities } from '../settings/queries'
 import { AddInvoiceDialog, type ChosenContact, type InvoiceSetup } from './AddInvoiceDialog'
 import { applyBelow, moveRow, quantityLabel } from './details'
 import { type DetailRow, DetailsEditor } from './DetailsEditor'
+import { detailField, detailOf, type NewEntity, type NewEntityKey } from './newEntity'
 import { closeOnEnter, InPlace } from './InPlace'
 import { DateView, DetailsView, Paper, RecipientContent, SenderAddress, type ShownLine } from './InvoicePaper'
 import { LayoutPicker } from './LayoutPicker'
-import { addDays, addressLines, daysBetween, documentDate, percentText, senderEntries, today } from './paper'
+import { addDays, addressLines, daysBetween, documentDate, percentText, senderEntries, today, withWebsite } from './paper'
 import { invoiceTitle, type SalesInvoice, type SalesInvoiceChanges, useNextDraftId, useSaveSalesInvoice } from './queries'
 import { computeTotals, parseCents, parsePercentage, parseQuantity } from './totals'
 import { type TotalRow, TotalsTable } from './TotalsTable'
@@ -30,7 +31,11 @@ import './editor.css'
  * invoice's page does from the blocks of its document, and keep a number
  * filled in by hand after a save.
  */
-export type Opening = { details?: boolean; dialog?: boolean; sequenceId?: string } | null
+/**
+ * What the editor opens with: its details or popup, a sequence number chosen,
+ * and a category or VAT rate added for one of its rows.
+ */
+export type Opening = { details?: boolean; dialog?: boolean; sequenceId?: string; newEntity?: NewEntity } | null
 
 /**
  * Creates an invoice (/sales_invoices/new, ?contact_id= to start with that
@@ -174,8 +179,8 @@ function InvoiceForm(props: FormProps) {
   })
   const [discount, setDiscount] = useState(Number(invoice?.discount ?? 0) ? String(Number(invoice?.discount)) : '')
   const [conditions, setConditions] = useState(invoice?.payment_conditions ?? '')
-  const [rows, setRows] = useState<DetailRow[]>(() =>
-    invoice?.details?.length
+  const [rows, setRows] = useState<DetailRow[]>(() => {
+    const loaded = invoice?.details?.length
       ? [...invoice.details]
           .sort((a, b) => (a.row_order ?? 0) - (b.row_order ?? 0))
           .map((d) => ({
@@ -183,8 +188,12 @@ function InvoiceForm(props: FormProps) {
             tax_rate_id: d.tax_rate_id ?? defaultRate, ledger_account_id: d.ledger_account_id ?? '', period: d.period ?? '', savedPeriod: d.period ?? '',
             product_id: d.product_id ? String(d.product_id) : '',
           }))
-      : [blank(defaultRate)],
-  )
+      : [blank(defaultRate)]
+    // Back from adding a category or VAT rate for a row, it is chosen there, as Moneybird's new_entity_field does.
+    const entity = opening?.newEntity
+    const added = entity ? detailOf(entity.field) : null
+    return entity && added ? loaded.map((r, i) => (i === added.index ? { ...r, [added.key]: entity.id } : r)) : loaded
+  })
   const [removed, setRemoved] = useState<string[]>([])
   const [editingLines, setEditingLines] = useState(!!opening?.details)
   // A new invoice starts in the popup, as on Moneybird.
@@ -197,7 +206,7 @@ function InvoiceForm(props: FormProps) {
   const allStyles = styles.data ?? []
   const style = allStyles.find((s) => s.id === setup.styleId) ?? allStyles.find((s) => s.default) ?? allStyles[0]
   const allIdentities = identities.data ?? []
-  const sender = allIdentities.find((i) => i.id === style?.identity_id) ?? allIdentities.find((i) => i.default) ?? allIdentities[0]
+  const sender = withWebsite(allIdentities.find((i) => i.id === style?.identity_id) ?? allIdentities.find((i) => i.default) ?? allIdentities[0], administration.data)
   const pricesInclTax = setup.inclTax ?? flow?.prices_are_incl_tax ?? false
   const currency = invoice?.currency ?? flow?.currency ?? administration.data?.currency ?? 'EUR'
   const customFields = (fields.data ?? []).filter((f) => f.source === 'sales_invoice')
@@ -317,14 +326,17 @@ function InvoiceForm(props: FormProps) {
     })
   }
   /**
-   * "Add Category..." in the details: Moneybird's Add category in this tab,
-   * which comes back to the invoice with its details open. Moneybird keeps a
-   * draft as it is typed; here the invoice is saved first, so nothing typed is
-   * lost, and stays put when it can't be saved.
+   * "Add Category..." and "Add VAT rate..." of a row: Moneybird's Add category
+   * or Add VAT rate in this tab, with new_entity_field naming the row's field,
+   * which comes back to the invoice with its details open and the new one on
+   * that row. Moneybird keeps a draft as it is typed; here the invoice is saved
+   * first, so nothing typed is lost, and stays put when it can't be saved.
    */
-  const addCategory = () => {
-    const go = (id: string) =>
-      navigate(`/${administrationId}/ledger_accounts/blueprints?${new URLSearchParams({ return_to: `/${administrationId}/sales_invoices/${id}`, source: 'sales_invoice' })}`)
+  const addEntity = (index: number, key: NewEntityKey) => {
+    const go = (id: string) => {
+      const query = new URLSearchParams({ return_to: `/${administrationId}/sales_invoices/${id}`, ...(key === 'ledger_account_id' ? { source: 'sales_invoice' } : {}), new_entity_field: detailField(index, key) })
+      navigate(`/${administrationId}/${key === 'ledger_account_id' ? 'ledger_accounts/blueprints' : 'tax_rates/new'}?${query}`)
+    }
     if (invoice?.id && !dirty) {
       go(invoice.id)
       return
@@ -481,7 +493,7 @@ function InvoiceForm(props: FormProps) {
                 onApplyBelow={(i, c) => setRows(applyBelow(rows, i, c))}
                 onDiscount={setDiscount}
                 onDone={linesInvalid ? undefined : () => setEditingLines(false)}
-                onAddCategory={addCategory}
+                onAddEntity={addEntity}
               />
             ) : (
               <>

@@ -397,10 +397,8 @@ func (s *Service) Credit(ctx context.Context, admin, id, user resource.ID, lineI
 	if err := s.save(ctx, admin, user, &credit, nil, true); err != nil {
 		return Invoice{}, err
 	}
-	if err := s.record(ctx, user,
-		on(credit, "credit_invoice_created_from_original").with(map[string]any{"original_invoice": orig.InvoiceID}),
-		on(orig, "credit_invoice_created").linked(EntityType, credit.ID),
-	); err != nil {
+	// Moneybird records the credit invoice's origin on it, and nothing on the original.
+	if err := s.record(ctx, user, on(credit, "credit_invoice_created_from_original").with(map[string]any{"original_invoice": orig.InvoiceID})); err != nil {
 		return Invoice{}, err
 	}
 	return s.one(ctx, a.ID, user, func() (Invoice, error) { return s.store.Invoice(ctx, admin, credit.ID) })

@@ -1,11 +1,12 @@
 import { type FormEvent, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { FormNotice, type FormErrors, formErrors, SelectInput, TextArea } from '../forms/Form'
-import { addressLines, defaultSenderLines } from '../invoices/paper'
+import { addressLines, defaultSenderLines, withWebsite } from '../invoices/paper'
 import { Loading } from '../layout/Loading'
 import { Menu } from '../layout/Menu'
 import { NotFoundPage } from '../layout/NotFoundPage'
@@ -67,10 +68,10 @@ export function toForm(d: DocumentStyle): StyleForm {
     email_footer_profile_subtitle: d.email_footer_profile_subtitle,
     body_background_color: d.body_background_color,
     email_font_family: d.email_font_family,
-    email_label_enabled: d.email_label_enabled,
+    email_moneybird_label_enabled: d.email_moneybird_label_enabled,
     public_view_logo_display_size: d.public_view_logo_display_size,
     public_view_background_color: d.public_view_background_color,
-    public_view_label_enabled: d.public_view_label_enabled,
+    public_view_moneybird_label_enabled: d.public_view_moneybird_label_enabled,
     checkout_show_address: d.checkout_show_address,
     checkout_show_phone_field: d.checkout_show_phone_field,
     checkout_for_business: d.checkout_for_business,
@@ -157,7 +158,8 @@ function Editor({ administrationId, style, identities, customFields, tab, langua
   const data = usePreviewData(administrationId, i18n.getFixedT(language))
   const back = `/${administrationId}/settings/invoices_and_estimates#document-styles`
   const base = `/${administrationId}/document_styles/${style.id}`
-  const sender = identities.find((i) => i.id === style.identity_id) ?? identities.find((i) => i.default) ?? identities[0]
+  const administration = useAdministration(administrationId)
+  const sender = withWebsite(identities.find((i) => i.id === style.identity_id) ?? identities.find((i) => i.default) ?? identities[0], administration.data)
   const errors = formErrors(save.error ?? remove.error, fieldLabels(t))
   const names = Object.fromEntries(customFields.map((f) => [`custom_field_${f.id}`, f.name]))
   const set = <K extends keyof StyleForm>(key: K, value: StyleForm[K]) => setForm((f) => ({ ...f, [key]: value }))

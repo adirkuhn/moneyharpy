@@ -205,7 +205,7 @@ func TestRecurringSalesInvoiceWebhooks(t *testing.T) {
 	api, recurrings, create := recurringSetup(t, owner)
 	rc := newReceiver(t)
 	wantStatus(t, owner.do(http.MethodPatch, "/api/instance/settings", map[string]bool{"webhooks_allow_local": true}), http.StatusOK)
-	wantStatus(t, owner.do(http.MethodPost, api+"/webhooks", map[string]any{"url": rc.srv.URL, "enabled_events": []string{"recurring_sales_invoice", "sales_invoice_created"}}), http.StatusCreated)
+	wantStatus(t, owner.do(http.MethodPost, api+"/webhooks", map[string]any{"url": rc.srv.URL, "enabled_events": []string{"recurring_sales_invoice", "sales_invoice_created_based_on_recurring"}}), http.StatusCreated)
 
 	r := create("100", nil)
 	wantStatus(t, owner.do(http.MethodPatch, recurrings+"/"+r.ID, map[string]any{"recurring_sales_invoice": map[string]any{"reference": "Contract 8"}}), http.StatusOK)
@@ -228,7 +228,7 @@ func TestRecurringSalesInvoiceWebhooks(t *testing.T) {
 	}
 	slices.Sort(actions)
 	want := []string{"recurring_sales_invoice_created", "recurring_sales_invoice_created", "recurring_sales_invoice_deactivated",
-		"recurring_sales_invoice_destroyed", "recurring_sales_invoice_invoice_created", "recurring_sales_invoice_updated", "sales_invoice_created"}
+		"recurring_sales_invoice_destroyed", "recurring_sales_invoice_invoice_created", "recurring_sales_invoice_updated", "sales_invoice_created_based_on_recurring"}
 	if !slices.Equal(actions, want) {
 		t.Errorf("actions = %v, want %v", actions, want)
 	}

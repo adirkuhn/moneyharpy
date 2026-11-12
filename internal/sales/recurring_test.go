@@ -183,6 +183,32 @@ func TestDeactivateAndDeleteRecurring(t *testing.T) {
 	}
 }
 
+// An invoice a subscription's recurring invoice made tells so, with
+// Moneybird's sales_invoice_created_based_on_subscription; the subscriptions
+// service sends its webhook once it has completed the invoice.
+func TestInvoicesOfASubscriptionTellTheyComeFromIt(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	r := recurring(t, h, "2026-11-01", RecurringChanges{})
+	sub := resource.ID(77)
+	stored := h.store.recurring[r.ID]
+	stored.SubscriptionID = &sub
+	h.store.recurring[r.ID] = stored
+	if err := h.svc.Work(ctx); err != nil {
+		t.Fatal(err)
+	}
+	made := h.store.fromRecurring(r.ID)
+	if len(made) != 1 {
+		t.Fatalf("made %d invoices", len(made))
+	}
+	if got := actions(t, h, made[0].ID); !slices.Equal(got, []string{"sales_invoice_created_based_on_subscription"}) {
+		t.Errorf("history = %v", got)
+	}
+	if slices.Contains(h.notifier.actions, "sales_invoice_created_based_on_recurring") || slices.Contains(h.notifier.actions, "sales_invoice_created") {
+		t.Errorf("webhook events = %v", h.notifier.actions)
+	}
+}
+
 func TestWorkerMakesTheInvoicesThatAreDueAndCatchesUp(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()
@@ -222,6 +248,13 @@ func TestWorkerMakesTheInvoicesThatAreDueAndCatchesUp(t *testing.T) {
 	}
 	if n := countOf(h.notifier.actions, "recurring_sales_invoice_invoice_created"); n != 2 {
 		t.Errorf("invoice created events = %d in %v", n, h.notifier.actions)
+	}
+	// Moneybird's event of an invoice a recurring invoice made.
+	if n := countOf(h.notifier.actions, "sales_invoice_created_based_on_recurring"); n != 2 || slices.Contains(h.notifier.actions, "sales_invoice_created") {
+		t.Errorf("sales invoice events = %v", h.notifier.actions)
+	}
+	if got := actions(t, h, first.ID); !slices.Equal(got, []string{"sales_invoice_created_based_on_recurring"}) {
+		t.Errorf("history = %v", got)
 	}
 	list, _, err := h.svc.List(ctx, adminID, owner, Query{RecurringSalesInvoiceID: &r.ID})
 	if err != nil || len(list) != 2 {

@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { LedgerAccount } from '../bookkeeping/queries'
 import { renderAt } from '../test/render'
 import { server, workflow } from '../test/server'
-import { cells, choose, contactCounts, creating, draft, invoice, invoicePaper, loaded, sales, sidebar, stamp, stateLabel } from './testkit'
+import { cells, choose, contactCounts, creating, draft, invoice, invoicePaper, loaded, sales, senderStyle, sidebar, stamp, stateLabel } from './testkit'
 
 describe('an invoice', () => {
   it("shows the invoice as its document with Moneybird's action bar and sidebar", async () => {
@@ -18,6 +18,8 @@ describe('an invoice', () => {
     const doc = invoicePaper('Invoice 2026-0001')
     expect(within(doc).getByRole('heading', { level: 2 })).toHaveTextContent('Factuur 2026-0001')
     expect(within(doc).getByText('Order 12')).toBeInTheDocument()
+    // Moneybird's default layout prints the reference and the dates, no client number.
+    expect(within(doc).queryByText(/Klantnummer/)).toBeNull()
     const lines = within(doc).getByRole('table', { name: 'Factuurregels' })
     expect(cells(within(lines).getAllByRole('row')[1]!)).toEqual(['2 x', 'Consulting', '€ 100,00', '€ 200,00', '21%'])
     const totals = within(doc).getByRole('table', { name: 'Totals' })
@@ -297,7 +299,19 @@ describe('an invoice', () => {
     expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/901$/)
   })
 
-  it('can still be edited with a payment registered, but not deleted', async () => {
+  it("prints the details the layout puts beside the title, as Moneybird's document does", async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/document_styles', () => HttpResponse.json([{
+      ...senderStyle, invoice_metadata_left: [{ field: 'reference' }, { field: 'customer_id' }],
+    }])))
+    renderAt('/11/sales_invoices/901')
+    const doc = await screen.findByRole('document', { name: 'Invoice 2026-0001' })
+    expect(within(doc).getByText('Order 12')).toBeInTheDocument()
+    expect(await within(doc).findByText('Klantnummer:')).toBeInTheDocument()
+    expect(within(doc).getByText('Klantnummer:').parentElement).toHaveTextContent('Klantnummer: 1')
+  })
+
+  it('can still be edited and deleted with a payment registered, its payments going along as at Moneybird', async () => {
     server.use(...loaded())
     server.use(http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice({
       total_unpaid: '142.0',
@@ -308,7 +322,7 @@ describe('an invoice', () => {
     expect(within(invoicePaper('Invoice 2026-0001')).getByRole('button', { name: 'Edit invoice details' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Register payment' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Extra' }))
-    expect(screen.queryByRole('button', { name: 'Delete invoice' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Delete invoice' })).toBeInTheDocument()
   })
 
   it('warns before a sent invoice is deleted, offering a credit note instead', async () => {

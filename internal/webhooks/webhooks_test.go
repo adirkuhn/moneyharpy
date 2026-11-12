@@ -271,7 +271,8 @@ func TestSubscriptions(t *testing.T) {
 		}
 	}
 	for _, e := range Events {
-		group := false
+		// Moneybird lists no group for its credit invoice event.
+		group := e == "credit_invoice_created_from_original"
 		for _, g := range Groups {
 			group = group || strings.HasPrefix(e, g+"_")
 		}

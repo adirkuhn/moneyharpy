@@ -62,7 +62,11 @@ describe('the history of an invoice', () => {
     expect(eventText('sales_invoice_state_changed_to_paid')).toEqual({ key: 'paid' })
     expect(eventText('sales_invoice_send_manually')).toEqual({ key: 'sentManually' })
     expect(eventText('credit_invoice_created_from_original')).toEqual({ key: 'createdFromOriginal' })
-    expect(eventText('credit_invoice_created')).toEqual({ key: 'creditCreated' })
+    expect(eventText('sales_invoice_created_from_original')).toEqual({ key: 'createdFromCopy' })
+    expect(eventText('sales_invoice_created_based_on_recurring')).toEqual({ key: 'createdFromRecurring' })
+    expect(eventText('sales_invoice_created_based_on_subscription')).toEqual({ key: 'createdFromSubscription' })
+    // Moneybird has no event for the original of a credit invoice.
+    expect(eventText('credit_invoice_created')).toEqual({ key: 'other', action: 'credit invoice created' })
     expect(eventText('sales_invoice_state_changed_to_late')).toEqual({ key: 'stateChanged', state: 'late' })
     expect(eventText('something_new')).toEqual({ key: 'other', action: 'something new' })
   })
