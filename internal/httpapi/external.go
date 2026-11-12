@@ -45,7 +45,7 @@ type externalSalesInvoiceJSON struct {
 	MarkedUncollectibleOn *string           `json:"marked_uncollectible_on"`
 	Notes                 []noteJSON        `json:"notes"`
 	Attachments           []attachmentJSON  `json:"attachments"`
-	Events                []any             `json:"events"`
+	Events                []eventJSON       `json:"events"`
 	TaxTotals             []taxTotalJSON    `json:"tax_totals"`
 	URI                   string            `json:"uri"`
 }
@@ -68,7 +68,7 @@ func (s *server) toExternalSalesInvoice(e sales.ExternalInvoice, contact *contac
 		PricesAreInclTax: e.PricesAreInclTax, TotalPriceExclTax: e.Totals.ExclTax.String(), TotalPriceExclTaxBase: e.Totals.ExclTax.String(),
 		TotalPriceInclTax: e.Totals.InclTax.String(), TotalPriceInclTaxBase: e.Totals.InclTax.String(), TotalTax: e.Totals.Tax.String(),
 		MarkedDubiousOn: dateText(e.MarkedDubiousOn), MarkedUncollectibleOn: dateText(e.MarkedUncollectibleOn), Notes: []noteJSON{},
-		Attachments: []attachmentJSON{}, Events: []any{}, TaxTotals: []taxTotalJSON{}, URI: e.Ref().URI(),
+		Attachments: []attachmentJSON{}, Events: toEvents(e.Events), TaxTotals: []taxTotalJSON{}, URI: e.Ref().URI(),
 	}
 	if e.ContactID != 0 {
 		out.ContactID = ptr(e.ContactID.String())
