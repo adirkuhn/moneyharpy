@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
 import { formatAmount } from '../banking/queries'
 import { useTaxRates } from '../bookkeeping/queries'
 import { contactName } from '../contacts/queries'
@@ -22,7 +21,7 @@ type Props = {
   editable: boolean
   /** The category the sidebar points at, whose lines stand out. */
   highlight?: string
-  /** Asks before the editor opens; without it the blocks open the editor straight away. */
+  /** Opens the editor in place, asking first. */
   onEdit?: (opening: Opening) => void
 }
 
@@ -32,7 +31,6 @@ type Props = {
  */
 export function InvoiceDocument({ administrationId, invoice: inv, editable, highlight, onEdit }: Props) {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
   const rates = useTaxRates(administrationId)
   const workflows = useWorkflows(administrationId)
   const styles = useDocumentStyles(administrationId)
@@ -82,18 +80,8 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
   })
   const contact = inv.contact
   const recipient = contact ? [contactName(contact), ...addressLines(contact)] : []
-  const edit = `/${administrationId}/sales_invoices/${inv.id}/edit`
-  // A sent invoice asks first, as Moneybird warns before it is edited.
-  const open = (opening: Opening) => ({
-    to: edit,
-    state: opening,
-    onClick: (e: React.MouseEvent) => {
-      if (onEdit) {
-        e.preventDefault()
-        onEdit(opening)
-      }
-    },
-  })
+  // The page asks first, as Moneybird warns before a sent invoice is edited, then edits it in place.
+  const open = (opening: Opening) => ({ type: 'button' as const, onClick: () => onEdit?.(opening) })
   const ledger = (i: number) => details[i]?.ledger_account_id ?? ''
 
   return (
@@ -107,9 +95,9 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
           </div>
           <div className="invoice-paper__recipient">
             {editable ? (
-              <Link className="invoice-paper__recipient-button invoice-document__recipient" aria-label={t('invoices.view.editContact')} {...open({ dialog: true })}>
+              <button className="invoice-paper__recipient-button invoice-document__recipient" aria-label={t('invoices.view.editContact')} {...open({ dialog: true })}>
                 <RecipientContent chosen lines={recipient} />
-              </Link>
+              </button>
             ) : (
               <div className="invoice-paper__recipient-button invoice-document__recipient">
                 <RecipientContent chosen lines={recipient} editable={false} />
@@ -119,7 +107,7 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
           <SenderAddress dt={dt} entries={senderEntries(style?.invoice_sender_address, sender)} />
         </div>
 
-        <Block editable={editable} marker={<Link className="invoice-document__marker" aria-label={t('invoices.settingsTitle')} title={t('invoices.settingsTitle')} {...open({ dialog: true })}><ListIcon kind="edit" /></Link>}>
+        <Block editable={editable} marker={<button className="invoice-document__marker" aria-label={t('invoices.settingsTitle')} title={t('invoices.settingsTitle')} {...open({ dialog: true })}><ListIcon kind="edit" /></button>}>
           <div className="invoice-paper__heading">
             <div className="invoice-paper__heading-text">
               <h2 className="invoice-paper__title">{dt('invoices.document.invoice')} {inv.invoice_id ? number : <em className="invoice-paper__draft">{number}</em>}</h2>
@@ -141,7 +129,7 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
             dt={dt}
             lines={lines}
             empty={{ quantity: '1 x', description: t('invoices.editor.noDetails'), price: cents(0), total: cents(0), vat: '' }}
-            onEdit={editable ? () => (onEdit ? onEdit({ details: true }) : navigate(edit, { state: { details: true } satisfies Opening })) : undefined}
+            onEdit={editable ? () => onEdit?.({ details: true }) : undefined}
             rowClass={(i) => (highlight && ledger(i) === highlight ? 'is-highlighted' : undefined)}
           />
           <TotalsTable rows={totalRows} />
@@ -150,7 +138,7 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
         <Block
           editable={editable}
           className="invoice-paper__footer"
-          marker={<Link className="invoice-document__marker" aria-label={t('invoices.view.editConditions')} title={t('invoices.view.editConditions')} {...open(null)}><ListIcon kind="edit" /></Link>}
+          marker={<button className="invoice-document__marker" aria-label={t('invoices.view.editConditions')} title={t('invoices.view.editConditions')} {...open(null)}><ListIcon kind="edit" /></button>}
         >
           {inv.payment_conditions && <p className="invoice-paper__conditions">{inv.payment_conditions}</p>}
           {payBefore && <p className="invoice-paper__pay">{payBefore}</p>}

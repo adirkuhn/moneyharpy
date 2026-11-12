@@ -110,7 +110,11 @@ type EntryQuery struct {
 	ProjectID       *resource.ID
 	NoProject       bool
 	AccountType     string
-	Page, PerPage   int
+	// DocumentType and DocumentID select one document's entries, a
+	// MoneyHarpy extension; without a period they cover every date.
+	DocumentType  string
+	DocumentID    *resource.ID
+	Page, PerPage int
 }
 
 // Store reads the journal.
@@ -227,13 +231,22 @@ func (s *Service) Entries(ctx context.Context, admin, user resource.ID, period s
 	if err != nil {
 		return nil, 0, err
 	}
-	if q.Period, err = ParseReportPeriod(period, today(a, s.now())); err != nil {
+	hasDocument := q.DocumentID != nil
+	switch {
+	case hasDocument && q.DocumentType == "":
+		return nil, 0, invalid("document_type", "can't be blank with a document_id")
+	case !hasDocument && q.DocumentType != "":
+		return nil, 0, invalid("document_id", "can't be blank with a document_type")
+	}
+	if hasDocument && period == "" {
+		q.Period = money.Period{From: time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC), To: time.Date(9999, 12, 31, 0, 0, 0, 0, time.UTC)}
+	} else if q.Period, err = ParseReportPeriod(period, today(a, s.now())); err != nil {
 		return nil, 0, invalid("period", err.Error())
 	}
 	hasContact, hasProject := q.ContactID != nil || q.NoContact, q.ProjectID != nil || q.NoProject
 	switch {
-	case q.LedgerAccountID == nil && !hasContact && !hasProject:
-		return nil, 0, invalid("base", "Give a ledger_account_id, contact_id or project_id")
+	case q.LedgerAccountID == nil && !hasContact && !hasProject && !hasDocument:
+		return nil, 0, invalid("base", "Give a ledger_account_id, contact_id, project_id or document_id")
 	case q.AccountType != "" && !hasContact && !hasProject:
 		return nil, 0, invalid("account_type", "needs a contact_id or project_id")
 	}

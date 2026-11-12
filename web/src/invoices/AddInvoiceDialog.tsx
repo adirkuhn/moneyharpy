@@ -284,7 +284,7 @@ export function AddInvoiceDialog(props: Props) {
 }
 
 /** A short explanation behind an information mark, as Moneybird's tooltips. */
-function Tip({ text }: { text: string }) {
+export function Tip({ text }: { text: string }) {
   return (
     <span className="add-invoice__tip" title={text}>
       <InfoIcon />

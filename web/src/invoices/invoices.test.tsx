@@ -205,7 +205,8 @@ async function pickContact() {
 /** The texts of a row's cells, with the spaces money is written with made plain. */
 const cells = (row: HTMLElement) => within(row).getAllByRole('cell').map((c) => c.textContent?.replace(/\s/g, ' '))
 
-const paper = () => screen.getByRole('document', { name: 'Invoice preview' })
+/** The editor's document: a preview on a new invoice, the draft itself on its page. */
+const paper = () => screen.getByRole('document', { name: /^Invoice (preview|Draft #\d+)$/ })
 
 /** The details editor and its detail rows (the header row left out). */
 const editor = () => screen.getByRole('table', { name: 'Invoice details' })
@@ -348,7 +349,7 @@ describe('adding an invoice', () => {
     expect(within(paper()).getByRole('button', { name: /Invoice date/ })).toHaveTextContent('Invoice date:12/01/2026')
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902\/edit$/))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
     expect(sent.post).toEqual({
       contact_id: '701', reference: '', invoice_date: '2026-12-01', invoice_sequence_id: '0100', workflow_id: '603', first_due_interval: 15,
       document_style_id: '702', prices_are_incl_tax: true, details_attributes: [],
@@ -454,7 +455,7 @@ describe('the invoice details editor', () => {
     await userEvent.type(within(popup()).getByLabelText('Reference'), 'Order 12')
     // "Invoice details" saves the draft and opens its details.
     await userEvent.click(within(popup()).getByRole('button', { name: 'Invoice details' }))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902\/edit$/))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
     expect(sent.post).toMatchObject({ contact_id: '701', reference: 'Order 12' })
 
     const table = await screen.findByRole('table', { name: 'Invoice details' })
@@ -482,7 +483,7 @@ describe('the invoice details editor', () => {
     // "Add Category..." opens Moneybird's Add category in a new tab, which comes back to this invoice.
     const open = vi.spyOn(window, 'open').mockReturnValue(null)
     await userEvent.selectOptions(within(rows[1]!).getByLabelText('Category'), 'Add Category...')
-    expect(open).toHaveBeenCalledWith(`/11/ledger_accounts/blueprints?return_to=${encodeURIComponent('/11/sales_invoices/902/edit')}&source=sales_invoice`, '_blank', 'noopener')
+    expect(open).toHaveBeenCalledWith(`/11/ledger_accounts/blueprints?return_to=${encodeURIComponent('/11/sales_invoices/902')}&source=sales_invoice`, '_blank', 'noopener')
     expect(within(rows[1]!).getByLabelText('Category')).toHaveValue('8001')
     open.mockRestore()
 
@@ -519,8 +520,8 @@ describe('the invoice details editor', () => {
       http.get('*/api/v2/11/products', ({ request }) =>
         HttpResponse.json(new URL(request.url).searchParams.get('query') === 'adv' ? [product] : [], { headers: { 'X-Total-Count': '1' } })),
     )
-    renderAt('/11/sales_invoices/902/edit')
-    await screen.findByRole('heading', { level: 1, name: 'Edit invoice Draft #12' })
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #12' })
     await editLines()
     await userEvent.click(screen.getByRole('button', { name: 'Add detail' }))
     await userEvent.click(screen.getByRole('button', { name: 'Add detail' }))
@@ -576,8 +577,8 @@ describe('the invoice details editor', () => {
     server.use(...loaded())
     server.use(...creating({}))
     server.use(http.patch('*/api/v2/11/sales_invoices/902', () => HttpResponse.json({ error: { 'details_attributes.0.price': ['is not an amount'] } }, { status: 422 })))
-    renderAt('/11/sales_invoices/902/edit')
-    await screen.findByRole('heading', { level: 1, name: 'Edit invoice Draft #12' })
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #12' })
     await editLines()
     await userEvent.type(within(detailRows()[0]!).getByLabelText('Description'), 'Consulting')
     await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
@@ -589,8 +590,8 @@ describe('the invoice details editor', () => {
     const sent: { patch?: Record<string, unknown> } = {}
     server.use(...loaded())
     server.use(...creating(sent))
-    renderAt('/11/sales_invoices/902/edit')
-    await screen.findByRole('heading', { level: 1, name: 'Edit invoice Draft #12' })
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #12' })
 
     await userEvent.click(within(paper()).getByRole('button', { name: /Factuurdatum/ }))
     const date = within(paper()).getByLabelText('Invoice date')
@@ -620,8 +621,8 @@ describe('the invoice details editor', () => {
   it('takes VAT out of prices that include it', async () => {
     server.use(...loaded())
     server.use(...creating({}, { ...empty, prices_are_incl_tax: true }))
-    renderAt('/11/sales_invoices/902/edit')
-    await screen.findByRole('heading', { level: 1, name: 'Edit invoice Draft #12' })
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #12' })
     await editLines()
     await userEvent.type(within(detailRows()[0]!).getByLabelText('Price'), '121')
     const totals = within(editorCard()).getByRole('table', { name: 'Totals' })
@@ -633,8 +634,8 @@ describe('the invoice details editor', () => {
     const sent: { patch?: Record<string, unknown> } = {}
     server.use(...loaded())
     server.use(...creating(sent))
-    renderAt('/11/sales_invoices/902/edit')
-    await screen.findByRole('heading', { level: 1, name: 'Edit invoice Draft #12' })
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #12' })
     expect(screen.queryByRole('dialog')).toBeNull()
     await userEvent.click(within(paper()).getByRole('button', { name: 'Contact' }))
     const dialog = popup()
@@ -643,7 +644,7 @@ describe('the invoice details editor', () => {
     await userEvent.type(within(dialog).getByLabelText('Reference'), 'Order 13')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent.patch).toMatchObject({ reference: 'Order 13' }))
-    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902\/edit$/)
+    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/)
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     // The heading opens it too.
     await userEvent.click(within(paper()).getByRole('button', { name: 'Invoice settings' }))
@@ -668,13 +669,15 @@ describe('the invoice details editor', () => {
         return HttpResponse.json(invoice())
       }),
     )
+    // The old address of the editor leads to the invoice, which is edited in place after the warning.
     renderAt('/11/sales_invoices/901/edit')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Edit invoice 2026-0001' })).toBeInTheDocument()
-    expect(within(paper()).getByRole('button', { name: 'Contact' })).toHaveTextContent('Example Shop B.V.')
-    expect(within(paper()).getByRole('heading', { level: 2 })).toHaveTextContent('Factuur 2026-0001')
-    const shown = within(paper()).getByRole('table', { name: 'Factuurregels' })
-    expect(cells(within(shown).getAllByRole('row')[1]!)).toEqual(['2 x', 'Consulting', '€ 100,00', '€ 200,00', '21%'])
-    await editLines()
+    expect(await screen.findByRole('heading', { level: 1, name: '2026-0001' })).toBeInTheDocument()
+    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/901$/)
+    const doc = () => invoicePaper('Invoice 2026-0001')
+    await userEvent.click(within(doc()).getByRole('button', { name: 'Edit invoice details' }))
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'This invoice has been sent' })).getByRole('button', { name: 'Continue editing' }))
+    expect(await within(doc()).findByRole('button', { name: 'Contact' })).toHaveTextContent('Example Shop B.V.')
+    expect(within(doc()).getByRole('heading', { level: 2 })).toHaveTextContent('Factuur 2026-0001')
     const price = within(detailRows()[0]!).getByLabelText('Price')
     expect(price).toHaveValue('100')
     await userEvent.clear(price)
@@ -682,7 +685,9 @@ describe('the invoice details editor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Remove row 2' }))
     expect(within(within(editorCard()).getByRole('table', { name: 'Totals' })).getByRole('row', { name: /^Total/ })).toHaveTextContent('€290.40')
     await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/901$/))
+    // Saved, the document is read again.
+    expect(await within(doc()).findByRole('button', { name: 'Edit contact' })).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Invoice details' })).toBeNull()
     expect(sent.sales_invoice).toMatchObject({ contact_id: '701', reference: 'Order 12', workflow_id: '601', first_due_interval: 14 })
     expect(sent.sales_invoice?.details_attributes).toEqual([
       { id: '951', description: 'Consulting', amount: '2', price: '120', tax_rate_id: '2101', ledger_account_id: '8001', row_order: 1 },
@@ -733,16 +738,18 @@ describe('an invoice', () => {
     expect(await within(totals).findByRole('row', { name: /21% btw over €\s200,00/ })).toHaveTextContent('€ 42,00')
     expect(within(totals).getByRole('row', { name: /^Totaal/ })).toHaveTextContent('€ 242,00')
     // Its blocks open the editor, as Moneybird's blue markers do.
-    expect(within(doc).getByRole('link', { name: 'Edit contact' })).toHaveAttribute('href', '/11/sales_invoices/901/edit')
-    expect(within(doc).getByRole('link', { name: 'Invoice settings' })).toHaveAttribute('href', '/11/sales_invoices/901/edit')
-    expect(within(doc).getByRole('link', { name: 'Edit payment conditions' })).toHaveAttribute('href', '/11/sales_invoices/901/edit')
+    expect(within(doc).getByRole('button', { name: 'Edit contact' })).toBeInTheDocument()
+    expect(within(doc).getByRole('button', { name: 'Invoice settings' })).toBeInTheDocument()
+    expect(within(doc).getByRole('button', { name: 'Edit payment conditions' })).toBeInTheDocument()
 
     // The action bar.
     expect(screen.getByRole('link', { name: 'Register payment' })).toHaveAttribute('href', '/11/sales_invoices/901/payments/new')
-    expect(screen.getByRole('button', { name: 'Journal entries' })).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('button', { name: 'Journal entries' })).toHaveAttribute('aria-pressed', 'false')
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
     expect(screen.getByRole('button', { name: 'Send invoice again' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send reminder' })).toBeInTheDocument()
+    // A sent invoice is not sent in the future.
+    expect(screen.queryByRole('button', { name: 'Send in future' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Download as...' }))
     expect(screen.getByRole('link', { name: 'Invoice (PDF)' })).toHaveAttribute('href', '/api/v2/11/sales_invoices/901/download_pdf')
     expect(screen.getByRole('link', { name: 'Invoice (UBL)' })).toHaveAttribute('href', '/api/v2/11/sales_invoices/901/download_ubl')
@@ -843,11 +850,12 @@ describe('an invoice', () => {
     expect(within(created).getByText(/^By/)).toHaveTextContent('By Ann de Vries')
   })
 
-  it('sends a draft by email', async () => {
+  it('sends a draft by email, after Moneybird', async () => {
     let sent: unknown
     let current = draft
     server.use(...loaded())
     server.use(
+      http.get('*/api/v2/11/workflows', () => HttpResponse.json([workflow({ invoice_email_body: 'Dear {contact_name}, here is invoice {invoice_id}.' })])),
       http.get('*/api/v2/11/sales_invoices/902', () => HttpResponse.json(current)),
       http.patch('*/api/v2/11/sales_invoices/902/send_invoice', async ({ request }) => {
         sent = await request.json()
@@ -858,44 +866,128 @@ describe('an invoice', () => {
     renderAt('/11/sales_invoices/902')
     expect(await screen.findByRole('heading', { level: 1, name: 'Draft #3' })).toBeInTheDocument()
     expect(await stateLabel('Draft')).toBeInTheDocument()
-    // What Moneybird offers for a draft.
-    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/11/sales_invoices/902/edit')
+    // What Moneybird offers for a draft: no Edit, as the draft is edited in its document.
+    expect(screen.queryByRole('link', { name: 'Edit' })).toBeNull()
     expect(screen.queryByRole('link', { name: 'Register payment' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Journal entries' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Download as...' }))
     expect(screen.getByRole('link', { name: 'Invoice (PDF)' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Invoice (UBL)' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Extra' }))
     expect(screen.getByRole('link', { name: 'Duplicate to recurring invoice' })).toHaveAttribute('href', '/11/recurring_sales_invoices/new?from=902')
+    expect(screen.getByText('Convert to recurring').closest('.dropdown__item')).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('button', { name: 'Change layout' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Duplicate to credit note' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Delete invoice' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+    expect(screen.getByRole('button', { name: 'Send in future' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     await choose('Send', 'Send invoice')
-    const panel = screen.getByRole('region', { name: 'Send invoice' })
+    const panel = screen.getByRole('region', { name: 'Send invoice Draft #3' })
+    const methods = within(panel).getByRole('radiogroup', { name: 'Delivery method' })
+    expect(within(methods).getAllByRole('radio').map((r) => r.closest('label')?.querySelector('.send-methods__title')?.textContent)).toEqual([
+      'Send by email', 'Send via Peppol', 'Send manually', 'Send by post',
+    ])
+    expect(within(methods).getByRole('radio', { name: /Send by email/ })).toBeChecked()
+    expect(within(methods).getByRole('radio', { name: /Send via Peppol/ })).toBeDisabled()
     expect(within(panel).getByLabelText('Email address')).toHaveValue('billing@example.com')
-    await userEvent.type(within(panel).getByLabelText('Message'), 'Thanks for your order')
+    // More addresses, with the plus beside the first.
+    await userEvent.click(within(panel).getByRole('button', { name: 'Add email address' }))
+    await userEvent.type(within(panel).getByLabelText('Email address 2'), 'boss@example.com')
+    // The message starts as the workflow's email text; its placeholders are filled in when sent.
+    const message = within(panel).getByLabelText('Email message')
+    expect(message).toHaveValue('Dear {contact_name}, here is invoice {invoice_id}.')
+    await userEvent.type(message, ' Thanks for your order')
+    const ubl = within(panel).getByRole('switch', { name: /Attach UBL invoice/ })
+    await waitFor(() => expect(ubl).toBeChecked())
+    await userEvent.click(ubl)
     await userEvent.click(within(panel).getByRole('button', { name: 'Send invoice' }))
     expect(await screen.findByRole('heading', { level: 1, name: '2026-0002' })).toBeInTheDocument()
-    expect(sent).toEqual({ sales_invoice_sending: { delivery_method: 'Email', email_address: 'billing@example.com', email_message: 'Thanks for your order', deliver_ubl: false } })
+    expect(sent).toEqual({
+      sales_invoice_sending: {
+        delivery_method: 'Email', email_address: 'billing@example.com, boss@example.com',
+        email_message: 'Dear {contact_name}, here is invoice {invoice_id}. Thanks for your order', deliver_ubl: false,
+      },
+    })
     expect(await stateLabel('Open')).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Send invoice' })).toBeNull()
+    expect(screen.queryByRole('region', { name: /Send invoice/ })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Send' }))
     expect(screen.getByRole('button', { name: 'Send invoice again' })).toBeInTheDocument()
+  })
+
+  it('starts the message with the default text in the language of the invoice', async () => {
+    server.use(...loaded())
+    renderAt('/11/sales_invoices/902')
+    await choose('Send', 'Send invoice')
+    expect(within(screen.getByRole('region', { name: 'Send invoice Draft #3' })).getByLabelText('Email message')).toHaveValue(
+      'Beste {contact_name},\n\nIn de bijlage vind je factuur {invoice_id} van {invoice_date} voor {total}. We ontvangen de betaling graag uiterlijk {due_date} onder vermelding van {payment_reference}.\n\nMet vriendelijke groet,\n{company_name}',
+    )
+  })
+
+  it('marks a draft as sent without sending it', async () => {
+    let sent: unknown
+    server.use(...loaded(), http.patch('*/api/v2/11/sales_invoices/902/send_invoice', async ({ request }) => {
+      sent = await request.json()
+      return HttpResponse.json(invoice({ id: '902', invoice_id: '2026-0002', state: 'open' }))
+    }))
+    renderAt('/11/sales_invoices/902')
+    await choose('Send', 'Send invoice')
+    const panel = screen.getByRole('region', { name: 'Send invoice Draft #3' })
+    await userEvent.click(within(panel).getByRole('radio', { name: /Send manually/ }))
+    expect(within(panel).queryByLabelText('Email address')).toBeNull()
+    expect(within(panel).queryByLabelText('Email message')).toBeNull()
+    await userEvent.click(within(panel).getByRole('button', { name: 'Send invoice' }))
+    await waitFor(() => expect(sent).toEqual({ sales_invoice_sending: { delivery_method: 'Manual' } }))
+  })
+
+  it('edits a draft in its document, without an editor page of its own', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded(), ...creating(sent, draft))
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #3' })
+    const doc = invoicePaper('Invoice Draft #3')
+    // Nothing changed yet, so nothing to save.
+    expect(screen.queryByRole('button', { name: 'Save invoice' })).toBeNull()
+    await userEvent.click(within(doc).getByRole('button', { name: /payment conditions/i }))
+    await userEvent.type(within(doc).getByLabelText('Payment conditions'), 'Pay within 30 days.')
+    await userEvent.tab()
+    // Cancel puts it back as it was.
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(within(invoicePaper('Invoice Draft #3')).queryByText('Pay within 30 days.')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Save invoice' })).toBeNull()
+
+    await userEvent.click(within(invoicePaper('Invoice Draft #3')).getByRole('button', { name: /payment conditions/i }))
+    await userEvent.type(within(invoicePaper('Invoice Draft #3')).getByLabelText('Payment conditions'), 'Pay within 30 days.')
+    await userEvent.click(screen.getByRole('button', { name: 'Save invoice' }))
+    await waitFor(() => expect(sent.patch).toMatchObject({ payment_conditions: 'Pay within 30 days.' }))
+    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/)
+    // The sidebar stays beside it.
+    expect(sidebar()).toBeInTheDocument()
+  })
+
+  it('changes the layout of a draft from Extra', async () => {
+    server.use(...loaded())
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: 'Invoice Draft #3' })
+    await choose('Extra', 'Change layout')
+    expect(await screen.findByRole('region', { name: 'Select layout' })).toBeInTheDocument()
   })
 
   it("opens the editor's popup and details from the document of a draft", async () => {
     server.use(...loaded())
     renderAt('/11/sales_invoices/902')
-    await screen.findByRole('heading', { level: 1, name: 'Draft #3' })
-    await userEvent.click(within(invoicePaper('Invoice Draft #3')).getByRole('link', { name: 'Edit contact' }))
+    await screen.findByRole('document', { name: 'Invoice Draft #3' })
+    await userEvent.click(within(invoicePaper('Invoice Draft #3')).getByRole('button', { name: 'Contact' }))
     expect(await screen.findByRole('dialog', { name: 'Add invoice' })).toBeInTheDocument()
-    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902\/edit$/)
+    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/)
   })
 
   it('opens the details editor from the lines of a draft', async () => {
     server.use(...loaded())
     renderAt('/11/sales_invoices/902')
-    await screen.findByRole('heading', { level: 1, name: 'Draft #3' })
-    await userEvent.click(within(invoicePaper('Invoice Draft #3')).getByRole('button', { name: 'Edit invoice details' }))
+    await screen.findByRole('document', { name: 'Invoice Draft #3' })
+    await userEvent.click(within(invoicePaper('Invoice Draft #3')).getByRole('button', { name: /invoice details/ }))
     expect(await screen.findByRole('table', { name: 'Invoice details' })).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).toBeNull()
   })
@@ -909,10 +1001,10 @@ describe('an invoice', () => {
     expect(warning).toHaveTextContent('When you make changes, make sure to inform the recipient. Are you sure you want to edit this invoice?')
     await userEvent.click(within(warning).getByRole('button', { name: 'Cancel' }))
     expect(screen.queryByRole('alertdialog')).toBeNull()
-    await userEvent.click(within(invoicePaper('Invoice 2026-0001')).getByRole('link', { name: 'Edit contact' }))
+    await userEvent.click(within(invoicePaper('Invoice 2026-0001')).getByRole('button', { name: 'Edit contact' }))
     await userEvent.click(within(screen.getByRole('alertdialog', { name: 'This invoice has been sent' })).getByRole('button', { name: 'Continue editing' }))
     expect(await screen.findByRole('dialog', { name: 'Add invoice' })).toBeInTheDocument()
-    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/901\/edit$/)
+    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/901$/)
   })
 
   it('cannot be edited once a payment is registered', async () => {
@@ -927,24 +1019,73 @@ describe('an invoice', () => {
     expect(screen.getByRole('link', { name: 'Register payment' })).toBeInTheDocument()
   })
 
-  it('schedules a draft for a later date', async () => {
+  it('sends a draft in the future, by the way the contact prefers', async () => {
     let sent: unknown
     server.use(...loaded(), http.patch('*/api/v2/11/sales_invoices/902/send_invoice', async ({ request }) => {
       sent = await request.json()
       return HttpResponse.json({ ...draft, state: 'scheduled' })
     }))
     renderAt('/11/sales_invoices/902')
-    await choose('Send', 'Send invoice')
-    const panel = screen.getByRole('region', { name: 'Send invoice' })
-    await userEvent.selectOptions(within(panel).getByLabelText('Send by'), 'Manual')
-    expect(within(panel).queryByLabelText('Email address')).toBeNull()
-    await userEvent.click(within(panel).getByRole('checkbox', { name: 'Send on a later date' }))
-    const date = within(panel).getByLabelText('Send on')
+    await choose('Send', 'Send in future')
+    const panel = screen.getByRole('region', { name: 'Send invoice in the future' })
+    expect(panel).toHaveTextContent('The invoice will be sent automatically on the invoice date.')
+    expect(panel).toHaveTextContent('The contact prefers to receive the invoice per email at billing@example.com.')
+    const date = within(panel).getByLabelText('Send invoice on')
+    expect(date).toHaveAttribute('min', (date as HTMLInputElement).value)
     await userEvent.clear(date)
     await userEvent.type(date, '2030-01-15')
-    await userEvent.click(within(panel).getByRole('button', { name: 'Schedule invoice' }))
+    await userEvent.click(within(panel).getByRole('checkbox', { name: /Send one invoice to this contact/ }))
+    await userEvent.click(within(panel).getByRole('button', { name: 'Send invoice' }))
     expect(await stateLabel('Scheduled')).toBeInTheDocument()
-    expect(sent).toEqual({ sales_invoice_sending: { delivery_method: 'Manual', sending_scheduled: true, invoice_date: '2030-01-15' } })
+    expect(sent).toEqual({ sales_invoice_sending: { sending_scheduled: true, invoice_date: '2030-01-15', mergeable: true } })
+  })
+
+  it("shows the invoice's journal entries, by document", async () => {
+    const seen: URL[] = []
+    const paid = invoice({
+      state: 'paid', total_unpaid: '0.0',
+      payments: [{ id: '981', administration_id: '11', invoice_type: 'SalesInvoice', invoice_id: '901', price: '242.0', price_base: '242.0', payment_date: '2026-11-11', manual_payment_action: 'bank_transfer', created_at: stamp, updated_at: stamp }],
+    })
+    const entry = (id: string, document_type: 'SalesInvoice' | 'Payment', document_id: string, date: string, ledger_account_id: string, amount: string, tax_rate_id: string | null = null) =>
+      ({ id, date, document_type, document_id, ledger_account_id, amount, tax_rate_id, contact_id: '701', project_id: null, financial_account_id: null, description: null })
+    const debtors: LedgerAccount = { ...sales, id: '1300', name: 'Accounts receivable', account_type: 'current_assets', uri: '/11/ledger_accounts/1300' }
+    const vat: LedgerAccount = { ...sales, id: '1500', name: 'Payable VAT', account_type: 'current_liabilities', uri: '/11/ledger_accounts/1500' }
+    const bank: LedgerAccount = { ...sales, id: '1100', name: 'Bank', account_type: 'current_assets', uri: '/11/ledger_accounts/1100' }
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(paid)),
+      http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales, debtors, vat, bank])),
+      http.get('*/api/v2/11/reports/journal_entries', ({ request }) => {
+        const url = new URL(request.url)
+        seen.push(url)
+        const id = url.searchParams.get('document_id')
+        return HttpResponse.json(id === '901'
+          ? [entry('1', 'SalesInvoice', '901', '2026-11-01', '1300', '242.0'), entry('2', 'SalesInvoice', '901', '2026-11-01', '8001', '-200.0', '2101'), entry('3', 'SalesInvoice', '901', '2026-11-01', '1500', '-42.0', '2101')]
+          : [entry('4', 'Payment', '981', '2026-11-11', '1100', '242.0'), entry('5', 'Payment', '981', '2026-11-11', '1300', '-242.0')])
+      }),
+    )
+    renderAt('/11/sales_invoices/901')
+    const button = await screen.findByRole('button', { name: 'Journal entries' })
+    await userEvent.click(button)
+    expect(button).toHaveAttribute('aria-pressed', 'true')
+    const panel = screen.getByRole('region', { name: 'Journal entries' })
+    expect(panel).toHaveTextContent('In the background, MoneyHarpy has created the following bookings, also called Journal Entries.')
+    const table = await within(panel).findByRole('table', { name: 'Journal entries' })
+    expect(within(within(table).getAllByRole('row')[0]!).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Category', 'Debit', 'Credit', 'VAT'])
+    await waitFor(() => expect(within(table).getAllByRole('row').map((r) => r.textContent)).toEqual([
+      'CategoryDebitCreditVAT',
+      'Invoice - 2026-11-01',
+      'Accounts receivable (Balance sheet)242.00',
+      'Sales (Profit and loss statement)200.0021% btw',
+      'Payable VAT (Balance sheet)42.0021% btw',
+      'Payment - 2026-11-11',
+      'Bank (Balance sheet)242.00',
+      'Accounts receivable (Balance sheet)242.00',
+    ]))
+    expect(seen.map((u) => `${u.searchParams.get('document_type')}:${u.searchParams.get('document_id')}`).sort()).toEqual(['Payment:981', 'SalesInvoice:901'])
+    expect(seen.every((u) => !u.searchParams.has('period'))).toBe(true)
+    await userEvent.click(button)
+    expect(screen.queryByRole('region', { name: 'Journal entries' })).toBeNull()
   })
 
   it('explains when the email could not be sent', async () => {
@@ -952,7 +1093,7 @@ describe('an invoice', () => {
       HttpResponse.json({ error: { base: ['The invoice is booked but could not be emailed; check the mail settings and send it again'] } }, { status: 422 })))
     renderAt('/11/sales_invoices/902')
     await choose('Send', 'Send invoice')
-    await userEvent.click(within(screen.getByRole('region', { name: 'Send invoice' })).getByRole('button', { name: 'Send invoice' }))
+    await userEvent.click(within(screen.getByRole('region', { name: 'Send invoice Draft #3' })).getByRole('button', { name: 'Send invoice' }))
     expect(await screen.findByText(/booked but could not be emailed/)).toBeInTheDocument()
   })
 
@@ -986,7 +1127,7 @@ describe('an invoice', () => {
     )
     renderAt('/11/sales_invoices/901')
     await choose('Extra', 'Duplicate invoice')
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/904\/edit$/))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/904$/))
     expect(posted).toEqual({
       contact_id: '701', reference: 'Order 12', workflow_id: '601', document_style_id: '701', prices_are_incl_tax: false, payment_conditions: '',
       details_attributes: [{ description: 'Consulting', amount: '2', price: '100.0', tax_rate_id: '2101', ledger_account_id: '8001', row_order: 1 }],

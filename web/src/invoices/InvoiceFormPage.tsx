@@ -1,8 +1,7 @@
 import { type FormEvent, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
-import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
 import { type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
@@ -11,7 +10,6 @@ import { formErrors } from '../forms/Form'
 import { styleFileURL, useDocumentStyles, useInvoiceSettings, useWorkflows } from '../invoicing/queries'
 import { ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
-import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { MoreMenu } from '../list/ListActions'
 import { useCustomFields, useIdentities } from '../settings/queries'
@@ -22,7 +20,7 @@ import { closeOnEnter, InPlace } from './InPlace'
 import { DateView, DetailsView, Paper, RecipientContent, SenderAddress, type ShownLine } from './InvoicePaper'
 import { LayoutPicker } from './LayoutPicker'
 import { addDays, addressLines, daysBetween, documentDate, percentText, senderEntries, today } from './paper'
-import { invoiceTitle, type SalesInvoice, type SalesInvoiceChanges, useNextDraftId, useSalesInvoice, useSaveSalesInvoice } from './queries'
+import { invoiceTitle, type SalesInvoice, type SalesInvoiceChanges, useNextDraftId, useSaveSalesInvoice } from './queries'
 import { computeTotals, parseCents, parsePercentage, parseQuantity } from './totals'
 import { type TotalRow, TotalsTable } from './TotalsTable'
 import './editor.css'
@@ -36,39 +34,80 @@ export type Opening = { details?: boolean; dialog?: boolean; sequenceId?: string
 
 /**
  * Creates an invoice (/sales_invoices/new, ?contact_id= to start with that
- * contact, as a contact's Add menu and the Add contact page do) or edits one
- * (/sales_invoices/:id/edit).
+ * contact, as a contact's Add menu and the Add contact page do). A saved
+ * invoice is edited on its own page, as on Moneybird.
  */
 export function InvoiceFormPage() {
-  const { administrationId = '', invoiceId } = useParams()
+  const { administrationId = '' } = useParams()
   const [params] = useSearchParams()
   const location = useLocation()
-  const invoice = useSalesInvoice(administrationId, invoiceId)
+  const navigate = useNavigate()
   const preset = useContact(administrationId, params.get('contact_id') ?? undefined)
+  if (preset.fetchStatus === 'fetching' && !preset.data) {
+    return <Loading />
+  }
+  return (
+    <InvoiceEditor
+      mode="new"
+      administrationId={administrationId}
+      invoice={null}
+      contact={preset.data}
+      opening={location.state as Opening}
+      // The new draft opens on its own page, with what the popup asked for.
+      onSaved={(saved, opening) => navigate(`/${administrationId}/sales_invoices/${saved.id}`, { state: opening })}
+    />
+  )
+}
+
+/** The old address of the editor (/sales_invoices/:id/edit), which is now the invoice's own page. */
+export function InvoiceEditRedirect() {
+  const location = useLocation()
+  return <Navigate to={location.pathname.replace(/\/edit\/?$/, '')} replace state={location.state} />
+}
+
+type ViewMode = {
+  /** In the invoice's own page: the document is edited in place, and saved when something changed. */
+  mode: 'view'
+  /** Whether the layouts show, as Extra's Change layout asks. */
+  layoutsOpen: boolean
+  onLayoutsClose: () => void
+  /** Puts the editor back as the invoice was. */
+  onCancel: () => void
+  /** The category the sidebar points at, whose lines stand out. */
+  highlight?: string
+}
+
+type EditorProps = {
+  administrationId: string
+  invoice: SalesInvoice | null
+  contact?: Contact
+  opening: Opening
+  /** After a save: the saved invoice, and what the editor should open again. */
+  onSaved: (saved: SalesInvoice, opening: Opening) => void
+} & ({ mode: 'new' } | ViewMode)
+
+/**
+ * The invoice editor once what it draws with is loaded: the rates, the
+ * workflows, the layouts and the senders.
+ */
+export function InvoiceEditor(props: EditorProps) {
+  const { administrationId, invoice: inv } = props
   const rates = useTaxRates(administrationId)
   // The document's language, layout and sender come from these, so it waits for them.
   const workflows = useWorkflows(administrationId)
   const styles = useDocumentStyles(administrationId)
   const identities = useIdentities(administrationId)
-  if (invoiceId && invoice.error instanceof ApiError && invoice.error.status < 500) {
-    return <NotFoundPage />
-  }
-  const settled = [workflows, styles, identities].every((q) => !q.isPending) && !(preset.fetchStatus === 'fetching' && !preset.data)
-  if ((invoiceId && !invoice.data) || !rates.data || !settled) {
+  if (!rates.data || [workflows, styles, identities].some((q) => q.isPending)) {
     return <Loading />
   }
-  const inv = invoice.data ?? null
   // Rates the invoice already uses stay available even when they were turned off since.
   const usable = rates.data.filter((r) => r.tax_rate_type === 'sales_invoice' && (r.active || inv?.details?.some((d) => d.tax_rate_id === r.id)))
   return (
     <InvoiceForm
       // A saved invoice starts the editor again from what the server keeps, with the ids of new lines.
       key={inv ? `${inv.id}-${inv.version ?? ''}` : 'new'}
-      administrationId={administrationId}
-      invoice={inv}
-      contact={preset.data}
+      {...props}
       rates={usable}
-      opening={location.state as Opening}
     />
   )
 }
@@ -89,18 +128,22 @@ const validDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v)
 const chosen = (c: Pick<Contact, 'id' | 'company_name' | 'firstname' | 'lastname' | 'address1' | 'address2' | 'zipcode' | 'city'>): ChosenContact =>
   ({ id: String(c.id ?? ''), name: contactName(c), address: addressLines(c) })
 
-type FormProps = { administrationId: string; invoice: SalesInvoice | null; contact?: Contact; rates: TaxRate[]; opening: Opening }
+type FormProps = EditorProps & { rates: TaxRate[] }
 
 /**
  * The invoice editor, after Moneybird's "Add invoice": the invoice drawn as
  * its document, edited in place, with the "Add invoice" popup for the
  * contact and settings, and the details editor for its lines.
  */
-function InvoiceForm({ administrationId, invoice, contact: preset, rates, opening }: FormProps) {
+function InvoiceForm(props: FormProps) {
+  const { administrationId, invoice, contact: preset, rates, opening, onSaved } = props
+  const view = props.mode === 'view' ? props : null
   const nextDraftId = useNextDraftId(administrationId, !invoice)
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
   const { pathname } = useLocation()
+  const [ownLayoutsOpen, setOwnLayoutsOpen] = useState(false)
+  const layoutsOpen = view ? view.layoutsOpen : ownLayoutsOpen
+  const closeLayouts = view ? view.onLayoutsClose : () => setOwnLayoutsOpen(false)
   const save = useSaveSalesInvoice(administrationId, invoice?.id)
   const administration = useAdministration(administrationId)
   const accounts = useLedgerAccounts(administrationId)
@@ -143,7 +186,6 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates, openin
   )
   const [removed, setRemoved] = useState<string[]>([])
   const [editingLines, setEditingLines] = useState(!!opening?.details)
-  const [layoutsOpen, setLayoutsOpen] = useState(false)
   // A new invoice starts in the popup, as on Moneybird.
   const [dialogOpen, setDialogOpen] = useState(!invoice || !!opening?.dialog)
   const before = useRef<InvoiceSetup>(setup)
@@ -242,25 +284,34 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates, openin
   }
 
   const list = `/${administrationId}/sales_invoices`
-  const back = invoice ? `${list}/${invoice.id}` : list
+  // What the invoice was when the editor opened, so its own page shows Save only once something changed.
+  const sent = JSON.stringify(body())
+  const saved = useRef(sent)
+  const dirty = sent !== saved.current
 
-  /** The page's Save: the invoice is saved and shown. */
+  /** The Save under the document: the invoice is saved and shown. */
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    save.mutate(body(), { onSuccess: (saved) => navigate(`${list}/${saved.id}`) })
+    save.mutate(body(), {
+      onSuccess: (s) => {
+        saved.current = sent
+        onSaved(s, null)
+      },
+    })
   }
   /** The popup's Save and Invoice details: the draft is saved and its document shown, with its details open for the latter. */
   const saveSetup = (then: 'save' | 'details') => {
     const sequenceId = setup.numberUnlocked ? setup.sequenceId.trim() : ''
     save.mutate(body(), {
-      onSuccess: (saved) => {
+      onSuccess: (s) => {
+        saved.current = sent
         setDialogOpen(false)
         const details = then === 'details' || editingLines
         // A new invoice opens its details in the editor of the saved draft, not in this one that goes away.
         if (then === 'details' && invoice) {
           setEditingLines(true)
         }
-        navigate(`${list}/${saved.id}/edit`, { replace: !!invoice, state: { details, ...(sequenceId ? { sequenceId } : {}) } })
+        onSaved(s, { details, ...(sequenceId ? { sequenceId } : {}) })
       },
     })
   }
@@ -275,6 +326,7 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates, openin
   }
 
   const title = invoice ? t('invoices.editTitle', { name: invoiceTitle(invoice, t) }) : t('invoices.newTitle')
+  const paperLabel = invoice ? t('invoices.view.document', { name: invoiceTitle(invoice, t) }) : t('invoices.editor.preview')
   const draftId = invoice ? invoice.draft_id : nextDraftId.data
   const draftLabel = invoice?.invoice_id || (draftId ? dt('invoices.document.draftNumber', { id: draftId }) : dt('invoices.document.draft'))
   const rateName = (id: string) => rateOf(id)?.name ?? ''
@@ -305,17 +357,8 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates, openin
     holder: sender.bank_account_name || sender.company_name || '', reference: invoice?.payment_reference || dt('invoices.document.numberOnSend'),
   })
 
-  const actions = (
+  const content = (
     <>
-      <button type="button" className="btn btn--secondary" aria-expanded={layoutsOpen} aria-controls={layoutsId} onClick={() => setLayoutsOpen(!layoutsOpen)}>
-        {t('invoices.editor.changeLayout')}
-      </button>
-      <MoreMenu items={[{ label: t('invoices.settingsTitle'), onSelect: openDialog }, { label: t('common.cancel'), to: back }]} />
-    </>
-  )
-
-  return (
-    <Page title={title} back={invoice ? { to: back, label: t('invoices.back') } : undefined} actions={actions}>
       {layoutsOpen && (
         <LayoutPicker
           id={layoutsId}
@@ -324,13 +367,13 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates, openin
           current={style?.id ?? ''}
           onPick={(id) => {
             change({ styleId: id })
-            setLayoutsOpen(false)
+            closeLayouts()
           }}
         />
       )}
-      <form className="invoice-editor" onSubmit={submit} noValidate aria-label={title}>
+      <form className={`invoice-editor${view ? ' invoice-editor--in-view' : ''}`} onSubmit={submit} noValidate aria-label={title}>
         {!dialogOpen && <Problems messages={errors.general} />}
-        <Paper label={t('invoices.editor.preview')} fontSize={style?.font_size}>
+        <Paper label={paperLabel} fontSize={style?.font_size}>
           <div className={`invoice-paper__header invoice-paper__header--${style?.address_position ?? 'left'}`}>
             <div className={`invoice-paper__logo invoice-paper__logo--${style?.logo_position ?? 'left'}`}>
               {style?.logo_hash && (
@@ -420,7 +463,13 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates, openin
               />
             ) : (
               <>
-                <DetailsView dt={dt} lines={shownLines} empty={emptyLine} onEdit={() => setEditingLines(true)} />
+                <DetailsView
+                  dt={dt}
+                  lines={shownLines}
+                  empty={emptyLine}
+                  onEdit={() => setEditingLines(true)}
+                  rowClass={(i) => (view?.highlight && rows.filter((r) => !isBlank(r))[i]?.ledger_account_id === view.highlight ? 'is-highlighted' : undefined)}
+                />
                 <TotalsTable rows={totalRows(dt, money, 'document')} />
               </>
             )}
@@ -439,10 +488,14 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates, openin
           </div>
         </Paper>
 
-        <div className="invoice-editor__actions">
-          <button className="btn btn--primary" disabled={save.isPending}>{t('invoices.save')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
-        </div>
+        {(!view || dirty) && (
+          <div className="invoice-editor__actions">
+            <button className="btn btn--primary" disabled={save.isPending}>{t('invoices.save')}</button>
+            {view
+              ? <button type="button" className="btn btn--secondary" onClick={view.onCancel}>{t('common.cancel')}</button>
+              : <Link className="btn btn--secondary" to={list}>{t('common.cancel')}</Link>}
+          </div>
+        )}
       </form>
 
       {dialogOpen && (
@@ -469,8 +522,21 @@ function InvoiceForm({ administrationId, invoice, contact: preset, rates, openin
           onClose={invoice ? cancelDialog : () => setDialogOpen(false)}
         />
       )}
-    </Page>
+    </>
   )
+
+  if (view) {
+    return content
+  }
+  const actions = (
+    <>
+      <button type="button" className="btn btn--secondary" aria-expanded={layoutsOpen} aria-controls={layoutsId} onClick={() => setOwnLayoutsOpen(!layoutsOpen)}>
+        {t('invoices.editor.changeLayout')}
+      </button>
+      <MoreMenu items={[{ label: t('invoices.settingsTitle'), onSelect: openDialog }, { label: t('common.cancel'), to: list }]} />
+    </>
+  )
+  return <Page title={title} actions={actions}>{content}</Page>
 }
 
 /** The due date, typed in place; it keeps what is typed until it is a whole date. */
