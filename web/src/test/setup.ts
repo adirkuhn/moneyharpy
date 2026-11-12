@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, configure } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
 import i18n from '../i18n'
 import { server } from './server'
@@ -11,6 +12,21 @@ import { server } from './server'
  * sets it before it renders.
  */
 export const testNow = new Date('2026-11-11T11:00:00Z')
+
+// Typing plain text key by key re-renders a form once per character, which
+// made long forms the slowest tests. Plain text is pasted into the focused
+// field instead: the same final value and change events, in one go. Text
+// with special keys ({Enter}, [Shift>]...) is still typed key by key.
+const typeKeyByKey = userEvent.type.bind(userEvent)
+const typeFast: typeof userEvent.type = async (element, text, options) => {
+  if (/[{[]/.test(text) || options) {
+    return typeKeyByKey(element, text, options)
+  }
+  const user = userEvent.setup()
+  await user.click(element)
+  await user.paste(text)
+}
+Object.assign(userEvent, { type: typeFast })
 
 // A loaded machine can take longer than the default second to render.
 configure({ asyncUtilTimeout: 5000 })
