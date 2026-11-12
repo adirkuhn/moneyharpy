@@ -63,6 +63,10 @@ type Props = {
    * the new one on that row; the editor around makes sure nothing typed is lost.
    */
   onAddEntity: (index: number, field: NewEntityKey) => void
+  /** Whether a discount can be given; an external invoice has none, as at Moneybird. */
+  discounts?: boolean
+  /** The currency select's tip, such as why it cannot change. */
+  currencyTip?: string
 }
 
 /**
@@ -158,6 +162,11 @@ export function DetailsEditor(props: Props) {
           >
             {currencyOptions(t, currency).map((o, i) => <option key={`${o.value}-${i}`} value={o.value} disabled={o.disabled}>{o.label}</option>)}
           </select>
+          {props.currencyTip && (
+            <span className="details-editor__tip" role="img" aria-label={props.currencyTip} title={props.currencyTip}>
+              <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 15h-2v-6h2Zm0-8h-2V7h2Z" /></svg>
+            </span>
+          )}
           {errors.field('currency') && <p className="form-input__message form-input__message--error">{errors.field('currency')?.join(' ')}</p>}
         </div>
         <fieldset className="segmented-control" role="radiogroup" aria-labelledby={`${hintId}-prices`}>
@@ -296,7 +305,7 @@ export function DetailsEditor(props: Props) {
               <ListIcon kind="plus" />
               <span>{d('add')}</span>
             </button>
-            <ActionMenu
+            {props.discounts !== false && <ActionMenu
               label={t('invoices.discount')}
               items={[
                 { label: d('discountDetail'), onSelect: () => props.onAdd({ description: d('discountDescription') }) },
@@ -308,7 +317,7 @@ export function DetailsEditor(props: Props) {
                   },
                 },
               ]}
-            />
+            />}
           </div>
           {discountShown && (
             <div className="details-editor__discount">

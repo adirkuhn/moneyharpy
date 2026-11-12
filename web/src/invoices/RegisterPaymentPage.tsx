@@ -11,7 +11,8 @@ import { ChevronIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
-import { type PaymentAction, type PaymentChanges, type SalesInvoice, today, useRegisterPayment, useSalesInvoice, useSettleCredit } from './queries'
+import { useExternalInvoice } from '../external/queries'
+import { type InvoiceKind, type PaymentAction, type PaymentChanges, type SalesInvoice, today, useRegisterPayment, useSalesInvoice, useSettleCredit } from './queries'
 import './view.css'
 
 /** The ways Moneybird asks an invoice was paid, in its order. */
@@ -20,15 +21,31 @@ type Way = (typeof ways)[number]
 const withText: Way[] = ['bank_transfer', 'cash_payment', 'payment_without_proof']
 const balanceTypes = ['non_current_assets', 'current_assets', 'equity', 'provisions', 'non_current_liabilities', 'current_liabilities']
 
+/** What the payment pages need of an invoice of either kind. */
+type Payable = Pick<SalesInvoice, 'id' | 'total_unpaid' | 'total_price_incl_tax' | 'currency' | 'reference'> &
+  Partial<Pick<SalesInvoice, 'invoice_id' | 'payment_reference' | 'original_sales_invoice_id'>>
+
 /**
  * Moneybird's "Register payment" of a sales invoice: first how it was paid
  * (/payments/new), then that way's own page (/payments/:way), such as linking
  * the bank transaction or booking a cash payment.
  */
 export function RegisterPaymentPage() {
-  const { administrationId = '', invoiceId = '', way = 'new' } = useParams()
-  const { t } = useTranslation()
+  const { administrationId = '', invoiceId = '' } = useParams()
   const invoice = useSalesInvoice(administrationId, invoiceId)
+  return <PaymentPages invoice={invoice} kind="sales" />
+}
+
+/** The same pages for an external invoice (/external_sales_invoices/:id/payments/:way). */
+export function ExternalRegisterPaymentPage() {
+  const { administrationId = '', invoiceId = '' } = useParams()
+  const invoice = useExternalInvoice(administrationId, invoiceId)
+  return <PaymentPages invoice={invoice} kind="external" />
+}
+
+function PaymentPages({ invoice, kind }: { invoice: { data?: Payable; error: Error | null }; kind: InvoiceKind }) {
+  const { administrationId = '', way = 'new' } = useParams()
+  const { t } = useTranslation()
   if (invoice.error instanceof ApiError && invoice.error.status < 500) {
     return <NotFoundPage />
   }
@@ -42,16 +59,19 @@ export function RegisterPaymentPage() {
   return (
     <Page title={t('invoices.registerPage.title')}>
       {way === 'new'
-        ? <Ways administrationId={administrationId} invoice={inv} />
+        ? <Ways administrationId={administrationId} invoice={inv} kind={kind} />
         : way === 'bank_transfer'
-          ? <BankTransfer administrationId={administrationId} invoice={inv} />
-          : <PaymentForm key={way} administrationId={administrationId} invoice={inv} way={way as Exclude<Way, 'bank_transfer'>} />}
+          ? <BankTransfer administrationId={administrationId} invoice={inv} kind={kind} />
+          : <PaymentForm key={way} administrationId={administrationId} invoice={inv} kind={kind} way={way as Exclude<Way, 'bank_transfer'>} />}
     </Page>
   )
 }
 
-const invoicePath = (administrationId: string, inv: SalesInvoice) => `/${administrationId}/sales_invoices/${inv.id}`
-const number = (inv: SalesInvoice) => inv.invoice_id ?? ''
+const invoicePath = (administrationId: string, inv: Payable, kind: InvoiceKind) =>
+  `/${administrationId}/${kind === 'external' ? 'external_sales_invoices' : 'sales_invoices'}/${inv.id}`
+/** How the pages name the invoice: a sales invoice by its number, an external one by its reference. */
+const number = (inv: Payable, kind: InvoiceKind) => (kind === 'external' ? inv.reference : inv.invoice_id) ?? ''
+type PageProps = { administrationId: string; invoice: Payable; kind: InvoiceKind }
 
 /** A page's introduction, its content and the buttons along its bottom, after Moneybird's content pages. */
 function ContentPage({ title, intro, children, actions }: { title: string; intro?: ReactNode; children?: ReactNode; actions: ReactNode }) {
@@ -67,18 +87,18 @@ function ContentPage({ title, intro, children, actions }: { title: string; intro
   )
 }
 
-function Ways({ administrationId, invoice: inv }: { administrationId: string; invoice: SalesInvoice }) {
+function Ways({ administrationId, invoice: inv, kind }: PageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const heading = useId()
   const settle = useSettleCredit(administrationId, inv.id ?? '')
-  const back = invoicePath(administrationId, inv)
+  const back = invoicePath(administrationId, inv, kind)
   const credit = !!inv.original_sales_invoice_id && Number(inv.total_price_incl_tax ?? 0) < 0
   return (
     <div className="content-page">
       <div className="content-page__introduction">
         <h2 id={heading} className="content-page__title">{t('invoices.registerPage.question')}</h2>
-        <p className="content-page__subtitle">{t('invoices.registerPage.intro', { number: number(inv) })}</p>
+        <p className="content-page__subtitle">{t(kind === 'external' ? 'invoices.registerPage.externalIntro' : 'invoices.registerPage.intro', { number: number(inv, kind) })}</p>
       </div>
       <div className="content-page__item">
         <Problems messages={formErrors(settle.error, {}).general} />
@@ -128,7 +148,7 @@ function Bottom({ back, children }: { back: string; children?: ReactNode }) {
  * payment reference, 1 when it has the open amount or names the number, 0
  * when it does not fit.
  */
-function fit(m: Mutation, inv: SalesInvoice) {
+function fit(m: Mutation, inv: Payable, kind: InvoiceKind) {
   if (m.state === 'processed') {
     return 0
   }
@@ -137,20 +157,20 @@ function fit(m: Mutation, inv: SalesInvoice) {
   }
   const open = Number(inv.total_unpaid ?? 0)
   const amount = Number(m.amount_open ?? m.amount ?? 0)
-  const number = inv.invoice_id?.toLowerCase()
+  const number = (kind === 'external' ? inv.reference : inv.invoice_id)?.toLowerCase()
   return (open !== 0 && amount === open) || (!!number && (m.message ?? '').toLowerCase().includes(number)) ? 1 : 0
 }
 
-function BankTransfer({ administrationId, invoice: inv }: { administrationId: string; invoice: SalesInvoice }) {
+function BankTransfer({ administrationId, invoice: inv, kind }: PageProps) {
   const { t, i18n } = useTranslation()
   const mutations = useMutations(administrationId, 'state:unprocessed')
-  const back = invoicePath(administrationId, inv)
+  const back = invoicePath(administrationId, inv, kind)
   const list = useId()
   if (!mutations.data && !mutations.error) {
     return <Loading />
   }
   // A transaction that quotes the payment reference comes first.
-  const found = (mutations.data ?? []).map((m) => ({ m, fit: fit(m, inv) })).filter((f) => f.fit > 0).sort((a, b) => b.fit - a.fit).map((f) => f.m)
+  const found = (mutations.data ?? []).map((m) => ({ m, fit: fit(m, inv, kind) })).filter((f) => f.fit > 0).sort((a, b) => b.fit - a.fit).map((f) => f.m)
   if (found.length === 0) {
     return (
       <ContentPage
@@ -161,7 +181,7 @@ function BankTransfer({ administrationId, invoice: inv }: { administrationId: st
     )
   }
   return (
-    <ContentPage title={t('invoices.registerPage.ways.bank_transfer')} intro={t('invoices.registerPage.matchesText', { number: number(inv) })} actions={<Bottom back={back} />}>
+    <ContentPage title={t('invoices.registerPage.ways.bank_transfer')} intro={t('invoices.registerPage.matchesText', { number: number(inv, kind) })} actions={<Bottom back={back} />}>
       <ul id={list} className="link-list" aria-label={t('invoices.registerPage.matches')}>
         {found.map((m) => (
           <li key={m.id} className="link-list__item link-list__item--static">
@@ -172,7 +192,7 @@ function BankTransfer({ administrationId, invoice: inv }: { administrationId: st
               </span>
             </span>
             <span className="link-list__amount">{formatAmount(m.amount, m.currency ?? inv.currency ?? 'EUR', i18n.language)}</span>
-            <LinkButton administrationId={administrationId} mutation={m} invoice={inv} />
+            <LinkButton administrationId={administrationId} mutation={m} invoice={inv} kind={kind} />
           </li>
         ))}
       </ul>
@@ -180,7 +200,7 @@ function BankTransfer({ administrationId, invoice: inv }: { administrationId: st
   )
 }
 
-function LinkButton({ administrationId, mutation, invoice: inv }: { administrationId: string; mutation: Mutation; invoice: SalesInvoice }) {
+function LinkButton({ administrationId, mutation, invoice: inv, kind }: PageProps & { mutation: Mutation }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const link = useLinkInvoice(administrationId, mutation.id ?? '')
@@ -190,7 +210,10 @@ function LinkButton({ administrationId, mutation, invoice: inv }: { administrati
         type="button"
         className="btn btn--primary btn--small"
         disabled={link.isPending}
-        onClick={() => link.mutate({ booking_type: 'SalesInvoice', booking_id: inv.id ?? '' }, { onSuccess: () => navigate(invoicePath(administrationId, inv)) })}
+        onClick={() => link.mutate(
+          { booking_type: kind === 'external' ? 'ExternalSalesInvoice' : 'SalesInvoice', booking_id: inv.id ?? '' },
+          { onSuccess: () => navigate(invoicePath(administrationId, inv, kind)) },
+        )}
       >
         {t('invoices.registerPage.link')}
       </button>
@@ -200,13 +223,13 @@ function LinkButton({ administrationId, mutation, invoice: inv }: { administrati
 }
 
 /** The form of a way that books the payment itself: cash, a rounding difference, a balance settlement or without proof. */
-function PaymentForm({ administrationId, invoice: inv, way }: { administrationId: string; invoice: SalesInvoice; way: Exclude<Way, 'bank_transfer'> }) {
+function PaymentForm({ administrationId, invoice: inv, kind, way }: PageProps & { way: Exclude<Way, 'bank_transfer'> }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const register = useRegisterPayment(administrationId, inv.id ?? '')
+  const register = useRegisterPayment(administrationId, inv.id ?? '', kind)
   const ledger = useLedgerAccounts(administrationId)
   const accounts = useFinancialAccounts(administrationId)
-  const back = invoicePath(administrationId, inv)
+  const back = invoicePath(administrationId, inv, kind)
   // A balance settlement goes against a balance sheet category, but not the debtors or creditors themselves.
   const balance = (ledger.data ?? []).filter((a) =>
     a.active !== false && balanceTypes.includes(a.account_type ?? '') && a.system_role !== 'accounts_receivable' && a.system_role !== 'accounts_payable')
@@ -217,7 +240,8 @@ function PaymentForm({ administrationId, invoice: inv, way }: { administrationId
   const labels = { price: t('invoices.registerPage.amount'), payment_date: t('invoices.registerPage.date'), ledger_account_id: t('invoices.registerPage.category'), financial_account_id: t('invoices.registerPage.method') }
   const errors = formErrors(register.error, labels)
   const chosenCategory = category || balance[0]?.id || ''
-  const reference = inv.reference ? t('invoices.registerPage.withReference', { reference: inv.reference }) : ''
+  // An external invoice is named by its reference already.
+  const reference = inv.reference && kind === 'sales' ? t('invoices.registerPage.withReference', { reference: inv.reference }) : ''
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -235,7 +259,7 @@ function PaymentForm({ administrationId, invoice: inv, way }: { administrationId
     <form onSubmit={submit} noValidate aria-label={t('invoices.registerPage.title')}>
       <ContentPage
         title={t(`invoices.registerPage.headings.${way}`)}
-        intro={t(`invoices.registerPage.intros.${way}`, { number: number(inv), reference })}
+        intro={t(`invoices.registerPage.intros.${way}`, { number: number(inv, kind), reference })}
         actions={<Bottom back={back}><button className="btn btn--primary" disabled={register.isPending}>{t('invoices.registerPage.save')}</button></Bottom>}
       >
         <div className="form-sheet">

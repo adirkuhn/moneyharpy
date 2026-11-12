@@ -172,6 +172,7 @@ export const nl: Messages = {
     registerPage: {
       title: 'Betaling registreren', question: 'Hoe is de factuur betaald?',
       intro: 'Je wilt een betaling registreren voor factuur {{number}}. Geef hieronder aan hoe deze factuur is betaald.',
+      externalIntro: 'Je wilt een betaling registreren voor externe factuur {{number}}. Geef hieronder aan hoe deze factuur is betaald.',
       ways: {
         bank_transfer: 'Bankoverschrijving', cash_payment: 'Contante betaling zakelijk', rounding_error: 'Afrondingsverschil', balance_settlement: 'Verrekening met balansrekening',
         payment_without_proof: 'Markeren als betaald zonder bewijs',
@@ -222,6 +223,9 @@ export const nl: Messages = {
         sentManually: 'Factuur handmatig als verstuurd gemarkeerd', reminderEmail: 'Herinnering per e-mail verstuurd', reminderManually: 'Herinnering handmatig als verstuurd gemarkeerd',
         paused: 'Herinneringen gepauzeerd', resumed: 'Herinneringen hervat', dubious: 'Factuur als dubieus gemarkeerd', uncollectible: 'Factuur als oninbaar gemarkeerd',
         paymentDeleted: 'Betaling verwijderd', other: '{{action}}', payment: 'Betaling van {{amount}} ontvangen', notLinked: 'Betaling is nog niet gekoppeld aan een bankmutatie',
+        externalCreated: 'Externe factuur aangemaakt', externalUpdated: 'Externe factuur bewerkt', externalPaid: 'Externe factuur is betaald',
+        externalStateChanged: 'Status van externe factuur gewijzigd naar {{state}}', externalDubious: 'Externe factuur gemarkeerd als dubieus',
+        externalUncollectible: 'Externe factuur gemarkeerd als oninbaar',
       },
       attachments: {
         title: 'Bijlagen', drag: 'Sleep bestanden hierheen om toe te voegen of', select: 'selecteer bestanden', max: '(Maximaal 10 MB in totaal)',
@@ -291,7 +295,7 @@ export const nl: Messages = {
     journal: {
       title: 'Journaalposten', intro: 'Op de achtergrond heeft MoneyHarpy de volgende boekingen gemaakt, ook wel journaalposten genoemd.',
       category: 'Categorie', debit: 'Debet', credit: 'Credit', vat: 'Btw', balanceSheet: 'Balans', profitAndLoss: 'Winst- en verliesrekening',
-      documents: { SalesInvoice: 'Factuur', Payment: 'Betaling' },
+      documents: { SalesInvoice: 'Factuur', ExternalSalesInvoice: 'Externe factuur', Payment: 'Betaling' },
       empty: 'Nog geen boekingen.', failed: 'De journaalposten konden niet worden geladen.',
     },
     attachments: 'Bijlagen', noAttachments: 'Nog geen bijlagen.', addAttachment: 'Bijlage toevoegen', attachmentHelp: 'Een PDF, afbeelding of tekstbestand van maximaal 10 MB.',
@@ -331,13 +335,13 @@ export const nl: Messages = {
     },
   },
   external: {
-    detailsTitle: 'Factuurgegevens', confirmDeleteText: 'Deze externe factuur verwijderen? Dit kan niet ongedaan worden gemaakt.',
-    title: 'Externe facturen', new: 'Nieuwe externe factuur', newTitle: 'Nieuwe externe factuur', backToList: 'Naar Externe facturen',
-    untitled: 'Externe factuur {{n}}', form: 'Externe factuur', save: 'Opslaan', filters: 'Filters voor externe facturen',
+    confirmDeleteText: 'Deze externe factuur verwijderen? Dit kan niet ongedaan worden gemaakt.',
+    title: 'Externe facturen', new: 'Nieuwe externe factuur',
+    untitled: 'Externe factuur {{n}}', filters: 'Filters voor externe facturen',
     loadError: 'De externe facturen konden niet worden geladen. Laad de pagina opnieuw.',
     empty: 'Nog geen externe facturen. Upload de facturen van je webwinkel of kassa, of voer er een in.',
     uploadTitle: 'Factuurbestanden toevoegen', upload: 'Facturen uploaden', dropText: 'Sleep bestanden hierheen om toe te voegen of', select: 'selecteer bestanden', maxSize: '(Maximaal 10 MB per bestand)',
-    uploadHelp: 'Elk bestand wordt een nieuwe factuur om in te vullen.', date: 'Datum', noMatches: 'Geen externe facturen voor dit filter. Probeer een ander filter.',
+    date: 'Datum', noMatches: 'Geen externe facturen voor dit filter. Probeer een ander filter.',
     quick: { this_year: 'Externe facturen van dit jaar', unpaid: 'Openstaande externe facturen', paid: 'Betaalde externe facturen' },
     views: { this_year: 'Externe facturen van dit jaar', unpaid: 'Openstaande externe facturen', paid: 'Betaalde externe facturen', custom: 'Gefilterde externe facturen' },
     add: 'Toevoegen', emailFiles: 'Externe factuur toevoegen door bestanden te e-mailen', emailTitle: 'Bestanden e-mailen voor externe facturen',
@@ -349,10 +353,28 @@ export const nl: Messages = {
       api: 'Koppelen via de API', apiText: 'Laat een ander systeem zijn facturen direct naar MoneyHarpy sturen.',
     },
     tooLarge: 'Deze bestanden zijn groter dan 10 MB: {{names}}.', refused: 'Deze bestanden konden niet worden geüpload: {{names}}.',
-    viewFile: '{{name}} bekijken', newNotice: 'Deze factuur is nog niet geboekt. Vul het contact en minstens één regel in om haar te boeken.',
-    bookHint: 'Met een contact en minstens één regel wordt de factuur geboekt.',
-    referenceHelp: 'Het factuurnummer in de software die de factuur maakte, zoals een ordernummer.', source: 'Bron', currency: 'Valuta',
     salesInvoice: 'Verkoopfactuur', externalInvoice: 'Externe factuur',
+    view: { title: 'Externe factuur {{name}}', registerPayment: 'Betaling registreren', edit: 'Bewerken', delete: 'Externe factuur verwijderen', sidebar: 'Over deze factuur' },
+    document: {
+      contact: 'Contact', invoiceDate: 'Factuurdatum', dueDate: 'Vervaldatum', source: 'Bron', facts: 'Factuurgegevens', lines: 'Factuurregels',
+      description: 'Omschrijving', price: 'Bedrag', total: 'Totaal', vat: 'Btw', subtotal: 'Subtotaal',
+    },
+    edit: {
+      editTitle: 'Externe factuur bewerken', newTitle: 'Nieuwe externe factuur', contact: 'Contact', changeContact: 'Contact wijzigen', addDetails: 'Gegevens toevoegen',
+      invoiceId: 'Factuurnummer', date: 'Datum', dueDate: 'Vervaldatum', days: 'Dagen', daysUntilDue: 'Dagen tot vervaldatum', dueAs: 'Vervaldatum als',
+      source: 'Bron (optioneel)', sourceUrl: 'Bron-URL (optioneel)', filesLater: 'Bestanden kun je toevoegen zodra de factuur is opgeslagen.',
+      currencyLocked: 'De valuta kan niet worden gewijzigd, omdat er al transacties in de huidige valuta zijn.',
+    },
+    attachments: {
+      max: '(Maximaal 10 MB per bestand en 15 MB in totaal)', tooLarge: 'Deze bijlage is groter dan 10 MB. Maximaal 10 MB is toegestaan.',
+      totalTooLarge: 'De bijlagen zijn samen groter dan 15 MB. Maximaal 15 MB is toegestaan.',
+    },
+    bulk: {
+      label: 'Geselecteerde externe facturen', selectAll: 'Alle externe facturen selecteren', select: 'Externe factuur {{name}} selecteren',
+      selected_one: '{{count}} externe factuur geselecteerd:', selected_other: '{{count}} externe facturen geselecteerd:',
+      delete: 'Verwijderen ({{count}})', confirmDelete_one: '{{count}} externe factuur definitief verwijderen', confirmDelete_other: '{{count}} externe facturen definitief verwijderen',
+      deleted_one: '{{count}} externe factuur verwijderd.', deleted_other: '{{count}} externe facturen verwijderd.', failed: 'Deze facturen konden niet worden verwijderd: {{names}}.',
+    },
   },
   estimates: {
     title: 'Offertes', add: 'Nieuwe offerte', newTitle: 'Nieuwe offerte', backToList: 'Naar Offertes', form: 'Offerte', save: 'Offerte opslaan', filters: 'Offertefilters',
@@ -619,7 +641,7 @@ export const nl: Messages = {
     },
   },
   bank: {
-    quotesReference: 'vermeldt betalingskenmerk {{reference}}', 
+    quotesReference: 'vermeldt betalingskenmerk {{reference}}',
     views: { unprocessed: 'Te boeken transacties', processed: 'Geboekte transacties', all: 'Alle transacties', custom: 'Gefilterde transacties' },
     importStatement: 'Afschrift importeren', accountSettings: 'Rekeninginstellingen', detailsTitle: 'Transactiegegevens',
     intro: {

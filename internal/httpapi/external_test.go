@@ -32,7 +32,10 @@ type externalInvoice struct {
 	MarkedUncollectibleOn *string   `json:"marked_uncollectible_on"`
 	Payments              []payment `json:"payments"`
 	URI                   string    `json:"uri"`
-	Contact               *struct {
+	Events                []struct {
+		Action string `json:"action"`
+	} `json:"events"`
+	Contact *struct {
 		ID string `json:"id"`
 	} `json:"contact"`
 	Details []struct {
@@ -148,7 +151,13 @@ func TestExternalSalesInvoiceLifecycle(t *testing.T) {
 	if part.InvoiceType != "ExternalSalesInvoice" || part.InvoiceID != e.ID {
 		t.Errorf("payment = %+v", part)
 	}
-	wantStatus(t, owner.do(http.MethodPatch, externals+"/"+e.ID, map[string]any{"external_sales_invoice": map[string]any{"reference": "WEB-1"}}), http.StatusUnprocessableEntity)
+	// As at Moneybird an invoice with payments still changes, but keeps its currency.
+	r = owner.do(http.MethodPatch, externals+"/"+e.ID, map[string]any{"external_sales_invoice": map[string]any{"reference": "WEB-1"}})
+	wantStatus(t, r, http.StatusOK)
+	if changed := decode[externalInvoice](t, r); deref(changed.Reference) != "WEB-1" || len(changed.Payments) != 1 || len(changed.Events) == 0 || changed.Events[0].Action != "external_sales_invoice_created" {
+		t.Errorf("changed with payments = %+v", changed)
+	}
+	wantStatus(t, owner.do(http.MethodPatch, externals+"/"+e.ID, map[string]any{"external_sales_invoice": map[string]any{"currency": "USD"}}), http.StatusUnprocessableEntity)
 	ov := decode[httpapi.Overview](t, owner.do(http.MethodGet, api+"/overview", nil))
 	if ov.Sales == nil || ov.Sales.ToReceive.Count != 2 || ov.Sales.ToReceive.Amount != "160.5" {
 		t.Errorf("overview sales = %+v", ov.Sales)
