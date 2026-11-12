@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adirkuhn/moneyharpy/internal/bookkeeping/countries"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/taxonomy"
 )
@@ -369,93 +368,6 @@ func (s *Service) applyLedgerAccount(ctx context.Context, l *LedgerAccount, c Le
 		verr.Add("rgs_code", "needs a chart scheme in the bookkeeping settings")
 	}
 	return verr.OrNil()
-}
-
-// Template is a group of categories for a common situation, named in the
-// administration's language.
-type Template struct {
-	Key, Name, Description string
-	Accounts               []TemplateAccount
-	// Applied reports that the administration has all of its categories.
-	Applied bool
-}
-
-// TemplateAccount is a category a template adds.
-type TemplateAccount struct{ Name, Type, Code string }
-
-// Templates lists the templates of the administration's country.
-func (s *Service) Templates(ctx context.Context, admin, user resource.ID) ([]Template, error) {
-	a, err := s.ensure(ctx, admin, user)
-	if err != nil {
-		return nil, err
-	}
-	all, err := s.store.LedgerAccounts(ctx, admin)
-	if err != nil {
-		return nil, fmt.Errorf("list ledger accounts: %w", err)
-	}
-	keys := keysOf(all)
-	seed := countries.For(a.Country)
-	out := make([]Template, len(seed.Templates))
-	for i, t := range seed.Templates {
-		out[i] = Template{Key: t.Key, Name: t.Name.In(a.Language), Description: t.Description.In(a.Language), Applied: true}
-		for _, sa := range t.Accounts {
-			out[i].Applied = out[i].Applied && keys[sa.Key]
-			out[i].Accounts = append(out[i].Accounts, TemplateAccount{Name: sa.Name.In(a.Language), Type: sa.Type, Code: sa.Code})
-		}
-	}
-	return out, nil
-}
-
-// ApplyTemplate adds the template's categories the administration does not
-// have yet, and returns the ones it added. Without a chart scheme, the codes
-// are left off.
-func (s *Service) ApplyTemplate(ctx context.Context, admin, user resource.ID, key string) ([]LedgerAccount, error) {
-	a, err := s.ensure(ctx, admin, user)
-	if err != nil {
-		return nil, err
-	}
-	seed := countries.For(a.Country)
-	i := slices.IndexFunc(seed.Templates, func(t countries.Template) bool { return t.Key == key })
-	if i < 0 {
-		return nil, ErrTemplateNotFound
-	}
-	all, err := s.store.LedgerAccounts(ctx, admin)
-	if err != nil {
-		return nil, fmt.Errorf("list ledger accounts: %w", err)
-	}
-	st, err := s.store.Settings(ctx, admin)
-	if err != nil {
-		return nil, fmt.Errorf("load settings: %w", err)
-	}
-	keys := keysOf(all)
-	var missing []countries.Account
-	for _, sa := range seed.Templates[i].Accounts {
-		if keys[sa.Key] {
-			continue
-		}
-		if st.Scheme != seed.Scheme {
-			sa.Taxonomy = ""
-		}
-		missing = append(missing, sa)
-	}
-	if len(missing) == 0 {
-		return nil, nil
-	}
-	added := s.accountsFrom(a.Administration, missing, all, key)
-	// A name taken by a category of the same type gets the template's name
-	// added, so both stay recognisable.
-	for j := range added {
-		for _, o := range all {
-			if o.Type == added[j].Type && strings.EqualFold(o.Name, added[j].Name) {
-				added[j].Name += " (" + seed.Templates[i].Name.In(a.Language) + ")"
-				break
-			}
-		}
-	}
-	if err := s.store.CreateLedgerAccounts(ctx, added); err != nil {
-		return nil, fmt.Errorf("store ledger accounts: %w", err)
-	}
-	return added, nil
 }
 
 // blankLast sorts empty codes after the others.

@@ -76,9 +76,17 @@ What goes in:
   the same role names. The books rely on them, for example
   `accounts_receivable` and `sales_tax`. Children name their parent by `Key`
   and have the same `Type`.
-- **Templates**: groups for common situations. Use the same keys as `nl.go`
-  where the situation is the same, so people recognise them across
-  countries.
+- **Templates**: the themes of Add category, such as a company car (see
+  `nl_themes.go`). Use the same keys as the Dutch themes where the situation
+  is the same, so people recognise them across countries. A theme either
+  lists categories to tick or adds one category the user names (`Single`,
+  with the kinds to choose from and their chart scheme codes). In a list,
+  an account with only a `Key` refers to a category of the seed or of
+  another theme; `Selected` ticks it when the page opens and `Choices` shows
+  it only for some answers of the theme's `Choice` (such as how the car is
+  financed). A theme with a `NameLabel` asks for a name that replaces
+  `{name}` in its categories' names, such as the entrepreneur's; those
+  categories are added once per name and have no fixed code.
 - **Text**: names in English and Dutch. A language MoneyHarpy does not speak
   yet falls back to English.
 
@@ -87,7 +95,9 @@ What goes in:
 `go test ./internal/bookkeeping/countries/` checks every registered seed:
 account types, parents of the same type, unique keys, names unique per type
 in each language, every system role present, chart scheme codes that exist
-and sit on the right side of the books, and tax rate boxes that exist. New
+and sit on the right side of the books, tax rate boxes that exist, and
+themes whose references resolve, whose parents are on the same page and
+whose choices and options exist. New
 seeds are picked up from `seeds`, so there is no list of countries to update
 in the tests. Then run `go test ./...`.
 

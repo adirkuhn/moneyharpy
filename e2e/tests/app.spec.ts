@@ -377,15 +377,18 @@ test('bookkeeping starts from the Dutch standard and is adjusted in settings', a
   await categories.getByRole('link', { name: 'Add category' }).click()
   await page.getByRole('list', { name: 'Themes' }).getByRole('link', { name: /Company car/ }).click()
   await expect(page.getByRole('heading', { name: 'Add category from Company car' })).toBeVisible()
+  // The financing decides which categories show; they are ticked one by one.
+  await page.getByLabel('Financing of the car').selectOption({ label: 'Paid with own money' })
+  await page.getByRole('checkbox', { name: 'Company car maintenance' }).check()
   await page.getByRole('button', { name: 'Save' }).click()
-  await categories.getByRole('link', { name: 'Add category' }).click()
-  await expect(page.getByRole('list', { name: 'Themes' }).getByRole('link', { name: /Company car/ })).toContainText('Added')
+  await expect(categories.getByRole('link', { name: 'Add category' })).toBeVisible()
 
   const id = uri.slice(1)
   const accounts = await (await page.request.get(`/api/v2/${id}/ledger_accounts.json`)).json()
   const hosting = accounts.find((a: { name: string }) => a.name === 'Hosting')
   expect(hosting.taxonomy_item.code).toBe('WBedKanSof')
-  expect(accounts.map((a: { name: string }) => a.name)).toContain('Company car fuel')
+  expect(accounts.map((a: { name: string }) => a.name)).toEqual(expect.arrayContaining(['Company car fuel', 'Company car maintenance']))
+  expect(accounts.map((a: { name: string }) => a.name)).not.toContain('Company car lease costs')
 })
 
 test('bank statements are imported, booked by rules and by hand', async ({ page }) => {
