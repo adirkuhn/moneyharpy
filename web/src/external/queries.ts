@@ -11,9 +11,9 @@ export type ExternalState = NonNullable<ExternalInvoice['state']>
 export const externalStates: ExternalState[] = ['new', 'open', 'late', 'paid', 'uncollectible']
 export const unpaidExternalStates = 'open|late'
 
-/** An external invoice changes until it takes payments or is marked dubious; paid and uncollectible ones are finished. */
-export function isEditable(inv: ExternalInvoice) {
-  return (inv.state === 'new' || inv.state === 'open' || inv.state === 'late') && (inv.payments ?? []).length === 0 && !inv.marked_dubious_on
+/** As at Moneybird an external invoice changes, even once paid, until it is written off as uncollectible. */
+export function isEditable(inv: Pick<ExternalInvoice, 'state'>) {
+  return inv.state !== 'uncollectible'
 }
 
 const admin = (administrationId: string) => ({ administration_id: administrationId })
@@ -56,6 +56,24 @@ export function useSaveExternalInvoice(administrationId: string, id?: string) {
   })
 }
 
+/** Deletes several invoices, one request each; it answers with those that could not go. */
+export function useDeleteExternalInvoices(administrationId: string) {
+  const saved = useSaved(administrationId, 'external')
+  return useMutation({
+    mutationFn: async (list: ExternalInvoice[]) => {
+      const failed: ExternalInvoice[] = []
+      for (const inv of list) {
+        const { response } = await api.DELETE('/api/v2/{administration_id}/external_sales_invoices/{id}', one(administrationId, inv.id ?? ''))
+        if (!response.ok) {
+          failed.push(inv)
+        }
+      }
+      return failed
+    },
+    onSettled: () => saved(),
+  })
+}
+
 export function useDeleteExternalInvoice(administrationId: string, id: string) {
   const saved = useSaved(administrationId, 'external')
   return useMutation({
@@ -90,4 +108,9 @@ export function useUploadExternalInvoices(administrationId: string) {
 /** What the invoice is called: its reference, or its entry number when it has none. */
 export function externalTitle(inv: Pick<ExternalInvoice, 'reference' | 'entry_number'>, t: TFunction) {
   return inv.reference || t('external.untitled', { n: inv.entry_number ?? '' })
+}
+
+/** How Moneybird's list names an invoice: the software it comes from, then its reference. */
+export function externalListName(inv: Pick<ExternalInvoice, 'reference' | 'entry_number' | 'source'>, t: TFunction) {
+  return inv.source ? `${inv.source} › ${externalTitle(inv, t)}` : externalTitle(inv, t)
 }

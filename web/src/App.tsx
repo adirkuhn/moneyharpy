@@ -50,6 +50,7 @@ import { StartPage } from './overview/StartPage'
 import { ContactFormPage } from './contacts/ContactFormPage'
 import { ContactPage } from './contacts/ContactPage'
 import { ContactsPage } from './contacts/ContactsPage'
+import { ExternalEditPage } from './external/ExternalFormPage'
 import { ExternalInvoicePage } from './external/ExternalInvoicePage'
 import { ExternalInvoicesPage } from './external/ExternalInvoicesPage'
 import { AssetPage } from './assets/AssetPage'
@@ -59,7 +60,7 @@ import { IncomingListPage } from './incoming/IncomingListPage'
 import { UploadsPage } from './incoming/UploadsPage'
 import { InvoiceEditRedirect, InvoiceFormPage } from './invoices/InvoiceFormPage'
 import { InvoicePage } from './invoices/InvoicePage'
-import { RegisterPaymentPage } from './invoices/RegisterPaymentPage'
+import { ExternalRegisterPaymentPage, RegisterPaymentPage } from './invoices/RegisterPaymentPage'
 import { InvoicesPage } from './invoices/InvoicesPage'
 import { JournalDocumentPage } from './journal/JournalDocumentPage'
 import { JournalDocumentsPage } from './journal/JournalDocumentsPage'
@@ -116,8 +117,10 @@ export function AppRoutes() {
           <Route path="/:administrationId/sales_invoices/:invoiceId/edit" element={<InvoiceEditRedirect />} />
           <Route path="/:administrationId/sales_invoices/:invoiceId/payments/:way" element={<RegisterPaymentPage />} />
           <Route path="/:administrationId/external_sales_invoices" element={<ExternalInvoicesPage />} />
-          <Route path="/:administrationId/external_sales_invoices/new" element={<ExternalInvoicePage />} />
+          <Route path="/:administrationId/external_sales_invoices/new" element={<ExternalEditPage />} />
           <Route path="/:administrationId/external_sales_invoices/:invoiceId" element={<ExternalInvoicePage />} />
+          <Route path="/:administrationId/external_sales_invoices/:invoiceId/edit" element={<ExternalEditPage />} />
+          <Route path="/:administrationId/external_sales_invoices/:invoiceId/payments/:way" element={<ExternalRegisterPaymentPage />} />
           <Route path="/:administrationId/recurring_sales_invoices" element={<RecurringInvoicesPage />} />
           <Route path="/:administrationId/recurring_sales_invoices/new" element={<RecurringInvoicePage />} />
           <Route path="/:administrationId/recurring_sales_invoices/:recurringId" element={<RecurringInvoicePage />} />
