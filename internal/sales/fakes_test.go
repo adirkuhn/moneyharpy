@@ -14,6 +14,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
@@ -659,6 +660,22 @@ func (m *memNotes) IsMember(context.Context, resource.ID, resource.ID) (bool, er
 	return true, nil
 }
 
+type memEvents struct{ list []history.Event }
+
+func (m *memEvents) InsertEvents(_ context.Context, list []history.Event) error {
+	m.list = append(m.list, list...)
+	return nil
+}
+func (m *memEvents) EventsOf(_ context.Context, _ resource.ID, t string, ids []resource.ID) ([]history.Event, error) {
+	var out []history.Event
+	for _, e := range m.list {
+		if e.EntityType == t && slices.Contains(ids, e.EntityID) {
+			out = append(out, e)
+		}
+	}
+	return out, nil
+}
+
 type memAttachments struct{ list []attachments.Attachment }
 
 func (m *memAttachments) CreateAttachment(_ context.Context, a attachments.Attachment) error {
@@ -711,7 +728,7 @@ func newHarness(t *testing.T) harness {
 	svc := NewService(Deps{
 		Administrations: fakeAdmins{}, Contacts: fakeContacts{}, Products: fakeCatalog{}, Projects: fakeCatalog{}, Invoicing: &fakeInvoicing{}, Ledger: ledger,
 		Notes: notes.NewService(&memNotes{}, ids, clock), Attachments: attachments.NewService(&memAttachments{}, noFiles{}, ids, clock),
-		Store: store, Renderer: fakeRenderer{}, Mailer: mailer, Bank: bank, Notifier: notifier, IDs: ids, Now: clock,
+		Store: store, Renderer: fakeRenderer{}, Mailer: mailer, Bank: bank, Notifier: notifier, History: history.NewService(&memEvents{}, ids, clock), IDs: ids, Now: clock,
 	})
 	bank.svc = svc
 	return harness{svc: svc, store: store, ledger: ledger, mailer: mailer, bank: bank, notifier: notifier, clock: &at}

@@ -711,6 +711,9 @@ func (s *Service) BillEstimate(ctx context.Context, admin, id, user resource.ID)
 	if err := s.store.SaveBilled(ctx, inv, e); err != nil {
 		return Invoice{}, wrap("store billed estimate", err)
 	}
+	if err := s.record(ctx, user, on(inv, "sales_invoice_created_based_on_estimate").with(map[string]any{"original_estimate": e.EstimateID})); err != nil {
+		return Invoice{}, err
+	}
 	return s.Invoice(ctx, admin, inv.ID, user)
 }
 

@@ -29,6 +29,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/downloads"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
@@ -280,7 +281,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
-		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, Bank: bank,
+		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, Bank: bank, History: history.NewService(postgres.NewEventStore(pool), ids, time.Now),
 		Notifier: httpapi.SalesNotifier{Webhooks: h.hooks}, IDs: ids, Now: time.Now,
 	})
 	bank.UseInvoices(invoiceService)

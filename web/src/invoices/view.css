@@ -46,7 +46,6 @@
 .send-form textarea { min-height: 11rem; }
 .send-form .form-input__control:has(> textarea), .send-form .form-input__control > textarea { max-width: none; }
 .send-form__switch { display: inline-flex; align-items: center; gap: 0.5rem; }
-.send-form__hint { margin: 0; }
 .send-form__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .send-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.5rem; }
 .send-methods__card {
