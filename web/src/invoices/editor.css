@@ -142,3 +142,12 @@ th.details-editor__remove, td.details-editor__remove { width: 1.75rem; padding-i
   .invoice-paper__settings { border: 1px solid CanvasText; }
   .layout-cards__card.is-checked { outline: 2px solid Highlight; }
 }
+
+/* The payment conditions as an editable part of the document, and the card that edits them, after Moneybird's editable-document-form. */
+.invoice-paper__conditions-button { min-height: 1.5rem; }
+.editable-document-form {
+  display: grid; gap: 0.75rem; margin: 0 -1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+  box-shadow: 0 6px 24px rgb(9 38 83 / 0.12); font-size: 14px;
+}
+.editable-document-form__link { font-size: 0.875rem; }
+.editable-document-form__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }

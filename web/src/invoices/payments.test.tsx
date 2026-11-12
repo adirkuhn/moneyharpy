@@ -150,6 +150,21 @@ describe('getting paid', () => {
     expect(screen.getByRole('link', { name: 'Bank' })).toHaveAttribute('href', '/11/financial_mutations')
   })
 
+  it('lists first the bank transaction that quotes the payment reference', async () => {
+    const row = (id: string, amount: string, message: string) => ({ id, administration_id: '11', financial_account_id: '301', date: '2026-11-10', amount, amount_open: amount, message, contra_account_name: 'Example Shop B.V.', state: 'unprocessed', currency: 'EUR' })
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice({ payment_reference: 'RF130000000000000PV96X5KP' }))),
+      http.get('*/api/v2/11/financial_mutations', () => HttpResponse.json([row('771', '242.0', 'Order 12'), row('772', '100.0', 'rf13 pv96 x5kp'), row('773', '5.0', 'Coffee')])),
+    )
+    renderAt('/11/sales_invoices/901/payments/bank_transfer')
+    const found = await screen.findByRole('list', { name: 'Matching transactions' })
+    const items = within(found).getAllByRole('listitem')
+    expect(items).toHaveLength(2)
+    expect(items[0]).toHaveTextContent('rf13 pv96 x5kp')
+    expect(items[1]).toHaveTextContent('Order 12')
+  })
+
   it('links a payment to its bank transaction', async () => {
     server.use(...loaded())
     server.use(http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice({
