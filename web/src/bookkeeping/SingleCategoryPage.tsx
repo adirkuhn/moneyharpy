@@ -68,7 +68,7 @@ function SingleCategory({ administrationId, hasScheme, accounts, flow }: Props) 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     const { rgs_code, ...ledger_account } = form
-    save.mutate({ ledger_account, ...(hasScheme ? { rgs_code } : {}) }, { onSuccess: () => navigate(flow.returnTo, { state: flow.returnState }) })
+    save.mutate({ ledger_account, ...(hasScheme ? { rgs_code } : {}) }, { onSuccess: (saved) => navigate(flow.returnTo, { state: flow.stateAfter([saved]) }) })
   }
 
   return (

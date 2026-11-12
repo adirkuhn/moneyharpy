@@ -69,7 +69,11 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
   /** What a block of a sent invoice's document would open, while the warning asks first. */
   const [asking, setAsking] = useState<Opening | undefined>(undefined)
   /** What the editor of a sent invoice opened with, once the warning was answered. */
-  const [editing, setEditing] = useState<Opening | undefined>(undefined)
+  // Back from adding a category or VAT rate for a row, its details open again, as Moneybird's ?open=details does.
+  const [editing, setEditing] = useState<Opening | undefined>(() => {
+    const back = location.state as Opening
+    return isSent(inv.state) && back?.details ? back : undefined
+  })
 
   const list = `/${administrationId}/sales_invoices`
   const draft = inv.state === 'draft'
@@ -78,8 +82,8 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
   const payable = isPayable(inv.state)
   // As at Moneybird a sent or paid invoice can still change, after a warning; one written off cannot.
   const editable = inv.state !== 'uncollectible'
-  // The server deletes an invoice only without payments.
-  const deletable = (inv.payments ?? []).length === 0
+  // As Moneybird's API, the server deletes an invoice with its payments, unless they are pending.
+  const deletable = inv.state !== 'pending_payment'
   const toCredit = () => credit.mutate(undefined, { onSuccess: (c) => navigate(`${list}/${c.id}`) })
   const done = () => setPanel(null)
   const here = `${list}/${inv.id}`

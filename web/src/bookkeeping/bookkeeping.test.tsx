@@ -142,6 +142,18 @@ describe('VAT rate form', () => {
     )
   })
 
+  it('goes back to the invoice that asked, with the new rate on its row, as Moneybird does', async () => {
+    server.use(...loaded(), http.post('*/api/v2/11/tax_rates', () => HttpResponse.json(rate({ id: '903' }), { status: 201 })))
+    const field = 'sales_invoice[details_attributes][1][tax_rate_id]'
+    renderAt(`/11/tax_rates/new?return_to=${encodeURIComponent('/11/sales_invoices/5')}&new_entity_field=${encodeURIComponent(field)}`)
+    await userEvent.type(await screen.findByLabelText('Name'), 'Reduced')
+    await userEvent.type(screen.getByLabelText('Percentage'), '9')
+    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/11/sales_invoices/5')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/5$/))
+    expect(JSON.parse(screen.getByTestId('state').textContent || 'null')).toEqual({ details: true, newEntity: { field, id: '903' } })
+  })
+
   it('shows problems beside the fields', async () => {
     server.use(...loaded(), http.post('*/api/v2/11/tax_rates', () =>
       HttpResponse.json({ error: { percentage: ['must be a number from 0 to 100 with at most 2 decimals'] } }, { status: 422 }),
@@ -154,6 +166,12 @@ describe('VAT rate form', () => {
 })
 
 const fromInvoice = `return_to=${encodeURIComponent('/11/sales_invoices/5/edit')}&source=sales_invoice`
+/** Moneybird's new_entity_field of the invoice's first row, whose category is being added. */
+const rowField = 'sales_invoice[details_attributes][0][ledger_account_id]'
+const fromInvoiceRow = `${fromInvoice}&new_entity_field=${encodeURIComponent(rowField)}`
+/** What the invoice gets back: its details open, with the new category on the row that asked. */
+const backWith = (id: string) => ({ details: true, newEntity: { field: rowField, id } })
+const passedState = () => JSON.parse(screen.getByTestId('state').textContent || 'null')
 
 const entry = (over: Partial<TemplateAccount> & Pick<TemplateAccount, 'key' | 'name'>): TemplateAccount => ({
   parent: null, account_type: 'expenses', account_id: '', rgs_code: '', description: '', exists: false, selected: false, choices: [], ...over,
@@ -220,7 +238,7 @@ const withTemplates = (applied: { key: string; body: unknown }[] = [], legalForm
   http.get('*/api/v2/11/ledger_account_templates', () => HttpResponse.json([revenue, car, housing, staff, entrepreneur, fixedAssets])),
   http.post('*/api/v2/11/ledger_account_templates/:key', async ({ params, request }) => {
     applied.push({ key: String(params.key), body: await request.json() })
-    return HttpResponse.json([], { status: 201 })
+    return HttpResponse.json([account({ id: '1020', name: 'Workshops' })], { status: 201 })
   }),
 ]
 
@@ -358,7 +376,7 @@ describe('add categories from a theme', () => {
   it('adds one revenue category of the kind chosen, under the parent chosen', async () => {
     const applied: { key: string; body: unknown }[] = []
     server.use(...withTemplates(applied))
-    renderAt(`/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=revenue&${fromInvoice}`)
+    renderAt(`/11/ledger_accounts/blueprint_ledger_accounts/new?ledger_account_set=revenue&${fromInvoiceRow}`)
     expect(await screen.findByRole('heading', { name: 'Add category for Invoice from Revenue', level: 1 })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Revenue from trade goods' })).toBeChecked()
     const parent = screen.getByLabelText('Parent category')
@@ -369,6 +387,7 @@ describe('add categories from a theme', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save and go back to the invoice' }))
     await waitFor(() => expect(applied).toEqual([{ key: 'revenue', body: { name: 'Workshops', option: 'revenue_from_provision_of_services', parent_id: '1010' } }]))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/5\/edit$/))
+    expect(passedState()).toEqual(backWith('1020'))
   })
 
   it('adds a fixed asset category to the group chosen', async () => {
@@ -400,9 +419,9 @@ describe('add single category', () => {
       }),
       ...loaded(), creating(sent),
     )
-    renderAt(`/11/ledger_accounts/new?${fromInvoice}`)
+    renderAt(`/11/ledger_accounts/new?${fromInvoiceRow}`)
     expect(await screen.findByRole('heading', { name: 'Add single category', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'To Add category' })).toHaveAttribute('href', `/11/ledger_accounts/blueprints?${fromInvoice}`)
+    expect(screen.getByRole('link', { name: 'To Add category' })).toHaveAttribute('href', `/11/ledger_accounts/blueprints?${fromInvoiceRow}`)
     const form = screen.getByRole('form', { name: 'Add single category' })
     expect(within(form).getByText('Profit and loss statement')).toBeInTheDocument()
     expect(within(form).getByText('Revenue')).toBeInTheDocument()
@@ -420,6 +439,7 @@ describe('add single category', () => {
       }),
     )
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/5\/edit$/))
+    expect(passedState()).toEqual(backWith('1005'))
   })
 
   it('takes a type, parent, number and code chosen by hand', async () => {

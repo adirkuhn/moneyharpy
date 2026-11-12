@@ -118,6 +118,14 @@ func TestSalesInvoicePayments(t *testing.T) {
 		t.Errorf("settled credit %s, original %s %+v", settled.State, orig.State, orig.Payments)
 	}
 
+	// As at Moneybird, deleting a paid invoice takes its payments along.
+	paidOff := send("10", false, 0)
+	r = owner.do(http.MethodPatch, invoices+"/"+paidOff.ID+"/register_payment", map[string]any{"payment": map[string]any{"payment_date": today, "price": "12.10"}})
+	wantStatus(t, r, http.StatusOK)
+	gone := decode[payment](t, r)
+	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+paidOff.ID, nil), http.StatusNoContent)
+	wantStatus(t, owner.do(http.MethodGet, api+"/payments/"+gone.ID, nil), http.StatusNotFound)
+
 	// Dubious, then uncollectible.
 	late := send("100", false, 40)
 	wantStatus(t, owner.do(http.MethodPatch, invoices+"/"+late.ID+"/mark_as_dubious", map[string]any{"dubious_date": adminNow().AddDate(0, 0, -41).Format(time.DateOnly)}), http.StatusUnprocessableEntity)
@@ -236,13 +244,14 @@ func TestPaymentWebhooks(t *testing.T) {
 	api, invoices, send := salesSetup(t, owner)
 	rc := newReceiver(t)
 	wantStatus(t, owner.do(http.MethodPatch, "/api/instance/settings", map[string]bool{"webhooks_allow_local": true}), http.StatusOK)
-	wantStatus(t, owner.do(http.MethodPost, api+"/webhooks", map[string]any{"url": rc.srv.URL, "enabled_events": []string{"payment", "sales_invoice_state_changed_to_paid", "sales_invoice_marked_as_dubious"}}), http.StatusCreated)
+	wantStatus(t, owner.do(http.MethodPost, api+"/webhooks", map[string]any{"url": rc.srv.URL, "enabled_events": []string{"payment", "sales_invoice_state_changed_to_paid", "sales_invoice_marked_as_dubious", "credit_invoice_created_from_original"}}), http.StatusCreated)
 
 	inv := send("100", false, 3)
 	r := owner.do(http.MethodPost, invoices+"/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": adminNow().Format(time.DateOnly), "price": "121"}})
 	wantStatus(t, r, http.StatusCreated)
 	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID+"/payments/"+decode[payment](t, r).ID, nil), http.StatusNoContent)
 	wantStatus(t, owner.do(http.MethodPatch, invoices+"/"+inv.ID+"/mark_as_dubious", map[string]any{}), http.StatusOK)
+	wantStatus(t, owner.do(http.MethodPatch, invoices+"/"+inv.ID+"/duplicate_creditinvoice", map[string]any{}), http.StatusOK)
 	if _, err := h.hooks.Deliver(ctx, 20); err != nil {
 		t.Fatal(err)
 	}
@@ -255,7 +264,7 @@ func TestPaymentWebhooks(t *testing.T) {
 		actions = append(actions, p["action"].(string))
 	}
 	slices.Sort(actions)
-	want := []string{"payment_destroyed", "payment_registered", "sales_invoice_marked_as_dubious", "sales_invoice_state_changed_to_paid"}
+	want := []string{"credit_invoice_created_from_original", "payment_destroyed", "payment_registered", "sales_invoice_marked_as_dubious", "sales_invoice_state_changed_to_paid"}
 	if !slices.Equal(actions, want) {
 		t.Errorf("actions = %v, want %v", actions, want)
 	}

@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { renderAt } from '../test/render'
 import { server } from '../test/server'
-import { creating, detailRows, draft, editLines, editorCard, empty, invoice, invoicePaper, loaded, paper, pickContact, popup } from './testkit'
+import { creating, detailRows, draft, editLines, editorCard, empty, invoice, invoicePaper, loaded, paper, pickContact, popup, sales } from './testkit'
 
 describe('the invoice details editor', () => {
   it('adds details with their totals, discount and VAT, after Moneybird', async () => {
@@ -266,9 +266,51 @@ describe('the invoice details editor', () => {
     await userEvent.type(within(row).getByLabelText('Description'), 'Coaching')
     await userEvent.selectOptions(within(row).getByLabelText('Category'), 'Add Category...')
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/ledger_accounts\/blueprints$/))
+    // Moneybird's new_entity_field names the field that asked, so the new category lands there.
+    const query = new URLSearchParams(screen.getByTestId('search').textContent ?? '')
+    expect(query.get('new_entity_field')).toBe('sales_invoice[details_attributes][0][ledger_account_id]')
+    expect(query.get('return_to')).toBe('/11/sales_invoices/902')
     expect(sent.patch?.details_attributes).toEqual([expect.objectContaining({ description: 'Coaching' })])
     expect(await screen.findByRole('heading', { name: 'Add category for Invoice', level: 1 })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'To invoice' })).toHaveAttribute('href', '/11/sales_invoices/902')
+  })
+
+  it('saves the draft before "Add VAT rate..." opens Add VAT rate in this tab, as Moneybird does', async () => {
+    const sent: { patch?: Record<string, unknown> } = {}
+    server.use(...loaded())
+    server.use(...creating(sent, draft), http.get('*/api/v2/11/bookkeeping_settings', () => HttpResponse.json({ chart_scheme: '', chart_schemes: [], tax_report_boxes: [] })))
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: /^Invoice Draft #3$/ })
+    await editLines()
+    const row = detailRows()[0]!
+    await userEvent.clear(within(row).getByLabelText('Description'))
+    await userEvent.type(within(row).getByLabelText('Description'), 'Coaching')
+    await userEvent.selectOptions(within(row).getByLabelText('VAT rate'), 'Add VAT rate...')
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/tax_rates\/new$/))
+    const query = new URLSearchParams(screen.getByTestId('search').textContent ?? '')
+    expect(query.get('new_entity_field')).toBe('sales_invoice[details_attributes][0][tax_rate_id]')
+    expect(query.get('return_to')).toBe('/11/sales_invoices/902')
+    expect(sent.patch?.details_attributes).toEqual([expect.objectContaining({ description: 'Coaching' })])
+  })
+
+  it('puts the category added for a row on that row when it comes back, as Moneybird does', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales, { ...sales, id: '8002', name: 'Coaching', account_id: '8010', uri: '/11/ledger_accounts/8002' }])))
+    renderAt({ pathname: '/11/sales_invoices/902', state: { details: true, newEntity: { field: 'sales_invoice[details_attributes][0][ledger_account_id]', id: '8002' } } })
+    await waitFor(() => expect(within(detailRows()[0]!).getByLabelText('Category')).toHaveValue('8002'))
+  })
+
+  it('puts the VAT rate added for a row on that row when it comes back', async () => {
+    server.use(...loaded())
+    renderAt({ pathname: '/11/sales_invoices/902', state: { details: true, newEntity: { field: 'sales_invoice[details_attributes][0][tax_rate_id]', id: '2109' } } })
+    await waitFor(() => expect(within(detailRows()[0]!).getByLabelText('VAT rate')).toHaveValue('2109'))
+  })
+
+  it('opens the details of a sent invoice again when it comes back from adding a category', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales, { ...sales, id: '8002', name: 'Coaching', uri: '/11/ledger_accounts/8002' }])))
+    renderAt({ pathname: '/11/sales_invoices/901', state: { details: true, newEntity: { field: 'sales_invoice[details_attributes][0][ledger_account_id]', id: '8002' } } })
+    await waitFor(() => expect(within(detailRows()[0]!).getByLabelText('Category')).toHaveValue('8002'))
   })
 
   it('goes to Add category straight away when nothing changed', async () => {

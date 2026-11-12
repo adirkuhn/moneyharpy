@@ -7,6 +7,7 @@ import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
+import { backState, useReturnTo } from './flow'
 import { type BookkeepingSettings, type TaxRate, type TaxRateType, taxRateTypes, useBookkeepingSettings, useSaveTaxRate, useTaxRate } from './queries'
 
 /** Adds a VAT rate (/tax_rates/new) or edits one (/tax_rates/:id). */
@@ -38,7 +39,10 @@ function TaxRateForm({ administrationId, settings, rate }: Props) {
     country: rate?.country ?? '',
     tax_report_boxes: rate?.tax_report_boxes ?? [],
   })
-  const back = `/${administrationId}/settings/bookkeeping#vat-rates`
+  // "Add VAT rate..." of an invoice comes back to it, with the new rate on the row that asked, as Moneybird's return_to and new_entity_field do.
+  const { returnTo, newEntityField } = useReturnTo(administrationId)
+  const back = returnTo || `/${administrationId}/settings/bookkeeping#vat-rates`
+  const stateAfter = (id?: string | null) => (newEntityField ? backState(newEntityField, id) : undefined)
   const labels = {
     name: t('bookkeeping.rateName'), percentage: t('bookkeeping.percentage'), tax_rate_type: t('bookkeeping.rateType'),
     country: t('bookkeeping.rateCountry'), tax_report_boxes: t('bookkeeping.reportColumn'),
@@ -49,11 +53,11 @@ function TaxRateForm({ administrationId, settings, rate }: Props) {
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    save.mutate(form, { onSuccess: () => navigate(back) })
+    save.mutate(form, { onSuccess: (saved) => navigate(back, { state: stateAfter(saved.id) }) })
   }
 
   return (
-    <Page title={rate ? t('bookkeeping.editRate') : t('bookkeeping.newRate')} back={{ to: back, label: t('bookkeeping.back') }}>
+    <Page title={rate ? t('bookkeeping.editRate') : t('bookkeeping.newRate')} back={{ to: back, label: newEntityField ? t('bookkeeping.toInvoice') : t('bookkeeping.back') }}>
       <form className="form-sheet" onSubmit={submit} noValidate>
         <Problems messages={errors.general} />
         <FormSection>
@@ -76,7 +80,7 @@ function TaxRateForm({ administrationId, settings, rate }: Props) {
         )}
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={save.isPending}>{t('settings.save')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <Link className="btn btn--secondary" to={back} state={stateAfter()}>{t('common.cancel')}</Link>
         </div>
       </form>
     </Page>

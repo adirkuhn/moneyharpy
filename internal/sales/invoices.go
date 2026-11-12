@@ -210,19 +210,26 @@ func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, c Cha
 	return s.Invoice(ctx, admin, id, user)
 }
 
-// Delete removes an invoice with what it booked. As at Moneybird a sent
-// invoice can go too, though crediting it is the regular way; one with
-// payments, or in the locked period, cannot.
+// Delete removes an invoice with what it booked and its payments, as
+// Moneybird's API does: a sent invoice can go too, though crediting it is the
+// regular way. One with pending payments, or in the locked period, cannot.
 func (s *Service) Delete(ctx context.Context, admin, id, user resource.ID) error {
 	inv, err := s.Invoice(ctx, admin, id, user)
 	if err != nil {
 		return err
 	}
-	if len(inv.Payments) > 0 {
-		return invalid("base", "Remove the payments of this invoice first")
+	if inv.State == PendingPayment {
+		return invalid("base", "Sales invoice has pending payments")
 	}
 	if inv.Sent() {
 		if err := s.checkUnlocked(ctx, admin, user, inv.InvoiceDate); err != nil {
+			return err
+		}
+	}
+	// Each payment goes as deleting it by itself would: one from a bank
+	// transaction is unlinked, so the transaction is open again.
+	for _, p := range inv.Payments {
+		if err := s.DeletePayment(ctx, admin, id, p.ID, user); err != nil {
 			return err
 		}
 	}

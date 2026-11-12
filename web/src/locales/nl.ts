@@ -213,7 +213,7 @@ export const nl: Messages = {
       },
       events: {
         created: 'Factuur aangemaakt', createdFromQuote: 'Factuur aangemaakt vanuit een offerte', createdFromRecurring: 'Factuur aangemaakt door een periodieke factuur',
-        createdFromSubscription: 'Factuur aangemaakt door een abonnement', createdFromOriginal: 'Creditfactuur aangemaakt', creditCreated: 'Creditfactuur voor deze factuur gemaakt', updated: 'Factuur bewerkt',
+        createdFromSubscription: 'Factuur aangemaakt door een abonnement', createdFromOriginal: 'Creditfactuur aangemaakt', createdFromCopy: 'Factuur aangemaakt vanuit een andere factuur', updated: 'Factuur bewerkt',
         stateChanged: 'Status van factuur gewijzigd naar {{state}}', paid: 'Factuur is betaald', sentEmail: 'Factuur per e-mail verstuurd', sentPost: 'Factuur per post verstuurd',
         sentManually: 'Factuur handmatig als verstuurd gemarkeerd', reminderEmail: 'Herinnering per e-mail verstuurd', reminderManually: 'Herinnering handmatig als verstuurd gemarkeerd',
         paused: 'Herinneringen gepauzeerd', resumed: 'Herinneringen hervat', dubious: 'Factuur als dubieus gemarkeerd', uncollectible: 'Factuur als oninbaar gemarkeerd',
@@ -232,7 +232,7 @@ export const nl: Messages = {
       payBefore: 'Graag ontvangen we {{amount}} vóór {{date}} op rekening {{account}} ten name van {{holder}}, onder vermelding van {{reference}}.',
       numberOnSend: 'het factuurnummer',
       fields: {
-        company_name: 'Bedrijfsnaam', address: 'Adres', email: 'E-mail', phone: 'Telefoon', website: 'Website', chamber_of_commerce: 'KVK', tax_number: 'Btw',
+        company_name: 'Bedrijfsnaam', address: 'Adres', email: 'E-mail', phone: 'Telefoon', company_website_url: 'Website', chamber_of_commerce: 'KVK', tax_number: 'Btw',
         bank_account_number: 'Bank', bank_account_bic: 'BIC', bank_account_name: 'Tenaamstelling',
       },
     }, editTitle: 'Factuur {{name}} bewerken', draftTitle: 'Concept #{{id}}',
@@ -814,7 +814,7 @@ export const nl: Messages = {
     move: '{{name}} verplaatsen', moveHelp: 'Verplaats dit veld met de pijltjestoetsen: omhoog en omlaag wijzigen de volgorde, links en rechts verplaatsen het naar de volgende kolom.',
     boldOf: '{{name}} vet', labelOf: 'Label van {{name}} tonen', noValue: 'Dit veld heeft geen waarde. Je kunt het toevoegen bij Instellingen > Bedrijf.',
     fields: {
-      company_name: 'Bedrijfsnaam', address: 'Adres', newline: 'Lege regel', email: 'E-mailadres', phone: 'Telefoonnummer', website: 'Website', chamber_of_commerce: 'KVK', tax_number: 'Btw',
+      company_name: 'Bedrijfsnaam', address: 'Adres', newline: 'Lege regel', email: 'E-mailadres', phone: 'Telefoonnummer', company_website_url: 'Website', chamber_of_commerce: 'KVK', tax_number: 'Btw',
       bank_account_number: 'Bank', bank_account_bic: 'BIC', bank_account_name: 'Tenaamstelling', invoice_id: 'Factuurnummer', invoice_date: 'Factuurdatum', due_date: 'Vervaldatum', reference: 'Referentie',
       customer_id: 'Klantnummer', estimate_id: 'Offertenummer', estimate_date: 'Offertedatum', customer_tax_number: 'Btw-nummer',
       customer_chamber_of_commerce: 'KVK-nummer', customer_email: 'E-mailadres klant', customer_phone: 'Telefoonnummer klant',

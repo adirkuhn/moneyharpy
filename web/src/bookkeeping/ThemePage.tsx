@@ -97,7 +97,7 @@ function CategoriesTheme({ administrationId, template, flow }: ThemeProps) {
     }
     apply.mutate(
       { key: template.key, body: { ledger_accounts: keys, ...(template.name_label ? { name: name.trim() } : {}) } },
-      { onSuccess: () => navigate(flow.returnTo, { state: flow.returnState }) },
+      { onSuccess: (added) => navigate(flow.returnTo, { state: flow.stateAfter(added) }) },
     )
   }
   const sides = [
@@ -230,7 +230,7 @@ function SingleTheme({ administrationId, template, single, accounts, flow }: Sin
   const submit = () =>
     apply.mutate(
       { key: template.key, body: { name: form.name.trim(), option: form.option, ...(single.parent ? { parent_id: form.parent_id } : {}) } },
-      { onSuccess: () => navigate(flow.returnTo, { state: flow.returnState }) },
+      { onSuccess: (added) => navigate(flow.returnTo, { state: flow.stateAfter(added) }) },
     )
   return (
     <ThemeForm template={template} flow={flow} pending={apply.isPending} onSubmit={submit}>

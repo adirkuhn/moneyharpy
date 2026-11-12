@@ -24,15 +24,15 @@ type styledLine struct {
 // fieldNames are the labels fields print with when a layout asks for them.
 var fieldNames = map[bool]map[string]string{
 	false: {
-		"company_name": "Company name", "address": "Address", "email": "Email", "phone": "Phone", "website": "Website",
+		"company_name": "Company name", "address": "Address", "email": "Email", "phone": "Phone", "company_website_url": "Website",
 		"chamber_of_commerce": "CoC", "tax_number": "VAT number", "bank_account_number": "IBAN", "bank_account_bic": "BIC",
 		"bank_account_name": "Account holder", "customer_tax_number": "VAT number", "customer_chamber_of_commerce": "CoC number",
-		"customer_id": "Customer number", "customer_email": "Email address", "customer_phone": "Phone number", "reference": "Reference",
+		"customer_id": "Client number", "customer_email": "Email address", "customer_phone": "Phone number", "reference": "Reference",
 		"invoice_id": "Invoice number", "invoice_date": "Invoice date", "due_date": "Due date", "estimate_id": "Quote number",
 		"estimate_date": "Quote date",
 	},
 	true: {
-		"company_name": "Bedrijfsnaam", "address": "Adres", "email": "E-mail", "phone": "Telefoon", "website": "Website",
+		"company_name": "Bedrijfsnaam", "address": "Adres", "email": "E-mail", "phone": "Telefoon", "company_website_url": "Website",
 		"chamber_of_commerce": "KVK", "tax_number": "Btw-nummer", "bank_account_number": "IBAN", "bank_account_bic": "BIC",
 		"bank_account_name": "Rekeninghouder", "customer_tax_number": "Btw-nummer", "customer_chamber_of_commerce": "KVK-nummer",
 		"customer_id": "Klantnummer", "customer_email": "E-mailadres", "customer_phone": "Telefoonnummer", "reference": "Referentie",
@@ -107,6 +107,10 @@ func fieldValue(doc sales.Document, field string, l labels) (string, []string) {
 		return name, nonEmpty(id.Email)
 	case "phone":
 		return name, nonEmpty(id.Phone)
+	case "company_website_url":
+		// As at Moneybird, the website is the administration's: identities
+		// have none.
+		return name, nonEmpty(doc.Administration.CompanyWebsiteURL)
 	case "chamber_of_commerce":
 		return name, nonEmpty(id.ChamberOfCommerce)
 	case "tax_number":
@@ -136,7 +140,6 @@ func fieldValue(doc sales.Document, field string, l labels) (string, []string) {
 	case "due_date":
 		return name, nonEmpty(pdfDay(due))
 	}
-	// Fields MoneyHarpy has no value for, such as the website, print nothing.
 	return name, nil
 }
 
@@ -188,13 +191,14 @@ func recipientInfo(doc sales.Document, l labels) []styledLine {
 	return styledLines(doc, ly.InvoiceRecipientAddress, l)
 }
 
-// metaRows are the document's details beside its title: its number, then
-// the style's left and right columns. A packing slip has no due date.
+// metaRows are the document's details beside its title, which carries the
+// number as on Moneybird's documents: the style's left and right columns. A
+// packing slip has no due date.
 func metaRows(doc sales.Document, l labels, prices bool) [][2]string {
 	ly := layout(doc)
-	number, columns := "invoice_id", append(append([]invoicing.Line{}, ly.InvoiceMetadataLeft...), ly.InvoiceMetadataRight...)
+	columns := append(append([]invoicing.Line{}, ly.InvoiceMetadataLeft...), ly.InvoiceMetadataRight...)
 	if isEstimate(doc) {
-		number, columns = "estimate_id", append(append([]invoicing.Line{}, ly.EstimateMetadataLeft...), ly.EstimateMetadataRight...)
+		columns = append(append([]invoicing.Line{}, ly.EstimateMetadataLeft...), ly.EstimateMetadataRight...)
 	}
 	var rows [][2]string
 	add := func(field string) {
@@ -203,9 +207,8 @@ func metaRows(doc sales.Document, l labels, prices bool) [][2]string {
 			rows = append(rows, [2]string{name, strings.Join(text, ", ")})
 		}
 	}
-	add(number)
 	for _, line := range columns {
-		if line.Field == number || line.Field == "newline" || (!prices && !isEstimate(doc) && line.Field == "due_date") {
+		if line.Field == "newline" || (!prices && !isEstimate(doc) && line.Field == "due_date") {
 			continue
 		}
 		add(line.Field)
