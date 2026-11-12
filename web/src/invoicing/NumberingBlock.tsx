@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Problems } from '../auth/AuthLayout'
 import { formErrors } from '../forms/Form'
+import { Tip } from '../contacts/ContactFormParts'
 import { CaretIcon } from '../layout/icons'
 import { Block } from '../settings/Block'
 import { numberTags, renderNumber } from './numbering'
@@ -67,7 +68,10 @@ function NumberCard({ administrationId, kind, title, settings, language }: CardP
             {templateErrors && <p id={`${id}-template-error`} className="form-input__message form-input__message--error">{templateErrors.join(' ')}</p>}
           </div>
           <div className={`numbering-card__field numbering-card__next${sequenceErrors ? ' form-input--invalid' : ''}`}>
-            <label htmlFor={`${id}-next`}>{t('invoicing.nextId')}</label>
+            <span className="numbering-card__label">
+              <label htmlFor={`${id}-next`}>{t('invoicing.nextId')}</label>
+              <Tip text={t('invoicing.nextIdHelp')} />
+            </span>
             <input
               id={`${id}-next`}
               type="text"
@@ -75,13 +79,10 @@ function NumberCard({ administrationId, kind, title, settings, language }: CardP
               autoComplete="off"
               maxLength={10}
               value={form.sequence}
-              aria-describedby={`${id}-next-message`}
-              {...(sequenceErrors ? { 'aria-invalid': true } : {})}
+              {...(sequenceErrors ? { 'aria-invalid': true, 'aria-describedby': `${id}-next-message` } : {})}
               onChange={(e) => setForm({ ...form, sequence: e.target.value })}
             />
-            <p id={`${id}-next-message`} className={`form-input__message form-input__message--${sequenceErrors ? 'error' : 'help'}`}>
-              {sequenceErrors ? sequenceErrors.join(' ') : t('invoicing.nextIdHelp')}
-            </p>
+            {sequenceErrors && <p id={`${id}-next-message`} className="form-input__message form-input__message--error">{sequenceErrors.join(' ')}</p>}
           </div>
           {dirty && (
             <div className="numbering-card__buttons">

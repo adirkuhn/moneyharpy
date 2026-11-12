@@ -13,7 +13,8 @@ import { CreateAdministrationPage } from './onboarding/CreateAdministrationPage'
 import { FirstActionPage } from './onboarding/FirstActionPage'
 import { ManualCompanyPage } from './onboarding/ManualCompanyPage'
 import { PermalinkPage } from './resources/PermalinkPage'
-import { DocumentStyleFormPage } from './invoicing/DocumentStyleFormPage'
+import { DocumentStyleEditorPage, DocumentStyleEditRedirect } from './invoicing/DocumentStyleEditorPage'
+import { DocumentStyleGeneralPage } from './invoicing/DocumentStyleGeneralPage'
 import { InvoicesSettingsPage } from './invoicing/InvoicesSettingsPage'
 import { WorkflowFormPage } from './invoicing/WorkflowFormPage'
 import { CompanySettingsPage } from './settings/CompanySettingsPage'
@@ -180,9 +181,12 @@ export function AppRoutes() {
           <Route path=":workflowId" element={<WorkflowFormPage />} />
         </Route>
         <Route path="/:administrationId/document_styles" element={<SettingsLayout />}>
-          <Route path="new" element={<DocumentStyleFormPage />} />
+          <Route path="new" element={<DocumentStyleGeneralPage />} />
           <Route path=":styleId" element={<Navigate to="edit" replace />} />
-          <Route path=":styleId/edit" element={<DocumentStyleFormPage />} />
+          <Route path=":styleId/edit" element={<DocumentStyleEditRedirect />} />
+          <Route path=":styleId/edit/:tab" element={<DocumentStyleEditorPage />} />
+          <Route path=":styleId/edit/:tab/:language" element={<DocumentStyleEditorPage />} />
+          <Route path=":styleId/edit_general" element={<DocumentStyleGeneralPage />} />
         </Route>
         <Route path="/:administrationId/connections" element={<SettingsLayout />}>
           <Route path="new" element={<ConnectionFormPage />} />
