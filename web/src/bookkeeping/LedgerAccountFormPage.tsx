@@ -9,8 +9,7 @@ import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import {
   type AccountType, balanceSheetTypes, documentTypes, type DocumentType, type LedgerAccount, profitAndLossTypes, tree,
-  useBookkeepingSettings, useDeleteLedgerAccount, useLedgerAccounts, useSaveLedgerAccount,
-} from './queries'
+  useBookkeepingSettings, useDeleteLedgerAccount, useLedgerAccounts, useSaveLedgerAccount, categoryOption } from './queries'
 import { TaxonomyPicker } from './TaxonomyPicker'
 
 /** Edits a category (/ledger_accounts/:id); Add single category adds one. */
@@ -101,7 +100,7 @@ function LedgerAccountForm({ administrationId, hasScheme, accounts, account }: P
           <TextInput label={labels.account_id} width="small" maxLength={20} autoComplete="off" value={form.account_id} errors={errors.field('account_id')} onChange={(e) => setForm({ ...form, account_id: e.target.value })} />
           <SelectInput label={labels.parent_id} width="medium" value={form.parent_id} errors={errors.field('parent_id')} onChange={(e) => setForm({ ...form, parent_id: e.target.value })}>
             <option value="">{t('bookkeeping.noParent')}</option>
-            {parents.map(({ account: a, depth }) => <option key={a.id} value={a.id}>{`${' '.repeat(depth)}${a.account_id ? `${a.account_id} ` : ''}${a.name}`}</option>)}
+            {parents.map(({ account: a, depth }) => <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>)}
           </SelectInput>
           {hasScheme && (
             <TaxonomyPicker

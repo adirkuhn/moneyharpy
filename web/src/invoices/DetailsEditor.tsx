@@ -11,6 +11,7 @@ import type { LineRow } from './LinesEditor'
 import type { NewEntityKey } from './newEntity'
 import { today } from './paper'
 import { type TotalRow, TotalsTable } from './TotalsTable'
+import { categoryOption } from '../bookkeeping/queries'
 
 /** A detail row as the editor keeps it: a line with its period and the product it came from. */
 export type DetailRow = LineRow & { period: string; product_id: string; /** The period the server keeps, so clearing it is sent. */ savedPeriod?: string }
@@ -38,6 +39,8 @@ type Props = {
   onChange: (index: number, change: Partial<DetailRow>) => void
   onRemove: (index: number) => void
   onAdd: (row?: Partial<DetailRow>) => void
+  /** Puts the details back as they were when the editor opened, and closes it. */
+  onCancel: () => void
   onMove: (from: number, to: number) => void
   onApplyBelow: (index: number, change: Partial<DetailRow>) => void
   onDiscount: (value: string) => void
@@ -229,7 +232,7 @@ export function DetailsEditor(props: Props) {
                     {groups.map((g) => (
                       <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>
                         {g.rows.map(({ account: a, depth }) => (
-                          <option key={a.id} value={a.id}>{`${' '.repeat(depth)}${a.account_id ? `${a.account_id} ` : ''}${a.name}`}</option>
+                          <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>
                         ))}
                       </optgroup>
                     ))}
@@ -301,6 +304,7 @@ export function DetailsEditor(props: Props) {
               ]}
             />
             {props.onDone && <button type="button" className="btn btn--secondary" onClick={props.onDone}>{t('invoices.editor.done')}</button>}
+            <button type="button" className="btn btn--secondary" onClick={props.onCancel}>{t('common.cancel')}</button>
           </div>
         </div>
         <TotalsTable rows={totals} />

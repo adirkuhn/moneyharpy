@@ -196,6 +196,23 @@ function InvoiceForm(props: FormProps) {
   })
   const [removed, setRemoved] = useState<string[]>([])
   const [editingLines, setEditingLines] = useState(!!opening?.details)
+  // The details as they were when the editor opened, for its Cancel.
+  const [beforeEditing, setBeforeEditing] = useState(() => ({ rows, discount, removed }))
+  const editLines = () => {
+    setBeforeEditing({ rows, discount, removed })
+    setEditingLines(true)
+  }
+  const cancelLines = () => {
+    setRows(beforeEditing.rows)
+    setDiscount(beforeEditing.discount)
+    setRemoved(beforeEditing.removed)
+    setEditingLines(false)
+  }
+  // A new detail takes the VAT rate and category of the one above it.
+  const addRow = (over?: Partial<DetailRow>) => {
+    const above = rows.at(-1)
+    setRows([...rows, blank(above?.tax_rate_id || defaultRate, { ledger_account_id: above?.ledger_account_id ?? '', ...over })])
+  }
   // A new invoice starts in the popup, as on Moneybird.
   const [dialogOpen, setDialogOpen] = useState(!invoice || !!opening?.dialog)
   const before = useRef<InvoiceSetup>(setup)
@@ -319,7 +336,7 @@ function InvoiceForm(props: FormProps) {
         const details = then === 'details' || editingLines
         // A new invoice opens its details in the editor of the saved draft, not in this one that goes away.
         if (then === 'details' && invoice) {
-          setEditingLines(true)
+          editLines()
         }
         onSaved(s, { details, ...(sequenceId ? { sequenceId } : {}) })
       },
@@ -488,11 +505,12 @@ function InvoiceForm(props: FormProps) {
                 errors={errors}
                 onChange={changeRow}
                 onRemove={remove}
-                onAdd={(over) => setRows([...rows, blank(defaultRate, over)])}
+                onAdd={addRow}
                 onMove={(from, to) => setRows(moveRow(rows, from, to))}
                 onApplyBelow={(i, c) => setRows(applyBelow(rows, i, c))}
                 onDiscount={setDiscount}
                 onDone={linesInvalid ? undefined : () => setEditingLines(false)}
+                onCancel={cancelLines}
                 onAddEntity={addEntity}
               />
             ) : (
@@ -501,7 +519,7 @@ function InvoiceForm(props: FormProps) {
                   dt={dt}
                   lines={shownLines}
                   empty={emptyLine}
-                  onEdit={() => setEditingLines(true)}
+                  onEdit={editLines}
                   rowClass={(i) => (view?.highlight && rows.filter((r) => !isBlank(r))[i]?.ledger_account_id === view.highlight ? 'is-highlighted' : undefined)}
                 />
                 <TotalsTable rows={totalRows(dt, money, 'document')} />
