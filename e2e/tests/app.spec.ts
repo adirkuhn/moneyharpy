@@ -13,29 +13,6 @@ const mailpit = process.env.E2E_MAILPIT_URL ?? 'http://localhost:18025'
 // Today as the server sees it: administrations are in Amsterdam, so dates
 // made from the UTC day would be yesterday's just after midnight.
 const serverToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date())
-const admin = { email: 'admin@example.com', name: 'Instance Admin', password }
-
-// Runs before every other test registers, so this account is the instance admin.
-test.beforeAll(async ({ baseURL }) => {
-  const api = await playwrightRequest.newContext({ baseURL, extraHTTPHeaders: randomClient() })
-  const signedIn = await api.post('/api/auth/login', { data: { email: admin.email, password } })
-  if (!signedIn.ok()) {
-    expect((await api.post('/api/auth/register', { data: admin })).status()).toBe(201)
-  }
-  const saved = await api.patch('/api/instance/settings', {
-    data: {
-      smtp_enabled: true, smtp_host: 'mailpit', smtp_port: 1025, smtp_from: 'books@example.com', smtp_security: 'none',
-      storage_enabled: true, storage_endpoint: 'http://storage:8333', storage_region: 'us-east-1', storage_bucket: 'moneyharpy',
-      storage_access_key: 's3-test', storage_secret_key: 's3-test-secret', storage_path_style: true,
-      webhooks_allow_local: true,
-    },
-  })
-  expect(saved.status()).toBe(200)
-  // Creates the bucket on first run.
-  expect((await api.post('/api/instance/settings/test_storage')).status()).toBe(204)
-  await api.dispose()
-})
-
 async function resetLinkFor(email: string): Promise<string> {
   return linkFor(email, /https?:\/\/\S+\/passwords\/edit\?token=\S+/)
 }
