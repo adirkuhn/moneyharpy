@@ -10167,13 +10167,13 @@ type WorkflowRequest struct {
 		PricesAreInclTax  *bool   `json:"prices_are_incl_tax,omitempty"`
 		ShowQrCode        *bool   `json:"show_qr_code,omitempty"`
 
-		// StepsAttributes The payment term or validity first, then the reminders.
+		// StepsAttributes The steps in order, as Moneybird's: sending the invoice or estimate (step_order 0), then the reminders (step_order 1 and on). Each step expires after its due_interval; when it expires unpaid the next reminder is due.
 		StepsAttributes *[]struct {
-			// DueInterval Days until payment is due, or until an estimate expires. First step only.
+			// DueInterval Days after which the step expires ("Reminder expires after"). For the first step the payment term, or how long an estimate is valid (0 to 365); for a reminder the days until the next reminder is due (1 to 365).
 			DueInterval      *int  `json:"due_interval,omitempty"`
 			ReminderAutoSend *bool `json:"reminder_auto_send,omitempty"`
 
-			// ReminderDelay Days after the previous stage that this reminder is due.
+			// ReminderDelay Kept for Moneybird's API, whose workflows hold 0. It does not change when a reminder is due.
 			ReminderDelay *int    `json:"reminder_delay,omitempty"`
 			ReminderText  *string `json:"reminder_text,omitempty"`
 		} `json:"steps_attributes,omitempty"`

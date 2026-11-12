@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -291,12 +292,14 @@ func TestUncollectibleAfterDubious(t *testing.T) {
 func TestRemindersAndTheBackgroundJob(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()
-	late := sent(t, h, "2026-10-01") // due 2026-10-15, first reminder 2026-10-22
-	if late.NextReminder == nil || late.NextReminder.Format(time.DateOnly) != "2026-10-22" || late.State != Late {
+	// As on Moneybird the first reminder is due when the payment term
+	// expires: on the due date, Day 15 of a 14-day term.
+	late := sent(t, h, "2026-10-01") // due 2026-10-15
+	if late.NextReminder == nil || late.NextReminder.Format(time.DateOnly) != "2026-10-15" || late.State != Late {
 		t.Fatalf("late = %s, next %v", late.State, late.NextReminder)
 	}
 	open := sent(t, h, "2026-11-10")
-	if open.NextReminder.Format(time.DateOnly) != "2026-12-01" {
+	if open.NextReminder.Format(time.DateOnly) != "2026-11-24" {
 		t.Errorf("open next = %v", open.NextReminder)
 	}
 	later := draft(t, h, line("10", "1", vat21, revenue))
@@ -308,8 +311,10 @@ func TestRemindersAndTheBackgroundJob(t *testing.T) {
 	if err := h.svc.Work(ctx); err != nil {
 		t.Fatal(err)
 	}
+	// The reminder sent today expires after its own 7 days; then the next
+	// one is due, counted from the day it went out.
 	got, _ := h.svc.Invoice(ctx, adminID, late.ID, owner)
-	if got.State != Reminded || got.ReminderCount != 1 || got.NextReminder.Format(time.DateOnly) != "2026-11-05" {
+	if got.State != Reminded || got.ReminderCount != 1 || got.NextReminder.Format(time.DateOnly) != "2026-11-18" {
 		t.Errorf("reminded = %s %d %v", got.State, got.ReminderCount, got.NextReminder)
 	}
 	if h.store.invoices[late.ID].State != Reminded || len(h.mailer.sent) != 1 {
@@ -337,6 +342,36 @@ func TestRemindersAndTheBackgroundJob(t *testing.T) {
 	got, _ = h.svc.Invoice(ctx, adminID, later.ID, owner)
 	if got.State != Open || got.InvoiceID == "" || len(h.mailer.sent) != 2 || !strings.Contains(h.mailer.sent[1].Body, "Hello "+got.InvoiceID) {
 		t.Errorf("scheduled = %s %q, mails %d", got.State, got.InvoiceID, len(h.mailer.sent))
+	}
+}
+
+// Moneybird chains the steps: each one expires after its due interval and
+// then the next reminder is due.
+func TestNextReminderChainsTheStepsDueIntervals(t *testing.T) {
+	w := invoicing.Workflow{ID: flow, Steps: []invoicing.WorkflowStep{
+		{StepOrder: 2, DueInterval: 5}, {StepOrder: 0, DueInterval: 14}, {StepOrder: 1, DueInterval: 10}, {StepOrder: 3, DueInterval: 5},
+	}}
+	due := time.Date(2026, 11, 26, 0, 0, 0, 0, time.UTC)
+	reminded := time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)
+	for _, c := range []struct {
+		name  string
+		inv   Invoice
+		want  string
+		order int
+	}{
+		{"first reminder on the due date", Invoice{State: Open}, "2026-11-26", 1},
+		{"second when the first expires", Invoice{State: Reminded, ReminderCount: 1, LastReminderOn: &reminded}, "2026-12-11", 2},
+		{"third when the second expires", Invoice{State: Reminded, ReminderCount: 2, LastReminderOn: &reminded}, "2026-12-06", 3},
+		{"planned days without the last reminder's day", Invoice{State: Reminded, ReminderCount: 2}, "2026-12-11", 3},
+	} {
+		c.inv.WorkflowID, c.inv.DueDate = flow, &due
+		day, step, ok := nextReminder(c.inv, w)
+		if !ok || day.Format(time.DateOnly) != c.want || step.StepOrder != c.order {
+			t.Errorf("%s: next = %v step %d (%v), want %s step %d", c.name, day, step.StepOrder, ok, c.want, c.order)
+		}
+	}
+	if _, _, ok := nextReminder(Invoice{State: Reminded, ReminderCount: 3, WorkflowID: flow, DueDate: &due}, w); ok {
+		t.Error("a reminder after the last step")
 	}
 }
 

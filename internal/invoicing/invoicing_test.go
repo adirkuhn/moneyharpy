@@ -82,7 +82,10 @@ func TestDefaultWorkflowsAreCreatedOnce(t *testing.T) {
 	if estimate.Type != EstimateWorkflow || invoice.Type != InvoiceWorkflow || !invoice.Default || invoice.Name != "Standaard (NL)" {
 		t.Errorf("Workflows() = %+v", got)
 	}
-	if len(invoice.Steps) != 3 || invoice.Steps[0].DueInterval != 14 || invoice.Steps[1].ReminderDelay != 7 || invoice.Steps[1].ReminderText == "" {
+	// As Moneybird's: step 0 sends the invoice and expires after the payment
+	// term; each reminder expires after its own due interval.
+	if len(invoice.Steps) != 3 || invoice.Steps[0].StepOrder != 0 || invoice.Steps[0].DueInterval != 14 || invoice.Steps[1].StepOrder != 1 ||
+		invoice.Steps[1].DueInterval != 7 || invoice.Steps[2].DueInterval != 7 || invoice.Steps[1].ReminderDelay != 0 || invoice.Steps[1].ReminderText == "" {
 		t.Errorf("invoice steps = %+v", invoice.Steps)
 	}
 	if len(estimate.Steps) != 1 || estimate.Steps[0].DueInterval != 30 {
@@ -101,12 +104,13 @@ func TestWorkflowLifecycle(t *testing.T) {
 
 	w, err := svc.CreateWorkflow(ctx, adminID, owner, InvoiceWorkflow, WorkflowChanges{
 		Name: ptr(" Export "), Currency: ptr("USD"), Language: ptr("en"),
-		Steps: &[]StepInput{{DueInterval: 30}, {ReminderDelay: 10, ReminderText: "Pay"}},
+		Steps: &[]StepInput{{DueInterval: 30}, {DueInterval: 10, ReminderText: "Pay"}},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if w.Name != "Export" || w.Default || w.Currency != "USD" || len(w.Steps) != 2 || w.Steps[1].StepOrder != 2 || w.Steps[1].ID == 0 {
+	if w.Name != "Export" || w.Default || w.Currency != "USD" || len(w.Steps) != 2 || w.Steps[0].StepOrder != 0 || w.Steps[1].StepOrder != 1 ||
+		w.Steps[1].DueInterval != 10 || w.Steps[1].ID == 0 {
 		t.Errorf("CreateWorkflow() = %+v", w)
 	}
 	if w.Ref().URI() != "/11/workflows/"+w.ID.String() {
@@ -137,7 +141,7 @@ func TestWorkflowValidation(t *testing.T) {
 	svc, _, _ := newTestService()
 	ctx := context.Background()
 	_, err := svc.CreateWorkflow(ctx, adminID, owner, EstimateWorkflow, WorkflowChanges{
-		Name: ptr(""), Currency: ptr("XXX"), Steps: &[]StepInput{{DueInterval: 30}, {ReminderDelay: 1}},
+		Name: ptr(""), Currency: ptr("XXX"), Steps: &[]StepInput{{DueInterval: 30}, {DueInterval: 1}},
 	})
 	fields := fieldsOf(t, err)
 	for _, f := range []string{"name", "currency", "steps"} {
@@ -146,10 +150,17 @@ func TestWorkflowValidation(t *testing.T) {
 		}
 	}
 	_, err = svc.CreateWorkflow(ctx, adminID, owner, InvoiceWorkflow, WorkflowChanges{
-		Name: ptr("x"), Steps: &[]StepInput{{DueInterval: 400}, {ReminderDelay: 0}},
+		Name: ptr("x"), Steps: &[]StepInput{{DueInterval: 400}, {DueInterval: 7}},
 	})
 	if fieldsOf(t, err)["steps"] == nil {
 		t.Error("out-of-range steps were accepted")
+	}
+	// A reminder must run at least a day before the next one is due.
+	for _, st := range []StepInput{{DueInterval: 0}, {DueInterval: 366}, {DueInterval: 7, ReminderDelay: -1}} {
+		_, err = svc.CreateWorkflow(ctx, adminID, owner, InvoiceWorkflow, WorkflowChanges{Name: ptr("x"), Steps: &[]StepInput{{DueInterval: 14}, st}})
+		if fieldsOf(t, err)["steps"] == nil {
+			t.Errorf("reminder %+v was accepted", st)
+		}
 	}
 	if _, err := svc.CreateWorkflow(ctx, adminID, owner, "PurchaseWorkflow", WorkflowChanges{Name: ptr("x")}); fieldsOf(t, err)["type"] == nil {
 		t.Error("unknown type was accepted")

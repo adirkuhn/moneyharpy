@@ -92,12 +92,17 @@ export function WorkflowPage({ administration, workflow: w }: { administration: 
 
   const ordinal = new Intl.PluralRules(i18n.language, { type: 'ordinal' })
   const reminderName = (i: number) => t('workflow.page.reminder', { n: i + 1, suffix: t(`workflow.page.ordinal.${ordinal.select(i + 1)}`, { defaultValue: t('workflow.page.ordinal.other') }) })
-  // Day 1 the invoice goes out; each reminder follows the step before it.
+  // As on Moneybird, Day 1 the invoice goes out and every step expires after
+  // its due interval; then the next reminder is due.
   const days: number[] = []
-  reminders.reduce((day, r) => {
-    days.push(day + r.reminder_delay)
-    return day + r.reminder_delay
-  }, 1 + term)
+  const lastDay = steps.reduce((day, s, i) => {
+    if (i > 0) days.push(day)
+    return day + s.due_interval
+  }, 1)
+  const daysText = (count: number) =>
+    count >= 2 && count <= 9
+      ? t('workflow.page.daysInWords', { n: (t('workflow.page.numberWords', { returnObjects: true }) as string[])[count] })
+      : t('workflow.page.days', { count })
   const intros = t('workflow.page.reminderIntro', { returnObjects: true }) as string[]
   const deleteAction = w.default ? (
     <button type="button" className="btn btn--secondary" disabled title={t('invoicing.defaultCannotBeDeleted')}>{t('invoicing.defaultCannotBeDeleted')}</button>
@@ -197,7 +202,7 @@ export function WorkflowPage({ administration, workflow: w }: { administration: 
                     <p>{invoices ? t('workflow.page.sendIntro') : t('workflow.page.sendQuoteIntro')}</p>
                     <hr className="workflow-page__rule" />
                     <h4 className="workflow-page__label">{invoices ? t('workflow.page.expiresAfter') : t('workflow.page.validFor')}</h4>
-                    <p>{t('workflow.page.days', { count: term })}</p>
+                    <p>{daysText(term)}</p>
                     {invoices && (
                       <>
                         <h4 className="workflow-page__label">{t('workflow.page.conditions')}</h4>
@@ -215,12 +220,11 @@ export function WorkflowPage({ administration, workflow: w }: { administration: 
                 )}
               </StepCard>
 
-              {invoices && [...reminders, ...(isNew(editing, reminders.length) ? [{ due_interval: 0, reminder_delay: 7, reminder_text: '', reminder_auto_send: false }] : [])].map((r, i) => {
+              {invoices && [...reminders, ...(isNew(editing, reminders.length) ? [{ due_interval: 7, reminder_delay: 0, reminder_text: '', reminder_auto_send: false }] : [])].map((r, i) => {
                 const name = reminderName(i)
-                const next = reminders[i + 1]
                 const thisOne = typeof editing === 'object' && editing?.reminder === i
                 return (
-                  <StepCard key={i} title={name} day={days[i] ?? (days.at(-1) ?? 1 + term) + r.reminder_delay} open={thisOne} editLabel={t('workflow.page.edit', { name })} editing={thisOne} onEdit={() => open({ reminder: i })}>
+                  <StepCard key={i} title={name} day={days[i] ?? lastDay} open={thisOne} editLabel={t('workflow.page.edit', { name })} editing={thisOne} onEdit={() => open({ reminder: i })}>
                     {thisOne ? (
                       <ReminderForm
                         reminder={r}
@@ -243,12 +247,8 @@ export function WorkflowPage({ administration, workflow: w }: { administration: 
                           <Paragraphs text={email(r.reminder_text)} />
                           <p className="hint">{t('workflow.page.unpaidTable')}</p>
                         </div>
-                        {next && (
-                          <>
-                            <h4 className="workflow-page__label">{t('workflow.page.expiresAfter')}</h4>
-                            <p>{t('workflow.page.days', { count: next.reminder_delay })}</p>
-                          </>
-                        )}
+                        <h4 className="workflow-page__label">{t('workflow.page.expiresAfter')}</h4>
+                        <p>{daysText(r.due_interval)}</p>
                       </>
                     )}
                   </StepCard>
@@ -491,7 +491,7 @@ type ReminderProps = { reminder: Step; name: string; removeLabel: string; errors
 
 function ReminderForm({ reminder, name, removeLabel, errors, pending, onCancel, onRemove, onSave }: ReminderProps) {
   const { t } = useTranslation()
-  const [form, setForm] = useState({ ...reminder, delay: String(reminder.reminder_delay) })
+  const [form, setForm] = useState({ ...reminder, expires: String(reminder.due_interval) })
   return (
     <form
       className="form-sheet form-sheet--block"
@@ -499,7 +499,7 @@ function ReminderForm({ reminder, name, removeLabel, errors, pending, onCancel, 
       aria-label={name}
       onSubmit={(e) => {
         e.preventDefault()
-        onSave({ due_interval: form.due_interval, reminder_delay: Number(form.delay), reminder_text: form.reminder_text, reminder_auto_send: form.reminder_auto_send })
+        onSave({ due_interval: Number(form.expires), reminder_delay: form.reminder_delay, reminder_text: form.reminder_text, reminder_auto_send: form.reminder_auto_send })
       }}
     >
       <Problems messages={[...errors.general, ...(errors.field('steps') ?? [])]} />
@@ -509,7 +509,7 @@ function ReminderForm({ reminder, name, removeLabel, errors, pending, onCancel, 
         options={[{ value: 'manual', label: t('workflow.page.manual') }, { value: 'automatic', label: t('workflow.page.automatic') }]}
         onChange={(v) => setForm({ ...form, reminder_auto_send: v === 'automatic' })}
       />
-      <TextInput label={t('workflow.page.sentAfter')} type="number" inputMode="numeric" min={1} max={365} width="small" help={t('workflow.page.sentAfterHelp')} value={form.delay} onChange={(e) => setForm({ ...form, delay: e.target.value })} />
+      <TextInput label={t('workflow.page.expiresAfter')} type="number" inputMode="numeric" min={1} max={365} width="small" help={t('workflow.page.expiresAfterHelp')} value={form.expires} onChange={(e) => setForm({ ...form, expires: e.target.value })} />
       <TextArea label={t('workflow.page.reminderEmail')} rows={6} maxLength={5000} value={form.reminder_text} onChange={(e) => setForm({ ...form, reminder_text: e.target.value })} />
       <div className="form-sheet__actions">
         <button className="btn btn--primary" disabled={pending}>{t('settings.save')}</button>
