@@ -12,6 +12,14 @@ type Props = {
   registers: string[]
   onChange: (value: string) => void
   onChoose: (company: CompanyMatch, country: string) => void
+  /**
+   * The contact's own country, chosen in front of the name from all of these,
+   * as Moneybird's quick contact form does; the register is searched only in
+   * the countries that have one. Without it the select lists the registers.
+   */
+  countries?: { value: string; label: string }[]
+  country?: string
+  onCountry?: (country: string) => void
 }
 
 const searchDelayMs = 300
@@ -20,12 +28,13 @@ const searchDelayMs = 300
  * The company name, after Moneybird: a country for the company register in
  * front, and while typing the register's matches to fill the contact from.
  */
-export function CompanyNameField({ label, value, errors, registers, onChange, onChoose }: Props) {
+export function CompanyNameField({ label, value, errors, registers, onChange, onChoose, countries, country: own = '', onCountry }: Props) {
   const { t, i18n } = useTranslation()
   const listId = useId()
   const [chosen, setCountry] = useState('')
   // The registers arrive after the form; until one is chosen the Dutch one goes first, as on Moneybird.
-  const country = registers.includes(chosen) ? chosen : registers.includes('NL') ? 'NL' : (registers[0] ?? '')
+  const fallback = registers.includes(chosen) ? chosen : registers.includes('NL') ? 'NL' : (registers[0] ?? '')
+  const country = countries ? (registers.includes(own) ? own : '') : fallback
   const [term, setTerm] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
@@ -65,7 +74,12 @@ export function CompanyNameField({ label, value, errors, registers, onChange, on
     <FormRow label={label} errors={errors}>
       {({ labelId: _, ...control }) => (
         <div className="company-name">
-          {registers.length > 0 && (
+          {countries && (
+            <select className="company-name__country" aria-label={t('contacts.form.country')} value={own} onChange={(e) => onCountry?.(e.target.value)}>
+              {countries.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          )}
+          {!countries && registers.length > 0 && (
             <select className="company-name__country" aria-label={t('contacts.form.registerCountry')} value={country} onChange={(e) => setCountry(e.target.value)}>
               {registers.map((c) => <option key={c} value={c} title={countryName(i18n.language, c)}>{c}</option>)}
             </select>
@@ -75,7 +89,7 @@ export function CompanyNameField({ label, value, errors, registers, onChange, on
             maxLength={255}
             autoComplete="off"
             {...control}
-            {...(registers.length > 0 ? { role: 'combobox', 'aria-expanded': shown.length > 0, 'aria-controls': listId, 'aria-autocomplete': 'list' as const } : {})}
+            {...(country !== '' ? { role: 'combobox', 'aria-expanded': shown.length > 0, 'aria-controls': listId, 'aria-autocomplete': 'list' as const } : {})}
             {...(shown.length > 0 ? { 'aria-activedescendant': `${listId}-${active}` } : {})}
             value={value}
             onChange={(e) => {

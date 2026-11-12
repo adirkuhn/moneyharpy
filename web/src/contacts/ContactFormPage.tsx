@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
@@ -13,7 +13,9 @@ import { MoreMenu } from '../list/ListActions'
 import { useOnboardingOptions } from '../onboarding/queries'
 import { SearchableSelect } from '../onboarding/SearchableSelect'
 import { countryName } from '../settings/format'
+import { returnPath } from '../settings/CustomFieldFormPage'
 import { useCustomFields } from '../settings/queries'
+import type { ContactPrefill } from '../invoices/ContactSelect'
 import { CompanyNameField } from './CompanyNameField'
 import { ContactIcon } from './ContactIcon'
 import { CheckRow, Counter, Section, SegmentedRow, Tip } from './ContactFormParts'
@@ -57,6 +59,13 @@ export function ContactFormPage() {
 function ContactForm({ administrationId, contact, country }: { administrationId: string; contact: Contact | null; country: string }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  // "Complete contact" in the Add invoice popup brings what was typed there, and comes back with the new contact.
+  const location = useLocation()
+  const prefill = contact ? undefined : (location.state as { prefill?: ContactPrefill } | null)?.prefill
+  const requested = params.get('return_to')
+  // Only a page of this administration, so the link cannot send people elsewhere.
+  const returnTo = requested && returnPath(administrationId, requested) === requested ? requested : ''
   const save = useSaveContact(administrationId, contact?.id)
   const archive = useArchiveContact(administrationId, contact?.id ?? '')
   const workflows = useWorkflows(administrationId)
@@ -65,6 +74,11 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
   const [text, setText] = useState<Record<TextField, string>>(() => {
     const initial = Object.fromEntries(textFields.map((f) => [f, String(contact?.[f] ?? '')])) as Record<TextField, string>
     initial.country = contact?.country ?? country
+    for (const [field, value] of Object.entries(prefill ?? {})) {
+      if (field !== 'kind' && value && field in initial) {
+        initial[field as TextField] = value
+      }
+    }
     return initial
   })
   // A new contact shows the client number it will get, as Moneybird does.
@@ -78,7 +92,7 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
       setPrefilled(next)
     }
   }, [nextCustomerId.data]) // eslint-disable-line react-hooks/exhaustive-deps
-  const [kind, setKind] = useState<Kind>(contact && !contact.company_name && (contact.firstname || contact.lastname) ? 'private_individual' : 'company')
+  const [kind, setKind] = useState<Kind>(prefill?.kind ?? (contact && !contact.company_name && (contact.firstname || contact.lastname) ? 'private_individual' : 'company'))
   const [delivery, setDelivery] = useState<DeliveryMethod>((contact?.delivery_method as DeliveryMethod | undefined) ?? 'Email')
   const [emailUBL, setEmailUBL] = useState(contact?.email_ubl ?? false)
   const [sameForQuotes, setSameForQuotes] = useState(() => {
@@ -137,10 +151,12 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
     if (!contact && (!body.customer_id || body.customer_id === prefilled)) {
       delete body.customer_id
     }
-    save.mutate(body, { onSuccess: (saved) => navigate(`/${administrationId}/contacts/${saved.id}`) })
+    save.mutate(body, {
+      onSuccess: (saved) => navigate(returnTo ? `${returnTo}${returnTo.includes('?') ? '&' : '?'}contact_id=${saved.id}` : `/${administrationId}/contacts/${saved.id}`),
+    })
   }
 
-  const back = contact ? `/${administrationId}/contacts/${contact.id}` : `/${administrationId}/contacts`
+  const back = returnTo || (contact ? `/${administrationId}/contacts/${contact.id}` : `/${administrationId}/contacts`)
   const newField = `/${administrationId}/custom_fields/new?source=contact`
   const flows = (type: string) => (workflows.data ?? []).filter((w) => w.type === type && (w.active || w.id === invoiceWorkflow || w.id === estimateWorkflow))
   const title = contact ? f('editTitle') : f('newTitle')
