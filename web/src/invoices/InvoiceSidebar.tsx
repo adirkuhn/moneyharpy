@@ -26,11 +26,8 @@ type Props = {
  */
 export function InvoiceSidebar({ administrationId, invoice: inv, onHighlight }: Props) {
   const { t, i18n } = useTranslation()
-  const accounts = useLedgerAccounts(administrationId)
-  const categoryId = useId()
   const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
   const usesProducts = (inv.details ?? []).some((d) => !!d.product_id)
-  const categories = [...new Set((inv.details ?? []).map((d) => d.ledger_account_id).filter((id): id is string => !!id))]
   const facts: [string, ReactNode][] = [
     [t('invoices.view.invoiceId'), invoiceTitle(inv, t)],
     [t('invoices.view.contact'), inv.contact && <ContactHoverCard administrationId={administrationId} contact={{ ...inv.contact, id: inv.contact_id }} />],
@@ -51,21 +48,40 @@ export function InvoiceSidebar({ administrationId, invoice: inv, onHighlight }: 
           </div>
         ))}
       </dl>
-      {categories.length > 0 && (
-        <div className="invoice-sidebar__categories">
-          <span id={categoryId} className="invoice-sidebar__label">{t('invoices.view.category')}</span>
-          <ul aria-labelledby={categoryId}>
-            {categories.map((id) => (
-              <li key={id} className="category-chip" tabIndex={0} onMouseEnter={() => onHighlight(id)} onMouseLeave={() => onHighlight(undefined)} onFocus={() => onHighlight(id)} onBlur={() => onHighlight(undefined)}>
-                <TagIcon />
-                <span>{accounts.data?.find((a) => a.id === id)?.name ?? ''}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <CategoryChips administrationId={administrationId} details={inv.details ?? []} onHighlight={onHighlight} />
       <InvoiceHistory administrationId={administrationId} invoice={inv} />
     </aside>
+  )
+}
+
+/**
+ * Moneybird's "Category" labels of a document: one per category its lines
+ * book on; pointing at one marks those lines on the document.
+ */
+export function CategoryChips({ administrationId, details, onHighlight }: {
+  administrationId: string
+  details: { ledger_account_id?: string | null }[]
+  onHighlight: (ledgerAccountId: string | undefined) => void
+}) {
+  const { t } = useTranslation()
+  const accounts = useLedgerAccounts(administrationId)
+  const categoryId = useId()
+  const categories = [...new Set(details.map((d) => d.ledger_account_id).filter((id): id is string => !!id))]
+  if (categories.length === 0) {
+    return null
+  }
+  return (
+    <div className="invoice-sidebar__categories">
+      <span id={categoryId} className="invoice-sidebar__label">{t('invoices.view.category')}</span>
+      <ul aria-labelledby={categoryId}>
+        {categories.map((id) => (
+          <li key={id} className="category-chip" tabIndex={0} onMouseEnter={() => onHighlight(id)} onMouseLeave={() => onHighlight(undefined)} onFocus={() => onHighlight(id)} onBlur={() => onHighlight(undefined)}>
+            <TagIcon />
+            <span>{accounts.data?.find((a) => a.id === id)?.name ?? ''}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 

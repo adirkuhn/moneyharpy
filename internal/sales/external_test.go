@@ -139,8 +139,75 @@ func TestUpdateExternalRebooksAndRespectsTheLock(t *testing.T) {
 	if _, err := h.svc.RegisterExternalPayment(ctx, adminID, e.ID, owner, PaymentInput{PaymentDate: "2026-11-06", Price: ptr("10")}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := h.svc.UpdateExternal(ctx, adminID, e.ID, owner, ExternalChanges{Reference: ptr("x")}); !errors.Is(err, ErrNotEditable) {
-		t.Errorf("changed an invoice with payments: %v", err)
+	// As at Moneybird an invoice with payments still changes; what is left to pay sets its state.
+	e, err = h.svc.UpdateExternal(ctx, adminID, e.ID, owner, ExternalChanges{Reference: ptr("x")})
+	if err != nil || e.Reference != "x" || len(e.Payments) != 1 || e.State != Open {
+		t.Fatalf("changed with payments = %+v, %v", e, err)
+	}
+	if fieldsOf(t, func() error {
+		_, err := h.svc.UpdateExternal(ctx, adminID, e.ID, owner, ExternalChanges{Currency: ptr("USD")})
+		return err
+	}())["currency"] == nil {
+		t.Error("changed the currency of an invoice with payments")
+	}
+}
+
+func TestUpdateExternalFollowsWhatIsPaid(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	e := external(t, h, "2026-11-01")
+	if _, err := h.svc.RegisterExternalPayment(ctx, adminID, e.ID, owner, PaymentInput{PaymentDate: "2026-11-05"}); err != nil {
+		t.Fatal(err)
+	}
+	// A paid invoice stays paid when its total does not grow.
+	e, err := h.svc.UpdateExternal(ctx, adminID, e.ID, owner, ExternalChanges{Source: ptr("Example till")})
+	if err != nil || e.State != Paid || e.PaidAt == nil {
+		t.Fatalf("paid after edit = %+v, %v", e, err)
+	}
+	// A higher total opens it again.
+	e, err = h.svc.UpdateExternal(ctx, adminID, e.ID, owner, ExternalChanges{Details: []DetailInput{{ID: &e.Lines[0].ID, Price: ptr("200")}}})
+	if err != nil || e.State != Late || e.PaidAt != nil || e.Unpaid() != 12100 {
+		t.Fatalf("after a higher total = %+v, %v", e, err)
+	}
+	if !slices.Contains(h.notifier.actions, "external_sales_invoice_state_changed_to_late") {
+		t.Errorf("events = %v", h.notifier.actions)
+	}
+	if _, err := h.svc.MarkExternalUncollectible(ctx, adminID, e.ID, owner, "", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := h.svc.UpdateExternal(ctx, adminID, e.ID, owner, ExternalChanges{Reference: ptr("y")}); !errors.Is(err, ErrNotEditable) {
+		t.Errorf("changed an uncollectible invoice: %v", err)
+	}
+}
+
+func TestExternalInvoicesKeepTheirHistory(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	e := external(t, h, "2026-11-01")
+	if _, err := h.svc.UpdateExternal(ctx, adminID, e.ID, owner, ExternalChanges{Reference: ptr("WEB-1002")}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := h.svc.RegisterExternalPayment(ctx, adminID, e.ID, owner, PaymentInput{PaymentDate: "2026-11-05"}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := h.svc.ExternalInvoice(ctx, adminID, e.ID, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var list []string
+	for _, ev := range got.Events {
+		list = append(list, ev.Action)
+	}
+	want := []string{"external_sales_invoice_created", "external_sales_invoice_updated", "payment_registered", "external_sales_invoice_state_changed_to_paid"}
+	if !slices.Equal(list, want) {
+		t.Errorf("events = %v, want %v", list, want)
+	}
+	if got.Events[0].UserID != owner {
+		t.Errorf("created by %v", got.Events[0].UserID)
+	}
+	n, _ := h.svc.CreateExternalFromFile(ctx, adminID, owner, "scan.pdf", "application/pdf", []byte("%PDF"))
+	if n, _ = h.svc.ExternalInvoice(ctx, adminID, n.ID, owner); len(n.Events) != 1 || n.Events[0].Action != "external_sales_invoice_created" {
+		t.Errorf("uploaded events = %+v", n.Events)
 	}
 }
 

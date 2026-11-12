@@ -433,17 +433,21 @@ export function withTerm(rest: string[], key: string, value: string) {
 
 export type JournalEntry = components['schemas']['JournalEntry']
 type JournalDocument = { type: JournalEntry['document_type']; id: string }
+/** What the journal entries of an invoice of either kind are found by. */
+export type JournalSource = Pick<SalesInvoice, 'id' | 'version' | 'payments'>
 
 /**
  * The bookings behind an invoice, as its Journal entries view shows them:
  * the invoice's own and those of each payment on it, oldest first. The
  * report's document filter is a MoneyHarpy extension.
  */
-export function useInvoiceJournalEntries(administrationId: string, inv: SalesInvoice, enabled: boolean) {
+export function useInvoiceJournalEntries(administrationId: string, inv: JournalSource, enabled: boolean, kind: InvoiceKind = 'sales') {
   const documents: JournalDocument[] = [
-    { type: 'SalesInvoice', id: inv.id ?? '' },
-    ...(inv.payments ?? []).map((p): JournalDocument => ({ type: 'Payment', id: String(p.id ?? '') })),
-  ]
+    { type: kind === 'external' ? 'ExternalSalesInvoice' : 'SalesInvoice', id: inv.id ?? '' } satisfies JournalDocument,
+    // A payment made by a bank transaction is booked by that transaction.
+    ...(inv.payments ?? []).map((p): JournalDocument =>
+      p.financial_mutation_id ? { type: 'FinancialMutation', id: String(p.financial_mutation_id) } : { type: 'Payment', id: String(p.id ?? '') }),
+  ].filter((d, i, all) => all.findIndex((o) => o.type === d.type && o.id === d.id) === i)
   return useQuery({
     queryKey: ['journal-entries', administrationId, inv.id, inv.version, documents.map((d) => d.id).join(',')],
     enabled,

@@ -5,6 +5,7 @@ import { useAdministration } from '../administrations/queries'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
 import { contactName } from '../contacts/queries'
+import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { formErrors } from '../forms/Form'
 import { filterTerms, type ListFilter, parseFilter, perPage } from '../invoices/queries'
 import { StateBadge } from '../invoices/StateBadge'
@@ -16,7 +17,10 @@ import { AttachmentIcon, DocumentTable, listDate } from '../list/DocumentTable'
 import { FilterPanel } from '../list/FilterPanel'
 import { GettingStarted } from '../list/GettingStarted'
 import { ListActions } from '../list/ListActions'
-import { externalStates, externalTitle, unpaidExternalStates, useExternalInvoices, useUploadExternalInvoices } from './queries'
+import {
+  type ExternalInvoice, externalListName, externalStates, externalTitle, unpaidExternalStates, useDeleteExternalInvoices, useExternalInvoices, useUploadExternalInvoices,
+} from './queries'
+import './external.css'
 
 const maxSize = 10 * 1024 * 1024
 
@@ -57,9 +61,12 @@ export function ExternalInvoicesPage() {
   const base = `/${administrationId}/external_sales_invoices`
   const [info, setInfo] = useState<boolean | null>(null)
   const [emailShown, setEmailShown] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [result, setResult] = useState<string | null>(null)
   const introId = useId()
   const emailId = useId()
   const shown = invoices.data?.invoices ?? []
+  const chosen = shown.filter((inv) => selected.has(inv.id ?? ''))
   const firstUse = invoices.data !== undefined && shown.length === 0 && quick === 'this_year' && page === 1
   const introShown = info ?? firstUse
   const linkTo = (f: Pick<ListFilter, 'state' | 'period'>) => {
@@ -129,20 +136,29 @@ export function ExternalInvoicesPage() {
         </section>
       )}
       <UploadArea administrationId={administrationId} />
+      {result && chosen.length === 0 && <p className="notice" role="status">{result}</p>}
       {!invoices.data ? (
         invoices.error ? <p className="empty">{t('external.loadError')}</p> : <Loading />
       ) : shown.length === 0 ? (
         <p className="empty">{firstUse ? t('external.empty') : t('external.noMatches')}</p>
       ) : (
+        <>
         <DocumentTable
           label={t('external.title')}
           rows={shown}
           rowKey={(inv) => inv.id ?? ''}
           href={(inv) => `${base}/${inv.id}`}
+          selection={{ selected, onChange: setSelected, selectLabel: (inv) => t('external.bulk.select', { name: externalListName(inv, t) }), allLabel: t('external.bulk.selectAll') }}
           total={invoices.data.total}
           perPage={perPage}
           columns={[
-            { key: 'reference', header: t('invoices.reference'), link: true, cell: (inv) => externalTitle(inv, t) },
+            {
+              key: 'reference', header: t('invoices.reference'), link: true,
+              // Moneybird's "Example POS › POS-1001": the software the invoice comes from, then its reference.
+              cell: (inv) => (inv.source
+                ? <span className="external-reference">{inv.source} <span className="external-reference__arrow">›</span> {externalTitle(inv, t)}</span>
+                : externalTitle(inv, t)),
+            },
             { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (inv) => <AttachmentIcon count={inv.attachments?.length ?? 0} /> },
             { key: 'contact', header: t('invoices.contact'), cell: (inv) => (inv.contact ? contactName(inv.contact) : '') },
             { key: 'date', header: t('external.date'), kind: 'date', cell: (inv) => listDate(inv.date) },
@@ -153,8 +169,43 @@ export function ExternalInvoicesPage() {
             { key: 'state', header: t('invoices.status'), kind: 'state', cell: (inv) => <StateBadge state={inv.state} /> },
           ]}
         />
+        <BulkActions
+          administrationId={administrationId}
+          invoices={chosen}
+          onDone={(message) => {
+            setResult(message)
+            setSelected(new Set())
+          }}
+        />
+        </>
       )}
     </Page>
+  )
+}
+
+/** What can be done with the invoices ticked in the list at once, in a bar at the bottom of the screen. */
+function BulkActions({ administrationId, invoices, onDone }: { administrationId: string; invoices: ExternalInvoice[]; onDone: (message: string) => void }) {
+  const { t } = useTranslation()
+  const remove = useDeleteExternalInvoices(administrationId)
+  if (invoices.length === 0) {
+    return null
+  }
+  return (
+    <div className="bulk-bar" role="group" aria-label={t('external.bulk.label')}>
+      <span className="bulk-bar__count" role="status">{t('external.bulk.selected', { count: invoices.length })}</span>
+      <div className="bulk-bar__actions">
+        <ConfirmDelete
+          label={t('external.bulk.delete', { count: invoices.length })}
+          confirmLabel={t('external.bulk.confirmDelete', { count: invoices.length })}
+          disabled={remove.isPending}
+          onConfirm={() => remove.mutate(invoices, {
+            onSuccess: (failed) => onDone(failed.length > 0
+              ? t('external.bulk.failed', { names: failed.map((inv) => externalTitle(inv, t)).join(', ') })
+              : t('external.bulk.deleted', { count: invoices.length })),
+          })}
+        />
+      </div>
+    </div>
   )
 }
 
@@ -194,7 +245,7 @@ function UploadArea({ administrationId }: { administrationId: string }) {
 
   return (
     <section
-      className={`upload-area${over ? ' is-over' : ''}`}
+      className={`upload-area upload-area--bar${over ? ' is-over' : ''}`}
       aria-labelledby={`${id}-title`}
       onDragOver={(e) => { e.preventDefault(); setOver(true) }}
       onDragLeave={() => setOver(false)}
@@ -209,7 +260,7 @@ function UploadArea({ administrationId }: { administrationId: string }) {
           <span className="upload-area__limit">{t('external.maxSize')}</span>
         </span>
       </p>
-      <p className="hint">{upload.isPending ? t('invoices.uploading') : t('external.uploadHelp')}</p>
+      {upload.isPending && <p className="hint" role="status">{t('invoices.uploading')}</p>}
       <Problems messages={[...problems, ...formErrors(upload.error, {}).general]} />
       <input
         id={`${id}-file`}

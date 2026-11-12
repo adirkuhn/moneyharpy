@@ -2,9 +2,13 @@
  * The history of a sales invoice as Moneybird's sidebar shows it: its events,
  * payments and notes, newest first, grouped by day.
  */
-import type { Payment, SalesInvoice } from './queries'
+import type { InvoiceKind, Payment, SalesInvoice } from './queries'
 
 type Note = NonNullable<SalesInvoice['notes']>[number]
+
+/** What the history of an invoice of either kind is told from; an external invoice is never sent. */
+export type HistorySource = Pick<SalesInvoice, 'created_at' | 'paid_at' | 'payments' | 'notes' | 'events'> &
+  Partial<Pick<SalesInvoice, 'sent_at' | 'delivery_method'>> & { state?: string }
 
 type Base = { id: string; at: string; userId?: string; timed: boolean }
 export type HistoryItem =
@@ -25,12 +29,12 @@ const dayStart = (date: string) => new Date(`${date}T00:00:00`).toISOString()
  * was created, sent and paid, in that order. Only invoices made before the
  * server kept events need this.
  */
-function derived(inv: SalesInvoice, payments: Payment[]): HistoryItem[] {
+function derived(inv: HistorySource, payments: Payment[], kind: InvoiceKind): HistoryItem[] {
   const items: HistoryItem[] = []
   const event = (action: string, at: string, timed: boolean) => items.push({ kind: 'event', id: `derived-${action}`, action, at, timed, data: {} })
   const created = inv.created_at ?? ''
   if (created) {
-    event('sales_invoice_created', created, true)
+    event(kind === 'external' ? 'external_sales_invoice_created' : 'sales_invoice_created', created, true)
   }
   let last = created ? ms(created) : 0
   if (inv.sent_at) {
@@ -41,13 +45,13 @@ function derived(inv: SalesInvoice, payments: Payment[]): HistoryItem[] {
   }
   if (inv.state === 'paid' && inv.paid_at) {
     const paidLast = Math.max(last, ...payments.map((p) => ms(p.created_at ?? '') || 0))
-    event('sales_invoice_state_changed_to_paid', later(dayStart(inv.paid_at), paidLast), false)
+    event(`${kind === 'external' ? 'external_' : ''}sales_invoice_state_changed_to_paid`, later(dayStart(inv.paid_at), paidLast), false)
   }
   return items
 }
 
 /** Everything that happened to the invoice, newest first. */
-export function historyOf(inv: SalesInvoice): HistoryItem[] {
+export function historyOf(inv: HistorySource, kind: InvoiceKind = 'sales'): HistoryItem[] {
   const payments = (inv.payments ?? []) as Payment[]
   const events: HistoryItem[] = (inv.events ?? []).length
     ? (inv.events ?? [])
@@ -55,7 +59,7 @@ export function historyOf(inv: SalesInvoice): HistoryItem[] {
         .map((e, i) => ({
           kind: 'event', id: `event-${i}`, action: e.action ?? '', at: e.created_at ?? '', userId: e.user_id ?? undefined, timed: true, data: e.data ?? {},
         }))
-    : derived(inv, payments)
+    : derived(inv, payments, kind)
   const paid: HistoryItem[] = payments.map((p) => ({ kind: 'payment', id: `payment-${p.id}`, at: p.created_at ?? '', userId: p.user_id ?? undefined, timed: true, payment: p }))
   const notes: HistoryItem[] = (inv.notes ?? []).map((n) => ({
     kind: 'note', id: `note-${n.id}`, at: n.created_at ?? '', userId: n.user_id ?? undefined, timed: true, note: n,
@@ -109,6 +113,11 @@ const sentences: Record<string, string> = {
   sales_invoice_marked_as_uncollectible: 'uncollectible',
   payment_destroyed: 'paymentDeleted',
   recurring_sales_invoice_created: 'recurringCreated',
+  external_sales_invoice_created: 'externalCreated',
+  external_sales_invoice_updated: 'externalUpdated',
+  external_sales_invoice_state_changed_to_paid: 'externalPaid',
+  external_sales_invoice_marked_as_dubious: 'externalDubious',
+  external_sales_invoice_marked_as_uncollectible: 'externalUncollectible',
 }
 
 /** Which sentence tells an event, as a key under invoices.view.events. */
@@ -120,6 +129,10 @@ export function eventText(action: string): { key: string; state?: string; action
   const state = /^sales_invoice_state_changed_to_(.+)$/.exec(action)?.[1]
   if (state) {
     return { key: 'stateChanged', state }
+  }
+  const externalState = /^external_sales_invoice_state_changed_to_(.+)$/.exec(action)?.[1]
+  if (externalState) {
+    return { key: 'externalStateChanged', state: externalState }
   }
   return { key: 'other', action: action.replace(/_/g, ' ') }
 }

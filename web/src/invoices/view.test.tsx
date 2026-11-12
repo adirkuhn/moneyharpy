@@ -487,6 +487,34 @@ describe('an invoice', () => {
     expect(screen.queryByRole('region', { name: 'Journal entries' })).toBeNull()
   })
 
+  it('shows a payment made by a bank transaction under Payment, as Moneybird does', async () => {
+    const seen: URL[] = []
+    const paid = invoice({
+      state: 'paid', total_unpaid: '0.0',
+      payments: [{ id: '981', administration_id: '11', invoice_type: 'SalesInvoice', invoice_id: '901', price: '242.0', price_base: '242.0', payment_date: '2026-11-11', financial_mutation_id: '771', created_at: stamp, updated_at: stamp }],
+    })
+    const bank: LedgerAccount = { ...sales, id: '1100', name: 'Bank', account_type: 'current_assets', uri: '/11/ledger_accounts/1100' }
+    const entry = (id: string, document_type: 'SalesInvoice' | 'FinancialMutation', document_id: string, date: string, ledger_account_id: string, amount: string) =>
+      ({ id, date, document_type, document_id, ledger_account_id, amount, tax_rate_id: null, contact_id: '701', project_id: null, financial_account_id: null, description: null })
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(paid)),
+      http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales, bank])),
+      http.get('*/api/v2/11/reports/journal_entries', ({ request }) => {
+        const url = new URL(request.url)
+        seen.push(url)
+        return HttpResponse.json(url.searchParams.get('document_type') === 'FinancialMutation'
+          ? [entry('4', 'FinancialMutation', '771', '2026-11-11', '1100', '242.0')]
+          : [entry('1', 'SalesInvoice', '901', '2026-11-01', '8001', '-242.0')])
+      }),
+    )
+    renderAt('/11/sales_invoices/901')
+    await userEvent.click(await screen.findByRole('button', { name: 'Journal entries' }))
+    const table = await within(screen.getByRole('region', { name: 'Journal entries' })).findByRole('table', { name: 'Journal entries' })
+    await waitFor(() => expect(table).toHaveTextContent('Payment - 2026-11-11'))
+    expect(seen.map((u) => `${u.searchParams.get('document_type')}:${u.searchParams.get('document_id')}`).sort()).toEqual(['FinancialMutation:771', 'SalesInvoice:901'])
+  })
+
   it('explains when the email could not be sent', async () => {
     server.use(...loaded(), http.patch('*/api/v2/11/sales_invoices/902/send_invoice', () =>
       HttpResponse.json({ error: { base: ['The invoice is booked but could not be emailed; check the mail settings and send it again'] } }, { status: 422 })))

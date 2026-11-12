@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
 import { Loading } from '../layout/Loading'
-import { type JournalEntry, type SalesInvoice, useInvoiceJournalEntries } from './queries'
+import { type InvoiceKind, type JournalEntry, type JournalSource, useInvoiceJournalEntries } from './queries'
 
 /** Categories of the profit and loss statement; every other kind is on the balance sheet. */
 const profitAndLoss = ['revenue', 'direct_costs', 'expenses', 'other_income_expenses']
@@ -28,9 +28,9 @@ export function groupEntries(entries: JournalEntry[]): Group[] {
  * for it in the background, by document, with their category, debit,
  * credit and VAT rate.
  */
-export function JournalEntriesPanel({ administrationId, invoice }: { administrationId: string; invoice: SalesInvoice }) {
+export function JournalEntriesPanel({ administrationId, invoice, kind = 'sales' }: { administrationId: string; invoice: JournalSource; kind?: InvoiceKind }) {
   const { t, i18n } = useTranslation()
-  const entries = useInvoiceJournalEntries(administrationId, invoice, true)
+  const entries = useInvoiceJournalEntries(administrationId, invoice, true, kind)
   const accounts = useLedgerAccounts(administrationId)
   const rates = useTaxRates(administrationId)
   const number = (v: number) => v.toLocaleString(i18n.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 })

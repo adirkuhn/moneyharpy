@@ -7,10 +7,12 @@ import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { formErrors } from '../forms/Form'
 import { CaretIcon } from '../layout/icons'
 import { useUsers } from '../management/queries'
-import { byDay, eventText, type HistoryItem, historyOf } from './history'
-import { type SalesInvoice, useAddInvoiceNote, useDeleteInvoiceNote } from './queries'
+import { byDay, eventText, type HistoryItem, historyOf, type HistorySource } from './history'
+import { type InvoiceKind, type SalesInvoice, useAddInvoiceNote, useDeleteInvoiceNote } from './queries'
 
-type Props = { administrationId: string; invoice: SalesInvoice }
+/** An invoice of either kind, as far as its history and notes need it. */
+type Invoice = HistorySource & Pick<SalesInvoice, 'id' | 'currency'>
+type Props = { administrationId: string; invoice: Invoice; kind?: InvoiceKind }
 
 type NoteChange = { note: string; todo: boolean; assignee_id?: string }
 /** Adding and deleting the notes of a document: a sales invoice's, or a recurring invoice's. */
@@ -39,10 +41,10 @@ function usePeople(administrationId: string) {
  * Moneybird's "Notes and tasks" beside a document: a field to add a note or
  * to-do, and what happened to the invoice by day.
  */
-export function InvoiceHistory({ administrationId, invoice }: Props) {
-  const add = useAddInvoiceNote(administrationId, invoice.id ?? '')
-  const remove = useDeleteInvoiceNote(administrationId, invoice.id ?? '')
-  return <NotesAndHistory administrationId={administrationId} items={historyOf(invoice)} currency={invoice.currency ?? 'EUR'} add={add} remove={remove} />
+export function InvoiceHistory({ administrationId, invoice, kind = 'sales' }: Props) {
+  const add = useAddInvoiceNote(administrationId, invoice.id ?? '', kind)
+  const remove = useDeleteInvoiceNote(administrationId, invoice.id ?? '', kind)
+  return <NotesAndHistory administrationId={administrationId} items={historyOf(invoice, kind)} currency={invoice.currency ?? 'EUR'} add={add} remove={remove} />
 }
 
 type HistoryProps = NoteMutations & { administrationId: string; items: HistoryItem[]; currency: string }
