@@ -113,7 +113,11 @@ export function useDeleteAdministration(administrationId: string) {
   return useMutation({
     mutationFn: (name: string) =>
       unwrap(api.POST('/api/v2/administrations/{id}/delete', { params: { path: { id: administrationId } }, body: { name } })),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['administrations'] }),
+    // Only the list loads again: the deleted administration itself would answer 404 and show "Page not found".
+    onSuccess: () => {
+      client.removeQueries({ queryKey: ['administrations', administrationId] })
+      return client.invalidateQueries({ queryKey: ['administrations'], exact: true })
+    },
   })
 }
 
