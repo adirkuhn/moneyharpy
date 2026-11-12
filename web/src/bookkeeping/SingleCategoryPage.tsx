@@ -68,7 +68,7 @@ function SingleCategory({ administrationId, hasScheme, accounts, flow }: Props) 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     const { rgs_code, ...ledger_account } = form
-    save.mutate({ ledger_account, ...(hasScheme ? { rgs_code } : {}) }, { onSuccess: () => navigate(flow.returnTo) })
+    save.mutate({ ledger_account, ...(hasScheme ? { rgs_code } : {}) }, { onSuccess: () => navigate(flow.returnTo, { state: flow.returnState }) })
   }
 
   return (
@@ -91,7 +91,7 @@ function SingleCategory({ administrationId, hasScheme, accounts, flow }: Props) 
           <TextInput label={labels.account_id} width="small" maxLength={20} autoComplete="off" value={form.account_id} help={b('single.optional')} errors={errors.field('account_id')} onChange={(e) => setForm({ ...form, account_id: e.target.value })} />
           <div className="category-card__actions">
             <button className="btn btn--primary" disabled={save.isPending}>{t('settings.save')}</button>
-            <Link className="btn btn--secondary" to={flow.returnTo}>{t('common.cancel')}</Link>
+            <Link className="btn btn--secondary" to={flow.returnTo} state={flow.returnState}>{t('common.cancel')}</Link>
           </div>
         </form>
         <section className="category-card single-category__picker" aria-label={b('single.select')}>

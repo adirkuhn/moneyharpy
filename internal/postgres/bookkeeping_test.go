@@ -95,7 +95,7 @@ func TestTaxRatesRoundTrip(t *testing.T) {
 func TestLedgerAccountsRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	svc, store, admin, owner := bookkeepingService(t)
-	added, err := svc.ApplyTemplate(ctx, admin, owner, "company_car")
+	added, err := svc.ApplyTemplate(ctx, admin, owner, "car_set", bookkeeping.TemplateInput{})
 	if err != nil || len(added) == 0 {
 		t.Fatalf("ApplyTemplate() = %d, %v", len(added), err)
 	}
@@ -104,7 +104,7 @@ func TestLedgerAccountsRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.ParentID == nil || *got.ParentID != *fuel.ParentID || got.Template != "company_car" || got.Taxonomy != fuel.Taxonomy ||
+	if got.ParentID == nil || *got.ParentID != *fuel.ParentID || got.Template != "car_set" || got.Taxonomy != fuel.Taxonomy ||
 		!slices.Equal(got.AllowedDocumentTypes, fuel.AllowedDocumentTypes) {
 		t.Errorf("LedgerAccount() = %+v, want %+v", got, fuel)
 	}

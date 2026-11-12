@@ -581,7 +581,7 @@ export const nl: Messages = {
     accountTypes: {
       non_current_assets: 'Vaste activa', current_assets: 'Vlottende activa', equity: 'Eigen vermogen', provisions: 'Voorzieningen',
       non_current_liabilities: 'Langlopende schulden', current_liabilities: 'Kortlopende schulden',
-      revenue: 'Omzet', direct_costs: 'Kostprijs van de omzet', expenses: 'Kosten', other_income_expenses: 'Overige baten en lasten',
+      revenue: 'Omzet', direct_costs: 'Directe kosten', expenses: 'Kosten', other_income_expenses: 'Overige baten en lasten',
     },
     editCategory: 'Categorie wijzigen', categoryName: 'Naam', accountType: 'Soort', accountNumber: 'Rekeningnummer',
     parent: 'Bovenliggende categorie', noParent: 'Geen', description: 'Omschrijving', documentTypes: 'Te gebruiken op',
@@ -597,12 +597,13 @@ export const nl: Messages = {
     noTemplates: 'Er zijn nog geen thema\'s voor jouw land.', added: 'Toegevoegd',
     addCategoryFor: 'Categorie toevoegen voor factuur', toInvoice: 'Naar factuur',
     themesIntro: 'Onderstaande categorieën zijn bepaald door het land van je administratie.', themes: 'Thema\'s',
+    legalFormIntro: 'Onderstaande categorieën zijn bepaald door je gekozen rechtsvorm:',
     singleIntro: 'Zoek je nog een specifieke categorie voor je bedrijf? Voeg deze dan los toe.',
     singleIntroScheme: 'Zoek je nog een specifieke categorie voor je bedrijf? Voeg deze dan los toe op basis van het {{scheme}}.',
     theme: {
       title: 'Categorie toevoegen vanuit {{name}}', titleFor: 'Categorie toevoegen voor factuur vanuit {{name}}',
       profitAndLoss: 'Winst- en verliesrekening', balanceSheet: 'Balans', exists: 'Categorie bestaat al',
-      together: 'De categorieën die je nog niet hebt, worden samen toegevoegd.', saveBack: 'Opslaan en terug naar de factuur',
+      saveBack: 'Opslaan en terug naar de factuur', warning: 'Let op:', choose: 'Selecteer...', kind: 'Soort categorie',
     },
     single: {
       title: 'Losse categorie toevoegen', back: 'Naar Categorie toevoegen', optional: 'Optioneel',
