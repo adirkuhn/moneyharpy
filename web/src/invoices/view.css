@@ -79,7 +79,6 @@
 
 /* A draft is edited in its own page: the editor stands where the document is read. */
 .invoice-editor--in-view { display: grid; gap: 1rem; width: 100%; }
-.invoice-editor--in-view .invoice-editor__actions { justify-content: center; margin-top: 0; padding: 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 
 /* The document as it is read: Moneybird's blue markers sit on the left edge of the blocks that can be edited. */
 .invoice-document__recipient { text-decoration: none; }

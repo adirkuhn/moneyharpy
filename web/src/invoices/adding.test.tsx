@@ -44,9 +44,13 @@ describe('adding an invoice', () => {
     expect(within(dialog).getByRole('button', { name: 'Save' })).toBeInTheDocument()
     expect(within(dialog).getByRole('button', { name: 'Invoice details' })).toBeInTheDocument()
     expect(within(dialog).getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/11/sales_invoices')
+    // Add custom field is among the settings behind Edit, as on Moneybird.
+    expect(within(dialog).queryByRole('link', { name: 'Add custom field' })).toBeNull()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Edit' }))
     expect(within(dialog).getByRole('link', { name: 'Add custom field' })).toHaveAttribute(
       'href', `/11/custom_fields/new?source=sales_invoice&return_to=${encodeURIComponent('/11/sales_invoices/new')}`,
     )
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close', expanded: true }))
 
     // Closing it, like Cancel, goes back to the invoices: nothing was made yet.
     await userEvent.click(within(dialog).getByRole('button', { name: 'Close' }))

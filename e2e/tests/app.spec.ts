@@ -770,12 +770,14 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   const detailsCard = page.getByRole('region', { name: 'Invoice details' })
   await expect(detailsCard.getByRole('radio', { name: 'Excluding VAT' })).toBeChecked()
   await expect(detailsCard.getByRole('combobox', { name: 'Currency' })).toHaveValue('EUR')
-  await page.getByRole('button', { name: 'Save invoice' }).click()
+  // The card saves the details itself, as Moneybird's: there is no Save under the document.
+  await expect(page.getByRole('button', { name: 'Save invoice' })).toHaveCount(0)
+  await detailsCard.getByRole('button', { name: 'Save' }).click()
   // As on Moneybird, the invoice's page shows it as its document; its title is for screen readers.
   await expect(page.getByRole('heading', { level: 1, name: 'Draft #1' })).toBeAttached()
   await expect(page.getByRole('document', { name: 'Invoice Draft #1' })).toBeVisible()
-  // Saved, there is nothing left to save.
-  await expect(page.getByRole('button', { name: 'Save invoice' })).toHaveCount(0)
+  // Saved, the card closes.
+  await expect(page.getByRole('region', { name: 'Invoice details' })).toHaveCount(0)
   // The payment conditions come from the workflow, with a draft's placeholder payment reference as Moneybird shows it.
   await expect(page.getByRole('document', { name: 'Invoice Draft #1' })).toContainText(/RF\d{2}CONCEPT1\b/)
 

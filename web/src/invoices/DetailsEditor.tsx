@@ -5,10 +5,12 @@ import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import { currencyOptions } from '../forms/currencies'
 import type { FormErrors } from '../forms/Form'
 import { ListIcon } from '../layout/icons'
+import { PageIcon } from '../layout/pageIcons'
 import { ActionMenu } from '../list/ListActions'
 import { type Product, useProductSearch } from '../products/queries'
 import { periodPresets, periodRange, periodText, presetPeriod, toPeriod } from './details'
 import type { LineRow } from './LinesEditor'
+import { EditableDocumentForm } from './EditableDocumentForm'
 import type { NewEntityKey } from './newEntity'
 import { today } from './paper'
 import { type TotalRow, TotalsTable } from './TotalsTable'
@@ -142,21 +144,11 @@ export function DetailsEditor(props: Props) {
   }
 
   return (
-    <section className="details-editor" aria-label={d('title')}>
-      <div className="details-editor__header">
-        <fieldset className="segmented details-editor__prices" role="radiogroup" aria-labelledby={`${hintId}-prices`}>
-          <legend id={`${hintId}-prices`} className="segmented__legend">{d('pricesAre')}</legend>
-          <div className="segmented__options">
-            {[false, true].map((incl) => (
-              <label key={String(incl)} className={`segmented__option${props.pricesInclTax === incl ? ' is-checked' : ''}`}>
-                <input type="radio" name={`${hintId}-prices`} value={String(incl)} checked={props.pricesInclTax === incl} onChange={() => props.onPricesInclTax(incl)} />
-                {d(incl ? 'inclVat' : 'exclVat')}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+    <EditableDocumentForm className="details-editor" label={d('title')}>
+      {/* Moneybird's header: the currency, then whether prices include VAT, at the right; their labels are for screen readers. */}
+      <div className="editable-document-form__header">
         <div className="details-editor__currency">
-          <label htmlFor={`${hintId}-currency`}>{d('currency')}</label>
+          <label className="sr-only" htmlFor={`${hintId}-currency`}>{d('currency')}</label>
           <select
             id={`${hintId}-currency`}
             value={currency}
@@ -168,129 +160,156 @@ export function DetailsEditor(props: Props) {
           </select>
           {errors.field('currency') && <p className="form-input__message form-input__message--error">{errors.field('currency')?.join(' ')}</p>}
         </div>
+        <fieldset className="segmented-control" role="radiogroup" aria-labelledby={`${hintId}-prices`}>
+          <legend id={`${hintId}-prices`} className="sr-only">{d('pricesAre')}</legend>
+          {[false, true].map((incl) => (
+            <label key={String(incl)} className={`segmented-control__option${props.pricesInclTax === incl ? ' is-checked' : ''}`}>
+              <input type="radio" name={`${hintId}-prices`} value={String(incl)} checked={props.pricesInclTax === incl} onChange={() => props.onPricesInclTax(incl)} />
+              {d(incl ? 'inclVat' : 'exclVat')}
+            </label>
+          ))}
+        </fieldset>
       </div>
-      <p id={hintId} className="sr-only">{d('moveHint')}</p>
-      <table className="details-editor__table" aria-label={d('title')}>
-        <thead>
-          <tr>
-            <th scope="col" className="details-editor__grip" aria-label={d('order')} />
-            <th scope="col" className="details-editor__amount">{d('amount')}</th>
-            <th scope="col" className="details-editor__description">{d('description')}</th>
-            <th scope="col" className="details-editor__price">{d('priceHeader')}</th>
-            <th scope="col" className="details-editor__total">{d('total')}</th>
-            <th scope="col" className="details-editor__rate">{d('rateAndCategory')}</th>
-            <th scope="col" className="details-editor__remove" aria-label={t('invoices.actions')} />
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => {
-            const amount = cell(i, 'amount', invalid[i]?.amount)
-            const description = cell(i, 'description')
-            const price = cell(i, 'price', invalid[i]?.price)
-            const rate = cell(i, 'tax_rate_id')
-            const category = cell(i, 'ledger_account_id')
-            const period = cell(i, 'period')
-            return (
-              <tr
-                key={r.key}
-                className={dragging === r.key ? 'is-dragging' : undefined}
-                draggable={dragging === r.key}
-                onDragStart={(e) => {
-                  e.dataTransfer.effectAllowed = 'move'
-                  e.dataTransfer.setData('text/plain', String(i))
-                }}
-                onDragOver={(e) => {
-                  if (dragging) {
+      <div className="details-editor__body">
+        <p id={hintId} className="sr-only">{d('moveHint')}</p>
+        <table className="details-editor__table" aria-label={d('title')}>
+          <thead>
+            <tr>
+              <th scope="col" className="details-editor__grip" aria-label={d('order')} />
+              <th scope="col" className="details-editor__amount">{d('amount')}</th>
+              <th scope="col" className="details-editor__description">{d('description')}</th>
+              <th scope="col" className="details-editor__price">{d('priceHeader')}</th>
+              <th scope="col" className="details-editor__total">{d('total')}</th>
+              <th scope="col" className="details-editor__rate">{d('rateAndCategory')}</th>
+              <th scope="col" className="details-editor__remove" aria-label={t('invoices.actions')} />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => {
+              const amount = cell(i, 'amount', invalid[i]?.amount)
+              const description = cell(i, 'description')
+              const price = cell(i, 'price', invalid[i]?.price)
+              const rate = cell(i, 'tax_rate_id')
+              const category = cell(i, 'ledger_account_id')
+              const period = cell(i, 'period')
+              return (
+                <tr
+                  key={r.key}
+                  className={dragging === r.key ? 'is-dragging' : undefined}
+                  draggable={dragging === r.key}
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = 'move'
+                    e.dataTransfer.setData('text/plain', String(i))
+                  }}
+                  onDragOver={(e) => {
+                    if (dragging) {
+                      e.preventDefault()
+                    }
+                  }}
+                  onDrop={(e) => {
                     e.preventDefault()
-                  }
-                }}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  move(Number(e.dataTransfer.getData('text/plain')), i)
-                  setDragging(null)
-                }}
-                onDragEnd={() => setDragging(null)}
-              >
-                <td className="details-editor__grip">
-                  <button
-                    type="button"
-                    ref={(el) => {
-                      if (el) {
-                        grips.current.set(r.key, el)
-                      } else {
-                        grips.current.delete(r.key)
-                      }
-                    }}
-                    className="details-editor__handle"
-                    aria-label={d('move', { n: i + 1 })}
-                    aria-describedby={hintId}
-                    title={d('move', { n: i + 1 })}
-                    onMouseDown={() => setDragging(r.key)}
-                    onMouseUp={() => setDragging(null)}
-                    onKeyDown={onGripKey(i)}
-                  >
-                    <span aria-hidden="true">⠿</span>
-                  </button>
-                </td>
-                <td className="details-editor__amount" data-label={d('amount')}>
-                  <input type="text" aria-label={d('amount')} placeholder="#" maxLength={255} value={r.amount} {...amount.control} onChange={(e) => props.onChange(i, { amount: e.target.value })} />
-                  {amount.message}
-                </td>
-                <td className="details-editor__description" data-label={d('description')}>
-                  <ProductDescription
-                    administrationId={administrationId}
-                    currency={currency}
-                    value={r.description}
-                    control={description.control}
-                    onChange={(value) => props.onChange(i, { description: value })}
-                    onProduct={(p) => fromProduct(i, p)}
-                  />
-                  {description.message}
-                  <PeriodSelect value={r.period} invalid={!!period.message} onChange={(value) => set(i, r, 'period', value)} />
-                  {period.message}
-                  {applyLink(i, r, 'period')}
-                </td>
-                <td className="details-editor__price" data-label={d('price')}>
-                  <input type="text" inputMode="decimal" aria-label={d('price')} placeholder="0.00" value={r.price} {...price.control} onChange={(e) => props.onChange(i, { price: e.target.value })} />
-                  {price.message}
-                </td>
-                <td className="details-editor__total" data-label={d('total')} data-testid="detail-total">{money(lineTotals[i] ?? 0)}</td>
-                <td className="details-editor__rate" data-label={d('rateAndCategory')}>
-                  <select aria-label={t('invoices.vatRate')} value={r.tax_rate_id} {...rate.control} onChange={(e) => choose(i, r, 'tax_rate_id', e.target.value)}>
-                    {rates.map((tr) => <option key={tr.id} value={tr.id}>{tr.name}</option>)}
-                    <option value={addOption}>{d('addRate')}</option>
-                  </select>
-                  {rate.message}
-                  {applyLink(i, r, 'tax_rate_id')}
-                  <select aria-label={t('invoices.category')} value={r.ledger_account_id} {...category.control} onChange={(e) => choose(i, r, 'ledger_account_id', e.target.value)}>
-                    <option value="">{t('invoices.uncategorized')}</option>
-                    {groups.map((g) => (
-                      <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>
-                        {g.rows.map(({ account: a, depth }) => (
-                          <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>
-                        ))}
-                      </optgroup>
-                    ))}
-                    <option value={addOption}>{d('addCategory')}</option>
-                  </select>
-                  {category.message}
-                  {applyLink(i, r, 'ledger_account_id')}
-                </td>
-                <td className="details-editor__remove">
-                  {rows.length > 1 && (
-                    <button type="button" className="details-editor__remove-button" aria-label={d('remove', { n: i + 1 })} title={d('removeRow')} onClick={() => props.onRemove(i)}>
-                      <span aria-hidden="true">×</span>
+                    move(Number(e.dataTransfer.getData('text/plain')), i)
+                    setDragging(null)
+                  }}
+                  onDragEnd={() => setDragging(null)}
+                >
+                  <td className="details-editor__grip">
+                    <button
+                      type="button"
+                      ref={(el) => {
+                        if (el) {
+                          grips.current.set(r.key, el)
+                        } else {
+                          grips.current.delete(r.key)
+                        }
+                      }}
+                      className="details-editor__handle"
+                      aria-label={d('move', { n: i + 1 })}
+                      aria-describedby={hintId}
+                      title={d('move', { n: i + 1 })}
+                      onMouseDown={() => setDragging(r.key)}
+                      onMouseUp={() => setDragging(null)}
+                      onKeyDown={onGripKey(i)}
+                    >
+                      <span aria-hidden="true">⠿</span>
                     </button>
-                  )}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+                  </td>
+                  <td className="details-editor__amount" data-label={d('amount')}>
+                    <input type="text" aria-label={d('amount')} placeholder="#" maxLength={255} value={r.amount} {...amount.control} onChange={(e) => props.onChange(i, { amount: e.target.value })} />
+                    {amount.message}
+                  </td>
+                  <td className="details-editor__description" data-label={d('description')}>
+                    <ProductDescription
+                      administrationId={administrationId}
+                      currency={currency}
+                      value={r.description}
+                      control={description.control}
+                      onChange={(value) => props.onChange(i, { description: value })}
+                      onProduct={(p) => fromProduct(i, p)}
+                    />
+                    {description.message}
+                    <PeriodSelect value={r.period} invalid={!!period.message} onChange={(value) => set(i, r, 'period', value)} />
+                    {period.message}
+                    {applyLink(i, r, 'period')}
+                  </td>
+                  <td className="details-editor__price" data-label={d('price')}>
+                    <input type="text" inputMode="decimal" aria-label={d('price')} placeholder="0.00" value={r.price} {...price.control} onChange={(e) => props.onChange(i, { price: e.target.value })} />
+                    {price.message}
+                  </td>
+                  <td className="details-editor__total" data-label={d('total')} data-testid="detail-total">{money(lineTotals[i] ?? 0)}</td>
+                  <td className="details-editor__rate" data-label={d('rateAndCategory')}>
+                    <select aria-label={t('invoices.vatRate')} value={r.tax_rate_id} {...rate.control} onChange={(e) => choose(i, r, 'tax_rate_id', e.target.value)}>
+                      {rates.map((tr) => <option key={tr.id} value={tr.id}>{tr.name}</option>)}
+                      <option value={addOption}>{d('addRate')}</option>
+                    </select>
+                    {rate.message}
+                    {applyLink(i, r, 'tax_rate_id')}
+                    <select aria-label={t('invoices.category')} value={r.ledger_account_id} {...category.control} onChange={(e) => choose(i, r, 'ledger_account_id', e.target.value)}>
+                      <option value="">{t('invoices.uncategorized')}</option>
+                      {groups.map((g) => (
+                        <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>
+                          {g.rows.map(({ account: a, depth }) => (
+                            <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                      <option value={addOption}>{d('addCategory')}</option>
+                    </select>
+                    {category.message}
+                    {applyLink(i, r, 'ledger_account_id')}
+                  </td>
+                  <td className="details-editor__remove">
+                    <button type="button" className="details-editor__remove-button" aria-label={d('remove', { n: i + 1 })} title={d('removeRow')} onClick={() => props.onRemove(i)}>
+                      <PageIcon kind="close" />
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
 
-      <div className="details-editor__footer">
-        <div className="details-editor__buttons">
+        <div className="details-editor__footer">
+          {/* "Add detail" and "Discount" joined, as Moneybird's button group. */}
+          <div className="btn-group">
+            <button type="button" className="btn btn--secondary btn--with-icon" onClick={() => props.onAdd()}>
+              <ListIcon kind="plus" />
+              <span>{d('add')}</span>
+            </button>
+            <ActionMenu
+              label={t('invoices.discount')}
+              items={[
+                { label: d('discountDetail'), onSelect: () => props.onAdd({ description: d('discountDescription') }) },
+                {
+                  label: d('discountTotal'),
+                  onSelect: () => {
+                    setDiscountShown(true)
+                    setTimeout(() => discountInput.current?.focus())
+                  },
+                },
+              ]}
+            />
+          </div>
           {discountShown && (
             <div className="details-editor__discount">
               <label htmlFor={`${hintId}-discount`}>{t('invoices.discount')}</label>
@@ -315,36 +334,19 @@ export function DetailsEditor(props: Props) {
                   setDiscountShown(false)
                 }}
               >
-                <span aria-hidden="true">×</span>
+                <PageIcon kind="close" />
               </button>
               {errors.field('discount') && <p className="form-input__message form-input__message--error">{errors.field('discount')?.join(' ')}</p>}
             </div>
           )}
-          <div className="details-editor__add">
-            <button type="button" className="btn btn--secondary btn--with-icon" onClick={() => props.onAdd()}>
-              <ListIcon kind="plus" />
-              <span>{d('add')}</span>
-            </button>
-            <ActionMenu
-              label={t('invoices.discount')}
-              items={[
-                { label: d('discountDetail'), onSelect: () => props.onAdd({ description: d('discountDescription') }) },
-                {
-                  label: d('discountTotal'),
-                  onSelect: () => {
-                    setDiscountShown(true)
-                    setTimeout(() => discountInput.current?.focus())
-                  },
-                },
-              ]}
-            />
-            <button type="button" className="btn btn--primary" disabled={props.saving} onClick={props.onSave}>{t('invoices.editor.save')}</button>
-            <button type="button" className="btn btn--secondary" onClick={props.onCancel}>{t('common.cancel')}</button>
-          </div>
+          <TotalsTable rows={totals} />
         </div>
-        <TotalsTable rows={totals} />
       </div>
-    </section>
+      <div className="editable-document-form__buttons">
+        <button type="button" className="btn btn--primary" disabled={props.saving} onClick={props.onSave}>{t('invoices.editor.save')}</button>
+        <button type="button" className="btn btn--secondary" onClick={props.onCancel}>{t('common.cancel')}</button>
+      </div>
+    </EditableDocumentForm>
   )
 }
 
