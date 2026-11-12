@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Menu } from '../layout/Menu'
 import { Block } from '../settings/Block'
 import { type AccountType, balanceSheetTypes, type LedgerAccount, profitAndLossTypes, tree, useDeleteLedgerAccount, useLedgerAccounts, useSaveLedgerAccount } from './queries'
 
@@ -17,12 +16,7 @@ export function CategoriesBlock({ administrationId, hasScheme }: { administratio
       action={
         <div className="block-actions">
           {hasScheme && <Link className="btn btn--secondary" to={`${base}/ledger_accounts/scheme`}>{t('bookkeeping.editScheme')}</Link>}
-          <Menu label={t('settings.add')} buttonClassName="btn btn--accent" align="right">
-            <ul className="menu__list">
-              <li><Link to={`${base}/ledger_accounts/new`}>{t('bookkeeping.addCategory')}</Link></li>
-              <li><Link to={`${base}/ledger_account_templates`}>{t('bookkeeping.addFromTemplate')}</Link></li>
-            </ul>
-          </Menu>
+          <Link className="btn btn--accent" to={`${base}/ledger_accounts/blueprints`}>{t('bookkeeping.addCategory')}</Link>
         </div>
       }
     >
