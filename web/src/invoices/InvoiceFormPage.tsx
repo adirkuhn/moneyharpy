@@ -108,14 +108,23 @@ export function InvoiceEditor(props: EditorProps) {
   }
   // Rates the invoice already uses stay available even when they were turned off since.
   const usable = rates.data.filter((r) => r.tax_rate_type === 'sales_invoice' && (r.active || inv?.details?.some((d) => d.tax_rate_id === r.id)))
-  return (
-    <InvoiceForm
-      // A saved invoice starts the editor again from what the server keeps, with the ids of new lines.
-      key={inv ? `${inv.id}-${inv.version ?? ''}` : 'new'}
-      {...props}
-      rates={usable}
-    />
-  )
+  return <KeyedForm {...props} rates={usable} />
+}
+
+/**
+ * A saved invoice starts the editor again from what the server keeps, with
+ * the ids of new lines. What to open (details, the popup…) belongs to the
+ * editor it came with: a new version of the same invoice starts closed,
+ * unless something new is asked to open.
+ */
+function KeyedForm(props: EditorProps & { rates: TaxRate[] }) {
+  const { invoice: inv, opening } = props
+  const key = inv ? `${inv.id}-${inv.version ?? ''}` : 'new'
+  const opened = useRef({ opening, key })
+  if (opened.current.opening !== opening) {
+    opened.current = { opening, key }
+  }
+  return <InvoiceForm key={key} {...props} opening={opened.current.key === key ? opening : null} />
 }
 
 let nextKey = 0

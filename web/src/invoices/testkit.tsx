@@ -126,7 +126,8 @@ export function creating(sent: { post?: Record<string, unknown>; patch?: Record<
     http.get('*/api/v2/11/sales_invoices/902', () => HttpResponse.json(created)),
     http.patch('*/api/v2/11/sales_invoices/902', async ({ request }) => {
       sent.patch = ((await request.json()) as { sales_invoice: Record<string, unknown> }).sales_invoice
-      return HttpResponse.json(created)
+      // As the server does, a saved invoice comes back with a new version.
+      return HttpResponse.json({ ...created, version: (created.version ?? 0) + 1 })
     }),
   ]
 }
