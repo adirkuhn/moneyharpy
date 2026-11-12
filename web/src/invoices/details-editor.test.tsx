@@ -60,6 +60,10 @@ describe('the invoice details editor', () => {
       { description: 'Consulting', amount: '2 x', price: '100', tax_rate_id: '2101', row_order: 1 },
       { description: 'Book', amount: '1 x', price: '50', tax_rate_id: '2109', ledger_account_id: '8001', row_order: 2 },
     ])
+    // Saved, the card closes and stays closed.
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Invoice details' })).toBeNull())
+    await new Promise((r) => setTimeout(r, 200))
+    expect(screen.queryByRole('region', { name: 'Invoice details' })).toBeNull()
   })
 
   it('fills a detail from a product, sets its period and applies it to the details below', async () => {
