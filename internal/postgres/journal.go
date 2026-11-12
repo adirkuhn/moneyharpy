@@ -59,7 +59,8 @@ func (s *JournalStore) Entries(ctx context.Context, admin resource.ID, q journal
 	rows, err := s.q.ListLedgerEntries(ctx, sqlc.ListLedgerEntriesParams{
 		AdministrationID: int64(admin), FromDate: day(q.Period.From), ToDate: day(q.Period.To), LedgerAccountID: optionalID(q.LedgerAccountID),
 		ContactID: optionalID(q.ContactID), NoContact: q.NoContact, ProjectID: optionalID(q.ProjectID), NoProject: q.NoProject,
-		AccountType: q.AccountType, MaxRows: int32(q.PerPage), Skip: int32((max(q.Page, 1) - 1) * q.PerPage),
+		AccountType: q.AccountType, DocumentType: q.DocumentType, DocumentID: optionalID(q.DocumentID),
+		MaxRows: int32(q.PerPage), Skip: int32((max(q.Page, 1) - 1) * q.PerPage),
 	})
 	if err != nil {
 		return nil, 0, err

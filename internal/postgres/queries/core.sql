@@ -775,6 +775,7 @@ WHERE e.administration_id = @administration_id AND e.date >= @from_date AND e.da
   AND (sqlc.narg(project_id)::bigint IS NULL OR e.project_id = sqlc.narg(project_id))
   AND (NOT @no_project::boolean OR e.project_id IS NULL)
   AND (@account_type::text = '' OR l.account_type = @account_type)
+  AND (sqlc.narg(document_id)::bigint IS NULL OR (e.document_type = @document_type::text AND e.document_id = sqlc.narg(document_id)))
 ORDER BY e.date, e.document_id, e.row_order, e.id
 LIMIT @max_rows OFFSET @skip;
 

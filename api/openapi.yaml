@@ -6816,6 +6816,7 @@ paths:
       summary: Get journal entries report
       description: >-
         Every booking in the period, oldest first, on a ledger account, for a contact or for a project; one of them is required. account_type needs a contact_id or project_id. Bank transactions post too: the whole amount on the account, each booking against its category, and the part not booked yet against unprocessed transactions.
+        MoneyHarpy extension: document_type with document_id selects the bookings of one document, such as a sales invoice or a payment, which is subject enough; without a period they cover every date.
       tags: [Journal]
       parameters:
         - $ref: '#/components/parameters/report_period'
@@ -6843,6 +6844,18 @@ paths:
           schema:
             type: string
             enum: [non_current_assets, current_assets, equity, provisions, non_current_liabilities, current_liabilities, revenue, direct_costs, expenses, other_income_expenses, other, temporary]
+        - name: document_type
+          in: query
+          description: MoneyHarpy extension. The kind of document whose bookings to list; needs document_id.
+          schema:
+            type: string
+            enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt, Payment, Asset]
+        - name: document_id
+          in: query
+          description: MoneyHarpy extension. The document whose bookings to list; needs document_type.
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
       responses:
         '200':
           description: The journal entries

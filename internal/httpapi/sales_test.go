@@ -151,6 +151,19 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 	if entries[0].DocumentType != "SalesInvoice" || entries[0].Amount != "272.86" {
 		t.Errorf("debtors = %+v", entries[0])
 	}
+	// The invoice's own entries, as its Journal entries view shows them, whatever their date (a MoneyHarpy extension).
+	own := decode[[]struct {
+		DocumentID string `json:"document_id"`
+		Amount     string `json:"amount"`
+	}](t, owner.do(http.MethodGet, api+"/reports/journal_entries?document_type=SalesInvoice&document_id="+inv.ID, nil))
+	if len(own) != 4 || own[0].DocumentID != inv.ID || own[0].Amount != "272.86" {
+		t.Errorf("own entries = %+v", own)
+	}
+	if other := decode[[]struct{}](t, owner.do(http.MethodGet, api+"/reports/journal_entries?document_type=Payment&document_id="+inv.ID, nil)); len(other) != 0 {
+		t.Errorf("payment entries of an invoice id = %+v", other)
+	}
+	wantStatus(t, owner.do(http.MethodGet, api+"/reports/journal_entries?document_id="+inv.ID, nil), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodGet, api+"/reports/journal_entries?document_type=Invoice&document_id="+inv.ID, nil), http.StatusBadRequest)
 
 	// Sent invoices cannot be deleted but can be credited.
 	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID, nil), http.StatusUnprocessableEntity)
