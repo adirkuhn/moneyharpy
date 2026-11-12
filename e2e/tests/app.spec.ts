@@ -751,11 +751,12 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   await popup.getByRole('option', { name: 'Example Shop B.V.' }).click()
   await expect(popup.getByRole('combobox', { name: 'Contact' })).toContainText('Example Shop B.V.')
   await popup.getByLabel('Reference').fill('Order 12')
-  // "Invoice details" saves the draft and opens its details editor.
+  // "Invoice details" saves the draft and opens its details editor on the draft's own page, as on Moneybird.
   await popup.getByRole('button', { name: 'Invoice details' }).click()
-  await expect(page).toHaveURL(/\/sales_invoices\/\d+\/edit$/)
-  const paper = page.getByRole('document', { name: 'Invoice preview' })
+  await expect(page).toHaveURL(/\/sales_invoices\/\d+$/)
+  const paper = page.getByRole('document', { name: 'Invoice Draft #1' })
   await expect(paper.getByRole('button', { name: 'Contact' })).toContainText('Example Shop B.V.')
+  await expect(page.getByRole('link', { name: 'Edit', exact: true })).toHaveCount(0)
   const rows = page.getByRole('table', { name: 'Invoice details' }).getByRole('row')
   const vat21 = async (row: number) =>
     (await rows.nth(row).getByLabel('VAT rate').locator('option', { hasText: '21%' }).first().getAttribute('value')) ?? ''
@@ -774,11 +775,15 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   // As on Moneybird, the invoice's page shows it as its document; its title is for screen readers.
   await expect(page.getByRole('heading', { level: 1, name: 'Draft #1' })).toBeAttached()
   await expect(page.getByRole('document', { name: 'Invoice Draft #1' })).toBeVisible()
+  // Saved, there is nothing left to save.
+  await expect(page.getByRole('button', { name: 'Save invoice' })).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Send', exact: true }).click()
   await page.getByRole('button', { name: 'Send invoice', exact: true }).click()
-  const sending = page.getByRole('region', { name: 'Send invoice' })
-  await expect(sending.getByLabel('Email address')).toHaveValue(customer)
+  const sending = page.getByRole('region', { name: 'Send invoice Draft #1' })
+  await expect(sending.getByRole('radio', { name: /Send by email/ })).toBeChecked()
+  await expect(sending.getByLabel('Email address', { exact: true })).toHaveValue(customer)
+  await expect(sending.getByRole('textbox', { name: 'Email message' })).toHaveValue(/\{invoice_id\}/)
   await sending.getByRole('button', { name: 'Send invoice' }).click()
   await expect(page.locator('.badge', { hasText: 'Open' })).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).not.toHaveText(/Draft/)
@@ -786,6 +791,11 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   // The document is written in the workflow's language.
   await expect(page.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Total/ })).toContainText(/302[.,]50/)
   await expect(page.getByRole('complementary', { name: 'Invoice information' }).getByRole('list', { name: 'Payment summary' })).toContainText('€302.50')
+  // Its journal entries show what it booked, as Moneybird's Journal entries button does.
+  await page.getByRole('button', { name: 'Journal entries' }).click()
+  const journal = page.getByRole('region', { name: 'Journal entries' }).getByRole('table', { name: 'Journal entries' })
+  await expect(journal.getByRole('row', { name: /^(Accounts receivable|Debiteuren)/ })).toContainText(/302[.,]50/)
+  await page.getByRole('button', { name: 'Journal entries' }).click()
 
   const mail = await playwrightRequest.newContext()
   await expect
@@ -855,8 +865,8 @@ test('sales invoices are paid by hand and by a bank transaction, and the overvie
   await page.goto(`${uri}/sales_invoices/${first}`)
   await page.getByRole('button', { name: 'Send', exact: true }).click()
   await page.getByRole('button', { name: 'Send invoice', exact: true }).click()
-  const sending = page.getByRole('region', { name: 'Send invoice' })
-  await sending.getByLabel('Send by').selectOption('Manual')
+  const sending = page.getByRole('region', { name: /^Send invoice/ })
+  await sending.getByRole('radio', { name: /Send manually/ }).check()
   await sending.getByRole('button', { name: 'Send invoice' }).click()
   await expect(page.locator('.badge', { hasText: 'Open' })).toBeVisible()
   // Moneybird's Register payment asks how the invoice was paid first.
