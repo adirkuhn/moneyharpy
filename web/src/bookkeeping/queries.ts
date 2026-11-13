@@ -81,6 +81,17 @@ export function useReorderTaxRates(administrationId: string) {
   })
 }
 
+export type DetailUsage = components['schemas']['DetailUsage']
+
+/** The VAT rates and categories the lines of purchase documents or sales invoices used most in the last year. */
+export function useDetailUsage(administrationId: string, kind: 'purchase' | 'sales') {
+  return useQuery({
+    queryKey: ['detail-usage', administrationId, kind],
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/details/usage', { params: { path: { administration_id: administrationId }, query: { kind } } })),
+    staleTime: 60_000,
+  })
+}
+
 export function useLedgerAccounts(administrationId: string) {
   return useQuery({
     queryKey: ['ledger-accounts', administrationId],

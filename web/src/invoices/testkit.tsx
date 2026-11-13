@@ -69,6 +69,7 @@ export function loaded(list: SalesInvoice[] = [invoice(), draft], total = list.l
     http.get('*/api/v2/11/sales_invoices/902', () => HttpResponse.json(draft)),
     http.get('*/api/v2/11/tax_rates', () => HttpResponse.json(rates)),
     http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales])),
+    http.get('*/api/v2/11/details/usage', () => HttpResponse.json({ tax_rates: [], ledger_accounts: [] })),
     http.get('*/api/v2/11/workflows', () => HttpResponse.json([workflow(), workflow({ id: '602', type: 'EstimateWorkflow', name: 'Quotes' })])),
     http.get('*/api/v2/11/document_styles', () => HttpResponse.json([senderStyle])),
     http.get('*/api/v2/11/identities', () => HttpResponse.json([identity({ id: '500' })])),
@@ -157,3 +158,10 @@ export const contactCounts = [
   http.get('*/api/v2/11/documents/purchase_invoices', () => HttpResponse.json([], { headers: { 'X-Total-Count': '2' } })),
   http.get('*/api/v2/11/documents/receipts', () => HttpResponse.json([], { headers: { 'X-Total-Count': '1' } })),
 ]
+
+/** Chooses an option of a line's searchable select, such as its VAT rate or category. */
+export async function chooseOption(scope: HTMLElement, label: string, option: string | RegExp) {
+  await userEvent.click(within(scope).getByRole('combobox', { name: label }))
+  const found = within(screen.getByRole('listbox', { name: label })).getAllByRole('option', { name: option })
+  await userEvent.click(found[found.length - 1]!)
+}

@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import type { Contact } from '../contacts/queries'
+import { chooseOption } from '../invoices/testkit'
 import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
@@ -354,7 +355,7 @@ describe('editing an external invoice', () => {
     await userEvent.type(within(form).getByLabelText('Invoice id'), 'WEB-1001')
     await userEvent.click(within(form).getByRole('radio', { name: 'Including VAT' }))
     await userEvent.type(within(form).getByLabelText('Price'), '121')
-    await userEvent.selectOptions(within(form).getByLabelText('Category'), '8001')
+    await chooseOption(form, 'Category', /^Sales/)
     await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent).toMatchObject({
       external_sales_invoice: { reference: 'WEB-1001', prices_are_incl_tax: true, details_attributes: [{ price: '121', tax_rate_id: '2101', ledger_account_id: '8001' }] },
