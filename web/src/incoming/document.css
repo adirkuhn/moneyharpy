@@ -123,15 +123,50 @@
 .incoming-card .invoice-totals__strong td { font-weight: 700; }
 .incoming-card .details-editor__footer { border-bottom: 0; }
 .details-editor__label { margin: 0 auto 0 0; font-size: 0.875rem; font-weight: 400; }
-.incoming-card__lines { display: grid; gap: 0.75rem; padding: 1rem; border-top: 1px solid var(--line); }
 .incoming-lines { width: 100%; border-collapse: collapse; }
 .incoming-lines th { padding: 0.75rem 0.25rem; border-bottom: 1px solid var(--line); color: var(--muted); font-weight: 500; text-align: left; white-space: nowrap; }
 .incoming-lines td { padding: 0.75rem 0.25rem; border-bottom: 1px solid var(--line); vertical-align: top; }
-.incoming-lines__amount { width: 4rem; }
 .incoming-lines__money { width: 6rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.incoming-lines__period, .incoming-lines__category { display: block; color: var(--muted); font-size: 0.8125rem; }
+.incoming-lines__period { display: block; color: var(--muted); font-size: 0.8125rem; }
 .incoming-lines__description { white-space: pre-wrap; }
-.incoming-card__lines .invoice-totals { justify-self: start; }
+
+/* A field that saves itself: part of the rows' grid, faded a little while it saves. */
+.inline-field { display: contents; }
+.inline-field.is-saving .form-input__control { opacity: 0.6; cursor: progress; transition: opacity 0.15s; }
+/* The contact as plain text, as Moneybird's document page: its name in the link colour, a search under it on a click. */
+.incoming-card__rows .contact-select { max-width: none; }
+.incoming-card__rows .contact-select__plain { border-color: transparent; background: transparent; text-align: left; }
+.incoming-card__rows .contact-select__plain .picker__value { color: var(--blue); }
+.incoming-card__rows .contact-select__plain:hover .picker__value { text-decoration: underline; }
+.incoming-card__rows .contact-select__plain .picker__value.is-placeholder { color: var(--muted); }
+.incoming-card__rows .contact-select__panel { right: auto; width: max(100%, 26rem); max-width: calc(100vw - 2rem); }
+
+/* The details of a document as they read: categories, a short table of the lines and the totals; the whole block opens the lines editor. */
+.document-details { position: relative; display: grid; gap: 0.75rem; padding: 1rem; border-top: 1px solid var(--line); }
+.document-details.is-clickable { cursor: pointer; }
+.document-details.is-clickable:hover { background: color-mix(in srgb, var(--row-hover) 60%, var(--surface)); }
+.document-details:last-child { border-radius: 0 0 12px 12px; }
+.document-details__open { position: absolute; inset: 0; z-index: 1; padding: 0; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
+.document-details__open:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.document-details__categories { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: 0 0.5rem; align-items: center; margin: 0; }
+.document-details__categories dd { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0; }
+/* A category tag sits above the block's button, so pointing at it shows its lines. */
+.category-tag {
+  position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.125rem 0.5rem; border-radius: 999px;
+  background: color-mix(in srgb, var(--blue) 10%, var(--surface)); color: var(--navy); font-size: 0.8125rem; font-weight: 600;
+}
+.category-tag__icon { flex: none; color: var(--blue); }
+.document-details .incoming-lines td { padding: 0.5rem 0.25rem; }
+.document-details .incoming-lines td.incoming-lines__muted { color: var(--muted); font-size: 0.8125rem; }
+.document-details .incoming-lines th.incoming-lines__money { text-align: right; }
+.document-details .incoming-lines tr.is-highlighted td { background: color-mix(in srgb, var(--blue) 10%, var(--surface)); }
+.incoming-lines__icons { width: 1.5rem; text-align: center; }
+.document-totals { display: grid; gap: 0.25rem; justify-self: end; min-width: 16rem; margin: 0; padding: 0; list-style: none; }
+.document-totals li { display: grid; grid-template-columns: minmax(0, 1fr) auto 1.25rem; gap: 0 1rem; align-items: center; }
+.document-totals__amount { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.document-totals__remark { display: flex; justify-content: center; }
+.document-totals__strong { padding-top: 0.25rem; border-top: 1px solid var(--line); font-weight: 700; }
+.incoming-card__editor > .problems { margin: 1rem 1rem 0; }
 
 /* The journal entry form of a manual journal, inside the card. */
 .journal-entry-form { display: grid; gap: 1rem; padding: 0 1rem 1rem; }

@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { type FormEvent, type ReactNode, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -79,11 +79,10 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
   const title = useTitle(typed)
   const isNew = 'state' in doc && doc.state === 'new'
   const purchase = typed.type === 'PurchaseInvoice' || typed.type === 'Receipt'
-  // A paid document, or one with payments, keeps what it booked, as the server refuses to change it.
-  const editable = purchase ? typed.doc.state !== 'paid' && (typed.doc.payments ?? []).length === 0 : type === 'GeneralDocument'
+  // A paid document, or one with payments, keeps what it booked, as the server refuses to change it; its fields read as text.
+  const editable = purchase && typed.doc.state !== 'paid' && (typed.doc.payments ?? []).length === 0
   // A journal entry or a booked document cannot change type.
   const canChangeType = type === 'TypelessDocument' || type === 'GeneralDocument' || (purchase && isNew)
-  const [editing, setEditing] = useState(isNew)
   const [deleting, setDeleting] = useState(false)
   const setType = useSetDocumentType(administrationId, id)
   const remove = useDeleteDocument(administrationId, type, id)
@@ -97,14 +96,9 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
   const canRead = (type === 'TypelessDocument' || (purchase && isNew)) && attachments.length > 0 && recognition?.state !== 'pending'
   const readAgain = () => recognize.mutate()
 
-  const onSaved = (stillNew: boolean, next: boolean) => {
-    if (next) {
-      navigate(toProcess.next ? documentPath(administrationId, toProcess.next) : list)
-    } else if (!stillNew) {
-      setEditing(false)
-    }
-  }
-  const edit = editable && !editing ? () => setEditing(true) : undefined
+  // Moneybird's Next: the next document still to process, or Incoming when there is none.
+  const toNext = () => navigate(toProcess.next ? documentPath(administrationId, toProcess.next) : list)
+  const onNext = isNew ? toNext : undefined
   const typeRow = (
     <TypePicker
       value={choiceOf[type]}
@@ -120,15 +114,15 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
       <RecognitionNotice state={recognition?.state} onReadAgain={canRead ? readAgain : undefined} busy={recognize.isPending} />
     </>
   )
-  const shared = { administrationId, typeRow, editing, onSaved, left: toProcess.left, cancelTo: list, notice }
+  const shared = { administrationId, typeRow, left: toProcess.left, onNext, notice }
 
   const card = (() => {
     switch (typed.type) {
       case 'PurchaseInvoice':
       case 'Receipt':
-        return <PurchaseDocument {...shared} kind={typed.type === 'Receipt' ? 'receipts' : 'purchase_invoices'} doc={typed.doc} onEdit={edit} />
+        return <PurchaseDocument {...shared} kind={typed.type === 'Receipt' ? 'receipts' : 'purchase_invoices'} doc={typed.doc} editable={editable} />
       case 'GeneralDocument':
-        return <GeneralDocumentCard {...shared} doc={typed.doc} onEdit={() => setEditing(true)} />
+        return <GeneralDocumentCard {...shared} doc={typed.doc} />
       case 'GeneralJournalDocument':
         return (
           <section className="incoming-card" aria-label={t('incoming.types.general_journal_document')}>
@@ -144,17 +138,16 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
         )
       default:
         return (
-          <form className="incoming-card" aria-label={t('incoming.view.document')} onSubmit={(e: FormEvent) => e.preventDefault()}>
+          <section className="incoming-card" aria-label={t('incoming.view.document')}>
             {notice}
             <div className="incoming-card__rows">{typeRow}</div>
             <p className="incoming-card__hint">{t('incoming.view.chooseTypeText')}</p>
-          </form>
+          </section>
         )
     }
   })()
 
   const more: MenuItem[] = [
-    ...(edit ? [{ label: t('incoming.view.edit'), onSelect: edit }] : []),
     ...(canRead ? [{ label: t('recognition.readAgain'), onSelect: readAgain, disabled: recognize.isPending }] : []),
     { label: t('incoming.new.back'), to: list },
   ]
