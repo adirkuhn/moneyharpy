@@ -498,6 +498,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/details/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Retrieve the most used VAT rates and categories
+         * @description MoneyHarpy extension. The VAT rates and categories the lines of purchase documents (kind purchase) or of sales invoices (kind sales) of the last twelve months used most, at most five of each, most used first. The line editor offers them first.
+         */
+        get: operations["getDetailUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/tax_rates/order": {
         parameters: {
             query?: never;
@@ -7361,6 +7383,16 @@ export interface components {
                 tax_report_boxes?: string[];
             };
         };
+        /** @description MoneyHarpy extension. How often lines used VAT rates and categories, most used first. */
+        DetailUsage: {
+            tax_rates: components["schemas"]["UsageCount"][];
+            ledger_accounts: components["schemas"]["UsageCount"][];
+        };
+        UsageCount: {
+            id: components["schemas"]["Identifier"];
+            /** @description The number of lines that used it. */
+            count: number;
+        };
         TaxRateOrderRequest: {
             tax_rate_type: components["schemas"]["TaxRateType"];
             ids: components["schemas"]["Identifier"][];
@@ -12152,6 +12184,36 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getDetailUsage: {
+        parameters: {
+            query: {
+                /** @description Whose lines to count, purchase invoices and receipts or sales invoices. */
+                kind: "purchase" | "sales";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The most used VAT rates and categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetailUsage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };

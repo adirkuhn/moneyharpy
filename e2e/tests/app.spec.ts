@@ -753,16 +753,20 @@ test('a sales invoice is written, sent by email, downloaded and credited', async
   await expect(paper.getByRole('button', { name: 'Contact' })).toContainText('Example Shop B.V.')
   await expect(page.getByRole('link', { name: 'Edit', exact: true })).toHaveCount(0)
   const rows = page.getByRole('table', { name: 'Invoice details' }).getByRole('row')
-  const vat21 = async (row: number) =>
-    (await rows.nth(row).getByLabel('VAT rate').locator('option', { hasText: '21%' }).first().getAttribute('value')) ?? ''
+  // The VAT rate is a searchable select: open it, search, and pick the option.
+  const vat21 = async (row: number) => {
+    await rows.nth(row).getByRole('combobox', { name: 'VAT rate' }).click()
+    await page.getByRole('searchbox', { name: 'Find vat rate' }).fill('21%')
+    await page.getByRole('listbox', { name: 'VAT rate' }).getByRole('option', { name: /21%/ }).first().click()
+  }
   await rows.nth(1).getByLabel('Description').fill('Consulting')
   await rows.nth(1).getByLabel('Amount').fill('2 x')
   await rows.nth(1).getByLabel('Price').fill('100')
-  await rows.nth(1).getByLabel('VAT rate').selectOption(await vat21(1))
+  await vat21(1)
   await page.getByRole('button', { name: 'Add detail' }).click()
   await rows.nth(2).getByLabel('Description').fill('Travel costs')
   await rows.nth(2).getByLabel('Price').fill('50')
-  await rows.nth(2).getByLabel('VAT rate').selectOption(await vat21(2))
+  await vat21(2)
   // The editor shows its totals in the user's language.
   const totals = page.getByRole('region', { name: 'Invoice details' }).getByRole('table', { name: 'Totals' })
   await expect(totals.getByRole('row', { name: /^Total\b/ })).toContainText(/302[.,]50/)
@@ -950,8 +954,9 @@ test('an external invoice is uploaded, filled in, booked and paid by a bank tran
   const row = form.getByRole('table', { name: 'Invoice details' }).getByRole('row').nth(1)
   await row.getByLabel('Description').fill('Sofa')
   await row.getByLabel('Price').fill('1000')
-  const vat21 = (await row.getByLabel('VAT rate').locator('option', { hasText: '21%' }).first().getAttribute('value')) ?? ''
-  await row.getByLabel('VAT rate').selectOption(vat21)
+  await row.getByRole('combobox', { name: 'VAT rate' }).click()
+  await page.getByRole('searchbox', { name: 'Find vat rate' }).fill('21%')
+  await page.getByRole('listbox', { name: 'VAT rate' }).getByRole('option', { name: /21%/ }).first().click()
   await form.getByRole('button', { name: 'Save' }).click()
   // Booked, it reads as Moneybird's document.
   const document = page.getByRole('article', { name: 'External invoice' })

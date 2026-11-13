@@ -4302,6 +4302,24 @@ func (e ListContactAdditionalChargesParamsIncludeBilled) Valid() bool {
 	}
 }
 
+// Defines values for GetDetailUsageParamsKind.
+const (
+	Purchase GetDetailUsageParamsKind = "purchase"
+	Sales    GetDetailUsageParamsKind = "sales"
+)
+
+// Valid indicates whether the value is a known member of the GetDetailUsageParamsKind enum.
+func (e GetDetailUsageParamsKind) Valid() bool {
+	switch e {
+	case Purchase:
+		return true
+	case Sales:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListIncomingDocumentsParamsSort.
 const (
 	ListIncomingDocumentsParamsSortDateAsc  ListIncomingDocumentsParamsSort = "date_asc"
@@ -5950,6 +5968,12 @@ type DefaultIdentityRequestIdentityTaxNumberAbsenceReason string
 type DeleteAdministrationRequest struct {
 	// Name The administration's name, exactly, to confirm.
 	Name string `json:"name"`
+}
+
+// DetailUsage MoneyHarpy extension. How often lines used VAT rates and categories, most used first.
+type DetailUsage struct {
+	LedgerAccounts []UsageCount `json:"ledger_accounts"`
+	TaxRates       []UsageCount `json:"tax_rates"`
 }
 
 // DocumentStyle A Moneybird document style with MoneyHarpy extensions. Moneybird's API has no fields for the look of emails, public views and the online sales checkout or for the layout options below; MoneyHarpy names them after Moneybird's editor form.
@@ -10333,6 +10357,17 @@ type UpdateInstanceSettingsRequestRecognitionAiProvider string
 // UpdateInstanceSettingsRequestSmtpSecurity defines model for UpdateInstanceSettingsRequest.SmtpSecurity.
 type UpdateInstanceSettingsRequestSmtpSecurity string
 
+// UsageCount defines model for UsageCount.
+type UsageCount struct {
+	// Count The number of lines that used it.
+	Count int `json:"count"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+}
+
 // User A Moneybird user of the administration with MoneyHarpy extensions.
 type User struct {
 	// Active MoneyHarpy extension. Deactivated users cannot open the administration.
@@ -13408,6 +13443,15 @@ type ListContactAdditionalChargesParams struct {
 
 // ListContactAdditionalChargesParamsIncludeBilled defines parameters for ListContactAdditionalCharges.
 type ListContactAdditionalChargesParamsIncludeBilled string
+
+// GetDetailUsageParams defines parameters for GetDetailUsage.
+type GetDetailUsageParams struct {
+	// Kind Whose lines to count, purchase invoices and receipts or sales invoices.
+	Kind GetDetailUsageParamsKind `form:"kind" json:"kind"`
+}
+
+// GetDetailUsageParamsKind defines parameters for GetDetailUsage.
+type GetDetailUsageParamsKind string
 
 // ListIncomingDocumentsParams defines parameters for ListIncomingDocuments.
 type ListIncomingDocumentsParams struct {
@@ -21014,6 +21058,9 @@ type ServerInterface interface {
 	// GetCustomerContactPortalSubscriptionLink Get a temporary link to the subscriptions in the customer contact portal
 	// (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id}/subscriptions/{id})
 	GetCustomerContactPortalSubscriptionLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id)
+	// GetDetailUsage Retrieve the most used VAT rates and categories
+	// (GET /api/v2/{administration_id}/details/usage)
+	GetDetailUsage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDetailUsageParams)
 	// ListDocumentStyles Retrieve document styles
 	// (GET /api/v2/{administration_id}/document_styles)
 	ListDocumentStyles(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -22589,6 +22636,12 @@ func (_ Unimplemented) GetCustomerContactPortalInvoicesLink(w http.ResponseWrite
 // GetCustomerContactPortalSubscriptionLink Get a temporary link to the subscriptions in the customer contact portal
 // (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id}/subscriptions/{id})
 func (_ Unimplemented) GetCustomerContactPortalSubscriptionLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDetailUsage Retrieve the most used VAT rates and categories
+// (GET /api/v2/{administration_id}/details/usage)
+func (_ Unimplemented) GetDetailUsage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDetailUsageParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -27713,6 +27766,48 @@ func (siw *ServerInterfaceWrapper) GetCustomerContactPortalSubscriptionLink(w ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetCustomerContactPortalSubscriptionLink(w, r, administrationId, contactId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDetailUsage operation middleware
+func (siw *ServerInterfaceWrapper) GetDetailUsage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDetailUsageParams
+
+	// ------------- Required query parameter "kind" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "kind", r.URL.Query(), &params.Kind, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kind"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDetailUsage(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -40362,6 +40457,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/tax_rates", wrapper.CreateTaxRate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/details/usage", wrapper.GetDetailUsage)
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/api/v2/{administration_id}/tax_rates/order", wrapper.ReorderTaxRates)

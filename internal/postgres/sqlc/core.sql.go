@@ -1321,6 +1321,57 @@ func (q *Queries) DeleteWorkflowSteps(ctx context.Context, workflowID int64) err
 	return err
 }
 
+const detailUsage = `-- name: DetailUsage :many
+WITH lines AS (
+    SELECT l.tax_rate_id, l.ledger_account_id
+    FROM purchase_document_details l JOIN purchase_documents d ON d.id = l.purchase_document_id
+    WHERE $1::text = 'purchase' AND l.administration_id = $2 AND d.date >= $3::date
+    UNION ALL
+    SELECT l.tax_rate_id, l.ledger_account_id
+    FROM sales_invoice_details l JOIN sales_invoices i ON i.id = l.sales_invoice_id
+    WHERE $1::text = 'sales' AND l.administration_id = $2 AND COALESCE(i.invoice_date, i.created_at::date) >= $3::date
+)
+SELECT 'tax_rate'::text AS what, tax_rate_id::bigint AS id, count(*)::bigint AS uses FROM lines GROUP BY tax_rate_id
+UNION ALL
+SELECT 'ledger_account'::text, ledger_account_id::bigint, count(*)::bigint FROM lines WHERE ledger_account_id IS NOT NULL GROUP BY ledger_account_id
+ORDER BY what, uses DESC, id
+`
+
+type DetailUsageParams struct {
+	Kind             string
+	AdministrationID int64
+	Since            pgtype.Date
+}
+
+type DetailUsageRow struct {
+	What string
+	ID   int64
+	Uses int64
+}
+
+// How many lines of purchase documents (kind purchase) or sales invoices
+// (kind sales) dated on or after since used each VAT rate and category. A
+// draft invoice without a date counts by the day it was made.
+func (q *Queries) DetailUsage(ctx context.Context, arg DetailUsageParams) ([]DetailUsageRow, error) {
+	rows, err := q.db.Query(ctx, detailUsage, arg.Kind, arg.AdministrationID, arg.Since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DetailUsageRow
+	for rows.Next() {
+		var i DetailUsageRow
+		if err := rows.Scan(&i.What, &i.ID, &i.Uses); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const disableTOTP = `-- name: DisableTOTP :exec
 UPDATE users SET totp_secret = '', totp_enabled_at = NULL, totp_last_step = 0 WHERE id = $1
 `

@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { renderAt } from '../test/render'
 import { server } from '../test/server'
-import { contactCounts, creating, detailRows, draft, editLines, editorCard, empty, invoice, invoicePaper, loaded, paper, pickContact, popup, sales } from './testkit'
+import { chooseOption, contactCounts, creating, rate, rates, detailRows, draft, editLines, editorCard, empty, invoice, invoicePaper, loaded, paper, pickContact, popup, sales } from './testkit'
 
 describe('the invoice details editor', () => {
   it('adds details with their totals, discount and VAT, after Moneybird', async () => {
@@ -31,16 +31,18 @@ describe('the invoice details editor', () => {
     await userEvent.type(within(rows[0]!).getByLabelText('Description'), 'Consulting')
     expect(within(rows[0]!).getByLabelText('Price')).toHaveAttribute('placeholder', '0.00')
     await userEvent.type(within(rows[0]!).getByLabelText('Price'), '100')
-    expect(within(rows[0]!).getByLabelText('VAT rate')).toHaveValue('2101')
-    expect(within(within(rows[0]!).getByLabelText('VAT rate')).queryByRole('option', { name: 'Old rate' })).toBeNull()
+    expect(within(rows[0]!).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('21% btw')
+    await userEvent.click(within(rows[0]!).getByRole('combobox', { name: 'VAT rate' }))
+    expect(within(screen.getByRole('listbox', { name: 'VAT rate' })).queryByRole('option', { name: 'Old rate' })).toBeNull()
+    await userEvent.keyboard('{Escape}')
     expect(within(rows[0]!).getByTestId('detail-total')).toHaveTextContent('€200.00')
 
     await userEvent.click(screen.getByRole('button', { name: 'Add detail' }))
     rows = detailRows()
     await userEvent.type(within(rows[1]!).getByLabelText('Description'), 'Book')
     await userEvent.type(within(rows[1]!).getByLabelText('Price'), '50')
-    await userEvent.selectOptions(within(rows[1]!).getByLabelText('VAT rate'), '2109')
-    await userEvent.selectOptions(within(rows[1]!).getByLabelText('Category'), '8001')
+    await chooseOption(rows[1]!, 'VAT rate', '9% btw')
+    await chooseOption(rows[1]!, 'Category', 'Sales (8000)')
 
     await userEvent.click(screen.getByRole('button', { name: 'Discount' }))
     await userEvent.click(screen.getByRole('button', { name: 'Discount over total price' }))
@@ -89,8 +91,8 @@ describe('the invoice details editor', () => {
     await userEvent.click(await screen.findByRole('option', { name: /Advice per hour/ }))
     expect(description).toHaveValue('Advice per hour')
     expect(within(rows[0]!).getByLabelText('Price')).toHaveValue('80')
-    expect(within(rows[0]!).getByLabelText('VAT rate')).toHaveValue('2109')
-    expect(within(rows[0]!).getByLabelText('Category')).toHaveValue('8001')
+    expect(within(rows[0]!).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('9% btw')
+    expect(within(rows[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Sales (8000)')
 
     // The period, from a preset.
     const period = within(rows[0]!).getByRole('button', { name: 'Period: Not selected' })
@@ -103,12 +105,12 @@ describe('the invoice details editor', () => {
     rows = detailRows()
     expect(within(rows[2]!).getByRole('button', { name: 'Period: 11/01/2026 – 11/30/2026' })).toBeInTheDocument()
     expect(within(rows[0]!).queryByRole('button', { name: 'Apply to details below' })).toBeNull()
-    expect(within(rows[1]!).getByLabelText('VAT rate')).toHaveValue('2101')
-    await userEvent.selectOptions(within(rows[0]!).getByLabelText('VAT rate'), '2101')
-    await userEvent.selectOptions(within(rows[0]!).getByLabelText('VAT rate'), '2109')
+    expect(within(rows[1]!).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('21% btw')
+    await chooseOption(rows[0]!, 'VAT rate', '21% btw')
+    await chooseOption(rows[0]!, 'VAT rate', '9% btw')
     await userEvent.click(within(rows[0]!).getByRole('button', { name: 'Apply to details below' }))
-    expect(within(rows[1]!).getByLabelText('VAT rate')).toHaveValue('2109')
-    expect(within(rows[2]!).getByLabelText('VAT rate')).toHaveValue('2109')
+    expect(within(rows[1]!).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('9% btw')
+    expect(within(rows[2]!).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('9% btw')
 
     // A discount detail, then moved to the top with the keyboard.
     await userEvent.click(screen.getByRole('button', { name: 'Discount' }))
@@ -131,21 +133,24 @@ describe('the invoice details editor', () => {
     ])
   })
 
-  it("starts a new detail with the VAT rate and category of the one above, and names categories without their code", async () => {
+  it("starts a new detail with the VAT rate and category of the one above, and names categories with their code", async () => {
     server.use(...loaded())
     renderAt('/11/sales_invoices/902')
     await screen.findByRole('document', { name: /Draft/ })
     await editLines()
     const first = detailRows()[0]!
-    await userEvent.selectOptions(within(first).getByLabelText('VAT rate'), '2109')
-    await userEvent.selectOptions(within(first).getByLabelText('Category'), '8001')
-    expect(within(within(first).getByLabelText('Category')).getByRole('option', { name: 'Sales' })).toBeInTheDocument()
-    expect(within(within(first).getByLabelText('Category')).queryByRole('option', { name: /8000/ })).toBeNull()
+    await chooseOption(first, 'VAT rate', '9% btw')
+    await chooseOption(first, 'Category', 'Sales (8000)')
+    await userEvent.click(within(first).getByRole('combobox', { name: 'Category' }))
+    const list = screen.getByRole('listbox', { name: 'Category' })
+    expect(within(within(list).getByRole('group', { name: 'Revenue' })).getByRole('option', { name: 'Sales (8000)' })).toHaveAttribute('aria-selected', 'true')
+    expect(within(list).getByRole('option', { name: 'Uncategorized' })).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
 
     await userEvent.click(screen.getByRole('button', { name: 'Add detail' }))
     const added = detailRows().at(-1)!
-    expect(within(added).getByLabelText('VAT rate')).toHaveValue('2109')
-    expect(within(added).getByLabelText('Category')).toHaveValue('8001')
+    expect(within(added).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('9% btw')
+    expect(within(added).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Sales (8000)')
   })
 
   it('cancels the changes to the details and closes the editor, as Moneybird does', async () => {
@@ -418,82 +423,102 @@ describe('the invoice details editor', () => {
     ])
   })
 
-  it('saves the draft before "Add Category..." opens Add category in this tab, which comes back to the invoice', async () => {
-    const sent: { patch?: Record<string, unknown> } = {}
+  it('adds a category from the line in a popup and puts it on that line', async () => {
+    const posted: { body?: unknown } = {}
+    const coaching = { ...sales, id: '8002', name: 'Coaching', account_id: '8010', uri: '/11/ledger_accounts/8002' }
+    let accounts = [sales]
     server.use(...loaded())
     server.use(
-      ...creating(sent, draft),
-      http.get('*/api/v2/11/bookkeeping_settings', () => HttpResponse.json({ chart_scheme: '', chart_schemes: [] })),
-      http.get('*/api/v2/11/ledger_account_templates', () => HttpResponse.json([])),
+      http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json(accounts)),
+      http.get('*/api/v2/11/bookkeeping_settings', () => HttpResponse.json({ chart_scheme: '', chart_schemes: [], tax_report_boxes: [] })),
+      http.post('*/api/v2/11/ledger_accounts', async ({ request }) => {
+        posted.body = await request.json()
+        accounts = [sales, coaching]
+        return HttpResponse.json(coaching, { status: 201 })
+      }),
     )
     renderAt('/11/sales_invoices/902')
     await screen.findByRole('document', { name: /^Invoice Draft #3$/ })
     await editLines()
     const row = detailRows()[0]!
-    await userEvent.clear(within(row).getByLabelText('Description'))
-    await userEvent.type(within(row).getByLabelText('Description'), 'Coaching')
-    await userEvent.selectOptions(within(row).getByLabelText('Category'), 'Add Category...')
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/ledger_accounts\/blueprints$/))
-    // Moneybird's new_entity_field names the field that asked, so the new category lands there.
-    const query = new URLSearchParams(screen.getByTestId('search').textContent ?? '')
-    expect(query.get('new_entity_field')).toBe('sales_invoice[details_attributes][0][ledger_account_id]')
-    expect(query.get('return_to')).toBe('/11/sales_invoices/902')
-    expect(sent.patch?.details_attributes).toEqual([expect.objectContaining({ description: 'Coaching' })])
-    expect(await screen.findByRole('heading', { name: 'Add category for Invoice', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'To invoice' })).toHaveAttribute('href', '/11/sales_invoices/902')
+    await userEvent.click(within(row).getByRole('combobox', { name: 'Category' }))
+    await userEvent.click(screen.getByRole('option', { name: 'Add Category...' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Add category' })
+    expect(within(dialog).getByLabelText('Name')).toHaveFocus()
+    expect(within(dialog).getByLabelText('Type')).toHaveDisplayValue('Revenue')
+    await userEvent.type(within(dialog).getByLabelText('Name'), 'Coaching')
+    await userEvent.type(within(dialog).getByLabelText('Code'), '8010')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Add category' })).toBeNull())
+    expect(posted.body).toEqual({ ledger_account: { name: 'Coaching', account_type: 'revenue', parent_id: '', account_id: '8010' } })
+    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Coaching (8010)'))
+    // Still in the editor, nothing saved or left.
+    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/)
   })
 
-  it('saves the draft before "Add VAT rate..." opens Add VAT rate in this tab, as Moneybird does', async () => {
-    const sent: { patch?: Record<string, unknown> } = {}
+  it('adds a sales VAT rate from the line in a popup and puts it on that line', async () => {
+    const posted: { body?: unknown } = {}
+    const six = rate({ id: '2160', name: '6% btw', percentage: '6', uri: '/11/tax_rates/2160' })
+    let list = rates
     server.use(...loaded())
-    server.use(...creating(sent, draft), http.get('*/api/v2/11/bookkeeping_settings', () => HttpResponse.json({ chart_scheme: '', chart_schemes: [], tax_report_boxes: [] })))
+    server.use(
+      http.get('*/api/v2/11/tax_rates', () => HttpResponse.json(list)),
+      http.post('*/api/v2/11/tax_rates', async ({ request }) => {
+        posted.body = await request.json()
+        list = [...rates, six]
+        return HttpResponse.json(six, { status: 201 })
+      }),
+    )
     renderAt('/11/sales_invoices/902')
     await screen.findByRole('document', { name: /^Invoice Draft #3$/ })
     await editLines()
-    const row = detailRows()[0]!
-    await userEvent.clear(within(row).getByLabelText('Description'))
-    await userEvent.type(within(row).getByLabelText('Description'), 'Coaching')
-    await userEvent.selectOptions(within(row).getByLabelText('VAT rate'), 'Add VAT rate...')
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/tax_rates\/new$/))
-    const query = new URLSearchParams(screen.getByTestId('search').textContent ?? '')
-    expect(query.get('new_entity_field')).toBe('sales_invoice[details_attributes][0][tax_rate_id]')
-    expect(query.get('return_to')).toBe('/11/sales_invoices/902')
-    expect(sent.patch?.details_attributes).toEqual([expect.objectContaining({ description: 'Coaching' })])
+    await userEvent.click(within(detailRows()[0]!).getByRole('combobox', { name: 'VAT rate' }))
+    await userEvent.keyboard('{End}{Enter}')
+    const dialog = await screen.findByRole('dialog', { name: 'Add VAT rate' })
+    await userEvent.type(within(dialog).getByLabelText('Name'), '6% btw')
+    await userEvent.type(within(dialog).getByLabelText('Percentage'), '6')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('6% btw'))
+    expect(posted.body).toEqual({ tax_rate: { name: '6% btw', percentage: '6', tax_rate_type: 'sales_invoice', show_tax: true, active: true } })
+  })
+
+  it('offers the most used VAT rates and categories of sales invoices first', async () => {
+    const asked: string[] = []
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/details/usage', ({ request }) => {
+      asked.push(new URL(request.url).searchParams.get('kind') ?? '')
+      // A rate this invoice cannot use is left out.
+      return HttpResponse.json({ tax_rates: [{ id: '2109', count: 7 }, { id: '2201', count: 3 }], ledger_accounts: [{ id: '8001', count: 2 }] })
+    }))
+    renderAt('/11/sales_invoices/902')
+    await screen.findByRole('document', { name: /^Invoice Draft #3$/ })
+    await editLines()
+    await userEvent.click(within(detailRows()[0]!).getByRole('combobox', { name: 'VAT rate' }))
+    const used = within(screen.getByRole('listbox', { name: 'VAT rate' })).getByRole('group', { name: 'Most used' })
+    expect(within(used).getAllByRole('option').map((o) => o.textContent)).toEqual(['9% btw'])
+    await userEvent.keyboard('{Escape}')
+    await userEvent.click(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' }))
+    expect(within(within(screen.getByRole('listbox', { name: 'Category' })).getByRole('group', { name: 'Most used' })).getAllByRole('option').map((o) => o.textContent)).toEqual(['Sales (8000)'])
+    expect(asked).toContain('sales')
   })
 
   it('puts the category added for a row on that row when it comes back, as Moneybird does', async () => {
     server.use(...loaded())
     server.use(http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales, { ...sales, id: '8002', name: 'Coaching', account_id: '8010', uri: '/11/ledger_accounts/8002' }])))
     renderAt({ pathname: '/11/sales_invoices/902', state: { details: true, newEntity: { field: 'sales_invoice[details_attributes][0][ledger_account_id]', id: '8002' } } })
-    await waitFor(() => expect(within(detailRows()[0]!).getByLabelText('Category')).toHaveValue('8002'))
+    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Coaching (8010)'))
   })
 
   it('puts the VAT rate added for a row on that row when it comes back', async () => {
     server.use(...loaded())
     renderAt({ pathname: '/11/sales_invoices/902', state: { details: true, newEntity: { field: 'sales_invoice[details_attributes][0][tax_rate_id]', id: '2109' } } })
-    await waitFor(() => expect(within(detailRows()[0]!).getByLabelText('VAT rate')).toHaveValue('2109'))
+    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('9% btw'))
   })
 
   it('opens the details of a sent invoice again when it comes back from adding a category', async () => {
     server.use(...loaded())
-    server.use(http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales, { ...sales, id: '8002', name: 'Coaching', uri: '/11/ledger_accounts/8002' }])))
+    server.use(http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales, { ...sales, id: '8002', name: 'Coaching', account_id: '8010', uri: '/11/ledger_accounts/8002' }])))
     renderAt({ pathname: '/11/sales_invoices/901', state: { details: true, newEntity: { field: 'sales_invoice[details_attributes][0][ledger_account_id]', id: '8002' } } })
-    await waitFor(() => expect(within(detailRows()[0]!).getByLabelText('Category')).toHaveValue('8002'))
-  })
-
-  it('goes to Add category straight away when nothing changed', async () => {
-    const sent: { patch?: Record<string, unknown> } = {}
-    server.use(...loaded())
-    server.use(
-      ...creating(sent, draft),
-      http.get('*/api/v2/11/bookkeeping_settings', () => HttpResponse.json({ chart_scheme: '', chart_schemes: [] })),
-      http.get('*/api/v2/11/ledger_account_templates', () => HttpResponse.json([])),
-    )
-    renderAt('/11/sales_invoices/902')
-    await screen.findByRole('document', { name: /^Invoice Draft #3$/ })
-    await editLines()
-    await userEvent.selectOptions(within(detailRows()[0]!).getByLabelText('Category'), 'Add Category...')
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/ledger_accounts\/blueprints$/))
-    expect(sent.patch).toBeUndefined()
+    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Coaching (8010)'))
   })
 })

@@ -82,6 +82,10 @@ type Store interface {
 	CreateLedgerAccounts(ctx context.Context, accounts []LedgerAccount) error
 	UpdateLedgerAccounts(ctx context.Context, accounts []LedgerAccount) error
 	DeleteLedgerAccount(ctx context.Context, admin, id resource.ID) error
+
+	// DetailUsage counts the lines of one kind of document (see UsageKinds)
+	// dated on or after since, by VAT rate and by category.
+	DetailUsage(ctx context.Context, admin resource.ID, kind string, since time.Time) (Usage, error)
 }
 
 // Service implements the bookkeeping use cases.

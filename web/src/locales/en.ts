@@ -158,6 +158,8 @@ export const en = {
       presets: { today: 'Today', this_month: 'This month', previous_month: 'Previous month', next_month: 'Next month' },
       from: 'From', to: 'To', apply: 'Apply', removePeriod: 'Remove period',
       pricesAre: 'Prices are', exclVat: 'Excluding VAT', inclVat: 'Including VAT', currency: 'Currency',
+      findRate: 'Find vat rate', noRate: 'No vat rate found', findCategory: 'Find category', noCategory: 'No category found', mostUsed: 'Most used',
+      newRate: 'Add VAT rate', newCategory: 'Add category', categoryCode: 'Code',
     },
     detailsTitle: 'Invoice details', settingsTitle: 'Invoice settings', confirmDeleteText: 'Delete this draft invoice? This cannot be undone.',
     title: 'Invoices', new: 'New invoice', newTitle: 'Add invoice',

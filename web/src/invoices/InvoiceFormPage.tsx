@@ -16,7 +16,7 @@ import { useCustomFields, useIdentities } from '../settings/queries'
 import { AddInvoiceDialog, type ChosenContact, type InvoiceSetup } from './AddInvoiceDialog'
 import { applyBelow, moveRow, quantityLabel } from './details'
 import { type DetailRow, DetailsEditor } from './DetailsEditor'
-import { detailField, detailOf, type NewEntity, type NewEntityKey } from './newEntity'
+import { detailOf, type NewEntity } from './newEntity'
 import { conditionTagValues } from './conditions'
 import { PaymentConditions } from './PaymentConditions'
 import { DateView, DetailsView, Paper, RecipientContent, SenderAddress, type ShownLine } from './InvoicePaper'
@@ -391,15 +391,10 @@ function InvoiceForm(props: FormProps) {
   }
 
   const list = `/${administrationId}/${recurring ? 'recurring_sales_invoices' : 'sales_invoices'}`
-  // What the invoice was when the editor opened, so Add category knows whether to save it first.
-  const sent = JSON.stringify(body())
-  const saved = useRef(sent)
-  const dirty = sent !== saved.current
   /** The blue Save of the details editor and of the payment conditions: the invoice is saved and the editor closes. */
   const saveAndClose = (close: () => void) => {
     save.mutate(body(), {
       onSuccess: (s) => {
-        saved.current = sent
         close()
         onSaved(s, null)
       },
@@ -427,7 +422,6 @@ function InvoiceForm(props: FormProps) {
     if (doc) {
       save.mutate(body(next), {
         onSuccess: (s) => {
-          saved.current = JSON.stringify(body(next))
           onSaved(s, null)
         },
       })
@@ -438,7 +432,6 @@ function InvoiceForm(props: FormProps) {
     const sequenceId = setup.numberUnlocked ? setup.sequenceId.trim() : ''
     save.mutate(body(), {
       onSuccess: (s) => {
-        saved.current = sent
         setDialogOpen(false)
         const details = then === 'details' || editingLines
         // A new invoice opens its details in the editor of the saved draft, not in this one that goes away.
@@ -446,29 +439,6 @@ function InvoiceForm(props: FormProps) {
           editLines()
         }
         onSaved(s, { details, ...(sequenceId ? { sequenceId } : {}) })
-      },
-    })
-  }
-  /**
-   * "Add Category..." and "Add VAT rate..." of a row: Moneybird's Add category
-   * or Add VAT rate in this tab, with new_entity_field naming the row's field,
-   * which comes back to the invoice with its details open and the new one on
-   * that row. Moneybird keeps a draft as it is typed; here the invoice is saved
-   * first, so nothing typed is lost, and stays put when it can't be saved.
-   */
-  const addEntity = (index: number, key: NewEntityKey) => {
-    const go = (id: string) => {
-      const query = new URLSearchParams({ return_to: `${list}/${id}`, ...(key === 'ledger_account_id' ? { source: 'sales_invoice' } : {}), new_entity_field: detailField(index, key) })
-      navigate(`/${administrationId}/${key === 'ledger_account_id' ? 'ledger_accounts/blueprints' : 'tax_rates/new'}?${query}`)
-    }
-    if (doc?.id && !dirty) {
-      go(doc.id)
-      return
-    }
-    save.mutate(body(), {
-      onSuccess: (s) => {
-        saved.current = sent
-        go(String(s.id))
       },
     })
   }
@@ -630,7 +600,6 @@ function InvoiceForm(props: FormProps) {
                 onSave={() => saveAndClose(() => setEditingLines(false))}
                 saving={save.isPending}
                 onCancel={cancelLines}
-                onAddEntity={addEntity}
               />
             )}
             <div className={editingLines || linesInvalid ? 'invoice-paper__under-edit' : undefined} aria-hidden={editingLines || linesInvalid || undefined} inert={editingLines || linesInvalid}>
