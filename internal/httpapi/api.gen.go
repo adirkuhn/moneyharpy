@@ -4278,6 +4278,30 @@ func (e ListTypelessDocumentsParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for SetIncomingDocumentTypeJSONBodyDocumentType.
+const (
+	SetIncomingDocumentTypeJSONBodyDocumentTypeGeneralDocument        SetIncomingDocumentTypeJSONBodyDocumentType = "general_document"
+	SetIncomingDocumentTypeJSONBodyDocumentTypeGeneralJournalDocument SetIncomingDocumentTypeJSONBodyDocumentType = "general_journal_document"
+	SetIncomingDocumentTypeJSONBodyDocumentTypePurchaseInvoice        SetIncomingDocumentTypeJSONBodyDocumentType = "purchase_invoice"
+	SetIncomingDocumentTypeJSONBodyDocumentTypeReceipt                SetIncomingDocumentTypeJSONBodyDocumentType = "receipt"
+)
+
+// Valid indicates whether the value is a known member of the SetIncomingDocumentTypeJSONBodyDocumentType enum.
+func (e SetIncomingDocumentTypeJSONBodyDocumentType) Valid() bool {
+	switch e {
+	case SetIncomingDocumentTypeJSONBodyDocumentTypeGeneralDocument:
+		return true
+	case SetIncomingDocumentTypeJSONBodyDocumentTypeGeneralJournalDocument:
+		return true
+	case SetIncomingDocumentTypeJSONBodyDocumentTypePurchaseInvoice:
+		return true
+	case SetIncomingDocumentTypeJSONBodyDocumentTypeReceipt:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListDownloadsParamsDownloaded.
 const (
 	ListDownloadsParamsDownloadedFalse ListDownloadsParamsDownloaded = "false"
@@ -13330,6 +13354,14 @@ type CreateTypelessDocumentAttachmentMultipartBody struct {
 	File openapi_types.File `json:"file"`
 }
 
+// SetIncomingDocumentTypeJSONBody defines parameters for SetIncomingDocumentType.
+type SetIncomingDocumentTypeJSONBody struct {
+	DocumentType SetIncomingDocumentTypeJSONBodyDocumentType `json:"document_type"`
+}
+
+// SetIncomingDocumentTypeJSONBodyDocumentType defines parameters for SetIncomingDocumentType.
+type SetIncomingDocumentTypeJSONBodyDocumentType string
+
 // ListDownloadsParams defines parameters for ListDownloads.
 type ListDownloadsParams struct {
 	// Page The page to return, starting at 1.
@@ -14145,6 +14177,9 @@ type FetchTypelessDocumentsJSONRequestBody = SynchronizationRequest
 
 // CreateTypelessDocumentAttachmentMultipartRequestBody defines body for CreateTypelessDocumentAttachment for multipart/form-data ContentType.
 type CreateTypelessDocumentAttachmentMultipartRequestBody CreateTypelessDocumentAttachmentMultipartBody
+
+// SetIncomingDocumentTypeJSONRequestBody defines body for SetIncomingDocumentType for application/json ContentType.
+type SetIncomingDocumentTypeJSONRequestBody SetIncomingDocumentTypeJSONBody
 
 // CreateEstimateJSONRequestBody defines body for CreateEstimate for application/json ContentType.
 type CreateEstimateJSONRequestBody = EstimateRequest
@@ -20973,6 +21008,9 @@ type ServerInterface interface {
 	// GetIncomingDocument Get any incoming document
 	// (GET /api/v2/{administration_id}/documents/{id})
 	GetIncomingDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// SetIncomingDocumentType Change the type of an incoming document
+	// (POST /api/v2/{administration_id}/documents/{id}/set_type)
+	SetIncomingDocumentType(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListDownloads List all downloads
 	// (GET /api/v2/{administration_id}/downloads)
 	ListDownloads(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListDownloadsParams)
@@ -22764,6 +22802,12 @@ func (_ Unimplemented) DownloadTypelessDocumentAttachment(w http.ResponseWriter,
 // GetIncomingDocument Get any incoming document
 // (GET /api/v2/{administration_id}/documents/{id})
 func (_ Unimplemented) GetIncomingDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetIncomingDocumentType Change the type of an incoming document
+// (POST /api/v2/{administration_id}/documents/{id}/set_type)
+func (_ Unimplemented) SetIncomingDocumentType(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -30562,6 +30606,41 @@ func (siw *ServerInterfaceWrapper) GetIncomingDocument(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetIncomingDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetIncomingDocumentType operation middleware
+func (siw *ServerInterfaceWrapper) SetIncomingDocumentType(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetIncomingDocumentType(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -40224,6 +40303,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/{id}", wrapper.GetIncomingDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/{id}/set_type", wrapper.SetIncomingDocumentType)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents", wrapper.ListGeneralJournalDocuments)
