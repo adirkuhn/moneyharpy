@@ -31,6 +31,9 @@ type memStore struct {
 	seeds    int
 	rates    map[resource.ID]TaxRate
 	accounts map[resource.ID]LedgerAccount
+
+	usage                 Usage
+	usageKind, usageSince string
 }
 
 func newMemStore() *memStore {
@@ -109,6 +112,11 @@ func (m *memStore) UpdateLedgerAccounts(ctx context.Context, accounts []LedgerAc
 func (m *memStore) DeleteLedgerAccount(_ context.Context, _, id resource.ID) error {
 	delete(m.accounts, id)
 	return nil
+}
+
+func (m *memStore) DetailUsage(_ context.Context, _ resource.ID, kind string, since time.Time) (Usage, error) {
+	m.usageKind, m.usageSince = kind, since.Format(time.DateOnly)
+	return m.usage, nil
 }
 
 var now = time.Date(2026, 11, 10, 9, 0, 0, 0, time.UTC)

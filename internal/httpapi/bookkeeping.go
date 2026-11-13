@@ -620,3 +620,24 @@ func (s *server) ApplyLedgerAccountTemplate(w http.ResponseWriter, r *http.Reque
 	}
 	s.ledgerAccounts(w, r, admin, http.StatusCreated, added)
 }
+
+// GetDetailUsage implements ServerInterface.
+func (s *server) GetDetailUsage(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, params GetDetailUsageParams) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	u, err := s.deps.Bookkeeping.DetailUsage(r.Context(), admin, user(r).ID, string(params.Kind))
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	counts := func(in []bookkeeping.UsageCount) []UsageCount {
+		out := make([]UsageCount, len(in))
+		for i, c := range in {
+			out[i] = UsageCount{Id: c.ID.String(), Count: c.Count}
+		}
+		return out
+	}
+	writeJSON(w, http.StatusOK, DetailUsage{TaxRates: counts(u.TaxRates), LedgerAccounts: counts(u.LedgerAccounts)})
+}

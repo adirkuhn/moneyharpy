@@ -13,7 +13,7 @@ import { formErrors, TextInput } from '../forms/Form'
 import { ContactPicker } from '../invoices/ContactPicker'
 import { type DetailRow, DetailsEditor } from '../invoices/DetailsEditor'
 import { AttachmentDropZone } from '../invoices/InvoiceExtras'
-import { detailField, detailOf, type NewEntity, type NewEntityKey } from '../invoices/newEntity'
+import { detailOf, type NewEntity } from '../invoices/newEntity'
 import { today } from '../invoices/queries'
 import { computeTotals, parseCents, parseQuantity } from '../invoices/totals'
 import { ListIcon } from '../layout/icons'
@@ -210,13 +210,6 @@ function Form({ administrationId, invoice, rates, currency: startCurrency }: Pro
     }
   }
   const applyBelow = (i: number, c: Partial<DetailRow>) => setRows(rows.map((r, j) => (j > i ? { ...r, ...c } : r)))
-  /** "Add Category..." and "Add VAT rate..." of a row: the invoice is saved first, then Moneybird's page comes back to it with the new one on that row. */
-  const addEntity = (index: number, key: NewEntityKey) => submit((saved) => {
-    const query = new URLSearchParams({
-      return_to: `${list}/${saved.id}/edit`, ...(key === 'ledger_account_id' ? { source: 'sales_invoice' } : {}), new_entity_field: detailField(index, key),
-    })
-    navigate(`/${administrationId}/${key === 'ledger_account_id' ? 'ledger_accounts/blueprints' : 'tax_rates/new'}?${query}`)
-  })
   const cancel = () => navigate(invoice ? `${list}/${invoice.id}` : list)
 
   const title = invoice ? f('editTitle') : f('newTitle')
@@ -347,7 +340,6 @@ function Form({ administrationId, invoice, rates, currency: startCurrency }: Pro
                     onDiscount={() => undefined}
                     onSave={() => submit()}
                     saving={save.isPending}
-                    onAddEntity={addEntity}
                   />
                 </div>
               </div>

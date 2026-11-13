@@ -121,7 +121,10 @@
 .details-editor__table th { padding: 0.75rem 0.25rem; border-bottom: 1px solid var(--line); color: var(--muted); font-weight: 500; text-align: left; white-space: nowrap; }
 .details-editor__table td { padding: 0.75rem 0.25rem; border-bottom: 1px solid var(--line); vertical-align: top; }
 .details-editor__table input, .details-editor__table select, .details-editor__table textarea { width: 100%; min-width: 0; }
-.details-editor__table select + select, .details-editor__table .details-editor__apply + select { margin-top: 0.25rem; }
+.details-editor__table select + select, .details-editor__table .details-editor__apply + select,
+.details-editor__table .search-select + .search-select, .details-editor__table .details-editor__apply + .search-select { margin-top: 0.25rem; }
+.details-editor__table .search-select__search { width: 100%; }
+.details-editor__table .search-select__panel { left: auto; right: 0; }
 .details-editor__table tr.is-dragging { opacity: 0.5; }
 th.details-editor__grip, td.details-editor__grip { width: 1.5rem; padding-inline: 0; }
 .details-editor__amount { width: 4.5rem; }

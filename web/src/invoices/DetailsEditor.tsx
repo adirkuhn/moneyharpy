@@ -1,11 +1,13 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { bookable, formatAmount } from '../banking/queries'
-import type { DocumentType, LedgerAccount, TaxRate } from '../bookkeeping/queries'
+import { AddCategoryDialog, AddTaxRateDialog } from '../bookkeeping/QuickAdd'
+import { type DetailUsage, type DocumentType, type LedgerAccount, type TaxRate, useDetailUsage } from '../bookkeeping/queries'
 import { currencyOptions } from '../forms/currencies'
 import { DatePicker } from '../forms/DatePicker'
 import type { FormErrors } from '../forms/Form'
 import { type Confidence, leastSure, Remark } from '../forms/Remark'
+import { type SearchGroup, type SearchOption, SearchSelect } from '../forms/SearchSelect'
 import { ListIcon } from '../layout/icons'
 import { PageIcon } from '../layout/pageIcons'
 import { ActionMenu } from '../list/ListActions'
@@ -13,10 +15,8 @@ import { type Product, useProductSearch } from '../products/queries'
 import { periodPresets, periodRange, periodText, presetPeriod, toPeriod } from './details'
 import type { LineRow } from './LinesEditor'
 import { EditableDocumentForm } from './EditableDocumentForm'
-import type { NewEntityKey } from './newEntity'
 import { today } from './paper'
 import { type TotalRow, TotalsTable } from './TotalsTable'
-import { categoryOption } from '../bookkeeping/queries'
 
 /** A detail row as the editor keeps it: a line with its period and the product it came from. */
 export type DetailRow = LineRow & { period: string; product_id: string; /** The period the server keeps, so clearing it is sent. */ savedPeriod?: string }
@@ -30,8 +30,8 @@ export type LineRemarks = Record<string, Partial<Record<LineField, Confidence>>>
 /** The fields "Apply to details below" copies to the rows under a changed one. */
 type Applicable = 'period' | 'tax_rate_id' | 'ledger_account_id'
 
-/** What choosing an option of a select adds instead of choosing a value. */
-const addOption = '__add'
+/** The fields of a line whose select can add a new VAT rate or category. */
+type AddableField = 'tax_rate_id' | 'ledger_account_id'
 
 type Props = {
   administrationId: string
@@ -65,12 +65,6 @@ type Props = {
   onSave?: () => void
   /** While the invoice is being saved. */
   saving?: boolean
-  /**
-   * "Add Category..." and "Add VAT rate..." of a row: go to Moneybird's Add
-   * category or Add VAT rate in this tab, which comes back to the invoice with
-   * the new one on that row; the editor around makes sure nothing typed is lost.
-   */
-  onAddEntity?: (index: number, field: NewEntityKey) => void
   /** Whether a discount can be given; an external invoice has none, as at Moneybird. */
   discounts?: boolean
   /** The currency select's tip, such as why it cannot change. */
@@ -103,7 +97,10 @@ export function DetailsEditor(props: Props) {
   const [focusGrip, setFocusGrip] = useState<string | null>(null)
   const grips = useRef(new Map<string, HTMLButtonElement>())
   const discountInput = useRef<HTMLInputElement>(null)
-  const groups = bookable(accounts, props.documentType ?? 'sales_invoice')
+  const documentType = props.documentType ?? 'sales_invoice'
+  const [adding, setAdding] = useState<{ index: number; field: AddableField } | null>(null)
+  const usage = useDetailUsage(administrationId, documentType === 'sales_invoice' ? 'sales' : 'purchase')
+  const { rateOptions, categoryGroups, mostUsedRates, mostUsedCategories } = lineChoices(rates, accounts, documentType, usage.data, t)
   const label = props.label ?? d('title')
   const money = (cents: number) => formatAmount(cents / 100, currency, i18n.language)
 
@@ -150,12 +147,12 @@ export function DetailsEditor(props: Props) {
       message: problems && <p id={id} className="form-input__message form-input__message--error">{problems.join(' ')}</p>,
     }
   }
-  const choose = (i: number, row: DetailRow, field: NewEntityKey, value: string) => {
-    if (value === addOption) {
-      props.onAddEntity?.(i, field)
-      return
+  const added = (id: string) => {
+    const row = adding && rows[adding.index]
+    if (adding && row) {
+      set(adding.index, row, adding.field, id)
     }
-    set(i, row, field, value)
+    setAdding(null)
   }
   const fromProduct = (i: number, product: Product) => {
     props.onChange(i, {
@@ -289,23 +286,34 @@ export function DetailsEditor(props: Props) {
                   </td>
                   <td className="details-editor__total" data-label={d('total')} data-testid="detail-total">{money(lineTotals[i] ?? 0)}</td>
                   <td className="details-editor__rate" data-label={d('rateAndCategory')}>
-                    <select aria-label={t('invoices.vatRate')} value={r.tax_rate_id} {...rate.control} onChange={(e) => choose(i, r, 'tax_rate_id', e.target.value)}>
-                      {rates.map((tr) => <option key={tr.id} value={tr.id}>{tr.name}</option>)}
-                      {props.onAddEntity && <option value={addOption}>{d('addRate')}</option>}
-                    </select>
+                    <SearchSelect
+                      label={t('invoices.vatRate')}
+                      searchLabel={d('findRate')}
+                      emptyLabel={d('noRate')}
+                      value={r.tax_rate_id}
+                      options={rateOptions}
+                      pinned={mostUsedRates}
+                      add={{ label: d('addRate'), onAdd: () => setAdding({ index: i, field: 'tax_rate_id' }) }}
+                      className={rate.control.className}
+                      aria-invalid={rate.control['aria-invalid']}
+                      aria-describedby={rate.control['aria-describedby']}
+                      onChange={(value) => set(i, r, 'tax_rate_id', value)}
+                    />
                     {rate.message}
                     {applyLink(i, r, 'tax_rate_id')}
-                    <select aria-label={t('invoices.category')} value={r.ledger_account_id} {...category.control} onChange={(e) => choose(i, r, 'ledger_account_id', e.target.value)}>
-                      <option value="">{t('invoices.uncategorized')}</option>
-                      {groups.map((g) => (
-                        <optgroup key={g.type} label={t(`bookkeeping.accountTypes.${g.type}`)}>
-                          {g.rows.map(({ account: a, depth }) => (
-                            <option key={a.id} value={a.id}>{categoryOption({ account: a, depth })}</option>
-                          ))}
-                        </optgroup>
-                      ))}
-                      {props.onAddEntity && <option value={addOption}>{d('addCategory')}</option>}
-                    </select>
+                    <SearchSelect
+                      label={t('invoices.category')}
+                      searchLabel={d('findCategory')}
+                      emptyLabel={d('noCategory')}
+                      value={r.ledger_account_id}
+                      groups={categoryGroups}
+                      pinned={mostUsedCategories}
+                      add={{ label: d('addCategory'), onAdd: () => setAdding({ index: i, field: 'ledger_account_id' }) }}
+                      className={category.control.className}
+                      aria-invalid={category.control['aria-invalid']}
+                      aria-describedby={category.control['aria-describedby']}
+                      onChange={(value) => set(i, r, 'ledger_account_id', value)}
+                    />
                     {category.message}
                     {applyLink(i, r, 'ledger_account_id')}
                   </td>
@@ -380,8 +388,41 @@ export function DetailsEditor(props: Props) {
           <button type="button" className="btn btn--secondary" onClick={props.onCancel}>{t('common.cancel')}</button>
         </div>
       )}
+      {adding?.field === 'tax_rate_id' && <AddTaxRateDialog administrationId={administrationId} documentType={documentType} onAdded={added} onClose={() => setAdding(null)} />}
+      {adding?.field === 'ledger_account_id' && <AddCategoryDialog administrationId={administrationId} documentType={documentType} accounts={accounts} onAdded={added} onClose={() => setAdding(null)} />}
     </EditableDocumentForm>
   )
+}
+
+type Translate = (key: string) => string
+
+// Only the name, as the user asked; the code still matches a search.
+const categoryLabel = (a: LedgerAccount) => a.name ?? ''
+
+/**
+ * The options of a line's VAT rate and category selects: the rates, the
+ * categories the document can be booked on grouped by type, and the most used
+ * of each, as far as they are among them.
+ */
+export function lineChoices(rates: TaxRate[], accounts: LedgerAccount[], documentType: DocumentType, usage: DetailUsage | undefined, t: Translate) {
+  const rateOptions: SearchOption[] = rates.map((r) => ({ value: String(r.id), label: r.name ?? '' }))
+  const groups = bookable(accounts, documentType)
+  const categoryGroups: SearchGroup[] = [
+    { options: [{ value: '', label: t('invoices.uncategorized') }] },
+    ...groups.map((g) => ({
+      label: t(`bookkeeping.accountTypes.${g.type}`),
+      options: g.rows.map(({ account: a, depth }) => ({ value: String(a.id), label: categoryLabel(a), code: a.account_id, depth })),
+    })),
+  ]
+  const pick = (counts: { id: string }[] | undefined, options: SearchOption[]) =>
+    (counts ?? []).flatMap((c) => options.filter((o) => o.value === c.id).map((o) => ({ ...o, depth: 0 })))
+  const mostUsed = (options: SearchOption[]): SearchGroup | undefined => (options.length > 0 ? { label: t('invoices.details.mostUsed'), options } : undefined)
+  return {
+    rateOptions,
+    categoryGroups,
+    mostUsedRates: mostUsed(pick(usage?.tax_rates, rateOptions)),
+    mostUsedCategories: mostUsed(pick(usage?.ledger_accounts, categoryGroups.flatMap((g) => g.options))),
+  }
 }
 
 type DescriptionProps = {
