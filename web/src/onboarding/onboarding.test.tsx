@@ -98,6 +98,21 @@ describe('starting to add an administration', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent('The company register could not be reached.')
     })
 
+    it('says when the KVK server did not respond', async () => {
+      server.use(signedIn(), configured, http.get('*/api/onboarding/company_search', () => HttpResponse.json({ error: 'KVK search is unavailable right now', code: 'kvk_unavailable' }, { status: 503 })))
+      renderAt(createPath)
+      await userEvent.type(await screen.findByRole('textbox', { name: 'What is the name of the company?' }), 'example')
+      expect(await screen.findByRole('alert')).toHaveTextContent('KVK search is unavailable right now — the KVK server did not respond. Fill in the details by hand.')
+      expect(screen.getByRole('link', { name: 'The company is not registered yet, or is not Dutch' })).toBeInTheDocument()
+    })
+
+    it('says when KVK blocked the search', async () => {
+      server.use(signedIn(), configured, http.get('*/api/onboarding/company_search', () => HttpResponse.json({ error: 'KVK blocked the search request', code: 'kvk_blocked' }, { status: 503 })))
+      renderAt(createPath)
+      await userEvent.type(await screen.findByRole('textbox', { name: 'What is the name of the company?' }), 'example')
+      expect(await screen.findByRole('alert')).toHaveTextContent('KVK blocked the search request. Fill in the details by hand.')
+    })
+
     it('links to the manual form for companies outside the register', async () => {
       server.use(signedIn(), configured)
       renderAt(createPath)

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"maps"
@@ -133,7 +134,11 @@ type fakeLookups struct {
 	gotQuery     string
 	address      administration.AddressMatch
 	addressErr   error
+	checkErr     error
 }
+
+// Check implements httpapi.RegisterChecker.
+func (f *fakeLookups) Check(context.Context) error { return f.checkErr }
 
 func (f *fakeLookups) SearchCompanies(_ context.Context, query string) ([]administration.CompanyMatch, error) {
 	f.gotQuery = query
@@ -329,6 +334,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Google:          google,
 		LM2:             lm2,
 		Companies:       lookup,
+		CompanyCheck:    lookup,
 		Addresses:       lookup,
 		LookupLimiter:   ratelimit.New(100000, time.Minute),
 		ResetLimiter:    ratelimit.New(2, time.Hour),
@@ -1145,6 +1151,18 @@ func TestOnboardingLookups(t *testing.T) {
 	const search = "/api/onboarding/company_search?country=NL&query=harpy"
 	const lookup = "/api/onboarding/address_lookup?zipcode=1012RJ&house_number=147"
 
+	t.Run("the experimental website search offers the Dutch register", func(t *testing.T) {
+		on, off := true, false
+		if _, err := h.settle.Update(ctx, settings.Update{KVKWebsiteSearchEnabled: &on}); err != nil {
+			t.Fatalf("Update() error = %v", err)
+		}
+		defer func() { _, _ = h.settle.Update(ctx, settings.Update{KVKWebsiteSearchEnabled: &off}) }()
+		got := decode[httpapi.OnboardingOptions](t, c.do(http.MethodGet, "/api/onboarding/options", nil))
+		if diff := cmp.Diff([]string{"NL"}, got.CompanySearchCountries); diff != "" {
+			t.Errorf("company_search_countries diff (-want +got):\n%s", diff)
+		}
+	})
+
 	t.Run("options without integrations", func(t *testing.T) {
 		got := decode[httpapi.OnboardingOptions](t, c.do(http.MethodGet, "/api/onboarding/options", nil))
 		if len(got.CompanySearchCountries) != 0 || len(got.AddressLookupCountries) != 0 {
@@ -1200,6 +1218,22 @@ func TestOnboardingLookups(t *testing.T) {
 		}
 	})
 
+	t.Run("tells why the register could not be searched", func(t *testing.T) {
+		defer func() { h.lookup.companiesErr = nil }()
+		for err, code := range map[error]string{
+			administration.ErrRegisterUnavailable: "kvk_unavailable",
+			administration.ErrRegisterBlocked:     "kvk_blocked",
+			administration.ErrRegisterBusy:        "kvk_rate_limited",
+		} {
+			h.lookup.companiesErr = fmt.Errorf("search: %w", err)
+			r := c.do(http.MethodGet, search, nil)
+			wantStatus(t, r, http.StatusServiceUnavailable)
+			if got := decode[httpapi.Error](t, r); got.Code == nil || *got.Code != code {
+				t.Errorf("%v: code = %v, want %s", err, got.Code, code)
+			}
+		}
+	})
+
 	t.Run("only searches registers it supports", func(t *testing.T) {
 		wantStatus(t, c.do(http.MethodGet, "/api/onboarding/company_search?country=BE&query=harpy", nil), http.StatusNotFound)
 	})
@@ -1235,6 +1269,44 @@ func TestOnboardingLookups(t *testing.T) {
 			t.Error("settings response contains the key")
 		}
 	})
+}
+
+func TestKVKWebsiteSearchSettingAndCheck(t *testing.T) {
+	ctx := context.Background()
+	pool, cleanup, err := postgrestest.Start(ctx)
+	if err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	defer cleanup()
+	h := newHarness(t, options{pool: pool})
+	admin, member := h.client(), h.client()
+	admin.register()
+	member.register()
+
+	if got := decode[httpapi.InstanceSettings](t, admin.do(http.MethodGet, "/api/instance/settings", nil)); got.KvkWebsiteSearchEnabled {
+		t.Error("kvk_website_search_enabled = true, want off by default")
+	}
+	r := admin.do(http.MethodPatch, "/api/instance/settings", map[string]any{"kvk_website_search_enabled": true})
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[httpapi.InstanceSettings](t, r); !got.KvkWebsiteSearchEnabled || got.KvkEnabled {
+		t.Errorf("settings = %+v, want only the website search on", got)
+	}
+	wantStatus(t, member.do(http.MethodPatch, "/api/instance/settings", map[string]any{"kvk_website_search_enabled": false}), http.StatusForbidden)
+
+	const path = "/api/instance/settings/test_kvk_website_search"
+	wantStatus(t, member.do(http.MethodPost, path, nil), http.StatusForbidden)
+	wantStatus(t, admin.do(http.MethodPost, path, nil), http.StatusNoContent)
+	for err, code := range map[error]string{
+		administration.ErrRegisterUnavailable: "kvk_unavailable",
+		administration.ErrRegisterBlocked:     "kvk_blocked",
+	} {
+		h.lookup.checkErr = err
+		r := admin.do(http.MethodPost, path, nil)
+		wantStatus(t, r, http.StatusServiceUnavailable)
+		if got := decode[httpapi.Error](t, r); got.Code == nil || *got.Code != code {
+			t.Errorf("%v: code = %v, want %s", err, got.Code, code)
+		}
+	}
 }
 
 func TestPasswordReset(t *testing.T) {

@@ -1,6 +1,7 @@
 import { type KeyboardEvent, useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FormRow } from '../forms/Form'
+import { registerProblem } from '../onboarding/registerProblem'
 import { countryName } from '../settings/format'
 import { type CompanyMatch, useCompanyRegister } from './queries'
 
@@ -71,7 +72,12 @@ export function CompanyNameField({ label, value, errors, registers, onChange, on
   }
 
   return (
-    <FormRow label={label} errors={errors}>
+    <FormRow
+      label={label}
+      errors={errors}
+      // When the register cannot be searched the name stays as typed, so the rest is filled in by hand.
+      help={matches.isError ? <span role="status">{t(registerProblem(matches.error))}</span> : undefined}
+    >
       {({ labelId: _, ...control }) => (
         <div className="company-name">
           {countries && (

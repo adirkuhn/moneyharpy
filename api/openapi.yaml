@@ -12497,7 +12497,10 @@ paths:
     get:
       operationId: companySearch
       summary: Search a company register
-      description: Only for countries listed in `company_search_countries`.
+      description: >-
+        Only for countries listed in `company_search_countries`. For the Netherlands this uses the official KVK API
+        when it is enabled, and otherwise the experimental KVK website search when that is enabled. A register that
+        cannot be used answers 503 with a `code` telling why, so people can fill in the details by hand.
       tags: [Onboarding]
       parameters:
         - name: country
@@ -12532,6 +12535,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/RegisterUnavailable'
   /api/onboarding/address_lookup:
     get:
       operationId: addressLookup
@@ -12950,6 +12955,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/instance/settings/test_kvk_website_search:
+    post:
+      operationId: testKvkWebsiteSearch
+      summary: Check the experimental KVK website search
+      description: >-
+        Runs a sample search for a common word through the KVK website search, also while it is not enabled, so an
+        administrator can see whether it works from this server.
+      tags: [Instance]
+      responses:
+        '204':
+          description: The website search works
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/RegisterUnavailable'
   /api/instance/settings/test_storage:
     post:
       operationId: testStorage
@@ -13395,6 +13417,16 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ValidationError'
+    RegisterUnavailable:
+      description: >-
+        MoneyHarpy extension. The company register could not be searched. `code` is `kvk_unavailable` when KVK did
+        not answer (network error, timeout or server error), `kvk_blocked` when KVK refused the request or answered
+        with something other than results (such as a challenge page), and `kvk_rate_limited` when this installation
+        searched too often in a short time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     TooManyRequests:
       description: Rate limit exceeded
       headers:
@@ -13431,6 +13463,9 @@ components:
       properties:
         error:
           type: string
+        code:
+          type: string
+          description: MoneyHarpy extension. A stable name for the problem, where clients treat it specially.
         symbolic:
           type: object
           additionalProperties: true
@@ -14034,7 +14069,7 @@ components:
           maxLength: 255
     InstanceSettings:
       type: object
-      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security, storage_enabled, storage_endpoint, storage_region, storage_bucket, storage_access_key, storage_secret_key_set, storage_path_style, webhooks_allow_local]
+      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, kvk_website_search_enabled, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security, storage_enabled, storage_endpoint, storage_region, storage_bucket, storage_access_key, storage_secret_key_set, storage_path_style, webhooks_allow_local]
       properties:
         registration_open:
           type: boolean
@@ -14054,6 +14089,11 @@ components:
           type: boolean
         kvk_api_key_set:
           type: boolean
+        kvk_website_search_enabled:
+          type: boolean
+          description: >-
+            Experimental. Search the company register through the public search of the KVK website while the KVK API
+            is not enabled. Unofficial: it may stop working or be blocked at any time, and sends the typed name to KVK.
         address_lookup_enabled:
           type: boolean
         smtp_enabled:
@@ -14116,6 +14156,9 @@ components:
         kvk_api_key:
           type: string
           writeOnly: true
+        kvk_website_search_enabled:
+          type: boolean
+          description: Experimental. See InstanceSettings.
         address_lookup_enabled:
           type: boolean
         smtp_enabled:
