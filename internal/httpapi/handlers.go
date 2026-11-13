@@ -463,7 +463,7 @@ func (s *server) OnboardingOptions(w http.ResponseWriter, r *http.Request) {
 		CompanySearchCountries: []string{},
 		AddressLookupCountries: []string{},
 	}
-	if inst.KVK.Enabled {
+	if inst.KVK.Enabled || inst.KVK.WebsiteSearch {
 		out.CompanySearchCountries = []string{lookupCountry}
 	}
 	if inst.AddressLookupEnabled {
@@ -822,31 +822,32 @@ func (s *server) DeleteToken(w http.ResponseWriter, r *http.Request, id Id) {
 
 func toInstanceSettings(inst settings.Instance) InstanceSettings {
 	return InstanceSettings{
-		RegistrationOpen:      inst.RegistrationOpen,
-		GoogleEnabled:         inst.Google.Enabled,
-		GoogleClientId:        inst.Google.ClientID,
-		GoogleClientSecretSet: inst.Google.ClientSecret != "",
-		Lm2Enabled:            inst.LM2.Enabled,
-		Lm2Url:                inst.LM2.URL,
-		Lm2App:                inst.LM2.App,
-		KvkEnabled:            inst.KVK.Enabled,
-		KvkApiKeySet:          inst.KVK.APIKey != "",
-		AddressLookupEnabled:  inst.AddressLookupEnabled,
-		WebhooksAllowLocal:    inst.WebhooksAllowLocal,
-		SmtpEnabled:           inst.SMTP.Enabled,
-		SmtpHost:              inst.SMTP.Host,
-		SmtpPort:              inst.SMTP.Port,
-		SmtpUsername:          inst.SMTP.Username,
-		SmtpPasswordSet:       inst.SMTP.Password != "",
-		SmtpFrom:              inst.SMTP.From,
-		SmtpSecurity:          inst.SMTP.Security,
-		StorageEnabled:        inst.Storage.Enabled,
-		StorageEndpoint:       inst.Storage.Endpoint,
-		StorageRegion:         inst.Storage.Region,
-		StorageBucket:         inst.Storage.Bucket,
-		StorageAccessKey:      inst.Storage.AccessKey,
-		StorageSecretKeySet:   inst.Storage.SecretKey != "",
-		StoragePathStyle:      inst.Storage.PathStyle,
+		RegistrationOpen:        inst.RegistrationOpen,
+		GoogleEnabled:           inst.Google.Enabled,
+		GoogleClientId:          inst.Google.ClientID,
+		GoogleClientSecretSet:   inst.Google.ClientSecret != "",
+		Lm2Enabled:              inst.LM2.Enabled,
+		Lm2Url:                  inst.LM2.URL,
+		Lm2App:                  inst.LM2.App,
+		KvkEnabled:              inst.KVK.Enabled,
+		KvkApiKeySet:            inst.KVK.APIKey != "",
+		KvkWebsiteSearchEnabled: inst.KVK.WebsiteSearch,
+		AddressLookupEnabled:    inst.AddressLookupEnabled,
+		WebhooksAllowLocal:      inst.WebhooksAllowLocal,
+		SmtpEnabled:             inst.SMTP.Enabled,
+		SmtpHost:                inst.SMTP.Host,
+		SmtpPort:                inst.SMTP.Port,
+		SmtpUsername:            inst.SMTP.Username,
+		SmtpPasswordSet:         inst.SMTP.Password != "",
+		SmtpFrom:                inst.SMTP.From,
+		SmtpSecurity:            inst.SMTP.Security,
+		StorageEnabled:          inst.Storage.Enabled,
+		StorageEndpoint:         inst.Storage.Endpoint,
+		StorageRegion:           inst.Storage.Region,
+		StorageBucket:           inst.Storage.Bucket,
+		StorageAccessKey:        inst.Storage.AccessKey,
+		StorageSecretKeySet:     inst.Storage.SecretKey != "",
+		StoragePathStyle:        inst.Storage.PathStyle,
 	}
 }
 
@@ -884,6 +885,18 @@ func (s *server) SendTestEmail(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// TestKvkWebsiteSearch implements ServerInterface.
+func (s *server) TestKvkWebsiteSearch(w http.ResponseWriter, r *http.Request) {
+	if !requireInstanceAdmin(w, r) {
+		return
+	}
+	if err := s.deps.CompanyCheck.Check(r.Context()); err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // UpdateInstanceSettings implements ServerInterface.
 func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) {
 	if !requireInstanceAdmin(w, r) {
@@ -902,10 +915,11 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 		LM2URL:             body.Lm2Url,
 		LM2App:             body.Lm2App,
 
-		KVKEnabled:           body.KvkEnabled,
-		KVKAPIKey:            body.KvkApiKey,
-		AddressLookupEnabled: body.AddressLookupEnabled,
-		WebhooksAllowLocal:   body.WebhooksAllowLocal,
+		KVKEnabled:              body.KvkEnabled,
+		KVKAPIKey:               body.KvkApiKey,
+		KVKWebsiteSearchEnabled: body.KvkWebsiteSearchEnabled,
+		AddressLookupEnabled:    body.AddressLookupEnabled,
+		WebhooksAllowLocal:      body.WebhooksAllowLocal,
 
 		SMTPEnabled:  body.SmtpEnabled,
 		SMTPHost:     body.SmtpHost,

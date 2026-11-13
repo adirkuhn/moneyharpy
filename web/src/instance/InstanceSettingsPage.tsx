@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { api, errorMessages, type InstanceSettings, unwrap, type UpdateInstanceSettings } from '../api/client'
+import { api, ApiError, errorMessages, type InstanceSettings, unwrap, type UpdateInstanceSettings } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
 import { useCurrentUser } from '../auth/queries'
@@ -71,6 +71,7 @@ function SettingsForm() {
 
   const testEmail = useMutation({ mutationFn: () => unwrap(api.POST('/api/instance/settings/test_email')) })
   const testStorage = useMutation({ mutationFn: () => unwrap(api.POST('/api/instance/settings/test_storage')) })
+  const testKvkWebsite = useMutation({ mutationFn: () => unwrap(api.POST('/api/instance/settings/test_kvk_website_search')) })
 
   if (!form) {
     return <Loading />
@@ -88,6 +89,7 @@ function SettingsForm() {
       lm2_url: form.lm2_url,
       lm2_app: form.lm2_app,
       kvk_enabled: form.kvk_enabled,
+      kvk_website_search_enabled: form.kvk_website_search_enabled,
       address_lookup_enabled: form.address_lookup_enabled,
       webhooks_allow_local: form.webhooks_allow_local,
       ...(kvkKey ? { kvk_api_key: kvkKey } : {}),
@@ -110,7 +112,7 @@ function SettingsForm() {
   }
 
   const errors = formErrors(save.error, labels)
-  const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'address_lookup_enabled' | 'webhooks_allow_local' | 'smtp_enabled' | 'storage_enabled' | 'storage_path_style', label: string, help?: string) => (
+  const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'kvk_website_search_enabled' | 'address_lookup_enabled' | 'webhooks_allow_local' | 'smtp_enabled' | 'storage_enabled' | 'storage_path_style', label: string, help?: string) => (
     <CheckboxInput label={label} help={help} checked={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />
   )
   const text = (
@@ -156,6 +158,17 @@ function SettingsForm() {
             errors={errors.field('kvk_api_key')}
             onChange={(e) => setKvkKey(e.target.value)}
           />
+          {check('kvk_website_search_enabled', t('instance.kvkWebsiteEnable'), t('instance.kvkWebsiteHint'))}
+          <div className="form-input form-input--check">
+            <span className="form-input__label" aria-hidden="true" />
+            <div className="form-input__body form__actions">
+              <button type="button" className="btn btn--secondary" disabled={testKvkWebsite.isPending} onClick={() => testKvkWebsite.mutate()}>
+                {t('instance.testKvkWebsite')}
+              </button>
+              {testKvkWebsite.isSuccess && <span role="status" className="saved">{t('instance.kvkWebsiteWorks')}</span>}
+            </div>
+          </div>
+          {testKvkWebsite.isError && <Problems messages={[kvkWebsiteProblem(testKvkWebsite.error, t)]} />}
         </FormSection>
         <FormSection title={t('instance.addressTitle')}>
           {check('address_lookup_enabled', t('instance.addressEnable'), t('instance.addressHint'))}
@@ -237,6 +250,20 @@ function SettingsForm() {
       <SupportGrants />
     </Page>
   )
+}
+
+/** Why the KVK website search check failed: KVK not answering, blocking the request, or too many searches. */
+function kvkWebsiteProblem(error: unknown, t: (key: string) => string) {
+  switch (error instanceof ApiError ? error.code : '') {
+    case 'kvk_unavailable':
+      return t('instance.kvkWebsiteUnavailable')
+    case 'kvk_blocked':
+      return t('instance.kvkWebsiteBlocked')
+    case 'kvk_rate_limited':
+      return t('instance.kvkWebsiteBusy')
+    default:
+      return errorMessages(error, {})[0] ?? t('common.genericError')
+  }
 }
 
 /** The administrations that let the instance admins in right now. */

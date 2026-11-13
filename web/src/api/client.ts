@@ -19,12 +19,15 @@ export const api = createClient<paths>({
 export class ApiError extends Error {
   readonly status: number
   readonly fields: Record<string, string[]>
+  /** The stable name of the problem, where the server gives one, such as `kvk_blocked`. */
+  readonly code: string
 
   constructor(status: number, body: unknown) {
-    const error = (body as { error?: unknown } | undefined)?.error
+    const { error, code } = (body ?? {}) as { error?: unknown; code?: unknown }
     super(typeof error === 'string' ? serverMessage(error) : i18n.t('common.requestFailed'))
     this.status = status
     this.fields = typeof error === 'object' && error !== null ? (error as Record<string, string[]>) : {}
+    this.code = typeof code === 'string' ? code : ''
   }
 }
 

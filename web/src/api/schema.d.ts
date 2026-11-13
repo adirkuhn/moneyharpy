@@ -6209,7 +6209,7 @@ export interface paths {
         };
         /**
          * Search a company register
-         * @description Only for countries listed in `company_search_countries`.
+         * @description Only for countries listed in `company_search_countries`. For the Netherlands this uses the official KVK API when it is enabled, and otherwise the experimental KVK website search when that is enabled. A register that cannot be used answers 503 with a `code` telling why, so people can fill in the details by hand.
          */
         get: operations["companySearch"];
         put?: never;
@@ -6532,6 +6532,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/instance/settings/test_kvk_website_search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check the experimental KVK website search
+         * @description Runs a sample search for a common word through the KVK website search, also while it is not enabled, so an administrator can see whether it works from this server.
+         */
+        post: operations["testKvkWebsiteSearch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/instance/settings/test_storage": {
         parameters: {
             query?: never;
@@ -6584,6 +6604,8 @@ export interface components {
         Identifier: string;
         Error: {
             error: string;
+            /** @description MoneyHarpy extension. A stable name for the problem, where clients treat it specially. */
+            code?: string;
             symbolic?: {
                 [key: string]: unknown;
             };
@@ -6899,6 +6921,8 @@ export interface components {
             lm2_app: string;
             kvk_enabled: boolean;
             kvk_api_key_set: boolean;
+            /** @description Experimental. Search the company register through the public search of the KVK website while the KVK API is not enabled. Unofficial: it may stop working or be blocked at any time, and sends the typed name to KVK. */
+            kvk_website_search_enabled: boolean;
             address_lookup_enabled: boolean;
             smtp_enabled: boolean;
             smtp_host: string;
@@ -6932,6 +6956,8 @@ export interface components {
             lm2_app?: string;
             kvk_enabled?: boolean;
             kvk_api_key?: string;
+            /** @description Experimental. See InstanceSettings. */
+            kvk_website_search_enabled?: boolean;
             address_lookup_enabled?: boolean;
             smtp_enabled?: boolean;
             smtp_host?: string;
@@ -10586,6 +10612,15 @@ export interface components {
             };
             content: {
                 "application/json": components["schemas"]["ValidationError"];
+            };
+        };
+        /** @description MoneyHarpy extension. The company register could not be searched. `code` is `kvk_unavailable` when KVK did not answer (network error, timeout or server error), `kvk_blocked` when KVK refused the request or answered with something other than results (such as a challenge page), and `kvk_rate_limited` when this installation searched too often in a short time. */
+        RegisterUnavailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
             };
         };
         /** @description Rate limit exceeded */
@@ -22319,6 +22354,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+            503: components["responses"]["RegisterUnavailable"];
         };
     };
     addressLookup: {
@@ -22774,6 +22810,27 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+        };
+    };
+    testKvkWebsiteSearch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The website search works */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            503: components["responses"]["RegisterUnavailable"];
         };
     };
     testStorage: {
