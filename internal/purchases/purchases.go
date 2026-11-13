@@ -215,6 +215,9 @@ type Store interface {
 	// IncomingStatistics sums up the documents the query selects; the
 	// currency is left to the caller.
 	IncomingStatistics(ctx context.Context, admin resource.ID, q IncomingQuery) (IncomingStatistics, error)
+	// RetypeDocument removes the document as r.From and stores it as its
+	// new type, with its notes, attachments and events, at once.
+	RetypeDocument(ctx context.Context, r Retype) error
 }
 
 // PaymentPosting is a payment with what it posts.

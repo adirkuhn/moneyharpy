@@ -157,12 +157,15 @@ type memStore struct {
 	incoming      []Incoming
 	statistics    IncomingStatistics
 	incomingQuery IncomingQuery
+	// journals are the journal entries documents were turned into.
+	journals map[resource.ID]journal.Document
 }
 
 func newMemStore() *memStore {
 	return &memStore{
 		docs: map[resource.ID]Document{}, entries: map[resource.ID][]journal.Entry{}, paid: map[resource.ID][]journal.Entry{},
 		general: map[resource.ID]General{}, typeless: map[resource.ID]Typeless{}, transactions: map[resource.ID]Transaction{}, batches: map[resource.ID]Batch{},
+		journals: map[resource.ID]journal.Document{},
 	}
 }
 
@@ -458,7 +461,38 @@ func (m *memStore) IncomingDocument(_ context.Context, _, id resource.ID, _ time
 			return d, nil
 		}
 	}
+	if d, ok := m.docs[id]; ok {
+		return Incoming{ID: id, AdministrationID: d.AdministrationID, Kind: d.Kind, Reference: d.Reference, ContactID: d.ContactID, Date: d.Date,
+			State: d.State, Currency: d.Currency, TotalInclTax: d.Totals.InclTax, CreatedAt: d.CreatedAt}, nil
+	}
+	if g, ok := m.general[id]; ok {
+		return Incoming{ID: id, AdministrationID: g.AdministrationID, Kind: GeneralDocument, Reference: g.Reference, ContactID: g.ContactID,
+			Date: g.Date, State: g.State, CreatedAt: g.CreatedAt}, nil
+	}
+	if t, ok := m.typeless[id]; ok {
+		return Incoming{ID: id, AdministrationID: t.AdministrationID, Kind: TypelessDocument, Reference: t.Reference, ContactID: t.ContactID,
+			Date: t.Date, State: t.State, CreatedAt: t.CreatedAt}, nil
+	}
+	if j, ok := m.journals[id]; ok {
+		return Incoming{ID: id, AdministrationID: j.AdministrationID, Kind: journal.GeneralJournalDocument, Reference: j.Reference, Date: j.Date,
+			State: Saved, CreatedAt: j.CreatedAt}, nil
+	}
 	return Incoming{}, ErrNotFound
+}
+
+func (m *memStore) RetypeDocument(_ context.Context, r Retype) error {
+	delete(m.docs, r.ID)
+	delete(m.general, r.ID)
+	delete(m.typeless, r.ID)
+	switch {
+	case r.Document != nil:
+		m.docs[r.ID] = *r.Document
+	case r.General != nil:
+		m.general[r.ID] = *r.General
+	default:
+		m.journals[r.ID] = *r.Journal
+	}
+	return nil
 }
 
 func (m *memStore) IncomingStatistics(_ context.Context, _ resource.ID, q IncomingQuery) (IncomingStatistics, error) {
