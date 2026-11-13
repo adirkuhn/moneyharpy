@@ -42,7 +42,7 @@ describe('the invoice details editor', () => {
     await userEvent.type(within(rows[1]!).getByLabelText('Description'), 'Book')
     await userEvent.type(within(rows[1]!).getByLabelText('Price'), '50')
     await chooseOption(rows[1]!, 'VAT rate', '9% btw')
-    await chooseOption(rows[1]!, 'Category', 'Sales (8000)')
+    await chooseOption(rows[1]!, 'Category', 'Sales')
 
     await userEvent.click(screen.getByRole('button', { name: 'Discount' }))
     await userEvent.click(screen.getByRole('button', { name: 'Discount over total price' }))
@@ -92,7 +92,7 @@ describe('the invoice details editor', () => {
     expect(description).toHaveValue('Advice per hour')
     expect(within(rows[0]!).getByLabelText('Price')).toHaveValue('80')
     expect(within(rows[0]!).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('9% btw')
-    expect(within(rows[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Sales (8000)')
+    expect(within(rows[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Sales')
 
     // The period, from a preset.
     const period = within(rows[0]!).getByRole('button', { name: 'Period: Not selected' })
@@ -133,24 +133,24 @@ describe('the invoice details editor', () => {
     ])
   })
 
-  it("starts a new detail with the VAT rate and category of the one above, and names categories with their code", async () => {
+  it("starts a new detail with the VAT rate and category of the one above, and names categories without their code, as the user asked", async () => {
     server.use(...loaded())
     renderAt('/11/sales_invoices/902')
     await screen.findByRole('document', { name: /Draft/ })
     await editLines()
     const first = detailRows()[0]!
     await chooseOption(first, 'VAT rate', '9% btw')
-    await chooseOption(first, 'Category', 'Sales (8000)')
+    await chooseOption(first, 'Category', 'Sales')
     await userEvent.click(within(first).getByRole('combobox', { name: 'Category' }))
     const list = screen.getByRole('listbox', { name: 'Category' })
-    expect(within(within(list).getByRole('group', { name: 'Revenue' })).getByRole('option', { name: 'Sales (8000)' })).toHaveAttribute('aria-selected', 'true')
+    expect(within(within(list).getByRole('group', { name: 'Revenue' })).getByRole('option', { name: 'Sales' })).toHaveAttribute('aria-selected', 'true')
     expect(within(list).getByRole('option', { name: 'Uncategorized' })).toBeInTheDocument()
     await userEvent.keyboard('{Escape}')
 
     await userEvent.click(screen.getByRole('button', { name: 'Add detail' }))
     const added = detailRows().at(-1)!
     expect(within(added).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('9% btw')
-    expect(within(added).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Sales (8000)')
+    expect(within(added).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Sales')
   })
 
   it('cancels the changes to the details and closes the editor, as Moneybird does', async () => {
@@ -451,7 +451,7 @@ describe('the invoice details editor', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Add category' })).toBeNull())
     expect(posted.body).toEqual({ ledger_account: { name: 'Coaching', account_type: 'revenue', parent_id: '', account_id: '8010' } })
-    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Coaching (8010)'))
+    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Coaching'))
     // Still in the editor, nothing saved or left.
     expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/)
   })
@@ -498,7 +498,7 @@ describe('the invoice details editor', () => {
     expect(within(used).getAllByRole('option').map((o) => o.textContent)).toEqual(['9% btw'])
     await userEvent.keyboard('{Escape}')
     await userEvent.click(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' }))
-    expect(within(within(screen.getByRole('listbox', { name: 'Category' })).getByRole('group', { name: 'Most used' })).getAllByRole('option').map((o) => o.textContent)).toEqual(['Sales (8000)'])
+    expect(within(within(screen.getByRole('listbox', { name: 'Category' })).getByRole('group', { name: 'Most used' })).getAllByRole('option').map((o) => o.textContent)).toEqual(['Sales'])
     expect(asked).toContain('sales')
   })
 
@@ -506,7 +506,7 @@ describe('the invoice details editor', () => {
     server.use(...loaded())
     server.use(http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales, { ...sales, id: '8002', name: 'Coaching', account_id: '8010', uri: '/11/ledger_accounts/8002' }])))
     renderAt({ pathname: '/11/sales_invoices/902', state: { details: true, newEntity: { field: 'sales_invoice[details_attributes][0][ledger_account_id]', id: '8002' } } })
-    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Coaching (8010)'))
+    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Coaching'))
   })
 
   it('puts the VAT rate added for a row on that row when it comes back', async () => {
@@ -519,6 +519,6 @@ describe('the invoice details editor', () => {
     server.use(...loaded())
     server.use(http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([sales, { ...sales, id: '8002', name: 'Coaching', account_id: '8010', uri: '/11/ledger_accounts/8002' }])))
     renderAt({ pathname: '/11/sales_invoices/901', state: { details: true, newEntity: { field: 'sales_invoice[details_attributes][0][ledger_account_id]', id: '8002' } } })
-    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Coaching (8010)'))
+    await waitFor(() => expect(within(detailRows()[0]!).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Coaching'))
   })
 })
