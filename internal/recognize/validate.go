@@ -216,3 +216,21 @@ func contains(list []string, s string) bool {
 	}
 	return false
 }
+
+// ValidPTNIF checks a Portuguese tax number (NIF/NIPC): nine digits whose
+// last is 11 minus the weighted sum (weights 9 to 2) modulo 11, or 0 when
+// that is 10 or 11.
+func ValidPTNIF(n string) bool {
+	if len(n) != 9 || !isDigits(n) {
+		return false
+	}
+	sum := 0
+	for i := range 8 {
+		sum += int(n[i]-'0') * (9 - i)
+	}
+	check := 11 - sum%11
+	if check >= 10 {
+		check = 0
+	}
+	return int(n[8]-'0') == check
+}
