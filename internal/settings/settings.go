@@ -47,6 +47,10 @@ type LM2 struct {
 type KVK struct {
 	Enabled bool
 	APIKey  string
+	// WebsiteSearch is an experimental, unofficial search through the public
+	// search of the KVK website, used while the API above is not enabled. It
+	// needs no key but may stop working or be blocked at any time.
+	WebsiteSearch bool
 }
 
 // SMTP configures the mail server used for outgoing email.
@@ -104,9 +108,10 @@ type Update struct {
 	LM2URL             *string
 	LM2App             *string
 
-	KVKEnabled           *bool
-	KVKAPIKey            *string
-	AddressLookupEnabled *bool
+	KVKEnabled              *bool
+	KVKAPIKey               *string
+	KVKWebsiteSearchEnabled *bool
+	AddressLookupEnabled    *bool
 
 	SMTPEnabled  *bool
 	SMTPHost     *string
@@ -155,6 +160,7 @@ type storedInstance struct {
 	LM2App           string `json:"lm2_app"`
 	KVKEnabled       bool   `json:"kvk_enabled"`
 	KVKKey           string `json:"kvk_api_key_sealed"`
+	KVKWebsite       bool   `json:"kvk_website_search_enabled"`
 	AddressLookup    bool   `json:"address_lookup_enabled"`
 	SMTPEnabled      bool   `json:"smtp_enabled"`
 	SMTPHost         string `json:"smtp_host"`
@@ -190,7 +196,7 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 		RegistrationOpen: st.RegistrationOpen,
 		Google:           Google{Enabled: st.GoogleEnabled, ClientID: st.GoogleClientID},
 		LM2:              LM2{Enabled: st.LM2Enabled, URL: st.LM2URL, App: st.LM2App},
-		KVK:              KVK{Enabled: st.KVKEnabled},
+		KVK:              KVK{Enabled: st.KVKEnabled, WebsiteSearch: st.KVKWebsite},
 
 		AddressLookupEnabled: st.AddressLookup,
 		WebhooksAllowLocal:   st.WebhooksLocal,
@@ -279,6 +285,9 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 	if u.KVKAPIKey != nil {
 		inst.KVK.APIKey = cmp.Or(*u.KVKAPIKey, inst.KVK.APIKey)
 	}
+	if u.KVKWebsiteSearchEnabled != nil {
+		inst.KVK.WebsiteSearch = *u.KVKWebsiteSearchEnabled
+	}
 	if u.WebhooksAllowLocal != nil {
 		inst.WebhooksAllowLocal = *u.WebhooksAllowLocal
 	}
@@ -322,6 +331,7 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		LM2URL:           inst.LM2.URL,
 		LM2App:           inst.LM2.App,
 		KVKEnabled:       inst.KVK.Enabled,
+		KVKWebsite:       inst.KVK.WebsiteSearch,
 		AddressLookup:    inst.AddressLookupEnabled,
 		WebhooksLocal:    inst.WebhooksAllowLocal,
 		SMTPEnabled:      inst.SMTP.Enabled,

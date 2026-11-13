@@ -197,6 +197,27 @@ func TestEnablingKVKRequiresKey(t *testing.T) {
 	}
 }
 
+func TestKVKWebsiteSearchIsOffByDefaultAndNeedsNoKey(t *testing.T) {
+	s, _ := newService(t)
+	ctx := context.Background()
+	inst, err := s.Instance(ctx)
+	if err != nil {
+		t.Fatalf("Instance() error = %v", err)
+	}
+	if inst.KVK.WebsiteSearch {
+		t.Error("KVK website search is on by default, want off")
+	}
+	if _, err := s.Update(ctx, Update{KVKWebsiteSearchEnabled: ptr(true)}); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	if inst, _ = s.Instance(ctx); !inst.KVK.WebsiteSearch || inst.KVK.Enabled {
+		t.Errorf("Instance().KVK = %+v, want only the website search on", inst.KVK)
+	}
+	if inst, _ = s.Update(ctx, Update{KVKWebsiteSearchEnabled: ptr(false)}); inst.KVK.WebsiteSearch {
+		t.Error("Update() kept the website search on, want off")
+	}
+}
+
 func validSMTP() Update {
 	return Update{
 		SMTPEnabled: ptr(true), SMTPHost: ptr("mail.example.com"), SMTPPort: ptr(587),

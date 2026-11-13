@@ -5,6 +5,7 @@ import type { components } from '../api/schema'
 import { useCurrentUser } from '../auth/queries'
 import { TextInput } from '../forms/Form'
 import { manualPath, useCompanySearch, useOnboardingOptions } from './queries'
+import { registerProblem } from './registerProblem'
 import { Wizard } from './Wizard'
 import { Loading } from '../layout/Loading'
 
@@ -78,7 +79,7 @@ function CompanySearch({ title, subtitle }: { title: string; subtitle: string })
       <p className="hint">
         {t('onboarding.searchHelp')} <Link to={manualPath()}>{t('onboarding.notRegistered')}</Link>
       </p>
-      {search.isError && <p role="alert" className="problems">{t('onboarding.searchFailed')}</p>}
+      {search.isError && <p role="alert" className="problems">{t(registerProblem(search.error))}</p>}
       {search.data?.length === 0 && <p className="empty">{t('onboarding.noResults')}</p>}
       {search.data && search.data.length > 0 && (
         <div className="choices">

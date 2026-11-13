@@ -6160,6 +6160,8 @@ type EmptyRequest = map[string]interface{}
 
 // Error defines model for Error.
 type Error struct {
+	// Code MoneyHarpy extension. A stable name for the problem, where clients treat it specially.
+	Code     *string                 `json:"code,omitempty"`
 	Error    string                  `json:"error"`
 	Symbolic *map[string]interface{} `json:"symbolic,omitempty"`
 }
@@ -7100,19 +7102,22 @@ type InstanceSettings struct {
 	GoogleEnabled         bool   `json:"google_enabled"`
 	KvkApiKeySet          bool   `json:"kvk_api_key_set"`
 	KvkEnabled            bool   `json:"kvk_enabled"`
-	Lm2App                string `json:"lm2_app"`
-	Lm2Enabled            bool   `json:"lm2_enabled"`
-	Lm2Url                string `json:"lm2_url"`
-	RegistrationOpen      bool   `json:"registration_open"`
-	SmtpEnabled           bool   `json:"smtp_enabled"`
-	SmtpFrom              string `json:"smtp_from"`
-	SmtpHost              string `json:"smtp_host"`
-	SmtpPasswordSet       bool   `json:"smtp_password_set"`
-	SmtpPort              int    `json:"smtp_port"`
-	SmtpSecurity          string `json:"smtp_security"`
-	SmtpUsername          string `json:"smtp_username"`
-	StorageAccessKey      string `json:"storage_access_key"`
-	StorageBucket         string `json:"storage_bucket"`
+
+	// KvkWebsiteSearchEnabled Experimental. Search the company register through the public search of the KVK website while the KVK API is not enabled. Unofficial: it may stop working or be blocked at any time, and sends the typed name to KVK.
+	KvkWebsiteSearchEnabled bool   `json:"kvk_website_search_enabled"`
+	Lm2App                  string `json:"lm2_app"`
+	Lm2Enabled              bool   `json:"lm2_enabled"`
+	Lm2Url                  string `json:"lm2_url"`
+	RegistrationOpen        bool   `json:"registration_open"`
+	SmtpEnabled             bool   `json:"smtp_enabled"`
+	SmtpFrom                string `json:"smtp_from"`
+	SmtpHost                string `json:"smtp_host"`
+	SmtpPasswordSet         bool   `json:"smtp_password_set"`
+	SmtpPort                int    `json:"smtp_port"`
+	SmtpSecurity            string `json:"smtp_security"`
+	SmtpUsername            string `json:"smtp_username"`
+	StorageAccessKey        string `json:"storage_access_key"`
+	StorageBucket           string `json:"storage_bucket"`
 
 	// StorageEnabled Whether uploads, such as logos, go to S3-compatible storage.
 	StorageEnabled bool `json:"storage_enabled"`
@@ -9948,6 +9953,9 @@ type UpdateInstanceSettingsRequest struct {
 	GoogleEnabled        *bool   `json:"google_enabled,omitempty"`
 	KvkApiKey            *string `json:"kvk_api_key,omitempty"`
 	KvkEnabled           *bool   `json:"kvk_enabled,omitempty"`
+
+	// KvkWebsiteSearchEnabled Experimental. See InstanceSettings.
+	KvkWebsiteSearchEnabled *bool `json:"kvk_website_search_enabled,omitempty"`
 
 	// Lm2App The name this installation is registered under in LM2.
 	Lm2App     *string `json:"lm2_app,omitempty"`
@@ -12835,6 +12843,9 @@ type ReceiptPage = []Receipt
 
 // RecurringSalesInvoicePage defines model for RecurringSalesInvoicePage.
 type RecurringSalesInvoicePage = []RecurringSalesInvoice
+
+// RegisterUnavailable defines model for RegisterUnavailable.
+type RegisterUnavailable = Error
 
 // SalesInvoicePage defines model for SalesInvoicePage.
 type SalesInvoicePage = []SalesInvoice
@@ -20345,6 +20356,9 @@ type ServerInterface interface {
 	// SendTestEmail Send a test email to yourself using the saved mail settings
 	// (POST /api/instance/settings/test_email)
 	SendTestEmail(w http.ResponseWriter, r *http.Request)
+	// TestKvkWebsiteSearch Check the experimental KVK website search
+	// (POST /api/instance/settings/test_kvk_website_search)
+	TestKvkWebsiteSearch(w http.ResponseWriter, r *http.Request)
 	// TestStorage Check the saved file storage settings
 	// (POST /api/instance/settings/test_storage)
 	TestStorage(w http.ResponseWriter, r *http.Request)
@@ -21626,6 +21640,12 @@ func (_ Unimplemented) UpdateInstanceSettings(w http.ResponseWriter, r *http.Req
 // SendTestEmail Send a test email to yourself using the saved mail settings
 // (POST /api/instance/settings/test_email)
 func (_ Unimplemented) SendTestEmail(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// TestKvkWebsiteSearch Check the experimental KVK website search
+// (POST /api/instance/settings/test_kvk_website_search)
+func (_ Unimplemented) TestKvkWebsiteSearch(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -24303,6 +24323,20 @@ func (siw *ServerInterfaceWrapper) SendTestEmail(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SendTestEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestKvkWebsiteSearch operation middleware
+func (siw *ServerInterfaceWrapper) TestKvkWebsiteSearch(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestKvkWebsiteSearch(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -40661,6 +40695,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/instance/settings/test_email", wrapper.SendTestEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/instance/settings/test_kvk_website_search", wrapper.TestKvkWebsiteSearch)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/instance/settings/test_storage", wrapper.TestStorage)
