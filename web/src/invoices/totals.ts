@@ -88,3 +88,40 @@ export function computeTotals(lines: TotalsLine[], discount: number, inclTax: bo
   const tax = byRate.reduce((s, r) => s + r.tax, 0)
   return { subtotal, discount: taken, exclTax, tax, inclTax: exclTax + tax, byRate, lines: amounts }
 }
+
+/** A VAT rate as far as totals need it. */
+export type TotalsRate = { id?: string; name?: string; percentage?: string | number | null; show_tax?: boolean | null }
+
+const percentageOf = (r: TotalsRate | undefined) => Math.round(Number(r?.percentage ?? 0) * 100)
+
+/**
+ * Whether a rate's VAT is reverse-charged: the supplier charges none and the
+ * administration owes and deducts it itself, such as on purchases from
+ * elsewhere in the EU. It has a percentage but does not show VAT.
+ */
+export function isReverseCharged(r: TotalsRate | undefined) {
+  return r?.show_tax === false && percentageOf(r) > 0
+}
+
+/** The percentage, in hundredths, that a rate adds to what the lines add up to. */
+export function chargedRate(r: TotalsRate | undefined) {
+  return isReverseCharged(r) ? 0 : percentageOf(r)
+}
+
+/**
+ * The VAT rows under the subtotal: charged VAT once; reverse-charged VAT as
+ * Moneybird shows it, owed and deducted, so it adds nothing to the total.
+ */
+export function vatRows(byRate: RateTotal[], rates: TotalsRate[], money: (cents: number) => string): { label: string; amount: string }[] {
+  return byRate
+    .filter((r) => r.tax !== 0 || r.taxable !== 0)
+    .flatMap((r) => {
+      const rate = rates.find((x) => x.id === r.taxRateId)
+      const label = rate?.name ?? ''
+      if (!isReverseCharged(rate)) {
+        return [{ label, amount: money(r.tax) }]
+      }
+      const owed = divRound(r.taxable * percentageOf(rate), 10000)
+      return [{ label, amount: money(-owed) }, { label, amount: money(owed) }]
+    })
+}

@@ -107,7 +107,7 @@ func MakePlan(in PlanInput) Plan {
 	} else if in.Supplier.ContactID != 0 && in.Supplier.ContactID == t.ContactID && in.Previous.Has(FieldContactID) {
 		mark(FieldContactID, in.Supplier.Confidence)
 	}
-	if v := strings.TrimSpace(e.Reference.V); e.Reference.Found && v != "" && len(v) <= 1000 && fill(FieldReference, t.Reference == "", false) {
+	if v := strings.TrimSpace(e.Reference.V); e.Reference.Found && v != "" && len(v) <= 1000 && fill(FieldReference, t.Reference == "" || isFileName(t.Reference), false) {
 		c.Reference = &v
 		mark(FieldReference, e.Reference.Confidence)
 	}
@@ -428,3 +428,9 @@ func MapReverseCharge(domestic bool, rates []bookkeeping.TaxRate) (resource.ID, 
 	}
 	return best.ID, true
 }
+
+// fileName is a reference that is only the name of an uploaded file, which
+// an upload gets until its own reference is known.
+var fileName = regexp.MustCompile(`(?i)^[^/\\]+\.(?:pdf|jpe?g|png|gif|tiff?|webp|heic|xml|eml|msg|txt)$`)
+
+func isFileName(reference string) bool { return fileName.MatchString(strings.TrimSpace(reference)) }

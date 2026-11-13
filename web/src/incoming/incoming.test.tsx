@@ -63,7 +63,7 @@ const general: GeneralDocument = {
 /** Three new documents wait to be processed: this one and two more. */
 const waiting = [summary({ id: '941', state: 'new' }), summary({ id: '942', type: 'Receipt', state: 'new' }), summary({ id: '943', state: 'new' })]
 
-function loaded(over: { doc?: PurchaseInvoice; summaries?: DocumentSummary[] } = {}) {
+function loaded(over: { doc?: PurchaseInvoice; summaries?: DocumentSummary[]; rates?: TaxRate[] } = {}) {
   const doc = over.doc ?? invoice()
   return [
     signedIn(),
@@ -82,7 +82,7 @@ function loaded(over: { doc?: PurchaseInvoice; summaries?: DocumentSummary[] } =
     // Without the OCR service there is no preview, and the page shows the file itself.
     http.get('*/api/v2/11/documents/:id/attachments/:attachment/preview', () => new HttpResponse(null, { status: 404 })),
     http.get('*/api/v2/11/documents/:type/:id/attachments/:attachment/download', () => new HttpResponse('file', { headers: { 'Content-Type': 'application/octet-stream' } })),
-    http.get('*/api/v2/11/tax_rates', () => HttpResponse.json(rates)),
+    http.get('*/api/v2/11/tax_rates', () => HttpResponse.json(over.rates ?? rates)),
     http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json(accounts)),
     http.get('*/api/v2/11/products', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
     http.get('*/api/v2/11/users', () => HttpResponse.json([])),
@@ -142,6 +142,25 @@ describe('the page of an incoming document', () => {
     expect(within(card()).getByRole('textbox', { name: 'Due date' })).toHaveValue('2026-11-15')
     await userEvent.click(within(card()).getByRole('link', { name: 'Cancel' }))
     expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/documents$/)
+  })
+
+  it('shows reverse-charged VAT as owed and deducted, adding nothing to the total, as Moneybird does', async () => {
+    const eu = rate({ id: '2290', name: 'Within the EU 9% (reverse-charged)', percentage: '9', show_tax: false, position: 4 })
+    const doc = invoice({
+      details: [{ id: '961', description: 'Goods', amount: '1', price: '3795.31', tax_rate_id: '2290', ledger_account_id: '4001', period: null, row_order: 1, total_price_excl_tax_with_discount: '3795.31' }],
+      total_price_excl_tax: '3795.31', total_price_incl_tax: '3795.31', total_tax: '0.0', total_unpaid: '3795.31',
+      tax_totals: [{ tax_rate_id: '2290', taxable_amount: '3795.31', tax_amount: '0.0' }],
+    })
+    server.use(...loaded({ doc, rates: [...rates, eu] }))
+    renderAt('/11/documents/941')
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
+    const shown = within(form).getByRole('table', { name: 'Totals' })
+    expect(shown).toHaveTextContent('reverse-charged)-€341.58Within the EU 9% (reverse-charged)€341.58')
+    expect(shown).toHaveTextContent('Total€3,795.31')
+    await userEvent.click(within(form).getByRole('button', { name: 'Edit' }))
+    const editing = within(card()).getByRole('table', { name: 'Totals' })
+    expect(within(editing).getAllByText('Within the EU 9% (reverse-charged)')).toHaveLength(2)
+    expect(editing).toHaveTextContent('Total€3,795.31')
   })
 
   it('books a new purchase invoice with its lines, and Next opens the next document to process', async () => {
