@@ -343,15 +343,25 @@ describe('the page of an incoming document', () => {
     await waitFor(() => expect(note).toEqual({ note: { note: 'Check the amount', todo: false } }))
   })
 
-  it('deletes the document after asking', async () => {
+  it('deletes the document after asking and goes back to the list without asking for it again', async () => {
     let deleted = false
+    let askedAfterDelete = 0
     server.use(...loaded())
-    server.use(http.delete('*/api/v2/11/documents/purchase_invoices/941', () => { deleted = true; return new HttpResponse(null, { status: 204 }) }))
+    server.use(
+      http.delete('*/api/v2/11/documents/purchase_invoices/941', () => { deleted = true; return new HttpResponse(null, { status: 204 }) }),
+      // Once deleted, the document is gone, as on the server: asking for it again shows the not found page.
+      http.get('*/api/v2/11/documents/941', () => {
+        if (!deleted) return HttpResponse.json(summary({ state: 'open' }))
+        askedAfterDelete++
+        return HttpResponse.json({ error: 'not found' }, { status: 404 })
+      }),
+    )
     renderAt('/11/documents/941')
     await userEvent.click(await screen.findByRole('button', { name: 'Delete document' }))
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/documents$/))
     expect(deleted).toBe(true)
+    expect(askedAfterDelete).toBe(0)
   })
 
   it('edits a manual journal in the same place', async () => {
