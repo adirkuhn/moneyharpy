@@ -81,22 +81,6 @@ type Storage struct {
 	PathStyle bool
 }
 
-// Recognition configures the optional AI model Scan and Recognise asks
-// about documents its rules could not read. Off by default; with an API
-// provider documents are sent to that provider.
-type Recognition struct {
-	AIEnabled bool
-	// Provider is "ollama" or "anthropic".
-	Provider string
-	// URL is the address of the Ollama server; empty for the provider's own.
-	URL    string
-	Model  string
-	APIKey string
-}
-
-// RecognitionProviders are the AI providers Scan and Recognise can ask.
-var RecognitionProviders = []string{"ollama", "anthropic"}
-
 // Instance is the configuration of this MoneyHarpy installation.
 type Instance struct {
 	RegistrationOpen bool
@@ -148,11 +132,9 @@ type Update struct {
 
 	WebhooksAllowLocal *bool
 
-	RecognitionAIEnabled  *bool
-	RecognitionAIProvider *string
-	RecognitionAIURL      *string
-	RecognitionAIModel    *string
-	RecognitionAIAPIKey   *string
+	RecognitionAIEnabled *bool
+	// RecognitionAIConnections replaces the AI connections, in order.
+	RecognitionAIConnections *[]AIConnectionUpdate
 }
 
 // Store persists opaque values by key.
@@ -201,17 +183,16 @@ type storedInstance struct {
 	StoragePathStyle bool   `json:"storage_path_style"`
 	WebhooksLocal    bool   `json:"webhooks_allow_local"`
 	RecognitionAI    bool   `json:"recognition_ai_enabled"`
-	RecognitionProv  string `json:"recognition_ai_provider"`
-	RecognitionURL   string `json:"recognition_ai_url"`
-	RecognitionModel string `json:"recognition_ai_model"`
-	RecognitionKey   string `json:"recognition_ai_api_key_sealed"`
+	// RecognitionConns is nil in settings saved before there were connections.
+	RecognitionConns []storedConnection `json:"recognition_ai_connections"`
+	legacyRecognition
 }
 
 // Instance returns the current settings with secrets decrypted.
 func (s *Service) Instance(ctx context.Context) (Instance, error) {
 	raw, err := s.store.Load(ctx, instanceKey)
 	if errors.Is(err, ErrNotSet) {
-		return Instance{RegistrationOpen: true, Recognition: Recognition{Provider: RecognitionProviders[0]}}, nil
+		return Instance{RegistrationOpen: true}, nil
 	}
 	if err != nil {
 		return Instance{}, fmt.Errorf("load settings: %w", err)
@@ -228,10 +209,7 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 
 		AddressLookupEnabled: st.AddressLookup,
 		WebhooksAllowLocal:   st.WebhooksLocal,
-		Recognition: Recognition{
-			AIEnabled: st.RecognitionAI, Provider: cmp.Or(st.RecognitionProv, RecognitionProviders[0]), URL: st.RecognitionURL,
-			Model: st.RecognitionModel,
-		},
+		Recognition:          Recognition{AIEnabled: st.RecognitionAI},
 		SMTP: SMTP{
 			Enabled: st.SMTPEnabled, Host: st.SMTPHost, Port: st.SMTPPort, Username: st.SMTPUsername,
 			From: st.SMTPFrom, Security: st.SMTPSecurity,
@@ -261,10 +239,11 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 			return Instance{}, fmt.Errorf("decrypt storage secret: %w", err)
 		}
 	}
-	if st.RecognitionKey != "" {
-		if inst.Recognition.APIKey, err = s.cipher.Open(st.RecognitionKey); err != nil {
-			return Instance{}, fmt.Errorf("decrypt recognition api key: %w", err)
-		}
+	if st.RecognitionConns == nil {
+		st.RecognitionConns = st.legacyConnections()
+	}
+	if inst.Recognition.Connections, err = s.openConnections(st.RecognitionConns); err != nil {
+		return Instance{}, err
 	}
 	return inst, nil
 }
@@ -334,7 +313,9 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 
 	applySMTP(&inst.SMTP, u)
 	applyStorage(&inst.Storage, u)
-	applyRecognition(&inst.Recognition, u)
+	if err := applyRecognition(&inst.Recognition, u); err != nil {
+		return Instance{}, err
+	}
 
 	var verr resource.ValidationError
 	validateSMTP(inst.SMTP, &verr)
@@ -386,14 +367,9 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		StorageAccessKey: inst.Storage.AccessKey,
 		StoragePathStyle: inst.Storage.PathStyle,
 		RecognitionAI:    inst.Recognition.AIEnabled,
-		RecognitionProv:  inst.Recognition.Provider,
-		RecognitionURL:   inst.Recognition.URL,
-		RecognitionModel: inst.Recognition.Model,
 	}
-	if inst.Recognition.APIKey != "" {
-		if st.RecognitionKey, err = s.cipher.Seal(inst.Recognition.APIKey); err != nil {
-			return Instance{}, fmt.Errorf("encrypt recognition api key: %w", err)
-		}
+	if st.RecognitionConns, err = s.sealConnections(inst.Recognition.Connections); err != nil {
+		return Instance{}, err
 	}
 	if inst.Storage.SecretKey != "" {
 		if st.StorageSecret, err = s.cipher.Seal(inst.Storage.SecretKey); err != nil {
@@ -488,42 +464,6 @@ func applyStorage(cfg *Storage, u Update) {
 	}
 	if u.StoragePathStyle != nil {
 		cfg.PathStyle = *u.StoragePathStyle
-	}
-}
-
-func applyRecognition(cfg *Recognition, u Update) {
-	if u.RecognitionAIEnabled != nil {
-		cfg.AIEnabled = *u.RecognitionAIEnabled
-	}
-	if u.RecognitionAIProvider != nil {
-		cfg.Provider = strings.TrimSpace(*u.RecognitionAIProvider)
-	}
-	if u.RecognitionAIURL != nil {
-		cfg.URL = strings.TrimRight(strings.TrimSpace(*u.RecognitionAIURL), "/")
-	}
-	if u.RecognitionAIModel != nil {
-		cfg.Model = strings.TrimSpace(*u.RecognitionAIModel)
-	}
-	if u.RecognitionAIAPIKey != nil {
-		cfg.APIKey = cmp.Or(*u.RecognitionAIAPIKey, cfg.APIKey)
-	}
-}
-
-func validateRecognition(cfg Recognition, verr *resource.ValidationError) {
-	if !slices.Contains(RecognitionProviders, cfg.Provider) {
-		verr.Add("recognition_ai_provider", "is not included in the list")
-	}
-	if cfg.URL != "" && !validHTTPAddress(cfg.URL) {
-		verr.Add("recognition_ai_url", "must be an http or https address without a query")
-	}
-	if !cfg.AIEnabled {
-		return
-	}
-	if cfg.Model == "" {
-		verr.Add("recognition_ai_model", "can't be blank while the AI model is enabled")
-	}
-	if cfg.Provider == "anthropic" && cfg.APIKey == "" {
-		verr.Add("recognition_ai_api_key", "can't be blank while the AI model is enabled")
 	}
 }
 

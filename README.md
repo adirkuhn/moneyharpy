@@ -66,6 +66,16 @@ The bundled compose file also runs `ocr`, the image `ghcr.io/adirkuhn/moneyharpy
 
 It is optional: leave it out (remove the service or `OCR_URL`) and the app still works; Scan and Recognise then reads only e-invoice XML, and previews show the file itself. Documents never leave your server for it: it runs as a non-root user on an internal network without internet access, keeps nothing, and removes its temporary files after each request. It reads at most 20 pages of a PDF, takes files up to 20 MB and gives up after 2 minutes; `MAX_PAGES`, `MAX_BODY_MB`, `READ_TIMEOUT_SECONDS`, `CONCURRENCY` (jobs at once, default the number of CPUs) and `OCR_LANGUAGES` (default `nld+eng`) on the `ocr` service change that. Set `MONEYHARPY_OCR_IMAGE` to use another tag.
 
+### AI model for Scan and Recognise
+
+Optional and off by default. Under **Instance settings > Scan and Recognise**, add one or more **AI connections** and turn the AI model on; documents the rules cannot read are then read by the first enabled connection that answers, in the order you put them in (when one fails, is rate limited or answers something unreadable, the next is asked). Three providers are supported:
+
+- **Ollama**: a vision model on an Ollama server of your own, for example `qwen2.5vl`. Documents stay on your network.
+- **Anthropic**: Claude through the Anthropic API (default model `claude-opus-5-5`), with an API key.
+- **NVIDIA**: a vision model from NVIDIA's API catalog at [build.nvidia.com](https://build.nvidia.com) (default model `meta/llama-3.2-90b-vision-instruct`), with an `nvapi-` API key. Fill in an address to use a self-hosted NIM instead; it may then run without a key. NVIDIA's free API is meant for trying out models; check NVIDIA's terms before using it for your bookkeeping.
+
+With Anthropic or NVIDIA's API catalog the text and page images of those documents are sent to that provider. **Check** tests each connection.
+
 ### Company search and address lookup
 
 Both are optional and off by default, and the app works without them. Under **Instance settings**:

@@ -12,7 +12,7 @@ import { ContactSelect } from '../invoices/ContactSelect'
 import { applyBelow, moveRow, periodText } from '../invoices/details'
 import { type DetailRow, DetailsEditor } from '../invoices/DetailsEditor'
 import { addDays } from '../invoices/paper'
-import { computeTotals, parseCents, parseQuantity } from '../invoices/totals'
+import { chargedRate, computeTotals, parseCents, parseQuantity, vatRows } from '../invoices/totals'
 import { type TotalRow, TotalsTable } from '../invoices/TotalsTable'
 import { StateBadge } from '../invoices/StateBadge'
 import { leastSure } from '../forms/Remark'
@@ -74,7 +74,11 @@ function PurchaseFacts({ kind, doc, typeRow, onEdit, rates, accounts, notice }: 
   const details = [...(doc.details ?? [])].sort((a, b) => (a.row_order ?? 0) - (b.row_order ?? 0))
   const totals: TotalRow[] = [
     { label: t('invoices.subtotal'), amount: money(doc.total_price_excl_tax) },
-    ...(doc.tax_totals ?? []).map((r) => ({ label: rateName(r.tax_rate_id), amount: money(r.tax_amount) })),
+    ...vatRows(
+      (doc.tax_totals ?? []).map((r) => ({ taxRateId: r.tax_rate_id ?? '', taxable: parseCents(r.taxable_amount ?? '0') ?? 0, tax: parseCents(r.tax_amount ?? '0') ?? 0 })),
+      rates,
+      (cents) => money(cents / 100),
+    ),
     { label: t('invoices.total'), amount: money(doc.total_price_incl_tax), strong: true },
   ]
   return (
@@ -172,14 +176,14 @@ function PurchaseForm({ administrationId, kind, doc, typeRow, rates, accounts, o
   const parsed = rows.map((r) => ({ price: parseCents(r.price), quantity: parseQuantity(r.amount) }))
   const rateOf = (id: string) => rates.find((r) => r.id === id)
   const totals = computeTotals(
-    rows.map((r, i) => ({ price: parsed[i]?.price ?? 0, quantity: parsed[i]?.quantity ?? 0, taxRateId: r.tax_rate_id, rate: Math.round(Number(rateOf(r.tax_rate_id)?.percentage ?? 0) * 100) })),
+    rows.map((r, i) => ({ price: parsed[i]?.price ?? 0, quantity: parsed[i]?.quantity ?? 0, taxRateId: r.tax_rate_id, rate: chargedRate(rateOf(r.tax_rate_id)) })),
     0,
     inclTax,
   )
   const money = (cents: number) => formatAmount(cents / 100, currency, i18n.language)
   const totalRows: TotalRow[] = [
     { label: t('invoices.subtotal'), amount: money(totals.exclTax) },
-    ...totals.byRate.filter((r) => r.tax !== 0 || r.taxable !== 0).map((r) => ({ label: rateOf(r.taxRateId)?.name ?? '', amount: money(r.tax) })),
+    ...vatRows(totals.byRate, rates, money),
     { label: t('invoices.total'), amount: money(totals.inclTax), strong: true },
   ]
 

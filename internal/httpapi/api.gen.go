@@ -1242,24 +1242,6 @@ func (e IncomingDocumentSummaryType) Valid() bool {
 	}
 }
 
-// Defines values for InstanceSettingsRecognitionAiProvider.
-const (
-	InstanceSettingsRecognitionAiProviderAnthropic InstanceSettingsRecognitionAiProvider = "anthropic"
-	InstanceSettingsRecognitionAiProviderOllama    InstanceSettingsRecognitionAiProvider = "ollama"
-)
-
-// Valid indicates whether the value is a known member of the InstanceSettingsRecognitionAiProvider enum.
-func (e InstanceSettingsRecognitionAiProvider) Valid() bool {
-	switch e {
-	case InstanceSettingsRecognitionAiProviderAnthropic:
-		return true
-	case InstanceSettingsRecognitionAiProviderOllama:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for JournalEntryDocumentType.
 const (
 	JournalEntryDocumentTypeAsset                  JournalEntryDocumentType = "Asset"
@@ -2007,21 +1989,63 @@ func (e RecognitionState) Valid() bool {
 	}
 }
 
+// Defines values for RecognitionAIProvider.
+const (
+	Anthropic RecognitionAIProvider = "anthropic"
+	Nvidia    RecognitionAIProvider = "nvidia"
+	Ollama    RecognitionAIProvider = "ollama"
+)
+
+// Valid indicates whether the value is a known member of the RecognitionAIProvider enum.
+func (e RecognitionAIProvider) Valid() bool {
+	switch e {
+	case Anthropic:
+		return true
+	case Nvidia:
+		return true
+	case Ollama:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecognitionCheckAi.
 const (
-	Off         RecognitionCheckAi = "off"
-	Ok          RecognitionCheckAi = "ok"
-	Unavailable RecognitionCheckAi = "unavailable"
+	RecognitionCheckAiOff         RecognitionCheckAi = "off"
+	RecognitionCheckAiOk          RecognitionCheckAi = "ok"
+	RecognitionCheckAiUnavailable RecognitionCheckAi = "unavailable"
 )
 
 // Valid indicates whether the value is a known member of the RecognitionCheckAi enum.
 func (e RecognitionCheckAi) Valid() bool {
 	switch e {
-	case Off:
+	case RecognitionCheckAiOff:
 		return true
-	case Ok:
+	case RecognitionCheckAiOk:
 		return true
-	case Unavailable:
+	case RecognitionCheckAiUnavailable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RecognitionConnectionCheckState.
+const (
+	RecognitionConnectionCheckStateDisabled    RecognitionConnectionCheckState = "disabled"
+	RecognitionConnectionCheckStateOk          RecognitionConnectionCheckState = "ok"
+	RecognitionConnectionCheckStateUnavailable RecognitionConnectionCheckState = "unavailable"
+)
+
+// Valid indicates whether the value is a known member of the RecognitionConnectionCheckState enum.
+func (e RecognitionConnectionCheckState) Valid() bool {
+	switch e {
+	case RecognitionConnectionCheckStateDisabled:
+		return true
+	case RecognitionConnectionCheckStateOk:
+		return true
+	case RecognitionConnectionCheckStateUnavailable:
 		return true
 	default:
 		return false
@@ -2538,24 +2562,6 @@ func (e UnlinkBookingRequestBookingType) Valid() bool {
 	case UnlinkBookingRequestBookingTypeLedgerAccountBooking:
 		return true
 	case UnlinkBookingRequestBookingTypePayment:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for UpdateInstanceSettingsRequestRecognitionAiProvider.
-const (
-	UpdateInstanceSettingsRequestRecognitionAiProviderAnthropic UpdateInstanceSettingsRequestRecognitionAiProvider = "anthropic"
-	UpdateInstanceSettingsRequestRecognitionAiProviderOllama    UpdateInstanceSettingsRequestRecognitionAiProvider = "ollama"
-)
-
-// Valid indicates whether the value is a known member of the UpdateInstanceSettingsRequestRecognitionAiProvider enum.
-func (e UpdateInstanceSettingsRequestRecognitionAiProvider) Valid() bool {
-	switch e {
-	case UpdateInstanceSettingsRequestRecognitionAiProviderAnthropic:
-		return true
-	case UpdateInstanceSettingsRequestRecognitionAiProviderOllama:
 		return true
 	default:
 		return false
@@ -7402,29 +7408,22 @@ type InstanceSettings struct {
 	Lm2App                  string `json:"lm2_app"`
 	Lm2Enabled              bool   `json:"lm2_enabled"`
 	Lm2Url                  string `json:"lm2_url"`
-	RecognitionAiApiKeySet  bool   `json:"recognition_ai_api_key_set"`
+
+	// RecognitionAiConnections The AI connections in the order Scan and Recognise tries them: the first enabled connection that reads the document answers; when it fails (unavailable, rate limited, refused, an unreadable answer) the next is asked.
+	RecognitionAiConnections []RecognitionAIConnection `json:"recognition_ai_connections"`
 
 	// RecognitionAiEnabled Let Scan and Recognise ask an AI model about documents its rules could not read. Off unless turned on; with an API provider the document's text and images are sent to that provider.
-	RecognitionAiEnabled bool `json:"recognition_ai_enabled"`
-
-	// RecognitionAiModel Example: claude-opus-5-5
-	RecognitionAiModel    string                                `json:"recognition_ai_model"`
-	RecognitionAiProvider InstanceSettingsRecognitionAiProvider `json:"recognition_ai_provider"`
-
-	// RecognitionAiUrl The address of the Ollama server; empty for the provider's own address.
-	//
-	// Example: http://ollama:11434
-	RecognitionAiUrl string `json:"recognition_ai_url"`
-	RegistrationOpen bool   `json:"registration_open"`
-	SmtpEnabled      bool   `json:"smtp_enabled"`
-	SmtpFrom         string `json:"smtp_from"`
-	SmtpHost         string `json:"smtp_host"`
-	SmtpPasswordSet  bool   `json:"smtp_password_set"`
-	SmtpPort         int    `json:"smtp_port"`
-	SmtpSecurity     string `json:"smtp_security"`
-	SmtpUsername     string `json:"smtp_username"`
-	StorageAccessKey string `json:"storage_access_key"`
-	StorageBucket    string `json:"storage_bucket"`
+	RecognitionAiEnabled bool   `json:"recognition_ai_enabled"`
+	RegistrationOpen     bool   `json:"registration_open"`
+	SmtpEnabled          bool   `json:"smtp_enabled"`
+	SmtpFrom             string `json:"smtp_from"`
+	SmtpHost             string `json:"smtp_host"`
+	SmtpPasswordSet      bool   `json:"smtp_password_set"`
+	SmtpPort             int    `json:"smtp_port"`
+	SmtpSecurity         string `json:"smtp_security"`
+	SmtpUsername         string `json:"smtp_username"`
+	StorageAccessKey     string `json:"storage_access_key"`
+	StorageBucket        string `json:"storage_bucket"`
 
 	// StorageEnabled Whether uploads, such as logos, go to S3-compatible storage.
 	StorageEnabled bool `json:"storage_enabled"`
@@ -7440,9 +7439,6 @@ type InstanceSettings struct {
 	// WebhooksAllowLocal Let webhooks reach plain HTTP and private or loopback addresses, for development.
 	WebhooksAllowLocal bool `json:"webhooks_allow_local"`
 }
-
-// InstanceSettingsRecognitionAiProvider defines model for InstanceSettings.RecognitionAiProvider.
-type InstanceSettingsRecognitionAiProvider string
 
 // InvitationPreview defines model for InvitationPreview.
 type InvitationPreview struct {
@@ -8854,9 +8850,59 @@ type RecognitionSource string
 // RecognitionState none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in; failed: the attachments could not be read.
 type RecognitionState string
 
+// RecognitionAIConnection MoneyHarpy extension. An AI model Scan and Recognise can ask.
+type RecognitionAIConnection struct {
+	ApiKeySet bool `json:"api_key_set"`
+	Enabled   bool `json:"enabled"`
+
+	// Id Stable identifier of the connection.
+	Id string `json:"id"`
+
+	// Model The model; empty for the provider's default (not for Ollama).
+	//
+	// Example: meta/llama-3.2-90b-vision-instruct
+	Model string `json:"model"`
+
+	// Name Example: NVIDIA free
+	Name string `json:"name"`
+
+	// Provider MoneyHarpy extension. ollama is a server of your own; anthropic is the Anthropic API; nvidia is NVIDIA's API catalog (build.nvidia.com), or a self-hosted NIM at another address.
+	Provider RecognitionAIProvider `json:"provider"`
+
+	// Url For Ollama the address of the server. For NVIDIA it overrides the hosted API catalog address, for example for a self-hosted NIM; empty for the provider's own address.
+	//
+	// Example: http://ollama:11434
+	Url string `json:"url"`
+}
+
+// RecognitionAIConnectionRequest defines model for RecognitionAIConnectionRequest.
+type RecognitionAIConnectionRequest struct {
+	// ApiKey Omitted keeps the connection's stored key; an empty string removes it.
+	ApiKey  *string `json:"api_key,omitempty"`
+	Enabled *bool   `json:"enabled,omitempty"`
+
+	// Id The connection to change, so its stored API key is kept; a new connection gets an id.
+	Id    *string `json:"id,omitempty"`
+	Model *string `json:"model,omitempty"`
+
+	// Name Defaults to the provider's name.
+	Name *string `json:"name,omitempty"`
+
+	// Provider MoneyHarpy extension. ollama is a server of your own; anthropic is the Anthropic API; nvidia is NVIDIA's API catalog (build.nvidia.com), or a self-hosted NIM at another address.
+	Provider RecognitionAIProvider `json:"provider"`
+	Url      *string               `json:"url,omitempty"`
+}
+
+// RecognitionAIProvider MoneyHarpy extension. ollama is a server of your own; anthropic is the Anthropic API; nvidia is NVIDIA's API catalog (build.nvidia.com), or a self-hosted NIM at another address.
+type RecognitionAIProvider string
+
 // RecognitionCheck MoneyHarpy extension. Whether Scan and Recognise can read documents on this server.
 type RecognitionCheck struct {
+	// Ai off while the AI model is turned off; ok when at least one enabled connection answers.
 	Ai RecognitionCheckAi `json:"ai"`
+
+	// AiConnections Each AI connection, in order.
+	AiConnections []RecognitionConnectionCheck `json:"ai_connections"`
 
 	// Message Why the OCR service or the AI model could not be reached.
 	Message *string `json:"message,omitempty"`
@@ -8865,8 +8911,21 @@ type RecognitionCheck struct {
 	OcrAvailable bool `json:"ocr_available"`
 }
 
-// RecognitionCheckAi defines model for RecognitionCheck.Ai.
+// RecognitionCheckAi off while the AI model is turned off; ok when at least one enabled connection answers.
 type RecognitionCheckAi string
+
+// RecognitionConnectionCheck defines model for RecognitionConnectionCheck.
+type RecognitionConnectionCheck struct {
+	Id string `json:"id"`
+
+	// Message Why the connection could not be used.
+	Message *string                         `json:"message,omitempty"`
+	Name    string                          `json:"name"`
+	State   RecognitionConnectionCheckState `json:"state"`
+}
+
+// RecognitionConnectionCheckState defines model for RecognitionConnectionCheck.State.
+type RecognitionConnectionCheckState string
 
 // RecognizedField defines model for RecognizedField.
 type RecognizedField struct {
@@ -10325,34 +10384,30 @@ type UpdateInstanceSettingsRequest struct {
 	Lm2Enabled *bool   `json:"lm2_enabled,omitempty"`
 
 	// Lm2Url Public address of the LM2 installation.
-	Lm2Url                *string                                             `json:"lm2_url,omitempty"`
-	RecognitionAiApiKey   *string                                             `json:"recognition_ai_api_key,omitempty"`
-	RecognitionAiEnabled  *bool                                               `json:"recognition_ai_enabled,omitempty"`
-	RecognitionAiModel    *string                                             `json:"recognition_ai_model,omitempty"`
-	RecognitionAiProvider *UpdateInstanceSettingsRequestRecognitionAiProvider `json:"recognition_ai_provider,omitempty"`
-	RecognitionAiUrl      *string                                             `json:"recognition_ai_url,omitempty"`
-	RegistrationOpen      *bool                                               `json:"registration_open,omitempty"`
-	SmtpEnabled           *bool                                               `json:"smtp_enabled,omitempty"`
-	SmtpFrom              *string                                             `json:"smtp_from,omitempty"`
-	SmtpHost              *string                                             `json:"smtp_host,omitempty"`
-	SmtpPassword          *string                                             `json:"smtp_password,omitempty"`
-	SmtpPort              *int                                                `json:"smtp_port,omitempty"`
-	SmtpSecurity          *UpdateInstanceSettingsRequestSmtpSecurity          `json:"smtp_security,omitempty"`
-	SmtpUsername          *string                                             `json:"smtp_username,omitempty"`
-	StorageAccessKey      *string                                             `json:"storage_access_key,omitempty"`
-	StorageBucket         *string                                             `json:"storage_bucket,omitempty"`
-	StorageEnabled        *bool                                               `json:"storage_enabled,omitempty"`
-	StorageEndpoint       *string                                             `json:"storage_endpoint,omitempty"`
-	StoragePathStyle      *bool                                               `json:"storage_path_style,omitempty"`
-	StorageRegion         *string                                             `json:"storage_region,omitempty"`
-	StorageSecretKey      *string                                             `json:"storage_secret_key,omitempty"`
+	Lm2Url *string `json:"lm2_url,omitempty"`
+
+	// RecognitionAiConnections Replaces the AI connections; their order is the order Scan and Recognise tries them in.
+	RecognitionAiConnections *[]RecognitionAIConnectionRequest          `json:"recognition_ai_connections,omitempty"`
+	RecognitionAiEnabled     *bool                                      `json:"recognition_ai_enabled,omitempty"`
+	RegistrationOpen         *bool                                      `json:"registration_open,omitempty"`
+	SmtpEnabled              *bool                                      `json:"smtp_enabled,omitempty"`
+	SmtpFrom                 *string                                    `json:"smtp_from,omitempty"`
+	SmtpHost                 *string                                    `json:"smtp_host,omitempty"`
+	SmtpPassword             *string                                    `json:"smtp_password,omitempty"`
+	SmtpPort                 *int                                       `json:"smtp_port,omitempty"`
+	SmtpSecurity             *UpdateInstanceSettingsRequestSmtpSecurity `json:"smtp_security,omitempty"`
+	SmtpUsername             *string                                    `json:"smtp_username,omitempty"`
+	StorageAccessKey         *string                                    `json:"storage_access_key,omitempty"`
+	StorageBucket            *string                                    `json:"storage_bucket,omitempty"`
+	StorageEnabled           *bool                                      `json:"storage_enabled,omitempty"`
+	StorageEndpoint          *string                                    `json:"storage_endpoint,omitempty"`
+	StoragePathStyle         *bool                                      `json:"storage_path_style,omitempty"`
+	StorageRegion            *string                                    `json:"storage_region,omitempty"`
+	StorageSecretKey         *string                                    `json:"storage_secret_key,omitempty"`
 
 	// WebhooksAllowLocal Let webhooks reach plain HTTP and private or loopback addresses, for development.
 	WebhooksAllowLocal *bool `json:"webhooks_allow_local,omitempty"`
 }
-
-// UpdateInstanceSettingsRequestRecognitionAiProvider defines model for UpdateInstanceSettingsRequest.RecognitionAiProvider.
-type UpdateInstanceSettingsRequestRecognitionAiProvider string
 
 // UpdateInstanceSettingsRequestSmtpSecurity defines model for UpdateInstanceSettingsRequest.SmtpSecurity.
 type UpdateInstanceSettingsRequestSmtpSecurity string

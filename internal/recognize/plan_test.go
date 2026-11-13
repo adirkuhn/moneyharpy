@@ -217,3 +217,21 @@ func TestPlanBooksAnIntraCommunitySupplyReverseCharged(t *testing.T) {
 		t.Errorf("details = %+v, want the 0%% rate", d)
 	}
 }
+
+func TestPlanReplacesTheFileNameOfAnUploadWithTheReferenceRead(t *testing.T) {
+	e := Extraction{Reference: certain("ABCDE 12345/6789")}
+	for _, target := range []Target{
+		{Kind: purchases.TypelessDocument, Reference: "scan-0042.pdf"},
+		{Kind: purchases.PurchaseInvoice, Reference: "invoice_example.PDF"},
+	} {
+		p := MakePlan(PlanInput{Extraction: e, Target: target, Rates: testRates})
+		if p.Changes.Reference == nil || *p.Changes.Reference != "ABCDE 12345/6789" {
+			t.Errorf("%s %q: reference = %v, want the one read", target.Kind, target.Reference, p.Changes.Reference)
+		}
+	}
+	// A reference typed on a purchase invoice stays, also on a first reading.
+	typed := Target{Kind: purchases.PurchaseInvoice, Reference: "PO 77"}
+	if p := MakePlan(PlanInput{Extraction: e, Target: typed, Rates: testRates}); p.Changes.Reference != nil {
+		t.Errorf("typed reference replaced with %q", *p.Changes.Reference)
+	}
+}
