@@ -16,6 +16,7 @@ import { PageIcon } from '../layout/pageIcons'
 import { type MenuItem, MoreMenu } from '../list/ListActions'
 import { AttachmentViewer } from './AttachmentViewer'
 import { documentPath, useDocumentSummary, useToProcess } from './documents'
+import { DuplicateNotice, type PossibleDuplicate } from './DuplicateNotice'
 import { GeneralDocumentCard } from './GeneralDocumentCard'
 import { incomingHistory } from './history'
 import { PurchaseDocument } from './PurchaseDocument'
@@ -44,7 +45,15 @@ export function DocumentPage() {
   if (!summary.data || !typed.data) {
     return <Loading />
   }
-  return <DocumentView key={`${typed.data.type}-${documentId}`} administrationId={administrationId} typed={typed.data} />
+  return (
+    <DocumentView
+      key={`${typed.data.type}-${documentId}`}
+      administrationId={administrationId}
+      typed={typed.data}
+      duplicates={summary.data.possible_duplicates}
+      currency={summary.data.currency}
+    />
+  )
 }
 
 /** What the page is called: the type and the reference, as Moneybird's "Receipt 2026-0042"; an upload is its file. */
@@ -58,7 +67,9 @@ function useTitle({ type, doc }: TypedDocument) {
   return doc.reference ? `${name} ${doc.reference}` : name
 }
 
-function DocumentView({ administrationId, typed }: { administrationId: string; typed: TypedDocument }) {
+type ViewProps = { administrationId: string; typed: TypedDocument; duplicates: PossibleDuplicate[]; currency: string }
+
+function DocumentView({ administrationId, typed, duplicates, currency }: ViewProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const client = useQueryClient()
@@ -103,7 +114,12 @@ function DocumentView({ administrationId, typed }: { administrationId: string; t
       remark={remarksOf(recognition).field('document_type')}
     />
   )
-  const notice = <RecognitionNotice state={recognition?.state} onReadAgain={canRead ? readAgain : undefined} busy={recognize.isPending} />
+  const notice = (
+    <>
+      <DuplicateNotice administrationId={administrationId} duplicates={duplicates} currency={currency} />
+      <RecognitionNotice state={recognition?.state} onReadAgain={canRead ? readAgain : undefined} busy={recognize.isPending} />
+    </>
+  )
   const shared = { administrationId, typeRow, editing, onSaved, left: toProcess.left, cancelTo: list, notice }
 
   const card = (() => {

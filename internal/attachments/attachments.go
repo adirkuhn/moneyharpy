@@ -5,6 +5,8 @@ package attachments
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -37,8 +39,11 @@ type Attachment struct {
 	Filename    string
 	ContentType string
 	Size        int64
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	// SHA256 is the SHA-256 sum of the contents in hex, which tells the
+	// same file uploaded twice; empty until worked out for an old one.
+	SHA256    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Key is where the file is kept.
@@ -59,6 +64,11 @@ type Store interface {
 	DeleteAttachment(ctx context.Context, admin, id resource.ID) error
 	// AttachmentsOf returns the attachments on the records, oldest first.
 	AttachmentsOf(ctx context.Context, admin resource.ID, entityType string, entities []resource.ID) ([]Attachment, error)
+	// UnhashedAttachments returns at most limit attachments of records of
+	// the types without a SHA-256 sum, with ids above after, by id.
+	UnhashedAttachments(ctx context.Context, entityTypes []string, after resource.ID, limit int) ([]Attachment, error)
+	// SetAttachmentHash stores the sum of an attachment that has none.
+	SetAttachmentHash(ctx context.Context, admin, id resource.ID, sum string) error
 }
 
 // Service implements the attachment use cases.
@@ -67,11 +77,18 @@ type Service struct {
 	files Files
 	ids   *resource.Generator
 	now   func() time.Time
+	// hashBatch is how many attachments HashMissing sums at a time.
+	hashBatch int
 }
 
 // NewService returns a Service.
 func NewService(store Store, files Files, ids *resource.Generator, now func() time.Time) *Service {
-	return &Service{store: store, files: files, ids: ids, now: now}
+	return &Service{store: store, files: files, ids: ids, now: now, hashBatch: 100}
+}
+
+func sum(data []byte) string {
+	h := sha256.Sum256(data)
+	return hex.EncodeToString(h[:])
 }
 
 // Add attaches a file to a record. The content type is sniffed when the
@@ -101,7 +118,7 @@ func (s *Service) Add(ctx context.Context, admin resource.ID, entityType string,
 		return Attachment{}, err
 	}
 	now := s.now()
-	a := Attachment{ID: s.ids.Next(), AdministrationID: admin, EntityType: entityType, EntityID: entity, Filename: filename, ContentType: contentType, Size: int64(len(data)), CreatedAt: now, UpdatedAt: now}
+	a := Attachment{ID: s.ids.Next(), AdministrationID: admin, EntityType: entityType, EntityID: entity, Filename: filename, ContentType: contentType, Size: int64(len(data)), SHA256: sum(data), CreatedAt: now, UpdatedAt: now}
 	if err := s.files.Put(ctx, a.Key(), contentType, data); err != nil {
 		return Attachment{}, fmt.Errorf("store file: %w", err)
 	}
@@ -179,4 +196,36 @@ func (s *Service) Of(ctx context.Context, admin resource.ID, entityType string, 
 		out[a.EntityID] = append(out[a.EntityID], a)
 	}
 	return out, nil
+}
+
+// HashMissing works out the SHA-256 sum of the attachments of records of
+// the types that were added before attachments had one, a batch at a time,
+// once each: an attachment whose file cannot be read is left without.
+func (s *Service) HashMissing(ctx context.Context, entityTypes []string) error {
+	var after resource.ID
+	for {
+		list, err := s.store.UnhashedAttachments(ctx, entityTypes, after, s.hashBatch)
+		if err != nil {
+			return fmt.Errorf("list attachments to sum: %w", err)
+		}
+		for _, a := range list {
+			after = a.ID
+			body, _, err := s.files.Open(ctx, a.Key())
+			if err != nil {
+				continue
+			}
+			h := sha256.New()
+			_, err = io.Copy(h, body)
+			_ = body.Close()
+			if err != nil {
+				continue
+			}
+			if err := s.store.SetAttachmentHash(ctx, a.AdministrationID, a.ID, hex.EncodeToString(h.Sum(nil))); err != nil {
+				return fmt.Errorf("store attachment sum: %w", err)
+			}
+		}
+		if len(list) < s.hashBatch {
+			return nil
+		}
+	}
 }

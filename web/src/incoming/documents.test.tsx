@@ -12,7 +12,7 @@ const stamp = '2026-11-10T09:00:00Z'
 const doc = (over: Partial<DocumentSummary>): DocumentSummary => ({
   id: '941', administration_id: '11', type: 'PurchaseInvoice', reference: '2026-01234', contact_id: '701', contact_name: 'Supplier B.V.',
   date: '2026-11-01', state: 'open', currency: 'EUR', total_price_incl_tax: '121.0', attachments_count: 1, created_at: stamp,
-  uri: '/api/v2/11/documents/purchase_invoices/941', recognition_state: 'none',
+  uri: '/api/v2/11/documents/purchase_invoices/941', recognition_state: 'none', possible_duplicates: [],
   ...over,
 })
 
@@ -73,6 +73,16 @@ describe('the Incoming page', () => {
     expect(screen.getByRole('link', { name: 'Add' })).toHaveAttribute('href', '/11/documents/new')
     const nav = screen.getByRole('navigation', { name: 'Administration menu' })
     expect(within(nav).getByRole('link', { name: 'Incoming' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('marks the rows of documents that may be a copy of another', async () => {
+    const copy = { id: '941', type: 'PurchaseInvoice' as const, reference: '2026-01234', date: '2026-11-01', total_price_incl_tax: '121.0', reasons: ['same_file' as const] }
+    server.use(...loaded([], [doc({ id: '940', possible_duplicates: [copy] }), doc({})]))
+    renderAt('/11/documents')
+    const table = await screen.findByRole('table', { name: 'Incoming' })
+    expect(within(table).getByRole('link', { name: 'PUR 2026-01234 Possible duplicate' })).toHaveAttribute('href', '/11/documents/940')
+    expect(within(table).getByRole('link', { name: 'PUR 2026-01234' })).toHaveAttribute('href', '/11/documents/941')
+    expect(within(table).getAllByText('Possible duplicate')).toHaveLength(1)
   })
 
   it('filters on type, status and attachment through the filter in the address', async () => {

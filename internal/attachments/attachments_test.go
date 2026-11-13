@@ -46,6 +46,24 @@ func (m *memStore) AttachmentsOf(_ context.Context, _ resource.ID, entityType st
 	return out, nil
 }
 
+func (m *memStore) UnhashedAttachments(_ context.Context, entityTypes []string, after resource.ID, limit int) ([]Attachment, error) {
+	var out []Attachment
+	for _, a := range m.list {
+		if a.SHA256 == "" && a.ID > after && slices.Contains(entityTypes, a.EntityType) && len(out) < limit {
+			out = append(out, a)
+		}
+	}
+	return out, nil
+}
+func (m *memStore) SetAttachmentHash(_ context.Context, _, id resource.ID, sum string) error {
+	for i := range m.list {
+		if m.list[i].ID == id && m.list[i].SHA256 == "" {
+			m.list[i].SHA256 = sum
+		}
+	}
+	return nil
+}
+
 func newService() (*Service, memFiles) {
 	files := memFiles{}
 	return NewService(&memStore{}, files, resource.NewGenerator(1), func() time.Time { return time.Date(2026, 11, 11, 9, 0, 0, 0, time.UTC) }), files
@@ -95,5 +113,43 @@ func TestOpenAndDeleteStayOnTheRecord(t *testing.T) {
 	}
 	if len(files) != 0 {
 		t.Errorf("files left: %d", len(files))
+	}
+}
+
+// pdfSum is the SHA-256 of pdf, in hex.
+const pdfSum = "4cdcd30197a080d2f5aa3c5750a83c03d619523936b79cf0efffdb62ec667b6f"
+
+func TestAddSumsTheContents(t *testing.T) {
+	s, _ := newService()
+	a, err := s.Add(context.Background(), admin, "Receipt", 10, "a.pdf", "application/pdf", pdf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.SHA256 != pdfSum {
+		t.Errorf("sha256 = %q, want %q", a.SHA256, pdfSum)
+	}
+}
+
+func TestHashMissingSumsOldAttachmentsOfTheTypes(t *testing.T) {
+	store, files := &memStore{}, memFiles{}
+	s := NewService(store, files, resource.NewGenerator(1), time.Now)
+	s.hashBatch = 2
+	ctx := context.Background()
+	for i, typ := range []string{"Receipt", "SalesInvoice", "TypelessDocument", "Receipt", "Receipt"} {
+		a := Attachment{ID: resource.ID(i + 1), AdministrationID: admin, EntityType: typ, EntityID: 10}
+		store.list = append(store.list, a)
+		if i != 3 { // The file of the fourth is gone; it stays unsummed.
+			files[a.Key()] = pdf
+		}
+	}
+	if err := s.HashMissing(ctx, []string{"Receipt", "TypelessDocument"}); err != nil {
+		t.Fatal(err)
+	}
+	got := make([]string, len(store.list))
+	for i, a := range store.list {
+		got[i] = a.SHA256
+	}
+	if want := []string{pdfSum, "", pdfSum, "", pdfSum}; !slices.Equal(got, want) {
+		t.Errorf("sums = %q, want %q", got, want)
 	}
 }

@@ -799,8 +799,17 @@ ORDER BY e.ledger_account_id;
 SELECT EXISTS (SELECT 1 FROM journal_entries WHERE administration_id = $1 AND contact_id = $2);
 
 -- name: InsertAttachment :exec
-INSERT INTO attachments (id, administration_id, entity_type, entity_id, filename, content_type, size, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+INSERT INTO attachments (id, administration_id, entity_type, entity_id, filename, content_type, size, sha256, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+
+-- name: UnhashedAttachments :many
+SELECT * FROM attachments
+WHERE sha256 = '' AND entity_type = ANY(@entity_types::text[]) AND id > @after
+ORDER BY id
+LIMIT @max_rows;
+
+-- name: SetAttachmentHash :exec
+UPDATE attachments SET sha256 = @sha256 WHERE administration_id = @administration_id AND id = @id AND sha256 = '';
 
 -- name: DeleteAttachment :exec
 DELETE FROM attachments WHERE administration_id = $1 AND id = $2;

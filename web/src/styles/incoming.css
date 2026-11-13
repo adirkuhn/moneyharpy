@@ -2,6 +2,10 @@
 .document-type-ref { display: inline-flex; align-items: baseline; gap: 0.25rem; max-width: 100%; }
 .document-type-ref > :last-child { min-width: 0; overflow-wrap: anywhere; }
 .document-type-tag { display: inline-block; min-width: 2.25rem; color: var(--muted); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.02em; }
+/* A row that may be a copy of another document: a small gold mark after its reference. */
+.duplicate-mark { display: inline-flex; flex: none; align-items: center; gap: 0.25rem; margin-left: 0.375rem; padding: 0 0.375rem; border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 18%, var(--surface)); color: var(--text); font-size: 0.6875rem; font-weight: 600; white-space: nowrap; }
+.duplicate-mark svg { color: var(--gold); }
 .drop-bar-wrap { margin: 0 0 1rem; }
 .drop-bar-wrap .problems { margin: 0.5rem 0 0; }
 .drop-bar {

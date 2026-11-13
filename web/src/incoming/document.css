@@ -74,7 +74,13 @@
 .recognition-notice { align-items: center; }
 .recognition-notice svg { margin-top: 0; color: var(--teal); }
 .recognition-notice__text { flex: 1; margin: 0; }
-.recognition-notice--failed { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, var(--surface)); }
+.recognition-notice--failed, .duplicate-notice { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, var(--surface)); }
+/* A possible duplicate: the gold of a value to check, with a link to each document it may copy. */
+.duplicate-notice svg { color: var(--gold); }
+.duplicate-notice__text { flex: 1; margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.duplicate-notice__text p { margin: 0; }
+.duplicate-notice__text ul { margin: 0.25rem 0 0; padding-left: 1.25rem; }
+.duplicate-notice__facts { color: var(--muted); }
 .document-reading { display: inline-flex; align-items: center; gap: 0.375rem; color: var(--muted); font-style: italic; }
 .document-reading svg { color: var(--teal); }
 .incoming-card__rows .form-input__label { padding: 0; font-weight: 400; }

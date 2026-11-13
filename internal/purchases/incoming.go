@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -35,6 +36,9 @@ type Incoming struct {
 	TotalInclTax     money.Amount
 	AttachmentsCount int
 	CreatedAt        time.Time
+	// PossibleDuplicates are the other documents it may be a copy of; a
+	// journal entry has none.
+	PossibleDuplicates []Duplicate
 }
 
 // Ref locates the typed resource the document is.
@@ -149,6 +153,9 @@ func (s *Service) IncomingList(ctx context.Context, admin, user resource.ID, q I
 	for i := range list {
 		list[i].Currency = cmpString(list[i].Currency, a.Currency)
 	}
+	if err := s.markDuplicates(ctx, admin, list); err != nil {
+		return nil, 0, err
+	}
 	return list, total, nil
 }
 
@@ -163,7 +170,11 @@ func (s *Service) IncomingDocument(ctx context.Context, admin, id, user resource
 		return Incoming{}, err
 	}
 	d.Currency = cmpString(d.Currency, a.Currency)
-	return d, nil
+	list := []Incoming{d}
+	if err := s.markDuplicates(ctx, admin, list); err != nil {
+		return Incoming{}, err
+	}
+	return list[0], nil
 }
 
 // IncomingStatistics sums up the incoming documents the query selects, in
@@ -180,4 +191,28 @@ func (s *Service) IncomingStatistics(ctx context.Context, admin, user resource.I
 	}
 	st.Currency = a.Currency
 	return st, nil
+}
+
+// markDuplicates names on each document of the list the others it may be a
+// copy of, comparing them with every incoming document of the
+// administration in one go. Journal entries are not compared.
+func (s *Service) markDuplicates(ctx context.Context, admin resource.ID, list []Incoming) error {
+	ids := make([]resource.ID, 0, len(list))
+	for _, d := range list {
+		if slices.Contains(ComparedKinds, d.Kind) {
+			ids = append(ids, d.ID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	pool, err := s.store.DuplicateCandidates(ctx, admin, ids)
+	if err != nil {
+		return fmt.Errorf("find possible duplicates: %w", err)
+	}
+	found := PossibleDuplicates(ids, pool)
+	for i := range list {
+		list[i].PossibleDuplicates = found[list[i].ID]
+	}
+	return nil
 }

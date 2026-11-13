@@ -23,6 +23,17 @@ type incomingDocumentJSON struct {
 	CreatedAt         time.Time `json:"created_at"`
 	URI               string    `json:"uri"`
 	RecognitionState  string    `json:"recognition_state"`
+	// PossibleDuplicates is never null: an empty list when there are none.
+	PossibleDuplicates []possibleDuplicateJSON `json:"possible_duplicates"`
+}
+
+type possibleDuplicateJSON struct {
+	ID                string   `json:"id"`
+	Type              string   `json:"type"`
+	Reference         string   `json:"reference"`
+	Date              string   `json:"date"`
+	TotalPriceInclTax string   `json:"total_price_incl_tax"`
+	Reasons           []string `json:"reasons"`
 }
 
 func toIncomingDocument(d purchases.Incoming) incomingDocumentJSON {
@@ -33,6 +44,12 @@ func toIncomingDocument(d purchases.Incoming) incomingDocumentJSON {
 	}
 	if d.ContactID != 0 {
 		o.ContactID = ptr(d.ContactID.String())
+	}
+	o.PossibleDuplicates = make([]possibleDuplicateJSON, len(d.PossibleDuplicates))
+	for i, p := range d.PossibleDuplicates {
+		o.PossibleDuplicates[i] = possibleDuplicateJSON{
+			ID: p.ID.String(), Type: p.Kind, Reference: p.Reference, Date: p.Date.Format(time.DateOnly), TotalPriceInclTax: p.TotalInclTax.String(), Reasons: p.Reasons,
+		}
 	}
 	return o
 }
