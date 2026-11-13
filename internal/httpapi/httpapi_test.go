@@ -1454,8 +1454,15 @@ func TestServesContractAndWebApp(t *testing.T) {
 		if string(r.body) != "<html>spa</html>" {
 			t.Errorf("GET %s = %q, want the web app", path, r.body)
 		}
-		if r.header.Get("Content-Security-Policy") == "" {
+		csp := r.header.Get("Content-Security-Policy")
+		if csp == "" {
 			t.Errorf("GET %s has no Content-Security-Policy", path)
+		}
+		// Attachments are previewed from object URLs: images inline, PDFs in a frame.
+		for _, want := range []string{"img-src 'self' data: blob:", "frame-src 'self' blob:"} {
+			if !strings.Contains(csp, want) {
+				t.Errorf("GET %s Content-Security-Policy = %q, want %q", path, csp, want)
+			}
 		}
 	}
 
