@@ -161,7 +161,9 @@
 .feed-row__title { grid-area: title; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .feed-row__amount { grid-area: amount; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .feed-row__subtitle { grid-area: subtitle; display: flex; align-items: center; gap: 0.5rem; min-width: 0; color: var(--muted); }
-.feed-row__lines { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The state keeps its size; the lines give way, cut off with an ellipsis. */
+.feed-row__subtitle .badge { flex: none; }
+.feed-row__lines { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .feed-row__date { grid-area: date; color: var(--muted); text-align: right; white-space: nowrap; }
 
 /* The Details tab: the form's sections, as labels beside their values. */
