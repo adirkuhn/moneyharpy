@@ -565,21 +565,26 @@ describe('an invoice', () => {
     let paused = false
     server.use(...loaded())
     server.use(
-      http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice({ paused }))),
+      // As Moneybird's API, a paused invoice's next reminder is 2099-01-01.
+      http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(invoice({ paused, next_reminder: paused ? '2099-01-01' : '2026-11-26' }))),
       http.post('*/api/v2/11/sales_invoices/901/pause', () => {
         paused = true
-        return HttpResponse.json(invoice({ paused }), { status: 201 })
+        return HttpResponse.json(invoice({ paused, next_reminder: '2099-01-01' }), { status: 201 })
       }),
       http.post('*/api/v2/11/sales_invoices/901/resume', () => {
         paused = false
-        return HttpResponse.json(invoice({ paused }), { status: 201 })
+        return HttpResponse.json(invoice({ paused, next_reminder: '2026-11-26' }), { status: 201 })
       }),
     )
     renderAt('/11/sales_invoices/901')
     await choose('Extra', 'Pause reminders')
     expect(await screen.findByText('Reminders for this invoice are paused.')).toBeInTheDocument()
+    // The far-off day only says no reminder is planned; it is not shown.
+    expect(within(sidebar()).queryByText('Next reminder')).toBeNull()
+    expect(within(sidebar()).queryByText(/2099/)).toBeNull()
     await choose('Extra', 'Resume reminders')
     await waitFor(() => expect(screen.queryByText('Reminders for this invoice are paused.')).toBeNull())
+    expect(within(sidebar()).getByText('Next reminder').nextElementSibling).toHaveTextContent('Nov 26, 2026')
   })
 
   it('deletes a draft and returns to the list', async () => {
@@ -602,7 +607,9 @@ describe('an invoice', () => {
     expect(warning).toHaveTextContent('A refund is registered as the payment of a credit note.')
     expect(within(warning).getByRole('button', { name: 'Continue editing' })).toBeInTheDocument()
     await userEvent.click(within(warning).getByRole('button', { name: 'Cancel' }))
-    expect(screen.queryByRole('link', { name: 'Register payment' })).toBeNull()
+    // Moneybird still offers Register payment on a paid invoice, e.g. to link
+    // the bank transaction of a payment marked paid without proof.
+    expect(screen.getByRole('link', { name: 'Register payment' })).toHaveAttribute('href', '/11/sales_invoices/901/payments/new')
     await userEvent.click(screen.getByRole('button', { name: 'Download as...' }))
     expect(screen.getByText('Payment receipt (PDF)').closest('.dropdown__item')).toHaveAttribute('aria-disabled', 'true')
     await userEvent.click(screen.getByRole('button', { name: 'Extra' }))

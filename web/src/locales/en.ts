@@ -313,7 +313,7 @@ export const en = {
     },
     reminders: {
       action: 'Send reminder', title: 'Send reminder', text: 'Reminder text', textPlaceholder: 'Leave empty to use the text of the workflow.',
-      textHelp: 'You can use {invoice_id}, {total}, {due_date}, {contact_name} and {invoices}, the list of open invoices.',
+      textHelp: 'You can use {invoice_id}, {total}, {due_date}, {contact_name} and {reminders_table} (or {invoices}), the table of unpaid invoices.',
       manualHint: 'The invoice is marked as reminded. Send the reminder yourself.', submit: 'Send reminder',
     },
     writeOff: {

@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
@@ -59,8 +61,13 @@ func TestRegisterPaymentPaysTheInvoice(t *testing.T) {
 	if !slices.Contains(h.notifier.actions, "sales_invoice_state_changed_to_paid") {
 		t.Errorf("events = %v", h.notifier.actions)
 	}
-	if _, err := h.svc.RegisterPayment(ctx, adminID, inv.ID, owner, PaymentInput{PaymentDate: "2026-11-10"}); !errors.Is(err, ErrNotEditable) {
+	// Moneybird offers Register payment on a paid invoice; with nothing left
+	// to receive, an amount is refused on its price, not for the state.
+	if _, err := h.svc.RegisterPayment(ctx, adminID, inv.ID, owner, PaymentInput{PaymentDate: "2026-11-10"}); fieldsOf(t, err)["price"] == nil {
 		t.Errorf("paid twice: %v", err)
+	}
+	if _, err := h.svc.RegisterPayment(ctx, adminID, inv.ID, owner, PaymentInput{PaymentDate: "2026-11-10", Price: ptr("5")}); fieldsOf(t, err)["price"] == nil {
+		t.Errorf("overpaid: %v", err)
 	}
 	if p, err := h.svc.Payment(ctx, adminID, part.ID, owner); err != nil || p.InvoiceID != inv.ID || p.Price != 2100 {
 		t.Errorf("Payment() = %+v, %v", p, err)
@@ -405,5 +412,22 @@ func TestSendReminders(t *testing.T) {
 	sum, err := h.svc.Summary(ctx, adminID, owner)
 	if err != nil || sum.ToReceive.Count != 2 || sum.ToReceive.Amount != 24200 || sum.ToRemind.Count != 2 || sum.Currency != "EUR" {
 		t.Errorf("summary = %+v, %v", sum, err)
+	}
+}
+
+// Moneybird's reminder texts place the unpaid invoices with
+// {reminders_table}; the default reminders use it.
+func TestReminderEmailFillsMoneybirdsRemindersTable(t *testing.T) {
+	day := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	doc := Document{
+		Invoice:  Invoice{InvoiceID: "2026-0007", InvoiceDate: &day, Language: "nl", Currency: "EUR"},
+		Contact:  contacts.Contact{CompanyName: "Example Shop B.V."},
+		Identity: administration.Identity{CompanyName: "Harpy B.V."},
+	}
+	text := invoicing.DefaultReminderTexts("nl")[0]
+	_, body := ReminderEmail([]Document{doc}, text)
+	if !strings.HasPrefix(body, "Geachte Example Shop B.V.,\n\n") || !strings.Contains(body, "\n\n- 2026-0007 (01-10-2026): ") ||
+		strings.Contains(body, "{") || !strings.HasSuffix(body, "Met vriendelijke groet,\n\nHarpy B.V.") {
+		t.Errorf("body = %q", body)
 	}
 }

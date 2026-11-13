@@ -182,7 +182,9 @@ function InvoiceForm(props: FormProps) {
   // The invoice being edited, sales or recurring; a new one starts from its template.
   const doc = editedOf(props)
   const init = doc ?? props.template ?? null
-  const nextDraftId = useNextDraftId(administrationId, !doc)
+  // A new invoice shows the next draft number; so does a recurring invoice,
+  // in its RF..CONCEPT reference, as Moneybird does.
+  const nextDraftId = useNextDraftId(administrationId, !doc || !!recurring)
   const { t, i18n } = useTranslation()
   const { pathname } = useLocation()
   const navigate = useNavigate()

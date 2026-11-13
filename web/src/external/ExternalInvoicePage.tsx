@@ -72,7 +72,8 @@ function ExternalInvoiceScreen({ administrationId, invoice: inv, rates }: { admi
   const actions = (
     <div className="invoice-actions invoice-actions--external">
       <div className="invoice-actions__buttons">
-        {payable && <Link className="btn btn--secondary" to={`${here}/payments/new`}>{t('external.view.registerPayment')}</Link>}
+        {/* Moneybird offers it on a paid invoice too, e.g. to link the bank transaction of a payment without proof. */}
+        {(payable || inv.state === 'paid') && <Link className="btn btn--secondary" to={`${here}/payments/new`}>{t('external.view.registerPayment')}</Link>}
         {isEditable(inv) && <Link className="btn btn--secondary" to={`${here}/edit`}>{t('external.view.edit')}</Link>}
         <button
           type="button"

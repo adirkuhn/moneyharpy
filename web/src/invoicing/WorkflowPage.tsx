@@ -244,8 +244,9 @@ export function WorkflowPage({ administration, workflow: w }: { administration: 
                         <p>{r.reminder_auto_send ? t('workflow.page.automatic') : t('workflow.page.manual')}</p>
                         <h4 className="workflow-page__label">{t('workflow.page.reminderEmail')}</h4>
                         <div className="workflow-page__preview">
-                          <Paragraphs text={email(r.reminder_text)} />
-                          <p className="hint">{t('workflow.page.unpaidTable')}</p>
+                          {/* Moneybird's {reminders_table} (or our {invoices}) places the unpaid invoices; otherwise they follow the text. */}
+                          <Paragraphs text={email(r.reminder_text)} table={t('workflow.page.unpaidTable')} />
+                          {!unpaidTag.test(r.reminder_text) && <p className="hint">{t('workflow.page.unpaidTable')}</p>}
                         </div>
                         <h4 className="workflow-page__label">{t('workflow.page.expiresAfter')}</h4>
                         <p>{daysText(r.due_interval)}</p>
@@ -296,12 +297,18 @@ function NotAvailable() {
 }
 
 /** A text as paragraphs, split on blank lines, with its line breaks kept. */
-function Paragraphs({ text }: { text: string }) {
+/** The tags a reminder text lists its unpaid invoices with. */
+const unpaidTag = /\{(reminders_table|invoices)\}/
+
+/** An email's paragraphs; a paragraph of only the unpaid invoices' tag shows `table` as a hint. */
+function Paragraphs({ text, table }: { text: string; table?: string }) {
   return (
     <>
-      {text.split(/\n{2,}/).map((p, i) => (
-        <p key={i} className="workflow-page__paragraph">{p}</p>
-      ))}
+      {text.split(/\n{2,}/).map((p, i) =>
+        table && unpaidTag.test(p) && p.replace(unpaidTag, '').trim() === ''
+          ? <p key={i} className="hint">{table}</p>
+          : <p key={i} className="workflow-page__paragraph">{table ? p.replace(new RegExp(unpaidTag, 'g'), table) : p}</p>,
+      )}
     </>
   )
 }
