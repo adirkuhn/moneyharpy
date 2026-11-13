@@ -4706,6 +4706,84 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/{id}/recognize:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: recognizeIncomingDocument
+      x-permissions: [documents]
+      summary: Read an incoming document again
+      description: >-
+        MoneyHarpy extension. Runs Scan and Recognise again on the document's attachments in the background, for an
+        upload or a new purchase invoice or receipt, which books nothing. What it reads replaces the fields it filled in
+        before; fields changed by hand are kept. A booked document or another type cannot be read again (422).
+      tags: [Incoming documents]
+      responses:
+        '202':
+          description: Reading has started; the document's recognition state is pending.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomingDocumentSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/{id}/attachments/{attachment_id}/preview:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    get:
+      operationId: previewIncomingDocumentAttachment
+      x-permissions: [documents]
+      summary: Preview a page of an attachment
+      description: >-
+        MoneyHarpy extension, after Moneybird's attachment viewer. One page of an incoming document's attachment as a
+        PNG image, for a PDF or an image, rendered by the OCR service. X-Page-Count tells how many pages there are.
+        404 when the attachment has no such page or cannot be previewed, for example while the OCR service is not
+        running; the page then shows the file itself.
+      tags: [Incoming documents]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 1
+      responses:
+        '200':
+          description: The page as an image
+          headers:
+            X-Page-Count:
+              description: The number of pages of the attachment.
+              schema:
+                type: integer
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/documents/{id}/set_type:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -13119,6 +13197,25 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '503':
           $ref: '#/components/responses/RegisterUnavailable'
+  /api/instance/settings/test_recognition:
+    post:
+      operationId: testRecognition
+      summary: Check Scan and Recognise
+      description: >-
+        Checks whether the OCR service answers and, when the AI model is turned on, whether it answers with the saved
+        settings, so an administrator can see what Scan and Recognise can do on this server.
+      tags: [Instance]
+      responses:
+        '200':
+          description: What works
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecognitionCheck'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/instance/settings/test_storage:
     post:
       operationId: testStorage
@@ -14233,7 +14330,7 @@ components:
           maxLength: 255
     InstanceSettings:
       type: object
-      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, kvk_website_search_enabled, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security, storage_enabled, storage_endpoint, storage_region, storage_bucket, storage_access_key, storage_secret_key_set, storage_path_style, webhooks_allow_local]
+      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, kvk_website_search_enabled, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security, storage_enabled, storage_endpoint, storage_region, storage_bucket, storage_access_key, storage_secret_key_set, storage_path_style, webhooks_allow_local, recognition_ai_enabled, recognition_ai_provider, recognition_ai_url, recognition_ai_model, recognition_ai_api_key_set]
       properties:
         registration_open:
           type: boolean
@@ -14294,6 +14391,23 @@ components:
         webhooks_allow_local:
           type: boolean
           description: Let webhooks reach plain HTTP and private or loopback addresses, for development.
+        recognition_ai_enabled:
+          type: boolean
+          description: >-
+            Let Scan and Recognise ask an AI model about documents its rules could not read. Off unless turned on; with
+            an API provider the document's text and images are sent to that provider.
+        recognition_ai_provider:
+          type: string
+          enum: [ollama, anthropic]
+        recognition_ai_url:
+          type: string
+          description: The address of the Ollama server; empty for the provider's own address.
+          example: http://ollama:11434
+        recognition_ai_model:
+          type: string
+          example: claude-opus-5-5
+        recognition_ai_api_key_set:
+          type: boolean
     UpdateInstanceSettingsRequest:
       type: object
       additionalProperties: false
@@ -14368,6 +14482,22 @@ components:
         webhooks_allow_local:
           type: boolean
           description: Let webhooks reach plain HTTP and private or loopback addresses, for development.
+        recognition_ai_enabled:
+          type: boolean
+        recognition_ai_provider:
+          type: string
+          enum: [ollama, anthropic]
+        recognition_ai_url:
+          type: string
+          maxLength: 2048
+        recognition_ai_model:
+          type: string
+          maxLength: 255
+        recognition_ai_api_key:
+          type: string
+          writeOnly: true
+          maxLength: 1024
+
     Workflow:
       description: A Moneybird workflow with MoneyHarpy extensions.
       allOf:
@@ -15873,11 +16003,13 @@ components:
     PurchaseDocumentFields:
       type: object
       required: [id, administration_id, contact_id, date, state, entry_number, currency, details, payments, notes, attachments, events,
-                 fiscal_allocations, total_price_excl_tax, total_price_incl_tax, total_paid, total_unpaid, version, uri]
+                 fiscal_allocations, total_price_excl_tax, total_price_incl_tax, total_paid, total_unpaid, version, uri, recognition]
       properties:
         uri:
           type: string
           description: MoneyHarpy extension. Canonical path of this resource.
+        recognition:
+          $ref: '#/components/schemas/Recognition'
         total_tax:
           type: string
           description: MoneyHarpy extension. The VAT charged; reverse-charged VAT is not part of it.
@@ -16094,7 +16226,7 @@ components:
     IncomingDocumentSummary:
       type: object
       description: MoneyHarpy extension. One incoming document of any kind, as a row of the Incoming page.
-      required: [id, administration_id, type, reference, contact_id, contact_name, date, state, currency, total_price_incl_tax, attachments_count, created_at, uri]
+      required: [id, administration_id, type, reference, contact_id, contact_name, date, state, currency, total_price_incl_tax, attachments_count, created_at, uri, recognition_state]
       properties:
         id:
           type: string
@@ -16130,6 +16262,10 @@ components:
         uri:
           type: string
           description: Canonical path of the typed resource, such as /api/v2/{administration_id}/documents/receipts/{id}.
+        recognition_state:
+          type: string
+          enum: [none, pending, done, failed]
+          description: The state of Scan and Recognise for this document; see Recognition.
     IncomingDocumentStatistics:
       type: object
       description: MoneyHarpy extension. Totals of the incoming documents in a selection.
@@ -16157,16 +16293,69 @@ components:
                 type: string
               amount:
                 type: string
+    Recognition:
+      type: object
+      description: >-
+        MoneyHarpy extension. What Scan and Recognise read from the document's attachments: its state, where the
+        values came from and which fields it filled in. Fields it was unsure of are marked uncertain for review.
+      required: [state, source, fields]
+      properties:
+        state:
+          type: string
+          enum: [none, pending, done, failed]
+          description: >-
+            none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending:
+            being read; done: read and filled in; failed: the attachments could not be read.
+        source:
+          type: string
+          nullable: true
+          enum: [e_invoice, text, ocr, ai, null]
+          description: >-
+            e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a
+            scan or photo; ai: the optional AI model, used when the rules could not read the document.
+        fields:
+          type: array
+          description: >-
+            The fields filled in automatically, by name as in the document's request (document_type, contact_id,
+            reference, date, due_date, currency, prices_are_incl_tax) or per line as details.<index>.<field>
+            (description, amount, price, tax_rate_id, ledger_account_id).
+          items:
+            $ref: '#/components/schemas/RecognizedField'
+    RecognizedField:
+      type: object
+      required: [field, confidence]
+      properties:
+        field:
+          type: string
+        confidence:
+          type: string
+          enum: [certain, uncertain]
+    RecognitionCheck:
+      type: object
+      description: MoneyHarpy extension. Whether Scan and Recognise can read documents on this server.
+      required: [ocr_available, ai]
+      properties:
+        ocr_available:
+          type: boolean
+          description: Whether the OCR service answers; without it only e-invoices and digital PDFs can be read.
+        ai:
+          type: string
+          enum: [off, ok, unavailable]
+        message:
+          type: string
+          description: Why the OCR service or the AI model could not be reached.
     TypelessDocument:
       description: A Moneybird typeless document with MoneyHarpy extensions.
       allOf:
         - $ref: '#/components/schemas/typeless_document_response'
         - type: object
-          required: [id, administration_id, contact_id, date, state, attachments, events, version, uri]
+          required: [id, administration_id, contact_id, date, state, attachments, events, version, uri, recognition]
           properties:
             uri:
               type: string
               description: MoneyHarpy extension. Canonical path of this resource.
+            recognition:
+              $ref: '#/components/schemas/Recognition'
     TypelessDocumentRequest:
       type: object
       required: [typeless_document]

@@ -1,0 +1,20 @@
+Exemplo Lda
+Rua do Exemplo, 123
+1000-001 Lisboa
+NIF: PT123456789
+
+FATURA FT 2026/142
+Data: 13-11-2026
+Vencimento: 13-12-2026
+
+Cliente: Example Shop B.V.
+NIF Cliente: NL123456782B01
+
+Descrição                 Qtd.   Preço Unit.   IVA    Total
+Tradução de documentos      2      150,00      23%   300,00
+
+Total Ilíquido                                       300,00
+IVA 23%                                               69,00
+Total a Pagar                                     369,00 €
+
+IBAN: PT50 0002 0123 1234 5678 9015 4

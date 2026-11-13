@@ -5,6 +5,7 @@ import {
   addMonths, calendarMonth, clampDay, firstOf, isDay, lastOf, type Month, monthOf, noonOf, shiftDay, shiftMonth, todayDay, weekdayOf,
 } from './calendar'
 import { type ControlProps, FormRow, type Width } from './Form'
+import type { Confidence } from './Remark'
 import './datePicker.css'
 
 export type DatePickerProps = Partial<ControlProps> & {
@@ -295,12 +296,13 @@ type DateInputProps = Omit<DatePickerProps, keyof ControlProps> & {
   width?: Width
   action?: ReactNode
   labelExtra?: ReactNode
+  remark?: Confidence
 }
 
 /** A labelled date field, as a form row. */
-export function DateInput({ label, errors, help, width = 'medium', action, labelExtra, ...picker }: DateInputProps) {
+export function DateInput({ label, errors, help, width = 'medium', action, labelExtra, remark, ...picker }: DateInputProps) {
   return (
-    <FormRow label={label} errors={errors} help={help} width={width} action={action} labelExtra={labelExtra}>
+    <FormRow label={label} errors={errors} help={help} width={width} action={action} labelExtra={labelExtra} remark={remark}>
       {({ labelId: _, ...control }) => <DatePicker {...picker} {...control} />}
     </FormRow>
   )

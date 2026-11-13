@@ -33,6 +33,12 @@ export function documentPath(administrationId: string, d: Pick<DocumentSummary, 
 
 const admin = (administrationId: string) => ({ administration_id: administrationId })
 
+/** How often a page asks again while Scan and Recognise reads a document; tests make it quick. */
+export const polling = { intervalMs: 3000 }
+
+/** Whether Scan and Recognise is still reading this document. */
+export const isReading = (d: Pick<DocumentSummary, 'recognition_state'> | undefined) => d?.recognition_state === 'pending'
+
 export const documentsKey = (administrationId: string) => ['documents', administrationId]
 
 /** One page of the incoming documents of every type, for a filter such as "period:this_year,type:receipt". */
@@ -40,6 +46,8 @@ export function useDocuments(administrationId: string, filter: string, page: num
   return useQuery({
     queryKey: [...documentsKey(administrationId), 'list', filter, page],
     placeholderData: keepPreviousData,
+    // The list asks again while a document on it is being read, so it shows what was read.
+    refetchInterval: (query) => (query.state.data?.documents.some(isReading) ? polling.intervalMs : false),
     queryFn: async () => {
       const { data, error, response } = await api.GET('/api/v2/{administration_id}/documents', {
         params: { path: admin(administrationId), query: { filter, page: String(page), per_page: String(perPage) } },
@@ -78,6 +86,7 @@ export function useToProcess(administrationId: string, currentId: string) {
 export function useDocumentSummary(administrationId: string, id: string) {
   return useQuery({
     queryKey: [...documentsKey(administrationId), 'one', id],
+    refetchInterval: (query) => (isReading(query.state.data) ? polling.intervalMs : false),
     queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/documents/{id}', { params: { path: { ...admin(administrationId), id } } })),
   })
 }

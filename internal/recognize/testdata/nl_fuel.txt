@@ -1,0 +1,16 @@
+TANKSTATION VOORBEELD
+Snelweg 99
+1234 AB Voorbeeldstad
+Example Fuel B.V.
+KvK 12345678   BTW NL123456782B01
+
+Bonnr: 2026-118-0042
+13-11-2026  08:12   Kassa 1
+
+Pomp 4  Euro 95 E10
+  42,17 l x 1,999 EUR/l          84,30
+Ruitenvloeistof                   4,99
+
+Totaal                 EUR       89,29
+BTW 21%  over 73,79              15,50
+Mastercard contactloos           89,29

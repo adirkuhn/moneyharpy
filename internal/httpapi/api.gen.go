@@ -1191,6 +1191,30 @@ func (e ImportResultFormat) Valid() bool {
 	}
 }
 
+// Defines values for IncomingDocumentSummaryRecognitionState.
+const (
+	IncomingDocumentSummaryRecognitionStateDone    IncomingDocumentSummaryRecognitionState = "done"
+	IncomingDocumentSummaryRecognitionStateFailed  IncomingDocumentSummaryRecognitionState = "failed"
+	IncomingDocumentSummaryRecognitionStateNone    IncomingDocumentSummaryRecognitionState = "none"
+	IncomingDocumentSummaryRecognitionStatePending IncomingDocumentSummaryRecognitionState = "pending"
+)
+
+// Valid indicates whether the value is a known member of the IncomingDocumentSummaryRecognitionState enum.
+func (e IncomingDocumentSummaryRecognitionState) Valid() bool {
+	switch e {
+	case IncomingDocumentSummaryRecognitionStateDone:
+		return true
+	case IncomingDocumentSummaryRecognitionStateFailed:
+		return true
+	case IncomingDocumentSummaryRecognitionStateNone:
+		return true
+	case IncomingDocumentSummaryRecognitionStatePending:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IncomingDocumentSummaryType.
 const (
 	IncomingDocumentSummaryTypeGeneralDocument        IncomingDocumentSummaryType = "GeneralDocument"
@@ -1212,6 +1236,24 @@ func (e IncomingDocumentSummaryType) Valid() bool {
 	case IncomingDocumentSummaryTypeReceipt:
 		return true
 	case IncomingDocumentSummaryTypeTypelessDocument:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for InstanceSettingsRecognitionAiProvider.
+const (
+	InstanceSettingsRecognitionAiProviderAnthropic InstanceSettingsRecognitionAiProvider = "anthropic"
+	InstanceSettingsRecognitionAiProviderOllama    InstanceSettingsRecognitionAiProvider = "ollama"
+)
+
+// Valid indicates whether the value is a known member of the InstanceSettingsRecognitionAiProvider enum.
+func (e InstanceSettingsRecognitionAiProvider) Valid() bool {
+	switch e {
+	case InstanceSettingsRecognitionAiProviderAnthropic:
+		return true
+	case InstanceSettingsRecognitionAiProviderOllama:
 		return true
 	default:
 		return false
@@ -1914,6 +1956,96 @@ func (e ReceiptState) Valid() bool {
 	}
 }
 
+// Defines values for RecognitionSource.
+const (
+	RecognitionSourceAi          RecognitionSource = "ai"
+	RecognitionSourceEInvoice    RecognitionSource = "e_invoice"
+	RecognitionSourceLessThannil RecognitionSource = "<nil>"
+	RecognitionSourceOcr         RecognitionSource = "ocr"
+	RecognitionSourceText        RecognitionSource = "text"
+)
+
+// Valid indicates whether the value is a known member of the RecognitionSource enum.
+func (e RecognitionSource) Valid() bool {
+	switch e {
+	case RecognitionSourceAi:
+		return true
+	case RecognitionSourceEInvoice:
+		return true
+	case RecognitionSourceLessThannil:
+		return true
+	case RecognitionSourceOcr:
+		return true
+	case RecognitionSourceText:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RecognitionState.
+const (
+	RecognitionStateDone    RecognitionState = "done"
+	RecognitionStateFailed  RecognitionState = "failed"
+	RecognitionStateNone    RecognitionState = "none"
+	RecognitionStatePending RecognitionState = "pending"
+)
+
+// Valid indicates whether the value is a known member of the RecognitionState enum.
+func (e RecognitionState) Valid() bool {
+	switch e {
+	case RecognitionStateDone:
+		return true
+	case RecognitionStateFailed:
+		return true
+	case RecognitionStateNone:
+		return true
+	case RecognitionStatePending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RecognitionCheckAi.
+const (
+	Off         RecognitionCheckAi = "off"
+	Ok          RecognitionCheckAi = "ok"
+	Unavailable RecognitionCheckAi = "unavailable"
+)
+
+// Valid indicates whether the value is a known member of the RecognitionCheckAi enum.
+func (e RecognitionCheckAi) Valid() bool {
+	switch e {
+	case Off:
+		return true
+	case Ok:
+		return true
+	case Unavailable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RecognizedFieldConfidence.
+const (
+	Certain   RecognizedFieldConfidence = "certain"
+	Uncertain RecognizedFieldConfidence = "uncertain"
+)
+
+// Valid indicates whether the value is a known member of the RecognizedFieldConfidence enum.
+func (e RecognizedFieldConfidence) Valid() bool {
+	switch e {
+	case Certain:
+		return true
+	case Uncertain:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecurringSalesInvoiceFrequencyType.
 const (
 	RecurringSalesInvoiceFrequencyTypeDay     RecurringSalesInvoiceFrequencyType = "day"
@@ -2412,21 +2544,39 @@ func (e UnlinkBookingRequestBookingType) Valid() bool {
 	}
 }
 
+// Defines values for UpdateInstanceSettingsRequestRecognitionAiProvider.
+const (
+	UpdateInstanceSettingsRequestRecognitionAiProviderAnthropic UpdateInstanceSettingsRequestRecognitionAiProvider = "anthropic"
+	UpdateInstanceSettingsRequestRecognitionAiProviderOllama    UpdateInstanceSettingsRequestRecognitionAiProvider = "ollama"
+)
+
+// Valid indicates whether the value is a known member of the UpdateInstanceSettingsRequestRecognitionAiProvider enum.
+func (e UpdateInstanceSettingsRequestRecognitionAiProvider) Valid() bool {
+	switch e {
+	case UpdateInstanceSettingsRequestRecognitionAiProviderAnthropic:
+		return true
+	case UpdateInstanceSettingsRequestRecognitionAiProviderOllama:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UpdateInstanceSettingsRequestSmtpSecurity.
 const (
-	None     UpdateInstanceSettingsRequestSmtpSecurity = "none"
-	Starttls UpdateInstanceSettingsRequestSmtpSecurity = "starttls"
-	Tls      UpdateInstanceSettingsRequestSmtpSecurity = "tls"
+	UpdateInstanceSettingsRequestSmtpSecurityNone     UpdateInstanceSettingsRequestSmtpSecurity = "none"
+	UpdateInstanceSettingsRequestSmtpSecurityStarttls UpdateInstanceSettingsRequestSmtpSecurity = "starttls"
+	UpdateInstanceSettingsRequestSmtpSecurityTls      UpdateInstanceSettingsRequestSmtpSecurity = "tls"
 )
 
 // Valid indicates whether the value is a known member of the UpdateInstanceSettingsRequestSmtpSecurity enum.
 func (e UpdateInstanceSettingsRequestSmtpSecurity) Valid() bool {
 	switch e {
-	case None:
+	case UpdateInstanceSettingsRequestSmtpSecurityNone:
 		return true
-	case Starttls:
+	case UpdateInstanceSettingsRequestSmtpSecurityStarttls:
 		return true
-	case Tls:
+	case UpdateInstanceSettingsRequestSmtpSecurityTls:
 		return true
 	default:
 		return false
@@ -7192,7 +7342,10 @@ type IncomingDocumentSummary struct {
 	Currency    string             `json:"currency"`
 	Date        openapi_types.Date `json:"date"`
 	Id          string             `json:"id"`
-	Reference   string             `json:"reference"`
+
+	// RecognitionState The state of Scan and Recognise for this document; see Recognition.
+	RecognitionState IncomingDocumentSummaryRecognitionState `json:"recognition_state"`
+	Reference        string                                  `json:"reference"`
 
 	// State new, saved, open, late, pending_payment or paid.
 	State string `json:"state"`
@@ -7204,6 +7357,9 @@ type IncomingDocumentSummary struct {
 	// Uri Canonical path of the typed resource, such as /api/v2/{administration_id}/documents/receipts/{id}.
 	Uri string `json:"uri"`
 }
+
+// IncomingDocumentSummaryRecognitionState The state of Scan and Recognise for this document; see Recognition.
+type IncomingDocumentSummaryRecognitionState string
 
 // IncomingDocumentSummaryType defines model for IncomingDocumentSummary.Type.
 type IncomingDocumentSummaryType string
@@ -7222,16 +7378,29 @@ type InstanceSettings struct {
 	Lm2App                  string `json:"lm2_app"`
 	Lm2Enabled              bool   `json:"lm2_enabled"`
 	Lm2Url                  string `json:"lm2_url"`
-	RegistrationOpen        bool   `json:"registration_open"`
-	SmtpEnabled             bool   `json:"smtp_enabled"`
-	SmtpFrom                string `json:"smtp_from"`
-	SmtpHost                string `json:"smtp_host"`
-	SmtpPasswordSet         bool   `json:"smtp_password_set"`
-	SmtpPort                int    `json:"smtp_port"`
-	SmtpSecurity            string `json:"smtp_security"`
-	SmtpUsername            string `json:"smtp_username"`
-	StorageAccessKey        string `json:"storage_access_key"`
-	StorageBucket           string `json:"storage_bucket"`
+	RecognitionAiApiKeySet  bool   `json:"recognition_ai_api_key_set"`
+
+	// RecognitionAiEnabled Let Scan and Recognise ask an AI model about documents its rules could not read. Off unless turned on; with an API provider the document's text and images are sent to that provider.
+	RecognitionAiEnabled bool `json:"recognition_ai_enabled"`
+
+	// RecognitionAiModel Example: claude-opus-5-5
+	RecognitionAiModel    string                                `json:"recognition_ai_model"`
+	RecognitionAiProvider InstanceSettingsRecognitionAiProvider `json:"recognition_ai_provider"`
+
+	// RecognitionAiUrl The address of the Ollama server; empty for the provider's own address.
+	//
+	// Example: http://ollama:11434
+	RecognitionAiUrl string `json:"recognition_ai_url"`
+	RegistrationOpen bool   `json:"registration_open"`
+	SmtpEnabled      bool   `json:"smtp_enabled"`
+	SmtpFrom         string `json:"smtp_from"`
+	SmtpHost         string `json:"smtp_host"`
+	SmtpPasswordSet  bool   `json:"smtp_password_set"`
+	SmtpPort         int    `json:"smtp_port"`
+	SmtpSecurity     string `json:"smtp_security"`
+	SmtpUsername     string `json:"smtp_username"`
+	StorageAccessKey string `json:"storage_access_key"`
+	StorageBucket    string `json:"storage_bucket"`
 
 	// StorageEnabled Whether uploads, such as logos, go to S3-compatible storage.
 	StorageEnabled bool `json:"storage_enabled"`
@@ -7247,6 +7416,9 @@ type InstanceSettings struct {
 	// WebhooksAllowLocal Let webhooks reach plain HTTP and private or loopback addresses, for development.
 	WebhooksAllowLocal bool `json:"webhooks_allow_local"`
 }
+
+// InstanceSettingsRecognitionAiProvider defines model for InstanceSettings.RecognitionAiProvider.
+type InstanceSettingsRecognitionAiProvider string
 
 // InvitationPreview defines model for InvitationPreview.
 type InvitationPreview struct {
@@ -8247,6 +8419,9 @@ type PurchaseDetailInput_RowOrder struct {
 
 // PurchaseDocumentFields defines model for PurchaseDocumentFields.
 type PurchaseDocumentFields struct {
+	// Recognition MoneyHarpy extension. What Scan and Recognise read from the document's attachments: its state, where the values came from and which fields it filled in. Fields it was unsure of are marked uncertain for review.
+	Recognition Recognition `json:"recognition"`
+
 	// TaxTotals MoneyHarpy extension. The VAT per rate.
 	TaxTotals *[]struct {
 		TaxAmount     string  `json:"tax_amount"`
@@ -8355,10 +8530,13 @@ type PurchaseInvoice struct {
 	PaidAt           *openapi_types.Date    `json:"paid_at,omitempty"`
 	Payments         []PaymentResponse      `json:"payments"`
 	PricesAreInclTax *bool                  `json:"prices_are_incl_tax,omitempty"`
-	Reference        *string                `json:"reference,omitempty"`
-	RevenueInvoice   *bool                  `json:"revenue_invoice,omitempty"`
-	State            PurchaseInvoiceState   `json:"state"`
-	TaxNumber        *string                `json:"tax_number,omitempty"`
+
+	// Recognition MoneyHarpy extension. What Scan and Recognise read from the document's attachments: its state, where the values came from and which fields it filled in. Fields it was unsure of are marked uncertain for review.
+	Recognition    Recognition          `json:"recognition"`
+	Reference      *string              `json:"reference,omitempty"`
+	RevenueInvoice *bool                `json:"revenue_invoice,omitempty"`
+	State          PurchaseInvoiceState `json:"state"`
+	TaxNumber      *string              `json:"tax_number,omitempty"`
 
 	// TaxTotals MoneyHarpy extension. The VAT per rate.
 	TaxTotals *[]struct {
@@ -8570,10 +8748,13 @@ type Receipt struct {
 	PaidAt           *openapi_types.Date `json:"paid_at,omitempty"`
 	Payments         []PaymentResponse   `json:"payments"`
 	PricesAreInclTax *bool               `json:"prices_are_incl_tax,omitempty"`
-	Reference        *string             `json:"reference,omitempty"`
-	RevenueInvoice   *bool               `json:"revenue_invoice,omitempty"`
-	State            ReceiptState        `json:"state"`
-	TaxNumber        *string             `json:"tax_number,omitempty"`
+
+	// Recognition MoneyHarpy extension. What Scan and Recognise read from the document's attachments: its state, where the values came from and which fields it filled in. Fields it was unsure of are marked uncertain for review.
+	Recognition    Recognition  `json:"recognition"`
+	Reference      *string      `json:"reference,omitempty"`
+	RevenueInvoice *bool        `json:"revenue_invoice,omitempty"`
+	State          ReceiptState `json:"state"`
+	TaxNumber      *string      `json:"tax_number,omitempty"`
 
 	// TaxTotals MoneyHarpy extension. The VAT per rate.
 	TaxTotals *[]struct {
@@ -8630,6 +8811,47 @@ type ReceiptRequest struct {
 	} `json:"payment,omitempty"`
 	Receipt PurchaseDocumentInput `json:"receipt"`
 }
+
+// Recognition MoneyHarpy extension. What Scan and Recognise read from the document's attachments: its state, where the values came from and which fields it filled in. Fields it was unsure of are marked uncertain for review.
+type Recognition struct {
+	// Fields The fields filled in automatically, by name as in the document's request (document_type, contact_id, reference, date, due_date, currency, prices_are_incl_tax) or per line as details.<index>.<field> (description, amount, price, tax_rate_id, ledger_account_id).
+	Fields []RecognizedField `json:"fields"`
+
+	// Source e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a scan or photo; ai: the optional AI model, used when the rules could not read the document.
+	Source *RecognitionSource `json:"source"`
+
+	// State none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in; failed: the attachments could not be read.
+	State RecognitionState `json:"state"`
+}
+
+// RecognitionSource e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a scan or photo; ai: the optional AI model, used when the rules could not read the document.
+type RecognitionSource string
+
+// RecognitionState none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in; failed: the attachments could not be read.
+type RecognitionState string
+
+// RecognitionCheck MoneyHarpy extension. Whether Scan and Recognise can read documents on this server.
+type RecognitionCheck struct {
+	Ai RecognitionCheckAi `json:"ai"`
+
+	// Message Why the OCR service or the AI model could not be reached.
+	Message *string `json:"message,omitempty"`
+
+	// OcrAvailable Whether the OCR service answers; without it only e-invoices and digital PDFs can be read.
+	OcrAvailable bool `json:"ocr_available"`
+}
+
+// RecognitionCheckAi defines model for RecognitionCheck.Ai.
+type RecognitionCheckAi string
+
+// RecognizedField defines model for RecognizedField.
+type RecognizedField struct {
+	Confidence RecognizedFieldConfidence `json:"confidence"`
+	Field      string                    `json:"field"`
+}
+
+// RecognizedFieldConfidence defines model for RecognizedField.Confidence.
+type RecognizedFieldConfidence string
 
 // RecoveryCodes defines model for RecoveryCodes.
 type RecoveryCodes struct {
@@ -9980,10 +10202,13 @@ type TypelessDocument struct {
 	// Id A unique record identifier. Parse as a string.
 	//
 	// Example: 123456789012345678
-	Id        Identifier              `json:"id"`
-	Origin    *TypelessDocumentOrigin `json:"origin,omitempty"`
-	Reference *string                 `json:"reference,omitempty"`
-	State     TypelessDocumentState   `json:"state"`
+	Id     Identifier              `json:"id"`
+	Origin *TypelessDocumentOrigin `json:"origin,omitempty"`
+
+	// Recognition MoneyHarpy extension. What Scan and Recognise read from the document's attachments: its state, where the values came from and which fields it filled in. Fields it was unsure of are marked uncertain for review.
+	Recognition Recognition           `json:"recognition"`
+	Reference   *string               `json:"reference,omitempty"`
+	State       TypelessDocumentState `json:"state"`
 
 	// UpdatedAt Moneybird-compatible timestamp.
 	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
@@ -10076,26 +10301,34 @@ type UpdateInstanceSettingsRequest struct {
 	Lm2Enabled *bool   `json:"lm2_enabled,omitempty"`
 
 	// Lm2Url Public address of the LM2 installation.
-	Lm2Url           *string                                    `json:"lm2_url,omitempty"`
-	RegistrationOpen *bool                                      `json:"registration_open,omitempty"`
-	SmtpEnabled      *bool                                      `json:"smtp_enabled,omitempty"`
-	SmtpFrom         *string                                    `json:"smtp_from,omitempty"`
-	SmtpHost         *string                                    `json:"smtp_host,omitempty"`
-	SmtpPassword     *string                                    `json:"smtp_password,omitempty"`
-	SmtpPort         *int                                       `json:"smtp_port,omitempty"`
-	SmtpSecurity     *UpdateInstanceSettingsRequestSmtpSecurity `json:"smtp_security,omitempty"`
-	SmtpUsername     *string                                    `json:"smtp_username,omitempty"`
-	StorageAccessKey *string                                    `json:"storage_access_key,omitempty"`
-	StorageBucket    *string                                    `json:"storage_bucket,omitempty"`
-	StorageEnabled   *bool                                      `json:"storage_enabled,omitempty"`
-	StorageEndpoint  *string                                    `json:"storage_endpoint,omitempty"`
-	StoragePathStyle *bool                                      `json:"storage_path_style,omitempty"`
-	StorageRegion    *string                                    `json:"storage_region,omitempty"`
-	StorageSecretKey *string                                    `json:"storage_secret_key,omitempty"`
+	Lm2Url                *string                                             `json:"lm2_url,omitempty"`
+	RecognitionAiApiKey   *string                                             `json:"recognition_ai_api_key,omitempty"`
+	RecognitionAiEnabled  *bool                                               `json:"recognition_ai_enabled,omitempty"`
+	RecognitionAiModel    *string                                             `json:"recognition_ai_model,omitempty"`
+	RecognitionAiProvider *UpdateInstanceSettingsRequestRecognitionAiProvider `json:"recognition_ai_provider,omitempty"`
+	RecognitionAiUrl      *string                                             `json:"recognition_ai_url,omitempty"`
+	RegistrationOpen      *bool                                               `json:"registration_open,omitempty"`
+	SmtpEnabled           *bool                                               `json:"smtp_enabled,omitempty"`
+	SmtpFrom              *string                                             `json:"smtp_from,omitempty"`
+	SmtpHost              *string                                             `json:"smtp_host,omitempty"`
+	SmtpPassword          *string                                             `json:"smtp_password,omitempty"`
+	SmtpPort              *int                                                `json:"smtp_port,omitempty"`
+	SmtpSecurity          *UpdateInstanceSettingsRequestSmtpSecurity          `json:"smtp_security,omitempty"`
+	SmtpUsername          *string                                             `json:"smtp_username,omitempty"`
+	StorageAccessKey      *string                                             `json:"storage_access_key,omitempty"`
+	StorageBucket         *string                                             `json:"storage_bucket,omitempty"`
+	StorageEnabled        *bool                                               `json:"storage_enabled,omitempty"`
+	StorageEndpoint       *string                                             `json:"storage_endpoint,omitempty"`
+	StoragePathStyle      *bool                                               `json:"storage_path_style,omitempty"`
+	StorageRegion         *string                                             `json:"storage_region,omitempty"`
+	StorageSecretKey      *string                                             `json:"storage_secret_key,omitempty"`
 
 	// WebhooksAllowLocal Let webhooks reach plain HTTP and private or loopback addresses, for development.
 	WebhooksAllowLocal *bool `json:"webhooks_allow_local,omitempty"`
 }
+
+// UpdateInstanceSettingsRequestRecognitionAiProvider defines model for UpdateInstanceSettingsRequest.RecognitionAiProvider.
+type UpdateInstanceSettingsRequestRecognitionAiProvider string
 
 // UpdateInstanceSettingsRequestSmtpSecurity defines model for UpdateInstanceSettingsRequest.SmtpSecurity.
 type UpdateInstanceSettingsRequestSmtpSecurity string
@@ -13352,6 +13585,11 @@ type ListTypelessDocumentVersionsParams struct {
 // CreateTypelessDocumentAttachmentMultipartBody defines parameters for CreateTypelessDocumentAttachment.
 type CreateTypelessDocumentAttachmentMultipartBody struct {
 	File openapi_types.File `json:"file"`
+}
+
+// PreviewIncomingDocumentAttachmentParams defines parameters for PreviewIncomingDocumentAttachment.
+type PreviewIncomingDocumentAttachmentParams struct {
+	Page *int `form:"page,omitempty" json:"page,omitempty"`
 }
 
 // SetIncomingDocumentTypeJSONBody defines parameters for SetIncomingDocumentType.
@@ -20509,6 +20747,9 @@ type ServerInterface interface {
 	// TestKvkWebsiteSearch Check the experimental KVK website search
 	// (POST /api/instance/settings/test_kvk_website_search)
 	TestKvkWebsiteSearch(w http.ResponseWriter, r *http.Request)
+	// TestRecognition Check Scan and Recognise
+	// (POST /api/instance/settings/test_recognition)
+	TestRecognition(w http.ResponseWriter, r *http.Request)
 	// TestStorage Check the saved file storage settings
 	// (POST /api/instance/settings/test_storage)
 	TestStorage(w http.ResponseWriter, r *http.Request)
@@ -21008,6 +21249,12 @@ type ServerInterface interface {
 	// GetIncomingDocument Get any incoming document
 	// (GET /api/v2/{administration_id}/documents/{id})
 	GetIncomingDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// PreviewIncomingDocumentAttachment Preview a page of an attachment
+	// (GET /api/v2/{administration_id}/documents/{id}/attachments/{attachment_id}/preview)
+	PreviewIncomingDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier, params PreviewIncomingDocumentAttachmentParams)
+	// RecognizeIncomingDocument Read an incoming document again
+	// (POST /api/v2/{administration_id}/documents/{id}/recognize)
+	RecognizeIncomingDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// SetIncomingDocumentType Change the type of an incoming document
 	// (POST /api/v2/{administration_id}/documents/{id}/set_type)
 	SetIncomingDocumentType(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -21808,6 +22055,12 @@ func (_ Unimplemented) SendTestEmail(w http.ResponseWriter, r *http.Request) {
 // TestKvkWebsiteSearch Check the experimental KVK website search
 // (POST /api/instance/settings/test_kvk_website_search)
 func (_ Unimplemented) TestKvkWebsiteSearch(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// TestRecognition Check Scan and Recognise
+// (POST /api/instance/settings/test_recognition)
+func (_ Unimplemented) TestRecognition(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -22802,6 +23055,18 @@ func (_ Unimplemented) DownloadTypelessDocumentAttachment(w http.ResponseWriter,
 // GetIncomingDocument Get any incoming document
 // (GET /api/v2/{administration_id}/documents/{id})
 func (_ Unimplemented) GetIncomingDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PreviewIncomingDocumentAttachment Preview a page of an attachment
+// (GET /api/v2/{administration_id}/documents/{id}/attachments/{attachment_id}/preview)
+func (_ Unimplemented) PreviewIncomingDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier, params PreviewIncomingDocumentAttachmentParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RecognizeIncomingDocument Read an incoming document again
+// (POST /api/v2/{administration_id}/documents/{id}/recognize)
+func (_ Unimplemented) RecognizeIncomingDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -24523,6 +24788,20 @@ func (siw *ServerInterfaceWrapper) TestKvkWebsiteSearch(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestKvkWebsiteSearch(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestRecognition operation middleware
+func (siw *ServerInterfaceWrapper) TestRecognition(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestRecognition(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -30606,6 +30885,101 @@ func (siw *ServerInterfaceWrapper) GetIncomingDocument(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetIncomingDocument(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PreviewIncomingDocumentAttachment operation middleware
+func (siw *ServerInterfaceWrapper) PreviewIncomingDocumentAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachment_id" -------------
+	var attachmentId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachment_id", chi.URLParam(r, "attachment_id"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachment_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PreviewIncomingDocumentAttachmentParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewIncomingDocumentAttachment(w, r, administrationId, id, attachmentId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RecognizeIncomingDocument operation middleware
+func (siw *ServerInterfaceWrapper) RecognizeIncomingDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RecognizeIncomingDocument(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -40305,6 +40679,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/{id}", wrapper.GetIncomingDocument)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/{id}/recognize", wrapper.RecognizeIncomingDocument)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/{id}/attachments/{attachment_id}/preview", wrapper.PreviewIncomingDocumentAttachment)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/documents/{id}/set_type", wrapper.SetIncomingDocumentType)
 	})
 	r.Group(func(r chi.Router) {
@@ -41089,6 +41469,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/instance/settings/test_kvk_website_search", wrapper.TestKvkWebsiteSearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/instance/settings/test_recognition", wrapper.TestRecognition)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/instance/settings/test_storage", wrapper.TestStorage)

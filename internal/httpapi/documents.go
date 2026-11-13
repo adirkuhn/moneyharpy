@@ -317,6 +317,7 @@ type typelessDocumentJSON struct {
 	Attachments      []attachmentJSON `json:"attachments"`
 	Events           []any            `json:"events"`
 	URI              string           `json:"uri"`
+	Recognition      Recognition      `json:"recognition"`
 }
 
 func (s *server) toTypelessDocuments(r *http.Request, admin resource.ID, list []purchases.Typeless) ([]typelessDocumentJSON, error) {
@@ -328,12 +329,20 @@ func (s *server) toTypelessDocuments(r *http.Request, admin resource.ID, list []
 	if err != nil {
 		return nil, err
 	}
+	docIDs := make([]resource.ID, len(list))
+	for i, t := range list {
+		docIDs[i] = t.ID
+	}
+	recs, err := s.recognitionsOf(r, admin, docIDs)
+	if err != nil {
+		return nil, err
+	}
 	out := make([]typelessDocumentJSON, len(list))
 	for i, t := range list {
 		o := typelessDocumentJSON{
 			ID: t.ID.String(), AdministrationID: t.AdministrationID.String(), Reference: nz(t.Reference), Date: t.Date.Format(time.DateOnly),
 			State: t.State, Origin: nz(t.Origin), CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt, Version: t.Version(),
-			Attachments: []attachmentJSON{}, Events: []any{}, URI: t.Ref().URI(),
+			Attachments: []attachmentJSON{}, Events: []any{}, URI: t.Ref().URI(), Recognition: recs[t.ID],
 		}
 		if t.ContactID != 0 {
 			o.ContactID = ptr(t.ContactID.String())

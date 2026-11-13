@@ -192,6 +192,7 @@ func (s *Service) Create(ctx context.Context, admin, user resource.ID, kind stri
 	if err := s.payAtOnce(ctx, a, user, d, c.PaymentAccountID); err != nil {
 		return Document{}, err
 	}
+	s.edited(ctx, admin, user, Document{}, d)
 	return s.Document(ctx, admin, kind, d.ID, user)
 }
 
@@ -216,6 +217,9 @@ func (s *Service) CreateFromFile(ctx context.Context, admin, user resource.ID, k
 		if derr := s.store.DeleteDocument(ctx, admin, d.ID); derr != nil {
 			return Document{}, fmt.Errorf("%w; remove the document again: %w", err, derr)
 		}
+		return Document{}, err
+	}
+	if err := s.queue(ctx, admin, d.ID, user); err != nil {
 		return Document{}, err
 	}
 	return s.Document(ctx, admin, kind, d.ID, user)
@@ -252,6 +256,8 @@ func (s *Service) Update(ctx context.Context, admin, user resource.ID, kind stri
 			return Document{}, err
 		}
 	}
+	before := d
+	before.Lines = slices.Clone(d.Lines)
 	if err := s.apply(ctx, a, user, &d, c); err != nil {
 		return Document{}, err
 	}
@@ -262,6 +268,7 @@ func (s *Service) Update(ctx context.Context, admin, user resource.ID, kind stri
 	if err := s.payAtOnce(ctx, a, user, d, c.PaymentAccountID); err != nil {
 		return Document{}, err
 	}
+	s.edited(ctx, admin, user, before, d)
 	return s.Document(ctx, admin, kind, id, user)
 }
 
@@ -762,7 +769,10 @@ func (s *Service) Delete(ctx context.Context, admin, user resource.ID, kind stri
 	if err := s.attachments.DeleteAll(ctx, admin, kind, id); err != nil {
 		return wrap("delete attachments", err)
 	}
-	return wrap("delete document", s.store.DeleteDocument(ctx, admin, id))
+	if err := s.store.DeleteDocument(ctx, admin, id); err != nil {
+		return wrap("delete document", err)
+	}
+	return s.forget(ctx, admin, id)
 }
 
 // List returns the page of documents of the kind the query selects.
@@ -868,15 +878,23 @@ func (s *Service) DeleteNote(ctx context.Context, admin, user resource.ID, kind 
 }
 
 // AddAttachment attaches a file to a document.
+// A new document has the file read by Scan and Recognise.
 func (s *Service) AddAttachment(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error) {
-	if _, err := s.Document(ctx, admin, kind, id, user); err != nil {
+	d, err := s.Document(ctx, admin, kind, id, user)
+	if err != nil {
 		return attachments.Attachment{}, err
 	}
 	a, err := s.attachments.Add(ctx, admin, kind, id, filename, contentType, data)
 	if err != nil {
 		return attachments.Attachment{}, err
 	}
-	return a, s.store.TouchDocument(ctx, admin, id, a.CreatedAt)
+	if err := s.store.TouchDocument(ctx, admin, id, a.CreatedAt); err != nil {
+		return a, err
+	}
+	if !d.Booked() {
+		return a, s.queue(ctx, admin, id, user)
+	}
+	return a, nil
 }
 
 // OpenAttachment returns an attachment of a document; the caller closes it.
