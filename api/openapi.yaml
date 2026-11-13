@@ -20641,7 +20641,6 @@ components:
           nullable: true
           type: string
         next_reminder:
-          description: When the next reminder is due; 2099-01-01 while the invoice is paused, as Moneybird gives it.
           format: date
           nullable: true
           type: string
