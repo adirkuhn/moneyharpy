@@ -1,0 +1,30 @@
+Voorbeeld Energie B.V.
+Postbus 1234
+1000 AB Amsterdam
+www.voorbeeld-energie.example.com
+
+Ann de Vries
+Kerkstraat 12
+1234 CD Utrecht
+
+FACTUUR
+
+Factuurnummer:      2026110042
+Factuurdatum:       13 november 2026
+Klantnummer:        556677
+Vervaldatum:        27 november 2026
+
+Omschrijving                                  Bedrag
+Termijnbedrag stroom november                  85,00
+Termijnbedrag gas november                     62,50
+
+Totaal excl. btw                              121,90
+Btw 21%                                        25,60
+Totaal incl. btw                              147,50
+
+Het totaalbedrag van € 147,50 wordt rond 27-11-2026 automatisch
+afgeschreven van uw rekening NL20 INGB 0001 2345 67.
+Betalingskenmerk: 3000 0000 0000 0047
+
+Voorbeeld Energie B.V. | KvK 12345678 | Btw NL123456782B01 | IBAN NL91 ABNA 0417 1643 00
+klantenservice@voorbeeld-energie.example.com | Tel. 020-1234567

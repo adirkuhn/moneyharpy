@@ -1,0 +1,19 @@
+BOUWMARKT VOORBEELD
+Example Bouw B.V.
+Industrieweg 20
+1234 AB Amsterdam
+www.example.com
+
+Kassabon
+Bonnummer: 7788-2026
+Datum: 13.11.26  Tijd: 11:05
+
+Art.nr  Omschrijving            Aantal   Prijs    Bedrag
+100234  Schroeven 4x40 200st      2      7,49     14,98
+100567  Houtlijm 250ml            1      5,99      5,99
+100890  Kwast 50mm                3      2,49      7,47
+
+Totaal te betalen                                 28,44
+Pin                                               28,44
+
+BTW 21%       Excl. 23,50      BTW 4,94

@@ -1,0 +1,27 @@
+Example Bouw B.V.
+Bouwweg 8
+1234 AB Amsterdam
+KvK 12345678
+BTW-nummer NL123456782B01
+IBAN NL91 ABNA 0417 1643 00
+
+Aan:
+Example Shop B.V.
+t.a.v. Ann de Vries
+Voorbeeldstraat 1
+5678 EF Eindhoven
+Uw BTW-nummer: NL987654329B01
+
+Factuur
+Factuurnummer    Factuurdatum    Vervaldatum
+2026-0099        13-11-2026      13-12-2026
+
+Omschrijving                                  Bedrag
+Stukadoorswerk week 45                      2.450,00
+
+Totaal excl. btw                            2.450,00
+BTW verlegd                                     0,00
+Totaal                                      2.450,00
+
+BTW verlegd naar: Example Shop B.V., NL987654329B01
+Graag betalen onder vermelding van RF18 5390 0754 7034
