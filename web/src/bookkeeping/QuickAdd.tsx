@@ -34,7 +34,7 @@ function QuickAddDialog({ title, busy, onSubmit, onClose, children }: { title: s
         </>
       }
     >
-      <form id={formId} className="form-sheet form-sheet--compact" onSubmit={submit} noValidate>
+      <form id={formId} className="form-sheet--compact quick-add__form" onSubmit={submit} noValidate>
         {children}
       </form>
     </Modal>,
