@@ -160,8 +160,7 @@ describe('the Incoming page', () => {
       }))
       renderAt('/11/documents')
       const table = await screen.findByRole('table', { name: 'Incoming' })
-      expect(within(table).getByRole('link', { name: 'Recognising…' })).toHaveAttribute('href', '/11/documents/953')
-      expect(within(table).queryByText('till.jpg')).toBeNull()
+      expect(within(table).getByRole('link', { name: /^— till\.jpg\s*Recognising…$/ })).toHaveAttribute('href', '/11/documents/953')
       reading = false
       expect(await within(table).findByRole('link', { name: 'REC Till 0077' })).toBeInTheDocument()
       const count = seen.length

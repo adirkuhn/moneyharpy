@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next'
-import { BoltIcon } from '../layout/icons'
+import { BoltIcon, WarningIcon } from '../layout/icons'
 
 /** How sure Scan and Recognise was of a value it filled in. */
 export type Confidence = 'certain' | 'uncertain'
 
 /**
- * The bolt at the right of a field Scan and Recognise filled in, after
- * Moneybird's remark icon: grey when it read the value, gold when it asks to
- * check it. The tooltip says which.
+ * The mark at the right of a field Scan and Recognise filled in, after
+ * Moneybird's remark icons: a grey bolt when it read the value, a yellow
+ * warning triangle when it asks to check it. The tooltip says which.
  */
 export function Remark({ confidence, label }: { confidence: Confidence | undefined; /** In place of the tooltip of a filled in value. */ label?: string }) {
   const { t } = useTranslation()
@@ -17,7 +17,7 @@ export function Remark({ confidence, label }: { confidence: Confidence | undefin
   const text = label ?? t(confidence === 'uncertain' ? 'recognition.uncertain' : 'recognition.filled')
   return (
     <span className={`remark remark--${confidence}`} role="img" aria-label={text} title={text}>
-      <BoltIcon />
+      {confidence === 'uncertain' ? <WarningIcon /> : <BoltIcon />}
     </span>
   )
 }

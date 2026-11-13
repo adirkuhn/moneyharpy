@@ -1225,13 +1225,14 @@ test('a purchase invoice is booked through the API, paid by a bank transaction a
   // An upload waits on the overview until it is processed.
   await menu.getByRole('link', { name: 'Incoming' }).click()
   await page.getByLabel('Drag your documents here or click to add them').setInputFiles({ name: 'bill-78.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n% bill 78\n') })
-  await expect(table.getByRole('link', { name: '— bill-78.pdf' })).toBeVisible()
+  // Scan and Recognise may still be reading it; it keeps its name meanwhile.
+  await expect(table.getByRole('link', { name: /^— bill-78\.pdf/ })).toBeVisible()
   await page.goto(`${uri}/feed`)
   await expect(page.getByRole('region', { name: 'Incoming' }).getByRole('link', { name: /To process\s*1/ })).toBeVisible()
 
   // The upload opens on the same page, with its file at the left; choosing a type turns it into a receipt to fill in.
   await menu.getByRole('link', { name: 'Incoming' }).click()
-  await table.getByRole('link', { name: '— bill-78.pdf' }).click()
+  await table.getByRole('link', { name: /^— bill-78\.pdf/ }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'bill-78.pdf' })).toBeVisible()
   await expect(page.getByRole('region', { name: 'Attachments' }).getByRole('button', { name: 'bill-78.pdf' })).toBeVisible()
   await page.getByRole('combobox', { name: 'Type' }).click()
