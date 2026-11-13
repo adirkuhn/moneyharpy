@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
@@ -40,7 +40,7 @@ describe('API tokens', () => {
 })
 
 describe('instance settings', () => {
-  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false }
+  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_provider: 'ollama' as const, recognition_ai_url: '', recognition_ai_model: '', recognition_ai_api_key_set: false }
 
   it('is closed to regular users', async () => {
     server.use(signedIn(), listing([]))
@@ -63,7 +63,7 @@ describe('instance settings', () => {
     await userEvent.click(await screen.findByLabelText('Allow new users to register'))
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() =>
-      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false }),
+      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_provider: 'ollama', recognition_ai_url: '', recognition_ai_model: '' }),
     )
     expect(await screen.findByRole('status')).toHaveTextContent('Settings saved')
   })
@@ -247,5 +247,61 @@ describe('instance settings', () => {
     )
     renderAt('/instance/settings')
     expect(await screen.findByLabelText('Google client secret')).toHaveAttribute('placeholder', 'Stored. Type to replace it.')
+  })
+
+  describe('Scan and Recognise', () => {
+    it('leaves the AI model off and warns what an API provider receives', async () => {
+      server.use(signedIn({ ...user, instance_admin: true }), listing([]), http.get('*/api/instance/settings', () => HttpResponse.json(current)))
+      renderAt('/instance/settings')
+      const section = await screen.findByRole('group', { name: 'Scan and Recognise' })
+      const toggle = within(section).getByRole('checkbox', { name: 'Use an AI model for documents the rules cannot read' })
+      expect(toggle).not.toBeChecked()
+      expect(within(section).getByText(/the text and images of those documents are sent to that provider/)).toBeInTheDocument()
+    })
+
+    it('saves the AI model with a new API key only when one is typed', async () => {
+      let sent: Record<string, unknown> | undefined
+      server.use(
+        signedIn({ ...user, instance_admin: true }),
+        listing([]),
+        http.get('*/api/instance/settings', () => HttpResponse.json({ ...current, recognition_ai_api_key_set: true })),
+        http.patch('*/api/instance/settings', async ({ request }) => {
+          sent = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json(current)
+        }),
+      )
+      renderAt('/instance/settings')
+      const section = await screen.findByRole('group', { name: 'Scan and Recognise' })
+      await userEvent.click(within(section).getByRole('checkbox', { name: 'Use an AI model for documents the rules cannot read' }))
+      await userEvent.selectOptions(within(section).getByRole('combobox', { name: 'AI provider' }), 'Anthropic')
+      expect(within(section).queryByRole('textbox', { name: 'Ollama address' })).toBeNull()
+      const model = within(section).getByRole('textbox', { name: 'Model' })
+      expect(model).toHaveAttribute('placeholder', 'claude-opus-5-5')
+      await userEvent.type(model, 'claude-opus-5-5')
+      expect(within(section).getByLabelText('API key')).toHaveAttribute('placeholder', 'Stored. Type to replace it.')
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+      await waitFor(() => expect(sent).toMatchObject({ recognition_ai_enabled: true, recognition_ai_provider: 'anthropic', recognition_ai_model: 'claude-opus-5-5' }))
+      expect(sent).not.toHaveProperty('recognition_ai_api_key')
+
+      await userEvent.selectOptions(within(section).getByRole('combobox', { name: 'AI provider' }), 'Ollama')
+      await userEvent.type(within(section).getByRole('textbox', { name: 'Ollama address' }), 'http://ollama:11434')
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+      await waitFor(() => expect(sent).toMatchObject({ recognition_ai_provider: 'ollama', recognition_ai_url: 'http://ollama:11434' }))
+    })
+
+    it('checks what can read documents on this server', async () => {
+      server.use(
+        signedIn({ ...user, instance_admin: true }),
+        listing([]),
+        http.get('*/api/instance/settings', () => HttpResponse.json({ ...current, recognition_ai_enabled: true })),
+        http.post('*/api/instance/settings/test_recognition', () => HttpResponse.json({ ocr_available: true, ai: 'unavailable', message: 'connection refused' })),
+      )
+      renderAt('/instance/settings')
+      const section = await screen.findByRole('group', { name: 'Scan and Recognise' })
+      await userEvent.click(within(section).getByRole('button', { name: 'Check' }))
+      const result = await within(section).findByRole('status')
+      expect(result).toHaveTextContent('OCR available')
+      expect(result).toHaveTextContent('AI model unavailable: connection refused')
+    })
   })
 })
