@@ -1092,3 +1092,20 @@ a.dropdown__item:hover { background: var(--row-hover); }
   .period-picker__band { border: 2px solid Highlight; }
   .period-picker__handle { background: Highlight; }
 }
+
+/* Scan and Recognise: a grey bolt beside what it filled in, a gold one and a light gold field where it was unsure. */
+.remark { display: inline-flex; flex: none; justify-content: center; align-items: center; width: 1.25rem; height: 1.25rem; color: var(--muted); font-size: 0.875rem; }
+.remark--uncertain { color: var(--gold); }
+.remark--uncertain svg { stroke: var(--star); }
+.is-uncertain:is(input, select, textarea),
+.form-input.is-uncertain .form-input__control > :first-child:is(input, select, textarea),
+.form-input.is-uncertain .form-input__control > :first-child :is(input[type='text'], select, textarea, .picker__button) {
+  border-color: var(--gold) !important; background: color-mix(in srgb, var(--gold) 12%, var(--surface)) !important;
+}
+.recognition-check { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+.recognition-check__problem { color: var(--danger); font-weight: 600; }
+.spinner-icon { animation: spinner-turn 0.9s linear infinite; }
+@keyframes spinner-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .spinner-icon { animation-duration: 2.7s; }
+}

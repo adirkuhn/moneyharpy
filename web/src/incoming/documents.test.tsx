@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
-import type { DocumentStatistics, DocumentSummary } from './documents'
+import { type DocumentStatistics, type DocumentSummary, polling } from './documents'
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 const stamp = '2026-11-10T09:00:00Z'
@@ -12,7 +12,7 @@ const stamp = '2026-11-10T09:00:00Z'
 const doc = (over: Partial<DocumentSummary>): DocumentSummary => ({
   id: '941', administration_id: '11', type: 'PurchaseInvoice', reference: '2026-01234', contact_id: '701', contact_name: 'Supplier B.V.',
   date: '2026-11-01', state: 'open', currency: 'EUR', total_price_incl_tax: '121.0', attachments_count: 1, created_at: stamp,
-  uri: '/api/v2/11/documents/purchase_invoices/941',
+  uri: '/api/v2/11/documents/purchase_invoices/941', recognition_state: 'none',
   ...over,
 })
 
@@ -142,6 +142,34 @@ describe('the Incoming page', () => {
     await waitFor(() => expect(attached).toEqual(['951', '952']))
     expect(made).toEqual([{ typeless_document: { reference: 'bill-1.pdf' } }, { typeless_document: { reference: 'bill-2.pdf' } }])
     await waitFor(() => expect(seen.length).toBeGreaterThan(before))
+  })
+
+  it('shows the uploads being read as Recognising, and reloads until they are read', async () => {
+    const quick = polling.intervalMs
+    polling.intervalMs = 20
+    try {
+      let reading = true
+      const seen: URL[] = []
+      server.use(...loaded())
+      server.use(http.get('*/api/v2/11/documents', ({ request }) => {
+        seen.push(new URL(request.url))
+        const list = reading
+          ? [rows[0] as DocumentSummary, doc({ id: '953', type: 'TypelessDocument', reference: 'till.jpg', contact_id: null, contact_name: '', state: 'new', recognition_state: 'pending' })]
+          : [rows[0] as DocumentSummary, doc({ id: '953', type: 'Receipt', reference: 'Till 0077', state: 'new', recognition_state: 'done' })]
+        return HttpResponse.json(list, { headers: { 'X-Total-Count': String(list.length) } })
+      }))
+      renderAt('/11/documents')
+      const table = await screen.findByRole('table', { name: 'Incoming' })
+      expect(within(table).getByRole('link', { name: 'Recognising…' })).toHaveAttribute('href', '/11/documents/953')
+      expect(within(table).queryByText('till.jpg')).toBeNull()
+      reading = false
+      expect(await within(table).findByRole('link', { name: 'REC Till 0077' })).toBeInTheDocument()
+      const count = seen.length
+      await new Promise((r) => setTimeout(r, 100))
+      expect(seen.length).toBe(count)
+    } finally {
+      polling.intervalMs = quick
+    }
   })
 
   it('introduces the page while there are no documents yet', async () => {
