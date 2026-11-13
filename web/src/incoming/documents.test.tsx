@@ -63,7 +63,7 @@ describe('the Incoming page', () => {
     expect(within(table).getByRole('link', { name: 'PUR 2026-01234' })).toHaveAttribute('href', '/11/documents/purchase_invoices/941')
     expect(within(table).getByRole('link', { name: 'REC Till 0042' })).toHaveAttribute('href', '/11/documents/receipts/942')
     expect(within(table).getByRole('link', { name: '— scan.pdf' })).toHaveAttribute('href', '/11/documents/951')
-    expect(within(table).getByRole('link', { name: 'MEM Opening balance' })).toHaveAttribute('href', '/11/documents/general_journal_documents/961')
+    expect(within(table).getByRole('link', { name: 'MAN Opening balance' })).toHaveAttribute('href', '/11/documents/general_journal_documents/961')
     expect(within(table).getAllByText('No contact')).toHaveLength(2)
     expect(within(table).getByText('€121.00')).toBeInTheDocument()
     expect(within(table).getAllByText('2026-11-01', { selector: 'td' })).toHaveLength(4)
