@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Problems } from '../auth/AuthLayout'
+import { DateInput } from '../forms/DatePicker'
 import { formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
 import { type Collectable, type InvoiceKind, remindersFor, type SalesInvoice, today, useSendReminders, useWriteOff, type WriteOff } from './queries'
 
@@ -28,7 +29,7 @@ export function WriteOffPanel({ administrationId, invoice, kind, invoiceKind = '
       <form className="form-sheet" onSubmit={submit} noValidate>
         <Problems messages={errors.general} />
         <p className="hint send-panel__hint">{t(`invoices.writeOff.${kind}Hint`)}</p>
-        <TextInput label={t('invoices.writeOff.date')} type="date" width="medium" max={today()} required value={date} errors={errors.field(field)} onChange={(e) => setDate(e.target.value)} />
+        <DateInput label={t('invoices.writeOff.date')} width="medium" max={today()} required value={date} errors={errors.field(field)} onChange={setDate} />
         <div className="form-sheet__actions">
           <button className={kind === 'uncollectible' ? 'btn btn--danger' : 'btn btn--primary'} disabled={writeOff.isPending || !date}>{t(`invoices.writeOff.${kind}Submit`)}</button>
           <button type="button" className="btn btn--secondary" onClick={onDone}>{t('common.cancel')}</button>

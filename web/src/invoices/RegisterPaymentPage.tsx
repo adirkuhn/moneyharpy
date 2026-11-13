@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
+import { DateInput } from '../forms/DatePicker'
 import { containsPaymentReference } from './paymentReference'
 import { formatAmount, useFinancialAccounts, useLinkInvoice, useMutations, type Mutation } from '../banking/queries'
 import { useLedgerAccounts } from '../bookkeeping/queries'
@@ -278,7 +279,7 @@ function PaymentForm({ administrationId, invoice: inv, kind, way }: PageProps & 
           {way !== 'rounding_error' && (
             <TextInput label={labels.price} inputMode="decimal" width="medium" maxLength={16} required value={price} errors={errors.field('price')} onChange={(e) => setPrice(e.target.value)} />
           )}
-          <TextInput label={labels.payment_date} type="date" width="long" required value={date} errors={errors.field('payment_date')} onChange={(e) => setDate(e.target.value)} />
+          <DateInput label={labels.payment_date} width="long" required value={date} errors={errors.field('payment_date')} onChange={setDate} />
         </div>
       </ContentPage>
     </form>

@@ -29,9 +29,8 @@
 .add-invoice__affix:last-child { border-left: 0; border-radius: 0 8px 8px 0; }
 .add-invoice__number .add-invoice__affix:first-child + input { border-top-left-radius: 0; border-bottom-left-radius: 0; }
 .add-invoice__number input:has(+ .add-invoice__affix) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-.add-invoice__date { position: relative; display: flex; flex: 0 1 var(--field); align-items: center; }
-.add-invoice .add-invoice__date input { flex: 1; min-width: 0; padding-right: 2rem; }
-.add-invoice__date svg { position: absolute; right: 0.5rem; color: var(--muted); pointer-events: none; }
+.add-invoice .form-input__control > .date-picker { flex: 0 1 var(--field); max-width: var(--field); }
+.add-invoice .date-picker__icon { width: 2rem; }
 /* The days with − and + inside the field, as Moneybird's number field. */
 .add-invoice__days { display: flex; align-items: center; gap: 0.5rem; }
 .add-invoice__number-field { position: relative; display: inline-flex; width: 118px; }

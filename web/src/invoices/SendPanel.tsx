@@ -1,7 +1,8 @@
 import { type FormEvent, type ReactNode, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Problems } from '../auth/AuthLayout'
-import { formErrors, FormRow, TextArea, TextInput } from '../forms/Form'
+import { DateInput } from '../forms/DatePicker'
+import { formErrors, FormRow, TextArea } from '../forms/Form'
 import { useInvoiceSettings, useWorkflows } from '../invoicing/queries'
 import { Tip } from './AddInvoiceDialog'
 import { invoiceTitle, type SalesInvoice, type Sending, useSendSalesInvoice } from './queries'
@@ -210,7 +211,7 @@ export function SchedulePanel({ administrationId, invoice: inv, onDone }: PanelP
       onSubmit={submit}
       onCancel={onDone}
     >
-      <TextInput label={labels.invoice_date} type="date" width="medium" min={tomorrow()} value={date} errors={errors.field('invoice_date')} onChange={(e) => setDate(e.target.value)} />
+      <DateInput label={labels.invoice_date} width="medium" min={tomorrow()} value={date} errors={errors.field('invoice_date')} onChange={setDate} />
       <div className="form-input form-input--check">
         <span className="form-input__label" aria-hidden="true" />
         <div className="form-input__body">

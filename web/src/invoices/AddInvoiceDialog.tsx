@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
 import type { Contact } from '../contacts/queries'
+import { DatePicker } from '../forms/DatePicker'
 import { type FormErrors, FormRow, TextInput } from '../forms/Form'
 import { InfoIcon, ListIcon } from '../layout/icons'
 import { ConfirmDialog, Modal } from '../layout/Modal'
@@ -206,13 +207,8 @@ export function AddInvoiceDialog(props: Props) {
                       : lockButton(p('unlockDate'), () => setConfirm('date')))}
                   >
                     {({ labelId: _, ...control }) => value.dateUnlocked || sentNumber
-                      ? <input type="date" {...control} disabled={!!sentNumber} value={value.invoiceDate} onChange={(e) => onChange({ invoiceDate: e.target.value })} />
-                      : (
-                        <span className="add-invoice__date">
-                          <input type="text" {...control} disabled placeholder="YYYY-MM-DD" value="" />
-                          <ListIcon kind="calendar" />
-                        </span>
-                      )}
+                      ? <DatePicker {...control} disabled={!!sentNumber} value={value.invoiceDate} onChange={(d) => onChange({ invoiceDate: d })} />
+                      : <DatePicker {...control} disabled value="" onChange={() => {}} />}
                   </FormRow>
                 </>
               )}
