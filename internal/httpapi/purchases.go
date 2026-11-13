@@ -89,6 +89,7 @@ type purchaseDocumentJSON struct {
 	Events                []any                  `json:"events"`
 	TaxTotals             []taxTotalJSON         `json:"tax_totals"`
 	URI                   string                 `json:"uri"`
+	Recognition           Recognition            `json:"recognition"`
 }
 
 func (s *server) toPurchaseDocument(d purchases.Document, contact *contacts.Contact, today time.Time) purchaseDocumentJSON {
@@ -182,9 +183,18 @@ func (s *server) toPurchaseDocuments(r *http.Request, admin resource.ID, list []
 		return nil, err
 	}
 	day := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.UTC)
+	docIDs := make([]resource.ID, len(list))
+	for i, d := range list {
+		docIDs[i] = d.ID
+	}
+	recs, err := s.recognitionsOf(r, admin, docIDs)
+	if err != nil {
+		return nil, err
+	}
 	out := make([]purchaseDocumentJSON, len(list))
 	for i, d := range list {
 		out[i] = s.toPurchaseDocument(d, byID[d.ContactID], day)
+		out[i].Recognition = recs[d.ID]
 	}
 	return out, nil
 }

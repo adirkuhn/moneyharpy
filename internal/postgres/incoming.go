@@ -155,22 +155,12 @@ func deleteIncoming(ctx context.Context, q *sqlc.Queries, kind string, admin, id
 	return fmt.Errorf("cannot retype a %s", kind)
 }
 
-// insertIncoming stores the document as its new type.
+// insertIncoming stores the document as its new type; a purchase invoice
+// or receipt with its lines, such as those Scan and Recognise read.
 func insertIncoming(ctx context.Context, q *sqlc.Queries, r purchases.Retype) error {
 	switch {
 	case r.Document != nil:
-		d := r.Document
-		taxTotals, err := encodeTaxTotals(d.Totals)
-		if err != nil {
-			return err
-		}
-		return q.UpsertPurchaseDocument(ctx, sqlc.UpsertPurchaseDocumentParams{
-			ID: int64(d.ID), AdministrationID: int64(d.AdministrationID), Kind: d.Kind, ContactID: optionalID(nonZero(d.ContactID)),
-			EntryNumber: int32(d.EntryNumber), Reference: d.Reference, Date: day(d.Date), DueDate: optionalDate(d.DueDate), State: d.State,
-			Origin: d.Origin, Currency: d.Currency, PricesAreInclTax: d.PricesAreInclTax, RevenueInvoice: d.RevenueInvoice, PaidAt: optionalTime(d.PaidAt),
-			TotalExclTax: int64(d.Totals.ExclTax), TotalTax: int64(d.Totals.Tax), TotalInclTax: int64(d.Totals.InclTax), TaxTotals: taxTotals,
-			CreatedAt: timestamp(d.CreatedAt), UpdatedAt: timestamp(d.UpdatedAt),
-		})
+		return storeDocument(ctx, q, *r.Document)
 	case r.General != nil:
 		g := r.General
 		return q.UpsertGeneralDocument(ctx, sqlc.UpsertGeneralDocumentParams{
