@@ -24,7 +24,6 @@ var testRates = []bookkeeping.TaxRate{
 func certain[T any](v T) Value[T]   { return Value[T]{V: v, Found: true, Confidence: Certain} }
 func uncertain[T any](v T) Value[T] { return Value[T]{V: v, Found: true, Confidence: Uncertain} }
 
-
 func TestMapTaxRate(t *testing.T) {
 	for _, tt := range []struct {
 		in   string
