@@ -28,10 +28,11 @@ test-e2e: ## End-to-end tests against a disposable stack.
 	$(E2E_COMPOSE) up -d --build --wait
 	cd e2e && E2E_BASE_URL=http://localhost:18080 npm test; status=$$?; cd .. && $(E2E_COMPOSE) down -v; exit $$status
 
-check: ## Everything CI checks, run locally: lint, generated code, backend, frontend and e2e.
+check: ## Everything CI checks, run locally: lint, generated code, Moneybird compatibility, backend, frontend and e2e.
 	$(MAKE) lint
 	$(MAKE) generate
 	git diff --exit-code
+	go test -tags moneybird ./cmd/mbschemas
 	$(MAKE) test
 	cd web && npm test && npm run build
 	$(MAKE) test-e2e
