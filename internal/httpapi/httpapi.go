@@ -26,6 +26,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
+	"github.com/adirkuhn/moneyharpy/internal/ocr"
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/products"
 	"github.com/adirkuhn/moneyharpy/internal/projects"
@@ -120,6 +121,9 @@ type Deps struct {
 	CompanyCheck    RegisterChecker
 	Addresses       AddressLookup
 	Mail            TestMailer
+	// OCR reads and renders attachments; nil works as an unavailable
+	// service.
+	OCR ocr.Service
 	// BaseURL is the public origin of this installation.
 	BaseURL string
 	Logger  *slog.Logger

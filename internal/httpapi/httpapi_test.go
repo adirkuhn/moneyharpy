@@ -237,6 +237,7 @@ type harness struct {
 	settle *settings.Service
 	hooks  *webhooks.Service
 	sales  *sales.Service
+	ocr    *fakeOCR
 
 	subscriptions *subscriptions.Service
 	downloads     *downloads.Service
@@ -261,7 +262,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	mailer := &fakeMailer{resets: make(chan sentMail, 8)}
 
 	files := &fakeFiles{data: map[string][]byte{}}
-	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle}
+	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle, ocr: &fakeOCR{}}
 	h.server = httptest.NewUnstartedServer(nil)
 	h.server.Start()
 	t.Cleanup(h.server.Close)
@@ -339,6 +340,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		LookupLimiter:   ratelimit.New(100000, time.Minute),
 		ResetLimiter:    ratelimit.New(2, time.Hour),
 		Mail:            mailer,
+		OCR:             h.ocr,
 		BaseURL:         h.server.URL,
 		Logger:          slog.New(slog.DiscardHandler),
 		Web:             fstest.MapFS{"index.html": {Data: []byte("<html>spa</html>")}, "assets/app.js": {Data: []byte("js")}},
