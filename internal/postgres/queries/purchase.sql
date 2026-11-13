@@ -242,3 +242,107 @@ SELECT * FROM purchase_transaction_batches WHERE administration_id = $1 AND id =
 INSERT INTO purchase_transaction_batches (id, administration_id, financial_account_id, identifier, state, execution_date, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, updated_at = EXCLUDED.updated_at;
+
+-- name: ListIncomingDocuments :many
+-- Incoming documents of every kind, for the Incoming page: purchase
+-- invoices and receipts with the state to show (pending payment when a
+-- batched purchase transaction pays an open one, late past its due date),
+-- general documents, journal entries, which are saved, and typeless
+-- documents, which only an unfiltered type shows. With an id it finds that
+-- one document.
+WITH docs AS (
+    SELECT d.id, d.kind, d.reference, d.contact_id, d.date,
+           (CASE WHEN d.state = 'open' AND EXISTS (SELECT 1 FROM purchase_transactions t
+                                                   WHERE t.payable_id = d.id AND t.purchase_transaction_batch_id IS NOT NULL AND NOT t.cancelled)
+                      THEN 'pending_payment'
+                 WHEN d.state = 'open' AND d.due_date < @today::date THEN 'late'
+                 ELSE d.state END)::text AS state,
+           d.currency, d.total_incl_tax, d.created_at
+    FROM purchase_documents d
+    WHERE d.administration_id = @administration_id
+      AND (cardinality(@kinds::text[]) = 0 OR d.kind = ANY(@kinds::text[]))
+      AND (sqlc.narg(id)::bigint IS NULL OR d.id = sqlc.narg(id))
+      AND (sqlc.narg(from_date)::date IS NULL OR d.date >= sqlc.narg(from_date))
+      AND (sqlc.narg(to_date)::date IS NULL OR d.date <= sqlc.narg(to_date))
+      AND (sqlc.narg(contact_id)::bigint IS NULL OR d.contact_id = sqlc.narg(contact_id))
+    UNION ALL
+    SELECT g.id, 'GeneralDocument', g.reference, g.contact_id, g.date, g.state, ''::text, 0::bigint, g.created_at
+    FROM general_documents g
+    WHERE g.administration_id = @administration_id
+      AND (cardinality(@kinds::text[]) = 0 OR 'GeneralDocument' = ANY(@kinds::text[]))
+      AND (sqlc.narg(id)::bigint IS NULL OR g.id = sqlc.narg(id))
+      AND (sqlc.narg(from_date)::date IS NULL OR g.date >= sqlc.narg(from_date))
+      AND (sqlc.narg(to_date)::date IS NULL OR g.date <= sqlc.narg(to_date))
+      AND (sqlc.narg(contact_id)::bigint IS NULL OR g.contact_id = sqlc.narg(contact_id))
+    UNION ALL
+    SELECT j.id, 'GeneralJournalDocument', j.reference, NULL::bigint, j.date, 'saved', ''::text, 0::bigint, j.created_at
+    FROM general_journal_documents j
+    WHERE j.administration_id = @administration_id
+      AND (cardinality(@kinds::text[]) = 0 OR 'GeneralJournalDocument' = ANY(@kinds::text[]))
+      AND (sqlc.narg(id)::bigint IS NULL OR j.id = sqlc.narg(id))
+      AND (sqlc.narg(from_date)::date IS NULL OR j.date >= sqlc.narg(from_date))
+      AND (sqlc.narg(to_date)::date IS NULL OR j.date <= sqlc.narg(to_date))
+      AND (sqlc.narg(contact_id)::bigint IS NULL OR EXISTS (
+          SELECT 1 FROM journal_entries e WHERE e.document_id = j.id AND e.contact_id = sqlc.narg(contact_id)))
+    UNION ALL
+    SELECT t.id, 'TypelessDocument', t.reference, t.contact_id, t.date, t.state, ''::text, 0::bigint, t.created_at
+    FROM typeless_documents t
+    WHERE t.administration_id = @administration_id
+      AND cardinality(@kinds::text[]) = 0
+      AND (sqlc.narg(id)::bigint IS NULL OR t.id = sqlc.narg(id))
+      AND (sqlc.narg(from_date)::date IS NULL OR t.date >= sqlc.narg(from_date))
+      AND (sqlc.narg(to_date)::date IS NULL OR t.date <= sqlc.narg(to_date))
+      AND (sqlc.narg(contact_id)::bigint IS NULL OR t.contact_id = sqlc.narg(contact_id))
+)
+SELECT x.id::bigint AS id, x.kind::text AS kind, x.reference::text AS reference, coalesce(x.contact_id, 0)::bigint AS contact_id,
+       coalesce(CASE WHEN c.company_name <> '' THEN c.company_name ELSE trim(c.firstname || ' ' || c.lastname) END, '')::text AS contact_name,
+       x.date::date AS date, x.state::text AS state, x.currency::text AS currency, x.total_incl_tax::bigint AS total_incl_tax,
+       (SELECT count(*) FROM attachments a WHERE a.entity_id = x.id)::int AS attachments_count,
+       x.created_at::timestamptz AS created_at, count(*) OVER () AS total
+FROM docs x
+LEFT JOIN contacts c ON c.id = x.contact_id
+WHERE NOT @nothing::boolean
+  AND (cardinality(@states::text[]) = 0 OR x.state = ANY(@states::text[]))
+  AND (@attachment::text = '' OR (@attachment::text = 'with') = EXISTS (SELECT 1 FROM attachments a WHERE a.entity_id = x.id))
+ORDER BY CASE WHEN @ascending::boolean THEN x.date END ASC,
+         CASE WHEN NOT @ascending::boolean THEN x.date END DESC,
+         CASE WHEN @ascending::boolean THEN x.id END ASC,
+         CASE WHEN NOT @ascending::boolean THEN x.id END DESC
+LIMIT sqlc.narg(max_rows) OFFSET @skip;
+
+-- name: IncomingDocumentStatistics :one
+-- What the purchase invoices and receipts the Incoming page selects book as
+-- costs excluding VAT (new documents book nothing), what is unpaid on the
+-- open, late and pending ones, and the costs per category as JSON, largest
+-- first, with the lines without a category under a null ledger account.
+WITH selected AS (
+    SELECT d.id, d.revenue_invoice, d.total_excl_tax, d.total_incl_tax,
+           (CASE WHEN d.state = 'open' AND EXISTS (SELECT 1 FROM purchase_transactions t
+                                                   WHERE t.payable_id = d.id AND t.purchase_transaction_batch_id IS NOT NULL AND NOT t.cancelled)
+                      THEN 'pending_payment'
+                 WHEN d.state = 'open' AND d.due_date < @today::date THEN 'late'
+                 ELSE d.state END)::text AS state
+    FROM purchase_documents d
+    WHERE d.administration_id = @administration_id
+      AND NOT @nothing::boolean
+      AND (cardinality(@kinds::text[]) = 0 OR d.kind = ANY(@kinds::text[]))
+      AND (sqlc.narg(from_date)::date IS NULL OR d.date >= sqlc.narg(from_date))
+      AND (sqlc.narg(to_date)::date IS NULL OR d.date <= sqlc.narg(to_date))
+      AND (sqlc.narg(contact_id)::bigint IS NULL OR d.contact_id = sqlc.narg(contact_id))
+      AND (@attachment::text = '' OR (@attachment::text = 'with') = EXISTS (SELECT 1 FROM attachments a WHERE a.entity_id = d.id))
+), kept AS (
+    SELECT s.*, CASE WHEN s.revenue_invoice THEN -1 ELSE 1 END AS sign
+    FROM selected s WHERE cardinality(@states::text[]) = 0 OR s.state = ANY(@states::text[])
+), categories AS (
+    SELECT l.ledger_account_id, coalesce(la.name, '') AS name, sum(k.sign * l.line_base)::bigint AS amount
+    FROM kept k
+    JOIN purchase_document_details l ON l.purchase_document_id = k.id
+    LEFT JOIN ledger_accounts la ON la.id = l.ledger_account_id
+    WHERE k.state <> 'new'
+    GROUP BY l.ledger_account_id, la.name
+)
+SELECT (SELECT coalesce(sum(k.sign * k.total_excl_tax), 0) FROM kept k WHERE k.state <> 'new')::bigint AS costs,
+       (SELECT coalesce(sum(k.sign * k.total_incl_tax
+                            - coalesce((SELECT sum(p.price) FROM payments p WHERE p.invoice_type = 'Document' AND p.invoice_id = k.id), 0)), 0)
+        FROM kept k WHERE k.state IN ('open', 'late', 'pending_payment'))::bigint AS payable,
+       (SELECT coalesce(jsonb_agg(c ORDER BY c.amount DESC, c.name), '[]') FROM categories c)::jsonb AS categories;
