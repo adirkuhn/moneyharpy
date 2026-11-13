@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { type Administration, errorMessages } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
+import { DateInput } from '../forms/DatePicker'
 import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
@@ -158,7 +159,7 @@ function ManualBlock({ administrationId, account }: { administrationId: string; 
       <form className="form-sheet form-sheet--block" onSubmit={submit} noValidate aria-label={t('bank.addTransaction')}>
         <Problems messages={errors.general} />
         <FormSection>
-          <TextInput label={t('bank.date')} type="date" width="medium" required value={form.date} errors={errors.field('financial_mutations_attributes.0.date')} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          <DateInput label={t('bank.date')} width="medium" required value={form.date} errors={errors.field('financial_mutations_attributes.0.date')} onChange={(d) => setForm({ ...form, date: d })} />
           <SelectInput label={t('bank.direction')} width="medium" value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}>
             <option value="out">{t('bank.moneyOut')}</option>
             <option value="in">{t('bank.moneyIn')}</option>

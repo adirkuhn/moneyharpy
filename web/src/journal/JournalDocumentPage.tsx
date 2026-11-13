@@ -7,6 +7,7 @@ import { Problems } from '../auth/AuthLayout'
 import { useLedgerAccounts, categoryOption } from '../bookkeeping/queries'
 import { bookable, formatAmount } from '../banking/queries'
 import { ConfirmPanel } from '../detail/Detail'
+import { DateInput } from '../forms/DatePicker'
 import { FormSection, formErrors, TextInput } from '../forms/Form'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
@@ -96,7 +97,7 @@ function JournalForm({ administrationId, doc }: { administrationId: string; doc:
         <Problems messages={errors.general} />
         <FormSection>
           <TextInput label={labels.reference} required maxLength={255} value={reference} errors={errors.field('reference')} onChange={(e) => setReference(e.target.value)} />
-          <TextInput label={labels.date} type="date" width="medium" required value={date} errors={errors.field('date')} onChange={(e) => setDate(e.target.value)} />
+          <DateInput label={labels.date} width="medium" required value={date} errors={errors.field('date')} onChange={setDate} />
         </FormSection>
         <FormSection title={t('journal.rows')}>
         <table className="data-table journal-rows" aria-label={t('journal.rows')}>
