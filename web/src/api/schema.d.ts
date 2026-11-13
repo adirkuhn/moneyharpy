@@ -2087,6 +2087,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List all incoming documents
+         * @description MoneyHarpy extension, for the Incoming page that shows every kind of incoming document together: purchase invoices, receipts, general documents, journal entries (general journal documents) and typeless documents (new uploads without a type yet). Filter terms: period (on the document date; this year unless a filter is given), state (all, new, saved, open, late, paid, pending_payment; several separated by |), type (all, purchase_invoice, receipt, general_document, general_journal_document; several separated by |; typeless documents are of no type and only shown for all), contact_id and attachment (all, with, without); recurring and automatic_saving are accepted, and as documents never recur and MoneyHarpy saves none by itself, recurring:enabled and automatic_saving:automatic select nothing. Newest first unless sort is date_asc. Paged with a Link header and X-Total-Count.
+         */
+        get: operations["listIncomingDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/statistics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Statistics of the incoming documents
+         * @description MoneyHarpy extension. For the incoming documents selected by the same filter as the list: the costs they record excluding VAT, what is still payable on them including VAT, and the costs per category, largest first. Amounts are in the administration's currency.
+         */
+        get: operations["getIncomingDocumentStatistics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get any incoming document
+         * @description MoneyHarpy extension. Finds an incoming document of any kind by its id, so a link to /documents/{id} can open it whatever its type; its uri is the canonical path of the typed resource.
+         */
+        get: operations["getIncomingDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/documents/general_journal_documents": {
         parameters: {
             query?: never;
@@ -7859,6 +7926,43 @@ export interface components {
             };
             remove_contact?: components["schemas"]["FlexibleBoolean"];
         };
+        /** @description MoneyHarpy extension. One incoming document of any kind, as a row of the Incoming page. */
+        IncomingDocumentSummary: {
+            id: string;
+            administration_id: string;
+            /** @enum {string} */
+            type: "PurchaseInvoice" | "Receipt" | "GeneralDocument" | "GeneralJournalDocument" | "TypelessDocument";
+            reference: string;
+            contact_id: string | null;
+            /** @description The company name of the contact, or else the person's name; empty without a contact. */
+            contact_name: string;
+            /** Format: date */
+            date: string;
+            /** @description new, saved, open, late, pending_payment or paid. */
+            state: string;
+            currency: string;
+            /** @description The total including VAT of a purchase invoice or receipt; 0.0 for other documents. */
+            total_price_incl_tax: string;
+            attachments_count: number;
+            /** Format: date-time */
+            created_at: string;
+            /** @description Canonical path of the typed resource, such as /api/v2/{administration_id}/documents/receipts/{id}. */
+            uri: string;
+        };
+        /** @description MoneyHarpy extension. Totals of the incoming documents in a selection. */
+        IncomingDocumentStatistics: {
+            currency: string;
+            /** @description The costs booked by the purchase invoices and receipts, excluding VAT. */
+            costs_excl_tax: string;
+            /** @description What is still to be paid on them, including VAT. */
+            amount_payable: string;
+            /** @description The costs per category, largest first; uncategorized costs have no ledger account. */
+            categories: {
+                ledger_account_id: string | null;
+                name: string;
+                amount: string;
+            }[];
+        };
         /** @description A Moneybird typeless document with MoneyHarpy extensions. */
         TypelessDocument: components["schemas"]["typeless_document_response"] & {
             /** @description MoneyHarpy extension. Canonical path of this resource. */
@@ -10510,6 +10614,19 @@ export interface components {
             };
             content: {
                 "application/json": components["schemas"]["GeneralDocument"][];
+            };
+        };
+        /** @description A page of incoming documents of every kind */
+        IncomingDocumentPage: {
+            headers: {
+                /** @description RFC 8288 links to the first, prev, next and last pages. */
+                Link?: string;
+                /** @description The number selected in all. MoneyHarpy extension. */
+                "X-Total-Count"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["IncomingDocumentSummary"][];
             };
         };
         /** @description A page of typeless documents */
@@ -14977,6 +15094,90 @@ export interface operations {
                 content?: never;
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listIncomingDocuments: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+                sort?: "date_desc" | "date_asc";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["IncomingDocumentPage"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getIncomingDocumentStatistics: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated key:value terms. */
+                filter?: components["parameters"]["document_filter"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The statistics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncomingDocumentStatistics"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getIncomingDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The incoming document */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncomingDocumentSummary"];
+                };
+            };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];

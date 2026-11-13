@@ -1191,6 +1191,33 @@ func (e ImportResultFormat) Valid() bool {
 	}
 }
 
+// Defines values for IncomingDocumentSummaryType.
+const (
+	IncomingDocumentSummaryTypeGeneralDocument        IncomingDocumentSummaryType = "GeneralDocument"
+	IncomingDocumentSummaryTypeGeneralJournalDocument IncomingDocumentSummaryType = "GeneralJournalDocument"
+	IncomingDocumentSummaryTypePurchaseInvoice        IncomingDocumentSummaryType = "PurchaseInvoice"
+	IncomingDocumentSummaryTypeReceipt                IncomingDocumentSummaryType = "Receipt"
+	IncomingDocumentSummaryTypeTypelessDocument       IncomingDocumentSummaryType = "TypelessDocument"
+)
+
+// Valid indicates whether the value is a known member of the IncomingDocumentSummaryType enum.
+func (e IncomingDocumentSummaryType) Valid() bool {
+	switch e {
+	case IncomingDocumentSummaryTypeGeneralDocument:
+		return true
+	case IncomingDocumentSummaryTypeGeneralJournalDocument:
+		return true
+	case IncomingDocumentSummaryTypePurchaseInvoice:
+		return true
+	case IncomingDocumentSummaryTypeReceipt:
+		return true
+	case IncomingDocumentSummaryTypeTypelessDocument:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for JournalEntryDocumentType.
 const (
 	JournalEntryDocumentTypeAsset                  JournalEntryDocumentType = "Asset"
@@ -4119,6 +4146,24 @@ func (e ListContactAdditionalChargesParamsIncludeBilled) Valid() bool {
 	case ListContactAdditionalChargesParamsIncludeBilledFalse:
 		return true
 	case ListContactAdditionalChargesParamsIncludeBilledTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListIncomingDocumentsParamsSort.
+const (
+	ListIncomingDocumentsParamsSortDateAsc  ListIncomingDocumentsParamsSort = "date_asc"
+	ListIncomingDocumentsParamsSortDateDesc ListIncomingDocumentsParamsSort = "date_desc"
+)
+
+// Valid indicates whether the value is a known member of the ListIncomingDocumentsParamsSort enum.
+func (e ListIncomingDocumentsParamsSort) Valid() bool {
+	switch e {
+	case ListIncomingDocumentsParamsSortDateAsc:
+		return true
+	case ListIncomingDocumentsParamsSortDateDesc:
 		return true
 	default:
 		return false
@@ -7093,6 +7138,51 @@ type ImportResult struct {
 
 // ImportResultFormat defines model for ImportResult.Format.
 type ImportResultFormat string
+
+// IncomingDocumentStatistics MoneyHarpy extension. Totals of the incoming documents in a selection.
+type IncomingDocumentStatistics struct {
+	// AmountPayable What is still to be paid on them, including VAT.
+	AmountPayable string `json:"amount_payable"`
+
+	// Categories The costs per category, largest first; uncategorized costs have no ledger account.
+	Categories []struct {
+		Amount          string  `json:"amount"`
+		LedgerAccountId *string `json:"ledger_account_id"`
+		Name            string  `json:"name"`
+	} `json:"categories"`
+
+	// CostsExclTax The costs booked by the purchase invoices and receipts, excluding VAT.
+	CostsExclTax string `json:"costs_excl_tax"`
+	Currency     string `json:"currency"`
+}
+
+// IncomingDocumentSummary MoneyHarpy extension. One incoming document of any kind, as a row of the Incoming page.
+type IncomingDocumentSummary struct {
+	AdministrationId string  `json:"administration_id"`
+	AttachmentsCount int     `json:"attachments_count"`
+	ContactId        *string `json:"contact_id"`
+
+	// ContactName The company name of the contact, or else the person's name; empty without a contact.
+	ContactName string             `json:"contact_name"`
+	CreatedAt   time.Time          `json:"created_at"`
+	Currency    string             `json:"currency"`
+	Date        openapi_types.Date `json:"date"`
+	Id          string             `json:"id"`
+	Reference   string             `json:"reference"`
+
+	// State new, saved, open, late, pending_payment or paid.
+	State string `json:"state"`
+
+	// TotalPriceInclTax The total including VAT of a purchase invoice or receipt; 0.0 for other documents.
+	TotalPriceInclTax string                      `json:"total_price_incl_tax"`
+	Type              IncomingDocumentSummaryType `json:"type"`
+
+	// Uri Canonical path of the typed resource, such as /api/v2/{administration_id}/documents/receipts/{id}.
+	Uri string `json:"uri"`
+}
+
+// IncomingDocumentSummaryType defines model for IncomingDocumentSummary.Type.
+type IncomingDocumentSummaryType string
 
 // InstanceSettings defines model for InstanceSettings.
 type InstanceSettings struct {
@@ -12814,6 +12904,9 @@ type GeneralDocumentPage = []GeneralDocument
 // GeneralJournalDocumentPage defines model for GeneralJournalDocumentPage.
 type GeneralJournalDocumentPage = []GeneralJournalDocument
 
+// IncomingDocumentPage defines model for IncomingDocumentPage.
+type IncomingDocumentPage = []IncomingDocumentSummary
+
 // NotFound defines model for NotFound.
 type NotFound = Error
 
@@ -13059,6 +13152,22 @@ type ListContactAdditionalChargesParams struct {
 // ListContactAdditionalChargesParamsIncludeBilled defines parameters for ListContactAdditionalCharges.
 type ListContactAdditionalChargesParamsIncludeBilled string
 
+// ListIncomingDocumentsParams defines parameters for ListIncomingDocuments.
+type ListIncomingDocumentsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage                         `form:"per_page,omitempty" json:"per_page,omitempty"`
+	Sort    *ListIncomingDocumentsParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+}
+
+// ListIncomingDocumentsParamsSort defines parameters for ListIncomingDocuments.
+type ListIncomingDocumentsParamsSort string
+
 // ListGeneralDocumentsParams defines parameters for ListGeneralDocuments.
 type ListGeneralDocumentsParams struct {
 	// Filter Comma-separated key:value terms.
@@ -13183,6 +13292,12 @@ type ListReceiptVersionsParams struct {
 // CreateReceiptAttachmentMultipartBody defines parameters for CreateReceiptAttachment.
 type CreateReceiptAttachmentMultipartBody struct {
 	File openapi_types.File `json:"file"`
+}
+
+// GetIncomingDocumentStatisticsParams defines parameters for GetIncomingDocumentStatistics.
+type GetIncomingDocumentStatisticsParams struct {
+	// Filter Comma-separated key:value terms.
+	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
 }
 
 // ListTypelessDocumentsParams defines parameters for ListTypelessDocuments.
@@ -20656,6 +20771,9 @@ type ServerInterface interface {
 	// UploadDocumentStyleFile Upload a logo or background
 	// (PUT /api/v2/{administration_id}/document_styles/{id}/{file})
 	UploadDocumentStyleFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, file string)
+	// ListIncomingDocuments List all incoming documents
+	// (GET /api/v2/{administration_id}/documents)
+	ListIncomingDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListIncomingDocumentsParams)
 	// ListGeneralDocuments List all general documents
 	// (GET /api/v2/{administration_id}/documents/general_documents)
 	ListGeneralDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralDocumentsParams)
@@ -20822,6 +20940,9 @@ type ServerInterface interface {
 	//
 	// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	RegisterReceiptPayment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetIncomingDocumentStatistics Statistics of the incoming documents
+	// (GET /api/v2/{administration_id}/documents/statistics)
+	GetIncomingDocumentStatistics(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetIncomingDocumentStatisticsParams)
 	// ListTypelessDocuments List all typeless documents
 	// (GET /api/v2/{administration_id}/documents/typeless_documents)
 	ListTypelessDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTypelessDocumentsParams)
@@ -20849,6 +20970,9 @@ type ServerInterface interface {
 	// DownloadTypelessDocumentAttachment Download an attachment
 	// (GET /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id}/download)
 	DownloadTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// GetIncomingDocument Get any incoming document
+	// (GET /api/v2/{administration_id}/documents/{id})
+	GetIncomingDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ListDownloads List all downloads
 	// (GET /api/v2/{administration_id}/downloads)
 	ListDownloads(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListDownloadsParams)
@@ -22243,6 +22367,12 @@ func (_ Unimplemented) UploadDocumentStyleFile(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListIncomingDocuments List all incoming documents
+// (GET /api/v2/{administration_id}/documents)
+func (_ Unimplemented) ListIncomingDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListIncomingDocumentsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListGeneralDocuments List all general documents
 // (GET /api/v2/{administration_id}/documents/general_documents)
 func (_ Unimplemented) ListGeneralDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListGeneralDocumentsParams) {
@@ -22571,6 +22701,12 @@ func (_ Unimplemented) RegisterReceiptPayment(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetIncomingDocumentStatistics Statistics of the incoming documents
+// (GET /api/v2/{administration_id}/documents/statistics)
+func (_ Unimplemented) GetIncomingDocumentStatistics(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetIncomingDocumentStatisticsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListTypelessDocuments List all typeless documents
 // (GET /api/v2/{administration_id}/documents/typeless_documents)
 func (_ Unimplemented) ListTypelessDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListTypelessDocumentsParams) {
@@ -22622,6 +22758,12 @@ func (_ Unimplemented) DeleteTypelessDocumentAttachment(w http.ResponseWriter, r
 // DownloadTypelessDocumentAttachment Download an attachment
 // (GET /api/v2/{administration_id}/documents/typeless_documents/{id}/attachments/{attachment_id}/download)
 func (_ Unimplemented) DownloadTypelessDocumentAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetIncomingDocument Get any incoming document
+// (GET /api/v2/{administration_id}/documents/{id})
+func (_ Unimplemented) GetIncomingDocument(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -27669,6 +27811,87 @@ func (siw *ServerInterfaceWrapper) UploadDocumentStyleFile(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ListIncomingDocuments operation middleware
+func (siw *ServerInterfaceWrapper) ListIncomingDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListIncomingDocumentsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIncomingDocuments(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListGeneralDocuments operation middleware
 func (siw *ServerInterfaceWrapper) ListGeneralDocuments(w http.ResponseWriter, r *http.Request) {
 
@@ -29890,6 +30113,48 @@ func (siw *ServerInterfaceWrapper) RegisterReceiptPayment(w http.ResponseWriter,
 	handler.ServeHTTP(w, r)
 }
 
+// GetIncomingDocumentStatistics operation middleware
+func (siw *ServerInterfaceWrapper) GetIncomingDocumentStatistics(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetIncomingDocumentStatisticsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetIncomingDocumentStatistics(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListTypelessDocuments operation middleware
 func (siw *ServerInterfaceWrapper) ListTypelessDocuments(w http.ResponseWriter, r *http.Request) {
 
@@ -30262,6 +30527,41 @@ func (siw *ServerInterfaceWrapper) DownloadTypelessDocumentAttachment(w http.Res
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadTypelessDocumentAttachment(w, r, administrationId, id, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetIncomingDocument operation middleware
+func (siw *ServerInterfaceWrapper) GetIncomingDocument(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetIncomingDocument(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -39915,6 +40215,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/v2/{administration_id}/contacts/{contact_id}/notes/{id}", wrapper.DeleteContactNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents", wrapper.ListIncomingDocuments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/statistics", wrapper.GetIncomingDocumentStatistics)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/{id}", wrapper.GetIncomingDocument)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/documents/general_journal_documents", wrapper.ListGeneralJournalDocuments)
