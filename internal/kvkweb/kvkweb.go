@@ -133,6 +133,9 @@ func (c *Client) search(ctx context.Context, query string) ([]administration.Com
 	}
 
 	switch {
+	case !isJSON(res.Header.Get("Content-Type"), body) && isChallenge(body):
+		// Bot protection answers with a challenge page, sometimes as a 5xx.
+		return nil, fmt.Errorf("%w: kvk answered a challenge page (%d)", administration.ErrRegisterBlocked, res.StatusCode)
 	case res.StatusCode >= http.StatusInternalServerError:
 		return nil, fmt.Errorf("%w: kvk answered %d", administration.ErrRegisterUnavailable, res.StatusCode)
 	case res.StatusCode != http.StatusOK:
@@ -230,4 +233,18 @@ func (f *flexString) UnmarshalJSON(raw []byte) error {
 	}
 	*f = flexString(n.String())
 	return nil
+}
+
+// challengeMarks are what bot-protection pages say, in any status.
+var challengeMarks = []string{"just a moment", "attention required", "challenge-platform", "captcha", "cf-chl"}
+
+// isChallenge tells a bot-protection challenge from an ordinary error page.
+func isChallenge(body []byte) bool {
+	page := strings.ToLower(string(body))
+	for _, mark := range challengeMarks {
+		if strings.Contains(page, mark) {
+			return true
+		}
+	}
+	return false
 }

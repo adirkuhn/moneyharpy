@@ -104,6 +104,9 @@ func TestSearchFailures(t *testing.T) {
 	}{
 		{"server error", reply(http.StatusInternalServerError, "text/plain", "oops"), administration.ErrRegisterUnavailable},
 		{"bad gateway", reply(http.StatusBadGateway, "text/html", "<html>bad gateway</html>"), administration.ErrRegisterUnavailable},
+		{"challenge behind a 503", reply(http.StatusServiceUnavailable, "text/html", "<html><title>Just a moment...</title><div id=\"challenge-platform\"></div></html>"), administration.ErrRegisterBlocked},
+		{"a company named like a challenge is a result", reply(http.StatusOK, "application/json", `{"data":{"items":[{"kvkNummer":"12345678","naam":"Captcha B.V.","vestiging":false}]}}`), nil},
+		{"attention required behind a 503", reply(http.StatusServiceUnavailable, "text/html", "<html><title>Attention Required!</title></html>"), administration.ErrRegisterBlocked},
 		{"forbidden", reply(http.StatusForbidden, "text/html", "<html>Access denied</html>"), administration.ErrRegisterBlocked},
 		{"too many requests", reply(http.StatusTooManyRequests, "application/json", `{}`), administration.ErrRegisterBlocked},
 		{"challenge page", reply(http.StatusOK, "text/html", "<!DOCTYPE html><html><title>Just a moment...</title></html>"), administration.ErrRegisterBlocked},
