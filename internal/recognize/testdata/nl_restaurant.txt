@@ -1,0 +1,22 @@
+   EETCAFE DE VOORBEELD
+   Marktplein 3
+   1234 AB Amsterdam
+   Tel: 020-7654321
+   BTW nr: NL123456782B01
+
+Tafel 7                          Bon: 4711
+Datum: 13-11-2026 19:42
+
+2 x Cappuccino        3,40       6,80
+1 x Tosti ham kaas               7,50
+1 x Appeltaart                   4,25
+1 x Spa rood                     3,10
+
+Totaal               EUR        21,65
+
+BTW-overzicht
+Tarief      Excl       BTW       Incl
+9%         19,86      1,79      21,65
+
+Betaald PIN                     21,65
+Bedankt en tot ziens!
