@@ -92,6 +92,16 @@ describe('the contact form', () => {
     expect(screen.getByLabelText('City')).toHaveValue('Amsterdam')
   })
 
+  it('says when the register cannot be searched and keeps the name typed', async () => {
+    server.use(...loaded(undefined, undefined, { companySearch: true }), http.get('*/api/onboarding/company_search', () =>
+      HttpResponse.json({ error: 'KVK blocked the search request', code: 'kvk_blocked' }, { status: 503 })))
+    renderAt('/11/contacts/new')
+    await screen.findByRole('combobox', { name: 'Company register country' })
+    await userEvent.type(screen.getByLabelText('Company name'), 'Example Shop')
+    expect(await screen.findByRole('status')).toHaveTextContent('KVK blocked the search request. Fill in the details by hand.')
+    expect(screen.getByLabelText('Company name')).toHaveValue('Example Shop')
+  })
+
   it('reveals a second address line on request', async () => {
     server.use(...loaded())
     renderAt('/11/contacts/new')
