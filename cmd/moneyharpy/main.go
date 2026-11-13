@@ -39,6 +39,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/objectstore"
+	"github.com/adirkuhn/moneyharpy/internal/ocr"
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/pdok"
 	"github.com/adirkuhn/moneyharpy/internal/postgres"
@@ -78,6 +79,9 @@ type config struct {
 	// uploadsDir holds uploaded files while no S3-compatible storage is
 	// configured.
 	uploadsDir string
+	// ocrURL is the OCR service (cmd/ocrd); without it, documents are not
+	// read with OCR and previews show the file itself.
+	ocrURL string
 }
 
 func loadConfig() (config, error) {
@@ -88,6 +92,7 @@ func loadConfig() (config, error) {
 		addr:              cmp.Or(os.Getenv("LISTEN_ADDR"), ":8080"),
 		trustProxyHeaders: os.Getenv("TRUST_PROXY_HEADERS") == "true",
 		uploadsDir:        cmp.Or(os.Getenv("UPLOADS_DIR"), "/data/uploads"),
+		ocrURL:            os.Getenv("OCR_URL"),
 	}
 	switch {
 	case c.databaseURL == "":
@@ -208,6 +213,7 @@ func run(logger *slog.Logger) error {
 		LookupLimiter:     ratelimit.New(60, time.Minute),
 		ResetLimiter:      ratelimit.New(3, time.Hour),
 		Mail:              mailer,
+		OCR:               ocr.New(cfg.ocrURL),
 		BaseURL:           cfg.baseURL,
 		Logger:            logger,
 		Web:               web.Dist(),
