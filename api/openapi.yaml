@@ -8418,7 +8418,7 @@ paths:
       x-permissions: [sales_invoices]
       summary: Send reminders
       description: >-
-        Sends one reminder per entry: an email to the contact listing the invoices, with their PDFs, or nothing when delivered Manual. The text defaults to the workflow's next reminder step, then to MoneyHarpy's own; {invoices} in it lists the invoices. Each invoice becomes reminded and counts the reminder. All entries are checked before any is sent. Moneybird answers with a status code; MoneyHarpy answers with the reminded invoices.
+        Sends one reminder per entry: an email to the contact listing the invoices, with their PDFs, or nothing when delivered Manual. The text defaults to the workflow's next reminder step, then to MoneyHarpy's own; {reminders_table} (Moneybird's tag) or {invoices} in it lists the invoices. Each invoice becomes reminded and counts the reminder. All entries are checked before any is sent. Moneybird answers with a status code; MoneyHarpy answers with the reminded invoices.
       tags: [Sales invoices]
       requestBody:
         required: true
@@ -20641,6 +20641,7 @@ components:
           nullable: true
           type: string
         next_reminder:
+          description: When the next reminder is due; 2099-01-01 while the invoice is paused, as Moneybird gives it.
           format: date
           nullable: true
           type: string

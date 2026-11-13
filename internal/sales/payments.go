@@ -128,7 +128,9 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 	if in.FinancialMutationID != nil {
 		return s.registerBankPayment(ctx, admin, user, inv, *in.FinancialMutationID, in.Price)
 	}
-	if !payable(inv) {
+	// Moneybird offers Register payment on a paid invoice too; what may be
+	// paid is then left to the price check.
+	if !payable(inv) && inv.State != Paid {
 		return Payment{}, ErrNotEditable
 	}
 	var verr resource.ValidationError

@@ -37,6 +37,11 @@ func steps(w invoicing.Workflow) []invoicing.WorkflowStep {
 	return out
 }
 
+// PausedNextReminder is the next reminder of a paused invoice, as Moneybird
+// gives it (its API's example of pausing an invoice): a day far ahead
+// rather than none, so lists sorted by it put paused invoices last.
+var PausedNextReminder = time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC)
+
 // nextReminder is when the workflow's next reminder for the invoice is due,
 // and that step. As on Moneybird each step expires after its due interval
 // and the next reminder is due when it does: the first reminder on the
@@ -104,8 +109,9 @@ func ReminderEmail(docs []Document, text string) (string, string) {
 	}
 	list := strings.Join(lines, "\n")
 	body := Expand(text, first)
-	if strings.Contains(body, "{invoices}") {
-		body = strings.ReplaceAll(body, "{invoices}", list)
+	// {reminders_table} is Moneybird's tag for the list, {invoices} ours.
+	if strings.Contains(body, "{invoices}") || strings.Contains(body, "{reminders_table}") {
+		body = strings.NewReplacer("{invoices}", list, "{reminders_table}", list).Replace(body)
 	} else {
 		body += "\n\n" + list
 	}

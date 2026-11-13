@@ -31,7 +31,9 @@ export function InvoiceSidebar({ administrationId, invoice: inv, onHighlight }: 
   const facts: [string, ReactNode][] = [
     [t('invoices.view.invoiceId'), invoiceTitle(inv, t)],
     [t('invoices.view.contact'), inv.contact && <ContactHoverCard administrationId={administrationId} contact={{ ...inv.contact, id: inv.contact_id }} />],
-    [t('invoices.nextReminder'), date(inv.next_reminder)],
+    // A paused invoice's next reminder is Moneybird's far-off 2099-01-01,
+    // which only means none is planned.
+    [t('invoices.nextReminder'), inv.paused ? '' : date(inv.next_reminder)],
     [t('invoices.reminderCount'), inv.reminder_count ? String(inv.reminder_count) : ''],
     [t('invoices.markedDubiousOn'), date(inv.marked_dubious_on)],
     [t('invoices.markedUncollectibleOn'), date(inv.marked_uncollectible_on)],
