@@ -54,7 +54,8 @@ type Parsers struct {
 	Text     func(text string, today time.Time) Extraction
 }
 
-// ModelFactory makes the AI model for the saved settings.
+// ModelFactory makes the AI model for the saved settings: one that asks the
+// enabled connections in order.
 type ModelFactory func(settings.Recognition) (Model, error)
 
 // Notifier tells others, such as webhooks, about what Scan and Recognise
@@ -550,7 +551,8 @@ func newContact(sup Supplier) contacts.Changes {
 	return c
 }
 
-// model is the AI model when an administrator turned it on.
+// model is the AI model, asking the connections in order, when an
+// administrator turned it on.
 func (s *Service) model(ctx context.Context) (Model, error) {
 	if s.Settings == nil || s.Models == nil {
 		return nil, nil
@@ -572,13 +574,30 @@ const (
 // Check tells what Scan and Recognise can do on this server.
 type Check struct {
 	OCRAvailable bool
-	// AI is AIOff, AIOK or AIUnavailable.
-	AI      string
+	// AI is AIOff, AIOK (a connection answers) or AIUnavailable.
+	AI          string
+	Connections []ConnectionCheck
+	Message     string
+}
+
+// Connection states of a check.
+const (
+	ConnectionOK          = "ok"
+	ConnectionUnavailable = "unavailable"
+	ConnectionDisabled    = "disabled"
+)
+
+// ConnectionCheck tells whether one AI connection answers.
+type ConnectionCheck struct {
+	ID, Name string
+	// State is ConnectionOK, ConnectionUnavailable or ConnectionDisabled.
+	State   string
 	Message string
 }
 
-// Check checks whether the OCR service and, when turned on, the AI model
-// answer.
+// Check checks whether the OCR service and each enabled AI connection
+// answer. Connections are checked even while the AI model is off, so an
+// administrator can try them before turning it on.
 func (s *Service) Check(ctx context.Context) (Check, error) {
 	var c Check
 	var problems []string
@@ -593,23 +612,43 @@ func (s *Service) Check(ctx context.Context) (Check, error) {
 	if err != nil {
 		return Check{}, err
 	}
-	c.AI = AIOff
-	if inst.Recognition.AIEnabled {
+	anyOK := false
+	for _, conn := range inst.Recognition.Connections {
+		cc := ConnectionCheck{ID: conn.ID, Name: conn.Name, State: ConnectionDisabled}
+		if conn.Enabled {
+			cc.State = ConnectionUnavailable
+			if err := s.pingConnection(ctx, conn); err != nil {
+				cc.Message = err.Error()
+			} else {
+				cc.State = ConnectionOK
+				anyOK = true
+			}
+		}
+		c.Connections = append(c.Connections, cc)
+	}
+	switch {
+	case !inst.Recognition.AIEnabled:
+		c.AI = AIOff
+	case anyOK:
+		c.AI = AIOK
+	default:
 		c.AI = AIUnavailable
-		if s.Models == nil {
-			problems = append(problems, "This server cannot ask an AI model.")
-		} else if err := s.pingModel(ctx, inst.Recognition); err != nil {
-			problems = append(problems, "The AI model does not answer: "+err.Error())
-		} else {
-			c.AI = AIOK
+		problems = append(problems, "No AI connection answers.")
+		for _, cc := range c.Connections {
+			if cc.State == ConnectionUnavailable {
+				problems = append(problems, cc.Name+": "+cc.Message)
+			}
 		}
 	}
 	c.Message = strings.Join(problems, " ")
 	return c, nil
 }
 
-func (s *Service) pingModel(ctx context.Context, cfg settings.Recognition) error {
-	m, err := s.Models(cfg)
+func (s *Service) pingConnection(ctx context.Context, conn settings.AIConnection) error {
+	if s.Models == nil {
+		return errors.New("this server cannot ask an AI model")
+	}
+	m, err := s.Models(settings.Recognition{AIEnabled: true, Connections: []settings.AIConnection{conn}})
 	if err != nil {
 		return err
 	}

@@ -7124,16 +7124,8 @@ export interface components {
             webhooks_allow_local: boolean;
             /** @description Let Scan and Recognise ask an AI model about documents its rules could not read. Off unless turned on; with an API provider the document's text and images are sent to that provider. */
             recognition_ai_enabled: boolean;
-            /** @enum {string} */
-            recognition_ai_provider: "ollama" | "anthropic";
-            /**
-             * @description The address of the Ollama server; empty for the provider's own address.
-             * @example http://ollama:11434
-             */
-            recognition_ai_url: string;
-            /** @example claude-opus-5-5 */
-            recognition_ai_model: string;
-            recognition_ai_api_key_set: boolean;
+            /** @description The AI connections in the order Scan and Recognise tries them: the first enabled connection that reads the document answers; when it fails (unavailable, rate limited, refused, an unreadable answer) the next is asked. */
+            recognition_ai_connections: components["schemas"]["RecognitionAIConnection"][];
         };
         UpdateInstanceSettingsRequest: {
             registration_open?: boolean;
@@ -7168,11 +7160,8 @@ export interface components {
             /** @description Let webhooks reach plain HTTP and private or loopback addresses, for development. */
             webhooks_allow_local?: boolean;
             recognition_ai_enabled?: boolean;
-            /** @enum {string} */
-            recognition_ai_provider?: "ollama" | "anthropic";
-            recognition_ai_url?: string;
-            recognition_ai_model?: string;
-            recognition_ai_api_key?: string;
+            /** @description Replaces the AI connections; their order is the order Scan and Recognise tries them in. */
+            recognition_ai_connections?: components["schemas"]["RecognitionAIConnectionRequest"][];
         };
         /** @description A Moneybird workflow with MoneyHarpy extensions. */
         Workflow: components["schemas"]["workflow_response"] & {
@@ -8129,12 +8118,63 @@ export interface components {
             /** @enum {string} */
             confidence: "certain" | "uncertain";
         };
+        /** @description MoneyHarpy extension. An AI model Scan and Recognise can ask. */
+        RecognitionAIConnection: {
+            /** @description Stable identifier of the connection. */
+            id: string;
+            /** @example NVIDIA free */
+            name: string;
+            provider: components["schemas"]["RecognitionAIProvider"];
+            /**
+             * @description For Ollama the address of the server. For NVIDIA it overrides the hosted API catalog address, for example for a self-hosted NIM; empty for the provider's own address.
+             * @example http://ollama:11434
+             */
+            url: string;
+            /**
+             * @description The model; empty for the provider's default (not for Ollama).
+             * @example meta/llama-3.2-90b-vision-instruct
+             */
+            model: string;
+            api_key_set: boolean;
+            enabled: boolean;
+        };
+        RecognitionAIConnectionRequest: {
+            /** @description The connection to change, so its stored API key is kept; a new connection gets an id. */
+            id?: string;
+            /** @description Defaults to the provider's name. */
+            name?: string;
+            provider: components["schemas"]["RecognitionAIProvider"];
+            url?: string;
+            model?: string;
+            /** @description Omitted keeps the connection's stored key; an empty string removes it. */
+            api_key?: string;
+            /** @default true */
+            enabled: boolean;
+        };
+        /**
+         * @description MoneyHarpy extension. ollama is a server of your own; anthropic is the Anthropic API; nvidia is NVIDIA's API catalog (build.nvidia.com), or a self-hosted NIM at another address.
+         * @enum {string}
+         */
+        RecognitionAIProvider: "ollama" | "anthropic" | "nvidia";
+        RecognitionConnectionCheck: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            state: "ok" | "unavailable" | "disabled";
+            /** @description Why the connection could not be used. */
+            message?: string;
+        };
         /** @description MoneyHarpy extension. Whether Scan and Recognise can read documents on this server. */
         RecognitionCheck: {
             /** @description Whether the OCR service answers; without it only e-invoices and digital PDFs can be read. */
             ocr_available: boolean;
-            /** @enum {string} */
+            /**
+             * @description off while the AI model is turned off; ok when at least one enabled connection answers.
+             * @enum {string}
+             */
             ai: "off" | "ok" | "unavailable";
+            /** @description Each AI connection, in order. */
+            ai_connections: components["schemas"]["RecognitionConnectionCheck"][];
             /** @description Why the OCR service or the AI model could not be reached. */
             message?: string;
         };

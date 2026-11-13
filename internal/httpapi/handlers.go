@@ -822,38 +822,60 @@ func (s *server) DeleteToken(w http.ResponseWriter, r *http.Request, id Id) {
 
 func toInstanceSettings(inst settings.Instance) InstanceSettings {
 	return InstanceSettings{
-		RegistrationOpen:        inst.RegistrationOpen,
-		GoogleEnabled:           inst.Google.Enabled,
-		GoogleClientId:          inst.Google.ClientID,
-		GoogleClientSecretSet:   inst.Google.ClientSecret != "",
-		Lm2Enabled:              inst.LM2.Enabled,
-		Lm2Url:                  inst.LM2.URL,
-		Lm2App:                  inst.LM2.App,
-		KvkEnabled:              inst.KVK.Enabled,
-		KvkApiKeySet:            inst.KVK.APIKey != "",
-		KvkWebsiteSearchEnabled: inst.KVK.WebsiteSearch,
-		AddressLookupEnabled:    inst.AddressLookupEnabled,
-		WebhooksAllowLocal:      inst.WebhooksAllowLocal,
-		SmtpEnabled:             inst.SMTP.Enabled,
-		SmtpHost:                inst.SMTP.Host,
-		SmtpPort:                inst.SMTP.Port,
-		SmtpUsername:            inst.SMTP.Username,
-		SmtpPasswordSet:         inst.SMTP.Password != "",
-		SmtpFrom:                inst.SMTP.From,
-		SmtpSecurity:            inst.SMTP.Security,
-		StorageEnabled:          inst.Storage.Enabled,
-		StorageEndpoint:         inst.Storage.Endpoint,
-		StorageRegion:           inst.Storage.Region,
-		StorageBucket:           inst.Storage.Bucket,
-		StorageAccessKey:        inst.Storage.AccessKey,
-		StorageSecretKeySet:     inst.Storage.SecretKey != "",
-		StoragePathStyle:        inst.Storage.PathStyle,
-		RecognitionAiEnabled:    inst.Recognition.AIEnabled,
-		RecognitionAiProvider:   InstanceSettingsRecognitionAiProvider(inst.Recognition.Provider),
-		RecognitionAiUrl:        inst.Recognition.URL,
-		RecognitionAiModel:      inst.Recognition.Model,
-		RecognitionAiApiKeySet:  inst.Recognition.APIKey != "",
+		RegistrationOpen:         inst.RegistrationOpen,
+		GoogleEnabled:            inst.Google.Enabled,
+		GoogleClientId:           inst.Google.ClientID,
+		GoogleClientSecretSet:    inst.Google.ClientSecret != "",
+		Lm2Enabled:               inst.LM2.Enabled,
+		Lm2Url:                   inst.LM2.URL,
+		Lm2App:                   inst.LM2.App,
+		KvkEnabled:               inst.KVK.Enabled,
+		KvkApiKeySet:             inst.KVK.APIKey != "",
+		KvkWebsiteSearchEnabled:  inst.KVK.WebsiteSearch,
+		AddressLookupEnabled:     inst.AddressLookupEnabled,
+		WebhooksAllowLocal:       inst.WebhooksAllowLocal,
+		SmtpEnabled:              inst.SMTP.Enabled,
+		SmtpHost:                 inst.SMTP.Host,
+		SmtpPort:                 inst.SMTP.Port,
+		SmtpUsername:             inst.SMTP.Username,
+		SmtpPasswordSet:          inst.SMTP.Password != "",
+		SmtpFrom:                 inst.SMTP.From,
+		SmtpSecurity:             inst.SMTP.Security,
+		StorageEnabled:           inst.Storage.Enabled,
+		StorageEndpoint:          inst.Storage.Endpoint,
+		StorageRegion:            inst.Storage.Region,
+		StorageBucket:            inst.Storage.Bucket,
+		StorageAccessKey:         inst.Storage.AccessKey,
+		StorageSecretKeySet:      inst.Storage.SecretKey != "",
+		StoragePathStyle:         inst.Storage.PathStyle,
+		RecognitionAiEnabled:     inst.Recognition.AIEnabled,
+		RecognitionAiConnections: toAIConnections(inst.Recognition.Connections),
 	}
+}
+
+func toAIConnections(cs []settings.AIConnection) []RecognitionAIConnection {
+	out := make([]RecognitionAIConnection, len(cs))
+	for i, c := range cs {
+		out[i] = RecognitionAIConnection{
+			Id: c.ID, Name: c.Name, Provider: RecognitionAIProvider(c.Provider), Url: c.URL, Model: c.Model,
+			ApiKeySet: c.APIKey != "", Enabled: c.Enabled,
+		}
+	}
+	return out
+}
+
+func fromAIConnections(in *[]RecognitionAIConnectionRequest) *[]settings.AIConnectionUpdate {
+	if in == nil {
+		return nil
+	}
+	out := make([]settings.AIConnectionUpdate, len(*in))
+	for i, c := range *in {
+		out[i] = settings.AIConnectionUpdate{
+			ID: deref(c.Id), Name: deref(c.Name), Provider: string(c.Provider), URL: deref(c.Url), Model: deref(c.Model),
+			APIKey: c.ApiKey, Enabled: c.Enabled == nil || *c.Enabled,
+		}
+	}
+	return &out
 }
 
 func requireInstanceAdmin(w http.ResponseWriter, r *http.Request) bool {
@@ -942,11 +964,8 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 		StorageSecretKey: body.StorageSecretKey,
 		StoragePathStyle: body.StoragePathStyle,
 
-		RecognitionAIEnabled:  body.RecognitionAiEnabled,
-		RecognitionAIProvider: (*string)(body.RecognitionAiProvider),
-		RecognitionAIURL:      body.RecognitionAiUrl,
-		RecognitionAIModel:    body.RecognitionAiModel,
-		RecognitionAIAPIKey:   body.RecognitionAiApiKey,
+		RecognitionAIEnabled:     body.RecognitionAiEnabled,
+		RecognitionAIConnections: fromAIConnections(body.RecognitionAiConnections),
 	})
 	if err != nil {
 		s.fail(w, r, err)

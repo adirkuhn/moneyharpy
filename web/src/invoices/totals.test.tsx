@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeTotals, parseCents, parsePercentage, parseQuantity } from './totals'
+import { chargedRate, computeTotals, parseCents, parsePercentage, parseQuantity, vatRows } from './totals'
 
 describe('reading what people type', () => {
   it('reads prices like the server, in cents', () => {
@@ -56,5 +56,34 @@ describe('invoice totals', () => {
   it('rounds credits away from zero', () => {
     const t = computeTotals([{ price: 3333, quantity: -3000, ...vat21 }], 1000, false)
     expect(t.inclTax).toBe(-10889)
+  })
+})
+
+describe('vatRows', () => {
+  const money = (cents: number) => (cents / 100).toFixed(2)
+  const rates = [
+    { id: 'nl21', name: '21% btw', percentage: '21', show_tax: true },
+    { id: 'eu9', name: 'Binnen EU 9% (btw verlegd)', percentage: '9', show_tax: false },
+    { id: 'none', name: 'Geen btw', percentage: '0', show_tax: false },
+  ]
+
+  it('shows charged VAT once and reverse-charged VAT as owed and deducted, as Moneybird does', () => {
+    const rows = vatRows([
+      { taxRateId: 'nl21', taxable: 10000, tax: 2100 },
+      { taxRateId: 'eu9', taxable: 379531, tax: 0 },
+      { taxRateId: 'none', taxable: 500, tax: 0 },
+    ], rates, money)
+    expect(rows).toEqual([
+      { label: '21% btw', amount: '21.00' },
+      { label: 'Binnen EU 9% (btw verlegd)', amount: '-341.58' },
+      { label: 'Binnen EU 9% (btw verlegd)', amount: '341.58' },
+      { label: 'Geen btw', amount: '0.00' },
+    ])
+  })
+
+  it('leaves reverse-charged VAT out of what the lines add up to', () => {
+    const totals = computeTotals([{ price: 379531, quantity: 1000, taxRateId: 'eu9', rate: chargedRate(rates[1]) }], 0, false)
+    expect(totals.inclTax).toBe(379531)
+    expect(chargedRate(rates[0])).toBe(2100)
   })
 })
