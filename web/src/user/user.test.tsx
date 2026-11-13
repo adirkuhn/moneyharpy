@@ -40,7 +40,7 @@ describe('API tokens', () => {
 })
 
 describe('instance settings', () => {
-  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false }
+  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false }
 
   it('is closed to regular users', async () => {
     server.use(signedIn(), listing([]))
@@ -63,7 +63,7 @@ describe('instance settings', () => {
     await userEvent.click(await screen.findByLabelText('Allow new users to register'))
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() =>
-      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false }),
+      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false }),
     )
     expect(await screen.findByRole('status')).toHaveTextContent('Settings saved')
   })
@@ -108,6 +108,45 @@ describe('instance settings', () => {
     await waitFor(() =>
       expect(sent).toMatchObject({ kvk_enabled: true, kvk_api_key: 'kvk-key', address_lookup_enabled: true }),
     )
+  })
+
+  describe('the experimental KVK website search', () => {
+    it('is off by default, explains its risks and can be enabled', async () => {
+      let sent: unknown
+      server.use(
+        signedIn({ ...user, instance_admin: true }),
+        listing([]),
+        http.get('*/api/instance/settings', () => HttpResponse.json(current)),
+        http.patch('*/api/instance/settings', async ({ request }) => {
+          sent = await request.json()
+          return HttpResponse.json(current)
+        }),
+      )
+      renderAt('/instance/settings')
+      const box = await screen.findByLabelText('Experimental: KVK website search')
+      expect(box).not.toBeChecked()
+      expect(screen.getByText(/Unofficial/)).toBeInTheDocument()
+      await userEvent.click(box)
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+      await waitFor(() => expect(sent).toMatchObject({ kvk_website_search_enabled: true }))
+    })
+
+    it.each([
+      [204, undefined, 'The KVK website search works.'],
+      [503, 'kvk_unavailable', 'KVK search is unavailable right now — the KVK server did not respond.'],
+      [503, 'kvk_blocked', 'KVK blocked the search request.'],
+    ])('reports the test result (%s %s)', async (status, code, message) => {
+      server.use(
+        signedIn({ ...user, instance_admin: true }),
+        listing([]),
+        http.get('*/api/instance/settings', () => HttpResponse.json(current)),
+        http.post('*/api/instance/settings/test_kvk_website_search', () =>
+          status === 204 ? new HttpResponse(null, { status }) : HttpResponse.json({ error: 'x', code }, { status })),
+      )
+      renderAt('/instance/settings')
+      await userEvent.click(await screen.findByRole('button', { name: 'Test KVK website search' }))
+      expect(await screen.findByText(message, { exact: false })).toBeInTheDocument()
+    })
   })
 
   it('configures the mail server', async () => {

@@ -55,6 +55,7 @@ Uploads, such as logos and stationery on document styles, work out of the box: w
 Both are optional and off by default, and the app works without them. Under **Instance settings**:
 
 - **Company search** needs an API key from the [KVK developer portal](https://developers.kvk.nl/) and searches the Dutch company register while adding an administration.
+- **Experimental: KVK website search** searches the same register through the public search of the KVK website (`web-api.kvk.nl`), without an API key. It is off by default and only the instance administrator can turn it on. It is unofficial and undocumented: KVK may change it, stop it or block requests at any time, and it sends the name people type to KVK. It is only used while the official KVK API is not enabled; the API key stays the supported way, and a failing API search never falls back to the website. Searches time out after 5 seconds and are capped at 30 a minute for the whole installation. When KVK does not answer (network error, timeout, server error) or blocks the request (refusal, rate limit, a challenge page instead of results), the search says so and people fill in the details by hand. **Test KVK website search** checks it from your server with a sample search for a common word.
 - **Address lookup** completes Dutch addresses from zipcode and house number. It sends those two values to PDOK, the Dutch government address service.
 
 ## API

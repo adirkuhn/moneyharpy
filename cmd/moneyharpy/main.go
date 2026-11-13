@@ -33,6 +33,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/kvk"
+	"github.com/adirkuhn/moneyharpy/internal/kvkweb"
 	"github.com/adirkuhn/moneyharpy/internal/lm2"
 	"github.com/adirkuhn/moneyharpy/internal/mail"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
@@ -170,6 +171,10 @@ func run(logger *slog.Logger) error {
 	home.UseIncoming(documentService)
 	// Reports read the journal; their exports land in the downloads.
 	reportService := reports.NewService(admins, postgres.NewReportStore(pool), downloadService, books, time.Now)
+	// The official KVK API is preferred; the experimental website search is
+	// used only while the API is not enabled, and is capped for the whole
+	// installation to stay a polite visitor.
+	kvkWebsite := kvkweb.New(instance, kvkweb.ProductionURL, outbound, ratelimit.New(30, time.Minute))
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
@@ -197,7 +202,8 @@ func run(logger *slog.Logger) error {
 		Resources:         postgres.NewResourceLocator(pool),
 		Google:            google.New(instance, cfg.baseURL, google.Issuer),
 		LM2:               lm2.New(instance, cfg.baseURL, outbound),
-		Companies:         kvk.New(instance, kvk.ProductionURL, outbound),
+		Companies:         administration.Registers{kvk.New(instance, kvk.ProductionURL, outbound), kvkWebsite},
+		CompanyCheck:      kvkWebsite,
 		Addresses:         pdok.New(instance, pdok.ProductionURL, outbound),
 		LookupLimiter:     ratelimit.New(60, time.Minute),
 		ResetLimiter:      ratelimit.New(3, time.Hour),
