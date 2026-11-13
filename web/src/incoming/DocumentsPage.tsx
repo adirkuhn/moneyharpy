@@ -157,7 +157,8 @@ export function DocumentsPage() {
             columns={[
               {
                 key: 'reference', header: t('incoming.reference'), link: true,
-                cell: (d) => <><span className="document-type-tag">{typeTags[d.type]}</span> {d.reference}</>,
+                // The tag stays beside a long reference, such as a file name, which wraps on its own.
+                cell: (d) => <span className="document-type-ref"><span className="document-type-tag">{typeTags[d.type]}</span> <span>{d.reference}</span></span>,
               },
               { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (d) => <AttachmentIcon count={d.attachments_count} /> },
               { key: 'contact', header: t('incoming.contact'), cell: (d) => d.contact_name || <span className="empty">{t('incoming.noContact')}</span> },

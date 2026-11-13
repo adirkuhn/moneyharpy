@@ -1,4 +1,6 @@
 /* The Incoming page: every incoming document together. */
+.document-type-ref { display: inline-flex; align-items: baseline; gap: 0.25rem; max-width: 100%; }
+.document-type-ref > :last-child { min-width: 0; overflow-wrap: anywhere; }
 .document-type-tag { display: inline-block; min-width: 2.25rem; color: var(--muted); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.02em; }
 .drop-bar-wrap { margin: 0 0 1rem; }
 .drop-bar-wrap .problems { margin: 0.5rem 0 0; }

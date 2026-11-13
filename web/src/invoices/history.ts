@@ -112,6 +112,8 @@ const sentences: Record<string, string> = {
   sales_invoice_marked_as_dubious: 'dubious',
   sales_invoice_marked_as_uncollectible: 'uncollectible',
   payment_destroyed: 'paymentDeleted',
+  document_saved: 'documentSaved',
+  document_updated: 'documentUpdated',
   recurring_sales_invoice_created: 'recurringCreated',
   external_sales_invoice_created: 'externalCreated',
   external_sales_invoice_updated: 'externalUpdated',

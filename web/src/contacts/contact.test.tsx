@@ -93,7 +93,7 @@ describe('a contact', () => {
     expect(within(feed).queryByText('Everything has been processed!')).toBeNull()
     const processed = within(feed).getByRole('list', { name: 'Recently processed' })
     const rows = within(processed).getAllByRole('link')
-    expect(rows.map((l) => l.getAttribute('href'))).toEqual(['/11/sales_invoices/501', '/11/documents/receipts/601', '/11/documents/receipts/602'])
+    expect(rows.map((l) => l.getAttribute('href'))).toEqual(['/11/sales_invoices/501', '/11/documents/601', '/11/documents/602'])
     expect(rows[0]).toHaveTextContent('Example Shop B.V. · 2026-0001 · Project X')
     expect(rows[0]).toHaveTextContent('Design work · Hosting')
     expect(rows[0]).toHaveTextContent('€+121.00')

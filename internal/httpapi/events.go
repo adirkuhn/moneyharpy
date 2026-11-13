@@ -414,6 +414,13 @@ var webhookEvents = map[string]func(c change) []webhooks.Event{
 	"deleteGeneralDocument":          func(c change) []webhooks.Event { return c.destroyed("Document", "document_destroyed") },
 	"createTypelessDocument":         func(c change) []webhooks.Event { return c.one("Document", "document_saved") },
 	"deleteTypelessDocument":         func(c change) []webhooks.Event { return c.destroyed("Document", "document_destroyed") },
+	// A document turned into a journal entry is no document any more.
+	"setIncomingDocumentType": func(c change) []webhooks.Event {
+		if c.responseMap["type"] == "GeneralJournalDocument" {
+			return c.destroyed("Document", "document_destroyed")
+		}
+		return c.one("Document", "document_updated")
+	},
 	"createPurchaseTransaction": func(c change) []webhooks.Event {
 		return c.one("PurchaseTransaction", "purchase_transaction_created")
 	},

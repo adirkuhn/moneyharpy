@@ -1214,6 +1214,111 @@ func (q *Queries) PurchaseTransactionByID(ctx context.Context, arg PurchaseTrans
 	return i, err
 }
 
+const retypeAttachments = `-- name: RetypeAttachments :exec
+UPDATE attachments SET entity_type = $1
+WHERE administration_id = $2 AND entity_id = $3 AND entity_type = $4
+`
+
+type RetypeAttachmentsParams struct {
+	NewType          string
+	AdministrationID int64
+	EntityID         int64
+	OldType          string
+}
+
+func (q *Queries) RetypeAttachments(ctx context.Context, arg RetypeAttachmentsParams) error {
+	_, err := q.db.Exec(ctx, retypeAttachments,
+		arg.NewType,
+		arg.AdministrationID,
+		arg.EntityID,
+		arg.OldType,
+	)
+	return err
+}
+
+const retypeEvents = `-- name: RetypeEvents :exec
+UPDATE events SET entity_type = $1
+WHERE administration_id = $2 AND entity_id = $3 AND entity_type = $4
+`
+
+type RetypeEventsParams struct {
+	NewType          string
+	AdministrationID int64
+	EntityID         int64
+	OldType          string
+}
+
+func (q *Queries) RetypeEvents(ctx context.Context, arg RetypeEventsParams) error {
+	_, err := q.db.Exec(ctx, retypeEvents,
+		arg.NewType,
+		arg.AdministrationID,
+		arg.EntityID,
+		arg.OldType,
+	)
+	return err
+}
+
+const retypeNotes = `-- name: RetypeNotes :exec
+UPDATE notes SET entity_type = $1
+WHERE administration_id = $2 AND entity_id = $3 AND entity_type = $4
+`
+
+type RetypeNotesParams struct {
+	NewType          string
+	AdministrationID int64
+	EntityID         int64
+	OldType          string
+}
+
+func (q *Queries) RetypeNotes(ctx context.Context, arg RetypeNotesParams) error {
+	_, err := q.db.Exec(ctx, retypeNotes,
+		arg.NewType,
+		arg.AdministrationID,
+		arg.EntityID,
+		arg.OldType,
+	)
+	return err
+}
+
+const retypeResource = `-- name: RetypeResource :exec
+UPDATE resources SET type = $1 WHERE administration_id = $2 AND id = $3
+`
+
+type RetypeResourceParams struct {
+	Type             string
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) RetypeResource(ctx context.Context, arg RetypeResourceParams) error {
+	_, err := q.db.Exec(ctx, retypeResource, arg.Type, arg.AdministrationID, arg.ID)
+	return err
+}
+
+const setPurchaseDocumentKind = `-- name: SetPurchaseDocumentKind :exec
+UPDATE purchase_documents SET kind = $1, revenue_invoice = $2, updated_at = $3
+WHERE administration_id = $4 AND id = $5
+`
+
+type SetPurchaseDocumentKindParams struct {
+	Kind             string
+	RevenueInvoice   bool
+	UpdatedAt        pgtype.Timestamptz
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) SetPurchaseDocumentKind(ctx context.Context, arg SetPurchaseDocumentKindParams) error {
+	_, err := q.db.Exec(ctx, setPurchaseDocumentKind,
+		arg.Kind,
+		arg.RevenueInvoice,
+		arg.UpdatedAt,
+		arg.AdministrationID,
+		arg.ID,
+	)
+	return err
+}
+
 const settlePurchaseDocument = `-- name: SettlePurchaseDocument :exec
 UPDATE purchase_documents SET state = $3, paid_at = $4, updated_at = $5 WHERE administration_id = $1 AND id = $2
 `

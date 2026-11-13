@@ -129,3 +129,25 @@ func (s *server) GetIncomingDocumentStatistics(w http.ResponseWriter, r *http.Re
 		Categories    []costCategoryJSON `json:"categories"`
 	}{st.Currency, st.CostsExclTax.String(), st.AmountPayable.String(), categories})
 }
+
+// SetIncomingDocumentType implements ServerInterface.
+func (s *server) SetIncomingDocumentType(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	docID, ok := parseID(w, id)
+	if !ok {
+		return
+	}
+	body, ok := decodeBody[SetIncomingDocumentTypeJSONBody](w, r)
+	if !ok {
+		return
+	}
+	d, err := s.deps.Purchases.SetType(r.Context(), admin, docID, user(r).ID, string(body.DocumentType))
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toIncomingDocument(d))
+}
