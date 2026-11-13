@@ -27,7 +27,7 @@ const (
 	maxUploadBytes = 10<<20 + 1<<10
 
 	contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
-		"img-src 'self' data:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; " +
+		"img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; " +
 		"frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 )
 
