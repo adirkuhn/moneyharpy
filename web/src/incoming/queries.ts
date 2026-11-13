@@ -154,7 +154,13 @@ export function useDeleteDocument(administrationId: string, type: DocumentType, 
   const client = useQueryClient()
   return useMutation({
     mutationFn: () => unwrap(api.DELETE(typed(type, '/api/v2/{administration_id}/documents/receipts/{id}'), one(administrationId, id))),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['documents', administrationId] }),
+    onSuccess: () => {
+      // The document is gone: forget it rather than ask for it again, which would show the not found page.
+      const gone = [...documentsKey(administrationId), 'one', id]
+      client.removeQueries({ queryKey: gone })
+      client.removeQueries({ queryKey: incomingKey(administrationId, id) })
+      return client.invalidateQueries({ queryKey: documentsKey(administrationId) })
+    },
   })
 }
 
