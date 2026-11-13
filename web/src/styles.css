@@ -601,6 +601,9 @@ textarea { min-height: 4.5rem; padding: 0.5rem 0.625rem; resize: vertical; }
 .search-select__option.is-active { background: var(--row-hover); }
 .search-select__option[aria-selected='true'] { color: var(--blue); font-weight: 650; }
 .search-select__option.has-separator { border-bottom: 1px solid var(--line); border-radius: 5px 5px 0 0; }
+/* Options without a heading after a group, such as all VAT rates under Most used, start under a line. */
+.search-select__group + .search-select__option { margin-top: 0.25rem; border-top: 1px solid var(--line); border-radius: 0 0 5px 5px; }
+.quick-add__form { display: grid; gap: 0.75rem; min-width: min(26rem, calc(100vw - 4rem)); }
 .search-select__empty { display: flex; align-items: center; min-height: 2.25rem; padding: 0 0.625rem; color: var(--muted); }
 .search-select__add { margin-top: 0.25rem; border-top: 1px solid var(--line); border-radius: 0 0 5px 5px; color: var(--link); font-weight: 550; }
 .search-select__add svg { flex: none; }

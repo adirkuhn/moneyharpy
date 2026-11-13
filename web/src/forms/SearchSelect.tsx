@@ -101,7 +101,7 @@ export function SearchSelect(props: Props) {
   const openWith = (text: string) => {
     setQuery(text)
     // The keyboard starts at the chosen option, else at the first.
-    const at = text ? 0 : entries.findIndex((e) => e.option?.value === value && !pinned?.options.includes(e.option))
+    const at = text ? 0 : entries.findIndex((e) => e.option?.value === value)
     setActive(Math.max(at, 0))
     setOpen(true)
   }
