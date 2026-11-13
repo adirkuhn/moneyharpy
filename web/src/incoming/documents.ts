@@ -30,8 +30,8 @@ const typedPages: DocumentType[] = ['PurchaseInvoice', 'Receipt', 'GeneralJourna
 export const typeTags: Record<DocumentType, string> = {
   PurchaseInvoice: 'PUR',
   Receipt: 'REC',
-  GeneralDocument: 'DOC',
-  GeneralJournalDocument: 'MEM',
+  GeneralDocument: 'GEN',
+  GeneralJournalDocument: 'MAN',
   TypelessDocument: '—',
 }
 
