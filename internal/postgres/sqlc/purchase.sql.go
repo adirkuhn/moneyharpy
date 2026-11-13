@@ -173,6 +173,79 @@ func (q *Queries) GeneralDocumentsByIDs(ctx context.Context, arg GeneralDocument
 	return items, nil
 }
 
+const incomingDocumentStatistics = `-- name: IncomingDocumentStatistics :one
+WITH selected AS (
+    SELECT d.id, d.revenue_invoice, d.total_excl_tax, d.total_incl_tax,
+           (CASE WHEN d.state = 'open' AND EXISTS (SELECT 1 FROM purchase_transactions t
+                                                   WHERE t.payable_id = d.id AND t.purchase_transaction_batch_id IS NOT NULL AND NOT t.cancelled)
+                      THEN 'pending_payment'
+                 WHEN d.state = 'open' AND d.due_date < $1::date THEN 'late'
+                 ELSE d.state END)::text AS state
+    FROM purchase_documents d
+    WHERE d.administration_id = $2
+      AND NOT $3::boolean
+      AND (cardinality($4::text[]) = 0 OR d.kind = ANY($4::text[]))
+      AND ($5::date IS NULL OR d.date >= $5)
+      AND ($6::date IS NULL OR d.date <= $6)
+      AND ($7::bigint IS NULL OR d.contact_id = $7)
+      AND ($8::text = '' OR ($8::text = 'with') = EXISTS (SELECT 1 FROM attachments a WHERE a.entity_id = d.id))
+), kept AS (
+    SELECT s.id, s.revenue_invoice, s.total_excl_tax, s.total_incl_tax, s.state, CASE WHEN s.revenue_invoice THEN -1 ELSE 1 END AS sign
+    FROM selected s WHERE cardinality($9::text[]) = 0 OR s.state = ANY($9::text[])
+), categories AS (
+    SELECT l.ledger_account_id, coalesce(la.name, '') AS name, sum(k.sign * l.line_base)::bigint AS amount
+    FROM kept k
+    JOIN purchase_document_details l ON l.purchase_document_id = k.id
+    LEFT JOIN ledger_accounts la ON la.id = l.ledger_account_id
+    WHERE k.state <> 'new'
+    GROUP BY l.ledger_account_id, la.name
+)
+SELECT (SELECT coalesce(sum(k.sign * k.total_excl_tax), 0) FROM kept k WHERE k.state <> 'new')::bigint AS costs,
+       (SELECT coalesce(sum(k.sign * k.total_incl_tax
+                            - coalesce((SELECT sum(p.price) FROM payments p WHERE p.invoice_type = 'Document' AND p.invoice_id = k.id), 0)), 0)
+        FROM kept k WHERE k.state IN ('open', 'late', 'pending_payment'))::bigint AS payable,
+       (SELECT coalesce(jsonb_agg(c ORDER BY c.amount DESC, c.name), '[]') FROM categories c)::jsonb AS categories
+`
+
+type IncomingDocumentStatisticsParams struct {
+	Today            pgtype.Date
+	AdministrationID int64
+	Nothing          bool
+	Kinds            []string
+	FromDate         pgtype.Date
+	ToDate           pgtype.Date
+	ContactID        pgtype.Int8
+	Attachment       string
+	States           []string
+}
+
+type IncomingDocumentStatisticsRow struct {
+	Costs      int64
+	Payable    int64
+	Categories []byte
+}
+
+// What the purchase invoices and receipts the Incoming page selects book as
+// costs excluding VAT (new documents book nothing), what is unpaid on the
+// open, late and pending ones, and the costs per category as JSON, largest
+// first, with the lines without a category under a null ledger account.
+func (q *Queries) IncomingDocumentStatistics(ctx context.Context, arg IncomingDocumentStatisticsParams) (IncomingDocumentStatisticsRow, error) {
+	row := q.db.QueryRow(ctx, incomingDocumentStatistics,
+		arg.Today,
+		arg.AdministrationID,
+		arg.Nothing,
+		arg.Kinds,
+		arg.FromDate,
+		arg.ToDate,
+		arg.ContactID,
+		arg.Attachment,
+		arg.States,
+	)
+	var i IncomingDocumentStatisticsRow
+	err := row.Scan(&i.Costs, &i.Payable, &i.Categories)
+	return i, err
+}
+
 const insertPurchaseDocumentAllocation = `-- name: InsertPurchaseDocumentAllocation :exec
 INSERT INTO purchase_document_fiscal_allocations (id, administration_id, purchase_document_id, ledger_account_id, private_ledger_account_id,
     percentage, price, created_at, updated_at)
@@ -327,6 +400,152 @@ func (q *Queries) ListGeneralDocuments(ctx context.Context, arg ListGeneralDocum
 			&i.GeneralDocument.State,
 			&i.GeneralDocument.CreatedAt,
 			&i.GeneralDocument.UpdatedAt,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listIncomingDocuments = `-- name: ListIncomingDocuments :many
+WITH docs AS (
+    SELECT d.id, d.kind, d.reference, d.contact_id, d.date,
+           (CASE WHEN d.state = 'open' AND EXISTS (SELECT 1 FROM purchase_transactions t
+                                                   WHERE t.payable_id = d.id AND t.purchase_transaction_batch_id IS NOT NULL AND NOT t.cancelled)
+                      THEN 'pending_payment'
+                 WHEN d.state = 'open' AND d.due_date < $7::date THEN 'late'
+                 ELSE d.state END)::text AS state,
+           d.currency, d.total_incl_tax, d.created_at
+    FROM purchase_documents d
+    WHERE d.administration_id = $8
+      AND (cardinality($9::text[]) = 0 OR d.kind = ANY($9::text[]))
+      AND ($10::bigint IS NULL OR d.id = $10)
+      AND ($11::date IS NULL OR d.date >= $11)
+      AND ($12::date IS NULL OR d.date <= $12)
+      AND ($13::bigint IS NULL OR d.contact_id = $13)
+    UNION ALL
+    SELECT g.id, 'GeneralDocument', g.reference, g.contact_id, g.date, g.state, ''::text, 0::bigint, g.created_at
+    FROM general_documents g
+    WHERE g.administration_id = $8
+      AND (cardinality($9::text[]) = 0 OR 'GeneralDocument' = ANY($9::text[]))
+      AND ($10::bigint IS NULL OR g.id = $10)
+      AND ($11::date IS NULL OR g.date >= $11)
+      AND ($12::date IS NULL OR g.date <= $12)
+      AND ($13::bigint IS NULL OR g.contact_id = $13)
+    UNION ALL
+    SELECT j.id, 'GeneralJournalDocument', j.reference, NULL::bigint, j.date, 'saved', ''::text, 0::bigint, j.created_at
+    FROM general_journal_documents j
+    WHERE j.administration_id = $8
+      AND (cardinality($9::text[]) = 0 OR 'GeneralJournalDocument' = ANY($9::text[]))
+      AND ($10::bigint IS NULL OR j.id = $10)
+      AND ($11::date IS NULL OR j.date >= $11)
+      AND ($12::date IS NULL OR j.date <= $12)
+      AND ($13::bigint IS NULL OR EXISTS (
+          SELECT 1 FROM journal_entries e WHERE e.document_id = j.id AND e.contact_id = $13))
+    UNION ALL
+    SELECT t.id, 'TypelessDocument', t.reference, t.contact_id, t.date, t.state, ''::text, 0::bigint, t.created_at
+    FROM typeless_documents t
+    WHERE t.administration_id = $8
+      AND cardinality($9::text[]) = 0
+      AND ($10::bigint IS NULL OR t.id = $10)
+      AND ($11::date IS NULL OR t.date >= $11)
+      AND ($12::date IS NULL OR t.date <= $12)
+      AND ($13::bigint IS NULL OR t.contact_id = $13)
+)
+SELECT x.id::bigint AS id, x.kind::text AS kind, x.reference::text AS reference, coalesce(x.contact_id, 0)::bigint AS contact_id,
+       coalesce(CASE WHEN c.company_name <> '' THEN c.company_name ELSE trim(c.firstname || ' ' || c.lastname) END, '')::text AS contact_name,
+       x.date::date AS date, x.state::text AS state, x.currency::text AS currency, x.total_incl_tax::bigint AS total_incl_tax,
+       (SELECT count(*) FROM attachments a WHERE a.entity_id = x.id)::int AS attachments_count,
+       x.created_at::timestamptz AS created_at, count(*) OVER () AS total
+FROM docs x
+LEFT JOIN contacts c ON c.id = x.contact_id
+WHERE NOT $1::boolean
+  AND (cardinality($2::text[]) = 0 OR x.state = ANY($2::text[]))
+  AND ($3::text = '' OR ($3::text = 'with') = EXISTS (SELECT 1 FROM attachments a WHERE a.entity_id = x.id))
+ORDER BY CASE WHEN $4::boolean THEN x.date END ASC,
+         CASE WHEN NOT $4::boolean THEN x.date END DESC,
+         CASE WHEN $4::boolean THEN x.id END ASC,
+         CASE WHEN NOT $4::boolean THEN x.id END DESC
+LIMIT $6 OFFSET $5
+`
+
+type ListIncomingDocumentsParams struct {
+	Nothing          bool
+	States           []string
+	Attachment       string
+	Ascending        bool
+	Skip             int32
+	MaxRows          pgtype.Int4
+	Today            pgtype.Date
+	AdministrationID int64
+	Kinds            []string
+	ID               pgtype.Int8
+	FromDate         pgtype.Date
+	ToDate           pgtype.Date
+	ContactID        pgtype.Int8
+}
+
+type ListIncomingDocumentsRow struct {
+	ID               int64
+	Kind             string
+	Reference        string
+	ContactID        int64
+	ContactName      string
+	Date             pgtype.Date
+	State            string
+	Currency         string
+	TotalInclTax     int64
+	AttachmentsCount int32
+	CreatedAt        pgtype.Timestamptz
+	Total            int64
+}
+
+// Incoming documents of every kind, for the Incoming page: purchase
+// invoices and receipts with the state to show (pending payment when a
+// batched purchase transaction pays an open one, late past its due date),
+// general documents, journal entries, which are saved, and typeless
+// documents, which only an unfiltered type shows. With an id it finds that
+// one document.
+func (q *Queries) ListIncomingDocuments(ctx context.Context, arg ListIncomingDocumentsParams) ([]ListIncomingDocumentsRow, error) {
+	rows, err := q.db.Query(ctx, listIncomingDocuments,
+		arg.Nothing,
+		arg.States,
+		arg.Attachment,
+		arg.Ascending,
+		arg.Skip,
+		arg.MaxRows,
+		arg.Today,
+		arg.AdministrationID,
+		arg.Kinds,
+		arg.ID,
+		arg.FromDate,
+		arg.ToDate,
+		arg.ContactID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListIncomingDocumentsRow
+	for rows.Next() {
+		var i ListIncomingDocumentsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.Reference,
+			&i.ContactID,
+			&i.ContactName,
+			&i.Date,
+			&i.State,
+			&i.Currency,
+			&i.TotalInclTax,
+			&i.AttachmentsCount,
+			&i.CreatedAt,
 			&i.Total,
 		); err != nil {
 			return nil, err

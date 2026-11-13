@@ -152,6 +152,11 @@ type memStore struct {
 	transactions map[resource.ID]Transaction
 	batches      map[resource.ID]Batch
 	number       int
+	// incoming and statistics are what the incoming document queries
+	// answer; incomingQuery is the last query they were asked.
+	incoming      []Incoming
+	statistics    IncomingStatistics
+	incomingQuery IncomingQuery
 }
 
 func newMemStore() *memStore {
@@ -440,6 +445,25 @@ func (m *memStore) Totals(_ context.Context, _ resource.ID) (Summary, error) {
 	}
 	s.ToProcess += len(m.typeless)
 	return s, nil
+}
+
+func (m *memStore) IncomingDocuments(_ context.Context, _ resource.ID, q IncomingQuery) ([]Incoming, int, error) {
+	m.incomingQuery = q
+	return slices.Clone(m.incoming), len(m.incoming), nil
+}
+
+func (m *memStore) IncomingDocument(_ context.Context, _, id resource.ID, _ time.Time) (Incoming, error) {
+	for _, d := range m.incoming {
+		if d.ID == id {
+			return d, nil
+		}
+	}
+	return Incoming{}, ErrNotFound
+}
+
+func (m *memStore) IncomingStatistics(_ context.Context, _ resource.ID, q IncomingQuery) (IncomingStatistics, error) {
+	m.incomingQuery = q
+	return m.statistics, nil
 }
 
 // fakeBank links payments to transactions and calls back as banking does.
