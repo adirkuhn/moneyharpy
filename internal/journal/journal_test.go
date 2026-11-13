@@ -208,6 +208,14 @@ func (m *memAttachments) AttachmentsOf(_ context.Context, _ resource.ID, entityT
 	return out, nil
 }
 
+func (m *memAttachments) UnhashedAttachments(context.Context, []string, resource.ID, int) ([]attachments.Attachment, error) {
+	return nil, nil
+}
+
+func (m *memAttachments) SetAttachmentHash(context.Context, resource.ID, resource.ID, string) error {
+	return nil
+}
+
 type fakeProjects struct{}
 
 func (fakeProjects) Project(_ context.Context, _, id, _ resource.ID) (projects.Project, error) {

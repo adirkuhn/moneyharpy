@@ -47,7 +47,7 @@ const invoice = (over: Partial<PurchaseInvoice> = {}): PurchaseInvoice => ({
 const summary = (over: Partial<DocumentSummary>): DocumentSummary => ({
   id: '941', administration_id: '11', type: 'PurchaseInvoice', reference: 'INV-1', contact_id: '701', contact_name: 'Supplier B.V.',
   date: '2026-11-01', state: 'open', currency: 'EUR', total_price_incl_tax: '121.0', attachments_count: 1, created_at: stamp,
-  uri: '/api/v2/11/documents/purchase_invoices/941', recognition_state: 'none', ...over,
+  uri: '/api/v2/11/documents/purchase_invoices/941', recognition_state: 'none', possible_duplicates: [], ...over,
 })
 
 const upload: TypelessDocument = {
@@ -484,5 +484,45 @@ describe('Scan and Recognise on the page of a document', () => {
     await screen.findByRole('heading', { level: 1, name: 'Purchase invoice INV-1' })
     await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
     expect(screen.queryByRole('button', { name: 'Read again' })).toBeNull()
+  })
+})
+
+describe('possible duplicates on the page of a document', () => {
+  it('warns of each document this one may copy, with a link and why, and nothing more', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/documents/941', () => HttpResponse.json(summary({
+      possible_duplicates: [
+        { id: '942', type: 'PurchaseInvoice', reference: 'INV-1', date: '2026-11-01', total_price_incl_tax: '121.0', reasons: ['same_reference', 'same_amount_and_date', 'same_lines'] },
+        { id: '951', type: 'TypelessDocument', reference: 'scan.jpg', date: '2026-11-10', total_price_incl_tax: '0.0', reasons: ['same_file'] },
+      ],
+    }))))
+    renderAt('/11/documents/941')
+    const notice = await screen.findByRole('note', { name: 'Possible duplicate' })
+    expect(notice).toHaveTextContent('Possible duplicate of:')
+    expect(within(notice).getByRole('link', { name: 'Purchase invoice INV-1' })).toHaveAttribute('href', '/11/documents/942')
+    expect(within(notice).getByRole('link', { name: 'Document scan.jpg' })).toHaveAttribute('href', '/11/documents/951')
+    expect(notice).toHaveTextContent('(2026-11-01, €121.00 — same reference, same amount and date, same lines)')
+    expect(notice).toHaveTextContent('(2026-11-10 — same file)')
+    // A warning only: the document can still be edited and saved.
+    expect(within(screen.getByRole('region', { name: 'Purchase invoice' })).getByRole('button', { name: 'Edit' })).toBeEnabled()
+  })
+
+  it('names a single duplicate in one line, on a general document too', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/documents/981', () => HttpResponse.json(summary({
+      id: '981', type: 'GeneralDocument', reference: 'Insurance policy', contact_id: null, contact_name: '', state: 'saved',
+      possible_duplicates: [{ id: '982', type: 'GeneralDocument', reference: 'Insurance policy', date: '2026-11-02', total_price_incl_tax: '0.0', reasons: ['same_file'] }],
+    }))))
+    renderAt('/11/documents/981')
+    const notice = await screen.findByRole('note', { name: 'Possible duplicate' })
+    expect(notice).toHaveTextContent('Possible duplicate of General document Insurance policy (2026-11-02 — same file)')
+    expect(within(notice).getByRole('link')).toHaveAttribute('href', '/11/documents/982')
+  })
+
+  it('shows no warning for a document like no other', async () => {
+    server.use(...loaded())
+    renderAt('/11/documents/941')
+    await screen.findByRole('heading', { level: 1, name: 'Purchase invoice INV-1' })
+    expect(screen.queryByRole('note', { name: 'Possible duplicate' })).toBeNull()
   })
 })

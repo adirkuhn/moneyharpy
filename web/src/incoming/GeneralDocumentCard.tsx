@@ -19,6 +19,8 @@ type Props = {
   onSaved: (stillNew: boolean, next: boolean) => void
   left: number
   cancelTo: string
+  /** Shown above the fields, such as a warning of a possible duplicate. */
+  notice?: ReactNode
 }
 
 /** A general document: kept for reference, with a contact, a reference, a date and when it is due. */
@@ -28,6 +30,7 @@ export function GeneralDocumentCard(props: Props) {
   if (!props.editing) {
     return (
       <DocumentFacts label={t('incoming.types.general_document')} onEdit={props.onEdit}>
+        {props.notice}
         <div className="incoming-card__rows">
           {props.typeRow}
           <FactRows
@@ -45,7 +48,7 @@ export function GeneralDocumentCard(props: Props) {
   return <GeneralForm key={doc.version} {...props} />
 }
 
-function GeneralForm({ administrationId, doc, typeRow, onSaved, left, cancelTo }: Props) {
+function GeneralForm({ administrationId, doc, typeRow, onSaved, left, cancelTo, notice }: Props) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const administration = useAdministration(administrationId)
@@ -68,6 +71,7 @@ function GeneralForm({ administrationId, doc, typeRow, onSaved, left, cancelTo }
   }
   return (
     <DocumentForm label={t('incoming.types.general_document')} saving={saving}>
+      {notice}
       <Problems messages={errors.general} />
       <div className="incoming-card__rows">
         {typeRow}

@@ -1045,6 +1045,10 @@ export const en = {
       withoutDocument: 'Or continue without document', type: 'Type',
       typeText: { purchase_invoice: 'Invoices for goods or services delivered', receipt: 'Receipts for shopping, fuel, meals', general_document: 'For the storage of tax returns, insurance policies, contracts', general_journal_document: 'For the recording of opening balances, year-end, payroll costs' },
     },
+    duplicates: {
+      title: 'Possible duplicate', mark: 'Possible duplicate', of: 'Possible duplicate of', ofMany: 'Possible duplicate of:',
+      reasons: { same_file: 'same file', same_reference: 'same reference', same_amount_and_date: 'same amount and date', same_lines: 'same lines' },
+    },
     view: {
       document: 'Document', attachments: 'Attachments', download: 'Download attachment', deleteAttachment: 'Delete attachment',
       confirmDeleteAttachment: 'Do you want to delete this attachment?', add: 'Add', noAttachment: 'No attachment',

@@ -157,6 +157,10 @@ type memStore struct {
 	incoming      []Incoming
 	statistics    IncomingStatistics
 	incomingQuery IncomingQuery
+	// candidates are what DuplicateCandidates answers; candidateIDs are
+	// the ids it was last asked about.
+	candidates   []DuplicateCandidate
+	candidateIDs []resource.ID
 	// journals are the journal entries documents were turned into.
 	journals map[resource.ID]journal.Document
 }
@@ -455,6 +459,11 @@ func (m *memStore) IncomingDocuments(_ context.Context, _ resource.ID, q Incomin
 	return slices.Clone(m.incoming), len(m.incoming), nil
 }
 
+func (m *memStore) DuplicateCandidates(_ context.Context, _ resource.ID, ids []resource.ID) ([]DuplicateCandidate, error) {
+	m.candidateIDs = ids
+	return slices.Clone(m.candidates), nil
+}
+
 func (m *memStore) IncomingDocument(_ context.Context, _, id resource.ID, _ time.Time) (Incoming, error) {
 	for _, d := range m.incoming {
 		if d.ID == id {
@@ -595,6 +604,14 @@ func (m *memAttachments) AttachmentsOf(_ context.Context, _ resource.ID, t strin
 		}
 	}
 	return out, nil
+}
+
+func (m *memAttachments) UnhashedAttachments(context.Context, []string, resource.ID, int) ([]attachments.Attachment, error) {
+	return nil, nil
+}
+
+func (m *memAttachments) SetAttachmentHash(context.Context, resource.ID, resource.ID, string) error {
+	return nil
 }
 
 type noFiles struct{}
