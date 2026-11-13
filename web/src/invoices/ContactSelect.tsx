@@ -6,6 +6,7 @@ import { CompanyNameField } from '../contacts/CompanyNameField'
 import { SegmentedRow } from '../contacts/ContactFormParts'
 import { type Contact, type ContactChanges, contactName, useSaveContact } from '../contacts/queries'
 import { type ControlProps, FormRow, formErrors, TextInput } from '../forms/Form'
+import type { Confidence } from '../forms/Remark'
 import { CaretIcon, ListIcon } from '../layout/icons'
 import { PageIcon } from '../layout/pageIcons'
 import { useOnboardingOptions } from '../onboarding/queries'
@@ -26,16 +27,18 @@ type Props = {
   onChange: (contact: Contact) => void
   /** The chosen contact of a saved invoice, whose card shows while it is hovered, as on Moneybird's Edit invoice. */
   hoverCard?: { id: string; name: string }
+  /** Scan and Recognise chose the contact. */
+  remark?: Confidence
 }
 
 /**
  * Moneybird's contact selector of the "Add invoice" popup: a search of all
  * contacts, and a short form to add a new one without leaving the invoice.
  */
-export function ContactSelect({ administrationId, value, errors, homeCountry, returnTo, onChange, hoverCard }: Props) {
+export function ContactSelect({ administrationId, value, errors, homeCountry, returnTo, onChange, hoverCard, remark }: Props) {
   const { t } = useTranslation()
   return (
-    <FormRow label={t('invoices.contact')} errors={errors}>
+    <FormRow label={t('invoices.contact')} errors={errors} remark={remark}>
       {({ labelId, ...control }) => (
         <Selector administrationId={administrationId} labelId={labelId} control={control} value={value} homeCountry={homeCountry} returnTo={returnTo} onChange={onChange} hoverCard={hoverCard} />
       )}
@@ -43,7 +46,7 @@ export function ContactSelect({ administrationId, value, errors, homeCountry, re
   )
 }
 
-type SelectorProps = Omit<Props, 'errors'> & { labelId: string; control: ControlProps }
+type SelectorProps = Omit<Props, 'errors' | 'remark'> & { labelId: string; control: ControlProps }
 
 function Selector({ administrationId, labelId, control, value, homeCountry, returnTo, onChange, hoverCard }: SelectorProps) {
   const { t } = useTranslation()

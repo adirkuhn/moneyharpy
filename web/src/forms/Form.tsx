@@ -2,6 +2,7 @@ import { type ReactNode, useId } from 'react'
 import { ApiError, errorMessages } from '../api/client'
 import { serverMessage } from '../i18n'
 import { InfoIcon } from '../layout/icons'
+import { type Confidence, Remark } from './Remark'
 
 /** How wide a control is, after Moneybird: short codes are small, text is long. */
 export type Width = 'small' | 'medium' | 'long'
@@ -22,6 +23,8 @@ type RowProps = {
   action?: ReactNode
   /** Something beside the label that is not part of it, such as an information button. */
   labelExtra?: ReactNode
+  /** Scan and Recognise filled the value in: a bolt at the right, and a highlight when it was unsure. */
+  remark?: Confidence
 }
 
 type FormRowProps = RowProps & {
@@ -33,13 +36,13 @@ type FormRowProps = RowProps & {
  * One labelled control: the label beside it on wide screens and above it on
  * narrow ones, with its error or help text underneath.
  */
-export function FormRow({ label, errors, help, width = 'long', action, labelExtra, children }: FormRowProps) {
+export function FormRow({ label, errors, help, width = 'long', action, labelExtra, remark, children }: FormRowProps) {
   const id = useId()
   const messageId = `${id}-message`
   const invalid = errors !== undefined && errors.length > 0
   const message = invalid ? errors.join(' ') : help
   return (
-    <div className={`form-input form-input--${width}${invalid ? ' form-input--invalid' : ''}`}>
+    <div className={`form-input form-input--${width}${invalid ? ' form-input--invalid' : ''}${remark ? ' has-remark' : ''}${remark === 'uncertain' ? ' is-uncertain' : ''}`}>
       {labelExtra ? (
         <div className="form-input__label-row">
           <label className="form-input__label" id={`${id}-label`} htmlFor={id}>{label}</label>
@@ -62,13 +65,14 @@ export function FormRow({ label, errors, help, width = 'long', action, labelExtr
           <p id={messageId} className={`form-input__message form-input__message--${invalid ? 'error' : 'help'}`}>{message}</p>
         )}
       </div>
+      {remark && <span className="form-input__remark"><Remark confidence={remark} /></span>}
     </div>
   )
 }
 
-export function TextInput({ label, errors, help, width, action, labelExtra, ...input }: RowProps & React.InputHTMLAttributes<HTMLInputElement>) {
+export function TextInput({ label, errors, help, width, action, labelExtra, remark, ...input }: RowProps & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <FormRow label={label} errors={errors} help={help} width={width} action={action} labelExtra={labelExtra}>
+    <FormRow label={label} errors={errors} help={help} width={width} action={action} labelExtra={labelExtra} remark={remark}>
       {({ labelId: _, ...control }) => <input type="text" {...input} {...control} />}
     </FormRow>
   )

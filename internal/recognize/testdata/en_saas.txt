@@ -1,0 +1,30 @@
+Example Cloud Ltd
+1 Example Street
+London EC1A 1BB
+United Kingdom
+VAT: GB123456789
+billing@example.com
+
+INVOICE
+
+Invoice number: EC-2026-11-0042
+Date of issue: November 13, 2026
+Date due: November 27, 2026
+
+Bill to:
+Example Shop B.V.
+Voorbeeldstraat 1
+1234 AB Amsterdam
+Netherlands
+VAT: NL123456782B01
+
+Description                         Qty    Unit price     Amount
+Pro plan (Nov 13 - Dec 13, 2026)      3      £15.00       £45.00
+Extra storage 100 GB                  1       £5.00        £5.00
+
+Subtotal                                                  £50.00
+VAT (0% - reverse charge)                                  £0.00
+Total                                                     £50.00
+Amount due                                                £50.00
+
+Pay online at https://pay.example.com/i/abc

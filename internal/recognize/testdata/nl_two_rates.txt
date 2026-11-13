@@ -1,0 +1,23 @@
+Example Catering B.V.
+Keukenstraat 4
+1234 AB Amsterdam
+T: +31 20 123 4567
+E: facturen@example.com
+
+FACTUUR
+Factuurnr.: F26-0313
+Factuurdatum: 13 nov. 2026
+Betalingstermijn: 14 dagen
+
+Omschrijving              Aantal    Prijs    BTW    Bedrag
+Lunchbuffet p.p.            25      12,50     9%    312,50
+Drankjes p.p.               25       3,00     9%     75,00
+Zaalhuur                     1     150,00    21%    150,00
+
+Subtotaal                                           537,50
+BTW 9% over 387,50                                   34,88
+BTW 21% over 150,00                                  31,50
+Totaal te betalen                                   603,88
+
+Wij verzoeken u het bedrag binnen 14 dagen over te maken op NL91ABNA0417164300 t.n.v. Example Catering B.V.
+KvK 12345678 - BTW NL123456782B01

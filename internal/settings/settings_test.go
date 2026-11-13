@@ -39,7 +39,7 @@ func TestInstanceDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Instance() error = %v", err)
 	}
-	if diff := cmp.Diff(Instance{RegistrationOpen: true}, got); diff != "" {
+	if diff := cmp.Diff(Instance{RegistrationOpen: true, Recognition: Recognition{Provider: "ollama"}}, got); diff != "" {
 		t.Errorf("Instance() diff (-want +got):\n%s", diff)
 	}
 }
@@ -68,7 +68,7 @@ func TestUpdatePersistsAndEncryptsSecret(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Instance() error = %v", err)
 	}
-	want := Instance{RegistrationOpen: false, Google: Google{Enabled: true, ClientID: "client-id", ClientSecret: secret}}
+	want := Instance{RegistrationOpen: false, Google: Google{Enabled: true, ClientID: "client-id", ClientSecret: secret}, Recognition: Recognition{Provider: "ollama"}}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("Instance() diff (-want +got):\n%s", diff)
 	}

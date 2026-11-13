@@ -15,9 +15,11 @@ import { addDays } from '../invoices/paper'
 import { computeTotals, parseCents, parseQuantity } from '../invoices/totals'
 import { type TotalRow, TotalsTable } from '../invoices/TotalsTable'
 import { StateBadge } from '../invoices/StateBadge'
+import { leastSure } from '../forms/Remark'
 import { Loading } from '../layout/Loading'
 import { DocumentFacts, DocumentForm, FactRows, type Saving } from './DocumentCard'
 import { type IncomingDocument, type IncomingKind, type PurchaseChanges, useSavePurchase } from './queries'
+import { remarksOf } from './recognition'
 import '../invoices/editor.css'
 
 type Props = {
@@ -33,6 +35,8 @@ type Props = {
   onSaved: (stillNew: boolean, next: boolean) => void
   left: number
   cancelTo: string
+  /** What Scan and Recognise is doing, on top of the card. */
+  notice?: ReactNode
 }
 
 /** The rates a document can use: the active purchase rates, and those it already has. */
@@ -48,7 +52,7 @@ export function PurchaseDocument(props: Props) {
   }
   const usable = purchaseRates(rates.data, props.doc)
   return props.editing
-    ? <PurchaseForm key={props.doc.version} {...props} rates={usable} accounts={accounts.data} />
+    ? <PurchaseForm key={`${props.doc.version}-${props.doc.recognition?.state}`} {...props} rates={usable} accounts={accounts.data} />
     : <PurchaseFacts {...props} rates={usable} accounts={accounts.data} />
 }
 
@@ -60,7 +64,7 @@ const words = (kind: IncomingKind) => ({
   reference: kind === 'receipts' ? 'incoming.view.reference' : 'incoming.view.invoiceId',
 })
 
-function PurchaseFacts({ kind, doc, typeRow, onEdit, rates, accounts }: Loaded) {
+function PurchaseFacts({ kind, doc, typeRow, onEdit, rates, accounts, notice }: Loaded) {
   const { t, i18n } = useTranslation()
   const w = words(kind)
   const currency = doc.currency ?? 'EUR'
@@ -75,6 +79,7 @@ function PurchaseFacts({ kind, doc, typeRow, onEdit, rates, accounts }: Loaded) 
   ]
   return (
     <DocumentFacts label={t(w.label)} onEdit={onEdit}>
+      {notice}
       <div className="incoming-card__rows">
         {typeRow}
         <FactRows
@@ -136,7 +141,7 @@ const isBlank = (r: DetailRow) => !r.id && !r.description.trim() && !r.price.tri
 /** A line's amount times its price, in cents, as the Total column shows it. */
 const grossCents = (price: number, quantity: number) => Math.sign(price * quantity) * Math.round(Math.abs(price * quantity) / 1000)
 
-function PurchaseForm({ administrationId, kind, doc, typeRow, rates, accounts, onSaved, left, cancelTo }: Loaded) {
+function PurchaseForm({ administrationId, kind, doc, typeRow, rates, accounts, onSaved, left, cancelTo, notice }: Loaded) {
   const { t, i18n } = useTranslation()
   const { pathname } = useLocation()
   const administration = useAdministration(administrationId)
@@ -161,6 +166,8 @@ function PurchaseForm({ administrationId, kind, doc, typeRow, rates, accounts, o
     return loaded.length ? loaded : [blank(defaultRate)]
   })
   const [removed, setRemoved] = useState<string[]>([])
+  // What Scan and Recognise filled in; the lines keep their remarks by id as they move.
+  const [remarks] = useState(() => remarksOf(doc.recognition, doc.details))
 
   const parsed = rows.map((r) => ({ price: parseCents(r.price), quantity: parseQuantity(r.amount) }))
   const rateOf = (id: string) => rates.find((r) => r.id === id)
@@ -239,10 +246,12 @@ function PurchaseForm({ administrationId, kind, doc, typeRow, rates, accounts, o
 
   return (
     <DocumentForm label={t(w.label)} saving={saving}>
+      {notice}
       <Problems messages={errors.general} />
       <div className="incoming-card__rows">
         {typeRow}
         <ContactSelect
+          remark={remarks.field('contact_id')}
           administrationId={administrationId}
           value={contact.name}
           errors={errors.field('contact_id')}
@@ -250,11 +259,12 @@ function PurchaseForm({ administrationId, kind, doc, typeRow, rates, accounts, o
           returnTo={pathname}
           onChange={(c) => setContact({ id: String(c.id ?? ''), name: contactName(c) })}
         />
-        <TextInput label={t(w.reference)} maxLength={255} value={reference} errors={errors.field('reference')} onChange={(e) => setReference(e.target.value)} />
-        <DateInput label={t('incoming.view.date')} value={date} errors={errors.field('date')} onChange={setDate} />
+        <TextInput label={t(w.reference)} remark={remarks.field('reference')} maxLength={255} value={reference} errors={errors.field('reference')} onChange={(e) => setReference(e.target.value)} />
+        <DateInput label={t('incoming.view.date')} remark={remarks.field('date')} value={date} errors={errors.field('date')} onChange={setDate} />
         {kind === 'purchase_invoices' && (
           <DateInput
             label={t('incoming.view.dueDate')}
+            remark={remarks.field('due_date')}
             value={dueDate}
             errors={errors.field('due_date')}
             onChange={(value) => {
@@ -295,6 +305,8 @@ function PurchaseForm({ administrationId, kind, doc, typeRow, rates, accounts, o
         onApplyBelow={(i, c) => setRows(applyBelow(rows, i, c))}
         onDiscount={() => undefined}
         buttons={null}
+        remarks={remarks.lines}
+        headerRemark={leastSure([remarks.field('currency'), remarks.field('prices_are_incl_tax')])}
       />
     </DocumentForm>
   )

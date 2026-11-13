@@ -1,0 +1,30 @@
+FACTUUR
+
+Example Shop B.V.
+Voorbeeldstraat 1
+1234 AB Amsterdam
+Nederland
+info@example.com
+www.example.com
+KvK: 12345678
+BTW: NL123456782B01
+
+Factuur aan:
+Ann de Vries
+Dorpsweg 5
+5678 EF Eindhoven
+
+Factuurnummer: INV-2026-0815
+Factuurdatum: 12-11-2026
+Bestelnummer: 100234
+
+Artikel                      Aantal   Prijs incl. btw   Totaal
+USB-C kabel 2m                  2          9,95          19,90
+Draadloze muis                  1         24,95          24,95
+Verzendkosten                   1          4,95           4,95
+
+Subtotaal                                                49,80
+Btw 21%                                                   8,64
+Totaal                                                   49,80
+
+Betaald via iDEAL op 12-11-2026.

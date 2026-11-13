@@ -5,6 +5,7 @@ import type { DocumentType, LedgerAccount, TaxRate } from '../bookkeeping/querie
 import { currencyOptions } from '../forms/currencies'
 import { DatePicker } from '../forms/DatePicker'
 import type { FormErrors } from '../forms/Form'
+import { type Confidence, leastSure, Remark } from '../forms/Remark'
 import { ListIcon } from '../layout/icons'
 import { PageIcon } from '../layout/pageIcons'
 import { ActionMenu } from '../list/ListActions'
@@ -19,6 +20,12 @@ import { categoryOption } from '../bookkeeping/queries'
 
 /** A detail row as the editor keeps it: a line with its period and the product it came from. */
 export type DetailRow = LineRow & { period: string; product_id: string; /** The period the server keeps, so clearing it is sent. */ savedPeriod?: string }
+
+/** The fields of a line Scan and Recognise can fill in. */
+export type LineField = 'description' | 'amount' | 'price' | 'tax_rate_id' | 'ledger_account_id'
+
+/** What Scan and Recognise filled in on each line, by the line's key. */
+export type LineRemarks = Record<string, Partial<Record<LineField, Confidence>>>
 
 /** The fields "Apply to details below" copies to the rows under a changed one. */
 type Applicable = 'period' | 'tax_rate_id' | 'ledger_account_id'
@@ -74,6 +81,10 @@ type Props = {
   documentType?: DocumentType
   /** Buttons in place of Save and Cancel, for a form that saves more than the lines. */
   buttons?: ReactNode
+  /** The values of each line Scan and Recognise filled in, marked with a bolt; unsure ones are highlighted. */
+  remarks?: LineRemarks
+  /** Whether Scan and Recognise filled in the currency or whether prices include VAT. */
+  headerRemark?: Confidence
 }
 
 /**
@@ -133,8 +144,9 @@ export function DetailsEditor(props: Props) {
   const cell = (i: number, field: string, invalidInput = false) => {
     const problems = errors.field(`details_attributes.${i}.${field}`)
     const id = `detail-${i}-${field}-message`
+    const unsure = props.remarks?.[rows[i]?.key ?? '']?.[field as LineField] === 'uncertain'
     return {
-      control: { 'aria-invalid': invalidInput || !!problems || undefined, 'aria-describedby': problems ? id : undefined },
+      control: { 'aria-invalid': invalidInput || !!problems || undefined, 'aria-describedby': problems ? id : undefined, ...(unsure ? { className: 'is-uncertain' } : {}) },
       message: problems && <p id={id} className="form-input__message form-input__message--error">{problems.join(' ')}</p>,
     }
   }
@@ -187,6 +199,7 @@ export function DetailsEditor(props: Props) {
             </label>
           ))}
         </fieldset>
+        {props.headerRemark && <span className="details-editor__remark"><Remark confidence={props.headerRemark} /></span>}
       </div>
       <div className="details-editor__body">
         <p id={hintId} className="sr-only">{d('moveHint')}</p>
@@ -300,6 +313,7 @@ export function DetailsEditor(props: Props) {
                     <button type="button" className="details-editor__remove-button" aria-label={d('remove', { n: i + 1 })} title={d('removeRow')} onClick={() => props.onRemove(i)}>
                       <PageIcon kind="close" />
                     </button>
+                    <Remark confidence={leastSure(Object.values(props.remarks?.[r.key] ?? {}))} />
                   </td>
                 </tr>
               )

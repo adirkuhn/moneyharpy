@@ -1,0 +1,18 @@
+Example Software Inc.
+100 Example Avenue, Suite 200
+San Francisco, CA 94105
+United States
+support@example.com
+
+Invoice #: 2026-1113
+Invoice Date: 11/13/2026
+Due Date: 12/13/2026
+
+Item                               Qty       Rate        Amount
+API usage - October 2026             1   $1,250.00     $1,250.00
+Premium support                      1     $250.00       $250.00
+
+Subtotal                                               $1,500.00
+Tax (0%)                                                   $0.00
+Total                                              USD 1,500.00
+Balance Due                                            $1,500.00

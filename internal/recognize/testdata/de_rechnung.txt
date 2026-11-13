@@ -1,0 +1,27 @@
+Beispiel GmbH · Musterstraße 12 · 10115 Berlin
+
+Example Shop B.V.
+Voorbeeldstraat 1
+1234 AB Amsterdam
+Niederlande
+
+Rechnung
+
+Rechnungsnummer: RE-2026-1187
+Rechnungsdatum: 13.11.2026
+Leistungsdatum: 10.11.2026
+Kundennummer: 4711
+
+Pos.  Bezeichnung              Menge   Einzelpreis   Gesamtpreis
+1     Beratung (Stunden)        4       95,00         380,00
+2     Reisekosten               1       45,50          45,50
+
+Nettobetrag                                          425,50
+Umsatzsteuer 19 %                                     80,85
+Gesamtbetrag                                         506,35
+
+Zahlbar innerhalb von 14 Tagen ohne Abzug.
+
+Beispiel GmbH · Geschäftsführer: Max Mustermann · Amtsgericht Berlin HRB 12345
+USt-IdNr.: DE123456789 · IBAN: DE89 3704 0044 0532 0130 00 · BIC: COBADEFFXXX
+info@beispiel.example.com

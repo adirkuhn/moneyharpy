@@ -1,0 +1,23 @@
+# The OCR service (cmd/ocrd): Poppler and Tesseract behind a small HTTP API.
+# The app works without it; with it, Scan and Recognise reads PDFs and scans,
+# and incoming documents show page previews.
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS build
+ARG TARGETOS TARGETARCH
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY cmd/ocrd ./cmd/ocrd
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /ocrd ./cmd/ocrd
+
+FROM debian:trixie-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends poppler-utils tesseract-ocr tesseract-ocr-nld tesseract-ocr-eng \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --system --uid 10001 --home-dir /nonexistent --shell /usr/sbin/nologin ocrd
+COPY --from=build /ocrd /usr/local/bin/ocrd
+# One thread per Tesseract run; the service runs one job per CPU instead.
+ENV OMP_THREAD_LIMIT=1
+USER 10001
+EXPOSE 8090
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s CMD ["/usr/local/bin/ocrd", "-healthcheck"]
+ENTRYPOINT ["/usr/local/bin/ocrd"]

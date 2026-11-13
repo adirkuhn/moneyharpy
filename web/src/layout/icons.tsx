@@ -198,3 +198,31 @@ export function MenuIcon({ kind }: { kind: MenuIconKind }) {
     </svg>
   )
 }
+
+/** A lightning bolt, MoneyHarpy's mark of what Scan and Recognise filled in. */
+export function BoltIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="currentColor" stroke="currentColor" strokeWidth={1.25} strokeLinejoin="round">
+      <path d="M13.500 2.500 5 13.500h6l-1.500 8 8.500-11h-6Z" />
+    </svg>
+  )
+}
+
+/** A warning triangle, after Moneybird's mark of a value to check. */
+export function WarningIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="currentColor" stroke="currentColor" strokeWidth={1.25} strokeLinejoin="round">
+      <path d="M12 3 2.500 20h19Z" />
+      <path d="M12 9.500v5M12 17.250v.25" stroke="var(--surface, #fff)" strokeWidth={2} strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/** A small spinning ring, for something busy in the background. */
+export function SpinnerIcon() {
+  return (
+    <svg className="spinner-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" {...stroke} strokeWidth={2.5}>
+      <path d="M12 3.500a8.500 8.500 0 1 1-8.500 8.500" />
+    </svg>
+  )
+}
