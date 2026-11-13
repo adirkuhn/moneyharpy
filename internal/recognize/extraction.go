@@ -76,6 +76,9 @@ type VAT struct {
 	Rate    string // percentage such as "21"
 	Taxable money.Amount
 	Tax     money.Amount
+	// ReverseCharge is set when the buyer accounts for the VAT: a reverse
+	// charge or an intra-community supply exempt in the seller's country.
+	ReverseCharge bool
 }
 
 // Extraction is everything read from one document.

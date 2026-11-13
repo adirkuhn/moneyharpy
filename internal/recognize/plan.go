@@ -172,7 +172,14 @@ func MakePlan(in PlanInput) Plan {
 
 		category, remembered := in.Memory.Category(l.description)
 		rate, rateConf := resource.ID(0), Uncertain
-		if l.rate.Found {
+		if l.reverse {
+			// The document says the buyer accounts for the VAT but not
+			// at which rate: the standard rate is a guess to check.
+			if id, ok := MapReverseCharge(supplierCountry(in.Extraction.Supplier) == "NL", in.Rates); ok {
+				rate, rateConf = id, Uncertain
+			}
+		}
+		if rate == 0 && l.rate.Found {
 			if id, ok := MapTaxRate(l.rate.V, in.Rates); ok {
 				rate, rateConf = id, l.rate.Confidence
 			}
@@ -214,7 +221,9 @@ type line struct {
 	amount      string
 	price       money.Amount
 	rate        Value[string]
-	confidence  Confidence
+	// reverse is set when the buyer accounts for the VAT of the line.
+	reverse    bool
+	confidence Confidence
 }
 
 // proposeLines makes the lines of the document: those read, else one per
@@ -225,6 +234,10 @@ func proposeLines(e Extraction, supplierName string, incl bool) (lines []line, i
 	summaryRate := Value[string]{}
 	if len(e.VAT) == 1 {
 		summaryRate = Value[string]{V: e.VAT[0].Rate, Found: true, Confidence: Uncertain}
+	}
+	reverse := false
+	for _, v := range e.VAT {
+		reverse = reverse || v.ReverseCharge
 	}
 	for _, l := range e.Lines {
 		conf := l.Price.Confidence
@@ -243,6 +256,11 @@ func proposeLines(e Extraction, supplierName string, incl bool) (lines []line, i
 		case l.Total.Found:
 			price, conf = money.Amount(roundDiv(int64(l.Total.V)*1000, qty)), l.Total.Confidence
 			if price*money.Amount(qty)/1000 != l.Total.V {
+				// A discounted line: its total, with the quantity kept in
+				// the description, so the document adds up to the cent.
+				if amount != "1" {
+					l.Description = amount + " × " + strings.TrimSpace(l.Description)
+				}
 				amount, price = "1", l.Total.V
 			}
 		default:
@@ -255,7 +273,8 @@ func proposeLines(e Extraction, supplierName string, incl bool) (lines []line, i
 		if !rate.Found {
 			rate = summaryRate
 		}
-		lines = append(lines, line{description: cmpOr(strings.TrimSpace(l.Description), description), amount: amount, price: price, rate: rate, confidence: conf})
+		lines = append(lines, line{description: cmpOr(strings.TrimSpace(l.Description), description), amount: amount, price: price, rate: rate,
+			reverse: reverse && isZeroRate(rate), confidence: conf})
 	}
 	if len(lines) > 0 {
 		return lines, nil
@@ -272,7 +291,8 @@ func proposeLines(e Extraction, supplierName string, incl bool) (lines []line, i
 		if incl {
 			price += v.Tax
 		}
-		lines = append(lines, line{description: description, amount: "1", price: price, rate: Value[string]{V: v.Rate, Found: true, Confidence: conf}, confidence: conf})
+		lines = append(lines, line{description: description, amount: "1", price: price, rate: Value[string]{V: v.Rate, Found: true, Confidence: conf},
+			reverse: v.ReverseCharge, confidence: conf})
 	}
 	if len(lines) > 0 {
 		return lines, nil
@@ -363,4 +383,48 @@ func roundDiv(n, d int64) int64 {
 		return -((-n + d/2) / d)
 	}
 	return (n + d/2) / d
+}
+
+func isZeroRate(r Value[string]) bool {
+	pct, ok := hundredths(r.V)
+	return r.Found && ok && pct == 0
+}
+
+// supplierCountry is the supplier's country as the document tells it.
+func supplierCountry(s Supplier) string {
+	switch {
+	case s.Country != "":
+		return s.Country
+	case s.VATNumber != "":
+		return countryOf(s.VATNumber)
+	case len(s.IBAN) >= 2:
+		return s.IBAN[:2]
+	}
+	return ""
+}
+
+// MapReverseCharge finds the purchase rate for VAT the buyer accounts for:
+// a domestic reverse charge (box 2a of the Dutch VAT return) or an
+// acquisition from another EU country (box 4b), the highest percentage of
+// them, which is the standard rate.
+func MapReverseCharge(domestic bool, rates []bookkeeping.TaxRate) (resource.ID, bool) {
+	box := "/4b"
+	if domestic {
+		box = "/2a"
+	}
+	var best *bookkeeping.TaxRate
+	bestPct := int64(-1)
+	for i, r := range rates {
+		pct, ok := hundredths(r.Percentage)
+		if !ok || !usable(r) || r.ShowTax || !slices.ContainsFunc(r.ReportBoxes, func(b string) bool { return strings.HasSuffix(b, box) }) {
+			continue
+		}
+		if pct > bestPct {
+			best, bestPct = &rates[i], pct
+		}
+	}
+	if best == nil {
+		return 0, false
+	}
+	return best.ID, true
 }

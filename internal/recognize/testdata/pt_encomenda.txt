@@ -1,0 +1,56 @@
+EXAMPLE FOODS, LDA.
+Sede: Parque Empresarial do Exemplo, Armazém 1
+       Zona Industrial do Exemplo
+      1000-001    Lisboa
+Armazém: Parque Empresarial do Exemplo, Armazém 2
+          1000-001 Lisboa
+Contribuinte:                    123456789
+Telefone:                        210000000
+ E-Mail:                         geral@example-foods.example.com                                Exmo.(s) Sr.(s)
+Capital Social:                  100 000,00
+                                                                                                EXAMPLE SHOP B.V.
+Cons. Reg. Com.:                 LISBOA
+ Matrícula N.º                   123456789                                                      VOORBEELDSTRAAT 1
+
+IBAN: PT50 0002 0123 1234 5678 9015 4
+                                                                                                AMSTERDAM
+ DOCUMENTO INTERNO / EM PREPARAÇÃO                                                              1234 AB AMSTERDAM
+ Condição de Pagamento A Pronto                                                                                                                           Confirmação de Encomenda
+ ORIGINAL - 2ªVIA                                                                                                                                                 ENCEX 7Q001/1234
+
+  Nº de Contribuinte                Cliente Nº       Desc.         Nº Requisição        Data Req.             Moeda          Câmbio Pág.          Data Entrega            Data Doc.
+  NL123456782B01                      1 001          3,00                               05/11/2026       EUR             1,000000    1/1           2026-11-05            2026-11-05
+
+   Refª                                 Descrição                                Lote        Val. Lote        Vol.    Qtd.     Un     Pr. Unit.      %Desc.       V. Líquido     %Impostos
+
+A001          Produto Exemplo A 100 g                                    L0001            15-mar-2027     0             12,00 Un           4,200                         48,89   (1)0,00
+A002          Produto Exemplo B 800 g                                    L0002            16-mar-2027     0             30,00 Un           2,700                        78,57    (1)0,00
+A003          Produto Exemplo C 1 Kg                                     L0003            17-abr-2028     5             40,00 Un           6,500                       260,00    (1)0,00
+K001          Produto Exemplo D                                          L0004                            220          220,00 Kg           5,250                     1 155,00    (1)0,00
+A004          Produto Exemplo E Pré Cozido em Palitos EXEMPLO            L0005            18-mai-2028     1              6,00 Un           3,300                         19,21   (1)0,00
+              FOODS 1 Kg
+T001          Transporte                                                                                  0              1,00 Un       150,000                         150,00    (1)0,00
+
+
+
+
+software certificado - Emitido por programa certificado nº 0000/AT
+Obs.:
+
+          Meio de Expedição:        Transportadora
+
+                     Peso Kg.:      268,15
+                                                                                                                                                   Mercadoria:                    1 716,20
+(1)Isento Artigo 14.º do CIVA;
+                                                                                                                                                   Descontos:                         4,53
+Resumo de Impostos
+                                                                                                                                                       Outros:                        0,00
+      Descrição           Taxa       Incidência      Imposto       Retenção                                                                           Acertos:                        0,00
+IVA                          0,00       1 711,67            0,00                                                                                    Sub. Total:                   1 711,67
+                                                                                                                                                     Impostos:                        0,00
+
+
+
+                                                                                                                                    Total do Documento:                          1 711,67
+                                                                                                                                                   Retenções:                          0,00
+                                                                                                                                             Total a Pagar:                       1 711,67
