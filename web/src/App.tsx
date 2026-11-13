@@ -56,8 +56,9 @@ import { ExternalInvoicesPage } from './external/ExternalInvoicesPage'
 import { AssetPage } from './assets/AssetPage'
 import { AssetsPage } from './assets/AssetsPage'
 import { IncomingDocumentPage } from './incoming/IncomingDocumentPage'
-import { IncomingListPage } from './incoming/IncomingListPage'
-import { UploadsPage } from './incoming/UploadsPage'
+import { DocumentRedirect, TypeListRedirect } from './incoming/DocumentRedirect'
+import { DocumentsPage } from './incoming/DocumentsPage'
+import { NewDocumentPage } from './incoming/NewDocumentPage'
 import { InvoiceEditRedirect, InvoiceFormPage } from './invoices/InvoiceFormPage'
 import { InvoicePage } from './invoices/InvoicePage'
 import { ExternalRegisterPaymentPage, RegisterPaymentPage } from './invoices/RegisterPaymentPage'
@@ -156,11 +157,14 @@ export function AppRoutes() {
           <Route path="/:administrationId/report/debtors_aging" element={<AgingReportPage key="debtors" kind="debtors_aging" />} />
           <Route path="/:administrationId/report/creditors_aging" element={<AgingReportPage key="creditors" kind="creditors_aging" />} />
           <Route path="/:administrationId/report/journal_entries" element={<LedgerEntriesPage />} />
-          <Route path="/:administrationId/documents/purchase_invoices" element={<IncomingListPage key="purchase_invoices" kind="purchase_invoices" />} />
+          <Route path="/:administrationId/documents" element={<DocumentsPage />} />
+          <Route path="/:administrationId/documents/new" element={<NewDocumentPage />} />
+          <Route path="/:administrationId/documents/:documentId" element={<DocumentRedirect />} />
+          <Route path="/:administrationId/documents/purchase_invoices" element={<TypeListRedirect type="purchase_invoice" />} />
           <Route path="/:administrationId/documents/purchase_invoices/:documentId" element={<IncomingDocumentPage kind="purchase_invoices" />} />
-          <Route path="/:administrationId/documents/receipts" element={<IncomingListPage key="receipts" kind="receipts" />} />
+          <Route path="/:administrationId/documents/receipts" element={<TypeListRedirect type="receipt" />} />
           <Route path="/:administrationId/documents/receipts/:documentId" element={<IncomingDocumentPage kind="receipts" />} />
-          <Route path="/:administrationId/documents/typeless_documents" element={<UploadsPage />} />
+          <Route path="/:administrationId/documents/typeless_documents" element={<TypeListRedirect type={null} />} />
           <Route path="/:administrationId/documents/general_journal_documents" element={<JournalDocumentsPage />} />
           <Route path="/:administrationId/documents/general_journal_documents/new" element={<JournalDocumentPage />} />
           <Route path="/:administrationId/documents/general_journal_documents/:documentId" element={<JournalDocumentPage />} />

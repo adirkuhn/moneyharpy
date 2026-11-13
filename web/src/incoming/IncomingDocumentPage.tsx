@@ -32,7 +32,7 @@ function DocumentView({ administrationId, kind, doc }: { administrationId: strin
   const navigate = useNavigate()
   const remove = useDeleteIncomingDocument(administrationId, kind, doc.id ?? '')
   const [confirming, setConfirming] = useState(false)
-  const list = `/${administrationId}/documents/${kind}`
+  const list = `/${administrationId}/documents`
   const currency = doc.currency ?? 'EUR'
   const money = (amount: string | null | undefined) => formatAmount(amount ?? '0', currency, i18n.language)
   const date = (d: string | null | undefined) => d && new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' })
@@ -51,7 +51,7 @@ function DocumentView({ administrationId, kind, doc }: { administrationId: strin
     <Page
       title={incomingTitle(doc, kind, t)}
       subtitle={doc.contact ? contactName(doc.contact) : undefined}
-      back={{ to: list, label: t(`purchases.backTo.${kind}`) }}
+      back={{ to: list, label: t('incoming.new.back') }}
       actions={<MoreMenu items={[{ label: t('purchases.delete'), danger: true, onSelect: () => setConfirming(true) }]} />}
     >
       <Problems messages={formErrors(remove.error, {}).general} />
