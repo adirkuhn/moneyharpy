@@ -848,6 +848,11 @@ func toInstanceSettings(inst settings.Instance) InstanceSettings {
 		StorageAccessKey:        inst.Storage.AccessKey,
 		StorageSecretKeySet:     inst.Storage.SecretKey != "",
 		StoragePathStyle:        inst.Storage.PathStyle,
+		RecognitionAiEnabled:    inst.Recognition.AIEnabled,
+		RecognitionAiProvider:   InstanceSettingsRecognitionAiProvider(inst.Recognition.Provider),
+		RecognitionAiUrl:        inst.Recognition.URL,
+		RecognitionAiModel:      inst.Recognition.Model,
+		RecognitionAiApiKeySet:  inst.Recognition.APIKey != "",
 	}
 }
 
@@ -936,6 +941,12 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 		StorageAccessKey: body.StorageAccessKey,
 		StorageSecretKey: body.StorageSecretKey,
 		StoragePathStyle: body.StoragePathStyle,
+
+		RecognitionAIEnabled:  body.RecognitionAiEnabled,
+		RecognitionAIProvider: (*string)(body.RecognitionAiProvider),
+		RecognitionAIURL:      body.RecognitionAiUrl,
+		RecognitionAIModel:    body.RecognitionAiModel,
+		RecognitionAIAPIKey:   body.RecognitionAiApiKey,
 	})
 	if err != nil {
 		s.fail(w, r, err)

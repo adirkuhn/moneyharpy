@@ -251,6 +251,20 @@ type CustomField struct {
 	Position         int32
 }
 
+type DocumentRecognition struct {
+	DocumentID       int64
+	AdministrationID int64
+	UserID           int64
+	State            string
+	Source           string
+	Fields           []byte
+	Error            string
+	Attempts         int32
+	NextAttemptAt    pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type DocumentStyle struct {
 	ID                     int64
 	AdministrationID       int64
@@ -943,6 +957,28 @@ type SubscriptionProduct struct {
 	Amount         string
 	Quantity       int64
 	Discount       int32
+}
+
+type SupplierMemory struct {
+	AdministrationID     int64
+	ContactID            int64
+	DocumentKind         string
+	DocumentKindUses     int32
+	Currency             string
+	CurrencyUses         int32
+	PricesAreInclTax     bool
+	PricesAreInclTaxUses int32
+	UpdatedAt            pgtype.Timestamptz
+}
+
+type SupplierMemoryLine struct {
+	AdministrationID int64
+	ContactID        int64
+	Description      string
+	LedgerAccountID  pgtype.Int8
+	TaxRateID        pgtype.Int8
+	Uses             int32
+	LastUsedAt       pgtype.Timestamptz
 }
 
 type TaskList struct {

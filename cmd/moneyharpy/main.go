@@ -47,6 +47,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
+	"github.com/adirkuhn/moneyharpy/internal/recognize"
+	"github.com/adirkuhn/moneyharpy/internal/recognize/ai"
 	"github.com/adirkuhn/moneyharpy/internal/reports"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -168,6 +170,20 @@ func run(logger *slog.Logger) error {
 		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
 	})
 	bank.UseDocuments(documentService)
+	// Scan and Recognise reads uploads in the background and fills them in:
+	// e-invoices and text by its rules, scans through the OCR service, and
+	// with the optional AI model when an administrator turned it on.
+	ocrService := ocr.New(cfg.ocrURL)
+	recognition := recognize.NewService(recognize.Deps{
+		Documents: documentService, Contacts: contactService, Ledger: books, Settings: instance,
+		Store: postgres.NewRecognitionStore(pool), OCR: ocrService,
+		Parsers: recognize.Parsers{EInvoice: recognize.ParseEInvoice, Text: recognize.ParseText},
+		Models: func(c settings.Recognition) (recognize.Model, error) {
+			return ai.New(ai.Config{Provider: c.Provider, URL: c.URL, Model: c.Model, APIKey: c.APIKey})
+		},
+		Notifier: httpapi.RecognitionNotifier{Webhooks: hooks, Logger: logger}, Logger: logger, Now: time.Now,
+	})
+	documentService.UseRecognition(recognition)
 	bank.UsePurchases(documentService)
 	bank.UseProjects(projectService)
 	// Fixed assets, depreciated each month by a background job.
@@ -190,6 +206,7 @@ func run(logger *slog.Logger) error {
 		Contacts:          contactService,
 		Sales:             invoiceService,
 		Purchases:         documentService,
+		Recognition:       recognition,
 		Assets:            assetService,
 		Products:          productService,
 		Projects:          projectService,
@@ -213,7 +230,7 @@ func run(logger *slog.Logger) error {
 		LookupLimiter:     ratelimit.New(60, time.Minute),
 		ResetLimiter:      ratelimit.New(3, time.Hour),
 		Mail:              mailer,
-		OCR:               ocr.New(cfg.ocrURL),
+		OCR:               ocrService,
 		BaseURL:           cfg.baseURL,
 		Logger:            logger,
 		Web:               web.Dist(),
@@ -237,6 +254,7 @@ func run(logger *slog.Logger) error {
 	go hooks.Run(ctx, 5*time.Second, func(err error) { logger.Error("deliver webhooks", "error", err) })
 	go invoiceService.Run(ctx, time.Minute, func(err error) { logger.Error("sales invoice background work", "error", err) })
 	go subscriptionService.Run(ctx, time.Minute, func(err error) { logger.Error("subscription charge billing", "error", err) })
+	go recognition.Run(ctx, 15*time.Second, func(err error) { logger.Error("scan and recognise", "error", err) })
 	go assetService.Run(ctx, time.Hour, func(err error) { logger.Error("asset depreciation", "error", err) })
 
 	errs := make(chan error, 1)

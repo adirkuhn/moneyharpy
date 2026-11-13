@@ -253,6 +253,7 @@ type Service struct {
 	attachments Attachments
 	store       Store
 	bank        Bank
+	recognition Recognition
 	ids         *resource.Generator
 	now         func() time.Time
 }
