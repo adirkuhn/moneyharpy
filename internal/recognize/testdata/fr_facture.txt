@@ -1,0 +1,16 @@
+Exemple SARL
+12 rue de l'Exemple
+75001 Paris
+TVA intracommunautaire : FR12345678901
+
+FACTURE N° F-2026-0456
+Date de facture : 13/11/2026
+Date d'échéance : 13/12/2026
+
+Désignation        Qté   Prix unitaire HT   Total HT
+Conseil             2         200,00          400,00
+
+Total HT                                      400,00
+TVA 20 %                                       80,00
+Total TTC                                     480,00
+Net à payer                                 480,00 €
