@@ -289,7 +289,7 @@ describe('editing an external invoice', () => {
     expect(within(form).getByRole('group', { name: 'Contact' })).toHaveTextContent('Example Shop B.V.')
     const details = within(form).getByRole('group', { name: 'Add details' })
     expect(within(details).getByLabelText('Invoice id')).toHaveValue('WEB-1001')
-    expect(within(details).getByLabelText('Date', { selector: 'input[type="date"]' })).toHaveValue('2026-11-01')
+    expect(within(details).getByLabelText('Date', { selector: 'input[type="text"]' })).toHaveValue('2026-11-01')
     expect(within(details).getByLabelText('Source (optional)')).toHaveValue('Example webshop')
     expect(within(details).getByLabelText('Source URL (optional)')).toHaveValue('https://shop.example.com/orders/1001')
     await userEvent.clear(within(details).getByLabelText('Invoice id'))

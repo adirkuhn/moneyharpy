@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
+import { DateInput } from '../forms/DatePicker'
 import { formErrors, SelectInput, TextInput } from '../forms/Form'
 import { useWorkflows } from '../invoicing/queries'
 import { Loading } from '../layout/Loading'
@@ -256,7 +257,7 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
             {mandate && (
               <>
                 {input('sepa_mandate_id', { width: 'medium' })}
-                {input('sepa_mandate_date', { type: 'date', width: 'medium' })}
+                <DateInput label={labels.sepa_mandate_date ?? ''} value={text.sepa_mandate_date} errors={errors.field('sepa_mandate_date')} onChange={(d) => change('sepa_mandate_date', d)} />
                 <SelectInput label={labels.sepa_sequence_type ?? ''} width="medium" value={sequence} errors={errors.field('sepa_sequence_type')} onChange={(e) => setSequence(e.target.value)}>
                   {sequenceTypes.map((s) => <option key={s} value={s}>{t(`contacts.sequence.${s}`)}</option>)}
                 </SelectInput>

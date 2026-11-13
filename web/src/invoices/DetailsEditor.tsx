@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { bookable, formatAmount } from '../banking/queries'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import { currencyOptions } from '../forms/currencies'
+import { DatePicker } from '../forms/DatePicker'
 import type { FormErrors } from '../forms/Form'
 import { ListIcon } from '../layout/icons'
 import { PageIcon } from '../layout/pageIcons'
@@ -508,11 +509,11 @@ function PeriodSelect({ value, invalid, onChange }: { value: string; invalid: bo
           <div className="details-editor__period-range">
             <label>
               <span>{d('from')}</span>
-              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <DatePicker value={from} onChange={setFrom} />
             </label>
             <label>
               <span>{d('to')}</span>
-              <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+              <DatePicker value={to} onChange={setTo} />
             </label>
             <button type="button" className="btn btn--secondary btn--small" disabled={!toPeriod(from, to)} onClick={() => pick(toPeriod(from, to))}>{d('apply')}</button>
           </div>

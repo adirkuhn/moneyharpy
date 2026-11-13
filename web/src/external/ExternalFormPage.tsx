@@ -8,6 +8,7 @@ import { formatAmount } from '../banking/queries'
 import { type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
 import { contactName } from '../contacts/queries'
 import { ConfirmPanel } from '../detail/Detail'
+import { DateInput } from '../forms/DatePicker'
 import { formErrors, TextInput } from '../forms/Form'
 import { ContactPicker } from '../invoices/ContactPicker'
 import { type DetailRow, DetailsEditor } from '../invoices/DetailsEditor'
@@ -282,7 +283,7 @@ function Form({ administrationId, invoice, rates, currency: startCurrency }: Pro
                 <div className="vertical-stepper__body">
                   <div className="external-edit__fields">
                     <TextInput label={labels.reference ?? ''} width="medium" maxLength={1000} value={reference} errors={errors.field('reference')} onChange={(e) => setReference(e.target.value)} />
-                    <TextInput label={labels.date ?? ''} type="date" width="medium" required value={date} errors={errors.field('date')} onChange={(e) => setDate(e.target.value)} />
+                    <DateInput label={labels.date ?? ''} width="medium" required value={date} errors={errors.field('date')} onChange={setDate} />
                     <DueDate
                       label={labels.due_date ?? ''}
                       mode={dueMode}
@@ -382,7 +383,7 @@ function DueDate({ label, mode, date, days, errors, onMode, onDate, onDays }: Du
   return (
     <div className="external-edit__due">
       {mode === 'date'
-        ? <TextInput label={label} type="date" width="medium" value={date} errors={errors} onChange={(e) => onDate(e.target.value)} />
+        ? <DateInput label={label} width="medium" value={date} errors={errors} onChange={onDate} />
         : <TextInput label={label} aria-label={f('daysUntilDue')} width="small" inputMode="numeric" maxLength={4} value={days} errors={errors} onChange={(e) => onDays(e.target.value)} />}
       <fieldset className="segmented-control" role="radiogroup" aria-label={f('dueAs')}>
         {(['date', 'days'] as const).map((m) => (

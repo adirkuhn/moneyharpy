@@ -1,5 +1,6 @@
 export const en = {
   common: { close: 'Close', loading: 'Loading…', language: 'Language', theme: 'Theme', system: 'System', light: 'Light', dark: 'Dark', cancel: 'Cancel', confirm: 'Confirm', next: 'Next', skip: 'Skip to content', genericError: 'Something went wrong. Try again.', requestFailed: 'The request failed', pagination: 'Pagination', page: 'Page {{n}}', previousPage: 'Previous page', nextPage: 'Next page' },
+  datePicker: { calendar: 'Calendar', choose: 'Choose a date', previousMonth: 'Previous month', nextMonth: 'Next month' },
   login: {
     title: 'Login', email: 'Email address', password: 'Password', submit: 'Login to MoneyHarpy', or: 'or', forgot: 'Forgot your password?', noAccount: 'No account?', passwordChanged: 'Password changed. Log in with your new password.', google: 'Continue with Google', lm2: 'Continue with LM2',
     unreachable: 'MoneyHarpy could not be reached. Reload the page to try again.',

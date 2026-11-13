@@ -1,7 +1,8 @@
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Problems } from '../auth/AuthLayout'
-import { formErrors, TextInput } from '../forms/Form'
+import { DateInput } from '../forms/DatePicker'
+import { formErrors } from '../forms/Form'
 import { Block } from '../settings/Block'
 import { type BookkeepingSettings, useUpdateBookkeepingSettings } from './queries'
 
@@ -24,7 +25,7 @@ export function LockBlock({ administrationId, settings }: { administrationId: st
           {locked ? t('bookkeeping.lockedUntil', { date: new Date(`${locked}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'long' }) }) : t('bookkeeping.notLocked')}
         </p>
         <Problems messages={errors.general} />
-        <TextInput label={t('bookkeeping.lockDate')} type="date" width="medium" max={today} value={day} errors={errors.field('period_locked_until')} onChange={(e) => setDay(e.target.value)} />
+        <DateInput label={t('bookkeeping.lockDate')} width="medium" max={today} value={day} errors={errors.field('period_locked_until')} onChange={setDay} />
         <div className="confirm-row__buttons">
           <button type="submit" className="btn btn--accent btn--small" disabled={update.isPending || !day || day === locked}>{t('bookkeeping.lock')}</button>
           {locked && (
