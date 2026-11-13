@@ -346,3 +346,22 @@ SELECT (SELECT coalesce(sum(k.sign * k.total_excl_tax), 0) FROM kept k WHERE k.s
                             - coalesce((SELECT sum(p.price) FROM payments p WHERE p.invoice_type = 'Document' AND p.invoice_id = k.id), 0)), 0)
         FROM kept k WHERE k.state IN ('open', 'late', 'pending_payment'))::bigint AS payable,
        (SELECT coalesce(jsonb_agg(c ORDER BY c.amount DESC, c.name), '[]') FROM categories c)::jsonb AS categories;
+
+-- name: SetPurchaseDocumentKind :exec
+UPDATE purchase_documents SET kind = @kind, revenue_invoice = @revenue_invoice, updated_at = @updated_at
+WHERE administration_id = @administration_id AND id = @id;
+
+-- name: RetypeResource :exec
+UPDATE resources SET type = @type WHERE administration_id = @administration_id AND id = @id;
+
+-- name: RetypeNotes :exec
+UPDATE notes SET entity_type = @new_type
+WHERE administration_id = @administration_id AND entity_id = @entity_id AND entity_type = @old_type;
+
+-- name: RetypeAttachments :exec
+UPDATE attachments SET entity_type = @new_type
+WHERE administration_id = @administration_id AND entity_id = @entity_id AND entity_type = @old_type;
+
+-- name: RetypeEvents :exec
+UPDATE events SET entity_type = @new_type
+WHERE administration_id = @administration_id AND entity_id = @entity_id AND entity_type = @old_type;

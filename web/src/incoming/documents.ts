@@ -14,18 +14,6 @@ export type FilterType = (typeof filterTypes)[number]
 /** The states of the Status filter, in Moneybird's order; late is shown as Expired. */
 export const documentStates = ['new', 'saved', 'open', 'paid', 'pending_payment', 'late'] as const
 
-/** The path segment of each type, as the API and the app name it. */
-const segments: Record<DocumentType, string> = {
-  PurchaseInvoice: 'purchase_invoices',
-  Receipt: 'receipts',
-  GeneralDocument: 'general_documents',
-  GeneralJournalDocument: 'general_journal_documents',
-  TypelessDocument: 'typeless_documents',
-}
-
-/** The types the app has a page of their own for. */
-const typedPages: DocumentType[] = ['PurchaseInvoice', 'Receipt', 'GeneralJournalDocument']
-
 /** The short label before a reference in the list, after Moneybird; an upload without a type has a dash. */
 export const typeTags: Record<DocumentType, string> = {
   PurchaseInvoice: 'PUR',
@@ -38,18 +26,10 @@ export const typeTags: Record<DocumentType, string> = {
 /** Whether a document of this type books an amount payable, so its total means something. */
 export const hasAmount = (type: DocumentType) => type === 'PurchaseInvoice' || type === 'Receipt'
 
-/**
- * The page of a document of this type, or the generic /documents/:id where the
- * app has no page of the type's own yet.
- */
-export function documentPath(administrationId: string, d: Pick<DocumentSummary, 'id' | 'type'>) {
-  return typedPages.includes(d.type)
-    ? `/${administrationId}/documents/${segments[d.type]}/${d.id}`
-    : `/${administrationId}/documents/${d.id}`
+/** The page of a document of any type: Moneybird's one page per document, /documents/:id. */
+export function documentPath(administrationId: string, d: Pick<DocumentSummary, 'id'>) {
+  return `/${administrationId}/documents/${d.id}`
 }
-
-/** Whether the app has a page of the type's own. */
-export const hasTypedPage = (type: DocumentType) => typedPages.includes(type)
 
 const admin = (administrationId: string) => ({ administration_id: administrationId })
 
@@ -81,6 +61,17 @@ export function useDocumentStatistics(administrationId: string, filter: string, 
     queryFn: () =>
       unwrap(api.GET('/api/v2/{administration_id}/documents/statistics', { params: { path: admin(administrationId), query: { filter } } })),
   })
+}
+
+/**
+ * The documents still to process (state new) besides this one: the next of
+ * them, for Moneybird's Next, and how many there are.
+ */
+export function useToProcess(administrationId: string, currentId: string) {
+  const left = useDocuments(administrationId, 'state:new', 1)
+  const others = (left.data?.documents ?? []).filter((d) => d.id !== currentId)
+  const counted = left.data?.documents.some((d) => d.id === currentId) ? 1 : 0
+  return { next: others[0], left: Math.max((left.data?.total ?? 0) - counted, 0), loaded: !!left.data }
 }
 
 /** An incoming document of any type, found by its id. */

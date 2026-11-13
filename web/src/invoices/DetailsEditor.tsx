@@ -1,7 +1,7 @@
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react'
+import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { bookable, formatAmount } from '../banking/queries'
-import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
+import type { DocumentType, LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import { currencyOptions } from '../forms/currencies'
 import { DatePicker } from '../forms/DatePicker'
 import type { FormErrors } from '../forms/Form'
@@ -50,12 +50,12 @@ type Props = {
   onRemove: (index: number) => void
   onAdd: (row?: Partial<DetailRow>) => void
   /** Puts the details back as they were when the editor opened, and closes it. */
-  onCancel: () => void
+  onCancel?: () => void
   onMove: (from: number, to: number) => void
   onApplyBelow: (index: number, change: Partial<DetailRow>) => void
   onDiscount: (value: string) => void
   /** Saves the invoice and closes the editor, as Moneybird's blue Save. */
-  onSave: () => void
+  onSave?: () => void
   /** While the invoice is being saved. */
   saving?: boolean
   /**
@@ -63,11 +63,17 @@ type Props = {
    * category or Add VAT rate in this tab, which comes back to the invoice with
    * the new one on that row; the editor around makes sure nothing typed is lost.
    */
-  onAddEntity: (index: number, field: NewEntityKey) => void
+  onAddEntity?: (index: number, field: NewEntityKey) => void
   /** Whether a discount can be given; an external invoice has none, as at Moneybird. */
   discounts?: boolean
   /** The currency select's tip, such as why it cannot change. */
   currencyTip?: string
+  /** What the lines are called, such as "Receipt lines", shown at the left of the header; an invoice's are "Invoice details", for screen readers. */
+  label?: string
+  /** Whose categories the rows offer, such as purchase_invoice for costs; an invoice's are its revenue. */
+  documentType?: DocumentType
+  /** Buttons in place of Save and Cancel, for a form that saves more than the lines. */
+  buttons?: ReactNode
 }
 
 /**
@@ -86,7 +92,8 @@ export function DetailsEditor(props: Props) {
   const [focusGrip, setFocusGrip] = useState<string | null>(null)
   const grips = useRef(new Map<string, HTMLButtonElement>())
   const discountInput = useRef<HTMLInputElement>(null)
-  const groups = bookable(accounts, 'sales_invoice')
+  const groups = bookable(accounts, props.documentType ?? 'sales_invoice')
+  const label = props.label ?? d('title')
   const money = (cents: number) => formatAmount(cents / 100, currency, i18n.language)
 
   useEffect(() => {
@@ -133,7 +140,7 @@ export function DetailsEditor(props: Props) {
   }
   const choose = (i: number, row: DetailRow, field: NewEntityKey, value: string) => {
     if (value === addOption) {
-      props.onAddEntity(i, field)
+      props.onAddEntity?.(i, field)
       return
     }
     set(i, row, field, value)
@@ -149,9 +156,10 @@ export function DetailsEditor(props: Props) {
   }
 
   return (
-    <EditableDocumentForm className="details-editor" label={d('title')}>
+    <EditableDocumentForm className="details-editor" label={label}>
       {/* Moneybird's header: the currency, then whether prices include VAT, at the right; their labels are for screen readers. */}
       <div className="editable-document-form__header">
+        {props.label && <h3 className="details-editor__label">{props.label}</h3>}
         <div className="details-editor__currency">
           <label className="sr-only" htmlFor={`${hintId}-currency`}>{d('currency')}</label>
           <select
@@ -182,7 +190,7 @@ export function DetailsEditor(props: Props) {
       </div>
       <div className="details-editor__body">
         <p id={hintId} className="sr-only">{d('moveHint')}</p>
-        <table className="details-editor__table" aria-label={d('title')}>
+        <table className="details-editor__table" aria-label={label}>
           <thead>
             <tr>
               <th scope="col" className="details-editor__grip" aria-label={d('order')} />
@@ -270,7 +278,7 @@ export function DetailsEditor(props: Props) {
                   <td className="details-editor__rate" data-label={d('rateAndCategory')}>
                     <select aria-label={t('invoices.vatRate')} value={r.tax_rate_id} {...rate.control} onChange={(e) => choose(i, r, 'tax_rate_id', e.target.value)}>
                       {rates.map((tr) => <option key={tr.id} value={tr.id}>{tr.name}</option>)}
-                      <option value={addOption}>{d('addRate')}</option>
+                      {props.onAddEntity && <option value={addOption}>{d('addRate')}</option>}
                     </select>
                     {rate.message}
                     {applyLink(i, r, 'tax_rate_id')}
@@ -283,7 +291,7 @@ export function DetailsEditor(props: Props) {
                           ))}
                         </optgroup>
                       ))}
-                      <option value={addOption}>{d('addCategory')}</option>
+                      {props.onAddEntity && <option value={addOption}>{d('addCategory')}</option>}
                     </select>
                     {category.message}
                     {applyLink(i, r, 'ledger_account_id')}
@@ -352,10 +360,12 @@ export function DetailsEditor(props: Props) {
           <TotalsTable rows={totals} />
         </div>
       </div>
-      <div className="editable-document-form__buttons">
-        <button type="button" className="btn btn--primary" disabled={props.saving} onClick={props.onSave}>{t('invoices.editor.save')}</button>
-        <button type="button" className="btn btn--secondary" onClick={props.onCancel}>{t('common.cancel')}</button>
-      </div>
+      {props.buttons !== undefined ? props.buttons : (
+        <div className="editable-document-form__buttons">
+          <button type="button" className="btn btn--primary" disabled={props.saving} onClick={props.onSave}>{t('invoices.editor.save')}</button>
+          <button type="button" className="btn btn--secondary" onClick={props.onCancel}>{t('common.cancel')}</button>
+        </div>
+      )}
     </EditableDocumentForm>
   )
 }

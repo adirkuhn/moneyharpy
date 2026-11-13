@@ -1215,8 +1215,12 @@ test('a purchase invoice is booked through the API, paid by a bank transaction a
   expect(linked.status()).toBe(200)
   expect((await linked.json()).state).toBe('processed')
   await table.getByRole('link', { name: 'PUR INV-2026-77' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'INV-2026-77' })).toBeVisible()
-  await expect(page.locator('.badge', { hasText: 'Paid' })).toBeVisible()
+  await expect(page).toHaveURL(new RegExp(`${uri}/documents/${doc.id}$`))
+  await expect(page.getByRole('heading', { level: 1, name: 'Purchase invoice INV-2026-77' })).toBeVisible()
+  const invoice = page.getByRole('region', { name: 'Purchase invoice' })
+  await expect(invoice.locator('.badge', { hasText: 'Paid' })).toBeVisible()
+  await expect(invoice.getByRole('table', { name: 'Purchase invoice lines' })).toContainText('Paper')
+  await expect(page.getByRole('region', { name: 'Notes and tasks' })).toBeVisible()
 
   // An upload waits on the overview until it is processed.
   await menu.getByRole('link', { name: 'Incoming' }).click()
@@ -1224,6 +1228,16 @@ test('a purchase invoice is booked through the API, paid by a bank transaction a
   await expect(table.getByRole('link', { name: '— bill-78.pdf' })).toBeVisible()
   await page.goto(`${uri}/feed`)
   await expect(page.getByRole('region', { name: 'Incoming' }).getByRole('link', { name: /To process\s*1/ })).toBeVisible()
+
+  // The upload opens on the same page, with its file at the left; choosing a type turns it into a receipt to fill in.
+  await menu.getByRole('link', { name: 'Incoming' }).click()
+  await table.getByRole('link', { name: '— bill-78.pdf' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'bill-78.pdf' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Attachments' }).getByRole('button', { name: 'bill-78.pdf' })).toBeVisible()
+  await page.getByRole('combobox', { name: 'Type' }).click()
+  await page.getByRole('listbox', { name: 'Type' }).getByRole('option', { name: /Receipt/ }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Receipt bill-78.pdf' })).toBeVisible()
+  await expect(page.getByRole('form', { name: 'Receipt' }).getByRole('table', { name: 'Receipt lines' })).toBeVisible()
 })
 
 test('an asset is added through the API, depreciated and shown with its value changes', async ({ page }) => {

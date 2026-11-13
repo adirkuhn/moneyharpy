@@ -94,3 +94,55 @@ func TestIncomingDocuments(t *testing.T) {
 	wantStatus(t, clerk.do(http.MethodGet, api+"/documents/statistics", nil), http.StatusForbidden)
 	wantStatus(t, clerk.do(http.MethodGet, api+"/documents/"+receipt.ID, nil), http.StatusForbidden)
 }
+
+func TestSetIncomingDocumentType(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, clerk := h.client(), h.client()
+	owner.register()
+	clerk.register()
+	adminID, api, supplier, vat21 := purchaseSetup(t, owner)
+	day := adminNow().Format(time.DateOnly)
+
+	typeless := decode[map[string]any](t, owner.do(http.MethodPost, api+"/documents/typeless_documents", map[string]any{"typeless_document": map[string]any{
+		"contact_id": supplier, "reference": "Scan", "date": day,
+	}}))
+	id := typeless["id"].(string)
+	wantStatus(t, owner.attach(api+"/documents/typeless_documents/"+id+"/attachments", "scan.png", "image/png", []byte("\x89PNG\r\n\x1a\nimage")), http.StatusOK)
+
+	r := owner.do(http.MethodPost, api+"/documents/"+id+"/set_type", map[string]any{"document_type": "purchase_invoice"})
+	wantStatus(t, r, http.StatusOK)
+	got := decode[incomingDocument](t, r)
+	if got.ID != id || got.Type != "PurchaseInvoice" || got.State != "new" || got.AttachmentsCount != 1 || deref(got.ContactID) != supplier ||
+		got.Reference != "Scan" || got.URI != "/api/v2/"+adminID+"/documents/purchase_invoices/"+id {
+		t.Errorf("set type = %+v", got)
+	}
+	inv := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/"+id, nil))
+	if files, _ := inv["attachments"].([]any); inv["id"] != id || len(files) != 1 {
+		t.Errorf("purchase invoice = %+v", inv)
+	}
+	wantStatus(t, owner.do(http.MethodGet, api+"/documents/typeless_documents/"+id, nil), http.StatusNotFound)
+
+	same := owner.do(http.MethodPost, api+"/documents/"+id+"/set_type", map[string]any{"document_type": "purchase_invoice"})
+	wantStatus(t, same, http.StatusOK)
+	if d := decode[incomingDocument](t, same); d.Type != "PurchaseInvoice" {
+		t.Errorf("same type = %+v", d)
+	}
+
+	r = owner.do(http.MethodPost, api+"/documents/"+id+"/set_type", map[string]any{"document_type": "general_journal_document"})
+	wantStatus(t, r, http.StatusOK)
+	if d := decode[incomingDocument](t, r); d.Type != "GeneralJournalDocument" || d.URI != "/api/v2/"+adminID+"/documents/general_journal_documents/"+id {
+		t.Errorf("journal entry = %+v", d)
+	}
+	wantStatus(t, owner.do(http.MethodPost, api+"/documents/"+id+"/set_type", map[string]any{"document_type": "receipt"}), http.StatusUnprocessableEntity)
+
+	receipt := decode[purchaseDocument](t, owner.do(http.MethodPost, api+"/documents/receipts", map[string]any{"receipt": map[string]any{
+		"contact_id": supplier, "reference": "Lunch", "date": day,
+		"details_attributes": []map[string]any{{"description": "Lunch", "price": "10", "tax_rate_id": vat21}},
+	}}))
+	wantStatus(t, owner.do(http.MethodPost, api+"/documents/"+receipt.ID+"/set_type", map[string]any{"document_type": "general_document"}), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPost, api+"/documents/"+receipt.ID+"/set_type", map[string]any{"document_type": "invoice"}), http.StatusBadRequest)
+	wantStatus(t, owner.do(http.MethodPost, api+"/documents/"+supplier+"/set_type", map[string]any{"document_type": "receipt"}), http.StatusNotFound)
+
+	invite(t, h, owner, clerk, adminID, "clerk@example.com", map[string]any{"user_type": "employee", "permissions": []string{"sales_invoices"}})
+	wantStatus(t, clerk.do(http.MethodPost, api+"/documents/"+receipt.ID+"/set_type", map[string]any{"document_type": "general_document"}), http.StatusForbidden)
+}
