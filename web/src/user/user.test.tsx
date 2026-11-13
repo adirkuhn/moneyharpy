@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import type { InstanceSettings } from '../api/client'
 import { renderAt } from '../test/render'
 import { listing, server, signedIn, user } from '../test/server'
 
@@ -40,7 +41,7 @@ describe('API tokens', () => {
 })
 
 describe('instance settings', () => {
-  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_provider: 'ollama' as const, recognition_ai_url: '', recognition_ai_model: '', recognition_ai_api_key_set: false }
+  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [] as InstanceSettings['recognition_ai_connections'] }
 
   it('is closed to regular users', async () => {
     server.use(signedIn(), listing([]))
@@ -63,7 +64,7 @@ describe('instance settings', () => {
     await userEvent.click(await screen.findByLabelText('Allow new users to register'))
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() =>
-      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_provider: 'ollama', recognition_ai_url: '', recognition_ai_model: '' }),
+      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [] }),
     )
     expect(await screen.findByRole('status')).toHaveTextContent('Settings saved')
   })
@@ -250,58 +251,126 @@ describe('instance settings', () => {
   })
 
   describe('Scan and Recognise', () => {
+    const nvidia = { id: 'c1', name: 'NVIDIA free', provider: 'nvidia' as const, url: '', model: '', api_key_set: true, enabled: true }
+    const ollama = { id: 'c2', name: 'Ollama', provider: 'ollama' as const, url: 'http://ollama:11434', model: 'qwen2.5vl', api_key_set: false, enabled: true }
+    const admin = () => [signedIn({ ...user, instance_admin: true }), listing([])]
+    const saving = (settings: typeof current, sent: { body?: Record<string, unknown> }) => [
+      ...admin(),
+      http.get('*/api/instance/settings', () => HttpResponse.json(settings)),
+      http.patch('*/api/instance/settings', async ({ request }) => {
+        sent.body = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(settings)
+      }),
+    ]
+    const section = () => screen.findByRole('group', { name: 'Scan and Recognise' })
+
     it('leaves the AI model off and warns what an API provider receives', async () => {
-      server.use(signedIn({ ...user, instance_admin: true }), listing([]), http.get('*/api/instance/settings', () => HttpResponse.json(current)))
+      server.use(...admin(), http.get('*/api/instance/settings', () => HttpResponse.json(current)))
       renderAt('/instance/settings')
-      const section = await screen.findByRole('group', { name: 'Scan and Recognise' })
-      const toggle = within(section).getByRole('checkbox', { name: 'Use an AI model for documents the rules cannot read' })
+      const s = await section()
+      const toggle = within(s).getByRole('checkbox', { name: 'Use an AI model for documents the rules cannot read' })
       expect(toggle).not.toBeChecked()
-      expect(within(section).getByText(/the text and images of those documents are sent to that provider/)).toBeInTheDocument()
+      expect(within(s).getByText(/the text and images of those documents are sent to that provider/)).toBeInTheDocument()
+      expect(within(s).getByText('No AI connections yet.')).toBeInTheDocument()
     })
 
-    it('saves the AI model with a new API key only when one is typed', async () => {
-      let sent: Record<string, unknown> | undefined
-      server.use(
-        signedIn({ ...user, instance_admin: true }),
-        listing([]),
-        http.get('*/api/instance/settings', () => HttpResponse.json({ ...current, recognition_ai_api_key_set: true })),
-        http.patch('*/api/instance/settings', async ({ request }) => {
-          sent = (await request.json()) as Record<string, unknown>
-          return HttpResponse.json(current)
+    it('adds an NVIDIA connection with an optional address and its key', async () => {
+      const sent: { body?: Record<string, unknown> } = {}
+      server.use(...saving(current, sent))
+      renderAt('/instance/settings')
+      const s = await section()
+      await userEvent.click(within(s).getByRole('checkbox', { name: 'Use an AI model for documents the rules cannot read' }))
+      await userEvent.click(within(s).getByRole('button', { name: 'Add connection' }))
+      const editor = within(s).getByRole('group', { name: 'New connection' })
+      await userEvent.selectOptions(within(editor).getByRole('combobox', { name: 'AI provider' }), 'NVIDIA (build.nvidia.com)')
+      expect(within(editor).getByText(/free API is meant for trying out/)).toBeInTheDocument()
+      expect(within(editor).getByRole('textbox', { name: 'Model' })).toHaveAttribute('placeholder', 'meta/llama-3.2-90b-vision-instruct')
+      expect(within(editor).getByRole('textbox', { name: 'Address' })).toHaveAccessibleDescription(/Leave empty for build\.nvidia\.com/)
+      await userEvent.clear(within(editor).getByRole('textbox', { name: 'Name' }))
+      await userEvent.type(within(editor).getByRole('textbox', { name: 'Name' }), 'NVIDIA free')
+      await userEvent.type(within(editor).getByLabelText('API key'), 'nvapi-placeholder')
+      await userEvent.click(within(editor).getByRole('button', { name: 'Done' }))
+      expect(within(s).getByRole('list', { name: 'AI connections' })).toHaveTextContent('NVIDIA free')
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+      await waitFor(() =>
+        expect(sent.body).toMatchObject({
+          recognition_ai_enabled: true,
+          recognition_ai_connections: [{ name: 'NVIDIA free', provider: 'nvidia', url: '', model: '', enabled: true, api_key: 'nvapi-placeholder' }],
         }),
       )
-      renderAt('/instance/settings')
-      const section = await screen.findByRole('group', { name: 'Scan and Recognise' })
-      await userEvent.click(within(section).getByRole('checkbox', { name: 'Use an AI model for documents the rules cannot read' }))
-      await userEvent.selectOptions(within(section).getByRole('combobox', { name: 'AI provider' }), 'Anthropic')
-      expect(within(section).queryByRole('textbox', { name: 'Ollama address' })).toBeNull()
-      const model = within(section).getByRole('textbox', { name: 'Model' })
-      expect(model).toHaveAttribute('placeholder', 'claude-opus-5-5')
-      await userEvent.type(model, 'claude-opus-5-5')
-      expect(within(section).getByLabelText('API key')).toHaveAttribute('placeholder', 'Stored. Type to replace it.')
-      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
-      await waitFor(() => expect(sent).toMatchObject({ recognition_ai_enabled: true, recognition_ai_provider: 'anthropic', recognition_ai_model: 'claude-opus-5-5' }))
-      expect(sent).not.toHaveProperty('recognition_ai_api_key')
-
-      await userEvent.selectOptions(within(section).getByRole('combobox', { name: 'AI provider' }), 'Ollama')
-      await userEvent.type(within(section).getByRole('textbox', { name: 'Ollama address' }), 'http://ollama:11434')
-      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
-      await waitFor(() => expect(sent).toMatchObject({ recognition_ai_provider: 'ollama', recognition_ai_url: 'http://ollama:11434' }))
     })
 
-    it('checks what can read documents on this server', async () => {
+    it('reorders, turns off and edits connections, keeping stored keys', async () => {
+      const sent: { body?: Record<string, unknown> } = {}
+      server.use(...saving({ ...current, recognition_ai_enabled: true, recognition_ai_connections: [nvidia, ollama] }, sent))
+      renderAt('/instance/settings')
+      const s = await section()
+      const list = within(s).getByRole('list', { name: 'AI connections' })
+      expect(within(list).getByRole('button', { name: 'Move NVIDIA free up' })).toBeDisabled()
+      await userEvent.click(within(list).getByRole('button', { name: 'Move NVIDIA free down' }))
+      await userEvent.click(within(list).getByRole('checkbox', { name: 'Use NVIDIA free' }))
+      await userEvent.click(within(list).getByRole('button', { name: 'Edit NVIDIA free' }))
+      const editor = within(s).getByRole('group', { name: 'Edit NVIDIA free' })
+      expect(within(editor).getByLabelText('API key')).toHaveAttribute('placeholder', 'Stored. Type to replace it.')
+      await userEvent.type(within(editor).getByRole('textbox', { name: 'Model' }), 'meta/llama-3.2-11b-vision-instruct')
+      await userEvent.click(within(editor).getByRole('button', { name: 'Done' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+      await waitFor(() =>
+        expect(sent.body?.recognition_ai_connections).toEqual([
+          { id: 'c2', name: 'Ollama', provider: 'ollama', url: 'http://ollama:11434', model: 'qwen2.5vl', enabled: true },
+          { id: 'c1', name: 'NVIDIA free', provider: 'nvidia', url: '', model: 'meta/llama-3.2-11b-vision-instruct', enabled: false },
+        ]),
+      )
+    })
+
+    it('removes a connection', async () => {
+      const sent: { body?: Record<string, unknown> } = {}
+      server.use(...saving({ ...current, recognition_ai_connections: [nvidia, ollama] }, sent))
+      renderAt('/instance/settings')
+      const s = await section()
+      await userEvent.click(within(s).getByRole('button', { name: 'Remove Ollama' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+      await waitFor(() => expect(sent.body?.recognition_ai_connections).toEqual([{ id: 'c1', name: 'NVIDIA free', provider: 'nvidia', url: '', model: '', enabled: true }]))
+    })
+
+    it('shows problems next to the connection', async () => {
       server.use(
-        signedIn({ ...user, instance_admin: true }),
-        listing([]),
-        http.get('*/api/instance/settings', () => HttpResponse.json({ ...current, recognition_ai_enabled: true })),
-        http.post('*/api/instance/settings/test_recognition', () => HttpResponse.json({ ocr_available: true, ai: 'unavailable', message: 'connection refused' })),
+        ...admin(),
+        http.get('*/api/instance/settings', () => HttpResponse.json({ ...current, recognition_ai_connections: [nvidia] })),
+        http.patch('*/api/instance/settings', () =>
+          HttpResponse.json({ error: { 'recognition_ai_connections[0].api_key': ["can't be blank for NVIDIA's API catalog"] } }, { status: 422 }),
+        ),
       )
       renderAt('/instance/settings')
-      const section = await screen.findByRole('group', { name: 'Scan and Recognise' })
-      await userEvent.click(within(section).getByRole('button', { name: 'Check' }))
-      const result = await within(section).findByRole('status')
+      const s = await section()
+      await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+      const list = within(s).getByRole('list', { name: 'AI connections' })
+      expect(await within(list).findByText(/API key can't be blank/)).toBeInTheDocument()
+    })
+
+    it('checks what can read documents on this server, per connection', async () => {
+      server.use(
+        ...admin(),
+        http.get('*/api/instance/settings', () => HttpResponse.json({ ...current, recognition_ai_enabled: true, recognition_ai_connections: [nvidia, ollama] })),
+        http.post('*/api/instance/settings/test_recognition', () =>
+          HttpResponse.json({
+            ocr_available: true,
+            ai: 'ok',
+            ai_connections: [
+              { id: 'c1', name: 'NVIDIA free', state: 'unavailable', message: 'rate limited' },
+              { id: 'c2', name: 'Ollama', state: 'ok' },
+            ],
+          }),
+        ),
+      )
+      renderAt('/instance/settings')
+      const s = await section()
+      await userEvent.click(within(s).getByRole('button', { name: 'Check' }))
+      const result = await within(s).findByRole('status')
       expect(result).toHaveTextContent('OCR available')
-      expect(result).toHaveTextContent('AI model unavailable: connection refused')
+      expect(result).toHaveTextContent('AI model works')
+      expect(result).toHaveTextContent('NVIDIA free: unavailable: rate limited')
+      expect(result).toHaveTextContent('Ollama: works')
     })
   })
 })

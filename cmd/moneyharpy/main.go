@@ -172,15 +172,14 @@ func run(logger *slog.Logger) error {
 	bank.UseDocuments(documentService)
 	// Scan and Recognise reads uploads in the background and fills them in:
 	// e-invoices and text by its rules, scans through the OCR service, and
-	// with the optional AI model when an administrator turned it on.
+	// with the optional AI connections when an administrator turned them on.
 	ocrService := ocr.New(cfg.ocrURL)
 	recognition := recognize.NewService(recognize.Deps{
 		Documents: documentService, Contacts: contactService, Ledger: books, Settings: instance,
 		Store: postgres.NewRecognitionStore(pool), OCR: ocrService,
 		Parsers: recognize.Parsers{EInvoice: recognize.ParseEInvoice, Text: recognize.ParseText},
-		Models: func(c settings.Recognition) (recognize.Model, error) {
-			return ai.New(ai.Config{Provider: c.Provider, URL: c.URL, Model: c.Model, APIKey: c.APIKey})
-		},
+		// The AI connections are asked in the administrator's order.
+		Models:   func(c settings.Recognition) (recognize.Model, error) { return ai.FromSettings(c, logger) },
 		Notifier: httpapi.RecognitionNotifier{Webhooks: hooks, Logger: logger}, Logger: logger, Now: time.Now,
 	})
 	documentService.UseRecognition(recognition)

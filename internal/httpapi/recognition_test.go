@@ -128,27 +128,49 @@ func TestRecognitionSettingsAndCheck(t *testing.T) {
 	r := admin.do(http.MethodPost, "/api/instance/settings/test_recognition", nil)
 	wantStatus(t, r, http.StatusOK)
 	got := decode[httpapi.RecognitionCheck](t, r)
-	if got.OcrAvailable || got.Ai != httpapi.Off || got.Message == nil {
+	if got.OcrAvailable || got.Ai != httpapi.RecognitionCheckAiOff || got.Message == nil {
 		t.Errorf("check = %+v", got)
 	}
 	wantStatus(t, member.do(http.MethodPost, "/api/instance/settings/test_recognition", nil), http.StatusForbidden)
 
-	wantStatus(t, admin.do(http.MethodPatch, "/api/instance/settings", map[string]any{"recognition_ai_enabled": true, "recognition_ai_provider": "anthropic", "recognition_ai_model": "m"}),
-		http.StatusUnprocessableEntity)
-	const key = "ai-key-value"
+	wantStatus(t, admin.do(http.MethodPatch, "/api/instance/settings", map[string]any{
+		"recognition_ai_enabled": true, "recognition_ai_connections": []any{map[string]any{"provider": "anthropic"}},
+	}), http.StatusUnprocessableEntity)
+	const key, nvidiaKey = "ai-key-value", "nvapi-placeholder"
 	r = admin.do(http.MethodPatch, "/api/instance/settings", map[string]any{
-		"recognition_ai_enabled": true, "recognition_ai_provider": "anthropic", "recognition_ai_model": "claude-opus-5-5", "recognition_ai_api_key": key,
+		"recognition_ai_enabled": true,
+		"recognition_ai_connections": []any{
+			map[string]any{"name": "NVIDIA free", "provider": "nvidia", "api_key": nvidiaKey},
+			map[string]any{"provider": "anthropic", "model": "claude-opus-5-5", "api_key": key, "enabled": false},
+		},
 	})
 	wantStatus(t, r, http.StatusOK)
-	if strings.Contains(string(r.body), key) {
-		t.Error("settings response contains the API key")
+	if strings.Contains(string(r.body), key) || strings.Contains(string(r.body), nvidiaKey) {
+		t.Error("settings response contains an API key")
 	}
 	s := decode[httpapi.InstanceSettings](t, admin.do(http.MethodGet, "/api/instance/settings", nil))
-	if !s.RecognitionAiEnabled || s.RecognitionAiProvider != "anthropic" || s.RecognitionAiModel != "claude-opus-5-5" || !s.RecognitionAiApiKeySet {
-		t.Errorf("settings = %+v", s)
+	cs := s.RecognitionAiConnections
+	if !s.RecognitionAiEnabled || len(cs) != 2 ||
+		cs[0].Name != "NVIDIA free" || cs[0].Provider != httpapi.Nvidia || !cs[0].Enabled || !cs[0].ApiKeySet || cs[0].Id == "" ||
+		cs[1].Name != "Anthropic" || cs[1].Model != "claude-opus-5-5" || cs[1].Enabled || !cs[1].ApiKeySet {
+		t.Fatalf("settings = %+v", s)
+	}
+	// Reordered by id, the keys stay with their connections.
+	r = admin.do(http.MethodPatch, "/api/instance/settings", map[string]any{
+		"recognition_ai_connections": []any{
+			map[string]any{"id": cs[1].Id, "name": "Claude", "provider": "anthropic", "enabled": true},
+			map[string]any{"id": cs[0].Id, "name": "NVIDIA free", "provider": "nvidia", "api_key": "", "enabled": false},
+		},
+	})
+	wantStatus(t, r, http.StatusOK)
+	got2 := decode[httpapi.InstanceSettings](t, r).RecognitionAiConnections
+	if len(got2) != 2 || got2[0].Id != cs[1].Id || !got2[0].ApiKeySet || !got2[0].Enabled || got2[1].Id != cs[0].Id || got2[1].ApiKeySet || got2[1].Enabled {
+		t.Errorf("reordered = %+v", got2)
 	}
 	// This server has no AI models wired in the tests.
-	if got := decode[httpapi.RecognitionCheck](t, admin.do(http.MethodPost, "/api/instance/settings/test_recognition", nil)); got.Ai != httpapi.Unavailable {
+	if got := decode[httpapi.RecognitionCheck](t, admin.do(http.MethodPost, "/api/instance/settings/test_recognition", nil)); got.Ai != httpapi.RecognitionCheckAiUnavailable ||
+		len(got.AiConnections) != 2 || got.AiConnections[0].State != httpapi.RecognitionConnectionCheckStateUnavailable ||
+		got.AiConnections[1].State != httpapi.RecognitionConnectionCheckStateDisabled {
 		t.Errorf("check with AI on = %+v", got)
 	}
 }
