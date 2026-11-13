@@ -94,6 +94,9 @@ func (s *Service) Upload(ctx context.Context, admin, user resource.ID, filename,
 		}
 		return Typeless{}, err
 	}
+	if err := s.queue(ctx, admin, t.ID, user); err != nil {
+		return Typeless{}, err
+	}
 	return s.TypelessDocument(ctx, admin, t.ID, user)
 }
 
@@ -105,7 +108,10 @@ func (s *Service) DeleteTypeless(ctx context.Context, admin, id, user resource.I
 	if err := s.attachments.DeleteAll(ctx, admin, TypelessDocument, id); err != nil {
 		return wrap("delete attachments", err)
 	}
-	return wrap("delete typeless document", s.store.DeleteTypelessDocument(ctx, admin, id))
+	if err := s.store.DeleteTypelessDocument(ctx, admin, id); err != nil {
+		return wrap("delete typeless document", err)
+	}
+	return s.forget(ctx, admin, id)
 }
 
 // TypelessList returns the page of typeless documents the query selects.
@@ -182,7 +188,8 @@ func (s *Service) completeTypeless(ctx context.Context, admin resource.ID, list 
 	return list, nil
 }
 
-// AddTypelessAttachment attaches a file to a typeless document.
+// AddTypelessAttachment attaches a file to a typeless document, to be read
+// by Scan and Recognise.
 func (s *Service) AddTypelessAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error) {
 	if _, err := s.TypelessDocument(ctx, admin, id, user); err != nil {
 		return attachments.Attachment{}, err
@@ -191,7 +198,10 @@ func (s *Service) AddTypelessAttachment(ctx context.Context, admin, id, user res
 	if err != nil {
 		return attachments.Attachment{}, err
 	}
-	return a, s.store.TouchTypelessDocument(ctx, admin, id, a.CreatedAt)
+	if err := s.store.TouchTypelessDocument(ctx, admin, id, a.CreatedAt); err != nil {
+		return a, err
+	}
+	return a, s.queue(ctx, admin, id, user)
 }
 
 // OpenTypelessAttachment returns an attachment of a typeless document; the

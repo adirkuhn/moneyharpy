@@ -46,6 +46,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
+	"github.com/adirkuhn/moneyharpy/internal/recognize"
 	"github.com/adirkuhn/moneyharpy/internal/reports"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -163,6 +164,16 @@ func run(logger *slog.Logger) error {
 		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
 	})
 	bank.UseDocuments(documentService)
+	// Scan and Recognise reads uploads in the background and fills them in.
+	// TODO(scan): wire the OCR client (OCR_URL), recognize.ParseEInvoice and
+	// recognize.ParseText, and the AI models (ai.New) once they are merged;
+	// until then nothing can be read and documents end up failed or none.
+	recognition := recognize.NewService(recognize.Deps{
+		Documents: documentService, Contacts: contactService, Ledger: books, Settings: instance,
+		Store: postgres.NewRecognitionStore(pool), OCR: nil, Parsers: recognize.Parsers{}, Models: nil,
+		Notifier: httpapi.RecognitionNotifier{Webhooks: hooks, Logger: logger}, Logger: logger, Now: time.Now,
+	})
+	documentService.UseRecognition(recognition)
 	bank.UsePurchases(documentService)
 	bank.UseProjects(projectService)
 	// Fixed assets, depreciated each month by a background job.
@@ -185,6 +196,7 @@ func run(logger *slog.Logger) error {
 		Contacts:          contactService,
 		Sales:             invoiceService,
 		Purchases:         documentService,
+		Recognition:       recognition,
 		Assets:            assetService,
 		Products:          productService,
 		Projects:          projectService,
@@ -231,6 +243,7 @@ func run(logger *slog.Logger) error {
 	go hooks.Run(ctx, 5*time.Second, func(err error) { logger.Error("deliver webhooks", "error", err) })
 	go invoiceService.Run(ctx, time.Minute, func(err error) { logger.Error("sales invoice background work", "error", err) })
 	go subscriptionService.Run(ctx, time.Minute, func(err error) { logger.Error("subscription charge billing", "error", err) })
+	go recognition.Run(ctx, 15*time.Second, func(err error) { logger.Error("scan and recognise", "error", err) })
 	go assetService.Run(ctx, time.Hour, func(err error) { logger.Error("asset depreciation", "error", err) })
 
 	errs := make(chan error, 1)

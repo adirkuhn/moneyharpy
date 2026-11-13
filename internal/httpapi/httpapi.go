@@ -31,6 +31,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
+	"github.com/adirkuhn/moneyharpy/internal/recognize"
 	"github.com/adirkuhn/moneyharpy/internal/reports"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -99,27 +100,30 @@ type Deps struct {
 	Journal         *journal.Service
 	Sales           *sales.Service
 	Purchases       *purchases.Service
-	Assets          *assets.Service
-	Products        *products.Service
-	Projects        *projects.Service
-	Subscriptions   *subscriptions.Service
-	Downloads       *downloads.Service
-	Reports         *reports.Service
-	TimeEntries     *timeentries.Service
-	TaskLists       *tasklists.Service
-	Membership      *membership.Service
-	Connections     *connections.Service
-	Webhooks        *webhooks.Service
-	Storage         StorageChecker
-	Identity        *identity.Service
-	Settings        *settings.Service
-	Resources       ResourceLocator
-	Google          GoogleClient
-	LM2             LM2Client
-	Companies       CompanySearcher
-	CompanyCheck    RegisterChecker
-	Addresses       AddressLookup
-	Mail            TestMailer
+	// Recognition is Scan and Recognise; nil shows every document as never
+	// read.
+	Recognition   *recognize.Service
+	Assets        *assets.Service
+	Products      *products.Service
+	Projects      *projects.Service
+	Subscriptions *subscriptions.Service
+	Downloads     *downloads.Service
+	Reports       *reports.Service
+	TimeEntries   *timeentries.Service
+	TaskLists     *tasklists.Service
+	Membership    *membership.Service
+	Connections   *connections.Service
+	Webhooks      *webhooks.Service
+	Storage       StorageChecker
+	Identity      *identity.Service
+	Settings      *settings.Service
+	Resources     ResourceLocator
+	Google        GoogleClient
+	LM2           LM2Client
+	Companies     CompanySearcher
+	CompanyCheck  RegisterChecker
+	Addresses     AddressLookup
+	Mail          TestMailer
 	// BaseURL is the public origin of this installation.
 	BaseURL string
 	Logger  *slog.Logger

@@ -46,6 +46,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
+	"github.com/adirkuhn/moneyharpy/internal/recognize"
 	"github.com/adirkuhn/moneyharpy/internal/reports"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -237,6 +238,9 @@ type harness struct {
 	settle *settings.Service
 	hooks  *webhooks.Service
 	sales  *sales.Service
+	// recognition is Scan and Recognise, reading e-invoices only: XML
+	// files starting with <Invoice are read as testEInvoice.
+	recognition *recognize.Service
 
 	subscriptions *subscriptions.Service
 	downloads     *downloads.Service
@@ -296,6 +300,11 @@ func newHarness(t *testing.T, opts options) *harness {
 	})
 	bank.UseDocuments(documentService)
 	bank.UsePurchases(documentService)
+	h.recognition = recognize.NewService(recognize.Deps{
+		Documents: documentService, Contacts: contactService, Ledger: books, Settings: settle, Store: postgres.NewRecognitionStore(pool),
+		Parsers: recognize.Parsers{EInvoice: testEInvoice}, Notifier: httpapi.RecognitionNotifier{Webhooks: h.hooks}, Now: time.Now,
+	})
+	documentService.UseRecognition(h.recognition)
 	bank.UseProjects(projectService)
 	home := overview.NewService(admins, bank, invoiceService)
 	home.UseIncoming(documentService)
@@ -319,6 +328,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Contacts:        contactService,
 		Sales:           invoiceService,
 		Purchases:       documentService,
+		Recognition:     h.recognition,
 		Assets:          assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: h.hooks}, ids, time.Now),
 		Products:        productService,
 		Projects:        projectService,
@@ -752,7 +762,7 @@ func TestInstanceSettings(t *testing.T) {
 	if strings.Contains(string(r.body), secret) {
 		t.Error("settings response contains the secret")
 	}
-	want := httpapi.InstanceSettings{RegistrationOpen: false, GoogleEnabled: true, GoogleClientId: "id", GoogleClientSecretSet: true}
+	want := httpapi.InstanceSettings{RegistrationOpen: false, GoogleEnabled: true, GoogleClientId: "id", GoogleClientSecretSet: true, RecognitionAiProvider: "ollama"}
 	if diff := cmp.Diff(want, decode[httpapi.InstanceSettings](t, r)); diff != "" {
 		t.Errorf("settings diff (-want +got):\n%s", diff)
 	}
