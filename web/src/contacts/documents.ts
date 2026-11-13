@@ -114,7 +114,7 @@ export function newestFirst(entries: FeedEntry[]) {
 /** Where a document opens. */
 export function documentPath(administrationId: string, e: Pick<FeedEntry, 'kind' | 'id'>) {
   const paths: Record<DocumentKind, string> = {
-    invoice: 'sales_invoices', external: 'external_sales_invoices', quote: 'estimates', purchase: 'documents/purchase_invoices', receipt: 'documents/receipts',
+    invoice: 'sales_invoices', external: 'external_sales_invoices', quote: 'estimates', purchase: 'documents', receipt: 'documents',
   }
   return `/${administrationId}/${paths[e.kind]}/${e.id}`
 }

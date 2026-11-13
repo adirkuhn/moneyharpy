@@ -60,10 +60,10 @@ describe('the Incoming page', () => {
     renderAt('/11/documents')
     const table = await screen.findByRole('table', { name: 'Incoming' })
     expect(filterOf(seen)).toBe('period:this_year')
-    expect(within(table).getByRole('link', { name: 'PUR 2026-01234' })).toHaveAttribute('href', '/11/documents/purchase_invoices/941')
-    expect(within(table).getByRole('link', { name: 'REC Till 0042' })).toHaveAttribute('href', '/11/documents/receipts/942')
+    expect(within(table).getByRole('link', { name: 'PUR 2026-01234' })).toHaveAttribute('href', '/11/documents/941')
+    expect(within(table).getByRole('link', { name: 'REC Till 0042' })).toHaveAttribute('href', '/11/documents/942')
     expect(within(table).getByRole('link', { name: '— scan.pdf' })).toHaveAttribute('href', '/11/documents/951')
-    expect(within(table).getByRole('link', { name: 'MAN Opening balance' })).toHaveAttribute('href', '/11/documents/general_journal_documents/961')
+    expect(within(table).getByRole('link', { name: 'MAN Opening balance' })).toHaveAttribute('href', '/11/documents/961')
     expect(within(table).getAllByText('No contact')).toHaveLength(2)
     expect(within(table).getByText('€121.00')).toBeInTheDocument()
     expect(within(table).getAllByText('2026-11-01', { selector: 'td' })).toHaveLength(4)
@@ -186,16 +186,6 @@ describe('the Incoming page', () => {
     await screen.findByRole('table', { name: 'Incoming' })
     expect(filterOf(seen)).toBe('period:this_year,type:purchase_invoice')
   })
-
-  it('opens a document by its id on the page of its type', async () => {
-    server.use(...loaded())
-    server.use(
-      http.get('*/api/v2/11/documents/942', () => HttpResponse.json(rows[1])),
-      http.get('*/api/v2/11/documents/receipts/942', () => HttpResponse.json({})),
-    )
-    renderAt('/11/documents/942')
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/documents/receipts/942'))
-  })
 })
 
 describe('adding an incoming document', () => {
@@ -245,12 +235,13 @@ describe('adding an incoming document', () => {
         body = await request.json()
         return HttpResponse.json({ id: '944' }, { status: 201 })
       }),
+      http.get('*/api/v2/11/documents/944', () => HttpResponse.json(doc({ id: '944', type: 'Receipt', state: 'new' }))),
       http.get('*/api/v2/11/documents/receipts/944', () => HttpResponse.json({})),
     )
     renderAt('/11/documents/new')
     await userEvent.click(await screen.findByRole('button', { name: 'Or continue without document' }))
     await userEvent.click(screen.getByRole('button', { name: /Receipt\s*Receipts for shopping, fuel, meals/ }))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/documents/receipts/944'))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/documents\/944$/))
     expect(body).toEqual({ receipt: { date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) } })
   })
 })
