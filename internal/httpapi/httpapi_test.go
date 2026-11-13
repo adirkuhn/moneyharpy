@@ -764,7 +764,7 @@ func TestInstanceSettings(t *testing.T) {
 	if strings.Contains(string(r.body), secret) {
 		t.Error("settings response contains the secret")
 	}
-	want := httpapi.InstanceSettings{RegistrationOpen: false, GoogleEnabled: true, GoogleClientId: "id", GoogleClientSecretSet: true, RecognitionAiProvider: "ollama"}
+	want := httpapi.InstanceSettings{RegistrationOpen: false, GoogleEnabled: true, GoogleClientId: "id", GoogleClientSecretSet: true, RecognitionAiConnections: []httpapi.RecognitionAIConnection{}}
 	if diff := cmp.Diff(want, decode[httpapi.InstanceSettings](t, r)); diff != "" {
 		t.Errorf("settings diff (-want +got):\n%s", diff)
 	}

@@ -102,14 +102,20 @@ func (s *server) TestRecognition(w http.ResponseWriter, r *http.Request) {
 	if !requireInstanceAdmin(w, r) {
 		return
 	}
-	out := RecognitionCheck{Ai: Off}
+	out := RecognitionCheck{Ai: RecognitionCheckAiOff, AiConnections: []RecognitionConnectionCheck{}}
 	if s.deps.Recognition != nil {
 		c, err := s.deps.Recognition.Check(r.Context())
 		if err != nil {
 			s.fail(w, r, err)
 			return
 		}
-		out = RecognitionCheck{OcrAvailable: c.OCRAvailable, Ai: RecognitionCheckAi(c.AI)}
+		out = RecognitionCheck{OcrAvailable: c.OCRAvailable, Ai: RecognitionCheckAi(c.AI), AiConnections: make([]RecognitionConnectionCheck, len(c.Connections))}
+		for i, cc := range c.Connections {
+			out.AiConnections[i] = RecognitionConnectionCheck{Id: cc.ID, Name: cc.Name, State: RecognitionConnectionCheckState(cc.State)}
+			if cc.Message != "" {
+				out.AiConnections[i].Message = &cc.Message
+			}
+		}
 		if c.Message != "" {
 			out.Message = &c.Message
 		}
