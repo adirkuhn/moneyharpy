@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CreditNote xmlns="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2"
+            xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+            xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0</cbc:CustomizationID>
+  <cbc:ID>CN-2026-007</cbc:ID>
+  <cbc:IssueDate>2026-11-13</cbc:IssueDate>
+  <cbc:CreditNoteTypeCode>381</cbc:CreditNoteTypeCode>
+  <cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>
+  <cac:BillingReference><cac:InvoiceDocumentReference><cbc:ID>INV-2026-0042</cbc:ID></cac:InvoiceDocumentReference></cac:BillingReference>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cbc:EndpointID schemeID="9944">NL123456782B01</cbc:EndpointID>
+      <cac:PartyName><cbc:Name>Example Shop B.V.</cbc:Name></cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Voorbeeldstraat</cbc:StreetName>
+        <cbc:AdditionalStreetName>1</cbc:AdditionalStreetName>
+        <cbc:CityName>Amsterdam</cbc:CityName>
+        <cbc:PostalZone>1234AB</cbc:PostalZone>
+        <cac:Country><cbc:IdentificationCode>NL</cbc:IdentificationCode></cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>NL123456782B01</cbc:CompanyID>
+        <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>Example Shop B.V.</cbc:RegistrationName>
+        <cbc:CompanyID>12345678</cbc:CompanyID>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:PaymentMeans>
+    <cbc:PaymentMeansCode>30</cbc:PaymentMeansCode>
+    <cbc:PaymentDueDate>2026-11-27</cbc:PaymentDueDate>
+    <cac:PayeeFinancialAccount><cbc:ID>NL91 ABNA 0417 1643 00</cbc:ID></cac:PayeeFinancialAccount>
+  </cac:PaymentMeans>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="EUR">4.33</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="EUR">20.62</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="EUR">4.33</cbc:TaxAmount>
+      <cac:TaxCategory><cbc:ID>S</cbc:ID><cbc:Percent>21</cbc:Percent><cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="EUR">20.62</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="EUR">20.62</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="EUR">24.95</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="EUR">24.95</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:CreditNoteLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:CreditedQuantity unitCode="C62">1</cbc:CreditedQuantity>
+    <cbc:LineExtensionAmount currencyID="EUR">20.62</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Retour draadloze muis</cbc:Name>
+      <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID><cbc:Percent>21</cbc:Percent><cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme></cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="EUR">20.62</cbc:PriceAmount></cac:Price>
+  </cac:CreditNoteLine>
+</CreditNote>

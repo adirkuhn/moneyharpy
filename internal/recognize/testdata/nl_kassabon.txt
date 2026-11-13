@@ -1,0 +1,28 @@
+        SUPERMARKT VOORBEELD
+   Winkelstraat 10, 1234 AB Amsterdam
+          Tel. 020-1112233
+
+OMSCHRIJVING                     BEDRAG
+HALFVOLLE MELK                     1,19
+VOLKORENBROOD                      2,49
+BANANEN                            1,85
+PINDAKAAS          2 x 0,89        1,78
+WASMIDDEL                          8,99
+BONUS WASMIDDEL                   -2,00
+
+SUBTOTAAL                         14,30
+TOTAAL                            14,30
+PINNEN                            14,30
+
+BTW      OVER       BEDRAG
+9%       6,71        0,60
+21%      5,78        1,21
+
+Pinbetaling
+Terminal: ABC123       Merchant: 0001
+Kaart: Maestro         Contactloos
+Datum: 13/11/2026 10:15
+Transactie: 004711     Autorisatiecode: 123456
+Totaal: EUR 14,30
+
+Bonnummer: 0042-3-4711   Kassa 3   13-11-2026 10:14
