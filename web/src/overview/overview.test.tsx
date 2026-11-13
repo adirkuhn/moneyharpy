@@ -67,8 +67,8 @@ describe('administration overview', () => {
     open()
     renderAt('/11/feed')
     const incoming = await screen.findByRole('region', { name: 'Incoming' })
-    expect(await within(incoming).findByRole('link', { name: /To pay\s*— 2\s*€242.00$/ })).toHaveAttribute('href', '/11/documents/purchase_invoices?filter=state%3Aopen%7Clate%7Cpending_payment')
-    expect(within(incoming).getByRole('link', { name: /To process\s*4$/ })).toHaveAttribute('href', '/11/documents/typeless_documents')
+    expect(await within(incoming).findByRole('link', { name: /To pay\s*— 2\s*€242.00$/ })).toHaveAttribute('href', '/11/documents?filter=state%3Aopen%7Clate%7Cpending_payment')
+    expect(within(incoming).getByRole('link', { name: /To process\s*4$/ })).toHaveAttribute('href', '/11/documents?filter=state%3Anew')
     expect(within(incoming).queryByText('Not available yet')).toBeNull()
   })
 

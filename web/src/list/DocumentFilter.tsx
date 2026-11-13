@@ -6,6 +6,9 @@ import { AdvancedFilter, ContactFilter, RadioFilter, SelectFilter } from './Filt
 import { parsePeriod, periodValue } from './period'
 import { PeriodPicker } from './PeriodPicker'
 
+/** A term of the filter shown as a row of tags, between the status and the contact. */
+export type Term = { key: string; legend: string; options: { value: string; label: string }[] }
+
 type Props = {
   administrationId: string
   filter: ListFilter
@@ -13,11 +16,13 @@ type Props = {
   states: { value: string; label: string }[]
   /** Whether the list can be filtered on workflow. */
   workflows?: boolean
+  /** More terms to choose one value of, such as Moneybird's Type of incoming documents; an empty value means all. */
+  terms?: Term[]
   onApply: (filter: ListFilter) => void
 }
 
-/** The advanced filter of the invoice lists: a period, a status, a contact and, for sales invoices, a workflow. */
-export function DocumentFilter({ administrationId, filter, states, workflows = false, onApply }: Props) {
+/** The advanced filter of the document lists: a period, a status, the list's own terms, a contact and, for sales invoices, a workflow. */
+export function DocumentFilter({ administrationId, filter, states, workflows = false, terms = [], onApply }: Props) {
   const { t } = useTranslation()
   const today = useMemo(() => new Date(), [])
   const [range, setRange] = useState(() => parsePeriod(filter.period, today))
@@ -25,17 +30,22 @@ export function DocumentFilter({ administrationId, filter, states, workflows = f
   const [state, setState] = useState(filter.state)
   const [contactId, setContactId] = useState(termOf(filter.rest, 'contact_id'))
   const [workflowId, setWorkflowId] = useState(termOf(filter.rest, 'workflow_id'))
+  const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries(terms.map((term) => [term.key, termOf(filter.rest, term.key)])))
 
   const apply = () =>
     onApply({
       state,
       // A period the picker cannot show stays as it is until another is picked.
       period: periodTouched ? periodValue(range, today) : filter.period,
-      rest: withTerm(withTerm(filter.rest, 'contact_id', contactId), 'workflow_id', workflows ? workflowId : termOf(filter.rest, 'workflow_id')),
+      rest: withTerm(
+        withTerm(terms.reduce((rest, term) => withTerm(rest, term.key, values[term.key] ?? ''), filter.rest), 'contact_id', contactId),
+        'workflow_id',
+        workflows ? workflowId : termOf(filter.rest, 'workflow_id'),
+      ),
     })
 
   return (
-    <AdvancedFilter value={{ range, state, contactId, workflowId }} onApply={apply}>
+    <AdvancedFilter value={{ range, state, contactId, workflowId, values }} onApply={apply}>
       <PeriodPicker
         value={range}
         today={today}
@@ -45,6 +55,15 @@ export function DocumentFilter({ administrationId, filter, states, workflows = f
         }}
       />
       <RadioFilter legend={t('list.status')} value={state} onChange={setState} options={states} />
+      {terms.map((term) => (
+        <RadioFilter
+          key={term.key}
+          legend={term.legend}
+          value={values[term.key] ?? ''}
+          onChange={(value) => setValues((v) => ({ ...v, [term.key]: value }))}
+          options={term.options}
+        />
+      ))}
       <ContactFilter administrationId={administrationId} contactId={contactId} onChange={setContactId} />
       {workflows && <WorkflowFilter administrationId={administrationId} value={workflowId} onChange={setWorkflowId} />}
     </AdvancedFilter>

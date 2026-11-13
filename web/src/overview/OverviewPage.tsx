@@ -90,8 +90,8 @@ export function OverviewPage() {
         )}
         {documents && (
           <Block title={t('overview.incoming')}>
-            <Tile icon="out" title={t('overview.toPay')} count={count(overview.data?.incoming?.to_pay)} to={`${base}/documents/purchase_invoices?filter=${encodeURIComponent('state:open|late|pending_payment')}`} detail={overview.data?.incoming && money(overview.data.incoming.to_pay.amount)} />
-            <Tile icon="attention" urgent title={t('overview.toProcess')} to={`${base}/documents/typeless_documents`} detail={overview.data?.incoming?.to_process.toLocaleString(i18n.language)} />
+            <Tile icon="out" title={t('overview.toPay')} count={count(overview.data?.incoming?.to_pay)} to={`${base}/documents?filter=${encodeURIComponent('state:open|late|pending_payment')}`} detail={overview.data?.incoming && money(overview.data.incoming.to_pay.amount)} />
+            <Tile icon="attention" urgent title={t('overview.toProcess')} to={`${base}/documents?filter=${encodeURIComponent('state:new')}`} detail={overview.data?.incoming?.to_process.toLocaleString(i18n.language)} />
           </Block>
         )}
       </div>
