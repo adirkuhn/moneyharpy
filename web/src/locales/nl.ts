@@ -2,6 +2,7 @@ import type { Messages } from './en'
 
 export const nl: Messages = {
   common: { close: 'Sluiten', loading: 'Laden…', language: 'Taal', theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker', cancel: 'Annuleren', confirm: 'Bevestigen', next: 'Volgende', skip: 'Naar de inhoud', genericError: 'Er ging iets mis. Probeer het opnieuw.', requestFailed: 'Het verzoek is mislukt', pagination: 'Paginering', page: 'Pagina {{n}}', previousPage: 'Vorige pagina', nextPage: 'Volgende pagina' },
+  datePicker: { calendar: 'Kalender', choose: 'Kies een datum', previousMonth: 'Vorige maand', nextMonth: 'Volgende maand' },
   login: {
     title: 'Inloggen', email: 'E-mailadres', password: 'Wachtwoord', submit: 'Inloggen bij MoneyHarpy', or: 'of', forgot: 'Wachtwoord vergeten?', noAccount: 'Geen account?', passwordChanged: 'Wachtwoord gewijzigd. Log in met je nieuwe wachtwoord.', google: 'Doorgaan met Google', lm2: 'Doorgaan met LM2',
     unreachable: 'MoneyHarpy is niet bereikbaar. Herlaad de pagina om het opnieuw te proberen.',

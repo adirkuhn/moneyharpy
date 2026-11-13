@@ -8,6 +8,7 @@ import { formatAmount } from '../banking/queries'
 import { type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
 import { contactName } from '../contacts/queries'
 import { ConfirmPanel, DetailBlock, DetailList, type DetailRow } from '../detail/Detail'
+import { DateInput } from '../forms/DatePicker'
 import { CheckboxInput, FormSection, formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
 import { ContactPicker } from '../invoices/ContactPicker'
 import { type LineRow, LinesEditor } from '../invoices/LinesEditor'
@@ -270,7 +271,7 @@ function EstimateForm({ administrationId, estimate, rates }: FormProps) {
             }}
           />
           <TextInput label={labels.reference ?? ''} maxLength={1000} value={reference} errors={errors.field('reference')} onChange={(e) => setReference(e.target.value)} />
-          <TextInput label={labels.estimate_date ?? ''} type="date" width="medium" help={t('estimates.dateHelp')} value={date} errors={errors.field('estimate_date')} onChange={(e) => setDate(e.target.value)} />
+          <DateInput label={labels.estimate_date ?? ''} width="medium" help={t('estimates.dateHelp')} value={date} errors={errors.field('estimate_date')} onChange={setDate} />
         </FormSection>
         <FormSection title={t('estimates.settings')}>
           <SelectInput label={labels.workflow_id ?? ''} width="medium" value={workflowId} errors={errors.field('workflow_id')} onChange={(e) => setWorkflowId(e.target.value)}>

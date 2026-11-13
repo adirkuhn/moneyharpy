@@ -22,9 +22,7 @@
 
 /* The form: labels in a column of their own, as Moneybird's form-element. */
 .recurring-schedule__form .form-input { grid-template-columns: 10.625rem minmax(0, 1fr); }
-.recurring-schedule__date { position: relative; display: inline-flex; align-items: center; width: 11.625rem; }
-.recurring-schedule__date input { width: 100%; padding-right: 2rem; }
-.recurring-schedule__date svg { position: absolute; right: 0.625rem; color: var(--muted); pointer-events: none; }
+.recurring-schedule__form .date-picker { max-width: 11.625rem; }
 .recurring-schedule__presets { display: grid; gap: 0.375rem; justify-items: start; padding-top: 0.25rem; }
 .recurring-schedule__presets .radio-option { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; }
 .recurring-schedule__presets input[type='radio'] { width: 1rem; height: 1rem; min-height: 0; margin: 0; padding: 0; accent-color: var(--blue); }

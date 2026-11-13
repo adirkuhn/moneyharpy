@@ -2,9 +2,10 @@ import { type FormEvent, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
+import { todayDay } from '../forms/calendar'
+import { DatePicker } from '../forms/DatePicker'
 import { type FormErrors, FormRow } from '../forms/Form'
 import { invoiceTitle, type SalesInvoice } from '../invoices/queries'
-import { ListIcon } from '../layout/icons'
 import { frequencyText, frequencyTypes, type FrequencyType, type RecurringChanges, type RecurringInvoice } from './queries'
 import { countUntil, frequencyOfPreset, occurrence, type Preset, presetOf, presets, upcoming } from './schedule'
 
@@ -104,10 +105,7 @@ export function ScheduleForm({ value, onChange, submitLabel, onSubmit, onCancel,
       <Problems messages={errors.general} />
       <FormRow label={t('recurring.startDate')} width="medium" errors={errors.field('invoice_date')}>
         {({ labelId: _, ...control }) => (
-          <span className="recurring-schedule__date">
-            <input type="text" inputMode="numeric" placeholder="YYYY-MM-DD" maxLength={10} {...control} value={value.invoiceDate} onChange={(e) => onChange({ invoiceDate: e.target.value })} />
-            <ListIcon kind="calendar" />
-          </span>
+          <DatePicker {...control} value={value.invoiceDate} min={todayDay()} onChange={(d) => onChange({ invoiceDate: d })} />
         )}
       </FormRow>
       <hr />
