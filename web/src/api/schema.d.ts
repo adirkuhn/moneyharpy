@@ -2154,6 +2154,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/documents/{id}/set_type": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the type of an incoming document
+         * @description MoneyHarpy extension, after Moneybird's type picker on a document. Turns an incoming document into a purchase invoice, receipt, general document or journal entry (general journal document) while it books nothing: a typeless document, a new purchase invoice or receipt, or a general document. It keeps its id, attachments, notes and history, and its contact, reference and date where the new type has them; lines are kept between purchase invoices and receipts. A journal entry or a booked document cannot change type (422). Setting the type it already has changes nothing.
+         */
+        post: operations["setIncomingDocumentType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/documents/general_journal_documents": {
         parameters: {
             query?: never;
@@ -15181,6 +15204,42 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    setIncomingDocumentType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    document_type: "purchase_invoice" | "receipt" | "general_document" | "general_journal_document";
+                };
+            };
+        };
+        responses: {
+            /** @description The document with its new type; its uri is the path of the typed resource. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncomingDocumentSummary"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };
     };
