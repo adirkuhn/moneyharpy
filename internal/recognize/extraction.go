@@ -4,6 +4,7 @@
 package recognize
 
 import (
+	"context"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/money"
@@ -102,4 +103,13 @@ type Extraction struct {
 func (e Extraction) Good() bool {
 	return e.TotalInclTax.Found && e.TotalInclTax.Confidence == Certain &&
 		e.Date.Found && e.Date.Confidence == Certain
+}
+
+// Model is the optional AI model, asked only when the rules could not read a
+// document well enough (Extraction.Good is false) and an administrator turned
+// it on. It gets the text read so far and the pages as PNG images.
+type Model interface {
+	Extract(ctx context.Context, text string, pages [][]byte) (Extraction, error)
+	// Ping checks the model answers with the saved settings.
+	Ping(ctx context.Context) error
 }
