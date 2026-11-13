@@ -14,6 +14,7 @@ const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 const stamp = '2026-11-10T09:00:00Z'
 
 const supplier = { id: '701', administration_id: '11', company_name: 'Supplier B.V.', firstname: null, lastname: null, country: 'NL' }
+const shop = { id: '702', administration_id: '11', company_name: 'Example Shop B.V.', firstname: null, lastname: null, country: 'NL' }
 
 const rate = (over: Partial<TaxRate>): TaxRate => ({
   id: '2201', administration_id: '11', name: '21% btw', percentage: '21', tax_rate_type: 'purchase_invoice', show_tax: true, active: true,
@@ -91,11 +92,21 @@ function loaded(over: { doc?: PurchaseInvoice; summaries?: DocumentSummary[]; ra
         : { tax_rates: [], ledger_accounts: [] })),
     http.get('*/api/v2/11/products', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
     http.get('*/api/v2/11/users', () => HttpResponse.json([])),
-    http.get('*/api/v2/11/contacts', () => HttpResponse.json([supplier], { headers: { 'X-Total-Count': '1' } })),
+    http.get('*/api/v2/11/contacts', () => HttpResponse.json([supplier, shop], { headers: { 'X-Total-Count': '2' } })),
   ]
 }
 
-const card = () => screen.getByRole('form', { name: /^(Purchase invoice|Receipt|General document|Document)$/ })
+const card = () => screen.getByRole('region', { name: /^(Purchase invoice|Receipt|General document|Document)$/ })
+
+/** Records the body of every change sent to the purchase invoice, and answers with the invoice. */
+function patches(answer: () => PurchaseInvoice = () => invoice()) {
+  const sent: Record<string, unknown>[] = []
+  const handler = http.patch('*/api/v2/11/documents/purchase_invoices/941', async ({ request }) => {
+    sent.push(((await request.json()) as { purchase_invoice: Record<string, unknown> }).purchase_invoice)
+    return HttpResponse.json(answer())
+  })
+  return { sent, handler }
+}
 
 beforeEach(() => {
   Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:preview'), revokeObjectURL: vi.fn() })
@@ -134,19 +145,156 @@ describe('the page of an incoming document', () => {
     await waitFor(() => expect(deleted).toEqual(['971']))
   })
 
-  it('shows a saved purchase invoice with its values, and Edit turns them into the form', async () => {
+  it('shows a purchase invoice with its fields to change in place, and no Edit button, as Moneybird does', async () => {
     server.use(...loaded())
     renderAt('/11/documents/941')
-    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
-    expect(within(form).getByText('Supplier B.V.')).toBeInTheDocument()
-    expect(within(form).getByText('2026-11-15')).toBeInTheDocument()
-    expect(within(form).getByRole('table', { name: 'Purchase invoice lines' })).toHaveTextContent('Paper')
-    expect(within(form).getByRole('table', { name: 'Totals' })).toHaveTextContent('€121.00')
-    await userEvent.click(within(form).getByRole('button', { name: 'Edit' }))
-    expect(within(card()).getByRole('textbox', { name: 'Invoice id' })).toHaveValue('INV-1')
-    expect(within(card()).getByRole('textbox', { name: 'Due date' })).toHaveValue('2026-11-15')
-    await userEvent.click(within(card()).getByRole('link', { name: 'Cancel' }))
-    expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/documents$/)
+    const doc = await screen.findByRole('region', { name: 'Purchase invoice' })
+    expect(within(doc).getByRole('combobox', { name: 'Contact' })).toHaveTextContent('Supplier B.V.')
+    expect(within(doc).getByRole('textbox', { name: 'Invoice id' })).toHaveValue('INV-1')
+    expect(within(doc).getByRole('textbox', { name: 'Date' })).toHaveValue('2026-11-01')
+    expect(within(doc).getByRole('textbox', { name: 'Due date' })).toHaveValue('2026-11-15')
+    // The details read as a short summary: the categories used, the lines and the totals.
+    const tag = within(doc).getByText('Other costs', { selector: '.category-tag__name' }).closest('.category-tag')
+    expect(tag).toHaveAttribute('title', 'Category: Expenses → Other costs')
+    const lines = within(doc).getByRole('table', { name: 'Purchase invoice lines' })
+    expect(within(lines).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Description', 'Category', 'VAT rate', 'Total', ''])
+    expect(lines).toHaveTextContent('PaperOther costs21% btw€100.00')
+    expect(within(doc).getByRole('list', { name: 'Totals' })).toHaveTextContent('Subtotal€100.0021% btw€21.00Total€121.00')
+    expect(within(doc).getByRole('button', { name: 'Invoice details' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
+    expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeNull()
+    expect(screen.queryByText('Edit')).toBeNull()
+  })
+
+  it('highlights the lines of a category while its tag is pointed at', async () => {
+    const doc = invoice({
+      details: [
+        { id: '961', description: 'Paper', amount: '1', price: '100.0', tax_rate_id: '2201', ledger_account_id: '4001', period: null, row_order: 1, total_price_excl_tax_with_discount: '100.0' },
+        { id: '962', description: 'Tickets', amount: '1', price: '20.0', tax_rate_id: '2209', ledger_account_id: '4002', period: null, row_order: 2, total_price_excl_tax_with_discount: '20.0' },
+      ],
+    })
+    server.use(...loaded({ doc }))
+    server.use(http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json([...accounts, account({ id: '4002', name: 'Travel', account_type: 'direct_costs' })])))
+    renderAt('/11/documents/941')
+    const region = await screen.findByRole('region', { name: 'Purchase invoice' })
+    const travel = await within(region).findByText('Travel', { selector: '.category-tag__name' })
+    expect(travel.closest('.category-tag')).toHaveAttribute('title', 'Category: Direct costs → Travel')
+    const rows = within(within(region).getByRole('table', { name: 'Purchase invoice lines' })).getAllByRole('row').slice(1)
+    await userEvent.hover(travel)
+    expect(rows[1]).toHaveClass('is-highlighted')
+    expect(rows[0]).not.toHaveClass('is-highlighted')
+    await userEvent.unhover(travel)
+    expect(rows[1]).not.toHaveClass('is-highlighted')
+  })
+
+  it('saves each field on its own: a text when it is left, a contact when it is picked', async () => {
+    const { sent, handler } = patches()
+    server.use(...loaded(), handler)
+    renderAt('/11/documents/941')
+    const doc = await screen.findByRole('region', { name: 'Purchase invoice' })
+    const reference = within(doc).getByRole('textbox', { name: 'Invoice id' })
+    await userEvent.clear(reference)
+    await userEvent.type(reference, 'INV-2')
+    // Typing alone saves nothing; leaving the field does.
+    expect(sent).toEqual([])
+    await userEvent.tab()
+    await waitFor(() => expect(sent).toEqual([{ reference: 'INV-2' }]))
+
+    const date = within(doc).getByRole('textbox', { name: 'Date' })
+    await userEvent.clear(date)
+    await userEvent.type(date, '2026-11-03')
+    await waitFor(() => expect(sent).toHaveLength(2))
+    expect(sent[1]).toEqual({ date: '2026-11-03' })
+    await userEvent.keyboard('{Escape}')
+
+    await userEvent.type(within(doc).getByRole('textbox', { name: 'Days' }), '30{Enter}')
+    await waitFor(() => expect(sent).toHaveLength(3))
+    expect(sent[2]).toEqual({ due_date: '2026-12-01' })
+
+    await userEvent.click(within(doc).getByRole('combobox', { name: 'Contact' }))
+    const search = screen.getByPlaceholderText('Search for an existing contact ...')
+    expect(search).toHaveFocus()
+    expect(within(doc).getByRole('button', { name: 'New contact' })).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('option', { name: 'Example Shop B.V.' }))
+    await waitFor(() => expect(sent).toHaveLength(4))
+    expect(sent[3]).toEqual({ contact_id: '702' })
+    expect(screen.queryByPlaceholderText('Search for an existing contact ...')).toBeNull()
+  })
+
+  it('closes the contact search with Escape or a click elsewhere, saving nothing', async () => {
+    const { sent, handler } = patches()
+    server.use(...loaded(), handler)
+    renderAt('/11/documents/941')
+    const doc = await screen.findByRole('region', { name: 'Purchase invoice' })
+    await userEvent.click(within(doc).getByRole('combobox', { name: 'Contact' }))
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByPlaceholderText('Search for an existing contact ...')).toBeNull()
+    await userEvent.click(within(doc).getByRole('combobox', { name: 'Contact' }))
+    await userEvent.click(screen.getByRole('heading', { level: 1 }))
+    expect(screen.queryByPlaceholderText('Search for an existing contact ...')).toBeNull()
+    expect(sent).toEqual([])
+  })
+
+  it('opens the lines editor from the details, saves only the lines and closes it', async () => {
+    const { sent, handler } = patches()
+    server.use(...loaded(), handler)
+    renderAt('/11/documents/941')
+    const doc = await screen.findByRole('region', { name: 'Purchase invoice' })
+    await userEvent.click(within(doc).getByRole('button', { name: 'Invoice details' }))
+    const editor = within(doc).getByRole('region', { name: 'Purchase invoice lines' })
+    expect(within(editor).getByRole('radio', { name: 'Excluding VAT' })).toBeChecked()
+    expect(within(editor).getByRole('combobox', { name: 'Currency' })).toHaveValue('EUR')
+    const price = within(editor).getByRole('textbox', { name: 'Price' })
+    await userEvent.clear(price)
+    await userEvent.type(price, '200')
+    expect(within(editor).getByRole('table', { name: 'Totals' })).toHaveTextContent('€242.00')
+    await userEvent.click(within(editor).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent).toHaveLength(1))
+    expect(Object.keys(sent[0] ?? {}).sort()).toEqual(['currency', 'details_attributes', 'prices_are_incl_tax'])
+    expect(sent[0]).toMatchObject({ details_attributes: [{ id: '961', description: 'Paper', price: '200', tax_rate_id: '2201', ledger_account_id: '4001', row_order: 1 }] })
+    expect(await within(doc).findByRole('button', { name: 'Invoice details' })).toBeInTheDocument()
+    expect(within(doc).queryByRole('region', { name: 'Purchase invoice lines' })).toBeNull()
+  })
+
+  it('opens the lines editor from the keyboard, and Cancel puts the lines back without saving', async () => {
+    const { sent, handler } = patches()
+    server.use(...loaded(), handler)
+    renderAt('/11/documents/941')
+    const doc = await screen.findByRole('region', { name: 'Purchase invoice' })
+    within(doc).getByRole('button', { name: 'Invoice details' }).focus()
+    await userEvent.keyboard('{Enter}')
+    const editor = within(doc).getByRole('region', { name: 'Purchase invoice lines' })
+    const description = within(editor).getByRole('combobox', { name: 'Description' })
+    await userEvent.clear(description)
+    await userEvent.type(description, 'Ink')
+    await userEvent.click(within(editor).getByRole('button', { name: 'Cancel' }))
+    expect(within(doc).getByRole('table', { name: 'Purchase invoice lines' })).toHaveTextContent('Paper')
+    await userEvent.click(within(doc).getByRole('button', { name: 'Invoice details' }))
+    expect(within(within(doc).getByRole('region', { name: 'Purchase invoice lines' })).getByRole('combobox', { name: 'Description' })).toHaveValue('Paper')
+    expect(sent).toEqual([])
+  })
+
+  it('shows a paid invoice the same way, but nothing can change', async () => {
+    server.use(...loaded({ doc: invoice({ state: 'paid', total_paid: '121.0', total_unpaid: '0.0' }) }))
+    renderAt('/11/documents/941')
+    const doc = await screen.findByRole('region', { name: 'Purchase invoice' })
+    expect(within(doc).getByText('INV-1')).toBeInTheDocument()
+    expect(within(doc).getByText('Supplier B.V.')).toBeInTheDocument()
+    expect(within(doc).getByText('2026-11-15')).toBeInTheDocument()
+    expect(within(doc).queryByRole('textbox')).toBeNull()
+    expect(within(doc).queryByRole('combobox', { name: 'Contact' })).toBeNull()
+    expect(within(doc).queryByRole('button', { name: 'Invoice details' })).toBeNull()
+    expect(within(doc).getByRole('table', { name: 'Purchase invoice lines' })).toHaveTextContent('Paper')
+    expect(within(doc).getByRole('list', { name: 'Totals' })).toHaveTextContent('€121.00')
+  })
+
+  it('keeps an invoice with payments as it is', async () => {
+    server.use(...loaded({ doc: invoice({ payments: [{ id: '991', price: '10.0', payment_date: '2026-11-02' }] as PurchaseInvoice['payments'] }) }))
+    renderAt('/11/documents/941')
+    const doc = await screen.findByRole('region', { name: 'Purchase invoice' })
+    expect(within(doc).queryByRole('textbox', { name: 'Invoice id' })).toBeNull()
+    expect(within(doc).queryByRole('button', { name: 'Invoice details' })).toBeNull()
   })
 
   it('shows reverse-charged VAT as owed and deducted, adding nothing to the total, as Moneybird does', async () => {
@@ -159,28 +307,24 @@ describe('the page of an incoming document', () => {
     server.use(...loaded({ doc, rates: [...rates, eu] }))
     renderAt('/11/documents/941')
     const form = await screen.findByRole('region', { name: 'Purchase invoice' })
-    const shown = within(form).getByRole('table', { name: 'Totals' })
+    const shown = within(form).getByRole('list', { name: 'Totals' })
     expect(shown).toHaveTextContent('reverse-charged)-€341.58Within the EU 9% (reverse-charged)€341.58')
     expect(shown).toHaveTextContent('Total€3,795.31')
-    await userEvent.click(within(form).getByRole('button', { name: 'Edit' }))
+    await userEvent.click(within(form).getByRole('button', { name: 'Invoice details' }))
     const editing = within(card()).getByRole('table', { name: 'Totals' })
     expect(within(editing).getAllByText('Within the EU 9% (reverse-charged)')).toHaveLength(2)
     expect(editing).toHaveTextContent('Total€3,795.31')
   })
 
-  it('books a new purchase invoice with its lines, and Next opens the next document to process', async () => {
-    let sent: Record<string, unknown> | undefined
-    server.use(...loaded({ doc: invoice({ state: 'new', reference: 'INV-1', details: [], due_date: null }) }))
+  it('opens a new purchase invoice without lines in the lines editor, and Next saves them and opens the next document to process', async () => {
+    const { sent, handler } = patches()
+    server.use(...loaded({ doc: invoice({ state: 'new', reference: 'INV-1', details: [], due_date: null }) }), handler)
     server.use(
-      http.patch('*/api/v2/11/documents/purchase_invoices/941', async ({ request }) => {
-        sent = ((await request.json()) as { purchase_invoice: Record<string, unknown> }).purchase_invoice
-        return HttpResponse.json(invoice())
-      }),
       http.get('*/api/v2/11/documents/942', () => HttpResponse.json(summary({ id: '942', type: 'Receipt', reference: 'Till 42', state: 'new' }))),
       http.get('*/api/v2/11/documents/receipts/942', () => HttpResponse.json(invoice({ id: '942', state: 'new', reference: 'Till 42' }))),
     )
     renderAt('/11/documents/941')
-    const form = await screen.findByRole('form', { name: 'Purchase invoice' })
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
     expect(within(form).getByText('2 documents left to process')).toBeInTheDocument()
     expect(within(form).getByRole('combobox', { name: 'Type' })).toHaveTextContent('Purchase invoice')
     const lines = within(form).getByRole('table', { name: 'Purchase invoice lines' })
@@ -202,15 +346,33 @@ describe('the page of an incoming document', () => {
     await userEvent.keyboard('{Enter}')
     expect(within(lines).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Other costs')
     expect(within(form).getByRole('table', { name: 'Totals' })).toHaveTextContent('€121.00')
+    // The due date saves on its own, from the days after the date.
     await userEvent.type(within(form).getByRole('textbox', { name: 'Days' }), '14')
     expect(within(form).getByRole('textbox', { name: 'Due date' })).toHaveValue('2026-11-15')
     await userEvent.click(within(form).getByRole('button', { name: 'Next' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Receipt Till 42' })).toBeInTheDocument()
     expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/documents\/942$/)
-    expect(sent).toMatchObject({
-      contact_id: '701', reference: 'INV-1', date: '2026-11-01', due_date: '2026-11-15', currency: 'EUR', prices_are_incl_tax: false,
-      details_attributes: [{ description: 'Paper', amount: '1', price: '100', tax_rate_id: '2201', ledger_account_id: '4001', row_order: 1 }],
-    })
+    expect(sent).toEqual([
+      { due_date: '2026-11-15' },
+      {
+        currency: 'EUR', prices_are_incl_tax: false,
+        details_attributes: [{ description: 'Paper', amount: '1', price: '100', tax_rate_id: '2201', ledger_account_id: '4001', row_order: 1 }],
+      },
+    ])
+  })
+
+  it('goes on to the next document to process from a new document with its lines', async () => {
+    server.use(...loaded({ doc: invoice({ state: 'new' }) }))
+    server.use(
+      http.get('*/api/v2/11/documents/942', () => HttpResponse.json(summary({ id: '942', type: 'Receipt', reference: 'Till 42', state: 'new' }))),
+      http.get('*/api/v2/11/documents/receipts/942', () => HttpResponse.json(invoice({ id: '942', state: 'new', reference: 'Till 42' }))),
+    )
+    renderAt('/11/documents/941')
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
+    expect(within(form).queryByRole('region', { name: 'Purchase invoice lines' })).toBeNull()
+    expect(within(form).getByText('2 documents left to process')).toBeInTheDocument()
+    await userEvent.click(within(form).getByRole('button', { name: 'Next' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Receipt Till 42' })).toBeInTheDocument()
   })
 
   it('adds a purchase VAT rate and a cost category from a line, each in a popup', async () => {
@@ -236,7 +398,7 @@ describe('the page of an incoming document', () => {
       }),
     )
     renderAt('/11/documents/941')
-    const form = await screen.findByRole('form', { name: 'Purchase invoice' })
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
     const lines = within(form).getByRole('table', { name: 'Purchase invoice lines' })
     await chooseOption(lines, 'VAT rate', 'Add VAT rate...')
     let dialog = await screen.findByRole('dialog', { name: 'Add VAT rate' })
@@ -257,15 +419,27 @@ describe('the page of an incoming document', () => {
     ])
   })
 
-  it('shows the problems of the server on the fields', async () => {
+  it('shows the problem of the server under the field that was saved', async () => {
     server.use(...loaded({ doc: invoice({ state: 'new' }) }))
     server.use(http.patch('*/api/v2/11/documents/purchase_invoices/941', () => HttpResponse.json({ error: { reference: ['is too long'] } }, { status: 422 })))
     renderAt('/11/documents/941')
-    const form = await screen.findByRole('form', { name: 'Purchase invoice' })
-    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
-    const field = await within(form).findByRole('textbox', { name: 'Invoice id' })
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
+    const field = within(form).getByRole('textbox', { name: 'Invoice id' })
+    await userEvent.type(field, '-2{Enter}')
     await waitFor(() => expect(field).toHaveAttribute('aria-invalid', 'true'))
-    expect(within(form).getByText('Invoice id is too long')).toBeInTheDocument()
+    expect(within(form).getByText('Invoice id is too long')).toHaveClass('form-input__message--error')
+    expect(within(form).getByRole('textbox', { name: 'Date' })).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('shows a lines problem of the server in the lines editor, which stays open', async () => {
+    server.use(...loaded())
+    server.use(http.patch('*/api/v2/11/documents/purchase_invoices/941', () => HttpResponse.json({ error: { 'details_attributes.0.price': ['is not a number'] } }, { status: 422 })))
+    renderAt('/11/documents/941')
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
+    await userEvent.click(within(form).getByRole('button', { name: 'Invoice details' }))
+    const editor = within(form).getByRole('region', { name: 'Purchase invoice lines' })
+    await userEvent.click(within(editor).getByRole('button', { name: 'Save' }))
+    expect(await within(editor).findByText('Price on line 1 is not a number')).toHaveClass('form-input__message--error')
   })
 
   it('gives an upload a type with the type picker and opens it as that type', async () => {
@@ -297,7 +471,7 @@ describe('the page of an incoming document', () => {
     await userEvent.click(within(types).getByRole('option', { name: /Receipt/ }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Receipt scan.jpg' })).toBeInTheDocument()
     expect(asked).toEqual({ document_type: 'receipt' })
-    await screen.findByRole('form', { name: 'Receipt' })
+    await screen.findByRole('region', { name: 'Receipt' })
     expect(within(card()).getByRole('textbox', { name: 'Reference' })).toHaveValue('scan.jpg')
     expect(within(card()).getByRole('table', { name: 'Receipt lines' })).toBeInTheDocument()
     expect(within(card()).queryByRole('textbox', { name: 'Due date' })).toBeNull()
@@ -312,21 +486,26 @@ describe('the page of an incoming document', () => {
     expect(await screen.findByText('A booked document cannot change its type')).toBeInTheDocument()
   })
 
-  it('saves a general document', async () => {
-    let sent: unknown
+  it('saves each field of a general document on its own, without an Edit button', async () => {
+    const sent: unknown[] = []
     server.use(...loaded())
     server.use(http.patch('*/api/v2/11/documents/general_documents/981', async ({ request }) => {
-      sent = await request.json()
+      sent.push(await request.json())
       return HttpResponse.json({ ...general, reference: 'Insurance 2027' })
     }))
     renderAt('/11/documents/981')
     expect(await screen.findByRole('heading', { level: 1, name: 'General document Insurance policy' })).toBeInTheDocument()
-    await userEvent.click(within(screen.getByRole('region', { name: 'General document' })).getByRole('button', { name: 'Edit' }))
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
     const reference = within(card()).getByRole('textbox', { name: 'Reference' })
     await userEvent.clear(reference)
     await userEvent.type(reference, 'Insurance 2027')
-    await userEvent.click(within(card()).getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(sent).toEqual({ general_document: { reference: 'Insurance 2027', date: '2026-11-02', due_date: '' }, remove_contact: true }))
+    expect(sent).toEqual([])
+    await userEvent.tab()
+    await waitFor(() => expect(sent).toEqual([{ general_document: { reference: 'Insurance 2027' } }]))
+    await userEvent.click(within(card()).getByRole('combobox', { name: 'Contact' }))
+    await userEvent.click(await screen.findByRole('option', { name: 'Example Shop B.V.' }))
+    await waitFor(() => expect(sent).toHaveLength(2))
+    expect(sent[1]).toEqual({ general_document: { contact_id: '702' } })
   })
 
   it('keeps notes and shows the history of the document', async () => {
@@ -433,11 +612,19 @@ describe('Scan and Recognise on the page of a document', () => {
       }),
     }))
     renderAt('/11/documents/941')
-    const form = await screen.findByRole('form', { name: 'Purchase invoice' })
-    expect(within(form).getAllByRole('img', { name: 'We filled this in for you from the attachment.' })).toHaveLength(3)
-    expect(within(form).getAllByRole('img', { name: 'Please check: we were not sure about this.' })).toHaveLength(2)
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
+    const certain = 'We filled this in for you from the attachment.'
+    const unsure = 'Please check: we were not sure about this.'
+    // The contact and reference; the date, the line and the three totals, which the unsure line makes unsure.
+    expect(within(form).getAllByRole('img', { name: certain })).toHaveLength(2)
+    expect(within(form).getAllByRole('img', { name: unsure })).toHaveLength(5)
+    expect(within(within(form).getByRole('table', { name: 'Purchase invoice lines' })).getByRole('img', { name: unsure })).toBeInTheDocument()
+    expect(within(within(form).getByRole('list', { name: 'Totals' })).getAllByRole('img', { name: unsure })).toHaveLength(3)
     expect(within(form).getByRole('textbox', { name: 'Date' }).closest('.form-input')).toHaveClass('is-uncertain')
     expect(within(form).getByRole('textbox', { name: 'Invoice id' }).closest('.form-input')).not.toHaveClass('is-uncertain')
+    await userEvent.click(within(form).getByRole('button', { name: 'Invoice details' }))
+    expect(within(form).getAllByRole('img', { name: certain })).toHaveLength(3)
+    expect(within(form).getAllByRole('img', { name: unsure })).toHaveLength(2)
     const lines = within(form).getByRole('table', { name: 'Purchase invoice lines' })
     expect(within(lines).getByRole('combobox', { name: 'VAT rate' })).toHaveClass('is-uncertain')
     expect(within(lines).getByRole('combobox', { name: 'Description' })).not.toHaveClass('is-uncertain')
@@ -513,8 +700,9 @@ describe('possible duplicates on the page of a document', () => {
     expect(within(notice).getByRole('link', { name: 'Document scan.jpg' })).toHaveAttribute('href', '/11/documents/951')
     expect(notice).toHaveTextContent('(2026-11-01, €121.00 — same reference, same amount and date, same lines)')
     expect(notice).toHaveTextContent('(2026-11-10 — same file)')
-    // A warning only: the document can still be edited and saved.
-    expect(within(screen.getByRole('region', { name: 'Purchase invoice' })).getByRole('button', { name: 'Edit' })).toBeEnabled()
+    // A warning only: the document can still be changed.
+    expect(within(screen.getByRole('region', { name: 'Purchase invoice' })).getByRole('textbox', { name: 'Invoice id' })).toBeEnabled()
+    expect(within(screen.getByRole('region', { name: 'Purchase invoice' })).getByRole('button', { name: 'Invoice details' })).toBeEnabled()
   })
 
   it('names a single duplicate in one line, on a general document too', async () => {

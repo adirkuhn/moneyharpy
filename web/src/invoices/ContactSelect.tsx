@@ -29,18 +29,28 @@ type Props = {
   hoverCard?: { id: string; name: string }
   /** Scan and Recognise chose the contact. */
   remark?: Confidence
+  /**
+   * Moneybird's contact on a document's page: the name as plain text, which
+   * opens the search under it, with its own words for the search and the add button.
+   */
+  plain?: { searchPlaceholder: string; addLabel: string }
+  /** While the contact picked is being saved. */
+  busy?: boolean
 }
 
 /**
  * Moneybird's contact selector of the "Add invoice" popup: a search of all
  * contacts, and a short form to add a new one without leaving the invoice.
  */
-export function ContactSelect({ administrationId, value, errors, homeCountry, returnTo, onChange, hoverCard, remark }: Props) {
+export function ContactSelect({ administrationId, value, errors, homeCountry, returnTo, onChange, hoverCard, remark, plain, busy }: Props) {
   const { t } = useTranslation()
   return (
     <FormRow label={t('invoices.contact')} errors={errors} remark={remark}>
       {({ labelId, ...control }) => (
-        <Selector administrationId={administrationId} labelId={labelId} control={control} value={value} homeCountry={homeCountry} returnTo={returnTo} onChange={onChange} hoverCard={hoverCard} />
+        <Selector
+          administrationId={administrationId} labelId={labelId} control={control} value={value} homeCountry={homeCountry} returnTo={returnTo}
+          onChange={onChange} hoverCard={hoverCard} plain={plain} busy={busy}
+        />
       )}
     </FormRow>
   )
@@ -48,7 +58,7 @@ export function ContactSelect({ administrationId, value, errors, homeCountry, re
 
 type SelectorProps = Omit<Props, 'errors' | 'remark'> & { labelId: string; control: ControlProps }
 
-function Selector({ administrationId, labelId, control, value, homeCountry, returnTo, onChange, hoverCard }: SelectorProps) {
+function Selector({ administrationId, labelId, control, value, homeCountry, returnTo, onChange, hoverCard, plain, busy }: SelectorProps) {
   const { t } = useTranslation()
   const [pane, setPane] = useState<'closed' | 'select' | 'add'>('closed')
   const [query, setQuery] = useState('')
@@ -111,8 +121,9 @@ function Selector({ administrationId, labelId, control, value, homeCountry, retu
       ref={button}
       type="button"
       role="combobox"
-      className="picker__button"
+      className={plain ? 'picker__button contact-select__plain' : 'picker__button'}
       aria-labelledby={labelId}
+      aria-busy={busy || undefined}
       aria-expanded={pane !== 'closed'}
       aria-haspopup="listbox"
       aria-controls={listId}
@@ -121,7 +132,7 @@ function Selector({ administrationId, labelId, control, value, homeCountry, retu
       onClick={() => setPane(pane === 'closed' ? 'select' : 'closed')}
     >
       <span className={`picker__value${value ? '' : ' is-placeholder'}`}>{value || t('invoices.popup.selectContact')}</span>
-      <CaretIcon />
+      {!plain && <CaretIcon />}
     </button>
   )
 
@@ -140,7 +151,7 @@ function Selector({ administrationId, labelId, control, value, homeCountry, retu
             <input
               type="search"
               aria-label={t('invoices.popup.query')}
-              placeholder={t('invoices.popup.searchContacts')}
+              placeholder={plain?.searchPlaceholder ?? t('invoices.popup.searchContacts')}
               ref={search}
               value={query}
               onChange={(e) => {
@@ -151,7 +162,7 @@ function Selector({ administrationId, labelId, control, value, homeCountry, retu
             />
             <button type="button" className="btn btn--secondary btn--with-icon" onClick={() => setPane('add')}>
               <ListIcon kind="plus" />
-              <span>{t('invoices.popup.addContact')}</span>
+              <span>{plain?.addLabel ?? t('invoices.popup.addContact')}</span>
             </button>
           </div>
           <ul id={listId} role="listbox" aria-labelledby={labelId} className="contact-select__list">

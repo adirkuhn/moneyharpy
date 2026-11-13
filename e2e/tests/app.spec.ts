@@ -1243,7 +1243,13 @@ test('a purchase invoice is booked through the API, paid by a bank transaction a
   await page.getByRole('combobox', { name: 'Type' }).click()
   await page.getByRole('listbox', { name: 'Type' }).getByRole('option', { name: /Receipt/ }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Receipt bill-78.pdf' })).toBeVisible()
-  await expect(page.getByRole('form', { name: 'Receipt' }).getByRole('table', { name: 'Receipt lines' })).toBeVisible()
+  const receipt = page.getByRole('region', { name: 'Receipt', exact: true })
+  await expect(receipt.getByRole('table', { name: 'Receipt lines' })).toBeVisible()
+  // Without an Edit button: the reference saves on its own when Enter is pressed, as on Moneybird.
+  await expect(page.getByRole('button', { name: 'Edit' })).toHaveCount(0)
+  await receipt.getByRole('textbox', { name: 'Reference' }).fill('Till 78')
+  await receipt.getByRole('textbox', { name: 'Reference' }).press('Enter')
+  await expect(page.getByRole('heading', { level: 1, name: 'Receipt Till 78' })).toBeVisible()
 })
 
 test('an asset is added through the API, depreciated and shown with its value changes', async ({ page }) => {
