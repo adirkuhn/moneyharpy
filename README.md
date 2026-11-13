@@ -32,6 +32,16 @@ Only the values in `.env` live outside the app. Everything else, such as open re
 
 Behind one reverse proxy that appends to `X-Forwarded-For`, also set `TRUST_PROXY_HEADERS=true`, so rate limits apply per client.
 
+If the app cannot reach outside services (company search, email, S3) because the containers cannot resolve names, as on WSL without `/etc/resolv.conf`, give it DNS servers in a `docker-compose.override.yml` next to the compose file (Compose reads it automatically; it is ignored by git):
+
+```yaml
+services:
+  app:
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+```
+
 ### Google login
 
 Create an OAuth client in Google Cloud with the redirect URI `<BASE_URL>/api/auth/google/callback`, then enter its ID and secret under **Instance settings**.
