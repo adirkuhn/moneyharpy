@@ -208,6 +208,16 @@ export function BoltIcon() {
   )
 }
 
+/** A warning triangle, after Moneybird's mark of a value to check. */
+export function WarningIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="currentColor" stroke="currentColor" strokeWidth={1.25} strokeLinejoin="round">
+      <path d="M12 3 2.500 20h19Z" />
+      <path d="M12 9.500v5M12 17.250v.25" stroke="var(--surface, #fff)" strokeWidth={2} strokeLinecap="round" />
+    </svg>
+  )
+}
+
 /** A small spinning ring, for something busy in the background. */
 export function SpinnerIcon() {
   return (

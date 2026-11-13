@@ -158,10 +158,13 @@ export function DocumentsPage() {
               {
                 key: 'reference', header: t('incoming.reference'), link: true,
                 // The tag stays beside a long reference, such as a file name, which wraps on its own.
-                // An upload being read says so until Scan and Recognise has filled it in.
-                cell: (d) => isReading(d) ? (
-                  <span className="document-reading"><SpinnerIcon /> {t('recognition.recognising')}</span>
-                ) : <span className="document-type-ref"><span className="document-type-tag">{typeTags[d.type]}</span> <span>{d.reference}</span></span>,
+                // An upload being read keeps its name and says so until Scan and Recognise has filled it in.
+                cell: (d) => (
+                  <span className="document-type-ref">
+                    <span className="document-type-tag">{typeTags[d.type]}</span> <span>{d.reference}</span>
+                    {isReading(d) && <span className="document-reading"><SpinnerIcon /> {t('recognition.recognising')}</span>}
+                  </span>
+                ),
               },
               { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (d) => <AttachmentIcon count={d.attachments_count} /> },
               { key: 'contact', header: t('incoming.contact'), cell: (d) => d.contact_name || <span className="empty">{t('incoming.noContact')}</span> },
