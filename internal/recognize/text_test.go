@@ -139,6 +139,20 @@ func TestParseTextFixtures(t *testing.T) {
 			lines:  []string{"Fotoshoot productfoto's (4 uur à € 85,00)|1|340.00|340.00|"},
 			payref: "RF18539007547034", good: true,
 		},
+		// A wide column table with lot columns, a discount that makes the
+		// net differ from quantity × price, a wrapped description, amounts
+		// with space thousands separators and exempt intra-EU supply.
+		"pt_encomenda.txt": {
+			kind: KindPurchaseInvoice, name: "EXAMPLE FOODS, LDA.", vat: "PT123456789", iban: "PT50000201231234567890154",
+			email: "geral@example-foods.example.com", phone: "210000000", ref: "ENCEX 7Q001/1234", date: "2026-11-05",
+			currency: "EUR", incl: "1711.67", excl: "1711.67", vat21: []string{"0:1711.67:0.00"}, prices: "excl",
+			lines: []string{
+				"Produto Exemplo A 100 g|12||48.89|0", "Produto Exemplo B 800 g|30||78.57|0",
+				"Produto Exemplo C 1 Kg|40|6.50|260.00|0", "Produto Exemplo D|220|5.25|1155.00|0",
+				"Produto Exemplo E Pré Cozido em Palitos EXEMPLO FOODS 1 Kg|6||19.21|0", "Transporte|1|150.00|150.00|0",
+			},
+			good: true,
+		},
 		"fr_facture.txt": {
 			kind: KindPurchaseInvoice, name: "Exemple SARL", vat: "FR12345678901", address: "12 rue de l'Exemple",
 			zip: "75001", city: "Paris", country: "FR", ref: "F-2026-0456", date: "2026-11-13", due: "2026-12-13",

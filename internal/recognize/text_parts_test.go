@@ -2,6 +2,8 @@ package recognize
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -26,6 +28,11 @@ func TestFindAmounts(t *testing.T) {
 		"(4 uur à € 85,00) € 340,00":   {"85.00", "340.00"},
 		"Mixed 1.234.56":               nil,
 		"CHF 1'250.00":                 {"1250.00"},
+		"Total a Pagar:   4 321,09":    {"4321.09"},
+		"Capital Social: 486 000,00":   {"486000.00"},
+		"IVA   0,00   1 573,35   0,00": {"0.00", "1573.35", "0.00"},
+		"Cliente 1 001   3,00":         {"3.00"},
+		"Qtd 20,00 Un   5,100   98,94": {"20.00", "98.94"},
 	} {
 		var got []string
 		for _, h := range findAmounts(in) {
@@ -189,6 +196,19 @@ func TestParseTextPaymentReference(t *testing.T) {
 	} {
 		if got := ParseText(text, today).PaymentReference; got != want {
 			t.Errorf("%q: payment reference = %+v, want %+v", text, got, want)
+		}
+	}
+}
+
+func TestParseTextMarksVATTheBuyerAccountsFor(t *testing.T) {
+	for file, want := range map[string]bool{"pt_encomenda.txt": true, "nl_verlegd.txt": true, "en_usd.txt": false, "nl_webshop.txt": false} {
+		data, err := os.ReadFile(filepath.Join("testdata", file))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := ParseText(string(data), today)
+		if len(got.VAT) == 0 || got.VAT[0].ReverseCharge != want {
+			t.Errorf("%s: VAT = %+v, want reverse charge %v", file, got.VAT, want)
 		}
 	}
 }

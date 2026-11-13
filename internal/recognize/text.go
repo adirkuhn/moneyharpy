@@ -29,7 +29,10 @@ func ParseText(text string, today time.Time) Extraction {
 
 	kinds := classify(lines)
 	t := readTotals(lines, kinds)
-	rows := readLines(lines, kinds)
+	rows := readTable(lines, kinds)
+	if len(rows) == 0 {
+		rows = readLines(lines, kinds)
+	}
 	kind := readKind(lines, e.DueDate.Found, t.paid)
 	e.Kind = kind
 	reconcile(&e, t, rows, kind.V, lines)
@@ -119,16 +122,19 @@ const (
 )
 
 var (
-	vatWord      = regexp.MustCompile(`(?i)\b(?:btw|b\.t\.w\.?|vat|mwst|ust|umsatzsteuer|mehrwertsteuer|iva|tva|tax|moms|igic)\b`)
+	vatWord      = regexp.MustCompile(`(?i)\b(?:btw|b\.t\.w\.?|vat|mwst|ust|umsatzsteuer|mehrwertsteuer|iva|tva|tax|moms|igic|impostos?)\b`)
 	reverseWords = regexp.MustCompile(`(?i)verlegd|reverse[ -]charge|autoliquidation|steuerschuldnerschaft|inversi[oó]n del sujeto pasivo|autoliquida[cç][aã]o|reverse charged`)
-	exclWords    = regexp.MustCompile(`(?i)\b(?:subtotaal|subtotal|sub-total|sub total|excl\.?|exclusief|excluding|exkl\.?|ex\.? btw|netto|nettobetrag|net amount|net total|total net|total ht|montant ht|hors taxes|base imponible|zwischensumme|sous-total|il[ií]quido|sem iva|total excl)`)
-	inclMarker   = regexp.MustCompile(`(?i)\b(?:incl\.?|inclusief|including|inkl\.?|ttc)\b`)
-	inclStrong   = regexp.MustCompile(`(?i)totaal incl|total incl|totaalbedrag|totaal te betalen|te betalen|amount due|total due|balance due|grand total|gesamtbetrag|rechnungsbetrag|zu zahlen|zahlbetrag|endbetrag|total a pagar|total ttc|net [aà] payer|importe total|total factura|eindtotaal|te voldoen|invoice total|total amount|totale`)
-	inclWeak     = regexp.MustCompile(`(?i)\b(?:totaal|total|summe|gesamt|totale)\b`)
-	paidWords    = regexp.MustCompile(`(?i)\b(?:pin|pinnen|pinbetaling|betaald|contant|cash|maestro|v ?pay|visa|mastercard|amex|card|kaart|contactloos|paid|bezahlt|ec-karte|girocard)\b`)
-	itemHeader   = regexp.MustCompile(`(?i)\b(?:omschrijving|description|artikel|art\.?nr|item|items|bezeichnung|beschreibung|descri[cç][aã]o|descripci[oó]n|d[ée]signation|product|produkt|aantal|qty|quantity|menge|qtd|qté)\b`)
-	htWord       = regexp.MustCompile(`\bHT\b`)
-	vatTableHead = regexp.MustCompile(`(?i)\b(?:btw|vat|mwst|iva|tva|tarief|rate)\b`)
+	// exemptEUWords mark a supply exempt in the seller's country because the
+	// buyer accounts for the VAT: an intra-community supply.
+	exemptEUWords = regexp.MustCompile(`(?i)verlegd|reverse[ -]charge|autoliquida|steuerschuldnerschaft|inversi[oó]n del sujeto pasivo|intra-?communautaire|intra-?community|intracomunit[aá]ri|innergemeinschaftlich|isento artigo 14|artigo 14\.?º? do civa|art(?:\.|icle|ikel)? ?138|art(?:\.|igo)? ?25 (?:de la )?ley|exenta art|vat exempt intra`)
+	exclWords     = regexp.MustCompile(`(?i)\b(?:subtotaal|subtotal|sub-total|sub total|sub\. total|incid[eê]ncia|excl\.?|exclusief|excluding|exkl\.?|ex\.? btw|netto|nettobetrag|net amount|net total|total net|total ht|montant ht|hors taxes|base imponible|zwischensumme|sous-total|il[ií]quido|sem iva|total excl)`)
+	inclMarker    = regexp.MustCompile(`(?i)\b(?:incl\.?|inclusief|including|inkl\.?|ttc)\b`)
+	inclStrong    = regexp.MustCompile(`(?i)totaal incl|total incl|totaalbedrag|totaal te betalen|te betalen|amount due|total due|balance due|grand total|gesamtbetrag|rechnungsbetrag|zu zahlen|zahlbetrag|endbetrag|total a pagar|total ttc|net [aà] payer|importe total|total factura|eindtotaal|te voldoen|invoice total|total amount|totale`)
+	inclWeak      = regexp.MustCompile(`(?i)\b(?:totaal|total|summe|gesamt|totale)\b`)
+	paidWords     = regexp.MustCompile(`(?i)\b(?:pin|pinnen|pinbetaling|betaald|contant|cash|maestro|v ?pay|visa|mastercard|amex|card|kaart|contactloos|paid|bezahlt|ec-karte|girocard)\b`)
+	itemHeader    = regexp.MustCompile(`(?i)\b(?:omschrijving|description|artikel|art\.?nr|item|items|bezeichnung|beschreibung|descri[cç][aã]o|descripci[oó]n|d[ée]signation|product|produkt|aantal|qty|quantity|menge|qtd|qté)\b`)
+	htWord        = regexp.MustCompile(`\bHT\b`)
+	vatTableHead  = regexp.MustCompile(`(?i)\b(?:btw|vat|mwst|iva|tva|tarief|rate)\b`)
 )
 
 // classify tells what each line with amounts is: a total, a VAT line, a
@@ -416,6 +422,11 @@ func reconcile(e *Extraction, t totals, rows []Line, kind Kind, lines []string) 
 	if len(e.VAT) == 0 && incl.Found && excl.Found && incl.V == excl.V && incl.Confidence == Certain {
 		e.VAT = []VAT{{Rate: "0", Taxable: excl.V}}
 	}
+	if mentions(lines, exemptEUWords) {
+		for i := range e.VAT {
+			e.VAT[i].ReverseCharge = e.VAT[i].Tax == 0
+		}
+	}
 	e.TotalInclTax, e.TotalExclTax = incl, excl
 }
 
@@ -459,7 +470,7 @@ func negate(e *Extraction) {
 // --- kind ---
 
 var (
-	invoiceWords = regexp.MustCompile(`(?i)factuurnummer|factuurdatum|factuur|invoice number|invoice date|invoice|rechnungsnummer|rechnung|fatura|facture|factura|credit ?nota|credit note|gutschrift|vervaldatum|due date|betalingstermijn|payment terms|zahlbar|vencimento|[ée]ch[ée]ance|vencimiento`)
+	invoiceWords = regexp.MustCompile(`(?i)factuurnummer|factuurdatum|factuur|invoice number|invoice date|invoice|rechnungsnummer|rechnung|fatura|facture|factura|credit ?nota|credit note|gutschrift|vervaldatum|due date|betalingstermijn|payment terms|zahlbar|vencimento|[ée]ch[ée]ance|vencimiento|encomenda|condi[cç][aã]o de pagamento|nota de cr[eé]dito`)
 	receiptWords = regexp.MustCompile(`(?i)kassabon|kassenbon|\bkassa\b|bonnummer|\bbonnr|\bbon\b|\bpin\b|pinnen|pinbetaling|contactloos|terminal|transactie|autorisatiecode|wisselgeld|kassier|merchant|\btafel\b|\breceipt\b|\bticket\b|\bbeleg\b|\brecibo\b|tal[aã]o|btw-overzicht|\btarief\b|bedankt|tot ziens|thank you for your (?:visit|purchase)|ticket de caisse`)
 )
 
@@ -499,9 +510,9 @@ func readKind(lines []string, hasDue bool, paid []money.Amount) Value[Kind] {
 // --- reference ---
 
 var (
-	refLabels  = regexp.MustCompile(`(?i)factuurnummer|factuurnr\.?|factuur ?nr\.?|factuur ?nummer|creditnotanummer|creditnota ?nr\.?|creditnota ?nummer|invoice number|invoice no\.?|invoice nr\.?|invoice #|invoice id|inv\.? ?no\.?|rechnungsnummer|rechnungs-?nr\.?|rechnung nr\.?|gutschriftsnummer|n\.?[ºo°] ?(?:da )?fatura|fatura n\.?[ºo°]|n[uú]mero de factura|factura n\.?[ºo°]|n[uú]mero da fatura|num[ée]ro de facture|facture n[°ºo]\.?|bonnummer|bonnr\.?|bon ?nr\.?|receipt number|receipt no\.?|receipt #|credit note number|credit note no\.?|documentnummer|document number|kassabon ?nr\.?`)
-	refGeneric = regexp.MustCompile(`(?i)\b(?:factuur|invoice|rechnung|fatura|facture|factura|creditnota|bon)\b`)
-	refToken   = regexp.MustCompile(`^\s*[:#.]?\s*(?:(?i:nr|no|n[°º])\.?)?\s*[:#.]?\s*((?:[A-Z]{1,4} )?[A-Z0-9][A-Za-z0-9\-/._]*)`)
+	refLabels  = regexp.MustCompile(`(?i)factuurnummer|factuurnr\.?|factuur ?nr\.?|factuur ?nummer|creditnotanummer|creditnota ?nr\.?|creditnota ?nummer|invoice number|invoice no\.?|invoice nr\.?|invoice #|invoice id|inv\.? ?no\.?|rechnungsnummer|rechnungs-?nr\.?|rechnung nr\.?|gutschriftsnummer|n\.?[ºo°] ?(?:da )?fatura|fatura n\.?[ºo°]|n[uú]mero de factura|factura n\.?[ºo°]|n[uú]mero da fatura|num[ée]ro de facture|facture n[°ºo]\.?|bonnummer|bonnr\.?|bon ?nr\.?|receipt number|receipt no\.?|receipt #|credit note number|credit note no\.?|documentnummer|document number|kassabon ?nr\.?|confirma[cç][aã]o de encomenda|nota de encomenda|encomenda n\.?[ºo°]|fatura-recibo(?: n\.?[ºo°])?|nota de cr[eé]dito(?: n\.?[ºo°])?`)
+	refGeneric = regexp.MustCompile(`(?i)\b(?:factuur|invoice|rechnung|fatura|facture|factura|creditnota|bon|encomenda)\b`)
+	refToken   = regexp.MustCompile(`^\s*[:#.]?\s*(?:(?i:nr|no|n[°º])\.?)?\s*[:#.]?\s*((?:[A-Z]{1,5} )?[A-Z0-9][A-Za-z0-9\-/._]*)`)
 	tokenRe    = regexp.MustCompile(`\S+`)
 )
 
@@ -516,7 +527,9 @@ func readReference(lines []string) Value[string] {
 			}
 			if j := nextNonEmpty(lines, i); j >= 0 {
 				for _, t := range tokenRe.FindAllStringIndex(lines[j], -1) {
-					if absInt(t[0]-m[0]) <= 3 {
+					// Under the label: starting near it, or within it when
+					// the label and value are right-aligned.
+					if absInt(t[0]-m[0]) <= 3 || t[0] >= m[0] && t[0] < m[1] {
 						if tok := refAfter(lines[j][t[0]:]); tok != "" {
 							return sure(tok)
 						}
@@ -617,4 +630,14 @@ func readCurrency(lines []string) Value[string] {
 		return unsure("EUR")
 	}
 	return sure(bestCode)
+}
+
+// mentions tells whether any line matches re.
+func mentions(lines []string, re *regexp.Regexp) bool {
+	for _, l := range lines {
+		if re.MatchString(l) {
+			return true
+		}
+	}
+	return false
 }
