@@ -1,0 +1,120 @@
+/*
+ * One incoming document, after Moneybird's document layout: the attachment
+ * viewer at the left, the document's card with its notes and history at the
+ * right.
+ */
+.incoming-document { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 1rem; align-items: start; }
+.incoming-document__left { position: sticky; top: 1rem; }
+.incoming-document__right { display: grid; gap: 0; min-width: 0; }
+.incoming-document__right .invoice-history { margin: 1.5rem 1rem 0; }
+
+/* The attachment viewer: the file large on a grey stage, a bar with its name, actions and tiles. */
+.attachment-viewer { display: grid; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.attachment-viewer__stage {
+  display: flex; justify-content: center; align-items: center; height: min(47.5rem, calc(100vh - 14rem)); min-height: 20rem; overflow: auto;
+  background: var(--bg);
+}
+.attachment-viewer__image { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
+.attachment-viewer__pdf { width: 100%; height: 100%; border: 0; }
+.attachment-viewer__empty { margin: 0; padding: 1rem; color: var(--muted); text-align: center; }
+.attachment-viewer__bar { display: grid; gap: 0.75rem; padding: 1rem; border-top: 1px solid var(--line); }
+.attachment-viewer__header { display: flex; align-items: center; gap: 0.5rem; }
+.attachment-viewer__name { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-viewer__actions { display: flex; gap: 0.25rem; }
+.attachment-viewer__actions .btn { width: 2rem; height: 2rem; min-height: 2rem; padding: 0; }
+.attachment-viewer__row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.attachment-viewer .alert { margin: 0; }
+
+/* A file's tile: its type as a badge, its name under it; the one shown is outlined. */
+.file-tile {
+  display: grid; justify-items: center; gap: 0.25rem; width: 5rem; padding: 0; border: 0; background: none; color: var(--muted); font: inherit;
+  font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+}
+.file-tile__thumb {
+  display: flex; justify-content: center; align-items: center; width: 100%; height: 1.75rem; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface);
+}
+.file-tile.is-active .file-tile__thumb { border: 2px solid var(--blue); }
+.file-tile.is-active { color: var(--blue); }
+.file-tile:hover .file-tile__thumb { background: var(--row-hover); }
+.file-tile:focus-visible { outline: none; }
+.file-tile:focus-visible .file-tile__thumb { outline: 2px solid var(--blue); outline-offset: 2px; }
+.file-tile__badge { padding: 0 0.375rem; border-radius: 4px; background: color-mix(in srgb, var(--blue) 12%, var(--surface)); color: var(--navy); font-size: 0.75rem; font-weight: 700; }
+.file-tile__name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-tile--add {
+  display: flex; flex: 1; justify-content: center; align-items: center; gap: 0.5rem; width: auto; min-width: 6rem; height: 1.75rem; border: 1px dashed var(--line);
+  border-radius: 8px; color: var(--text); font-weight: 700;
+}
+.file-tile--add:hover { background: var(--row-hover); }
+.file-tile--add:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+.file-tile--add.is-busy { opacity: 0.6; }
+.file-tile--add svg { width: 1em; height: 1em; }
+
+/* The document's card: rows of a label and its value or field, the lines, then the buttons. */
+.incoming-card { display: grid; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.incoming-card > .alert { margin: 1rem 1rem 0; }
+.incoming-card__rows { display: grid; gap: 0.25rem; padding: 1rem; }
+.incoming-card__rows .form-input { display: grid; grid-template-columns: 10rem minmax(0, 1fr); align-items: center; gap: 0 0.5rem; margin: 0; }
+.incoming-card__rows .form-input__label { padding: 0; font-weight: 400; }
+.incoming-card__rows .form-input__body { min-width: 0; }
+.incoming-card__rows .form-input__message { grid-column: 2; }
+.incoming-card__rows :is(input[type='text'], .picker__button, .date-picker) { width: 100%; max-width: none; }
+.incoming-card__rows .form-input__control { display: flex; align-items: center; gap: 0.5rem; }
+.incoming-card__rows .form-input__control > :first-child { flex: 1; min-width: 0; }
+/* Fields read as values until they are pointed at or typed in, as Moneybird's document form. */
+.incoming-card__rows :is(input[type='text'], .picker__button):not(:hover, :focus, [aria-invalid='true']) { border-color: transparent; background: transparent; }
+.incoming-card__days { display: inline-flex; flex: none !important; align-items: center; gap: 0.375rem; color: var(--muted); }
+.incoming-card__days input[type='text'] { width: 3.5rem; border-color: var(--line) !important; text-align: right; }
+.incoming-card__facts { display: grid; gap: 0.25rem; margin: 0; }
+.incoming-card__fact { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: 0 0.5rem; align-items: center; min-height: 2.25rem; }
+.incoming-card__fact dt { color: var(--text); }
+.incoming-card__fact dd { margin: 0; padding-left: calc(0.75rem + 1px); overflow-wrap: anywhere; }
+.incoming-card__none { color: var(--muted); }
+.incoming-card__hint { margin: 0; padding: 0 1rem 1rem; color: var(--muted); }
+.incoming-card__footer { display: grid; justify-items: center; gap: 0.5rem; margin: 0 1rem; padding: 1rem 0; border-top: 1px solid var(--line); }
+.incoming-card__buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+.incoming-card__left { margin: 0; color: var(--muted); font-size: 0.8125rem; }
+
+/* The type picker: the type, and in its list each type with what it is for. */
+.type-picker { position: relative; }
+.type-picker__button:disabled { opacity: 1; color: var(--text); cursor: default; }
+.type-picker__list { position: absolute; top: calc(100% + 0.25rem); left: 0; right: 0; z-index: 20; margin: 0; padding: 0.25rem; list-style: none; }
+.type-picker__list:focus { outline: none; }
+.type-picker__option { display: grid; gap: 0.125rem; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; }
+.type-picker__option.is-active { background: var(--row-hover); }
+.type-picker__option[aria-selected='true'] .type-picker__name { color: var(--blue); }
+.type-picker__text { color: var(--muted); font-size: 0.8125rem; }
+
+/* The lines inside the card, edited with the invoice details editor or shown as they are. */
+.incoming-card .editable-document-form { position: static; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+.incoming-card .editable-document-form__header { justify-content: flex-end; padding: 1rem; border-bottom: 0; }
+.incoming-card .details-editor__body { padding: 0 1rem; }
+.incoming-card .details-editor__rate { width: 11.5rem; }
+.incoming-card .details-editor__price, .incoming-card .details-editor__total { width: 5rem; }
+.incoming-card .details-editor__amount { width: 4rem; }
+.incoming-card .invoice-totals__strong td { font-weight: 700; }
+.incoming-card .details-editor__footer { border-bottom: 0; }
+.details-editor__label { margin: 0 auto 0 0; font-size: 0.875rem; font-weight: 400; }
+.incoming-card__lines { display: grid; gap: 0.75rem; padding: 1rem; border-top: 1px solid var(--line); }
+.incoming-lines { width: 100%; border-collapse: collapse; }
+.incoming-lines th { padding: 0.75rem 0.25rem; border-bottom: 1px solid var(--line); color: var(--muted); font-weight: 500; text-align: left; white-space: nowrap; }
+.incoming-lines td { padding: 0.75rem 0.25rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.incoming-lines__amount { width: 4rem; }
+.incoming-lines__money { width: 6rem; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.incoming-lines__period, .incoming-lines__category { display: block; color: var(--muted); font-size: 0.8125rem; }
+.incoming-lines__description { white-space: pre-wrap; }
+.incoming-card__lines .invoice-totals { justify-self: start; }
+
+/* The journal entry form of a manual journal, inside the card. */
+.journal-entry-form { display: grid; gap: 1rem; padding: 0 1rem 1rem; }
+.journal-entry-form .form-sheet__actions { display: flex; justify-content: center; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+
+@media (max-width: 60rem) {
+  .incoming-document { grid-template-columns: minmax(0, 1fr); }
+  .incoming-document__left { position: static; }
+  .attachment-viewer__stage { height: 24rem; }
+}
+@media (max-width: 36rem) {
+  .incoming-card__rows .form-input, .incoming-card__fact { grid-template-columns: minmax(0, 1fr); }
+  .incoming-card__rows .form-input__message { grid-column: 1; }
+}
