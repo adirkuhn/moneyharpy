@@ -2154,6 +2154,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/documents/{id}/recognize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Read an incoming document again
+         * @description MoneyHarpy extension. Runs Scan and Recognise again on the document's attachments in the background, for an upload or a new purchase invoice or receipt, which books nothing. What it reads replaces the fields it filled in before; fields changed by hand are kept. A booked document or another type cannot be read again (422).
+         */
+        post: operations["recognizeIncomingDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/documents/{id}/attachments/{attachment_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Preview a page of an attachment
+         * @description MoneyHarpy extension, after Moneybird's attachment viewer. One page of an incoming document's attachment as a PNG image, for a PDF or an image, rendered by the OCR service. X-Page-Count tells how many pages there are. 404 when the attachment has no such page or cannot be previewed, for example while the OCR service is not running; the page then shows the file itself.
+         */
+        get: operations["previewIncomingDocumentAttachment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/documents/{id}/set_type": {
         parameters: {
             query?: never;
@@ -6642,6 +6689,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/instance/settings/test_recognition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check Scan and Recognise
+         * @description Checks whether the OCR service answers and, when the AI model is turned on, whether it answers with the saved settings, so an administrator can see what Scan and Recognise can do on this server.
+         */
+        post: operations["testRecognition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/instance/settings/test_storage": {
         parameters: {
             query?: never;
@@ -7033,6 +7100,18 @@ export interface components {
             storage_path_style: boolean;
             /** @description Let webhooks reach plain HTTP and private or loopback addresses, for development. */
             webhooks_allow_local: boolean;
+            /** @description Let Scan and Recognise ask an AI model about documents its rules could not read. Off unless turned on; with an API provider the document's text and images are sent to that provider. */
+            recognition_ai_enabled: boolean;
+            /** @enum {string} */
+            recognition_ai_provider: "ollama" | "anthropic";
+            /**
+             * @description The address of the Ollama server; empty for the provider's own address.
+             * @example http://ollama:11434
+             */
+            recognition_ai_url: string;
+            /** @example claude-haiku-5-5 */
+            recognition_ai_model: string;
+            recognition_ai_api_key_set: boolean;
         };
         UpdateInstanceSettingsRequest: {
             registration_open?: boolean;
@@ -7066,6 +7145,12 @@ export interface components {
             storage_path_style?: boolean;
             /** @description Let webhooks reach plain HTTP and private or loopback addresses, for development. */
             webhooks_allow_local?: boolean;
+            recognition_ai_enabled?: boolean;
+            /** @enum {string} */
+            recognition_ai_provider?: "ollama" | "anthropic";
+            recognition_ai_url?: string;
+            recognition_ai_model?: string;
+            recognition_ai_api_key?: string;
         };
         /** @description A Moneybird workflow with MoneyHarpy extensions. */
         Workflow: components["schemas"]["workflow_response"] & {
@@ -7844,6 +7929,7 @@ export interface components {
         PurchaseDocumentFields: {
             /** @description MoneyHarpy extension. Canonical path of this resource. */
             uri: string;
+            recognition: components["schemas"]["Recognition"];
             /** @description MoneyHarpy extension. The VAT charged; reverse-charged VAT is not part of it. */
             total_tax?: string;
             /** @description MoneyHarpy extension. What payments settled. */
@@ -7971,6 +8057,11 @@ export interface components {
             created_at: string;
             /** @description Canonical path of the typed resource, such as /api/v2/{administration_id}/documents/receipts/{id}. */
             uri: string;
+            /**
+             * @description The state of Scan and Recognise for this document; see Recognition.
+             * @enum {string}
+             */
+            recognition_state: "none" | "pending" | "done" | "failed";
         };
         /** @description MoneyHarpy extension. Totals of the incoming documents in a selection. */
         IncomingDocumentStatistics: {
@@ -7986,10 +8077,40 @@ export interface components {
                 amount: string;
             }[];
         };
+        /** @description MoneyHarpy extension. What Scan and Recognise read from the document's attachments: its state, where the values came from and which fields it filled in. Fields it was unsure of are marked uncertain for review. */
+        Recognition: {
+            /**
+             * @description none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in; failed: the attachments could not be read.
+             * @enum {string}
+             */
+            state: "none" | "pending" | "done" | "failed";
+            /**
+             * @description e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a scan or photo; ai: the optional AI model, used when the rules could not read the document.
+             * @enum {string|null}
+             */
+            source: "e_invoice" | "text" | "ocr" | "ai" | null;
+            /** @description The fields filled in automatically, by name as in the document's request (document_type, contact_id, reference, date, due_date, currency, prices_are_incl_tax) or per line as details.<index>.<field> (description, amount, price, tax_rate_id, ledger_account_id). */
+            fields: components["schemas"]["RecognizedField"][];
+        };
+        RecognizedField: {
+            field: string;
+            /** @enum {string} */
+            confidence: "certain" | "uncertain";
+        };
+        /** @description MoneyHarpy extension. Whether Scan and Recognise can read documents on this server. */
+        RecognitionCheck: {
+            /** @description Whether the OCR service answers; without it only e-invoices and digital PDFs can be read. */
+            ocr_available: boolean;
+            /** @enum {string} */
+            ai: "off" | "ok" | "unavailable";
+            /** @description Why the OCR service or the AI model could not be reached. */
+            message?: string;
+        };
         /** @description A Moneybird typeless document with MoneyHarpy extensions. */
         TypelessDocument: components["schemas"]["typeless_document_response"] & {
             /** @description MoneyHarpy extension. Canonical path of this resource. */
             uri: string;
+            recognition: components["schemas"]["Recognition"];
         };
         TypelessDocumentRequest: {
             typeless_document: {
@@ -15199,6 +15320,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IncomingDocumentSummary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    recognizeIncomingDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reading has started; the document's recognition state is pending. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncomingDocumentSummary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    previewIncomingDocumentAttachment: {
+        parameters: {
+            query?: {
+                page?: number;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+                attachment_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The page as an image */
+            200: {
+                headers: {
+                    /** @description The number of pages of the attachment. */
+                    "X-Page-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -23091,6 +23272,28 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             503: components["responses"]["RegisterUnavailable"];
+        };
+    };
+    testRecognition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What works */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecognitionCheck"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     testStorage: {
