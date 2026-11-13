@@ -252,6 +252,9 @@ func (s *Service) complete(ctx context.Context, admin, user resource.ID, list []
 		list[i].State = effective(list[i], today)
 		if day, _, ok := nextReminder(list[i], flows[list[i].WorkflowID]); ok {
 			list[i].NextReminder = &day
+		} else if list[i].Paused && payable(list[i]) {
+			day := PausedNextReminder
+			list[i].NextReminder = &day
 		}
 	}
 	return list, nil

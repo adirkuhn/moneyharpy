@@ -96,6 +96,13 @@ func TestSalesInvoicePayments(t *testing.T) {
 	if got.State != "paid" || deref(got.PaidAt) != today || got.TotalPaid != "121.0" || got.TotalUnpaid != "0.0" || len(got.Payments) != 2 {
 		t.Fatalf("paid = %+v", got)
 	}
+	// A paid invoice still takes the request, as Moneybird offers Register
+	// payment on it; with nothing left to receive the price is refused.
+	r = owner.do(http.MethodPost, invoices+"/"+inv.ID+"/payments", map[string]any{"payment": map[string]any{"payment_date": today, "price": "1"}})
+	wantStatus(t, r, http.StatusUnprocessableEntity)
+	if body := decode[map[string]map[string][]string](t, r); len(body["error"]["price"]) == 0 {
+		t.Errorf("paid again = %+v", body)
+	}
 	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID+"/payments/"+rest.ID, nil), http.StatusNoContent)
 	wantStatus(t, owner.do(http.MethodDelete, invoices+"/"+inv.ID+"/payments/"+rest.ID, nil), http.StatusNotFound)
 	if got := decode[paidInvoice](t, owner.do(http.MethodGet, invoices+"/"+inv.ID, nil)); got.State != "open" || got.TotalUnpaid != "100.0" {
@@ -145,7 +152,7 @@ func TestSalesInvoicePayments(t *testing.T) {
 	// Reminders.
 	overdue := send("50", false, 30)
 	// As on Moneybird the first reminder is due when the 14-day term expires,
-	// on the due date; the default first reminder then expires after 7 days.
+	// on the due date; the default first reminder then expires after 10 days.
 	if want := adminNow().AddDate(0, 0, -16).Format(time.DateOnly); deref(overdue.NextReminder) != want {
 		t.Errorf("next reminder = %v, want %s", deref(overdue.NextReminder), want)
 	}
@@ -158,7 +165,7 @@ func TestSalesInvoicePayments(t *testing.T) {
 	if len(reminded) != 1 || reminded[0].State != "reminded" || reminded[0].ReminderCount != 1 {
 		t.Fatalf("reminded = %+v", reminded)
 	}
-	if want := adminNow().AddDate(0, 0, 7).Format(time.DateOnly); deref(reminded[0].NextReminder) != want {
+	if want := adminNow().AddDate(0, 0, 10).Format(time.DateOnly); deref(reminded[0].NextReminder) != want {
 		t.Errorf("next reminder after the first = %v, want %s", deref(reminded[0].NextReminder), want)
 	}
 	h.mailer.mu.Lock()

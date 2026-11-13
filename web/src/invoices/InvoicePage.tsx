@@ -127,7 +127,8 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
     <div className="invoice-actions">
       <div className="invoice-actions__buttons">
         {sendItems.length > 0 && <ActionMenu primary={draft} label={t('invoices.view.send')} items={sendItems} />}
-        {payable && <Link className="btn btn--secondary" to={`${list}/${inv.id}/payments/new`}>{t('invoices.view.registerPayment')}</Link>}
+        {/* Moneybird offers it on a paid invoice too, e.g. to link the bank transaction of a payment without proof. */}
+        {(payable || inv.state === 'paid') && <Link className="btn btn--secondary" to={`${list}/${inv.id}/payments/new`}>{t('invoices.view.registerPayment')}</Link>}
         <ActionMenu label={t('invoices.view.downloadAs')} items={downloads} />
         {sent && (
           <button

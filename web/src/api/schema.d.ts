@@ -4062,7 +4062,7 @@ export interface paths {
         put?: never;
         /**
          * Send reminders
-         * @description Sends one reminder per entry: an email to the contact listing the invoices, with their PDFs, or nothing when delivered Manual. The text defaults to the workflow's next reminder step, then to MoneyHarpy's own; {invoices} in it lists the invoices. Each invoice becomes reminded and counts the reminder. All entries are checked before any is sent. Moneybird answers with a status code; MoneyHarpy answers with the reminded invoices.
+         * @description Sends one reminder per entry: an email to the contact listing the invoices, with their PDFs, or nothing when delivered Manual. The text defaults to the workflow's next reminder step, then to MoneyHarpy's own; {reminders_table} (Moneybird's tag) or {invoices} in it lists the invoices. Each invoice becomes reminded and counts the reminder. All entries are checked before any is sent. Moneybird answers with a status code; MoneyHarpy answers with the reminded invoices.
          */
         post: operations["sendSalesInvoiceReminders"];
         delete?: never;
@@ -9925,7 +9925,10 @@ export interface components {
             marked_dubious_on?: string | null;
             /** Format: date */
             marked_uncollectible_on?: string | null;
-            /** Format: date */
+            /**
+             * Format: date
+             * @description When the next reminder is due; 2099-01-01 while the invoice is paused, as Moneybird gives it.
+             */
             next_reminder?: string | null;
             notes?: components["schemas"]["note_response"][];
             original_estimate_id?: components["schemas"]["identifier_nullable"];

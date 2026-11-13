@@ -316,7 +316,7 @@ export const nl: Messages = {
     },
     reminders: {
       action: 'Herinnering sturen', title: 'Herinnering sturen', text: 'Tekst van de herinnering', textPlaceholder: 'Laat leeg om de tekst van de workflow te gebruiken.',
-      textHelp: 'Je kunt {invoice_id}, {total}, {due_date}, {contact_name} en {invoices}, de lijst met openstaande facturen, gebruiken.',
+      textHelp: 'Je kunt {invoice_id}, {total}, {due_date}, {contact_name} en {reminders_table} (of {invoices}), de tabel met openstaande facturen, gebruiken.',
       manualHint: 'De factuur wordt gemarkeerd als herinnerd. Verstuur de herinnering zelf.', submit: 'Herinnering sturen',
     },
     writeOff: {

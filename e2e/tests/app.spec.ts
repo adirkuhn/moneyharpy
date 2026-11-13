@@ -882,6 +882,8 @@ test('sales invoices are paid by hand and by a bank transaction, and the overvie
   await expect(form.getByLabel('Amount')).toHaveValue('121.00')
   await form.getByRole('button', { name: 'Save' }).click()
   await expect(page.locator('.badge', { hasText: 'Paid' })).toBeVisible()
+  // As on Moneybird, a paid invoice still offers Register payment.
+  await expect(page.getByRole('link', { name: 'Register payment' })).toBeVisible()
   const sidebar = page.getByRole('complementary', { name: 'Invoice information' })
   await sidebar.getByRole('button', { name: 'View registered payment' }).click()
   await expect(sidebar.getByRole('list', { name: 'Registered payments' }).getByRole('listitem')).toContainText(/€121\.00.*Without proof/)
@@ -1035,6 +1037,8 @@ test('a draft invoice is made recurring, scheduled and deactivated', async ({ pa
   await page.getByRole('region', { name: 'Invoice details' }).getByRole('button', { name: 'Save' }).click()
   await expect(page.getByRole('region', { name: 'Invoice details' })).toHaveCount(0)
   await expect(paper).toContainText('Hosting {period}')
+  // As Moneybird's RF69CONCEPT6586: the draft reference of the next draft number.
+  await expect(paper).toContainText(/RF\d{2}CONCEPT\d+\b/)
   await expect(paper.getByRole('table', { name: 'Totals' }).getByRole('row', { name: /^Tota/ })).toContainText(/121[.,]00/)
 
   await menu.getByRole('link', { name: 'Recurring invoices' }).click()

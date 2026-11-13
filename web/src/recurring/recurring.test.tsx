@@ -6,7 +6,7 @@ import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import type { Contact } from '../contacts/queries'
 import type { SalesInvoice } from '../invoices/queries'
 import { renderAt } from '../test/render'
-import { administration, documentStyle, identity, invoiceSettings, listing, server, signedIn, workflow } from '../test/server'
+import { administration, defaultConditions, documentStyle, identity, invoiceSettings, listing, server, signedIn, workflow } from '../test/server'
 import type { RecurringInvoice } from './queries'
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
@@ -222,7 +222,7 @@ describe('adding a recurring invoice', () => {
 
 describe('a recurring invoice', () => {
   it('is named by its schedule and contact, tells its schedule over the document, and shows its contact, workflow and history', async () => {
-    server.use(...documentHandlers())
+    server.use(...documentHandlers(() => recurring({ payment_conditions: defaultConditions })))
     renderAt('/11/recurring_sales_invoices/941')
     expect(await screen.findByRole('heading', { level: 1, name: 'Every month to Example Shop B.V.' })).toBeInTheDocument()
     expect(scheduleCard()).toHaveTextContent('This recurring invoice will be created every month indefinitely.')
@@ -238,6 +238,9 @@ describe('a recurring invoice', () => {
     const paper = await screen.findByRole('document', { name: 'Recurring invoice' })
     expect(paper).toHaveTextContent('Periodieke factuur #2')
     expect(paper).toHaveTextContent('Hosting {period}')
+    // Its payment reference is the draft one of the next draft number, as
+    // Moneybird's RF69CONCEPT6586 under "Concept #6586".
+    expect(await within(paper).findByText(/omschrijving RF32CONCEPT12\./)).toBeInTheDocument()
     const side = screen.getByRole('complementary', { name: 'Recurring invoice information' })
     expect(within(side).getByRole('link', { name: 'Standaard (NL)' })).toHaveAttribute('href', '/11/workflows/601')
     expect(within(side).getByText('Example Shop B.V.')).toBeInTheDocument()
