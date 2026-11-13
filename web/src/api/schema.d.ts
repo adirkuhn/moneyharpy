@@ -7109,7 +7109,7 @@ export interface components {
              * @example http://ollama:11434
              */
             recognition_ai_url: string;
-            /** @example claude-haiku-5-5 */
+            /** @example claude-opus-5-5 */
             recognition_ai_model: string;
             recognition_ai_api_key_set: boolean;
         };
