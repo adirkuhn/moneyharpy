@@ -122,3 +122,35 @@ func TestIncomingStatisticsSelectEverything(t *testing.T) {
 		t.Errorf("store query = %+v", got)
 	}
 }
+
+func TestIncomingDocumentsNamePossibleDuplicates(t *testing.T) {
+	h := newHarness(t)
+	day := time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC)
+	h.store.incoming = []Incoming{
+		{ID: 1, AdministrationID: adminID, Kind: PurchaseInvoice, Reference: "INV-0042", Date: day},
+		{ID: 2, AdministrationID: adminID, Kind: TypelessDocument, Reference: "scan.pdf", Date: day},
+		{ID: 3, AdministrationID: adminID, Kind: journal.GeneralJournalDocument, Date: day},
+	}
+	h.store.candidates = []DuplicateCandidate{
+		{ID: 1, Kind: PurchaseInvoice, Reference: "INV-0042", Date: day, Hashes: []string{"aa"}},
+		{ID: 2, Kind: TypelessDocument, Reference: "scan.pdf", Date: day, Hashes: []string{"bb"}},
+		{ID: 9, Kind: Receipt, Reference: "Old", Date: day.AddDate(0, -1, 0), TotalInclTax: 500, Hashes: []string{"aa"}},
+	}
+	q, _ := ParseIncomingFilter("", time.Time{})
+	list, _, err := h.svc.IncomingList(ctx, adminID, owner, q)
+	if err != nil {
+		t.Fatalf("IncomingList() error = %v", err)
+	}
+	want := []Duplicate{{ID: 9, Kind: Receipt, Reference: "Old", Date: day.AddDate(0, -1, 0), TotalInclTax: 500, Reasons: []string{SameFile}}}
+	if !cmp.Equal(list[0].PossibleDuplicates, want) || list[1].PossibleDuplicates != nil || list[2].PossibleDuplicates != nil {
+		t.Errorf("possible duplicates = %+v, %+v, %+v", list[0].PossibleDuplicates, list[1].PossibleDuplicates, list[2].PossibleDuplicates)
+	}
+	// Journal entries are no upload; they are not compared.
+	if got := h.store.candidateIDs; !cmp.Equal(got, []resource.ID{1, 2}) {
+		t.Errorf("compared ids = %v", got)
+	}
+	d, err := h.svc.IncomingDocument(ctx, adminID, 1, owner)
+	if err != nil || !cmp.Equal(d.PossibleDuplicates, want) {
+		t.Errorf("IncomingDocument() = %+v, %v", d.PossibleDuplicates, err)
+	}
+}

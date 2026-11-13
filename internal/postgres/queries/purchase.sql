@@ -365,3 +365,50 @@ WHERE administration_id = @administration_id AND entity_id = @entity_id AND enti
 -- name: RetypeEvents :exec
 UPDATE events SET entity_type = @new_type
 WHERE administration_id = @administration_id AND entity_id = @entity_id AND entity_type = @old_type;
+
+-- name: DuplicateCandidates :many
+-- The purchase invoices, receipts, general and typeless documents with the
+-- ids, and every other one of the administration with the contact of one
+-- of them or an attachment with the same contents: what duplicate
+-- detection compares. Each branch finds its rows through an index on the
+-- administration and contact, the id, or the attachments' sums.
+WITH targets AS (
+    SELECT p.contact_id FROM purchase_documents p WHERE p.administration_id = @administration_id AND p.id = ANY(@ids::bigint[])
+    UNION
+    SELECT g.contact_id FROM general_documents g WHERE g.administration_id = @administration_id AND g.id = ANY(@ids::bigint[])
+    UNION
+    SELECT t.contact_id FROM typeless_documents t WHERE t.administration_id = @administration_id AND t.id = ANY(@ids::bigint[])
+), same_file AS (
+    SELECT DISTINCT o.entity_id
+    FROM attachments a
+    JOIN attachments o ON o.administration_id = a.administration_id AND o.sha256 = a.sha256
+    WHERE a.administration_id = @administration_id AND a.entity_id = ANY(@ids::bigint[]) AND a.sha256 <> ''
+), docs AS (
+    SELECT p.id, p.kind, p.contact_id, p.reference, p.date, p.total_incl_tax
+    FROM purchase_documents p
+    WHERE p.administration_id = @administration_id
+      AND (p.id = ANY(@ids::bigint[]) OR p.contact_id IN (SELECT contact_id FROM targets) OR p.id IN (SELECT entity_id FROM same_file))
+    UNION ALL
+    SELECT g.id, 'GeneralDocument', g.contact_id, g.reference, g.date, 0::bigint
+    FROM general_documents g
+    WHERE g.administration_id = @administration_id
+      AND (g.id = ANY(@ids::bigint[]) OR g.contact_id IN (SELECT contact_id FROM targets) OR g.id IN (SELECT entity_id FROM same_file))
+    UNION ALL
+    SELECT t.id, 'TypelessDocument', t.contact_id, t.reference, t.date, 0::bigint
+    FROM typeless_documents t
+    WHERE t.administration_id = @administration_id
+      AND (t.id = ANY(@ids::bigint[]) OR t.contact_id IN (SELECT contact_id FROM targets) OR t.id IN (SELECT entity_id FROM same_file))
+)
+SELECT x.id::bigint AS id, x.kind::text AS kind, coalesce(x.contact_id, 0)::bigint AS contact_id, x.reference::text AS reference,
+       x.date::date AS date, x.total_incl_tax::bigint AS total_incl_tax,
+       ARRAY(SELECT a.sha256 FROM attachments a WHERE a.entity_id = x.id AND a.sha256 <> '' ORDER BY a.id)::text[] AS hashes
+FROM docs x
+ORDER BY x.id;
+
+-- name: DuplicateCandidateLines :many
+-- The lines duplicate detection compares of the purchase invoices and
+-- receipts with the ids.
+SELECT purchase_document_id, description, price, quantity
+FROM purchase_document_details
+WHERE administration_id = @administration_id AND purchase_document_id = ANY(@ids::bigint[])
+ORDER BY purchase_document_id, row_order, id;

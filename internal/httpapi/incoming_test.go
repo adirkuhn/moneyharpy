@@ -2,6 +2,7 @@ package httpapi_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
@@ -93,6 +94,78 @@ func TestIncomingDocuments(t *testing.T) {
 	wantStatus(t, clerk.do(http.MethodGet, api+"/documents", nil), http.StatusForbidden)
 	wantStatus(t, clerk.do(http.MethodGet, api+"/documents/statistics", nil), http.StatusForbidden)
 	wantStatus(t, clerk.do(http.MethodGet, api+"/documents/"+receipt.ID, nil), http.StatusForbidden)
+}
+
+type possibleDuplicate struct {
+	ID                string   `json:"id"`
+	Type              string   `json:"type"`
+	Reference         string   `json:"reference"`
+	Date              string   `json:"date"`
+	TotalPriceInclTax string   `json:"total_price_incl_tax"`
+	Reasons           []string `json:"reasons"`
+}
+
+func TestIncomingDocumentsWarnOfPossibleDuplicates(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	_, api, supplier, vat21 := purchaseSetup(t, owner)
+	day := adminNow().Format(time.DateOnly)
+	invoice := func(reference string) string {
+		t.Helper()
+		d := decode[purchaseDocument](t, owner.do(http.MethodPost, api+"/documents/purchase_invoices", map[string]any{"purchase_invoice": map[string]any{
+			"contact_id": supplier, "reference": reference, "date": day, "prices_are_incl_tax": true,
+			"details_attributes": []map[string]any{{"description": "Paper", "price": "121", "tax_rate_id": vat21}},
+		}}))
+		return d.ID
+	}
+	first, again := invoice("INV-2026-0042"), invoice("inv 2026/0042")
+	upload := func(name string) string {
+		t.Helper()
+		d := decode[map[string]any](t, owner.do(http.MethodPost, api+"/documents/typeless_documents", map[string]any{"typeless_document": map[string]any{
+			"reference": name, "date": day,
+		}}))
+		id := d["id"].(string)
+		wantStatus(t, owner.attach(api+"/documents/typeless_documents/"+id+"/attachments", name, "application/pdf", []byte("%PDF-1.4 Example Shop B.V.")), http.StatusOK)
+		return id
+	}
+	scan, rescan := upload("scan.pdf"), upload("scan (1).pdf")
+
+	r := owner.do(http.MethodGet, api+"/documents", nil)
+	wantStatus(t, r, http.StatusOK)
+	byID := map[string][]possibleDuplicate{}
+	for _, d := range decode[[]struct {
+		ID                 string              `json:"id"`
+		PossibleDuplicates []possibleDuplicate `json:"possible_duplicates"`
+	}](t, r) {
+		byID[d.ID] = d.PossibleDuplicates
+	}
+	if got := byID[again]; len(got) != 1 || got[0].ID != first || got[0].Type != "PurchaseInvoice" || got[0].TotalPriceInclTax != "121.0" ||
+		got[0].Date != day || strings.Join(got[0].Reasons, ",") != "same_reference,same_amount_and_date,same_lines" {
+		t.Errorf("duplicates of the second invoice = %+v", got)
+	}
+	if got := byID[rescan]; len(got) != 1 || got[0].ID != scan || got[0].Type != "TypelessDocument" || strings.Join(got[0].Reasons, ",") != "same_file" {
+		t.Errorf("duplicates of the second upload = %+v", got)
+	}
+	if got := byID[first]; len(got) != 1 || got[0].ID != again {
+		t.Errorf("duplicates of the first invoice = %+v", got)
+	}
+
+	one := decode[struct {
+		PossibleDuplicates []possibleDuplicate `json:"possible_duplicates"`
+	}](t, owner.do(http.MethodGet, api+"/documents/"+scan, nil))
+	if len(one.PossibleDuplicates) != 1 || one.PossibleDuplicates[0].ID != rescan {
+		t.Errorf("duplicates by id = %+v", one.PossibleDuplicates)
+	}
+
+	// A document unlike any other has none, as an empty list.
+	other := decode[map[string]any](t, owner.do(http.MethodPost, api+"/documents/general_documents", map[string]any{"general_document": map[string]any{
+		"reference": "Lease", "date": day,
+	}}))
+	raw := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/"+other["id"].(string), nil))
+	if list, ok := raw["possible_duplicates"].([]any); !ok || len(list) != 0 {
+		t.Errorf("possible_duplicates = %#v", raw["possible_duplicates"])
+	}
 }
 
 func TestSetIncomingDocumentType(t *testing.T) {

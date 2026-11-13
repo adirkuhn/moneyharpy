@@ -135,6 +135,7 @@ type Attachment struct {
 	Size             int64
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
+	Sha256           string
 }
 
 type BankJournalEntry struct {

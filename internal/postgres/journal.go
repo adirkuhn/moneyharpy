@@ -255,8 +255,22 @@ func NewAttachmentStore(pool *pgxpool.Pool) *AttachmentStore {
 func (s *AttachmentStore) CreateAttachment(ctx context.Context, a attachments.Attachment) error {
 	return s.q.InsertAttachment(ctx, sqlc.InsertAttachmentParams{
 		ID: int64(a.ID), AdministrationID: int64(a.AdministrationID), EntityType: a.EntityType, EntityID: int64(a.EntityID), Filename: a.Filename,
-		ContentType: a.ContentType, Size: a.Size, CreatedAt: timestamp(a.CreatedAt), UpdatedAt: timestamp(a.UpdatedAt),
+		ContentType: a.ContentType, Size: a.Size, Sha256: a.SHA256, CreatedAt: timestamp(a.CreatedAt), UpdatedAt: timestamp(a.UpdatedAt),
 	})
+}
+
+// UnhashedAttachments implements attachments.Store.
+func (s *AttachmentStore) UnhashedAttachments(ctx context.Context, entityTypes []string, after resource.ID, limit int) ([]attachments.Attachment, error) {
+	rows, err := s.q.UnhashedAttachments(ctx, sqlc.UnhashedAttachmentsParams{EntityTypes: nonNil(entityTypes), After: int64(after), MaxRows: int32(min(limit, 10000))})
+	if err != nil {
+		return nil, err
+	}
+	return toAttachments(rows), nil
+}
+
+// SetAttachmentHash implements attachments.Store.
+func (s *AttachmentStore) SetAttachmentHash(ctx context.Context, admin, id resource.ID, sum string) error {
+	return s.q.SetAttachmentHash(ctx, sqlc.SetAttachmentHashParams{Sha256: sum, AdministrationID: int64(admin), ID: int64(id)})
 }
 
 // DeleteAttachment implements attachments.Store.
@@ -270,12 +284,16 @@ func (s *AttachmentStore) AttachmentsOf(ctx context.Context, admin resource.ID, 
 	if err != nil {
 		return nil, err
 	}
+	return toAttachments(rows), nil
+}
+
+func toAttachments(rows []sqlc.Attachment) []attachments.Attachment {
 	out := make([]attachments.Attachment, len(rows))
 	for i, r := range rows {
 		out[i] = attachments.Attachment{
 			ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), EntityType: r.EntityType, EntityID: resource.ID(r.EntityID),
-			Filename: r.Filename, ContentType: r.ContentType, Size: r.Size, CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
+			Filename: r.Filename, ContentType: r.ContentType, Size: r.Size, SHA256: r.Sha256, CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
 		}
 	}
-	return out, nil
+	return out
 }

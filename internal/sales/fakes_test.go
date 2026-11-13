@@ -718,6 +718,14 @@ func (m *memAttachments) AttachmentsOf(_ context.Context, _ resource.ID, t strin
 	return out, nil
 }
 
+func (m *memAttachments) UnhashedAttachments(context.Context, []string, resource.ID, int) ([]attachments.Attachment, error) {
+	return nil, nil
+}
+
+func (m *memAttachments) SetAttachmentHash(context.Context, resource.ID, resource.ID, string) error {
+	return nil
+}
+
 type noFiles struct{}
 
 func (noFiles) Put(context.Context, string, string, []byte) error { return nil }

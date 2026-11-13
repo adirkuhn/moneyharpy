@@ -1048,6 +1048,10 @@ export const nl: Messages = {
       withoutDocument: 'Of ga verder zonder document', type: 'Type',
       typeText: { purchase_invoice: 'Facturen voor geleverde goederen of diensten', receipt: 'Bonnetjes van boodschappen, brandstof, maaltijden', general_document: 'Voor het bewaren van belastingaangiftes, verzekeringspolissen, contracten', general_journal_document: 'Voor het boeken van beginbalansen, jaarafsluiting, loonkosten' },
     },
+    duplicates: {
+      title: 'Mogelijk dubbel document', mark: 'Mogelijk dubbel', of: 'Mogelijk dubbel document van', ofMany: 'Mogelijk dubbel document van:',
+      reasons: { same_file: 'hetzelfde bestand', same_reference: 'dezelfde referentie', same_amount_and_date: 'hetzelfde bedrag en dezelfde datum', same_lines: 'dezelfde regels' },
+    },
     view: {
       document: 'Document', attachments: 'Bijlagen', download: 'Bijlage downloaden', deleteAttachment: 'Bijlage verwijderen',
       confirmDeleteAttachment: 'Wil je deze bijlage verwijderen?', add: 'Toevoegen', noAttachment: 'Geen bijlage',
