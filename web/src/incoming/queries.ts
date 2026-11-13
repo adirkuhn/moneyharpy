@@ -4,6 +4,8 @@ import { api, unwrap } from '../api/client'
 import type { components, operations } from '../api/schema'
 import { fileBody } from '../invoices/queries'
 import type { JournalDocument } from '../journal/queries'
+import { documentsKey, polling } from './documents'
+import type { Recognition } from './recognition'
 
 export type PurchaseInvoice = components['schemas']['PurchaseInvoice']
 export type Receipt = components['schemas']['Receipt']
@@ -63,6 +65,8 @@ export function useTypedDocument(administrationId: string, type: DocumentType | 
   return useQuery({
     queryKey: [...incomingKey(administrationId, id), type],
     enabled: type !== undefined,
+    // While Scan and Recognise reads the document it is asked for again, until what was read is filled in.
+    refetchInterval: (query) => (query.state.data && recognitionOf(query.state.data)?.state === 'pending' ? polling.intervalMs : false),
     queryFn: async (): Promise<TypedDocument> => {
       const target = one(administrationId, id)
       switch (type) {
@@ -81,14 +85,28 @@ export function useTypedDocument(administrationId: string, type: DocumentType | 
   })
 }
 
+/** What Scan and Recognise read of a document, for the types it reads. */
+export function recognitionOf({ doc }: TypedDocument): Recognition | undefined {
+  return 'recognition' in doc ? doc.recognition : undefined
+}
+
 /** Reloads the document and the lists it is on. */
 function useRefresh(administrationId: string, id: string) {
   const client = useQueryClient()
   return () =>
     Promise.all([
       client.invalidateQueries({ queryKey: incomingKey(administrationId, id) }),
-      client.invalidateQueries({ queryKey: ['documents', administrationId] }),
+      client.invalidateQueries({ queryKey: documentsKey(administrationId) }),
     ])
+}
+
+/** Reads the document's attachments again with Scan and Recognise, in the background. */
+export function useRecognize(administrationId: string, id: string) {
+  const refresh = useRefresh(administrationId, id)
+  return useMutation({
+    mutationFn: () => unwrap(api.POST('/api/v2/{administration_id}/documents/{id}/recognize', one(administrationId, id))),
+    onSuccess: refresh,
+  })
 }
 
 /** Gives the document another type, as Moneybird's type picker; it keeps its id, files and notes. */
@@ -187,6 +205,11 @@ export function useDeleteDocumentNote(administrationId: string, type: DocumentTy
 /** Where an attachment of an incoming document downloads from. */
 export function attachmentURL(administrationId: string, type: DocumentType, id: string, attachmentId: string) {
   return `/api/v2/${administrationId}/documents/${segments[type]}/${id}/attachments/${attachmentId}/download`
+}
+
+/** Where a page of an incoming document's attachment previews from, as an image. */
+export function previewURL(administrationId: string, id: string, attachmentId: string, page: number) {
+  return `/api/v2/${administrationId}/documents/${id}/attachments/${attachmentId}/preview?page=${page}`
 }
 
 /** What a purchase invoice or receipt is called: its reference, or its entry number when it has none. */

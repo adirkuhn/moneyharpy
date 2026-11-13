@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -7,6 +7,7 @@ import { Problems } from '../auth/AuthLayout'
 import { formErrors } from '../forms/Form'
 import { NotesAndHistory } from '../invoices/InvoiceHistory'
 import { JournalEntryForm } from '../journal/JournalDocumentPage'
+import { SpinnerIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { DangerDialog } from '../layout/Modal'
 import { NotFoundPage } from '../layout/NotFoundPage'
@@ -19,8 +20,10 @@ import { GeneralDocumentCard } from './GeneralDocumentCard'
 import { incomingHistory } from './history'
 import { PurchaseDocument } from './PurchaseDocument'
 import {
-  choiceOf, incomingKey, type TypedDocument, useAddDocumentNote, useDeleteDocument, useDeleteDocumentNote, useSetDocumentType, useTypedDocument,
+  choiceOf, incomingKey, recognitionOf, type TypedDocument, useAddDocumentNote, useDeleteDocument, useDeleteDocumentNote, useRecognize, useSetDocumentType,
+  useTypedDocument,
 } from './queries'
+import { remarksOf } from './recognition'
 import { TypePicker } from './TypePicker'
 import '../invoices/view.css'
 import './document.css'
@@ -76,6 +79,12 @@ function DocumentView({ administrationId, typed }: { administrationId: string; t
   const addNote = useAddDocumentNote(administrationId, type, id)
   const removeNote = useDeleteDocumentNote(administrationId, type, id)
   const toProcess = useToProcess(administrationId, id)
+  const recognize = useRecognize(administrationId, id)
+  const recognition = recognitionOf(typed)
+  const attachments = doc.attachments ?? []
+  // Scan and Recognise reads an upload, or a new purchase invoice or receipt, which books nothing.
+  const canRead = (type === 'TypelessDocument' || (purchase && isNew)) && attachments.length > 0 && recognition?.state !== 'pending'
+  const readAgain = () => recognize.mutate()
 
   const onSaved = (stillNew: boolean, next: boolean) => {
     if (next) {
@@ -91,9 +100,11 @@ function DocumentView({ administrationId, typed }: { administrationId: string; t
       disabled={!canChangeType || setType.isPending}
       errors={setType.error ? formErrors(setType.error, {}).general : undefined}
       onChange={(choice) => setType.mutate(choice)}
+      remark={remarksOf(recognition).field('document_type')}
     />
   )
-  const shared = { administrationId, typeRow, editing, onSaved, left: toProcess.left, cancelTo: list }
+  const notice = <RecognitionNotice state={recognition?.state} onReadAgain={canRead ? readAgain : undefined} busy={recognize.isPending} />
+  const shared = { administrationId, typeRow, editing, onSaved, left: toProcess.left, cancelTo: list, notice }
 
   const card = (() => {
     switch (typed.type) {
@@ -118,6 +129,7 @@ function DocumentView({ administrationId, typed }: { administrationId: string; t
       default:
         return (
           <form className="incoming-card" aria-label={t('incoming.view.document')} onSubmit={(e: FormEvent) => e.preventDefault()}>
+            {notice}
             <div className="incoming-card__rows">{typeRow}</div>
             <p className="incoming-card__hint">{t('incoming.view.chooseTypeText')}</p>
           </form>
@@ -127,6 +139,7 @@ function DocumentView({ administrationId, typed }: { administrationId: string; t
 
   const more: MenuItem[] = [
     ...(edit ? [{ label: t('incoming.view.edit'), onSelect: edit }] : []),
+    ...(canRead ? [{ label: t('recognition.readAgain'), onSelect: readAgain, disabled: recognize.isPending }] : []),
     { label: t('incoming.new.back'), to: list },
   ]
 
@@ -143,10 +156,16 @@ function DocumentView({ administrationId, typed }: { administrationId: string; t
         </>
       }
     >
-      <Problems messages={formErrors(remove.error, {}).general} />
+      <Problems messages={[...formErrors(remove.error, {}).general, ...formErrors(recognize.error, {}).general]} />
       <div className="incoming-document">
         <div className="incoming-document__left">
-          <AttachmentViewer administrationId={administrationId} type={type} documentId={id} attachments={doc.attachments ?? []} />
+          <AttachmentViewer
+            administrationId={administrationId}
+            type={type}
+            documentId={id}
+            attachments={attachments}
+            analysedId={recognition?.state === 'done' ? attachments[0]?.id : undefined}
+          />
         </div>
         <div className="incoming-document__right">
           {card}
@@ -164,5 +183,24 @@ function DocumentView({ administrationId, typed }: { administrationId: string; t
         />
       )}
     </Page>
+  )
+}
+
+type NoticeProps = { state: string | undefined; onReadAgain?: () => void; busy: boolean }
+
+/** What Scan and Recognise is doing with the document: reading it, or why it could not. */
+function RecognitionNotice({ state, onReadAgain, busy }: NoticeProps): ReactNode {
+  const { t } = useTranslation()
+  if (state !== 'pending' && state !== 'failed') {
+    return null
+  }
+  return (
+    <div className={`alert recognition-notice recognition-notice--${state}`} role="status" aria-label={t('recognition.title')}>
+      {state === 'pending' ? <SpinnerIcon /> : null}
+      <p className="recognition-notice__text">{t(state === 'pending' ? 'recognition.reading' : 'recognition.failed')}</p>
+      {state === 'failed' && onReadAgain && (
+        <button type="button" className="btn btn--secondary btn--small" disabled={busy} onClick={onReadAgain}>{t('recognition.readAgain')}</button>
+      )}
+    </div>
   )
 }

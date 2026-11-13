@@ -1,6 +1,7 @@
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FormRow } from '../forms/Form'
+import type { Confidence } from '../forms/Remark'
 import { CaretIcon } from '../layout/icons'
 import { type TypeChoice, typeChoices } from './queries'
 
@@ -9,13 +10,15 @@ type Props = {
   onChange: (type: TypeChoice) => void
   disabled?: boolean
   errors?: string[]
+  /** Scan and Recognise chose the type. */
+  remark?: Confidence
 }
 
 /**
  * Moneybird's Type select of a document: each type with what it is for. An
  * upload without a type asks for one.
  */
-export function TypePicker({ value, onChange, disabled = false, errors }: Props) {
+export function TypePicker({ value, onChange, disabled = false, errors, remark }: Props) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
@@ -67,7 +70,7 @@ export function TypePicker({ value, onChange, disabled = false, errors }: Props)
   }
 
   return (
-    <FormRow label={t('incoming.type')} errors={errors}>
+    <FormRow label={t('incoming.type')} errors={errors} remark={remark}>
       {({ labelId, id, ...control }) => (
         <div className="picker type-picker" ref={root}>
           <button
