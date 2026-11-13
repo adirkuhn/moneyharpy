@@ -122,6 +122,28 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      # The OCR service, an optional companion image: ghcr.io/<owner>/moneyharpy-ocr.
+      - id: meta-ocr
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-ocr
+          tags: |
+            type=ref,event=branch
+            type=sha,enable=${{ github.ref_type == 'branch' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.ocr
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-ocr.outputs.tags }}
+          labels: ${{ steps.meta-ocr.outputs.labels }}
+          annotations: ${{ steps.meta-ocr.outputs.annotations }}
+          cache-from: type=gha,scope=ocr
+          cache-to: type=gha,mode=max,scope=ocr
 
   docs:
     if: github.event_name == 'push'

@@ -8,6 +8,9 @@ services:
       DATABASE_URL: postgres://moneyharpy:${POSTGRES_PASSWORD}@db:5432/moneyharpy?sslmode=disable
       SECRET_KEY: ${SECRET_KEY}
       BASE_URL: ${BASE_URL:-http://localhost:8080}
+      # Optional: without the ocr service the app still works, but reads
+      # only e-invoices and previews show the file itself.
+      OCR_URL: http://ocr:8090
     ports:
       - "8080:8080"
     volumes:
@@ -16,6 +19,25 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks: [default, ocr]
+    restart: unless-stopped
+
+  # Reads scans and PDFs (Tesseract, Poppler) and renders page previews. It
+  # needs no internet: it is only on an internal network with the app.
+  ocr:
+    image: ${MONEYHARPY_OCR_IMAGE:-ghcr.io/adirkuhn/moneyharpy-ocr:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.ocr
+    networks: [ocr]
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/ocrd", "-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   # S3-compatible file storage for uploads such as logos. Any S3 service works
@@ -49,6 +71,11 @@ services:
       timeout: 3s
       retries: 30
     restart: unless-stopped
+
+networks:
+  default:
+  ocr:
+    internal: true
 
 volumes:
   db-data:
