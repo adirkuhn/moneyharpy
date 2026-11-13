@@ -1199,10 +1199,9 @@ test('a purchase invoice is booked through the API, paid by a bank transaction a
   expect(created.status()).toBe(201)
 
   const menu = page.getByRole('navigation', { name: 'Administration menu' })
-  await menu.getByRole('button', { name: 'Incoming' }).click()
-  await menu.getByRole('link', { name: 'Purchase invoices' }).click()
-  const table = page.getByRole('table', { name: 'Purchase invoices' })
-  await expect(table.getByRole('link', { name: 'INV-2026-77' })).toBeVisible()
+  await menu.getByRole('link', { name: 'Incoming' }).click()
+  const table = page.getByRole('table', { name: 'Incoming' })
+  await expect(table.getByRole('link', { name: 'PUR INV-2026-77' })).toBeVisible()
   await expect(table.locator('.badge', { hasText: 'Open' })).toBeVisible()
 
   // The outgoing bank transaction pays it, booked against the creditors.
@@ -1215,14 +1214,14 @@ test('a purchase invoice is booked through the API, paid by a bank transaction a
   const linked = await page.request.patch(`${api}/financial_mutations/${outgoing.id}/link_booking`, { data: { booking_type: 'Document', booking_id: doc.id } })
   expect(linked.status()).toBe(200)
   expect((await linked.json()).state).toBe('processed')
-  await table.getByRole('link', { name: 'INV-2026-77' }).click()
+  await table.getByRole('link', { name: 'PUR INV-2026-77' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'INV-2026-77' })).toBeVisible()
   await expect(page.locator('.badge', { hasText: 'Paid' })).toBeVisible()
 
   // An upload waits on the overview until it is processed.
-  await menu.getByRole('link', { name: 'Uploads' }).click()
-  await page.getByLabel('Upload documents').setInputFiles({ name: 'bill-78.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n% bill 78\n') })
-  await expect(page.getByRole('table', { name: 'Uploads to process' }).getByRole('link', { name: 'bill-78.pdf' })).toBeVisible()
+  await menu.getByRole('link', { name: 'Incoming' }).click()
+  await page.getByLabel('Drag your documents here or click to add them').setInputFiles({ name: 'bill-78.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n% bill 78\n') })
+  await expect(table.getByRole('link', { name: '— bill-78.pdf' })).toBeVisible()
   await page.goto(`${uri}/feed`)
   await expect(page.getByRole('region', { name: 'Incoming' }).getByRole('link', { name: /To process\s*1/ })).toBeVisible()
 })

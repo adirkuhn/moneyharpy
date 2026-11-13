@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
-import type { PurchaseInvoice, TypelessDocument } from './queries'
+import type { PurchaseInvoice } from './queries'
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 const stamp = '2026-11-10T09:00:00Z'
@@ -23,50 +23,19 @@ const invoice = (over: Partial<PurchaseInvoice> = {}): PurchaseInvoice => ({
   ...over,
 })
 
-const upload: TypelessDocument = {
-  id: '951', administration_id: '11', contact_id: null, contact: null, date: '2026-11-10', state: 'new', origin: 'api', reference: 'scan.pdf',
-  attachments: [{ id: '981', administration_id: '11', attachable_id: '951', attachable_type: 'Document', filename: 'scan.pdf', content_type: 'application/pdf', size: 10, rotation: 0, created_at: stamp, updated_at: stamp }],
-  events: [], version: 1, uri: '/11/documents/typeless_documents/951',
-}
-
-function loaded(seen: URL[] = []) {
+function loaded() {
   return [
     signedIn(),
     listing([harpy]),
     http.get('*/api/v2/administrations/11', () => HttpResponse.json(harpy)),
-    http.get('*/api/v2/11/documents/purchase_invoices', ({ request }) => {
-      seen.push(new URL(request.url))
-      return HttpResponse.json([invoice()], { headers: { 'X-Total-Count': '1' } })
-    }),
+    http.get('*/api/v2/11/documents', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
     http.get('*/api/v2/11/documents/purchase_invoices/941', () => HttpResponse.json(invoice())),
     http.get('*/api/v2/11/documents/receipts', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
-    http.get('*/api/v2/11/documents/typeless_documents', () => HttpResponse.json([upload], { headers: { 'X-Total-Count': '1' } })),
     http.get('*/api/v2/11/contacts', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
   ]
 }
 
-describe('incoming documents', () => {
-  it('lists purchase invoices with their reference, supplier, amount and status', async () => {
-    const seen: URL[] = []
-    server.use(...loaded(seen))
-    renderAt('/11/documents/purchase_invoices')
-    const table = await screen.findByRole('table', { name: 'Purchase invoices' })
-    expect(within(table).getByRole('link', { name: '2026-01234' })).toHaveAttribute('href', '/11/documents/purchase_invoices/941')
-    expect(within(table).getByText('Supplier B.V.')).toBeInTheDocument()
-    expect(within(table).getByText('€121.00')).toBeInTheDocument()
-    expect(within(table).getByText('Open')).toHaveClass('badge')
-    expect(seen.at(-1)?.searchParams.get('filter')).toBe('period:this_year')
-    const nav = screen.getByRole('navigation', { name: 'Administration menu' })
-    expect(within(nav).getByRole('link', { name: 'Purchase invoices' })).toHaveAttribute('aria-current', 'page')
-    expect(within(nav).getByRole('link', { name: 'Receipts' })).toHaveAttribute('href', '/11/documents/receipts')
-  })
-
-  it('says when there are no receipts', async () => {
-    server.use(...loaded())
-    renderAt('/11/documents/receipts')
-    expect(await screen.findByText('No documents match this filter.')).toBeInTheDocument()
-  })
-
+describe('a purchase invoice', () => {
   it('shows a purchase invoice and deletes it', async () => {
     let deleted = false
     server.use(...loaded())
@@ -80,16 +49,7 @@ describe('incoming documents', () => {
     expect(screen.getByRole('link', { name: 'bill.pdf' })).toHaveAttribute('href', '/api/v2/11/documents/purchase_invoices/941/attachments/971/download')
     await chooseMore('Delete')
     await userEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/documents/purchase_invoices'))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/documents$/))
     expect(deleted).toBe(true)
-  })
-
-  it('lists the uploads to process with their files', async () => {
-    server.use(...loaded())
-    renderAt('/11/documents/typeless_documents')
-    const table = await screen.findByRole('table', { name: 'Uploads to process' })
-    expect(within(table).getByRole('link', { name: 'scan.pdf' })).toHaveAttribute('href', '/api/v2/11/documents/typeless_documents/951/attachments/981/download')
-    expect(screen.getByLabelText('Upload documents')).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Add document files' })).toBeInTheDocument()
   })
 })
