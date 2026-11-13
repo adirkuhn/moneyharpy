@@ -8858,10 +8858,8 @@ type SalesInvoice struct {
 	Language              *string             `json:"language,omitempty"`
 	MarkedDubiousOn       *openapi_types.Date `json:"marked_dubious_on,omitempty"`
 	MarkedUncollectibleOn *openapi_types.Date `json:"marked_uncollectible_on,omitempty"`
-
-	// NextReminder When the next reminder is due; 2099-01-01 while the invoice is paused, as Moneybird gives it.
-	NextReminder *openapi_types.Date `json:"next_reminder,omitempty"`
-	Notes        []NoteResponse      `json:"notes"`
+	NextReminder          *openapi_types.Date `json:"next_reminder,omitempty"`
+	Notes                 []NoteResponse      `json:"notes"`
 
 	// OriginalEstimateId Moneybird-compatible identifier_nullable.
 	OriginalEstimateId *IdentifierNullable `json:"original_estimate_id,omitempty"`
@@ -12029,10 +12027,8 @@ type SalesInvoiceResponse struct {
 	Language              *string             `json:"language,omitempty"`
 	MarkedDubiousOn       *openapi_types.Date `json:"marked_dubious_on,omitempty"`
 	MarkedUncollectibleOn *openapi_types.Date `json:"marked_uncollectible_on,omitempty"`
-
-	// NextReminder When the next reminder is due; 2099-01-01 while the invoice is paused, as Moneybird gives it.
-	NextReminder *openapi_types.Date `json:"next_reminder,omitempty"`
-	Notes        *[]NoteResponse     `json:"notes,omitempty"`
+	NextReminder          *openapi_types.Date `json:"next_reminder,omitempty"`
+	Notes                 *[]NoteResponse     `json:"notes,omitempty"`
 
 	// OriginalEstimateId Moneybird-compatible identifier_nullable.
 	OriginalEstimateId *IdentifierNullable `json:"original_estimate_id,omitempty"`
