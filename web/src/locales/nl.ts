@@ -161,6 +161,8 @@ export const nl: Messages = {
       presets: { today: 'Vandaag', this_month: 'Deze maand', previous_month: 'Vorige maand', next_month: 'Volgende maand' },
       from: 'Van', to: 'Tot en met', apply: 'Toepassen', removePeriod: 'Periode verwijderen',
       pricesAre: 'Prijzen zijn', exclVat: 'Exclusief btw', inclVat: 'Inclusief btw', currency: 'Valuta',
+      findRate: 'Zoek btw-tarief', noRate: 'Geen btw-tarief gevonden', findCategory: 'Zoek categorie', noCategory: 'Geen categorie gevonden', mostUsed: 'Meest gebruikt',
+      newRate: 'Btw-tarief toevoegen', newCategory: 'Categorie toevoegen', categoryCode: 'Code',
     },
     detailsTitle: 'Factuurgegevens', settingsTitle: 'Factuurinstellingen', confirmDeleteText: 'Deze conceptfactuur verwijderen? Dit kan niet ongedaan worden gemaakt.',
     title: 'Facturen', new: 'Nieuwe factuur', newTitle: 'Factuur toevoegen',

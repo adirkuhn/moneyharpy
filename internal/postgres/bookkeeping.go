@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -257,4 +258,22 @@ func optionalID(id *resource.ID) pgtype.Int8 {
 		return pgtype.Int8{}
 	}
 	return pgtype.Int8{Int64: int64(*id), Valid: true}
+}
+
+// DetailUsage implements bookkeeping.Store.
+func (s *BookkeepingStore) DetailUsage(ctx context.Context, admin resource.ID, kind string, since time.Time) (bookkeeping.Usage, error) {
+	rows, err := s.q.DetailUsage(ctx, sqlc.DetailUsageParams{Kind: kind, AdministrationID: int64(admin), Since: pgtype.Date{Time: since, Valid: true}})
+	if err != nil {
+		return bookkeeping.Usage{}, err
+	}
+	var u bookkeeping.Usage
+	for _, r := range rows {
+		c := bookkeeping.UsageCount{ID: resource.ID(r.ID), Count: int(r.Uses)}
+		if r.What == "tax_rate" {
+			u.TaxRates = append(u.TaxRates, c)
+		} else {
+			u.LedgerAccounts = append(u.LedgerAccounts, c)
+		}
+	}
+	return u, nil
 }

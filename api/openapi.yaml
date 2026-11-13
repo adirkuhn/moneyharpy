@@ -1345,6 +1345,43 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/details/usage:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getDetailUsage
+      x-permissions: [settings, sales_invoices, documents, estimates]
+      summary: Retrieve the most used VAT rates and categories
+      description: >-
+        MoneyHarpy extension. The VAT rates and categories the lines of purchase documents (kind purchase) or of
+        sales invoices (kind sales) of the last twelve months used most, at most five of each, most used first.
+        The line editor offers them first.
+      tags: [Tax rates, Ledger accounts]
+      parameters:
+        - name: kind
+          in: query
+          required: true
+          description: Whose lines to count, purchase invoices and receipts or sales invoices.
+          schema:
+            type: string
+            enum: [purchase, sales]
+      responses:
+        '200':
+          description: The most used VAT rates and categories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailUsage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/tax_rates/order:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -14887,6 +14924,32 @@ components:
               items:
                 type: string
                 maxLength: 16
+    DetailUsage:
+      type: object
+      description: MoneyHarpy extension. How often lines used VAT rates and categories, most used first.
+      required: [tax_rates, ledger_accounts]
+      additionalProperties: false
+      properties:
+        tax_rates:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/UsageCount'
+        ledger_accounts:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/UsageCount'
+    UsageCount:
+      type: object
+      required: [id, count]
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        count:
+          type: integer
+          description: The number of lines that used it.
     TaxRateOrderRequest:
       type: object
       required: [tax_rate_type, ids]

@@ -1,8 +1,8 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { FormRow, type Width } from '../forms/Form'
-import { CaretIcon } from '../layout/icons'
+import { type SearchOption, SearchSelect } from '../forms/SearchSelect'
 
-export type SelectOption = { value: string; label: string; separatorAfter?: boolean }
+export type SelectOption = SearchOption
 
 type Props = {
   label: string
@@ -16,111 +16,22 @@ type Props = {
   width?: Width
 }
 
-/** A select whose long list can be narrowed by typing. */
+/** A select whose long list can be narrowed by typing, in a form row. */
 export function SearchableSelect({ label, searchLabel, emptyLabel, value, options, onChange, errors, help, width }: Props) {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [active, setActive] = useState(0)
-  const root = useRef<HTMLDivElement>(null)
-  const button = useRef<HTMLButtonElement>(null)
-
-  const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    return needle ? options.filter((o) => o.label.toLowerCase().includes(needle)) : options
-  }, [options, query])
-
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-    const onClick = (e: MouseEvent) => {
-      if (!root.current?.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('click', onClick)
-    return () => document.removeEventListener('click', onClick)
-  }, [open])
-
-  const close = () => {
-    setOpen(false)
-    setQuery('')
-    setActive(0)
-    button.current?.focus()
-  }
-  const pick = (option: SelectOption | undefined) => {
-    if (option) {
-      onChange(option.value)
-      close()
-    }
-  }
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActive((i) => Math.min(i + 1, visible.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActive((i) => Math.max(i - 1, 0))
-    } else if (e.key === 'Enter') {
-      e.preventDefault()
-      pick(visible[active])
-    } else if (e.key === 'Escape') {
-      e.preventDefault()
-      close()
-    }
-  }
-
   return (
     <FormRow label={label} errors={errors} help={help} width={width}>
       {({ id, labelId, ...described }) => (
-      <div className="picker" ref={root}>
-        <button
-          ref={button}
+        <SearchSelect
           id={id}
-          type="button"
-          role="combobox"
-          className="picker__button"
-          aria-labelledby={labelId}
-          aria-expanded={open}
-          aria-haspopup="listbox"
-          aria-controls={`${id}-list`}
-          {...described}
-          onClick={() => setOpen(!open)}
-        >
-          <span className="picker__value">{options.find((o) => o.value === value)?.label ?? ''}</span>
-          <CaretIcon />
-        </button>
-        {open && (
-          <div className="picker__panel">
-            <input
-              type="search"
-              aria-label={searchLabel}
-              placeholder={searchLabel}
-              autoFocus
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value)
-                setActive(0)
-              }}
-              onKeyDown={onKeyDown}
-            />
-            <ul id={`${id}-list`} role="listbox" aria-labelledby={labelId}>
-              {visible.map((option, index) => (
-                <li
-                  key={option.value}
-                  role="option"
-                  aria-selected={option.value === value}
-                  className={`${index === active ? 'is-active' : ''}${option.separatorAfter && !query ? ' has-separator' : ''}`}
-                  onClick={() => pick(option)}
-                >
-                  {option.label}
-                </li>
-              ))}
-            </ul>
-            {visible.length === 0 && <p className="picker__empty">{emptyLabel}</p>}
-          </div>
-        )}
-      </div>
+          labelledBy={labelId}
+          searchLabel={searchLabel}
+          emptyLabel={emptyLabel}
+          value={value}
+          options={options}
+          onChange={onChange}
+          aria-invalid={described['aria-invalid']}
+          aria-describedby={described['aria-describedby']}
+        />
       )}
     </FormRow>
   )

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
+import { chooseOption } from '../invoices/testkit'
 import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
@@ -84,6 +85,10 @@ function loaded(over: { doc?: PurchaseInvoice; summaries?: DocumentSummary[] } =
     http.get('*/api/v2/11/documents/:type/:id/attachments/:attachment/download', () => new HttpResponse('file', { headers: { 'Content-Type': 'application/octet-stream' } })),
     http.get('*/api/v2/11/tax_rates', () => HttpResponse.json(rates)),
     http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json(accounts)),
+    http.get('*/api/v2/11/details/usage', ({ request }) =>
+      HttpResponse.json(new URL(request.url).searchParams.get('kind') === 'purchase'
+        ? { tax_rates: [{ id: '2209', count: 4 }], ledger_accounts: [{ id: '4001', count: 9 }] }
+        : { tax_rates: [], ledger_accounts: [] })),
     http.get('*/api/v2/11/products', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
     http.get('*/api/v2/11/users', () => HttpResponse.json([])),
     http.get('*/api/v2/11/contacts', () => HttpResponse.json([supplier], { headers: { 'X-Total-Count': '1' } })),
@@ -162,9 +167,21 @@ describe('the page of an incoming document', () => {
     const lines = within(form).getByRole('table', { name: 'Purchase invoice lines' })
     await userEvent.type(within(lines).getByRole('combobox', { name: 'Description' }), 'Paper')
     await userEvent.type(within(lines).getByRole('textbox', { name: 'Price' }), '100')
-    expect(within(lines).getByRole('combobox', { name: 'VAT rate' })).toHaveDisplayValue('21% btw')
-    expect(within(within(lines).getByRole('combobox', { name: 'VAT rate' })).queryByRole('option', { name: '21% sales' })).toBeNull()
-    await userEvent.selectOptions(within(lines).getByRole('combobox', { name: 'Category' }), 'Other costs')
+    expect(within(lines).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('21% btw')
+    // Purchase lines offer the purchase rates, the most used of purchase documents first.
+    await userEvent.click(within(lines).getByRole('combobox', { name: 'VAT rate' }))
+    const rateList = screen.getByRole('listbox', { name: 'VAT rate' })
+    expect(within(rateList).getAllByRole('option').map((o) => o.textContent)).toEqual(['9% btw', '21% btw', '9% btw', 'Add VAT rate...'])
+    expect(within(rateList).getByRole('group', { name: 'Most used' })).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    // And the categories of costs, grouped by type.
+    await userEvent.click(within(lines).getByRole('combobox', { name: 'Category' }))
+    const categoryList = screen.getByRole('listbox', { name: 'Category' })
+    expect(within(categoryList).getByRole('group', { name: 'Expenses' })).toBeInTheDocument()
+    expect(within(categoryList).queryByRole('option', { name: /Sales/ })).toBeNull()
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Find category' }), 'other')
+    await userEvent.keyboard('{Enter}')
+    expect(within(lines).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Other costs (4000)')
     expect(within(form).getByRole('table', { name: 'Totals' })).toHaveTextContent('€121.00')
     await userEvent.type(within(form).getByRole('textbox', { name: 'Days' }), '14')
     expect(within(form).getByRole('textbox', { name: 'Due date' })).toHaveValue('2026-11-15')
@@ -175,6 +192,50 @@ describe('the page of an incoming document', () => {
       contact_id: '701', reference: 'INV-1', date: '2026-11-01', due_date: '2026-11-15', currency: 'EUR', prices_are_incl_tax: false,
       details_attributes: [{ description: 'Paper', amount: '1', price: '100', tax_rate_id: '2201', ledger_account_id: '4001', row_order: 1 }],
     })
+  })
+
+  it('adds a purchase VAT rate and a cost category from a line, each in a popup', async () => {
+    const posted: unknown[] = []
+    const five = rate({ id: '2205', name: '5% purchase', percentage: '5' })
+    const travel = account({ id: '4002', name: 'Travel', account_type: 'direct_costs', account_id: null })
+    let shownRates = rates
+    let shownAccounts = accounts
+    server.use(...loaded({ doc: invoice({ state: 'new', details: [] }) }))
+    server.use(
+      http.get('*/api/v2/11/tax_rates', () => HttpResponse.json(shownRates)),
+      http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json(shownAccounts)),
+      http.get('*/api/v2/11/bookkeeping_settings', () => HttpResponse.json({ chart_scheme: '', chart_schemes: [], tax_report_boxes: [] })),
+      http.post('*/api/v2/11/tax_rates', async ({ request }) => {
+        posted.push(await request.json())
+        shownRates = [...rates, five]
+        return HttpResponse.json(five, { status: 201 })
+      }),
+      http.post('*/api/v2/11/ledger_accounts', async ({ request }) => {
+        posted.push(await request.json())
+        shownAccounts = [...accounts, travel]
+        return HttpResponse.json(travel, { status: 201 })
+      }),
+    )
+    renderAt('/11/documents/941')
+    const form = await screen.findByRole('form', { name: 'Purchase invoice' })
+    const lines = within(form).getByRole('table', { name: 'Purchase invoice lines' })
+    await chooseOption(lines, 'VAT rate', 'Add VAT rate...')
+    let dialog = await screen.findByRole('dialog', { name: 'Add VAT rate' })
+    await userEvent.type(within(dialog).getByLabelText('Name'), '5% purchase')
+    await userEvent.type(within(dialog).getByLabelText('Percentage'), '5')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(within(lines).getByRole('combobox', { name: 'VAT rate' })).toHaveTextContent('5% purchase'))
+
+    await chooseOption(lines, 'Category', 'Add Category...')
+    dialog = await screen.findByRole('dialog', { name: 'Add category' })
+    expect(within(within(dialog).getByLabelText('Type')).getAllByRole('option').map((o) => o.textContent)).toEqual(['Direct costs', 'Expenses', 'Non-current assets', 'Other income and expenses'])
+    await userEvent.type(within(dialog).getByLabelText('Name'), 'Travel')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(within(lines).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Travel'))
+    expect(posted).toEqual([
+      { tax_rate: { name: '5% purchase', percentage: '5', tax_rate_type: 'purchase_invoice', show_tax: true, active: true } },
+      { ledger_account: { name: 'Travel', account_type: 'direct_costs', parent_id: '', account_id: '' } },
+    ])
   })
 
   it('shows the problems of the server on the fields', async () => {

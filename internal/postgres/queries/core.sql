@@ -1188,3 +1188,21 @@ SELECT EXISTS (SELECT 1 FROM sales_invoice_details s WHERE s.administration_id =
 
 -- name: ProjectInJournal :one
 SELECT EXISTS (SELECT 1 FROM ledger_entries WHERE administration_id = @administration_id AND project_id = @project_id);
+
+-- name: DetailUsage :many
+-- How many lines of purchase documents (kind purchase) or sales invoices
+-- (kind sales) dated on or after since used each VAT rate and category. A
+-- draft invoice without a date counts by the day it was made.
+WITH lines AS (
+    SELECT l.tax_rate_id, l.ledger_account_id
+    FROM purchase_document_details l JOIN purchase_documents d ON d.id = l.purchase_document_id
+    WHERE @kind::text = 'purchase' AND l.administration_id = @administration_id AND d.date >= @since::date
+    UNION ALL
+    SELECT l.tax_rate_id, l.ledger_account_id
+    FROM sales_invoice_details l JOIN sales_invoices i ON i.id = l.sales_invoice_id
+    WHERE @kind::text = 'sales' AND l.administration_id = @administration_id AND COALESCE(i.invoice_date, i.created_at::date) >= @since::date
+)
+SELECT 'tax_rate'::text AS what, tax_rate_id::bigint AS id, count(*)::bigint AS uses FROM lines GROUP BY tax_rate_id
+UNION ALL
+SELECT 'ledger_account'::text, ledger_account_id::bigint, count(*)::bigint FROM lines WHERE ledger_account_id IS NOT NULL GROUP BY ledger_account_id
+ORDER BY what, uses DESC, id;

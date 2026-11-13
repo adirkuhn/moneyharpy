@@ -580,6 +580,32 @@ textarea { min-height: 4.5rem; padding: 0.5rem 0.625rem; resize: vertical; }
 .picker__panel li.has-separator { margin-bottom: 0.375rem; border-bottom: 1px solid var(--line); border-radius: 5px 5px 0 0; }
 .picker__empty { margin: 0.375rem 0.625rem; color: var(--muted); font-weight: 400; }
 
+/* A select with a search over its options, after Moneybird's select popups. */
+.search-select { position: relative; min-width: 0; }
+.search-select__button { gap: 0.5rem; font-size: 0.875rem; }
+.search-select__button .is-placeholder { color: var(--muted); }
+.search-select__panel {
+  position: absolute; z-index: 30; top: calc(100% + 0.25rem); left: 0; display: grid; gap: 0.375rem;
+  min-width: 100%; width: max-content; max-width: min(24rem, calc(100vw - 2rem)); padding: 0.375rem;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 12px 28px rgb(9 38 83 / 0.18);
+  font-size: 0.875rem; font-weight: 400; text-align: left;
+}
+.search-select__search { width: 100%; min-height: 2.25rem; height: 2.25rem; font-size: 0.875rem; }
+.search-select__list { max-height: 18rem; overflow-y: auto; overscroll-behavior: contain; }
+.search-select__heading { padding: 0.5rem 0.625rem 0.25rem; color: var(--muted); font-size: 0.75rem; font-weight: 650; letter-spacing: 0.02em; text-transform: uppercase; }
+.search-select__option {
+  --indent: 0.625rem; display: flex; align-items: center; gap: 0.375rem; min-height: 2.25rem; padding: 0 0.625rem; padding-inline-start: var(--indent); border-radius: 5px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+}
+.search-select__group .search-select__option { --indent: 1.25rem; }
+.search-select__option.is-active { background: var(--row-hover); }
+.search-select__option[aria-selected='true'] { color: var(--blue); font-weight: 650; }
+.search-select__option.has-separator { border-bottom: 1px solid var(--line); border-radius: 5px 5px 0 0; }
+.search-select__empty { display: flex; align-items: center; min-height: 2.25rem; padding: 0 0.625rem; color: var(--muted); }
+.search-select__add { margin-top: 0.25rem; border-top: 1px solid var(--line); border-radius: 0 0 5px 5px; color: var(--link); font-weight: 550; }
+.search-select__add svg { flex: none; }
+.is-uncertain.search-select__button { border-color: var(--gold) !important; background: color-mix(in srgb, var(--gold) 12%, var(--surface)) !important; }
+
 @media (max-width: 40rem) {
   .wizard__wing { display: none; }
   .wizard__card { padding: 1.25rem; }
