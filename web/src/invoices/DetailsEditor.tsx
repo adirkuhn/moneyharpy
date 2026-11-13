@@ -396,8 +396,8 @@ export function DetailsEditor(props: Props) {
 
 type Translate = (key: string) => string
 
-/** A category as its select names it: with its code, when it has one. */
-const categoryLabel = (a: LedgerAccount) => (a.account_id ? `${a.name ?? ''} (${a.account_id})` : (a.name ?? ''))
+// Only the name, as the user asked; the code still matches a search.
+const categoryLabel = (a: LedgerAccount) => a.name ?? ''
 
 /**
  * The options of a line's VAT rate and category selects: the rates, the

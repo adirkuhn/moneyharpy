@@ -200,7 +200,7 @@ describe('the page of an incoming document', () => {
     expect(within(categoryList).queryByRole('option', { name: /Sales/ })).toBeNull()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Find category' }), 'other')
     await userEvent.keyboard('{Enter}')
-    expect(within(lines).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Other costs (4000)')
+    expect(within(lines).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Other costs')
     expect(within(form).getByRole('table', { name: 'Totals' })).toHaveTextContent('€121.00')
     await userEvent.type(within(form).getByRole('textbox', { name: 'Days' }), '14')
     expect(within(form).getByRole('textbox', { name: 'Due date' })).toHaveValue('2026-11-15')
