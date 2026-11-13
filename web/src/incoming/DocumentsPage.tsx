@@ -8,7 +8,7 @@ import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { formErrors } from '../forms/Form'
 import { filterTerms, type ListFilter, parseFilter, perPage } from '../invoices/queries'
 import { StateBadge } from '../invoices/StateBadge'
-import { ListIcon } from '../layout/icons'
+import { ListIcon, SpinnerIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { DocumentFilter, type Term } from '../list/DocumentFilter'
@@ -17,7 +17,7 @@ import { FilterPanel } from '../list/FilterPanel'
 import { GettingStarted } from '../list/GettingStarted'
 import { ListActions } from '../list/ListActions'
 import {
-  type DocumentSummary, documentPath, documentStates, filterTypes, hasAmount, typeTags, useDeleteDocuments, useDocuments, useDocumentStatistics, useUploadEach,
+  type DocumentSummary, documentPath, documentStates, filterTypes, hasAmount, isReading, typeTags, useDeleteDocuments, useDocuments, useDocumentStatistics, useUploadEach,
 } from './documents'
 
 /** The quick filters of Moneybird's Incoming page, as the filters they stand for. */
@@ -158,7 +158,10 @@ export function DocumentsPage() {
               {
                 key: 'reference', header: t('incoming.reference'), link: true,
                 // The tag stays beside a long reference, such as a file name, which wraps on its own.
-                cell: (d) => <span className="document-type-ref"><span className="document-type-tag">{typeTags[d.type]}</span> <span>{d.reference}</span></span>,
+                // An upload being read says so until Scan and Recognise has filled it in.
+                cell: (d) => isReading(d) ? (
+                  <span className="document-reading"><SpinnerIcon /> {t('recognition.recognising')}</span>
+                ) : <span className="document-type-ref"><span className="document-type-tag">{typeTags[d.type]}</span> <span>{d.reference}</span></span>,
               },
               { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (d) => <AttachmentIcon count={d.attachments_count} /> },
               { key: 'contact', header: t('incoming.contact'), cell: (d) => d.contact_name || <span className="empty">{t('incoming.noContact')}</span> },

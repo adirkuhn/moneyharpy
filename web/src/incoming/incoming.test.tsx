@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
+import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
-import type { DocumentSummary } from './documents'
+import { type DocumentSummary, polling } from './documents'
 import type { GeneralDocument, PurchaseInvoice, TypelessDocument } from './queries'
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
@@ -38,19 +39,19 @@ const invoice = (over: Partial<PurchaseInvoice> = {}): PurchaseInvoice => ({
   fiscal_allocations: [], payments: [], notes: [], events: [], attachments: [pdf],
   total_price_excl_tax: '100.0', total_price_incl_tax: '121.0', total_paid: '0.0', total_unpaid: '121.0', total_tax: '21.0',
   tax_totals: [{ tax_rate_id: '2201', taxable_amount: '100.0', tax_amount: '21.0' }],
-  created_at: stamp, version: 1, uri: '/11/documents/purchase_invoices/941',
+  created_at: stamp, version: 1, uri: '/11/documents/purchase_invoices/941', recognition: { state: 'none', source: null, fields: [] },
   ...over,
 })
 
 const summary = (over: Partial<DocumentSummary>): DocumentSummary => ({
   id: '941', administration_id: '11', type: 'PurchaseInvoice', reference: 'INV-1', contact_id: '701', contact_name: 'Supplier B.V.',
   date: '2026-11-01', state: 'open', currency: 'EUR', total_price_incl_tax: '121.0', attachments_count: 1, created_at: stamp,
-  uri: '/api/v2/11/documents/purchase_invoices/941', ...over,
+  uri: '/api/v2/11/documents/purchase_invoices/941', recognition_state: 'none', ...over,
 })
 
 const upload: TypelessDocument = {
   id: '951', administration_id: '11', contact_id: null, contact: null, date: '2026-11-10', reference: 'scan.jpg', state: 'new', origin: 'upload',
-  events: [], created_at: stamp, version: 1, uri: '/11/documents/typeless_documents/951',
+  events: [], created_at: stamp, version: 1, uri: '/11/documents/typeless_documents/951', recognition: { state: 'none', source: null, fields: [] },
   attachments: [{ ...pdf, id: '972', attachable_id: '951', filename: 'scan.jpg', content_type: 'image/jpeg' }],
 } as TypelessDocument
 
@@ -78,6 +79,8 @@ function loaded(over: { doc?: PurchaseInvoice; summaries?: DocumentSummary[] } =
     http.get('*/api/v2/11/documents/purchase_invoices/941', () => HttpResponse.json(doc)),
     http.get('*/api/v2/11/documents/typeless_documents/951', () => HttpResponse.json(upload)),
     http.get('*/api/v2/11/documents/general_documents/981', () => HttpResponse.json(general)),
+    // Without the OCR service there is no preview, and the page shows the file itself.
+    http.get('*/api/v2/11/documents/:id/attachments/:attachment/preview', () => new HttpResponse(null, { status: 404 })),
     http.get('*/api/v2/11/documents/:type/:id/attachments/:attachment/download', () => new HttpResponse('file', { headers: { 'Content-Type': 'application/octet-stream' } })),
     http.get('*/api/v2/11/tax_rates', () => HttpResponse.json(rates)),
     http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json(accounts)),
@@ -289,5 +292,117 @@ describe('the page of an incoming document', () => {
     const entry = screen.getByRole('form', { name: 'Entry' })
     expect(within(entry).getByRole('textbox', { name: /Reference/ })).toHaveValue('Opening balance')
     expect(screen.getByRole('combobox', { name: 'Type' })).toBeDisabled()
+  })
+})
+
+describe('Scan and Recognise on the page of a document', () => {
+  const quick = polling.intervalMs
+  beforeEach(() => { polling.intervalMs = 20 })
+  afterEach(() => { polling.intervalMs = quick })
+
+  const png = (pages: number) => () => new HttpResponse(new Uint8Array([137, 80, 78, 71]), { headers: { 'Content-Type': 'image/png', 'X-Page-Count': String(pages) } })
+
+  it('shows every page of the attachment as an image, the first at once and the others under it', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/documents/941/attachments/971/preview', png(3)))
+    renderAt('/11/documents/941')
+    const viewer = await screen.findByRole('region', { name: 'Attachments' })
+    expect(await within(viewer).findByRole('img', { name: 'bill.pdf, page 1' })).toHaveAttribute('src', 'blob:preview')
+    const second = within(viewer).getByRole('img', { name: 'bill.pdf, page 2' })
+    expect(second).toHaveAttribute('src', '/api/v2/11/documents/941/attachments/971/preview?page=2')
+    expect(second).toHaveAttribute('loading', 'lazy')
+    expect(within(viewer).getByRole('img', { name: 'bill.pdf, page 3' })).toBeInTheDocument()
+    expect(within(viewer).queryByTitle('bill.pdf')).toBeNull()
+    const zoom = within(viewer).getByRole('button', { name: 'Zoom in' })
+    await userEvent.click(zoom)
+    expect(zoom).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('marks the attachment it read and colours the tiles by type', async () => {
+    server.use(...loaded({ doc: invoice({ state: 'new', recognition: { state: 'done', source: 'text', fields: [] }, attachments: [pdf, { ...pdf, id: '973', filename: 'mail.eml', content_type: 'message/rfc822' }] }) }))
+    renderAt('/11/documents/941')
+    const viewer = await screen.findByRole('region', { name: 'Attachments' })
+    expect(await within(viewer).findByRole('img', { name: 'We used this attachment for the analysis.' })).toBeInTheDocument()
+    expect(within(within(viewer).getByRole('button', { name: /bill\.pdf/ })).getByText('PDF')).toHaveClass('file-tile__badge--green')
+    await userEvent.click(within(viewer).getByRole('button', { name: /mail\.eml/ }))
+    expect(within(within(viewer).getByRole('button', { name: /mail\.eml/ })).getByText('EML')).toHaveClass('file-tile__badge--red')
+    expect(within(viewer).queryByRole('img', { name: 'We used this attachment for the analysis.' })).toBeNull()
+  })
+
+  it('marks the fields it filled in with a bolt, and those it was unsure of in gold', async () => {
+    server.use(...loaded({
+      doc: invoice({
+        state: 'new',
+        recognition: {
+          state: 'done', source: 'ocr',
+          fields: [
+            { field: 'contact_id', confidence: 'certain' }, { field: 'reference', confidence: 'certain' }, { field: 'date', confidence: 'uncertain' },
+            { field: 'currency', confidence: 'certain' }, { field: 'details.0.description', confidence: 'certain' }, { field: 'details.0.tax_rate_id', confidence: 'uncertain' },
+          ],
+        },
+      }),
+    }))
+    renderAt('/11/documents/941')
+    const form = await screen.findByRole('form', { name: 'Purchase invoice' })
+    expect(within(form).getAllByRole('img', { name: 'We filled this in for you from the attachment.' })).toHaveLength(3)
+    expect(within(form).getAllByRole('img', { name: 'Please check: we were not sure about this.' })).toHaveLength(2)
+    expect(within(form).getByRole('textbox', { name: 'Date' }).closest('.form-input')).toHaveClass('is-uncertain')
+    expect(within(form).getByRole('textbox', { name: 'Invoice id' }).closest('.form-input')).not.toHaveClass('is-uncertain')
+    const lines = within(form).getByRole('table', { name: 'Purchase invoice lines' })
+    expect(within(lines).getByRole('combobox', { name: 'VAT rate' })).toHaveClass('is-uncertain')
+    expect(within(lines).getByRole('combobox', { name: 'Description' })).not.toHaveClass('is-uncertain')
+  })
+
+  it('says it is reading the document and shows what it read when it is done', async () => {
+    let reading = true
+    const read = () => invoice({
+      state: 'new', reference: reading ? '' : 'INV-77',
+      recognition: reading ? { state: 'pending', source: null, fields: [] } : { state: 'done', source: 'text', fields: [{ field: 'reference', confidence: 'certain' }] },
+    })
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/documents/941', () => HttpResponse.json(summary({ state: 'new', recognition_state: reading ? 'pending' : 'done' }))),
+      http.get('*/api/v2/11/documents/purchase_invoices/941', () => HttpResponse.json(read())),
+    )
+    renderAt('/11/documents/941')
+    expect(await screen.findByText('We are reading this document…')).toBeInTheDocument()
+    reading = false
+    await waitFor(() => expect(screen.queryByText('We are reading this document…')).toBeNull())
+    expect(await within(card()).findByRole('textbox', { name: 'Invoice id' })).toHaveValue('INV-77')
+  })
+
+  it('says when the document could not be read, and reads it again', async () => {
+    let asked = 0
+    server.use(...loaded({ doc: invoice({ state: 'new', recognition: { state: 'failed', source: null, fields: [] } }) }))
+    server.use(http.post('*/api/v2/11/documents/941/recognize', () => {
+      asked++
+      return HttpResponse.json(summary({ state: 'new', recognition_state: 'pending' }), { status: 202 })
+    }))
+    renderAt('/11/documents/941')
+    const notice = await screen.findByRole('status', { name: 'Scan and Recognise' })
+    expect(notice).toHaveTextContent('We could not read this document. Fill it in yourself, or read it again.')
+    await userEvent.click(within(notice).getByRole('button', { name: 'Read again' }))
+    await waitFor(() => expect(asked).toBe(1))
+  })
+
+  it('reads an upload again from the More actions menu', async () => {
+    let asked = 0
+    server.use(...loaded())
+    server.use(http.post('*/api/v2/11/documents/951/recognize', () => {
+      asked++
+      return HttpResponse.json(summary({ id: '951', type: 'TypelessDocument', state: 'new', recognition_state: 'pending' }), { status: 202 })
+    }))
+    renderAt('/11/documents/951')
+    await screen.findByRole('heading', { level: 1, name: 'scan.jpg' })
+    await chooseMore('Read again')
+    await waitFor(() => expect(asked).toBe(1))
+  })
+
+  it('does not offer to read a booked document again', async () => {
+    server.use(...loaded())
+    renderAt('/11/documents/941')
+    await screen.findByRole('heading', { level: 1, name: 'Purchase invoice INV-1' })
+    await userEvent.click(screen.getByRole('button', { name: 'More actions' }))
+    expect(screen.queryByRole('button', { name: 'Read again' })).toBeNull()
   })
 })
