@@ -68,6 +68,11 @@ type CompanySearcher interface {
 	SearchCompanies(ctx context.Context, query string) ([]administration.CompanyMatch, error)
 }
 
+// RegisterChecker checks the experimental KVK website search.
+type RegisterChecker interface {
+	Check(ctx context.Context) error
+}
+
 // AddressLookup completes Dutch addresses.
 type AddressLookup interface {
 	LookupAddress(ctx context.Context, zipcode, houseNumber string) (administration.AddressMatch, error)
@@ -112,6 +117,7 @@ type Deps struct {
 	Google          GoogleClient
 	LM2             LM2Client
 	Companies       CompanySearcher
+	CompanyCheck    RegisterChecker
 	Addresses       AddressLookup
 	Mail            TestMailer
 	// BaseURL is the public origin of this installation.
@@ -293,8 +299,22 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		errors.Is(err, administration.ErrAddressUnknown),
 		errors.Is(err, identity.ErrTokenNotFound):
 		writeError(w, http.StatusNotFound, "Not found")
+	case errors.Is(err, administration.ErrRegisterUnavailable):
+		s.registerProblem(w, r, err, "kvk_unavailable", "KVK search is unavailable right now")
+	case errors.Is(err, administration.ErrRegisterBlocked):
+		s.registerProblem(w, r, err, "kvk_blocked", "KVK blocked the search request")
+	case errors.Is(err, administration.ErrRegisterBusy):
+		w.Header().Set("Retry-After", "60")
+		s.registerProblem(w, r, err, "kvk_rate_limited", "Too many KVK searches, retry in a minute")
 	default:
 		s.deps.Logger.ErrorContext(r.Context(), "request failed", "path", r.URL.Path, "error", err)
 		writeError(w, http.StatusInternalServerError, "Internal server error")
 	}
+}
+
+// registerProblem answers a company register failure with a code clients can
+// explain, and logs the detail for the administrator.
+func (s *server) registerProblem(w http.ResponseWriter, r *http.Request, err error, code, message string) {
+	s.deps.Logger.WarnContext(r.Context(), "company register search failed", "path", r.URL.Path, "error", err)
+	writeJSON(w, http.StatusServiceUnavailable, Error{Error: message, Code: &code})
 }
