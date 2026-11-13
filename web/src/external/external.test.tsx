@@ -212,6 +212,13 @@ describe('an external invoice', () => {
     expect(within(files).getByRole('link', { name: 'order.pdf' })).toHaveAttribute('href', '/api/v2/11/external_sales_invoices/931/attachments/971/download')
   })
 
+  it('still offers Register payment once paid, as Moneybird does', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/external_sales_invoices/931', () => HttpResponse.json(external({ state: 'paid', total_paid: '121.0', total_unpaid: '0.0', paid_at: '2026-11-05' }))))
+    renderAt('/11/external_sales_invoices/931')
+    expect(await screen.findByRole('link', { name: 'Register payment' })).toHaveAttribute('href', '/11/external_sales_invoices/931/payments/new')
+  })
+
   it('can be marked dubious while it is unpaid', async () => {
     let dubious: unknown
     let current = external({ state: 'late' })

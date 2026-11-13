@@ -1467,13 +1467,13 @@ func TestWorkflows(t *testing.T) {
 	base := "/api/v2/" + a.Id + "/workflows"
 
 	list := decode[[]httpapi.Workflow](t, owner.do(http.MethodGet, base+".json", nil))
-	if len(list) != 2 || *list[1].Type != "InvoiceWorkflow" || !*list[1].Default || len(*list[1].Steps) != 3 {
+	if len(list) != 2 || *list[1].Type != "InvoiceWorkflow" || !*list[1].Default || len(*list[1].Steps) != 4 {
 		t.Fatalf("list = %+v", list)
 	}
-	// Moneybird's steps: step_order from 0, each expiring after its
-	// due_interval, reminder_delay 0.
+	// Moneybird's default steps: step_order from 0, each expiring after its
+	// due_interval (14, 10, 5, 5), reminder_delay 0.
 	for i, st := range *list[1].Steps {
-		if want := []int{14, 7, 7}[i]; *st.StepOrder != i || *st.DueInterval != want || *st.ReminderDelay != 0 {
+		if want := []int{14, 10, 5, 5}[i]; *st.StepOrder != i || *st.DueInterval != want || *st.ReminderDelay != 0 {
 			t.Errorf("default step %d = order %d, due interval %d, delay %d", i, *st.StepOrder, *st.DueInterval, *st.ReminderDelay)
 		}
 	}

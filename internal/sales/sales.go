@@ -105,7 +105,8 @@ type Invoice struct {
 	// reminder is due when that one expires.
 	LastReminderOn *time.Time
 	// NextReminder is when the workflow's next reminder is due; it is
-	// worked out on reading and empty when no reminder follows.
+	// worked out on reading and empty when no reminder follows. A paused
+	// invoice that is still to be paid has PausedNextReminder.
 	NextReminder *time.Time
 	// OriginalID is the invoice a credit invoice credits.
 	OriginalID              *resource.ID

@@ -23,6 +23,7 @@ type salesInvoice struct {
 	TotalUnpaid    string  `json:"total_unpaid"`
 	OriginalID     *string `json:"original_sales_invoice_id"`
 	Paused         bool    `json:"paused"`
+	NextReminder   *string `json:"next_reminder"`
 	// PaymentConditions start as the workflow's; PaymentReference and
 	// ShortPaymentReference are given when the invoice is sent.
 	PaymentConditions     *string `json:"payment_conditions"`
@@ -218,8 +219,9 @@ func TestSalesInvoiceLifecycle(t *testing.T) {
 
 	paused := owner.do(http.MethodPost, invoices+"/"+inv.ID+"/pause", nil)
 	wantStatus(t, paused, http.StatusCreated)
-	if !decode[salesInvoice](t, paused).Paused {
-		t.Error("not paused")
+	// As Moneybird's pause example, the next reminder becomes 2099-01-01.
+	if p := decode[salesInvoice](t, paused); !p.Paused || p.NextReminder == nil || *p.NextReminder != "2099-01-01" {
+		t.Errorf("paused = %+v", p)
 	}
 	wantStatus(t, owner.do(http.MethodPost, invoices+"/"+inv.ID+"/resume", nil), http.StatusCreated)
 

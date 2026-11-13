@@ -303,8 +303,13 @@ func TestPauseNotesAndDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	sent, _ := h.svc.Send(ctx, adminID, inv.ID, owner, SendInput{DeliveryMethod: "Manual"})
-	if p, err := h.svc.Pause(ctx, adminID, sent.ID, owner, true); err != nil || !p.Paused {
+	// As Moneybird's pause example: a paused invoice's next reminder is
+	// 2099-01-01, and resuming brings back the workflow's day.
+	if p, err := h.svc.Pause(ctx, adminID, sent.ID, owner, true); err != nil || !p.Paused || p.NextReminder == nil || p.NextReminder.Format(time.DateOnly) != "2099-01-01" {
 		t.Errorf("pause = %+v, %v", p, err)
+	}
+	if p, err := h.svc.Pause(ctx, adminID, sent.ID, owner, false); err != nil || p.Paused || p.NextReminder == nil || p.NextReminder.Equal(PausedNextReminder) {
+		t.Errorf("resume = %+v, %v", p, err)
 	}
 	other := draft(t, h)
 	if err := h.svc.Delete(ctx, adminID, other.ID, owner); err != nil {

@@ -357,9 +357,55 @@ func (s *Service) ensureWorkflows(ctx context.Context, a administration.Administ
 	return nil
 }
 
-// defaultWorkflow is the starting point for a workflow of type t: a 14-day
-// payment term, then two reminders that each expire after a week (Day 15
-// and Day 22), or a 30-day estimate.
+// DefaultReminderTexts are the emails of the three reminders of Moneybird's
+// default invoice workflow: Moneybird's text in Dutch, its translation
+// otherwise. {reminders_table} is where the unpaid invoices are listed.
+// Moneybird's text also links to the contact's open invoices online
+// ({recipient.show_open_invoices_online_url}); MoneyHarpy has no such page,
+// so that sentence is left out.
+func DefaultReminderTexts(language string) [3]string {
+	if strings.HasPrefix(language, "nl") {
+		const crossed = "Mochten de betalingen en deze herinnering elkaar kruisen, dan kunt u deze herinnering als niet verzonden beschouwen."
+		return [3]string{
+			reminderText("Geachte {recipient.name},",
+				"Uit onze administratie blijkt dat u de onderstaande facturen nog niet voldaan heeft. We willen u erop wijzen dat de betaaltermijn van deze facturen verstreken is en verzoeken u vriendelijk doch dringend om de betaling zo spoedig mogelijk te voldoen.",
+				crossed, "Met vriendelijke groet,"),
+			reminderText("Geachte {recipient.name},",
+				"Ondanks een eerdere herinnering blijkt uit onze administratie dat u de onderstaande facturen nog niet voldaan heeft. We willen u er op wijzen dat de betaaltermijn van deze facturen verstreken is en verzoeken u vriendelijk doch dringend om de betaling zo spoedig mogelijk te voldoen.",
+				crossed+" Wanneer betaling uitblijft, zullen wij de vordering uit handen moeten geven aan een incassobureau en de wettelijke incassokosten in rekening brengen.",
+				"Met vriendelijke groet,"),
+			reminderText("Geachte {recipient.name},",
+				"Ondanks eerdere herinneringen blijkt uit onze administratie dat u de onderstaande facturen nog niet voldaan heeft. Dit is de derde herinnering voor het voldoen van de vordering, voordat de vordering uit handen gegeven zal worden aan een incassobureau.",
+				"Wij verzoeken u om de betalingen binnen 5 dagen te voldoen. Wanneer betaling uitblijft, zullen wij de vordering uit handen geven aan een incassobureau en brengen we de wettelijke incassokosten in rekening.",
+				"Met vriendelijke groet,"),
+		}
+	}
+	const crossed = "If this reminder and your payment have crossed, please disregard this reminder."
+	return [3]string{
+		reminderText("Dear {recipient.name},",
+			"According to our records, the invoices below have not been paid yet. We would like to point out that the payment term of these invoices has expired and kindly but urgently request you to pay as soon as possible.",
+			crossed, "Kind regards,"),
+		reminderText("Dear {recipient.name},",
+			"Despite an earlier reminder, our records show that the invoices below have not been paid yet. We would like to point out that the payment term of these invoices has expired and kindly but urgently request you to pay as soon as possible.",
+			crossed+" If payment is not received, we will have to hand the claim over to a debt collection agency and charge the statutory collection costs.",
+			"Kind regards,"),
+		reminderText("Dear {recipient.name},",
+			"Despite earlier reminders, our records show that the invoices below have not been paid yet. This is the third reminder to settle the claim before it is handed over to a debt collection agency.",
+			"We request you to pay within 5 days. If payment is not received, we will hand the claim over to a debt collection agency and charge the statutory collection costs.",
+			"Kind regards,"),
+	}
+}
+
+// reminderText is a reminder email as Moneybird lays it out: a greeting, the
+// text, the table of unpaid invoices, a closing text and the sender.
+func reminderText(greeting, text, closing, regards string) string {
+	return strings.Join([]string{greeting, text, "{reminders_table}", closing, regards, "{company.company_name}"}, "\n\n")
+}
+
+// defaultWorkflow is the starting point for a workflow of type t: as
+// Moneybird's default invoice workflow a 14-day payment term, then three
+// reminders that expire after 10, 5 and 5 days (Day 15, 25 and 30); or a
+// 30-day estimate.
 func (s *Service) defaultWorkflow(a administration.Administration, t WorkflowType) Workflow {
 	dutch := strings.HasPrefix(a.Language, "nl")
 	name := "Default (EN)"
@@ -375,16 +421,12 @@ func (s *Service) defaultWorkflow(a administration.Administration, t WorkflowTyp
 		return w
 	}
 	w.PaymentConditions = DefaultPaymentConditions(a.Language)
-	first, second := "We have not received payment for this invoice yet. Please pay the outstanding amount as soon as possible.",
-		"This is a second reminder: we still have not received payment for this invoice. Please pay the outstanding amount within 7 days."
-	if dutch {
-		first, second = "We hebben de betaling voor deze factuur nog niet ontvangen. Wil je het openstaande bedrag zo snel mogelijk betalen?",
-			"Dit is een tweede herinnering: we hebben de betaling voor deze factuur nog steeds niet ontvangen. Wil je het openstaande bedrag binnen 7 dagen betalen?"
-	}
+	texts := DefaultReminderTexts(a.Language)
 	w.Steps = []WorkflowStep{
 		{StepOrder: 0, DueInterval: 14},
-		{StepOrder: 1, DueInterval: 7, ReminderText: first},
-		{StepOrder: 2, DueInterval: 7, ReminderText: second},
+		{StepOrder: 1, DueInterval: 10, ReminderText: texts[0]},
+		{StepOrder: 2, DueInterval: 5, ReminderText: texts[1]},
+		{StepOrder: 3, DueInterval: 5, ReminderText: texts[2]},
 	}
 	return w
 }

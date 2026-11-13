@@ -93,7 +93,7 @@ describe('workflow page', () => {
   })
 
   it("numbers the days as Moneybird does: each step's expiry brings the next reminder", async () => {
-    const step = (order: number, days: number) => ({ ...exportFlow.steps![0]!, id: String(order + 1), step_order: order, due_interval: days, reminder_text: order ? `Reminder ${order}` : null })
+    const step = (order: number, days: number) => ({ ...exportFlow.steps![0]!, id: String(order + 1), step_order: order, due_interval: days, reminder_text: order === 1 ? 'Reminder 1\n\n{reminders_table}\n\nThanks' : order ? `Reminder ${order}` : null })
     server.use(...loaded())
     server.use(http.get('*/api/v2/11/workflows/603', () => HttpResponse.json({ ...exportFlow, steps: [step(2, 5), step(0, 14), step(3, 5), step(1, 10)] })))
     renderAt('/11/workflows/603')
@@ -104,6 +104,12 @@ describe('workflow page', () => {
     expect(reminders.map((r) => r.querySelector('.workflow-card__day')?.textContent)).toEqual(['Day 15', 'Day 25', 'Day 30'])
     for (const r of reminders) await userEvent.click(within(r).getByRole('button', { name: 'Show more' }))
     expect(reminders[0]).toHaveTextContent('Reminder 1')
+    // Moneybird's {reminders_table} shows where the unpaid invoices go;
+    // a text without it gets them at the end.
+    expect(within(reminders[0]!).getAllByText('Table with unpaid invoices')).toHaveLength(1)
+    expect(reminders[0]).not.toHaveTextContent('{reminders_table}')
+    expect(reminders[0]!.querySelector('.workflow-page__preview')?.lastElementChild).toHaveTextContent('Thanks')
+    expect(reminders[1]!.querySelector('.workflow-page__preview')?.lastElementChild).toHaveTextContent('Table with unpaid invoices')
     expect(reminders[0]).toHaveTextContent('Reminder expires after10 days')
     expect(reminders[1]).toHaveTextContent('Reminder expires afterfive days')
     expect(reminders[2]).toHaveTextContent('Reminder expires afterfive days')

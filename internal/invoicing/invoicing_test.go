@@ -3,6 +3,7 @@ package invoicing
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
@@ -84,12 +85,41 @@ func TestDefaultWorkflowsAreCreatedOnce(t *testing.T) {
 	}
 	// As Moneybird's: step 0 sends the invoice and expires after the payment
 	// term; each reminder expires after its own due interval.
-	if len(invoice.Steps) != 3 || invoice.Steps[0].StepOrder != 0 || invoice.Steps[0].DueInterval != 14 || invoice.Steps[1].StepOrder != 1 ||
-		invoice.Steps[1].DueInterval != 7 || invoice.Steps[2].DueInterval != 7 || invoice.Steps[1].ReminderDelay != 0 || invoice.Steps[1].ReminderText == "" {
-		t.Errorf("invoice steps = %+v", invoice.Steps)
+	// Moneybird's default: pay in 14 days, then three manual reminders that
+	// expire after 10, 5 and 5 days (Day 15, 25 and 30).
+	if len(invoice.Steps) != 4 {
+		t.Fatalf("invoice steps = %+v, want 4", invoice.Steps)
+	}
+	for i, want := range []int{14, 10, 5, 5} {
+		st := invoice.Steps[i]
+		if st.StepOrder != i || st.DueInterval != want || st.ReminderDelay != 0 || st.ReminderAutoSend || (i > 0) != (st.ReminderText != "") {
+			t.Errorf("invoice step %d = %+v, want due interval %d", i, st, want)
+		}
+	}
+	for i, want := range []string{"Uit onze administratie blijkt", "Ondanks een eerdere herinnering", "Dit is de derde herinnering"} {
+		text := invoice.Steps[i+1].ReminderText
+		if !strings.HasPrefix(text, "Geachte {recipient.name},\n\n") || !strings.Contains(text, want) || !strings.Contains(text, "\n\n{reminders_table}\n\n") ||
+			!strings.HasSuffix(text, "Met vriendelijke groet,\n\n{company.company_name}") {
+			t.Errorf("reminder %d text = %q", i+1, text)
+		}
 	}
 	if len(estimate.Steps) != 1 || estimate.Steps[0].DueInterval != 30 {
 		t.Errorf("estimate steps = %+v", estimate.Steps)
+	}
+}
+
+func TestDefaultEnglishWorkflowHasMoneybirdsRemindersInEnglish(t *testing.T) {
+	svc, _, _ := newTestService()
+	w := svc.defaultWorkflow(administration.Administration{ID: adminID, Language: "en", Currency: "EUR"}, InvoiceWorkflow)
+	if w.Name != "Default (EN)" || len(w.Steps) != 4 {
+		t.Fatalf("defaultWorkflow(en) = %+v", w)
+	}
+	for i, want := range []string{"According to our records", "Despite an earlier reminder", "This is the third reminder"} {
+		text := w.Steps[i+1].ReminderText
+		if !strings.HasPrefix(text, "Dear {recipient.name},\n\n") || !strings.Contains(text, want) || !strings.Contains(text, "\n\n{reminders_table}\n\n") ||
+			!strings.HasSuffix(text, "Kind regards,\n\n{company.company_name}") {
+			t.Errorf("reminder %d text = %q", i+1, text)
+		}
 	}
 }
 
