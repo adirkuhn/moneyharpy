@@ -3,6 +3,7 @@ package recognize
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -255,7 +256,7 @@ func TestWorkAsksTheModelOnlyWhenTheRulesFallShortAndItIsOn(t *testing.T) {
 	poor := Extraction{Supplier: Supplier{Name: "Example Shop"}, Reference: uncertain("A-1")}
 	for _, on := range []bool{false, true} {
 		f := newFixture(t)
-		f.settings.rec = settings.Recognition{AIEnabled: on, Provider: "ollama", Model: "m"}
+		f.settings.rec = settings.Recognition{AIEnabled: on, Connections: []settings.AIConnection{{Name: "Ollama", Provider: "ollama", Model: "m", Enabled: true}}}
 		f.docs.upload(10, map[string][]byte{"a.pdf": []byte("%PDF")})
 		f.ocr.text, f.ocr.pages = ocr.Text{Text: "scanned text", Method: "ocr", Pages: 7}, 7
 		f.text = poor
@@ -393,7 +394,7 @@ func TestCheck(t *testing.T) {
 	if err != nil || !c.OCRAvailable || c.AI != AIOff || c.Message != "" {
 		t.Errorf("Check() = %+v, %v", c, err)
 	}
-	f.settings.rec.AIEnabled = true
+	f.settings.rec = settings.Recognition{AIEnabled: true, Connections: []settings.AIConnection{{ID: "a", Name: "Ollama", Provider: "ollama", Enabled: true}}}
 	f.model.err = errors.New("connection refused")
 	f.ocr.err = ocr.ErrUnavailable
 	c, err = f.svc.Check(ctx)
@@ -403,5 +404,44 @@ func TestCheck(t *testing.T) {
 	f.model.err = nil
 	if c, _ = f.svc.Check(ctx); c.AI != AIOK {
 		t.Errorf("Check() = %+v", c)
+	}
+}
+
+func TestCheckEachConnection(t *testing.T) {
+	f := newFixture(t)
+	f.settings.rec = settings.Recognition{AIEnabled: true, Connections: []settings.AIConnection{
+		{ID: "a", Name: "NVIDIA", Provider: "nvidia", Enabled: true},
+		{ID: "b", Name: "Ollama", Provider: "ollama", Enabled: true},
+		{ID: "c", Name: "Claude", Provider: "anthropic"},
+	}}
+	f.svc.Models = func(r settings.Recognition) (Model, error) {
+		if len(r.Connections) != 1 {
+			t.Errorf("checked %d connections at once", len(r.Connections))
+		}
+		if r.Connections[0].ID == "a" {
+			return &fakeModel{err: errors.New("rate limited")}, nil
+		}
+		return &fakeModel{}, nil
+	}
+	c, err := f.svc.Check(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []ConnectionCheck{
+		{ID: "a", Name: "NVIDIA", State: ConnectionUnavailable, Message: "rate limited"},
+		{ID: "b", Name: "Ollama", State: ConnectionOK},
+		{ID: "c", Name: "Claude", State: ConnectionDisabled},
+	}
+	if c.AI != AIOK || !slices.Equal(c.Connections, want) {
+		t.Errorf("Check() = %+v", c)
+	}
+
+	f.settings.rec.AIEnabled = false
+	if c, _ := f.svc.Check(context.Background()); c.AI != AIOff || len(c.Connections) != 3 {
+		t.Errorf("off: Check() = %+v", c)
+	}
+	f.settings.rec = settings.Recognition{AIEnabled: true, Connections: f.settings.rec.Connections[:1]}
+	if c, _ := f.svc.Check(context.Background()); c.AI != AIUnavailable {
+		t.Errorf("none answers: Check() = %+v", c)
 	}
 }

@@ -1109,3 +1109,10 @@ a.dropdown__item:hover { background: var(--row-hover); }
 @media (prefers-reduced-motion: reduce) {
   .spinner-icon { animation-duration: 2.7s; }
 }
+.ai-connections__list { display: grid; gap: 0.5rem; margin: 0.5rem 0; padding: 0; list-style: none; }
+.ai-connections__item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid var(--input-border); border-radius: 4px; }
+.ai-connections__item > .recognition-check__problem { flex-basis: 100%; margin: 0; }
+.ai-connections__meta { color: var(--muted); }
+.ai-connections__actions { display: flex; gap: 0.25rem; align-items: center; }
+.ai-connections__editor { margin: 0.5rem 0; padding: 0.75rem; border: 1px solid var(--input-border); border-radius: 4px; }
+.ai-connections__editor > legend { font-weight: 600; padding: 0 0.25rem; }
