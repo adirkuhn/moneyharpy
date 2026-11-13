@@ -27,7 +27,7 @@ func cents(s string) money.Amount {
 	return a
 }
 
-func line(desc, qty, price, total, rate string) Line {
+func wantLine(desc, qty, price, total, rate string) Line {
 	return Line{Description: desc, Quantity: sure(qty), Price: sure(cents(price)),
 		Total: sure(cents(total)), TaxRate: sure(rate)}
 }
@@ -52,7 +52,7 @@ func TestParseEInvoice(t *testing.T) {
 			TotalInclTax:     sure(cents("142.80")),
 			TotalExclTax:     sure(cents("120.00")),
 			VAT:              []VAT{{Rate: "21", Taxable: cents("100"), Tax: cents("21")}, {Rate: "9", Taxable: cents("20"), Tax: cents("1.80")}},
-			Lines:            []Line{line("Consultancy", "2", "50", "100", "21"), line("Manual", "1", "20", "20", "9")},
+			Lines:            []Line{wantLine("Consultancy", "2", "50", "100", "21"), wantLine("Manual", "1", "20", "20", "9")},
 			PaymentReference: sure("RF18539007547034"),
 		}},
 		{"ubl_creditnote.xml", Extraction{
@@ -69,7 +69,7 @@ func TestParseEInvoice(t *testing.T) {
 			TotalInclTax:  sure(cents("-24.95")),
 			TotalExclTax:  sure(cents("-20.62")),
 			VAT:           []VAT{{Rate: "21", Taxable: cents("-20.62"), Tax: cents("-4.33")}},
-			Lines:         []Line{line("Retour draadloze muis", "1", "-20.62", "-20.62", "21")},
+			Lines:         []Line{wantLine("Retour draadloze muis", "1", "-20.62", "-20.62", "21")},
 		}},
 		{"cii_invoice.xml", Extraction{
 			Source: SourceEInvoice,
@@ -86,7 +86,7 @@ func TestParseEInvoice(t *testing.T) {
 			TotalInclTax:     sure(cents("506.35")),
 			TotalExclTax:     sure(cents("425.50")),
 			VAT:              []VAT{{Rate: "19", Taxable: cents("425.50"), Tax: cents("80.85")}},
-			Lines:            []Line{line("Beratung (Stunden)", "4", "95", "380", "19"), line("Reisekosten", "1", "45.50", "45.50", "19")},
+			Lines:            []Line{wantLine("Beratung (Stunden)", "4", "95", "380", "19"), wantLine("Reisekosten", "1", "45.50", "45.50", "19")},
 			PaymentReference: sure("RE-2026-1187"),
 		}},
 	}

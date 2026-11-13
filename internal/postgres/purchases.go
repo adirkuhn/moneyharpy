@@ -110,53 +110,13 @@ func (s *PurchaseStore) NextEntryNumber(ctx context.Context, admin resource.ID) 
 
 // SaveDocument implements purchases.Store.
 func (s *PurchaseStore) SaveDocument(ctx context.Context, d purchases.Document, entries []journal.Entry, created bool) error {
-	taxTotals, err := encodeTaxTotals(d.Totals)
-	if err != nil {
-		return err
-	}
 	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
-		admin := int64(d.AdministrationID)
-		if err := q.UpsertPurchaseDocument(ctx, sqlc.UpsertPurchaseDocumentParams{
-			ID: int64(d.ID), AdministrationID: admin, Kind: d.Kind, ContactID: optionalID(nonZero(d.ContactID)), EntryNumber: int32(d.EntryNumber),
-			Reference: d.Reference, Date: day(d.Date), DueDate: optionalDate(d.DueDate), State: d.State, Origin: d.Origin, Currency: d.Currency,
-			PricesAreInclTax: d.PricesAreInclTax, RevenueInvoice: d.RevenueInvoice, PaidAt: optionalTime(d.PaidAt),
-			TotalExclTax: int64(d.Totals.ExclTax), TotalTax: int64(d.Totals.Tax), TotalInclTax: int64(d.Totals.InclTax), TaxTotals: taxTotals,
-			CreatedAt: timestamp(d.CreatedAt), UpdatedAt: timestamp(d.UpdatedAt),
-		}); err != nil {
+		if err := storeDocument(ctx, q, d); err != nil {
 			return err
 		}
 		if created {
-			if err := q.InsertResource(ctx, sqlc.InsertResourceParams{ID: int64(d.ID), Type: string(d.Ref().Type), AdministrationID: admin}); err != nil {
-				return err
-			}
-		}
-		if err := q.DeletePurchaseDocumentDetails(ctx, int64(d.ID)); err != nil {
-			return err
-		}
-		for i, l := range d.Lines {
-			var base int64
-			if i < len(d.Totals.LineBases) {
-				base = int64(d.Totals.LineBases[i])
-			}
-			if err := q.InsertPurchaseDocumentDetail(ctx, sqlc.InsertPurchaseDocumentDetailParams{
-				ID: int64(l.ID), AdministrationID: admin, PurchaseDocumentID: int64(d.ID), Description: l.Description, Period: l.Period,
-				Price: int64(l.Price), Amount: l.Amount, Quantity: l.Quantity, TaxRateID: int64(l.TaxRateID), LedgerAccountID: optionalID(l.LedgerAccountID),
-				ProjectID: optionalID(l.ProjectID), ProductID: optionalID(l.ProductID), RowOrder: int32(l.RowOrder), LineBase: base,
-				CreatedAt: timestamp(l.CreatedAt), UpdatedAt: timestamp(l.UpdatedAt),
-			}); err != nil {
-				return err
-			}
-		}
-		if err := q.DeletePurchaseDocumentAllocations(ctx, int64(d.ID)); err != nil {
-			return err
-		}
-		for _, f := range d.FiscalAllocations {
-			if err := q.InsertPurchaseDocumentAllocation(ctx, sqlc.InsertPurchaseDocumentAllocationParams{
-				ID: int64(f.ID), AdministrationID: admin, PurchaseDocumentID: int64(d.ID), LedgerAccountID: int64(f.LedgerAccountID),
-				PrivateLedgerAccountID: int64(f.PrivateLedgerAccountID), Percentage: int32(f.Percentage), Price: int64(f.Price),
-				CreatedAt: timestamp(f.CreatedAt), UpdatedAt: timestamp(f.UpdatedAt),
-			}); err != nil {
+			if err := q.InsertResource(ctx, sqlc.InsertResourceParams{ID: int64(d.ID), Type: string(d.Ref().Type), AdministrationID: int64(d.AdministrationID)}); err != nil {
 				return err
 			}
 		}
@@ -165,6 +125,55 @@ func (s *PurchaseStore) SaveDocument(ctx context.Context, d purchases.Document, 
 		}
 		return postEntries(ctx, q, d.AdministrationID, d.Kind, d.ID, entries, d.UpdatedAt)
 	})
+}
+
+// storeDocument stores a purchase invoice or receipt with its lines and
+// fiscal allocations, replacing those it had.
+func storeDocument(ctx context.Context, q *sqlc.Queries, d purchases.Document) error {
+	taxTotals, err := encodeTaxTotals(d.Totals)
+	if err != nil {
+		return err
+	}
+	admin := int64(d.AdministrationID)
+	if err := q.UpsertPurchaseDocument(ctx, sqlc.UpsertPurchaseDocumentParams{
+		ID: int64(d.ID), AdministrationID: admin, Kind: d.Kind, ContactID: optionalID(nonZero(d.ContactID)), EntryNumber: int32(d.EntryNumber),
+		Reference: d.Reference, Date: day(d.Date), DueDate: optionalDate(d.DueDate), State: d.State, Origin: d.Origin, Currency: d.Currency,
+		PricesAreInclTax: d.PricesAreInclTax, RevenueInvoice: d.RevenueInvoice, PaidAt: optionalTime(d.PaidAt),
+		TotalExclTax: int64(d.Totals.ExclTax), TotalTax: int64(d.Totals.Tax), TotalInclTax: int64(d.Totals.InclTax), TaxTotals: taxTotals,
+		CreatedAt: timestamp(d.CreatedAt), UpdatedAt: timestamp(d.UpdatedAt),
+	}); err != nil {
+		return err
+	}
+	if err := q.DeletePurchaseDocumentDetails(ctx, int64(d.ID)); err != nil {
+		return err
+	}
+	for i, l := range d.Lines {
+		var base int64
+		if i < len(d.Totals.LineBases) {
+			base = int64(d.Totals.LineBases[i])
+		}
+		if err := q.InsertPurchaseDocumentDetail(ctx, sqlc.InsertPurchaseDocumentDetailParams{
+			ID: int64(l.ID), AdministrationID: admin, PurchaseDocumentID: int64(d.ID), Description: l.Description, Period: l.Period,
+			Price: int64(l.Price), Amount: l.Amount, Quantity: l.Quantity, TaxRateID: int64(l.TaxRateID), LedgerAccountID: optionalID(l.LedgerAccountID),
+			ProjectID: optionalID(l.ProjectID), ProductID: optionalID(l.ProductID), RowOrder: int32(l.RowOrder), LineBase: base,
+			CreatedAt: timestamp(l.CreatedAt), UpdatedAt: timestamp(l.UpdatedAt),
+		}); err != nil {
+			return err
+		}
+	}
+	if err := q.DeletePurchaseDocumentAllocations(ctx, int64(d.ID)); err != nil {
+		return err
+	}
+	for _, f := range d.FiscalAllocations {
+		if err := q.InsertPurchaseDocumentAllocation(ctx, sqlc.InsertPurchaseDocumentAllocationParams{
+			ID: int64(f.ID), AdministrationID: admin, PurchaseDocumentID: int64(d.ID), LedgerAccountID: int64(f.LedgerAccountID),
+			PrivateLedgerAccountID: int64(f.PrivateLedgerAccountID), Percentage: int32(f.Percentage), Price: int64(f.Price),
+			CreatedAt: timestamp(f.CreatedAt), UpdatedAt: timestamp(f.UpdatedAt),
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func nonZero(id resource.ID) *resource.ID {

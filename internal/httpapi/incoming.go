@@ -22,13 +22,14 @@ type incomingDocumentJSON struct {
 	AttachmentsCount  int       `json:"attachments_count"`
 	CreatedAt         time.Time `json:"created_at"`
 	URI               string    `json:"uri"`
+	RecognitionState  string    `json:"recognition_state"`
 }
 
 func toIncomingDocument(d purchases.Incoming) incomingDocumentJSON {
 	o := incomingDocumentJSON{
 		ID: d.ID.String(), AdministrationID: d.AdministrationID.String(), Type: d.Kind, Reference: d.Reference, ContactName: d.ContactName,
 		Date: d.Date.Format(time.DateOnly), State: d.State, Currency: d.Currency, TotalPriceInclTax: d.TotalInclTax.String(),
-		AttachmentsCount: d.AttachmentsCount, CreatedAt: d.CreatedAt, URI: "/api/v2" + d.Ref().URI(),
+		AttachmentsCount: d.AttachmentsCount, CreatedAt: d.CreatedAt, URI: "/api/v2" + d.Ref().URI(), RecognitionState: string(RecognitionStateNone),
 	}
 	if d.ContactID != 0 {
 		o.ContactID = ptr(d.ContactID.String())
@@ -68,9 +69,10 @@ func (s *server) ListIncomingDocuments(w http.ResponseWriter, r *http.Request, a
 		s.fail(w, r, err)
 		return
 	}
-	out := make([]incomingDocumentJSON, len(list))
-	for i, d := range list {
-		out[i] = toIncomingDocument(d)
+	out, err := s.toIncomingDocuments(r, admin, list)
+	if err != nil {
+		s.fail(w, r, err)
+		return
 	}
 	s.writeLinks(w, r, max(q.Page, 1), cmpPerPage(q.PerPage, purchases.DefaultPerPage), total)
 	writeJSON(w, http.StatusOK, out)
@@ -91,7 +93,7 @@ func (s *server) GetIncomingDocument(w http.ResponseWriter, r *http.Request, adm
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toIncomingDocument(d))
+	s.writeIncomingDocument(w, r, admin, http.StatusOK, d)
 }
 
 type costCategoryJSON struct {
@@ -149,5 +151,5 @@ func (s *server) SetIncomingDocumentType(w http.ResponseWriter, r *http.Request,
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toIncomingDocument(d))
+	s.writeIncomingDocument(w, r, admin, http.StatusOK, d)
 }
