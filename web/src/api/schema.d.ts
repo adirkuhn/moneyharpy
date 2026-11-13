@@ -8083,6 +8083,20 @@ export interface components {
              * @enum {string}
              */
             recognition_state: "none" | "pending" | "done" | "failed";
+            /** @description The other incoming documents of the administration this one may be a copy of, oldest first; empty when none look alike. A warning only: nothing is blocked or removed. Journal entries are not compared. */
+            possible_duplicates: components["schemas"]["PossibleDuplicate"][];
+        };
+        /** @description MoneyHarpy extension. Another incoming document a document may be a copy of, and why. same_file: an attachment of each has the same contents; same_reference: the same supplier and a reference alike (written the same without spaces and punctuation, one holding the other, or a typo apart with the same numbers); same_amount_and_date: the same supplier and total including VAT, at most 7 days apart; same_lines: the same supplier and at least 80% of the lines alike in description, price and amount. */
+        PossibleDuplicate: {
+            id: string;
+            /** @enum {string} */
+            type: "PurchaseInvoice" | "Receipt" | "GeneralDocument" | "TypelessDocument";
+            reference: string;
+            /** Format: date */
+            date: string;
+            /** @description The total including VAT of a purchase invoice or receipt; 0.0 for other documents. */
+            total_price_incl_tax: string;
+            reasons: ("same_file" | "same_reference" | "same_amount_and_date" | "same_lines")[];
         };
         /** @description MoneyHarpy extension. Totals of the incoming documents in a selection. */
         IncomingDocumentStatistics: {

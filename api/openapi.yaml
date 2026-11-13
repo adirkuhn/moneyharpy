@@ -16277,7 +16277,8 @@ components:
     IncomingDocumentSummary:
       type: object
       description: MoneyHarpy extension. One incoming document of any kind, as a row of the Incoming page.
-      required: [id, administration_id, type, reference, contact_id, contact_name, date, state, currency, total_price_incl_tax, attachments_count, created_at, uri, recognition_state]
+      required: [id, administration_id, type, reference, contact_id, contact_name, date, state, currency, total_price_incl_tax, attachments_count, created_at, uri, recognition_state,
+                 possible_duplicates]
       properties:
         id:
           type: string
@@ -16317,6 +16318,42 @@ components:
           type: string
           enum: [none, pending, done, failed]
           description: The state of Scan and Recognise for this document; see Recognition.
+        possible_duplicates:
+          type: array
+          description: >-
+            The other incoming documents of the administration this one may be a copy of, oldest first; empty when
+            none look alike. A warning only: nothing is blocked or removed. Journal entries are not compared.
+          items:
+            $ref: '#/components/schemas/PossibleDuplicate'
+    PossibleDuplicate:
+      type: object
+      description: >-
+        MoneyHarpy extension. Another incoming document a document may be a copy of, and why. same_file: an attachment
+        of each has the same contents; same_reference: the same supplier and a reference alike (written the same
+        without spaces and punctuation, one holding the other, or a typo apart with the same numbers); same_amount_and_date:
+        the same supplier and total including VAT, at most 7 days apart; same_lines: the same supplier and at least 80%
+        of the lines alike in description, price and amount.
+      required: [id, type, reference, date, total_price_incl_tax, reasons]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [PurchaseInvoice, Receipt, GeneralDocument, TypelessDocument]
+        reference:
+          type: string
+        date:
+          type: string
+          format: date
+        total_price_incl_tax:
+          type: string
+          description: The total including VAT of a purchase invoice or receipt; 0.0 for other documents.
+        reasons:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [same_file, same_reference, same_amount_and_date, same_lines]
     IncomingDocumentStatistics:
       type: object
       description: MoneyHarpy extension. Totals of the incoming documents in a selection.

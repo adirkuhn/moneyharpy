@@ -429,8 +429,6 @@ func MapReverseCharge(domestic bool, rates []bookkeeping.TaxRate) (resource.ID, 
 	return best.ID, true
 }
 
-// fileName is a reference that is only the name of an uploaded file, which
-// an upload gets until its own reference is known.
-var fileName = regexp.MustCompile(`(?i)^[^/\\]+\.(?:pdf|jpe?g|png|gif|tiff?|webp|heic|xml|eml|msg|txt)$`)
-
-func isFileName(reference string) bool { return fileName.MatchString(strings.TrimSpace(reference)) }
+// isFileName reports whether a reference is only the name of an uploaded
+// file, which an upload gets until its own reference is known.
+func isFileName(reference string) bool { return purchases.IsFileName(reference) }

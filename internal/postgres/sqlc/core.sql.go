@@ -133,7 +133,7 @@ func (q *Queries) AdministrationForUser(ctx context.Context, arg AdministrationF
 }
 
 const attachmentsOf = `-- name: AttachmentsOf :many
-SELECT id, administration_id, entity_type, entity_id, filename, content_type, size, created_at, updated_at FROM attachments
+SELECT id, administration_id, entity_type, entity_id, filename, content_type, size, created_at, updated_at, sha256 FROM attachments
 WHERE administration_id = $1 AND entity_type = $2 AND entity_id = ANY($3::bigint[])
 ORDER BY created_at, id
 `
@@ -163,6 +163,7 @@ func (q *Queries) AttachmentsOf(ctx context.Context, arg AttachmentsOfParams) ([
 			&i.Size,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Sha256,
 		); err != nil {
 			return nil, err
 		}
@@ -1944,8 +1945,8 @@ func (q *Queries) InsertAdministration(ctx context.Context, arg InsertAdministra
 }
 
 const insertAttachment = `-- name: InsertAttachment :exec
-INSERT INTO attachments (id, administration_id, entity_type, entity_id, filename, content_type, size, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO attachments (id, administration_id, entity_type, entity_id, filename, content_type, size, sha256, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 `
 
 type InsertAttachmentParams struct {
@@ -1956,6 +1957,7 @@ type InsertAttachmentParams struct {
 	Filename         string
 	ContentType      string
 	Size             int64
+	Sha256           string
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
 }
@@ -1969,6 +1971,7 @@ func (q *Queries) InsertAttachment(ctx context.Context, arg InsertAttachmentPara
 		arg.Filename,
 		arg.ContentType,
 		arg.Size,
+		arg.Sha256,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -6359,6 +6362,21 @@ func (q *Queries) SaveWebhookResponse(ctx context.Context, arg SaveWebhookRespon
 	return err
 }
 
+const setAttachmentHash = `-- name: SetAttachmentHash :exec
+UPDATE attachments SET sha256 = $1 WHERE administration_id = $2 AND id = $3 AND sha256 = ''
+`
+
+type SetAttachmentHashParams struct {
+	Sha256           string
+	AdministrationID int64
+	ID               int64
+}
+
+func (q *Queries) SetAttachmentHash(ctx context.Context, arg SetAttachmentHashParams) error {
+	_, err := q.db.Exec(ctx, setAttachmentHash, arg.Sha256, arg.AdministrationID, arg.ID)
+	return err
+}
+
 const setBankAutoLink = `-- name: SetBankAutoLink :exec
 UPDATE administrations SET bank_auto_link = $2 WHERE id = $1
 `
@@ -6682,6 +6700,50 @@ type TouchSalesInvoiceParams struct {
 func (q *Queries) TouchSalesInvoice(ctx context.Context, arg TouchSalesInvoiceParams) error {
 	_, err := q.db.Exec(ctx, touchSalesInvoice, arg.AdministrationID, arg.ID, arg.UpdatedAt)
 	return err
+}
+
+const unhashedAttachments = `-- name: UnhashedAttachments :many
+SELECT id, administration_id, entity_type, entity_id, filename, content_type, size, created_at, updated_at, sha256 FROM attachments
+WHERE sha256 = '' AND entity_type = ANY($1::text[]) AND id > $2
+ORDER BY id
+LIMIT $3
+`
+
+type UnhashedAttachmentsParams struct {
+	EntityTypes []string
+	After       int64
+	MaxRows     int32
+}
+
+func (q *Queries) UnhashedAttachments(ctx context.Context, arg UnhashedAttachmentsParams) ([]Attachment, error) {
+	rows, err := q.db.Query(ctx, unhashedAttachments, arg.EntityTypes, arg.After, arg.MaxRows)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Attachment
+	for rows.Next() {
+		var i Attachment
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.EntityType,
+			&i.EntityID,
+			&i.Filename,
+			&i.ContentType,
+			&i.Size,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Sha256,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateAdministration = `-- name: UpdateAdministration :exec

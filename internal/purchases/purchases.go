@@ -212,6 +212,11 @@ type Store interface {
 	// IncomingDocument returns the incoming document of any kind with the
 	// id; today decides whether an open one is late.
 	IncomingDocument(ctx context.Context, admin, id resource.ID, today time.Time) (Incoming, error)
+	// DuplicateCandidates returns the incoming documents with the ids and
+	// every other one of the administration that shares a contact or the
+	// contents of an attachment with one of them, as duplicate detection
+	// compares them. Journal entries are left out.
+	DuplicateCandidates(ctx context.Context, admin resource.ID, ids []resource.ID) ([]DuplicateCandidate, error)
 	// IncomingStatistics sums up the documents the query selects; the
 	// currency is left to the caller.
 	IncomingStatistics(ctx context.Context, admin resource.ID, q IncomingQuery) (IncomingStatistics, error)

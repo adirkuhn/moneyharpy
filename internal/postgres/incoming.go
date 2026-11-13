@@ -63,6 +63,41 @@ func (s *PurchaseStore) incoming(ctx context.Context, p sqlc.ListIncomingDocumen
 	return out, total, nil
 }
 
+// DuplicateCandidates implements purchases.Store: the documents in one
+// query, the lines of the purchase invoices and receipts with a contact in
+// another.
+func (s *PurchaseStore) DuplicateCandidates(ctx context.Context, admin resource.ID, ids []resource.ID) ([]purchases.DuplicateCandidate, error) {
+	rows, err := s.q.DuplicateCandidates(ctx, sqlc.DuplicateCandidatesParams{AdministrationID: int64(admin), Ids: ids64(ids)})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]purchases.DuplicateCandidate, len(rows))
+	at := map[int64]int{}
+	var withLines []int64
+	for i, r := range rows {
+		out[i] = purchases.DuplicateCandidate{
+			ID: resource.ID(r.ID), Kind: r.Kind, ContactID: resource.ID(r.ContactID), Reference: r.Reference, Date: dayOf(r.Date),
+			TotalInclTax: money.Amount(r.TotalInclTax), Hashes: r.Hashes,
+		}
+		if r.ContactID != 0 && (r.Kind == purchases.PurchaseInvoice || r.Kind == purchases.Receipt) {
+			at[r.ID] = i
+			withLines = append(withLines, r.ID)
+		}
+	}
+	if len(withLines) == 0 {
+		return out, nil
+	}
+	lines, err := s.q.DuplicateCandidateLines(ctx, sqlc.DuplicateCandidateLinesParams{AdministrationID: int64(admin), Ids: withLines})
+	if err != nil {
+		return nil, err
+	}
+	for _, l := range lines {
+		c := &out[at[l.PurchaseDocumentID]]
+		c.Lines = append(c.Lines, purchases.DuplicateLine{Description: l.Description, Price: money.Amount(l.Price), Quantity: l.Quantity})
+	}
+	return out, nil
+}
+
 // IncomingStatistics implements purchases.Store.
 func (s *PurchaseStore) IncomingStatistics(ctx context.Context, admin resource.ID, q purchases.IncomingQuery) (purchases.IncomingStatistics, error) {
 	p := sqlc.IncomingDocumentStatisticsParams{

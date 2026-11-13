@@ -19,6 +19,7 @@ import { ListActions } from '../list/ListActions'
 import {
   type DocumentSummary, documentPath, documentStates, filterTypes, hasAmount, isReading, typeTags, useDeleteDocuments, useDocuments, useDocumentStatistics, useUploadEach,
 } from './documents'
+import { DuplicateMark } from './DuplicateNotice'
 
 /** The quick filters of Moneybird's Incoming page, as the filters they stand for. */
 const quickFilters: Record<string, string | null> = {
@@ -163,6 +164,7 @@ export function DocumentsPage() {
                   <span className="document-type-ref">
                     <span className="document-type-tag">{typeTags[d.type]}</span> <span>{d.reference}</span>
                     {isReading(d) && <span className="document-reading"><SpinnerIcon /> {t('recognition.recognising')}</span>}
+                    <DuplicateMark count={d.possible_duplicates.length} />
                   </span>
                 ),
               },

@@ -1572,6 +1572,54 @@ func (e Permission) Valid() bool {
 	}
 }
 
+// Defines values for PossibleDuplicateReasons.
+const (
+	SameAmountAndDate PossibleDuplicateReasons = "same_amount_and_date"
+	SameFile          PossibleDuplicateReasons = "same_file"
+	SameLines         PossibleDuplicateReasons = "same_lines"
+	SameReference     PossibleDuplicateReasons = "same_reference"
+)
+
+// Valid indicates whether the value is a known member of the PossibleDuplicateReasons enum.
+func (e PossibleDuplicateReasons) Valid() bool {
+	switch e {
+	case SameAmountAndDate:
+		return true
+	case SameFile:
+		return true
+	case SameLines:
+		return true
+	case SameReference:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PossibleDuplicateType.
+const (
+	PossibleDuplicateTypeGeneralDocument  PossibleDuplicateType = "GeneralDocument"
+	PossibleDuplicateTypePurchaseInvoice  PossibleDuplicateType = "PurchaseInvoice"
+	PossibleDuplicateTypeReceipt          PossibleDuplicateType = "Receipt"
+	PossibleDuplicateTypeTypelessDocument PossibleDuplicateType = "TypelessDocument"
+)
+
+// Valid indicates whether the value is a known member of the PossibleDuplicateType enum.
+func (e PossibleDuplicateType) Valid() bool {
+	switch e {
+	case PossibleDuplicateTypeGeneralDocument:
+		return true
+	case PossibleDuplicateTypePurchaseInvoice:
+		return true
+	case PossibleDuplicateTypeReceipt:
+		return true
+	case PossibleDuplicateTypeTypelessDocument:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ProductFrequencyType.
 const (
 	ProductFrequencyTypeDay     ProductFrequencyType = "day"
@@ -7373,6 +7421,9 @@ type IncomingDocumentSummary struct {
 	Date        openapi_types.Date `json:"date"`
 	Id          string             `json:"id"`
 
+	// PossibleDuplicates The other incoming documents of the administration this one may be a copy of, oldest first; empty when none look alike. A warning only: nothing is blocked or removed. Journal entries are not compared.
+	PossibleDuplicates []PossibleDuplicate `json:"possible_duplicates"`
+
 	// RecognitionState The state of Scan and Recognise for this document; see Recognition.
 	RecognitionState IncomingDocumentSummaryRecognitionState `json:"recognition_state"`
 	Reference        string                                  `json:"reference"`
@@ -8166,6 +8217,24 @@ type PaymentRequestPaymentManualPaymentAction string
 
 // Permission Opens the API resources of the scope with the same name; ownership opens managing the administration: its users, security and deletion.
 type Permission string
+
+// PossibleDuplicate MoneyHarpy extension. Another incoming document a document may be a copy of, and why. same_file: an attachment of each has the same contents; same_reference: the same supplier and a reference alike (written the same without spaces and punctuation, one holding the other, or a typo apart with the same numbers); same_amount_and_date: the same supplier and total including VAT, at most 7 days apart; same_lines: the same supplier and at least 80% of the lines alike in description, price and amount.
+type PossibleDuplicate struct {
+	Date      openapi_types.Date         `json:"date"`
+	Id        string                     `json:"id"`
+	Reasons   []PossibleDuplicateReasons `json:"reasons"`
+	Reference string                     `json:"reference"`
+
+	// TotalPriceInclTax The total including VAT of a purchase invoice or receipt; 0.0 for other documents.
+	TotalPriceInclTax string                `json:"total_price_incl_tax"`
+	Type              PossibleDuplicateType `json:"type"`
+}
+
+// PossibleDuplicateReasons defines model for PossibleDuplicate.Reasons.
+type PossibleDuplicateReasons string
+
+// PossibleDuplicateType defines model for PossibleDuplicate.Type.
+type PossibleDuplicateType string
 
 // Product A Moneybird product with MoneyHarpy extensions.
 type Product struct {

@@ -255,6 +255,12 @@ func run(logger *slog.Logger) error {
 	go subscriptionService.Run(ctx, time.Minute, func(err error) { logger.Error("subscription charge billing", "error", err) })
 	go recognition.Run(ctx, 15*time.Second, func(err error) { logger.Error("scan and recognise", "error", err) })
 	go assetService.Run(ctx, time.Hour, func(err error) { logger.Error("asset depreciation", "error", err) })
+	// Attachments added before they had a sum get one, once, for duplicate detection.
+	go func() {
+		if err := attachmentService.HashMissing(ctx, purchases.ComparedKinds); err != nil {
+			logger.Error("sum attachments", "error", err)
+		}
+	}()
 
 	errs := make(chan error, 1)
 	go func() { errs <- srv.ListenAndServe() }()
