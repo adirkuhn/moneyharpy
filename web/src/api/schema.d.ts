@@ -9925,10 +9925,7 @@ export interface components {
             marked_dubious_on?: string | null;
             /** Format: date */
             marked_uncollectible_on?: string | null;
-            /**
-             * Format: date
-             * @description When the next reminder is due; 2099-01-01 while the invoice is paused, as Moneybird gives it.
-             */
+            /** Format: date */
             next_reminder?: string | null;
             notes?: components["schemas"]["note_response"][];
             original_estimate_id?: components["schemas"]["identifier_nullable"];
