@@ -44,6 +44,13 @@ func buyerLines(lines []string) []bool {
 	for i := 0; i < len(lines); i++ {
 		if buyerWords.MatchString(lines[i]) {
 			out[i] = true
+			// A header row of columns about the buyer ("Nº de Contribuinte
+			// Cliente Nº …") holds its values in the row below.
+			if !strings.ContainsAny(lines[i], "0123456789") {
+				if j := nextNonEmpty(lines, i); j >= 0 {
+					out[j] = true
+				}
+			}
 		}
 		if !buyerLabel.MatchString(lines[i]) {
 			continue
@@ -94,6 +101,11 @@ func readSupplier(lines []string, buyer []bool) (Supplier, Confidence) {
 		}
 	}
 	s.IBAN = supplierIBAN(lines, buyer)
+	if s.VATNumber == "" {
+		if v := portugueseNIF(lines, buyer, s.IBAN); v != "" {
+			s.VATNumber, vatSure = v, true
+		}
+	}
 	hint := countryOf(s.VATNumber)
 	if hint == "" && s.IBAN != "" {
 		hint = s.IBAN[:2]
@@ -309,4 +321,28 @@ func looksLikeName(l string) bool {
 	}
 	zip, _, _ := postcode(l, "")
 	return zip == ""
+}
+
+// nifLabel is the Portuguese tax number's label, printed without the PT
+// prefix: "Contribuinte: 123456789", "NIF 123456789".
+var nifLabel = regexp.MustCompile(`(?i)\b(?:contribuinte|nif|nipc|n\.?º? ?de contribuinte)\b[^0-9\n]{0,40}(\d{3} ?\d{3} ?\d{3})\b`)
+
+// portugueseNIF reads a labelled Portuguese tax number (NIF) as a VAT
+// number, when its check digit is right and the document is Portuguese: its
+// IBAN is Portuguese or the label is.
+func portugueseNIF(lines []string, buyer []bool, iban string) string {
+	for i, l := range lines {
+		if buyer[i] {
+			continue
+		}
+		m := nifLabel.FindStringSubmatch(l)
+		if m == nil {
+			continue
+		}
+		n := strings.ReplaceAll(m[1], " ", "")
+		if ValidPTNIF(n) && (strings.HasPrefix(iban, "PT") || iban == "") {
+			return "PT" + n
+		}
+	}
+	return ""
 }
