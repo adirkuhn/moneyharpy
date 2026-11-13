@@ -11,6 +11,7 @@ import { Page } from '../layout/Page'
 import { Block } from '../settings/Block'
 import { Loading } from '../layout/Loading'
 import { useSupportGrants } from '../management/queries'
+import { AIConnections, connectionLabels, type DraftConnection, toDrafts, toRequest } from './AIConnections'
 
 const defaultSmtpPort = 587
 
@@ -41,10 +42,6 @@ function SettingsForm() {
     storage_bucket: t('instance.storageBucket'),
     storage_access_key: t('instance.storageAccessKey'),
     storage_secret_key: t('instance.storageSecretKey'),
-    recognition_ai_provider: t('instance.aiProvider'),
-    recognition_ai_url: t('instance.aiUrl'),
-    recognition_ai_model: t('instance.aiModel'),
-    recognition_ai_api_key: t('instance.aiKey'),
   }
   const client = useQueryClient()
   const settings = useQuery({ queryKey: ['instance-settings'], queryFn: () => unwrap(api.GET('/api/instance/settings')) })
@@ -53,12 +50,13 @@ function SettingsForm() {
   const [kvkKey, setKvkKey] = useState('')
   const [smtpPassword, setSmtpPassword] = useState('')
   const [storageSecret, setStorageSecret] = useState('')
-  const [aiKey, setAiKey] = useState('')
+  const [connections, setConnections] = useState<DraftConnection[]>([])
   const me = useCurrentUser()
 
   useEffect(() => {
     if (settings.data) {
       setForm({ ...settings.data, smtp_port: settings.data.smtp_port || defaultSmtpPort })
+      setConnections(toDrafts(settings.data.recognition_ai_connections))
     }
   }, [settings.data])
 
@@ -69,7 +67,6 @@ function SettingsForm() {
       setKvkKey('')
       setSmtpPassword('')
       setStorageSecret('')
-      setAiKey('')
       client.setQueryData(['instance-settings'], saved)
       void client.invalidateQueries({ queryKey: ['providers'] })
     },
@@ -85,7 +82,6 @@ function SettingsForm() {
   }
 
   const security = (form.smtp_security || 'starttls') as NonNullable<UpdateInstanceSettings['smtp_security']>
-  const provider = form.recognition_ai_provider || 'ollama'
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -117,19 +113,16 @@ function SettingsForm() {
       ...(storageSecret ? { storage_secret_key: storageSecret } : {}),
       ...(secret ? { google_client_secret: secret } : {}),
       recognition_ai_enabled: form.recognition_ai_enabled,
-      recognition_ai_provider: provider,
-      recognition_ai_url: form.recognition_ai_url,
-      recognition_ai_model: form.recognition_ai_model,
-      ...(aiKey ? { recognition_ai_api_key: aiKey } : {}),
+      recognition_ai_connections: toRequest(connections),
     })
   }
 
-  const errors = formErrors(save.error, labels)
+  const errors = formErrors(save.error, { ...labels, ...connectionLabels(connections, t) })
   const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'kvk_website_search_enabled' | 'address_lookup_enabled' | 'webhooks_allow_local' | 'smtp_enabled' | 'storage_enabled' | 'storage_path_style' | 'recognition_ai_enabled', label: string, help?: string) => (
     <CheckboxInput label={label} help={help} checked={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />
   )
   const text = (
-    key: 'google_client_id' | 'lm2_url' | 'lm2_app' | 'smtp_host' | 'smtp_username' | 'smtp_from' | 'storage_endpoint' | 'storage_region' | 'storage_bucket' | 'storage_access_key' | 'recognition_ai_url' | 'recognition_ai_model',
+    key: 'google_client_id' | 'lm2_url' | 'lm2_app' | 'smtp_host' | 'smtp_username' | 'smtp_from' | 'storage_endpoint' | 'storage_region' | 'storage_bucket' | 'storage_access_key',
     label: string,
     extra: Partial<React.ComponentProps<typeof TextInput>> = {},
   ) => (
@@ -257,29 +250,7 @@ function SettingsForm() {
         <FormSection title={t('instance.recognitionTitle')}>
           <p className="hint">{t('instance.recognitionHint')}</p>
           {check('recognition_ai_enabled', t('instance.aiEnable'), t('instance.aiWarning'))}
-          <SelectInput
-            label={labels.recognition_ai_provider}
-            width="medium"
-            value={provider}
-            errors={errors.field('recognition_ai_provider')}
-            onChange={(e) => setForm({ ...form, recognition_ai_provider: e.target.value as typeof provider })}
-          >
-            <option value="ollama">{t('instance.aiOllama')}</option>
-            <option value="anthropic">{t('instance.aiAnthropic')}</option>
-          </SelectInput>
-          {provider === 'ollama' && text('recognition_ai_url', labels.recognition_ai_url, { type: 'url', placeholder: 'http://ollama:11434' })}
-          {text('recognition_ai_model', labels.recognition_ai_model, { width: 'medium', placeholder: provider === 'anthropic' ? 'claude-opus-5-5' : 'qwen2.5vl' })}
-          {provider === 'anthropic' && (
-            <TextInput
-              label={labels.recognition_ai_api_key}
-              type="password"
-              autoComplete="off"
-              placeholder={form.recognition_ai_api_key_set ? t('instance.stored') : ''}
-              value={aiKey}
-              errors={errors.field('recognition_ai_api_key')}
-              onChange={(e) => setAiKey(e.target.value)}
-            />
-          )}
+          <AIConnections connections={connections} onChange={setConnections} errors={errors.field} />
           <div className="form-input form-input--check">
             <span className="form-input__label" aria-hidden="true" />
             <div className="form-input__body form__actions">
@@ -293,9 +264,14 @@ function SettingsForm() {
                   </li>
                   <li className={testRecognition.data.ai === 'unavailable' ? 'recognition-check__problem' : 'saved'}>
                     {t({ off: 'instance.aiOff', ok: 'instance.aiOk', unavailable: 'instance.aiUnavailable' }[testRecognition.data.ai])}
-                    {testRecognition.data.ai === 'unavailable' && testRecognition.data.message ? `: ${testRecognition.data.message}` : ''}
                   </li>
-                  {testRecognition.data.ai !== 'unavailable' && !testRecognition.data.ocr_available && testRecognition.data.message && (
+                  {testRecognition.data.ai_connections.map((c) => (
+                    <li key={c.id} className={c.state === 'unavailable' ? 'recognition-check__problem' : 'saved'}>
+                      {t(`instance.aiConnection_${c.state}`, { name: c.name })}
+                      {c.state === 'unavailable' && c.message ? `: ${c.message}` : ''}
+                    </li>
+                  ))}
+                  {!testRecognition.data.ocr_available && testRecognition.data.message && (
                     <li className="recognition-check__problem">{testRecognition.data.message}</li>
                   )}
                 </ul>

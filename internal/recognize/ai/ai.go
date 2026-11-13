@@ -1,8 +1,8 @@
 // Package ai implements recognize.Model, the optional AI model of Scan and
-// Recognise, for a local Ollama server or the Anthropic API. Every provider
-// gets the same prompt and JSON schema; answers map into a
-// recognize.Extraction whose values are uncertain unless the code can verify
-// them.
+// Recognise, for a local Ollama server, the Anthropic API or NVIDIA's API
+// catalog (or a self-hosted NIM). Every provider gets the same prompt and JSON
+// schema; answers map into a recognize.Extraction whose values are uncertain
+// unless the code can verify them.
 package ai
 
 import (
@@ -16,14 +16,15 @@ import (
 const (
 	ProviderOllama    = "ollama"
 	ProviderAnthropic = "anthropic"
+	ProviderNVIDIA    = "nvidia"
 )
 
 // Config is the administrator's AI settings.
 type Config struct {
-	Provider string // ProviderOllama or ProviderAnthropic
-	URL      string // Ollama server; for Anthropic only to override the API URL
-	Model    string // required for Ollama; Anthropic defaults to DefaultAnthropicModel
-	APIKey   string // Anthropic only
+	Provider string // ProviderOllama, ProviderAnthropic or ProviderNVIDIA
+	URL      string // Ollama server; for the API providers only to override their URL
+	Model    string // required for Ollama; the API providers have a default
+	APIKey   string // the API providers; optional for a self-hosted NVIDIA NIM
 }
 
 // Errors the models return, wrapped with details, so callers (the settings
@@ -46,6 +47,8 @@ func New(cfg Config) (recognize.Model, error) {
 		return NewOllama(cfg)
 	case ProviderAnthropic:
 		return NewAnthropic(cfg)
+	case ProviderNVIDIA:
+		return NewNVIDIA(cfg)
 	default:
 		return nil, fmt.Errorf("%w: unknown provider %q", ErrConfig, cfg.Provider)
 	}
