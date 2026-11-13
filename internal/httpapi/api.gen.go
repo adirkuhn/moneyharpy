@@ -7383,7 +7383,7 @@ type InstanceSettings struct {
 	// RecognitionAiEnabled Let Scan and Recognise ask an AI model about documents its rules could not read. Off unless turned on; with an API provider the document's text and images are sent to that provider.
 	RecognitionAiEnabled bool `json:"recognition_ai_enabled"`
 
-	// RecognitionAiModel Example: claude-haiku-5-5
+	// RecognitionAiModel Example: claude-opus-5-5
 	RecognitionAiModel    string                                `json:"recognition_ai_model"`
 	RecognitionAiProvider InstanceSettingsRecognitionAiProvider `json:"recognition_ai_provider"`
 
