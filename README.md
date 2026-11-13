@@ -12,7 +12,7 @@ Requires Docker.
 
 ```sh
 cp .env.example .env   # set POSTGRES_PASSWORD and SECRET_KEY
-docker compose pull app && docker compose up -d
+docker compose pull app ocr && docker compose up -d
 ```
 
 This runs the published image `ghcr.io/adirkuhn/moneyharpy` for amd64 and arm64. Tags:
@@ -59,6 +59,12 @@ Enter your SMTP server under **Instance settings**, then use **Send test email**
 ### File storage
 
 Uploads, such as logos and stationery on document styles, work out of the box: without further setup they are kept on the server's disk, in the `uploads-data` volume (`UPLOADS_DIR`, default `/data/uploads`). Back that volume up with the database. For larger installations, use S3-compatible storage instead: Amazon S3, Cloudflare R2, Backblaze B2, MinIO, SeaweedFS or any other S3 service. The bundled compose file runs SeaweedFS. To use it, set `S3_ACCESS_KEY` and `S3_SECRET_KEY` in `.env`. Then enter them under **Instance settings > File storage** with endpoint `http://storage:8333`, any bucket name and path-style addresses on. **Test storage** creates the bucket if it is missing. Files uploaded before S3 was set up stay readable from disk.
+
+### OCR service (scans and previews)
+
+The bundled compose file also runs `ocr`, the image `ghcr.io/adirkuhn/moneyharpy-ocr` (built from `Dockerfile.ocr`, about 215 MB: Poppler, Tesseract with Dutch and English). It reads the text of PDFs, falls back to OCR for scans and photos (PNG, JPEG, TIFF, WebP), finds the UBL or Factur-X XML embedded in e-invoice PDFs, and renders the pages of incoming documents as preview images. The app finds it through `OCR_URL` (`http://ocr:8090` in the compose file).
+
+It is optional: leave it out (remove the service or `OCR_URL`) and the app still works; Scan and Recognise then reads only e-invoice XML, and previews show the file itself. Documents never leave your server for it: it runs as a non-root user on an internal network without internet access, keeps nothing, and removes its temporary files after each request. It reads at most 20 pages of a PDF, takes files up to 20 MB and gives up after 2 minutes; `MAX_PAGES`, `MAX_BODY_MB`, `READ_TIMEOUT_SECONDS`, `CONCURRENCY` (jobs at once, default the number of CPUs) and `OCR_LANGUAGES` (default `nld+eng`) on the `ocr` service change that. Set `MONEYHARPY_OCR_IMAGE` to use another tag.
 
 ### Company search and address lookup
 
@@ -126,7 +132,7 @@ To change the API, edit the contract first. Requests are validated against it at
 
 ### Releases
 
-Every push to main and every `v*` tag, once CI passes, publishes the image to `ghcr.io/adirkuhn/moneyharpy` and the documentation to GitHub Pages. To release, tag main:
+Every push to main and every `v*` tag, once CI passes, publishes the images `ghcr.io/adirkuhn/moneyharpy` and `ghcr.io/adirkuhn/moneyharpy-ocr` and the documentation to GitHub Pages. To release, tag main:
 
 ```sh
 git tag v1.2.3 && git push origin v1.2.3

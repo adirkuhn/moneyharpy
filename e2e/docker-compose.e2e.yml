@@ -8,6 +8,7 @@ services:
       BASE_URL: http://localhost:18080
       # Lets each test act as its own client, so real rate limits stay on.
       TRUST_PROXY_HEADERS: "true"
+      OCR_URL: http://ocr:8090
     ports:
       - "18080:8080"
     volumes:
@@ -15,6 +16,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  ocr:
+    build:
+      context: ..
+      dockerfile: Dockerfile.ocr
+    tmpfs:
+      - /tmp
   storage:
     image: chrislusf/seaweedfs:4.52
     command: ["server", "-s3", "-s3.port=8333", "-dir=/data", "-s3.config=/etc/seaweedfs/s3.json"]
