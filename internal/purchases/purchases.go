@@ -205,6 +205,16 @@ type Store interface {
 
 	// Totals sums up the documents still to pay and those to process.
 	Totals(ctx context.Context, admin resource.ID) (Summary, error)
+
+	// IncomingDocuments lists incoming documents of every kind, journal
+	// entries too; documents without a currency leave it empty.
+	IncomingDocuments(ctx context.Context, admin resource.ID, q IncomingQuery) ([]Incoming, int, error)
+	// IncomingDocument returns the incoming document of any kind with the
+	// id; today decides whether an open one is late.
+	IncomingDocument(ctx context.Context, admin, id resource.ID, today time.Time) (Incoming, error)
+	// IncomingStatistics sums up the documents the query selects; the
+	// currency is left to the caller.
+	IncomingStatistics(ctx context.Context, admin resource.ID, q IncomingQuery) (IncomingStatistics, error)
 }
 
 // PaymentPosting is a payment with what it posts.

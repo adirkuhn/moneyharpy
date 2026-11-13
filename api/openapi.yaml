@@ -60,6 +60,8 @@ tags:
     description: Receipts of costs paid at once or later, booked when saved. Compatible with the Moneybird API.
   - name: General documents
     description: Documents kept for the record, such as contracts, that book nothing. Compatible with the Moneybird API.
+  - name: Incoming documents
+    description: Every kind of incoming document together, for the Incoming page. MoneyHarpy extension.
   - name: Typeless documents
     description: Uploads still to be processed into a document. Compatible with the Moneybird API.
   - name: Purchase transactions
@@ -4598,6 +4600,104 @@ paths:
           description: The note is deleted
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listIncomingDocuments
+      x-permissions: [documents]
+      summary: List all incoming documents
+      description: >-
+        MoneyHarpy extension, for the Incoming page that shows every kind of incoming document together: purchase
+        invoices, receipts, general documents, journal entries (general journal documents) and typeless documents (new
+        uploads without a type yet). Filter terms: period (on the document date; this year unless a filter is given),
+        state (all, new, saved, open, late, paid, pending_payment; several separated by |), type (all,
+        purchase_invoice, receipt, general_document, general_journal_document; several separated by |; typeless
+        documents are of no type and only shown for all), contact_id and attachment (all, with, without); recurring
+        and automatic_saving are accepted, and as documents never recur and MoneyHarpy saves none by itself,
+        recurring:enabled and automatic_saving:automatic select nothing. Newest first unless sort is date_asc. Paged
+        with a Link header and X-Total-Count.
+      tags: [Incoming documents]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [date_desc, date_asc]
+      responses:
+        '200':
+          $ref: '#/components/responses/IncomingDocumentPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/statistics:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getIncomingDocumentStatistics
+      x-permissions: [documents]
+      summary: Statistics of the incoming documents
+      description: >-
+        MoneyHarpy extension. For the incoming documents selected by the same filter as the list: the costs they
+        record excluding VAT, what is still payable on them including VAT, and the costs per category, largest first.
+        Amounts are in the administration's currency.
+      tags: [Incoming documents]
+      parameters:
+        - $ref: '#/components/parameters/document_filter'
+      responses:
+        '200':
+          description: The statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomingDocumentStatistics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/documents/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getIncomingDocument
+      x-permissions: [documents]
+      summary: Get any incoming document
+      description: >-
+        MoneyHarpy extension. Finds an incoming document of any kind by its id, so a link to /documents/{id} can open
+        it whatever its type; its uri is the canonical path of the typed resource.
+      tags: [Incoming documents]
+      responses:
+        '200':
+          description: The incoming document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncomingDocumentSummary'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -13324,6 +13424,23 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/GeneralDocument'
+    IncomingDocumentPage:
+      description: A page of incoming documents of every kind
+      headers:
+        Link:
+          description: RFC 8288 links to the first, prev, next and last pages.
+          schema:
+            type: string
+        X-Total-Count:
+          description: The number selected in all. MoneyHarpy extension.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/IncomingDocumentSummary'
     TypelessDocumentPage:
       description: A page of typeless documents
       headers:
@@ -15927,6 +16044,72 @@ components:
                   maxLength: 10000
         remove_contact:
           $ref: '#/components/schemas/FlexibleBoolean'
+    IncomingDocumentSummary:
+      type: object
+      description: MoneyHarpy extension. One incoming document of any kind, as a row of the Incoming page.
+      required: [id, administration_id, type, reference, contact_id, contact_name, date, state, currency, total_price_incl_tax, attachments_count, created_at, uri]
+      properties:
+        id:
+          type: string
+        administration_id:
+          type: string
+        type:
+          type: string
+          enum: [PurchaseInvoice, Receipt, GeneralDocument, GeneralJournalDocument, TypelessDocument]
+        reference:
+          type: string
+        contact_id:
+          type: string
+          nullable: true
+        contact_name:
+          type: string
+          description: The company name of the contact, or else the person's name; empty without a contact.
+        date:
+          type: string
+          format: date
+        state:
+          type: string
+          description: new, saved, open, late, pending_payment or paid.
+        currency:
+          type: string
+        total_price_incl_tax:
+          type: string
+          description: The total including VAT of a purchase invoice or receipt; 0.0 for other documents.
+        attachments_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        uri:
+          type: string
+          description: Canonical path of the typed resource, such as /api/v2/{administration_id}/documents/receipts/{id}.
+    IncomingDocumentStatistics:
+      type: object
+      description: MoneyHarpy extension. Totals of the incoming documents in a selection.
+      required: [currency, costs_excl_tax, amount_payable, categories]
+      properties:
+        currency:
+          type: string
+        costs_excl_tax:
+          type: string
+          description: The costs booked by the purchase invoices and receipts, excluding VAT.
+        amount_payable:
+          type: string
+          description: What is still to be paid on them, including VAT.
+        categories:
+          type: array
+          description: The costs per category, largest first; uncategorized costs have no ledger account.
+          items:
+            type: object
+            required: [ledger_account_id, name, amount]
+            properties:
+              ledger_account_id:
+                type: string
+                nullable: true
+              name:
+                type: string
+              amount:
+                type: string
     TypelessDocument:
       description: A Moneybird typeless document with MoneyHarpy extensions.
       allOf:
