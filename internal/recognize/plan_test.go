@@ -168,3 +168,52 @@ func TestPlanDropsADueDateBeforeTheDate(t *testing.T) {
 		t.Errorf("due date = %v", *p.Changes.DueDate)
 	}
 }
+
+// reverseRates adds the reverse-charged purchase rates of the Dutch VAT
+// return: EU acquisitions (box 4b) and domestic reverse charge (box 2a).
+var reverseRates = append([]bookkeeping.TaxRate{
+	{ID: 10, Percentage: "21.0", Type: "purchase_invoice", Active: true, ReportBoxes: []string{"NL/4b", "NL/5b"}},
+	{ID: 11, Percentage: "9.0", Type: "purchase_invoice", Active: true, ReportBoxes: []string{"NL/4b", "NL/5b"}},
+	{ID: 12, Percentage: "21.0", Type: "purchase_invoice", Active: true, ReportBoxes: []string{"NL/2a", "NL/5b"}},
+}, testRates...)
+
+func TestPlanBooksADiscountedLineWithItsTotal(t *testing.T) {
+	e := Extraction{
+		Source: SourceText, TotalInclTax: certain(money.Amount(12894)), TotalExclTax: certain(money.Amount(12894)),
+		Lines: []Line{
+			{Description: "Produto Exemplo A", Quantity: certain("20"), Total: certain(money.Amount(9894)), TaxRate: certain("0")},
+			{Description: "Transporte", Quantity: certain("1"), Price: certain(money.Amount(3000)), Total: certain(money.Amount(3000)), TaxRate: certain("0")},
+		},
+	}
+	p := MakePlan(PlanInput{Extraction: e, Target: Target{Kind: purchases.TypelessDocument}, Rates: testRates})
+	d := p.Changes.Details
+	if len(d) != 2 || *d[0].Amount != "1" || *d[0].Price != "98.94" || *d[0].Description != "20 × Produto Exemplo A" ||
+		*d[1].Amount != "1" || *d[1].Price != "30.0" || *d[1].Description != "Transporte" {
+		t.Errorf("details = %+v", d)
+	}
+}
+
+func TestPlanBooksAnIntraCommunitySupplyReverseCharged(t *testing.T) {
+	supply := func(country string) Extraction {
+		return Extraction{
+			Source: SourceText, Supplier: Supplier{Country: country},
+			TotalInclTax: certain(money.Amount(10000)), TotalExclTax: certain(money.Amount(10000)),
+			VAT:   []VAT{{Rate: "0", Taxable: 10000, ReverseCharge: true}},
+			Lines: []Line{{Description: "Goods", Quantity: certain("1"), Price: certain(money.Amount(10000)), Total: certain(money.Amount(10000)), TaxRate: certain("0")}},
+		}
+	}
+	for country, want := range map[string]resource.ID{"PT": 10, "NL": 12} {
+		p := MakePlan(PlanInput{Extraction: supply(country), Target: Target{Kind: purchases.TypelessDocument}, Rates: reverseRates})
+		if d := p.Changes.Details; len(d) != 1 || *d[0].TaxRateID != want {
+			t.Errorf("%s supplier: details = %+v, want tax rate %d", country, d, want)
+		}
+		if f := fieldNames(p.Fields); f["details.0.tax_rate_id"] != Uncertain {
+			t.Errorf("%s supplier: the reverse-charged rate is a guess, fields %v", country, f)
+		}
+	}
+	// Without such rates: plain 0%.
+	p := MakePlan(PlanInput{Extraction: supply("PT"), Target: Target{Kind: purchases.TypelessDocument}, Rates: testRates})
+	if d := p.Changes.Details; len(d) != 1 || *d[0].TaxRateID != 3 {
+		t.Errorf("details = %+v, want the 0%% rate", d)
+	}
+}

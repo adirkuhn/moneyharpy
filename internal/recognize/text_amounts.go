@@ -14,10 +14,12 @@ type amountHit struct {
 	start, end int
 }
 
-// amountPattern matches "1.234,56", "1,234.56", "€ 12,50", "-2,00", "(3.00)",
-// "12,50-" and Dutch whole amounts "12,-". Amounts need decimals so that
-// quantities, years and numbers are not taken for money.
-var amountPattern = regexp.MustCompile(`(?:([-−])\s?)?(\()?(?:(?:EUR|USD|GBP|CHF|€|\$|£)\s?)?([-−])?(\d{1,3}(?:[.,'’]\d{3})+|\d+)(?:([.,])(\d{2})|(,-))(\))?(-)?`)
+// amountPattern matches "1.234,56", "1,234.56", "4 321,09", "€ 12,50",
+// "-2,00", "(3.00)", "12,50-" and Dutch whole amounts "12,-". Amounts need
+// decimals so that quantities, years and numbers are not taken for money. A
+// space groups thousands only as one space before exactly three digits, so
+// amounts in neighbouring columns stay apart.
+var amountPattern = regexp.MustCompile(`(?:([-−])\s?)?(\()?(?:(?:EUR|USD|GBP|CHF|€|\$|£)\s?)?([-−])?(\d{1,3}(?:[.,'’]\d{3})+|\d{1,3}(?: \d{3})+|\d+)(?:([.,])(\d{2})|(,-))(\))?(-)?`)
 
 // findAmounts returns the amounts printed on a line, left to right.
 func findAmounts(s string) []amountHit {
