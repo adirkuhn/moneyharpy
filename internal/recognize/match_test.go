@@ -61,7 +61,7 @@ func TestMatchPrefersStrongKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := sup
 			tt.drop(&s)
-			got, by, ok := Match(s, all)
+			got, by, ok := Match(s, all, Self{})
 			if !ok || int(got.ID) != tt.wantID || by != tt.wantBy {
 				t.Errorf("Match() = %d, %q, %v; want %d, %q", got.ID, by, ok, tt.wantID, tt.wantBy)
 			}
@@ -74,7 +74,7 @@ func TestMatchPrefersStrongKeys(t *testing.T) {
 
 func TestMatchIgnoresFreeMailAndMisses(t *testing.T) {
 	c := contacts.Contact{ID: 1, CompanyName: "Ann de Vries", SendInvoicesToEmail: "ann@gmail.com"}
-	if _, _, ok := Match(Supplier{Name: "Example Shop", Email: "shop@gmail.com"}, []contacts.Contact{c}); ok {
+	if _, _, ok := Match(Supplier{Name: "Example Shop", Email: "shop@gmail.com"}, []contacts.Contact{c}, Self{}); ok {
 		t.Error("Match() matched on a free mail domain")
 	}
 }

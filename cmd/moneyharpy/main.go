@@ -182,7 +182,10 @@ func run(logger *slog.Logger) error {
 	recognition := recognize.NewService(recognize.Deps{
 		Documents: documentService, Contacts: contactService, Ledger: books, Settings: instance,
 		Store: postgres.NewRecognitionStore(pool), OCR: ocrService,
-		Parsers: recognize.Parsers{EInvoice: recognize.ParseEInvoice, Text: recognize.ParseText},
+		Parsers: recognize.Parsers{EInvoice: recognize.ParseEInvoice, Text: recognize.ParseTextFor},
+		// Documents are read for the administration: its own company, the
+		// buyer, is never their supplier.
+		Own: recognize.OwnCompany{Administrations: admins, Accounts: bank},
 		// The AI connections are asked in the administrator's order.
 		Models: func(c settings.Recognition) (recognize.Model, error) { return ai.FromSettings(c, logger) },
 		// New suppliers get their registered name from VIES, when an

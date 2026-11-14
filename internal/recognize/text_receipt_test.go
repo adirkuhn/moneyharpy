@@ -185,7 +185,7 @@ func TestReadSupplierVATNumber(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			lines := prepare(tc.text)
-			s, conf := readSupplier(lines, buyerLines(lines))
+			s, conf := readSupplier(lines, buyerLines(lines), Self{})
 			if s.VATNumber != tc.vat {
 				t.Errorf("VAT number = %q, want %q", s.VATNumber, tc.vat)
 			}
@@ -209,7 +209,7 @@ func TestSupplierNameSkipsOCRGarbage(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			lines := prepare(tc.text)
-			s, _ := readSupplier(lines, buyerLines(lines))
+			s, _ := readSupplier(lines, buyerLines(lines), Self{})
 			if s.Name != tc.want {
 				t.Errorf("name = %q, want %q", s.Name, tc.want)
 			}

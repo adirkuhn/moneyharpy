@@ -2,6 +2,7 @@ package recognize
 
 import (
 	"net/url"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -118,8 +119,11 @@ func (s Supplier) SearchTerms() []string {
 }
 
 // Match finds the contact that is the supplier among candidates: by IBAN,
-// then VAT number, KVK number, email domain and at last company name.
-func Match(s Supplier, candidates []contacts.Contact) (contacts.Contact, MatchedBy, bool) {
+// then VAT number, KVK number, email domain and at last company name. It
+// never takes a contact that is the administration's own company (self),
+// such as one it keeps of itself.
+func Match(s Supplier, candidates []contacts.Contact, self Self) (contacts.Contact, MatchedBy, bool) {
+	candidates = slices.DeleteFunc(slices.Clone(candidates), self.isContact)
 	keys := []struct {
 		by    MatchedBy
 		want  string
