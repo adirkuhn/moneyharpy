@@ -198,7 +198,7 @@ func run(logger *slog.Logger) error {
 	// The official KVK API is preferred; the experimental website search is
 	// used only while the API is not enabled, and is capped for the whole
 	// installation to stay a polite visitor.
-	kvkWebsite := kvkweb.New(instance, kvkweb.ProductionURL, outbound, ratelimit.New(30, time.Minute))
+	kvkWebsite := kvkweb.New(instance, kvkweb.ProductionURL, kvkweb.ProductionEnvConfig, outbound, ratelimit.New(30, time.Minute))
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
