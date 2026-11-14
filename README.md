@@ -12,7 +12,7 @@ Requires Docker.
 
 ```sh
 cp .env.example .env   # set POSTGRES_PASSWORD and SECRET_KEY
-docker compose pull app ocr && docker compose up -d
+docker compose pull app ocr ocr-rapid && docker compose up -d
 ```
 
 This runs the published image `ghcr.io/adirkuhn/moneyharpy` for amd64 and arm64. Tags:
@@ -67,6 +67,24 @@ The bundled compose file also runs `ocr`, the image `ghcr.io/adirkuhn/moneyharpy
 It is optional: leave it out (remove the service or `OCR_URL`) and the app still works; Scan and Recognise then reads only e-invoice XML, and previews show the file itself. Documents never leave your server for it: it runs as a non-root user on an internal network without internet access, keeps nothing, and removes its temporary files after each request. It reads at most 20 pages of a PDF, takes files up to 20 MB and gives up after 2 minutes; `MAX_PAGES`, `MAX_BODY_MB`, `READ_TIMEOUT_SECONDS`, `CONCURRENCY` (jobs at once, default the number of CPUs) and `OCR_LANGUAGES` (default `nld+eng`) on the `ocr` service change that. Set `MONEYHARPY_OCR_IMAGE` to use another tag.
 
 Photos and short scans (up to 2 pages) are read with several Tesseract page modes at once, by default `3,6,4` (`OCR_PAGE_MODES`): automatic layout, one block of text and one column of lines. A phone photo of a till receipt reads much better with the last two. Scan and Recognise takes the reading its rules understand best. `OCR_WORKERS` (default the number of CPUs) caps the Tesseract runs at once.
+
+#### RapidOCR, a second OCR engine
+
+The compose file also runs `ocr-rapid`, the image `ghcr.io/adirkuhn/moneyharpy-ocr-rapid` (built from `Dockerfile.ocr-rapid` and `ocr-rapid/`). It is [RapidOCR](https://github.com/RapidAI/RapidOCR) (Apache-2.0): PaddleOCR's PP-OCRv5 models (Apache-2.0) on ONNX Runtime (MIT), CPU only. It uses the text detection model `ch_PP-OCRv5_det_mobile`, the upside-down text classifier `ch_ppocr_mobile_v2.0_cls` and the Latin-script recognition model `latin_PP-OCRv5_rec_mobile`, which reads accents (è, é, û) as printed. It reads phone photos of till receipts well, and the service puts the text it finds on lines by their height in the photo, undoing a skew, so a receipt's columns stay together: `TOTAAL 24,10`, not `TOTAAL` with the amount elsewhere.
+
+When `RAPIDOCR_URL` is set on the `ocr` service (`http://ocr-rapid:8091` in the compose file), photos and short scans are read by RapidOCR at the same time as by Tesseract. Its reading is one more candidate: the best reading is returned as the text, the others as alternatives, each labelled with what read it (`tesseract-psm6`, `rapidocr`), and Scan and Recognise votes across all of them. When RapidOCR is down, fails or takes longer than 60 seconds (`RAPIDOCR_TIMEOUT_SECONDS`), Tesseract's readings are used and a warning is logged. Digital PDFs and scans of more than 2 pages are not sent to it.
+
+To turn it off, remove `RAPIDOCR_URL` from the `ocr` service and the `ocr-rapid` service from your compose file.
+
+Like `ocr`, it runs as a non-root user on the internal network only, and needs no internet: the models are downloaded when the image is built, checked against their SHA-256, and nothing is downloaded at runtime. ONNX Runtime's telemetry is switched off (`ORT_DISABLE_TELEMETRY`). It keeps nothing and logs no text.
+
+The image is about 465 MB (190 MB to download), mostly OpenCV, ONNX Runtime and NumPy; it uses about 300 MB of memory. A synthetic receipt photo (1590 × 1810 pixels) takes about 2.4 s on one CPU and 1.5 s with 4 threads; reading it with Tesseract as well takes no longer than RapidOCR alone, as they run side by side. On the `ocr-rapid` service, `RAPIDOCR_WORKERS` (images read at once, default 1), `RAPIDOCR_THREADS` (ONNX Runtime threads per worker, default the CPUs up to 4: more made it slower) and `MAX_BODY_MB` (default 20) change that. Set `MONEYHARPY_OCR_RAPID_IMAGE` to use another tag.
+
+To try it on a photo of your own, against a running stack (`moneyharpy` is the compose project's name; nothing leaves your machine):
+
+```sh
+docker run --rm -i --network moneyharpy_ocr curlimages/curl:8.11.1 -s --data-binary @- http://ocr-rapid:8091/read < receipt.jpg
+```
 
 ### AI model for Scan and Recognise
 
@@ -135,6 +153,8 @@ make generate   # after changing api/openapi.yaml or SQL queries
 make test       # backend, needs Docker
 make test-web   # frontend, run npm ci in web/ first
 make test-e2e   # whole stack, run npm ci in e2e/ first
+make test-ocr-rapid        # RapidOCR service's unit tests, needs python3
+make test-ocr-rapid-image  # its image's smoke test with the real models, needs Docker
 make lint       # gofmt, go vet and golangci-lint, as CI runs them
 make check      # everything CI checks, locally, on a clean tree
 make docs       # documentation site into build/site, needs pip install -r docs/requirements.txt
@@ -146,7 +166,7 @@ To change the API, edit the contract first. Requests are validated against it at
 
 ### Releases
 
-Every push to main and every `v*` tag, once CI passes, publishes the images `ghcr.io/adirkuhn/moneyharpy` and `ghcr.io/adirkuhn/moneyharpy-ocr` and the documentation to GitHub Pages. To release, tag main:
+Every push to main and every `v*` tag, once CI passes, publishes the images `ghcr.io/adirkuhn/moneyharpy`, `ghcr.io/adirkuhn/moneyharpy-ocr` and `ghcr.io/adirkuhn/moneyharpy-ocr-rapid` and the documentation to GitHub Pages. To release, tag main:
 
 ```sh
 git tag v1.2.3 && git push origin v1.2.3

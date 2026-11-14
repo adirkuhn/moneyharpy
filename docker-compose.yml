@@ -29,6 +29,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.ocr
+    environment:
+      # Optional: photos and short scans are also read by RapidOCR, the
+      # ocr-rapid service below. Remove this line (and that service) to read
+      # with Tesseract alone; when it is down, Tesseract is used anyway.
+      RAPIDOCR_URL: http://ocr-rapid:8091
     networks: [ocr]
     read_only: true
     tmpfs:
@@ -37,6 +42,24 @@ services:
       test: ["CMD", "/usr/local/bin/ocrd", "-healthcheck"]
       interval: 30s
       timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # A second OCR engine (RapidOCR: PaddleOCR's models on ONNX Runtime) that
+  # reads phone photos of till receipts better. Only the ocr service talks to
+  # it, on the internal network: no internet, the models are in the image.
+  ocr-rapid:
+    image: ${MONEYHARPY_OCR_RAPID_IMAGE:-ghcr.io/adirkuhn/moneyharpy-ocr-rapid:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.ocr-rapid
+    networks: [ocr]
+    read_only: true
+    healthcheck:
+      test: ["CMD", "python", "/app/main.py", "-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
       retries: 3
     restart: unless-stopped
 
