@@ -20,7 +20,8 @@ import type { ContactPrefill } from '../invoices/ContactSelect'
 import { CompanyNameField } from './CompanyNameField'
 import { ContactIcon } from './ContactIcon'
 import { CheckRow, Counter, Section, SegmentedRow, Tip } from './ContactFormParts'
-import { type Contact, type ContactChanges, useArchiveContact, useContact, useNextCustomerId, useSaveContact } from './queries'
+import { type Contact, type ContactChanges, useArchiveContact, useContact, useNextCustomerId, useSaveContact, type VatMatch } from './queries'
+import { TaxNumberField } from './TaxNumberField'
 import './contacts.css'
 
 export const deliveryMethods = ['Email', 'Post', 'Manual', 'Peppol', 'Simplerinvoicing'] as const
@@ -130,6 +131,24 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
   const input = (field: TextField, extra: Partial<React.ComponentProps<typeof TextInput>> = {}) => (
     <TextInput label={labels[field] ?? field} maxLength={255} autoComplete="off" value={text[field]} errors={errors.field(field)} onChange={(e) => change(field, e.target.value)} {...extra} />
   )
+  // What VIES registered goes only into fields still empty, never over what was typed; the country goes with the address.
+  const fillFromVIES = (company: VatMatch) => {
+    const found: Partial<Record<TextField, string>> = { company_name: company.name, address1: company.address1, zipcode: company.zipcode, city: company.city }
+    const fill = Object.entries(found).filter(([field, value]) => value && !text[field as TextField].trim()) as [TextField, string][]
+    const noAddress = !text.address1.trim() && !text.zipcode.trim() && !text.city.trim()
+    if (noAddress && company.address1 && company.country && company.country !== text.country) {
+      fill.push(['country', company.country])
+    }
+    if (fill.length > 0) {
+      // Checked again against the latest values, in case something was typed while VIES answered.
+      setText((current) => {
+        const empty = (field: TextField) => !current[field].trim()
+        const keep = fill.filter(([field]) => (field === 'country' ? empty('address1') && empty('zipcode') && empty('city') : empty(field)))
+        return { ...current, ...Object.fromEntries(keep) }
+      })
+    }
+    return fill.length > 0
+  }
   const ibanAbroad = /^[A-Z]{2}/i.test(text.sepa_iban.trim()) && !/^NL/i.test(text.sepa_iban.trim())
 
   const submit = (e: FormEvent) => {
@@ -193,7 +212,16 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
                   }))}
                 />
                 {input('chamber_of_commerce', { width: 'medium' })}
-                {input('tax_number', { width: 'medium', labelExtra: <Tip text={f('taxNumberTip')} /> })}
+                <TaxNumberField
+                  administrationId={administrationId}
+                  label={labels.tax_number ?? ''}
+                  value={text.tax_number}
+                  errors={errors.field('tax_number')}
+                  labelExtra={<Tip text={f('taxNumberTip')} />}
+                  lookup={options.data?.vat_lookup_enabled === true}
+                  onChange={(value) => change('tax_number', value)}
+                  onFound={fillFromVIES}
+                />
               </>
             ) : (
               <>

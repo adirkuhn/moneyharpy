@@ -221,10 +221,13 @@ func (fakeLedger) TaxRates(context.Context, resource.ID, resource.ID, bookkeepin
 	return testRates, nil
 }
 
-type fakeSettings struct{ rec settings.Recognition }
+type fakeSettings struct {
+	rec  settings.Recognition
+	vies bool
+}
 
 func (s *fakeSettings) Instance(context.Context) (settings.Instance, error) {
-	return settings.Instance{Recognition: s.rec}, nil
+	return settings.Instance{Recognition: s.rec, VIESEnabled: s.vies}, nil
 }
 
 type fakeOCR struct {

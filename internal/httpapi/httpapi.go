@@ -40,6 +40,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
 	"github.com/adirkuhn/moneyharpy/internal/tasklists"
 	"github.com/adirkuhn/moneyharpy/internal/timeentries"
+	"github.com/adirkuhn/moneyharpy/internal/vatlookup"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -78,6 +79,11 @@ type RegisterChecker interface {
 // AddressLookup completes Dutch addresses.
 type AddressLookup interface {
 	LookupAddress(ctx context.Context, zipcode, houseNumber string) (administration.AddressMatch, error)
+}
+
+// VATNumbers looks EU VAT numbers up in VIES, while the settings allow it.
+type VATNumbers interface {
+	Lookup(ctx context.Context, vat string) (vatlookup.Company, error)
 }
 
 // StorageChecker checks that the file storage settings work.
@@ -124,7 +130,9 @@ type Deps struct {
 	Companies     CompanySearcher
 	CompanyCheck  RegisterChecker
 	Addresses     AddressLookup
-	Mail          TestMailer
+	// VATNumbers fills in contacts from VIES; nil leaves the lookup off.
+	VATNumbers VATNumbers
+	Mail       TestMailer
 	// OCR reads and renders attachments; nil works as an unavailable
 	// service.
 	OCR ocr.Service
@@ -307,6 +315,13 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		errors.Is(err, administration.ErrAddressUnknown),
 		errors.Is(err, identity.ErrTokenNotFound):
 		writeError(w, http.StatusNotFound, "Not found")
+	case errors.Is(err, vatlookup.ErrDisabled):
+		code := "vies_disabled"
+		writeJSON(w, http.StatusForbidden, Error{Error: "The EU VAT number lookup is turned off", Code: &code})
+	case errors.Is(err, vatlookup.ErrInvalidNumber):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"vat_number": {"is not a valid EU VAT number"}}))
+	case errors.Is(err, vatlookup.ErrUnavailable):
+		s.registerProblem(w, r, err, "vies_unavailable", "VIES is not available right now")
 	case errors.Is(err, administration.ErrRegisterUnavailable):
 		s.registerProblem(w, r, err, "kvk_unavailable", "KVK search is unavailable right now")
 	case errors.Is(err, administration.ErrRegisterBlocked):

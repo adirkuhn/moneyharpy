@@ -57,6 +57,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/tasklists"
 	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"github.com/adirkuhn/moneyharpy/internal/uploads"
+	"github.com/adirkuhn/moneyharpy/internal/vatlookup"
 	"github.com/adirkuhn/moneyharpy/internal/vies"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/adirkuhn/moneyharpy/web"
@@ -175,6 +176,9 @@ func run(logger *slog.Logger) error {
 	// e-invoices and text by its rules, scans through the OCR service, and
 	// with the optional AI connections when an administrator turned them on.
 	ocrService := ocr.New(cfg.ocrURL)
+	// VIES is asked only while an administrator turned the VAT number lookup
+	// on, by Scan and Recognise and by the contact form, sharing one cache.
+	viesClient := vies.New(vies.ProductionURL, outbound)
 	recognition := recognize.NewService(recognize.Deps{
 		Documents: documentService, Contacts: contactService, Ledger: books, Settings: instance,
 		Store: postgres.NewRecognitionStore(pool), OCR: ocrService,
@@ -183,7 +187,7 @@ func run(logger *slog.Logger) error {
 		Models: func(c settings.Recognition) (recognize.Model, error) { return ai.FromSettings(c, logger) },
 		// New suppliers get their registered name from VIES, when an
 		// administrator turned that on.
-		Registry: vies.New(vies.ProductionURL, outbound),
+		Registry: viesClient,
 		Notifier: httpapi.RecognitionNotifier{Webhooks: hooks, Logger: logger}, Logger: logger, Now: time.Now,
 	})
 	documentService.UseRecognition(recognition)
@@ -228,6 +232,7 @@ func run(logger *slog.Logger) error {
 		Google:            google.New(instance, cfg.baseURL, google.Issuer),
 		LM2:               lm2.New(instance, cfg.baseURL, outbound),
 		Companies:         administration.Registers{kvk.New(instance, kvk.ProductionURL, outbound), kvkWebsite},
+		VATNumbers:        vatlookup.New(instance, viesClient),
 		CompanyCheck:      kvkWebsite,
 		Addresses:         pdok.New(instance, pdok.ProductionURL, outbound),
 		LookupLimiter:     ratelimit.New(60, time.Minute),
