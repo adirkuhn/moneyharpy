@@ -20,6 +20,8 @@ type Props = {
    */
   countries?: { value: string; label: string }[]
   country?: string
+  /** The name of that country select; "Country" when none is given. */
+  countryLabel?: string
   onCountry?: (country: string) => void
 }
 
@@ -29,7 +31,7 @@ const searchDelayMs = 300
  * The company name, after Moneybird: a country for the company register in
  * front, and while typing the register's matches to fill the contact from.
  */
-export function CompanyNameField({ label, value, errors, registers, onChange, onChoose, countries, country: own = '', onCountry }: Props) {
+export function CompanyNameField({ label, value, errors, registers, onChange, onChoose, countries, country: own = '', countryLabel, onCountry }: Props) {
   const { t, i18n } = useTranslation()
   const listId = useId()
   const [chosen, setCountry] = useState('')
@@ -81,7 +83,7 @@ export function CompanyNameField({ label, value, errors, registers, onChange, on
       {({ labelId: _, ...control }) => (
         <div className="company-name">
           {countries && (
-            <select className="company-name__country" aria-label={t('contacts.form.country')} value={own} onChange={(e) => onCountry?.(e.target.value)}>
+            <select className="company-name__country" aria-label={countryLabel ?? t('contacts.form.country')} value={own} onChange={(e) => onCountry?.(e.target.value)}>
               {countries.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           )}

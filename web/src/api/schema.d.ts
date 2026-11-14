@@ -1934,6 +1934,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/kvk_lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Look up a company in the Dutch company register by its KVK number
+         * @description MoneyHarpy extension. The company the KVK register holds under a KVK number, to fill in a Dutch contact. Uses the official KVK API when it is enabled, and otherwise the experimental KVK website search when that is enabled; neither answers 404, as does a number the register does not know. Only the number is sent. Rate limited like the company register search.
+         */
+        get: operations["lookupKvkNumber"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/contacts/registry_duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Find contacts that already hold a chamber of commerce or VAT number
+         * @description MoneyHarpy extension. The contacts that are not archived and already hold the chamber of commerce number or the VAT number, at most one per field, so a form can warn before saving a duplicate. Numbers are compared normalised: a chamber of commerce number by its digits, a VAT number in capitals without spaces, dots and dashes. Creating and updating contacts accept duplicates, as Moneybird does.
+         */
+        get: operations["listContactRegistryDuplicates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/contacts/synchronization": {
         parameters: {
             query?: never;
@@ -7049,6 +7093,15 @@ export interface components {
             address1: string;
             zipcode: string;
             city: string;
+        };
+        /** @description MoneyHarpy extension. A contact that already holds a chamber of commerce or VAT number. */
+        ContactRegistryDuplicate: {
+            /** @enum {string} */
+            field: "chamber_of_commerce" | "tax_number";
+            contact_id: string;
+            contact_name: string;
+            /** @description In English, such as "A contact with this KVK number already exists: Example Shop B.V.". */
+            message: string;
         };
         AddressMatch: {
             address1: string;
@@ -15064,6 +15117,77 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+        };
+    };
+    lookupKvkNumber: {
+        parameters: {
+            query: {
+                /** @description The eight digits of the KVK number. */
+                kvk_number: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The company. Address parts the register does not return are empty. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyMatch"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            /** @description The register could not be searched (`code` is `kvk_unavailable`, `kvk_blocked` or `kvk_rate_limited`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listContactRegistryDuplicates: {
+        parameters: {
+            query?: {
+                chamber_of_commerce?: string;
+                tax_number?: string;
+                /** @description The contact being edited, which is left out. */
+                except_id?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The contacts holding a number already; empty when none does. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactRegistryDuplicate"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     listContactVersions: {

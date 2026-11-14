@@ -13,15 +13,19 @@ import { Page } from '../layout/Page'
 import { MoreMenu } from '../list/ListActions'
 import { useOnboardingOptions } from '../onboarding/queries'
 import { SearchableSelect } from '../onboarding/SearchableSelect'
-import { countryName } from '../settings/format'
+import { countryFlag, countryName } from '../settings/format'
 import { returnPath } from '../settings/CustomFieldFormPage'
 import { useCustomFields } from '../settings/queries'
 import type { ContactPrefill } from '../invoices/ContactSelect'
+import { ChamberOfCommerceField, kvkDigits, registryOf, validKvk } from './ChamberOfCommerceField'
 import { CompanyNameField } from './CompanyNameField'
 import { ContactIcon } from './ContactIcon'
 import { CheckRow, Counter, Section, SegmentedRow, Tip } from './ContactFormParts'
-import { type Contact, type ContactChanges, useArchiveContact, useContact, useNextCustomerId, useSaveContact, type VatMatch } from './queries'
-import { TaxNumberField } from './TaxNumberField'
+import {
+  type CompanyMatch, type Contact, type ContactChanges, findRegistryDuplicates, type RegistryDuplicate, type RegistryField, useArchiveContact, useContact,
+  useNextCustomerId, useSaveContact, type VatMatch,
+} from './queries'
+import { normalizeVat, TaxNumberField } from './TaxNumberField'
 import './contacts.css'
 
 export const deliveryMethods = ['Email', 'Post', 'Manual', 'Peppol', 'Simplerinvoicing'] as const
@@ -43,6 +47,15 @@ type TextField = (typeof textFields)[number]
 const mandateFields: TextField[] = ['sepa_mandate_id', 'sepa_mandate_date']
 
 type Kind = 'company' | 'private_individual'
+
+/** A registry number as it is compared with other contacts': a chamber of commerce number by its digits, a VAT number without separators. */
+const comparable: Record<RegistryField, (value: string) => string> = {
+  chamber_of_commerce: (value) => kvkDigits(value.trim()).toUpperCase(),
+  tax_number: (value) => normalizeVat(value.trim()),
+}
+const registryFields: RegistryField[] = ['chamber_of_commerce', 'tax_number']
+/** The other contact holding a number, with the number as it was checked. */
+type Duplicate = RegistryDuplicate & { checked: string }
 
 /** Adds a contact (/contacts/new) or edits one (/contacts/:id/edit), on Moneybird's form. */
 export function ContactFormPage() {
@@ -111,12 +124,17 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
   const [custom, setCustom] = useState<Record<string, string>>(() => Object.fromEntries((contact?.custom_fields ?? []).map((f) => [f.id ?? '', f.value ?? ''])))
 
   const countryOptions = useMemo(
-    () => (options.data?.countries ?? [text.country]).map((value) => ({ value, label: countryName(i18n.language, value) })).sort((a, b) => a.label.localeCompare(b.label, i18n.language)),
+    () => (options.data?.countries ?? [text.country])
+      .map((value) => ({ value, label: countryName(i18n.language, value), decoration: countryFlag(value) }))
+      .sort((a, b) => a.label.localeCompare(b.label, i18n.language)),
     [options.data, text.country, i18n.language],
   )
+  const registers = options.data?.company_search_countries ?? []
+  // KVK, by name or by number, only applies to Dutch contacts.
+  const kvk = registers.includes('NL') && text.country === 'NL'
   const f = (key: string) => t(`contacts.form.${key}`)
   const labels: Record<string, string> = {
-    company_name: f('companyName'), chamber_of_commerce: f('chamberOfCommerce'), tax_number: f('taxNumber'),
+    company_name: f('companyName'), chamber_of_commerce: f(`registry.${registryOf(text.country)}`), tax_number: f('taxNumber'),
     firstname: kind === 'company' ? f('personFirstname') : f('firstname'), lastname: kind === 'company' ? f('personLastname') : f('lastname'),
     phone: f('phone'), customer_id: f('customerId'), address1: f('address'), address2: f('address2'), zipcode: f('zipcode'), city: f('city'),
     country: f('country'), delivery_method: f('deliveryMethod'), si_identifier_type: f('siIdentifierType'), si_identifier: f('siIdentifier'),
@@ -149,10 +167,77 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
     }
     return fill.length > 0
   }
+  // What the KVK register holds goes only into fields still empty, as with VIES; the contact is Dutch already.
+  const fillFromKVK = (company: CompanyMatch) => {
+    const found: Partial<Record<TextField, string>> = { company_name: company.name, address1: company.address1, zipcode: company.zipcode, city: company.city }
+    const fill = Object.entries(found).filter(([field, value]) => value && !text[field as TextField].trim()) as [TextField, string][]
+    if (fill.length > 0) {
+      setText((current) => ({ ...current, ...Object.fromEntries(fill.filter(([field]) => !current[field].trim())) }))
+    }
+    return fill.length > 0
+  }
   const ibanAbroad = /^[A-Z]{2}/i.test(text.sepa_iban.trim()) && !/^NL/i.test(text.sepa_iban.trim())
 
-  const submit = (e: FormEvent) => {
+  // Another contact holding the KVK or VAT number is told as soon as the field is left, and saving is refused while it does.
+  const [duplicates, setDuplicates] = useState<Partial<Record<RegistryField, Duplicate>>>({})
+  const [checkFormat, setCheckFormat] = useState(false)
+  const changedNumber = (field: RegistryField) => comparable[field](text[field]) !== comparable[field](String(contact?.[field] ?? ''))
+  const checkDuplicates = async (numbers: Partial<Record<RegistryField, string>>) => {
+    const asked = Object.fromEntries(Object.entries(numbers).filter(([, value]) => value?.trim())) as Partial<Record<RegistryField, string>>
+    const keys = Object.keys(numbers) as RegistryField[]
+    let found: RegistryDuplicate[] = []
+    if (Object.keys(asked).length > 0) {
+      try {
+        found = await findRegistryDuplicates(administrationId, asked, contact?.id)
+      } catch {
+        // The check only warns: when it cannot be made, saving goes on as Moneybird would.
+        return []
+      }
+    }
+    setDuplicates((current) => {
+      const next = { ...current }
+      for (const field of keys) {
+        const match = found.find((d) => d.field === field)
+        next[field] = match ? { ...match, checked: comparable[field](numbers[field] ?? '') } : undefined
+      }
+      return next
+    })
+    return found
+  }
+  const duplicate = (field: RegistryField) => {
+    const d = duplicates[field]
+    return d && d.checked === comparable[field](text[field]) ? d : undefined
+  }
+  const duplicateNotice = (field: RegistryField) => {
+    const d = duplicate(field)
+    if (!d) {
+      return undefined
+    }
+    const number = field === 'tax_number' ? f('vatNumber') : f(`registryNumber.${registryOf(text.country)}`)
+    return (
+      <p className="contact-card__notice contact-form__notice contact-form__duplicate" role="alert">
+        <ContactIcon kind="info" />
+        <span>
+          {t('contacts.form.duplicate', { number, name: d.contact_name })}
+          <Link to={`/${administrationId}/contacts/${d.contact_id}`}>{f('openContact')}</Link>
+        </span>
+      </p>
+    )
+  }
+
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
+    if (kind === 'company') {
+      setCheckFormat(true)
+      if (text.country === 'NL' && changedNumber('chamber_of_commerce') && !validKvk(text.chamber_of_commerce)) {
+        return
+      }
+      // Only numbers that changed are checked, so a contact that held one before can still be saved.
+      const numbers = Object.fromEntries(registryFields.filter(changedNumber).map((field) => [field, text[field]])) as Partial<Record<RegistryField, string>>
+      if ((await checkDuplicates(numbers)).length > 0) {
+        return
+      }
+    }
     const trimmed = Object.fromEntries(textFields.filter((k) => mandate || !mandateFields.includes(k)).map((k) => [k, text[k].trim()])) as Partial<Record<TextField, string>>
     const body: ContactChanges = {
       ...trimmed,
@@ -192,7 +277,7 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
         ]} />
       }
     >
-      <form className="contact-form" aria-label={title} onSubmit={submit} noValidate>
+      <form className="contact-form" aria-label={title} onSubmit={(e) => void submit(e)} noValidate>
         <Problems messages={[...errors.general, ...formErrors(archive.error, {}).general]} />
         <div className="contact-form__sheet">
           <Section icon="card" title={f('contactTitle')}>
@@ -204,14 +289,30 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
                   label={labels.company_name ?? ''}
                   value={text.company_name}
                   errors={errors.field('company_name')}
-                  registers={contact ? [] : (options.data?.company_search_countries ?? [])}
+                  registers={contact ? [] : registers}
+                  // The contact's own country goes in front of the name, from all countries, and the register is searched
+                  // only for a Dutch one; a select of the registers alone looked as if contacts could only be Dutch.
+                  {...(!contact && registers.length > 0
+                    ? { countries: countryOptions, country: text.country, countryLabel: f('companyCountry'), onCountry: (value: string) => change('country', value) }
+                    : {})}
                   onChange={(value) => change('company_name', value)}
                   onChoose={(company, register) => setText((current) => ({
                     ...current, company_name: company.name, chamber_of_commerce: company.chamber_of_commerce || current.chamber_of_commerce,
                     address1: company.address1 || current.address1, zipcode: company.zipcode || current.zipcode, city: company.city || current.city, country: register,
                   }))}
                 />
-                {input('chamber_of_commerce', { width: 'medium' })}
+                <ChamberOfCommerceField
+                  administrationId={administrationId}
+                  country={text.country}
+                  value={text.chamber_of_commerce}
+                  errors={errors.field('chamber_of_commerce')}
+                  lookup={kvk}
+                  checkFormat={checkFormat && changedNumber('chamber_of_commerce')}
+                  warning={duplicateNotice('chamber_of_commerce')}
+                  onChange={(value) => change('chamber_of_commerce', value)}
+                  onLeave={(value) => { if (changedNumber('chamber_of_commerce')) void checkDuplicates({ chamber_of_commerce: value }) }}
+                  onFound={fillFromKVK}
+                />
                 <TaxNumberField
                   administrationId={administrationId}
                   label={labels.tax_number ?? ''}
@@ -219,7 +320,9 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
                   errors={errors.field('tax_number')}
                   labelExtra={<Tip text={f('taxNumberTip')} />}
                   lookup={options.data?.vat_lookup_enabled === true}
+                  warning={duplicateNotice('tax_number')}
                   onChange={(value) => change('tax_number', value)}
+                  onLeave={(value) => { if (changedNumber('tax_number')) void checkDuplicates({ tax_number: value }) }}
                   onFound={fillFromVIES}
                 />
               </>

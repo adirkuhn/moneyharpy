@@ -203,6 +203,7 @@ func run(logger *slog.Logger) error {
 	// used only while the API is not enabled, and is capped for the whole
 	// installation to stay a polite visitor.
 	kvkWebsite := kvkweb.New(instance, kvkweb.ProductionURL, kvkweb.ProductionEnvConfig, outbound, ratelimit.New(30, time.Minute))
+	registers := administration.Registers{kvk.New(instance, kvk.ProductionURL, outbound), kvkWebsite}
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
@@ -231,7 +232,8 @@ func run(logger *slog.Logger) error {
 		Resources:         postgres.NewResourceLocator(pool),
 		Google:            google.New(instance, cfg.baseURL, google.Issuer),
 		LM2:               lm2.New(instance, cfg.baseURL, outbound),
-		Companies:         administration.Registers{kvk.New(instance, kvk.ProductionURL, outbound), kvkWebsite},
+		Companies:         registers,
+		CompanyNumbers:    registers,
 		VATNumbers:        vatlookup.New(instance, viesClient),
 		CompanyCheck:      kvkWebsite,
 		Addresses:         pdok.New(instance, pdok.ProductionURL, outbound),

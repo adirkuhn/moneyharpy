@@ -198,6 +198,23 @@ sales invoices, documents or estimates permission work with contacts.
 Deleting a contact that documents refer to archives it instead, as Moneybird
 does, answering `X-Kept-As: archived`.
 
+Like Moneybird's API, creating and updating accept a contact whose chamber
+of commerce or VAT number another contact already has (Moneybird lists such
+contacts as possible duplicates afterwards). The contact form refuses them:
+as soon as the number field is left it asks
+`GET /api/v2/{administration_id}/contacts/registry_duplicates`, a MoneyHarpy
+extension that compares the numbers normalised (a chamber of commerce number
+by its digits, a VAT number in capitals without separators) with the
+contacts that are not archived, then warns with a link to the other contact,
+and it does not save while the number is taken. Contacts can be in any
+country: the chamber of commerce field is named after the contact country's
+register (KVK, KBO/BCE, Handelsregister, NIPC, SIREN/SIRET, CIF/NIF, or a
+company registration number), and only a Dutch one must have the eight digits
+of a KVK number. With KVK enabled, the form searches the register by name and
+fills in a Dutch contact from its KVK number
+(`GET /api/v2/{administration_id}/kvk_lookup`, also an extension) in the
+fields that are still empty.
+
 ## Journal
 
 Everything that changes the books posts to one journal in double entry:

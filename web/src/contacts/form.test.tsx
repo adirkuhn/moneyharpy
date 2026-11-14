@@ -82,7 +82,8 @@ describe('the contact form', () => {
       return HttpResponse.json([{ name: 'Example Shop B.V.', chamber_of_commerce: '12345678', address1: 'Dam 1', zipcode: '1012JS', city: 'Amsterdam' }])
     }))
     renderAt('/11/contacts/new')
-    expect(await screen.findByRole('combobox', { name: 'Company register country' })).toHaveDisplayValue('NL')
+    // The contact's own country is in front of the name, from all countries.
+    expect(await screen.findByRole('combobox', { name: 'Country of the company' })).toHaveDisplayValue('Netherlands')
     await userEvent.type(screen.getByLabelText('Company name'), 'Exam')
     await userEvent.click(await screen.findByRole('option', { name: /Example Shop B\.V\./ }))
     expect(screen.getByLabelText('Company name')).toHaveValue('Example Shop B.V.')
@@ -96,7 +97,7 @@ describe('the contact form', () => {
     server.use(...loaded(undefined, undefined, { companySearch: true }), http.get('*/api/onboarding/company_search', () =>
       HttpResponse.json({ error: 'KVK blocked the search request', code: 'kvk_blocked' }, { status: 503 })))
     renderAt('/11/contacts/new')
-    await screen.findByRole('combobox', { name: 'Company register country' })
+    await screen.findByRole('combobox', { name: 'Country of the company' })
     await userEvent.type(screen.getByLabelText('Company name'), 'Example Shop')
     expect(await screen.findByRole('status')).toHaveTextContent('KVK blocked the search request. Fill in the details by hand.')
     expect(screen.getByLabelText('Company name')).toHaveValue('Example Shop')

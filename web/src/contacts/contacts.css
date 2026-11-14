@@ -200,3 +200,7 @@
 .contact-form__lookup:disabled { color: var(--muted); cursor: default; }
 .contact-form__lookup:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-radius: 4px; }
 .contact-form__notice { margin: 0.25rem 0; max-width: calc(10.5rem + 1rem + 18rem); }
+/* Another contact already holds the number: told in the brand's warning colour, with a link to it. */
+.contact-form__duplicate { border-color: color-mix(in srgb, var(--gold) 70%, var(--line)); background: color-mix(in srgb, var(--gold) 12%, var(--surface)); }
+.contact-form__duplicate > svg { color: var(--text); }
+.contact-form__duplicate a { margin-inline-start: 0.375rem; color: var(--link); font-weight: 550; white-space: nowrap; }

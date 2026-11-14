@@ -179,6 +179,26 @@ export function useVatLookup(administrationId: string) {
   })
 }
 
+/** The company the Dutch KVK register holds under an 8-digit KVK number, for filling in a contact. Only the number is sent. */
+export function useKvkLookup(administrationId: string) {
+  return useMutation({
+    mutationFn: (number: string) => unwrap(api.GET('/api/v2/{administration_id}/kvk_lookup', { params: { path: admin(administrationId), query: { kvk_number: number } } })),
+  })
+}
+
+export type RegistryField = 'chamber_of_commerce' | 'tax_number'
+export type RegistryDuplicate = components['schemas']['ContactRegistryDuplicate']
+
+/** The other contacts that already hold a chamber of commerce or VAT number; the contact being edited is left out. */
+export async function findRegistryDuplicates(administrationId: string, numbers: Partial<Record<RegistryField, string>>, except?: string) {
+  const query = {
+    ...(numbers.chamber_of_commerce ? { chamber_of_commerce: numbers.chamber_of_commerce } : {}),
+    ...(numbers.tax_number ? { tax_number: numbers.tax_number } : {}),
+    ...(except ? { except_id: except } : {}),
+  }
+  return unwrap(api.GET('/api/v2/{administration_id}/contacts/registry_duplicates', { params: { path: admin(administrationId), query } }))
+}
+
 /** What lists show for a contact: the company, else the person's name. */
 export function contactName(c: Pick<Contact, 'company_name' | 'firstname' | 'lastname'>) {
   const company = typeof c.company_name === 'string' ? c.company_name : ''
