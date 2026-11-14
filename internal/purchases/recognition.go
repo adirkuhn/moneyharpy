@@ -17,6 +17,37 @@ type Recognition interface {
 	Edited(ctx context.Context, admin, user resource.ID, before, after Document)
 	// Forget drops what was read of a removed document.
 	Forget(ctx context.Context, admin, id resource.ID) error
+	// Confirmed tells that a user saved these fields of the document, as
+	// Recognition names them, whether or not they changed: they no longer
+	// show as filled in by Scan and Recognise.
+	Confirmed(ctx context.Context, admin, id resource.ID, fields ...string)
+}
+
+// The fields of a document a user confirms by saving them, as Recognition
+// names them.
+const (
+	FieldDocumentType = "document_type"
+	FieldContactID    = "contact_id"
+	FieldReference    = "reference"
+	FieldDate         = "date"
+	FieldDueDate      = "due_date"
+)
+
+// confirmedFields names the fields of the document's head that changes
+// save: the contact, reference and dates, which a user confirms by saving
+// them even unchanged.
+func (c Changes) confirmedFields() []string {
+	var out []string
+	add := func(sent bool, name string) {
+		if sent {
+			out = append(out, name)
+		}
+	}
+	add(c.ContactID != nil, FieldContactID)
+	add(c.Reference != nil, FieldReference)
+	add(c.Date != nil, FieldDate)
+	add(c.DueDate != nil, FieldDueDate)
+	return out
 }
 
 // UseRecognition has uploads read by Scan and Recognise.
@@ -32,6 +63,12 @@ func (s *Service) queue(ctx context.Context, admin, id, user resource.ID) error 
 func (s *Service) edited(ctx context.Context, admin, user resource.ID, before, after Document) {
 	if s.recognition != nil {
 		s.recognition.Edited(ctx, admin, user, before, after)
+	}
+}
+
+func (s *Service) confirmed(ctx context.Context, admin, id resource.ID, fields ...string) {
+	if s.recognition != nil && len(fields) > 0 {
+		s.recognition.Confirmed(ctx, admin, id, fields...)
 	}
 }
 

@@ -22,6 +22,15 @@ export const en = {
     all: 'All administrations', new: 'New administration', account: 'User account', instance: 'Instance settings', docs: 'API documentation', signOut: 'Sign out',
   },
   contacts: {
+    hoverCard: {
+      created: 'Created {{ago}} ago', iban: 'IBAN', email: 'Email', phone: 'Phone', invoices: 'Invoices', documents: 'Documents',
+      distance: {
+        lessThanMinute: 'less than a minute', minutes_one: '1 minute', minutes_other: '{{count}} minutes', aboutHours_one: 'about 1 hour', aboutHours_other: 'about {{count}} hours',
+        days_one: '1 day', days_other: '{{count}} days', aboutMonths_one: 'about 1 month', aboutMonths_other: 'about {{count}} months', months_one: '1 month', months_other: '{{count}} months',
+        aboutYears_one: 'about 1 year', aboutYears_other: 'about {{count}} years', overYears_one: 'over 1 year', overYears_other: 'over {{count}} years',
+        almostYears_one: 'almost 1 year', almostYears_other: 'almost {{count}} years',
+      },
+    },
     quick: { all: 'All contacts', trusted: 'Trusted contacts', manual: 'Contacts with delivery method manual', email: 'Contacts with delivery method e-mail' },
     views: { all: 'Contacts', trusted: 'Trusted contacts', manual: 'Contacts with delivery method manual', email: 'Contacts with delivery method e-mail', custom: 'Filtered contacts', duplicates: 'Possible duplicates' },
     filter: {
@@ -1055,7 +1064,8 @@ export const en = {
       confirmDeleteAttachment: 'Do you want to delete this attachment?', add: 'Add', noAttachment: 'No attachment',
       noPreview: 'There is no preview of this file. Download it to view it.', deleteDocument: 'Delete document', confirmDelete: 'Do you want to delete this document?',
       chooseType: 'Select a type...', chooseTypeText: 'Choose the type of this document to fill in its details.',
-      reference: 'Reference', invoiceId: 'Invoice id', date: 'Date', dueDate: 'Due date', days: 'Days',
+      reference: 'Reference', invoiceId: 'Invoice id', date: 'Date', dueDate: 'Due date', days: 'Days', dueAs: 'Due date as', numberOfDays: 'Number of days',
+      onlyNew: 'It is only possible to change to this type if the document is in the "New" state',
       purchaseLines: 'Purchase invoice lines', receiptLines: 'Receipt lines', save: 'Save', next: 'Next',
       invoiceDetails: 'Invoice details', receiptDetails: 'Receipt details', category: 'Category', categoryTip: 'Category: {{type}} → {{name}}',
       searchContact: 'Search for an existing contact ...', newContact: 'New contact', saving: 'Saving…',

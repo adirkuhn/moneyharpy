@@ -4,6 +4,7 @@ import { useAdministration } from '../administrations/queries'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
 import { type LedgerAccount, type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
+import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { contactName } from '../contacts/queries'
 import { formErrors } from '../forms/Form'
 import { type Confidence, leastSure, Remark } from '../forms/Remark'
@@ -15,7 +16,7 @@ import { type TotalRow } from '../invoices/TotalsTable'
 import { ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { FactRows, NextFooter } from './DocumentCard'
-import { type FieldSaving, fieldErrors, InlineContact, InlineDate, InlineText } from './InlineFields'
+import { type FieldSaving, fieldErrors, InlineContact, InlineDate, InlineDueDate, InlineText } from './InlineFields'
 import { type IncomingDocument, type IncomingKind, type PurchaseChanges, useSavePurchase } from './queries'
 import { type Remarks, remarksOf } from './recognition'
 import '../invoices/editor.css'
@@ -70,6 +71,9 @@ function PurchaseCard(props: Loaded) {
   const w = words(kind)
   const remarks = remarksOf(doc.recognition, doc.details)
   const isNew = doc.state === 'new'
+  // What was read shows on the details until the document or its lines are saved; the lines editor still shows it.
+  const [linesSaved, setLinesSaved] = useState(false)
+  const shownRemarks = isNew && !linesSaved ? remarks : remarksOf(undefined)
   // A document without lines opens with the lines editor, as Moneybird shows a fresh one.
   const [linesOpen, setLinesOpen] = useState(editable && (doc.details ?? []).length === 0)
   const open = editable && linesOpen
@@ -83,7 +87,7 @@ function PurchaseCard(props: Loaded) {
           : (
             <FactRows
               rows={[
-                [t('invoices.contact'), doc.contact ? contactName(doc.contact) : ''],
+                [t('invoices.contact'), doc.contact && <ContactHoverCard key="contact" administrationId={administrationId} contact={{ ...doc.contact, id: doc.contact_id }} />],
                 [t(w.reference), doc.reference],
                 [t('incoming.view.date'), doc.date],
                 ...(kind === 'purchase_invoices' ? [[t('incoming.view.dueDate'), doc.due_date] as [string, ReactNode]] : []),
@@ -99,11 +103,12 @@ function PurchaseCard(props: Loaded) {
             key={doc.recognition?.state ?? 'none'}
             {...props}
             remarks={remarks}
+            onSaved={() => setLinesSaved(true)}
             onClose={() => setLinesOpen(false)}
             onNext={isNew ? onNext : undefined}
           />
         )
-        : <DetailsSummary {...props} remarks={remarks} onOpen={editable ? () => setLinesOpen(true) : undefined} />}
+        : <DetailsSummary {...props} remarks={shownRemarks} onOpen={editable ? () => setLinesOpen(true) : undefined} />}
       {isNew && editable && <NextFooter left={left} onNext={open ? undefined : onNext} />}
     </section>
   )
@@ -128,11 +133,11 @@ function PurchaseFields({ administrationId, kind, doc, remarks }: FieldsProps) {
   const due = usePurchaseField(administrationId, kind, id, 'due_date', t('incoming.view.dueDate'))
   return (
     <>
-      <InlineContact administrationId={administrationId} name={doc.contact ? contactName(doc.contact) : ''} saving={contact} remark={remarks.field('contact_id')} />
+      <InlineContact administrationId={administrationId} contactId={doc.contact_id} name={doc.contact ? contactName(doc.contact) : ''} saving={contact} remark={remarks.field('contact_id')} />
       <InlineText label={t(w.reference)} saved={doc.reference ?? ''} saving={reference} remark={remarks.field('reference')} />
       <InlineDate label={t('incoming.view.date')} saved={doc.date ?? ''} saving={date} remark={remarks.field('date')} />
       {kind === 'purchase_invoices' && (
-        <InlineDate label={t('incoming.view.dueDate')} saved={doc.due_date ?? ''} saving={due} remark={remarks.field('due_date')} daysFrom={doc.date ?? ''} />
+        <InlineDueDate label={t('incoming.view.dueDate')} saved={doc.due_date ?? ''} saving={due} remark={remarks.field('due_date')} from={doc.date ?? ''} />
       )}
     </>
   )
@@ -276,6 +281,8 @@ const grossCents = (price: number, quantity: number) => Math.sign(price * quanti
 
 type LinesProps = Loaded & {
   remarks: Remarks
+  /** The lines were saved: what was read no longer shows on the details. */
+  onSaved: () => void
   /** Back to the details as they read, after Save or Cancel. */
   onClose: () => void
   /** Saves and opens the next document to process, for a new document. */
@@ -287,7 +294,7 @@ type LinesProps = Loaded & {
  * include VAT and their currency, saved together by Save, or put back by
  * Cancel.
  */
-function PurchaseLines({ administrationId, kind, doc, rates, accounts, remarks, onClose, onNext }: LinesProps) {
+function PurchaseLines({ administrationId, kind, doc, rates, accounts, remarks, onSaved, onClose, onNext }: LinesProps) {
   const { t, i18n } = useTranslation()
   const administration = useAdministration(administrationId)
   const save = useSavePurchase(administrationId, kind, doc.id ?? '')
@@ -366,6 +373,7 @@ function PurchaseLines({ administrationId, kind, doc, rates, accounts, remarks, 
   const submit = (next: boolean) =>
     save.mutate(body(), {
       onSuccess: () => {
+        onSaved()
         onClose()
         if (next) {
           onNext?.()

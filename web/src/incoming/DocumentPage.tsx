@@ -21,7 +21,7 @@ import { GeneralDocumentCard } from './GeneralDocumentCard'
 import { incomingHistory } from './history'
 import { PurchaseDocument } from './PurchaseDocument'
 import {
-  choiceOf, incomingKey, recognitionOf, type TypedDocument, useAddDocumentNote, useDeleteDocument, useDeleteDocumentNote, useRecognize, useSetDocumentType,
+  choiceOf, incomingKey, recognitionOf, type TypeChoice, type TypedDocument, useAddDocumentNote, useDeleteDocument, useDeleteDocumentNote, useRecognize, useSetDocumentType,
   useTypedDocument,
 } from './queries'
 import { remarksOf } from './recognition'
@@ -81,8 +81,9 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
   const purchase = typed.type === 'PurchaseInvoice' || typed.type === 'Receipt'
   // A paid document, or one with payments, keeps what it booked, as the server refuses to change it; its fields read as text.
   const editable = purchase && typed.doc.state !== 'paid' && (typed.doc.payments ?? []).length === 0
-  // A journal entry or a booked document cannot change type.
-  const canChangeType = type === 'TypelessDocument' || type === 'GeneralDocument' || (purchase && isNew)
+  // As in Moneybird, a purchase invoice becomes a receipt and back until it is paid; other types only while it is new. A journal entry keeps its type.
+  const canChangeType = type === 'TypelessDocument' || type === 'GeneralDocument' || editable
+  const unavailable: TypeChoice[] = purchase && !isNew ? ['general_document', 'general_journal_document'] : []
   const [deleting, setDeleting] = useState(false)
   const setType = useSetDocumentType(administrationId, id)
   const remove = useDeleteDocument(administrationId, type, id)
@@ -106,6 +107,7 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
       errors={setType.error ? formErrors(setType.error, {}).general : undefined}
       onChange={(choice) => setType.mutate(choice)}
       remark={remarksOf(recognition).field('document_type')}
+      unavailable={unavailable}
     />
   )
   const notice = (

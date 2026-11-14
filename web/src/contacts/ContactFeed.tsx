@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { formatAmount } from '../banking/queries'
 import { Loading } from '../layout/Loading'
 import { ContactIcon } from './ContactIcon'
+import { ContactName } from './ContactHoverCard'
 import { amountSign, type ContactDocuments, documentPath, type FeedEntry, newestFirst } from './documents'
 import { type Contact, contactName } from './queries'
 
@@ -59,7 +60,10 @@ function FeedRow({ administrationId, contact, entry: e }: { administrationId: st
   return (
     <Link className="feed-row" to={documentPath(administrationId, e)} aria-label={`${kind}: ${title}`}>
       <span className="feed-row__icon" title={kind}><ContactIcon kind={icons[e.kind]} /></span>
-      <span className="feed-row__title">{title}</span>
+      <span className="feed-row__title">
+        <ContactName administrationId={administrationId} contactId={contact.id} name={contactName(contact)} />
+        {names.map((n) => ` · ${n}`).join('')}
+      </span>
       <span className="feed-row__amount">{amount}</span>
       <span className="feed-row__subtitle">
         {e.state && <span className={`badge badge--${e.state}`}>{state}</span>}

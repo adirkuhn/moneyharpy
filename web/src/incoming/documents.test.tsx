@@ -75,6 +75,21 @@ describe('the Incoming page', () => {
     expect(within(nav).getByRole('link', { name: 'Incoming' })).toHaveAttribute('aria-current', 'page')
   })
 
+  it('shows the card of a contact when its name is hovered', async () => {
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/contacts/701', () => HttpResponse.json({ id: '701', administration_id: '11', company_name: 'Supplier B.V.', firstname: null, lastname: null, country: 'NL', created_at: stamp })),
+      http.get('*/api/v2/11/sales_invoices', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
+    )
+    renderAt('/11/documents')
+    const table = await screen.findByRole('table', { name: 'Incoming' })
+    const contact = within(table).getByRole('link', { name: 'Supplier B.V.' })
+    expect(contact).toHaveAttribute('href', '/11/contacts/701')
+    await userEvent.hover(contact)
+    const card = await screen.findByRole('dialog', { name: 'Supplier B.V.' })
+    await waitFor(() => expect(within(card).getByText('Documents').previousElementSibling).toHaveTextContent('4'))
+  })
+
   it('marks the rows of documents that may be a copy of another', async () => {
     const copy = { id: '941', type: 'PurchaseInvoice' as const, reference: '2026-01234', date: '2026-11-01', total_price_incl_tax: '121.0', reasons: ['same_file' as const] }
     server.use(...loaded([], [doc({ id: '940', possible_duplicates: [copy] }), doc({})]))

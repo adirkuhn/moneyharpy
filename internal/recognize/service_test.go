@@ -522,6 +522,27 @@ func TestEditedUnmarksChangedFieldsAndLearnsFromBookedDocuments(t *testing.T) {
 	}
 }
 
+func TestConfirmedUnmarksSavedFieldsEvenUnchanged(t *testing.T) {
+	ctx := context.Background()
+	f := newFixture(t)
+	f.store.recs[10] = Recognition{DocumentID: 10, State: StateDone, Fields: []Field{
+		{Name: FieldReference}, {Name: FieldContactID}, {Name: FieldDocumentType}, {Name: "details.0.price"},
+	}}
+	f.svc.Confirmed(ctx, admin, 10, FieldReference, FieldDocumentType)
+	got := fieldNames(f.recognition(t, 10).Fields)
+	if _, ok := got[FieldReference]; ok || len(got) != 2 {
+		t.Errorf("fields = %v, want contact_id and details.0.price", got)
+	}
+	if _, ok := got[FieldDocumentType]; ok {
+		t.Errorf("fields = %v, still the type", got)
+	}
+	// A document nothing was read of has nothing to unmark.
+	f.svc.Confirmed(ctx, admin, 11, FieldReference)
+	if _, ok := f.store.recs[11]; ok {
+		t.Error("made a recognition")
+	}
+}
+
 func TestChangedFieldsOfReorderedLines(t *testing.T) {
 	before := purchases.Document{Lines: []sales.Detail{{ID: 1}, {ID: 2}}}
 	after := purchases.Document{Lines: []sales.Detail{{ID: 2}}}
