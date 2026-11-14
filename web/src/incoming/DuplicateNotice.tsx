@@ -71,8 +71,9 @@ export function DuplicateMark({ count }: { count: number }): ReactNode {
   return (
     <>
       {' '}
-      <span className="duplicate-mark" title={t('incoming.duplicates.title')}>
-        <WarningIcon /> {t('incoming.duplicates.mark')}
+      {/* Just the icon, so a long reference keeps its width; the words are its name and tooltip. */}
+      <span className="duplicate-mark" role="img" aria-label={t('incoming.duplicates.mark')} title={t('incoming.duplicates.title')}>
+        <WarningIcon />
       </span>
     </>
   )
