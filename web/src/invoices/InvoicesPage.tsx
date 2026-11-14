@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { formatAmount } from '../banking/queries'
-import { contactName } from '../contacts/queries'
+import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { formErrors } from '../forms/Form'
 import { Problems } from '../auth/AuthLayout'
@@ -139,7 +139,7 @@ export function InvoicesPage() {
               { key: 'reference', header: t('invoices.reference'), kind: 'extra', cell: (inv) => inv.reference },
               { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (inv) => <AttachmentIcon count={inv.attachments?.length ?? 0} /> },
               { key: 'date', header: t('invoices.invoiceDate'), kind: 'date', cell: (inv) => listDate(inv.invoice_date) },
-              { key: 'contact', header: t('invoices.contact'), cell: (inv) => (inv.contact ? contactName(inv.contact) : '') },
+              { key: 'contact', header: t('invoices.contact'), cell: (inv) => (inv.contact ? <ContactHoverCard administrationId={administrationId} contact={{ ...inv.contact, id: inv.contact_id }} /> : '') },
               {
                 key: 'amount', header: t('invoices.amount'), kind: 'amount',
                 cell: (inv) => formatAmount(inv.total_price_incl_tax, inv.currency ?? administration.data?.currency ?? 'EUR', i18n.language),

@@ -1,6 +1,7 @@
 import { type DragEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { useAdministration } from '../administrations/queries'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
@@ -169,7 +170,10 @@ export function DocumentsPage() {
                 ),
               },
               { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (d) => <AttachmentIcon count={d.attachments_count} /> },
-              { key: 'contact', header: t('incoming.contact'), cell: (d) => d.contact_name || <span className="empty">{t('incoming.noContact')}</span> },
+              { key: 'contact', header: t('incoming.contact'), cell: (d) => (d.contact_id && d.contact_name
+                  ? <ContactHoverCard administrationId={administrationId} contact={{ id: d.contact_id, company_name: d.contact_name, firstname: null, lastname: null }} />
+                  : <span className="empty">{t('incoming.noContact')}</span>),
+              },
               { key: 'date', header: t('incoming.date'), kind: 'date', cell: (d) => listDate(d.date) },
               {
                 key: 'amount', header: t('incoming.amount'), kind: 'amount',

@@ -93,6 +93,8 @@ function loaded(over: { doc?: PurchaseInvoice; summaries?: DocumentSummary[]; ra
     http.get('*/api/v2/11/products', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
     http.get('*/api/v2/11/users', () => HttpResponse.json([])),
     http.get('*/api/v2/11/contacts', () => HttpResponse.json([supplier, shop], { headers: { 'X-Total-Count': '2' } })),
+    http.get('*/api/v2/11/contacts/701', () => HttpResponse.json({ ...supplier, sepa_iban: 'NL91ABNA0417164300', created_at: '2024-01-10T09:00:00Z' })),
+    http.get('*/api/v2/11/sales_invoices', () => HttpResponse.json([], { headers: { 'X-Total-Count': '3' } })),
   ]
 }
 
@@ -208,9 +210,20 @@ describe('the page of an incoming document', () => {
     expect(sent[1]).toEqual({ date: '2026-11-03' })
     await userEvent.keyboard('{Escape}')
 
-    await userEvent.type(within(doc).getByRole('textbox', { name: 'Days' }), '30{Enter}')
+    // The due date is a date, or a number of days after the date, chosen at its right as Moneybird does.
+    const modes = within(doc).getByRole('radiogroup', { name: 'Due date as' })
+    expect(within(modes).getByRole('radio', { name: 'Date' })).toBeChecked()
+    expect(within(doc).queryByRole('textbox', { name: 'Number of days' })).toBeNull()
+    await userEvent.click(within(modes).getByRole('radio', { name: 'Days' }))
+    expect(within(doc).queryByRole('textbox', { name: 'Due date' })).toBeNull()
+    const days = within(doc).getByRole('textbox', { name: 'Number of days' })
+    expect(days).toHaveAttribute('maxLength', '3')
+    await userEvent.type(days, '3x0{Enter}')
+    expect(days).toHaveValue('30')
     await waitFor(() => expect(sent).toHaveLength(3))
     expect(sent[2]).toEqual({ due_date: '2026-12-01' })
+    await userEvent.click(within(within(doc).getByRole('radiogroup', { name: 'Due date as' })).getByRole('radio', { name: 'Date' }))
+    expect(within(doc).getByRole('textbox', { name: 'Due date' })).toBeInTheDocument()
 
     await userEvent.click(within(doc).getByRole('combobox', { name: 'Contact' }))
     const search = screen.getByPlaceholderText('Search for an existing contact ...')
@@ -287,6 +300,7 @@ describe('the page of an incoming document', () => {
     expect(within(doc).queryByRole('button', { name: 'Invoice details' })).toBeNull()
     expect(within(doc).getByRole('table', { name: 'Purchase invoice lines' })).toHaveTextContent('Paper')
     expect(within(doc).getByRole('list', { name: 'Totals' })).toHaveTextContent('€121.00')
+    expect(within(doc).getByRole('combobox', { name: 'Type' })).toBeDisabled()
   })
 
   it('keeps an invoice with payments as it is', async () => {
@@ -347,7 +361,9 @@ describe('the page of an incoming document', () => {
     expect(within(lines).getByRole('combobox', { name: 'Category' })).toHaveTextContent('Other costs')
     expect(within(form).getByRole('table', { name: 'Totals' })).toHaveTextContent('€121.00')
     // The due date saves on its own, from the days after the date.
-    await userEvent.type(within(form).getByRole('textbox', { name: 'Days' }), '14')
+    await userEvent.click(within(form).getByRole('radio', { name: 'Days' }))
+    await userEvent.type(within(form).getByRole('textbox', { name: 'Number of days' }), '14')
+    await userEvent.click(within(form).getByRole('radio', { name: 'Date' }))
     expect(within(form).getByRole('textbox', { name: 'Due date' })).toHaveValue('2026-11-15')
     await userEvent.click(within(form).getByRole('button', { name: 'Next' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Receipt Till 42' })).toBeInTheDocument()
@@ -475,6 +491,68 @@ describe('the page of an incoming document', () => {
     expect(within(card()).getByRole('textbox', { name: 'Reference' })).toHaveValue('scan.jpg')
     expect(within(card()).getByRole('table', { name: 'Receipt lines' })).toBeInTheDocument()
     expect(within(card()).queryByRole('textbox', { name: 'Due date' })).toBeNull()
+  })
+
+  it('turns a saved purchase invoice into a receipt, and offers the other types only while it is new, as Moneybird does', async () => {
+    let asked: unknown
+    let typed = false
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/documents/941', () => HttpResponse.json(summary({ type: typed ? 'Receipt' : 'PurchaseInvoice', state: 'open' }))),
+      http.post('*/api/v2/11/documents/941/set_type', async ({ request }) => {
+        asked = await request.json()
+        typed = true
+        return HttpResponse.json(summary({ type: 'Receipt', state: 'open' }))
+      }),
+      http.get('*/api/v2/11/documents/receipts/941', () => HttpResponse.json({ ...invoice(), uri: '/11/documents/receipts/941' })),
+    )
+    renderAt('/11/documents/941')
+    await screen.findByRole('region', { name: 'Purchase invoice' })
+    const picker = within(card()).getByRole('combobox', { name: 'Type' })
+    expect(picker).toBeEnabled()
+    await userEvent.click(picker)
+    const types = screen.getByRole('listbox', { name: 'Type' })
+    const onlyNew = 'It is only possible to change to this type if the document is in the "New" state'
+    const general = within(types).getByRole('option', { name: /General document/ })
+    expect(general).toHaveAttribute('aria-disabled', 'true')
+    expect(general).toHaveTextContent(onlyNew)
+    expect(within(types).getByRole('option', { name: /Manual journal/ })).toHaveAttribute('aria-disabled', 'true')
+    const receipt = within(types).getByRole('option', { name: /Receipt/ })
+    expect(receipt).not.toHaveAttribute('aria-disabled')
+    expect(receipt).toHaveTextContent('Receipts for shopping, fuel, meals')
+    expect(within(types).getByRole('option', { name: /Purchase invoice/ })).toHaveTextContent('Invoices for goods or services delivered')
+    // A type it cannot become is not chosen.
+    await userEvent.click(general)
+    expect(asked).toBeUndefined()
+    expect(screen.getByRole('listbox', { name: 'Type' })).toBeInTheDocument()
+    await userEvent.click(within(screen.getByRole('listbox', { name: 'Type' })).getByRole('option', { name: /Receipt/ }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Receipt INV-1' })).toBeInTheDocument()
+    expect(asked).toEqual({ document_type: 'receipt' })
+    expect(await screen.findByRole('region', { name: 'Receipt' })).toBeInTheDocument()
+    expect(within(card()).getByRole('combobox', { name: 'Type' })).toHaveTextContent('Receipt')
+  })
+
+  it('offers every type for a new purchase invoice', async () => {
+    server.use(...loaded({ doc: invoice({ state: 'new' }) }))
+    renderAt('/11/documents/941')
+    await screen.findByRole('region', { name: 'Purchase invoice' })
+    await userEvent.click(within(card()).getByRole('combobox', { name: 'Type' }))
+    const options = within(screen.getByRole('listbox', { name: 'Type' })).getAllByRole('option')
+    expect(options.filter((o) => o.getAttribute('aria-disabled') === 'true')).toEqual([])
+  })
+
+  it('shows the card of the contact when its name is hovered, and still opens the search when clicked', async () => {
+    server.use(...loaded())
+    renderAt('/11/documents/941')
+    const doc = await screen.findByRole('region', { name: 'Purchase invoice' })
+    const contact = within(doc).getByRole('combobox', { name: 'Contact' })
+    await userEvent.hover(contact)
+    const hover = await screen.findByRole('dialog', { name: 'Supplier B.V.' })
+    expect((await within(hover).findByText('IBAN')).nextElementSibling).toHaveTextContent('NL91ABNA0417164300')
+    await waitFor(() => expect(within(hover).getByText('Invoices').previousElementSibling).toHaveTextContent('3'))
+    await userEvent.click(contact)
+    expect(screen.getByPlaceholderText('Search for an existing contact ...')).toHaveFocus()
+    expect(screen.queryByRole('dialog', { name: 'Supplier B.V.' })).toBeNull()
   })
 
   it('says why a document cannot change its type', async () => {
@@ -628,6 +706,76 @@ describe('Scan and Recognise on the page of a document', () => {
     const lines = within(form).getByRole('table', { name: 'Purchase invoice lines' })
     expect(within(lines).getByRole('combobox', { name: 'VAT rate' })).toHaveClass('is-uncertain')
     expect(within(lines).getByRole('combobox', { name: 'Description' })).not.toHaveClass('is-uncertain')
+  })
+
+  it('shows no marks on the details of a saved document, only in its lines editor', async () => {
+    server.use(...loaded({
+      doc: invoice({
+        state: 'open',
+        recognition: {
+          state: 'done', source: 'ocr',
+          fields: [{ field: 'reference', confidence: 'certain' }, { field: 'currency', confidence: 'certain' }, { field: 'details.0.tax_rate_id', confidence: 'uncertain' }],
+        },
+      }),
+    }))
+    renderAt('/11/documents/941')
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
+    expect(within(within(form).getByRole('table', { name: 'Purchase invoice lines' })).queryByRole('img')).toBeNull()
+    expect(within(within(form).getByRole('list', { name: 'Totals' })).queryByRole('img')).toBeNull()
+    // A field of the head keeps its mark until it is saved.
+    expect(within(form).getAllByRole('img', { name: 'We filled this in for you from the attachment.' })).toHaveLength(1)
+    await userEvent.click(within(form).getByRole('button', { name: 'Invoice details' }))
+    const lines = within(form).getByRole('table', { name: 'Purchase invoice lines' })
+    expect(within(lines).getByRole('combobox', { name: 'VAT rate' })).toHaveClass('is-uncertain')
+  })
+
+  it('drops the marks of the details once the lines are saved', async () => {
+    const read = invoice({
+      state: 'new', contact: null, contact_id: null,
+      recognition: { state: 'done', source: 'ocr', fields: [{ field: 'details.0.description', confidence: 'uncertain' }] },
+    })
+    const { handler } = patches(() => read)
+    server.use(...loaded({ doc: read }), handler)
+    renderAt('/11/documents/941')
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
+    const unsure = 'Please check: we were not sure about this.'
+    expect(within(within(form).getByRole('table', { name: 'Purchase invoice lines' })).getByRole('img', { name: unsure })).toBeInTheDocument()
+    await userEvent.click(within(form).getByRole('button', { name: 'Invoice details' }))
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    expect(await within(form).findByRole('button', { name: 'Invoice details' })).toBeInTheDocument()
+    expect(within(within(form).getByRole('table', { name: 'Purchase invoice lines' })).queryByRole('img')).toBeNull()
+    expect(within(within(form).getByRole('list', { name: 'Totals' })).queryByRole('img')).toBeNull()
+  })
+
+  it('confirms a marked field when it is saved unchanged, which drops its mark', async () => {
+    let confirmed = false
+    const doc = () => invoice({
+      state: 'new',
+      recognition: { state: 'done', source: 'ocr', fields: confirmed ? [] : [{ field: 'reference', confidence: 'uncertain' }] },
+    })
+    const sent: unknown[] = []
+    server.use(...loaded({ doc: doc() }))
+    server.use(
+      http.get('*/api/v2/11/documents/purchase_invoices/941', () => HttpResponse.json(doc())),
+      http.patch('*/api/v2/11/documents/purchase_invoices/941', async ({ request }) => {
+        sent.push(((await request.json()) as { purchase_invoice: unknown }).purchase_invoice)
+        confirmed = true
+        return HttpResponse.json(doc())
+      }),
+    )
+    renderAt('/11/documents/941')
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
+    const reference = within(form).getByRole('textbox', { name: 'Invoice id' })
+    expect(reference.closest('.form-input')).toHaveClass('is-uncertain')
+    await userEvent.click(reference)
+    await userEvent.keyboard('{Enter}')
+    await waitFor(() => expect(sent).toEqual([{ reference: 'INV-1' }]))
+    await waitFor(() => expect(within(form).getByRole('textbox', { name: 'Invoice id' }).closest('.form-input')).not.toHaveClass('is-uncertain'))
+    // An unchanged field without a mark saves nothing.
+    await userEvent.click(within(form).getByRole('textbox', { name: 'Invoice id' }))
+    await userEvent.keyboard('{Enter}')
+    await userEvent.tab()
+    expect(sent).toHaveLength(1)
   })
 
   it('says it is reading the document and shows what it read when it is done', async () => {

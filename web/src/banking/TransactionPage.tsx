@@ -1,6 +1,7 @@
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
+import { ContactName } from '../contacts/ContactHoverCard'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
@@ -200,7 +201,7 @@ function PaymentRow({ administrationId, payment: p, currency, disabled, onUnlink
 
 /** An open invoice of either kind the transaction can pay. */
 type Payable = {
-  key: string; type: 'SalesInvoice' | 'ExternalSalesInvoice'; id: string; title: string; contact: string; reference: string; paymentReference: string
+  key: string; type: 'SalesInvoice' | 'ExternalSalesInvoice'; id: string; title: string; contact: string; contactId: string; reference: string; paymentReference: string
   unpaid: string | undefined; currency: string
 }
 
@@ -217,11 +218,11 @@ function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: 
   const term = search.trim().toLowerCase()
   const all: Payable[] = [
     ...(invoices.data?.invoices ?? []).map((inv): Payable => ({
-      key: `SalesInvoice:${inv.id}`, type: 'SalesInvoice', id: inv.id ?? '', title: invoiceTitle(inv, t), contact: inv.contact ? contactName(inv.contact) : '',
+      key: `SalesInvoice:${inv.id}`, type: 'SalesInvoice', id: inv.id ?? '', title: invoiceTitle(inv, t), contact: inv.contact ? contactName(inv.contact) : '', contactId: String(inv.contact_id ?? ''),
       reference: inv.reference ?? '', paymentReference: inv.payment_reference ?? '', unpaid: inv.total_unpaid, currency: inv.currency ?? 'EUR',
     })),
     ...(externals.data?.invoices ?? []).map((inv): Payable => ({
-      key: `ExternalSalesInvoice:${inv.id}`, type: 'ExternalSalesInvoice', id: inv.id ?? '', title: externalTitle(inv, t), contact: inv.contact ? contactName(inv.contact) : '',
+      key: `ExternalSalesInvoice:${inv.id}`, type: 'ExternalSalesInvoice', id: inv.id ?? '', title: externalTitle(inv, t), contact: inv.contact ? contactName(inv.contact) : '', contactId: String(inv.contact_id ?? ''),
       reference: inv.reference ?? '', paymentReference: '', unpaid: inv.total_unpaid, currency: inv.currency ?? 'EUR',
     })),
   ]
@@ -257,7 +258,7 @@ function LinkInvoiceForm({ administrationId, mutation: m }: { administrationId: 
                   {inv.type === 'ExternalSalesInvoice' && <span className="hint"> · {t('external.externalInvoice')}</span>}
                   {quoted(inv) && <span className="hint"> · {t('bank.quotesReference', { reference: shortPaymentReference(inv.paymentReference) })}</span>}
                 </span>
-                <span>{inv.contact}</span>
+                <span><ContactName administrationId={administrationId} contactId={inv.contactId} name={inv.contact} /></span>
                 <span className="transactions__amount">{formatAmount(inv.unpaid, inv.currency, i18n.language)}</span>
               </label>
             ))}
