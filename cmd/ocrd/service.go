@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -20,6 +21,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -40,7 +42,21 @@ type Config struct {
 	ReadTimeout time.Duration
 	// Concurrency caps the requests worked on at once; others wait.
 	Concurrency int
+	// PageModes are the Tesseract page segmentation modes (--psm) a photo
+	// or a short scan is read with; the best reading is returned. The
+	// first is the default, used alone for longer scans. Mode 3 finds the
+	// layout itself, 4 reads one column of lines of different sizes, 6 one
+	// block of text: a till receipt photographed with a phone reads best
+	// with 6 or 4.
+	PageModes []string
+	// Workers caps the Tesseract runs at once over all requests.
+	Workers int
 }
+
+// multiModePages is the most pages a scanned PDF may have to be read with
+// every page mode: a receipt or a short invoice. Longer scans are read
+// with the first mode only, to keep them fast.
+const multiModePages = 2
 
 // Runner runs a command and returns what it wrote to stdout.
 type Runner interface {
@@ -121,6 +137,16 @@ type ReadResult struct {
 	Method   string `json:"method"`
 	Pages    int    `json:"pages"`
 	Embedded []File `json:"embedded"`
+	// Alternatives are the other readings of OCR with other page modes,
+	// best first, for a reader that can tell better which one it
+	// understands.
+	Alternatives []Reading `json:"alternatives"`
+}
+
+// Reading is the text OCR read with one page mode.
+type Reading struct {
+	PageMode string `json:"page_mode"`
+	Text     string `json:"text"`
 }
 
 // errUnreadable means the file looked supported but the tools could not read
@@ -135,11 +161,19 @@ type service struct {
 	run    Runner
 	logger *slog.Logger
 	slots  chan struct{}
+	// workers caps the Tesseract runs at once.
+	workers chan struct{}
 }
 
 // NewHandler returns the service's HTTP handler.
 func NewHandler(cfg Config, run Runner, logger *slog.Logger) http.Handler {
-	s := &service{cfg: cfg, run: run, logger: logger, slots: make(chan struct{}, max(cfg.Concurrency, 1))}
+	if len(cfg.PageModes) == 0 {
+		cfg.PageModes = DefaultPageModes
+	}
+	s := &service{
+		cfg: cfg, run: run, logger: logger, slots: make(chan struct{}, max(cfg.Concurrency, 1)),
+		workers: make(chan struct{}, max(cfg.Workers, 1)),
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = io.WriteString(w, "ok\n")
@@ -236,6 +270,9 @@ func (s *service) read(ctx context.Context, w http.ResponseWriter, _ *http.Reque
 	if res.Embedded == nil {
 		res.Embedded = []File{}
 	}
+	if res.Alternatives == nil {
+		res.Alternatives = []Reading{}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(res)
 }
@@ -264,34 +301,76 @@ func (s *service) readPDF(ctx context.Context, j job) (ReadResult, error) {
 		if err != nil {
 			return ReadResult{}, err
 		}
-		texts := make([]string, 0, len(files))
-		for _, f := range files {
-			text, err := s.tesseract(ctx, f)
-			if err != nil {
-				return ReadResult{}, err
-			}
-			texts = append(texts, strings.TrimRight(text, "\f"))
+		modes := s.cfg.PageModes
+		if pages > multiModePages {
+			modes = modes[:1]
 		}
-		res.Text, res.Method = strings.Join(texts, "\f"), "ocr"
+		readings, err := s.ocr(ctx, files, modes)
+		if err != nil {
+			return ReadResult{}, err
+		}
+		res.Text, res.Alternatives, res.Method = readings[0].Text, readings[1:], "ocr"
 	}
 	res.Embedded = s.embedded(ctx, j)
 	return res, nil
 }
 
 func (s *service) readImage(ctx context.Context, in string) (ReadResult, error) {
-	text, err := s.tesseract(ctx, in)
+	readings, err := s.ocr(ctx, []string{in}, s.cfg.PageModes)
 	if err != nil {
 		return ReadResult{}, err
 	}
-	text = strings.TrimRight(text, "\f")
-	return ReadResult{Text: text, Method: "ocr", Pages: strings.Count(text, "\f") + 1}, nil
+	text := readings[0].Text
+	return ReadResult{Text: text, Method: "ocr", Pages: strings.Count(text, "\f") + 1, Alternatives: readings[1:]}, nil
 }
 
-func (s *service) tesseract(ctx context.Context, in string) (string, error) {
-	out, err := s.run.Run(ctx, "tesseract", in, "-", "-l", s.cfg.Languages)
+// ocr reads the pages (image files) with each page mode, the runs in
+// parallel as far as the workers allow, and returns the readings best
+// first. A mode that fails is left out; only when all fail is the error
+// returned.
+func (s *service) ocr(ctx context.Context, pages []string, modes []string) ([]Reading, error) {
+	texts := make([][]string, len(modes))
+	errs := make([][]error, len(modes))
+	var wg sync.WaitGroup
+	for m, mode := range modes {
+		texts[m], errs[m] = make([]string, len(pages)), make([]error, len(pages))
+		for p, page := range pages {
+			wg.Go(func() {
+				text, err := s.tesseract(ctx, page, mode)
+				texts[m][p], errs[m][p] = strings.TrimRight(text, "\f"), err
+			})
+		}
+	}
+	wg.Wait()
+	var readings []Reading
+	var first error
+	for m, mode := range modes {
+		if err := errors.Join(errs[m]...); err != nil {
+			first = cmp.Or(first, err)
+			continue
+		}
+		readings = append(readings, Reading{PageMode: mode, Text: strings.Join(texts[m], "\f")})
+	}
+	if len(readings) == 0 {
+		return nil, first
+	}
+	return bestFirst(readings), nil
+}
+
+// tesseract reads one image with a page mode, waiting for a free worker.
+func (s *service) tesseract(ctx context.Context, in, mode string) (string, error) {
+	select {
+	case s.workers <- struct{}{}:
+		defer func() { <-s.workers }()
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+	start := time.Now()
+	out, err := s.run.Run(ctx, "tesseract", in, "-", "--psm", mode, "-l", s.cfg.Languages)
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", errUnreadable, err)
 	}
+	s.logger.Debug("tesseract", "page_mode", mode, "duration", time.Since(start))
 	return string(out), nil
 }
 
@@ -358,6 +437,13 @@ func (s *service) pageCount(ctx context.Context, in string) (int, error) {
 // maxPreviewSide caps the longest side of an image preview in pixels.
 const maxPreviewSide = 1600
 
+// Bounds of the max_side parameter of /render, which asks for a page larger
+// or smaller than a preview, such as a page an AI model is to read.
+const (
+	minRenderSide = 200
+	maxRenderSide = 4096
+)
+
 // maxPixels caps the size of an image that is decoded, so a small file
 // cannot claim gigabytes of memory.
 const maxPixels = 100_000_000
@@ -372,18 +458,27 @@ func (s *service) render(ctx context.Context, w http.ResponseWriter, r *http.Req
 		}
 		page = n
 	}
+	side := 0 // a preview
+	if p := r.URL.Query().Get("max_side"); p != "" {
+		n, err := strconv.Atoi(p)
+		if err != nil || n < minRenderSide || n > maxRenderSide {
+			http.Error(w, fmt.Sprintf("max_side must be a number from %d to %d", minRenderSide, maxRenderSide), http.StatusBadRequest)
+			return nil
+		}
+		side = n
+	}
 	var data []byte
 	var count int
 	var err error
 	if j.kind == kindPDF {
-		data, count, err = s.renderPDF(ctx, j, page)
+		data, count, err = s.renderPDF(ctx, j, page, side)
 	} else {
 		count = 1
 		if page > 1 {
 			w.Header().Set("X-Page-Count", "1")
 			return errNoPage
 		}
-		data, err = renderImage(j.data)
+		data, err = renderImage(j.data, cmp.Or(side, maxPreviewSide))
 	}
 	if count > 0 {
 		w.Header().Set("X-Page-Count", strconv.Itoa(count))
@@ -397,7 +492,9 @@ func (s *service) render(ctx context.Context, w http.ResponseWriter, r *http.Req
 	return nil
 }
 
-func (s *service) renderPDF(ctx context.Context, j job, page int) ([]byte, int, error) {
+// renderPDF renders a page at preview resolution, or with its longest side
+// side pixels.
+func (s *service) renderPDF(ctx context.Context, j job, page, side int) ([]byte, int, error) {
 	count, err := s.pageCount(ctx, j.in)
 	if err != nil {
 		return nil, 0, err
@@ -407,7 +504,12 @@ func (s *service) renderPDF(ctx context.Context, j job, page int) ([]byte, int, 
 	}
 	n := strconv.Itoa(page)
 	out := filepath.Join(j.dir, "page")
-	if _, err := s.run.Run(ctx, "pdftoppm", "-f", n, "-l", n, "-r", "110", "-png", "-singlefile", j.in, out); err != nil {
+	size := []string{"-r", "110"}
+	if side > 0 {
+		size = []string{"-scale-to", strconv.Itoa(side)}
+	}
+	args := append([]string{"-f", n, "-l", n}, size...)
+	if _, err := s.run.Run(ctx, "pdftoppm", append(args, "-png", "-singlefile", j.in, out)...); err != nil {
 		return nil, count, fmt.Errorf("%w: %w", errUnreadable, err)
 	}
 	data, err := os.ReadFile(out + ".png")
@@ -417,8 +519,9 @@ func (s *service) renderPDF(ctx context.Context, j job, page int) ([]byte, int, 
 	return data, count, nil
 }
 
-// renderImage turns an image into a PNG no larger than maxPreviewSide.
-func renderImage(data []byte) ([]byte, error) {
+// renderImage turns an image into a PNG whose longest side is at most side
+// pixels.
+func renderImage(data []byte, side int) ([]byte, error) {
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", errUnreadable, err)
@@ -431,8 +534,8 @@ func renderImage(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("%w: %w", errUnreadable, err)
 	}
 	b := src.Bounds()
-	if side := max(b.Dx(), b.Dy()); side > maxPreviewSide {
-		dst := image.NewRGBA(image.Rect(0, 0, b.Dx()*maxPreviewSide/side, b.Dy()*maxPreviewSide/side))
+	if long := max(b.Dx(), b.Dy()); long > side {
+		dst := image.NewRGBA(image.Rect(0, 0, b.Dx()*side/long, b.Dy()*side/long))
 		draw.ApproxBiLinear.Scale(dst, dst.Bounds(), src, b, draw.Src, nil)
 		src = dst
 	}

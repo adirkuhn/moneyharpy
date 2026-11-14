@@ -66,6 +66,8 @@ The bundled compose file also runs `ocr`, the image `ghcr.io/adirkuhn/moneyharpy
 
 It is optional: leave it out (remove the service or `OCR_URL`) and the app still works; Scan and Recognise then reads only e-invoice XML, and previews show the file itself. Documents never leave your server for it: it runs as a non-root user on an internal network without internet access, keeps nothing, and removes its temporary files after each request. It reads at most 20 pages of a PDF, takes files up to 20 MB and gives up after 2 minutes; `MAX_PAGES`, `MAX_BODY_MB`, `READ_TIMEOUT_SECONDS`, `CONCURRENCY` (jobs at once, default the number of CPUs) and `OCR_LANGUAGES` (default `nld+eng`) on the `ocr` service change that. Set `MONEYHARPY_OCR_IMAGE` to use another tag.
 
+Photos and short scans (up to 2 pages) are read with several Tesseract page modes at once, by default `3,6,4` (`OCR_PAGE_MODES`): automatic layout, one block of text and one column of lines. A phone photo of a till receipt reads much better with the last two. Scan and Recognise takes the reading its rules understand best. `OCR_WORKERS` (default the number of CPUs) caps the Tesseract runs at once.
+
 ### AI model for Scan and Recognise
 
 Optional and off by default. Under **Instance settings > Scan and Recognise**, add one or more **AI connections** and turn the AI model on; documents the rules cannot read are then read by the first enabled connection that answers, in the order you put them in (when one fails, is rate limited or answers something unreadable, the next is asked). Three providers are supported:
@@ -75,6 +77,8 @@ Optional and off by default. Under **Instance settings > Scan and Recognise**, a
 - **NVIDIA**: a vision model from NVIDIA's API catalog at [build.nvidia.com](https://build.nvidia.com) (default model `meta/llama-3.2-90b-vision-instruct`), with an `nvapi-` API key. Fill in an address to use a self-hosted NIM instead; it may then run without a key. NVIDIA's free API is meant for trying out models; check NVIDIA's terms before using it for your bookkeeping.
 
 With Anthropic or NVIDIA's API catalog the text and page images of those documents are sent to that provider. **Check** tests each connection.
+
+Also off by default: **Add new suppliers under the name registered for their VAT number**. When Scan and Recognise reads an EU VAT number that matches no contact, it looks the number up in [VIES](https://ec.europa.eu/taxation_customs/vies/), the European Commission's VAT number service, and adds the supplier under its registered name (and address, when the document gave none) rather than the name read from the document, which OCR may garble. Only the VAT number is sent; when VIES does not answer within 5 seconds, the name read from the document is used.
 
 ### Company search and address lookup
 

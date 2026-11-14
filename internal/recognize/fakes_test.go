@@ -200,6 +200,21 @@ func (c *fakeContacts) Create(_ context.Context, _, _ resource.ID, ch contacts.C
 	return contact, nil
 }
 
+// fakeRegistry answers VAT number lookups from a table, and records them.
+type fakeRegistry struct {
+	companies map[string]RegisteredCompany
+	err       error
+	asked     []string
+}
+
+func (r *fakeRegistry) LookupVAT(_ context.Context, vat string) (RegisteredCompany, error) {
+	r.asked = append(r.asked, vat)
+	if r.err != nil {
+		return RegisteredCompany{}, r.err
+	}
+	return r.companies[vat], nil
+}
+
 type fakeLedger struct{}
 
 func (fakeLedger) TaxRates(context.Context, resource.ID, resource.ID, bookkeeping.TaxRateFilter) ([]bookkeeping.TaxRate, error) {
@@ -218,6 +233,8 @@ type fakeOCR struct {
 	reads   int
 	renders int
 	pages   int
+	// sides are the sizes pages were rendered at.
+	sides []int
 }
 
 func (o *fakeOCR) Read(context.Context, ocr.File) (ocr.Text, error) {
@@ -231,6 +248,11 @@ func (o *fakeOCR) Render(_ context.Context, _ ocr.File, page int) (ocr.Page, err
 		return ocr.Page{}, errors.New("no such page")
 	}
 	return ocr.Page{PNG: []byte{byte(page)}, Count: o.pages}, nil
+}
+
+func (o *fakeOCR) RenderAt(ctx context.Context, f ocr.File, page, maxSide int) (ocr.Page, error) {
+	o.sides = append(o.sides, maxSide)
+	return o.Render(ctx, f, page)
 }
 
 func (o *fakeOCR) Ping(context.Context) error { return o.err }

@@ -7464,17 +7464,20 @@ type InstanceSettings struct {
 	RecognitionAiConnections []RecognitionAIConnection `json:"recognition_ai_connections"`
 
 	// RecognitionAiEnabled Let Scan and Recognise ask an AI model about documents its rules could not read. Off unless turned on; with an API provider the document's text and images are sent to that provider.
-	RecognitionAiEnabled bool   `json:"recognition_ai_enabled"`
-	RegistrationOpen     bool   `json:"registration_open"`
-	SmtpEnabled          bool   `json:"smtp_enabled"`
-	SmtpFrom             string `json:"smtp_from"`
-	SmtpHost             string `json:"smtp_host"`
-	SmtpPasswordSet      bool   `json:"smtp_password_set"`
-	SmtpPort             int    `json:"smtp_port"`
-	SmtpSecurity         string `json:"smtp_security"`
-	SmtpUsername         string `json:"smtp_username"`
-	StorageAccessKey     string `json:"storage_access_key"`
-	StorageBucket        string `json:"storage_bucket"`
+	RecognitionAiEnabled bool `json:"recognition_ai_enabled"`
+
+	// RecognitionViesEnabled Let Scan and Recognise look up the VAT number read from a document in the EU's VIES service, to add a new supplier under its registered name and address. Off unless turned on; only the VAT number is sent to the European Commission.
+	RecognitionViesEnabled bool   `json:"recognition_vies_enabled"`
+	RegistrationOpen       bool   `json:"registration_open"`
+	SmtpEnabled            bool   `json:"smtp_enabled"`
+	SmtpFrom               string `json:"smtp_from"`
+	SmtpHost               string `json:"smtp_host"`
+	SmtpPasswordSet        bool   `json:"smtp_password_set"`
+	SmtpPort               int    `json:"smtp_port"`
+	SmtpSecurity           string `json:"smtp_security"`
+	SmtpUsername           string `json:"smtp_username"`
+	StorageAccessKey       string `json:"storage_access_key"`
+	StorageBucket          string `json:"storage_bucket"`
 
 	// StorageEnabled Whether uploads, such as logos, go to S3-compatible storage.
 	StorageEnabled bool `json:"storage_enabled"`
@@ -10456,23 +10459,26 @@ type UpdateInstanceSettingsRequest struct {
 	Lm2Url *string `json:"lm2_url,omitempty"`
 
 	// RecognitionAiConnections Replaces the AI connections; their order is the order Scan and Recognise tries them in.
-	RecognitionAiConnections *[]RecognitionAIConnectionRequest          `json:"recognition_ai_connections,omitempty"`
-	RecognitionAiEnabled     *bool                                      `json:"recognition_ai_enabled,omitempty"`
-	RegistrationOpen         *bool                                      `json:"registration_open,omitempty"`
-	SmtpEnabled              *bool                                      `json:"smtp_enabled,omitempty"`
-	SmtpFrom                 *string                                    `json:"smtp_from,omitempty"`
-	SmtpHost                 *string                                    `json:"smtp_host,omitempty"`
-	SmtpPassword             *string                                    `json:"smtp_password,omitempty"`
-	SmtpPort                 *int                                       `json:"smtp_port,omitempty"`
-	SmtpSecurity             *UpdateInstanceSettingsRequestSmtpSecurity `json:"smtp_security,omitempty"`
-	SmtpUsername             *string                                    `json:"smtp_username,omitempty"`
-	StorageAccessKey         *string                                    `json:"storage_access_key,omitempty"`
-	StorageBucket            *string                                    `json:"storage_bucket,omitempty"`
-	StorageEnabled           *bool                                      `json:"storage_enabled,omitempty"`
-	StorageEndpoint          *string                                    `json:"storage_endpoint,omitempty"`
-	StoragePathStyle         *bool                                      `json:"storage_path_style,omitempty"`
-	StorageRegion            *string                                    `json:"storage_region,omitempty"`
-	StorageSecretKey         *string                                    `json:"storage_secret_key,omitempty"`
+	RecognitionAiConnections *[]RecognitionAIConnectionRequest `json:"recognition_ai_connections,omitempty"`
+	RecognitionAiEnabled     *bool                             `json:"recognition_ai_enabled,omitempty"`
+
+	// RecognitionViesEnabled See InstanceSettings.
+	RecognitionViesEnabled *bool                                      `json:"recognition_vies_enabled,omitempty"`
+	RegistrationOpen       *bool                                      `json:"registration_open,omitempty"`
+	SmtpEnabled            *bool                                      `json:"smtp_enabled,omitempty"`
+	SmtpFrom               *string                                    `json:"smtp_from,omitempty"`
+	SmtpHost               *string                                    `json:"smtp_host,omitempty"`
+	SmtpPassword           *string                                    `json:"smtp_password,omitempty"`
+	SmtpPort               *int                                       `json:"smtp_port,omitempty"`
+	SmtpSecurity           *UpdateInstanceSettingsRequestSmtpSecurity `json:"smtp_security,omitempty"`
+	SmtpUsername           *string                                    `json:"smtp_username,omitempty"`
+	StorageAccessKey       *string                                    `json:"storage_access_key,omitempty"`
+	StorageBucket          *string                                    `json:"storage_bucket,omitempty"`
+	StorageEnabled         *bool                                      `json:"storage_enabled,omitempty"`
+	StorageEndpoint        *string                                    `json:"storage_endpoint,omitempty"`
+	StoragePathStyle       *bool                                      `json:"storage_path_style,omitempty"`
+	StorageRegion          *string                                    `json:"storage_region,omitempty"`
+	StorageSecretKey       *string                                    `json:"storage_secret_key,omitempty"`
 
 	// WebhooksAllowLocal Let webhooks reach plain HTTP and private or loopback addresses, for development.
 	WebhooksAllowLocal *bool `json:"webhooks_allow_local,omitempty"`

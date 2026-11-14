@@ -1,0 +1,33 @@
+EXAMPLE SHOP
+Example Street 1
+1234 AB Amsterdam
+
+Bureaulamp LED 12,95
+
+Notitieboek A5 2x 4.50
+9,00
+Opbergdoos S35
+
+Batterijen AA 6,00
+
+TOTAAL [4] 36,30
+PIN 36,30
+
+BTW% Netto BTW Bruto
+21% 30,00 6,30 36,30
+
+20-10-2026 14:32:24 Kassa 3
+Bon 0042
+
+Betaalautomaat
+Terminal EXAQ1234
+Kaart velden OOOO
+Datum 20/10/2026 14:32
+Bedrag EUR 36,30
+Akkoord
+
+Example Shop B.V.
+BIW nummer NL123456782B01
+
+Bedankt voor uw bezoek
+

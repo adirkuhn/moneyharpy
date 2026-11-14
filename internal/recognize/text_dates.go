@@ -242,6 +242,69 @@ func termDays(s string) (int, bool) {
 	return 0, false
 }
 
+// dateCounts counts how often each plausible date is printed, and lists
+// them in the order they first appear.
+func dateCounts(lines []string, today time.Time) (map[time.Time]int, []time.Time) {
+	counts := map[time.Time]int{}
+	var order []time.Time
+	for _, s := range lines {
+		for _, d := range findDates(s) {
+			if !plausible(d.t, today) {
+				continue
+			}
+			if counts[d.t] == 0 {
+				order = append(order, d.t)
+			}
+			counts[d.t]++
+		}
+	}
+	return counts, order
+}
+
+// mostOften tells whether t is printed more often than any other date.
+func mostOften(t time.Time, counts map[time.Time]int) bool {
+	for o, n := range counts {
+		if !o.Equal(t) && n >= counts[t] {
+			return false
+		}
+	}
+	return true
+}
+
+// checkMisread looks for another reading of the document date: a date
+// printed elsewhere that differs in one digit, as OCR reads "20-10-2026" as
+// "26-10-2026". Dates labelled as something else, such as the due date, do
+// not count. When the other reading is printed more often it is taken
+// instead; either way the date is then uncertain, unless it is itself
+// printed more often.
+func checkMisread(date Value[time.Time], counts map[time.Time]int, labelledElse map[time.Time]bool) Value[time.Time] {
+	for o, n := range counts {
+		if o.Equal(date.V) || labelledElse[o] || !oneDigitApart(o, date.V) {
+			continue
+		}
+		switch {
+		case n > counts[date.V]:
+			return unsure(o)
+		case n == counts[date.V]:
+			date.Confidence = Uncertain
+		}
+	}
+	return date
+}
+
+// oneDigitApart tells whether two dates written DDMMYYYY differ in exactly
+// one digit.
+func oneDigitApart(a, b time.Time) bool {
+	x, y := a.Format("02012006"), b.Format("02012006")
+	diff := 0
+	for i := range len(x) {
+		if x[i] != y[i] {
+			diff++
+		}
+	}
+	return diff == 1
+}
+
 // readDates finds the document date and due date.
 func readDates(lines []string, today time.Time) (date, due Value[time.Time]) {
 	set := func(v *Value[time.Time], t time.Time) {
@@ -252,6 +315,7 @@ func readDates(lines []string, today time.Time) (date, due Value[time.Time]) {
 		}
 	}
 	var generic *time.Time
+	labelledElse := map[time.Time]bool{} // dates labelled as something else
 	for _, d := range labelledDates(lines) {
 		switch d.kind {
 		case labelDate:
@@ -259,6 +323,7 @@ func readDates(lines []string, today time.Time) (date, due Value[time.Time]) {
 				set(&date, d.t)
 			}
 		case labelDue:
+			labelledElse[d.t] = true
 			if !due.Found {
 				set(&due, d.t)
 			}
@@ -267,29 +332,36 @@ func readDates(lines []string, today time.Time) (date, due Value[time.Time]) {
 				t := d.t
 				generic = &t
 			}
+		case labelOther:
+			labelledElse[d.t] = true
 		}
 	}
+	counts, order := dateCounts(lines, today)
 	if !date.Found && generic != nil {
 		set(&date, *generic)
+		date = checkMisread(date, counts, labelledElse)
 	}
 	if !date.Found {
 		var all []time.Time
-		for _, s := range lines {
-			for _, d := range findDates(s) {
-				if plausible(d.t, today) && (due.Found && !d.t.Equal(due.V) || !due.Found) {
-					all = append(all, d.t)
-				}
+		for _, t := range order {
+			if !due.Found || !t.Equal(due.V) {
+				all = append(all, t)
 			}
 		}
 		if len(all) > 0 {
-			date = unsure(all[0])
-			distinct := true
-			for _, t := range all {
-				distinct = distinct && t.Equal(all[0])
+			// The date printed most often; a till receipt prints it on
+			// the receipt and again on the card payment slip.
+			top := all[0]
+			for _, t := range all[1:] {
+				if counts[t] > counts[top] {
+					top = t
+				}
 			}
-			if distinct {
+			date = unsure(top)
+			if len(all) == 1 || counts[top] >= 2 && mostOften(top, counts) {
 				date.Confidence = Certain
 			}
+			date = checkMisread(date, counts, labelledElse)
 		}
 	}
 	if !due.Found && date.Found {

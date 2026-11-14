@@ -135,6 +135,7 @@ type Update struct {
 	RecognitionAIEnabled *bool
 	// RecognitionAIConnections replaces the AI connections, in order.
 	RecognitionAIConnections *[]AIConnectionUpdate
+	RecognitionVIESEnabled   *bool
 }
 
 // Store persists opaque values by key.
@@ -185,6 +186,7 @@ type storedInstance struct {
 	RecognitionAI    bool   `json:"recognition_ai_enabled"`
 	// RecognitionConns is nil in settings saved before there were connections.
 	RecognitionConns []storedConnection `json:"recognition_ai_connections"`
+	RecognitionVIES  bool               `json:"recognition_vies_enabled"`
 	legacyRecognition
 }
 
@@ -209,7 +211,7 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 
 		AddressLookupEnabled: st.AddressLookup,
 		WebhooksAllowLocal:   st.WebhooksLocal,
-		Recognition:          Recognition{AIEnabled: st.RecognitionAI},
+		Recognition:          Recognition{AIEnabled: st.RecognitionAI, VIESEnabled: st.RecognitionVIES},
 		SMTP: SMTP{
 			Enabled: st.SMTPEnabled, Host: st.SMTPHost, Port: st.SMTPPort, Username: st.SMTPUsername,
 			From: st.SMTPFrom, Security: st.SMTPSecurity,
@@ -367,6 +369,7 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		StorageAccessKey: inst.Storage.AccessKey,
 		StoragePathStyle: inst.Storage.PathStyle,
 		RecognitionAI:    inst.Recognition.AIEnabled,
+		RecognitionVIES:  inst.Recognition.VIESEnabled,
 	}
 	if st.RecognitionConns, err = s.sealConnections(inst.Recognition.Connections); err != nil {
 		return Instance{}, err
