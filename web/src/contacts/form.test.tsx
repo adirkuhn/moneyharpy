@@ -83,7 +83,7 @@ describe('the contact form', () => {
     }))
     renderAt('/11/contacts/new')
     // The contact's own country is in front of the name, from all countries.
-    expect(await screen.findByRole('combobox', { name: 'Country of the company' })).toHaveDisplayValue('Netherlands')
+    expect(await screen.findByRole('combobox', { name: 'Country of the company' })).toHaveDisplayValue('NL')
     await userEvent.type(screen.getByLabelText('Company name'), 'Exam')
     await userEvent.click(await screen.findByRole('option', { name: /Example Shop B\.V\./ }))
     expect(screen.getByLabelText('Company name')).toHaveValue('Example Shop B.V.')

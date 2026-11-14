@@ -214,7 +214,7 @@ describe('the registry numbers of a contact', () => {
       renderAt('/11/contacts/new')
       const country = await screen.findByRole('combobox', { name: 'Country of the company' })
       // Every country, not only the ones with a register.
-      expect(within(country).getAllByRole('option').map((o) => o.textContent)).toEqual(['Belgium', 'Germany', 'Netherlands'])
+      expect(within(country).getAllByRole('option').map((o) => [o.textContent, o.getAttribute('title')])).toEqual([['BE', 'Belgium'], ['DE', 'Germany'], ['NL', 'Netherlands']])
       await userEvent.selectOptions(country, 'BE')
       expect(screen.getByRole('combobox', { name: 'Country' })).toHaveTextContent('Belgium')
       await userEvent.type(screen.getByLabelText('Company name'), 'Example Shop')

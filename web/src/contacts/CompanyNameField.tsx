@@ -84,7 +84,8 @@ export function CompanyNameField({ label, value, errors, registers, onChange, on
         <div className="company-name">
           {countries && (
             <select className="company-name__country" aria-label={countryLabel ?? t('contacts.form.country')} value={own} onChange={(e) => onCountry?.(e.target.value)}>
-              {countries.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              {/* The narrow box shows the code, as beside the register search; the name is its tooltip. */}
+              {countries.map((c) => <option key={c.value} value={c.value} title={c.label}>{c.value}</option>)}
             </select>
           )}
           {!countries && registers.length > 0 && (
