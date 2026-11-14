@@ -152,11 +152,8 @@ export const invoicePaper = (name: string) => screen.getByRole('document', { nam
 
 /** What the hover card of a contact asks for: the contact and how many documents it has. */
 export const contactCounts = [
-  http.get('*/api/v2/11/contacts/701', () => HttpResponse.json({ ...shop, email: 'info@example.com', created_at: '2026-11-11T09:00:00Z' })),
-  http.get('*/api/v2/11/external_sales_invoices', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
-  http.get('*/api/v2/11/estimates', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
-  http.get('*/api/v2/11/documents/purchase_invoices', () => HttpResponse.json([], { headers: { 'X-Total-Count': '2' } })),
-  http.get('*/api/v2/11/documents/receipts', () => HttpResponse.json([], { headers: { 'X-Total-Count': '1' } })),
+  http.get('*/api/v2/11/contacts/701', () => HttpResponse.json({ ...shop, email: 'info@example.com', sepa_iban: 'NL91ABNA0417164300', created_at: '2026-11-11T09:00:00Z' })),
+  http.get('*/api/v2/11/documents', () => HttpResponse.json([], { headers: { 'X-Total-Count': '3' } })),
 ]
 
 /** Chooses an option of a line's searchable select, such as its VAT rate or category. */

@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { ContactName } from '../contacts/ContactHoverCard'
 import { formatAmount } from '../banking/queries'
 import { contactName } from '../contacts/queries'
 import { perPage } from '../invoices/queries'
@@ -80,7 +81,7 @@ export function RecurringInvoicesPage() {
           total={invoices.data.total}
           perPage={perPage}
           columns={[
-            { key: 'contact', header: t('invoices.contact'), link: true, cell: (r) => (r.contact ? contactName(r.contact) : r.reference || r.id) },
+            { key: 'contact', header: t('invoices.contact'), link: true, cell: (r) => (r.contact ? <ContactName administrationId={administrationId} contactId={r.contact_id} name={contactName(r.contact)} /> : r.reference || r.id) },
             { key: 'reference', header: t('invoices.reference'), kind: 'extra', cell: (r) => r.reference },
             { key: 'icons', header: '', label: t('recurring.autoSend'), kind: 'icons', cell: (r) => r.auto_send && <AutoSendIcon /> },
             { key: 'frequency', header: t('recurring.frequency'), cell: (r) => frequencyText(r, t) },

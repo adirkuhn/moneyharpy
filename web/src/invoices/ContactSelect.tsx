@@ -11,7 +11,7 @@ import { CaretIcon, ListIcon } from '../layout/icons'
 import { PageIcon } from '../layout/pageIcons'
 import { useOnboardingOptions } from '../onboarding/queries'
 import { countryName } from '../settings/format'
-import { HoverCard } from './ContactHoverCard'
+import { HoverCard } from '../contacts/ContactHoverCard'
 import { useContactSearch } from './ContactPicker'
 import { needsVatId } from './details'
 
@@ -140,7 +140,7 @@ function Selector({ administrationId, labelId, control, value, homeCountry, retu
     <div className="contact-select" ref={root}>
       {hoverCard && pane === 'closed'
         ? (
-          <HoverCard className="hover-card--block" administrationId={administrationId} contact={{ id: hoverCard.id, company_name: hoverCard.name, firstname: null, lastname: null, address1: null, address2: null, zipcode: null, city: null }}>
+          <HoverCard className="hover-card--block" administrationId={administrationId} contactId={hoverCard.id} name={hoverCard.name}>
             {trigger}
           </HoverCard>
         )

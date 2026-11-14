@@ -8,7 +8,7 @@ import { useLedgerAccounts } from '../bookkeeping/queries'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { formErrors } from '../forms/Form'
 import { ChevronIcon } from '../layout/icons'
-import { ContactHoverCard } from './ContactHoverCard'
+import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { InvoiceHistory } from './InvoiceHistory'
 import { invoiceTitle, type Payment, type SalesInvoice, useDeletePayment } from './queries'
 

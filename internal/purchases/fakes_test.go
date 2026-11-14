@@ -496,6 +496,7 @@ func (m *memStore) RetypeDocument(_ context.Context, r Retype) error {
 	switch {
 	case r.Document != nil:
 		m.docs[r.ID] = *r.Document
+		m.entries[r.ID] = r.Entries
 	case r.General != nil:
 		m.general[r.ID] = *r.General
 	default:

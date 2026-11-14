@@ -9,6 +9,7 @@ import { type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/que
 import { contactName } from '../contacts/queries'
 import { ConfirmPanel } from '../detail/Detail'
 import { DateInput } from '../forms/DatePicker'
+import { DueModeToggle } from '../forms/DueModeToggle'
 import { formErrors, TextInput } from '../forms/Form'
 import { ContactPicker } from '../invoices/ContactPicker'
 import { type DetailRow, DetailsEditor } from '../invoices/DetailsEditor'
@@ -370,21 +371,13 @@ type DueDateProps = {
 /** Moneybird's due date: a date, or a number of days after the invoice date, chosen at its right. */
 function DueDate({ label, mode, date, days, errors, onMode, onDate, onDays }: DueDateProps) {
   const { t } = useTranslation()
-  const name = useId()
   const f = (key: string) => t(`external.edit.${key}`)
   return (
     <div className="external-edit__due">
       {mode === 'date'
         ? <DateInput label={label} width="medium" value={date} errors={errors} onChange={onDate} />
         : <TextInput label={label} aria-label={f('daysUntilDue')} width="small" inputMode="numeric" maxLength={4} value={days} errors={errors} onChange={(e) => onDays(e.target.value)} />}
-      <fieldset className="segmented-control" role="radiogroup" aria-label={f('dueAs')}>
-        {(['date', 'days'] as const).map((m) => (
-          <label key={m} className={`segmented-control__option${mode === m ? ' is-checked' : ''}`}>
-            <input type="radio" name={name} value={m} checked={mode === m} onChange={() => onMode(m)} />
-            {f(m)}
-          </label>
-        ))}
-      </fieldset>
+      <DueModeToggle mode={mode} onMode={onMode} label={f('dueAs')} words={{ date: f('date'), days: f('days') }} />
     </div>
   )
 }
