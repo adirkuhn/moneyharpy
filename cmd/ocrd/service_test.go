@@ -183,7 +183,11 @@ func TestReadPhotoWithEveryPageModeAndReturnsTheBestReading(t *testing.T) {
 	if res.Text != strings.TrimSuffix(readings["6"], "\f") {
 		t.Errorf("text = %q, want the reading of page mode 6", res.Text)
 	}
+	if res.TextMethod != "tesseract-psm6" {
+		t.Errorf("text read by %q", res.TextMethod)
+	}
 	if len(res.Alternatives) != 2 || res.Alternatives[0].PageMode != "4" || res.Alternatives[1].PageMode != "3" ||
+		res.Alternatives[0].Method != "tesseract-psm4" || res.Alternatives[1].Method != "tesseract-psm3" ||
 		res.Alternatives[1].Text != strings.TrimSuffix(readings["3"], "\f") {
 		t.Errorf("alternatives = %+v", res.Alternatives)
 	}

@@ -381,7 +381,7 @@ func TestWorkAsksTheModelOnlyWhenTheRulesFallShortAndItIsOn(t *testing.T) {
 func TestWorkTakesTheOCRReadingTheRulesReadBest(t *testing.T) {
 	f := newFixture(t)
 	f.docs.upload(10, map[string][]byte{"receipt.jpg": []byte("\xff\xd8\xff")})
-	f.ocr.text = ocr.Text{Text: "psm 3", Method: "ocr", Pages: 1, Alternatives: []string{"psm 6", "psm 4"}}
+	f.ocr.text = ocr.Text{Text: "psm 3", Method: "ocr", Pages: 1, Alternatives: []ocr.Reading{{Method: "tesseract-psm6", Text: "psm 6"}, {Method: "tesseract-psm4", Text: "psm 4"}}}
 	var parsed []string
 	f.svc.Parsers.Text = func(text string, _ time.Time) Extraction {
 		parsed = append(parsed, text)
@@ -408,7 +408,7 @@ func TestWorkTakesTheOCRReadingTheRulesReadBest(t *testing.T) {
 func TestWorkGivesTheModelTheBestReadingAndLargePages(t *testing.T) {
 	f := newFixture(t)
 	f.docs.upload(10, map[string][]byte{"receipt.jpg": []byte("\xff\xd8\xff")})
-	f.ocr.text, f.ocr.pages = ocr.Text{Text: "psm 3", Method: "ocr", Pages: 1, Alternatives: []string{"psm 6"}}, 1
+	f.ocr.text, f.ocr.pages = ocr.Text{Text: "psm 3", Method: "ocr", Pages: 1, Alternatives: []ocr.Reading{{Method: "tesseract-psm6", Text: "psm 6"}}}, 1
 	f.svc.Parsers.Text = func(text string, _ time.Time) Extraction {
 		if text == "psm 6" {
 			return Extraction{TotalInclTax: uncertain(money.Amount(3630)), Reference: uncertain("0042")}

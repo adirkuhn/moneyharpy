@@ -51,7 +51,17 @@ type Config struct {
 	PageModes []string
 	// Workers caps the Tesseract runs at once over all requests.
 	Workers int
+	// RapidOCRURL is the RapidOCR service (ocr-rapid/), such as
+	// http://ocr-rapid:8091, that reads photos and short scans next to
+	// Tesseract; its reading is one more candidate. Empty is off.
+	RapidOCRURL string
+	// RapidOCRTimeout caps RapidOCR's reading of one file; when it takes
+	// longer, fails or is down, Tesseract's readings are used.
+	RapidOCRTimeout time.Duration
 }
+
+// DefaultRapidOCRTimeout caps RapidOCR's reading of one file.
+const DefaultRapidOCRTimeout = time.Minute
 
 // multiModePages is the most pages a scanned PDF may have to be read with
 // every page mode: a receipt or a short invoice. Longer scans are read
@@ -133,19 +143,26 @@ type File struct {
 
 // ReadResult is the response of POST /read.
 type ReadResult struct {
-	Text     string `json:"text"`
-	Method   string `json:"method"`
-	Pages    int    `json:"pages"`
-	Embedded []File `json:"embedded"`
-	// Alternatives are the other readings of OCR with other page modes,
-	// best first, for a reader that can tell better which one it
+	Text   string `json:"text"`
+	Method string `json:"method"`
+	// TextMethod tells which OCR read Text, as Reading.Method; empty for
+	// a PDF's text layer.
+	TextMethod string `json:"text_method,omitempty"`
+	Pages      int    `json:"pages"`
+	Embedded   []File `json:"embedded"`
+	// Alternatives are the other readings of OCR, by other page modes or
+	// engines, best first, for a reader that can tell better which one it
 	// understands.
 	Alternatives []Reading `json:"alternatives"`
 }
 
-// Reading is the text OCR read with one page mode.
+// Reading is the text one OCR engine read.
 type Reading struct {
-	PageMode string `json:"page_mode"`
+	// Method is the engine and its mode: "tesseract-psm6" for Tesseract
+	// with page mode 6, "rapidocr" for RapidOCR.
+	Method string `json:"method"`
+	// PageMode is Tesseract's page mode; empty for RapidOCR.
+	PageMode string `json:"page_mode,omitempty"`
 	Text     string `json:"text"`
 }
 
@@ -163,6 +180,8 @@ type service struct {
 	slots  chan struct{}
 	// workers caps the Tesseract runs at once.
 	workers chan struct{}
+	// rapid is the RapidOCR service, or nil.
+	rapid *rapidOCR
 }
 
 // NewHandler returns the service's HTTP handler.
@@ -173,6 +192,7 @@ func NewHandler(cfg Config, run Runner, logger *slog.Logger) http.Handler {
 	s := &service{
 		cfg: cfg, run: run, logger: logger, slots: make(chan struct{}, max(cfg.Concurrency, 1)),
 		workers: make(chan struct{}, max(cfg.Workers, 1)),
+		rapid:   newRapidOCR(cfg.RapidOCRURL, cmp.Or(cfg.RapidOCRTimeout, DefaultRapidOCRTimeout)),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
@@ -301,37 +321,51 @@ func (s *service) readPDF(ctx context.Context, j job) (ReadResult, error) {
 		if err != nil {
 			return ReadResult{}, err
 		}
-		modes := s.cfg.PageModes
-		if pages > multiModePages {
+		modes, short := s.cfg.PageModes, pages <= multiModePages
+		if !short {
 			modes = modes[:1]
 		}
-		readings, err := s.ocr(ctx, files, modes)
+		readings, err := s.ocr(ctx, files, modes, short)
 		if err != nil {
 			return ReadResult{}, err
 		}
-		res.Text, res.Alternatives, res.Method = readings[0].Text, readings[1:], "ocr"
+		res.Text, res.TextMethod, res.Alternatives, res.Method = readings[0].Text, readings[0].Method, readings[1:], "ocr"
 	}
 	res.Embedded = s.embedded(ctx, j)
 	return res, nil
 }
 
 func (s *service) readImage(ctx context.Context, in string) (ReadResult, error) {
-	readings, err := s.ocr(ctx, []string{in}, s.cfg.PageModes)
+	readings, err := s.ocr(ctx, []string{in}, s.cfg.PageModes, true)
 	if err != nil {
 		return ReadResult{}, err
 	}
 	text := readings[0].Text
-	return ReadResult{Text: text, Method: "ocr", Pages: strings.Count(text, "\f") + 1, Alternatives: readings[1:]}, nil
+	return ReadResult{
+		Text: text, TextMethod: readings[0].Method, Method: "ocr", Pages: strings.Count(text, "\f") + 1,
+		Alternatives: readings[1:],
+	}, nil
 }
 
 // ocr reads the pages (image files) with each page mode, the runs in
 // parallel as far as the workers allow, and returns the readings best
-// first. A mode that fails is left out; only when all fail is the error
-// returned.
-func (s *service) ocr(ctx context.Context, pages []string, modes []string) ([]Reading, error) {
+// first. With withRapid, RapidOCR (when configured) reads them at the same
+// time, and its reading is one more. A mode that fails is left out; only
+// when all fail is the error returned. RapidOCR failing is only logged.
+func (s *service) ocr(ctx context.Context, pages []string, modes []string, withRapid bool) ([]Reading, error) {
 	texts := make([][]string, len(modes))
 	errs := make([][]error, len(modes))
 	var wg sync.WaitGroup
+	withRapid = withRapid && s.rapid != nil
+	var rapid Reading
+	var rapidErr error
+	if withRapid {
+		wg.Go(func() {
+			start := time.Now()
+			rapid, rapidErr = s.rapid.read(ctx, pages)
+			s.logger.Debug("rapidocr", "duration", time.Since(start))
+		})
+	}
 	for m, mode := range modes {
 		texts[m], errs[m] = make([]string, len(pages)), make([]error, len(pages))
 		for p, page := range pages {
@@ -349,7 +383,14 @@ func (s *service) ocr(ctx context.Context, pages []string, modes []string) ([]Re
 			first = cmp.Or(first, err)
 			continue
 		}
-		readings = append(readings, Reading{PageMode: mode, Text: strings.Join(texts[m], "\f")})
+		readings = append(readings, Reading{Method: "tesseract-psm" + mode, PageMode: mode, Text: strings.Join(texts[m], "\f")})
+	}
+	switch {
+	case !withRapid:
+	case rapidErr != nil:
+		s.logger.Warn("rapidocr failed; using Tesseract's readings only", "error", rapidErr)
+	default:
+		readings = append(readings, rapid)
 	}
 	if len(readings) == 0 {
 		return nil, first
