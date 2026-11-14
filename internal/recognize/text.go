@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/adirkuhn/moneyharpy/internal/money"
 )
@@ -250,16 +252,22 @@ func besideColumn(l string) (left, right string) {
 	if k < 0 {
 		return l, ""
 	}
-	if !hasWords(cols[k]) {
+	if !hasWords(cols[k][:findAmounts(cols[k])[0].start]) {
 		k-- // the amount's label is the column before it
 	}
-	if k < 1 || !hasWords(cols[k]) {
+	if k < 1 || !hasWords(cols[k]) || !startsWithLetter(cols[k]) {
 		return l, ""
 	}
 	return strings.Join(cols[:k], "  "), strings.Join(cols[k:], "  ")
 }
 
 var wideGapRe = regexp.MustCompile(` {` + strconv.Itoa(wideGap) + `,}`)
+
+// startsWithLetter tells whether s starts with a letter, as a label does.
+func startsWithLetter(s string) bool {
+	r, _ := utf8.DecodeRuneInString(s)
+	return unicode.IsLetter(r)
+}
 
 // hasWords tells whether s has letters besides a currency code.
 func hasWords(s string) bool {

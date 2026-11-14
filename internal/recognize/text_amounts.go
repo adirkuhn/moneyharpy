@@ -101,7 +101,7 @@ func group(s string, m []int, i int) string {
 
 func isDigit(c byte) bool { return c >= '0' && c <= '9' }
 
-var percentPattern = regexp.MustCompile(`(\d{1,2}(?:[.,]\d{1,2})?)\s?%`)
+var percentPattern = regexp.MustCompile(`(\d{1,2}(?:[.,]\d{1,2})?) {0,6}%`) // "0,00     %" in a column
 
 // findRate returns the first VAT-like percentage on a line, normalised
 // ("21", "5.5"), or "".

@@ -211,18 +211,15 @@ type match struct {
 	score             int
 }
 
-// columnRow reads a row of a column table: its description is the first
-// cell with words after the codes before it (position, article number,
-// lot, dates); after it, a quantity times a unit price makes the line
-// total, the right-most one that does. It also returns the rune offset
-// where the description is printed.
+// columnRow reads a row of a column table: its description is the cell
+// with words (see description); after it, a quantity times a unit price
+// makes the line total, the right-most one that does and is not zero. A
+// VAT line ("zzgl. MwSt. 0% … % von 500,56 0,00") is no row. It also
+// returns the rune offset where the description is printed.
 func columnRow(line string, h tableHead) (Line, int, bool) {
-	if metadataLine.MatchString(line) {
-		return Line{}, 0, false
-	}
 	cs := cells(line)
 	desc, at, after := description(cs)
-	if desc == "" {
+	if desc == "" || vatWord.MatchString(desc) && findRate(line) != "" {
 		return Line{}, 0, false
 	}
 	var nums []number
@@ -380,7 +377,7 @@ const roundingTolerance = 100
 func findMatch(nums []number, discounts []int64) (match, bool) {
 	for k := len(nums) - 1; k >= 0; k-- {
 		for r, t := range nums[k].vals {
-			if nums[k].decimals[r] != 2 {
+			if nums[k].decimals[r] != 2 || t == 0 { // nothing to pay is no item
 				continue
 			}
 			if m, ok := matchTotal(nums[:k], t, discounts); ok {

@@ -49,11 +49,12 @@ const maxRoughGap = 0.02
 // incl. VAT (then the prices include VAT and the total is certain) or excl.
 // VAT, the one that read the most prices; else a set kept roughly that
 // comes close to either, uncertain; else, when no total was read, the first
-// set found, whose sum is then the total.
+// set found in the order given (the most structured reading), whose sum is
+// then the total.
 func pickLines(sets []rowSet, incl *Value[money.Amount], excl Value[money.Amount], receipt bool) ([]Line, Value[bool]) {
 	pricesIncl := Value[bool]{V: receipt, Found: true, Confidence: Uncertain}
-	sets = byPrices(readSets(sets, *incl, excl))
-	for _, set := range sets {
+	sets = readSets(sets, *incl, excl)
+	for _, set := range byPrices(sets) {
 		if len(set.lines) == 0 {
 			continue
 		}

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -27,6 +28,21 @@ func TestParseTextColumnTables(t *testing.T) {
 				"EXAMPLE Coconut water 1L|120|1.29|154.80|7",
 				"EXAMPLE Mango juice 1L Fruchtsaft aus Konzentrat|24|2.15|51.60|7",
 				"EXAMPLE Rice crackers 100g|1000|0.89|890.00|7",
+			},
+			good: true,
+		},
+		// An intra-EU order confirmation: no VAT, its summary line "zzgl.
+		// MwSt. 0% … 0,00 % von 457,92 0,00" under the last row, a count of
+		// packages right after a description and an item without a count.
+		"de_auftrag_eu.txt": {
+			name: "Example GmbH", vat: "DE123456789", date: "2026-11-05", currency: "EUR",
+			incl: "457.92", excl: "457.92", vat21: []string{"0:457.92:0.00"}, prices: "excl",
+			lines: []string{
+				"EXAMPLE Guava dessert - Glas Dessert, 350g|24|1.85|44.40|0",
+				"EXAMPLE Tapioca flour sweet, Packung - Beutel 500g|48|2.05|98.40|0",
+				"EXAMPLE Soda zero Dose Erfrischungsgetränk - kalorienfrei|72|0.56|40.32|0",
+				"EXAMPLE Coconut water 1L Kokoswasser, 1L|120|1.29|154.80|0",
+				"EXAMPLE Display stand - Aufsteller|1|120.00|120.00|0",
 			},
 			good: true,
 		},
@@ -133,6 +149,13 @@ func TestColumnRow(t *testing.T) {
 			pt, "KIT 6X      30-jan-2054 KIT 6X  EXEMPLO CABAZ DE NATAL 3 6 PRODUTOS   1     UNI    55,000 €      0%            55,00 €",
 			"EXEMPLO CABAZ DE NATAL 3 6 PRODUTOS|1|55.00|55.00|",
 		},
+		"Portuguese, a lot named LOT": {
+			pt, "LOT AB      12-abr-2027    900021        EXEMPLO BOLACHA 12 X 350GR     48     UNI     1,140 €      0%            54,72 €",
+			"EXEMPLO BOLACHA 12 X 350GR|48|1.14|54.72|",
+		},
+		"a VAT line with nothing to pay is no row": {
+			de, "                                     zzgl. MwSt. 0% steuerfrei              10     0,00     % von         457,92               0,00", "",
+		},
 		"German big amounts": {
 			de, "  6   900-1       EXAMPLE Water 1,5L             80,00 VPE    à 6              480 Einh         2,55     15,30      1.224,00  10",
 			"EXAMPLE Water 1,5L|480|2.55|1224.00|",
@@ -174,6 +197,22 @@ func TestColumnRow(t *testing.T) {
 				t.Errorf("columnRow = %q, want %q", got, tc.want)
 			}
 		})
+	}
+}
+
+// Without a total to check them against, the lines of a column table win
+// over those the line reader made of the same rows, however many prices
+// those have.
+func TestPickLinesWithoutTotalsKeepsTheMostStructured(t *testing.T) {
+	priced := func(d string, cents money.Amount) Line {
+		return Line{Description: d, Quantity: certain("1"), Price: certain(cents), Total: certain(cents)}
+	}
+	columns := []Line{priced("Row", 4440)}
+	lines := []Line{priced("1 512-1", 100), priced("Row", 4440), priced("MHD", 960)}
+	var incl Value[money.Amount]
+	got, _ := pickLines([]rowSet{{}, {lines: columns, roughly: true}, {read: func() []Line { return lines }}}, &incl, Value[money.Amount]{}, false)
+	if len(got) != 1 || got[0].Description != "Row" {
+		t.Errorf("lines = %+v, want the column table's", got)
 	}
 }
 
