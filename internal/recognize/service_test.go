@@ -258,7 +258,7 @@ func TestWorkAddsANewSupplierUnderItsRegisteredName(t *testing.T) {
 			f := newFixture(t)
 			registry := &fakeRegistry{companies: map[string]RegisteredCompany{"NL123456782B01": registered}, err: tc.err}
 			f.svc.Registry = registry
-			f.settings.rec.VIESEnabled = tc.on
+			f.settings.vies = tc.on
 			f.contacts.list = tc.existing
 			f.docs.upload(10, map[string][]byte{"receipt.jpg": []byte("\xff\xd8\xff")})
 			f.ocr.text = ocr.Text{Text: "x", Method: "ocr"}
@@ -305,6 +305,38 @@ func TestRegisteredAddress(t *testing.T) {
 		a, z, c := registeredAddress(in, "NL")
 		if got := []string{a, z, c}; !slices.Equal(got, want) {
 			t.Errorf("registeredAddress(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestSplitRegisteredAddress(t *testing.T) {
+	for name, tc := range map[string]struct {
+		addr, vat string
+		want      []string
+	}{
+		"Dutch":                    {"EXAMPLE STREET 00001\n1234AB AMSTERDAM \n", "NL123456782B01", []string{"EXAMPLE STREET 00001", "1234 AB", "AMSTERDAM"}},
+		"Dutch with a second line": {"EXAMPLE STREET 1\nBUILDING 2\n1234 AB AMSTERDAM", "NL123456782B01", []string{"EXAMPLE STREET 1, BUILDING 2", "1234 AB", "AMSTERDAM"}},
+		"Belgian":                  {"Example Street 1\n1000 Brussel", "BE0123456789", []string{"Example Street 1", "1000", "Brussel"}},
+		"German":                   {"Example Street 1\n10115 Berlin", "DE123456789", []string{"Example Street 1", "10115", "Berlin"}},
+		"French":                   {"1 RUE EXEMPLE\n75001 PARIS", "FR12345678901", []string{"1 RUE EXEMPLE", "75001", "PARIS"}},
+		"Greek, prefixed EL":       {"EXAMPLE STREET 1\n10431 ATHINA", "EL123456789", []string{"EXAMPLE STREET 1", "10431", "ATHINA"}},
+		"Portuguese":               {"RUA EXEMPLO 1\n1000-001 LISBOA", "PT123456789", []string{"RUA EXEMPLO 1", "1000-001", "LISBOA"}},
+		"no postcode keeps it all": {"EXAMPLE STREET 1\nNOWHERE", "NL123456782B01", []string{"EXAMPLE STREET 1, NOWHERE", "", ""}},
+		"one line keeps it all":    {"EXAMPLE STREET 1 1234 AB AMSTERDAM", "NL123456782B01", []string{"EXAMPLE STREET 1 1234 AB AMSTERDAM", "", ""}},
+		"unknown postcode shape":   {"1 EXAMPLE ROAD\nDUBLIN 2", "IE1234567T", []string{"1 EXAMPLE ROAD, DUBLIN 2", "", ""}},
+		"nothing":                  {"", "NL123456782B01", []string{"", "", ""}},
+	} {
+		a, z, c := SplitRegisteredAddress(tc.addr, tc.vat)
+		if got := []string{a, z, c}; !slices.Equal(got, tc.want) {
+			t.Errorf("%s: SplitRegisteredAddress(%q) = %q, want %q", name, tc.addr, got, tc.want)
+		}
+	}
+}
+
+func TestVATCountry(t *testing.T) {
+	for vat, want := range map[string]string{"NL123456782B01": "NL", "el 123456789": "GR", "XI123456789": "GB", "": ""} {
+		if got := VATCountry(vat); got != want {
+			t.Errorf("VATCountry(%q) = %q, want %q", vat, got, want)
 		}
 	}
 }

@@ -54,6 +54,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
 	"github.com/adirkuhn/moneyharpy/internal/tasklists"
 	"github.com/adirkuhn/moneyharpy/internal/timeentries"
+	"github.com/adirkuhn/moneyharpy/internal/vatlookup"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -223,8 +224,9 @@ func (f *fakeFiles) Delete(_ context.Context, key string) error {
 func (f *fakeFiles) Check(context.Context) error { return f.checkErr }
 
 type options struct {
-	pool       *pgxpool.Pool
-	apiLimiter *ratelimit.Limiter
+	pool          *pgxpool.Pool
+	apiLimiter    *ratelimit.Limiter
+	lookupLimiter *ratelimit.Limiter
 }
 
 type harness struct {
@@ -239,6 +241,8 @@ type harness struct {
 	hooks  *webhooks.Service
 	sales  *sales.Service
 	ocr    *fakeOCR
+	// vies stands in for VIES; tests never call the real one.
+	vies *fakeVIES
 	// recognition is Scan and Recognise, reading e-invoices only: XML
 	// files starting with <Invoice are read as testEInvoice.
 	recognition *recognize.Service
@@ -256,6 +260,9 @@ func newHarness(t *testing.T, opts options) *harness {
 	if opts.apiLimiter == nil {
 		opts.apiLimiter = ratelimit.New(100000, time.Minute)
 	}
+	if opts.lookupLimiter == nil {
+		opts.lookupLimiter = ratelimit.New(100000, time.Minute)
+	}
 	ids := resource.NewGenerator(emailSeq.Add(1) % 1024)
 	settle := settings.NewService(postgres.NewSettingsStore(pool), settings.NewCipher("test-secret"))
 	google := &fakeGoogle{}
@@ -266,7 +273,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	mailer := &fakeMailer{resets: make(chan sentMail, 8)}
 
 	files := &fakeFiles{data: map[string][]byte{}}
-	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle, ocr: &fakeOCR{}}
+	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle, ocr: &fakeOCR{}, vies: &fakeVIES{}}
 	h.server = httptest.NewUnstartedServer(nil)
 	h.server.Start()
 	t.Cleanup(h.server.Close)
@@ -347,7 +354,8 @@ func newHarness(t *testing.T, opts options) *harness {
 		Companies:       lookup,
 		CompanyCheck:    lookup,
 		Addresses:       lookup,
-		LookupLimiter:   ratelimit.New(100000, time.Minute),
+		VATNumbers:      vatlookup.New(settle, h.vies),
+		LookupLimiter:   opts.lookupLimiter,
 		ResetLimiter:    ratelimit.New(2, time.Hour),
 		Mail:            mailer,
 		OCR:             h.ocr,

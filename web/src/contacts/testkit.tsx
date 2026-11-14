@@ -20,9 +20,9 @@ export const contact = (over: Partial<Contact> = {}): Contact => ({
 })
 export const ann = contact({ id: '902', company_name: '', firstname: 'Ann', lastname: 'Jansen', customer_id: '2', email: null, send_invoices_to_email: null, city: 'Utrecht', uri: '/11/contacts/902' })
 
-export type Options = { total?: number; archived?: number; doubles?: Contact[][]; companySearch?: boolean }
+export type Options = { total?: number; archived?: number; doubles?: Contact[][]; companySearch?: boolean; vatLookup?: boolean }
 
-export function loaded(list: Contact[] = [contact(), ann], seen: URL[] = [], { total = list.length, archived = 0, doubles = [], companySearch = false }: Options = {}) {
+export function loaded(list: Contact[] = [contact(), ann], seen: URL[] = [], { total = list.length, archived = 0, doubles = [], companySearch = false, vatLookup = false }: Options = {}) {
   const page = (request: Request, rows: Contact[], count: number) => {
     const url = new URL(request.url)
     seen.push(url)
@@ -40,6 +40,7 @@ export function loaded(list: Contact[] = [contact(), ann], seen: URL[] = [], { t
     http.get('*/api/v2/11/custom_fields', () => HttpResponse.json([])),
     http.get('*/api/onboarding/options', () => HttpResponse.json({
       countries: ['BE', 'DE', 'NL'], currencies: ['EUR'], popular_currencies: ['EUR'], company_search_countries: companySearch ? ['NL'] : [], address_lookup_countries: [],
+      vat_lookup_enabled: vatLookup,
     })),
     http.get('*/api/v2/11/contacts', ({ request }) => page(request, list, total)),
     http.get('*/api/v2/11/contacts/filter', ({ request }) => page(request, list.slice(0, 1), 1)),

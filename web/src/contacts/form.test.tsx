@@ -102,6 +102,90 @@ describe('the contact form', () => {
     expect(screen.getByLabelText('Company name')).toHaveValue('Example Shop')
   })
 
+  describe('the EU VAT number lookup', () => {
+    const registered = { valid: true, name: 'EXAMPLE SHOP B.V.', address1: 'EXAMPLE STREET 1', zipcode: '1234 AB', city: 'AMSTERDAM', country: 'NL' }
+    const vies = (answer: () => Response, asked: string[] = []) => http.get('*/api/v2/11/vat_lookup', ({ request }) => {
+      asked.push(new URL(request.url).searchParams.get('vat_number') ?? '')
+      return answer()
+    })
+
+    it('fills in only the empty fields when leaving the VAT number, and says so', async () => {
+      const asked: string[] = []
+      server.use(...loaded(undefined, undefined, { vatLookup: true }), vies(() => HttpResponse.json(registered), asked))
+      renderAt('/11/contacts/new')
+      await userEvent.type(await screen.findByLabelText('Company name'), 'Example Shop')
+      await userEvent.type(screen.getByLabelText('City'), 'Rotterdam')
+      await userEvent.type(screen.getByLabelText('VAT-id'), 'nl 1234.56782.b01')
+      await userEvent.tab()
+      expect(await screen.findByText('Filled in from the EU VIES register')).toBeInTheDocument()
+      // Only the VAT number is sent, as typed without its separators.
+      expect(asked).toEqual(['NL123456782B01'])
+      expect(screen.getByLabelText('Company name')).toHaveValue('Example Shop')
+      expect(screen.getByRole('textbox', { name: 'Address' })).toHaveValue('EXAMPLE STREET 1')
+      expect(screen.getByLabelText('Zipcode')).toHaveValue('1234 AB')
+      expect(screen.getByLabelText('City')).toHaveValue('Rotterdam')
+      // Leaving the field again does not ask again.
+      await userEvent.click(screen.getByLabelText('VAT-id'))
+      await userEvent.tab()
+      expect(asked).toHaveLength(1)
+    })
+
+    it('fills in an empty form and the country of the address on Look up', async () => {
+      const sent: Sent = {}
+      server.use(...loaded(undefined, undefined, { vatLookup: true }), creating(sent), vies(() => HttpResponse.json({ ...registered, name: 'EXEMPLE SARL', address1: '1 RUE EXEMPLE', zipcode: '75001', city: 'PARIS', country: 'FR' })))
+      renderAt('/11/contacts/new')
+      await userEvent.type(await screen.findByLabelText('VAT-id'), 'FR12345678901')
+      await userEvent.click(screen.getByRole('button', { name: 'Look up' }))
+      expect(await screen.findByText('Filled in from the EU VIES register')).toBeInTheDocument()
+      expect(screen.getByLabelText('Company name')).toHaveValue('EXEMPLE SARL')
+      await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+      await waitFor(() => expect(sent.contact).toMatchObject({ company_name: 'EXEMPLE SARL', address1: '1 RUE EXEMPLE', zipcode: '75001', city: 'PARIS', country: 'FR', tax_number: 'FR12345678901' }))
+    })
+
+    it('says quietly when VIES does not know the number', async () => {
+      server.use(...loaded(undefined, undefined, { vatLookup: true }), vies(() => HttpResponse.json({ valid: false, name: '', address1: '', zipcode: '', city: '', country: 'NL' })))
+      renderAt('/11/contacts/new')
+      await userEvent.type(await screen.findByLabelText('VAT-id'), 'NL000099998B57')
+      await userEvent.tab()
+      expect(await screen.findByRole('status')).toHaveTextContent('VAT number not found in VIES')
+      expect(screen.queryByText('Filled in from the EU VIES register')).toBeNull()
+      expect(screen.getByLabelText('Company name')).toHaveValue('')
+      // Changing the number clears the message.
+      await userEvent.type(screen.getByLabelText('VAT-id'), '1')
+      expect(screen.queryByText('VAT number not found in VIES')).toBeNull()
+    })
+
+    it('says quietly when VIES is not available', async () => {
+      server.use(...loaded(undefined, undefined, { vatLookup: true }), vies(() => HttpResponse.json({ error: 'VIES is not available right now', code: 'vies_unavailable' }, { status: 503 })))
+      renderAt('/11/contacts/new')
+      await userEvent.type(await screen.findByLabelText('VAT-id'), 'NL123456782B01')
+      await userEvent.tab()
+      expect(await screen.findByRole('status')).toHaveTextContent('VIES is not available right now')
+      expect(screen.getByLabelText('Company name')).toHaveValue('')
+    })
+
+    it('does not ask about numbers that are not EU VAT numbers', async () => {
+      const asked: string[] = []
+      server.use(...loaded(undefined, undefined, { vatLookup: true }), vies(() => HttpResponse.json(registered), asked))
+      renderAt('/11/contacts/new')
+      await userEvent.type(await screen.findByLabelText('VAT-id'), 'GB123456789')
+      await userEvent.tab()
+      expect(screen.queryByRole('button', { name: 'Look up' })).toBeNull()
+      expect(asked).toEqual([])
+    })
+
+    it('is not there while the lookup is turned off', async () => {
+      const asked: string[] = []
+      server.use(...loaded(), vies(() => HttpResponse.json(registered), asked))
+      renderAt('/11/contacts/new')
+      await userEvent.type(await screen.findByLabelText('VAT-id'), 'NL123456782B01')
+      await userEvent.tab()
+      expect(screen.queryByRole('button', { name: 'Look up' })).toBeNull()
+      expect(screen.queryByText('Filled in from the EU VIES register')).toBeNull()
+      expect(asked).toEqual([])
+    })
+  })
+
   it('reveals a second address line on request', async () => {
     server.use(...loaded())
     renderAt('/11/contacts/new')

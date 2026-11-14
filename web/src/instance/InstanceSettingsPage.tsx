@@ -114,12 +114,12 @@ function SettingsForm() {
       ...(secret ? { google_client_secret: secret } : {}),
       recognition_ai_enabled: form.recognition_ai_enabled,
       recognition_ai_connections: toRequest(connections),
-      recognition_vies_enabled: form.recognition_vies_enabled,
+      vies_enabled: form.vies_enabled,
     })
   }
 
   const errors = formErrors(save.error, { ...labels, ...connectionLabels(connections, t) })
-  const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'kvk_website_search_enabled' | 'address_lookup_enabled' | 'webhooks_allow_local' | 'smtp_enabled' | 'storage_enabled' | 'storage_path_style' | 'recognition_ai_enabled' | 'recognition_vies_enabled', label: string, help?: string) => (
+  const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'kvk_website_search_enabled' | 'address_lookup_enabled' | 'webhooks_allow_local' | 'smtp_enabled' | 'storage_enabled' | 'storage_path_style' | 'recognition_ai_enabled' | 'vies_enabled', label: string, help?: string) => (
     <CheckboxInput label={label} help={help} checked={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />
   )
   const text = (
@@ -176,6 +176,7 @@ function SettingsForm() {
             </div>
           </div>
           {testKvkWebsite.isError && <Problems messages={[kvkWebsiteProblem(testKvkWebsite.error, t)]} />}
+          {check('vies_enabled', t('instance.viesEnable'), t('instance.viesHint'))}
         </FormSection>
         <FormSection title={t('instance.addressTitle')}>
           {check('address_lookup_enabled', t('instance.addressEnable'), t('instance.addressHint'))}
@@ -250,7 +251,6 @@ function SettingsForm() {
         </FormSection>
         <FormSection title={t('instance.recognitionTitle')}>
           <p className="hint">{t('instance.recognitionHint')}</p>
-          {check('recognition_vies_enabled', t('instance.viesEnable'), t('instance.viesHint'))}
           {check('recognition_ai_enabled', t('instance.aiEnable'), t('instance.aiWarning'))}
           <AIConnections connections={connections} onChange={setConnections} errors={errors.field} />
           <div className="form-input form-input--check">

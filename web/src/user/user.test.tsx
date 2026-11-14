@@ -41,7 +41,7 @@ describe('API tokens', () => {
 })
 
 describe('instance settings', () => {
-  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [] as InstanceSettings['recognition_ai_connections'], recognition_vies_enabled: false }
+  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [] as InstanceSettings['recognition_ai_connections'], vies_enabled: false }
 
   it('is closed to regular users', async () => {
     server.use(signedIn(), listing([]))
@@ -64,7 +64,7 @@ describe('instance settings', () => {
     await userEvent.click(await screen.findByLabelText('Allow new users to register'))
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() =>
-      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [], recognition_vies_enabled: false }),
+      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [], vies_enabled: false }),
     )
     expect(await screen.findByRole('status')).toHaveTextContent('Settings saved')
   })
@@ -111,7 +111,7 @@ describe('instance settings', () => {
     )
   })
 
-  it('turns on the VIES lookup of new suppliers, off by default', async () => {
+  it('turns on the EU VAT number lookup, off by default', async () => {
     let sent: unknown
     server.use(
       signedIn({ ...user, instance_admin: true }),
@@ -123,12 +123,12 @@ describe('instance settings', () => {
       }),
     )
     renderAt('/instance/settings')
-    const vies = await screen.findByLabelText('Add new suppliers under the name registered for their VAT number')
+    const vies = await screen.findByLabelText('EU VAT number lookup (VIES)')
     expect(vies).not.toBeChecked()
     expect(screen.getByText(/Sends only the VAT number/)).toBeInTheDocument()
     await userEvent.click(vies)
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
-    await waitFor(() => expect(sent).toMatchObject({ recognition_vies_enabled: true }))
+    await waitFor(() => expect(sent).toMatchObject({ vies_enabled: true }))
   })
 
   describe('the experimental KVK website search', () => {

@@ -1912,6 +1912,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/vat_lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Look up an EU VAT number in VIES
+         * @description MoneyHarpy extension. What VIES, the European Commission's register of EU VAT numbers, registered for a VAT number, to fill in a contact. Only while an instance administrator turned on `vies_enabled`, and only the VAT number is sent. The number is checked first: one not shaped like an EU VAT number of its country (or failing the Dutch checksum) answers 422 without asking VIES. A number VIES does not know answers `valid: false`. Answers are kept for a day. Rate limited like the company register search.
+         */
+        get: operations["lookupVatNumber"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/contacts/synchronization": {
         parameters: {
             query?: never;
@@ -7006,6 +7028,20 @@ export interface components {
             company_search_countries: string[];
             /** @description Countries whose addresses can be looked up here. */
             address_lookup_countries: string[];
+            /** @description Whether EU VAT numbers can be looked up in VIES here, with vat_lookup. */
+            vat_lookup_enabled: boolean;
+        };
+        /** @description MoneyHarpy extension. What VIES registered for a VAT number; empty strings where it tells nothing. */
+        VatLookup: {
+            /** @description Whether the number is registered and active. When false the other fields but country are empty. */
+            valid: boolean;
+            name: string;
+            /** @description The street. VIES gives the address as one block of lines; when its postcode cannot be read the whole address is here and zipcode and city are empty. */
+            address1: string;
+            zipcode: string;
+            city: string;
+            /** @description ISO 3166-1 alpha-2 code of the VAT number's country (GR for EL, GB for XI). */
+            country: string;
         };
         CompanyMatch: {
             name: string;
@@ -7126,8 +7162,8 @@ export interface components {
             recognition_ai_enabled: boolean;
             /** @description The AI connections in the order Scan and Recognise tries them: the first enabled connection that reads the document answers; when it fails (unavailable, rate limited, refused, an unreadable answer) the next is asked. */
             recognition_ai_connections: components["schemas"]["RecognitionAIConnection"][];
-            /** @description Let Scan and Recognise look up the VAT number read from a document in the EU's VIES service, to add a new supplier under its registered name and address. Off unless turned on; only the VAT number is sent to the European Commission. */
-            recognition_vies_enabled: boolean;
+            /** @description EU VAT number lookup (VIES): look VAT numbers up in VIES, the European Commission's register of EU VAT numbers. Scan and Recognise then adds a new supplier under its registered name and address, and the contact form fills in a contact from its VAT number. Off unless turned on; only the VAT number is sent to the European Commission. */
+            vies_enabled: boolean;
         };
         UpdateInstanceSettingsRequest: {
             registration_open?: boolean;
@@ -7165,6 +7201,11 @@ export interface components {
             /** @description Replaces the AI connections; their order is the order Scan and Recognise tries them in. */
             recognition_ai_connections?: components["schemas"]["RecognitionAIConnectionRequest"][];
             /** @description See InstanceSettings. */
+            vies_enabled?: boolean;
+            /**
+             * @deprecated
+             * @description The former name of vies_enabled, still accepted; vies_enabled wins when both are sent.
+             */
             recognition_vies_enabled?: boolean;
         };
         /** @description A Moneybird workflow with MoneyHarpy extensions. */
@@ -14975,6 +15016,54 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
+        };
+    };
+    lookupVatNumber: {
+        parameters: {
+            query: {
+                /** @description The VAT number with its country prefix, such as NL123456782B01; spaces, dots and dashes are ignored. */
+                vat_number: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What VIES registered for the number */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatLookup"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            /** @description The user has no permission, or the lookup is turned off for this installation (`code` is `vies_disabled`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+            /** @description VIES or the member state's register could not answer (`code` is `vies_unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     listContactVersions: {

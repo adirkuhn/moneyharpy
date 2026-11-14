@@ -7464,20 +7464,17 @@ type InstanceSettings struct {
 	RecognitionAiConnections []RecognitionAIConnection `json:"recognition_ai_connections"`
 
 	// RecognitionAiEnabled Let Scan and Recognise ask an AI model about documents its rules could not read. Off unless turned on; with an API provider the document's text and images are sent to that provider.
-	RecognitionAiEnabled bool `json:"recognition_ai_enabled"`
-
-	// RecognitionViesEnabled Let Scan and Recognise look up the VAT number read from a document in the EU's VIES service, to add a new supplier under its registered name and address. Off unless turned on; only the VAT number is sent to the European Commission.
-	RecognitionViesEnabled bool   `json:"recognition_vies_enabled"`
-	RegistrationOpen       bool   `json:"registration_open"`
-	SmtpEnabled            bool   `json:"smtp_enabled"`
-	SmtpFrom               string `json:"smtp_from"`
-	SmtpHost               string `json:"smtp_host"`
-	SmtpPasswordSet        bool   `json:"smtp_password_set"`
-	SmtpPort               int    `json:"smtp_port"`
-	SmtpSecurity           string `json:"smtp_security"`
-	SmtpUsername           string `json:"smtp_username"`
-	StorageAccessKey       string `json:"storage_access_key"`
-	StorageBucket          string `json:"storage_bucket"`
+	RecognitionAiEnabled bool   `json:"recognition_ai_enabled"`
+	RegistrationOpen     bool   `json:"registration_open"`
+	SmtpEnabled          bool   `json:"smtp_enabled"`
+	SmtpFrom             string `json:"smtp_from"`
+	SmtpHost             string `json:"smtp_host"`
+	SmtpPasswordSet      bool   `json:"smtp_password_set"`
+	SmtpPort             int    `json:"smtp_port"`
+	SmtpSecurity         string `json:"smtp_security"`
+	SmtpUsername         string `json:"smtp_username"`
+	StorageAccessKey     string `json:"storage_access_key"`
+	StorageBucket        string `json:"storage_bucket"`
 
 	// StorageEnabled Whether uploads, such as logos, go to S3-compatible storage.
 	StorageEnabled bool `json:"storage_enabled"`
@@ -7489,6 +7486,9 @@ type InstanceSettings struct {
 	StoragePathStyle    bool   `json:"storage_path_style"`
 	StorageRegion       string `json:"storage_region"`
 	StorageSecretKeySet bool   `json:"storage_secret_key_set"`
+
+	// ViesEnabled EU VAT number lookup (VIES): look VAT numbers up in VIES, the European Commission's register of EU VAT numbers. Scan and Recognise then adds a new supplier under its registered name and address, and the contact form fills in a contact from its VAT number. Off unless turned on; only the VAT number is sent to the European Commission.
+	ViesEnabled bool `json:"vies_enabled"`
 
 	// WebhooksAllowLocal Let webhooks reach plain HTTP and private or loopback addresses, for development.
 	WebhooksAllowLocal bool `json:"webhooks_allow_local"`
@@ -8003,6 +8003,9 @@ type OnboardingOptions struct {
 	// Currencies ISO 4217 codes.
 	Currencies        []string `json:"currencies"`
 	PopularCurrencies []string `json:"popular_currencies"`
+
+	// VatLookupEnabled Whether EU VAT numbers can be looked up in VIES here, with vat_lookup.
+	VatLookupEnabled bool `json:"vat_lookup_enabled"`
 }
 
 // OneOffSalesInvoiceRequest defines model for OneOffSalesInvoiceRequest.
@@ -10462,7 +10465,8 @@ type UpdateInstanceSettingsRequest struct {
 	RecognitionAiConnections *[]RecognitionAIConnectionRequest `json:"recognition_ai_connections,omitempty"`
 	RecognitionAiEnabled     *bool                             `json:"recognition_ai_enabled,omitempty"`
 
-	// RecognitionViesEnabled See InstanceSettings.
+	// RecognitionViesEnabled The former name of vies_enabled, still accepted; vies_enabled wins when both are sent.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	RecognitionViesEnabled *bool                                      `json:"recognition_vies_enabled,omitempty"`
 	RegistrationOpen       *bool                                      `json:"registration_open,omitempty"`
 	SmtpEnabled            *bool                                      `json:"smtp_enabled,omitempty"`
@@ -10479,6 +10483,9 @@ type UpdateInstanceSettingsRequest struct {
 	StoragePathStyle       *bool                                      `json:"storage_path_style,omitempty"`
 	StorageRegion          *string                                    `json:"storage_region,omitempty"`
 	StorageSecretKey       *string                                    `json:"storage_secret_key,omitempty"`
+
+	// ViesEnabled See InstanceSettings.
+	ViesEnabled *bool `json:"vies_enabled,omitempty"`
 
 	// WebhooksAllowLocal Let webhooks reach plain HTTP and private or loopback addresses, for development.
 	WebhooksAllowLocal *bool `json:"webhooks_allow_local,omitempty"`
@@ -10570,6 +10577,21 @@ type UserType string
 type ValidationError struct {
 	// Error Messages per invalid attribute.
 	Error map[string][]string `json:"error"`
+}
+
+// VatLookup MoneyHarpy extension. What VIES registered for a VAT number; empty strings where it tells nothing.
+type VatLookup struct {
+	// Address1 The street. VIES gives the address as one block of lines; when its postcode cannot be read the whole address is here and zipcode and city are empty.
+	Address1 string `json:"address1"`
+	City     string `json:"city"`
+
+	// Country ISO 3166-1 alpha-2 code of the VAT number's country (GR for EL, GB for XI).
+	Country string `json:"country"`
+	Name    string `json:"name"`
+
+	// Valid Whether the number is registered and active. When false the other fields but country are empty.
+	Valid   bool   `json:"valid"`
+	Zipcode string `json:"zipcode"`
 }
 
 // Webhook A Moneybird webhook with MoneyHarpy extensions.
@@ -14371,6 +14393,12 @@ type ListUsersParams struct {
 
 	// IncludeApiUsers Accepted for compatibility; there are no API users to include.
 	IncludeApiUsers *bool `form:"include_api_users,omitempty" json:"include_api_users,omitempty"`
+}
+
+// LookupVatNumberParams defines parameters for LookupVatNumber.
+type LookupVatNumberParams struct {
+	// VatNumber The VAT number with its country prefix, such as NL123456782B01; spaces, dots and dashes are ignored.
+	VatNumber string `form:"vat_number" json:"vat_number"`
 }
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
@@ -22088,6 +22116,9 @@ type ServerInterface interface {
 	// UpdateUser Change a user's access
 	// (PATCH /api/v2/{administration_id}/users/{id})
 	UpdateUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// LookupVatNumber Look up an EU VAT number in VIES
+	// (GET /api/v2/{administration_id}/vat_lookup)
+	LookupVatNumber(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params LookupVatNumberParams)
 	// GetVerifications Retrieve verifications
 	// (GET /api/v2/{administration_id}/verifications)
 	GetVerifications(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -24554,6 +24585,12 @@ func (_ Unimplemented) GetUser(w http.ResponseWriter, r *http.Request, administr
 // UpdateUser Change a user's access
 // (PATCH /api/v2/{administration_id}/users/{id})
 func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// LookupVatNumber Look up an EU VAT number in VIES
+// (GET /api/v2/{administration_id}/vat_lookup)
+func (_ Unimplemented) LookupVatNumber(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params LookupVatNumberParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -39951,6 +39988,48 @@ func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// LookupVatNumber operation middleware
+func (siw *ServerInterfaceWrapper) LookupVatNumber(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params LookupVatNumberParams
+
+	// ------------- Required query parameter "vat_number" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "vat_number", r.URL.Query(), &params.VatNumber, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "vat_number"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "vat_number", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LookupVatNumber(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetVerifications operation middleware
 func (siw *ServerInterfaceWrapper) GetVerifications(w http.ResponseWriter, r *http.Request) {
 
@@ -40854,6 +40933,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/next_customer_id", wrapper.GetNextCustomerId)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/vat_lookup", wrapper.LookupVatNumber)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/synchronization", wrapper.ListContactVersions)
