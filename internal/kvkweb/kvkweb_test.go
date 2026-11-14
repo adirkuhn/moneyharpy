@@ -17,18 +17,28 @@ import (
 
 type staticSettings struct{ inst settings.Instance }
 
+const envConfigBody = `window.__ENV = {"NEXT_PUBLIC_SEARCH_V2_GENERAL_SEARCH_PROFILE_ID":"test-profile-id"};`
+
 func (s staticSettings) Instance(context.Context) (settings.Instance, error) { return s.inst, nil }
 
 func client(t *testing.T, url string, enabled bool) *Client {
 	t.Helper()
 	s := staticSettings{inst: settings.Instance{KVK: settings.KVK{WebsiteSearch: enabled}}}
-	return New(s, url, http.DefaultClient, ratelimit.New(1000, time.Minute))
+	return New(s, url, url+"/config.env.js", http.DefaultClient, ratelimit.New(1000, time.Minute))
 }
 
 // serve answers like the KVK website search, checking what is asked.
 func serve(t *testing.T, handler func(w http.ResponseWriter)) *httptest.Server {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/config.env.js" {
+			w.Header().Set("Content-Type", "application/javascript")
+			_, _ = w.Write([]byte(envConfigBody))
+			return
+		}
+		if got := r.Header.Get("Profileid"); got != "test-profile-id" {
+			t.Errorf("Profileid = %q, want %q", got, "test-profile-id")
+		}
 		q := r.URL.Query()
 		if got := q.Get("q"); got != "example & co" {
 			t.Errorf("q = %q, want the query", got)
@@ -149,13 +159,17 @@ func TestSearchServerDown(t *testing.T) {
 
 func TestSearchIsRateLimitedPerInstance(t *testing.T) {
 	calls := 0
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/config.env.js" {
+			_, _ = w.Write([]byte(envConfigBody))
+			return
+		}
 		calls++
 		reply(http.StatusOK, "application/json", `{"data":{"items":[]}}`)(w)
 	}))
 	t.Cleanup(srv.Close)
 	s := staticSettings{inst: settings.Instance{KVK: settings.KVK{WebsiteSearch: true}}}
-	c := New(s, srv.URL, http.DefaultClient, ratelimit.New(2, time.Minute))
+	c := New(s, srv.URL, srv.URL+"/config.env.js", http.DefaultClient, ratelimit.New(2, time.Minute))
 	for range 2 {
 		if _, err := c.SearchCompanies(context.Background(), "example"); err != nil {
 			t.Fatalf("SearchCompanies() error = %v", err)
@@ -172,6 +186,13 @@ func TestSearchIsRateLimitedPerInstance(t *testing.T) {
 func TestCheckWorksWhileDisabled(t *testing.T) {
 	var asked string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/config.env.js" {
+			_, _ = w.Write([]byte(envConfigBody))
+			return
+		}
+		if got := r.Header.Get("Profileid"); got != "test-profile-id" {
+			t.Errorf("Profileid = %q, want %q", got, "test-profile-id")
+		}
 		asked = r.URL.Query().Get("q")
 		reply(http.StatusOK, "application/json", results)(w)
 	}))
@@ -185,11 +206,175 @@ func TestCheckWorksWhileDisabled(t *testing.T) {
 }
 
 func TestCheckReportsBlocked(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/config.env.js" {
+			_, _ = w.Write([]byte(envConfigBody))
+			return
+		}
 		reply(http.StatusForbidden, "text/html", "<html>blocked</html>")(w)
 	}))
 	t.Cleanup(srv.Close)
 	if err := client(t, srv.URL, false).Check(context.Background()); !errors.Is(err, administration.ErrRegisterBlocked) {
 		t.Errorf("Check() error = %v, want ErrRegisterBlocked", err)
+	}
+}
+
+func TestExtractProfileID(t *testing.T) {
+	tests := []struct {
+		name    string
+		body    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "valid single line",
+			body: `window.__ENV = {"NEXT_PUBLIC_SEARCH_V2_GENERAL_SEARCH_PROFILE_ID":"5C10A89D-635E-49CC-94B8-042DD533B64A"};`,
+			want: "5C10A89D-635E-49CC-94B8-042DD533B64A",
+		},
+		{
+			name: "valid multiline with other fields",
+			body: `window.__ENV = {
+				"FOO": "bar",
+				"NEXT_PUBLIC_SEARCH_V2_GENERAL_SEARCH_PROFILE_ID": "abc-123",
+				"NESTED": {"key": 123}
+			};`,
+			want: "abc-123",
+		},
+		{
+			name:    "missing json braces",
+			body:    `window.__ENV = "invalid";`,
+			wantErr: true,
+		},
+		{
+			name:    "empty json object",
+			body:    `window.__ENV = {};`,
+			wantErr: true,
+		},
+		{
+			name:    "missing target key",
+			body:    `window.__ENV = {"OTHER_KEY": "123"};`,
+			wantErr: true,
+		},
+		{
+			name:    "malformed json",
+			body:    `window.__ENV = {invalid json};`,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := extractProfileID([]byte(tt.body))
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("extractProfileID() error = %v, wantErr = %v", err, tt.wantErr)
+			}
+			if got != tt.want {
+				t.Errorf("extractProfileID() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestProfileIDCached(t *testing.T) {
+	configCalls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/config.env.js" {
+			configCalls++
+			w.Header().Set("Content-Type", "application/javascript")
+			_, _ = w.Write([]byte(envConfigBody))
+			return
+		}
+		if got := r.Header.Get("Profileid"); got != "test-profile-id" {
+			t.Errorf("Profileid = %q, want %q", got, "test-profile-id")
+		}
+		reply(http.StatusOK, "application/json", `{"data":{"items":[]}}`)(w)
+	}))
+	t.Cleanup(srv.Close)
+
+	c := client(t, srv.URL, true)
+	currentTime := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	c.now = func() time.Time { return currentTime }
+
+	for i := 0; i < 3; i++ {
+		if _, err := c.SearchCompanies(context.Background(), "example & co"); err != nil {
+			t.Fatalf("SearchCompanies() [%d] error = %v", i, err)
+		}
+	}
+	if configCalls != 1 {
+		t.Errorf("config.env.js fetched %d times, want 1 within 30m", configCalls)
+	}
+
+	// Advance time by 31 minutes: profile id should expire and be refetched
+	currentTime = currentTime.Add(31 * time.Minute)
+	if _, err := c.SearchCompanies(context.Background(), "example & co"); err != nil {
+		t.Fatalf("SearchCompanies() after 31m error = %v", err)
+	}
+	if configCalls != 2 {
+		t.Errorf("config.env.js fetched %d times, want 2 after 30m TTL", configCalls)
+	}
+}
+
+func TestSearchConfigUnavailable(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/config.env.js" {
+			reply(http.StatusInternalServerError, "text/plain", "error")(w)
+			return
+		}
+		reply(http.StatusOK, "application/json", `{"data":{"items":[]}}`)(w)
+	}))
+	t.Cleanup(srv.Close)
+
+	c := client(t, srv.URL, true)
+	if _, err := c.SearchCompanies(context.Background(), "example & co"); !errors.Is(err, administration.ErrRegisterUnavailable) {
+		t.Errorf("SearchCompanies() error = %v, want ErrRegisterUnavailable", err)
+	}
+}
+
+func TestSearchConfigMalformed(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/config.env.js" {
+			reply(http.StatusOK, "text/html", "<html>blocked</html>")(w)
+			return
+		}
+		reply(http.StatusOK, "application/json", `{"data":{"items":[]}}`)(w)
+	}))
+	t.Cleanup(srv.Close)
+
+	c := client(t, srv.URL, true)
+	if _, err := c.SearchCompanies(context.Background(), "example & co"); !errors.Is(err, administration.ErrRegisterBlocked) {
+		t.Errorf("SearchCompanies() error = %v, want ErrRegisterBlocked", err)
+	}
+}
+
+func TestSearchInvalidatesProfileIDOnBadRequest(t *testing.T) {
+	configCalls := 0
+	searchCalls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/config.env.js" {
+			configCalls++
+			w.Header().Set("Content-Type", "application/javascript")
+			_, _ = w.Write([]byte(envConfigBody))
+			return
+		}
+		searchCalls++
+		if searchCalls == 1 {
+			// First search fails with 400 Bad Request (expired profile id)
+			reply(http.StatusBadRequest, "application/json", `{"errors":{"profileId":["required"]}}`)(w)
+			return
+		}
+		reply(http.StatusOK, "application/json", `{"data":{"items":[]}}`)(w)
+	}))
+	t.Cleanup(srv.Close)
+
+	c := client(t, srv.URL, true)
+	// First search fails with 400
+	if _, err := c.SearchCompanies(context.Background(), "example & co"); !errors.Is(err, administration.ErrRegisterBlocked) {
+		t.Errorf("first search error = %v, want ErrRegisterBlocked", err)
+	}
+	// Second search should re-fetch config because profile ID was invalidated
+	if _, err := c.SearchCompanies(context.Background(), "example & co"); err != nil {
+		t.Errorf("second search error = %v, want nil", err)
+	}
+	if configCalls != 2 {
+		t.Errorf("config.env.js fetched %d times, want 2 (refetched after 400)", configCalls)
 	}
 }
