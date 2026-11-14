@@ -293,7 +293,7 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
                   // The contact's own country goes in front of the name, from all countries, and the register is searched
                   // only for a Dutch one; a select of the registers alone looked as if contacts could only be Dutch.
                   {...(!contact && registers.length > 0
-                    ? { countries: countryOptions, country: text.country, countryLabel: f('companyCountry'), onCountry: (value: string) => change('country', value) }
+                    ? { countries: countryOptions, country: text.country, countryLabel: f('companyCountry'), countryCodes: true, onCountry: (value: string) => change('country', value) }
                     : {})}
                   onChange={(value) => change('company_name', value)}
                   onChoose={(company, register) => setText((current) => ({
