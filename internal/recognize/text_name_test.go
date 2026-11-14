@@ -56,7 +56,7 @@ func TestSupplierNameIsNoAddressOrPageMarker(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			lines := prepare(tc.text)
-			s, _ := readSupplier(lines, buyerLines(lines))
+			s, _ := readSupplier(lines, buyerLines(lines), Self{})
 			if s.Name != tc.want {
 				t.Errorf("name = %q, want %q", s.Name, tc.want)
 			}

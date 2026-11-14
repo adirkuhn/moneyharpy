@@ -51,7 +51,8 @@ type Settings interface {
 // as they can. today places dates written without a year.
 type Parsers struct {
 	EInvoice func(xml []byte) (Extraction, error)
-	Text     func(text string, today time.Time) Extraction
+	// Text reads for the administration whose own company is self.
+	Text func(text string, today time.Time, self Self) Extraction
 }
 
 // ModelFactory makes the AI model for the saved settings: one that asks the
@@ -96,6 +97,9 @@ type Deps struct {
 	// Registry may be nil: new suppliers then keep the name read from the
 	// document.
 	Registry Registry
+	// Own may be nil: documents are then read as if for anyone, and the
+	// administration may be taken for their supplier.
+	Own      Own
 	Notifier Notifier
 	Logger   *slog.Logger
 	Now      func() time.Time
@@ -435,11 +439,12 @@ func (s *Service) fill(ctx context.Context, r *Recognition) error {
 	if err != nil {
 		return err
 	}
-	e, err := s.extract(ctx, read)
+	self := s.self(ctx, admin, user)
+	e, err := s.extract(ctx, read, self)
 	if err != nil {
 		return err
 	}
-	supplier, err := s.supplier(ctx, admin, user, e)
+	supplier, err := s.supplier(ctx, admin, user, e, self)
 	if err != nil {
 		return err
 	}
@@ -510,7 +515,7 @@ func (s *Service) load(ctx context.Context, admin, user resource.ID, kind string
 
 // supplier finds the contact the document is from, or adds one with what
 // the document says of it.
-func (s *Service) supplier(ctx context.Context, admin, user resource.ID, e Extraction) (SupplierMatch, error) {
+func (s *Service) supplier(ctx context.Context, admin, user resource.ID, e Extraction, self Self) (SupplierMatch, error) {
 	sup := e.Supplier
 	var candidates []contacts.Contact
 	seen := map[resource.ID]bool{}
@@ -526,14 +531,14 @@ func (s *Service) supplier(ctx context.Context, admin, user resource.ID, e Extra
 			}
 		}
 	}
-	if c, by, ok := Match(sup, candidates); ok {
+	if c, by, ok := Match(sup, candidates, self); ok {
 		return SupplierMatch{ContactID: c.ID, Name: c.Name(), Confidence: by.Confidence()}, nil
 	}
 	if e.Source != SourceEInvoice {
 		sup = s.fromRegistry(ctx, sup)
 	}
 	name := strings.TrimSpace(sup.Name)
-	if name == "" {
+	if name == "" || self.Is(sup) {
 		return SupplierMatch{}, nil
 	}
 	c, err := s.Contacts.Create(ctx, admin, user, newContact(sup))

@@ -2,18 +2,20 @@ package recognize
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 var (
 	// buyerLabel starts a block with the buyer's details ("Factuur aan:").
-	buyerLabel = regexp.MustCompile(`(?i)^\s*(?:factuur aan|aan|bill(?:ed)? to|invoice to|sold to|ship to|deliver to|delivery address|afleveradres|klant|customer|cliente|client|kunde|rechnungsempf[äa]nger|lieferadresse|factur[ée] [àa]|uw gegevens|t\.?a\.?v\.?)\b\s*:?`)
+	buyerLabel = regexp.MustCompile(`(?i)^\s*(?:factuur aan|aan|bill(?:ed)? to|invoice to|sold to|ship to|deliver to|delivery address|afleveradres|klant|customer|cliente|client|kunde|rechnungsempf[äa]nger|lieferadresse|factur[ée] [àa]|uw gegevens|t\.?a\.?v\.?|fao|attn|for the attention of)\b\s*:?`)
 	// buyerWords mark a single line about the buyer, or the buyer's account.
 	buyerWords = regexp.MustCompile(`(?i)\b(?:uw|your|ihre?|cliente|client|customer|klant|kunde|buyer|koper|afnemer|verlegd naar|afgeschreven|incasso|ge[ïi]ncasseerd|debited|abgebucht|lastschrift|machtiging|mandate)\b`)
 	vatLabel   = regexp.MustCompile(`(?i)\b(?:btw|b\.t\.w\.?|vat|tva|iva|ust|ust-?id(?:nr)?\.?|nif|nipc|mwst|tax|moms|p\.?\s?iva|cif|nr\.? tva)\b`)
 	vatStart   = regexp.MustCompile(`\b(?:AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK|GB|XI|CHE)`)
-	kvkPattern = regexp.MustCompile(`(?i)(?:\bkvk|\bk\.v\.k\.?|kamer van koophandel|\bcoc\b|chamber of commerce|handelsregister)[^0-9\n]{0,20}(\d{8})\b`)
+	kvkPattern = regexp.MustCompile(`(?i)(?:\bkvk|\bk\.v\.k\.?|kamer van koophandel|\bcoc\b|chamber of commerce|handelsregister)[^0-9\n]{0,20}(\d{8}|\d{2}[ .]\d{2}[ .]\d{2}[ .]\d{2}|\d{4}[ .]\d{4})\b`)
 	ibanLabel  = regexp.MustCompile(`(?i)iban|rekening|bank|account|konto|\bnib\b|over te maken|overmaken|t\.n\.v`)
 	emailRe    = regexp.MustCompile(`[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}`)
 	wwwRe      = regexp.MustCompile(`(?i)\b(www\.[a-z0-9-]+(?:\.[a-z0-9-]+)+)`)
@@ -72,19 +74,37 @@ func buyerLines(lines []string) []bool {
 	return out
 }
 
-// readSupplier reads who sent the document.
-func readSupplier(lines []string, buyer []bool) (Supplier, Confidence) {
+// readSupplierFor reads who sent the document to the administration whose
+// own company is self: what the lines print of self is left out first.
+func readSupplierFor(lines []string, self Self) (Supplier, Confidence) {
+	lines = self.scrub(lines)
+	s, conf := readSupplier(lines, buyerLines(lines), self)
+	if clean := self.Without(s); clean != s {
+		s = clean
+		if s == (Supplier{}) {
+			conf = ""
+		}
+	}
+	return s, conf
+}
+
+// readSupplier reads who sent the document, never the administration's own
+// company (self).
+func readSupplier(lines []string, buyer []bool, self Self) (Supplier, Confidence) {
 	var s Supplier
 	kvkFound := false
-	vat, vatAt, vatSure := supplierVAT(lines, buyer)
+	vat, vatAt, vatSure := supplierVAT(lines, buyer, self)
 	s.VATNumber = vat
 	for i, l := range lines {
 		if buyer[i] {
 			continue
 		}
 		if s.KVK == "" {
-			if m := kvkPattern.FindStringSubmatch(l); m != nil {
-				s.KVK, kvkFound = m[1], true
+			for _, m := range kvkPattern.FindAllStringSubmatch(l, -1) {
+				if kvk := NormalizeKVK(m[1]); !self.sameKVK(kvk) {
+					s.KVK, kvkFound = kvk, true
+					break
+				}
 			}
 		}
 		if s.Email == "" {
@@ -103,7 +123,7 @@ func readSupplier(lines []string, buyer []bool) (Supplier, Confidence) {
 			}
 		}
 	}
-	s.IBAN = supplierIBAN(lines, buyer)
+	s.IBAN = supplierIBAN(lines, buyer, self)
 	if s.VATNumber == "" {
 		if v := portugueseNIF(lines, buyer, s.IBAN); v != "" {
 			s.VATNumber, vatSure = v, true
@@ -113,11 +133,11 @@ func readSupplier(lines []string, buyer []bool) (Supplier, Confidence) {
 	if hint == "" && s.IBAN != "" {
 		hint = s.IBAN[:2]
 	}
-	readAddress(lines, buyer, hint, &s)
+	readAddress(lines, buyer, hint, self, &s)
 	if s.Country == "" {
 		s.Country = hint
 	}
-	s.Name = supplierName(lines, buyer, vatAt)
+	s.Name = supplierName(lines, buyer, vatAt, self, cmpOr(Domain(s.Email), Domain(s.Website)))
 
 	switch {
 	case vatSure || kvkFound || s.IBAN != "" && s.Name != "":
@@ -133,14 +153,14 @@ func readSupplier(lines []string, buyer []bool) (Supplier, Confidence) {
 // any valid one, then the first one shaped like a VAT number. It returns
 // the line it is on (-1 for none), and whether it is sure: valid, and
 // labelled or Dutch.
-func supplierVAT(lines []string, buyer []bool) (vat string, at int, sure bool) {
+func supplierVAT(lines []string, buyer []bool, self Self) (vat string, at int, sure bool) {
 	at, rank := -1, 0
 	for i, l := range lines {
 		if buyer[i] {
 			continue
 		}
 		v := findVAT(l)
-		if v == "" {
+		if v == "" || self.sameVAT(v) {
 			continue
 		}
 		valid, labelled := ValidVAT(v), vatLabel.MatchString(l)
@@ -172,15 +192,16 @@ func countryOf(vat string) string {
 	return vat[:2]
 }
 
-// supplierIBAN takes the first valid IBAN not on a buyer line, preferring one
-// printed next to "IBAN"/"rekening"/"bank".
-func supplierIBAN(lines []string, buyer []bool) string {
+// supplierIBAN takes the first valid IBAN not on a buyer line nor the
+// administration's own, preferring one printed next to
+// "IBAN"/"rekening"/"bank".
+func supplierIBAN(lines []string, buyer []bool, self Self) string {
 	first := ""
 	for i, l := range lines {
 		if buyer[i] {
 			continue
 		}
-		ibans := FindIBANs(l)
+		ibans := slices.DeleteFunc(FindIBANs(l), self.sameIBAN)
 		if len(ibans) == 0 {
 			continue
 		}
@@ -205,9 +226,10 @@ func segments(l string) []string {
 	return out
 }
 
-// readAddress finds the first postcode and city not in the buyer's block,
-// with the street before it.
-func readAddress(lines []string, buyer []bool, hint string, s *Supplier) {
+// readAddress finds the first postcode and city not in the buyer's block
+// nor the administration's own, with the street before it. A postcode
+// printed apart from its city ("9999 ZZ | Voorbeeldstad") is read with it.
+func readAddress(lines []string, buyer []bool, hint string, self Self, s *Supplier) {
 	for i, l := range lines {
 		if buyer[i] {
 			continue
@@ -222,7 +244,10 @@ func readAddress(lines []string, buyer []bool, hint string, s *Supplier) {
 		}
 		for j, p := range parts {
 			zip, city, country := postcode(p, hint)
-			if zip == "" {
+			if m := nlZip.FindStringSubmatch(p); zip == "" && m != nil && m[3] == "" && j+1 < len(parts) && cityRe.MatchString(parts[j+1]) {
+				zip, city, country = m[1]+" "+m[2], parts[j+1], "NL"
+			}
+			if zip == "" || self.sameZipcode(zip) {
 				continue
 			}
 			s.Zipcode, s.City, s.Country = zip, city, country
@@ -286,16 +311,48 @@ const vatNear = 3
 // Example Shop B.V.") from being taken for one.
 const maxNameWords = 8
 
-// supplierName takes a company name with a legal form (B.V., GmbH, Ltd …)
-// outside the buyer's block: the one nearest the supplier's VAT number
-// (vatAt, -1 for none) when one is printed near it, else the first. Without
-// one it takes the first line that reads like a name at the top of the
-// document. Names OCR garbled are left out.
-func supplierName(lines []string, buyer []bool, vatAt int) string {
-	if name := tradeNameOwner(lines); name != "" {
+// supplierName takes the supplier's name outside the buyer's block, never
+// the administration's own (self), in this order:
+//   - the legal entity a "handelsnaam van" sentence names;
+//   - a company name with a legal form (B.V., GmbH, Ltd …) printed near the
+//     supplier's VAT number (vatAt, -1 for none);
+//   - the company a sentence says the document is from ("in favour of X",
+//     "namens X"), with its legal form when a name with one is printed too;
+//   - the first company name with a legal form;
+//   - a name spelled as the domain of the supplier's email address or
+//     website;
+//   - the company that starts the line with its KvK or VAT number;
+//   - the company before a "Postbus", or the first line that reads like a
+//     name at the top of the document.
+//
+// Names OCR garbled are left out.
+func supplierName(lines []string, buyer []bool, vatAt int, self Self, domain string) string {
+	if name := tradeNameOwner(lines); name != "" && !self.sameName(name) {
 		return name
 	}
-	name, dist := "", -1
+	legal, near := legalName(lines, buyer, vatAt, self)
+	if near {
+		return legal
+	}
+	if name := attributedName(lines, self); name != "" {
+		if legal != "" && sameCompany(legal, name) {
+			return legal
+		}
+		return name
+	}
+	for _, name := range []string{legal, domainName(lines, buyer, self, domain), idLineName(lines, buyer, self)} {
+		if name != "" {
+			return name
+		}
+	}
+	return topName(lines, buyer, self)
+}
+
+// legalName is the company name with a legal form nearest the supplier's
+// VAT number (vatAt), else the first; near tells whether it is printed
+// near the VAT number.
+func legalName(lines []string, buyer []bool, vatAt int, self Self) (name string, near bool) {
+	dist := -1
 	for i, l := range lines {
 		if buyer[i] {
 			continue
@@ -303,7 +360,7 @@ func supplierName(lines []string, buyer []bool, vatAt int) string {
 		for _, seg := range segments(l) {
 			seg = cleanName(seg)
 			if strings.ContainsAny(seg, "@:") || labelLine.MatchString(seg+" ") || garbledName(seg) ||
-				len(strings.Fields(seg)) > maxNameWords {
+				len(strings.Fields(seg)) > maxNameWords || self.sameName(seg) {
 				continue
 			}
 			if m := legalForm.FindStringSubmatch(seg); m == nil || nlZip.MatchString(seg) {
@@ -318,18 +375,131 @@ func supplierName(lines []string, buyer []bool, vatAt int) string {
 			}
 		}
 	}
-	if name != "" {
+	return name, name != "" && dist <= vatNear
+}
+
+var (
+	// attribution is a sentence naming who the document is from: "in
+	// favour of X", "invoiced on behalf of X", "namens X", "Rechnungssteller:
+	// X".
+	attribution = regexp.MustCompile(`(?i)\b(?:in favou?r of|on behalf of|ten gunste van|namens|invoiced by|issued by|billed by|gefactureerd door|rechnungssteller(?:in)?)\s*:?\s+(\S.*)$`)
+	// attributionEnd ends the name a sentence gives: a comma, a full stop
+	// before more text, a column gap.
+	attributionEnd = regexp.MustCompile(`\s*(?:[,;|(]|\.\s|\s{2,}|\s-\s).*$`)
+)
+
+// maxAttributedWords keeps the rest of a sentence from being taken for the
+// name it gives.
+const maxAttributedWords = 6
+
+// attributedName is the first company a sentence says the document is from,
+// on any line: the buyer's own ("debited from your account … in favour of
+// X") too.
+func attributedName(lines []string, self Self) string {
+	for _, l := range lines {
+		m := attribution.FindStringSubmatch(l)
+		if m == nil {
+			continue
+		}
+		name := cleanName(attributionEnd.ReplaceAllString(m[1], ""))
+		if !legalForm.MatchString(name) {
+			name = strings.TrimRight(name, ".")
+			// A Dutch or German sentence puts its verb after the name:
+			// "namens Voorbeeld Levering verstuurd".
+			words := strings.Fields(name)
+			for len(words) > 1 && unicode.IsLower([]rune(words[len(words)-1])[0]) {
+				words = words[:len(words)-1]
+			}
+			name = strings.Join(words, " ")
+		}
+		first, _ := utf8.DecodeRuneInString(name)
+		if !unicode.IsUpper(first) && !unicode.IsDigit(first) || len(strings.Fields(name)) > maxAttributedWords ||
+			!looksLikeName(name) || self.sameName(name) {
+			continue
+		}
 		return name
 	}
+	return ""
+}
+
+// sameCompany tells whether one name holds the other: the brand
+// "ExampleShip" and its legal name "ExampleShip B.V.".
+func sameCompany(a, b string) bool {
+	a, b = squashName(a), squashName(b)
+	return a != "" && b != "" && (strings.Contains(a, b) || strings.Contains(b, a))
+}
+
+// squashName is a name to compare without legal form, case, spaces and
+// punctuation: "Example Shop B.V." is "exampleshop".
+func squashName(s string) string {
+	return strings.ReplaceAll(NormalizeName(s), " ", "")
+}
+
+// nameParts are the parts of a line a name may be: its segments, and those
+// split at commas.
+func nameParts(l string) []string {
+	var out []string
+	for _, seg := range segments(l) {
+		for _, p := range strings.Split(seg, ",") {
+			if p = cleanName(p); p != "" {
+				out = append(out, p)
+			}
+		}
+	}
+	return out
+}
+
+// domainName is a name printed as the domain of the supplier's email
+// address or website spells it: "ExampleShip" for exampleship.example.
+func domainName(lines []string, buyer []bool, self Self, domain string) string {
+	labels := strings.Split(domain, ".")
+	if len(labels) < 2 {
+		return ""
+	}
+	want := labels[len(labels)-2]
 	for i, l := range lines {
-		if m := postbusName.FindStringSubmatch(strings.TrimSpace(l)); m != nil && !buyer[i] && looksLikeName(m[1]) {
+		if buyer[i] {
+			continue
+		}
+		for _, p := range nameParts(l) {
+			if squashName(p) == want && looksLikeName(p) && !self.sameName(p) {
+				return p
+			}
+		}
+	}
+	return ""
+}
+
+// idLineName is the company that starts a line with its KvK or VAT
+// number: "ExampleShip, Example Lane 31, … KvK 12345678".
+func idLineName(lines []string, buyer []bool, self Self) string {
+	for i, l := range lines {
+		if buyer[i] || !kvkPattern.MatchString(l) && (findVAT(l) == "" || !vatLabel.MatchString(l)) {
+			continue
+		}
+		parts := nameParts(l)
+		if len(parts) < 2 || len(strings.Fields(parts[0])) > maxNameWords {
+			continue
+		}
+		if p := parts[0]; looksLikeName(p) && !vatLabel.MatchString(p) && !kvkPattern.MatchString(p) && !self.sameName(p) {
+			return p
+		}
+	}
+	return ""
+}
+
+// topName is the company before a "Postbus", or the first line that reads
+// like a name at the top of the document.
+func topName(lines []string, buyer []bool, self Self) string {
+	for i, l := range lines {
+		if m := postbusName.FindStringSubmatch(strings.TrimSpace(l)); m != nil && !buyer[i] && looksLikeName(m[1]) && !self.sameName(m[1]) {
 			return m[1]
 		}
 	}
 	seen := 0
 	for i, l := range lines {
 		l = strings.TrimSpace(l)
-		if l == "" || buyer[i] || boilerplate.MatchString(l) || pageMarker.MatchString(l) {
+		if l == "" || buyer[i] || boilerplate.MatchString(l) || pageMarker.MatchString(l) || attribution.MatchString(l) {
 			continue
 		}
 		if seen++; seen > 6 {
@@ -342,7 +512,7 @@ func supplierName(lines []string, buyer []bool, vatAt int) string {
 		if j := prevNonEmpty(lines, i); j >= 0 && isStreetLine(lines[j]) {
 			continue // the city under a street
 		}
-		if looksLikeName(segs[0]) {
+		if looksLikeName(segs[0]) && !self.sameName(segs[0]) {
 			return segs[0]
 		}
 	}
