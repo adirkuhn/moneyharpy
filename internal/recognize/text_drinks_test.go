@@ -43,7 +43,7 @@ func TestParseTextDrinksReceipt(t *testing.T) {
 func TestSupplierNameSkipsReceiptBoilerplate(t *testing.T) {
 	for _, header := range []string{
 		"KOPIE BON", "KOPIEBON", "Kopie", "Kassabon", "Kassa bon", "Bon", "Customer's receipt", "CUSTOMER RECEIPT",
-		"Klantticket", "Duplicaat", "Receipt", "Copy", "Factuur", "INVOICE", "ALLE DRANKEN GOEDKOPER!",
+		"Klantticket", "Duplicaat", "Receipt", "Copy", "Factuur", "INVOICE", "ALTIJD VOORDELIG!",
 	} {
 		t.Run(header, func(t *testing.T) {
 			lines := prepare(header + "\nBTW Nummer NL123456782B01\nVOORBEELD DRANKEN\nExample Street 1\n")

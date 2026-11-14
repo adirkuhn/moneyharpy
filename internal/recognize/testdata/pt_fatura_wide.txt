@@ -1,0 +1,37 @@
+EXEMPLO DISTRIBUICAO, LDA.
+Rua do Exemplo, 123
+1000-001 Lisboa
+Contribuinte: 123456789
+IBAN: PT50 0002 0123 1234 5678 9015 4
+                                                                                                                                           Exmo.(s) Sr.(s)
+                                                                                                                                           EXAMPLE SHOP B.V.
+                                                                                                                                           VOORBEELDSTRAAT 1
+                                                                                                                                           1234 AB AMSTERDAM
+Fatura FT 2026/0815
+Data de Emissão: 2026-11-05
+  Lote        Validade        Referência      Descrição                                                                 Quant.          Uni             Preço S/IVA             Desc.         IVA                                                                     Valor Liquido
+  L123        06-abr-2027     100138          EXAMPLE SNACK MINI 32 X                                                       32          UNI                1,450 €                0%          6%                                                                            46,40 €
+  L124        12-mai-2027     100139          EXAMPLE BOLACHA MARIA 200G                                                    24          UN                 0,895 €                0%          6%                                                                            21,48 €
+  L125        30-jun-2027     100140          EXAMPLE AZEITE VIRGEM 750ML                                                   12          UN                 6,250 €                0%          6%                                                                            75,00 €
+  L126        15-set-2027     100141          EXAMPLE QUEIJO FLAMENGO                                                    2,500          KG                 8,990 €                0%          6%                                                                            22,48 €
+  L127        01-out-2027     100142          EXAMPLE CAFE MOIDO 250G                                                       10          CX                 3,120 €                5%          6%                                                                            29,64 €
+
+                                                                                                                                                                                                        A transportar                                                      195,00 €
+
+Processado por programa certificado n.º 0000/AT
+                                                                                                                        Fatura FT 2026/0815   Pág. 2/2
+
+  Lote        Validade        Referência      Descrição                                                                 Quant.          Uni             Preço S/IVA             Desc.         IVA                                                                     Valor Liquido
+                                                                                                                                                                                                        Transporte                                                         195,00 €
+  L128        20-nov-2027     100143          EXAMPLE ARROZ CAROLINO 1KG                                                    40          UN                 1,150 €                0%          6%                                                                            46,00 €
+  L129        02-dez-2027     100144          EXAMPLE ATUM EM OLEO 120G                                                     48          UN                 1,375 €                0%          6%                                                                            66,00 €
+
+Quadro Resumo do IVA
+  Taxa              Incidência          Valor IVA
+  6%                  307,00 €            18,42 €
+
+                                                                                                                                                                                                        Total Ilíquido                                                     307,00 €
+                                                                                                                                                                                                        Total IVA                                                           18,42 €
+                                                                                                                                                                                                        Total a Pagar                                                      325,42 €
+
+Processado por programa certificado n.º 0000/AT

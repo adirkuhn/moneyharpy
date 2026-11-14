@@ -83,6 +83,20 @@ func TestPlanBooksPricesInclVATWhenThatMakesThePrintedTotal(t *testing.T) {
 	}
 }
 
+func TestPlanOfAnEnergyBillBooksItsPrintedTotal(t *testing.T) {
+	text := "Voorbeeld Energie B.V.\nFactuurdatum: 13-11-2026\n\nOmschrijving                    Bedrag\n" +
+		"Levering stroom                  120,10\nLevering gas                      60,06\n\n" +
+		"Totaal excl. btw                 180,16\nBtw 21%                           37,84\nTotaal incl. btw                 218,00\n"
+	e := ParseText(text, today)
+	if !e.TotalInclTax.Found || e.TotalInclTax.V != 21800 || e.TotalInclTax.Confidence != Certain || len(e.Lines) != 2 {
+		t.Fatalf("read total %+v, lines %+v", e.TotalInclTax, e.Lines)
+	}
+	p := MakePlan(PlanInput{Extraction: e, Target: Target{Kind: purchases.TypelessDocument}, Rates: testRates})
+	if got := bookedTotal(t, p); got != 21800 {
+		t.Errorf("booked total = %s, want the printed 218.00 (details %+v)", got, p.Changes.Details)
+	}
+}
+
 func TestPlanKeepsPricesExclVATWhenTheyMakeThePrintedTotal(t *testing.T) {
 	line := Line{Description: "Energie", Quantity: certain("1"), Price: certain(money.Amount(18000)), Total: certain(money.Amount(18000)), TaxRate: certain("21")}
 	for name, incl := range map[string]money.Amount{

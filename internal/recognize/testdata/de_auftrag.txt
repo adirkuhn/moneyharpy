@@ -1,0 +1,38 @@
+Example GmbH · Beispielweg 5 · 10115 Berlin
+
+                                                                   Auftragsbestätigung
+Example Shop B.V.                                                  Nummer:          AB-2026-0815
+Voorbeeldstraat 1                                                  Datum:           05.11.2026
+1234 AB Amsterdam                                                  Kunden-Nr.:      10001
+Niederlande                                                        Seite:           1
+
+Pos.  Artikelnr.  Bezeichnung                     AnzahlVPE   Inhalt        Menge Einh.   P.Einheit     P.VPE   Gesamtpreis  SC
+  1   512-1       EXAMPLE Guava dessert 350g      1,00 VPE    à 24              24 Einh         1,85     44,40         44,40  10
+                  MHD: 31.10.2027   EAN: 2000000000015        Gewicht: 9,60
+  2   543-2       EXAMPLE Soda zero 330ml         3,00 VPE    à 24              72 Einh         0,56     13,44         40,32  10
+                  MHD: 30.06.2027   EAN: 2000000000022        Gewicht: 25,20
+  3   610-4       EXAMPLE Coconut water 1L       10,00 VPE    à 12             120 Einh         1,29     15,48        154,80  10
+                  MHD: 15.03.2027   EAN: 2000000000039        Gewicht: 126,00
+                                                                                          Übertrag                    239,52
+
+
+Example GmbH · Geschäftsführer: Erika Beispiel · Amtsgericht Berlin HRB 12345 · USt-IdNr. DE123456789
+IBAN DE89 3704 0044 0532 0130 00 · BIC EXAMPLEXXXX
+                                                                   Auftragsbestätigung AB-2026-0815      Seite: 2
+
+Pos.  Artikelnr.  Bezeichnung                     AnzahlVPE   Inhalt        Menge Einh.   P.Einheit     P.VPE   Gesamtpreis  SC
+                                                                                          Übertrag                    239,52
+  4   701-1       EXAMPLE Mango juice 1L          2,00 VPE    à 12              24 Einh         2,15     25,80         51,60  10
+                  Fruchtsaft aus Konzentrat
+                  MHD: 01.02.2027   EAN: 2000000000046        Gewicht: 26,40
+  5   820-3       EXAMPLE Rice crackers 100g     50,00 VPE    à 20           1.000 Einh         0,89     17,80        890,00  10
+                  MHD: 20.08.2027   EAN: 2000000000053        Gewicht: 100,00
+
+                                                                      Warenwert netto                               1.181,12
+                                                                      MwSt 7%                                          82,68
+                                                                      Gesamtbetrag EUR                              1.263,80
+
+Zahlbar innerhalb von 14 Tagen ohne Abzug.
+
+Example GmbH · Geschäftsführer: Erika Beispiel · Amtsgericht Berlin HRB 12345 · USt-IdNr. DE123456789
+IBAN DE89 3704 0044 0532 0130 00 · BIC EXAMPLEXXXX

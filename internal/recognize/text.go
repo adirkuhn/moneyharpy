@@ -15,28 +15,35 @@ import (
 //
 // Lines are kept only when their totals add up to the document's total incl.
 // or excl. VAT; otherwise none are returned and the integrator books one line
-// per VAT rate from the VAT summary.
+// per VAT rate from the VAT summary. Lines of a column table that come
+// close to it are kept too, uncertain.
 func ParseText(text string, today time.Time) Extraction {
 	lines := prepare(text)
-	buyer := buyerLines(lines)
+	columns, table := readColumnRows(lines)
+	// The rest of the document, without the rows of a column table: what
+	// is printed on them, such as lot dates, is not about the document.
+	rest := withoutTable(lines, table)
+	buyer := buyerLines(rest)
 	e := Extraction{Source: SourceText}
 
-	e.Supplier, e.SupplierFound = readSupplier(lines, buyer)
-	e.Reference = readReference(lines)
-	e.Date, e.DueDate = readDates(lines, today)
-	e.Currency = readCurrency(lines)
-	e.PaymentReference = readPaymentReference(lines)
+	e.Supplier, e.SupplierFound = readSupplier(rest, buyer)
+	e.Reference = readReference(rest)
+	e.Date, e.DueDate = readDates(rest, today)
+	e.Currency = readCurrency(rest)
+	e.PaymentReference = readPaymentReference(rest)
 
-	kinds := classify(lines)
-	t := readTotals(lines, kinds)
-	rows := readTable(lines, kinds)
-	if len(rows) == 0 {
-		rows = readLines(lines, kinds)
+	kinds := classify(rest)
+	t := readTotals(rest, kinds)
+	// The ways to read the item lines, the most structured first.
+	rows := []rowSet{
+		{lines: readTable(lines, kinds)},
+		{lines: columns, roughly: true},
+		{read: func() []Line { return readLines(lines, kinds) }},
 	}
-	kind := readKind(lines, e.DueDate.Found, t.paid)
+	kind := readKind(rest, e.DueDate.Found, t.paid)
 	e.Kind = kind
-	reconcile(&e, t, rows, kind.V, lines)
-	if isCreditNote(lines) {
+	reconcile(&e, t, rows, kind.V, rest)
+	if isCreditNote(rest) {
 		negate(&e)
 	}
 	return e
@@ -256,7 +263,27 @@ func readTotals(lines []string, kinds []lineKind) totals {
 			t.vat = addVAT(t.vat, vatLine(l, amountValues(amounts)))
 		}
 	}
+	t.vat = dropVATTotal(t.vat)
 	return t
+}
+
+// dropVATTotal leaves out a VAT line without a rate ("Total IVA 18,42")
+// that is the sum of the VAT of the rates printed elsewhere.
+func dropVATTotal(vat []vatEntry) []vatEntry {
+	var rated money.Amount
+	at := -1
+	for i, v := range vat {
+		switch {
+		case v.rate != "":
+			rated += v.tax
+		case !v.hasTaxable:
+			at = i
+		}
+	}
+	if at < 0 || len(vat) < 2 || rated != vat[at].tax {
+		return vat
+	}
+	return append(append([]vatEntry(nil), vat[:at]...), vat[at+1:]...)
 }
 
 func vatLine(l string, amounts []money.Amount) vatEntry {
@@ -334,7 +361,7 @@ func best(cands []candidate) (candidate, bool) {
 
 // reconcile picks the totals that agree with each other (excl + VAT = incl)
 // and marks them certain; a lone best guess stays uncertain.
-func reconcile(e *Extraction, t totals, rows []Line, kind Kind, lines []string) {
+func reconcile(e *Extraction, t totals, rows []rowSet, kind Kind, lines []string) {
 	vatSum, taxableSum, allTaxable := money.Amount(0), money.Amount(0), len(t.vat) > 0
 	for _, v := range t.vat {
 		vatSum += v.tax
@@ -423,28 +450,8 @@ func reconcile(e *Extraction, t totals, rows []Line, kind Kind, lines []string) 
 		incl = unsure(t.paid[0])
 	}
 
-	// Lines: keep them only when they add up to a total.
-	var sum money.Amount
-	for _, r := range rows {
-		sum += r.Total.V
-	}
-	pricesIncl := Value[bool]{V: kind == KindReceipt, Found: true, Confidence: Uncertain}
-	switch {
-	case len(rows) == 0:
-	case incl.Found && excl.Found && incl.V == excl.V && near(sum, incl.V, 1):
-		e.Lines = rows
-		pricesIncl.V = kind == KindReceipt
-	case incl.Found && near(sum, incl.V, 1):
-		e.Lines = rows
-		pricesIncl = sure(true)
-		incl.Confidence = Certain // the lines confirm it
-	case excl.Found && near(sum, excl.V, 1):
-		e.Lines = rows
-		pricesIncl = sure(false)
-	case !incl.Found && !excl.Found:
-		incl = unsure(sum)
-		e.Lines = rows
-	}
+	var pricesIncl Value[bool]
+	e.Lines, pricesIncl = pickLines(rows, &incl, excl, kind == KindReceipt)
 	if !e.PricesInclTax.Found {
 		e.PricesInclTax = pricesIncl
 	}
