@@ -22,6 +22,10 @@ type Props = {
   /** Whether VAT numbers can be looked up in VIES; off leaves a plain field. */
   lookup: boolean
   onChange: (value: string) => void
+  /** Shown under the field, such as a contact that already has the number. */
+  warning?: ReactNode
+  /** Called on leaving the field, with the number as typed. */
+  onLeave?: (value: string) => void
   /** Fills in the contact from what VIES registered; tells whether it filled in anything. */
   onFound: (company: VatMatch) => boolean
 }
@@ -32,7 +36,7 @@ type Props = {
  * and address. Only the VAT number is sent, and only while an administrator
  * turned the lookup on.
  */
-export function TaxNumberField({ administrationId, label, value, errors, labelExtra, lookup: enabled, onChange, onFound }: Props) {
+export function TaxNumberField({ administrationId, label, value, errors, labelExtra, lookup: enabled, warning, onChange, onLeave, onFound }: Props) {
   const { t } = useTranslation()
   const lookup = useVatLookup(administrationId)
   const [asked, setAsked] = useState('')
@@ -63,13 +67,17 @@ export function TaxNumberField({ administrationId, label, value, errors, labelEx
         labelExtra={labelExtra}
         help={problem && <span role="status">{problem}</span>}
         onChange={(e) => onChange(e.target.value)}
-        onBlur={() => ask(false)}
+        onBlur={() => {
+          ask(false)
+          onLeave?.(value)
+        }}
         action={lookable ? (
           <button type="button" className="contact-form__lookup" disabled={lookup.isPending} onClick={() => ask(true)}>
             {t('contacts.form.vatLookup')}
           </button>
         ) : undefined}
       />
+      {warning}
       {enabled && filled && (
         <p className="contact-card__notice contact-form__notice" role="status">
           <ContactIcon kind="info" />

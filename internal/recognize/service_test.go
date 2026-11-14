@@ -54,7 +54,7 @@ func newFixture(t *testing.T) *fixture {
 				}
 				return f.eInvoice, nil
 			},
-			Text: func(string, time.Time) Extraction { f.texts++; return f.text },
+			Text: func(string, time.Time, Self) Extraction { f.texts++; return f.text },
 		},
 		Models:   func(settings.Recognition) (Model, error) { return f.model, nil },
 		Notifier: f.notifier, Now: f.clock.now,
@@ -415,7 +415,7 @@ func TestWorkTakesTheOCRReadingTheRulesReadBest(t *testing.T) {
 	f.docs.upload(10, map[string][]byte{"receipt.jpg": []byte("\xff\xd8\xff")})
 	f.ocr.text = ocr.Text{Text: "psm 3", Method: "ocr", Pages: 1, Alternatives: []ocr.Reading{{Method: "tesseract-psm6", Text: "psm 6"}, {Method: "tesseract-psm4", Text: "psm 4"}}}
 	var parsed []string
-	f.svc.Parsers.Text = func(text string, _ time.Time) Extraction {
+	f.svc.Parsers.Text = func(text string, _ time.Time, _ Self) Extraction {
 		parsed = append(parsed, text)
 		if text == "psm 6" {
 			return goodText()
@@ -441,7 +441,7 @@ func TestWorkGivesTheModelTheBestReadingAndLargePages(t *testing.T) {
 	f := newFixture(t)
 	f.docs.upload(10, map[string][]byte{"receipt.jpg": []byte("\xff\xd8\xff")})
 	f.ocr.text, f.ocr.pages = ocr.Text{Text: "psm 3", Method: "ocr", Pages: 1, Alternatives: []ocr.Reading{{Method: "tesseract-psm6", Text: "psm 6"}}}, 1
-	f.svc.Parsers.Text = func(text string, _ time.Time) Extraction {
+	f.svc.Parsers.Text = func(text string, _ time.Time, _ Self) Extraction {
 		if text == "psm 6" {
 			return Extraction{TotalInclTax: uncertain(money.Amount(3630)), Reference: uncertain("0042")}
 		}

@@ -67,6 +67,18 @@ export const nl: Messages = {
       chamberOfCommerce: 'KVK-nummer', taxNumber: 'Btw-id', taxNumberTip: 'Het btw-identificatienummer, zoals NL000099998B57.',
       vatLookup: 'Opzoeken', viesFilled: 'Ingevuld vanuit het EU-register VIES', vatNotFound: 'Btw-nummer niet gevonden in VIES',
       viesUnavailable: 'VIES is nu niet bereikbaar', vatInvalid: 'Dit is geen geldig EU-btw-nummer', viesOff: 'Btw-nummers opzoeken staat uit',
+      companyCountry: 'Land van het bedrijf',
+      registry: {
+        NL: 'KVK-nummer', BE: 'Ondernemingsnummer (KBO/BCE)', DE: 'Handelsregisternummer (Handelsregister)',
+        PT: 'NIPC', FR: 'SIREN/SIRET', ES: 'CIF/NIF', other: 'Registratienummer van het bedrijf',
+      },
+      registryNumber: {
+        NL: 'KVK-nummer', BE: 'ondernemingsnummer', DE: 'handelsregisternummer', PT: 'NIPC', FR: 'SIREN/SIRET-nummer', ES: 'CIF/NIF',
+        other: 'registratienummer',
+      },
+      kvkFormat: 'Een KVK-nummer heeft 8 cijfers',
+      kvkLookup: 'Opzoeken', kvkFilled: 'Ingevuld vanuit het KVK-register', kvkNotFound: 'Niet gevonden in de KVK', kvkUnavailable: 'De KVK is nu niet bereikbaar',
+      duplicate: 'Er bestaat al een contact met dit {{number}}: {{name}}', vatNumber: 'btw-nummer', openContact: 'Contact openen',
       firstname: 'Voornaam', lastname: 'Achternaam', phone: 'Telefoonnummer', customerId: 'Klantnummer',
       contactPerson: 'Contactpersoon', personFirstname: 'Voornaam', personLastname: 'Achternaam',
       addressTitle: 'Adres', address: 'Adres', addAddressLine: 'Adresregel toevoegen', address2: 'Aanvullende adresgegevens', zipcode: 'Postcode', city: 'Plaats', country: 'Land',

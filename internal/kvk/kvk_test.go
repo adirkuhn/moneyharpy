@@ -81,3 +81,35 @@ func TestSearchFailures(t *testing.T) {
 		t.Errorf("SearchCompanies() when disabled error = %v, want ErrLookupUnavailable", err)
 	}
 }
+
+func TestLookupCompanyByNumber(t *testing.T) {
+	status, body := http.StatusOK, `{"pagina":1,"totaal":2,"resultaten":[
+		{"kvkNummer":"12345678","naam":"Example Shop B.V.","type":"rechtspersoon"},
+		{"kvkNummer":"12345678","naam":"Example Shop B.V.","type":"hoofdvestiging","adres":{"binnenlandsAdres":{"straatnaam":"Dam","huisnummer":1,"postcode":"1012JS","plaats":"Amsterdam"}}}
+	]}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/zoeken" || r.URL.Query().Get("kvkNummer") != "12345678" || r.URL.Query().Has("naam") {
+			t.Errorf("asked %s, want /zoeken by kvkNummer", r.URL)
+		}
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(body))
+	}))
+	t.Cleanup(srv.Close)
+
+	got, err := client(srv.URL, true).LookupCompany(context.Background(), "12345678")
+	if err != nil {
+		t.Fatalf("LookupCompany() error = %v", err)
+	}
+	want := administration.CompanyMatch{Name: "Example Shop B.V.", ChamberOfCommerce: "12345678", Address1: "Dam 1", Zipcode: "1012JS", City: "Amsterdam"}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("LookupCompany() diff (-want +got):\n%s", diff)
+	}
+
+	status, body = http.StatusNotFound, `{"fout":[{"code":"IPD5200","omschrijving":"geen gegevens"}]}`
+	if _, err := client(srv.URL, true).LookupCompany(context.Background(), "12345678"); !errors.Is(err, administration.ErrCompanyNotFound) {
+		t.Errorf("LookupCompany() of an unknown number error = %v, want ErrCompanyNotFound", err)
+	}
+	if _, err := client("http://unused", false).LookupCompany(context.Background(), "12345678"); !errors.Is(err, administration.ErrLookupUnavailable) {
+		t.Errorf("LookupCompany() when disabled error = %v, want ErrLookupUnavailable", err)
+	}
+}

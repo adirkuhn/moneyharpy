@@ -15,8 +15,9 @@ import (
 // else the text of each file (its text layer, or OCR) is read by rules, and
 // when that is not enough the AI model, if turned on, reads the text and
 // pages too. Without anything readable it returns errUnreadable, or the
-// OCR service's error when it was needed but failed.
-func (s *Service) extract(ctx context.Context, files []ocr.File) (Extraction, error) {
+// OCR service's error when it was needed but failed. The rules and the
+// model read for the administration whose own company is self.
+func (s *Service) extract(ctx context.Context, files []ocr.File, self Self) (Extraction, error) {
 	var best *Extraction
 	var texts []string
 	var pages []ocr.File
@@ -73,7 +74,7 @@ func (s *Service) extract(ctx context.Context, files []ocr.File) (Extraction, er
 			if strings.TrimSpace(text) == "" {
 				continue
 			}
-			e := s.Parsers.Text(text, today)
+			e := s.Parsers.Text(text, today, self)
 			e.Source = SourceText
 			if t.Method == "ocr" {
 				e.Source = SourceOCR
@@ -96,6 +97,8 @@ func (s *Service) extract(ctx context.Context, files []ocr.File) (Extraction, er
 	}
 	if (best == nil || !best.Good()) && len(pages) > 0 {
 		if ai, ok := s.askModel(ctx, strings.Join(texts, "\f"), pages); ok {
+			// The model may take the buyer for the supplier too.
+			ai.Supplier = self.Without(ai.Supplier)
 			if best != nil {
 				ai = merge(ai, *best)
 			}

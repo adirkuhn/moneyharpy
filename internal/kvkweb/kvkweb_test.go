@@ -378,3 +378,36 @@ func TestSearchInvalidatesProfileIDOnBadRequest(t *testing.T) {
 		t.Errorf("config.env.js fetched %d times, want 2 (refetched after 400)", configCalls)
 	}
 }
+
+func TestLookupCompanySearchesForTheNumber(t *testing.T) {
+	var asked []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/config.env.js" {
+			_, _ = w.Write([]byte(envConfigBody))
+			return
+		}
+		asked = append(asked, r.URL.Query().Get("q"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(results))
+	}))
+	t.Cleanup(srv.Close)
+	c := client(t, srv.URL, true)
+
+	got, err := c.LookupCompany(context.Background(), "12345678")
+	if err != nil {
+		t.Fatalf("LookupCompany() error = %v", err)
+	}
+	want := administration.CompanyMatch{Name: "Example Shop B.V.", ChamberOfCommerce: "12345678", Address1: "Dam 1A", Zipcode: "1012AB", City: "Amsterdam"}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("LookupCompany() diff (-want +got):\n%s", diff)
+	}
+	if len(asked) != 1 || asked[0] != "12345678" {
+		t.Errorf("searched for %q, want the number", asked)
+	}
+	if _, err := c.LookupCompany(context.Background(), "99999999"); !errors.Is(err, administration.ErrCompanyNotFound) {
+		t.Errorf("LookupCompany() of an unknown number error = %v, want ErrCompanyNotFound", err)
+	}
+	if _, err := client(t, "http://unused.invalid", false).LookupCompany(context.Background(), "12345678"); !errors.Is(err, administration.ErrLookupUnavailable) {
+		t.Errorf("LookupCompany() while disabled error = %v, want ErrLookupUnavailable", err)
+	}
+}

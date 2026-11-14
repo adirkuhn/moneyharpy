@@ -15,22 +15,30 @@ import (
 // ParseText reads a document from its text: the text layer of a digital PDF
 // or what OCR read from a scan. It sets Source to SourceText; a caller that
 // ran OCR sets SourceOCR. Values the rules are not sure of are Uncertain;
-// today bounds plausible dates.
+// today bounds plausible dates. It reads as if for anyone; ParseTextFor
+// reads for an administration.
 //
 // Lines are kept only when their totals add up to the document's total incl.
 // or excl. VAT; otherwise none are returned and the integrator books one line
 // per VAT rate from the VAT summary. Lines of a column table that come
 // close to it are kept too, uncertain.
 func ParseText(text string, today time.Time) Extraction {
+	return ParseTextFor(text, today, Self{})
+}
+
+// ParseTextFor reads a document as ParseText does, for the administration
+// whose own company is self: what the document prints of self, such as the
+// buyer's name and address at the top of an invoice, is never taken for
+// the supplier.
+func ParseTextFor(text string, today time.Time, self Self) Extraction {
 	lines := prepare(text)
 	columns, table := readColumnRows(lines)
 	// The rest of the document, without the rows of a column table: what
 	// is printed on them, such as lot dates, is not about the document.
 	rest := withoutTable(lines, table)
-	buyer := buyerLines(rest)
 	e := Extraction{Source: SourceText}
 
-	e.Supplier, e.SupplierFound = readSupplier(rest, buyer)
+	e.Supplier, e.SupplierFound = readSupplierFor(rest, self)
 	e.Reference = readReference(rest)
 	e.Date, e.DueDate = readDates(rest, today)
 	e.Currency = readCurrency(rest)

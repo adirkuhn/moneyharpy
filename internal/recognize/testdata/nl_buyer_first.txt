@@ -1,0 +1,19 @@
+Invoice
+9-11-2026
+Example Shop                                          Shop            https://shop.example.com
+FAO Jane Example                                      Invoice number  260000001
+Example Street 31                                     Concerns        Distribution costs ExampleShip
+1234 AB Amsterdam                                     Period          2-11-2026 until 8-11-2026
+
+Description            VAT category   Amount exclusive   Vat       Total
+Carrier A              21%            €254.28            €53.40    €307.68
+Carrier B              21%            €100.00            €21.00    €121.00
+
+                                      Total              €354.28   €74.40    €428.68
+
+This amount will be debited from your account NL20INGB0001234567 in seven days, in favour of ExampleShip.
+
+   T. 012 345 6789 | E. info@exampleship.example | W. exampleship.example | IBAN. NL91 ABNA 0417 1643 00 | KvK. 12 34 56 78
+   BTW. NL1234.56.782.B01 | Example Lane 31 | 9999 ZZ | Voorbeeldstad | Nederland
+Invoiced on behalf of ExampleShip
+ExampleShip, Example Lane 31, 9999 ZZ Voorbeeldstad KvK 12345678 BTW-nr. NL123456782B01

@@ -154,8 +154,8 @@ func doubles(all []Contact) [][]Contact {
 				out = append(out, kind+":"+v)
 			}
 		}
-		add("coc", c.ChamberOfCommerce)
-		add("tax", strings.ReplaceAll(c.TaxNumber, " ", ""))
+		add("coc", NormalizeChamberOfCommerce(c.ChamberOfCommerce))
+		add("tax", NormalizeVAT(c.TaxNumber))
 		add("email", c.SendInvoicesToEmail)
 		add("name", c.Name())
 		return out

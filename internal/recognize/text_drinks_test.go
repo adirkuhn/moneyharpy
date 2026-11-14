@@ -47,7 +47,7 @@ func TestSupplierNameSkipsReceiptBoilerplate(t *testing.T) {
 	} {
 		t.Run(header, func(t *testing.T) {
 			lines := prepare(header + "\nBTW Nummer NL123456782B01\nVOORBEELD DRANKEN\nExample Street 1\n")
-			s, _ := readSupplier(lines, buyerLines(lines))
+			s, _ := readSupplier(lines, buyerLines(lines), Self{})
 			if s.Name != "VOORBEELD DRANKEN" {
 				t.Errorf("name = %q, want VOORBEELD DRANKEN", s.Name)
 			}

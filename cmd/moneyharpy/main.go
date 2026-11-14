@@ -182,7 +182,10 @@ func run(logger *slog.Logger) error {
 	recognition := recognize.NewService(recognize.Deps{
 		Documents: documentService, Contacts: contactService, Ledger: books, Settings: instance,
 		Store: postgres.NewRecognitionStore(pool), OCR: ocrService,
-		Parsers: recognize.Parsers{EInvoice: recognize.ParseEInvoice, Text: recognize.ParseText},
+		Parsers: recognize.Parsers{EInvoice: recognize.ParseEInvoice, Text: recognize.ParseTextFor},
+		// Documents are read for the administration: its own company, the
+		// buyer, is never their supplier.
+		Own: recognize.OwnCompany{Administrations: admins, Accounts: bank},
 		// The AI connections are asked in the administrator's order.
 		Models: func(c settings.Recognition) (recognize.Model, error) { return ai.FromSettings(c, logger) },
 		// New suppliers get their registered name from VIES, when an
@@ -203,6 +206,7 @@ func run(logger *slog.Logger) error {
 	// used only while the API is not enabled, and is capped for the whole
 	// installation to stay a polite visitor.
 	kvkWebsite := kvkweb.New(instance, kvkweb.ProductionURL, kvkweb.ProductionEnvConfig, outbound, ratelimit.New(30, time.Minute))
+	registers := administration.Registers{kvk.New(instance, kvk.ProductionURL, outbound), kvkWebsite}
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
@@ -231,7 +235,8 @@ func run(logger *slog.Logger) error {
 		Resources:         postgres.NewResourceLocator(pool),
 		Google:            google.New(instance, cfg.baseURL, google.Issuer),
 		LM2:               lm2.New(instance, cfg.baseURL, outbound),
-		Companies:         administration.Registers{kvk.New(instance, kvk.ProductionURL, outbound), kvkWebsite},
+		Companies:         registers,
+		CompanyNumbers:    registers,
 		VATNumbers:        vatlookup.New(instance, viesClient),
 		CompanyCheck:      kvkWebsite,
 		Addresses:         pdok.New(instance, pdok.ProductionURL, outbound),

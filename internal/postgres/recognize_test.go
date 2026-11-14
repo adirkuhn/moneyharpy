@@ -230,7 +230,7 @@ func TestScanAndRecogniseFillsInUploadsAndLearns(t *testing.T) {
 	})
 	// The parser stands in for recognize.ParseText: it reads the supplier
 	// and amounts of the text "<IBAN> <total>".
-	parse := func(text string, _ time.Time) recognize.Extraction {
+	parse := func(text string, _ time.Time, _ recognize.Self) recognize.Extraction {
 		var iban string
 		var total money.Amount
 		for i, part := range bytes.Fields([]byte(text)) {

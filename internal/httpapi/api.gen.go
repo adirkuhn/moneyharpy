@@ -291,6 +291,24 @@ func (e ContactSepaSequenceType) Valid() bool {
 	}
 }
 
+// Defines values for ContactRegistryDuplicateField.
+const (
+	ContactRegistryDuplicateFieldChamberOfCommerce ContactRegistryDuplicateField = "chamber_of_commerce"
+	ContactRegistryDuplicateFieldTaxNumber         ContactRegistryDuplicateField = "tax_number"
+)
+
+// Valid indicates whether the value is a known member of the ContactRegistryDuplicateField enum.
+func (e ContactRegistryDuplicateField) Valid() bool {
+	switch e {
+	case ContactRegistryDuplicateFieldChamberOfCommerce:
+		return true
+	case ContactRegistryDuplicateFieldTaxNumber:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ContactRequestContactSepaSequenceType.
 const (
 	ContactRequestContactSepaSequenceTypeFNAL ContactRequestContactSepaSequenceType = "FNAL"
@@ -5722,6 +5740,19 @@ type ContactPersonFields struct {
 type ContactPersonRequest struct {
 	ContactPerson ContactPersonFields `json:"contact_person"`
 }
+
+// ContactRegistryDuplicate MoneyHarpy extension. A contact that already holds a chamber of commerce or VAT number.
+type ContactRegistryDuplicate struct {
+	ContactId   string                        `json:"contact_id"`
+	ContactName string                        `json:"contact_name"`
+	Field       ContactRegistryDuplicateField `json:"field"`
+
+	// Message In English, such as "A contact with this KVK number already exists: Example Shop B.V.".
+	Message string `json:"message"`
+}
+
+// ContactRegistryDuplicateField defines model for ContactRegistryDuplicate.Field.
+type ContactRegistryDuplicateField string
 
 // ContactRequest defines model for ContactRequest.
 type ContactRequest struct {
@@ -13535,6 +13566,15 @@ type FilterContactsParams struct {
 // FilterContactsParamsIncludeArchived defines parameters for FilterContacts.
 type FilterContactsParamsIncludeArchived string
 
+// ListContactRegistryDuplicatesParams defines parameters for ListContactRegistryDuplicates.
+type ListContactRegistryDuplicatesParams struct {
+	ChamberOfCommerce *string `form:"chamber_of_commerce,omitempty" json:"chamber_of_commerce,omitempty"`
+	TaxNumber         *string `form:"tax_number,omitempty" json:"tax_number,omitempty"`
+
+	// ExceptId The contact being edited, which is left out.
+	ExceptId *string `form:"except_id,omitempty" json:"except_id,omitempty"`
+}
+
 // ListContactVersionsParams defines parameters for ListContactVersions.
 type ListContactVersionsParams struct {
 	// Filter Comma-separated key:value terms; see Filter contacts.
@@ -13926,6 +13966,12 @@ type ListFinancialMutationsParams struct {
 type ListFinancialMutationVersionsParams struct {
 	// Filter Comma-separated key:value terms.
 	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// LookupKvkNumberParams defines parameters for LookupKvkNumber.
+type LookupKvkNumberParams struct {
+	// KvkNumber The eight digits of the KVK number.
+	KvkNumber string `form:"kvk_number" json:"kvk_number"`
 }
 
 // ListProductsParams defines parameters for ListProducts.
@@ -21168,6 +21214,9 @@ type ServerInterface interface {
 	// GetNextCustomerId Get the next customer id
 	// (GET /api/v2/{administration_id}/contacts/next_customer_id)
 	GetNextCustomerId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListContactRegistryDuplicates Find contacts that already hold a chamber of commerce or VAT number
+	// (GET /api/v2/{administration_id}/contacts/registry_duplicates)
+	ListContactRegistryDuplicates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactRegistryDuplicatesParams)
 	// ListContactVersions List all ids and versions
 	// (GET /api/v2/{administration_id}/contacts/synchronization)
 	ListContactVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactVersionsParams)
@@ -21682,6 +21731,9 @@ type ServerInterface interface {
 	// UpdateInvoiceSettings Update invoice and estimate settings
 	// (PATCH /api/v2/{administration_id}/invoice_settings)
 	UpdateInvoiceSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// LookupKvkNumber Look up a company in the Dutch company register by its KVK number
+	// (GET /api/v2/{administration_id}/kvk_lookup)
+	LookupKvkNumber(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params LookupKvkNumberParams)
 	// ListLedgerAccountTemplates Retrieve ledger account templates
 	// (GET /api/v2/{administration_id}/ledger_account_templates)
 	ListLedgerAccountTemplates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -22668,6 +22720,12 @@ func (_ Unimplemented) FilterContacts(w http.ResponseWriter, r *http.Request, ad
 // GetNextCustomerId Get the next customer id
 // (GET /api/v2/{administration_id}/contacts/next_customer_id)
 func (_ Unimplemented) GetNextCustomerId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListContactRegistryDuplicates Find contacts that already hold a chamber of commerce or VAT number
+// (GET /api/v2/{administration_id}/contacts/registry_duplicates)
+func (_ Unimplemented) ListContactRegistryDuplicates(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListContactRegistryDuplicatesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -23692,6 +23750,12 @@ func (_ Unimplemented) GetInvoiceSettings(w http.ResponseWriter, r *http.Request
 // UpdateInvoiceSettings Update invoice and estimate settings
 // (PATCH /api/v2/{administration_id}/invoice_settings)
 func (_ Unimplemented) UpdateInvoiceSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// LookupKvkNumber Look up a company in the Dutch company register by its KVK number
+// (GET /api/v2/{administration_id}/kvk_lookup)
+func (_ Unimplemented) LookupKvkNumber(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params LookupKvkNumberParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -26960,6 +27024,74 @@ func (siw *ServerInterfaceWrapper) GetNextCustomerId(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetNextCustomerId(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListContactRegistryDuplicates operation middleware
+func (siw *ServerInterfaceWrapper) ListContactRegistryDuplicates(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListContactRegistryDuplicatesParams
+
+	// ------------- Optional query parameter "chamber_of_commerce" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "chamber_of_commerce", r.URL.Query(), &params.ChamberOfCommerce, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "chamber_of_commerce"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "chamber_of_commerce", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "tax_number" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "tax_number", r.URL.Query(), &params.TaxNumber, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "tax_number"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tax_number", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "except_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "except_id", r.URL.Query(), &params.ExceptId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "except_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "except_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListContactRegistryDuplicates(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -33597,6 +33729,48 @@ func (siw *ServerInterfaceWrapper) UpdateInvoiceSettings(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateInvoiceSettings(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// LookupKvkNumber operation middleware
+func (siw *ServerInterfaceWrapper) LookupKvkNumber(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params LookupKvkNumberParams
+
+	// ------------- Required query parameter "kvk_number" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "kvk_number", r.URL.Query(), &params.KvkNumber, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kvk_number"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kvk_number", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LookupKvkNumber(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -40969,6 +41143,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/vat_lookup", wrapper.LookupVatNumber)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/kvk_lookup", wrapper.LookupKvkNumber)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/registry_duplicates", wrapper.ListContactRegistryDuplicates)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/contacts/synchronization", wrapper.ListContactVersions)

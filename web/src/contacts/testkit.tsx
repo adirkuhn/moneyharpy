@@ -1,7 +1,7 @@
 import { within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { administration, listing, signedIn, workflow } from '../test/server'
-import type { Contact } from './queries'
+import type { Contact, RegistryDuplicate } from './queries'
 
 export const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 export const stamp = '2026-11-10T09:00:00Z'
@@ -20,9 +20,15 @@ export const contact = (over: Partial<Contact> = {}): Contact => ({
 })
 export const ann = contact({ id: '902', company_name: '', firstname: 'Ann', lastname: 'Jansen', customer_id: '2', email: null, send_invoices_to_email: null, city: 'Utrecht', uri: '/11/contacts/902' })
 
-export type Options = { total?: number; archived?: number; doubles?: Contact[][]; companySearch?: boolean; vatLookup?: boolean }
+export type Options = {
+  total?: number; archived?: number; doubles?: Contact[][]; companySearch?: boolean; vatLookup?: boolean
+  /** The countries the options offer; BE, DE and NL unless a test says otherwise. */
+  countries?: string[]
+  /** The contacts that already hold a KVK or VAT number; none unless a test says otherwise. */
+  duplicates?: RegistryDuplicate[]
+}
 
-export function loaded(list: Contact[] = [contact(), ann], seen: URL[] = [], { total = list.length, archived = 0, doubles = [], companySearch = false, vatLookup = false }: Options = {}) {
+export function loaded(list: Contact[] = [contact(), ann], seen: URL[] = [], { total = list.length, archived = 0, doubles = [], companySearch = false, vatLookup = false, countries = ['BE', 'DE', 'NL'], duplicates = [] }: Options = {}) {
   const page = (request: Request, rows: Contact[], count: number) => {
     const url = new URL(request.url)
     seen.push(url)
@@ -39,12 +45,16 @@ export function loaded(list: Contact[] = [contact(), ann], seen: URL[] = [], { t
     ])),
     http.get('*/api/v2/11/custom_fields', () => HttpResponse.json([])),
     http.get('*/api/onboarding/options', () => HttpResponse.json({
-      countries: ['BE', 'DE', 'NL'], currencies: ['EUR'], popular_currencies: ['EUR'], company_search_countries: companySearch ? ['NL'] : [], address_lookup_countries: [],
+      countries, currencies: ['EUR'], popular_currencies: ['EUR'], company_search_countries: companySearch ? ['NL'] : [], address_lookup_countries: [],
       vat_lookup_enabled: vatLookup,
     })),
     http.get('*/api/v2/11/contacts', ({ request }) => page(request, list, total)),
     http.get('*/api/v2/11/contacts/filter', ({ request }) => page(request, list.slice(0, 1), 1)),
     http.get('*/api/v2/11/contacts/next_customer_id', () => HttpResponse.json({ customer_id: '43' })),
+    http.get('*/api/v2/11/contacts/registry_duplicates', ({ request }) => {
+      const asked = new URL(request.url).searchParams
+      return HttpResponse.json(duplicates.filter((d) => asked.has(d.field)))
+    }),
     http.get('*/api/v2/11/contacts/doubles', () => HttpResponse.json(doubles.map((contacts) => ({ contacts })))),
     http.get('*/api/v2/11/contacts/901', () => HttpResponse.json(contact())),
     // The documents of a contact, for its feed: none unless a test says otherwise.

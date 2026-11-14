@@ -4310,6 +4310,99 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/v2/{administration_id}/kvk_lookup:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: lookupKvkNumber
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Look up a company in the Dutch company register by its KVK number
+      description: >-
+        MoneyHarpy extension. The company the KVK register holds under a KVK number, to fill in a Dutch contact. Uses
+        the official KVK API when it is enabled, and otherwise the experimental KVK website search when that is
+        enabled; neither answers 404, as does a number the register does not know. Only the number is sent. Rate
+        limited like the company register search.
+      tags: [Contacts]
+      parameters:
+        - name: kvk_number
+          in: query
+          required: true
+          description: The eight digits of the KVK number.
+          schema:
+            type: string
+            pattern: '^[0-9]{8}$'
+      responses:
+        '200':
+          description: The company. Address parts the register does not return are empty.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMatch'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          description: The register could not be searched (`code` is `kvk_unavailable`, `kvk_blocked` or `kvk_rate_limited`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v2/{administration_id}/contacts/registry_duplicates:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listContactRegistryDuplicates
+      x-permissions: [sales_invoices, documents, estimates]
+      summary: Find contacts that already hold a chamber of commerce or VAT number
+      description: >-
+        MoneyHarpy extension. The contacts that are not archived and already hold the chamber of commerce number or
+        the VAT number, at most one per field, so a form can warn before saving a duplicate. Numbers are compared
+        normalised: a chamber of commerce number by its digits, a VAT number in capitals without spaces, dots and
+        dashes. Creating and updating contacts accept duplicates, as Moneybird does.
+      tags: [Contacts]
+      parameters:
+        - name: chamber_of_commerce
+          in: query
+          schema:
+            type: string
+            maxLength: 255
+        - name: tax_number
+          in: query
+          schema:
+            type: string
+            maxLength: 255
+        - name: except_id
+          in: query
+          description: The contact being edited, which is left out.
+          schema:
+            type: string
+            pattern: '^[0-9]+$'
+      responses:
+        '200':
+          description: The contacts holding a number already; empty when none does.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContactRegistryDuplicate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/contacts/synchronization:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -14277,6 +14370,21 @@ components:
           type: string
         city:
           type: string
+    ContactRegistryDuplicate:
+      type: object
+      description: MoneyHarpy extension. A contact that already holds a chamber of commerce or VAT number.
+      required: [field, contact_id, contact_name, message]
+      properties:
+        field:
+          type: string
+          enum: [chamber_of_commerce, tax_number]
+        contact_id:
+          type: string
+        contact_name:
+          type: string
+        message:
+          type: string
+          description: 'In English, such as "A contact with this KVK number already exists: Example Shop B.V.".'
     AddressMatch:
       type: object
       required: [address1, zipcode, city]
