@@ -97,7 +97,10 @@ describe('the Incoming page', () => {
     const table = await screen.findByRole('table', { name: 'Incoming' })
     expect(within(table).getByRole('link', { name: 'PUR 2026-01234 Possible duplicate' })).toHaveAttribute('href', '/11/documents/940')
     expect(within(table).getByRole('link', { name: 'PUR 2026-01234' })).toHaveAttribute('href', '/11/documents/941')
-    expect(within(table).getAllByText('Possible duplicate')).toHaveLength(1)
+    // An icon with a tooltip, not words, so a long reference keeps its width.
+    expect(within(table).queryByText('Possible duplicate')).not.toBeInTheDocument()
+    expect(within(table).getAllByRole('img', { name: 'Possible duplicate' })).toHaveLength(1)
+    expect(within(table).getByRole('img', { name: 'Possible duplicate' })).toHaveAttribute('title', 'Possible duplicate')
   })
 
   it('filters on type, status and attachment through the filter in the address', async () => {
@@ -186,6 +189,9 @@ describe('the Incoming page', () => {
       renderAt('/11/documents')
       const table = await screen.findByRole('table', { name: 'Incoming' })
       expect(within(table).getByRole('link', { name: /^— till\.jpg\s*Recognising…$/ })).toHaveAttribute('href', '/11/documents/953')
+      // Only a spinner shows, so the reference keeps its one line; the words are for screen readers and the tooltip.
+      expect(within(table).queryByText('Recognising…')).not.toBeInTheDocument()
+      expect(within(table).getByRole('img', { name: 'Recognising…' })).toHaveAttribute('title', 'Recognising…')
       reading = false
       expect(await within(table).findByRole('link', { name: 'REC Till 0077' })).toBeInTheDocument()
       const count = seen.length

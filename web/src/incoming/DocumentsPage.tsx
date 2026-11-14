@@ -164,7 +164,12 @@ export function DocumentsPage() {
                 cell: (d) => (
                   <span className="document-type-ref">
                     <span className="document-type-tag">{typeTags[d.type]}</span> <span>{d.reference}</span>
-                    {isReading(d) && <span className="document-reading"><SpinnerIcon /> {t('recognition.recognising')}</span>}
+                    {isReading(d) && (
+                      // Just the spinner, so the reference stays on its line; the words are its name and tooltip.
+                      <span className="document-reading" role="img" aria-label={t('recognition.recognising')} title={t('recognition.recognising')}>
+                        <SpinnerIcon />
+                      </span>
+                    )}
                     <DuplicateMark count={d.possible_duplicates.length} />
                   </span>
                 ),
