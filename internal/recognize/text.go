@@ -122,7 +122,7 @@ const (
 )
 
 var (
-	vatWord      = regexp.MustCompile(`(?i)\b(?:btw|b\.t\.w\.?|vat|mwst|ust|umsatzsteuer|mehrwertsteuer|iva|tva|tax|moms|igic|impostos?)\b`)
+	vatWord      = regexp.MustCompile(`(?i)\b(?:btw|b[il]w|b\.t\.w\.?|vat|mwst|ust|umsatzsteuer|mehrwertsteuer|iva|tva|tax|moms|igic|impostos?)\b`)
 	reverseWords = regexp.MustCompile(`(?i)verlegd|reverse[ -]charge|autoliquidation|steuerschuldnerschaft|inversi[oó]n del sujeto pasivo|autoliquida[cç][aã]o|reverse charged`)
 	// exemptEUWords mark a supply exempt in the seller's country because the
 	// buyer accounts for the VAT: an intra-community supply.
@@ -134,7 +134,9 @@ var (
 	paidWords     = regexp.MustCompile(`(?i)\b(?:pin|pinnen|pinbetaling|betaald|contant|cash|maestro|v ?pay|visa|mastercard|amex|card|kaart|contactloos|paid|bezahlt|ec-karte|girocard)\b`)
 	itemHeader    = regexp.MustCompile(`(?i)\b(?:omschrijving|description|artikel|art\.?nr|item|items|bezeichnung|beschreibung|descri[cç][aã]o|descripci[oó]n|d[ée]signation|product|produkt|aantal|qty|quantity|menge|qtd|qté)\b`)
 	htWord        = regexp.MustCompile(`\bHT\b`)
-	vatTableHead  = regexp.MustCompile(`(?i)\b(?:btw|b[i1l]w|vat|mwst|iva|tva|tarief|rate|netto|bruto)\b`) // "BIW": BTW as OCR reads it
+	// vatOver is a VAT summary line's "9% x 37,58", "9% over 37,58".
+	vatOver      = regexp.MustCompile(`(?i)\d\s?%\s?(?:x|×|\*|over|op|van|of|on|sur|auf)\s?\d`)
+	vatTableHead = regexp.MustCompile(`(?i)\b(?:btw|b[i1l]w|vat|mwst|iva|tva|tarief|rate|netto|bruto)\b`) // "BIW": BTW as OCR reads it
 )
 
 // classify tells what each line with amounts is: a total, a VAT line, a
@@ -171,13 +173,31 @@ func classify(lines []string) []lineKind {
 			kinds[i] = lineVAT
 		case paidWords.MatchString(l):
 			kinds[i] = linePaid
-		case i <= vatTableUntil && hasRate && len(amounts) >= 2:
-			if _, _, ok := taxPair(findRate(l), amountValues(amounts)); ok {
+		case (i <= vatTableUntil || vatOver.MatchString(l)) && hasRate && len(amounts) >= 2:
+			if _, _, ok := taxPair(findRate(l), unsigned(amountValues(amounts))); ok {
 				kinds[i] = lineVAT
 			}
 		}
 	}
 	return kinds
+}
+
+// unsigned are amounts without their signs.
+func unsigned(amounts []money.Amount) []money.Amount {
+	out := make([]money.Amount, len(amounts))
+	for i, a := range amounts {
+		out[i] = abs(a)
+	}
+	return out
+}
+
+// mixedSigns tells whether some amounts are negative and others not.
+func mixedSigns(amounts []money.Amount) bool {
+	neg, pos := false, false
+	for _, a := range amounts {
+		neg, pos = neg || a < 0, pos || a > 0
+	}
+	return neg && pos
 }
 
 func amountValues(hits []amountHit) []money.Amount {
@@ -241,6 +261,10 @@ func readTotals(lines []string, kinds []lineKind) totals {
 
 func vatLine(l string, amounts []money.Amount) vatEntry {
 	rate := findRate(l)
+	if _, _, ok := taxPair(rate, amounts); !ok && mixedSigns(amounts) {
+		// "BTW 9% x 37,58 - 3,38": the dash before the VAT is no sign.
+		amounts = unsigned(amounts)
+	}
 	if rate == "" && reverseWords.MatchString(l) {
 		rate = "0"
 	}
@@ -465,6 +489,7 @@ func reconcile(e *Extraction, t totals, rows []Line, kind Kind, lines []string) 
 			e.VAT[i].ReverseCharge = e.VAT[i].Tax == 0
 		}
 	}
+	e.Lines, e.VAT = assignRates(e.Lines, e.VAT)
 	e.TotalInclTax, e.TotalExclTax = incl, excl
 }
 

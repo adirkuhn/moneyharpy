@@ -17,7 +17,7 @@ func TestParseTextTillReceiptPhoto(t *testing.T) {
 		kind: KindReceipt, name: "Example Shop B.V.", vat: "NL123456782B01", website: "www.example.com",
 		address: "Example Street 1", zip: "1234 AB", city: "Amsterdam", country: "NL", date: "2026-10-20",
 		currency: "EUR", incl: "36.30", excl: "30.00", vat21: []string{"21:30.00:6.30"}, prices: "incl",
-		lines: []string{"Bureaulamp LED|1|12.95|12.95|", "Notitieboek A5|2|4.50|9.00|", "Opbergdoos|1|8.35|8.35|", "Batterijen AA|1|6.00|6.00|"},
+		lines: []string{"Bureaulamp LED|1|12.95|12.95|21", "Notitieboek A5|2|4.50|9.00|21", "Opbergdoos|1|8.35|8.35|21", "Batterijen AA|1|6.00|6.00|21"},
 		good:  true,
 	}
 	for file, w := range map[string]textWant{

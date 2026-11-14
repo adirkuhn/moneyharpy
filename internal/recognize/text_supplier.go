@@ -23,6 +23,9 @@ var (
 	segmentSep = regexp.MustCompile(`\s*(?:\||·|•|\s{2,}|\s-\s|\t)\s*`)
 	titleWords = regexp.MustCompile(`(?i)^(?:factuur|invoice|rechnung|fatura|facture|factura|creditnota|credit ?note|kassabon|kassenbon|receipt|bon|quittung|recibo|ticket|tax invoice|nota)\b`)
 	labelLine  = regexp.MustCompile(`^[^:]{1,30}:\s`)
+	// boilerplate is what a receipt or invoice prints about itself, never
+	// the supplier's name: "KOPIE BON", "Kassabon", "Customer's receipt".
+	boilerplate = regexp.MustCompile(`(?i)^\W*(?:kopie\s?bon|kopie|copy|duplica(?:at|te)|kassa\s?bon|kassenbon|bon|customer'?s?\s+(?:receipt|copy)|klant(?:en)?\s?ticket|receipt|factuur|invoice|rechnung|fatura|facture|factura|origineel|original)\W*$`)
 	streetRe   = regexp.MustCompile(`(?i)^(?:\p{L}[\p{L}\p{M}'.,\- ]*\s\d+\s?[a-z]?(?:[-/ ]?\d+[a-z]?)?(?:,.*)?|\d+[a-z]?,?\s+\p{L}.*|(?:postbus|p\.?\s?o\.?\s?box|postfach|apartado|bo[iî]te postale)\s*\d+.*)$`)
 	nlZip      = regexp.MustCompile(`^(\d{4})\s?([A-Z]{2})\b\s*(.*)$`)
 	ptZip      = regexp.MustCompile(`^(\d{4}-\d{3})\s+(.+)$`)
@@ -43,6 +46,9 @@ var (
 func buyerLines(lines []string) []bool {
 	out := make([]bool, len(lines))
 	for i := 0; i < len(lines); i++ {
+		if boilerplate.MatchString(lines[i]) {
+			continue
+		}
 		if buyerWords.MatchString(lines[i]) {
 			out[i] = true
 			// A header row of columns about the buyer ("Nº de Contribuinte
@@ -150,41 +156,6 @@ func supplierVAT(lines []string, buyer []bool) (vat string, at int, sure bool) {
 		}
 	}
 	return vat, at, sure
-}
-
-// findVAT finds a VAT number on a line; groups may be separated by single
-// spaces or dots ("NL 1234.56.782.B01"). A Dutch number whose B was read as
-// an 8 is repaired when that makes it valid.
-func findVAT(l string) string {
-	for _, loc := range vatStart.FindAllStringIndex(l, -1) {
-		if loc[0] > 0 && isAlnum(l[loc[0]-1]) {
-			continue
-		}
-		var b strings.Builder
-		b.WriteString(l[loc[0]:loc[1]])
-		for j := loc[1]; j < len(l) && b.Len() < 20; j++ {
-			c := l[j]
-			switch {
-			case isAlnum(c):
-				b.WriteByte(c)
-			case (c == ' ' || c == '.' || c == '-') && j+1 < len(l) &&
-				(isDigit(l[j+1]) || l[j+1] == 'B' && j+2 < len(l) && isDigit(l[j+2]) || l[j+1] == 'U' && b.Len() == 2):
-				continue
-			default:
-				j = len(l)
-			}
-		}
-		v := b.String()
-		if len(v) == 14 && strings.HasPrefix(v, "NL") && v[11] == '8' && isDigits(v[2:]) {
-			if fixed := v[:11] + "B" + v[12:]; ValidNLVAT(fixed) {
-				return fixed
-			}
-		}
-		if vatShaped(v) {
-			return v
-		}
-	}
-	return ""
 }
 
 func countryOf(vat string) string {
@@ -350,7 +321,7 @@ func supplierName(lines []string, buyer []bool, vatAt int) string {
 	seen := 0
 	for i, l := range lines {
 		l = strings.TrimSpace(l)
-		if l == "" || buyer[i] {
+		if l == "" || buyer[i] || boilerplate.MatchString(l) {
 			continue
 		}
 		if seen++; seen > 6 {
@@ -372,6 +343,7 @@ func looksLikeName(l string) bool {
 	}
 	switch {
 	case letters < 3, garbledName(l), titleWords.MatchString(l), strings.ContainsAny(l, "@:"),
+		strings.HasSuffix(l, "!"), findVAT(l) != "", itemHeader.MatchString(l), // a slogan, the VAT number, column headings
 		wwwRe.MatchString(l), len(findAmounts(l)) > 0, len(findDates(l)) > 0,
 		streetRe.MatchString(l) && strings.ContainsAny(l, "0123456789"):
 		return false
