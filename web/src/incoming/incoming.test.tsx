@@ -683,8 +683,8 @@ describe('Scan and Recognise on the page of a document', () => {
         recognition: {
           state: 'done', source: 'ocr',
           fields: [
-            { field: 'contact_id', confidence: 'certain' }, { field: 'reference', confidence: 'certain' }, { field: 'date', confidence: 'uncertain' },
-            { field: 'currency', confidence: 'certain' }, { field: 'details.0.description', confidence: 'certain' }, { field: 'details.0.tax_rate_id', confidence: 'uncertain' },
+            { field: 'contact_id', confidence: 'certain', reason: 'attachment' }, { field: 'reference', confidence: 'certain', reason: 'attachment' }, { field: 'date', confidence: 'uncertain', reason: 'attachment' },
+            { field: 'currency', confidence: 'certain', reason: 'attachment' }, { field: 'details.0.description', confidence: 'certain', reason: 'attachment' }, { field: 'details.0.tax_rate_id', confidence: 'uncertain', reason: 'attachment' },
           ],
         },
       }),
@@ -714,7 +714,7 @@ describe('Scan and Recognise on the page of a document', () => {
         state: 'open',
         recognition: {
           state: 'done', source: 'ocr',
-          fields: [{ field: 'reference', confidence: 'certain' }, { field: 'currency', confidence: 'certain' }, { field: 'details.0.tax_rate_id', confidence: 'uncertain' }],
+          fields: [{ field: 'reference', confidence: 'certain', reason: 'attachment' }, { field: 'currency', confidence: 'certain', reason: 'attachment' }, { field: 'details.0.tax_rate_id', confidence: 'uncertain', reason: 'attachment' }],
         },
       }),
     }))
@@ -729,10 +729,33 @@ describe('Scan and Recognise on the page of a document', () => {
     expect(within(lines).getByRole('combobox', { name: 'VAT rate' })).toHaveClass('is-uncertain')
   })
 
+  it('shows what was remembered of the contact on the details, with the document it came from', async () => {
+    server.use(...loaded({
+      doc: invoice({
+        state: 'open',
+        recognition: {
+          state: 'done', source: null,
+          fields: [
+            { field: 'reference', confidence: 'certain', reason: 'attachment' },
+            { field: 'details.0.ledger_account_id', confidence: 'uncertain', reason: 'previous_document', source_document_id: '940', source_document_reference: 'EX-2026-1' },
+          ],
+        },
+      }),
+    }))
+    renderAt('/11/documents/941')
+    const form = await screen.findByRole('region', { name: 'Purchase invoice' })
+    const lines = within(form).getByRole('table', { name: 'Purchase invoice lines' })
+    expect(within(lines).getByRole('img', { name: 'We filled this in based on EX-2026-1.' })).toBeInTheDocument()
+    expect(within(within(lines).getByRole('tooltip')).getByRole('link', { name: 'EX-2026-1' })).toHaveAttribute('href', '/11/documents/940')
+    // The totals take the mark of the line; the reference read of the attachment keeps its own in the head.
+    expect(within(within(form).getByRole('list', { name: 'Totals' })).getAllByRole('img', { name: 'Please check: we were not sure about this.' })).toHaveLength(3)
+    expect(within(form).getAllByRole('img', { name: 'We filled this in for you from the attachment.' })).toHaveLength(1)
+  })
+
   it('drops the marks of the details once the lines are saved', async () => {
     const read = invoice({
       state: 'new', contact: null, contact_id: null,
-      recognition: { state: 'done', source: 'ocr', fields: [{ field: 'details.0.description', confidence: 'uncertain' }] },
+      recognition: { state: 'done', source: 'ocr', fields: [{ field: 'details.0.description', confidence: 'uncertain', reason: 'attachment' }] },
     })
     const { handler } = patches(() => read)
     server.use(...loaded({ doc: read }), handler)
@@ -751,7 +774,7 @@ describe('Scan and Recognise on the page of a document', () => {
     let confirmed = false
     const doc = () => invoice({
       state: 'new',
-      recognition: { state: 'done', source: 'ocr', fields: confirmed ? [] : [{ field: 'reference', confidence: 'uncertain' }] },
+      recognition: { state: 'done', source: 'ocr', fields: confirmed ? [] : [{ field: 'reference', confidence: 'uncertain', reason: 'attachment' }] },
     })
     const sent: unknown[] = []
     server.use(...loaded({ doc: doc() }))
@@ -782,7 +805,7 @@ describe('Scan and Recognise on the page of a document', () => {
     let reading = true
     const read = () => invoice({
       state: 'new', reference: reading ? '' : 'INV-77',
-      recognition: reading ? { state: 'pending', source: null, fields: [] } : { state: 'done', source: 'text', fields: [{ field: 'reference', confidence: 'certain' }] },
+      recognition: reading ? { state: 'pending', source: null, fields: [] } : { state: 'done', source: 'text', fields: [{ field: 'reference', confidence: 'certain', reason: 'attachment' }] },
     })
     server.use(...loaded())
     server.use(

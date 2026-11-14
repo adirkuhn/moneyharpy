@@ -1090,6 +1090,7 @@ export const en = {
   },
   recognition: {
     title: 'Scan and Recognise', filled: 'We filled this in for you from the attachment.', uncertain: 'Please check: we were not sure about this.',
+    basedOn: { before: 'We filled this in based on ', after: '.' }, earlierDocument: 'an earlier document',
     reading: 'We are reading this document…', failed: 'We could not read this document. Fill it in yourself, or read it again.',
     readAgain: 'Read again', recognising: 'Recognising…',
   },

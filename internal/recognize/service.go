@@ -1,6 +1,7 @@
 package recognize
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -37,9 +38,11 @@ type Contacts interface {
 	Create(ctx context.Context, admin, user resource.ID, c contacts.Changes) (contacts.Contact, error)
 }
 
-// Ledger gives the VAT rates lines get.
+// Ledger gives the VAT rates lines get, and the category of expenses still
+// to categorise, which lines without one book on.
 type Ledger interface {
 	TaxRates(ctx context.Context, admin, user resource.ID, f bookkeeping.TaxRateFilter) ([]bookkeeping.TaxRate, error)
+	SystemLedgerAccount(ctx context.Context, admin, user resource.ID, role string) (resource.ID, error)
 }
 
 // Settings give the instance's AI model settings.
@@ -80,6 +83,10 @@ type Store interface {
 	// learned yet.
 	Memory(ctx context.Context, admin, contact resource.ID) (Memory, error)
 	SaveMemory(ctx context.Context, m Memory) error
+	// History returns up to limit of the supplier's most recent booked
+	// documents of a kind (purchases.PurchaseInvoice or Receipt), oldest
+	// first, with what Memory.Learn reads of them.
+	History(ctx context.Context, admin, contact resource.ID, kind string, limit int) ([]purchases.Document, error)
 }
 
 // Deps are what a Service needs.
@@ -135,6 +142,9 @@ const (
 	maxPages = 5
 	// maxFileSize is the largest attachment read.
 	maxFileSize = 32 << 20
+	// historySize is how many booked documents of a kind a supplier's
+	// memory starts from.
+	historySize = 20
 )
 
 var (
@@ -209,40 +219,162 @@ func (s *Service) Forget(ctx context.Context, admin, id resource.ID) error {
 }
 
 // Edited unmarks the fields a user changed, so they no longer show as
-// filled in, and learns from a booked document what its supplier's next
-// document holds.
-func (s *Service) Edited(ctx context.Context, admin, user resource.ID, before, after purchases.Document) {
-	if err := s.edited(ctx, admin, before, after); err != nil {
+// filled in, marks those Remember filled in, and learns from a booked
+// document what its supplier's next document holds.
+func (s *Service) Edited(ctx context.Context, admin, user resource.ID, before, after purchases.Document, remembered []purchases.Remembered) {
+	if err := s.edited(ctx, admin, user, before, after, remembered); err != nil {
 		s.Logger.ErrorContext(ctx, "scan and recognise: learn from a saved document", "document", after.ID, "error", err)
 	}
 }
 
-func (s *Service) edited(ctx context.Context, admin resource.ID, before, after purchases.Document) error {
-	if before.ID != 0 {
-		r, err := s.Store.Recognition(ctx, admin, after.ID)
-		switch {
-		case errors.Is(err, ErrNotFound):
-		case err != nil:
+func (s *Service) edited(ctx context.Context, admin, user resource.ID, before, after purchases.Document, remembered []purchases.Remembered) error {
+	if before.ID != 0 || len(remembered) > 0 {
+		if err := s.mark(ctx, admin, user, before, after, remembered); err != nil {
 			return err
-		default:
-			if r.Drop(ChangedFields(before, after)...) {
-				r.UpdatedAt = s.Now()
-				if err := s.Store.SaveRecognition(ctx, r); err != nil {
-					return err
-				}
-			}
 		}
 	}
 	if !after.Booked() || after.ContactID == 0 {
 		return nil
 	}
-	m, err := s.Store.Memory(ctx, admin, after.ContactID)
+	m, err := s.memory(ctx, admin, user, after.ContactID, after.ID)
 	if err != nil {
 		return err
 	}
-	m.AdministrationID, m.ContactID = admin, after.ContactID
-	m.Learn(after, s.Now())
+	uncategorized, err := s.Ledger.SystemLedgerAccount(ctx, admin, user, uncategorizedExpenses)
+	if err != nil {
+		return err
+	}
+	m.Learn(categorized(after, uncategorized), s.Now())
 	return s.Store.SaveMemory(ctx, m)
+}
+
+// mark unmarks the fields the user changed but those Remember filled in,
+// which it marks.
+func (s *Service) mark(ctx context.Context, admin, user resource.ID, before, after purchases.Document, remembered []purchases.Remembered) error {
+	r, err := s.Store.Recognition(ctx, admin, after.ID)
+	switch {
+	case errors.Is(err, ErrNotFound) && len(remembered) > 0:
+		// Filled in from memory only, as for a document entered by hand.
+		now := s.Now()
+		r = Recognition{DocumentID: after.ID, AdministrationID: admin, UserID: user, State: StateDone, CreatedAt: now}
+	case errors.Is(err, ErrNotFound):
+		return nil
+	case err != nil:
+		return err
+	}
+	names := make([]string, len(remembered))
+	for i, f := range remembered {
+		names[i] = f.Field
+	}
+	var drop []string
+	if before.ID != 0 {
+		drop = slices.DeleteFunc(ChangedFields(before, after), func(name string) bool { return slices.Contains(names, name) })
+	}
+	changed := r.Drop(drop...)
+	if len(remembered) > 0 {
+		r.Drop(names...)
+		for _, f := range remembered {
+			conf := Uncertain
+			if f.Certain {
+				conf = Certain
+			}
+			r.Fields = append(r.Fields, Field{Name: f.Field, Confidence: conf, Reason: ReasonPreviousDocument, SourceDocumentID: f.SourceDocumentID})
+		}
+		r.Fields = s.describeSources(ctx, admin, user, r.Fields)
+		changed = true
+	}
+	if !changed {
+		return nil
+	}
+	r.UpdatedAt = s.Now()
+	return s.Store.SaveRecognition(ctx, r)
+}
+
+// describeSources gives the remembered fields the reference of the
+// document they came from, and forgets documents removed since.
+func (s *Service) describeSources(ctx context.Context, admin, user resource.ID, fields []Field) []Field {
+	refs := map[resource.ID]*string{}
+	for i, f := range fields {
+		if f.SourceDocumentID == 0 || f.SourceReference != "" {
+			continue
+		}
+		ref, ok := refs[f.SourceDocumentID]
+		if !ok {
+			if d, err := s.Documents.IncomingDocument(ctx, admin, f.SourceDocumentID, user); err == nil {
+				ref = &d.Reference
+			} else if !purchases.IsNotFound(err) {
+				s.Logger.WarnContext(ctx, "scan and recognise: look up a remembered document", "document", f.SourceDocumentID, "error", err)
+			}
+			refs[f.SourceDocumentID] = ref
+		}
+		if ref == nil {
+			fields[i].SourceDocumentID = 0
+			continue
+		}
+		fields[i].SourceReference = *ref
+	}
+	return fields
+}
+
+// uncategorizedExpenses is the role of the category lines book on until
+// they get one.
+const uncategorizedExpenses = "uncategorized_expenses"
+
+// categorized leaves the categories of lines booked as still to
+// categorise out of a document, so they teach nothing.
+func categorized(d purchases.Document, uncategorized resource.ID) purchases.Document {
+	d.Lines = slices.Clone(d.Lines)
+	for i, l := range d.Lines {
+		if l.LedgerAccountID != nil && *l.LedgerAccountID == uncategorized {
+			d.Lines[i].LedgerAccountID = nil
+		}
+	}
+	return d
+}
+
+// memory returns what is remembered of a supplier. A kind of document
+// nothing was learned of yet is learned from the supplier's most recent
+// booked documents of that kind first, so documents booked before Scan and
+// Recognise remembered them, or entered by hand, count; skip is left out,
+// for the caller to learn.
+func (s *Service) memory(ctx context.Context, admin, user, contact, skip resource.ID) (Memory, error) {
+	m, err := s.Store.Memory(ctx, admin, contact)
+	if err != nil {
+		return Memory{}, err
+	}
+	m.AdministrationID, m.ContactID = admin, contact
+	var history []purchases.Document
+	for _, kind := range Kinds {
+		if !m.Of(kind).Empty() {
+			continue
+		}
+		docs, err := s.Store.History(ctx, admin, contact, DocumentKind(kind), historySize)
+		if err != nil {
+			return Memory{}, fmt.Errorf("supplier history: %w", err)
+		}
+		history = append(history, docs...)
+	}
+	history = slices.DeleteFunc(history, func(d purchases.Document) bool { return d.ID == skip })
+	if len(history) == 0 {
+		return m, nil
+	}
+	uncategorized, err := s.Ledger.SystemLedgerAccount(ctx, admin, user, uncategorizedExpenses)
+	if err != nil {
+		return Memory{}, err
+	}
+	slices.SortStableFunc(history, func(a, b purchases.Document) int {
+		if c := a.Date.Compare(b.Date); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.ID, b.ID)
+	})
+	for _, d := range history {
+		m.Learn(categorized(d, uncategorized), d.UpdatedAt)
+	}
+	if err := s.Store.SaveMemory(ctx, m); err != nil {
+		return Memory{}, err
+	}
+	return m, nil
 }
 
 // Confirmed unmarks the fields a user saved, changed or not: they checked
@@ -450,7 +582,7 @@ func (s *Service) fill(ctx context.Context, r *Recognition) error {
 	}
 	var memory Memory
 	if supplier.ContactID != 0 {
-		if memory, err = s.Store.Memory(ctx, admin, supplier.ContactID); err != nil {
+		if memory, err = s.memory(ctx, admin, user, supplier.ContactID, 0); err != nil {
 			return err
 		}
 	}
@@ -471,7 +603,7 @@ func (s *Service) fill(ctx context.Context, r *Recognition) error {
 	if err != nil {
 		return err
 	}
-	r.Source, r.Fields = e.Source, plan.Fields
+	r.Source, r.Fields = e.Source, s.describeSources(ctx, admin, user, plan.Fields)
 	if s.Notifier != nil {
 		s.Notifier.DocumentUpdated(ctx, admin, d)
 	}

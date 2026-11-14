@@ -2136,6 +2136,27 @@ func (e RecognizedFieldConfidence) Valid() bool {
 	}
 }
 
+// Defines values for RecognizedFieldReason.
+const (
+	Attachment       RecognizedFieldReason = "attachment"
+	Default          RecognizedFieldReason = "default"
+	PreviousDocument RecognizedFieldReason = "previous_document"
+)
+
+// Valid indicates whether the value is a known member of the RecognizedFieldReason enum.
+func (e RecognizedFieldReason) Valid() bool {
+	switch e {
+	case Attachment:
+		return true
+	case Default:
+		return true
+	case PreviousDocument:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecurringSalesInvoiceFrequencyType.
 const (
 	RecurringSalesInvoiceFrequencyTypeDay     RecurringSalesInvoiceFrequencyType = "day"
@@ -8943,17 +8964,17 @@ type Recognition struct {
 	// Fields The fields filled in automatically, by name as in the document's request (document_type, contact_id, reference, date, due_date, currency, prices_are_incl_tax) or per line as details.<index>.<field> (description, amount, price, tax_rate_id, ledger_account_id).
 	Fields []RecognizedField `json:"fields"`
 
-	// Source e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a scan or photo; ai: the optional AI model, used when the rules could not read the document.
+	// Source e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a scan or photo; ai: the optional AI model, used when the rules could not read the document. Null when nothing was read, such as for a document filled in from what is remembered of its contact only.
 	Source *RecognitionSource `json:"source"`
 
-	// State none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in; failed: the attachments could not be read.
+	// State none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in, or filled in from what is remembered of the contact chosen; failed: the attachments could not be read.
 	State RecognitionState `json:"state"`
 }
 
-// RecognitionSource e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a scan or photo; ai: the optional AI model, used when the rules could not read the document.
+// RecognitionSource e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a scan or photo; ai: the optional AI model, used when the rules could not read the document. Null when nothing was read, such as for a document filled in from what is remembered of its contact only.
 type RecognitionSource string
 
-// RecognitionState none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in; failed: the attachments could not be read.
+// RecognitionState none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in, or filled in from what is remembered of the contact chosen; failed: the attachments could not be read.
 type RecognitionState string
 
 // RecognitionAIConnection MoneyHarpy extension. An AI model Scan and Recognise can ask.
@@ -9033,14 +9054,26 @@ type RecognitionConnectionCheck struct {
 // RecognitionConnectionCheckState defines model for RecognitionConnectionCheck.State.
 type RecognitionConnectionCheckState string
 
-// RecognizedField defines model for RecognizedField.
+// RecognizedField A field filled in automatically. Remembered values (reason previous_document) come from what the contact's earlier booked documents of the same kind hold, else of the other kind (purchase invoice or receipt); they are certain once two documents in a row agreed, and stay marked until the field is saved.
 type RecognizedField struct {
 	Confidence RecognizedFieldConfidence `json:"confidence"`
 	Field      string                    `json:"field"`
+
+	// Reason Where the value came from. attachment: read from the document's attachments; previous_document: remembered of the contact's earlier documents, filled in when the document was read or when its contact was chosen; default: neither, such as the standard VAT rate.
+	Reason RecognizedFieldReason `json:"reason"`
+
+	// SourceDocumentId The earlier document a remembered value came from; null when unknown or removed since.
+	SourceDocumentId *string `json:"source_document_id,omitempty"`
+
+	// SourceDocumentReference That document's reference when the value was filled in.
+	SourceDocumentReference *string `json:"source_document_reference,omitempty"`
 }
 
 // RecognizedFieldConfidence defines model for RecognizedField.Confidence.
 type RecognizedFieldConfidence string
+
+// RecognizedFieldReason Where the value came from. attachment: read from the document's attachments; previous_document: remembered of the contact's earlier documents, filled in when the document was read or when its contact was chosen; default: neither, such as the standard VAT rate.
+type RecognizedFieldReason string
 
 // RecoveryCodes defines model for RecoveryCodes.
 type RecoveryCodes struct {

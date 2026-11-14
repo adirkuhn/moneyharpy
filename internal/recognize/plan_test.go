@@ -63,7 +63,7 @@ func TestPlanFillsATypelessDocumentFromItsLines(t *testing.T) {
 			{Description: "Without an amount"},
 		},
 	}
-	mem := Memory{Lines: map[string]Category{"hosting": {LedgerAccountID: 70, TaxRateID: 2, Uses: 2}}}
+	mem := Memory{Receipts: KindMemory{Lines: map[string]Category{"hosting": {LedgerAccountID: 70, TaxRateID: 2, Uses: 2}}}}
 	p := MakePlan(PlanInput{
 		Extraction: e, Target: Target{Kind: purchases.TypelessDocument, Date: day("2026-11-13")},
 		Supplier: SupplierMatch{ContactID: 9, Name: "Example Shop B.V.", Confidence: Certain}, Memory: mem, Rates: testRates,
@@ -115,7 +115,7 @@ func TestPlanMakesLinesOfTheVATSummaryOrTheTotal(t *testing.T) {
 	}
 
 	total := Extraction{TotalInclTax: uncertain(money.Amount(4250))}
-	mem := Memory{Kind: Learned[Kind]{V: KindReceipt, Uses: 1}, Lines: map[string]Category{"": {LedgerAccountID: 80, TaxRateID: 2, Uses: 1}}}
+	mem := Memory{Kind: Learned[Kind]{V: KindReceipt, Uses: 1}, Receipts: KindMemory{Lines: map[string]Category{"": {LedgerAccountID: 80, TaxRateID: 2, Uses: 1}}}}
 	p = MakePlan(PlanInput{Extraction: total, Target: Target{Kind: purchases.TypelessDocument}, Memory: mem, Rates: testRates})
 	d := p.Changes.Details
 	if len(d) != 1 || *d[0].Price != "42.5" || *d[0].Description != fallbackDescription || *d[0].TaxRateID != 2 || *d[0].LedgerAccountID != 80 ||

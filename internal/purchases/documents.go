@@ -170,8 +170,13 @@ func checkKind(kind string) error {
 }
 
 // Create adds a purchase invoice or receipt. With what booking needs it is
-// booked at once; without, it is new.
+// booked at once; without, it is new. A new one with a contact gets what is
+// remembered of the contact's earlier documents.
 func (s *Service) Create(ctx context.Context, admin, user resource.ID, kind string, c Changes) (Document, error) {
+	return s.create(ctx, admin, user, kind, c, true)
+}
+
+func (s *Service) create(ctx context.Context, admin, user resource.ID, kind string, c Changes, remember bool) (Document, error) {
 	if err := checkKind(kind); err != nil {
 		return Document{}, err
 	}
@@ -186,13 +191,17 @@ func (s *Service) Create(ctx context.Context, admin, user resource.ID, kind stri
 	if err := s.apply(ctx, a, user, &d, c); err != nil {
 		return Document{}, err
 	}
+	var remembered []Remembered
+	if remember {
+		remembered = s.remember(ctx, a, user, Document{}, &d)
+	}
 	if err := s.save(ctx, a, user, &d, true); err != nil {
 		return Document{}, err
 	}
 	if err := s.payAtOnce(ctx, a, user, d, c.PaymentAccountID); err != nil {
 		return Document{}, err
 	}
-	s.edited(ctx, admin, user, Document{}, d)
+	s.edited(ctx, admin, user, Document{}, d, remembered)
 	return s.Document(ctx, admin, kind, d.ID, user)
 }
 
@@ -261,6 +270,7 @@ func (s *Service) Update(ctx context.Context, admin, user resource.ID, kind stri
 	if err := s.apply(ctx, a, user, &d, c); err != nil {
 		return Document{}, err
 	}
+	remembered := s.remember(ctx, a, user, before, &d)
 	d.UpdatedAt = s.now()
 	if err := s.save(ctx, a, user, &d, false); err != nil {
 		return Document{}, err
@@ -268,7 +278,7 @@ func (s *Service) Update(ctx context.Context, admin, user resource.ID, kind stri
 	if err := s.payAtOnce(ctx, a, user, d, c.PaymentAccountID); err != nil {
 		return Document{}, err
 	}
-	s.edited(ctx, admin, user, before, d)
+	s.edited(ctx, admin, user, before, d, remembered)
 	s.confirmed(ctx, admin, id, c.confirmedFields()...)
 	return s.Document(ctx, admin, kind, id, user)
 }

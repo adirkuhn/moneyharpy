@@ -124,7 +124,7 @@ func TestWorkFillsInAnUploadFromItsText(t *testing.T) {
 	f := newFixture(t)
 	f.docs.upload(10, map[string][]byte{"bill.pdf": []byte("%PDF")})
 	f.contacts.list = []contacts.Contact{{ID: 77, CompanyName: "Example Shop", SepaIBAN: "NL91ABNA0417164300"}}
-	f.store.mems[77] = Memory{ContactID: 77, Kind: Learned[Kind]{V: KindReceipt, Uses: 2}, Lines: map[string]Category{"": {LedgerAccountID: 500, TaxRateID: 1, Uses: 2}}}
+	f.store.mems[77] = Memory{ContactID: 77, Kind: Learned[Kind]{V: KindReceipt, Uses: 2}, Receipts: KindMemory{Lines: map[string]Category{"": {LedgerAccountID: 500, TaxRateID: 1, Uses: 2}}}}
 	f.ocr.text = ocr.Text{Text: "Invoice 2026-0042", Method: "text", Pages: 1}
 	f.text = goodText()
 	if err := f.svc.Queue(ctx, admin, 10, owner); err != nil {
@@ -472,7 +472,7 @@ func TestWorkLeavesOutRememberedCategoriesThatNoLongerPass(t *testing.T) {
 	f := newFixture(t)
 	f.docs.upload(10, map[string][]byte{"a.pdf": []byte("%PDF")})
 	f.contacts.list = []contacts.Contact{{ID: 77, CompanyName: "Example Shop", SepaIBAN: "NL91ABNA0417164300"}}
-	f.store.mems[77] = Memory{ContactID: 77, Lines: map[string]Category{"": {LedgerAccountID: 500, Uses: 3}}}
+	f.store.mems[77] = Memory{ContactID: 77, Invoices: KindMemory{Lines: map[string]Category{"": {LedgerAccountID: 500, Uses: 3}}}}
 	f.ocr.text = ocr.Text{Text: "x", Method: "text"}
 	f.text = goodText()
 	var verr resource.ValidationError
@@ -536,19 +536,19 @@ func TestEditedUnmarksChangedFieldsAndLearnsFromBookedDocuments(t *testing.T) {
 	after.Lines = []sales.Detail{{ID: 1, Description: "Hosting", Price: 150, TaxRateID: 1, LedgerAccountID: &ledger}}
 	after.Reference, after.State = "B", purchases.Open
 
-	f.svc.Edited(ctx, admin, owner, before, after)
+	f.svc.Edited(ctx, admin, owner, before, after, nil)
 
 	got := fieldNames(f.recognition(t, 10).Fields)
 	if _, ok := got[FieldReference]; ok || len(got) != 2 {
 		t.Errorf("fields = %v, want contact_id and details.0.description", got)
 	}
 	m := f.store.mems[77]
-	if m.Kind.V != KindPurchaseInvoice || m.Lines["hosting"].LedgerAccountID != ledger || m.Currency.V != "EUR" {
+	if m.Kind.V != KindPurchaseInvoice || m.Invoices.Lines["hosting"].LedgerAccountID != ledger || m.Invoices.Currency.V != "EUR" {
 		t.Errorf("memory = %+v", m)
 	}
 
 	// A new document teaches nothing.
-	f.svc.Edited(ctx, admin, owner, purchases.Document{}, purchases.Document{ID: 20, ContactID: 78, State: purchases.New})
+	f.svc.Edited(ctx, admin, owner, purchases.Document{}, purchases.Document{ID: 20, ContactID: 78, State: purchases.New}, nil)
 	if _, ok := f.store.mems[78]; ok {
 		t.Error("learned from a new document")
 	}

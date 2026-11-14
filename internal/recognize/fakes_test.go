@@ -22,10 +22,27 @@ import (
 type fakeStore struct {
 	recs map[resource.ID]Recognition
 	mems map[resource.ID]Memory
+	// history holds the booked documents of each contact, oldest first.
+	history      map[resource.ID][]purchases.Document
+	historyCalls int
 }
 
 func newFakeStore() *fakeStore {
-	return &fakeStore{recs: map[resource.ID]Recognition{}, mems: map[resource.ID]Memory{}}
+	return &fakeStore{recs: map[resource.ID]Recognition{}, mems: map[resource.ID]Memory{}, history: map[resource.ID][]purchases.Document{}}
+}
+
+func (s *fakeStore) History(_ context.Context, _, contact resource.ID, kind string, limit int) ([]purchases.Document, error) {
+	s.historyCalls++
+	var out []purchases.Document
+	for _, d := range s.history[contact] {
+		if d.Kind == kind {
+			out = append(out, d)
+		}
+	}
+	if len(out) > limit {
+		out = out[len(out)-limit:]
+	}
+	return out, nil
 }
 
 func (s *fakeStore) Recognition(_ context.Context, _, id resource.ID) (Recognition, error) {
@@ -72,7 +89,8 @@ func (s *fakeStore) LeaseDue(_ context.Context, now, lease time.Time, maxCount i
 
 func (s *fakeStore) Memory(_ context.Context, admin, contact resource.ID) (Memory, error) {
 	if m, ok := s.mems[contact]; ok {
-		m.Lines = maps.Clone(m.Lines)
+		m.Invoices.Lines = maps.Clone(m.Invoices.Lines)
+		m.Receipts.Lines = maps.Clone(m.Receipts.Lines)
 		return m, nil
 	}
 	return Memory{AdministrationID: admin, ContactID: contact}, nil
@@ -215,7 +233,17 @@ func (r *fakeRegistry) LookupVAT(_ context.Context, vat string) (RegisteredCompa
 	return r.companies[vat], nil
 }
 
+// uncategorized is the category of expenses still to categorise.
+const uncategorized resource.ID = 999
+
 type fakeLedger struct{}
+
+func (fakeLedger) SystemLedgerAccount(_ context.Context, _, _ resource.ID, role string) (resource.ID, error) {
+	if role != "uncategorized_expenses" {
+		return 0, errors.New("unknown role " + role)
+	}
+	return uncategorized, nil
+}
 
 func (fakeLedger) TaxRates(context.Context, resource.ID, resource.ID, bookkeeping.TaxRateFilter) ([]bookkeeping.TaxRate, error) {
 	return testRates, nil

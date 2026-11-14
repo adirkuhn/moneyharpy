@@ -25,17 +25,19 @@ func (q *Queries) DeleteDocumentRecognition(ctx context.Context, arg DeleteDocum
 	return err
 }
 
-const deleteSupplierMemoryLines = `-- name: DeleteSupplierMemoryLines :exec
-DELETE FROM supplier_memory_lines WHERE administration_id = $1 AND contact_id = $2
+const deleteSupplierMemoryKinds = `-- name: DeleteSupplierMemoryKinds :exec
+DELETE FROM supplier_memory_kinds WHERE administration_id = $1 AND contact_id = $2
 `
 
-type DeleteSupplierMemoryLinesParams struct {
+type DeleteSupplierMemoryKindsParams struct {
 	AdministrationID int64
 	ContactID        int64
 }
 
-func (q *Queries) DeleteSupplierMemoryLines(ctx context.Context, arg DeleteSupplierMemoryLinesParams) error {
-	_, err := q.db.Exec(ctx, deleteSupplierMemoryLines, arg.AdministrationID, arg.ContactID)
+// Removes the kinds of a supplier's memory with their lines, to insert
+// them again.
+func (q *Queries) DeleteSupplierMemoryKinds(ctx context.Context, arg DeleteSupplierMemoryKindsParams) error {
+	_, err := q.db.Exec(ctx, deleteSupplierMemoryKinds, arg.AdministrationID, arg.ContactID)
 	return err
 }
 
@@ -108,30 +110,68 @@ func (q *Queries) DocumentRecognitionsOf(ctx context.Context, arg DocumentRecogn
 	return items, nil
 }
 
+const insertSupplierMemoryKind = `-- name: InsertSupplierMemoryKind :exec
+INSERT INTO supplier_memory_kinds (administration_id, contact_id, document_kind, currency, currency_uses, prices_are_incl_tax,
+                                   prices_are_incl_tax_uses, last_document_id, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+`
+
+type InsertSupplierMemoryKindParams struct {
+	AdministrationID     int64
+	ContactID            int64
+	DocumentKind         string
+	Currency             string
+	CurrencyUses         int32
+	PricesAreInclTax     bool
+	PricesAreInclTaxUses int32
+	LastDocumentID       pgtype.Int8
+	UpdatedAt            pgtype.Timestamptz
+}
+
+func (q *Queries) InsertSupplierMemoryKind(ctx context.Context, arg InsertSupplierMemoryKindParams) error {
+	_, err := q.db.Exec(ctx, insertSupplierMemoryKind,
+		arg.AdministrationID,
+		arg.ContactID,
+		arg.DocumentKind,
+		arg.Currency,
+		arg.CurrencyUses,
+		arg.PricesAreInclTax,
+		arg.PricesAreInclTaxUses,
+		arg.LastDocumentID,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const insertSupplierMemoryLine = `-- name: InsertSupplierMemoryLine :exec
-INSERT INTO supplier_memory_lines (administration_id, contact_id, description, ledger_account_id, tax_rate_id, uses, last_used_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO supplier_memory_lines (administration_id, contact_id, document_kind, description, ledger_account_id, tax_rate_id, uses,
+                                   last_used_at, source_document_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 `
 
 type InsertSupplierMemoryLineParams struct {
 	AdministrationID int64
 	ContactID        int64
+	DocumentKind     string
 	Description      string
 	LedgerAccountID  pgtype.Int8
 	TaxRateID        pgtype.Int8
 	Uses             int32
 	LastUsedAt       pgtype.Timestamptz
+	SourceDocumentID pgtype.Int8
 }
 
 func (q *Queries) InsertSupplierMemoryLine(ctx context.Context, arg InsertSupplierMemoryLineParams) error {
 	_, err := q.db.Exec(ctx, insertSupplierMemoryLine,
 		arg.AdministrationID,
 		arg.ContactID,
+		arg.DocumentKind,
 		arg.Description,
 		arg.LedgerAccountID,
 		arg.TaxRateID,
 		arg.Uses,
 		arg.LastUsedAt,
+		arg.SourceDocumentID,
 	)
 	return err
 }
@@ -186,8 +226,114 @@ func (q *Queries) LeaseDueRecognitions(ctx context.Context, arg LeaseDueRecognit
 	return items, nil
 }
 
+const supplierHistory = `-- name: SupplierHistory :many
+SELECT id, kind, state, currency, prices_are_incl_tax, date, updated_at
+FROM purchase_documents
+WHERE administration_id = $1 AND contact_id = $2 AND kind = $3 AND state <> 'new'
+ORDER BY date DESC, id DESC
+LIMIT $4
+`
+
+type SupplierHistoryParams struct {
+	AdministrationID int64
+	ContactID        pgtype.Int8
+	Kind             string
+	MaxCount         int32
+}
+
+type SupplierHistoryRow struct {
+	ID               int64
+	Kind             string
+	State            string
+	Currency         string
+	PricesAreInclTax bool
+	Date             pgtype.Date
+	UpdatedAt        pgtype.Timestamptz
+}
+
+// A supplier's most recent booked documents of a kind, which Scan and
+// Recognise learns the supplier from.
+func (q *Queries) SupplierHistory(ctx context.Context, arg SupplierHistoryParams) ([]SupplierHistoryRow, error) {
+	rows, err := q.db.Query(ctx, supplierHistory,
+		arg.AdministrationID,
+		arg.ContactID,
+		arg.Kind,
+		arg.MaxCount,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SupplierHistoryRow
+	for rows.Next() {
+		var i SupplierHistoryRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.State,
+			&i.Currency,
+			&i.PricesAreInclTax,
+			&i.Date,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const supplierHistoryLines = `-- name: SupplierHistoryLines :many
+SELECT purchase_document_id, description, price, tax_rate_id, ledger_account_id
+FROM purchase_document_details
+WHERE administration_id = $1 AND purchase_document_id = ANY($2::bigint[])
+ORDER BY purchase_document_id, row_order, id
+`
+
+type SupplierHistoryLinesParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+type SupplierHistoryLinesRow struct {
+	PurchaseDocumentID int64
+	Description        string
+	Price              int64
+	TaxRateID          int64
+	LedgerAccountID    pgtype.Int8
+}
+
+func (q *Queries) SupplierHistoryLines(ctx context.Context, arg SupplierHistoryLinesParams) ([]SupplierHistoryLinesRow, error) {
+	rows, err := q.db.Query(ctx, supplierHistoryLines, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SupplierHistoryLinesRow
+	for rows.Next() {
+		var i SupplierHistoryLinesRow
+		if err := rows.Scan(
+			&i.PurchaseDocumentID,
+			&i.Description,
+			&i.Price,
+			&i.TaxRateID,
+			&i.LedgerAccountID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const supplierMemory = `-- name: SupplierMemory :one
-SELECT administration_id, contact_id, document_kind, document_kind_uses, currency, currency_uses, prices_are_incl_tax, prices_are_incl_tax_uses, updated_at FROM supplier_memories WHERE administration_id = $1 AND contact_id = $2
+SELECT administration_id, contact_id, document_kind, document_kind_uses, updated_at FROM supplier_memories WHERE administration_id = $1 AND contact_id = $2
 `
 
 type SupplierMemoryParams struct {
@@ -203,17 +349,52 @@ func (q *Queries) SupplierMemory(ctx context.Context, arg SupplierMemoryParams) 
 		&i.ContactID,
 		&i.DocumentKind,
 		&i.DocumentKindUses,
-		&i.Currency,
-		&i.CurrencyUses,
-		&i.PricesAreInclTax,
-		&i.PricesAreInclTaxUses,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
+const supplierMemoryKinds = `-- name: SupplierMemoryKinds :many
+SELECT administration_id, contact_id, document_kind, currency, currency_uses, prices_are_incl_tax, prices_are_incl_tax_uses, last_document_id, updated_at FROM supplier_memory_kinds WHERE administration_id = $1 AND contact_id = $2 ORDER BY document_kind
+`
+
+type SupplierMemoryKindsParams struct {
+	AdministrationID int64
+	ContactID        int64
+}
+
+func (q *Queries) SupplierMemoryKinds(ctx context.Context, arg SupplierMemoryKindsParams) ([]SupplierMemoryKind, error) {
+	rows, err := q.db.Query(ctx, supplierMemoryKinds, arg.AdministrationID, arg.ContactID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SupplierMemoryKind
+	for rows.Next() {
+		var i SupplierMemoryKind
+		if err := rows.Scan(
+			&i.AdministrationID,
+			&i.ContactID,
+			&i.DocumentKind,
+			&i.Currency,
+			&i.CurrencyUses,
+			&i.PricesAreInclTax,
+			&i.PricesAreInclTaxUses,
+			&i.LastDocumentID,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const supplierMemoryLines = `-- name: SupplierMemoryLines :many
-SELECT administration_id, contact_id, description, ledger_account_id, tax_rate_id, uses, last_used_at FROM supplier_memory_lines WHERE administration_id = $1 AND contact_id = $2 ORDER BY description
+SELECT administration_id, contact_id, description, ledger_account_id, tax_rate_id, uses, last_used_at, document_kind, source_document_id FROM supplier_memory_lines WHERE administration_id = $1 AND contact_id = $2 ORDER BY document_kind, description
 `
 
 type SupplierMemoryLinesParams struct {
@@ -238,6 +419,8 @@ func (q *Queries) SupplierMemoryLines(ctx context.Context, arg SupplierMemoryLin
 			&i.TaxRateID,
 			&i.Uses,
 			&i.LastUsedAt,
+			&i.DocumentKind,
+			&i.SourceDocumentID,
 		); err != nil {
 			return nil, err
 		}
@@ -292,25 +475,18 @@ func (q *Queries) UpsertDocumentRecognition(ctx context.Context, arg UpsertDocum
 }
 
 const upsertSupplierMemory = `-- name: UpsertSupplierMemory :exec
-INSERT INTO supplier_memories (administration_id, contact_id, document_kind, document_kind_uses, currency, currency_uses,
-                               prices_are_incl_tax, prices_are_incl_tax_uses, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO supplier_memories (administration_id, contact_id, document_kind, document_kind_uses, updated_at)
+VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (administration_id, contact_id) DO UPDATE SET
-    document_kind = excluded.document_kind, document_kind_uses = excluded.document_kind_uses, currency = excluded.currency,
-    currency_uses = excluded.currency_uses, prices_are_incl_tax = excluded.prices_are_incl_tax,
-    prices_are_incl_tax_uses = excluded.prices_are_incl_tax_uses, updated_at = excluded.updated_at
+    document_kind = excluded.document_kind, document_kind_uses = excluded.document_kind_uses, updated_at = excluded.updated_at
 `
 
 type UpsertSupplierMemoryParams struct {
-	AdministrationID     int64
-	ContactID            int64
-	DocumentKind         string
-	DocumentKindUses     int32
-	Currency             string
-	CurrencyUses         int32
-	PricesAreInclTax     bool
-	PricesAreInclTaxUses int32
-	UpdatedAt            pgtype.Timestamptz
+	AdministrationID int64
+	ContactID        int64
+	DocumentKind     string
+	DocumentKindUses int32
+	UpdatedAt        pgtype.Timestamptz
 }
 
 func (q *Queries) UpsertSupplierMemory(ctx context.Context, arg UpsertSupplierMemoryParams) error {
@@ -319,10 +495,6 @@ func (q *Queries) UpsertSupplierMemory(ctx context.Context, arg UpsertSupplierMe
 		arg.ContactID,
 		arg.DocumentKind,
 		arg.DocumentKindUses,
-		arg.Currency,
-		arg.CurrencyUses,
-		arg.PricesAreInclTax,
-		arg.PricesAreInclTaxUses,
 		arg.UpdatedAt,
 	)
 	return err

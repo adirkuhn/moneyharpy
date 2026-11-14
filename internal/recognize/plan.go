@@ -71,11 +71,11 @@ func MakePlan(in PlanInput) Plan {
 	e, t := in.Extraction, in.Target
 	firstRun := in.Previous.State != StateDone
 	var p Plan
-	mark := func(name string, c Confidence) {
+	mark := func(name string, c Confidence, o origin) {
 		if c == "" {
 			c = Uncertain
 		}
-		p.Fields = append(p.Fields, Field{Name: name, Confidence: c})
+		p.Fields = append(p.Fields, Field{Name: name, Confidence: c, Reason: o.reason, SourceDocumentID: o.source})
 	}
 	fill := func(name string, empty, defaulted bool) bool {
 		return in.Previous.Has(name) || empty || (defaulted && firstRun)
@@ -85,83 +85,83 @@ func MakePlan(in PlanInput) Plan {
 	// else a purchase invoice.
 	p.Kind = t.Kind
 	if t.Kind == purchases.TypelessDocument {
-		kind, conf := KindPurchaseInvoice, Uncertain
+		kind, conf, o := KindPurchaseInvoice, Uncertain, byDefault
 		switch {
 		case e.Kind.Found && e.Kind.V != KindUnknown && (e.Kind.Confidence == Certain || !in.Memory.Kind.Known()):
-			kind, conf = e.Kind.V, e.Kind.Confidence
+			kind, conf, o = e.Kind.V, e.Kind.Confidence, read
 		case in.Memory.Kind.Known():
 			kind, conf = in.Memory.Kind.V, in.Memory.Kind.Confidence()
+			o = remembered(in.Memory.Of(kind).LastDocumentID)
 		}
-		p.Kind = purchases.PurchaseInvoice
-		if kind == KindReceipt {
-			p.Kind = purchases.Receipt
-		}
-		mark(FieldDocumentType, conf)
+		p.Kind = DocumentKind(kind)
+		mark(FieldDocumentType, conf, o)
 	}
+	memory := in.Memory.Recall(KindOf(p.Kind))
 
 	c := &p.Changes
 	if in.Supplier.ContactID != 0 && in.Supplier.ContactID != t.ContactID && fill(FieldContactID, t.ContactID == 0, false) {
 		id := in.Supplier.ContactID
 		c.ContactID = &id
-		mark(FieldContactID, in.Supplier.Confidence)
+		mark(FieldContactID, in.Supplier.Confidence, read)
 	} else if in.Supplier.ContactID != 0 && in.Supplier.ContactID == t.ContactID && in.Previous.Has(FieldContactID) {
-		mark(FieldContactID, in.Supplier.Confidence)
+		mark(FieldContactID, in.Supplier.Confidence, read)
 	}
 	if v := strings.TrimSpace(e.Reference.V); e.Reference.Found && v != "" && len(v) <= 1000 && fill(FieldReference, t.Reference == "" || isFileName(t.Reference), false) {
 		c.Reference = &v
-		mark(FieldReference, e.Reference.Confidence)
+		mark(FieldReference, e.Reference.Confidence, read)
 	}
 	date := t.Date
 	if e.Date.Found && !e.Date.V.IsZero() && fill(FieldDate, false, true) {
 		date = e.Date.V
 		v := date.Format(time.DateOnly)
 		c.Date = &v
-		mark(FieldDate, e.Date.Confidence)
+		mark(FieldDate, e.Date.Confidence, read)
 	}
 	if e.DueDate.Found && !e.DueDate.V.Before(date) && fill(FieldDueDate, t.DueDate == nil, false) {
 		v := e.DueDate.V.Format(time.DateOnly)
 		c.DueDate = &v
-		mark(FieldDueDate, e.DueDate.Confidence)
+		mark(FieldDueDate, e.DueDate.Confidence, read)
 	}
 	if fill(FieldCurrency, false, true) {
 		cur := strings.ToUpper(strings.TrimSpace(e.Currency.V))
 		switch {
 		case e.Currency.Found && currencyPattern.MatchString(cur):
 			c.Currency = &cur
-			mark(FieldCurrency, e.Currency.Confidence)
-		case in.Memory.Currency.Known():
-			v := in.Memory.Currency.V
+			mark(FieldCurrency, e.Currency.Confidence, read)
+		case memory.Currency().Known():
+			cur := memory.Currency()
+			v := cur.V
 			c.Currency = &v
-			mark(FieldCurrency, in.Memory.Currency.Confidence())
+			mark(FieldCurrency, cur.Confidence(), remembered(cur.SourceDocumentID))
 		}
 	}
 
-	incl, inclConf, inclKnown := t.PricesAreInclTax, Confidence(""), false
-	switch {
+	incl, inclConf, inclKnown, inclOrigin := t.PricesAreInclTax, Confidence(""), false, read
+	switch rem := memory.PricesInclTax(); {
 	case e.PricesInclTax.Found:
 		incl, inclConf, inclKnown = e.PricesInclTax.V, e.PricesInclTax.Confidence, true
-	case in.Memory.PricesInclTax.Known():
-		incl, inclConf, inclKnown = in.Memory.PricesInclTax.V, in.Memory.PricesInclTax.Confidence(), true
+	case rem.Known():
+		incl, inclConf, inclKnown, inclOrigin = rem.V, rem.Confidence(), true, remembered(rem.SourceDocumentID)
 	}
 	lines, linesIncl := proposeLines(e, in.Supplier.Name, incl)
 	if linesIncl != nil {
-		incl, inclConf, inclKnown = *linesIncl, e.TotalInclTax.Confidence, true
+		incl, inclConf, inclKnown, inclOrigin = *linesIncl, e.TotalInclTax.Confidence, true, read
 	}
 	fallback := defaultRate(in.Rates)
 	rates := make([]lineRate, len(lines))
 	for i, l := range lines {
-		rates[i] = rateOf(l, in, fallback)
+		rates[i] = rateOf(l, in, memory, fallback)
 	}
 	if !incl && e.TotalInclTax.Found && e.TotalInclTax.Confidence == Certain {
 		if fitted, ok := fitPrintedTotal(lines, rates, in.Rates, e.TotalInclTax.V, e.VAT); ok {
-			lines, incl, inclConf, inclKnown = fitted, true, Certain, true
+			lines, incl, inclConf, inclKnown, inclOrigin = fitted, true, Certain, true, read
 		}
 	}
 	replaceLines := len(lines) > 0 && (len(t.Lines) == 0 || allMarked(in.Previous, len(t.Lines)))
 	if inclKnown && (fill(FieldPricesAreInclTax, false, true) || replaceLines) {
 		v := incl
 		c.PricesAreInclTax = &v
-		mark(FieldPricesAreInclTax, inclConf)
+		mark(FieldPricesAreInclTax, inclConf, inclOrigin)
 	}
 	if !replaceLines {
 		return p
@@ -175,51 +175,65 @@ func MakePlan(in PlanInput) Plan {
 		d := sales.DetailInput{Description: &l.description, Amount: &l.amount}
 		price := l.price.String()
 		d.Price = &price
-		mark(field("description"), l.confidence)
-		mark(field("amount"), l.confidence)
-		mark(field("price"), l.confidence)
+		mark(field("description"), l.confidence, read)
+		mark(field("amount"), l.confidence, read)
+		mark(field("price"), l.confidence, read)
 
-		category, remembered := in.Memory.Category(l.description)
 		if rate := rates[i]; rate.id != 0 {
 			d.TaxRateID = &rate.id
-			mark(field("tax_rate_id"), rate.confidence)
+			mark(field("tax_rate_id"), rate.confidence, rate.origin)
 		}
-		if remembered && category.LedgerAccountID != 0 {
+		if category, ok := memory.Category(l.description); ok && category.LedgerAccountID != 0 {
 			ledger := category.LedgerAccountID
 			d.LedgerAccountID = &ledger
-			mark(field("ledger_account_id"), category.Confidence())
+			mark(field("ledger_account_id"), category.Confidence(), remembered(category.SourceDocumentID))
 		}
 		c.Details = append(c.Details, d)
 	}
 	return p
 }
 
-// lineRate is the purchase VAT rate a line gets, and how sure it is.
+// origin is where a value filled in came from.
+type origin struct {
+	reason Reason
+	source resource.ID
+}
+
+var (
+	read      = origin{reason: ReasonAttachment}
+	byDefault = origin{reason: ReasonDefault}
+)
+
+func remembered(source resource.ID) origin { return origin{ReasonPreviousDocument, source} }
+
+// lineRate is the purchase VAT rate a line gets, how sure it is and where
+// it came from.
 type lineRate struct {
 	id         resource.ID
 	confidence Confidence
+	origin     origin
 }
 
 // rateOf picks the VAT rate of a line: for VAT the buyer accounts for the
 // reverse-charged rate, else the rate read, else the one remembered for
 // such lines of the supplier, else the standard rate (fallback).
-func rateOf(l line, in PlanInput, fallback resource.ID) lineRate {
+func rateOf(l line, in PlanInput, memory Recalled, fallback resource.ID) lineRate {
 	if l.reverse {
 		// The document says the buyer accounts for the VAT but not
 		// at which rate: the standard rate is a guess to check.
 		if id, ok := MapReverseCharge(supplierCountry(in.Extraction.Supplier) == "NL", in.Rates); ok {
-			return lineRate{id, Uncertain}
+			return lineRate{id, Uncertain, read}
 		}
 	}
 	if l.rate.Found {
 		if id, ok := MapTaxRate(l.rate.V, in.Rates); ok {
-			return lineRate{id, l.rate.Confidence}
+			return lineRate{id, l.rate.Confidence, read}
 		}
 	}
-	if category, ok := in.Memory.Category(l.description); ok && category.TaxRateID != 0 {
-		return lineRate{category.TaxRateID, category.Confidence()}
+	if category, ok := memory.Category(l.description); ok && category.TaxRateID != 0 {
+		return lineRate{category.TaxRateID, category.Confidence(), remembered(category.SourceDocumentID)}
 	}
-	return lineRate{fallback, Uncertain}
+	return lineRate{fallback, Uncertain, byDefault}
 }
 
 // allMarked reports whether every one of n lines still holds what was

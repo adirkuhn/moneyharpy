@@ -1092,6 +1092,7 @@ export const nl: Messages = {
   },
   recognition: {
     title: 'Scan & herken', filled: 'We hebben dit voor je ingevuld op basis van de bijlage.', uncertain: 'Controleer dit: we wisten het niet zeker.',
+    basedOn: { before: 'We hebben dit ingevuld op basis van ', after: '.' }, earlierDocument: 'een eerder document',
     reading: 'We lezen dit document…', failed: 'We konden dit document niet lezen. Vul het zelf in, of laat het opnieuw lezen.',
     readAgain: 'Opnieuw lezen', recognising: 'Herkennen…',
   },

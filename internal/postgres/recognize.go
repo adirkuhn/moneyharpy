@@ -11,9 +11,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/postgres/sqlc"
+	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/recognize"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
+	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
 
 // RecognitionStore implements recognize.Store.
@@ -28,8 +31,11 @@ func NewRecognitionStore(pool *pgxpool.Pool) *RecognitionStore {
 }
 
 type recognizedFieldJSON struct {
-	Field      string `json:"field"`
-	Confidence string `json:"confidence"`
+	Field            string `json:"field"`
+	Confidence       string `json:"confidence"`
+	Reason           string `json:"reason,omitempty"`
+	SourceDocumentID int64  `json:"source_document_id,omitempty"`
+	SourceReference  string `json:"source_reference,omitempty"`
 }
 
 func toRecognition(r sqlc.DocumentRecognition) (recognize.Recognition, error) {
@@ -47,7 +53,10 @@ func toRecognition(r sqlc.DocumentRecognition) (recognize.Recognition, error) {
 		out.NextAttemptAt = &t
 	}
 	for _, f := range fields {
-		out.Fields = append(out.Fields, recognize.Field{Name: f.Field, Confidence: recognize.Confidence(f.Confidence)})
+		out.Fields = append(out.Fields, recognize.Field{
+			Name: f.Field, Confidence: recognize.Confidence(f.Confidence), Reason: recognize.Reason(f.Reason),
+			SourceDocumentID: resource.ID(f.SourceDocumentID), SourceReference: f.SourceReference,
+		})
 	}
 	return out, nil
 }
@@ -92,7 +101,10 @@ func (s *RecognitionStore) Recognitions(ctx context.Context, admin resource.ID, 
 func (s *RecognitionStore) SaveRecognition(ctx context.Context, r recognize.Recognition) error {
 	fields := make([]recognizedFieldJSON, len(r.Fields))
 	for i, f := range r.Fields {
-		fields[i] = recognizedFieldJSON{Field: f.Name, Confidence: string(f.Confidence)}
+		fields[i] = recognizedFieldJSON{
+			Field: f.Name, Confidence: string(f.Confidence), Reason: string(f.Reason), SourceDocumentID: int64(f.SourceDocumentID),
+			SourceReference: f.SourceReference,
+		}
 	}
 	raw, err := json.Marshal(fields)
 	if err != nil {
@@ -129,7 +141,10 @@ func (s *RecognitionStore) LeaseDue(ctx context.Context, now, lease time.Time, m
 
 // Memory implements recognize.Store.
 func (s *RecognitionStore) Memory(ctx context.Context, admin, contact resource.ID) (recognize.Memory, error) {
-	m := recognize.Memory{AdministrationID: admin, ContactID: contact, Lines: map[string]recognize.Category{}}
+	m := recognize.Memory{AdministrationID: admin, ContactID: contact}
+	for _, k := range recognize.Kinds {
+		m.Of(k).Lines = map[string]recognize.Category{}
+	}
 	row, err := s.q.SupplierMemory(ctx, sqlc.SupplierMemoryParams{AdministrationID: int64(admin), ContactID: int64(contact)})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return m, nil
@@ -138,46 +153,110 @@ func (s *RecognitionStore) Memory(ctx context.Context, admin, contact resource.I
 		return recognize.Memory{}, err
 	}
 	m.Kind = recognize.Learned[recognize.Kind]{V: recognize.Kind(row.DocumentKind), Uses: int(row.DocumentKindUses)}
-	m.Currency = recognize.Learned[string]{V: row.Currency, Uses: int(row.CurrencyUses)}
-	m.PricesInclTax = recognize.Learned[bool]{V: row.PricesAreInclTax, Uses: int(row.PricesAreInclTaxUses)}
 	m.UpdatedAt = row.UpdatedAt.Time
+	kinds, err := s.q.SupplierMemoryKinds(ctx, sqlc.SupplierMemoryKindsParams{AdministrationID: int64(admin), ContactID: int64(contact)})
+	if err != nil {
+		return recognize.Memory{}, err
+	}
+	for _, k := range kinds {
+		km := m.Of(recognize.Kind(k.DocumentKind))
+		km.Currency = recognize.Learned[string]{V: k.Currency, Uses: int(k.CurrencyUses)}
+		km.PricesInclTax = recognize.Learned[bool]{V: k.PricesAreInclTax, Uses: int(k.PricesAreInclTaxUses)}
+		km.LastDocumentID, km.UpdatedAt = resource.ID(k.LastDocumentID.Int64), k.UpdatedAt.Time
+	}
 	lines, err := s.q.SupplierMemoryLines(ctx, sqlc.SupplierMemoryLinesParams{AdministrationID: int64(admin), ContactID: int64(contact)})
 	if err != nil {
 		return recognize.Memory{}, err
 	}
 	for _, l := range lines {
-		m.Lines[l.Description] = recognize.Category{
+		m.Of(recognize.Kind(l.DocumentKind)).Lines[l.Description] = recognize.Category{
 			LedgerAccountID: resource.ID(l.LedgerAccountID.Int64), TaxRateID: resource.ID(l.TaxRateID.Int64), Uses: int(l.Uses), LastUsed: l.LastUsedAt.Time,
+			SourceDocumentID: resource.ID(l.SourceDocumentID.Int64),
 		}
 	}
 	return m, nil
 }
 
-// SaveMemory implements recognize.Store.
+// SaveMemory implements recognize.Store. Kinds nothing was learned of are
+// left out.
 func (s *RecognitionStore) SaveMemory(ctx context.Context, m recognize.Memory) error {
 	admin, contact := int64(m.AdministrationID), int64(m.ContactID)
 	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
 		if err := q.UpsertSupplierMemory(ctx, sqlc.UpsertSupplierMemoryParams{
 			AdministrationID: admin, ContactID: contact, DocumentKind: string(m.Kind.V), DocumentKindUses: int32(m.Kind.Uses),
-			Currency: m.Currency.V, CurrencyUses: int32(m.Currency.Uses), PricesAreInclTax: m.PricesInclTax.V,
-			PricesAreInclTaxUses: int32(m.PricesInclTax.Uses), UpdatedAt: timestamp(m.UpdatedAt),
+			UpdatedAt: timestamp(m.UpdatedAt),
 		}); err != nil {
 			return err
 		}
-		if err := q.DeleteSupplierMemoryLines(ctx, sqlc.DeleteSupplierMemoryLinesParams{AdministrationID: admin, ContactID: contact}); err != nil {
+		if err := q.DeleteSupplierMemoryKinds(ctx, sqlc.DeleteSupplierMemoryKindsParams{AdministrationID: admin, ContactID: contact}); err != nil {
 			return err
 		}
-		for description, c := range m.Lines {
-			if err := q.InsertSupplierMemoryLine(ctx, sqlc.InsertSupplierMemoryLineParams{
-				AdministrationID: admin, ContactID: contact, Description: description, LedgerAccountID: optionalInt8(c.LedgerAccountID),
-				TaxRateID: optionalInt8(c.TaxRateID), Uses: int32(c.Uses), LastUsedAt: timestamp(c.LastUsed),
+		for _, kind := range recognize.Kinds {
+			k := m.Of(kind)
+			if k.Empty() {
+				continue
+			}
+			updated := k.UpdatedAt
+			if updated.IsZero() {
+				updated = m.UpdatedAt
+			}
+			if err := q.InsertSupplierMemoryKind(ctx, sqlc.InsertSupplierMemoryKindParams{
+				AdministrationID: admin, ContactID: contact, DocumentKind: string(kind), Currency: k.Currency.V, CurrencyUses: int32(k.Currency.Uses),
+				PricesAreInclTax: k.PricesInclTax.V, PricesAreInclTaxUses: int32(k.PricesInclTax.Uses), LastDocumentID: optionalInt8(k.LastDocumentID),
+				UpdatedAt: timestamp(updated),
 			}); err != nil {
 				return err
+			}
+			for description, c := range k.Lines {
+				if err := q.InsertSupplierMemoryLine(ctx, sqlc.InsertSupplierMemoryLineParams{
+					AdministrationID: admin, ContactID: contact, DocumentKind: string(kind), Description: description,
+					LedgerAccountID: optionalInt8(c.LedgerAccountID), TaxRateID: optionalInt8(c.TaxRateID), Uses: int32(c.Uses),
+					LastUsedAt: timestamp(c.LastUsed), SourceDocumentID: optionalInt8(c.SourceDocumentID),
+				}); err != nil {
+					return err
+				}
 			}
 		}
 		return nil
 	})
+}
+
+// History implements recognize.Store.
+func (s *RecognitionStore) History(ctx context.Context, admin, contact resource.ID, kind string, limit int) ([]purchases.Document, error) {
+	rows, err := s.q.SupplierHistory(ctx, sqlc.SupplierHistoryParams{
+		AdministrationID: int64(admin), ContactID: optionalInt8(contact), Kind: kind, MaxCount: int32(limit),
+	})
+	if err != nil || len(rows) == 0 {
+		return nil, err
+	}
+	docs := make([]purchases.Document, len(rows))
+	at := make(map[int64]int, len(rows))
+	ids := make([]int64, len(rows))
+	for i, r := range rows {
+		// The query gives the most recent first; the history is oldest
+		// first.
+		j := len(rows) - 1 - i
+		docs[j] = purchases.Document{
+			ID: resource.ID(r.ID), AdministrationID: admin, Kind: r.Kind, ContactID: contact, State: r.State, Currency: r.Currency,
+			PricesAreInclTax: r.PricesAreInclTax, Date: r.Date.Time, UpdatedAt: r.UpdatedAt.Time,
+		}
+		at[r.ID], ids[i] = j, r.ID
+	}
+	lines, err := s.q.SupplierHistoryLines(ctx, sqlc.SupplierHistoryLinesParams{AdministrationID: int64(admin), Ids: ids})
+	if err != nil {
+		return nil, err
+	}
+	for _, l := range lines {
+		d := &docs[at[l.PurchaseDocumentID]]
+		line := sales.Detail{Description: l.Description, Price: money.Amount(l.Price), TaxRateID: resource.ID(l.TaxRateID)}
+		if l.LedgerAccountID.Valid {
+			id := resource.ID(l.LedgerAccountID.Int64)
+			line.LedgerAccountID = &id
+		}
+		d.Lines = append(d.Lines, line)
+	}
+	return docs, nil
 }
 
 func optionalInt8(id resource.ID) pgtype.Int8 {

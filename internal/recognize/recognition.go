@@ -3,6 +3,7 @@ package recognize
 import (
 	"errors"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -30,6 +31,42 @@ const (
 type Field struct {
 	Name       string
 	Confidence Confidence
+	// Reason is where the value came from; empty for fields filled in
+	// before reasons were kept, which ReasonOf tells.
+	Reason Reason
+	// SourceDocumentID is the earlier document a remembered value came
+	// from; zero when unknown or removed since.
+	SourceDocumentID resource.ID
+	// SourceReference is that document's reference when the value was
+	// filled in.
+	SourceReference string
+}
+
+// Reason is where a value filled in came from.
+type Reason string
+
+const (
+	// ReasonAttachment: read from the document's attachments.
+	ReasonAttachment Reason = "attachment"
+	// ReasonPreviousDocument: remembered of the supplier's earlier
+	// documents.
+	ReasonPreviousDocument Reason = "previous_document"
+	// ReasonDefault: neither read nor remembered, such as the standard VAT
+	// rate.
+	ReasonDefault Reason = "default"
+)
+
+// ReasonOf tells where the value of a field came from. Fields filled in
+// before reasons were kept were read, but for categories, which were
+// only ever remembered.
+func ReasonOf(f Field) Reason {
+	switch {
+	case f.Reason != "":
+		return f.Reason
+	case strings.HasSuffix(f.Name, ".ledger_account_id"):
+		return ReasonPreviousDocument
+	}
+	return ReasonAttachment
 }
 
 // Names of the fields Scan and Recognise fills in.

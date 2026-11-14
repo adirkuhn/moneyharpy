@@ -3,6 +3,7 @@ package postgres_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -125,21 +126,79 @@ func TestSupplierMemoryRoundTrip(t *testing.T) {
 	at := time.Now().UTC().Truncate(time.Second)
 	m := recognize.Memory{
 		AdministrationID: f.admin, ContactID: f.supplier, Kind: recognize.Learned[recognize.Kind]{V: recognize.KindReceipt, Uses: 2},
-		Currency: recognize.Learned[string]{V: "EUR", Uses: 1}, PricesInclTax: recognize.Learned[bool]{V: true, Uses: 3},
-		Lines:     map[string]recognize.Category{"": {LedgerAccountID: f.costs, TaxRateID: f.vat21, Uses: 2, LastUsed: at}, "hosting": {LedgerAccountID: f.costs, Uses: 1, LastUsed: at}},
+		Receipts: recognize.KindMemory{
+			Currency: recognize.Learned[string]{V: "EUR", Uses: 1}, PricesInclTax: recognize.Learned[bool]{V: true, Uses: 3}, LastDocumentID: 41,
+			Lines: map[string]recognize.Category{
+				"":        {LedgerAccountID: f.costs, TaxRateID: f.vat21, Uses: 2, LastUsed: at, SourceDocumentID: 41},
+				"hosting": {LedgerAccountID: f.costs, Uses: 1, LastUsed: at},
+			},
+			UpdatedAt: at,
+		},
+		Invoices: recognize.KindMemory{
+			Currency: recognize.Learned[string]{V: "USD", Uses: 1}, LastDocumentID: 42,
+			Lines:     map[string]recognize.Category{"hosting": {LedgerAccountID: f.costs, TaxRateID: f.vat21, Uses: 1, LastUsed: at, SourceDocumentID: 42}},
+			UpdatedAt: at,
+		},
 		UpdatedAt: at,
 	}
 	if err := store.SaveMemory(ctx, m); err != nil {
 		t.Fatal(err)
 	}
-	delete(m.Lines, "hosting")
+	delete(m.Receipts.Lines, "hosting")
 	if err := store.SaveMemory(ctx, m); err != nil {
 		t.Fatal(err)
 	}
 	got, err := store.Memory(ctx, f.admin, f.supplier)
-	if err != nil || got.Kind != m.Kind || got.Currency != m.Currency || got.PricesInclTax != m.PricesInclTax || len(got.Lines) != 1 ||
-		got.Lines[""].LedgerAccountID != f.costs || got.Lines[""].TaxRateID != f.vat21 || !got.Lines[""].LastUsed.Equal(at) {
-		t.Errorf("Memory() = %+v, %v", got, err)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, i := got.Receipts, got.Invoices
+	if got.Kind != m.Kind || r.Currency != m.Receipts.Currency || r.PricesInclTax != m.Receipts.PricesInclTax || r.LastDocumentID != 41 ||
+		len(r.Lines) != 1 || r.Lines[""].LedgerAccountID != f.costs || r.Lines[""].TaxRateID != f.vat21 || !r.Lines[""].LastUsed.Equal(at) ||
+		r.Lines[""].SourceDocumentID != 41 || !r.UpdatedAt.Equal(at) {
+		t.Errorf("receipts = %+v", r)
+	}
+	if i.Currency.V != "USD" || i.LastDocumentID != 42 || len(i.Lines) != 1 || i.Lines["hosting"].SourceDocumentID != 42 || i.PricesInclTax.Known() {
+		t.Errorf("purchase invoices = %+v", i)
+	}
+}
+
+func TestSupplierHistoryHoldsTheMostRecentBookedDocuments(t *testing.T) {
+	ctx := context.Background()
+	f := newPurchaseFixture(t)
+	store := postgres.NewRecognitionStore(testPool)
+	var want []resource.ID
+	for i, day := range []string{"2026-10-03", "2026-10-01", "2026-10-02"} {
+		d := f.purchase(t, purchases.PurchaseInvoice, fmt.Sprintf("1%d", i), day)
+		want = append(want, d.ID)
+	}
+	f.purchase(t, purchases.Receipt, "50", "2026-10-04")
+	// A new document, without lines, is not booked.
+	if _, err := f.docs.Create(ctx, f.admin, f.owner, purchases.PurchaseInvoice, purchases.Changes{ContactID: &f.supplier}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := store.History(ctx, f.admin, f.supplier, purchases.PurchaseInvoice, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The two most recent, oldest first.
+	if len(got) != 2 || got[0].ID != want[2] || got[1].ID != want[0] {
+		t.Fatalf("History() = %+v, want documents %d and %d", got, want[2], want[0])
+	}
+	d := got[1]
+	if d.Kind != purchases.PurchaseInvoice || d.ContactID != f.supplier || d.State == purchases.New || d.Currency != "EUR" || !d.PricesAreInclTax ||
+		d.Date.Format(time.DateOnly) != "2026-10-03" || d.UpdatedAt.IsZero() || len(d.Lines) != 1 {
+		t.Fatalf("document = %+v", d)
+	}
+	if l := d.Lines[0]; l.Description != "Paper" || l.Price != 1000 || l.TaxRateID != f.vat21 || l.LedgerAccountID == nil || *l.LedgerAccountID != f.costs {
+		t.Errorf("line = %+v", l)
+	}
+	if receipts, err := store.History(ctx, f.admin, f.supplier, purchases.Receipt, 20); err != nil || len(receipts) != 1 {
+		t.Errorf("receipts = %+v, %v", receipts, err)
+	}
+	if none, err := store.History(ctx, f.admin+1, f.supplier, purchases.Receipt, 20); err != nil || len(none) != 0 {
+		t.Errorf("of another administration = %+v, %v", none, err)
 	}
 }
 
