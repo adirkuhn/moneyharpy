@@ -137,6 +137,17 @@ type fakeLookups struct {
 	address      administration.AddressMatch
 	addressErr   error
 	checkErr     error
+	// company and companyErr answer a lookup by number; gotNumber is the
+	// number asked.
+	company    administration.CompanyMatch
+	companyErr error
+	gotNumber  string
+}
+
+// LookupCompany implements administration.CompanyLookup.
+func (f *fakeLookups) LookupCompany(_ context.Context, number string) (administration.CompanyMatch, error) {
+	f.gotNumber = number
+	return f.company, f.companyErr
 }
 
 // Check implements httpapi.RegisterChecker.
@@ -352,6 +363,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Google:          google,
 		LM2:             lm2,
 		Companies:       lookup,
+		CompanyNumbers:  lookup,
 		CompanyCheck:    lookup,
 		Addresses:       lookup,
 		VATNumbers:      vatlookup.New(settle, h.vies),

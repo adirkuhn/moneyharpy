@@ -95,6 +95,22 @@ func (c *Client) SearchCompanies(ctx context.Context, query string) ([]administr
 	return c.search(ctx, query)
 }
 
+// LookupCompany finds the company with a KVK number by searching for the
+// number, while the website search is enabled. A number it does not know
+// is administration.ErrCompanyNotFound.
+func (c *Client) LookupCompany(ctx context.Context, number string) (administration.CompanyMatch, error) {
+	found, err := c.SearchCompanies(ctx, number)
+	if err != nil {
+		return administration.CompanyMatch{}, err
+	}
+	for _, m := range found {
+		if m.ChamberOfCommerce == number {
+			return m, nil
+		}
+	}
+	return administration.CompanyMatch{}, administration.ErrCompanyNotFound
+}
+
 // Check runs a sample search, enabled or not, so an administrator can see
 // whether the website search works from this server before relying on it.
 func (c *Client) Check(ctx context.Context) error {

@@ -10,6 +10,8 @@ export type SearchOption = {
   depth?: number
   /** A line under the option while nothing is searched. */
   separatorAfter?: boolean
+  /** Shown in front of the label but hidden from screen readers and not searched, such as a country's flag. */
+  decoration?: string
 }
 
 /** Options under a heading; a group without a label has none. */
@@ -172,6 +174,7 @@ export function SearchSelect(props: Props) {
         onMouseMove={() => setActive(i)}
         onClick={() => pick({ option })}
       >
+        <Decoration text={option.decoration} />
         {option.label}
       </div>
     )
@@ -195,7 +198,7 @@ export function SearchSelect(props: Props) {
         onClick={() => (open ? close() : openWith(''))}
         onKeyDown={onTriggerKey}
       >
-        <span className={`picker__value${chosen ? '' : ' is-placeholder'}`}>{chosen?.label ?? props.placeholder ?? ''}</span>
+        <span className={`picker__value${chosen ? '' : ' is-placeholder'}`}><Decoration text={chosen?.decoration} />{chosen?.label ?? props.placeholder ?? ''}</span>
         <CaretIcon />
       </button>
       {open && (
@@ -251,4 +254,9 @@ export function SearchSelect(props: Props) {
       )}
     </div>
   )
+}
+
+/** Text in front of an option, hidden from screen readers. */
+function Decoration({ text }: { text?: string }) {
+  return text ? <span className="search-select__decoration" aria-hidden="true">{text}</span> : null
 }

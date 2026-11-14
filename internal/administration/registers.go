@@ -41,3 +41,28 @@ func (rs Registers) SearchCompanies(ctx context.Context, query string) ([]Compan
 	}
 	return nil, ErrLookupUnavailable
 }
+
+// ErrCompanyNotFound reports a company number the register does not know.
+var ErrCompanyNotFound = errors.New("company not found in the register")
+
+// CompanyLookup finds one company in a company register by its number.
+type CompanyLookup interface {
+	LookupCompany(ctx context.Context, number string) (CompanyMatch, error)
+}
+
+// LookupCompany implements CompanyLookup with the first enabled register
+// that can look companies up by number, like SearchCompanies.
+func (rs Registers) LookupCompany(ctx context.Context, number string) (CompanyMatch, error) {
+	for _, r := range rs {
+		l, ok := r.(CompanyLookup)
+		if !ok {
+			continue
+		}
+		found, err := l.LookupCompany(ctx, number)
+		if errors.Is(err, ErrLookupUnavailable) {
+			continue
+		}
+		return found, err
+	}
+	return CompanyMatch{}, ErrLookupUnavailable
+}
