@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -26,9 +27,12 @@ import (
 // ProductionURL is the search endpoint behind the KVK website.
 const ProductionURL = "https://web-api.kvk.nl/zoeken/v3/search"
 
+// Env for profileId
+const ProductionEnvConfig = "https://www.kvk.nl/config.env.js"
+
 const (
 	// userAgent names the software only, never the installation or its users.
-	userAgent      = "MoneyHarpy company search"
+	userAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36"
 	defaultTimeout = 5 * time.Second
 	maxBodyBytes   = 1 << 20
 	resultsPerPage = "10"
@@ -37,6 +41,7 @@ const (
 	// checkQuery is what the settings check searches for: a common word, so
 	// no one's data is sent.
 	checkQuery = "bakkerij"
+	profileTTL = 30 * time.Minute
 )
 
 // Settings tells whether the website search is enabled.
@@ -46,17 +51,35 @@ type Settings interface {
 
 // Client searches the KVK website.
 type Client struct {
-	settings Settings
-	url      string
-	http     *http.Client
-	limiter  *ratelimit.Limiter
-	timeout  time.Duration
+	settings  Settings
+	url       string
+	configURL string
+	http      *http.Client
+	limiter   *ratelimit.Limiter
+	timeout   time.Duration
+	now       func() time.Time
+
+	mu            sync.RWMutex
+	profileID     string
+	profileExpiry time.Time
 }
 
-// New returns a Client calling the search at url. The limiter caps the
-// searches of the whole installation, to stay a polite visitor.
-func New(s Settings, url string, httpClient *http.Client, limiter *ratelimit.Limiter) *Client {
-	return &Client{settings: s, url: url, http: httpClient, limiter: limiter, timeout: defaultTimeout}
+// New returns a Client calling the search at url and fetching configuration from
+// configURL. If configURL is empty, ProductionEnvConfig is used. The limiter
+// caps the searches of the whole installation, to stay a polite visitor.
+func New(s Settings, url, configURL string, httpClient *http.Client, limiter *ratelimit.Limiter) *Client {
+	if configURL == "" {
+		configURL = ProductionEnvConfig
+	}
+	return &Client{
+		settings:  s,
+		url:       url,
+		configURL: configURL,
+		http:      httpClient,
+		limiter:   limiter,
+		timeout:   defaultTimeout,
+		now:       time.Now,
+	}
 }
 
 // SearchCompanies finds companies by name while the website search is
@@ -108,6 +131,11 @@ func (c *Client) search(ctx context.Context, query string) ([]administration.Com
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
+	profileID, err := c.getProfileID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	params := url.Values{
 		"q": {query}, "language": {"nl"}, "site": {"handelsregister"}, "size": {resultsPerPage}, "start": {"0"},
 		"inschrijvingsstatus": {"ingeschreven"},
@@ -118,6 +146,7 @@ func (c *Client) search(ctx context.Context, query string) ([]administration.Com
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Profileid", profileID)
 
 	res, err := c.http.Do(req)
 	if err != nil {
@@ -139,6 +168,12 @@ func (c *Client) search(ctx context.Context, query string) ([]administration.Com
 	case res.StatusCode >= http.StatusInternalServerError:
 		return nil, fmt.Errorf("%w: kvk answered %d", administration.ErrRegisterUnavailable, res.StatusCode)
 	case res.StatusCode != http.StatusOK:
+		if res.StatusCode == http.StatusBadRequest {
+			c.mu.Lock()
+			c.profileID = ""
+			c.profileExpiry = time.Time{}
+			c.mu.Unlock()
+		}
 		// 403 and 429 are refusals; any other answer means the search no
 		// longer works the way it did, which is as good as blocked.
 		return nil, fmt.Errorf("%w: kvk answered %d", administration.ErrRegisterBlocked, res.StatusCode)
@@ -151,6 +186,93 @@ func (c *Client) search(ctx context.Context, query string) ([]administration.Com
 		return nil, fmt.Errorf("%w: unexpected kvk response", administration.ErrRegisterBlocked)
 	}
 	return companies(parsed.Data.Items), nil
+}
+
+type envConfig struct {
+	ProfileID string `json:"NEXT_PUBLIC_SEARCH_V2_GENERAL_SEARCH_PROFILE_ID"`
+}
+
+func extractProfileID(body []byte) (string, error) {
+	start := bytes.IndexByte(body, '{')
+	end := bytes.LastIndexByte(body, '}')
+	if start == -1 || end == -1 || start >= end {
+		return "", errors.New("no json object in env config")
+	}
+	var cfg envConfig
+	if err := json.Unmarshal(body[start:end+1], &cfg); err != nil {
+		return "", fmt.Errorf("unmarshal env config: %w", err)
+	}
+	if cfg.ProfileID == "" {
+		return "", errors.New("profile id missing in env config")
+	}
+	return cfg.ProfileID, nil
+}
+
+func (c *Client) currentTime() time.Time {
+	if c.now != nil {
+		return c.now()
+	}
+	return time.Now()
+}
+
+func (c *Client) getProfileID(ctx context.Context) (string, error) {
+	now := c.currentTime()
+	c.mu.RLock()
+	id := c.profileID
+	valid := id != "" && !c.profileExpiry.IsZero() && now.Before(c.profileExpiry)
+	c.mu.RUnlock()
+	if valid {
+		return id, nil
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.profileID != "" && !c.profileExpiry.IsZero() && now.Before(c.profileExpiry) {
+		return c.profileID, nil
+	}
+
+	id, err := c.fetchProfileID(ctx)
+	if err != nil {
+		return "", err
+	}
+	c.profileID = id
+	c.profileExpiry = now.Add(profileTTL)
+	return id, nil
+}
+
+func (c *Client) fetchProfileID(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.configURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("build env config request: %w", err)
+	}
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("Accept", "*/*")
+
+	res, err := c.http.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("%w: fetch env config: %w", administration.ErrRegisterUnavailable, err)
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+
+	if res.StatusCode >= http.StatusInternalServerError {
+		return "", fmt.Errorf("%w: env config answered %d", administration.ErrRegisterUnavailable, res.StatusCode)
+	}
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("%w: env config answered %d", administration.ErrRegisterBlocked, res.StatusCode)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(res.Body, maxBodyBytes))
+	if err != nil {
+		return "", fmt.Errorf("%w: read env config: %w", administration.ErrRegisterUnavailable, err)
+	}
+
+	id, err := extractProfileID(body)
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", administration.ErrRegisterBlocked, err)
+	}
+	return id, nil
 }
 
 // isJSON tells results from the HTML of a block or challenge page.
