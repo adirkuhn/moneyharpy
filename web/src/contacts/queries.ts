@@ -170,6 +170,15 @@ export function useCompanyRegister(country: string, term: string, enabled: boole
   })
 }
 
+export type VatMatch = components['schemas']['VatLookup']
+
+/** What VIES registered for an EU VAT number, for filling in a contact. Only the VAT number is sent. */
+export function useVatLookup(administrationId: string) {
+  return useMutation({
+    mutationFn: (vat: string) => unwrap(api.GET('/api/v2/{administration_id}/vat_lookup', { params: { path: admin(administrationId), query: { vat_number: vat } } })),
+  })
+}
+
 /** What lists show for a contact: the company, else the person's name. */
 export function contactName(c: Pick<Contact, 'company_name' | 'firstname' | 'lastname'>) {
   const company = typeof c.company_name === 'string' ? c.company_name : ''

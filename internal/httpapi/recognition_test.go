@@ -178,7 +178,7 @@ func TestRecognitionSettingsAndCheck(t *testing.T) {
 	}
 	s := decode[httpapi.InstanceSettings](t, admin.do(http.MethodGet, "/api/instance/settings", nil))
 	cs := s.RecognitionAiConnections
-	if s.RecognitionViesEnabled {
+	if s.ViesEnabled {
 		t.Error("the VIES lookup is on by default, want off")
 	}
 	if !s.RecognitionAiEnabled || len(cs) != 2 ||
@@ -198,9 +198,9 @@ func TestRecognitionSettingsAndCheck(t *testing.T) {
 	if len(got2) != 2 || got2[0].Id != cs[1].Id || !got2[0].ApiKeySet || !got2[0].Enabled || got2[1].Id != cs[0].Id || got2[1].ApiKeySet || got2[1].Enabled {
 		t.Errorf("reordered = %+v", got2)
 	}
-	r = admin.do(http.MethodPatch, "/api/instance/settings", map[string]any{"recognition_vies_enabled": true})
+	r = admin.do(http.MethodPatch, "/api/instance/settings", map[string]any{"vies_enabled": true})
 	wantStatus(t, r, http.StatusOK)
-	if s := decode[httpapi.InstanceSettings](t, r); !s.RecognitionViesEnabled || len(s.RecognitionAiConnections) != 2 {
+	if s := decode[httpapi.InstanceSettings](t, r); !s.ViesEnabled || len(s.RecognitionAiConnections) != 2 {
 		t.Errorf("settings with the VIES lookup on = %+v", s)
 	}
 	// This server has no AI models wired in the tests.

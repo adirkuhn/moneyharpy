@@ -96,7 +96,7 @@ Optional and off by default. Under **Instance settings > Scan and Recognise**, a
 
 With Anthropic or NVIDIA's API catalog the text and page images of those documents are sent to that provider. **Check** tests each connection.
 
-Also off by default: **Add new suppliers under the name registered for their VAT number**. When Scan and Recognise reads an EU VAT number that matches no contact, it looks the number up in [VIES](https://ec.europa.eu/taxation_customs/vies/), the European Commission's VAT number service, and adds the supplier under its registered name (and address, when the document gave none) rather than the name read from the document, which OCR may garble. Only the VAT number is sent; when VIES does not answer within 5 seconds, the name read from the document is used.
+With **EU VAT number lookup (VIES)** turned on (see [Company search and address lookup](#company-search-and-address-lookup)), when Scan and Recognise reads an EU VAT number that matches no contact, it adds the supplier under the name (and address, when the document gave none) registered for that number rather than the name read from the document, which OCR may garble. When VIES does not answer within 5 seconds, the name read from the document is used.
 
 ### Company search and address lookup
 
@@ -105,6 +105,7 @@ Both are optional and off by default, and the app works without them. Under **In
 - **Company search** needs an API key from the [KVK developer portal](https://developers.kvk.nl/) and searches the Dutch company register while adding an administration.
 - **Experimental: KVK website search** searches the same register through the public search of the KVK website (`web-api.kvk.nl`), without an API key. It is off by default and only the instance administrator can turn it on. It is unofficial and undocumented: KVK may change it, stop it or block requests at any time, and it sends the name people type to KVK. It is only used while the official KVK API is not enabled; the API key stays the supported way, and a failing API search never falls back to the website. Searches time out after 5 seconds and are capped at 30 a minute for the whole installation. When KVK does not answer (network error, timeout, server error) or blocks the request (refusal, rate limit, a challenge page instead of results), the search says so and people fill in the details by hand. **Test KVK website search** checks it from your server with a sample search for a common word.
 - **Address lookup** completes Dutch addresses from zipcode and house number. It sends those two values to PDOK, the Dutch government address service.
+- **EU VAT number lookup (VIES)** looks EU VAT numbers up in [VIES](https://ec.europa.eu/taxation_customs/vies/), the European Commission's VAT number service. It sends only the VAT number. On the contact form, leaving the VAT number field (or **Look up** beside it) fills in the company name, address, zipcode, city and country from what VIES registered, in the fields that are still empty only, and says "Filled in from the EU VIES register". Scan and Recognise uses it for new suppliers too. Answers are kept for a day; when VIES does not answer within 5 seconds the form says so and nothing changes. Settings saved before this switch was shared keep the value of the old Scan and Recognise switch.
 
 ## API
 

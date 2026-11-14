@@ -23,21 +23,50 @@ func TestRecognitionAIIsOffByDefault(t *testing.T) {
 	}
 }
 
-func TestRecognitionVIESLookupIsOffByDefaultAndKept(t *testing.T) {
+func TestVIESLookupIsOffByDefaultAndKept(t *testing.T) {
 	ctx := context.Background()
 	s, _ := newService(t)
-	if got, _ := s.Instance(ctx); got.Recognition.VIESEnabled {
+	if got, _ := s.Instance(ctx); got.VIESEnabled {
 		t.Error("the VIES lookup is on by default, want off")
 	}
-	if _, err := s.Update(ctx, Update{RecognitionVIESEnabled: ptr(true)}); err != nil {
+	if _, err := s.Update(ctx, Update{VIESEnabled: ptr(true)}); err != nil {
 		t.Fatal(err)
 	}
 	got, err := s.Instance(ctx)
-	if err != nil || !got.Recognition.VIESEnabled || got.Recognition.AIEnabled {
-		t.Errorf("Instance().Recognition = %+v, %v, want only the VIES lookup on", got.Recognition, err)
+	if err != nil || !got.VIESEnabled || got.Recognition.AIEnabled {
+		t.Errorf("Instance() = %+v, %v, want only the VIES lookup on", got, err)
 	}
-	if got, _ := s.Update(ctx, Update{RecognitionVIESEnabled: ptr(false)}); got.Recognition.VIESEnabled {
+	if got, _ := s.Update(ctx, Update{VIESEnabled: ptr(false)}); got.VIESEnabled {
 		t.Error("the VIES lookup stayed on")
+	}
+}
+
+func TestVIESLookupMigratesTheScanAndRecogniseSwitch(t *testing.T) {
+	ctx := context.Background()
+	s, store := newService(t)
+	store.values[instanceKey] = []byte(`{"registration_open": true, "recognition_vies_enabled": true}`)
+	got, err := s.Instance(ctx)
+	if err != nil || !got.VIESEnabled {
+		t.Fatalf("Instance() = %+v, %v, want the VIES lookup on", got, err)
+	}
+
+	// Saved once, it is kept under its new name only.
+	if _, err := s.Update(ctx, Update{RegistrationOpen: ptr(false)}); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	raw := string(store.values[instanceKey])
+	if strings.Contains(raw, "recognition_vies_enabled") || !strings.Contains(raw, `"vies_enabled":true`) {
+		t.Errorf("stored = %s", raw)
+	}
+	if got, _ := s.Instance(ctx); !got.VIESEnabled {
+		t.Error("the VIES lookup was lost when saving")
+	}
+	// Turned off, the old name does not bring it back.
+	if got, _ := s.Update(ctx, Update{VIESEnabled: ptr(false)}); got.VIESEnabled {
+		t.Error("the VIES lookup stayed on")
+	}
+	if got, _ := s.Instance(ctx); got.VIESEnabled {
+		t.Error("the VIES lookup came back on")
 	}
 }
 

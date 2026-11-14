@@ -47,7 +47,7 @@ func (s *Service) fromRegistry(ctx context.Context, sup Supplier) Supplier {
 		return sup
 	}
 	inst, err := s.Settings.Instance(ctx)
-	if err != nil || !inst.Recognition.VIESEnabled {
+	if err != nil || !inst.VIESEnabled {
 		return sup
 	}
 	c, err := s.Registry.LookupVAT(ctx, NormalizeVAT(sup.VATNumber))
@@ -84,3 +84,25 @@ func registeredAddress(addr, country string) (address1, zipcode, city string) {
 	}
 	return strings.Join(lines[:len(lines)-1], ", "), zipcode, city
 }
+
+// SplitRegisteredAddress splits an address as a register such as VIES prints
+// it, one block of lines, into the street and the postcode and city of its
+// last line, reading postcodes as written in the country of the VAT number.
+// When it finds no postcode it keeps the whole address, its lines joined by
+// commas, as the street.
+func SplitRegisteredAddress(addr, vat string) (address1, zipcode, city string) {
+	if address1, zipcode, city = registeredAddress(addr, VATCountry(vat)); zipcode != "" {
+		return address1, zipcode, city
+	}
+	var lines []string
+	for _, l := range strings.Split(addr, "\n") {
+		if l = strings.Join(strings.Fields(l), " "); l != "" {
+			lines = append(lines, l)
+		}
+	}
+	return strings.Join(lines, ", "), "", ""
+}
+
+// VATCountry is the country code of a VAT number: its prefix, except EL for
+// Greece (GR) and XI for Northern Ireland (GB).
+func VATCountry(vat string) string { return countryOf(NormalizeVAT(vat)) }

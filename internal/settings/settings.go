@@ -96,6 +96,11 @@ type Instance struct {
 	// loopback addresses, for development. Off, webhooks need public HTTPS.
 	WebhooksAllowLocal bool
 	Recognition        Recognition
+	// VIESEnabled allows sending VAT numbers, and only those, to VIES, the
+	// European Commission's register of EU VAT numbers: to add a supplier
+	// Scan and Recognise found under its registered name, and to fill in a
+	// contact from its VAT number. Off by default.
+	VIESEnabled bool
 }
 
 // Update changes selected settings. Nil fields stay as they are, and an empty
@@ -135,7 +140,8 @@ type Update struct {
 	RecognitionAIEnabled *bool
 	// RecognitionAIConnections replaces the AI connections, in order.
 	RecognitionAIConnections *[]AIConnectionUpdate
-	RecognitionVIESEnabled   *bool
+
+	VIESEnabled *bool
 }
 
 // Store persists opaque values by key.
@@ -186,7 +192,10 @@ type storedInstance struct {
 	RecognitionAI    bool   `json:"recognition_ai_enabled"`
 	// RecognitionConns is nil in settings saved before there were connections.
 	RecognitionConns []storedConnection `json:"recognition_ai_connections"`
-	RecognitionVIES  bool               `json:"recognition_vies_enabled"`
+	VIES             bool               `json:"vies_enabled"`
+	// LegacyVIES is the VIES switch saved when only Scan and Recognise used
+	// it; it is read as VIES until the settings are saved.
+	LegacyVIES bool `json:"recognition_vies_enabled,omitempty"`
 	legacyRecognition
 }
 
@@ -211,7 +220,8 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 
 		AddressLookupEnabled: st.AddressLookup,
 		WebhooksAllowLocal:   st.WebhooksLocal,
-		Recognition:          Recognition{AIEnabled: st.RecognitionAI, VIESEnabled: st.RecognitionVIES},
+		Recognition:          Recognition{AIEnabled: st.RecognitionAI},
+		VIESEnabled:          st.VIES || st.LegacyVIES,
 		SMTP: SMTP{
 			Enabled: st.SMTPEnabled, Host: st.SMTPHost, Port: st.SMTPPort, Username: st.SMTPUsername,
 			From: st.SMTPFrom, Security: st.SMTPSecurity,
@@ -312,6 +322,9 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 	if u.AddressLookupEnabled != nil {
 		inst.AddressLookupEnabled = *u.AddressLookupEnabled
 	}
+	if u.VIESEnabled != nil {
+		inst.VIESEnabled = *u.VIESEnabled
+	}
 
 	applySMTP(&inst.SMTP, u)
 	applyStorage(&inst.Storage, u)
@@ -369,7 +382,7 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		StorageAccessKey: inst.Storage.AccessKey,
 		StoragePathStyle: inst.Storage.PathStyle,
 		RecognitionAI:    inst.Recognition.AIEnabled,
-		RecognitionVIES:  inst.Recognition.VIESEnabled,
+		VIES:             inst.VIESEnabled,
 	}
 	if st.RecognitionConns, err = s.sealConnections(inst.Recognition.Connections); err != nil {
 		return Instance{}, err

@@ -17,10 +17,6 @@ type Recognition struct {
 	AIEnabled bool
 	// Connections are tried in this order: the first that answers wins.
 	Connections []AIConnection
-	// VIESEnabled allows sending the VAT number read from a document to the
-	// EU's VIES service, to add a new supplier under its registered name.
-	// Off by default.
-	VIESEnabled bool
 }
 
 // AIConnection is one AI model Scan and Recognise can ask.
@@ -133,9 +129,6 @@ func (s *Service) sealConnections(cs []AIConnection) ([]storedConnection, error)
 func applyRecognition(cfg *Recognition, u Update) error {
 	if u.RecognitionAIEnabled != nil {
 		cfg.AIEnabled = *u.RecognitionAIEnabled
-	}
-	if u.RecognitionVIESEnabled != nil {
-		cfg.VIESEnabled = *u.RecognitionVIESEnabled
 	}
 	if u.RecognitionAIConnections == nil {
 		return nil

@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"cmp"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
@@ -469,6 +470,7 @@ func (s *server) OnboardingOptions(w http.ResponseWriter, r *http.Request) {
 	if inst.AddressLookupEnabled {
 		out.AddressLookupCountries = []string{lookupCountry}
 	}
+	out.VatLookupEnabled = inst.VIESEnabled && s.deps.VATNumbers != nil
 	writeJSON(w, http.StatusOK, out)
 }
 
@@ -850,7 +852,7 @@ func toInstanceSettings(inst settings.Instance) InstanceSettings {
 		StoragePathStyle:         inst.Storage.PathStyle,
 		RecognitionAiEnabled:     inst.Recognition.AIEnabled,
 		RecognitionAiConnections: toAIConnections(inst.Recognition.Connections),
-		RecognitionViesEnabled:   inst.Recognition.VIESEnabled,
+		ViesEnabled:              inst.VIESEnabled,
 	}
 }
 
@@ -967,7 +969,7 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 
 		RecognitionAIEnabled:     body.RecognitionAiEnabled,
 		RecognitionAIConnections: fromAIConnections(body.RecognitionAiConnections),
-		RecognitionVIESEnabled:   body.RecognitionViesEnabled,
+		VIESEnabled:              cmp.Or(body.ViesEnabled, body.RecognitionViesEnabled),
 	})
 	if err != nil {
 		s.fail(w, r, err)
