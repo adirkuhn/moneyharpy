@@ -1,37 +1,428 @@
-EXEMPLO DISTRIBUICAO, LDA.
-Rua do Exemplo, 123
-1000-001 Lisboa
-Contribuinte: 123456789
-IBAN: PT50 0002 0123 1234 5678 9015 4
-                                                                                                                                           Exmo.(s) Sr.(s)
-                                                                                                                                           EXAMPLE SHOP B.V.
-                                                                                                                                           VOORBEELDSTRAAT 1
-                                                                                                                                           1234 AB AMSTERDAM
-Fatura FT 2026/0815
-Data de Emissão: 2026-11-05
-  Lote        Validade        Referência      Descrição                                                                 Quant.          Uni             Preço S/IVA             Desc.         IVA                                                                     Valor Liquido
-  L123        06-abr-2027     100138          EXAMPLE SNACK MINI 32 X                                                       32          UNI                1,450 €                0%          6%                                                                            46,40 €
-  L124        12-mai-2027     100139          EXAMPLE BOLACHA MARIA 200G                                                    24          UN                 0,895 €                0%          6%                                                                            21,48 €
-  L125        30-jun-2027     100140          EXAMPLE AZEITE VIRGEM 750ML                                                   12          UN                 6,250 €                0%          6%                                                                            75,00 €
-  L126        15-set-2027     100141          EXAMPLE QUEIJO FLAMENGO                                                    2,500          KG                 8,990 €                0%          6%                                                                            22,48 €
-  L127        01-out-2027     100142          EXAMPLE CAFE MOIDO 250G                                                       10          CX                 3,120 €                5%          6%                                                                            29,64 €
+                                                                                                                                                                                                        ATCUD: EXEMPLO-0001                                                        FT EX1/0099
 
-                                                                                                                                                                                                        A transportar                                                      195,00 €
+                                                                                                                                                                                                                                                                      Fatura
 
-Processado por programa certificado n.º 0000/AT
-                                                                                                                        Fatura FT 2026/0815   Pág. 2/2
+                                                                                                                                                                                                                                                                     Página 1 de 3                      Original
+                                                                                                                    RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                    1000-001 Lisboa
+                                                                                                                                                                                                                                                                     Original: Fatura
 
-  Lote        Validade        Referência      Descrição                                                                 Quant.          Uni             Preço S/IVA             Desc.         IVA                                                                     Valor Liquido
-                                                                                                                                                                                                        Transporte                                                         195,00 €
-  L128        20-nov-2027     100143          EXAMPLE ARROZ CAROLINO 1KG                                                    40          UN                 1,150 €                0%          6%                                                                            46,00 €
-  L129        02-dez-2027     100144          EXAMPLE ATUM EM OLEO 120G                                                     48          UN                 1,375 €                0%          6%                                                                            66,00 €
 
-Quadro Resumo do IVA
-  Taxa              Incidência          Valor IVA
-  6%                  307,00 €            18,42 €
 
-                                                                                                                                                                                                        Total Ilíquido                                                     307,00 €
-                                                                                                                                                                                                        Total IVA                                                           18,42 €
-                                                                                                                                                                                                        Total a Pagar                                                      325,42 €
+                                                                                                                                                                                                        Voorbeeldstraat 7 B
+                                                                                                                                                                                                        AMSTERDAM
 
-Processado por programa certificado n.º 0000/AT
+
+                                                                                                                                                                                                        1000 AB AMSTERDAM
+
+                                                                                                                    Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                             Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                     11111/26          06-abr-2027 900001        EXEMPLO SNACK DE MILHO SABOR QUEIJO 32 X                   32      UNI     1,450 €       0%                  46,40 €
+                                                                                                                                                                 50G
+                                                                                                                     L90002            16-mai-2027 900002        BOLACHA EXEMPLO COM CHOCOLATE 6 X 10 X 25G                 60      UNI     0,400 €       0%                  24,00 €
+                                                                                                                     90003             19-mai-2027 900003        BOLACHA EXEMPLO COM BAUNILHA 6 X 10 X 25GR                 60      UNI     0,400 €       0%                  24,00 €
+                                                                                                                     90000004          04-jun-2027 900004        TOSTAS EXEMPLO INTEGRAIS 10 X 80G                         480      UNI     1,520 €       0%                 729,60 €
+                                                                                                                     101/ 102          31-jul-2027 900005        AZEITONAS EXEMPLO PRETAS 6 X 250G                          24      UNI     2,350 €       0%                  56,40 €
+
+
+
+                                                                                                                                                                               Continua na página seguinte
+
+                                                                                                                                                                                                           ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                         Fatura
+
+                                                                                                                                                                                                                                                                        Página 2 de 3                      Original
+                                                                                                                       RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                       1000-001 Lisboa
+                                                                                                                                                                                                                                                                        Original: Fatura
+
+
+
+                                                                                                                                                                                                           Voorbeeldstraat 7 B
+                                                                                                                                                                                                           AMSTERDAM
+
+
+                                                                                                                                                                                                           1000 AB AMSTERDAM
+
+                                                                                                                       Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                                Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                        EX90006           01-ago-2027 REF9          DOCE EXEMPLO DE FRUTOS VERMELHOS 16                        32      UNI     1,650 €       0%                  52,80 €
+                                                                                                                                                                    X 250G
+                                                                                                                        22222/26          12-set-2027 900007        FARINHA EXEMPLO S/ GLUTEN 10 X 10 X                        12      UNI     7,450 €       0%                  89,40 €
+                                                                                                                                                                    40G
+                                                                                                                                                                    250G
+                                                                                                                        0909              06-out-2027 900008        MEL EXEMPLO DE ROSMANINHO 12X250G                          12      UNI     2,190 €       0%                  26,28 €
+                                                                                                                        L90009            18-nov-2027 900009        QUEIJO EXEMPLO CURADO 1 KG                              2,500      KG      8,990 €       0%                  22,48 €
+                                                                                                                        0900A26           11-dez-2027 9010          CAFE EXEMPLO MOIDO 20 X100G                                20      UNI     0,450 €       0%                   9,00 €
+
+
+
+                                                                                                                                                                                  Continua na página seguinte
+
+                                                                                                                                                                                                              ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                            Fatura
+
+                                                                                                                                                                                                                                                                           Página 3 de 3                      Original
+                                                                                                                          RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                          1000-001 Lisboa
+                                                                                                                                                                                                                                                                           Original: Fatura
+
+
+
+                                                                                                                                                                                                              Voorbeeldstraat 7 B
+                                                                                                                                                                                                              AMSTERDAM
+
+
+                                                                                                                                                                                                              1000 AB AMSTERDAM
+
+                                                                                                                          Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                                   Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                           KIT 6X            30-jan-2054 KIT 6X        CABAZ EXEMPLO DE NATAL 3 6 PRODUTOS COM 2                   1      UNI    42,000 €       0%                  42,00 €
+                                                                                                                                                                       CAIXAS 2 TAMPAS
+                                                                                                                           L90012            04-fev-2027 9012          CHA EXEMPLO DE CIDREIRA C/ MEL 24 X 50G                    24      UNI     1,250 €       0%                  30,00 €
+                                                                                                                           L90013            08-mar-2027 9013          BOLACHA EXEMPLO MARIA 200G                                 24      UNI     0,895 €       0%                  21,48 €
+                                                                                                                           L90014            05-mar-2027 9014          CAFE EXEMPLO EM GRAO 250G                                  10      CX      3,120 €       5%                  29,64 €
+
+
+
+                                                                                                                                                                     Peso Total:                            123,45 KG
+                                                                                                                          Observações:
+                                                                                                                           Valor Incid.            IVA                   Imposto                     Mercadoria / Serviço:                                               1 203,48 EUR
+                                                                                                                                    1 203,48        0,0 %                0,00                        Desconto Comercial:                                                     0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Desconto Financeiro:                                                    0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Portes:                                                                 0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Total Líquido:                                                      1 203,48 EUR
+                                                                                                                          Isento Artigo 14.º do RITI (ou similar)                                    Total Imposto:                                                          0,00 EUR
+                                                                                                                          Condições de Pagamento:              Pronto Pagamento
+                                                                                                                                                                                                      Total a Pagar:                                               1 203,48 EUR
+
+                                                                                                                           Data: 02/10/2026          Hora: 09:15
+
+                                                                                                                          Processado por programa certificado n.º 0000/AT
+
+                                                                                                                                                                                                        ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                      Fatura
+
+                                                                                                                                                                                                                                                                     Página 1 de 3                      Duplicado
+                                                                                                                    RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                    1000-001 Lisboa
+                                                                                                                                                                                                                                                                     Original: Fatura
+
+
+
+                                                                                                                                                                                                        Voorbeeldstraat 7 B
+                                                                                                                                                                                                        AMSTERDAM
+
+
+                                                                                                                                                                                                        1000 AB AMSTERDAM
+
+                                                                                                                    Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                             Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                     11111/26          06-abr-2027 900001        EXEMPLO SNACK DE MILHO SABOR QUEIJO 32 X                   32      UNI     1,450 €       0%                  46,40 €
+                                                                                                                                                                 50G
+                                                                                                                     L90002            16-mai-2027 900002        BOLACHA EXEMPLO COM CHOCOLATE 6 X 10 X 25G                 60      UNI     0,400 €       0%                  24,00 €
+                                                                                                                     90003             19-mai-2027 900003        BOLACHA EXEMPLO COM BAUNILHA 6 X 10 X 25GR                 60      UNI     0,400 €       0%                  24,00 €
+                                                                                                                     90000004          04-jun-2027 900004        TOSTAS EXEMPLO INTEGRAIS 10 X 80G                         480      UNI     1,520 €       0%                 729,60 €
+                                                                                                                     101/ 102          31-jul-2027 900005        AZEITONAS EXEMPLO PRETAS 6 X 250G                          24      UNI     2,350 €       0%                  56,40 €
+
+
+
+                                                                                                                                                                               Continua na página seguinte
+
+                                                                                                                                                                                                           ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                         Fatura
+
+                                                                                                                                                                                                                                                                        Página 2 de 3                      Duplicado
+                                                                                                                       RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                       1000-001 Lisboa
+                                                                                                                                                                                                                                                                        Original: Fatura
+
+
+
+                                                                                                                                                                                                           Voorbeeldstraat 7 B
+                                                                                                                                                                                                           AMSTERDAM
+
+
+                                                                                                                                                                                                           1000 AB AMSTERDAM
+
+                                                                                                                       Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                                Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                        EX90006           01-ago-2027 REF9          DOCE EXEMPLO DE FRUTOS VERMELHOS 16                        32      UNI     1,650 €       0%                  52,80 €
+                                                                                                                                                                    X 250G
+                                                                                                                        22222/26          12-set-2027 900007        FARINHA EXEMPLO S/ GLUTEN 10 X 10 X                        12      UNI     7,450 €       0%                  89,40 €
+                                                                                                                                                                    40G
+                                                                                                                                                                    250G
+                                                                                                                        0909              06-out-2027 900008        MEL EXEMPLO DE ROSMANINHO 12X250G                          12      UNI     2,190 €       0%                  26,28 €
+                                                                                                                        L90009            18-nov-2027 900009        QUEIJO EXEMPLO CURADO 1 KG                              2,500      KG      8,990 €       0%                  22,48 €
+                                                                                                                        0900A26           11-dez-2027 9010          CAFE EXEMPLO MOIDO 20 X100G                                20      UNI     0,450 €       0%                   9,00 €
+
+
+
+                                                                                                                                                                                  Continua na página seguinte
+
+                                                                                                                                                                                                              ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                            Fatura
+
+                                                                                                                                                                                                                                                                           Página 3 de 3                      Duplicado
+                                                                                                                          RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                          1000-001 Lisboa
+                                                                                                                                                                                                                                                                           Original: Fatura
+
+
+
+                                                                                                                                                                                                              Voorbeeldstraat 7 B
+                                                                                                                                                                                                              AMSTERDAM
+
+
+                                                                                                                                                                                                              1000 AB AMSTERDAM
+
+                                                                                                                          Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                                   Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                           KIT 6X            30-jan-2054 KIT 6X        CABAZ EXEMPLO DE NATAL 3 6 PRODUTOS COM 2                   1      UNI    42,000 €       0%                  42,00 €
+                                                                                                                                                                       CAIXAS 2 TAMPAS
+                                                                                                                           L90012            04-fev-2027 9012          CHA EXEMPLO DE CIDREIRA C/ MEL 24 X 50G                    24      UNI     1,250 €       0%                  30,00 €
+                                                                                                                           L90013            08-mar-2027 9013          BOLACHA EXEMPLO MARIA 200G                                 24      UNI     0,895 €       0%                  21,48 €
+                                                                                                                           L90014            05-mar-2027 9014          CAFE EXEMPLO EM GRAO 250G                                  10      CX      3,120 €       5%                  29,64 €
+
+
+
+                                                                                                                                                                     Peso Total:                            123,45 KG
+                                                                                                                          Observações:
+                                                                                                                           Valor Incid.            IVA                   Imposto                     Mercadoria / Serviço:                                               1 203,48 EUR
+                                                                                                                                    1 203,48        0,0 %                0,00                        Desconto Comercial:                                                     0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Desconto Financeiro:                                                    0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Portes:                                                                 0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Total Líquido:                                                      1 203,48 EUR
+                                                                                                                          Isento Artigo 14.º do RITI (ou similar)                                    Total Imposto:                                                          0,00 EUR
+                                                                                                                          Condições de Pagamento:              Pronto Pagamento
+                                                                                                                                                                                                      Total a Pagar:                                               1 203,48 EUR
+
+                                                                                                                           Data: 02/10/2026          Hora: 09:15
+
+                                                                                                                          Processado por programa certificado n.º 0000/AT
+
+                                                                                                                                                                                                        ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                      Fatura
+
+                                                                                                                                                                                                                                                                     Página 1 de 3                      Triplicado
+                                                                                                                    RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                    1000-001 Lisboa
+                                                                                                                                                                                                                                                                     Original: Fatura
+
+
+
+                                                                                                                                                                                                        Voorbeeldstraat 7 B
+                                                                                                                                                                                                        AMSTERDAM
+
+
+                                                                                                                                                                                                        1000 AB AMSTERDAM
+
+                                                                                                                    Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                             Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                     11111/26          06-abr-2027 900001        EXEMPLO SNACK DE MILHO SABOR QUEIJO 32 X                   32      UNI     1,450 €       0%                  46,40 €
+                                                                                                                                                                 50G
+                                                                                                                     L90002            16-mai-2027 900002        BOLACHA EXEMPLO COM CHOCOLATE 6 X 10 X 25G                 60      UNI     0,400 €       0%                  24,00 €
+                                                                                                                     90003             19-mai-2027 900003        BOLACHA EXEMPLO COM BAUNILHA 6 X 10 X 25GR                 60      UNI     0,400 €       0%                  24,00 €
+                                                                                                                     90000004          04-jun-2027 900004        TOSTAS EXEMPLO INTEGRAIS 10 X 80G                         480      UNI     1,520 €       0%                 729,60 €
+                                                                                                                     101/ 102          31-jul-2027 900005        AZEITONAS EXEMPLO PRETAS 6 X 250G                          24      UNI     2,350 €       0%                  56,40 €
+
+
+
+                                                                                                                                                                               Continua na página seguinte
+
+                                                                                                                                                                                                           ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                         Fatura
+
+                                                                                                                                                                                                                                                                        Página 2 de 3                      Triplicado
+                                                                                                                       RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                       1000-001 Lisboa
+                                                                                                                                                                                                                                                                        Original: Fatura
+
+
+
+                                                                                                                                                                                                           Voorbeeldstraat 7 B
+                                                                                                                                                                                                           AMSTERDAM
+
+
+                                                                                                                                                                                                           1000 AB AMSTERDAM
+
+                                                                                                                       Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                                Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                        EX90006           01-ago-2027 REF9          DOCE EXEMPLO DE FRUTOS VERMELHOS 16                        32      UNI     1,650 €       0%                  52,80 €
+                                                                                                                                                                    X 250G
+                                                                                                                        22222/26          12-set-2027 900007        FARINHA EXEMPLO S/ GLUTEN 10 X 10 X                        12      UNI     7,450 €       0%                  89,40 €
+                                                                                                                                                                    40G
+                                                                                                                                                                    250G
+                                                                                                                        0909              06-out-2027 900008        MEL EXEMPLO DE ROSMANINHO 12X250G                          12      UNI     2,190 €       0%                  26,28 €
+                                                                                                                        L90009            18-nov-2027 900009        QUEIJO EXEMPLO CURADO 1 KG                              2,500      KG      8,990 €       0%                  22,48 €
+                                                                                                                        0900A26           11-dez-2027 9010          CAFE EXEMPLO MOIDO 20 X100G                                20      UNI     0,450 €       0%                   9,00 €
+
+
+
+                                                                                                                                                                                  Continua na página seguinte
+
+                                                                                                                                                                                                              ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                            Fatura
+
+                                                                                                                                                                                                                                                                           Página 3 de 3                      Triplicado
+                                                                                                                          RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                          1000-001 Lisboa
+                                                                                                                                                                                                                                                                           Original: Fatura
+
+
+
+                                                                                                                                                                                                              Voorbeeldstraat 7 B
+                                                                                                                                                                                                              AMSTERDAM
+
+
+                                                                                                                                                                                                              1000 AB AMSTERDAM
+
+                                                                                                                          Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                                   Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                           KIT 6X            30-jan-2054 KIT 6X        CABAZ EXEMPLO DE NATAL 3 6 PRODUTOS COM 2                   1      UNI    42,000 €       0%                  42,00 €
+                                                                                                                                                                       CAIXAS 2 TAMPAS
+                                                                                                                           L90012            04-fev-2027 9012          CHA EXEMPLO DE CIDREIRA C/ MEL 24 X 50G                    24      UNI     1,250 €       0%                  30,00 €
+                                                                                                                           L90013            08-mar-2027 9013          BOLACHA EXEMPLO MARIA 200G                                 24      UNI     0,895 €       0%                  21,48 €
+                                                                                                                           L90014            05-mar-2027 9014          CAFE EXEMPLO EM GRAO 250G                                  10      CX      3,120 €       5%                  29,64 €
+
+
+
+                                                                                                                                                                     Peso Total:                            123,45 KG
+                                                                                                                          Observações:
+                                                                                                                           Valor Incid.            IVA                   Imposto                     Mercadoria / Serviço:                                               1 203,48 EUR
+                                                                                                                                    1 203,48        0,0 %                0,00                        Desconto Comercial:                                                     0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Desconto Financeiro:                                                    0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Portes:                                                                 0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Total Líquido:                                                      1 203,48 EUR
+                                                                                                                          Isento Artigo 14.º do RITI (ou similar)                                    Total Imposto:                                                          0,00 EUR
+                                                                                                                          Condições de Pagamento:              Pronto Pagamento
+                                                                                                                                                                                                      Total a Pagar:                                               1 203,48 EUR
+
+                                                                                                                           Data: 02/10/2026          Hora: 09:15
+
+                                                                                                                          Processado por programa certificado n.º 0000/AT
+
+                                                                                                                                                                                                        ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                      Fatura
+
+                                                                                                                                                                                                                                                                     Página 1 de 3                      Quadruplicado
+                                                                                                                    RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                    1000-001 Lisboa
+                                                                                                                                                                                                                                                                     Original: Fatura
+
+
+
+                                                                                                                                                                                                        Voorbeeldstraat 7 B
+                                                                                                                                                                                                        AMSTERDAM
+
+
+                                                                                                                                                                                                        1000 AB AMSTERDAM
+
+                                                                                                                    Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                             Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                     11111/26          06-abr-2027 900001        EXEMPLO SNACK DE MILHO SABOR QUEIJO 32 X                   32      UNI     1,450 €       0%                  46,40 €
+                                                                                                                                                                 50G
+                                                                                                                     L90002            16-mai-2027 900002        BOLACHA EXEMPLO COM CHOCOLATE 6 X 10 X 25G                 60      UNI     0,400 €       0%                  24,00 €
+                                                                                                                     90003             19-mai-2027 900003        BOLACHA EXEMPLO COM BAUNILHA 6 X 10 X 25GR                 60      UNI     0,400 €       0%                  24,00 €
+                                                                                                                     90000004          04-jun-2027 900004        TOSTAS EXEMPLO INTEGRAIS 10 X 80G                         480      UNI     1,520 €       0%                 729,60 €
+                                                                                                                     101/ 102          31-jul-2027 900005        AZEITONAS EXEMPLO PRETAS 6 X 250G                          24      UNI     2,350 €       0%                  56,40 €
+
+
+
+                                                                                                                                                                               Continua na página seguinte
+
+                                                                                                                                                                                                           ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                         Fatura
+
+                                                                                                                                                                                                                                                                        Página 2 de 3                      Quadruplicado
+                                                                                                                       RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                       1000-001 Lisboa
+                                                                                                                                                                                                                                                                        Original: Fatura
+
+
+
+                                                                                                                                                                                                           Voorbeeldstraat 7 B
+                                                                                                                                                                                                           AMSTERDAM
+
+
+                                                                                                                                                                                                           1000 AB AMSTERDAM
+
+                                                                                                                       Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                                Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                        EX90006           01-ago-2027 REF9          DOCE EXEMPLO DE FRUTOS VERMELHOS 16                        32      UNI     1,650 €       0%                  52,80 €
+                                                                                                                                                                    X 250G
+                                                                                                                        22222/26          12-set-2027 900007        FARINHA EXEMPLO S/ GLUTEN 10 X 10 X                        12      UNI     7,450 €       0%                  89,40 €
+                                                                                                                                                                    40G
+                                                                                                                                                                    250G
+                                                                                                                        0909              06-out-2027 900008        MEL EXEMPLO DE ROSMANINHO 12X250G                          12      UNI     2,190 €       0%                  26,28 €
+                                                                                                                        L90009            18-nov-2027 900009        QUEIJO EXEMPLO CURADO 1 KG                              2,500      KG      8,990 €       0%                  22,48 €
+                                                                                                                        0900A26           11-dez-2027 9010          CAFE EXEMPLO MOIDO 20 X100G                                20      UNI     0,450 €       0%                   9,00 €
+
+
+
+                                                                                                                                                                                  Continua na página seguinte
+
+                                                                                                                                                                                                              ATCUD: EXEMPLO-0001                                                        FT EX1/0099
+
+                                                                                                                                                                                                                                                                            Fatura
+
+                                                                                                                                                                                                                                                                           Página 3 de 3                      Quadruplicado
+                                                                                                                          RUA DO EXEMPLO DA INDUSTRIA LOTE 4 ARMAZEM 2
+                                                                                                                          1000-001 Lisboa
+                                                                                                                                                                                                                                                                           Original: Fatura
+
+
+
+                                                                                                                                                                                                              Voorbeeldstraat 7 B
+                                                                                                                                                                                                              AMSTERDAM
+
+
+                                                                                                                                                                                                              1000 AB AMSTERDAM
+
+                                                                                                                          Os bens foram colocados a disposicao do adquirente em 2026-10-02
+
+                                                                                                                                   Lote       Validade    Referência                          Descrição                          Quant.     Uni   Preço S/IVA Desc. IVA Valor Liquido
+                                                                                                                           KIT 6X            30-jan-2054 KIT 6X        CABAZ EXEMPLO DE NATAL 3 6 PRODUTOS COM 2                   1      UNI    42,000 €       0%                  42,00 €
+                                                                                                                                                                       CAIXAS 2 TAMPAS
+                                                                                                                           L90012            04-fev-2027 9012          CHA EXEMPLO DE CIDREIRA C/ MEL 24 X 50G                    24      UNI     1,250 €       0%                  30,00 €
+                                                                                                                           L90013            08-mar-2027 9013          BOLACHA EXEMPLO MARIA 200G                                 24      UNI     0,895 €       0%                  21,48 €
+                                                                                                                           L90014            05-mar-2027 9014          CAFE EXEMPLO EM GRAO 250G                                  10      CX      3,120 €       5%                  29,64 €
+
+
+
+                                                                                                                                                                     Peso Total:                            123,45 KG
+                                                                                                                          Observações:
+                                                                                                                           Valor Incid.            IVA                   Imposto                     Mercadoria / Serviço:                                               1 203,48 EUR
+                                                                                                                                    1 203,48        0,0 %                0,00                        Desconto Comercial:                                                     0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Desconto Financeiro:                                                    0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Portes:                                                                 0,00 EUR
+                                                                                                                                        0,00        0,0 %                0,00                        Total Líquido:                                                      1 203,48 EUR
+                                                                                                                          Isento Artigo 14.º do RITI (ou similar)                                    Total Imposto:                                                          0,00 EUR
+                                                                                                                          Condições de Pagamento:              Pronto Pagamento
+                                                                                                                                                                                                      Total a Pagar:                                               1 203,48 EUR
+
+                                                                                                                           Data: 02/10/2026          Hora: 09:15
+
+                                                                                                                          Processado por programa certificado n.º 0000/AT
+

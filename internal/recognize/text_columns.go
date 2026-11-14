@@ -98,7 +98,6 @@ var metadataLine = regexp.MustCompile(`(?i)^\s*(?:mhd|ean|gtin|lote?|lot|validad
 type number struct {
 	vals     []int64
 	decimals []int
-	start    int
 }
 
 // numberToken reads a number as a column prints it: "44,40", "1.234,56",
@@ -222,13 +221,13 @@ func columnRow(line string, h tableHead) (Line, int, bool) {
 		return Line{}, 0, false
 	}
 	cs := cells(line)
-	desc, at, next := description(cs)
+	desc, at, after := description(cs)
 	if desc == "" {
 		return Line{}, 0, false
 	}
 	var nums []number
 	var pcts []percent
-	for _, c := range cs[next:] {
+	for _, c := range after {
 		for _, f := range fields(c.text) {
 			f.start += c.start
 			if p, ok := strings.CutSuffix(f.text, "%"); ok {
@@ -238,7 +237,6 @@ func columnRow(line string, h tableHead) (Line, int, bool) {
 				continue
 			}
 			if n, ok := numberToken(f.text); ok {
-				n.start = f.start
 				nums = append(nums, n)
 			}
 		}
@@ -259,10 +257,16 @@ func columnRow(line string, h tableHead) (Line, int, bool) {
 	return l, at, true
 }
 
-// description finds a row's description: the first cell that has words
-// once the codes printed before them are left out. It returns the
-// description, where it is printed and the index of the next cell.
-func description(cs []cell) (string, int, int) {
+// description finds a row's description: of the cells that have words once
+// the codes printed before them are left out (position, article number,
+// lot, dates), the one with the most letters, so a short lot or reference
+// code with letters ("KIT 8X") is not taken for it. A count printed right
+// after it, with decimals and a unit ("4,00 VPE"), belongs to the numbers.
+// It returns the description, where it is printed and the cells after it,
+// with that count as a cell of its own.
+func description(cs []cell) (string, int, []cell) {
+	best, bestLetters := -1, 1
+	var bestFields []field
 	for i, c := range cs {
 		fs := fields(c.text)
 		for len(fs) > 0 && strings.ContainsFunc(fs[0].text, unicode.IsDigit) {
@@ -271,22 +275,75 @@ func description(cs []cell) (string, int, int) {
 		if len(fs) == 0 || !strings.ContainsFunc(fs[0].text, unicode.IsLetter) {
 			continue
 		}
-		var ws []string
-		letters := 0
-		for _, f := range fs {
-			ws = append(ws, f.text)
-			for _, r := range f.text {
-				if unicode.IsLetter(r) {
-					letters++
-				}
+		if n := letterCount(fs); n > bestLetters {
+			best, bestLetters, bestFields = i, n, fs
+		}
+	}
+	if best < 0 {
+		return "", 0, nil
+	}
+	c := cs[best]
+	rest := cs[best+1:]
+	if k := trailingCount(bestFields); k < len(bestFields) {
+		tail := cell{text: strings.Join(texts(bestFields[k:]), " "), start: c.start + bestFields[k].start}
+		rest = append([]cell{tail}, rest...)
+		bestFields = bestFields[:k]
+	}
+	return strings.Join(texts(bestFields), " "), c.start + bestFields[0].start, rest
+}
+
+// trailingCount is where a count with decimals and an optional unit ends a
+// description ("… Doce 4,00 VPE"), or len(fs) when none does. Whole numbers
+// are part of descriptions ("32 X", "8 X 15 X 20G").
+func trailingCount(fs []field) int {
+	k := len(fs)
+	if k > 1 && len(fs[k-1].text) <= 4 && !strings.ContainsFunc(fs[k-1].text, unicode.IsDigit) {
+		k-- // the unit
+	}
+	if k > 1 {
+		if n, ok := numberToken(fs[k-1].text); ok && n.decimals[0] > 0 {
+			return k - 1
+		}
+	}
+	return len(fs)
+}
+
+func letterCount(fs []field) int {
+	n := 0
+	for _, f := range fs {
+		for _, r := range f.text {
+			if unicode.IsLetter(r) {
+				n++
 			}
 		}
-		if letters < 2 {
+	}
+	return n
+}
+
+func texts(fs []field) []string {
+	out := make([]string, len(fs))
+	for i, f := range fs {
+		out[i] = f.text
+	}
+	return out
+}
+
+// oneCopy is lines printed in several identical copies (Original,
+// Duplicado …) as one copy; other lines are returned as they are.
+func oneCopy(lines []Line) []Line {
+	for n := 1; n <= len(lines)/2; n++ {
+		if len(lines)%n != 0 {
 			continue
 		}
-		return strings.Join(ws, " "), c.start + fs[0].start, i + 1
+		same := true
+		for i := n; i < len(lines) && same; i++ {
+			same = lines[i] == lines[i-n]
+		}
+		if same {
+			return lines[:n]
+		}
 	}
-	return "", 0, 0
+	return lines
 }
 
 // splitPercents tells the VAT rate of a row, the percentage printed nearest

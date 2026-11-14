@@ -30,7 +30,31 @@ func TestParseTextColumnTables(t *testing.T) {
 			},
 			good: true,
 		},
+		// Three pages printed in four copies (Original … Quadruplicado), a
+		// wide left margin, an empty discount column, numbers in the
+		// descriptions and an exempt VAT summary beside the totals.
 		"pt_fatura_wide.txt": {
+			kind: KindPurchaseInvoice, date: "2026-10-02", currency: "EUR", incl: "1203.48", excl: "1203.48",
+			vat21: []string{"0:1203.48:0.00"}, prices: "excl",
+			lines: []string{
+				"EXEMPLO SNACK DE MILHO SABOR QUEIJO 32 X 50G|32|1.45|46.40|0",
+				"BOLACHA EXEMPLO COM CHOCOLATE 6 X 10 X 25G|60|0.40|24.00|0",
+				"BOLACHA EXEMPLO COM BAUNILHA 6 X 10 X 25GR|60|0.40|24.00|0",
+				"TOSTAS EXEMPLO INTEGRAIS 10 X 80G|480|1.52|729.60|0",
+				"AZEITONAS EXEMPLO PRETAS 6 X 250G|24|2.35|56.40|0",
+				"DOCE EXEMPLO DE FRUTOS VERMELHOS 16 X 250G|32|1.65|52.80|0",
+				"FARINHA EXEMPLO S/ GLUTEN 10 X 10 X 40G 250G|12|7.45|89.40|0",
+				"MEL EXEMPLO DE ROSMANINHO 12X250G|12|2.19|26.28|0",
+				"QUEIJO EXEMPLO CURADO 1 KG|2.5|8.99|22.48|0",
+				"CAFE EXEMPLO MOIDO 20 X100G|20|0.45|9.00|0",
+				"CABAZ EXEMPLO DE NATAL 3 6 PRODUTOS COM 2 CAIXAS 2 TAMPAS|1|42.00|42.00|0",
+				"CHA EXEMPLO DE CIDREIRA C/ MEL 24 X 50G|24|1.25|30.00|0",
+				"BOLACHA EXEMPLO MARIA 200G|24||21.48|0",
+				"CAFE EXEMPLO EM GRAO 250G|10||29.64|0",
+			},
+			good: true,
+		},
+		"pt_fatura_transporte.txt": {
 			kind: KindPurchaseInvoice, name: "EXEMPLO DISTRIBUICAO, LDA.", vat: "PT123456789", iban: "PT50000201231234567890154",
 			date: "2026-11-05", currency: "EUR", incl: "325.42", excl: "307.00", vat21: []string{"6:307.00:18.42"}, prices: "excl",
 			lines: []string{
@@ -53,9 +77,13 @@ func TestParseTextColumnTables(t *testing.T) {
 			got := ParseText(string(data), today)
 			checkText(t, got, w)
 			for i, l := range got.Lines {
-				if l.Total.Confidence != Certain || l.TaxRate.Confidence != Certain {
+				// 0% on goods stays a guess to check: it may be an exemption.
+				if l.Total.Confidence != Certain || l.TaxRate.Confidence != Certain && l.TaxRate.V != "0" {
 					t.Errorf("line %d total %+v rate %+v, want certain: the lines add up to the total", i, l.Total, l.TaxRate)
 				}
+			}
+			if w.name == "" && got.Supplier.Name != "" {
+				t.Errorf("supplier name = %q, want none: the document prints none", got.Supplier.Name)
 			}
 		})
 	}
@@ -97,20 +125,28 @@ func TestColumnRow(t *testing.T) {
 			de, "  5   820-3       EXAMPLE Rice crackers 100g     50,00 VPE    à 20           1.000 Einh         0,89     17,80        890,00  10",
 			"EXAMPLE Rice crackers 100g|1000|0.89|890.00|",
 		},
+		"German, the package count against the description": {
+			de, "  7   930-2       EXAMPLE Tapioca flour sweet 4,00 VPE    à 12              48 Einh         2,10     25,20        100,80  10",
+			"EXAMPLE Tapioca flour sweet|48|2.10|100.80|",
+		},
+		"Portuguese, a lot code with letters": {
+			pt, "KIT 6X      30-jan-2054 KIT 6X  EXEMPLO CABAZ DE NATAL 3 6 PRODUTOS   1     UNI    55,000 €      0%            55,00 €",
+			"EXEMPLO CABAZ DE NATAL 3 6 PRODUTOS|1|55.00|55.00|",
+		},
 		"German big amounts": {
 			de, "  6   900-1       EXAMPLE Water 1,5L             80,00 VPE    à 6              480 Einh         2,55     15,30      1.224,00  10",
 			"EXAMPLE Water 1,5L|480|2.55|1224.00|",
 		},
 		"Portuguese, three decimals and €": {
-			pt, "L123        06-abr-2027    100138        EXAMPLE SNACK MINI 32 X        32     UNI     1,450 €      0%     6%       46,40 €",
+			pt, "L123        06-abr-2027    900138        EXAMPLE SNACK MINI 32 X        32     UNI     1,450 €      0%     6%       46,40 €",
 			"EXAMPLE SNACK MINI 32 X|32|1.45|46.40|6",
 		},
 		"Portuguese, a price not in cents": {
-			pt, "L124        12-mai-2027    100139        EXAMPLE BOLACHA MARIA 200G     24     UN      0,895 €      0%     6%       21,48 €",
+			pt, "L124        12-mai-2027    900139        EXAMPLE BOLACHA MARIA 200G     24     UN      0,895 €      0%     6%       21,48 €",
 			"EXAMPLE BOLACHA MARIA 200G|24||21.48|6",
 		},
 		"Portuguese, a discount": {
-			pt, "L127        01-out-2027    100142        EXAMPLE CAFE MOIDO 250G        10     CX      3,120 €      5%     6%       29,64 €",
+			pt, "L127        01-out-2027    900142        EXAMPLE CAFE MOIDO 250G        10     CX      3,120 €      5%     6%       29,64 €",
 			"EXAMPLE CAFE MOIDO 250G|10||29.64|6",
 		},
 		"English, price before quantity is no matter": {
@@ -190,7 +226,9 @@ func bigInvoice() (string, int) {
 		fmt.Fprintf(&b, "%s A transportar %s %d,%02d €\n\fProcessado por programa certificado\n", strings.Repeat(" ", 150), strings.Repeat(" ", 100), cents/100, cents%100)
 	}
 	fmt.Fprintf(&b, "Total Ilíquido %d,%02d €\n", cents/100, cents%100)
-	return b.String(), rows
+	// A wide left margin, as wide invoices are printed with.
+	margin := strings.Repeat(" ", 115)
+	return margin + strings.ReplaceAll(b.String(), "\n", "\n"+margin), rows
 }
 
 func TestParseTextBigColumnTableIsFast(t *testing.T) {

@@ -2,6 +2,8 @@ package recognize
 
 import (
 	"regexp"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,6 +40,7 @@ func ParseText(text string, today time.Time) Extraction {
 	rows := []rowSet{
 		{lines: readTable(lines, kinds)},
 		{lines: columns, roughly: true},
+		{lines: oneCopy(columns), roughly: true}, // a document printed in copies
 		{read: func() []Line { return readLines(lines, kinds) }},
 	}
 	kind := readKind(rest, e.DueDate.Found, t.paid)
@@ -57,11 +60,51 @@ var ocrWord = regexp.MustCompile(`\b[A-Za-z][A-Za-z01]*[A-Za-z]\b|\b[A-Za-z]{2,}
 func prepare(text string) []string {
 	text = strings.NewReplacer("\r\n", "\n", "\r", "\n", "\t", "    ", " ", " ", " ", " ",
 		" ", " ", " ", " ", "–", "-", "—", "-", "−", "-", "’", "'").Replace(text)
-	lines := strings.Split(text, "\n")
+	lines := dedent(strings.Split(text, "\n"))
 	for i, l := range lines {
 		lines[i] = strings.TrimRight(joinSplitDecimals(fixOCR(l)), " ")
 	}
 	return lines
+}
+
+// dedent leaves out the left margin of each page: the spaces every line of
+// it starts with. A page starts at a form feed, which is dropped. Columns
+// stay where they are relative to each other, and a wide margin does not
+// slow down reading every line.
+func dedent(lines []string) []string {
+	start := 0
+	for i := range lines {
+		if strings.HasPrefix(lines[i], "\f") {
+			trimMargin(lines[start:i])
+			lines[i] = strings.TrimLeft(lines[i], "\f")
+			start = i
+		}
+	}
+	trimMargin(lines[start:])
+	return lines
+}
+
+// trimMargin removes the spaces all non-blank lines of a page start with.
+func trimMargin(page []string) {
+	margin := -1
+	for _, l := range page {
+		if strings.TrimSpace(l) == "" {
+			continue
+		}
+		if n := len(l) - len(strings.TrimLeft(l, " ")); margin < 0 || n < margin {
+			margin = n
+		}
+	}
+	if margin <= 0 {
+		return
+	}
+	for i, l := range page {
+		if len(l) >= margin {
+			page[i] = l[margin:]
+		} else {
+			page[i] = ""
+		}
+	}
 }
 
 func fixOCR(l string) string {
@@ -134,7 +177,7 @@ var (
 	// exemptEUWords mark a supply exempt in the seller's country because the
 	// buyer accounts for the VAT: an intra-community supply.
 	exemptEUWords = regexp.MustCompile(`(?i)verlegd|reverse[ -]charge|autoliquida|steuerschuldnerschaft|inversi[oó]n del sujeto pasivo|intra-?communautaire|intra-?community|intracomunit[aá]ri|innergemeinschaftlich|isento artigo 14|artigo 14\.?º? do civa|art(?:\.|icle|ikel)? ?138|art(?:\.|igo)? ?25 (?:de la )?ley|exenta art|vat exempt intra`)
-	exclWords     = regexp.MustCompile(`(?i)\b(?:subtotaal|subtotal|sub-total|sub total|sub\. total|incid[eê]ncia|excl\.?|exclusief|excluding|exkl\.?|ex\.? btw|netto|nettobetrag|net amount|net total|total net|total ht|montant ht|hors taxes|base imponible|zwischensumme|sous-total|il[ií]quido|sem iva|total excl)`)
+	exclWords     = regexp.MustCompile(`(?i)\b(?:subtotaal|subtotal|sub-total|sub total|sub\. total|incid[eê]ncia|excl\.?|exclusief|excluding|exkl\.?|ex\.? btw|netto|nettobetrag|net amount|net total|total net|total ht|montant ht|hors taxes|base imponible|zwischensumme|sous-total|il[ií]quido|total l[ií]quido|sem iva|total excl)`)
 	inclMarker    = regexp.MustCompile(`(?i)\b(?:incl\.?|inclusief|including|inkl\.?|ttc)\b`)
 	inclStrong    = regexp.MustCompile(`(?i)totaal incl|total incl|totaalbedrag|totaal te betalen|te betalen|amount due|total due|balance due|grand total|gesamtbetrag|rechnungsbetrag|zu zahlen|zahlbetrag|endbetrag|total a pagar|total ttc|net [aà] payer|importe total|total factura|eindtotaal|te voldoen|invoice total|total amount|totale`)
 	inclWeak      = regexp.MustCompile(`(?i)\b(?:totaal|total|summe|gesamt|totale)\b`)
@@ -153,11 +196,15 @@ func classify(lines []string) []lineKind {
 	vatTableUntil := -1
 	for i, l := range lines {
 		amounts := findAmounts(l)
+		left, right := besideColumn(l)
+		if vatTableHead.MatchString(left) && !itemHeader.MatchString(left) && len(findAmounts(left)) == 0 && (len(amounts) == 0 || right != "") {
+			vatTableUntil = i + 4
+		}
 		if len(amounts) == 0 {
-			if vatTableHead.MatchString(l) && !itemHeader.MatchString(l) {
-				vatTableUntil = i + 4
-			}
 			continue
+		}
+		if right != "" {
+			l = right // the amounts belong to the label beside the other column
 		}
 		hasVAT, hasRate := vatWord.MatchString(l), findRate(l) != ""
 		incl, excl := inclStrong.MatchString(l) || inclWeak.MatchString(l), exclWords.MatchString(l)
@@ -188,6 +235,38 @@ func classify(lines []string) []lineKind {
 	}
 	return kinds
 }
+
+// wideGap is how many spaces set two columns of text apart on a line.
+const wideGap = 8
+
+// besideColumn splits a line printed in two columns, a column of words
+// without amounts on the left and a label with its amount on the right
+// ("Valor Incid.  IVA  Imposto      Mercadoria / Serviço:  1 276,02 EUR"):
+// it returns the left column and the right one. Otherwise left is the line
+// and right is empty.
+func besideColumn(l string) (left, right string) {
+	cols := wideGapRe.Split(strings.TrimSpace(l), -1)
+	k := slices.IndexFunc(cols, func(c string) bool { return len(findAmounts(c)) > 0 })
+	if k < 0 {
+		return l, ""
+	}
+	if !hasWords(cols[k]) {
+		k-- // the amount's label is the column before it
+	}
+	if k < 1 || !hasWords(cols[k]) {
+		return l, ""
+	}
+	return strings.Join(cols[:k], "  "), strings.Join(cols[k:], "  ")
+}
+
+var wideGapRe = regexp.MustCompile(` {` + strconv.Itoa(wideGap) + `,}`)
+
+// hasWords tells whether s has letters besides a currency code.
+func hasWords(s string) bool {
+	return strings.ContainsFunc(currencyCode.ReplaceAllString(s, ""), isLetterRune)
+}
+
+var currencyCode = regexp.MustCompile(`\b(?:EUR|USD|GBP|CHF)\b`)
 
 // unsigned are amounts without their signs.
 func unsigned(amounts []money.Amount) []money.Amount {

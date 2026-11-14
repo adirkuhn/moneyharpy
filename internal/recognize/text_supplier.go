@@ -25,7 +25,7 @@ var (
 	labelLine  = regexp.MustCompile(`^[^:]{1,30}:\s`)
 	// boilerplate is what a receipt or invoice prints about itself, never
 	// the supplier's name: "KOPIE BON", "Kassabon", "Customer's receipt".
-	boilerplate = regexp.MustCompile(`(?i)^\W*(?:kopie\s?bon|kopie|copy|duplica(?:at|te)|kassa\s?bon|kassenbon|bon|customer'?s?\s+(?:receipt|copy)|klant(?:en)?\s?ticket|receipt|factuur|invoice|rechnung|fatura|facture|factura|origineel|original)\W*$`)
+	boilerplate = regexp.MustCompile(`(?i)^\W*(?:kopie\s?bon|kopie|copy|duplica(?:at|te)|kassa\s?bon|kassenbon|bon|customer'?s?\s+(?:receipt|copy)|klant(?:en)?\s?ticket|receipt|factuur|invoice|rechnung|fatura|facture|factura|origineel|original|duplicado|triplicado|quadruplicado|\d\s?ª\s?via)\W*$`)
 	streetRe    = regexp.MustCompile(`(?i)^(?:\p{L}[\p{L}\p{M}'.,\- ]*\s\d+\s?[a-z]?(?:[-/ ]?\d+[a-z]?)?(?:,.*)?|\d+[a-z]?,?\s+\p{L}.*|(?:postbus|p\.?\s?o\.?\s?box|postfach|apartado|bo[iî]te postale)\s*\d+.*)$`)
 	nlZip       = regexp.MustCompile(`^(\d{4})\s?([A-Z]{2})\b\s*(.*)$`)
 	ptZip       = regexp.MustCompile(`^(\d{4}-\d{3})\s+(.+)$`)
@@ -292,6 +292,9 @@ const maxNameWords = 8
 // one it takes the first line that reads like a name at the top of the
 // document. Names OCR garbled are left out.
 func supplierName(lines []string, buyer []bool, vatAt int) string {
+	if name := tradeNameOwner(lines); name != "" {
+		return name
+	}
 	name, dist := "", -1
 	for i, l := range lines {
 		if buyer[i] {
@@ -318,20 +321,91 @@ func supplierName(lines []string, buyer []bool, vatAt int) string {
 	if name != "" {
 		return name
 	}
+	for i, l := range lines {
+		if m := postbusName.FindStringSubmatch(strings.TrimSpace(l)); m != nil && !buyer[i] && looksLikeName(m[1]) {
+			return m[1]
+		}
+	}
 	seen := 0
 	for i, l := range lines {
 		l = strings.TrimSpace(l)
-		if l == "" || buyer[i] || boilerplate.MatchString(l) {
+		if l == "" || buyer[i] || boilerplate.MatchString(l) || pageMarker.MatchString(l) {
 			continue
 		}
 		if seen++; seen > 6 {
 			break
 		}
-		if looksLikeName(l) {
-			return l
+		segs := segments(l)
+		if j := nextNonEmpty(lines, i); j >= 0 && isPostcodeLine(lines[j]) || otherColumnSays(segs) {
+			continue // the street above a postcode, a label and its value
+		}
+		if j := prevNonEmpty(lines, i); j >= 0 && isStreetLine(lines[j]) {
+			continue // the city under a street
+		}
+		if looksLikeName(segs[0]) {
+			return segs[0]
 		}
 	}
 	return ""
+}
+
+var (
+	// tradeName is a sentence naming the legal entity behind a trade name:
+	// "X Zakelijk is een handelsnaam van X Retail Energie B.V.".
+	tradeName = regexp.MustCompile(`(?i)\b(?:is een handelsnaam van|handelsnaam van|is a trad(?:e|ing) name of|trading name of|ist eine marke der|ist ein handelsname der|é uma marca de|est une marque de)\s+(.+?)[\s,;]*$`)
+	// postbusName is the company a postal address starts with: "X, Postbus
+	// 1234".
+	postbusName = regexp.MustCompile(`(?i)^([^,|]{2,60}?),\s*(?:postbus|p\.?\s?o\.?\s?box|postfach|apartado|bo[iî]te postale)\s*\d`)
+	// pageMarker is a page number: "Página 1 de 3", "Seite 2 von 3".
+	pageMarker = regexp.MustCompile(`(?i)\b(?:p[aá]gina|p[aá]g\.?|page|seite|blad|pagina)\s*(?:n\.?\s?[º°o]\.?\s*)?\d+\s*(?:de|of|von|van|/)\s*\d+|\b\d{1,3}\s+(?:de|of|von|van)\s+\d{1,3}\s*$`)
+	// deliveryWords label the buyer's addresses printed beside the
+	// supplier's details.
+	deliveryWords = regexp.MustCompile(`(?i)leveringsadres|factuuradres|afleveradres|bezorgadres|postadres|delivery address|billing address|invoice address|lieferadresse|rechnungsadresse|morada de entrega|adresse de livraison|direcci[oó]n de entrega`)
+	longNumber    = regexp.MustCompile(`\d{6,}`)
+)
+
+// tradeNameOwner is the legal entity a "handelsnaam van" sentence names.
+func tradeNameOwner(lines []string) string {
+	for _, l := range lines {
+		for _, seg := range segments(l) {
+			m := tradeName.FindStringSubmatch(seg)
+			if m == nil {
+				continue
+			}
+			if name := cleanName(m[1]); legalForm.MatchString(name) && len(strings.Fields(name)) <= maxNameWords && !garbledName(name) {
+				return name
+			}
+		}
+	}
+	return ""
+}
+
+// isStreetLine tells whether a line starts with a street and number.
+func isStreetLine(l string) bool {
+	segs := segments(l)
+	return len(segs) > 0 && streetRe.MatchString(segs[0]) && strings.ContainsAny(segs[0], "0123456789")
+}
+
+// isPostcodeLine tells whether a line starts with a postcode and a city.
+func isPostcodeLine(l string) bool {
+	segs := segments(l)
+	if len(segs) == 0 {
+		return false
+	}
+	zip, _, _ := postcode(segs[0], "")
+	return zip != "" || ptZip.MatchString(segs[0])
+}
+
+// otherColumnSays tells whether the columns of a line make it no name: a
+// label of the buyer's address in any column, or a short label followed
+// by its value ("Verbruiksperiode   oktober 2026").
+func otherColumnSays(segs []string) bool {
+	for _, s := range segs {
+		if deliveryWords.MatchString(s) {
+			return true
+		}
+	}
+	return len(segs) >= 2 && len(strings.Fields(segs[0])) <= 2 && strings.ContainsAny(segs[1], "0123456789")
 }
 
 func looksLikeName(l string) bool {
@@ -344,7 +418,8 @@ func looksLikeName(l string) bool {
 	switch {
 	case letters < 3, garbledName(l), titleWords.MatchString(l), strings.ContainsAny(l, "@:"),
 		strings.HasSuffix(l, "!"), findVAT(l) != "", itemHeader.MatchString(l), // a slogan, the VAT number, column headings
-		wwwRe.MatchString(l), len(findAmounts(l)) > 0, len(findDates(l)) > 0,
+		wwwRe.MatchString(l), len(findAmounts(l)) > 0, len(findDates(l)) > 0, longNumber.MatchString(l),
+		boilerplate.MatchString(l), pageMarker.MatchString(l), deliveryWords.MatchString(l),
 		streetRe.MatchString(l) && strings.ContainsAny(l, "0123456789"):
 		return false
 	}
