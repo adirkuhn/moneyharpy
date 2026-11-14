@@ -52,7 +52,7 @@ func prepare(text string) []string {
 		" ", " ", " ", " ", "–", "-", "—", "-", "−", "-", "’", "'").Replace(text)
 	lines := strings.Split(text, "\n")
 	for i, l := range lines {
-		lines[i] = strings.TrimRight(fixOCR(l), " ")
+		lines[i] = strings.TrimRight(joinSplitDecimals(fixOCR(l)), " ")
 	}
 	return lines
 }
@@ -134,7 +134,7 @@ var (
 	paidWords     = regexp.MustCompile(`(?i)\b(?:pin|pinnen|pinbetaling|betaald|contant|cash|maestro|v ?pay|visa|mastercard|amex|card|kaart|contactloos|paid|bezahlt|ec-karte|girocard)\b`)
 	itemHeader    = regexp.MustCompile(`(?i)\b(?:omschrijving|description|artikel|art\.?nr|item|items|bezeichnung|beschreibung|descri[cç][aã]o|descripci[oó]n|d[ée]signation|product|produkt|aantal|qty|quantity|menge|qtd|qté)\b`)
 	htWord        = regexp.MustCompile(`\bHT\b`)
-	vatTableHead  = regexp.MustCompile(`(?i)\b(?:btw|vat|mwst|iva|tva|tarief|rate)\b`)
+	vatTableHead  = regexp.MustCompile(`(?i)\b(?:btw|b[i1l]w|vat|mwst|iva|tva|tarief|rate|netto|bruto)\b`) // "BIW": BTW as OCR reads it
 )
 
 // classify tells what each line with amounts is: a total, a VAT line, a
@@ -201,6 +201,10 @@ type vatEntry struct {
 	tax        money.Amount
 	hasTaxable bool
 	checked    bool
+	// gross is the amount incl. VAT a VAT summary table prints next to
+	// the taxable amount and the tax ("21% 30,00 6,30 36,30").
+	gross    money.Amount
+	hasGross bool
 }
 
 type totals struct {
@@ -242,7 +246,9 @@ func vatLine(l string, amounts []money.Amount) vatEntry {
 	}
 	if rate != "" && len(amounts) >= 2 {
 		if taxable, tax, ok := taxPair(rate, amounts); ok {
-			return vatEntry{rate: rate, taxable: taxable, tax: tax, hasTaxable: true, checked: true}
+			v := vatEntry{rate: rate, taxable: taxable, tax: tax, hasTaxable: true, checked: true}
+			v.gross, v.hasGross = grossOf(taxable, tax, amounts)
+			return v
 		}
 		return vatEntry{rate: rate, taxable: amounts[0], tax: amounts[len(amounts)-1], hasTaxable: true}
 	}
@@ -257,13 +263,37 @@ func vatLine(l string, amounts []money.Amount) vatEntry {
 func addVAT(list []vatEntry, v vatEntry) []vatEntry {
 	for i, old := range list {
 		if old.rate == v.rate {
-			if !old.hasTaxable && v.hasTaxable {
+			if !old.hasTaxable && v.hasTaxable || !old.hasGross && v.hasGross && v.checked {
 				list[i] = v
 			}
 			return list
 		}
 	}
 	return append(list, v)
+}
+
+// grossOf finds, among the amounts of a VAT line, the amount incl. VAT:
+// taxable + tax.
+func grossOf(taxable, tax money.Amount, amounts []money.Amount) (money.Amount, bool) {
+	for _, a := range amounts {
+		if a != taxable && a != tax && near(a, taxable+tax, 1) {
+			return a, true
+		}
+	}
+	return 0, false
+}
+
+// tableTotal is the total incl. VAT of a VAT summary table that prints the
+// amount incl. VAT of every rate, when each row adds up (net + VAT = gross).
+func tableTotal(vat []vatEntry) (incl, excl money.Amount, ok bool) {
+	for _, v := range vat {
+		if !v.hasGross || !v.checked || !near(v.taxable+v.tax, v.gross, 1) {
+			return 0, 0, false
+		}
+		incl += v.gross
+		excl += v.taxable
+	}
+	return incl, excl, len(vat) > 0
 }
 
 // best is the strongest candidate, the largest of equally strong ones.
@@ -311,6 +341,14 @@ func reconcile(e *Extraction, t totals, rows []Line, kind Kind, lines []string) 
 				incl, excl = sure(ic.v), sure(ic.v-vatSum)
 				t.vat[0].taxable, t.vat[0].hasTaxable = ic.v-vatSum, true
 				break
+			}
+		}
+		if gross, net, ok := tableTotal(t.vat); ok && !incl.Found {
+			// The VAT summary table adds up on its own. It is sure unless a
+			// total printed elsewhere disagrees.
+			incl, excl = sure(gross), sure(net)
+			if len(t.incl) > 0 {
+				incl.Confidence, excl.Confidence = Uncertain, Uncertain
 			}
 		}
 		if !incl.Found && len(t.incl) == 0 {

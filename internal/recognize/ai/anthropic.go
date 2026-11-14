@@ -62,13 +62,18 @@ func (m *Anthropic) Extract(ctx context.Context, text string, pages [][]byte) (r
 		return recognize.Extraction{}, ErrNothingToRead
 	}
 	var content []anthropic.BetaContentBlockParamUnion
-	for _, p := range pagesToSend(pages) {
+	images, split := splitTall(pagesToSend(pages))
+	for _, p := range images {
 		content = append(content, anthropic.NewBetaImageBlock(anthropic.BetaBase64ImageSourceParam{
 			Data:      base64.StdEncoding.EncodeToString(p),
 			MediaType: anthropic.BetaBase64ImageSourceMediaTypeImagePNG,
 		}))
 	}
-	content = append(content, anthropic.NewBetaTextBlock(userPrompt(text)))
+	prompt := userPrompt(text)
+	if split {
+		prompt = splitNote + prompt
+	}
+	content = append(content, anthropic.NewBetaTextBlock(prompt))
 
 	params := anthropic.BetaMessageNewParams{
 		Model:     m.model,

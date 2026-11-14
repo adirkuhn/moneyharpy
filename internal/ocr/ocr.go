@@ -34,6 +34,10 @@ type Text struct {
 	// Embedded are files embedded in a PDF, such as the UBL or Factur-X XML of
 	// an e-invoice.
 	Embedded []File
+	// Alternatives are other readings of OCR, with other page modes, that
+	// the service thought worse than Text: a reader may understand one of
+	// them better.
+	Alternatives []string
 }
 
 // Page is one page rendered as a PNG image.
@@ -50,6 +54,10 @@ type Service interface {
 	// Render returns page (1-based) of a PDF or image as a PNG, with the page
 	// count.
 	Render(ctx context.Context, f File, page int) (Page, error)
+	// RenderAt renders a page as Render does, with its longest side
+	// maxSide pixels (at most, for an image): larger than a preview, for
+	// an AI model to read the text.
+	RenderAt(ctx context.Context, f File, page, maxSide int) (Page, error)
 	// Ping tells whether the service answers.
 	Ping(ctx context.Context) error
 }

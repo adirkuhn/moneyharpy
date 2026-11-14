@@ -57,6 +57,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/tasklists"
 	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"github.com/adirkuhn/moneyharpy/internal/uploads"
+	"github.com/adirkuhn/moneyharpy/internal/vies"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/adirkuhn/moneyharpy/web"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -179,7 +180,10 @@ func run(logger *slog.Logger) error {
 		Store: postgres.NewRecognitionStore(pool), OCR: ocrService,
 		Parsers: recognize.Parsers{EInvoice: recognize.ParseEInvoice, Text: recognize.ParseText},
 		// The AI connections are asked in the administrator's order.
-		Models:   func(c settings.Recognition) (recognize.Model, error) { return ai.FromSettings(c, logger) },
+		Models: func(c settings.Recognition) (recognize.Model, error) { return ai.FromSettings(c, logger) },
+		// New suppliers get their registered name from VIES, when an
+		// administrator turned that on.
+		Registry: vies.New(vies.ProductionURL, outbound),
 		Notifier: httpapi.RecognitionNotifier{Webhooks: hooks, Logger: logger}, Logger: logger, Now: time.Now,
 	})
 	documentService.UseRecognition(recognition)

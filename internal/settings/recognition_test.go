@@ -23,6 +23,24 @@ func TestRecognitionAIIsOffByDefault(t *testing.T) {
 	}
 }
 
+func TestRecognitionVIESLookupIsOffByDefaultAndKept(t *testing.T) {
+	ctx := context.Background()
+	s, _ := newService(t)
+	if got, _ := s.Instance(ctx); got.Recognition.VIESEnabled {
+		t.Error("the VIES lookup is on by default, want off")
+	}
+	if _, err := s.Update(ctx, Update{RecognitionVIESEnabled: ptr(true)}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.Instance(ctx)
+	if err != nil || !got.Recognition.VIESEnabled || got.Recognition.AIEnabled {
+		t.Errorf("Instance().Recognition = %+v, %v, want only the VIES lookup on", got.Recognition, err)
+	}
+	if got, _ := s.Update(ctx, Update{RecognitionVIESEnabled: ptr(false)}); got.Recognition.VIESEnabled {
+		t.Error("the VIES lookup stayed on")
+	}
+}
+
 func connections(cs ...AIConnectionUpdate) Update {
 	return Update{RecognitionAIConnections: &cs}
 }

@@ -152,6 +152,9 @@ func (o scanOCR) Read(context.Context, ocr.File) (ocr.Text, error) {
 func (scanOCR) Render(context.Context, ocr.File, int) (ocr.Page, error) {
 	return ocr.Page{}, ocr.ErrUnsupported
 }
+func (scanOCR) RenderAt(context.Context, ocr.File, int, int) (ocr.Page, error) {
+	return ocr.Page{}, ocr.ErrUnsupported
+}
 func (scanOCR) Ping(context.Context) error { return nil }
 
 func TestScanAndRecogniseFillsInUploadsAndLearns(t *testing.T) {
