@@ -269,6 +269,7 @@ func (s *Service) Update(ctx context.Context, admin, user resource.ID, kind stri
 		return Document{}, err
 	}
 	s.edited(ctx, admin, user, before, d)
+	s.confirmed(ctx, admin, id, c.confirmedFields()...)
 	return s.Document(ctx, admin, kind, id, user)
 }
 

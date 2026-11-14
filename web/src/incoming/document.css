@@ -112,6 +112,9 @@
 .type-picker__option.is-active { background: var(--row-hover); }
 .type-picker__option[aria-selected='true'] .type-picker__name { color: var(--blue); }
 .type-picker__text { color: var(--muted); font-size: 0.8125rem; }
+.type-picker__option.is-disabled { cursor: not-allowed; }
+.type-picker__option.is-disabled .type-picker__name { color: var(--muted); opacity: 0.7; }
+.type-picker__option.is-disabled .type-picker__text { font-style: italic; }
 
 /* The lines inside the card, edited with the invoice details editor or shown as they are. */
 .incoming-card .editable-document-form { position: static; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; }

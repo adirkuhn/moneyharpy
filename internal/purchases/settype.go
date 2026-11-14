@@ -21,6 +21,9 @@ type Retype struct {
 	Document *Document
 	General  *General
 	Journal  *journal.Document
+	// Entries are what a booked purchase invoice or receipt books as its
+	// new kind, in place of what it booked as From.
+	Entries []journal.Entry
 }
 
 // To is the kind the document becomes.
@@ -38,8 +41,10 @@ func (r Retype) To() string {
 // invoice, receipt, general document or journal entry (documentType as the
 // Incoming page's type filter names it), keeping its id, its notes,
 // attachments and history, and its contact, reference and date where the
-// new type has them. A journal entry or a booked purchase invoice or
-// receipt keeps its type; the type it has already changes nothing.
+// new type has them. As in Moneybird, a booked purchase invoice becomes a
+// receipt and back, booked again as its new kind, but becomes nothing else;
+// a paid one or a journal entry keeps its type. The type it has already
+// changes nothing, but confirms what Scan and Recognise chose.
 func (s *Service) SetType(ctx context.Context, admin, id, user resource.ID, documentType string) (Incoming, error) {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
@@ -54,6 +59,7 @@ func (s *Service) SetType(ctx context.Context, admin, id, user resource.ID, docu
 		return Incoming{}, err
 	}
 	if cur.Kind == to {
+		s.confirmed(ctx, admin, id, FieldDocumentType)
 		return s.IncomingDocument(ctx, admin, id, user)
 	}
 	r, err := s.retype(ctx, a, cur, to)
@@ -63,10 +69,37 @@ func (s *Service) SetType(ctx context.Context, admin, id, user resource.ID, docu
 	if err := s.checkDay(ctx, admin, user, cur.Date, "date"); err != nil {
 		return Incoming{}, err
 	}
+	if err := s.rebook(ctx, a, user, &r); err != nil {
+		return Incoming{}, err
+	}
 	if err := s.store.RetypeDocument(ctx, r); err != nil {
 		return Incoming{}, wrap("change document type", err)
 	}
+	s.confirmed(ctx, admin, id, FieldDocumentType)
 	return s.IncomingDocument(ctx, admin, id, user)
+}
+
+// rebook works out what a booked purchase invoice or receipt books as its
+// new kind: a receipt books the other way round from a revenue invoice, and
+// a purchase invoice needs its supplier.
+func (s *Service) rebook(ctx context.Context, a administration.Listed, user resource.ID, r *Retype) error {
+	if r.Document == nil || !r.Document.Booked() {
+		return nil
+	}
+	d := r.Document
+	if d.Kind == PurchaseInvoice && d.ContactID == 0 {
+		return invalid("contact_id", "can't be blank")
+	}
+	rates, err := s.rates(ctx, a.ID, user, *d)
+	if err != nil {
+		return err
+	}
+	d.Totals = computeTotals(*d, rates)
+	allocate(d, rates)
+	if r.Entries, err = s.post(ctx, a.ID, user, *d, rates); err != nil {
+		return err
+	}
+	return nil
 }
 
 // retype works out the document cur becomes as kind to.
@@ -86,12 +119,15 @@ func (s *Service) retype(ctx context.Context, a administration.Listed, cur Incom
 		if err != nil {
 			return Retype{}, err
 		}
-		if d.Booked() || len(d.Payments) > 0 {
-			name := "purchase invoice"
-			if d.Kind == Receipt {
-				name = "receipt"
-			}
-			return Retype{}, invalid("base", "A booked "+name+" cannot change type")
+		name := "purchase invoice"
+		if d.Kind == Receipt {
+			name = "receipt"
+		}
+		if d.State == Paid || len(d.Payments) > 0 {
+			return Retype{}, invalid("base", "A paid "+name+" or one with payments cannot change type")
+		}
+		if d.Booked() && to != PurchaseInvoice && to != Receipt {
+			return Retype{}, invalid("base", `It is only possible to change to this type if the document is in the "New" state`)
 		}
 		src = d
 		src.UpdatedAt = now

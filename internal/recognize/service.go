@@ -238,6 +238,29 @@ func (s *Service) edited(ctx context.Context, admin resource.ID, before, after p
 	return s.Store.SaveMemory(ctx, m)
 }
 
+// Confirmed unmarks the fields a user saved, changed or not: they checked
+// what Scan and Recognise filled in.
+func (s *Service) Confirmed(ctx context.Context, admin, id resource.ID, fields ...string) {
+	if err := s.confirmed(ctx, admin, id, fields); err != nil {
+		s.Logger.ErrorContext(ctx, "scan and recognise: unmark confirmed fields", "document", id, "error", err)
+	}
+}
+
+func (s *Service) confirmed(ctx context.Context, admin, id resource.ID, fields []string) error {
+	r, err := s.Store.Recognition(ctx, admin, id)
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return nil
+	case err != nil:
+		return err
+	}
+	if !r.Drop(fields...) {
+		return nil
+	}
+	r.UpdatedAt = s.Now()
+	return s.Store.SaveRecognition(ctx, r)
+}
+
 // ChangedFields names the fields that differ between two versions of a
 // document, as Recognition names them. Lines added, removed or reordered
 // change every line field.
