@@ -1,0 +1,28 @@
+EXAMPLE SHOP
+
+Example Street 1
+1234 AB Amsterdam
+
+Bureaulamp LED 12,95
+Notitieboek A5 2 x 4,50 9,00
+Opbergdoos 8,3S
+Batterijen AA 6,00
+
+OTAAL [4] 36,3%
+
+PIN 36,30
+
+BTW% Netto BTW Bruto
+2t% 30,0 6,3o 36,3
+
+26-10-2026 14:32:24 Kassa 3 Bon 0042
+
+Betaalautomaat
+Terminal EXA01234
+Kaart ************0000
+Datum 20/10/2026 14:32
+Bedrag EUR 36,30
+Akkoord
+
+“Xampl Shop BV
+BTW nummer NL 123456782B01

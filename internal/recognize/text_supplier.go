@@ -3,6 +3,7 @@ package recognize
 import (
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 var (
@@ -68,16 +69,12 @@ func buyerLines(lines []string) []bool {
 // readSupplier reads who sent the document.
 func readSupplier(lines []string, buyer []bool) (Supplier, Confidence) {
 	var s Supplier
-	vatSure, kvkFound := false, false
+	kvkFound := false
+	vat, vatAt, vatSure := supplierVAT(lines, buyer)
+	s.VATNumber = vat
 	for i, l := range lines {
 		if buyer[i] {
 			continue
-		}
-		if s.VATNumber == "" {
-			if v := findVAT(l); v != "" {
-				s.VATNumber = v
-				vatSure = ValidVAT(v) && (vatLabel.MatchString(l) || strings.HasPrefix(v, "NL"))
-			}
 		}
 		if s.KVK == "" {
 			if m := kvkPattern.FindStringSubmatch(l); m != nil {
@@ -114,7 +111,7 @@ func readSupplier(lines []string, buyer []bool) (Supplier, Confidence) {
 	if s.Country == "" {
 		s.Country = hint
 	}
-	s.Name = supplierName(lines, buyer)
+	s.Name = supplierName(lines, buyer, vatAt)
 
 	switch {
 	case vatSure || kvkFound || s.IBAN != "" && s.Name != "":
@@ -125,8 +122,39 @@ func readSupplier(lines []string, buyer []bool) (Supplier, Confidence) {
 	return s, ""
 }
 
+// supplierVAT picks the supplier's VAT number outside the buyer's lines: a
+// valid one printed next to a VAT label ("BTW nummer", "VAT") first, then
+// any valid one, then the first one shaped like a VAT number. It returns
+// the line it is on (-1 for none), and whether it is sure: valid, and
+// labelled or Dutch.
+func supplierVAT(lines []string, buyer []bool) (vat string, at int, sure bool) {
+	at, rank := -1, 0
+	for i, l := range lines {
+		if buyer[i] {
+			continue
+		}
+		v := findVAT(l)
+		if v == "" {
+			continue
+		}
+		valid, labelled := ValidVAT(v), vatLabel.MatchString(l)
+		r := 1
+		switch {
+		case valid && labelled:
+			r = 3
+		case valid:
+			r = 2
+		}
+		if r > rank {
+			vat, at, rank, sure = v, i, r, valid && (labelled || strings.HasPrefix(v, "NL"))
+		}
+	}
+	return vat, at, sure
+}
+
 // findVAT finds a VAT number on a line; groups may be separated by single
-// spaces or dots ("NL 1234.56.782.B01").
+// spaces or dots ("NL 1234.56.782.B01"). A Dutch number whose B was read as
+// an 8 is repaired when that makes it valid.
 func findVAT(l string) string {
 	for _, loc := range vatStart.FindAllStringIndex(l, -1) {
 		if loc[0] > 0 && isAlnum(l[loc[0]-1]) {
@@ -146,7 +174,13 @@ func findVAT(l string) string {
 				j = len(l)
 			}
 		}
-		if v := b.String(); vatShaped(v) {
+		v := b.String()
+		if len(v) == 14 && strings.HasPrefix(v, "NL") && v[11] == '8' && isDigits(v[2:]) {
+			if fixed := v[:11] + "B" + v[12:]; ValidNLVAT(fixed) {
+				return fixed
+			}
+		}
+		if vatShaped(v) {
 			return v
 		}
 	}
@@ -273,22 +307,45 @@ func isDigits(s string) bool {
 	return s != ""
 }
 
-// supplierName takes the first company name with a legal form (B.V., GmbH,
-// Ltd …) outside the buyer's block, else the first line that reads like a
-// name at the top of the document.
-func supplierName(lines []string, buyer []bool) string {
+// vatNear is how many lines from the VAT number a company name may be
+// printed to be taken for the one the VAT number belongs to.
+const vatNear = 3
+
+// maxNameWords keeps sentences that end in a company name ("… t.n.v.
+// Example Shop B.V.") from being taken for one.
+const maxNameWords = 8
+
+// supplierName takes a company name with a legal form (B.V., GmbH, Ltd …)
+// outside the buyer's block: the one nearest the supplier's VAT number
+// (vatAt, -1 for none) when one is printed near it, else the first. Without
+// one it takes the first line that reads like a name at the top of the
+// document. Names OCR garbled are left out.
+func supplierName(lines []string, buyer []bool, vatAt int) string {
+	name, dist := "", -1
 	for i, l := range lines {
 		if buyer[i] {
 			continue
 		}
 		for _, seg := range segments(l) {
-			if strings.ContainsAny(seg, "@:") || labelLine.MatchString(seg+" ") {
+			seg = cleanName(seg)
+			if strings.ContainsAny(seg, "@:") || labelLine.MatchString(seg+" ") || garbledName(seg) ||
+				len(strings.Fields(seg)) > maxNameWords {
 				continue
 			}
-			if m := legalForm.FindStringSubmatch(seg); m != nil && !nlZip.MatchString(seg) {
-				return seg
+			if m := legalForm.FindStringSubmatch(seg); m == nil || nlZip.MatchString(seg) {
+				continue
+			}
+			d := absInt(i - vatAt)
+			if vatAt < 0 || d > vatNear {
+				d = vatNear + 1
+			}
+			if name == "" || d < dist {
+				name, dist = seg, d
 			}
 		}
+	}
+	if name != "" {
+		return name
 	}
 	seen := 0
 	for i, l := range lines {
@@ -314,13 +371,50 @@ func looksLikeName(l string) bool {
 		}
 	}
 	switch {
-	case letters < 3, titleWords.MatchString(l), strings.ContainsAny(l, "@:"),
+	case letters < 3, garbledName(l), titleWords.MatchString(l), strings.ContainsAny(l, "@:"),
 		wwwRe.MatchString(l), len(findAmounts(l)) > 0, len(findDates(l)) > 0,
 		streetRe.MatchString(l) && strings.ContainsAny(l, "0123456789"):
 		return false
 	}
 	zip, _, _ := postcode(l, "")
 	return zip == ""
+}
+
+// garbledName tells whether a name is OCR garbage rather than a company
+// name: it starts with a quote or other mark OCR reads from specks, or too
+// few of its characters are letters.
+func garbledName(s string) bool {
+	s = strings.TrimSpace(s)
+	if s == "" || strings.ContainsAny(s, nameQuotes+nameNoise) {
+		return true
+	}
+	letters, marks := 0, 0
+	for _, r := range s {
+		switch {
+		case unicode.IsLetter(r):
+			letters++
+		case !unicode.IsSpace(r):
+			marks++
+		}
+	}
+	return letters < 2 || float64(letters) < minNameLetters*float64(letters+marks)
+}
+
+// Marks that do not belong in a company name: quotes OCR reads from specks
+// at the start of a line, and other noise.
+const (
+	nameQuotes = "\"“”„‟«»‹›`´"
+	nameNoise  = "|~#^%*;{}[]<>=_\\¦§¬"
+)
+
+// minNameLetters is the share of a name's printed characters that must be
+// letters: "Example Shop B.V." has 13 of 15.
+const minNameLetters = 0.7
+
+// cleanName drops the marks OCR reads before a name and the spaces around
+// it; quotes are kept, as they tell a name is garbled.
+func cleanName(s string) string {
+	return strings.TrimSpace(strings.TrimLeft(strings.TrimSpace(s), "-–—*•·.,:;_~ "))
 }
 
 // nifLabel is the Portuguese tax number's label, printed without the PT

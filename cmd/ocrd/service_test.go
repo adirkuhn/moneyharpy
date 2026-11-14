@@ -120,8 +120,8 @@ func TestReadScannedPDFFallsBackToOCRAndCapsPages(t *testing.T) {
 			return nil, nil
 		},
 		"tesseract": func(args []string) ([]byte, error) {
-			if args[1] != "-" || args[len(args)-1] != "nld+eng" {
-				t.Errorf("tesseract args = %v", args)
+			if args[1] != "-" || args[len(args)-1] != "nld+eng" || psmArg(args) != "3" {
+				t.Errorf("tesseract args = %v: a long scan is read with the first page mode only", args)
 			}
 			return []byte("page " + strings.TrimSuffix(filepath.Base(args[0]), ".png") + "\n\f"), nil
 		},
@@ -145,6 +145,103 @@ func TestReadImageUsesTesseract(t *testing.T) {
 	res := decodeRead(t, post(t, newTestHandler(run), "/read", pngBytes(t, 10, 10)))
 	if res.Method != "ocr" || res.Pages != 1 || res.Text != "Example Shop B.V.\nTotal 12.10\n" || res.Embedded == nil {
 		t.Errorf("read = %+v", res)
+	}
+}
+
+// psmArg returns the page mode a tesseract command was run with.
+func psmArg(args []string) string {
+	if i := slices.Index(args, "--psm"); i >= 0 && i+1 < len(args) {
+		return args[i+1]
+	}
+	return ""
+}
+
+func TestReadPhotoWithEveryPageModeAndReturnsTheBestReading(t *testing.T) {
+	// What the page modes make of one till receipt photo.
+	readings := map[string]string{
+		"3": "EXAMPLE SHOP\nOTAAL [4] 36,3%\n“Xampl Shop BV\n26-10-2026 14:32\n\f",
+		"6": "EXAMPLE SHOP\nTOTAAL [4] 36 . 30\n21% 30,00 6,30 36,30\nDatum 20-10-2026 14:32\nExample Shop B.V.\n\f",
+		"4": "EXAMPLE SHOP\nTOTAAL [43 36,30\n21% 30,00 6,30 36,3\n\f",
+	}
+	run := &fakeRunner{tools: map[string]func([]string) ([]byte, error){
+		"tesseract": func(args []string) ([]byte, error) {
+			if len(args) != 6 || args[1] != "-" || args[2] != "--psm" || args[4] != "-l" || args[5] != "nld+eng" {
+				t.Errorf("tesseract args = %v", args)
+			}
+			return []byte(readings[psmArg(args)]), nil
+		},
+	}}
+	res := decodeRead(t, post(t, newTestHandler(run), "/read", pngBytes(t, 10, 10)))
+	var modes []string
+	for _, c := range run.calls {
+		modes = append(modes, psmArg(strings.Fields(c)[1:]))
+	}
+	slices.Sort(modes)
+	if !slices.Equal(modes, []string{"3", "4", "6"}) {
+		t.Errorf("page modes run = %v", modes)
+	}
+	if res.Text != strings.TrimSuffix(readings["6"], "\f") {
+		t.Errorf("text = %q, want the reading of page mode 6", res.Text)
+	}
+	if len(res.Alternatives) != 2 || res.Alternatives[0].PageMode != "4" || res.Alternatives[1].PageMode != "3" ||
+		res.Alternatives[1].Text != strings.TrimSuffix(readings["3"], "\f") {
+		t.Errorf("alternatives = %+v", res.Alternatives)
+	}
+}
+
+func TestReadPhotoLeavesOutPageModesThatFail(t *testing.T) {
+	run := &fakeRunner{tools: map[string]func([]string) ([]byte, error){
+		"tesseract": func(args []string) ([]byte, error) {
+			if psmArg(args) != "4" {
+				return nil, errors.New("tesseract crashed")
+			}
+			return []byte("Total 12,10"), nil
+		},
+	}}
+	res := decodeRead(t, post(t, newTestHandler(run), "/read", pngBytes(t, 10, 10)))
+	if res.Text != "Total 12,10" || len(res.Alternatives) != 0 {
+		t.Errorf("read = %+v", res)
+	}
+	failing := &fakeRunner{tools: map[string]func([]string) ([]byte, error){
+		"tesseract": func([]string) ([]byte, error) { return nil, errors.New("tesseract crashed") },
+	}}
+	if rec := post(t, newTestHandler(failing), "/read", pngBytes(t, 10, 10)); rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("all modes failing = %d", rec.Code)
+	}
+}
+
+func TestReadRunsAtMostWorkersTesseractsAtOnce(t *testing.T) {
+	var mu sync.Mutex
+	running, most := 0, 0
+	run := &fakeRunner{tools: map[string]func([]string) ([]byte, error){
+		"tesseract": func([]string) ([]byte, error) {
+			mu.Lock()
+			running++
+			most = max(most, running)
+			mu.Unlock()
+			time.Sleep(20 * time.Millisecond)
+			mu.Lock()
+			running--
+			mu.Unlock()
+			return []byte("Total 12,10"), nil
+		},
+	}}
+	h := NewHandler(Config{Languages: "nld+eng", MaxBody: 1 << 20, MaxPages: 20, ReadTimeout: 5 * time.Second, Concurrency: 4, Workers: 2}, run, slog.New(slog.DiscardHandler))
+	var wg sync.WaitGroup
+	for range 3 {
+		wg.Go(func() { decodeRead(t, post(t, h, "/read", pngBytes(t, 10, 10))) })
+	}
+	wg.Wait()
+	if most != 2 || len(run.calls) != 9 {
+		t.Errorf("at most %d tesseracts at once over %d runs, want 2 over 9", most, len(run.calls))
+	}
+}
+
+func TestReadingScore(t *testing.T) {
+	good := readingScore("TOTAAL 36.30\n21% 30,00 6,30 36,30\nDatum 20-10-2026")
+	bad := readingScore("OTAAL [4] 36,3%\n“Xampl Shop BV\n2t% 30,0 6,3o 36,3")
+	if good <= bad {
+		t.Errorf("score of a good reading %d <= of a bad one %d", good, bad)
 	}
 }
 
@@ -189,6 +286,59 @@ func TestRenderPDFPage(t *testing.T) {
 	}
 	if rec := post(t, h, "/render?page=zero", []byte(minimalPDF)); rec.Code != http.StatusBadRequest {
 		t.Errorf("bad page = %d", rec.Code)
+	}
+}
+
+func TestReadShortScanWithEveryPageMode(t *testing.T) {
+	run := &fakeRunner{tools: map[string]func([]string) ([]byte, error){
+		"pdfinfo":   pdfinfo("1"),
+		"pdftotext": func([]string) ([]byte, error) { return []byte(" \f"), nil },
+		"pdftoppm": func(args []string) ([]byte, error) {
+			return nil, os.WriteFile(args[len(args)-1]+"-1.png", []byte("png"), 0o600)
+		},
+		"tesseract": func(args []string) ([]byte, error) {
+			if psmArg(args) == "6" {
+				return []byte("Totaal 12,10 Datum 20-10-2026"), nil
+			}
+			return []byte("Tota@l l2,1O"), nil
+		},
+		"pdfdetach": func([]string) ([]byte, error) { return nil, errors.New("no attachments") },
+	}}
+	res := decodeRead(t, post(t, newTestHandler(run), "/read", []byte(minimalPDF)))
+	if res.Method != "ocr" || res.Text != "Totaal 12,10 Datum 20-10-2026" || len(res.Alternatives) != 2 {
+		t.Errorf("read = %+v", res)
+	}
+}
+
+func TestRenderForReadingAtAnotherSize(t *testing.T) {
+	h := newTestHandler(&fakeRunner{})
+	rec := post(t, h, "/render?max_side=800", pngBytes(t, 450, 1000))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("render = %d %s", rec.Code, rec.Body)
+	}
+	img, err := png.Decode(rec.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b := img.Bounds(); b.Dx() != 360 || b.Dy() != 800 {
+		t.Errorf("size = %v", b)
+	}
+	for _, bad := range []string{"0", "100", "5000", "big"} {
+		if rec := post(t, h, "/render?max_side="+bad, pngBytes(t, 10, 10)); rec.Code != http.StatusBadRequest {
+			t.Errorf("max_side=%s = %d", bad, rec.Code)
+		}
+	}
+	run := &fakeRunner{tools: map[string]func([]string) ([]byte, error){
+		"pdfinfo": pdfinfo("1"),
+		"pdftoppm": func(args []string) ([]byte, error) {
+			if args[slices.Index(args, "-scale-to")+1] != "2048" || slices.Contains(args, "-r") {
+				t.Errorf("pdftoppm args = %v", args)
+			}
+			return nil, os.WriteFile(args[len(args)-1]+".png", []byte("\x89PNG page"), 0o600)
+		},
+	}}
+	if rec := post(t, newTestHandler(run), "/render?max_side=2048", []byte(minimalPDF)); rec.Code != http.StatusOK {
+		t.Errorf("pdf = %d %s", rec.Code, rec.Body)
 	}
 }
 

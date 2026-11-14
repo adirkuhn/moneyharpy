@@ -64,8 +64,12 @@ func (m *Ollama) Extract(ctx context.Context, text string, pages [][]byte) (reco
 	if strings.TrimSpace(text) == "" && len(pages) == 0 {
 		return recognize.Extraction{}, ErrNothingToRead
 	}
+	images, split := splitTall(pagesToSend(pages))
 	user := ollamaMessage{Role: "user", Content: userPrompt(text)}
-	for _, p := range pagesToSend(pages) {
+	if split {
+		user.Content = splitNote + user.Content
+	}
+	for _, p := range images {
 		user.Images = append(user.Images, base64.StdEncoding.EncodeToString(p))
 	}
 	req := ollamaChatRequest{

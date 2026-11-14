@@ -7126,6 +7126,8 @@ export interface components {
             recognition_ai_enabled: boolean;
             /** @description The AI connections in the order Scan and Recognise tries them: the first enabled connection that reads the document answers; when it fails (unavailable, rate limited, refused, an unreadable answer) the next is asked. */
             recognition_ai_connections: components["schemas"]["RecognitionAIConnection"][];
+            /** @description Let Scan and Recognise look up the VAT number read from a document in the EU's VIES service, to add a new supplier under its registered name and address. Off unless turned on; only the VAT number is sent to the European Commission. */
+            recognition_vies_enabled: boolean;
         };
         UpdateInstanceSettingsRequest: {
             registration_open?: boolean;
@@ -7162,6 +7164,8 @@ export interface components {
             recognition_ai_enabled?: boolean;
             /** @description Replaces the AI connections; their order is the order Scan and Recognise tries them in. */
             recognition_ai_connections?: components["schemas"]["RecognitionAIConnectionRequest"][];
+            /** @description See InstanceSettings. */
+            recognition_vies_enabled?: boolean;
         };
         /** @description A Moneybird workflow with MoneyHarpy extensions. */
         Workflow: components["schemas"]["workflow_response"] & {

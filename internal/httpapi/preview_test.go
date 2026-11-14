@@ -35,6 +35,10 @@ func (f *fakeOCR) Render(_ context.Context, file ocr.File, page int) (ocr.Page, 
 	return ocr.Page{PNG: []byte("\x89PNG page " + string(rune('0'+page))), Count: 2}, nil
 }
 
+func (f *fakeOCR) RenderAt(ctx context.Context, file ocr.File, page, _ int) (ocr.Page, error) {
+	return f.Render(ctx, file, page)
+}
+
 func (f *fakeOCR) Ping(context.Context) error { return nil }
 
 func TestPreviewIncomingDocumentAttachment(t *testing.T) {

@@ -850,6 +850,7 @@ func toInstanceSettings(inst settings.Instance) InstanceSettings {
 		StoragePathStyle:         inst.Storage.PathStyle,
 		RecognitionAiEnabled:     inst.Recognition.AIEnabled,
 		RecognitionAiConnections: toAIConnections(inst.Recognition.Connections),
+		RecognitionViesEnabled:   inst.Recognition.VIESEnabled,
 	}
 }
 
@@ -966,6 +967,7 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 
 		RecognitionAIEnabled:     body.RecognitionAiEnabled,
 		RecognitionAIConnections: fromAIConnections(body.RecognitionAiConnections),
+		RecognitionVIESEnabled:   body.RecognitionViesEnabled,
 	})
 	if err != nil {
 		s.fail(w, r, err)

@@ -66,6 +66,9 @@ func (c *Client) Read(ctx context.Context, f File) (Text, error) {
 			ContentType string `json:"content_type"`
 			Data        []byte `json:"data"`
 		} `json:"embedded"`
+		Alternatives []struct {
+			Text string `json:"text"`
+		} `json:"alternatives"`
 	}
 	if err := json.NewDecoder(io.LimitReader(res.Body, maxResponse)).Decode(&body); err != nil {
 		return Text{}, fmt.Errorf("%w: read response: %w", ErrUnavailable, err)
@@ -74,17 +77,37 @@ func (c *Client) Read(ctx context.Context, f File) (Text, error) {
 	for _, e := range body.Embedded {
 		t.Embedded = append(t.Embedded, File{Name: e.Name, ContentType: e.ContentType, Data: e.Data})
 	}
+	for _, a := range body.Alternatives {
+		t.Alternatives = append(t.Alternatives, a.Text)
+	}
 	return t, nil
 }
 
 // Render implements Service.
 func (c *Client) Render(ctx context.Context, f File, page int) (Page, error) {
+	return c.render(ctx, f, page, 0)
+}
+
+// RenderAt implements Service.
+func (c *Client) RenderAt(ctx context.Context, f File, page, maxSide int) (Page, error) {
+	if maxSide < 1 {
+		return Page{}, fmt.Errorf("ocr: render with a side of %d pixels", maxSide)
+	}
+	return c.render(ctx, f, page, maxSide)
+}
+
+// render renders a page as a preview, or with its longest side maxSide.
+func (c *Client) render(ctx context.Context, f File, page, maxSide int) (Page, error) {
 	if page < 1 {
 		return Page{}, ErrNoPage
 	}
 	ctx, cancel := context.WithTimeout(ctx, renderTimeout)
 	defer cancel()
-	res, err := c.post(ctx, "/render?page="+strconv.Itoa(page), f)
+	q := url.Values{"page": {strconv.Itoa(page)}}
+	if maxSide > 0 {
+		q.Set("max_side", strconv.Itoa(maxSide))
+	}
+	res, err := c.post(ctx, "/render?"+q.Encode(), f)
 	if err != nil {
 		return Page{}, err
 	}
@@ -157,6 +180,11 @@ func (Unavailable) Read(context.Context, File) (Text, error) { return Text{}, Er
 
 // Render implements Service.
 func (Unavailable) Render(context.Context, File, int) (Page, error) { return Page{}, ErrUnavailable }
+
+// RenderAt implements Service.
+func (Unavailable) RenderAt(context.Context, File, int, int) (Page, error) {
+	return Page{}, ErrUnavailable
+}
 
 // Ping implements Service.
 func (Unavailable) Ping(context.Context) error { return ErrUnavailable }

@@ -26,14 +26,15 @@ func TestReadSendsTheFileAndDecodesTheText(t *testing.T) {
 			t.Errorf("request = %s %s %q %v", r.Method, r.URL, body, r.Header)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"text":"Example Shop B.V.\fpage 2","method":"text","pages":2,"embedded":[{"name":"factur-x.xml","content_type":"application/xml","data":"PEludm9pY2UvPg=="}]}`)
+		_, _ = io.WriteString(w, `{"text":"Example Shop B.V.\fpage 2","method":"text","pages":2,"embedded":[{"name":"factur-x.xml","content_type":"application/xml","data":"PEludm9pY2UvPg=="}],"alternatives":[{"page_mode":"6","text":"other reading"}]}`)
 	})
 	got, err := c.Read(context.Background(), ocr.File{Name: "invoice 2026.pdf", ContentType: "application/pdf", Data: []byte("%PDF-1.4")})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got.Text != "Example Shop B.V.\fpage 2" || got.Method != "text" || got.Pages != 2 || len(got.Embedded) != 1 ||
-		got.Embedded[0].Name != "factur-x.xml" || string(got.Embedded[0].Data) != "<Invoice/>" {
+		got.Embedded[0].Name != "factur-x.xml" || string(got.Embedded[0].Data) != "<Invoice/>" ||
+		len(got.Alternatives) != 1 || got.Alternatives[0] != "other reading" {
 		t.Errorf("read = %+v", got)
 	}
 }
@@ -50,6 +51,23 @@ func TestRenderReturnsThePageAndCount(t *testing.T) {
 	got, err := c.Render(context.Background(), ocr.File{Data: []byte("%PDF")}, 2)
 	if err != nil || string(got.PNG) != "\x89PNG" || got.Count != 3 {
 		t.Errorf("render = %+v, %v", got, err)
+	}
+}
+
+func TestRenderAtAsksForTheSize(t *testing.T) {
+	c := serve(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/render" || r.URL.Query().Get("page") != "1" || r.URL.Query().Get("max_side") != "2048" {
+			t.Errorf("request = %s", r.URL)
+		}
+		w.Header().Set("X-Page-Count", "1")
+		_, _ = io.WriteString(w, "\x89PNG")
+	})
+	got, err := c.RenderAt(context.Background(), ocr.File{Data: []byte("\xff\xd8\xff")}, 1, 2048)
+	if err != nil || string(got.PNG) != "\x89PNG" || got.Count != 1 {
+		t.Errorf("render = %+v, %v", got, err)
+	}
+	if _, err := c.RenderAt(context.Background(), ocr.File{}, 1, 0); err == nil {
+		t.Error("a side of 0 pixels was asked for")
 	}
 }
 

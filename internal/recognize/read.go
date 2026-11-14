@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/iban"
 	"github.com/adirkuhn/moneyharpy/internal/ocr"
 )
 
@@ -59,17 +60,32 @@ func (s *Service) extract(ctx context.Context, files []ocr.File) (Extraction, er
 			}
 		}
 		pages = append(pages, f)
-		if strings.TrimSpace(t.Text) == "" || s.Parsers.Text == nil {
+		if s.Parsers.Text == nil {
 			continue
 		}
-		texts = append(texts, t.Text)
-		e := s.Parsers.Text(t.Text, today)
-		e.Source = SourceText
-		if t.Method == "ocr" {
-			e.Source = SourceOCR
+		// OCR reads a photo in several ways; the rules take the reading
+		// they understand best.
+		var fileBest *Extraction
+		fileText := ""
+		for _, text := range append([]string{t.Text}, t.Alternatives...) {
+			if strings.TrimSpace(text) == "" {
+				continue
+			}
+			e := s.Parsers.Text(text, today)
+			e.Source = SourceText
+			if t.Method == "ocr" {
+				e.Source = SourceOCR
+			}
+			if fileBest == nil || score(e) > score(*fileBest) {
+				fileBest, fileText = &e, text
+			}
 		}
-		if best == nil || score(e) > score(*best) {
-			best = &e
+		if fileBest == nil {
+			continue
+		}
+		texts = append(texts, fileText)
+		if best == nil || score(*fileBest) > score(*best) {
+			best = fileBest
 		}
 	}
 	if (best == nil || !best.Good()) && len(pages) > 0 {
@@ -101,6 +117,11 @@ func (s *Service) eInvoice(data []byte) (Extraction, bool) {
 	return e, true
 }
 
+// aiPageSide is the longest side of a page image the AI model gets, in
+// pixels: a tall till receipt photo stays legible, where a preview (1600)
+// shrinks its text too much.
+const aiPageSide = 2048
+
 // askModel has the AI model read the text and up to maxPages pages; it
 // tells false when the model is off or failed, and the rules' reading is
 // used instead.
@@ -116,7 +137,7 @@ func (s *Service) askModel(ctx context.Context, text string, files []ocr.File) (
 	var images [][]byte
 	for _, f := range files {
 		for page := 1; len(images) < maxPages; page++ {
-			p, err := s.OCR.Render(ctx, f, page)
+			p, err := s.OCR.RenderAt(ctx, f, page, aiPageSide)
 			if err != nil {
 				break
 			}
@@ -156,29 +177,45 @@ func score(e Extraction) int {
 	return n
 }
 
-// merge completes primary with what only secondary found.
-func merge(primary, secondary Extraction) Extraction {
-	e := primary
-	e.Kind = or(e.Kind, secondary.Kind)
-	e.Reference = or(e.Reference, secondary.Reference)
-	e.Date = or(e.Date, secondary.Date)
-	e.DueDate = or(e.DueDate, secondary.DueDate)
-	e.Currency = or(e.Currency, secondary.Currency)
-	e.PricesInclTax = or(e.PricesInclTax, secondary.PricesInclTax)
-	e.TotalInclTax = or(e.TotalInclTax, secondary.TotalInclTax)
-	e.TotalExclTax = or(e.TotalExclTax, secondary.TotalExclTax)
-	e.PaymentReference = or(e.PaymentReference, secondary.PaymentReference)
-	if len(e.VAT) == 0 {
-		e.VAT = secondary.VAT
+// merge completes the AI model's reading with what the rules are sure of.
+// A value the rules are not sure of is never used: on a poor photo it is
+// often OCR garbage. A value the rules are sure of (checked against another,
+// such as a total against the VAT table) wins over the model's, which is
+// never sure. Lines and VAT come from the rules only when their total is
+// sure and the model's total, if any, is the same.
+func merge(ai, rules Extraction) Extraction {
+	e := ai
+	e.Kind = prefer(e.Kind, rules.Kind)
+	e.Reference = prefer(e.Reference, rules.Reference)
+	e.Date = prefer(e.Date, rules.Date)
+	e.DueDate = prefer(e.DueDate, rules.DueDate)
+	e.Currency = prefer(e.Currency, rules.Currency)
+	e.PricesInclTax = prefer(e.PricesInclTax, rules.PricesInclTax)
+	e.TotalInclTax = prefer(e.TotalInclTax, rules.TotalInclTax)
+	e.TotalExclTax = prefer(e.TotalExclTax, rules.TotalExclTax)
+	e.PaymentReference = prefer(e.PaymentReference, rules.PaymentReference)
+	total := rules.TotalInclTax
+	sameTotal := total.Found && total.Confidence == Certain && (!ai.TotalInclTax.Found || ai.TotalInclTax.V == total.V)
+	if len(e.VAT) == 0 && sameTotal {
+		e.VAT = rules.VAT
 	}
-	if len(e.Lines) == 0 {
-		e.Lines = secondary.Lines
+	if len(e.Lines) == 0 && sameTotal {
+		e.Lines = rules.Lines
 	}
-	p, q := &e.Supplier, secondary.Supplier
-	p.Name = cmpOr(p.Name, q.Name)
-	p.VATNumber = cmpOr(p.VATNumber, q.VATNumber)
+	if rules.SupplierFound != Certain {
+		return e
+	}
+	p, q := &e.Supplier, rules.Supplier
+	if !garbledName(q.Name) {
+		p.Name = cmpOr(p.Name, q.Name)
+	}
+	if ValidVAT(q.VATNumber) {
+		p.VATNumber = cmpOr(p.VATNumber, q.VATNumber)
+	}
+	if iban.Valid(iban.Normalize(q.IBAN)) {
+		p.IBAN = cmpOr(p.IBAN, q.IBAN)
+	}
 	p.KVK = cmpOr(p.KVK, q.KVK)
-	p.IBAN = cmpOr(p.IBAN, q.IBAN)
 	p.Email = cmpOr(p.Email, q.Email)
 	p.Website = cmpOr(p.Website, q.Website)
 	p.Address1 = cmpOr(p.Address1, q.Address1)
@@ -186,15 +223,20 @@ func merge(primary, secondary Extraction) Extraction {
 	p.City = cmpOr(p.City, q.City)
 	p.Country = cmpOr(p.Country, q.Country)
 	p.Phone = cmpOr(p.Phone, q.Phone)
-	if e.SupplierFound == "" {
-		e.SupplierFound = secondary.SupplierFound
+	if e.SupplierFound == "" && e.Supplier != (Supplier{}) {
+		e.SupplierFound = rules.SupplierFound
 	}
 	return e
 }
 
-func or[T any](a, b Value[T]) Value[T] {
-	if a.Found {
-		return a
+// prefer takes the model's value unless only the rules' value is sure; a
+// rules' value that is not sure is never taken.
+func prefer[T any](model, rules Value[T]) Value[T] {
+	switch {
+	case rules.Found && rules.Confidence == Certain && (!model.Found || model.Confidence != Certain):
+		return rules
+	case model.Found:
+		return model
 	}
-	return b
+	return Value[T]{}
 }
