@@ -26,13 +26,13 @@ var (
 	// boilerplate is what a receipt or invoice prints about itself, never
 	// the supplier's name: "KOPIE BON", "Kassabon", "Customer's receipt".
 	boilerplate = regexp.MustCompile(`(?i)^\W*(?:kopie\s?bon|kopie|copy|duplica(?:at|te)|kassa\s?bon|kassenbon|bon|customer'?s?\s+(?:receipt|copy)|klant(?:en)?\s?ticket|receipt|factuur|invoice|rechnung|fatura|facture|factura|origineel|original)\W*$`)
-	streetRe   = regexp.MustCompile(`(?i)^(?:\p{L}[\p{L}\p{M}'.,\- ]*\s\d+\s?[a-z]?(?:[-/ ]?\d+[a-z]?)?(?:,.*)?|\d+[a-z]?,?\s+\p{L}.*|(?:postbus|p\.?\s?o\.?\s?box|postfach|apartado|bo[iî]te postale)\s*\d+.*)$`)
-	nlZip      = regexp.MustCompile(`^(\d{4})\s?([A-Z]{2})\b\s*(.*)$`)
-	ptZip      = regexp.MustCompile(`^(\d{4}-\d{3})\s+(.+)$`)
-	fiveZip    = regexp.MustCompile(`^(?:[A-Z]{1,2}-)?(\d{5})\s+(\p{L}.*)$`)
-	fourZip    = regexp.MustCompile(`^(?:[A-Z]{1,2}-)?(\d{4})\s+(\p{L}.*)$`)
-	gbZip      = regexp.MustCompile(`^(\p{L}[\p{L} .'-]*?)\s+([A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$`)
-	cityRe     = regexp.MustCompile(`^\p{L}[\p{L}\p{M}' .-]*$`)
+	streetRe    = regexp.MustCompile(`(?i)^(?:\p{L}[\p{L}\p{M}'.,\- ]*\s\d+\s?[a-z]?(?:[-/ ]?\d+[a-z]?)?(?:,.*)?|\d+[a-z]?,?\s+\p{L}.*|(?:postbus|p\.?\s?o\.?\s?box|postfach|apartado|bo[iî]te postale)\s*\d+.*)$`)
+	nlZip       = regexp.MustCompile(`^(\d{4})\s?([A-Z]{2})\b\s*(.*)$`)
+	ptZip       = regexp.MustCompile(`^(\d{4}-\d{3})\s+(.+)$`)
+	fiveZip     = regexp.MustCompile(`^(?:[A-Z]{1,2}-)?(\d{5})\s+(\p{L}.*)$`)
+	fourZip     = regexp.MustCompile(`^(?:[A-Z]{1,2}-)?(\d{4})\s+(\p{L}.*)$`)
+	gbZip       = regexp.MustCompile(`^(\p{L}[\p{L} .'-]*?)\s+([A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$`)
+	cityRe      = regexp.MustCompile(`^\p{L}[\p{L}\p{M}' .-]*$`)
 )
 
 var (
