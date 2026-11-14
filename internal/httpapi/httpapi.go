@@ -128,8 +128,11 @@ type Deps struct {
 	Google        GoogleClient
 	LM2           LM2Client
 	Companies     CompanySearcher
-	CompanyCheck  RegisterChecker
-	Addresses     AddressLookup
+	// CompanyNumbers looks Dutch companies up by KVK number; nil leaves the
+	// lookup off.
+	CompanyNumbers administration.CompanyLookup
+	CompanyCheck   RegisterChecker
+	Addresses      AddressLookup
 	// VATNumbers fills in contacts from VIES; nil leaves the lookup off.
 	VATNumbers VATNumbers
 	Mail       TestMailer
@@ -312,6 +315,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		errors.Is(err, webhooks.ErrNotFound),
 		errors.Is(err, membership.ErrInvitationNotFound),
 		errors.Is(err, administration.ErrLookupUnavailable),
+		errors.Is(err, administration.ErrCompanyNotFound),
 		errors.Is(err, administration.ErrAddressUnknown),
 		errors.Is(err, identity.ErrTokenNotFound):
 		writeError(w, http.StatusNotFound, "Not found")

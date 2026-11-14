@@ -59,6 +59,33 @@ type searchResponse struct {
 // SearchCompanies finds companies by name. The API answers 404 when nothing
 // matches, which is an ordinary empty result here.
 func (c *Client) SearchCompanies(ctx context.Context, query string) ([]administration.CompanyMatch, error) {
+	return c.zoeken(ctx, url.Values{"naam": {query}, "resultatenPerPagina": {resultsPerPage}})
+}
+
+// LookupCompany finds the company with a KVK number, preferring the
+// result that has an address: the API lists the legal entity and its
+// branches separately. A number it does not know is ErrCompanyNotFound.
+func (c *Client) LookupCompany(ctx context.Context, number string) (administration.CompanyMatch, error) {
+	found, err := c.zoeken(ctx, url.Values{"kvkNummer": {number}, "resultatenPerPagina": {resultsPerPage}})
+	if err != nil {
+		return administration.CompanyMatch{}, err
+	}
+	var best *administration.CompanyMatch
+	for i, m := range found {
+		if m.ChamberOfCommerce != number {
+			continue
+		}
+		if best == nil || (best.Address1 == "" && m.Address1 != "") {
+			best = &found[i]
+		}
+	}
+	if best == nil {
+		return administration.CompanyMatch{}, administration.ErrCompanyNotFound
+	}
+	return *best, nil
+}
+
+func (c *Client) zoeken(ctx context.Context, params url.Values) ([]administration.CompanyMatch, error) {
 	inst, err := c.settings.Instance(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
@@ -67,7 +94,6 @@ func (c *Client) SearchCompanies(ctx context.Context, query string) ([]administr
 		return nil, administration.ErrLookupUnavailable
 	}
 
-	params := url.Values{"naam": {query}, "resultatenPerPagina": {resultsPerPage}}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/zoeken?"+params.Encode(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("build request: %w", err)

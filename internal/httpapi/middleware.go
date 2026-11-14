@@ -112,8 +112,10 @@ func (s *server) throttle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var limiter *ratelimit.Limiter
 		switch {
-		// The VAT number lookup reaches VIES, so it counts as a register lookup.
-		case strings.HasPrefix(r.URL.Path, "/api/v2/") && strings.HasSuffix(strings.TrimSuffix(r.URL.Path, ".json"), "/vat_lookup"):
+		// The VAT and KVK number lookups reach VIES and KVK, so they count as
+		// register lookups.
+		case strings.HasPrefix(r.URL.Path, "/api/v2/") && strings.HasSuffix(strings.TrimSuffix(r.URL.Path, ".json"), "/vat_lookup"),
+			strings.HasPrefix(r.URL.Path, "/api/v2/") && strings.HasSuffix(strings.TrimSuffix(r.URL.Path, ".json"), "/kvk_lookup"):
 			limiter = s.deps.LookupLimiter
 		case strings.HasPrefix(r.URL.Path, "/api/v2/"):
 			limiter = s.deps.APILimiter

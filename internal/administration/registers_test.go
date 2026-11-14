@@ -60,3 +60,34 @@ func TestRegistersNoneEnabled(t *testing.T) {
 		t.Errorf("SearchCompanies() with no registers error = %v, want ErrLookupUnavailable", err)
 	}
 }
+
+type stubLookup struct {
+	stubRegister
+	found  CompanyMatch
+	asked  string
+	lookup error
+}
+
+func (s *stubLookup) LookupCompany(_ context.Context, number string) (CompanyMatch, error) {
+	s.asked = number
+	return s.found, s.lookup
+}
+
+func TestRegistersLookUpByNumberWithTheFirstEnabledOne(t *testing.T) {
+	searchOnly := &stubRegister{}
+	official := &stubLookup{lookup: ErrLookupUnavailable}
+	website := &stubLookup{found: CompanyMatch{Name: "Example Shop B.V.", ChamberOfCommerce: "12345678"}}
+	got, err := Registers{searchOnly, official, website}.LookupCompany(context.Background(), "12345678")
+	if err != nil || got.Name != "Example Shop B.V." || website.asked != "12345678" {
+		t.Errorf("LookupCompany() = %+v, %v; asked %q", got, err, website.asked)
+	}
+
+	official.lookup = ErrCompanyNotFound
+	website.asked = ""
+	if _, err := (Registers{official, website}).LookupCompany(context.Background(), "12345678"); !errors.Is(err, ErrCompanyNotFound) || website.asked != "" {
+		t.Errorf("LookupCompany() error = %v, asked website %q; want the official answer only", err, website.asked)
+	}
+	if _, err := (Registers{searchOnly}).LookupCompany(context.Background(), "12345678"); !errors.Is(err, ErrLookupUnavailable) {
+		t.Errorf("LookupCompany() without lookups error = %v, want ErrLookupUnavailable", err)
+	}
+}

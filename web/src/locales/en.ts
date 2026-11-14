@@ -65,6 +65,19 @@ export const en = {
       chamberOfCommerce: 'Netherlands Chamber of Commerce KVK number', taxNumber: 'VAT-id', taxNumberTip: 'The VAT identification number, such as NL000099998B57.',
       vatLookup: 'Look up', viesFilled: 'Filled in from the EU VIES register', vatNotFound: 'VAT number not found in VIES',
       viesUnavailable: 'VIES is not available right now', vatInvalid: 'This is not a valid EU VAT number', viesOff: 'The EU VAT number lookup is turned off',
+      companyCountry: 'Country of the company',
+      // The chamber of commerce field is named after the contact country's company register.
+      registry: {
+        NL: 'Netherlands Chamber of Commerce KVK number', BE: 'Enterprise number (KBO/BCE)', DE: 'Commercial register number (Handelsregister)',
+        PT: 'NIPC', FR: 'SIREN/SIRET', ES: 'CIF/NIF', other: 'Company registration number',
+      },
+      registryNumber: {
+        NL: 'KVK number', BE: 'enterprise number', DE: 'commercial register number', PT: 'NIPC', FR: 'SIREN/SIRET number', ES: 'CIF/NIF',
+        other: 'company registration number',
+      },
+      kvkFormat: 'A KVK number has 8 digits',
+      kvkLookup: 'Look up', kvkFilled: 'Filled in from the KVK register', kvkNotFound: 'Not found in KVK', kvkUnavailable: 'KVK is not available right now',
+      duplicate: 'A contact with this {{number}} already exists: {{name}}', vatNumber: 'VAT number', openContact: 'Open contact',
       firstname: 'First name', lastname: 'Last name', phone: 'Phone number', customerId: 'Client number',
       contactPerson: 'Contact person', personFirstname: 'Firstname', personLastname: 'Lastname',
       addressTitle: 'Address', address: 'Address', addAddressLine: 'Add address line', address2: 'Additional address details', zipcode: 'Zipcode', city: 'City', country: 'Country',
