@@ -2,6 +2,7 @@
 
 package recognize
 
-// raceSlowdown widens time budgets of tests: the race detector makes code
-// several times slower.
-const raceSlowdown = 10
+// raceEnabled tells tests the race detector is on: it makes code many
+// times slower, by how much depends on the machine's load, so time budgets
+// are not checked.
+const raceEnabled = true

@@ -278,7 +278,7 @@ func TestParseTextBigColumnTableIsFast(t *testing.T) {
 	if len(got.Lines) != rows {
 		t.Errorf("lines = %d, want %d", len(got.Lines), rows)
 	}
-	if budget := 200 * time.Millisecond * raceSlowdown; took > budget {
+	if budget := 200 * time.Millisecond; !raceEnabled && took > budget {
 		t.Errorf("ParseText of %d characters took %v, want under %v", len(text), took, budget)
 	}
 }
