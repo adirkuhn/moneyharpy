@@ -54,6 +54,12 @@ func run(logger *slog.Logger, addr string) error {
 		Concurrency: envInt("CONCURRENCY", runtime.NumCPU()),
 		PageModes:   pageModes(os.Getenv("OCR_PAGE_MODES")),
 		Workers:     envInt("OCR_WORKERS", runtime.NumCPU()),
+		// Optional: a second OCR engine, asked next to Tesseract.
+		RapidOCRURL:     os.Getenv("RAPIDOCR_URL"),
+		RapidOCRTimeout: time.Duration(envInt("RAPIDOCR_TIMEOUT_SECONDS", 60)) * time.Second,
+	}
+	if cfg.RapidOCRURL != "" {
+		logger.Info("reading photos and short scans with RapidOCR too", "url", cfg.RapidOCRURL, "timeout", cfg.RapidOCRTimeout)
 	}
 	srv := &http.Server{
 		Addr:              addr,
