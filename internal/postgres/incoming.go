@@ -155,6 +155,18 @@ func (s *PurchaseStore) RetypeDocument(ctx context.Context, r purchases.Retype) 
 			}); err != nil {
 				return err
 			}
+			// A booked one books again as its new kind, in place of what it booked.
+			if r.Entries != nil {
+				if err := q.DeleteJournalEntriesOf(ctx, sqlc.DeleteJournalEntriesOfParams{AdministrationID: admin, DocumentType: r.From, DocumentID: id}); err != nil {
+					return err
+				}
+				if err := storeDocument(ctx, q, *r.Document); err != nil {
+					return err
+				}
+				if err := postEntries(ctx, q, r.AdministrationID, r.Document.Kind, r.ID, r.Entries, r.Document.UpdatedAt); err != nil {
+					return err
+				}
+			}
 		} else {
 			if err := deleteIncoming(ctx, q, r.From, admin, id); err != nil {
 				return err

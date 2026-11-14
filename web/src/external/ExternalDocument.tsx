@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { formatAmount } from '../banking/queries'
 import type { TaxRate } from '../bookkeeping/queries'
-import { contactName } from '../contacts/queries'
 import { parseCents, parseQuantity } from '../invoices/totals'
 import { type ExternalInvoice, externalTitle } from './queries'
 
@@ -39,7 +38,7 @@ export function ExternalDocument({ administrationId, invoice: inv, rates, highli
     ? <a href={inv.source_url} target="_blank" rel="noreferrer">{inv.source || inv.source_url}</a>
     : inv.source
   const facts: [string, ReactNode][] = [
-    [t('external.document.contact'), inv.contact && <Link to={`/${administrationId}/contacts/${inv.contact_id}`}>{contactName(inv.contact)}</Link>],
+    [t('external.document.contact'), inv.contact && <ContactHoverCard administrationId={administrationId} contact={{ ...inv.contact, id: String(inv.contact_id ?? '') }} />],
     [t('external.document.invoiceDate'), inv.date],
     [t('external.document.dueDate'), inv.due_date],
     [t('external.document.source'), source],

@@ -113,3 +113,48 @@ func TestSetTypeMovesADocumentWithItsFilesNotesAndEvents(t *testing.T) {
 		t.Error("a journal entry changed type")
 	}
 }
+
+func TestSetTypeBooksABookedPurchaseInvoiceAgainAsReceipt(t *testing.T) {
+	ctx := context.Background()
+	f := newPurchaseFixture(t)
+	d, err := f.docs.Create(ctx, f.admin, f.owner, purchases.PurchaseInvoice, purchases.Changes{
+		ContactID: &f.supplier, Reference: ptr("EX-1"), Date: ptr(time.Now().Format(time.DateOnly)),
+		Details: []sales.DetailInput{{Description: ptr("Paper"), Price: ptr("100"), TaxRateID: &f.vat21, LedgerAccountID: &f.costs}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.State != purchases.Open {
+		t.Fatalf("state = %s, want open", d.State)
+	}
+	booked := func(kind string) (n int) {
+		t.Helper()
+		if err := testPool.QueryRow(ctx, "SELECT count(*) FROM journal_entries WHERE document_id = $1 AND document_type = $2", int64(d.ID), kind).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	before := booked(purchases.PurchaseInvoice)
+	if before == 0 {
+		t.Fatal("the purchase invoice books nothing")
+	}
+	if _, err := f.docs.SetType(ctx, f.admin, d.ID, f.owner, "receipt"); err != nil {
+		t.Fatalf("SetType(receipt) error = %v", err)
+	}
+	rec, err := f.docs.Document(ctx, f.admin, purchases.Receipt, d.ID, f.owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.State != purchases.Open || len(rec.Lines) != 1 || rec.EntryNumber != d.EntryNumber {
+		t.Errorf("receipt = %+v", rec)
+	}
+	if got := booked(purchases.PurchaseInvoice); got != 0 {
+		t.Errorf("%d entries still on the purchase invoice", got)
+	}
+	if got := booked(purchases.Receipt); got != before {
+		t.Errorf("receipt books %d entries, want %d", got, before)
+	}
+	if _, err := f.docs.SetType(ctx, f.admin, d.ID, f.owner, "general_document"); err == nil {
+		t.Error("a booked receipt became a general document")
+	}
+}

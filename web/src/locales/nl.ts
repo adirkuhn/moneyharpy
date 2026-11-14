@@ -24,6 +24,15 @@ export const nl: Messages = {
     all: 'Alle administraties', new: 'Nieuwe administratie', account: 'Gebruikersaccount', instance: 'Instellingen van deze installatie', docs: 'API-documentatie', signOut: 'Uitloggen',
   },
   contacts: {
+    hoverCard: {
+      created: '{{ago}} geleden aangemaakt', iban: 'IBAN', email: 'E-mail', phone: 'Telefoon', invoices: 'Facturen', documents: 'Documenten',
+      distance: {
+        lessThanMinute: 'minder dan een minuut', minutes_one: '1 minuut', minutes_other: '{{count}} minuten', aboutHours_one: 'ongeveer 1 uur', aboutHours_other: 'ongeveer {{count}} uur',
+        days_one: '1 dag', days_other: '{{count}} dagen', aboutMonths_one: 'ongeveer 1 maand', aboutMonths_other: 'ongeveer {{count}} maanden', months_one: '1 maand', months_other: '{{count}} maanden',
+        aboutYears_one: 'ongeveer 1 jaar', aboutYears_other: 'ongeveer {{count}} jaar', overYears_one: 'meer dan 1 jaar', overYears_other: 'meer dan {{count}} jaar',
+        almostYears_one: 'bijna 1 jaar', almostYears_other: 'bijna {{count}} jaar',
+      },
+    },
     quick: { all: 'Alle contacten', trusted: 'Vertrouwde contacten', manual: 'Contacten met verzendmethode handmatig', email: 'Contacten met verzendmethode e-mail' },
     views: { all: 'Contacten', trusted: 'Vertrouwde contacten', manual: 'Contacten met verzendmethode handmatig', email: 'Contacten met verzendmethode e-mail', custom: 'Gefilterde contacten', duplicates: 'Mogelijke dubbele contacten' },
     filter: {
@@ -1058,7 +1067,8 @@ export const nl: Messages = {
       confirmDeleteAttachment: 'Wil je deze bijlage verwijderen?', add: 'Toevoegen', noAttachment: 'Geen bijlage',
       noPreview: 'Er is geen voorbeeld van dit bestand. Download het om het te bekijken.', deleteDocument: 'Document verwijderen', confirmDelete: 'Wil je dit document verwijderen?',
       chooseType: 'Selecteer een type...', chooseTypeText: 'Kies het type van dit document om de gegevens in te vullen.',
-      reference: 'Referentie', invoiceId: 'Factuurnummer', date: 'Datum', dueDate: 'Vervaldatum', days: 'Dagen',
+      reference: 'Referentie', invoiceId: 'Factuurnummer', date: 'Datum', dueDate: 'Vervaldatum', days: 'Dagen', dueAs: 'Vervaldatum als', numberOfDays: 'Aantal dagen',
+      onlyNew: 'Wijzigen naar dit type kan alleen als het document de status "Nieuw" heeft',
       purchaseLines: 'Inkoopfactuurregels', receiptLines: 'Bonregels', save: 'Opslaan', next: 'Volgende',
       invoiceDetails: 'Factuurgegevens', receiptDetails: 'Bongegevens', category: 'Categorie', categoryTip: 'Categorie: {{type}} → {{name}}',
       searchContact: 'Zoek een bestaand contact ...', newContact: 'Nieuw contact', saving: 'Bezig met opslaan…',

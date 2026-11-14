@@ -95,6 +95,26 @@ func TestScanAndRecogniseOverTheAPI(t *testing.T) {
 		t.Errorf("incoming document = %+v", got)
 	}
 
+	// Choosing the type it has confirms the type.
+	marked := func(field string) bool {
+		got := decode[struct {
+			Recognition recognitionJSON `json:"recognition"`
+		}](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/"+id, nil))
+		for _, f := range got.Recognition.Fields {
+			if f.Field == field {
+				return true
+			}
+		}
+		return false
+	}
+	if !marked("document_type") {
+		t.Fatal("the type is not marked")
+	}
+	wantStatus(t, owner.do(http.MethodPost, api+"/documents/"+id+"/set_type", map[string]any{"document_type": "purchase_invoice"}), http.StatusOK)
+	if marked("document_type") {
+		t.Error("the type is still marked")
+	}
+
 	// Read again: pending, 202.
 	r = owner.do(http.MethodPost, api+"/documents/"+id+"/recognize", nil)
 	wantStatus(t, r, http.StatusAccepted)
@@ -103,6 +123,14 @@ func TestScanAndRecogniseOverTheAPI(t *testing.T) {
 	}
 	if err := h.recognition.Work(ctx); err != nil {
 		t.Fatal(err)
+	}
+	// Saving a field, even unchanged, confirms it: it is no longer marked.
+	if !marked("reference") || !marked("date") {
+		t.Fatal("the reference and date are not marked")
+	}
+	wantStatus(t, owner.do(http.MethodPatch, api+"/documents/purchase_invoices/"+id, map[string]any{"purchase_invoice": map[string]any{"reference": "EX-2026-7"}}), http.StatusOK)
+	if marked("reference") || !marked("date") {
+		t.Error("want only the reference confirmed")
 	}
 
 	// A document without attachments cannot be read.

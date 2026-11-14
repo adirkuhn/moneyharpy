@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { ContactName } from '../contacts/ContactHoverCard'
 import { formatAmount } from '../banking/queries'
 import { contactName } from '../contacts/queries'
 import { perPage } from '../invoices/queries'
@@ -58,7 +59,7 @@ export function EstimatesPage() {
           total={estimates.data.total}
           perPage={perPage}
           columns={[
-            { key: 'contact', header: t('invoices.contact'), link: true, cell: (e) => (e.contact ? contactName(e.contact) : estimateTitle(e, t)) },
+            { key: 'contact', header: t('invoices.contact'), link: true, cell: (e) => (e.contact ? <ContactName administrationId={administrationId} contactId={e.contact_id} name={contactName(e.contact)} /> : estimateTitle(e, t)) },
             { key: 'reference', header: t('invoices.reference'), kind: 'extra', cell: (e) => e.reference },
             { key: 'number', header: t('estimates.number'), cell: (e) => estimateTitle(e, t) },
             { key: 'date', header: t('estimates.date'), kind: 'date', cell: (e) => listDate(e.estimate_date) },
