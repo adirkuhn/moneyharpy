@@ -211,6 +211,104 @@ func TestWorkAddsASupplierByNameWhenItsDetailsDoNotPass(t *testing.T) {
 	}
 }
 
+func TestWorkAddsANewSupplierUnderItsRegisteredName(t *testing.T) {
+	registered := RegisteredCompany{Valid: true, Name: "EXAMPLE SHOP B.V.", Address: "EXAMPLE STREET 00001\n1234AB AMSTERDAM \n"}
+	for name, tc := range map[string]struct {
+		on       bool
+		supplier Supplier
+		existing []contacts.Contact
+		err      error
+		asked    []string
+		created  string
+		address  []string // address1, zipcode, city of the new contact
+	}{
+		"off": {
+			supplier: Supplier{Name: "Xampl Shop BV", VATNumber: "NL123456782B01"}, created: "Xampl Shop BV",
+		},
+		"on": {
+			on: true, supplier: Supplier{Name: "Xampl Shop BV", VATNumber: "NL 1234 56 782 B01"}, asked: []string{"NL123456782B01"},
+			created: "EXAMPLE SHOP B.V.", address: []string{"EXAMPLE STREET 00001", "1234 AB", "AMSTERDAM"},
+		},
+		"no name read": {
+			on: true, supplier: Supplier{VATNumber: "NL123456782B01"}, asked: []string{"NL123456782B01"}, created: "EXAMPLE SHOP B.V.",
+		},
+		"the document's address is kept": {
+			on: true, supplier: Supplier{Name: "Xampl Shop BV", VATNumber: "NL123456782B01", Address1: "Example Street 1", Zipcode: "1234 AB", City: "Amsterdam"},
+			asked: []string{"NL123456782B01"}, created: "EXAMPLE SHOP B.V.", address: []string{"Example Street 1", "1234 AB", "Amsterdam"},
+		},
+		"an existing contact with the tax number": {
+			on: true, supplier: Supplier{Name: "Xampl Shop BV", VATNumber: "NL123456782B01"},
+			existing: []contacts.Contact{{ID: 77, CompanyName: "Example Shop", TaxNumber: "NL 123456782 B01"}},
+		},
+		"VIES unavailable": {
+			on: true, supplier: Supplier{Name: "Xampl Shop BV", VATNumber: "NL123456782B01"}, err: errors.New("timeout"),
+			asked: []string{"NL123456782B01"}, created: "Xampl Shop BV",
+		},
+		"not registered": {
+			on: true, supplier: Supplier{Name: "Example Shop", VATNumber: "NL000099998B57"}, asked: []string{"NL000099998B57"}, created: "Example Shop",
+		},
+		"checksum fails": {
+			on: true, supplier: Supplier{Name: "Example Shop", VATNumber: "NL123456789B01"}, created: "Example Shop",
+		},
+		"outside the EU": {
+			on: true, supplier: Supplier{Name: "Example Cloud Ltd", VATNumber: "GB123456789"}, created: "Example Cloud Ltd",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newFixture(t)
+			registry := &fakeRegistry{companies: map[string]RegisteredCompany{"NL123456782B01": registered}, err: tc.err}
+			f.svc.Registry = registry
+			f.settings.rec.VIESEnabled = tc.on
+			f.contacts.list = tc.existing
+			f.docs.upload(10, map[string][]byte{"receipt.jpg": []byte("\xff\xd8\xff")})
+			f.ocr.text = ocr.Text{Text: "x", Method: "ocr"}
+			f.text = goodText()
+			f.text.Supplier = tc.supplier
+			_ = f.svc.Queue(context.Background(), admin, 10, owner)
+			f.work(t)
+			if !slices.Equal(registry.asked, tc.asked) {
+				t.Errorf("asked VIES about %q, want %q", registry.asked, tc.asked)
+			}
+			if tc.created == "" {
+				if len(f.contacts.created) != 0 || *f.docs.proposed[0].changes.ContactID != 77 {
+					t.Errorf("created %+v, want the existing contact", f.contacts.created)
+				}
+				return
+			}
+			if len(f.contacts.created) != 1 || *f.contacts.created[0].CompanyName != tc.created {
+				t.Fatalf("created %+v, want %q", f.contacts.created, tc.created)
+			}
+			if tc.address != nil {
+				c := f.contacts.created[0]
+				if got := []string{deref(c.Address1), deref(c.Zipcode), deref(c.City)}; !slices.Equal(got, tc.address) {
+					t.Errorf("address %q, want %q", got, tc.address)
+				}
+			}
+		})
+	}
+}
+
+func deref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func TestRegisteredAddress(t *testing.T) {
+	for in, want := range map[string][]string{
+		"EXAMPLE STREET 00001\n1234AB AMSTERDAM \n":       {"EXAMPLE STREET 00001", "1234 AB", "AMSTERDAM"},
+		"EXAMPLE STREET 1\nBUILDING 2\n1234 AB AMSTERDAM": {"EXAMPLE STREET 1, BUILDING 2", "1234 AB", "AMSTERDAM"},
+		"---":                       {"", "", ""},
+		"EXAMPLE STREET 1\nNOWHERE": {"", "", ""},
+	} {
+		a, z, c := registeredAddress(in, "NL")
+		if got := []string{a, z, c}; !slices.Equal(got, want) {
+			t.Errorf("registeredAddress(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestWorkRetriesWhileTheOCRServiceIsUnavailable(t *testing.T) {
 	f := newFixture(t)
 	f.docs.upload(10, map[string][]byte{"a.pdf": []byte("%PDF")})
@@ -253,7 +351,7 @@ func TestWorkWithoutAnOCRServiceReadsOnlyEInvoices(t *testing.T) {
 }
 
 func TestWorkAsksTheModelOnlyWhenTheRulesFallShortAndItIsOn(t *testing.T) {
-	poor := Extraction{Supplier: Supplier{Name: "Example Shop"}, Reference: uncertain("A-1")}
+	poor := Extraction{Supplier: Supplier{Name: "Example Shop"}, Reference: certain("A-1")}
 	for _, on := range []bool{false, true} {
 		f := newFixture(t)
 		f.settings.rec = settings.Recognition{AIEnabled: on, Connections: []settings.AIConnection{{Name: "Ollama", Provider: "ollama", Model: "m", Enabled: true}}}
@@ -277,6 +375,52 @@ func TestWorkAsksTheModelOnlyWhenTheRulesFallShortAndItIsOn(t *testing.T) {
 		if *p.Reference != "A-1" || *p.Date != "2026-11-01" || *p.Details[0].Price != "50.0" {
 			t.Errorf("merged proposal = %+v", p)
 		}
+	}
+}
+
+func TestWorkTakesTheOCRReadingTheRulesReadBest(t *testing.T) {
+	f := newFixture(t)
+	f.docs.upload(10, map[string][]byte{"receipt.jpg": []byte("\xff\xd8\xff")})
+	f.ocr.text = ocr.Text{Text: "psm 3", Method: "ocr", Pages: 1, Alternatives: []string{"psm 6", "psm 4"}}
+	var parsed []string
+	f.svc.Parsers.Text = func(text string, _ time.Time) Extraction {
+		parsed = append(parsed, text)
+		if text == "psm 6" {
+			return goodText()
+		}
+		return Extraction{TotalInclTax: uncertain(money.Amount(2913))}
+	}
+	f.settings.rec = settings.Recognition{AIEnabled: true, Connections: []settings.AIConnection{{Name: "Ollama", Provider: "ollama", Model: "m", Enabled: true}}}
+	_ = f.svc.Queue(context.Background(), admin, 10, owner)
+	f.work(t)
+	if !slices.Equal(parsed, []string{"psm 3", "psm 6", "psm 4"}) {
+		t.Errorf("parsed %q, want every reading", parsed)
+	}
+	r := f.recognition(t, 10)
+	if r.State != StateDone || r.Source != SourceOCR || f.model.got != "" {
+		t.Errorf("recognition = %+v, model asked %q: the psm 6 reading is good enough", r, f.model.got)
+	}
+	if p := f.docs.proposed[0].changes; *p.Reference != "2026-0042" {
+		t.Errorf("proposal = %+v", p)
+	}
+}
+
+func TestWorkGivesTheModelTheBestReadingAndLargePages(t *testing.T) {
+	f := newFixture(t)
+	f.docs.upload(10, map[string][]byte{"receipt.jpg": []byte("\xff\xd8\xff")})
+	f.ocr.text, f.ocr.pages = ocr.Text{Text: "psm 3", Method: "ocr", Pages: 1, Alternatives: []string{"psm 6"}}, 1
+	f.svc.Parsers.Text = func(text string, _ time.Time) Extraction {
+		if text == "psm 6" {
+			return Extraction{TotalInclTax: uncertain(money.Amount(3630)), Reference: uncertain("0042")}
+		}
+		return Extraction{}
+	}
+	f.settings.rec = settings.Recognition{AIEnabled: true, Connections: []settings.AIConnection{{Name: "Ollama", Provider: "ollama", Model: "m", Enabled: true}}}
+	f.model.out = Extraction{Date: uncertain(day("2026-10-20")), TotalInclTax: uncertain(money.Amount(3630))}
+	_ = f.svc.Queue(context.Background(), admin, 10, owner)
+	f.work(t)
+	if f.model.got != "psm 6" || !slices.Equal(f.ocr.sides, []int{aiPageSide}) {
+		t.Errorf("model got %q, pages rendered at %v", f.model.got, f.ocr.sides)
 	}
 }
 

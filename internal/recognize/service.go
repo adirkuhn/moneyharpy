@@ -92,7 +92,10 @@ type Deps struct {
 	OCR     ocr.Service
 	Parsers Parsers
 	// Models may be nil: the AI model is then never asked.
-	Models   ModelFactory
+	Models ModelFactory
+	// Registry may be nil: new suppliers then keep the name read from the
+	// document.
+	Registry Registry
 	Notifier Notifier
 	Logger   *slog.Logger
 	Now      func() time.Time
@@ -502,6 +505,9 @@ func (s *Service) supplier(ctx context.Context, admin, user resource.ID, e Extra
 	}
 	if c, by, ok := Match(sup, candidates); ok {
 		return SupplierMatch{ContactID: c.ID, Name: c.Name(), Confidence: by.Confidence()}, nil
+	}
+	if e.Source != SourceEInvoice {
+		sup = s.fromRegistry(ctx, sup)
 	}
 	name := strings.TrimSpace(sup.Name)
 	if name == "" {

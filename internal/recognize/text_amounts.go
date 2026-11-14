@@ -169,3 +169,73 @@ func taxPair(rate string, amounts []money.Amount) (taxable, tax money.Amount, ok
 
 // commonRates are the VAT rates used to guess a rate from totals.
 var commonRates = []string{"21", "9", "19", "7", "20", "23", "6", "5.5", "10", "22", "25", "24", "8.1", "17", "13", "12", "5", "0"}
+
+// splitDecimal is an amount OCR printed with a stray space around its
+// decimal separator: "36 . 30", "36 ,30", "36, 30".
+var splitDecimal = regexp.MustCompile(`(\d{1,6})( ?)([.,])( ?)(\d{2})`)
+
+// amountAhead is an amount, as the next column after a split one.
+var amountAhead = regexp.MustCompile(`^ ?(?:\d{1,6} ?[.,] ?\d{2}|\d{1,6},-)(?:\s|$)`)
+
+// joinSplitDecimals removes the stray spaces OCR reads around the decimal
+// separator of an amount. Only a whole number standing alone and followed
+// by the end of the line, a wide gap, a currency or another amount is
+// joined, so times ("11 . 32 . 24"), dates, counts in a sentence ("3, 12
+// artikelen") and card numbers stay as they are.
+func joinSplitDecimals(l string) string {
+	locs := splitDecimal.FindAllStringSubmatchIndex(l, -1)
+	if len(locs) == 0 {
+		return l
+	}
+	var b strings.Builder
+	last := 0
+	for _, m := range locs {
+		if m[2*2] == m[2*2+1] && m[2*4] == m[2*4+1] {
+			continue // no stray space
+		}
+		if !standsAlone(l, m[0]) || !endsAmount(l[m[1]:]) {
+			continue
+		}
+		b.WriteString(l[last:m[0]])
+		b.WriteString(group(l, m, 1) + group(l, m, 3) + group(l, m, 5))
+		last = m[1]
+	}
+	b.WriteString(l[last:])
+	return b.String()
+}
+
+// standsAlone tells whether the number at i starts a word that is not part
+// of a longer run of numbers, such as a card number printed in groups, a
+// date or a time.
+func standsAlone(l string, i int) bool {
+	if i == 0 {
+		return true
+	}
+	switch {
+	case l[i-1] == '(' || strings.HasSuffix(l[:i], "€"):
+		return true
+	case l[i-1] != ' ':
+		return false
+	}
+	before := strings.TrimRight(l[:i], " ")
+	if before == "" || amountBehind.MatchString(before) {
+		return true // the next column after an amount
+	}
+	c := before[len(before)-1]
+	return !isDigit(c) && !strings.ContainsRune(".,:-/*", rune(c))
+}
+
+// amountBehind is an amount ending a text, as the column before another.
+var amountBehind = regexp.MustCompile(`(?:^|\s)\d{1,6} ?[.,] ?\d{2}$`)
+
+// endsAmount tells whether rest, the text after a split amount, lets it be
+// one: the line ends, a wide gap or a currency follows, or another amount.
+func endsAmount(rest string) bool {
+	switch {
+	case strings.TrimSpace(rest) == "", strings.HasPrefix(rest, "  "):
+		return true
+	case rest[0] != ' ':
+		return false
+	}
+	return amountAhead.MatchString(rest) || strings.HasPrefix(rest, " EUR") || strings.HasPrefix(rest, " €")
+}

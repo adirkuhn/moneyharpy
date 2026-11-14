@@ -17,6 +17,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -51,6 +52,8 @@ func run(logger *slog.Logger, addr string) error {
 		MaxPages:    envInt("MAX_PAGES", 20),
 		ReadTimeout: time.Duration(envInt("READ_TIMEOUT_SECONDS", 120)) * time.Second,
 		Concurrency: envInt("CONCURRENCY", runtime.NumCPU()),
+		PageModes:   pageModes(os.Getenv("OCR_PAGE_MODES")),
+		Workers:     envInt("OCR_WORKERS", runtime.NumCPU()),
 	}
 	srv := &http.Server{
 		Addr:              addr,
@@ -85,6 +88,21 @@ func envInt(name string, fallback int) int {
 		return n
 	}
 	return fallback
+}
+
+// pageModes reads a list of Tesseract page modes such as "3,6,4"; without
+// a valid one it is DefaultPageModes.
+func pageModes(s string) []string {
+	var out []string
+	for _, f := range strings.Split(s, ",") {
+		if n, err := strconv.Atoi(strings.TrimSpace(f)); err == nil && (n == 1 || n >= 3 && n <= 13) { // 0 and 2 read no text
+			out = append(out, strconv.Itoa(n))
+		}
+	}
+	if len(out) == 0 {
+		return DefaultPageModes
+	}
+	return out
 }
 
 func checkHealth(addr string) error {
