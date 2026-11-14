@@ -296,3 +296,50 @@ func TestRecognizeWithoutOwnCompany(t *testing.T) {
 		t.Fatalf("proposed = %+v", f.docs.proposed)
 	}
 }
+
+// The account a debit or collection sentence takes the money from is the
+// buyer's, also when the administration never registered it and the
+// sentence runs over two lines.
+func TestDebitedAccountIsNotTheSuppliers(t *testing.T) {
+	footer := "IBAN NL91 ABNA 0417 1643 00 | Incassant NL00ZZZ000000000000 | Btw NL123456782B01 KvK 12 34 56 78\n"
+	for name, sentence := range map[string]string{
+		"afgeschreven van rekeningnummer": "Dit bedrag wordt rond 20 oktober 2026 afgeschreven van\nrekeningnummer NL20 INGB 0001 2345 67.\n",
+		"afgeschreven van rekening":       "Wij schrijven het bedrag af. Het wordt afgeschreven van rekening\nNL20INGB0001234567 op 20 oktober 2026.\n",
+		"geïncasseerd van":                "Het bedrag wordt rond 20 oktober 2026 geïncasseerd van\nNL20 INGB 0001 2345 67.\n",
+		"debited from your account":       "The amount will be debited from your\naccount NL20INGB0001234567 on 20 October 2026.\n",
+		"abgebucht von Ihrem Konto":       "Der Betrag wird am 20.10.2026 abgebucht von\nIhrem Konto NL20INGB0001234567.\n",
+		"prélevé sur":                     "Le montant sera prélevé sur le compte\nNL20INGB0001234567 le 20 octobre 2026.\n",
+		"debitado da conta":               "O valor será debitado da conta\nNL20INGB0001234567 em 20 de outubro de 2026.\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			lines := prepare("Voorbeeld Energie B.V.\n" + sentence + "\n" + footer)
+			s, _ := readSupplierFor(lines, Self{})
+			if s.IBAN != "NL91ABNA0417164300" {
+				t.Errorf("IBAN = %q, want the supplier's NL91ABNA0417164300", s.IBAN)
+			}
+		})
+	}
+}
+
+// The IBAN printed with the supplier's VAT and KvK numbers wins over
+// another one labelled earlier.
+func TestFooterIBANWins(t *testing.T) {
+	lines := prepare("Voorbeeld Energie B.V.\nRekening NL20 INGB 0001 2345 67\n\nNL91 ABNA 0417 1643 00 | Btw NL123456782B01 | KvK 12345678\n")
+	if s, _ := readSupplierFor(lines, Self{}); s.IBAN != "NL91ABNA0417164300" {
+		t.Errorf("IBAN = %q, want the footer's NL91ABNA0417164300", s.IBAN)
+	}
+}
+
+// A SEPA creditor id is neither an IBAN nor a VAT number.
+func TestCreditorIDIsIgnored(t *testing.T) {
+	for _, text := range []string{
+		"Voorbeeld Energie B.V.\nIncassant NL00ZZZ000000000000\n",
+		"Voorbeeld Energie B.V.\nCreditor ID: NL00ZZZ123456780000\n",
+		"Voorbeeld Energie B.V.\nNL00ZZZ123456780000\n",
+	} {
+		lines := prepare(text)
+		if s, _ := readSupplierFor(lines, Self{}); s.IBAN != "" || s.VATNumber != "" {
+			t.Errorf("%q: IBAN %q, VAT %q; want none", text, s.IBAN, s.VATNumber)
+		}
+	}
+}

@@ -123,7 +123,7 @@ func readSupplier(lines []string, buyer []bool, self Self) (Supplier, Confidence
 			}
 		}
 	}
-	s.IBAN = supplierIBAN(lines, buyer, self)
+	s.IBAN = supplierIBAN(lines, buyer, vatAt, self)
 	if s.VATNumber == "" {
 		if v := portugueseNIF(lines, buyer, s.IBAN); v != "" {
 			s.VATNumber, vatSure = v, true
@@ -192,27 +192,60 @@ func countryOf(vat string) string {
 	return vat[:2]
 }
 
-// supplierIBAN takes the first valid IBAN not on a buyer line nor the
-// administration's own, preferring one printed next to
-// "IBAN"/"rekening"/"bank".
-func supplierIBAN(lines []string, buyer []bool, self Self) string {
-	first := ""
+// supplierIBAN takes the first valid IBAN not on a buyer line, nor the
+// administration's own, nor the account a debit sentence takes the money
+// from. It prefers one printed on the line of the supplier's VAT number
+// (vatAt) or KvK number, then one printed next to "IBAN"/"rekening"/"bank".
+func supplierIBAN(lines []string, buyer []bool, vatAt int, self Self) string {
+	debited := debitedAccounts(lines)
+	best, rank := "", 0
 	for i, l := range lines {
 		if buyer[i] {
 			continue
 		}
-		ibans := slices.DeleteFunc(FindIBANs(l), self.sameIBAN)
+		ibans := slices.DeleteFunc(FindIBANs(l), func(n string) bool { return self.sameIBAN(n) || slices.Contains(debited, n) })
 		if len(ibans) == 0 {
 			continue
 		}
-		if ibanLabel.MatchString(l) {
-			return ibans[0]
+		r := 1
+		switch {
+		case i == vatAt || kvkPattern.MatchString(l):
+			r = 3
+		case ibanLabel.MatchString(l):
+			r = 2
 		}
-		if first == "" {
-			first = ibans[0]
+		if r > rank {
+			best, rank = ibans[0], r
 		}
 	}
-	return first
+	return best
+}
+
+// debitSentence takes money from the buyer's account: "afgeschreven van
+// rekening", "debited from your account", "prélevé sur".
+var debitSentence = regexp.MustCompile(`(?i)(?:afgeschreven van|ge[ïi]ncasseerd van|ge[ïi]nd van|debited from|collected from|abgebucht von|eingezogen von|pr[ée]lev[ée] sur|debitad[oa] (?:da|na|de)|cobrad[oa] (?:da|na))\b`)
+
+// debitSpan is how far after a debit sentence's words its account may
+// be printed: "van uw rekeningnummer".
+const debitSpan = 60
+
+// debitedAccounts are the IBANs debit sentences take money from, read with
+// the next line, as such a sentence often runs over a line break.
+func debitedAccounts(lines []string) []string {
+	var out []string
+	for i, l := range lines {
+		text := l
+		if j := nextNonEmpty(lines, i); j >= 0 {
+			text += " " + strings.TrimSpace(lines[j])
+		}
+		for _, loc := range debitSentence.FindAllStringIndex(text, -1) {
+			end := min(len(text), loc[1]+debitSpan)
+			if ibans := FindIBANs(text[loc[1]:end]); len(ibans) > 0 && !slices.Contains(out, ibans[0]) {
+				out = append(out, ibans[0])
+			}
+		}
+	}
+	return out
 }
 
 // segments splits a line into the parts printed with "|", "·" or wide gaps.
