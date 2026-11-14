@@ -1,0 +1,58 @@
+# syntax=docker/dockerfile:1.7
+# The RapidOCR service (ocr-rapid/): PaddleOCR's PP-OCR models on ONNX
+# Runtime, a second OCR engine the OCR service (cmd/ocrd) asks next to
+# Tesseract when RAPIDOCR_URL is set. Optional: without it ocrd reads with
+# Tesseract alone.
+#
+# Every package and model is pinned; the models are downloaded here, at
+# build time, and checked against their SHA-256, so the service needs no
+# network at runtime.
+FROM python:3.13.18-slim-trixie AS base
+# ONNX Runtime's Linux build sends telemetry to Microsoft unless this is set.
+ENV PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 ORT_DISABLE_TELEMETRY=1
+COPY ocr-rapid/requirements.txt /tmp/requirements.txt
+# ONNX Runtime for the CPU and OpenCV without its GUI libraries (headless),
+# from wheels only. What the service does not use is removed: the PP-OCRv6
+# models the rapidocr package bundles, ONNX Runtime's tools for converting
+# and quantising models, the packages' test suites, and pip.
+RUN python -m venv /opt/venv \
+ && /opt/venv/bin/pip install --only-binary=:all: -r /tmp/requirements.txt \
+ && cd /opt/venv/lib/python3.13/site-packages \
+ && rm -f rapidocr/models/*.onnx \
+ && rm -rf onnxruntime/transformers onnxruntime/quantization onnxruntime/tools \
+ && find . -depth -type d -name tests -exec rm -rf {} + \
+ && /opt/venv/bin/python -m pip uninstall -q -y pip \
+ && rm /tmp/requirements.txt
+# The models of RapidOCR 3.10.0's model repository (Apache-2.0): text
+# detection, upside-down text, and recognition of Latin script.
+ARG MODELS=https://www.modelscope.cn/models/RapidAI/RapidOCR/resolve/v3.10.0/onnx
+ADD --chmod=644 --checksum=sha256:4d97c44a20d30a81aad087d6a396b08f786c4635742afc391f6621f5c6ae78ae \
+    ${MODELS}/PP-OCRv5/det/ch_PP-OCRv5_det_mobile.onnx /models/ch_PP-OCRv5_det_mobile.onnx
+ADD --chmod=644 --checksum=sha256:e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c \
+    ${MODELS}/PP-OCRv4/cls/ch_ppocr_mobile_v2.0_cls_mobile.onnx /models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
+ADD --chmod=644 --checksum=sha256:b20bd37c168a570f583afbc8cd7925603890efbcdc000a59e22c269d160b5f5a \
+    ${MODELS}/PP-OCRv5/rec/latin_PP-OCRv5_rec_mobile.onnx /models/latin_PP-OCRv5_rec_mobile.onnx
+COPY ocr-rapid/main.py ocr-rapid/server.py ocr-rapid/lines.py ocr-rapid/engine.py /app/
+
+# The unit tests and a smoke test with the real models on a synthetic
+# receipt, without network. The final image copies from this stage, so it
+# is only built when they pass.
+FROM base AS test
+# A font with accents for the synthetic receipt; only in this stage.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/*
+COPY ocr-rapid/test_lines.py ocr-rapid/test_server.py ocr-rapid/smoke_test.py ocr-rapid/receipt.py /app/
+RUN --network=none cd /app && /opt/venv/bin/python -m unittest -v test_lines test_server smoke_test
+
+FROM python:3.13.18-slim-trixie
+COPY --from=test /opt/venv /opt/venv
+COPY --from=base /models /models
+COPY --from=base /app /app
+RUN useradd --system --uid 10002 --home-dir /nonexistent --shell /usr/sbin/nologin rapidocr
+ENV PATH=/opt/venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 ORT_DISABLE_TELEMETRY=1
+WORKDIR /app
+USER 10002
+EXPOSE 8091
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD ["python", "/app/main.py", "-healthcheck"]
+ENTRYPOINT ["python", "/app/main.py"]

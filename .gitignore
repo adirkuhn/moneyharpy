@@ -9,3 +9,4 @@ coverage/
 *.tsbuildinfo
 build/
 docker-compose.override.yml
+__pycache__/

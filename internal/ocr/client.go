@@ -58,27 +58,29 @@ func (c *Client) Read(ctx context.Context, f File) (Text, error) {
 		return Text{}, err
 	}
 	var body struct {
-		Text     string `json:"text"`
-		Method   string `json:"method"`
-		Pages    int    `json:"pages"`
-		Embedded []struct {
+		Text       string `json:"text"`
+		Method     string `json:"method"`
+		TextMethod string `json:"text_method"`
+		Pages      int    `json:"pages"`
+		Embedded   []struct {
 			Name        string `json:"name"`
 			ContentType string `json:"content_type"`
 			Data        []byte `json:"data"`
 		} `json:"embedded"`
 		Alternatives []struct {
-			Text string `json:"text"`
+			Method string `json:"method"`
+			Text   string `json:"text"`
 		} `json:"alternatives"`
 	}
 	if err := json.NewDecoder(io.LimitReader(res.Body, maxResponse)).Decode(&body); err != nil {
 		return Text{}, fmt.Errorf("%w: read response: %w", ErrUnavailable, err)
 	}
-	t := Text{Text: body.Text, Method: body.Method, Pages: body.Pages}
+	t := Text{Text: body.Text, Method: body.Method, TextMethod: body.TextMethod, Pages: body.Pages}
 	for _, e := range body.Embedded {
 		t.Embedded = append(t.Embedded, File{Name: e.Name, ContentType: e.ContentType, Data: e.Data})
 	}
 	for _, a := range body.Alternatives {
-		t.Alternatives = append(t.Alternatives, a.Text)
+		t.Alternatives = append(t.Alternatives, Reading{Method: a.Method, Text: a.Text})
 	}
 	return t, nil
 }

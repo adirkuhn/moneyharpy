@@ -63,14 +63,18 @@ func noisy(tok string) bool {
 	return all >= 2 && 2*marks > all
 }
 
-// bestFirst orders readings by score, keeping the order of the page modes
-// between equals.
+// bestFirst orders readings by score, keeping their order between equals:
+// the order of the page modes, then RapidOCR.
 func bestFirst(readings []Reading) []Reading {
-	scores := make(map[string]int, len(readings))
-	for _, r := range readings {
-		scores[r.PageMode] = readingScore(r.Text)
+	scores := make([]int, len(readings))
+	order := make([]int, len(readings))
+	for i, r := range readings {
+		scores[i], order[i] = readingScore(r.Text), i
 	}
-	out := slices.Clone(readings)
-	slices.SortStableFunc(out, func(a, b Reading) int { return scores[b.PageMode] - scores[a.PageMode] })
+	slices.SortStableFunc(order, func(a, b int) int { return scores[b] - scores[a] })
+	out := make([]Reading, len(readings))
+	for i, o := range order {
+		out[i] = readings[o]
+	}
 	return out
 }

@@ -69,7 +69,7 @@ func (s *Service) extract(ctx context.Context, files []ocr.File) (Extraction, er
 		var readings []string
 		var parsed []Extraction
 		fileText := ""
-		for _, text := range append([]string{t.Text}, t.Alternatives...) {
+		for _, text := range readingTexts(t) {
 			if strings.TrimSpace(text) == "" {
 				continue
 			}
@@ -245,4 +245,14 @@ func prefer[T any](model, rules Value[T]) Value[T] {
 		return model
 	}
 	return Value[T]{}
+}
+
+// readingTexts are the texts of every reading of a file: the service's best
+// first, then the alternatives.
+func readingTexts(t ocr.Text) []string {
+	out := []string{t.Text}
+	for _, a := range t.Alternatives {
+		out = append(out, a.Text)
+	}
+	return out
 }

@@ -16,6 +16,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  # Without ocr-rapid (RAPIDOCR_URL): no test reads a photo or a scan, so
+  # it would only slow the stack down. cmd/ocrd's tests cover asking it, and
+  # building its image runs a smoke test with the real models (make
+  # test-ocr-rapid-image).
   ocr:
     build:
       context: ..

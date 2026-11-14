@@ -29,15 +29,26 @@ type Text struct {
 	// Method is "text" for the text of a digital PDF and "ocr" for text read
 	// from a scan or photo.
 	Method string
+	// TextMethod tells which OCR engine read Text, as Reading.Method; empty
+	// for the text of a digital PDF.
+	TextMethod string
 	// Pages is the number of pages read.
 	Pages int
 	// Embedded are files embedded in a PDF, such as the UBL or Factur-X XML of
 	// an e-invoice.
 	Embedded []File
-	// Alternatives are other readings of OCR, with other page modes, that
-	// the service thought worse than Text: a reader may understand one of
-	// them better.
-	Alternatives []string
+	// Alternatives are other readings of OCR, with other page modes or
+	// engines, that the service thought worse than Text: a reader may
+	// understand one of them better.
+	Alternatives []Reading
+}
+
+// Reading is the text one OCR engine read.
+type Reading struct {
+	// Method is the engine and its mode, such as "tesseract-psm6" or
+	// "rapidocr".
+	Method string
+	Text   string
 }
 
 // Page is one page rendered as a PNG image.

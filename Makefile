@@ -2,7 +2,7 @@ SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 GOLANGCI := go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 E2E_COMPOSE := docker compose -p moneyharpy-e2e -f e2e/docker-compose.e2e.yml
 
-.PHONY: generate moneybird-schemas lint test test-web test-e2e check run docs
+.PHONY: generate moneybird-schemas lint test test-web test-e2e test-ocr-rapid test-ocr-rapid-image check run docs
 
 generate: ## Regenerate code from the OpenAPI contract and SQL queries.
 	cd internal/httpapi && go tool oapi-codegen -config oapi-codegen.yaml ../../api/openapi.yaml
@@ -21,6 +21,12 @@ lint: ## Formatting, vet and golangci-lint, as CI runs them.
 test: ## Backend unit and integration tests. Needs Docker.
 	go test -race ./...
 
+test-ocr-rapid: ## Unit tests of the RapidOCR service (ocr-rapid/): line building and HTTP, Python's standard library only.
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ocr-rapid
+
+test-ocr-rapid-image: ## The RapidOCR image's test stage: the unit tests and a smoke test with the real models on a synthetic receipt. About 30 s the first time, cached afterwards.
+	docker build -q --target test -f Dockerfile.ocr-rapid . >/dev/null
+
 test-web: ## Frontend tests.
 	cd web && npm test
 
@@ -28,12 +34,14 @@ test-e2e: ## End-to-end tests against a disposable stack.
 	$(E2E_COMPOSE) up -d --build --wait
 	cd e2e && E2E_BASE_URL=http://localhost:18080 npm test; status=$$?; cd .. && $(E2E_COMPOSE) down -v; exit $$status
 
-check: ## Everything CI checks, run locally: lint, generated code, Moneybird compatibility, backend, frontend and e2e.
+check: ## Everything CI checks, run locally: lint, generated code, Moneybird compatibility, backend, RapidOCR service, frontend and e2e.
 	$(MAKE) lint
 	$(MAKE) generate
 	git diff --exit-code
 	go test -tags moneybird ./cmd/mbschemas
 	$(MAKE) test
+	$(MAKE) test-ocr-rapid
+	$(MAKE) test-ocr-rapid-image
 	cd web && npm test && npm run build
 	$(MAKE) test-e2e
 

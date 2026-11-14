@@ -26,7 +26,7 @@ func TestReadSendsTheFileAndDecodesTheText(t *testing.T) {
 			t.Errorf("request = %s %s %q %v", r.Method, r.URL, body, r.Header)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"text":"Example Shop B.V.\fpage 2","method":"text","pages":2,"embedded":[{"name":"factur-x.xml","content_type":"application/xml","data":"PEludm9pY2UvPg=="}],"alternatives":[{"page_mode":"6","text":"other reading"}]}`)
+		_, _ = io.WriteString(w, `{"text":"Example Shop B.V.\fpage 2","method":"text","pages":2,"text_method":"rapidocr","embedded":[{"name":"factur-x.xml","content_type":"application/xml","data":"PEludm9pY2UvPg=="}],"alternatives":[{"method":"tesseract-psm6","page_mode":"6","text":"other reading"}]}`)
 	})
 	got, err := c.Read(context.Background(), ocr.File{Name: "invoice 2026.pdf", ContentType: "application/pdf", Data: []byte("%PDF-1.4")})
 	if err != nil {
@@ -34,7 +34,8 @@ func TestReadSendsTheFileAndDecodesTheText(t *testing.T) {
 	}
 	if got.Text != "Example Shop B.V.\fpage 2" || got.Method != "text" || got.Pages != 2 || len(got.Embedded) != 1 ||
 		got.Embedded[0].Name != "factur-x.xml" || string(got.Embedded[0].Data) != "<Invoice/>" ||
-		len(got.Alternatives) != 1 || got.Alternatives[0] != "other reading" {
+		got.TextMethod != "rapidocr" ||
+		len(got.Alternatives) != 1 || got.Alternatives[0] != (ocr.Reading{Method: "tesseract-psm6", Text: "other reading"}) {
 		t.Errorf("read = %+v", got)
 	}
 }
