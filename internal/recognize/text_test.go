@@ -33,7 +33,7 @@ func TestParseTextFixtures(t *testing.T) {
 			website: "www.voorbeeld-energie.example.com", address: "Postbus 1234", zip: "1000 AB", city: "Amsterdam",
 			country: "NL", phone: "020-1234567", ref: "2026110042", date: "2026-11-13", due: "2026-11-27",
 			currency: "EUR", incl: "147.50", excl: "121.90", vat21: []string{"21:121.90:25.60"}, prices: "incl",
-			lines:  []string{"Termijnbedrag stroom november|1|85.00|85.00|", "Termijnbedrag gas november|1|62.50|62.50|"},
+			lines:  []string{"Termijnbedrag stroom november|1|85.00|85.00|21", "Termijnbedrag gas november|1|62.50|62.50|21"},
 			payref: "3000000000000047", good: true,
 		},
 		"nl_webshop.txt": {
@@ -41,36 +41,36 @@ func TestParseTextFixtures(t *testing.T) {
 			email: "info@example.com", website: "www.example.com", address: "Voorbeeldstraat 1", zip: "1234 AB",
 			city: "Amsterdam", country: "NL", ref: "INV-2026-0815", date: "2026-11-12", currency: "EUR",
 			incl: "49.80", excl: "41.16", vat21: []string{"21:41.16:8.64"}, prices: "incl",
-			lines: []string{"USB-C kabel 2m|2|9.95|19.90|", "Draadloze muis|1|24.95|24.95|", "Verzendkosten|1|4.95|4.95|"},
+			lines: []string{"USB-C kabel 2m|2|9.95|19.90|21", "Draadloze muis|1|24.95|24.95|21", "Verzendkosten|1|4.95|4.95|21"},
 			good:  true,
 		},
 		"nl_restaurant.txt": {
 			kind: KindReceipt, name: "EETCAFE DE VOORBEELD", vat: "NL123456782B01", address: "Marktplein 3",
 			zip: "1234 AB", city: "Amsterdam", phone: "020-7654321", ref: "4711", date: "2026-11-13", currency: "EUR",
 			incl: "21.65", excl: "19.86", vat21: []string{"9:19.86:1.79"}, prices: "incl",
-			lines: []string{"Cappuccino|2|3.40|6.80|", "Tosti ham kaas|1|7.50|7.50|", "Appeltaart|1|4.25|4.25|", "Spa rood|1|3.10|3.10|"},
+			lines: []string{"Cappuccino|2|3.40|6.80|9", "Tosti ham kaas|1|7.50|7.50|9", "Appeltaart|1|4.25|4.25|9", "Spa rood|1|3.10|3.10|9"},
 			good:  true,
 		},
 		"nl_kassabon.txt": {
 			kind: KindReceipt, name: "SUPERMARKT VOORBEELD", address: "Winkelstraat 10", zip: "1234 AB",
 			city: "Amsterdam", phone: "020-1112233", ref: "0042-3-4711", date: "2026-11-13", currency: "EUR",
 			incl: "14.30", excl: "12.49", vat21: []string{"9:6.71:0.60", "21:5.78:1.21"}, prices: "incl",
-			lines: []string{"HALFVOLLE MELK|1|1.19|1.19|", "VOLKORENBROOD|1|2.49|2.49|", "BANANEN|1|1.85|1.85|",
-				"PINDAKAAS|2|0.89|1.78|", "WASMIDDEL|1|8.99|8.99|", "BONUS WASMIDDEL|1|-2.00|-2.00|"},
+			lines: []string{"HALFVOLLE MELK|1|1.19|1.19|9", "VOLKORENBROOD|1|2.49|2.49|9", "BANANEN|1|1.85|1.85|9",
+				"PINDAKAAS|2|0.89|1.78|9", "WASMIDDEL|1|8.99|8.99|21", "BONUS WASMIDDEL|1|-2.00|-2.00|21"},
 			good: true,
 		},
 		"nl_fuel.txt": {
 			kind: KindReceipt, name: "Example Fuel B.V.", vat: "NL123456782B01", kvk: "12345678",
 			address: "Snelweg 99", zip: "1234 AB", city: "Voorbeeldstad", ref: "2026-118-0042", date: "2026-11-13",
 			currency: "EUR", incl: "89.29", excl: "73.79", vat21: []string{"21:73.79:15.50"}, prices: "incl",
-			lines: []string{"Pomp 4 Euro 95 E10|1|84.30|84.30|", "Ruitenvloeistof|1|4.99|4.99|"},
+			lines: []string{"Pomp 4 Euro 95 E10|1|84.30|84.30|21", "Ruitenvloeistof|1|4.99|4.99|21"},
 			good:  true,
 		},
 		"nl_hardware.txt": {
 			kind: KindReceipt, name: "Example Bouw B.V.", website: "www.example.com", address: "Industrieweg 20",
 			zip: "1234 AB", city: "Amsterdam", ref: "7788-2026", date: "2026-11-13",
 			incl: "28.44", excl: "23.50", vat21: []string{"21:23.50:4.94"}, prices: "incl",
-			lines: []string{"Schroeven 4x40 200st|2|7.49|14.98|", "Houtlijm 250ml|1|5.99|5.99|", "Kwast 50mm|3|2.49|7.47|"},
+			lines: []string{"Schroeven 4x40 200st|2|7.49|14.98|21", "Houtlijm 250ml|1|5.99|5.99|21", "Kwast 50mm|3|2.49|7.47|21"},
 			good:  true,
 		},
 		"en_saas.txt": {
@@ -78,7 +78,7 @@ func TestParseTextFixtures(t *testing.T) {
 			address: "1 Example Street", zip: "EC1A 1BB", city: "London", country: "GB", ref: "EC-2026-11-0042",
 			date: "2026-11-13", due: "2026-11-27", currency: "GBP", incl: "50.00", excl: "50.00",
 			vat21: []string{"0:50.00:0.00"}, prices: "excl",
-			lines: []string{"Pro plan (Nov 13 - Dec 13, 2026)|3|15.00|45.00|", "Extra storage 100 GB|1|5.00|5.00|"},
+			lines: []string{"Pro plan (Nov 13 - Dec 13, 2026)|3|15.00|45.00|0", "Extra storage 100 GB|1|5.00|5.00|0"},
 			good:  true,
 		},
 		"de_rechnung.txt": {
@@ -86,7 +86,7 @@ func TestParseTextFixtures(t *testing.T) {
 			email: "info@beispiel.example.com", address: "Musterstraße 12", zip: "10115", city: "Berlin",
 			country: "DE", ref: "RE-2026-1187", date: "2026-11-13", due: "2026-11-27", currency: "EUR",
 			incl: "506.35", excl: "425.50", vat21: []string{"19:425.50:80.85"}, prices: "excl",
-			lines: []string{"Beratung (Stunden)|4|95.00|380.00|", "Reisekosten|1|45.50|45.50|"},
+			lines: []string{"Beratung (Stunden)|4|95.00|380.00|19", "Reisekosten|1|45.50|45.50|19"},
 			good:  true,
 		},
 		"pt_fatura.txt": {
@@ -100,20 +100,20 @@ func TestParseTextFixtures(t *testing.T) {
 		"ocr_receipt.txt": {
 			kind: KindReceipt, name: "CAFE VOORBEELD", vat: "NL123456782B01", zip: "1234 AB", city: "Amsterdam",
 			ref: "0815", date: "2026-11-13", incl: "14.10", excl: "12.94", vat21: []string{"9:12.94:1.16"},
-			prices: "incl", lines: []string{"Koffie verkeerd|2|3.80|7.60|", "Broodjekaas|1|6.50|6.50|"},
+			prices: "incl", lines: []string{"Koffie verkeerd|2|3.80|7.60|9", "Broodjekaas|1|6.50|6.50|9"},
 			good: true,
 		},
 		"nl_creditnota.txt": {
 			kind: KindPurchaseInvoice, name: "Example Shop B.V.", vat: "NL123456782B01", kvk: "12345678",
 			iban: "NL91ABNA0417164300", ref: "CN-2026-007", date: "2026-11-13", incl: "-24.95", excl: "-20.62",
-			vat21: []string{"21:-20.62:-4.33"}, prices: "excl", lines: []string{"Retour draadloze muis|1|-20.62|-20.62|"},
+			vat21: []string{"21:-20.62:-4.33"}, prices: "excl", lines: []string{"Retour draadloze muis|1|-20.62|-20.62|21"},
 			good: true,
 		},
 		"nl_verlegd.txt": {
 			kind: KindPurchaseInvoice, name: "Example Bouw B.V.", vat: "NL123456782B01", kvk: "12345678",
 			iban: "NL91ABNA0417164300", address: "Bouwweg 8", zip: "1234 AB", city: "Amsterdam",
 			ref: "2026-0099", date: "2026-11-13", due: "2026-12-13", incl: "2450.00", excl: "2450.00",
-			vat21: []string{"0:2450.00:0.00"}, prices: "excl", lines: []string{"Stukadoorswerk week 45|1|2450.00|2450.00|"},
+			vat21: []string{"0:2450.00:0.00"}, prices: "excl", lines: []string{"Stukadoorswerk week 45|1|2450.00|2450.00|0"},
 			payref: "RF18539007547034", good: true,
 		},
 		"nl_two_rates.txt": {
@@ -128,7 +128,7 @@ func TestParseTextFixtures(t *testing.T) {
 			kind: KindPurchaseInvoice, name: "Example Software Inc.", email: "support@example.com", ref: "2026-1113",
 			date: "2026-11-13", due: "2026-12-13", currency: "USD", incl: "1500.00", excl: "1500.00",
 			vat21: []string{"0:1500.00:0.00"}, prices: "excl",
-			lines: []string{"API usage - October 2026|1|1250.00|1250.00|", "Premium support|1|250.00|250.00|"},
+			lines: []string{"API usage - October 2026|1|1250.00|1250.00|0", "Premium support|1|250.00|250.00|0"},
 			good:  true,
 		},
 		"nl_freelancer.txt": {
@@ -136,7 +136,7 @@ func TestParseTextFixtures(t *testing.T) {
 			iban: "NL91ABNA0417164300", address: "Fotostraat 7", zip: "1234 AB", city: "Amsterdam", ref: "2026-017",
 			date: "2026-11-10", due: "2026-12-10", currency: "EUR", incl: "411.40", excl: "340.00",
 			vat21: []string{"21:340.00:71.40"}, prices: "excl",
-			lines:  []string{"Fotoshoot productfoto's (4 uur à € 85,00)|1|340.00|340.00|"},
+			lines:  []string{"Fotoshoot productfoto's (4 uur à € 85,00)|1|340.00|340.00|21"},
 			payref: "RF18539007547034", good: true,
 		},
 		// A wide column table with lot columns, a discount that makes the
@@ -157,7 +157,7 @@ func TestParseTextFixtures(t *testing.T) {
 			kind: KindPurchaseInvoice, name: "Exemple SARL", vat: "FR12345678901", address: "12 rue de l'Exemple",
 			zip: "75001", city: "Paris", country: "FR", ref: "F-2026-0456", date: "2026-11-13", due: "2026-12-13",
 			currency: "EUR", incl: "480.00", excl: "400.00", vat21: []string{"20:400.00:80.00"}, prices: "excl",
-			lines: []string{"Conseil|2|200.00|400.00|"}, good: true,
+			lines: []string{"Conseil|2|200.00|400.00|20"}, good: true,
 		},
 	}
 	for file, w := range tests {

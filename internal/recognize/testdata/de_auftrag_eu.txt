@@ -1,0 +1,52 @@
+
+
+
+                                                                                                      Vorgangsnummer           1000001
+                                                                                                      Belegnummer              2026-0000815
+                                                                                                      Datum                    05.11.2026
+                                                                                                      Kundennummer             100001
+
+Example GmbH · Beispielweg 5 · 10115 Berlin
+
+Example Shop B.V.                                                              Auftragsbestätigung
+Voorbeeldstraat 1
+1234 AB Amsterdam
+
+
+Pos.     Artikelnr.      Bezeichnung                                          AnzahlVPE   Inhalt    Menge Einh. P.Einheit P.VPE Gesamtpreis SC
+
+1         512-1           EXAMPLE Guava dessert - Glas  1,00 VPE                          à 24          24 Einh         1,85    44,40         44,40 10
+                          Dessert, 350g
+                          MHD: 31.10.2027        EAN: 2000000000015                         Gewicht: 9,60
+
+2         530-7           EXAMPLE Tapioca flour sweet, Packung - Beutel 4,00 VPE          à 12          48 Einh         2,05    24,60         98,40 10
+                          500g
+                          MHD: 13.02.2027              EAN: 2000000000022                   Gewicht: 25,20
+
+3         543-2           EXAMPLE Soda zero Dose                       3,00 VPE           à 24          72 Einh         0,56    13,44         40,32 10
+                          Erfrischungsgetränk - kalorienfrei
+                          MHD: 28.12.2026               EAN: 2000000000039                  Gewicht: 25,20
+
+                                                                                                                     Übertrag                 183,12
+
+Example GmbH · Geschäftsführer: Erika Beispiel · Amtsgericht Berlin HRB 12345 · USt-IdNr. DE123456789
+
+                                                                                                      Belegnummer              2026-0000815
+                                                                                                      Seite                    2
+
+                                                                                                    Übertrag           183,12
+
+Pos.   Artikelnr.    Bezeichnung                                    AnzahlVPE     Inhalt   Menge Einh. P.Einheit P.VPE Gesamtpreis SC
+
+4       610-4        EXAMPLE Coconut water 1L                  10,00 VPE          à 12        120 Einh       1,29   15,48    154,80 10
+                     Kokoswasser, 1L
+                     MHD: 15.03.2027            EAN: 2000000000046                  Gewicht: 126,00
+
+5       8800         EXAMPLE Display stand - Aufsteller             1,00        à1           1 Einh     120,00 120,00      120,00 10
+                                                                                   Gewicht: 0,00
+                                                                                             Zwischensumme EUR              457,92 SC
+                                     zzgl. MwSt. 0% steuerfrei              10     0,00     % von         457,92               0,00
+                                                                                                  Endbetrag EUR              457,92
+
+Steuerfreie innergemeinschaftliche Lieferung nach § 4 Nr. 1 b UStG
+Zahlbar innerhalb von 14 Tagen ohne Abzug.

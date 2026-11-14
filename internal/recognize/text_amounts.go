@@ -23,6 +23,9 @@ var amountPattern = regexp.MustCompile(`(?:([-−])\s?)?(\()?(?:(?:EUR|USD|GBP|C
 
 // findAmounts returns the amounts printed on a line, left to right.
 func findAmounts(s string) []amountHit {
+	if !mayHoldAmount(s) {
+		return nil
+	}
 	var out []amountHit
 	for _, m := range amountPattern.FindAllStringSubmatchIndex(s, -1) {
 		start, end := m[0], m[1]
@@ -75,6 +78,20 @@ func findAmounts(s string) []amountHit {
 	return out
 }
 
+// mayHoldAmount tells quickly whether s may print an amount: a digit, a
+// decimal separator and two digits ("12,50"), or a Dutch "12,-".
+func mayHoldAmount(s string) bool {
+	for i := 1; i+1 < len(s); i++ {
+		if s[i] != '.' && s[i] != ',' || !isDigit(s[i-1]) {
+			continue
+		}
+		if s[i+1] == '-' || i+2 < len(s) && isDigit(s[i+1]) && isDigit(s[i+2]) {
+			return true
+		}
+	}
+	return false
+}
+
 func group(s string, m []int, i int) string {
 	if m[2*i] < 0 {
 		return ""
@@ -84,7 +101,7 @@ func group(s string, m []int, i int) string {
 
 func isDigit(c byte) bool { return c >= '0' && c <= '9' }
 
-var percentPattern = regexp.MustCompile(`(\d{1,2}(?:[.,]\d{1,2})?)\s?%`)
+var percentPattern = regexp.MustCompile(`(\d{1,2}(?:[.,]\d{1,2})?) {0,6}%`) // "0,00     %" in a column
 
 // findRate returns the first VAT-like percentage on a line, normalised
 // ("21", "5.5"), or "".

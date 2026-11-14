@@ -147,6 +147,16 @@ func MakePlan(in PlanInput) Plan {
 	if linesIncl != nil {
 		incl, inclConf, inclKnown = *linesIncl, e.TotalInclTax.Confidence, true
 	}
+	fallback := defaultRate(in.Rates)
+	rates := make([]lineRate, len(lines))
+	for i, l := range lines {
+		rates[i] = rateOf(l, in, fallback)
+	}
+	if !incl && e.TotalInclTax.Found && e.TotalInclTax.Confidence == Certain {
+		if fitted, ok := fitPrintedTotal(lines, rates, in.Rates, e.TotalInclTax.V, e.VAT); ok {
+			lines, incl, inclConf, inclKnown = fitted, true, Certain, true
+		}
+	}
 	replaceLines := len(lines) > 0 && (len(t.Lines) == 0 || allMarked(in.Previous, len(t.Lines)))
 	if inclKnown && (fill(FieldPricesAreInclTax, false, true) || replaceLines) {
 		v := incl
@@ -160,7 +170,6 @@ func MakePlan(in PlanInput) Plan {
 		id := l.ID
 		c.Details = append(c.Details, sales.DetailInput{ID: &id, Destroy: true})
 	}
-	fallback := defaultRate(in.Rates)
 	for i, l := range lines {
 		field := func(name string) string { return fmt.Sprintf("details.%d.%s", i, name) }
 		d := sales.DetailInput{Description: &l.description, Amount: &l.amount}
@@ -171,28 +180,9 @@ func MakePlan(in PlanInput) Plan {
 		mark(field("price"), l.confidence)
 
 		category, remembered := in.Memory.Category(l.description)
-		rate, rateConf := resource.ID(0), Uncertain
-		if l.reverse {
-			// The document says the buyer accounts for the VAT but not
-			// at which rate: the standard rate is a guess to check.
-			if id, ok := MapReverseCharge(supplierCountry(in.Extraction.Supplier) == "NL", in.Rates); ok {
-				rate, rateConf = id, Uncertain
-			}
-		}
-		if rate == 0 && l.rate.Found {
-			if id, ok := MapTaxRate(l.rate.V, in.Rates); ok {
-				rate, rateConf = id, l.rate.Confidence
-			}
-		}
-		if rate == 0 && remembered && category.TaxRateID != 0 {
-			rate, rateConf = category.TaxRateID, category.Confidence()
-		}
-		if rate == 0 {
-			rate, rateConf = fallback, Uncertain
-		}
-		if rate != 0 {
-			d.TaxRateID = &rate
-			mark(field("tax_rate_id"), rateConf)
+		if rate := rates[i]; rate.id != 0 {
+			d.TaxRateID = &rate.id
+			mark(field("tax_rate_id"), rate.confidence)
 		}
 		if remembered && category.LedgerAccountID != 0 {
 			ledger := category.LedgerAccountID
@@ -202,6 +192,34 @@ func MakePlan(in PlanInput) Plan {
 		c.Details = append(c.Details, d)
 	}
 	return p
+}
+
+// lineRate is the purchase VAT rate a line gets, and how sure it is.
+type lineRate struct {
+	id         resource.ID
+	confidence Confidence
+}
+
+// rateOf picks the VAT rate of a line: for VAT the buyer accounts for the
+// reverse-charged rate, else the rate read, else the one remembered for
+// such lines of the supplier, else the standard rate (fallback).
+func rateOf(l line, in PlanInput, fallback resource.ID) lineRate {
+	if l.reverse {
+		// The document says the buyer accounts for the VAT but not
+		// at which rate: the standard rate is a guess to check.
+		if id, ok := MapReverseCharge(supplierCountry(in.Extraction.Supplier) == "NL", in.Rates); ok {
+			return lineRate{id, Uncertain}
+		}
+	}
+	if l.rate.Found {
+		if id, ok := MapTaxRate(l.rate.V, in.Rates); ok {
+			return lineRate{id, l.rate.Confidence}
+		}
+	}
+	if category, ok := in.Memory.Category(l.description); ok && category.TaxRateID != 0 {
+		return lineRate{category.TaxRateID, category.Confidence()}
+	}
+	return lineRate{fallback, Uncertain}
 }
 
 // allMarked reports whether every one of n lines still holds what was

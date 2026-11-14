@@ -38,9 +38,16 @@ func readLines(lines []string, kinds []lineKind) []Line {
 		if len(hits) == 0 || len(FindIBANs(lines[i])) > 0 {
 			continue
 		}
+		if discountSummary(lines[i], hits) {
+			continue
+		}
 		prev := ""
 		if i > start && len(findAmounts(lines[i-1])) == 0 {
 			prev = strings.Join(strings.Fields(lines[i-1]), " ")
+		}
+		if l, ok := promoLine(prev, lines[i], hits); ok {
+			out = append(out, l)
+			continue
 		}
 		if l, ok := itemLine(lines[i], hits, prev); ok {
 			out = append(out, l)
@@ -140,6 +147,51 @@ func qtyFits(qty string, price, total money.Amount) bool {
 		return false
 	}
 	return near(money.Amount(divRound(int64(q)*int64(price), 100)), total, 1)
+}
+
+var (
+	// promoNote is a price note printed under an item without an amount:
+	// "Van 6.48 voor 5,00 25,00" (was 6.48, now 5.00), "2 voor 3,00 3,00",
+	// "Korting 0,50 4,49".
+	promoNote = regexp.MustCompile(`(?i)^\s*(?:(?:van|was|statt|de)\s+\d+[.,]\d{2}\s+(?:voor|now|nu|f[üu]r|por|pour)\s+(\d+[.,]\d{2})|\d+\s*(?:voor|for|f[üu]r|pour|por)\s+\d+[.,]\d{2}|(?:actie)?korting|actie|aanbieding|promo(?:tie|tion)?|rabatt|aktion|desconto|remise)\b`)
+	// discountWords are a receipt's summary of the discounts already in
+	// the line prices: "Actiekorting 7,40", "Uw voordeel 7,40".
+	discountWords = regexp.MustCompile(`(?i)^\s*(?:totale?\s+|uw\s+|je\s+)?(?:actie)?(?:korting(?:en)?|voordeel|bespaard|besparing)(?:\s+totaal)?\s*:?\s*$|^\s*(?:u|je)\s+(?:heeft|hebt)\s+.*bespaard`)
+)
+
+// discountSummary tells whether a line sums up the discounts given, as a
+// positive amount: they are already in the lines' prices.
+func discountSummary(s string, hits []amountHit) bool {
+	return len(hits) == 1 && hits[0].v > 0 && discountWords.MatchString(s[:hits[0].start])
+}
+
+// promoLine reads an item whose amount is printed on a price note under it
+// (note): its description and leading quantity are the item's, its total
+// the note's last amount and its price the note's new price when the
+// quantity times it makes the total.
+func promoLine(item, note string, hits []amountHit) (Line, bool) {
+	m := promoNote.FindStringSubmatch(note)
+	if item == "" || m == nil || !strings.ContainsFunc(item, isLetterRune) || itemHeader.MatchString(item) {
+		return Line{}, false
+	}
+	qty, desc := "1", item
+	if q := leadingQty.FindStringSubmatch(item); q != nil {
+		qty, desc = q[1], q[2]
+	}
+	total := hits[len(hits)-1].v
+	l := Line{Description: desc, Quantity: sure(normalizeQuantity(qty)), Total: sure(total)}
+	if m[1] != "" {
+		if p, err := money.ParseAmount(strings.ReplaceAll(m[1], ",", ".")); err == nil && qtyFits(qty, p, total) {
+			l.Price = sure(p)
+			return l, true
+		}
+	}
+	if q, err := money.ParseAmount(strings.ReplaceAll(qty, ",", ".")); err == nil && q > 0 {
+		if p := money.Amount(divRound(int64(total)*100, int64(q))); qtyFits(qty, p, total) {
+			l.Price = sure(p)
+		}
+	}
+	return l, true
 }
 
 func isLetterRune(r rune) bool {

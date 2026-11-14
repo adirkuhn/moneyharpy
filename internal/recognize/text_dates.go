@@ -52,9 +52,31 @@ var (
 	monthDayYear = regexp.MustCompile(`(?i)\b(` + monthNames + `)\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b`)
 )
 
+// mayHoldDate tells quickly whether s may print a date: every date pattern
+// has a four-digit year or a digit, a separator and a digit ("1.10").
+func mayHoldDate(s string) bool {
+	run := 0
+	for i := range len(s) {
+		switch c := s[i]; {
+		case isDigit(c):
+			if run++; run == 4 {
+				return true
+			}
+		case (c == '-' || c == '.' || c == '/') && run > 0 && i+1 < len(s) && isDigit(s[i+1]):
+			return true
+		default:
+			run = 0
+		}
+	}
+	return false
+}
+
 // findDates returns the dates printed on a line. Numeric dates are read day
 // first (European) unless only month first makes sense (11/13/2026).
 func findDates(s string) []dateHit {
+	if !mayHoldDate(s) {
+		return nil
+	}
 	var out []dateHit
 	add := func(start, end, y, m, d int) {
 		if y < 100 {

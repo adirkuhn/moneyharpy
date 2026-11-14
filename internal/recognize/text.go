@@ -2,8 +2,12 @@ package recognize
 
 import (
 	"regexp"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/adirkuhn/moneyharpy/internal/money"
 )
@@ -15,28 +19,36 @@ import (
 //
 // Lines are kept only when their totals add up to the document's total incl.
 // or excl. VAT; otherwise none are returned and the integrator books one line
-// per VAT rate from the VAT summary.
+// per VAT rate from the VAT summary. Lines of a column table that come
+// close to it are kept too, uncertain.
 func ParseText(text string, today time.Time) Extraction {
 	lines := prepare(text)
-	buyer := buyerLines(lines)
+	columns, table := readColumnRows(lines)
+	// The rest of the document, without the rows of a column table: what
+	// is printed on them, such as lot dates, is not about the document.
+	rest := withoutTable(lines, table)
+	buyer := buyerLines(rest)
 	e := Extraction{Source: SourceText}
 
-	e.Supplier, e.SupplierFound = readSupplier(lines, buyer)
-	e.Reference = readReference(lines)
-	e.Date, e.DueDate = readDates(lines, today)
-	e.Currency = readCurrency(lines)
-	e.PaymentReference = readPaymentReference(lines)
+	e.Supplier, e.SupplierFound = readSupplier(rest, buyer)
+	e.Reference = readReference(rest)
+	e.Date, e.DueDate = readDates(rest, today)
+	e.Currency = readCurrency(rest)
+	e.PaymentReference = readPaymentReference(rest)
 
-	kinds := classify(lines)
-	t := readTotals(lines, kinds)
-	rows := readTable(lines, kinds)
-	if len(rows) == 0 {
-		rows = readLines(lines, kinds)
+	kinds := classify(rest)
+	t := readTotals(rest, kinds)
+	// The ways to read the item lines, the most structured first.
+	rows := []rowSet{
+		{lines: readTable(lines, kinds)},
+		{lines: columns, roughly: true},
+		{lines: oneCopy(columns), roughly: true}, // a document printed in copies
+		{read: func() []Line { return readLines(lines, kinds) }},
 	}
-	kind := readKind(lines, e.DueDate.Found, t.paid)
+	kind := readKind(rest, e.DueDate.Found, t.paid)
 	e.Kind = kind
-	reconcile(&e, t, rows, kind.V, lines)
-	if isCreditNote(lines) {
+	reconcile(&e, t, rows, kind.V, rest)
+	if isCreditNote(rest) {
 		negate(&e)
 	}
 	return e
@@ -50,11 +62,51 @@ var ocrWord = regexp.MustCompile(`\b[A-Za-z][A-Za-z01]*[A-Za-z]\b|\b[A-Za-z]{2,}
 func prepare(text string) []string {
 	text = strings.NewReplacer("\r\n", "\n", "\r", "\n", "\t", "    ", " ", " ", " ", " ",
 		" ", " ", " ", " ", "–", "-", "—", "-", "−", "-", "’", "'").Replace(text)
-	lines := strings.Split(text, "\n")
+	lines := dedent(strings.Split(text, "\n"))
 	for i, l := range lines {
 		lines[i] = strings.TrimRight(joinSplitDecimals(fixOCR(l)), " ")
 	}
 	return lines
+}
+
+// dedent leaves out the left margin of each page: the spaces every line of
+// it starts with. A page starts at a form feed, which is dropped. Columns
+// stay where they are relative to each other, and a wide margin does not
+// slow down reading every line.
+func dedent(lines []string) []string {
+	start := 0
+	for i := range lines {
+		if strings.HasPrefix(lines[i], "\f") {
+			trimMargin(lines[start:i])
+			lines[i] = strings.TrimLeft(lines[i], "\f")
+			start = i
+		}
+	}
+	trimMargin(lines[start:])
+	return lines
+}
+
+// trimMargin removes the spaces all non-blank lines of a page start with.
+func trimMargin(page []string) {
+	margin := -1
+	for _, l := range page {
+		if strings.TrimSpace(l) == "" {
+			continue
+		}
+		if n := len(l) - len(strings.TrimLeft(l, " ")); margin < 0 || n < margin {
+			margin = n
+		}
+	}
+	if margin <= 0 {
+		return
+	}
+	for i, l := range page {
+		if len(l) >= margin {
+			page[i] = l[margin:]
+		} else {
+			page[i] = ""
+		}
+	}
 }
 
 func fixOCR(l string) string {
@@ -122,19 +174,21 @@ const (
 )
 
 var (
-	vatWord      = regexp.MustCompile(`(?i)\b(?:btw|b\.t\.w\.?|vat|mwst|ust|umsatzsteuer|mehrwertsteuer|iva|tva|tax|moms|igic|impostos?)\b`)
+	vatWord      = regexp.MustCompile(`(?i)\b(?:btw|b[il]w|b\.t\.w\.?|vat|mwst|ust|umsatzsteuer|mehrwertsteuer|iva|tva|tax|moms|igic|impostos?)\b`)
 	reverseWords = regexp.MustCompile(`(?i)verlegd|reverse[ -]charge|autoliquidation|steuerschuldnerschaft|inversi[oó]n del sujeto pasivo|autoliquida[cç][aã]o|reverse charged`)
 	// exemptEUWords mark a supply exempt in the seller's country because the
 	// buyer accounts for the VAT: an intra-community supply.
 	exemptEUWords = regexp.MustCompile(`(?i)verlegd|reverse[ -]charge|autoliquida|steuerschuldnerschaft|inversi[oó]n del sujeto pasivo|intra-?communautaire|intra-?community|intracomunit[aá]ri|innergemeinschaftlich|isento artigo 14|artigo 14\.?º? do civa|art(?:\.|icle|ikel)? ?138|art(?:\.|igo)? ?25 (?:de la )?ley|exenta art|vat exempt intra`)
-	exclWords     = regexp.MustCompile(`(?i)\b(?:subtotaal|subtotal|sub-total|sub total|sub\. total|incid[eê]ncia|excl\.?|exclusief|excluding|exkl\.?|ex\.? btw|netto|nettobetrag|net amount|net total|total net|total ht|montant ht|hors taxes|base imponible|zwischensumme|sous-total|il[ií]quido|sem iva|total excl)`)
+	exclWords     = regexp.MustCompile(`(?i)\b(?:subtotaal|subtotal|sub-total|sub total|sub\. total|incid[eê]ncia|excl\.?|exclusief|excluding|exkl\.?|ex\.? btw|netto|nettobetrag|net amount|net total|total net|total ht|montant ht|hors taxes|base imponible|zwischensumme|sous-total|il[ií]quido|total l[ií]quido|sem iva|total excl)`)
 	inclMarker    = regexp.MustCompile(`(?i)\b(?:incl\.?|inclusief|including|inkl\.?|ttc)\b`)
 	inclStrong    = regexp.MustCompile(`(?i)totaal incl|total incl|totaalbedrag|totaal te betalen|te betalen|amount due|total due|balance due|grand total|gesamtbetrag|rechnungsbetrag|zu zahlen|zahlbetrag|endbetrag|total a pagar|total ttc|net [aà] payer|importe total|total factura|eindtotaal|te voldoen|invoice total|total amount|totale`)
 	inclWeak      = regexp.MustCompile(`(?i)\b(?:totaal|total|summe|gesamt|totale)\b`)
 	paidWords     = regexp.MustCompile(`(?i)\b(?:pin|pinnen|pinbetaling|betaald|contant|cash|maestro|v ?pay|visa|mastercard|amex|card|kaart|contactloos|paid|bezahlt|ec-karte|girocard)\b`)
 	itemHeader    = regexp.MustCompile(`(?i)\b(?:omschrijving|description|artikel|art\.?nr|item|items|bezeichnung|beschreibung|descri[cç][aã]o|descripci[oó]n|d[ée]signation|product|produkt|aantal|qty|quantity|menge|qtd|qté)\b`)
 	htWord        = regexp.MustCompile(`\bHT\b`)
-	vatTableHead  = regexp.MustCompile(`(?i)\b(?:btw|b[i1l]w|vat|mwst|iva|tva|tarief|rate|netto|bruto)\b`) // "BIW": BTW as OCR reads it
+	// vatOver is a VAT summary line's "9% x 37,58", "9% over 37,58".
+	vatOver      = regexp.MustCompile(`(?i)\d\s?%\s?(?:x|×|\*|over|op|van|of|on|sur|auf)\s?\d`)
+	vatTableHead = regexp.MustCompile(`(?i)\b(?:btw|b[i1l]w|vat|mwst|iva|tva|tarief|rate|netto|bruto)\b`) // "BIW": BTW as OCR reads it
 )
 
 // classify tells what each line with amounts is: a total, a VAT line, a
@@ -144,11 +198,15 @@ func classify(lines []string) []lineKind {
 	vatTableUntil := -1
 	for i, l := range lines {
 		amounts := findAmounts(l)
+		left, right := besideColumn(l)
+		if vatTableHead.MatchString(left) && !itemHeader.MatchString(left) && len(findAmounts(left)) == 0 && (len(amounts) == 0 || right != "") {
+			vatTableUntil = i + 4
+		}
 		if len(amounts) == 0 {
-			if vatTableHead.MatchString(l) && !itemHeader.MatchString(l) {
-				vatTableUntil = i + 4
-			}
 			continue
+		}
+		if right != "" {
+			l = right // the amounts belong to the label beside the other column
 		}
 		hasVAT, hasRate := vatWord.MatchString(l), findRate(l) != ""
 		incl, excl := inclStrong.MatchString(l) || inclWeak.MatchString(l), exclWords.MatchString(l)
@@ -171,13 +229,69 @@ func classify(lines []string) []lineKind {
 			kinds[i] = lineVAT
 		case paidWords.MatchString(l):
 			kinds[i] = linePaid
-		case i <= vatTableUntil && hasRate && len(amounts) >= 2:
-			if _, _, ok := taxPair(findRate(l), amountValues(amounts)); ok {
+		case (i <= vatTableUntil || vatOver.MatchString(l)) && hasRate && len(amounts) >= 2:
+			if _, _, ok := taxPair(findRate(l), unsigned(amountValues(amounts))); ok {
 				kinds[i] = lineVAT
 			}
 		}
 	}
 	return kinds
+}
+
+// wideGap is how many spaces set two columns of text apart on a line.
+const wideGap = 8
+
+// besideColumn splits a line printed in two columns, a column of words
+// without amounts on the left and a label with its amount on the right
+// ("Valor Incid.  IVA  Imposto      Mercadoria / Serviço:  1 276,02 EUR"):
+// it returns the left column and the right one. Otherwise left is the line
+// and right is empty.
+func besideColumn(l string) (left, right string) {
+	cols := wideGapRe.Split(strings.TrimSpace(l), -1)
+	k := slices.IndexFunc(cols, func(c string) bool { return len(findAmounts(c)) > 0 })
+	if k < 0 {
+		return l, ""
+	}
+	if !hasWords(cols[k][:findAmounts(cols[k])[0].start]) {
+		k-- // the amount's label is the column before it
+	}
+	if k < 1 || !hasWords(cols[k]) || !startsWithLetter(cols[k]) {
+		return l, ""
+	}
+	return strings.Join(cols[:k], "  "), strings.Join(cols[k:], "  ")
+}
+
+var wideGapRe = regexp.MustCompile(` {` + strconv.Itoa(wideGap) + `,}`)
+
+// startsWithLetter tells whether s starts with a letter, as a label does.
+func startsWithLetter(s string) bool {
+	r, _ := utf8.DecodeRuneInString(s)
+	return unicode.IsLetter(r)
+}
+
+// hasWords tells whether s has letters besides a currency code.
+func hasWords(s string) bool {
+	return strings.ContainsFunc(currencyCode.ReplaceAllString(s, ""), isLetterRune)
+}
+
+var currencyCode = regexp.MustCompile(`\b(?:EUR|USD|GBP|CHF)\b`)
+
+// unsigned are amounts without their signs.
+func unsigned(amounts []money.Amount) []money.Amount {
+	out := make([]money.Amount, len(amounts))
+	for i, a := range amounts {
+		out[i] = abs(a)
+	}
+	return out
+}
+
+// mixedSigns tells whether some amounts are negative and others not.
+func mixedSigns(amounts []money.Amount) bool {
+	neg, pos := false, false
+	for _, a := range amounts {
+		neg, pos = neg || a < 0, pos || a > 0
+	}
+	return neg && pos
 }
 
 func amountValues(hits []amountHit) []money.Amount {
@@ -236,11 +350,35 @@ func readTotals(lines []string, kinds []lineKind) totals {
 			t.vat = addVAT(t.vat, vatLine(l, amountValues(amounts)))
 		}
 	}
+	t.vat = dropVATTotal(t.vat)
 	return t
+}
+
+// dropVATTotal leaves out a VAT line without a rate ("Total IVA 18,42")
+// that is the sum of the VAT of the rates printed elsewhere.
+func dropVATTotal(vat []vatEntry) []vatEntry {
+	var rated money.Amount
+	at := -1
+	for i, v := range vat {
+		switch {
+		case v.rate != "":
+			rated += v.tax
+		case !v.hasTaxable:
+			at = i
+		}
+	}
+	if at < 0 || len(vat) < 2 || rated != vat[at].tax {
+		return vat
+	}
+	return append(append([]vatEntry(nil), vat[:at]...), vat[at+1:]...)
 }
 
 func vatLine(l string, amounts []money.Amount) vatEntry {
 	rate := findRate(l)
+	if _, _, ok := taxPair(rate, amounts); !ok && mixedSigns(amounts) {
+		// "BTW 9% x 37,58 - 3,38": the dash before the VAT is no sign.
+		amounts = unsigned(amounts)
+	}
 	if rate == "" && reverseWords.MatchString(l) {
 		rate = "0"
 	}
@@ -310,7 +448,7 @@ func best(cands []candidate) (candidate, bool) {
 
 // reconcile picks the totals that agree with each other (excl + VAT = incl)
 // and marks them certain; a lone best guess stays uncertain.
-func reconcile(e *Extraction, t totals, rows []Line, kind Kind, lines []string) {
+func reconcile(e *Extraction, t totals, rows []rowSet, kind Kind, lines []string) {
 	vatSum, taxableSum, allTaxable := money.Amount(0), money.Amount(0), len(t.vat) > 0
 	for _, v := range t.vat {
 		vatSum += v.tax
@@ -399,28 +537,8 @@ func reconcile(e *Extraction, t totals, rows []Line, kind Kind, lines []string) 
 		incl = unsure(t.paid[0])
 	}
 
-	// Lines: keep them only when they add up to a total.
-	var sum money.Amount
-	for _, r := range rows {
-		sum += r.Total.V
-	}
-	pricesIncl := Value[bool]{V: kind == KindReceipt, Found: true, Confidence: Uncertain}
-	switch {
-	case len(rows) == 0:
-	case incl.Found && excl.Found && incl.V == excl.V && near(sum, incl.V, 1):
-		e.Lines = rows
-		pricesIncl.V = kind == KindReceipt
-	case incl.Found && near(sum, incl.V, 1):
-		e.Lines = rows
-		pricesIncl = sure(true)
-		incl.Confidence = Certain // the lines confirm it
-	case excl.Found && near(sum, excl.V, 1):
-		e.Lines = rows
-		pricesIncl = sure(false)
-	case !incl.Found && !excl.Found:
-		incl = unsure(sum)
-		e.Lines = rows
-	}
+	var pricesIncl Value[bool]
+	e.Lines, pricesIncl = pickLines(rows, &incl, excl, kind == KindReceipt)
 	if !e.PricesInclTax.Found {
 		e.PricesInclTax = pricesIncl
 	}
@@ -465,6 +583,7 @@ func reconcile(e *Extraction, t totals, rows []Line, kind Kind, lines []string) 
 			e.VAT[i].ReverseCharge = e.VAT[i].Tax == 0
 		}
 	}
+	e.Lines, e.VAT = assignRates(e.Lines, e.VAT)
 	e.TotalInclTax, e.TotalExclTax = incl, excl
 }
 
