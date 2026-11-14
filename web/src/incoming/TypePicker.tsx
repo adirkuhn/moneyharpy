@@ -10,15 +10,17 @@ type Props = {
   onChange: (type: TypeChoice) => void
   disabled?: boolean
   errors?: string[]
-  /** Scan and Recognise chose the type. */
+  /** Scan and Recognise chose the type; choosing the type it has confirms it. */
   remark?: Confidence
+  /** The types it cannot become now, shown disabled with why: a booked purchase invoice only becomes a receipt, and back. */
+  unavailable?: TypeChoice[]
 }
 
 /**
- * Moneybird's Type select of a document: each type with what it is for. An
- * upload without a type asks for one.
+ * Moneybird's Type select of a document: each type with what it is for, or
+ * why it cannot be chosen now. An upload without a type asks for one.
  */
-export function TypePicker({ value, onChange, disabled = false, errors, remark }: Props) {
+export function TypePicker({ value, onChange, disabled = false, errors, remark, unavailable = [] }: Props) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
@@ -27,6 +29,7 @@ export function TypePicker({ value, onChange, disabled = false, errors, remark }
   const list = useRef<HTMLUListElement>(null)
   const name = (type: TypeChoice) => t(`incoming.types.${type}`)
   const text = (type: TypeChoice) => t(`incoming.new.typeText.${type}`)
+  const off = (type: TypeChoice) => unavailable.includes(type)
 
   useEffect(() => {
     if (!open) {
@@ -51,8 +54,11 @@ export function TypePicker({ value, onChange, disabled = false, errors, remark }
     button.current?.focus()
   }
   const pick = (type: TypeChoice | undefined) => {
+    if (!type || off(type)) {
+      return
+    }
     close()
-    if (type && type !== value) {
+    if (type !== value || remark) {
       onChange(type)
     }
   }
@@ -113,12 +119,13 @@ export function TypePicker({ value, onChange, disabled = false, errors, remark }
                   id={`${id}-${type}`}
                   role="option"
                   aria-selected={type === value}
-                  className={`type-picker__option${i === active ? ' is-active' : ''}`}
+                  aria-disabled={off(type) || undefined}
+                  className={`type-picker__option${i === active ? ' is-active' : ''}${off(type) ? ' is-disabled' : ''}`}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => pick(type)}
                 >
                   <span className="type-picker__name">{name(type)}</span>
-                  <span className="type-picker__text">{text(type)}</span>
+                  <span className="type-picker__text">{off(type) ? t('incoming.view.onlyNew') : text(type)}</span>
                 </li>
               ))}
             </ul>

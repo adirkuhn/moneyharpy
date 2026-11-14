@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
-import { contactName } from '../contacts/queries'
+import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { formErrors } from '../forms/Form'
 import { filterTerms, type ListFilter, parseFilter, perPage } from '../invoices/queries'
@@ -160,7 +160,7 @@ export function ExternalInvoicesPage() {
                 : externalTitle(inv, t)),
             },
             { key: 'icons', header: '', label: t('list.attachments'), kind: 'icons', cell: (inv) => <AttachmentIcon count={inv.attachments?.length ?? 0} /> },
-            { key: 'contact', header: t('invoices.contact'), cell: (inv) => (inv.contact ? contactName(inv.contact) : '') },
+            { key: 'contact', header: t('invoices.contact'), cell: (inv) => (inv.contact ? <ContactHoverCard administrationId={administrationId} contact={{ ...inv.contact, id: String(inv.contact_id ?? '') }} /> : '') },
             { key: 'date', header: t('external.date'), kind: 'date', cell: (inv) => listDate(inv.date) },
             {
               key: 'amount', header: t('invoices.amount'), kind: 'amount',

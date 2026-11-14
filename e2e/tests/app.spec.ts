@@ -1252,6 +1252,57 @@ test('a purchase invoice is booked through the API, paid by a bank transaction a
   await expect(page.getByRole('heading', { level: 1, name: 'Receipt Till 78' })).toBeVisible()
 })
 
+test('a saved purchase invoice gets a due date in days and becomes a receipt that stays booked', async ({ page }) => {
+  await register(page)
+  await addAdministration(page, 'Type Co')
+  const uri = administrationUri(page)
+  const api = `/api/v2${uri}`
+  const shop = await (await page.request.post(`${api}/contacts`, { data: { contact: { company_name: 'Example Shop B.V.', sepa_iban: 'NL91ABNA0417164300' } } })).json()
+  const rates = await (await page.request.get(`${api}/tax_rates`)).json()
+  const vat21 = rates.find((r: { tax_rate_type: string; percentage: string }) => r.tax_rate_type === 'purchase_invoice' && r.percentage.startsWith('21')).id
+  const today = serverToday()
+  const created = await page.request.post(`${api}/documents/purchase_invoices`, { data: { purchase_invoice: {
+    contact_id: shop.id, reference: 'INV-2026-99', date: today, details_attributes: [{ description: 'Paper', price: '100', tax_rate_id: vat21 }],
+  } } })
+  expect(created.status()).toBe(201)
+  const doc = await created.json()
+  expect(doc.state).toBe('open')
+
+  await page.goto(`${uri}/documents/${doc.id}`)
+  await expect(page.getByRole('heading', { level: 1, name: 'Purchase invoice INV-2026-99' })).toBeVisible()
+  const invoice = page.getByRole('region', { name: 'Purchase invoice' })
+
+  // The contact's card shows while its name is hovered.
+  await invoice.getByRole('combobox', { name: 'Contact' }).hover()
+  const card = page.getByRole('dialog', { name: 'Example Shop B.V.' })
+  await expect(card).toContainText('NL91ABNA0417164300')
+  await expect(card).toContainText('1 Documents')
+  await page.mouse.move(0, 0)
+  await expect(card).toHaveCount(0)
+
+  // The due date as a number of days after the date.
+  await invoice.locator('.segmented-control__option', { hasText: 'Days' }).click()
+  await invoice.getByRole('textbox', { name: 'Number of days' }).fill('30')
+  await invoice.getByRole('textbox', { name: 'Number of days' }).press('Enter')
+  const due = new Date(`${today}T00:00:00Z`)
+  due.setUTCDate(due.getUTCDate() + 30)
+  await expect.poll(async () => (await (await page.request.get(`${api}/documents/purchase_invoices/${doc.id}`)).json()).due_date).toBe(due.toISOString().slice(0, 10))
+
+  // Saved, it becomes a receipt, but not a general document.
+  await invoice.getByRole('combobox', { name: 'Type' }).click()
+  const types = page.getByRole('listbox', { name: 'Type' })
+  await expect(types.getByRole('option', { name: /General document/ })).toHaveAttribute('aria-disabled', 'true')
+  await types.getByRole('option', { name: /Receipt/ }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Receipt INV-2026-99' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Receipt', exact: true }).locator('.badge', { hasText: 'Open' })).toBeVisible()
+
+  // It is booked as before.
+  const menu = page.getByRole('navigation', { name: 'Administration menu' })
+  await menu.getByRole('button', { name: 'Reports' }).click()
+  await menu.getByRole('link', { name: 'Profit and loss statement' }).click()
+  await expect(page.getByRole('table', { name: 'Profit and loss statement' }).getByRole('row', { name: /Net profit/ })).toContainText('100.00')
+})
+
 test('an asset is added through the API, depreciated and shown with its value changes', async ({ page }) => {
   await register(page)
   await addAdministration(page, 'Asset Co')

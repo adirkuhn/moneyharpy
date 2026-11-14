@@ -1,0 +1,24 @@
+/* A contact's hover card: drawn over the page, fixed beside the name, so nothing moves when it shows. */
+.hover-card { display: inline; }
+.hover-card--block { display: block; }
+.hover-card__content {
+  position: fixed; z-index: 60; display: grid; gap: 0.625rem; width: 17rem; max-width: calc(100vw - 1rem); padding: 0.875rem 1rem;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); box-shadow: 0 12px 28px rgb(9 38 83 / 0.18);
+  font-size: 0.875rem; font-weight: 400; line-height: 1.4; text-align: left; white-space: normal; cursor: auto;
+}
+.hover-card__header { display: grid; gap: 0.125rem; padding-bottom: 0.625rem; border-bottom: 1px solid var(--line); }
+.hover-card__name { overflow: hidden; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.hover-card__meta { color: var(--muted); font-size: 0.8125rem; }
+.hover-card__grid {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.375rem 1rem; margin: 0; padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--line); font-size: 0.8125rem;
+}
+.hover-card__fact { display: contents; }
+.hover-card__label { color: var(--muted); }
+.hover-card__value { overflow: hidden; margin: 0; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.hover-card__stats { display: flex; gap: 1.25rem; font-size: 0.8125rem; }
+.hover-card__stat strong { color: var(--navy); font-size: 0.9375rem; }
+:root[data-theme='dark'] .hover-card__stat strong { color: var(--gold); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .hover-card__stat strong { color: var(--gold); }
+}

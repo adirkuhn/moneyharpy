@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { contactName } from '../contacts/queries'
 import { NextFooter } from './DocumentCard'
-import { type FieldSaving, fieldErrors, InlineContact, InlineDate, InlineText } from './InlineFields'
+import { type FieldSaving, fieldErrors, InlineContact, InlineDate, InlineDueDate, InlineText } from './InlineFields'
 import { type GeneralDocument, useSaveGeneralDocument } from './queries'
 
 type Props = {
@@ -41,10 +41,10 @@ export function GeneralDocumentCard({ administrationId, doc, typeRow, left, onNe
       {notice}
       <div className="incoming-card__rows">
         {typeRow}
-        <InlineContact administrationId={administrationId} name={doc.contact ? contactName(doc.contact) : ''} saving={contact} />
+        <InlineContact administrationId={administrationId} contactId={doc.contact_id} name={doc.contact ? contactName(doc.contact) : ''} saving={contact} />
         <InlineText label={t('incoming.view.reference')} saved={doc.reference ?? ''} saving={reference} />
         <InlineDate label={t('incoming.view.date')} saved={doc.date ?? ''} saving={date} />
-        <InlineDate label={t('incoming.view.dueDate')} saved={doc.due_date ?? ''} saving={due} />
+        <InlineDueDate label={t('incoming.view.dueDate')} saved={doc.due_date ?? ''} saving={due} from={doc.date ?? ''} />
       </div>
       {doc.state === 'new' && <NextFooter left={left} onNext={onNext} />}
     </section>
