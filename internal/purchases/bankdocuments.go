@@ -40,7 +40,8 @@ func (s *Service) CreateBankDocument(ctx context.Context, admin, user resource.I
 		ContactID: contact, Date: &day, PricesAreInclTax: &incl,
 		Details: []sales.DetailInput{{Description: &description, Price: &price, TaxRateID: &rate, ProjectID: in.ProjectID}},
 	}
-	d, err := s.Create(ctx, admin, user, in.Kind, c)
+	// Its line stays to categorise, whatever is remembered of the contact.
+	d, err := s.create(ctx, admin, user, in.Kind, c, false)
 	if err != nil {
 		return 0, err
 	}

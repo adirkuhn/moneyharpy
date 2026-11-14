@@ -47,6 +47,14 @@ func MigrateTo(ctx context.Context, url string, version int64) error {
 	})
 }
 
+// MigrateDownTo rolls the database at url back to a schema version.
+func MigrateDownTo(ctx context.Context, url string, version int64) error {
+	return withProvider(url, func(p *goose.Provider) error {
+		_, err := p.DownTo(ctx, version)
+		return err
+	})
+}
+
 func withProvider(url string, run func(*goose.Provider) error) error {
 	db, err := sql.Open("pgx", url)
 	if err != nil {

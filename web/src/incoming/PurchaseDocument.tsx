@@ -69,11 +69,15 @@ function PurchaseCard(props: Loaded) {
   const { administrationId, kind, doc, typeRow, editable, left, onNext, notice } = props
   const { t } = useTranslation()
   const w = words(kind)
-  const remarks = remarksOf(doc.recognition, doc.details)
+  const remarks = remarksOf(doc.recognition, doc.details, { administrationId })
   const isNew = doc.state === 'new'
   // What was read shows on the details until the document or its lines are saved; the lines editor still shows it.
+  // What was remembered of the contact's earlier documents, filled in as the contact was chosen, which saves the
+  // document, shows until the lines are saved.
   const [linesSaved, setLinesSaved] = useState(false)
-  const shownRemarks = isNew && !linesSaved ? remarks : remarksOf(undefined)
+  const shownRemarks = linesSaved
+    ? remarksOf(undefined)
+    : isNew ? remarks : remarksOf(doc.recognition, doc.details, { administrationId, rememberedOnly: true })
   // A document without lines opens with the lines editor, as Moneybird shows a fresh one.
   const [linesOpen, setLinesOpen] = useState(editable && (doc.details ?? []).length === 0)
   const open = editable && linesOpen
@@ -233,7 +237,7 @@ function DetailsSummary({ kind, doc, rates, accounts, remarks, onOpen }: Summary
               <td className="incoming-lines__muted">{accountName(d.ledger_account_id)}</td>
               <td className="incoming-lines__muted">{rateName(d.tax_rate_id)}</td>
               <td className="incoming-lines__money">{money(d.total_price_excl_tax_with_discount)}</td>
-              <td className="incoming-lines__icons"><Remark confidence={lineRemark(remarks, d.id)} /></td>
+              <td className="incoming-lines__icons"><Remark confidence={lineRemark(remarks, d.id)} source={remarks.lineSources[d.id ?? '']} /></td>
             </tr>
           ))}
         </tbody>
@@ -425,7 +429,9 @@ function PurchaseLines({ administrationId, kind, doc, rates, accounts, remarks, 
           </div>
         ) : undefined}
         remarks={remarks.lines}
+        remarkSources={remarks.lineSources}
         headerRemark={leastSure([remarks.field('currency'), remarks.field('prices_are_incl_tax')])}
+        headerRemarkSource={remarks.source('currency') ?? remarks.source('prices_are_incl_tax')}
       />
     </div>
   )

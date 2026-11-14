@@ -26,7 +26,11 @@ func toRecognition(r recognize.Recognition) Recognition {
 		out.Source = &src
 	}
 	for i, f := range r.Fields {
-		out.Fields[i] = RecognizedField{Field: f.Name, Confidence: RecognizedFieldConfidence(f.Confidence)}
+		out.Fields[i] = RecognizedField{Field: f.Name, Confidence: RecognizedFieldConfidence(f.Confidence), Reason: RecognizedFieldReason(recognize.ReasonOf(f))}
+		if f.SourceDocumentID != 0 {
+			id, ref := f.SourceDocumentID.String(), f.SourceReference
+			out.Fields[i].SourceDocumentId, out.Fields[i].SourceDocumentReference = &id, &ref
+		}
 	}
 	return out
 }

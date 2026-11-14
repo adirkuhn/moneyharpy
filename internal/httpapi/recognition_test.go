@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -139,6 +140,77 @@ func TestScanAndRecogniseOverTheAPI(t *testing.T) {
 	}](t, owner.do(http.MethodPost, typeless, map[string]any{"typeless_document": map[string]any{}}))
 	wantStatus(t, owner.do(http.MethodPost, api+"/documents/"+other.ID+"/recognize", nil), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodPost, api+"/documents/1/recognize", nil), http.StatusNotFound)
+}
+
+// Choosing the contact of a new document fills in what the contact's
+// earlier documents hold, marked to check, with the document it came from.
+func TestChoosingTheContactFillsInWhatIsRemembered(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	adminID, api, supplier, vat21 := purchaseSetup(t, owner)
+	invoices := api + "/documents/purchase_invoices"
+	software := category(t, owner, adminID, "Software")
+	day := adminNow().AddDate(0, 0, -10).Format(time.DateOnly)
+
+	// An earlier purchase invoice of the supplier, booked by hand.
+	r := owner.do(http.MethodPost, invoices, map[string]any{"purchase_invoice": map[string]any{
+		"contact_id": supplier, "reference": "EX-2026-1", "date": day,
+		"details_attributes": []map[string]any{{"description": "Hosting October", "price": "10", "tax_rate_id": vat21, "ledger_account_id": software}},
+	}})
+	wantStatus(t, r, http.StatusCreated)
+	earlier := decode[purchaseDocument](t, r)
+
+	// A new one, without its supplier yet: its line is uncategorised.
+	r = owner.do(http.MethodPost, invoices, map[string]any{"purchase_invoice": map[string]any{
+		"reference": "EX-2026-2", "date": day, "details_attributes": []map[string]any{{"description": "Hosting November", "price": "10", "tax_rate_id": vat21}},
+	}})
+	wantStatus(t, r, http.StatusCreated)
+	fresh := decode[purchaseDocument](t, r)
+	if fresh.State != "new" || fresh.Details[0].LedgerAccountID == software {
+		t.Fatalf("new document = %+v", fresh)
+	}
+
+	type field struct {
+		Field                   string  `json:"field"`
+		Confidence              string  `json:"confidence"`
+		Reason                  string  `json:"reason"`
+		SourceDocumentID        *string `json:"source_document_id"`
+		SourceDocumentReference *string `json:"source_document_reference"`
+	}
+	r = owner.do(http.MethodPatch, invoices+"/"+fresh.ID, map[string]any{"purchase_invoice": map[string]any{"contact_id": supplier}})
+	wantStatus(t, r, http.StatusOK)
+	got := decode[struct {
+		purchaseDocument
+		Recognition struct {
+			State  string  `json:"state"`
+			Fields []field `json:"fields"`
+		} `json:"recognition"`
+	}](t, r)
+	if len(got.Details) != 1 || got.Details[0].LedgerAccountID != software {
+		t.Fatalf("details = %+v, want the category of the earlier document", got.Details)
+	}
+	i := slices.IndexFunc(got.Recognition.Fields, func(f field) bool { return f.Field == "details.0.ledger_account_id" })
+	if got.Recognition.State != "done" || i < 0 {
+		t.Fatalf("recognition = %+v", got.Recognition)
+	}
+	if f := got.Recognition.Fields[i]; f.Confidence != "uncertain" || f.Reason != "previous_document" || f.SourceDocumentID == nil ||
+		*f.SourceDocumentID != earlier.ID || f.SourceDocumentReference == nil || *f.SourceDocumentReference != "EX-2026-1" {
+		t.Errorf("category field = %+v", f)
+	}
+
+	// Saving the category confirms it.
+	r = owner.do(http.MethodPatch, invoices+"/"+fresh.ID, map[string]any{"purchase_invoice": map[string]any{
+		"details_attributes": []map[string]any{{"id": got.Details[0].ID, "ledger_account_id": category(t, owner, adminID, "Rent")}},
+	}})
+	wantStatus(t, r, http.StatusOK)
+	if fields := decode[struct {
+		Recognition struct {
+			Fields []field `json:"fields"`
+		} `json:"recognition"`
+	}](t, r).Recognition.Fields; slices.ContainsFunc(fields, func(f field) bool { return f.Field == "details.0.ledger_account_id" }) {
+		t.Errorf("fields = %+v, want the category confirmed", fields)
+	}
 }
 
 func TestRecognitionSettingsAndCheck(t *testing.T) {

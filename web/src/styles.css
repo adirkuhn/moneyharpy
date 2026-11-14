@@ -1126,6 +1126,19 @@ a.dropdown__item:hover { background: var(--row-hover); }
 .remark { display: inline-flex; flex: none; justify-content: center; align-items: center; width: 1.25rem; height: 1.25rem; color: var(--muted); font-size: 0.875rem; }
 .remark--uncertain { color: var(--gold); }
 .remark--uncertain svg { stroke: var(--star); }
+/* A value remembered of an earlier document: the tooltip links to it, so it opens on hover and focus and stays open while the pointer moves onto it. */
+.remark--source { position: relative; cursor: help; border-radius: 4px; }
+.remark--source:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.remark__icon { display: inline-flex; }
+.remark__tip {
+  display: none; position: absolute; z-index: 20; top: 100%; right: -0.5rem; width: max-content; max-width: min(18rem, 80vw);
+  margin-top: 0.25rem; padding: 0.5rem 0.625rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
+  box-shadow: 0 6px 18px rgb(9 38 83 / 0.16); color: var(--text); font-size: 0.8125rem; font-weight: 400; line-height: 1.4; text-align: left; white-space: normal; cursor: auto;
+}
+/* Bridges the gap above the tooltip, so the pointer reaches its link. */
+.remark__tip::before { content: ''; position: absolute; inset: -0.375rem 0 100% 0; }
+.remark__tip a { color: var(--link); }
+.remark--source:hover .remark__tip, .remark--source:focus-within .remark__tip { display: block; }
 .is-uncertain:is(input, select, textarea),
 .form-input.is-uncertain .form-input__control > :first-child:is(input, select, textarea),
 .form-input.is-uncertain .form-input__control > :first-child :is(input[type='text'], select, textarea, .picker__button) {

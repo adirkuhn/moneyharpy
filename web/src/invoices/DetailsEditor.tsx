@@ -6,7 +6,7 @@ import { type DetailUsage, type DocumentType, type LedgerAccount, type TaxRate, 
 import { currencyOptions } from '../forms/currencies'
 import { DatePicker } from '../forms/DatePicker'
 import type { FormErrors } from '../forms/Form'
-import { type Confidence, leastSure, Remark } from '../forms/Remark'
+import { type Confidence, leastSure, Remark, type RemarkSource } from '../forms/Remark'
 import { type SearchGroup, type SearchOption, SearchSelect } from '../forms/SearchSelect'
 import { ListIcon } from '../layout/icons'
 import { PageIcon } from '../layout/pageIcons'
@@ -77,8 +77,12 @@ type Props = {
   buttons?: ReactNode
   /** The values of each line Scan and Recognise filled in, marked with a bolt; unsure ones are highlighted. */
   remarks?: LineRemarks
+  /** The earlier document each line's remembered values came from, by the key of the row. */
+  remarkSources?: Record<string, RemarkSource>
   /** Whether Scan and Recognise filled in the currency or whether prices include VAT. */
   headerRemark?: Confidence
+  /** The earlier document the currency or VAT mode was remembered of. */
+  headerRemarkSource?: RemarkSource
 }
 
 /**
@@ -196,7 +200,7 @@ export function DetailsEditor(props: Props) {
             </label>
           ))}
         </fieldset>
-        {props.headerRemark && <span className="details-editor__remark"><Remark confidence={props.headerRemark} /></span>}
+        {props.headerRemark && <span className="details-editor__remark"><Remark confidence={props.headerRemark} source={props.headerRemarkSource} /></span>}
       </div>
       <div className="details-editor__body">
         <p id={hintId} className="sr-only">{d('moveHint')}</p>
@@ -321,7 +325,7 @@ export function DetailsEditor(props: Props) {
                     <button type="button" className="details-editor__remove-button" aria-label={d('remove', { n: i + 1 })} title={d('removeRow')} onClick={() => props.onRemove(i)}>
                       <PageIcon kind="close" />
                     </button>
-                    <Remark confidence={leastSure(Object.values(props.remarks?.[r.key] ?? {}))} />
+                    <Remark confidence={leastSure(Object.values(props.remarks?.[r.key] ?? {}))} source={props.remarkSources?.[r.key]} />
                   </td>
                 </tr>
               )

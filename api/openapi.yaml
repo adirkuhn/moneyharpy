@@ -16485,14 +16485,16 @@ components:
           enum: [none, pending, done, failed]
           description: >-
             none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending:
-            being read; done: read and filled in; failed: the attachments could not be read.
+            being read; done: read and filled in, or filled in from what is remembered of the contact chosen; failed:
+            the attachments could not be read.
         source:
           type: string
           nullable: true
           enum: [e_invoice, text, ocr, ai, null]
           description: >-
             e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a
-            scan or photo; ai: the optional AI model, used when the rules could not read the document.
+            scan or photo; ai: the optional AI model, used when the rules could not read the document. Null when
+            nothing was read, such as for a document filled in from what is remembered of its contact only.
         fields:
           type: array
           description: >-
@@ -16503,13 +16505,32 @@ components:
             $ref: '#/components/schemas/RecognizedField'
     RecognizedField:
       type: object
-      required: [field, confidence]
+      description: >-
+        A field filled in automatically. Remembered values (reason previous_document) come from what the contact's
+        earlier booked documents of the same kind hold, else of the other kind (purchase invoice or receipt); they are
+        certain once two documents in a row agreed, and stay marked until the field is saved.
+      required: [field, confidence, reason]
       properties:
         field:
           type: string
         confidence:
           type: string
           enum: [certain, uncertain]
+        reason:
+          type: string
+          enum: [attachment, previous_document, default]
+          description: >-
+            Where the value came from. attachment: read from the document's attachments; previous_document:
+            remembered of the contact's earlier documents, filled in when the document was read or when its contact
+            was chosen; default: neither, such as the standard VAT rate.
+        source_document_id:
+          type: string
+          nullable: true
+          description: The earlier document a remembered value came from; null when unknown or removed since.
+        source_document_reference:
+          type: string
+          nullable: true
+          description: That document's reference when the value was filled in.
     RecognitionAIConnection:
       type: object
       description: MoneyHarpy extension. An AI model Scan and Recognise can ask.

@@ -961,14 +961,22 @@ type SubscriptionProduct struct {
 }
 
 type SupplierMemory struct {
+	AdministrationID int64
+	ContactID        int64
+	DocumentKind     string
+	DocumentKindUses int32
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type SupplierMemoryKind struct {
 	AdministrationID     int64
 	ContactID            int64
 	DocumentKind         string
-	DocumentKindUses     int32
 	Currency             string
 	CurrencyUses         int32
 	PricesAreInclTax     bool
 	PricesAreInclTaxUses int32
+	LastDocumentID       pgtype.Int8
 	UpdatedAt            pgtype.Timestamptz
 }
 
@@ -980,6 +988,8 @@ type SupplierMemoryLine struct {
 	TaxRateID        pgtype.Int8
 	Uses             int32
 	LastUsedAt       pgtype.Timestamptz
+	DocumentKind     string
+	SourceDocumentID pgtype.Int8
 }
 
 type TaskList struct {

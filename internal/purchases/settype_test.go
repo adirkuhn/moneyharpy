@@ -210,8 +210,12 @@ type confirmations struct{ fields map[resource.ID][]string }
 func (c *confirmations) Queue(context.Context, resource.ID, resource.ID, resource.ID) error {
 	return nil
 }
-func (c *confirmations) Edited(context.Context, resource.ID, resource.ID, Document, Document) {}
-func (c *confirmations) Forget(context.Context, resource.ID, resource.ID) error               { return nil }
+func (c *confirmations) Remember(context.Context, resource.ID, resource.ID, Document, Document) (Changes, []Remembered) {
+	return Changes{}, nil
+}
+func (c *confirmations) Edited(context.Context, resource.ID, resource.ID, Document, Document, []Remembered) {
+}
+func (c *confirmations) Forget(context.Context, resource.ID, resource.ID) error { return nil }
 func (c *confirmations) Confirmed(_ context.Context, _, id resource.ID, fields ...string) {
 	c.fields[id] = append(c.fields[id], fields...)
 }

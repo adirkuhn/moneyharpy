@@ -14,8 +14,8 @@ import (
 // value before it is filled in as certain.
 const certainUses = 2
 
-// maxMemoryLines caps the line descriptions remembered per supplier; the
-// least recently used go first.
+// maxMemoryLines caps the line descriptions remembered per supplier and
+// kind of document; the least recently used go first.
 const maxMemoryLines = 200
 
 // Learned is a remembered value with the number of documents in a row that
@@ -44,12 +44,20 @@ func (l *Learned[T]) learn(v T) {
 	l.V, l.Uses = v, 1
 }
 
+// Remembered is a learned value with the last document that taught it.
+type Remembered[T comparable] struct {
+	Learned[T]
+	SourceDocumentID resource.ID
+}
+
 // Category is the category and VAT rate remembered for a line description.
 type Category struct {
 	LedgerAccountID resource.ID
 	TaxRateID       resource.ID
 	Uses            int
 	LastUsed        time.Time
+	// SourceDocumentID is the last document that taught it.
+	SourceDocumentID resource.ID
 }
 
 // Confidence is certain once enough documents agreed.
@@ -60,37 +68,93 @@ func (c Category) Confidence() Confidence {
 	return Uncertain
 }
 
-// Memory is what users saved on earlier documents of one supplier.
+// KindMemory is what users saved on earlier documents of one kind, purchase
+// invoices or receipts, of one supplier.
+type KindMemory struct {
+	Currency      Learned[string]
+	PricesInclTax Learned[bool]
+	// Lines map normalised line descriptions to their category; the empty
+	// description is the default of the supplier's documents of the kind.
+	Lines map[string]Category
+	// LastDocumentID is the last document learned from.
+	LastDocumentID resource.ID
+	UpdatedAt      time.Time
+}
+
+// Empty reports a kind nothing was learned of.
+func (k KindMemory) Empty() bool {
+	return !k.Currency.Known() && !k.PricesInclTax.Known() && len(k.Lines) == 0
+}
+
+// Memory is what users saved on earlier documents of one supplier, apart
+// per kind of document.
 type Memory struct {
 	AdministrationID resource.ID
 	ContactID        resource.ID
-	Kind             Learned[Kind]
-	Currency         Learned[string]
-	PricesInclTax    Learned[bool]
-	// Lines map normalised line descriptions to their category; the empty
-	// description is the supplier's default.
-	Lines     map[string]Category
+	// Kind is the kind of the supplier's documents.
+	Kind     Learned[Kind]
+	Invoices KindMemory
+	Receipts KindMemory
+	// UpdatedAt is when anything was last learned.
 	UpdatedAt time.Time
 }
 
+// Kinds are the kinds of documents remembered apart.
+var Kinds = []Kind{KindPurchaseInvoice, KindReceipt}
+
 // Empty reports a supplier nothing was learned of.
 func (m Memory) Empty() bool {
-	return !m.Kind.Known() && !m.Currency.Known() && !m.PricesInclTax.Known() && len(m.Lines) == 0
+	return !m.Kind.Known() && m.Invoices.Empty() && m.Receipts.Empty()
+}
+
+// Of returns the memory of a kind of documents.
+func (m *Memory) Of(kind Kind) *KindMemory {
+	if kind == KindReceipt {
+		return &m.Receipts
+	}
+	return &m.Invoices
+}
+
+// KindOf is the kind of a purchase invoice or receipt (purchases.Receipt
+// or PurchaseInvoice).
+func KindOf(documentKind string) Kind {
+	if documentKind == purchases.Receipt {
+		return KindReceipt
+	}
+	return KindPurchaseInvoice
+}
+
+// DocumentKind is the purchases kind of a kind of document.
+func DocumentKind(k Kind) string {
+	if k == KindReceipt {
+		return purchases.Receipt
+	}
+	return purchases.PurchaseInvoice
+}
+
+// otherKind is the kind a supplier's documents are when not of kind k.
+func otherKind(k Kind) Kind {
+	if k == KindReceipt {
+		return KindPurchaseInvoice
+	}
+	return KindReceipt
 }
 
 // Learn remembers what the saved document d says of its supplier.
 func (m *Memory) Learn(d purchases.Document, at time.Time) {
-	kind := KindPurchaseInvoice
-	if d.Kind == purchases.Receipt {
-		kind = KindReceipt
-	}
+	kind := KindOf(d.Kind)
 	m.Kind.learn(kind)
+	m.Of(kind).learn(d, at)
+	m.UpdatedAt = at
+}
+
+func (k *KindMemory) learn(d purchases.Document, at time.Time) {
 	if d.Currency != "" {
-		m.Currency.learn(d.Currency)
+		k.Currency.learn(d.Currency)
 	}
-	m.PricesInclTax.learn(d.PricesAreInclTax)
-	if m.Lines == nil {
-		m.Lines = map[string]Category{}
+	k.PricesInclTax.learn(d.PricesAreInclTax)
+	if k.Lines == nil {
+		k.Lines = map[string]Category{}
 	}
 	main := -1
 	for i, l := range d.Lines {
@@ -101,55 +165,102 @@ func (m *Memory) Learn(d purchases.Document, at time.Time) {
 			main = i
 		}
 		if key := NormalizeDescription(l.Description); key != "" {
-			m.learnLine(key, *l.LedgerAccountID, l.TaxRateID, at)
+			k.learnLine(key, *l.LedgerAccountID, l.TaxRateID, d.ID, at)
 		}
 	}
 	if main >= 0 {
-		m.learnLine("", *d.Lines[main].LedgerAccountID, d.Lines[main].TaxRateID, at)
+		k.learnLine("", *d.Lines[main].LedgerAccountID, d.Lines[main].TaxRateID, d.ID, at)
 	}
-	m.trim()
-	m.UpdatedAt = at
+	k.trim()
+	k.LastDocumentID, k.UpdatedAt = d.ID, at
 }
 
-func (m *Memory) learnLine(key string, ledger, rate resource.ID, at time.Time) {
-	c := m.Lines[key]
+func (k *KindMemory) learnLine(key string, ledger, rate, source resource.ID, at time.Time) {
+	c := k.Lines[key]
 	if c.Uses > 0 && c.LedgerAccountID == ledger && c.TaxRateID == rate {
 		c.Uses++
 	} else {
 		c = Category{LedgerAccountID: ledger, TaxRateID: rate, Uses: 1}
 	}
-	c.LastUsed = at
-	m.Lines[key] = c
+	c.LastUsed, c.SourceDocumentID = at, source
+	k.Lines[key] = c
 }
 
 // trim forgets the least recently used descriptions beyond the cap; the
 // default stays.
-func (m *Memory) trim() {
-	if len(m.Lines) <= maxMemoryLines+1 {
+func (k *KindMemory) trim() {
+	if len(k.Lines) <= maxMemoryLines+1 {
 		return
 	}
-	keys := make([]string, 0, len(m.Lines))
-	for k := range m.Lines {
-		if k != "" {
-			keys = append(keys, k)
+	keys := make([]string, 0, len(k.Lines))
+	for key := range k.Lines {
+		if key != "" {
+			keys = append(keys, key)
 		}
 	}
-	slices.SortFunc(keys, func(a, b string) int { return m.Lines[b].LastUsed.Compare(m.Lines[a].LastUsed) })
-	for _, k := range keys[maxMemoryLines:] {
-		delete(m.Lines, k)
+	slices.SortFunc(keys, func(a, b string) int { return k.Lines[b].LastUsed.Compare(k.Lines[a].LastUsed) })
+	for _, key := range keys[maxMemoryLines:] {
+		delete(k.Lines, key)
 	}
 }
 
-// Category returns the category remembered for a line description, or else
-// the supplier's default.
-func (m Memory) Category(description string) (Category, bool) {
+// Recalled is what is remembered of a supplier for one kind of document:
+// what its documents of that kind taught, else what its documents of the
+// other kind did, which is never certain.
+type Recalled struct {
+	same, other KindMemory
+}
+
+// Recall returns what is remembered for documents of kind.
+func (m Memory) Recall(kind Kind) Recalled {
+	return Recalled{same: *m.Of(kind), other: *m.Of(otherKind(kind))}
+}
+
+// guess caps the uses of a value learned of the other kind, so it stays
+// uncertain.
+func guess(uses int) int { return min(uses, 1) }
+
+// Currency returns the remembered currency.
+func (r Recalled) Currency() Remembered[string] {
+	if r.same.Currency.Known() {
+		return Remembered[string]{r.same.Currency, r.same.LastDocumentID}
+	}
+	l := r.other.Currency
+	l.Uses = guess(l.Uses)
+	return Remembered[string]{l, r.other.LastDocumentID}
+}
+
+// PricesInclTax returns whether prices were remembered to include VAT.
+func (r Recalled) PricesInclTax() Remembered[bool] {
+	if r.same.PricesInclTax.Known() {
+		return Remembered[bool]{r.same.PricesInclTax, r.same.LastDocumentID}
+	}
+	l := r.other.PricesInclTax
+	l.Uses = guess(l.Uses)
+	return Remembered[bool]{l, r.other.LastDocumentID}
+}
+
+// Category returns the category remembered for a line description: of the
+// same kind of document, else of the other kind, else the default of the
+// same kind, else that of the other kind.
+func (r Recalled) Category(description string) (Category, bool) {
+	other := func(c Category, ok bool) (Category, bool) {
+		c.Uses = guess(c.Uses)
+		return c, ok
+	}
 	if key := NormalizeDescription(description); key != "" {
-		if c, ok := m.Lines[key]; ok {
+		if c, ok := r.same.Lines[key]; ok {
 			return c, true
 		}
+		if c, ok := r.other.Lines[key]; ok {
+			return other(c, true)
+		}
 	}
-	c, ok := m.Lines[""]
-	return c, ok
+	if c, ok := r.same.Lines[""]; ok {
+		return c, true
+	}
+	c, ok := r.other.Lines[""]
+	return other(c, ok)
 }
 
 // monthWords are left out of descriptions, so "Hosting March" and "Hosting

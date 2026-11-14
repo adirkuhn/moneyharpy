@@ -8160,22 +8160,32 @@ export interface components {
         /** @description MoneyHarpy extension. What Scan and Recognise read from the document's attachments: its state, where the values came from and which fields it filled in. Fields it was unsure of are marked uncertain for review. */
         Recognition: {
             /**
-             * @description none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in; failed: the attachments could not be read.
+             * @description none: nothing to read (no attachment, recognition off or the document was filled in by hand); pending: being read; done: read and filled in, or filled in from what is remembered of the contact chosen; failed: the attachments could not be read.
              * @enum {string}
              */
             state: "none" | "pending" | "done" | "failed";
             /**
-             * @description e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a scan or photo; ai: the optional AI model, used when the rules could not read the document.
+             * @description e_invoice: a UBL (Peppol) e-invoice, read exactly; text: the text of a digital PDF; ocr: text read from a scan or photo; ai: the optional AI model, used when the rules could not read the document. Null when nothing was read, such as for a document filled in from what is remembered of its contact only.
              * @enum {string|null}
              */
             source: "e_invoice" | "text" | "ocr" | "ai" | null;
             /** @description The fields filled in automatically, by name as in the document's request (document_type, contact_id, reference, date, due_date, currency, prices_are_incl_tax) or per line as details.<index>.<field> (description, amount, price, tax_rate_id, ledger_account_id). */
             fields: components["schemas"]["RecognizedField"][];
         };
+        /** @description A field filled in automatically. Remembered values (reason previous_document) come from what the contact's earlier booked documents of the same kind hold, else of the other kind (purchase invoice or receipt); they are certain once two documents in a row agreed, and stay marked until the field is saved. */
         RecognizedField: {
             field: string;
             /** @enum {string} */
             confidence: "certain" | "uncertain";
+            /**
+             * @description Where the value came from. attachment: read from the document's attachments; previous_document: remembered of the contact's earlier documents, filled in when the document was read or when its contact was chosen; default: neither, such as the standard VAT rate.
+             * @enum {string}
+             */
+            reason: "attachment" | "previous_document" | "default";
+            /** @description The earlier document a remembered value came from; null when unknown or removed since. */
+            source_document_id?: string | null;
+            /** @description That document's reference when the value was filled in. */
+            source_document_reference?: string | null;
         };
         /** @description MoneyHarpy extension. An AI model Scan and Recognise can ask. */
         RecognitionAIConnection: {
