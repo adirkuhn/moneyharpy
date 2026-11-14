@@ -66,6 +66,8 @@ func (s *Service) extract(ctx context.Context, files []ocr.File) (Extraction, er
 		// OCR reads a photo in several ways; the rules take the reading
 		// they understand best.
 		var fileBest *Extraction
+		var readings []string
+		var parsed []Extraction
 		fileText := ""
 		for _, text := range append([]string{t.Text}, t.Alternatives...) {
 			if strings.TrimSpace(text) == "" {
@@ -76,6 +78,7 @@ func (s *Service) extract(ctx context.Context, files []ocr.File) (Extraction, er
 			if t.Method == "ocr" {
 				e.Source = SourceOCR
 			}
+			readings, parsed = append(readings, text), append(parsed, e)
 			if fileBest == nil || score(e) > score(*fileBest) {
 				fileBest, fileText = &e, text
 			}
@@ -83,6 +86,9 @@ func (s *Service) extract(ctx context.Context, files []ocr.File) (Extraction, er
 		if fileBest == nil {
 			continue
 		}
+		// The readings vote on what they all print, such as the date.
+		agreed := agreeAcross(*fileBest, readings, parsed, today)
+		fileBest = &agreed
 		texts = append(texts, fileText)
 		if best == nil || score(*fileBest) > score(*best) {
 			best = fileBest
