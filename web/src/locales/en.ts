@@ -219,7 +219,7 @@ export const en = {
       bank: 'Bank', matches: 'Matching transactions', matchesText: 'These transactions match the amount or reference of invoice {{number}}.', link: 'Link',
     },
     view: {
-      document: 'Invoice {{name}}', sidebar: 'Invoice information', send: 'Send', sendInvoice: 'Send invoice', sendAgain: 'Send invoice again',
+      document: 'Invoice {{name}}', sidebar: 'Invoice information', recurring: 'Recurring invoice', recurringLink: 'View recurring invoice', quote: 'Quote', quoteLink: 'View quote', send: 'Send', sendInvoice: 'Send invoice', sendAgain: 'Send invoice again',
       registerPayment: 'Register payment', downloadAs: 'Download as...', pdf: 'Invoice (PDF)', ubl: 'Invoice (UBL)', packingSlip: 'Packing slip (PDF)',
       receipt: 'Payment receipt (PDF)', journalEntries: 'Journal entries', extra: 'Extra', edit: 'Edit', duplicate: 'Duplicate invoice',
       duplicateQuote: 'Duplicate to quote', duplicateCredit: 'Duplicate to credit note', duplicateRecurring: 'Duplicate to recurring invoice',

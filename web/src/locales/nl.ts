@@ -221,7 +221,7 @@ export const nl: Messages = {
       bank: 'Bank', matches: 'Overeenkomende transacties', matchesText: 'Deze transacties komen overeen met het bedrag of kenmerk van factuur {{number}}.', link: 'Koppelen',
     },
     view: {
-      document: 'Factuur {{name}}', sidebar: 'Factuurinformatie', send: 'Versturen', sendInvoice: 'Factuur versturen', sendAgain: 'Factuur opnieuw versturen',
+      document: 'Factuur {{name}}', sidebar: 'Factuurinformatie', recurring: 'Periodieke factuur', recurringLink: 'Bekijk periodieke factuur', quote: 'Offerte', quoteLink: 'Bekijk offerte', send: 'Versturen', sendInvoice: 'Factuur versturen', sendAgain: 'Factuur opnieuw versturen',
       registerPayment: 'Betaling registreren', downloadAs: 'Downloaden als...', pdf: 'Factuur (PDF)', ubl: 'Factuur (UBL)', packingSlip: 'Pakbon (PDF)',
       receipt: 'Betalingsbewijs (PDF)', journalEntries: 'Journaalposten', extra: 'Extra', edit: 'Bewerken', duplicate: 'Factuur dupliceren',
       duplicateQuote: 'Dupliceren naar offerte', duplicateCredit: 'Dupliceren naar creditfactuur', duplicateRecurring: 'Dupliceren naar periodieke factuur',

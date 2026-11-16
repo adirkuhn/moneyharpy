@@ -137,3 +137,14 @@ func TestRenderHTMLShowsTheButton(t *testing.T) {
 		t.Errorf("unsafe link = %s", html)
 	}
 }
+
+func TestRenderHTMLShowsATableInPlaceOfItsText(t *testing.T) {
+	list := "- 2026-0001 (16-11-2026): €139.25"
+	html, _ := renderHTML("Dear Jan,\n\n"+list+"\n\nKind regards", Look{Table: &Table{
+		Columns: []string{"Invoice", "Invoice date", "Due date", "Amount due"}, Rows: [][]string{{"2026-0001", "16-11-2026", "30-11-2026", "€139.25"}}, Text: list,
+	}})
+	if strings.Contains(html, "- 2026-0001") || !strings.Contains(html, ">Due date</th>") || !strings.Contains(html, ">30-11-2026</td>") ||
+		strings.Index(html, "Dear Jan") > strings.Index(html, "<th") || strings.Index(html, "Kind regards") < strings.Index(html, "</table>") {
+		t.Errorf("html = %s", html)
+	}
+}

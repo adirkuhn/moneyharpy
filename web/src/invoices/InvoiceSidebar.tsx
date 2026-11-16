@@ -10,6 +10,7 @@ import { formErrors } from '../forms/Form'
 import { ChevronIcon } from '../layout/icons'
 import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { InvoiceHistory } from './InvoiceHistory'
+import { useWorkflows } from '../invoicing/queries'
 import { invoiceTitle, type Payment, type SalesInvoice, useDeletePayment } from './queries'
 
 type Props = {
@@ -28,9 +29,16 @@ export function InvoiceSidebar({ administrationId, invoice: inv, onHighlight }: 
   const { t, i18n } = useTranslation()
   const date = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' }) : '')
   const usesProducts = (inv.details ?? []).some((d) => !!d.product_id)
+  const workflows = useWorkflows(administrationId)
+  const flow = (workflows.data ?? []).find((w) => w.id === inv.workflow_id)
+  const base = `/${administrationId}`
   const facts: [string, ReactNode][] = [
     [t('invoices.view.invoiceId'), invoiceTitle(inv, t)],
     [t('invoices.view.contact'), inv.contact && <ContactHoverCard administrationId={administrationId} contact={{ ...inv.contact, id: inv.contact_id }} />],
+    [t('invoices.workflow'), flow && <Link to={`${base}/workflows/${flow.id}`}>{flow.name}</Link>],
+    // Where the invoice came from: the recurring invoice that made it, or the quote billed into it.
+    [t('invoices.view.recurring'), inv.recurring_sales_invoice_id && <Link to={`${base}/recurring_sales_invoices/${inv.recurring_sales_invoice_id}`}>{t('invoices.view.recurringLink')}</Link>],
+    [t('invoices.view.quote'), inv.original_estimate_id && <Link to={`${base}/estimates/${inv.original_estimate_id}`}>{t('invoices.view.quoteLink')}</Link>],
     // A paused invoice's next reminder is Moneybird's far-off 2099-01-01,
     // which only means none is planned.
     [t('invoices.nextReminder'), inv.paused ? '' : date(inv.next_reminder)],

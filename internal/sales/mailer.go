@@ -67,7 +67,7 @@ func mailLook(l *EmailLook) *mail.Look {
 		PageBackground: e.BodyBackgroundColor, FontStack: FontStacks[e.FontFamily], Label: label,
 		Logo: image(invoicing.EmailLogo), HeaderImage: image(invoicing.EmailHeaderBackground),
 		ProfilePicture: image(invoicing.EmailFooterProfilePicture), FooterImage: image(invoicing.EmailFooterBackground),
-		ContactLines: contact, Details: l.Details, Button: mailButton(l.Button),
+		ContactLines: contact, Details: l.Details, Button: mailButton(l.Button), Table: mailTable(l.Table),
 	}
 }
 
@@ -76,4 +76,11 @@ func mailButton(b *EmailButton) *mail.Button {
 		return nil
 	}
 	return &mail.Button{Label: b.Label, URL: b.URL}
+}
+
+func mailTable(t *EmailTable) *mail.Table {
+	if t == nil {
+		return nil
+	}
+	return &mail.Table{Columns: t.Columns, Rows: t.Rows, Text: t.Text}
 }
