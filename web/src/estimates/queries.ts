@@ -143,8 +143,11 @@ export function useDuplicateEstimate(administrationId: string) {
 export function useSendEstimate(administrationId: string, id: string) {
   const saved = useSaved(administrationId)
   return useMutation({
-    mutationFn: (estimate_sending: EstimateSending) =>
-      unwrap(api.PATCH('/api/v2/{administration_id}/estimates/{id}/send_estimate', { ...one(administrationId, id), body: { estimate_sending } })),
+    // The sender's own signature goes beside the sending, where Moneybird's form puts it.
+    mutationFn: ({ signature_output, ...estimate_sending }: EstimateSending & { signature_output?: string }) =>
+      unwrap(api.PATCH('/api/v2/{administration_id}/estimates/{id}/send_estimate', {
+        ...one(administrationId, id), body: { estimate_sending, ...(signature_output ? { signature_output } : {}) },
+      })),
     onSuccess: saved,
   })
 }
@@ -222,6 +225,11 @@ export function useDeleteEstimateAttachment(administrationId: string, id: string
 /** Where the browser downloads the estimate's PDF; the session cookie signs the request. */
 export function estimatePdfURL(administrationId: string, id: string) {
   return `/api/v2/${administrationId}/estimates/${id}/download_pdf`
+}
+
+/** Where the browser downloads the quote its contact signed online. */
+export function signedEstimatePdfURL(administrationId: string, id: string) {
+  return `/api/v2/${administrationId}/estimates/${id}/download_signed_pdf`
 }
 
 export function estimateAttachmentURL(administrationId: string, id: string, attachmentId: string) {

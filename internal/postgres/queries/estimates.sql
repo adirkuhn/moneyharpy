@@ -100,3 +100,22 @@ SELECT EXISTS (SELECT 1 FROM estimate_details WHERE administration_id = @adminis
 
 -- name: ProjectOnEstimates :one
 SELECT EXISTS (SELECT 1 FROM estimate_details WHERE administration_id = @administration_id AND project_id = @project_id);
+
+-- name: GetEstimateSigning :one
+-- The online signing of an estimate; administration_id 0 finds it by the
+-- estimate alone, for the contact's online page.
+SELECT * FROM estimate_signings
+WHERE estimate_id = @estimate_id AND (@administration_id::bigint = 0 OR administration_id = @administration_id);
+
+-- name: UpsertEstimateSigning :exec
+INSERT INTO estimate_signings (
+    estimate_id, administration_id, view_code, view_code_expires_at, sent_by_user_id, sender_signature, sender_signed_at, sender_user_id,
+    signer_name, signer_email, signer_ip, signer_user_agent, signature, audit_trail, signed_at, updated_at)
+VALUES (@estimate_id, @administration_id, @view_code, @view_code_expires_at, @sent_by_user_id, @sender_signature, @sender_signed_at, @sender_user_id,
+    @signer_name, @signer_email, @signer_ip, @signer_user_agent, @signature, @audit_trail, @signed_at, @updated_at)
+ON CONFLICT (estimate_id) DO UPDATE SET
+    view_code = EXCLUDED.view_code, view_code_expires_at = EXCLUDED.view_code_expires_at, sent_by_user_id = EXCLUDED.sent_by_user_id,
+    sender_signature = EXCLUDED.sender_signature, sender_signed_at = EXCLUDED.sender_signed_at, sender_user_id = EXCLUDED.sender_user_id,
+    signer_name = EXCLUDED.signer_name, signer_email = EXCLUDED.signer_email, signer_ip = EXCLUDED.signer_ip,
+    signer_user_agent = EXCLUDED.signer_user_agent, signature = EXCLUDED.signature, audit_trail = EXCLUDED.audit_trail,
+    signed_at = EXCLUDED.signed_at, updated_at = EXCLUDED.updated_at;

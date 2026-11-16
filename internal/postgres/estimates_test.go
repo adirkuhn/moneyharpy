@@ -3,6 +3,7 @@ package postgres_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -124,5 +125,40 @@ func TestEstimatesAreStoredSentAndBilled(t *testing.T) {
 	}
 	if kept, err := f.store.Invoice(ctx, f.admin, inv.ID); err != nil || kept.OriginalEstimateID != nil {
 		t.Errorf("invoice after delete = %+v, %v", kept.OriginalEstimateID, err)
+	}
+}
+
+func TestEstimateSigningsAreStored(t *testing.T) {
+	ctx := context.Background()
+	f := newSalesFixture(t)
+	e, err := f.svc.CreateEstimate(ctx, f.admin, f.owner, sales.EstimateChanges{
+		ContactID: &f.customer, Details: []sales.DetailInput{{Description: ptr("Advice"), Price: ptr("100"), Amount: ptr("1"), TaxRateID: &f.vat21, LedgerAccountID: &f.revenue}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok, err := f.store.EstimateSigning(ctx, f.admin, e.ID); err != nil || ok {
+		t.Fatalf("signing before sending = %v, %v", ok, err)
+	}
+	at := adminNow().UTC().Truncate(time.Second)
+	expires := at.Add(time.Hour)
+	g := sales.Signing{
+		AdministrationID: f.admin, EstimateID: e.ID, ViewCode: "123456789012", ViewCodeExpiresAt: &expires, SentByUserID: &f.owner,
+		SenderSignature: []byte("\x89PNG me"), SenderSignedAt: &at, SenderUserID: &f.owner, SignerName: "Jan Voorbeeld", SignerEmail: "jan@example.com",
+		SignerIP: "203.0.113.7", SignerUserAgent: "Test", Signature: []byte("\x89PNG you"), AuditTrail: "[]", SignedAt: &at, UpdatedAt: at,
+	}
+	if err := f.store.SaveSigning(ctx, g); err != nil {
+		t.Fatal(err)
+	}
+	// Found by the estimate alone too, as the contact's online page does.
+	for _, admin := range []resource.ID{f.admin, 0} {
+		got, ok, err := f.store.EstimateSigning(ctx, admin, e.ID)
+		if err != nil || !ok || got.ViewCode != g.ViewCode || !got.ViewCodeExpiresAt.Equal(expires) || *got.SentByUserID != f.owner ||
+			string(got.Signature) != string(g.Signature) || string(got.SenderSignature) != string(g.SenderSignature) || got.SignerIP != g.SignerIP || !got.SignedAt.Equal(at) {
+			t.Errorf("stored (admin %d) = %+v, %v, %v", admin, got, ok, err)
+		}
+	}
+	if _, ok, _ := f.store.EstimateSigning(ctx, f.admin+1, e.ID); ok {
+		t.Error("found from another administration")
 	}
 }

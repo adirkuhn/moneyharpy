@@ -343,6 +343,42 @@ func (q *Queries) EstimatesByIDs(ctx context.Context, arg EstimatesByIDsParams) 
 	return items, nil
 }
 
+const getEstimateSigning = `-- name: GetEstimateSigning :one
+SELECT estimate_id, administration_id, view_code, view_code_expires_at, sent_by_user_id, sender_signature, sender_signed_at, sender_user_id, signer_name, signer_email, signer_ip, signer_user_agent, signature, audit_trail, signed_at, updated_at FROM estimate_signings
+WHERE estimate_id = $1 AND ($2::bigint = 0 OR administration_id = $2)
+`
+
+type GetEstimateSigningParams struct {
+	EstimateID       int64
+	AdministrationID int64
+}
+
+// The online signing of an estimate; administration_id 0 finds it by the
+// estimate alone, for the contact's online page.
+func (q *Queries) GetEstimateSigning(ctx context.Context, arg GetEstimateSigningParams) (EstimateSigning, error) {
+	row := q.db.QueryRow(ctx, getEstimateSigning, arg.EstimateID, arg.AdministrationID)
+	var i EstimateSigning
+	err := row.Scan(
+		&i.EstimateID,
+		&i.AdministrationID,
+		&i.ViewCode,
+		&i.ViewCodeExpiresAt,
+		&i.SentByUserID,
+		&i.SenderSignature,
+		&i.SenderSignedAt,
+		&i.SenderUserID,
+		&i.SignerName,
+		&i.SignerEmail,
+		&i.SignerIp,
+		&i.SignerUserAgent,
+		&i.Signature,
+		&i.AuditTrail,
+		&i.SignedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const insertEstimateCustomFieldValue = `-- name: InsertEstimateCustomFieldValue :exec
 INSERT INTO estimate_custom_field_values (estimate_id, custom_field_id, value) VALUES ($1, $2, $3)
 `
@@ -720,6 +756,61 @@ func (q *Queries) UpsertEstimate(ctx context.Context, arg UpsertEstimateParams) 
 		arg.TotalDiscount,
 		arg.TaxTotals,
 		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const upsertEstimateSigning = `-- name: UpsertEstimateSigning :exec
+INSERT INTO estimate_signings (
+    estimate_id, administration_id, view_code, view_code_expires_at, sent_by_user_id, sender_signature, sender_signed_at, sender_user_id,
+    signer_name, signer_email, signer_ip, signer_user_agent, signature, audit_trail, signed_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
+    $9, $10, $11, $12, $13, $14, $15, $16)
+ON CONFLICT (estimate_id) DO UPDATE SET
+    view_code = EXCLUDED.view_code, view_code_expires_at = EXCLUDED.view_code_expires_at, sent_by_user_id = EXCLUDED.sent_by_user_id,
+    sender_signature = EXCLUDED.sender_signature, sender_signed_at = EXCLUDED.sender_signed_at, sender_user_id = EXCLUDED.sender_user_id,
+    signer_name = EXCLUDED.signer_name, signer_email = EXCLUDED.signer_email, signer_ip = EXCLUDED.signer_ip,
+    signer_user_agent = EXCLUDED.signer_user_agent, signature = EXCLUDED.signature, audit_trail = EXCLUDED.audit_trail,
+    signed_at = EXCLUDED.signed_at, updated_at = EXCLUDED.updated_at
+`
+
+type UpsertEstimateSigningParams struct {
+	EstimateID        int64
+	AdministrationID  int64
+	ViewCode          string
+	ViewCodeExpiresAt pgtype.Timestamptz
+	SentByUserID      pgtype.Int8
+	SenderSignature   []byte
+	SenderSignedAt    pgtype.Timestamptz
+	SenderUserID      pgtype.Int8
+	SignerName        string
+	SignerEmail       string
+	SignerIp          string
+	SignerUserAgent   string
+	Signature         []byte
+	AuditTrail        string
+	SignedAt          pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertEstimateSigning(ctx context.Context, arg UpsertEstimateSigningParams) error {
+	_, err := q.db.Exec(ctx, upsertEstimateSigning,
+		arg.EstimateID,
+		arg.AdministrationID,
+		arg.ViewCode,
+		arg.ViewCodeExpiresAt,
+		arg.SentByUserID,
+		arg.SenderSignature,
+		arg.SenderSignedAt,
+		arg.SenderUserID,
+		arg.SignerName,
+		arg.SignerEmail,
+		arg.SignerIp,
+		arg.SignerUserAgent,
+		arg.Signature,
+		arg.AuditTrail,
+		arg.SignedAt,
 		arg.UpdatedAt,
 	)
 	return err

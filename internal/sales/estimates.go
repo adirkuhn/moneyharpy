@@ -69,7 +69,7 @@ var (
 	// late or accepted, or whose contact is gone.
 	ErrEstimateNotBillable = errors.New("estimate cannot be billed")
 	// ErrEstimateNotSigned reports asking for the signed PDF of an estimate
-	// the contact did not sign online; MoneyHarpy has no online signing yet.
+	// the contact did not sign online.
 	ErrEstimateNotSigned = errors.New("estimate is not signed")
 	// ErrEstimateDelivery reports an estimate that was sent but could not
 	// be emailed; it can be sent again.
@@ -145,6 +145,9 @@ type Estimate struct {
 	Totals    Totals
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	// Signing is its online signing, once it was sent to be signed online;
+	// set on a single estimate only.
+	Signing *Signing
 }
 
 // Ref locates the estimate.
@@ -427,6 +430,9 @@ type EstimateSendInput struct {
 	EmailAddress   string
 	EmailMessage   string
 	SignOnline     *bool
+	// Sender signs the estimate before it goes, with SenderSignature, a PNG.
+	Sender          bool
+	SenderSignature []byte
 }
 
 // SendEstimate sends an estimate: a draft gets its number, date and due
@@ -477,9 +483,18 @@ func (s *Service) SendEstimate(ctx context.Context, admin, id, user resource.ID,
 	if in.SignOnline != nil {
 		e.SignOnline = *in.SignOnline
 	}
+	signing, fresh, err := s.signingFor(ctx, e, user, in)
+	if err != nil {
+		return Estimate{}, err
+	}
 	e.Delivery, e.UpdatedAt = &delivery, now
 	if err := s.saveEstimate(ctx, admin, user, &e, false); err != nil {
 		return Estimate{}, err
+	}
+	if fresh {
+		if err := wrap("store estimate signing", s.store.SaveSigning(ctx, signing)); err != nil {
+			return Estimate{}, err
+		}
 	}
 	sentBy := on(e.invoice(), "estimate_send_manually")
 	if delivery.Method == "Email" {
@@ -489,7 +504,11 @@ func (s *Service) SendEstimate(ctx context.Context, admin, id, user resource.ID,
 		return Estimate{}, err
 	}
 	if delivery.Method == "Email" {
-		if err := s.deliverEstimate(ctx, a, user, e, delivery, settings.Settings); err != nil {
+		link := ""
+		if fresh {
+			link = s.OnlineURL(signing)
+		}
+		if err := s.deliverEstimate(ctx, a, user, e, delivery, settings.Settings, link); err != nil {
 			return Estimate{}, fmt.Errorf("%w: %v", ErrEstimateDelivery, err)
 		}
 	}
@@ -567,7 +586,9 @@ func (s *Service) numberEstimate(ctx context.Context, admin resource.ID, e *Esti
 }
 
 // deliverEstimate emails the estimate with its PDF.
-func (s *Service) deliverEstimate(ctx context.Context, a administration.Listed, user resource.ID, e Estimate, d Delivery, settings invoicing.Settings) error {
+// A link to the estimate online, when it is to be signed, ends the message
+// and is the email's button.
+func (s *Service) deliverEstimate(ctx context.Context, a administration.Listed, user resource.ID, e Estimate, d Delivery, settings invoicing.Settings, link string) error {
 	doc, err := s.estimateDocument(ctx, a, user, e)
 	if err != nil {
 		return err
@@ -580,10 +601,16 @@ func (s *Service) deliverEstimate(ctx context.Context, a administration.Listed, 
 	if strings.TrimSpace(d.EmailMessage) != "" {
 		body = ExpandEstimate(d.EmailMessage, doc)
 	}
+	look := s.emailLook(ctx, a.ID, user, doc, EstimateDetails(doc))
+	if link != "" {
+		text, label := onlineMessage(doc.Invoice.Language, link)
+		body = strings.TrimRight(body, "\n") + "\n\n" + text
+		look.Button = &EmailButton{Label: label, URL: link}
+	}
 	return s.mailer.SendDocument(ctx, Mail{
 		To: splitAddresses(d.EmailAddress), BCC: splitAddresses(settings.EstimateBCC), ReplyTo: doc.Identity.Email, FromName: doc.Identity.CompanyName,
 		Subject: subject, Body: body, Files: []File{{Name: estimateFileName(e, "pdf"), ContentType: "application/pdf", Data: pdf}},
-		Look: s.emailLook(ctx, a.ID, user, doc, EstimateDetails(doc)),
+		Look: look,
 	})
 }
 
@@ -661,13 +688,23 @@ func (s *Service) EstimatePDF(ctx context.Context, admin, id, user resource.ID, 
 	return data, estimateFileName(e, "pdf"), wrap("render estimate", err)
 }
 
-// SignedEstimatePDF is the PDF the contact signed online. MoneyHarpy has no
-// online signing yet, so no estimate is signed.
+// SignedEstimatePDF is the PDF of the estimate the contact signed online,
+// with the signatures and what was kept of the signing on a page of its own.
 func (s *Service) SignedEstimatePDF(ctx context.Context, admin, id, user resource.ID) ([]byte, string, error) {
-	if _, err := s.Estimate(ctx, admin, id, user); err != nil {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
 		return nil, "", err
 	}
-	return nil, "", ErrEstimateNotSigned
+	e, err := s.Estimate(ctx, admin, id, user)
+	if err != nil {
+		return nil, "", err
+	}
+	doc, err := s.signedDocument(ctx, a, user, e)
+	if err != nil {
+		return nil, "", err
+	}
+	data, err := s.renderer.PDF(doc)
+	return data, estimateFileName(e, "pdf"), wrap("render signed estimate", err)
 }
 
 // ChangeEstimateState moves an estimate to another state, without sending
@@ -899,6 +936,11 @@ func (s *Service) oneEstimate(ctx context.Context, admin, user resource.ID, load
 	list, err := s.completeEstimates(ctx, admin, []Estimate{e}, s.today(a))
 	if err != nil {
 		return Estimate{}, err
+	}
+	if g, ok, err := s.store.EstimateSigning(ctx, admin, e.ID); err != nil {
+		return Estimate{}, wrap("load estimate signing", err)
+	} else if ok {
+		list[0].Signing = &g
 	}
 	return list[0], nil
 }

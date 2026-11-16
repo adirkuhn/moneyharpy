@@ -119,7 +119,9 @@ func (s *server) throttle(next http.Handler) http.Handler {
 			limiter = s.deps.LookupLimiter
 		case strings.HasPrefix(r.URL.Path, "/api/v2/"):
 			limiter = s.deps.APILimiter
-		case r.URL.Path == "/api/auth/login", r.URL.Path == "/api/auth/register",
+		// The online estimates need no account; their codes must not be guessed.
+		case strings.HasPrefix(r.URL.Path, "/api/online/"),
+			r.URL.Path == "/api/auth/login", r.URL.Path == "/api/auth/register",
 			r.URL.Path == "/api/auth/password_reset/request", r.URL.Path == "/api/auth/password_reset/confirm":
 			limiter = s.deps.AuthLimiter
 		case r.URL.Path == "/api/onboarding/company_search", r.URL.Path == "/api/onboarding/address_lookup":

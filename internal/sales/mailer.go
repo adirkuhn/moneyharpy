@@ -67,6 +67,13 @@ func mailLook(l *EmailLook) *mail.Look {
 		PageBackground: e.BodyBackgroundColor, FontStack: FontStacks[e.FontFamily], Label: label,
 		Logo: image(invoicing.EmailLogo), HeaderImage: image(invoicing.EmailHeaderBackground),
 		ProfilePicture: image(invoicing.EmailFooterProfilePicture), FooterImage: image(invoicing.EmailFooterBackground),
-		ContactLines: contact, Details: l.Details,
+		ContactLines: contact, Details: l.Details, Button: mailButton(l.Button),
 	}
+}
+
+func mailButton(b *EmailButton) *mail.Button {
+	if b == nil {
+		return nil
+	}
+	return &mail.Button{Label: b.Label, URL: b.URL}
 }

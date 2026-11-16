@@ -55,6 +55,9 @@ type Document struct {
 	// Estimate is set when the document is an estimate; Invoice then holds
 	// its lines, number and dates as an invoice would.
 	Estimate *Estimate
+	// Signing is set on a signed estimate: its signatures, shown on a page
+	// of their own.
+	Signing *Signing
 }
 
 // Send sends an invoice: a draft gets its number and is booked, a sent one

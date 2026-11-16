@@ -19,7 +19,6 @@ var refusedOnPurpose = map[string]string{
 	"POST /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate":       "Moneybird Payments is not offered",
 	"DELETE /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate":     "Moneybird Payments is not offered",
 	"POST /api/v2/{administration_id}/contacts/{contact_id}/moneybird_payments_mandate/url":   "Moneybird Payments is not offered",
-	"GET /api/v2/{administration_id}/estimates/{id}/download_signed_pdf":                      "online signing is not offered",
 	"POST /api/v2/{administration_id}/products/{id}/sales_link":                               "online sales are not offered",
 	"POST /api/v2/{administration_id}/subscription_templates/{id}/sales_link":                 "subscription templates need Moneybird Payments",
 	"GET /api/v2/{administration_id}/subscription_templates/{id}/checkout_identifier":         "subscription templates need Moneybird Payments",

@@ -1,0 +1,37 @@
+/* A quote opened online by its contact: the sender on top, the quote as a sheet, the acceptance under it. */
+.online-page { min-height: 100vh; padding: 0 1rem 3rem; background: var(--bg, #f5f7fa); color: var(--text); }
+.online-page__bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: 52rem; margin: 0 auto; padding: 1rem 0;
+}
+.online-page__company { font-size: 1.125rem; font-weight: 700; }
+.online-card { max-width: 52rem; margin: 0 auto 1rem; padding: 2rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.online-card--message { margin-top: 4rem; text-align: center; }
+.online-document__head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1.5rem; }
+.online-document__recipient { font-weight: 600; }
+.online-document__sender { display: grid; font-style: normal; line-height: 1.5; text-align: right; }
+.online-document__title { margin: 2.5rem 0 0.75rem; font-size: 1.5rem; font-weight: 400; }
+.online-document__facts { display: grid; grid-template-columns: max-content auto; gap: 0.25rem 1rem; margin: 0 0 1.5rem; }
+.online-document__facts dt { color: var(--muted); }
+.online-document__facts dd { margin: 0; }
+.online-document__text { margin: 0 0 1.25rem; white-space: pre-line; line-height: 1.5; }
+.online-document__lines { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+.online-document__lines th { padding: 0.5rem; border-bottom: 2px solid var(--text); text-align: left; font-weight: 600; }
+.online-document__lines td { padding: 0.5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.online-document__lines .num { text-align: right; white-space: nowrap; }
+.online-document__description { white-space: pre-line; }
+.online-document__totals { display: grid; grid-template-columns: auto max-content; gap: 0.375rem 2rem; width: max-content; margin: 0 0 1.5rem auto; }
+.online-document__totals dd { margin: 0; text-align: right; }
+.online-document__total-row { display: contents; }
+.online-document__grand { padding-top: 0.375rem; border-top: 2px solid var(--text); font-weight: 700; }
+.online-acceptance form { display: grid; gap: 1rem; }
+.online-acceptance h2 { margin: 0; font-size: 1.125rem; }
+.online-acceptance p { margin: 0; line-height: 1.5; }
+.online-acceptance__note { color: var(--muted); font-size: 0.875rem; }
+.online-acceptance--done { border-left: 4px solid var(--teal); }
+
+@media (max-width: 640px) {
+  .online-card { padding: 1.25rem 1rem; }
+  .online-document__sender { text-align: left; }
+  .online-document__lines { font-size: 0.875rem; }
+  .online-document__lines th:last-child, .online-document__lines td:last-child { display: none; }
+}

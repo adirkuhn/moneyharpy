@@ -1,0 +1,9 @@
+/* A field to sign in: the drawing surface above the line signed on, and a link to clear it. */
+.signature-pad { display: grid; gap: 0.375rem; max-width: 28rem; }
+.signature-pad__label { font-weight: 600; }
+.signature-pad__canvas {
+  display: block; width: 100%; height: 9rem; border: 1px solid var(--line); border-bottom: 2px solid var(--text);
+  border-radius: 6px 6px 0 0; background: var(--surface); touch-action: none; cursor: crosshair;
+}
+.signature-pad--invalid .signature-pad__canvas { border-color: var(--danger); }
+.signature-pad__clear { justify-self: end; }

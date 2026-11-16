@@ -151,7 +151,8 @@ function Sentence({ item, currency }: { item: HistoryItem; currency: string }) {
   const { key, state, action, quote } = eventText(item.action)
   const stateName = state ? t(`${quote ? 'estimates' : 'invoices'}.states.${state}`, { defaultValue: state }).toLowerCase() : undefined
   const original = typeof item.data.original_estimate === 'string' ? item.data.original_estimate : ''
-  return <span>{t(`invoices.view.events.${key}`, { state: stateName, action, original })}</span>
+  const name = typeof item.data.name === 'string' ? item.data.name : ''
+  return <span>{t(`invoices.view.events.${key}`, { state: stateName, action, original, name })}</span>
 }
 
 /** Note, to-do, or a to-do for someone, as Moneybird's select under the field. */

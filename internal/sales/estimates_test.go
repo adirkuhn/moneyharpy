@@ -88,7 +88,7 @@ func TestSendEstimateNumbersAndEmails(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if again.EstimateID != "Q2026-0001" || h.mailer.sent[1].To[0] != "alternative@example.com" || h.mailer.sent[1].Body != "Hi, this is an estimate with id Q2026-0001!" {
+	if again.EstimateID != "Q2026-0001" || h.mailer.sent[1].To[0] != "alternative@example.com" || !strings.HasPrefix(h.mailer.sent[1].Body, "Hi, this is an estimate with id Q2026-0001!\n\nView and accept the quote online: https://books.example.com/online/estimates/") {
 		t.Errorf("again = %+v, mail %+v", again, h.mailer.sent[1])
 	}
 	// The estimate's sequence id picks the number.

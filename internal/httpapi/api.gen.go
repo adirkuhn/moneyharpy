@@ -1485,6 +1485,36 @@ func (e MarkUncollectibleRequestBookMethod) Valid() bool {
 	}
 }
 
+// Defines values for OnlineEstimateState.
+const (
+	OnlineEstimateStateAccepted OnlineEstimateState = "accepted"
+	OnlineEstimateStateArchived OnlineEstimateState = "archived"
+	OnlineEstimateStateBilled   OnlineEstimateState = "billed"
+	OnlineEstimateStateLate     OnlineEstimateState = "late"
+	OnlineEstimateStateOpen     OnlineEstimateState = "open"
+	OnlineEstimateStateRejected OnlineEstimateState = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the OnlineEstimateState enum.
+func (e OnlineEstimateState) Valid() bool {
+	switch e {
+	case OnlineEstimateStateAccepted:
+		return true
+	case OnlineEstimateStateArchived:
+		return true
+	case OnlineEstimateStateBilled:
+		return true
+	case OnlineEstimateStateLate:
+		return true
+	case OnlineEstimateStateOpen:
+		return true
+	case OnlineEstimateStateRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for OverviewItemType.
 const (
 	OverviewItemTypeFinancialMutation OverviewItemType = "financial_mutation"
@@ -6577,6 +6607,9 @@ type Estimate struct {
 	Language   *string        `json:"language,omitempty"`
 	Notes      []NoteResponse `json:"notes"`
 
+	// OnlineSignature MoneyHarpy extension. The online signing, once the estimate was sent to be signed online: whether the sender signed it, and the contact's signature details once they signed. The signature images are only in the signed PDF.
+	OnlineSignature *EstimateOnlineSignature `json:"online_signature,omitempty"`
+
 	// OriginalEstimateId Moneybird-compatible identifier_nullable.
 	OriginalEstimateId *IdentifierNullable `json:"original_estimate_id,omitempty"`
 
@@ -6637,6 +6670,20 @@ type Estimate_ContactPerson struct {
 
 // EstimateState defines model for Estimate.State.
 type EstimateState string
+
+// EstimateOnlineSignature defines model for EstimateOnlineSignature.
+type EstimateOnlineSignature struct {
+	// OnlineUrl The link the contact opens the estimate with, while its public_view_code is valid.
+	OnlineUrl *string `json:"online_url,omitempty"`
+
+	// SenderSigned The sender signed the estimate before sending it; the signature shows once the contact signed too.
+	SenderSigned bool       `json:"sender_signed"`
+	Signed       bool       `json:"signed"`
+	SignedAt     *time.Time `json:"signed_at,omitempty"`
+	SignerEmail  *string    `json:"signer_email,omitempty"`
+	SignerIp     *string    `json:"signer_ip,omitempty"`
+	SignerName   *string    `json:"signer_name,omitempty"`
+}
 
 // EstimateRequest defines model for EstimateRequest.
 type EstimateRequest struct {
@@ -8090,6 +8137,66 @@ type OneOffSalesInvoiceRequestSalesInvoiceDetailsAttributes1 map[string]SalesInv
 type OneOffSalesInvoiceRequest_SalesInvoice_DetailsAttributes struct {
 	union json.RawMessage
 }
+
+// OnlineEstimate MoneyHarpy extension. What the contact sees of an estimate online.
+type OnlineEstimate struct {
+	ContactName string `json:"contact_name"`
+	Currency    string `json:"currency"`
+	Details     []struct {
+		Amount                        string `json:"amount"`
+		Description                   string `json:"description"`
+		Price                         string `json:"price"`
+		TaxPercentage                 string `json:"tax_percentage"`
+		TotalPriceExclTaxWithDiscount string `json:"total_price_excl_tax_with_discount"`
+	} `json:"details"`
+	DueDate      *openapi_types.Date `json:"due_date,omitempty"`
+	EstimateDate *openapi_types.Date `json:"estimate_date,omitempty"`
+	EstimateId   *string             `json:"estimate_id,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id       Identifier `json:"id"`
+	Language string     `json:"language"`
+
+	// PostText The text under the lines, its tags filled in, as plain text.
+	PostText *string `json:"post_text,omitempty"`
+
+	// PreText The text above the lines, its tags filled in, as plain text.
+	PreText          *string `json:"pre_text,omitempty"`
+	PricesAreInclTax bool    `json:"prices_are_incl_tax"`
+	Reference        *string `json:"reference,omitempty"`
+	Sender           struct {
+		Address1          *string `json:"address1,omitempty"`
+		Address2          *string `json:"address2,omitempty"`
+		ChamberOfCommerce *string `json:"chamber_of_commerce,omitempty"`
+		City              *string `json:"city,omitempty"`
+		CompanyName       string  `json:"company_name"`
+		Country           *string `json:"country,omitempty"`
+		Email             *string `json:"email,omitempty"`
+		Phone             *string `json:"phone,omitempty"`
+		TaxNumber         *string `json:"tax_number,omitempty"`
+		Zipcode           *string `json:"zipcode,omitempty"`
+	} `json:"sender"`
+
+	// Signable The contact can still sign it.
+	Signable   bool                `json:"signable"`
+	Signed     bool                `json:"signed"`
+	SignedAt   *time.Time          `json:"signed_at,omitempty"`
+	SignerName *string             `json:"signer_name,omitempty"`
+	State      OnlineEstimateState `json:"state"`
+	TaxTotals  []struct {
+		TaxAmount     string `json:"tax_amount"`
+		TaxPercentage string `json:"tax_percentage"`
+		TaxableAmount string `json:"taxable_amount"`
+	} `json:"tax_totals"`
+	TotalPriceExclTax string `json:"total_price_excl_tax"`
+	TotalPriceInclTax string `json:"total_price_incl_tax"`
+	TotalTax          string `json:"total_tax"`
+}
+
+// OnlineEstimateState defines model for OnlineEstimate.State.
+type OnlineEstimateState string
 
 // Overview MoneyHarpy extension. An administration's home page.
 type Overview struct {
@@ -9653,7 +9760,7 @@ type Scope string
 
 // SendEstimateRequest defines model for SendEstimateRequest.
 type SendEstimateRequest struct {
-	// AuditTrail Accepted for compatibility; MoneyHarpy has no online signing yet.
+	// AuditTrail Accepted for compatibility; the sender's signature keeps no strokes.
 	AuditTrail      *string `json:"audit_trail,omitempty"`
 	EstimateSending *struct {
 		DeliveryMethod *SendEstimateRequestEstimateSendingDeliveryMethod `json:"delivery_method,omitempty"`
@@ -9662,17 +9769,20 @@ type SendEstimateRequest struct {
 		// EmailMessage Replaces the workflow's email text; {estimate_id}, {estimate_date}, {due_date}, {total}, {contact_name}, {company_name} and {reference} work.
 		EmailMessage *string `json:"email_message,omitempty"`
 
+		// Sender A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
+		Sender *FlexibleBoolean `json:"sender,omitempty"`
+
 		// SignOnline A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
 		SignOnline *FlexibleBoolean `json:"sign_online,omitempty"`
 	} `json:"estimate_sending,omitempty"`
 
-	// IpAddress Accepted for compatibility; MoneyHarpy has no online signing yet.
+	// IpAddress Accepted for compatibility.
 	IpAddress *string `json:"ip_address,omitempty"`
 
 	// Sender A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
 	Sender *FlexibleBoolean `json:"sender,omitempty"`
 
-	// SignatureOutput Accepted for compatibility; MoneyHarpy has no online signing yet.
+	// SignatureOutput The sender's signature when sender is true, as a PNG data URL (data:image/png;base64,...).
 	SignatureOutput *string `json:"signature_output,omitempty"`
 }
 
@@ -9725,6 +9835,17 @@ type SendSalesInvoiceRequest struct {
 
 // SendSalesInvoiceRequestSalesInvoiceSendingDeliveryMethod defines model for SendSalesInvoiceRequest.SalesInvoiceSending.DeliveryMethod.
 type SendSalesInvoiceRequestSalesInvoiceSendingDeliveryMethod string
+
+// SignOnlineEstimateRequest defines model for SignOnlineEstimateRequest.
+type SignOnlineEstimateRequest struct {
+	// AuditTrail The strokes of the signature as drawn, kept as evidence.
+	AuditTrail *string `json:"audit_trail,omitempty"`
+	Email      string  `json:"email"`
+	Name       string  `json:"name"`
+
+	// SignatureOutput The drawn signature as a PNG data URL (data:image/png;base64,...).
+	SignatureOutput string `json:"signature_output"`
+}
 
 // Subscription A Moneybird subscription with MoneyHarpy extensions.
 type Subscription struct {
@@ -13391,6 +13512,9 @@ type IncludeArchived string
 // Media defines model for media.
 type Media = string
 
+// OnlineCode defines model for online_code.
+type OnlineCode = string
+
 // Page defines model for page.
 type Page = string
 
@@ -13500,6 +13624,24 @@ type AddressLookupParams struct {
 type CompanySearchParams struct {
 	Country string `form:"country" json:"country"`
 	Query   string `form:"query" json:"query"`
+}
+
+// GetOnlineEstimateParams defines parameters for GetOnlineEstimate.
+type GetOnlineEstimateParams struct {
+	// Code The estimate's public_view_code, from the link in its email.
+	Code OnlineCode `form:"code" json:"code"`
+}
+
+// DownloadOnlineEstimatePdfParams defines parameters for DownloadOnlineEstimatePdf.
+type DownloadOnlineEstimatePdfParams struct {
+	// Code The estimate's public_view_code, from the link in its email.
+	Code OnlineCode `form:"code" json:"code"`
+}
+
+// SignOnlineEstimateParams defines parameters for SignOnlineEstimate.
+type SignOnlineEstimateParams struct {
+	// Code The estimate's public_view_code, from the link in its email.
+	Code OnlineCode `form:"code" json:"code"`
 }
 
 // ListAssetsParams defines parameters for ListAssets.
@@ -14509,6 +14651,9 @@ type UpdateInstanceSettingsJSONRequestBody = UpdateInstanceSettingsRequest
 
 // McpJSONRequestBody defines body for Mcp for application/json ContentType.
 type McpJSONRequestBody = JsonRpcMessage
+
+// SignOnlineEstimateJSONRequestBody defines body for SignOnlineEstimate for application/json ContentType.
+type SignOnlineEstimateJSONRequestBody = SignOnlineEstimateRequest
 
 // CreateTokenJSONRequestBody defines body for CreateToken for application/json ContentType.
 type CreateTokenJSONRequestBody = CreateTokenRequest
@@ -21064,6 +21209,15 @@ type ServerInterface interface {
 	// OnboardingOptions List what can be chosen when adding an administration
 	// (GET /api/onboarding/options)
 	OnboardingOptions(w http.ResponseWriter, r *http.Request)
+	// GetOnlineEstimate An estimate as its contact sees it online
+	// (GET /api/online/estimates/{id})
+	GetOnlineEstimate(w http.ResponseWriter, r *http.Request, id Id, params GetOnlineEstimateParams)
+	// DownloadOnlineEstimatePdf The PDF of an estimate opened online
+	// (GET /api/online/estimates/{id}/pdf)
+	DownloadOnlineEstimatePdf(w http.ResponseWriter, r *http.Request, id Id, params DownloadOnlineEstimatePdfParams)
+	// SignOnlineEstimate Accept an estimate online with a signature
+	// (POST /api/online/estimates/{id}/sign)
+	SignOnlineEstimate(w http.ResponseWriter, r *http.Request, id Id, params SignOnlineEstimateParams)
 	// LocateResource Locate a resource
 	// (GET /api/resources/{id})
 	LocateResource(w http.ResponseWriter, r *http.Request, id Id)
@@ -22420,6 +22574,24 @@ func (_ Unimplemented) CompanySearch(w http.ResponseWriter, r *http.Request, par
 // OnboardingOptions List what can be chosen when adding an administration
 // (GET /api/onboarding/options)
 func (_ Unimplemented) OnboardingOptions(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetOnlineEstimate An estimate as its contact sees it online
+// (GET /api/online/estimates/{id})
+func (_ Unimplemented) GetOnlineEstimate(w http.ResponseWriter, r *http.Request, id Id, params GetOnlineEstimateParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadOnlineEstimatePdf The PDF of an estimate opened online
+// (GET /api/online/estimates/{id}/pdf)
+func (_ Unimplemented) DownloadOnlineEstimatePdf(w http.ResponseWriter, r *http.Request, id Id, params DownloadOnlineEstimatePdfParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SignOnlineEstimate Accept an estimate online with a signature
+// (POST /api/online/estimates/{id}/sign)
+func (_ Unimplemented) SignOnlineEstimate(w http.ResponseWriter, r *http.Request, id Id, params SignOnlineEstimateParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -25355,6 +25527,132 @@ func (siw *ServerInterfaceWrapper) OnboardingOptions(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.OnboardingOptions(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOnlineEstimate operation middleware
+func (siw *ServerInterfaceWrapper) GetOnlineEstimate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetOnlineEstimateParams
+
+	// ------------- Required query parameter "code" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "code", r.URL.Query(), &params.Code, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "code"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "code", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOnlineEstimate(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadOnlineEstimatePdf operation middleware
+func (siw *ServerInterfaceWrapper) DownloadOnlineEstimatePdf(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DownloadOnlineEstimatePdfParams
+
+	// ------------- Required query parameter "code" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "code", r.URL.Query(), &params.Code, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "code"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "code", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadOnlineEstimatePdf(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SignOnlineEstimate operation middleware
+func (siw *ServerInterfaceWrapper) SignOnlineEstimate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SignOnlineEstimateParams
+
+	// ------------- Required query parameter "code" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "code", r.URL.Query(), &params.Code, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "code"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "code", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SignOnlineEstimate(w, r, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -42091,6 +42389,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/auth/register", wrapper.Register)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/online/estimates/{id}", wrapper.GetOnlineEstimate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/online/estimates/{id}/pdf", wrapper.DownloadOnlineEstimatePdf)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/online/estimates/{id}/sign", wrapper.SignOnlineEstimate)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/auth/login", wrapper.Login)

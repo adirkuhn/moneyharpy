@@ -322,7 +322,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
 		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, Bank: bank, History: history.NewService(postgres.NewEventStore(pool), ids, time.Now),
-		Notifier: httpapi.SalesNotifier{Webhooks: h.hooks}, IDs: ids, Now: time.Now,
+		Notifier: httpapi.SalesNotifier{Webhooks: h.hooks}, IDs: ids, Now: time.Now, BaseURL: "https://books.example.com",
 	})
 	bank.UseInvoices(invoiceService)
 	documentService := purchases.NewService(purchases.Deps{

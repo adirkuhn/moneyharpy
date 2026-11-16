@@ -96,3 +96,16 @@ func (m *memStore) SaveBilled(_ context.Context, inv Invoice, e Estimate) error 
 	m.estimates[e.ID] = e
 	return nil
 }
+
+func (m *memStore) EstimateSigning(_ context.Context, admin, id resource.ID) (Signing, bool, error) {
+	g, ok := m.signings[id]
+	if !ok || (admin != 0 && g.AdministrationID != admin) {
+		return Signing{}, false, nil
+	}
+	return g, true, nil
+}
+
+func (m *memStore) SaveSigning(_ context.Context, g Signing) error {
+	m.signings[g.EstimateID] = g
+	return nil
+}

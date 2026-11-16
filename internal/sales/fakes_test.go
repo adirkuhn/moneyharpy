@@ -263,6 +263,7 @@ type memStore struct {
 	recurring map[resource.ID]Recurring
 	// estimates holds estimates.
 	estimates        map[resource.ID]Estimate
+	signings         map[resource.ID]Signing
 	estimateSequence int
 	sequence         int
 	locked           map[resource.ID]bool
@@ -634,7 +635,11 @@ func (f *fakeNotifier) NotifyRecurring(_ context.Context, _ resource.ID, action 
 type fakeRenderer struct{}
 
 func (fakeRenderer) PDF(doc Document) ([]byte, error) {
-	return []byte("%PDF " + doc.Invoice.InvoiceID + " " + strconv.FormatInt(int64(doc.Totals.InclTax), 10)), nil
+	signed := ""
+	if doc.Signing != nil {
+		signed = " signed by " + doc.Signing.SignerName
+	}
+	return []byte("%PDF " + doc.Invoice.InvoiceID + " " + strconv.FormatInt(int64(doc.Totals.InclTax), 10) + signed), nil
 }
 func (fakeRenderer) PackingSlip(doc Document) ([]byte, error) {
 	if doc.Stationery {
@@ -747,7 +752,8 @@ type harness struct {
 func newHarness(t *testing.T) harness {
 	t.Helper()
 	store := &memStore{invoices: map[resource.ID]Invoice{}, entries: map[resource.ID][]journal.Entry{}, paid: map[resource.ID][]journal.Entry{}, locked: map[resource.ID]bool{},
-		externals: map[resource.ID]ExternalInvoice{}, externalEntries: map[resource.ID][]journal.Entry{}, recurring: map[resource.ID]Recurring{}, estimates: map[resource.ID]Estimate{}}
+		externals: map[resource.ID]ExternalInvoice{}, externalEntries: map[resource.ID][]journal.Entry{}, recurring: map[resource.ID]Recurring{}, estimates: map[resource.ID]Estimate{},
+		signings: map[resource.ID]Signing{}}
 	ledger := &fakeLedger{}
 	mailer := &fakeMailer{}
 	ids := resource.NewGenerator(1)
@@ -759,6 +765,7 @@ func newHarness(t *testing.T) harness {
 		Administrations: fakeAdmins{}, Contacts: fakeContacts{}, Products: fakeCatalog{}, Projects: fakeCatalog{}, Invoicing: &fakeInvoicing{}, Ledger: ledger,
 		Notes: notes.NewService(&memNotes{}, ids, clock), Attachments: attachments.NewService(&memAttachments{}, noFiles{}, ids, clock),
 		Store: store, Renderer: fakeRenderer{}, Mailer: mailer, Bank: bank, Notifier: notifier, History: history.NewService(&memEvents{}, ids, clock), IDs: ids, Now: clock,
+		BaseURL: "https://books.example.com/",
 	})
 	bank.svc = svc
 	return harness{svc: svc, store: store, ledger: ledger, mailer: mailer, bank: bank, notifier: notifier, clock: &at}

@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
@@ -336,6 +337,7 @@ type Attachments interface {
 // Store persists invoices with what they post, and estimates.
 type Store interface {
 	EstimateStore
+	SigningStore
 	Invoices(ctx context.Context, admin resource.ID, q Query) ([]Invoice, int, error)
 	Invoice(ctx context.Context, admin, id resource.ID) (Invoice, error)
 	InvoicesByID(ctx context.Context, admin resource.ID, ids []resource.ID) ([]Invoice, error)
@@ -472,6 +474,7 @@ type Service struct {
 	hook        RecurringHook
 	ids         *resource.Generator
 	now         func() time.Time
+	baseURL     string
 }
 
 // Deps are what a Service needs.
@@ -495,6 +498,8 @@ type Deps struct {
 	History History
 	IDs     *resource.Generator
 	Now     func() time.Time
+	// BaseURL is the public origin, for the links to quotes online.
+	BaseURL string
 }
 
 // NewService returns a Service.
@@ -502,6 +507,7 @@ func NewService(d Deps) *Service {
 	return &Service{
 		admins: d.Administrations, contacts: d.Contacts, products: d.Products, projects: d.Projects, invoicing: d.Invoicing, ledger: d.Ledger, notes: d.Notes,
 		attachments: d.Attachments, store: d.Store, renderer: d.Renderer, mailer: d.Mailer, bank: d.Bank, notifier: d.Notifier, history: d.History, ids: d.IDs, now: d.Now,
+		baseURL: strings.TrimRight(d.BaseURL, "/"),
 	}
 }
 

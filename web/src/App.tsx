@@ -82,6 +82,7 @@ import { TaskListPage } from './tasklists/TaskListPage'
 import { TaskListsPage } from './tasklists/TaskListsPage'
 import { TimeEntriesPage } from './timeentries/TimeEntriesPage'
 import { TimeEntryPage } from './timeentries/TimeEntryPage'
+import { OnlineEstimatePage } from './online/OnlineEstimatePage'
 
 export function AppRoutes() {
   return (
@@ -92,6 +93,8 @@ export function AppRoutes() {
       <Route path="/invitations/:token" element={<InvitationPage />} />
       <Route path="/passwords/new" element={<ForgotPasswordPage />} />
       <Route path="/passwords/edit" element={<EditPasswordPage />} />
+      {/* A quote its contact opens from the email, without an account. */}
+      <Route path="/online/estimates/:estimateId" element={<OnlineEstimatePage />} />
       <Route element={<RequireAuth><Outlet /></RequireAuth>}>
         <Route path="/onboarding/company/create_administration" element={<CreateAdministrationPage />} />
         <Route path="/onboarding/company/manually" element={<ManualCompanyPage />} />

@@ -17,8 +17,20 @@ import (
 // Kinds of estimate file a download link names.
 const (
 	fileEstimatePDF        = "estimate_pdf"
+	fileSignedEstimatePDF  = "signed_estimate_pdf"
 	fileEstimateAttachment = "estimate_attachment"
 )
+
+// estimateSignatureJSON is MoneyHarpy's online_signature of an estimate.
+type estimateSignatureJSON struct {
+	SenderSigned bool       `json:"sender_signed"`
+	Signed       bool       `json:"signed"`
+	SignerName   *string    `json:"signer_name"`
+	SignerEmail  *string    `json:"signer_email"`
+	SignerIP     *string    `json:"signer_ip"`
+	SignedAt     *time.Time `json:"signed_at"`
+	OnlineURL    *string    `json:"online_url"`
+}
 
 type estimateJSON struct {
 	ID                      string                 `json:"id"`
@@ -53,6 +65,7 @@ type estimateJSON struct {
 	UpdatedAt               time.Time              `json:"updated_at"`
 	PublicViewCode          *string                `json:"public_view_code"`
 	PublicViewCodeExpiresAt *time.Time             `json:"public_view_code_expires_at"`
+	OnlineSignature         *estimateSignatureJSON `json:"online_signature"`
 	Version                 int64                  `json:"version"`
 	PreText                 *string                `json:"pre_text"`
 	PostText                *string                `json:"post_text"`
@@ -114,6 +127,17 @@ func (s *server) toEstimate(e sales.Estimate, contact *contacts.Contact, today t
 	}
 	if e.Delivery != nil {
 		out.DeliveryMethod = &e.Delivery.Method
+	}
+	if g := e.Signing; g != nil {
+		sig := &estimateSignatureJSON{SenderSigned: len(g.SenderSignature) > 0, Signed: g.Signed()}
+		if g.Signed() {
+			sig.SignerName, sig.SignerEmail, sig.SignerIP, sig.SignedAt = &g.SignerName, &g.SignerEmail, &g.SignerIP, g.SignedAt
+		}
+		if g.ViewCode != "" && g.ViewCodeExpiresAt != nil && time.Now().Before(*g.ViewCodeExpiresAt) {
+			code, url := g.ViewCode, s.deps.Sales.OnlineURL(*g)
+			out.PublicViewCode, out.PublicViewCodeExpiresAt, sig.OnlineURL = &code, g.ViewCodeExpiresAt, &url
+		}
+		out.OnlineSignature = sig
 	}
 	if contact != nil {
 		c := s.toContact(*contact)
@@ -449,14 +473,23 @@ func (s *server) SendEstimate(w http.ResponseWriter, r *http.Request, administra
 			EmailAddress   string    `json:"email_address"`
 			EmailMessage   string    `json:"email_message"`
 			SignOnline     *flexBool `json:"sign_online"`
+			Sender         *flexBool `json:"sender"`
 		} `json:"estimate_sending"`
+		Sender          *flexBool `json:"sender"`
+		SignatureOutput string    `json:"signature_output"`
 	}](w, r)
 	if !ok {
 		return
 	}
 	in := body.Sending
+	sender := deref(body.Sender.ptr()) || deref(in.Sender.ptr())
+	var signature []byte
+	if sender {
+		signature = pngDataURL(body.SignatureOutput)
+	}
 	e, err := s.deps.Sales.SendEstimate(r.Context(), admin, rid, user(r).ID, sales.EstimateSendInput{
 		DeliveryMethod: in.DeliveryMethod, EmailAddress: in.EmailAddress, EmailMessage: in.EmailMessage, SignOnline: in.SignOnline.ptr(),
+		Sender: sender, SenderSignature: signature,
 	})
 	if err != nil {
 		s.failEstimate(w, r, err)
@@ -512,18 +545,23 @@ func (s *server) DownloadEstimatePdf(w http.ResponseWriter, r *http.Request, adm
 	s.redirectToFile(w, fileLink{Kind: fileEstimatePDF, Admin: admin, ID: rid, User: user(r).ID, Stationery: deref(params.Media) == "stationery"})
 }
 
-// DownloadSignedEstimatePdf implements ServerInterface. No estimate is
-// signed online yet, so it answers Moneybird's error for that.
+// DownloadSignedEstimatePdf implements ServerInterface: it redirects to a
+// temporary link to the signed PDF, or answers that it is not signed.
 func (s *server) DownloadSignedEstimatePdf(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
 	admin, rid, ok := parseIDs(w, administrationID, id)
 	if !ok {
 		return
 	}
-	_, _, err := s.deps.Sales.SignedEstimatePDF(r.Context(), admin, rid, user(r).ID)
-	if err == nil {
-		err = sales.ErrEstimateNotSigned
+	e, err := s.deps.Sales.Estimate(r.Context(), admin, rid, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
 	}
-	s.failEstimate(w, r, err)
+	if e.Signing == nil || !e.Signing.Signed() {
+		s.failEstimate(w, r, sales.ErrEstimateNotSigned)
+		return
+	}
+	s.redirectToFile(w, fileLink{Kind: fileSignedEstimatePDF, Admin: admin, ID: rid, User: user(r).ID})
 }
 
 // CreateEstimateNote implements ServerInterface.

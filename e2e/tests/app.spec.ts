@@ -1106,7 +1106,7 @@ test('a project and a product are added, listed and the product repriced', async
   await expect(page.getByRole('region', { name: 'Product details' })).toContainText('€60.00')
 })
 
-test('a quote is written, sent, accepted and billed as an invoice', async ({ page }) => {
+test('a quote is written, sent, accepted and billed as an invoice', async ({ page, browser }) => {
   await register(page)
   await addAdministration(page, 'Quote Co')
   const uri = administrationUri(page)
@@ -1150,10 +1150,38 @@ test('a quote is written, sent, accepted and billed as an invoice', async ({ pag
   const pdf = await page.request.get((await page.getByRole('link', { name: 'Download' }).getAttribute('href')) ?? '')
   expect(pdf.status()).toBe(200)
   expect(pdf.headers()['content-type']).toContain('application/pdf')
-  await page.getByRole('button', { name: 'Change state' }).click()
-  await page.getByRole('button', { name: 'Accepted' }).click()
+
+  // The contact accepts it online with a signature, without an account, from the link Extra shows.
+  await page.getByRole('button', { name: 'Extra' }).click()
+  const online = (await page.getByRole('link', { name: 'View quote online' }).getAttribute('href')) ?? ''
+  await page.keyboard.press('Escape')
+  const visitor = await browser.newContext()
+  const contact = await visitor.newPage()
+  await contact.goto(new URL(page.url()).origin + new URL(online).pathname + new URL(online).search)
+  await expect(contact.getByRole('heading', { level: 1, name: /^Quote \d/ })).toBeVisible()
+  const accept = contact.getByRole('form', { name: 'Accept quote' })
+  await accept.getByLabel('Name').fill('Jan Voorbeeld')
+  await accept.getByLabel('Email address').fill(unique())
+  const signatureField = accept.getByRole('img', { name: 'Signature' })
+  await signatureField.scrollIntoViewIfNeeded()
+  const pad = await signatureField.boundingBox()
+  if (!pad) throw new Error('no signature pad')
+  await contact.mouse.move(pad.x + 20, pad.y + 40)
+  await contact.mouse.down()
+  await contact.mouse.move(pad.x + 120, pad.y + 60, { steps: 5 })
+  await contact.mouse.move(pad.x + 220, pad.y + 30, { steps: 5 })
+  await contact.mouse.up()
+  await accept.getByRole('button', { name: 'Accept and sign quote' }).click()
+  await expect(contact.getByRole('status')).toContainText('Accepted and signed by Jan Voorbeeld')
+  await visitor.close()
+
+  await page.reload()
   await expect(page.locator('.actionbar .badge', { hasText: 'Accepted' })).toBeVisible()
-  await expect(page.getByRole('complementary', { name: 'Quote information' })).toContainText('Quote marked as accepted')
+  const quoteInfo = page.getByRole('complementary', { name: 'Quote information' })
+  await expect(quoteInfo).toContainText('Quote accepted and signed online by Jan Voorbeeld')
+  const signed = await page.request.get((await quoteInfo.getByRole('link', { name: 'Download signed PDF' }).getAttribute('href')) ?? '')
+  expect(signed.status()).toBe(200)
+  expect(signed.headers()['content-type']).toContain('application/pdf')
 
   await page.getByRole('button', { name: 'Bill quote' }).click()
   await expect(page).toHaveURL(/\/\d+\/sales_invoices\/\d+$/)
