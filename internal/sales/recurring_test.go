@@ -135,6 +135,36 @@ func TestCreateRecurringWithoutDetails(t *testing.T) {
 	}
 }
 
+// Made before its details, as on Moneybird, a recurring invoice starting
+// today makes no empty invoice: the worker waits until it has details.
+func TestWorkerWaitsForTheDetails(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	r, err := h.svc.CreateRecurring(ctx, adminID, owner, RecurringChanges{ContactID: ptr(customer), InvoiceDate: ptr("2026-11-11"), FrequencyType: ptr(Month), AutoSend: ptr(true)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.Work(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if made := h.store.fromRecurring(r.ID); len(made) != 0 {
+		t.Fatalf("made %d invoices without details", len(made))
+	}
+	if got, _ := h.svc.Recurring(ctx, adminID, r.ID, owner); got.InvoiceDate.Format(time.DateOnly) != "2026-11-11" || got.Generated != 0 {
+		t.Errorf("moved on without details: %+v", got)
+	}
+
+	if _, err := h.svc.UpdateRecurring(ctx, adminID, r.ID, owner, RecurringChanges{Details: []DetailInput{line("100", "1", vat21, 0)}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.Work(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if made := h.store.fromRecurring(r.ID); len(made) != 1 || made[0].State != Open || len(made[0].Lines) != 1 {
+		t.Errorf("made = %+v", made)
+	}
+}
+
 func TestUpdateRecurringMovesTheSchedule(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()
