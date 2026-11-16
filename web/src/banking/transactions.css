@@ -1,0 +1,35 @@
+/* Moneybird's transactions: a card per transaction, the status circle on a line down to what it is linked to. */
+.transactions-feed { display: grid; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+.transaction { padding: 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.transaction__row, .transaction__link { display: flex; align-items: flex-start; gap: 1rem; }
+.transaction__status {
+  display: grid; flex: none; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: #a16207; color: #fff;
+}
+.transaction__status.is-processed { background: var(--teal); }
+.transaction__status svg { width: 1rem; height: 1rem; }
+.transaction__main { display: grid; flex: 1; gap: 0.125rem; min-width: 0; line-height: 1.5; }
+.transaction__title { color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
+.transaction__title:hover { color: var(--blue); text-decoration: underline; }
+.transaction__subtitle, .transaction__text { margin: 0; overflow-wrap: anywhere; }
+.transaction__text { margin-top: 0.375rem; }
+.transaction__subtitle + .transaction__text { margin-top: 0.5rem; }
+.transaction__amount, .transaction__price { flex: none; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.transaction__auto { flex: none; color: var(--muted); font-size: 0.875rem; }
+.transaction__links { display: grid; gap: 0.75rem; margin: 0.75rem 0 0; padding: 0.75rem 0 0 1rem; border-top: 1px solid var(--line); list-style: none; }
+.transaction__link-icon {
+  display: grid; flex: none; place-items: center; width: 2rem; height: 2rem; margin-left: -1rem; border: 1px solid var(--line); border-radius: 50%; color: var(--muted);
+}
+.transaction__link-icon svg { width: 0.875rem; height: 0.875rem; }
+.transaction__link-title { color: var(--text); text-decoration: none; }
+a.transaction__link-title:hover { color: var(--blue); text-decoration: underline; }
+.transaction__label { font-weight: 600; }
+.transaction__details { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 1; -webkit-box-orient: vertical; color: var(--text); }
+.transaction__price { color: var(--muted); }
+.transaction__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 0 3rem; padding-top: 0.75rem; border-top: 1px solid var(--line); }
+.transactions-feed__more { display: flex; justify-content: center; margin-top: 1rem; }
+
+@media (max-width: 640px) {
+  .transaction { padding: 0.75rem; }
+  .transaction__row, .transaction__link { gap: 0.625rem; }
+  .transaction__actions { margin-left: 0; }
+}

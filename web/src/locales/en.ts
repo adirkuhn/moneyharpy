@@ -735,6 +735,15 @@ export const en = {
     },
   },
   bank: {
+    feed: {
+      views: { all: 'Transactions from this year', unprocessed: 'Unprocessed transactions', processed: 'Processed transactions', auto_booked: 'Automatically booked transactions', custom: 'Filtered transactions' },
+      viewAccount: 'Transactions of {{name}}', status: 'Status', type: 'Transaction type',
+      states: { all: 'All', unprocessed: 'Unprocessed', processed: 'Processed', auto_booked: 'Automatically booked' },
+      types: { all: 'All', credit: 'Credit', debit: 'Debit' },
+      paymentReference: 'Payment reference: {{reference}}', processed: 'Processed', unprocessed: 'Unprocessed', linked: 'Linked to',
+      linkOpen: 'Link open amount', linkRest: 'Link the rest', about: 'About transactions',
+      showMore_one: 'Show {{count}} more transaction', showMore_other: 'Show {{count}} more transactions',
+    },
     accounts: {
       title: 'Financial accounts', moreInfo: 'More information', more: 'More actions', addTransactions: 'Add transactions',
       linkUnprocessed_one: 'Link unprocessed transactions ({{count}})', linkUnprocessed_other: 'Link unprocessed transactions ({{count}})',

@@ -440,11 +440,10 @@ test('bank statements are imported, booked by rules and by hand', async ({ page 
   const menu = page.getByRole('navigation', { name: 'Administration menu' })
   await menu.getByRole('button', { name: 'Bank' }).click()
   await menu.getByRole('link', { name: 'Transactions' }).click()
-  await page.getByRole('button', { name: 'Transactions to book' }).click()
-  await page.getByRole('search', { name: 'Filter transactions' }).getByRole('link', { name: 'All transactions' }).click()
-  const table = page.getByRole('table', { name: 'Transactions' })
-  await expect(table.getByRole('link', { name: 'Hosting Company' })).toBeVisible()
-  await table.getByRole('link', { name: 'Example Client B.V.' }).click()
+  // Moneybird's feed of cards: this year's transactions, booked ones with what they are booked on.
+  const feed = page.getByRole('list', { name: 'Transactions' })
+  await expect(feed.getByRole('article', { name: 'Hosting Company' }).getByRole('img', { name: 'Processed' })).toBeVisible()
+  await feed.getByRole('article', { name: 'Example Client B.V.' }).getByRole('link', { name: 'Link open amount' }).click()
 
   const form = page.getByRole('form', { name: 'Book' })
   await form.getByLabel('Category').selectOption(await optionValue('Category', 'Revenue'))

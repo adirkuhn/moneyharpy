@@ -317,10 +317,13 @@ type financialMutationJSON struct {
 	SepaFields            *struct{}     `json:"sepa_fields"`
 	Payments              []paymentJSON `json:"payments"`
 	LedgerAccountBookings []bookingJSON `json:"ledger_account_bookings"`
-	Version               int64         `json:"version"`
-	CreatedAt             time.Time     `json:"created_at"`
-	UpdatedAt             time.Time     `json:"updated_at"`
-	URI                   string        `json:"uri"`
+	// Links is MoneyHarpy's summary of the documents the payments pay; only
+	// the list and a single transaction carry it.
+	Links     []mutationLinkJSON `json:"links,omitempty"`
+	Version   int64              `json:"version"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+	URI       string             `json:"uri"`
 }
 
 func toFinancialMutation(m banking.Mutation) financialMutationJSON {
@@ -540,7 +543,12 @@ func (s *server) ListFinancialMutations(w http.ResponseWriter, r *http.Request, 
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toFinancialMutations(list))
+	out, err := s.withLinks(r.Context(), admin, user(r).ID, list)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 // GetFinancialMutation implements ServerInterface.
@@ -554,7 +562,12 @@ func (s *server) GetFinancialMutation(w http.ResponseWriter, r *http.Request, ad
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toFinancialMutation(m))
+	out, err := s.withLinks(r.Context(), admin, user(r).ID, []banking.Mutation{m})
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out[0])
 }
 
 // ListFinancialMutationVersions implements ServerInterface.

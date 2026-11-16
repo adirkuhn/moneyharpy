@@ -1089,6 +1089,54 @@ func (e FinancialMutationState) Valid() bool {
 	}
 }
 
+// Defines values for FinancialMutationLinkDocumentType.
+const (
+	FinancialMutationLinkDocumentTypeExternalSalesInvoice FinancialMutationLinkDocumentType = "ExternalSalesInvoice"
+	FinancialMutationLinkDocumentTypePurchaseInvoice      FinancialMutationLinkDocumentType = "PurchaseInvoice"
+	FinancialMutationLinkDocumentTypeReceipt              FinancialMutationLinkDocumentType = "Receipt"
+	FinancialMutationLinkDocumentTypeSalesInvoice         FinancialMutationLinkDocumentType = "SalesInvoice"
+)
+
+// Valid indicates whether the value is a known member of the FinancialMutationLinkDocumentType enum.
+func (e FinancialMutationLinkDocumentType) Valid() bool {
+	switch e {
+	case FinancialMutationLinkDocumentTypeExternalSalesInvoice:
+		return true
+	case FinancialMutationLinkDocumentTypePurchaseInvoice:
+		return true
+	case FinancialMutationLinkDocumentTypeReceipt:
+		return true
+	case FinancialMutationLinkDocumentTypeSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialMutationLinkLabel.
+const (
+	EXT FinancialMutationLinkLabel = "EXT"
+	INV FinancialMutationLinkLabel = "INV"
+	PUR FinancialMutationLinkLabel = "PUR"
+	REC FinancialMutationLinkLabel = "REC"
+)
+
+// Valid indicates whether the value is a known member of the FinancialMutationLinkLabel enum.
+func (e FinancialMutationLinkLabel) Valid() bool {
+	switch e {
+	case EXT:
+		return true
+	case INV:
+		return true
+	case PUR:
+		return true
+	case REC:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for FlexibleBoolean1.
 const (
 	FlexibleBoolean1False FlexibleBoolean1 = "false"
@@ -7051,15 +7099,18 @@ type FinancialMutation struct {
 	// Id A unique record identifier. Parse as a string.
 	//
 	// Example: 123456789012345678
-	Id                    *Identifier                       `json:"id,omitempty"`
-	LedgerAccountBookings []LedgerAccountBooking            `json:"ledger_account_bookings"`
-	Message               *string                           `json:"message,omitempty"`
-	OriginalAmount        *string                           `json:"original_amount,omitempty"`
-	Payments              *[]PaymentResponse                `json:"payments,omitempty"`
-	ProcessedAt           *time.Time                        `json:"processed_at,omitempty"`
-	SepaFields            *map[string]interface{}           `json:"sepa_fields,omitempty"`
-	SettlementState       *FinancialMutationSettlementState `json:"settlement_state,omitempty"`
-	State                 *FinancialMutationState           `json:"state,omitempty"`
+	Id                    *Identifier            `json:"id,omitempty"`
+	LedgerAccountBookings []LedgerAccountBooking `json:"ledger_account_bookings"`
+
+	// Links MoneyHarpy extension, on the list and a single transaction. The documents the payments pay, summed up as Moneybird's transaction list shows them.
+	Links           *[]FinancialMutationLink          `json:"links,omitempty"`
+	Message         *string                           `json:"message,omitempty"`
+	OriginalAmount  *string                           `json:"original_amount,omitempty"`
+	Payments        *[]PaymentResponse                `json:"payments,omitempty"`
+	ProcessedAt     *time.Time                        `json:"processed_at,omitempty"`
+	SepaFields      *map[string]interface{}           `json:"sepa_fields,omitempty"`
+	SettlementState *FinancialMutationSettlementState `json:"settlement_state,omitempty"`
+	State           *FinancialMutationState           `json:"state,omitempty"`
 
 	// UpdatedAt Moneybird-compatible timestamp.
 	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
@@ -7107,6 +7158,45 @@ type FinancialMutationInputId1 = int
 type FinancialMutationInput_Id struct {
 	union json.RawMessage
 }
+
+// FinancialMutationLink defines model for FinancialMutationLink.
+type FinancialMutationLink struct {
+	ContactName string              `json:"contact_name"`
+	Currency    string              `json:"currency"`
+	Date        *openapi_types.Date `json:"date,omitempty"`
+
+	// Details The lines, summed up as "2 Coffee, 1 Tea".
+	Details string `json:"details"`
+
+	// DocumentId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DocumentId   Identifier                        `json:"document_id"`
+	DocumentType FinancialMutationLinkDocumentType `json:"document_type"`
+
+	// Label Moneybird's short name of the kind of document.
+	Label FinancialMutationLinkLabel `json:"label"`
+
+	// PaymentId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	PaymentId        Identifier `json:"payment_id"`
+	PaymentReference *string    `json:"payment_reference,omitempty"`
+
+	// Price The amount of the transaction that pays this document.
+	Price string `json:"price"`
+
+	// Reference The invoice number or the document's reference.
+	Reference string `json:"reference"`
+	State     string `json:"state"`
+	Total     string `json:"total"`
+}
+
+// FinancialMutationLinkDocumentType defines model for FinancialMutationLink.DocumentType.
+type FinancialMutationLinkDocumentType string
+
+// FinancialMutationLinkLabel Moneybird's short name of the kind of document.
+type FinancialMutationLinkLabel string
 
 // FinancialStatement A Moneybird financial statement with MoneyHarpy extensions.
 type FinancialStatement struct {
