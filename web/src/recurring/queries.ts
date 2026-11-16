@@ -172,3 +172,8 @@ export function recurringHistory(r: RecurringInvoice): HistoryItem[] {
   const notes: HistoryItem[] = (r.notes ?? []).map((n) => ({ kind: 'note', id: `note-${n.id}`, at: n.created_at ?? '', userId: n.user_id ?? undefined, timed: true, note: n }))
   return [...created, ...notes].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
 }
+
+/** Where the browser downloads the example of the recurring invoice's next invoice; the session cookie signs the request. */
+export function recurringExampleURL(administrationId: string, id: string) {
+  return `/api/v2/${administrationId}/recurring_sales_invoices/${id}/download_example_pdf`
+}

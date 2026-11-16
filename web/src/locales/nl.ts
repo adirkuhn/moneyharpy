@@ -382,7 +382,7 @@ export const nl: Messages = {
     },
     tooLarge: 'Deze bestanden zijn groter dan 10 MB: {{names}}.', refused: 'Deze bestanden konden niet worden geüpload: {{names}}.',
     salesInvoice: 'Verkoopfactuur', externalInvoice: 'Externe factuur',
-    view: { title: 'Externe factuur {{name}}', registerPayment: 'Betaling registreren', edit: 'Bewerken', delete: 'Externe factuur verwijderen', sidebar: 'Over deze factuur' },
+    view: { title: 'Externe factuur {{name}}', registerPayment: 'Betaling registreren', edit: 'Bewerken', delete: 'Externe factuur verwijderen', sidebar: 'Over deze factuur', allAttachments: 'Alle bijlagen (ZIP)' },
     document: {
       contact: 'Contact', invoiceDate: 'Factuurdatum', dueDate: 'Vervaldatum', source: 'Bron', facts: 'Factuurgegevens', lines: 'Factuurregels',
       description: 'Omschrijving', price: 'Bedrag', total: 'Totaal', vat: 'Btw', subtotal: 'Subtotaal',
@@ -427,7 +427,7 @@ export const nl: Messages = {
     noMatches: 'Geen periodieke facturen voor dit filter. Probeer een ander filter.',
     states: { active: 'Actief', inactive: 'Gedeactiveerd', all: 'Alle' }, status: 'Status', filterStates: { active: 'Actief', inactive: 'Inactief', all: 'Alle' },
     views: { active: 'Actieve periodieke facturen', inactive: 'Inactieve periodieke facturen', all: 'Alle periodieke facturen', custom: 'Gefilterde periodieke facturen' },
-    showAllActive: 'Alle actieve periodieke facturen tonen', sendAutomatically: 'Automatisch versturen', nextInvoiceDate: 'Volgende factuurdatum', add: 'Periodieke factuur toevoegen',
+    showAllActive: 'Alle actieve periodieke facturen tonen', sendAutomatically: 'Automatisch versturen', nextInvoiceDate: 'Volgende factuurdatum', add: 'Periodieke factuur toevoegen', examplePdf: 'Voorbeeldfactuur (PDF)',
     intro: {
       title: 'Verstuur periodieke facturen', text: 'Factureer een klant volgens een schema, zoals elke week of elke maand, zonder elke factuur zelf te maken.',
       start: 'Startdatum', startText: 'Maak een periodieke factuur en kies de datum van de eerste factuur.',

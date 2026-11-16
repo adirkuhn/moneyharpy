@@ -1,6 +1,7 @@
 package httpapi_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -232,4 +233,31 @@ func TestRecurringSalesInvoiceWebhooks(t *testing.T) {
 	if !slices.Equal(actions, want) {
 		t.Errorf("actions = %v, want %v", actions, want)
 	}
+}
+
+func TestRecurringSalesInvoiceExamplePDF(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	_, recurrings, create := recurringSetup(t, owner)
+	r := create("100", map[string]any{"invoice_date": adminNow().AddDate(0, 1, 0).Format(time.DateOnly)})
+
+	pdf := owner.do(http.MethodGet, recurrings+"/"+r.ID+"/download_example_pdf", nil)
+	wantStatus(t, pdf, http.StatusOK)
+	if !bytes.HasPrefix(pdf.body, []byte("%PDF-")) || pdf.header.Get("Content-Type") != "application/pdf" ||
+		!strings.Contains(pdf.header.Get("Content-Disposition"), `filename="example-invoice-`+r.InvoiceDate+`.pdf"`) {
+		t.Errorf("pdf = %d bytes, %s, %s", len(pdf.body), pdf.header.Get("Content-Type"), pdf.header.Get("Content-Disposition"))
+	}
+	if !bytes.Contains(pdf.body, pdfTitle("Example invoice")) {
+		t.Error("pdf not titled Example invoice")
+	}
+	// The example is not stored: the recurring invoice made no invoice.
+	if got := decode[recurringInvoice](t, owner.do(http.MethodGet, recurrings+"/"+r.ID, nil)); got.InvoicesCreated != 0 || got.InvoiceDate != r.InvoiceDate {
+		t.Errorf("after the example = %+v", got)
+	}
+	wantStatus(t, owner.do(http.MethodGet, recurrings+"/1/download_example_pdf", nil), http.StatusNotFound)
+
+	// An inactive one makes no next invoice.
+	wantStatus(t, owner.do(http.MethodPatch, recurrings+"/"+r.ID+"/deactivate", nil), http.StatusOK)
+	wantStatus(t, owner.do(http.MethodGet, recurrings+"/"+r.ID+"/download_example_pdf", nil), http.StatusUnprocessableEntity)
 }
