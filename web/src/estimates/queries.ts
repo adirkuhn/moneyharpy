@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
 import type { components } from '../api/schema'
-import { perPage } from '../invoices/queries'
+import { fileBody, type ListFilter, perPage } from '../invoices/queries'
 
 export type Estimate = components['schemas']['Estimate']
 export type EstimateChanges = NonNullable<components['schemas']['EstimateRequest']['estimate']>
@@ -11,15 +11,15 @@ export type EstimateSending = NonNullable<components['schemas']['SendEstimateReq
 
 export const estimateStates: EstimateState[] = ['draft', 'open', 'late', 'accepted', 'rejected', 'billed', 'archived']
 
-/** The states an estimate can be moved to by hand from its state, as the API allows. */
+/** The states change_state moves an estimate to from its state, as the API allows; a draft only leaves draft by being sent. */
 export const transitions: Record<EstimateState, EstimateState[]> = {
   draft: [],
-  open: ['accepted', 'rejected', 'archived'],
-  late: ['accepted', 'rejected', 'archived'],
-  accepted: ['open', 'rejected', 'archived'],
+  open: ['late', 'accepted', 'rejected', 'billed', 'archived'],
+  late: ['open', 'accepted', 'rejected', 'billed', 'archived'],
+  accepted: ['open', 'rejected', 'billed', 'archived'],
   rejected: ['open', 'accepted', 'archived'],
-  billed: ['archived'],
-  archived: ['open'],
+  billed: ['open', 'accepted', 'archived'],
+  archived: ['open', 'accepted', 'rejected', 'billed'],
 }
 
 /** Whether an estimate can be billed: it is open, late or accepted. */
@@ -28,30 +28,12 @@ export const isBillable = (state: string | undefined) => state === 'open' || sta
 /** Whether an estimate can still be changed: it is not billed or archived. */
 export const isEditable = (state: string | undefined) => state !== 'billed' && state !== 'archived'
 
-/** The list's filter: a state (empty for all) and a contact. */
-export type EstimateFilter = { state: string; contactId: string }
-
-export function estimateFilterOf(params: URLSearchParams): EstimateFilter {
-  return { state: params.get('state') ?? '', contactId: params.get('contact_id') ?? '' }
-}
-
-/** The address of the list with a filter, leaving out what is empty. */
-export function estimateQuery(f: EstimateFilter, params: URLSearchParams) {
-  const next = new URLSearchParams(params)
-  for (const [key, value] of [['state', f.state], ['contact_id', f.contactId]] as const) {
-    if (value) {
-      next.set(key, value)
-    } else {
-      next.delete(key)
-    }
-  }
-  next.delete('page')
-  return next
-}
-
-/** Moneybird's filter terms for a filter, such as "state:open,contact_id:1"; all estimates of any date without a state. */
-export function estimateFilterTerms(f: EstimateFilter) {
-  return [`state:${f.state || 'all'}`, f.contactId && `contact_id:${f.contactId}`].filter(Boolean).join(',')
+/** Moneybird's quick filters of the quotes: this year's, drafts, the ones not accepted yet, and accepted ones. */
+export const quickFilters: Record<string, Pick<ListFilter, 'state' | 'period'>> = {
+  this_year: { state: '', period: 'this_year' },
+  draft: { state: 'draft', period: '' },
+  not_accepted: { state: 'open|late', period: '' },
+  accepted: { state: 'accepted', period: '' },
 }
 
 const admin = (administrationId: string) => ({ administration_id: administrationId })
@@ -82,12 +64,31 @@ export function useEstimate(administrationId: string, id?: string) {
   })
 }
 
+/** The draft number a new estimate gets, which the add quote screen shows as "Concept #n". */
+export function useNextEstimateDraftId(administrationId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['estimate-next-draft-id', administrationId],
+    enabled,
+    // Another estimate may have taken it since, so it is asked for afresh every time.
+    gcTime: 0,
+    queryFn: async () => (await unwrap(api.GET('/api/v2/{administration_id}/estimates/next_draft_id', { params: { path: admin(administrationId) } }))).draft_id,
+  })
+}
+
 function useSaved(administrationId: string) {
   const client = useQueryClient()
   return (saved?: { id?: string }) => {
     if (saved?.id) {
       client.setQueryData(['estimate', administrationId, saved.id], saved)
     }
+    void client.invalidateQueries({ queryKey: ['estimates', administrationId] })
+  }
+}
+
+function useRefetch(administrationId: string, id: string) {
+  const client = useQueryClient()
+  return () => {
+    void client.invalidateQueries({ queryKey: ['estimate', administrationId, id] })
     void client.invalidateQueries({ queryKey: ['estimates', administrationId] })
   }
 }
@@ -100,6 +101,41 @@ export function useSaveEstimate(administrationId: string, id?: string) {
       id
         ? unwrap(api.PATCH('/api/v2/{administration_id}/estimates/{id}', { ...one(administrationId, id), body: { estimate } }))
         : unwrap(api.POST('/api/v2/{administration_id}/estimates', { params: { path: admin(administrationId) }, body: { estimate } })),
+    onSuccess: saved,
+  })
+}
+
+/** What a copy of an estimate is made with, as Moneybird's Duplicate quote: its contact, settings, texts and lines, naming the original. */
+export function duplicateOf(e: Estimate): EstimateChanges {
+  return {
+    contact_id: e.contact_id ?? '',
+    original_estimate_id: e.id ?? '',
+    reference: e.reference ?? '',
+    ...(e.workflow_id ? { workflow_id: e.workflow_id } : {}),
+    ...(e.document_style_id ? { document_style_id: e.document_style_id } : {}),
+    prices_are_incl_tax: e.prices_are_incl_tax ?? false,
+    ...(Number(e.discount ?? 0) ? { discount: String(e.discount) } : {}),
+    pre_text: e.pre_text ?? '',
+    post_text: e.post_text ?? '',
+    details_attributes: [...(e.details ?? [])]
+      .sort((a, b) => (a.row_order ?? 0) - (b.row_order ?? 0))
+      .map((d, i) => ({
+        description: d.description ?? '',
+        amount: d.amount ?? '1',
+        price: String(d.price ?? '0'),
+        tax_rate_id: d.tax_rate_id ?? '',
+        ...(d.ledger_account_id ? { ledger_account_id: d.ledger_account_id } : {}),
+        ...(d.product_id ? { product_id: String(d.product_id) } : {}),
+        ...(d.period ? { period: d.period } : {}),
+        row_order: i + 1,
+      })),
+  }
+}
+
+export function useDuplicateEstimate(administrationId: string) {
+  const saved = useSaved(administrationId)
+  return useMutation({
+    mutationFn: (e: Estimate) => unwrap(api.POST('/api/v2/{administration_id}/estimates', { params: { path: admin(administrationId) }, body: { estimate: duplicateOf(e) } })),
     onSuccess: saved,
   })
 }
@@ -146,9 +182,50 @@ export function useDeleteEstimate(administrationId: string, id: string) {
   })
 }
 
+export function useAddEstimateNote(administrationId: string, id: string) {
+  const refetch = useRefetch(administrationId, id)
+  return useMutation({
+    mutationFn: (note: { note: string; todo: boolean; assignee_id?: string }) =>
+      unwrap(api.POST('/api/v2/{administration_id}/estimates/{id}/notes', { ...one(administrationId, id), body: { note } })),
+    onSuccess: refetch,
+  })
+}
+
+export function useDeleteEstimateNote(administrationId: string, id: string) {
+  const refetch = useRefetch(administrationId, id)
+  return useMutation({
+    mutationFn: (noteId: string) =>
+      unwrap(api.DELETE('/api/v2/{administration_id}/estimates/{id}/notes/{note_id}', { params: { path: { ...admin(administrationId), id, note_id: noteId } } })),
+    onSuccess: refetch,
+  })
+}
+
+export function useAddEstimateAttachment(administrationId: string, id: string) {
+  const refetch = useRefetch(administrationId, id)
+  return useMutation({
+    mutationFn: (file: File) => unwrap(api.POST('/api/v2/{administration_id}/estimates/{id}/attachments', { ...one(administrationId, id), ...fileBody(file) })),
+    onSuccess: refetch,
+  })
+}
+
+export function useDeleteEstimateAttachment(administrationId: string, id: string) {
+  const refetch = useRefetch(administrationId, id)
+  return useMutation({
+    mutationFn: (attachmentId: string) =>
+      unwrap(api.DELETE('/api/v2/{administration_id}/estimates/{id}/attachments/{attachment_id}', {
+        params: { path: { ...admin(administrationId), id, attachment_id: attachmentId } },
+      })),
+    onSuccess: refetch,
+  })
+}
+
 /** Where the browser downloads the estimate's PDF; the session cookie signs the request. */
 export function estimatePdfURL(administrationId: string, id: string) {
   return `/api/v2/${administrationId}/estimates/${id}/download_pdf`
+}
+
+export function estimateAttachmentURL(administrationId: string, id: string, attachmentId: string) {
+  return `/api/v2/${administrationId}/estimates/${id}/attachments/${attachmentId}/download`
 }
 
 /** What the estimate is called: its number once sent, "Draft quote N" before. */

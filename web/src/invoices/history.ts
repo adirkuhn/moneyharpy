@@ -120,10 +120,15 @@ const sentences: Record<string, string> = {
   external_sales_invoice_state_changed_to_paid: 'externalPaid',
   external_sales_invoice_marked_as_dubious: 'externalDubious',
   external_sales_invoice_marked_as_uncollectible: 'externalUncollectible',
+  estimate_created: 'quoteCreated',
+  estimate_created_from_original: 'quoteCreatedFromCopy',
+  estimate_send_email: 'quoteSentEmail',
+  estimate_send_manually: 'quoteSentManually',
+  estimate_billed: 'quoteBilled',
 }
 
-/** Which sentence tells an event, as a key under invoices.view.events. */
-export function eventText(action: string): { key: string; state?: string; action?: string } {
+/** Which sentence tells an event, as a key under invoices.view.events; a quote's state is named as a quote's. */
+export function eventText(action: string): { key: string; state?: string; action?: string; quote?: boolean } {
   const key = sentences[action]
   if (key) {
     return { key }
@@ -131,6 +136,10 @@ export function eventText(action: string): { key: string; state?: string; action
   const state = /^sales_invoice_state_changed_to_(.+)$/.exec(action)?.[1]
   if (state) {
     return { key: 'stateChanged', state }
+  }
+  const quoteState = /^estimate_mark_(.+)$/.exec(action)?.[1]
+  if (quoteState) {
+    return { key: 'quoteMarked', state: quoteState, quote: true }
   }
   const externalState = /^external_sales_invoice_state_changed_to_(.+)$/.exec(action)?.[1]
   if (externalState) {

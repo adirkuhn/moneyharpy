@@ -55,6 +55,8 @@ type Props = {
    * invoices it makes, and no layouts, which its page sets.
    */
   recurring?: boolean
+  /** Over a quote: its id, date, validity and words instead of an invoice's. */
+  quote?: boolean
   /** Whether the settings behind Edit show from the start, as when the document's dates open it. */
   advancedOpen?: boolean
   /** The document the popup is laid over, aligned with it as Moneybird's popup--align-document. */
@@ -84,17 +86,20 @@ type Confirm = 'number' | 'date' | null
  * "Edit invoice", without the layouts, which Change layout sets.
  */
 export function AddInvoiceDialog(props: Props) {
-  const { administrationId, value, onChange, flows, flow, styles, style, existing, recurring = false, dueTerm, sentNumber, numbering, customFields, errors, pending, cancel, onSave, onClose } = props
+  const { administrationId, value, onChange, flows, flow, styles, style, existing, recurring = false, quote = false, dueTerm, sentNumber, numbering, customFields, errors, pending, cancel, onSave, onClose } = props
   const { t } = useTranslation()
   const formId = useId()
   const advancedId = useId()
   const [advanced, setAdvanced] = useState(!!props.advancedOpen)
   const [confirm, setConfirm] = useState<Confirm>(null)
-  const p = (key: string, options: Record<string, unknown> = {}) => t(`invoices.popup.${key}`, options)
+  // A quote's popup says quote where an invoice's says invoice; what they share is worded once, under invoices.
+  const p = (key: string, options: Record<string, unknown> = {}) => t([...(quote ? [`estimates.popup.${key}`] : []), `invoices.popup.${key}`], options)
+  const numberField = quote ? 'estimate_sequence_id' : 'invoice_sequence_id'
+  const dateField = quote ? 'estimate_date' : 'invoice_date'
 
   const settingsLink = `/${administrationId}/settings/invoices_and_estimates`
-  const next = numbering?.invoice_sequence_id ?? ''
-  const parts = numberParts(numbering?.invoice_id_example ?? '', next)
+  const next = (quote ? numbering?.estimate_sequence_id : numbering?.invoice_sequence_id) ?? ''
+  const parts = numberParts((quote ? numbering?.estimate_id_example : numbering?.invoice_id_example) ?? '', next)
   const days = value.term.trim() !== '' && Number.isFinite(Number(value.term)) ? Number(value.term) : dueTerm
   const setDays = (n: number) => onChange({ term: String(Math.min(365, Math.max(0, n))) })
   const lockButton = (label: string, onClick: () => void) => (
@@ -102,7 +107,7 @@ export function AddInvoiceDialog(props: Props) {
       <PageIcon kind="lock" />
     </button>
   )
-  const newField = `/${administrationId}/custom_fields/new?${new URLSearchParams({ source: 'sales_invoice', return_to: props.here })}`
+  const newField = `/${administrationId}/custom_fields/new?${new URLSearchParams({ source: quote ? 'estimate' : 'sales_invoice', return_to: props.here })}`
 
   const footer = (
     <>
@@ -121,7 +126,7 @@ export function AddInvoiceDialog(props: Props) {
   )
 
   return (
-    <Modal title={existing ? p('editTitle') : recurring ? t('recurring.add') : t('invoices.newTitle')} subtitle={existing ? undefined : p('subtitle')} onClose={onClose} footer={footer} className="add-invoice" anchor={props.anchor}>
+    <Modal title={existing ? p('editTitle') : recurring ? t('recurring.add') : quote ? t('estimates.newTitle') : t('invoices.newTitle')} subtitle={existing ? undefined : p('subtitle')} onClose={onClose} footer={footer} className="add-invoice" anchor={props.anchor}>
       <form
         id={formId}
         className="add-invoice__form"
@@ -175,7 +180,7 @@ export function AddInvoiceDialog(props: Props) {
                 <>
                   <FormRow
                     label={p('invoiceId')}
-                    errors={errors.field('invoice_sequence_id')}
+                    errors={errors.field(numberField)}
                     labelExtra={!sentNumber && <Tip text={p('numberTip')}>{p('numberTip')} <Link to={settingsLink}>{p('companySettings')}</Link>.</Tip>}
                     action={!sentNumber && (value.numberUnlocked
                       ? lockButton(p('lockNumber'), () => onChange({ numberUnlocked: false, sequenceId: '' }))
@@ -199,9 +204,9 @@ export function AddInvoiceDialog(props: Props) {
                   </FormRow>
 
                   <FormRow
-                    label={t('invoices.invoiceDate')}
+                    label={quote ? t('estimates.date') : t('invoices.invoiceDate')}
                     width="medium"
-                    errors={errors.field('invoice_date')}
+                    errors={errors.field(dateField)}
                     action={!sentNumber && (value.dateUnlocked
                       ? lockButton(p('lockDate'), () => onChange({ dateUnlocked: false, invoiceDate: '' }))
                       : lockButton(p('unlockDate'), () => setConfirm('date')))}

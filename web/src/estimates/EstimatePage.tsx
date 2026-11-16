@@ -1,336 +1,285 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, type ReactNode, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useAdministration } from '../administrations/queries'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
-import { type TaxRate, useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
-import { contactName } from '../contacts/queries'
-import { ConfirmPanel, DetailBlock, DetailList, type DetailRow } from '../detail/Detail'
-import { DateInput } from '../forms/DatePicker'
-import { CheckboxInput, FormSection, formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
-import { ContactPicker } from '../invoices/ContactPicker'
-import { type LineRow, LinesEditor } from '../invoices/LinesEditor'
-import { computeTotals, parseCents, parsePercentage, parseQuantity } from '../invoices/totals'
-import { TotalsTable } from '../invoices/TotalsTable'
-import { useDocumentStyles, useWorkflows } from '../invoicing/queries'
+import { ContactHoverCard } from '../contacts/ContactHoverCard'
+import { useContact } from '../contacts/queries'
+import { ConfirmPanel } from '../detail/Detail'
+import { formErrors, TextArea, TextInput } from '../forms/Form'
+import { type HistoryItem, historyOf } from '../invoices/history'
+import { NotesAndHistory } from '../invoices/InvoiceHistory'
+import { AttachmentZone } from '../invoices/InvoiceExtras'
+import { InvoiceEditor, type Opening } from '../invoices/InvoiceFormPage'
+import { CategoryChips } from '../invoices/InvoiceSidebar'
+import { invoiceTitle, useSalesInvoice } from '../invoices/queries'
+import { useWorkflows } from '../invoicing/queries'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
-import { type MenuItem, MoreMenu } from '../list/ListActions'
+import { ActionMenu, type MenuItem } from '../list/ListActions'
 import { EstimateBadge } from './EstimatesPage'
 import {
-  type Estimate, type EstimateChanges, estimatePdfURL, estimateTitle, isBillable, isEditable, transitions, useBillEstimate, useChangeEstimateState,
-  useDeleteEstimate, useEstimate, useSaveEstimate, useSendEstimate,
+  type Estimate, estimateAttachmentURL, estimatePdfURL, estimateTitle, isBillable, isEditable, transitions, useAddEstimateAttachment, useAddEstimateNote,
+  useBillEstimate, useChangeEstimateState, useDeleteEstimate, useDeleteEstimateAttachment, useDeleteEstimateNote, useDuplicateEstimate, useEstimate,
+  useSendEstimate,
 } from './queries'
+import '../invoices/view.css'
+import './estimates.css'
 
-/** One estimate (/estimates/:id), or a new one (/estimates/new). */
+/** A new quote (/estimates/new, ?contact_id= to start with that contact), or one quote (/estimates/:id). */
 export function EstimatePage() {
   const { administrationId = '', estimateId } = useParams()
-  const estimate = useEstimate(administrationId, estimateId)
-  const rates = useTaxRates(administrationId)
-  if (estimateId && estimate.error instanceof ApiError && estimate.error.status < 500) {
-    return <NotFoundPage />
+  if (!estimateId) {
+    return <NewEstimate administrationId={administrationId} />
   }
-  if ((estimateId && !estimate.data) || !rates.data) {
-    return <Loading />
-  }
-  const e = estimate.data ?? null
-  const usable = rates.data.filter((r) => r.tax_rate_type === 'sales_invoice' && (r.active || e?.details?.some((d) => d.tax_rate_id === r.id)))
-  if (!e) {
-    return <NewEstimate administrationId={administrationId} rates={usable} />
-  }
-  return <EstimateView key={e.id} administrationId={administrationId} estimate={e} rates={usable} />
+  // A fresh page per quote, so a duplicate opens with its panels closed.
+  return <EstimateView key={estimateId} administrationId={administrationId} estimateId={estimateId} />
 }
 
-function NewEstimate({ administrationId, rates }: { administrationId: string; rates: TaxRate[] }) {
-  const { t } = useTranslation()
+/**
+ * Moneybird's "Add quote": the quote drawn as its document and edited in
+ * place, with the invoice editor. Once saved it opens on its own page.
+ */
+function NewEstimate({ administrationId }: { administrationId: string }) {
+  const [params] = useSearchParams()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const preset = useContact(administrationId, params.get('contact_id') ?? undefined)
+  if (preset.fetchStatus === 'fetching' && !preset.data) {
+    return <Loading />
+  }
   return (
-    <Page title={t('estimates.newTitle')} back={{ to: `/${administrationId}/estimates`, label: t('estimates.backToList') }}>
-      <EstimateForm administrationId={administrationId} estimate={null} rates={rates} />
-    </Page>
+    <InvoiceEditor
+      mode="new"
+      administrationId={administrationId}
+      invoice={null}
+      quote={{ estimate: null }}
+      contact={preset.data}
+      opening={location.state as Opening}
+      onSaved={(saved, opening) => navigate(`/${administrationId}/estimates/${saved.id}`, { state: opening })}
+    />
   )
 }
 
-function EstimateView({ administrationId, estimate: e, rates }: { administrationId: string; estimate: Estimate; rates: TaxRate[] }) {
-  const { t, i18n } = useTranslation()
+function EstimateView({ administrationId, estimateId }: { administrationId: string; estimateId: string }) {
+  const estimate = useEstimate(administrationId, estimateId)
+  if (estimate.error instanceof ApiError && estimate.error.status < 500) {
+    return <NotFoundPage />
+  }
+  if (!estimate.data) {
+    return <Loading />
+  }
+  return <EstimateScreen administrationId={administrationId} estimate={estimate.data} />
+}
+
+type Panel = 'send' | 'delete' | 'archive' | null
+
+/**
+ * One quote after Moneybird's quote page: the action bar with Send quote,
+ * Bill quote, Download and Extra, the state and Change state at its right;
+ * the quote as its document, edited in place, with its attachments; and the
+ * sidebar with its contact, the invoice it was billed to, its workflow, its
+ * categories and its notes and history.
+ */
+function EstimateScreen({ administrationId, estimate: e }: { administrationId: string; estimate: Estimate }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const id = e.id ?? ''
+  const state = e.state ?? 'draft'
+  const list = `/${administrationId}/estimates`
+  const here = `${list}/${id}`
   const send = useSendEstimate(administrationId, id)
   const change = useChangeEstimateState(administrationId, id)
   const bill = useBillEstimate(administrationId, id)
   const remove = useDeleteEstimate(administrationId, id)
-  const [confirming, setConfirming] = useState(false)
-  const list = `/${administrationId}/estimates`
-  const state = e.state ?? 'draft'
-  const date = (d: string | null | undefined) => d && new Date(`${d}T00:00:00`).toLocaleDateString(i18n.language, { dateStyle: 'medium' })
+  const duplicate = useDuplicateEstimate(administrationId)
+  const [panel, setPanel] = useState<Panel>(null)
+  const [layoutsOpen, setLayoutsOpen] = useState(false)
+  const [highlight, setHighlight] = useState<string | undefined>(undefined)
+  const editable = isEditable(state)
+  const sent = state !== 'draft'
+  const problems = formErrors(send.error ?? change.error ?? bill.error ?? remove.error ?? duplicate.error, {}).general
 
-  const more: MenuItem[] = [
-    ...(state !== 'draft' ? [{ label: t('estimates.sendAgain'), disabled: send.isPending, onSelect: () => send.mutate({}) }] : []),
-    ...transitions[state].map((to) => ({ label: t(`estimates.mark.${to}`), disabled: change.isPending, onSelect: () => change.mutate(to) })),
-    { label: t('estimates.downloadPdf'), href: estimatePdfURL(administrationId, id), download: true },
-    { label: t('estimates.delete'), danger: true, onSelect: () => setConfirming(true) },
+  const sendItems: MenuItem[] = [
+    { label: sent ? t('estimates.view.sendAgain') : t('estimates.view.sendEmail'), onSelect: () => setPanel('send') },
+    { label: t('estimates.view.markSent'), disabled: send.isPending, onSelect: () => send.mutate({ delivery_method: 'Manual' }) },
   ]
-  const rows: DetailRow[] = [
-    [t('estimates.status'), <EstimateBadge key="state" state={state} />],
-    [t('estimates.number'), estimateTitle(e, t)],
-    [t('estimates.date'), date(e.estimate_date)],
-    [t('estimates.validUntil'), state !== 'draft' && date(e.due_date)],
-    [t('invoices.amount'), formatAmount(e.total_price_incl_tax, e.currency ?? 'EUR', i18n.language)],
+  // Archiving has its own entry under Extra, as at Moneybird.
+  const states: MenuItem[] = transitions[state]
+    .filter((s) => s !== 'archived')
+    .map((s) => ({ label: t(`estimates.states.${s}`), disabled: change.isPending, onSelect: () => change.mutate(s) }))
+  const extra: MenuItem[] = [
+    {
+      label: t('estimates.view.duplicate'), disabled: duplicate.isPending,
+      onSelect: () => duplicate.mutate(e, { onSuccess: (copy) => navigate(`${list}/${copy.id}`) }),
+    },
+    ...(editable ? [{ label: t('invoices.view.changeLayout'), onSelect: () => setLayoutsOpen(true) }] : []),
+    ...(state !== 'archived' && sent ? [{ label: t('estimates.view.archive'), onSelect: () => setPanel('archive') }] : []),
+    { label: t('estimates.view.delete'), danger: true, onSelect: () => setPanel('delete') },
   ]
+
+  const actions = (
+    <div className="invoice-actions">
+      <div className="invoice-actions__buttons">
+        <ActionMenu primary={!sent} label={t('estimates.view.send')} items={sendItems} />
+        {isBillable(state) && (
+          <button
+            type="button"
+            className="btn btn--secondary"
+            disabled={bill.isPending}
+            onClick={() => bill.mutate(undefined, { onSuccess: (inv) => navigate(`/${administrationId}/sales_invoices/${inv.id}`) })}
+          >
+            {t('estimates.view.bill')}
+          </button>
+        )}
+        <a className="btn btn--secondary" href={estimatePdfURL(administrationId, id)} download>{t('estimates.view.download')}</a>
+        <ActionMenu label={t('invoices.view.extra')} items={extra} />
+      </div>
+      <span className="invoice-actions__state estimate-actions__state">
+        <EstimateBadge state={state} />
+        {states.length > 0 && <ActionMenu label={t('estimates.view.changeState')} items={states} />}
+      </span>
+    </div>
+  )
 
   return (
-    <Page
-      title={estimateTitle(e, t)}
-      subtitle={e.contact ? contactName(e.contact) : undefined}
-      back={{ to: list, label: t('estimates.backToList') }}
-      actions={
-        <>
-          {state === 'draft' && (
-            <>
-              <button type="button" className="btn btn--secondary" disabled={send.isPending} onClick={() => send.mutate({ delivery_method: 'Manual' })}>
-                {t('estimates.markSent')}
-              </button>
-              <button type="button" className="btn btn--primary" disabled={send.isPending} onClick={() => send.mutate({ delivery_method: 'Email' })}>
-                {t('estimates.send')}
-              </button>
-            </>
+    <Page wide hideTitle title={estimateTitle(e, t)} actions={actions}>
+      <div className="invoice-view">
+        <div className="invoice-view__main">
+          <Problems messages={problems} />
+          {panel === 'delete' && (
+            <ConfirmPanel
+              message={t('estimates.confirmDeleteText')}
+              confirmLabel={t('estimates.confirmDelete')}
+              disabled={remove.isPending}
+              onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })}
+              onCancel={() => setPanel(null)}
+            />
           )}
-          {isBillable(state) && (
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={bill.isPending}
-              onClick={() => bill.mutate(undefined, { onSuccess: (inv) => navigate(`/${administrationId}/sales_invoices/${inv.id}`) })}
-            >
-              {t('estimates.bill')}
-            </button>
+          {panel === 'archive' && (
+            <ConfirmPanel
+              message={t('estimates.confirmArchiveText')}
+              confirmLabel={t('estimates.confirmArchive')}
+              danger={false}
+              disabled={change.isPending}
+              onConfirm={() => change.mutate('archived', { onSuccess: () => setPanel(null) })}
+              onCancel={() => setPanel(null)}
+            />
           )}
-          <MoreMenu items={more} />
-        </>
-      }
-    >
-      <Problems messages={[...formErrors(send.error ?? change.error ?? bill.error ?? remove.error, {}).general]} />
-      {confirming && (
-        <ConfirmPanel
-          message={t('estimates.confirmDeleteText')}
-          confirmLabel={t('estimates.confirmDelete')}
-          disabled={remove.isPending}
-          onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(list) })}
-          onCancel={() => setConfirming(false)}
-        />
-      )}
-      <DetailBlock title={t('estimates.detailsTitle')}>
-        <DetailList rows={rows} />
-      </DetailBlock>
-      <DetailBlock title={t('estimates.editTitle')}>
-        {!isEditable(state) && <p className="notice">{t('estimates.lockedNotice')}</p>}
-        {/* A fresh form for every version, so saved lines carry their ids. */}
-        <EstimateForm key={e.updated_at} administrationId={administrationId} estimate={e} rates={rates} />
-      </DetailBlock>
+          {panel === 'send' && <SendPanel administrationId={administrationId} estimate={e} onDone={() => setPanel(null)} />}
+          {e.original_estimate_id && (
+            <p className="notice">
+              {t('estimates.copyOf')} <Link to={`${list}/${e.original_estimate_id}`}>{t('estimates.original')}</Link>.
+            </p>
+          )}
+          {!editable && <p className="notice">{t('estimates.lockedNotice')}</p>}
+          {/* A billed or archived quote shows its document as it is; the server no longer changes it. */}
+          <div className={editable ? undefined : 'estimate-locked'} inert={!editable}>
+            <InvoiceEditor
+              mode="view"
+              administrationId={administrationId}
+              invoice={null}
+              quote={{ estimate: e }}
+              opening={location.state as Opening}
+              layoutsOpen={layoutsOpen}
+              onLayoutsClose={() => setLayoutsOpen(false)}
+              highlight={highlight}
+              onCancel={() => {}}
+              onSaved={(_, opening) => navigate(here, { replace: true, state: opening })}
+            />
+          </div>
+          <EstimateAttachments administrationId={administrationId} estimate={e} />
+        </div>
+        <EstimateSidebar administrationId={administrationId} estimate={e} onHighlight={setHighlight} />
+      </div>
     </Page>
   )
 }
 
-let nextKey = 0
-const newKey = () => `new-${++nextKey}`
-const blank = (taxRateId: string): LineRow => ({ key: newKey(), description: '', amount: '1', price: '', tax_rate_id: taxRateId, ledger_account_id: '' })
-/** Shows "100.0" from the server as "100" and keeps "12.5" as it is. */
-const priceText = (p: string | undefined) => (p === undefined || p === '' ? '' : String(Number(p)))
+function EstimateAttachments({ administrationId, estimate: e }: { administrationId: string; estimate: Estimate }) {
+  const add = useAddEstimateAttachment(administrationId, e.id ?? '')
+  const remove = useDeleteEstimateAttachment(administrationId, e.id ?? '')
+  return <AttachmentZone attachments={e.attachments ?? []} add={add} remove={remove} url={(a) => estimateAttachmentURL(administrationId, e.id ?? '', a)} />
+}
 
-type FormProps = { administrationId: string; estimate: Estimate | null; rates: TaxRate[] }
-
-/** The contact, texts and lines of an estimate, with the invoice line editor; billed and archived ones show them without changing. */
-function EstimateForm({ administrationId, estimate, rates }: FormProps) {
-  const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
-  const save = useSaveEstimate(administrationId, estimate?.id)
-  const administration = useAdministration(administrationId)
-  const accounts = useLedgerAccounts(administrationId)
-  const workflows = useWorkflows(administrationId)
-  const styles = useDocumentStyles(administrationId)
-  const defaultRate = rates.find((r) => r.active)?.id ?? ''
-  const locked = estimate !== null && !isEditable(estimate.state)
-
-  const [contact, setContact] = useState({ id: estimate?.contact_id ?? '', name: estimate?.contact ? contactName(estimate.contact) : '' })
-  const [reference, setReference] = useState(estimate?.reference ?? '')
-  const [date, setDate] = useState(estimate?.estimate_date ?? '')
-  const [validity, setValidity] = useState(estimate?.first_due_interval === undefined ? '' : String(estimate.first_due_interval))
-  const [workflowId, setWorkflowId] = useState(estimate?.workflow_id ?? '')
-  const [styleId, setStyleId] = useState(estimate?.document_style_id ?? '')
-  const [inclTax, setInclTax] = useState<boolean | null>(estimate?.prices_are_incl_tax ?? null)
-  const [discount, setDiscount] = useState(estimate?.discount && Number(estimate.discount) !== 0 ? String(Number(estimate.discount)) : '')
-  const [preText, setPreText] = useState(estimate?.pre_text ?? '')
-  const [postText, setPostText] = useState(estimate?.post_text ?? '')
-  const [rows, setRows] = useState<LineRow[]>(() =>
-    estimate?.details?.length
-      ? estimate.details.map((d) => ({
-          key: d.id ?? newKey(), id: d.id, description: d.description ?? '', amount: d.amount ?? '1', price: priceText(d.price),
-          tax_rate_id: d.tax_rate_id ?? defaultRate, ledger_account_id: d.ledger_account_id ?? '',
-        }))
-      : [blank(defaultRate)],
-  )
-  const [removed, setRemoved] = useState<string[]>([])
-
-  const flows = (workflows.data ?? []).filter((w) => w.type === 'EstimateWorkflow' && (w.active || w.id === workflowId))
-  const flow = flows.find((w) => w.id === workflowId) ?? flows.find((w) => w.default)
-  const pricesInclTax = inclTax ?? flow?.prices_are_incl_tax ?? false
-  const currency = estimate?.currency ?? flow?.currency ?? administration.data?.currency ?? 'EUR'
-  const money = (cents: number) => formatAmount(cents / 100, currency, i18n.language)
-  const parsed = rows.map((r) => ({ price: parseCents(r.price), quantity: parseQuantity(r.amount) }))
-  const percentage = (id: string) => Math.round(Number(rates.find((r) => r.id === id)?.percentage ?? 0) * 100)
-  const discountValue = parsePercentage(discount)
-  const totals = computeTotals(
-    rows.map((r, i) => ({ price: parsed[i]?.price ?? 0, quantity: parsed[i]?.quantity ?? 0, taxRateId: r.tax_rate_id, rate: percentage(r.tax_rate_id) })),
-    discountValue ?? 0,
-    pricesInclTax,
-  )
-  const rateName = (id: string) => rates.find((r) => r.id === id)?.name ?? ''
-
-  const labels: Record<string, string> = {
-    contact_id: t('invoices.contact'), reference: t('invoices.reference'), estimate_date: t('estimates.date'), first_due_interval: t('estimates.validity'),
-    workflow_id: t('invoices.workflow'), document_style_id: t('invoices.documentStyle'), discount: t('invoices.discount'),
-    prices_are_incl_tax: t('invoices.pricesInclTax'), pre_text: t('estimates.preText'), post_text: t('estimates.postText'), details_attributes: t('invoices.lines'),
+/** Moneybird's send form of a quote: the address it goes to and a message of its own, else the workflow's. */
+function SendPanel({ administrationId, estimate: e, onDone }: { administrationId: string; estimate: Estimate; onDone: () => void }) {
+  const { t } = useTranslation()
+  const heading = useId()
+  const send = useSendEstimate(administrationId, e.id ?? '')
+  const [email, setEmail] = useState(e.contact?.send_estimates_to_email || e.contact?.send_invoices_to_email || '')
+  const [message, setMessage] = useState('')
+  const labels = { email_address: t('estimates.send.email'), email_message: t('estimates.send.message') }
+  const errors = formErrors(send.error, labels)
+  const submit = (ev: FormEvent) => {
+    ev.preventDefault()
+    send.mutate({ delivery_method: 'Email', email_address: email.trim(), ...(message.trim() ? { email_message: message } : {}) }, { onSuccess: onDone })
   }
-  rows.forEach((_, i) => {
-    for (const [field, name] of Object.entries({ description: t('invoices.description'), amount: t('invoices.quantity'), price: t('invoices.price'), tax_rate_id: t('invoices.vatRate'), ledger_account_id: t('invoices.category') })) {
-      labels[`details_attributes.${i}.${field}`] = t('invoices.lineField', { field: name, n: i + 1 })
-    }
-  })
-  const errors = formErrors(save.error, labels)
-
-  const change = (i: number, c: Partial<LineRow>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...c } : r)))
-  const remove = (i: number) => {
-    const row = rows[i]
-    if (row?.id) {
-      setRemoved([...removed, row.id])
-    }
-    setRows(rows.filter((_, j) => j !== i))
-  }
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    // A new line left empty is not meant as a line.
-    const kept = rows.filter((r) => r.id || r.description.trim() || r.price.trim())
-    const body: EstimateChanges = {
-      contact_id: contact.id,
-      reference: reference.trim(),
-      estimate_date: date,
-      prices_are_incl_tax: pricesInclTax,
-      discount: discount.trim(),
-      pre_text: preText,
-      post_text: postText,
-      ...(validity.trim() !== '' ? { first_due_interval: Number(validity) } : {}),
-      ...(workflowId ? { workflow_id: workflowId } : {}),
-      ...(styleId ? { document_style_id: styleId } : {}),
-      details_attributes: [
-        ...kept.map((r) => ({
-          ...(r.id ? { id: r.id } : {}),
-          description: r.description.trim(),
-          amount: r.amount.trim(),
-          price: r.price.trim(),
-          tax_rate_id: r.tax_rate_id,
-          ...(r.ledger_account_id ? { ledger_account_id: r.ledger_account_id } : {}),
-        })),
-        ...removed.map((id) => ({ id, _destroy: true })),
-      ],
-    }
-    save.mutate(body, {
-      onSuccess: (saved) => {
-        setRemoved([])
-        if (!estimate) {
-          navigate(`/${administrationId}/estimates/${saved.id}`)
-        }
-      },
-    })
-  }
-
-  const totalRows = [
-    { label: t('invoices.subtotal'), amount: money(totals.subtotal) },
-    ...(totals.discount !== 0 ? [{ label: t('invoices.discountAmount', { percentage: discount.trim() }), amount: money(-totals.discount) }] : []),
-    ...totals.byRate.map((r) => ({ label: pricesInclTax ? t('invoices.includesVat', { name: rateName(r.taxRateId) }) : rateName(r.taxRateId), amount: money(r.tax) })),
-    { label: t('invoices.total'), amount: money(totals.inclTax), strong: true },
-  ]
-
   return (
-    <form className="form-sheet invoice-form" onSubmit={submit} noValidate aria-label={t('estimates.form')}>
-      <fieldset className="form-sheet__fieldset" disabled={locked}>
-        <Problems messages={[...errors.general, ...(errors.field('details_attributes') ?? [])]} />
-        <FormSection>
-          <ContactPicker
-            administrationId={administrationId}
-            label={labels.contact_id ?? ''}
-            value={contact.name}
-            errors={errors.field('contact_id')}
-            onChange={(c) => {
-              setContact({ id: String(c.id ?? ''), name: contactName(c) })
-              if (!estimate && !workflowId && c.estimate_workflow_id) {
-                setWorkflowId(String(c.estimate_workflow_id))
-              }
-            }}
-          />
-          <TextInput label={labels.reference ?? ''} maxLength={1000} value={reference} errors={errors.field('reference')} onChange={(e) => setReference(e.target.value)} />
-          <DateInput label={labels.estimate_date ?? ''} width="medium" help={t('estimates.dateHelp')} value={date} errors={errors.field('estimate_date')} onChange={setDate} />
-        </FormSection>
-        <FormSection title={t('estimates.settings')}>
-          <SelectInput label={labels.workflow_id ?? ''} width="medium" value={workflowId} errors={errors.field('workflow_id')} onChange={(e) => setWorkflowId(e.target.value)}>
-            {!estimate && <option value="">{t('invoices.defaultWorkflow')}</option>}
-            {flows.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-          </SelectInput>
-          <SelectInput label={labels.document_style_id ?? ''} width="medium" value={styleId} errors={errors.field('document_style_id')} onChange={(e) => setStyleId(e.target.value)}>
-            {!estimate && <option value="">{t('invoices.defaultStyle')}</option>}
-            {(styles.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </SelectInput>
-          <TextInput
-            label={labels.first_due_interval ?? ''}
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={365}
-            width="small"
-            placeholder={String(flow?.steps?.[0]?.due_interval ?? '')}
-            help={t('estimates.validityHelp')}
-            value={validity}
-            errors={errors.field('first_due_interval')}
-            onChange={(e) => setValidity(e.target.value)}
-          />
-          <CheckboxInput label={labels.prices_are_incl_tax ?? ''} checked={pricesInclTax} onChange={(e) => setInclTax(e.target.checked)} />
-          <TextInput
-            label={labels.discount ?? ''}
-            width="small"
-            inputMode="decimal"
-            maxLength={10}
-            help={t('invoices.discountHelp')}
-            value={discount}
-            aria-invalid={discountValue === null || undefined}
-            errors={errors.field('discount')}
-            onChange={(e) => setDiscount(e.target.value)}
-          />
-        </FormSection>
-        <FormSection title={t('invoices.lines')}>
-          <TextArea label={labels.pre_text ?? ''} maxLength={10000} value={preText} errors={errors.field('pre_text')} onChange={(e) => setPreText(e.target.value)} />
-          <LinesEditor
-            rows={rows}
-            rates={rates}
-            accounts={accounts.data ?? []}
-            amounts={totals.lines.map(money)}
-            invalid={parsed.map((p) => ({ price: p.price === null, amount: p.quantity === null }))}
-            errors={errors}
-            onChange={change}
-            onRemove={remove}
-            onAdd={() => setRows([...rows, blank(defaultRate)])}
-          />
-          <TotalsTable rows={totalRows} />
-          <TextArea label={labels.post_text ?? ''} maxLength={10000} value={postText} errors={errors.field('post_text')} onChange={(e) => setPostText(e.target.value)} />
-        </FormSection>
-        {!locked && (
-          <div className="form-sheet__actions">
-            <button className="btn btn--primary" disabled={save.isPending}>{t('estimates.save')}</button>
-            {!estimate && <Link className="btn btn--secondary" to={`/${administrationId}/estimates`}>{t('common.cancel')}</Link>}
-          </div>
-        )}
-      </fieldset>
-    </form>
+    <section className="send-form" aria-labelledby={heading}>
+      <form onSubmit={submit} noValidate>
+        <div className="send-form__intro">
+          <h3 id={heading} className="send-form__title">{t('estimates.send.title')}</h3>
+          <p className="send-form__text">{t('estimates.send.text')}</p>
+        </div>
+        <Problems messages={errors.general} />
+        <div className="send-form__fields">
+          <TextInput label={labels.email_address} type="email" value={email} errors={errors.field('email_address')} onChange={(ev) => setEmail(ev.target.value)} />
+          <TextArea label={labels.email_message} help={t('estimates.send.messageHelp')} maxLength={10000} value={message} errors={errors.field('email_message')} onChange={(ev) => setMessage(ev.target.value)} />
+        </div>
+        <div className="send-form__actions">
+          <button className="btn btn--primary" disabled={send.isPending}>{t('estimates.send.submit')}</button>
+          <button type="button" className="btn btn--secondary" onClick={onDone}>{t('common.cancel')}</button>
+        </div>
+      </form>
+    </section>
   )
+}
+
+type SidebarProps = { administrationId: string; estimate: Estimate; onHighlight: (ledgerAccountId: string | undefined) => void }
+
+/** The column beside a quote, after Moneybird's: its contact, the invoice it was billed to and how much, its workflow, categories, notes and history. */
+function EstimateSidebar({ administrationId, estimate: e, onHighlight }: SidebarProps) {
+  const { t, i18n } = useTranslation()
+  const workflows = useWorkflows(administrationId)
+  const billed = [...(e.events ?? [])].reverse().find((ev) => ev.action === 'estimate_billed' && ev.link_entity_id)
+  const invoice = useSalesInvoice(administrationId, billed?.link_entity_id ? String(billed.link_entity_id) : undefined)
+  const add = useAddEstimateNote(administrationId, e.id ?? '')
+  const remove = useDeleteEstimateNote(administrationId, e.id ?? '')
+  const flow = (workflows.data ?? []).find((w) => w.id === e.workflow_id)
+  const money = (v: string | number | null | undefined) => formatAmount(v, e.currency ?? 'EUR', i18n.language)
+  const facts: [string, ReactNode][] = [
+    [t('invoices.view.contact'), e.contact && <ContactHoverCard administrationId={administrationId} contact={{ ...e.contact, id: e.contact_id }} />],
+    [t('estimates.view.invoice'), invoice.data && <Link to={`/${administrationId}/sales_invoices/${invoice.data.id}`}>{invoiceTitle(invoice.data, t)}</Link>],
+    [t('estimates.view.invoiced'), invoice.data && t('estimates.view.invoicedOf', { amount: money(invoice.data.total_price_incl_tax), total: money(e.total_price_incl_tax) })],
+    [t('invoices.workflow'), flow && <Link to={`/${administrationId}/workflows/${flow.id}`}>{flow.name}</Link>],
+  ]
+  return (
+    <aside className="invoice-sidebar" aria-label={t('estimates.view.sidebar')}>
+      <dl className="invoice-sidebar__facts">
+        {facts.filter(([, value]) => value).map(([label, value]) => (
+          <div key={label} className="invoice-sidebar__fact">
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <CategoryChips administrationId={administrationId} details={e.details ?? []} onHighlight={onHighlight} />
+      <NotesAndHistory administrationId={administrationId} items={estimateHistory(e)} currency={e.currency ?? 'EUR'} add={add} remove={remove} />
+    </aside>
+  )
+}
+
+/** What happened to the quote, newest first; a quote made before the server kept events tells only when it was created. */
+function estimateHistory(e: Estimate): HistoryItem[] {
+  const told = (e.events ?? []).length > 0
+  // Without events of its own, an invoice's history would be made up from its dates; a quote's is told here.
+  const items = historyOf({ created_at: told ? (e.created_at ?? undefined) : undefined, paid_at: null, notes: e.notes, events: e.events, payments: [] })
+  if (told || !e.created_at) {
+    return items
+  }
+  return [...items, { kind: 'event', id: 'derived-created', action: 'estimate_created', at: e.created_at, timed: true, data: {} }]
 }

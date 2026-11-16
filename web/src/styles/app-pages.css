@@ -93,6 +93,10 @@
 :is(.document-table__state, .detail-list, .detail-block__actions, .invoices__state, .feed-row) .badge--reminded { background: var(--state-reminded); }
 :is(.document-table__state, .detail-list, .detail-block__actions, .invoices__state, .feed-row) :is(.badge--paid, .badge--active) { background: var(--state-paid); }
 :is(.document-table__state, .detail-list, .detail-block__actions, .invoices__state, .feed-row) .badge--uncollectible { background: var(--state-dark); }
+/* A quote's states: accepted and billed as paid, rejected as late, archived as written off. */
+:is(.document-table__state, .detail-list, .detail-block__actions, .invoices__state, .feed-row) :is(.badge--accepted, .badge--billed) { background: var(--state-paid); }
+:is(.document-table__state, .detail-list, .detail-block__actions, .invoices__state, .feed-row) .badge--rejected { background: var(--state-late); }
+:is(.document-table__state, .detail-list, .detail-block__actions, .invoices__state, .feed-row) .badge--archived { background: var(--state-dark); }
 
 /* A centred pager on a small sheet: previous, the pages around the current one, next. */
 .pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; width: fit-content; max-width: 100%; margin: 0.75rem auto 0; padding: 2px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
@@ -306,6 +310,11 @@ a.pagination__page:hover, a.pagination__step:hover { background: var(--row-hover
 .invoice-paper__footer { margin-top: 3.5rem; padding-top: 0.75rem; border-top: 1px solid var(--text); }
 .invoice-paper__conditions { white-space: pre-wrap; }
 .invoice-paper__pay { margin: 0.5rem 0 0; }
+
+/* A quote's texts above and under its lines, as Moneybird prints them: no rule above the closing text. */
+.invoice-paper__text { position: relative; margin-top: 3.5rem; }
+.invoice-paper__text + .invoice-paper__details { margin-top: 3rem; }
+.invoice-paper__footer--text { border-top: 0; padding-top: 0; }
 
 @media (max-width: 44rem) {
   .invoice-paper { padding: 1.5rem 1rem 2rem; }

@@ -73,17 +73,19 @@ type DetailsProps = {
   onEdit?: () => void
   /** Classes of each line, such as the one of the category the sidebar points at. */
   rowClass?: (index: number) => string | undefined
+  /** The first step's words before any line, as a quote's "Add quote details"; an invoice's by default. */
+  addLabel?: string
 }
 
 /** The lines as the document prints them; a click on them opens them for editing. */
-export function DetailsView({ dt, lines, empty, onEdit, rowClass }: DetailsProps) {
+export function DetailsView({ dt, lines, empty, onEdit, rowClass, addLabel }: DetailsProps) {
   const { t } = useTranslation()
   const shown = lines.length ? lines : [empty]
   return (
     <div className={`invoice-paper__details-view${lines.length ? '' : ' is-empty'}${onEdit ? '' : ' is-read-only'}`} onClick={onEdit}>
       {onEdit && (
         <button type="button" className={lines.length ? 'invoice-paper__edit-details' : 'invoice-paper__step'} onClick={(e) => { e.stopPropagation(); onEdit() }}>
-          {lines.length ? <><ListIcon kind="edit" /><span className="sr-only">{t('invoices.editor.editDetails')}</span></> : t('invoices.editor.addDetails')}
+          {lines.length ? <><ListIcon kind="edit" /><span className="sr-only">{t('invoices.editor.editDetails')}</span></> : (addLabel ?? t('invoices.editor.addDetails'))}
         </button>
       )}
       <table className="invoice-paper__lines" aria-label={dt('invoices.document.lines')}>
