@@ -2,8 +2,10 @@ package invoicedoc
 
 import (
 	"bytes"
+	"math"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
 	"testing"
 
@@ -96,5 +98,55 @@ func TestPDFTextRoundTrips(t *testing.T) {
 		r.one(t, "Café, façade, ação, Müller • € 5")
 		r.one(t, "€ 296,50")
 		r.one(t, "Factuurdatum:")
+	}
+}
+
+// widthOf is how wide a piece of text prints in a face.
+func widthOf(f face, p placed) float64 {
+	pdf := fpdf.New("P", "mm", "A4", "")
+	style := ""
+	if p.Bold {
+		style = "B"
+	}
+	f.set(pdf, style, p.Size)
+	return pdf.GetStringWidth(p.Text)
+}
+
+func TestPDFTextFitsInEveryFont(t *testing.T) {
+	for _, family := range invoicing.DocumentFontFamilies {
+		f := faceFor(family)
+		for _, prices := range []bool{true, false} {
+			doc := example(t, "nl")
+			doc.Style.FontFamily = family
+			doc.Invoice.Lines[1].Amount = "12,5 uur"
+			r := layoutOf(t, doc, prices)
+			for _, p := range r.Texts {
+				if end := p.X + widthOf(f, p); end > right+0.05 {
+					t.Errorf("%s: %q ends at %.1f mm, past the right margin at %.0f", family, p.Text, end, right)
+				}
+			}
+			// The table's columns, from its header to its last line, keep
+			// at least 2 mm between them.
+			header := r.one(t, "Omschrijving")
+			bottom := r.one(t, "12,5 uur").Y
+			rows := map[float64][]placed{}
+			for _, p := range r.Texts {
+				if p.Page == 1 && p.Y >= header.Y-0.01 && p.Y <= bottom+0.01 {
+					y := math.Round(p.Y*100) / 100
+					rows[y] = append(rows[y], p)
+				}
+			}
+			if len(rows) < 3 {
+				t.Errorf("%s: table rows = %v", family, rows)
+			}
+			for _, row := range rows {
+				sort.Slice(row, func(i, j int) bool { return row[i].X < row[j].X })
+				for i := 1; i < len(row); i++ {
+					if gap := row[i].X - (row[i-1].X + widthOf(f, row[i-1])); gap < 2 {
+						t.Errorf("%s: %q and %q %.1f mm apart, want at least 2", family, row[i-1].Text, row[i].Text, gap)
+					}
+				}
+			}
+		}
 	}
 }

@@ -82,6 +82,8 @@ const (
 	heavyRule = 0.35
 	// rowPadding is the space above and below a line of the table.
 	rowPadding = 1.5
+	// columnGap is the least space between the quantity and description.
+	columnGap = 3.0
 )
 
 // The web app's colours (web/src/styles.css): text in --text, labels and
@@ -151,7 +153,8 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	if fontSize < 8 || fontSize > 14 {
 		fontSize = 10
 	}
-	w := &writer{pdf: pdf, face: faceFor(doc.Style.FontFamily), doc: doc, l: l, prices: prices, size: fontSize, cols: columns(l, prices)}
+	w := &writer{pdf: pdf, face: faceFor(doc.Style.FontFamily), doc: doc, l: l, prices: prices, size: fontSize}
+	w.cols = w.columns()
 	if prices && doc.Estimate == nil {
 		w.notice = w.paymentNotice()
 	}
@@ -319,12 +322,34 @@ func (w *writer) letterhead() {
 	if layout(w.doc).HideSenderAddress {
 		return
 	}
-	sw := senderWidth(w.doc)
+	lines := senderLines(w.doc, w.l)
+	// The block starts where the style puts it, or further left when its
+	// widest line would cross the right margin in this face.
 	pageW, _ := w.pdf.GetPageSize()
-	x := pageW - senderMargin - sw
+	x := min(pageW-senderMargin-senderWidth(w.doc), right-w.widest(lines, size)-w.pdf.GetCellMargin())
 	w.pdf.SetXY(x, senderY)
 	w.color(textColor)
-	drawStyled(w.pdf, w.face, senderLines(w.doc, w.l), x, sw, size)
+	drawStyled(w.pdf, w.face, lines, x, right-x, size)
+}
+
+// widest is the width of the widest of the lines as drawStyled prints them.
+func (w *writer) widest(lines []styledLine, size float64) float64 {
+	scratch := w.scratchPage()
+	widest := 0.0
+	for _, line := range lines {
+		style := ""
+		if line.Bold {
+			style = "B"
+		}
+		w.face.set(scratch, style, size)
+		for i, text := range line.Text {
+			if i == 0 && line.Label != "" {
+				text = line.Label + ": " + text
+			}
+			widest = max(widest, scratch.GetStringWidth(text))
+		}
+	}
+	return widest
 }
 
 // logoSize registers the logo and is the size it prints at: the style's
@@ -450,12 +475,39 @@ func (w *writer) metaBlock(rows [][2]string, x, y, size float64, alignRight bool
 }
 
 // columns are the lines table's: the quantity, the description and, with
-// prices, the price, line total and VAT rate.
-func columns(l labels, prices bool) []column {
-	if !prices {
-		return []column{{l.Quantity, 20, "L"}, {l.Description, width - 20, "L"}}
+// prices, the price, line total and VAT rate. The quantity column is as wide
+// as its header or widest quantity in this face, with columnGap to the
+// description, which takes the rest.
+func (w *writer) columns() []column {
+	l := w.l
+	quantity := 15.0
+	if !w.prices {
+		quantity = 20
 	}
-	return []column{{l.Quantity, 15, "L"}, {l.Description, 95, "L"}, {l.Price, 25, "R"}, {l.Total, 25, "R"}, {l.VAT, 10, "R"}}
+	scratch := w.scratchPage()
+	w.face.set(scratch, "B", w.size-1.5)
+	widest := scratch.GetStringWidth(l.Quantity)
+	w.face.set(scratch, "", w.size-0.5)
+	for _, d := range w.lines() {
+		widest = max(widest, scratch.GetStringWidth(d.Amount))
+	}
+	quantity = max(quantity, widest+scratch.GetCellMargin()+columnGap)
+	if !w.prices {
+		return []column{{l.Quantity, quantity, "L"}, {l.Description, width - quantity, "L"}}
+	}
+	return []column{{l.Quantity, quantity, "L"}, {l.Description, width - quantity - 60, "L"}, {l.Price, 25, "R"}, {l.Total, 25, "R"}, {l.VAT, 10, "R"}}
+}
+
+// lines are the invoice's lines the document prints: not the optional ones
+// the customer left out.
+func (w *writer) lines() []sales.Detail {
+	var lines []sales.Detail
+	for _, d := range w.doc.Invoice.Lines {
+		if !d.Optional || d.Selected {
+			lines = append(lines, d)
+		}
+	}
+	return lines
 }
 
 func (w *writer) tableHead() {
@@ -485,12 +537,7 @@ func (w *writer) rule(y, from, to, lineWidth float64) {
 // the last; lines that do not fit go to the next page under the header.
 func (w *writer) table() {
 	pdf, inv := w.pdf, w.doc.Invoice
-	var lines []sales.Detail
-	for _, d := range inv.Lines {
-		if !d.Optional || d.Selected {
-			lines = append(lines, d)
-		}
-	}
+	lines := w.lines()
 	w.tableHead()
 	w.inTable = true
 	for i, d := range lines {
