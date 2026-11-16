@@ -166,8 +166,7 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	y := w.heading()
 	pdf.SetY(y + 8)
 	if doc.Estimate != nil && doc.Estimate.PreText != "" {
-		w.font("", fontSize-1)
-		pdf.MultiCell(0, lineHeight, doc.Estimate.PreText, "", "L", false)
+		w.estimateText(doc.Estimate.PreText)
 		pdf.Ln(4)
 	}
 	w.table()
@@ -176,14 +175,22 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	}
 	if doc.Estimate != nil && doc.Estimate.PostText != "" {
 		pdf.Ln(8)
-		w.font("", fontSize-1)
-		pdf.MultiCell(0, lineHeight, doc.Estimate.PostText, "", "L", false)
+		w.estimateText(doc.Estimate.PostText)
 	}
 	if pdf.GetY() > w.lastBottom() {
 		pdf.AddPage()
 	}
 	w.last = true
 	return pdf
+}
+
+// estimateText writes a text of a quote, above or under its lines, styled
+// by its textile and with its tags filled in, from the left margin.
+func (w *writer) estimateText(text string) {
+	w.font("", w.size-1)
+	w.pdf.SetX(left)
+	writeSpans(w.pdf, w.face, sales.EstimateTextSpans(w.doc, text, time.Now().UTC()), w.size-1)
+	w.pdf.Ln(lineHeight)
 }
 
 // font selects the face in a style and size, in the text colour.

@@ -2,6 +2,7 @@ package sales
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -130,6 +131,36 @@ func joinNames(first, last string) string { return strings.TrimSpace(first + " "
 func PaymentConditionsSpans(doc Document, today time.Time) []Span {
 	values := TagValues(doc, today)
 	spans := ParseTextile(doc.Invoice.PaymentConditions)
+	for i := range spans {
+		spans[i].Text = RenderTags(spans[i].Text, values)
+	}
+	return spans
+}
+
+// EstimateTagValues are the tags of an estimate's texts: those of the
+// payment conditions, and {document.estimate_id} and
+// {document.estimate_date}. A draft is named as Moneybird's editor shows
+// it, "Concept #3".
+func EstimateTagValues(doc Document, today time.Time) map[string]string {
+	v := TagValues(doc, today)
+	inv := doc.Invoice
+	number := inv.InvoiceID
+	if number == "" {
+		word := "Draft"
+		if strings.HasPrefix(inv.Language, "nl") {
+			word = "Concept"
+		}
+		number = word + " #" + strconv.Itoa(inv.DraftID)
+	}
+	v["document.estimate_id"], v["document.estimate_date"] = number, v["document.invoice_date"]
+	return v
+}
+
+// EstimateTextSpans is a text of an estimate, the one above or under its
+// lines, as shown: styled by its textile, with its tags filled in.
+func EstimateTextSpans(doc Document, text string, today time.Time) []Span {
+	values := EstimateTagValues(doc, today)
+	spans := ParseTextile(text)
 	for i := range spans {
 		spans[i].Text = RenderTags(spans[i].Text, values)
 	}

@@ -6673,10 +6673,17 @@ type EstimateRequest struct {
 		IdentityId *FlexibleIdentifier `json:"identity_id,omitempty"`
 		Language   *string             `json:"language,omitempty"`
 
+		// OriginalEstimateId An id as a string or a number; an empty string clears it.
+		OriginalEstimateId *FlexibleIdentifier `json:"original_estimate_id,omitempty"`
+
 		// OriginalSalesInvoiceId An id as a string or a number; an empty string clears it.
 		OriginalSalesInvoiceId *FlexibleIdentifier `json:"original_sales_invoice_id,omitempty"`
-		PostText               *string             `json:"post_text,omitempty"`
-		PreText                *string             `json:"pre_text,omitempty"`
+
+		// PostText The text under the lines, as the pre_text.
+		PostText *string `json:"post_text,omitempty"`
+
+		// PreText The text above the lines. Textile (_italic_, *bold*, +underline+) and the tags of the payment conditions, such as {recipient.name}, and {document.estimate_id} and {document.estimate_date}, are filled in where the estimate is shown.
+		PreText *string `json:"pre_text,omitempty"`
 
 		// PricesAreInclTax A boolean; the strings "true" and "false" are accepted too, as at Moneybird.
 		PricesAreInclTax *FlexibleBoolean `json:"prices_are_incl_tax,omitempty"`
@@ -21562,6 +21569,9 @@ type ServerInterface interface {
 	// GetEstimateByEstimateId Find an estimate by estimate number
 	// (GET /api/v2/{administration_id}/estimates/find_by_estimate_id/{estimate_id})
 	GetEstimateByEstimateId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, estimateId string)
+	// GetNextEstimateDraftId Get the next draft number
+	// (GET /api/v2/{administration_id}/estimates/next_draft_id)
+	GetNextEstimateDraftId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// ListEstimateVersions List all ids and versions
 	// (GET /api/v2/{administration_id}/estimates/synchronization)
 	ListEstimateVersions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListEstimateVersionsParams)
@@ -23410,6 +23420,12 @@ func (_ Unimplemented) CreateEstimate(w http.ResponseWriter, r *http.Request, ad
 // GetEstimateByEstimateId Find an estimate by estimate number
 // (GET /api/v2/{administration_id}/estimates/find_by_estimate_id/{estimate_id})
 func (_ Unimplemented) GetEstimateByEstimateId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, estimateId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetNextEstimateDraftId Get the next draft number
+// (GET /api/v2/{administration_id}/estimates/next_draft_id)
+func (_ Unimplemented) GetNextEstimateDraftId(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -31702,6 +31718,32 @@ func (siw *ServerInterfaceWrapper) GetEstimateByEstimateId(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetEstimateByEstimateId(w, r, administrationId, estimateId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetNextEstimateDraftId operation middleware
+func (siw *ServerInterfaceWrapper) GetNextEstimateDraftId(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetNextEstimateDraftId(w, r, administrationId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -41619,6 +41661,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/estimates", wrapper.CreateEstimate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates/next_draft_id", wrapper.GetNextEstimateDraftId)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates/synchronization", wrapper.ListEstimateVersions)

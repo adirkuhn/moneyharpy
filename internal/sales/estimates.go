@@ -13,6 +13,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -138,6 +139,8 @@ type Estimate struct {
 	CustomFields []FieldValue
 	Notes        []notes.Note
 	Attachments  []attachments.Attachment
+	// Events are what happened to the estimate, oldest first.
+	Events []history.Event
 	// Totals are the amounts worked out when the estimate was last saved.
 	Totals    Totals
 	CreatedAt time.Time
@@ -230,8 +233,11 @@ type EstimateChanges struct {
 	PostText               *string
 	Discount               *string
 	OriginalSalesInvoiceID *resource.ID
-	Details                []DetailInput
-	CustomFields           []FieldValue
+	// OriginalEstimateID names the estimate a new one copies; it is only
+	// read when creating.
+	OriginalEstimateID *resource.ID
+	Details            []DetailInput
+	CustomFields       []FieldValue
 }
 
 func (c EstimateChanges) invoiceChanges() Changes {
@@ -269,13 +275,46 @@ func (s *Service) CreateEstimate(ctx context.Context, admin, user resource.ID, c
 	if e.DraftID, err = s.store.NextEstimateDraftID(ctx, admin); err != nil {
 		return Estimate{}, wrap("number draft", err)
 	}
+	var original *Estimate
+	if c.OriginalEstimateID != nil && *c.OriginalEstimateID != 0 {
+		o, err := s.store.Estimate(ctx, admin, *c.OriginalEstimateID)
+		if err != nil {
+			if !IsNotFound(err) {
+				return Estimate{}, err
+			}
+			return Estimate{}, invalid("original_estimate_id", "does not exist")
+		}
+		original, e.OriginalEstimateID = &o, &o.ID
+	}
 	if err := s.applyEstimate(ctx, a, user, &e, c); err != nil {
 		return Estimate{}, err
 	}
 	if err := s.saveEstimate(ctx, admin, user, &e, true); err != nil {
 		return Estimate{}, err
 	}
+	created := on(e.invoice(), "estimate_created")
+	if original != nil {
+		created = on(e.invoice(), "estimate_created_from_original").
+			with(map[string]any{"original_estimate": cmpString(original.EstimateID, fmt.Sprintf("#%d", original.DraftID))}).
+			linked(EstimateEntityType, original.ID)
+	}
+	if err := s.record(ctx, user, created); err != nil {
+		return Estimate{}, err
+	}
 	return s.Estimate(ctx, admin, e.ID, user)
+}
+
+// NextEstimateDraftID returns the draft number the next new estimate gets,
+// which Moneybird shows on a quote being added ("Concept #12").
+func (s *Service) NextEstimateDraftID(ctx context.Context, admin, user resource.ID) (int, error) {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return 0, err
+	}
+	n, err := s.store.NextEstimateDraftID(ctx, admin)
+	if err != nil {
+		return 0, wrap("number draft", err)
+	}
+	return n, nil
 }
 
 // UpdateEstimate changes an estimate that is not billed or archived. A
@@ -440,6 +479,13 @@ func (s *Service) SendEstimate(ctx context.Context, admin, id, user resource.ID,
 	}
 	e.Delivery, e.UpdatedAt = &delivery, now
 	if err := s.saveEstimate(ctx, admin, user, &e, false); err != nil {
+		return Estimate{}, err
+	}
+	sentBy := on(e.invoice(), "estimate_send_manually")
+	if delivery.Method == "Email" {
+		sentBy = on(e.invoice(), "estimate_send_email").with(map[string]any{"email_address": delivery.EmailAddress, "email_message": delivery.EmailMessage})
+	}
+	if err := s.record(ctx, user, sentBy); err != nil {
 		return Estimate{}, err
 	}
 	if delivery.Method == "Email" {
@@ -666,6 +712,9 @@ func (s *Service) ChangeEstimateState(ctx context.Context, admin, id, user resou
 	if err := wrap("store estimate", s.store.SaveEstimate(ctx, e, false)); err != nil {
 		return Estimate{}, err
 	}
+	if err := s.record(ctx, user, on(e.invoice(), "estimate_mark_"+state)); err != nil {
+		return Estimate{}, err
+	}
 	return s.Estimate(ctx, admin, id, user)
 }
 
@@ -712,7 +761,10 @@ func (s *Service) BillEstimate(ctx context.Context, admin, id, user resource.ID)
 	if err := s.store.SaveBilled(ctx, inv, e); err != nil {
 		return Invoice{}, wrap("store billed estimate", err)
 	}
-	if err := s.record(ctx, user, on(inv, "sales_invoice_created_based_on_estimate").with(map[string]any{"original_estimate": e.EstimateID})); err != nil {
+	if err := s.record(ctx, user,
+		on(inv, "sales_invoice_created_based_on_estimate").with(map[string]any{"original_estimate": e.EstimateID}).linked(EstimateEntityType, e.ID),
+		on(e.invoice(), "estimate_billed").with(map[string]any{"draft_id": inv.DraftID}).linked(EntityType, inv.ID),
+	); err != nil {
 		return Invoice{}, err
 	}
 	return s.Invoice(ctx, admin, inv.ID, user)
@@ -866,8 +918,14 @@ func (s *Service) completeEstimates(ctx context.Context, admin resource.ID, list
 	if err != nil {
 		return nil, err
 	}
+	events := map[resource.ID][]history.Event{}
+	if s.history != nil {
+		if events, err = s.history.Of(ctx, admin, EstimateEntityType, ids); err != nil {
+			return nil, err
+		}
+	}
 	for i := range list {
-		list[i].Notes, list[i].Attachments = byID[list[i].ID], files[list[i].ID]
+		list[i].Notes, list[i].Attachments, list[i].Events = byID[list[i].ID], files[list[i].ID], events[list[i].ID]
 		list[i].State = effectiveEstimate(list[i], today)
 	}
 	return list, nil
