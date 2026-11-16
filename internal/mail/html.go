@@ -43,6 +43,21 @@ type Look struct {
 	Details [][2]string
 	// Button is a web link shown as a button under the text.
 	Button *Button
+	// Table takes the place of the paragraph of the text that reads its Text.
+	Table *Table
+}
+
+// Table is a table shown in the text, such as a reminder's invoices.
+type Table struct {
+	Columns []string
+	Rows    [][]string
+	Text    string
+}
+
+// paragraph is a paragraph of the text, or the table that stands in for it.
+type paragraph struct {
+	Lines []string
+	Table *Table
 }
 
 // Button is a labelled web link.
@@ -87,7 +102,14 @@ var page = template.Must(template.New("email").Parse(`<!DOCTYPE html>
 </td></tr>
 {{- end}}
 <tr><td style="padding:32px">
-{{- range .Paragraphs}}<p style="margin:0 0 16px">{{range $i, $l := .}}{{if $i}}<br>{{end}}{{$l}}{{end}}</p>{{end}}
+{{- range .Paragraphs}}
+{{- if .Table}}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;width:100%;border-collapse:collapse">
+<tr>{{range $i, $c := .Table.Columns}}<th align="{{if eq $i 3}}right{{else}}left{{end}}" style="padding:6px 8px 6px 0;border-bottom:2px solid #1F2937;font-weight:bold">{{$c}}</th>{{end}}</tr>
+{{- range .Table.Rows}}<tr>{{range $i, $v := .}}<td align="{{if eq $i 3}}right{{else}}left{{end}}" style="padding:6px 8px 6px 0;border-bottom:1px solid #E5E7EB">{{$v}}</td>{{end}}</tr>{{end}}
+</table>
+{{- else}}<p style="margin:0 0 16px">{{range $i, $l := .Lines}}{{if $i}}<br>{{end}}{{$l}}{{end}}</p>{{end}}
+{{- end}}
 {{- if .Details}}
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;width:100%;border-collapse:collapse">
 {{- range .Details}}<tr><th align="left" style="padding:4px 16px 4px 0;font-weight:bold;vertical-align:top">{{index . 0}}</th><td style="padding:4px 0">{{index . 1}}</td></tr>{{end}}
@@ -145,7 +167,7 @@ func renderHTML(text string, l Look) (string, []inlineImage) {
 		BodyStyle, CardStyle, HeaderTextStyle template.CSS
 		Header                                *headerView
 		Footer                                *footerView
-		Paragraphs                            [][]string
+		Paragraphs                            []paragraph
 		Details                               [][2]string
 		Button                                *Button
 		Label                                 string
@@ -160,8 +182,13 @@ func renderHTML(text string, l Look) (string, []inlineImage) {
 		view.Button = b
 	}
 	for p := range strings.SplitSeq(strings.ReplaceAll(strings.TrimSpace(text), "\r\n", "\n"), "\n\n") {
-		if p = strings.TrimSpace(p); p != "" {
-			view.Paragraphs = append(view.Paragraphs, strings.Split(p, "\n"))
+		p = strings.TrimSpace(p)
+		switch {
+		case p == "":
+		case l.Table != nil && p == strings.TrimSpace(l.Table.Text):
+			view.Paragraphs = append(view.Paragraphs, paragraph{Table: l.Table})
+		default:
+			view.Paragraphs = append(view.Paragraphs, paragraph{Lines: strings.Split(p, "\n")})
 		}
 	}
 

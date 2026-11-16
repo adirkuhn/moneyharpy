@@ -331,6 +331,10 @@ func TestRemindersAndTheBackgroundJob(t *testing.T) {
 	if !strings.Contains(m.Subject, late.InvoiceID) || !strings.Contains(m.Body, "Please pay "+late.InvoiceID) || !strings.Contains(m.Body, "€ 121,00") || len(m.Files) != 1 {
 		t.Errorf("reminder = %q / %q", m.Subject, m.Body)
 	}
+	// The invoices are in the reminder's table, not again in a list of facts under it.
+	if m.Look == nil || len(m.Look.Details) != 0 || m.Look.Table == nil || len(m.Look.Table.Rows) != 1 {
+		t.Errorf("look = %+v", m.Look)
+	}
 	for _, want := range []string{"sales_invoice_state_changed_to_late", "sales_invoice_send_reminder_email", "sales_invoice_state_changed_to_reminded"} {
 		if !slices.Contains(h.notifier.actions, want) {
 			t.Errorf("no %s in %v", want, h.notifier.actions)
@@ -424,10 +428,17 @@ func TestReminderEmailFillsMoneybirdsRemindersTable(t *testing.T) {
 		Contact:  contacts.Contact{CompanyName: "Example Shop B.V."},
 		Identity: administration.Identity{CompanyName: "Harpy B.V."},
 	}
+	due := day.AddDate(0, 0, 14)
+	doc.Invoice.DueDate = &due
 	text := invoicing.DefaultReminderTexts("nl")[0]
-	_, body := ReminderEmail([]Document{doc}, text)
+	_, body, table := ReminderEmail([]Document{doc}, text)
 	if !strings.HasPrefix(body, "Geachte Example Shop B.V.,\n\n") || !strings.Contains(body, "\n\n- 2026-0007 (01-10-2026): ") ||
 		strings.Contains(body, "{") || !strings.HasSuffix(body, "Met vriendelijke groet,\n\nHarpy B.V.") {
 		t.Errorf("body = %q", body)
+	}
+	// The HTML email shows the list as a table in the reminder's language, where the text has it.
+	if len(table.Columns) != 4 || table.Columns[0] != "Factuur" || table.Columns[2] != "Vervaldatum" || len(table.Rows) != 1 ||
+		table.Rows[0][0] != "2026-0007" || table.Rows[0][1] != "01-10-2026" || table.Rows[0][2] != "15-10-2026" || !strings.Contains(body, table.Text) {
+		t.Errorf("table = %+v", table)
 	}
 }

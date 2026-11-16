@@ -76,6 +76,16 @@ describe('an invoice', () => {
     expect(within(side).getByRole('link', { name: 'Example Shop B.V.' })).toHaveAttribute('href', '/11/contacts/701')
     expect(within(within(side).getByRole('list', { name: 'Category' })).getByRole('listitem')).toHaveTextContent('Sales')
     expect(within(side).getByRole('region', { name: 'Notes and tasks' })).toBeInTheDocument()
+    expect(await within(side).findByRole('link', { name: 'Standaard (NL)' })).toHaveAttribute('href', '/11/workflows/601')
+  })
+
+  it('links the recurring invoice or quote it came from in its sidebar', async () => {
+    const made = invoice({ recurring_sales_invoice_id: '941', original_estimate_id: '971' })
+    server.use(http.get('*/api/v2/11/sales_invoices/901', () => HttpResponse.json(made)), ...loaded([made]))
+    renderAt('/11/sales_invoices/901')
+    const side = await screen.findByRole('complementary', { name: 'Invoice information' })
+    expect(await within(side).findByRole('link', { name: 'View recurring invoice' })).toHaveAttribute('href', '/11/recurring_sales_invoices/941')
+    expect(within(side).getByRole('link', { name: 'View quote' })).toHaveAttribute('href', '/11/estimates/971')
   })
 
   it('shows the contact in a card when its link is hovered or focused', async () => {

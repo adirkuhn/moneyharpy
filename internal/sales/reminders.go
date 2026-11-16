@@ -83,8 +83,9 @@ func DefaultReminderText(language string) string {
 }
 
 // ReminderEmail is the subject and body of a reminder about the documents'
-// invoices.
-func ReminderEmail(docs []Document, text string) (string, string) {
+// invoices, and the table of them that an HTML email shows in place of the
+// list in the body.
+func ReminderEmail(docs []Document, text string) (string, string, EmailTable) {
 	first := docs[0]
 	nl := strings.HasPrefix(first.Invoice.Language, "nl")
 	var subject string
@@ -98,16 +99,25 @@ func ReminderEmail(docs []Document, text string) (string, string) {
 	default:
 		subject = fmt.Sprintf("Reminder: %d invoices from {company_name}", len(docs))
 	}
+	day := func(t *time.Time) string {
+		if t == nil {
+			return ""
+		}
+		return t.Format("02-01-2006")
+	}
+	table := EmailTable{Columns: []string{"Invoice", "Invoice date", "Due date", "Amount due"}}
+	if nl {
+		table.Columns = []string{"Factuur", "Factuurdatum", "Vervaldatum", "Openstaand"}
+	}
 	lines := make([]string, len(docs))
 	for i, d := range docs {
 		inv := d.Invoice
-		date := ""
-		if inv.InvoiceDate != nil {
-			date = inv.InvoiceDate.Format("02-01-2006")
-		}
-		lines[i] = fmt.Sprintf("- %s (%s): %s", inv.InvoiceID, date, FormatMoney(inv.Unpaid(), inv.Currency, inv.Language))
+		unpaid := FormatMoney(inv.Unpaid(), inv.Currency, inv.Language)
+		lines[i] = fmt.Sprintf("- %s (%s): %s", inv.InvoiceID, day(inv.InvoiceDate), unpaid)
+		table.Rows = append(table.Rows, []string{inv.InvoiceID, day(inv.InvoiceDate), day(inv.DueDate), unpaid})
 	}
 	list := strings.Join(lines, "\n")
+	table.Text = list
 	body := Expand(text, first)
 	// {reminders_table} is Moneybird's tag for the list, {invoices} ours.
 	if strings.Contains(body, "{invoices}") || strings.Contains(body, "{reminders_table}") {
@@ -115,7 +125,7 @@ func ReminderEmail(docs []Document, text string) (string, string) {
 	} else {
 		body += "\n\n" + list
 	}
-	return Expand(subject, first), body
+	return Expand(subject, first), body, table
 }
 
 type reminder struct {
@@ -274,14 +284,12 @@ func (s *Service) deliverReminder(ctx context.Context, a administration.Listed, 
 		}
 		docs[i], files[i] = doc, File{Name: fileName(inv, "pdf"), ContentType: "application/pdf", Data: pdf}
 	}
-	subject, body := ReminderEmail(docs, j.text)
+	subject, body, table := ReminderEmail(docs, j.text)
 	m := Mail{To: splitAddresses(j.delivery.EmailAddress), BCC: splitAddresses(settings.InvoiceBCC), ReplyTo: docs[0].Identity.Email,
 		FromName: docs[0].Identity.CompanyName, Subject: subject, Body: body, Files: files}
-	if len(docs) == 1 {
-		m.Look = s.emailLook(ctx, a.ID, user, docs[0], InvoiceDetails(docs[0]))
-	} else {
-		m.Look = s.emailLook(ctx, a.ID, user, docs[0], nil)
-	}
+	// The table names the invoices; the facts an invoice email lists under its text would only repeat them.
+	m.Look = s.emailLook(ctx, a.ID, user, docs[0], nil)
+	m.Look.Table = &table
 	return s.mailer.SendDocument(ctx, m)
 }
 

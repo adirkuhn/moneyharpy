@@ -22,6 +22,16 @@ type EmailLook struct {
 	Details  [][2]string
 	// Button is a link the email shows as a button, such as the quote online.
 	Button *EmailButton
+	// Table replaces, in the HTML email, the paragraph of the body that
+	// reads its Text, such as a reminder's list of invoices.
+	Table *EmailTable
+}
+
+// EmailTable is a table an HTML email shows in place of the text it stands for.
+type EmailTable struct {
+	Columns []string
+	Rows    [][]string
+	Text    string
 }
 
 // EmailButton is a labelled link in an email.
