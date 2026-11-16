@@ -21871,9 +21871,6 @@ type ServerInterface interface {
 	// DeactivateRecurringSalesInvoice Deactivate a recurring sales invoice
 	// (PATCH /api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate)
 	DeactivateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
-	// DownloadRecurringSalesInvoiceExamplePdf Download an example of the next invoice
-	// (GET /api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf)
-	DownloadRecurringSalesInvoiceExamplePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// CreateRecurringSalesInvoiceNote Add note to a recurring sales invoice
 	// (POST /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes)
 	CreateRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -24031,12 +24028,6 @@ func (_ Unimplemented) UpdateRecurringSalesInvoice(w http.ResponseWriter, r *htt
 // DeactivateRecurringSalesInvoice Deactivate a recurring sales invoice
 // (PATCH /api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate)
 func (_ Unimplemented) DeactivateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// DownloadRecurringSalesInvoiceExamplePdf Download an example of the next invoice
-// (GET /api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf)
-func (_ Unimplemented) DownloadRecurringSalesInvoiceExamplePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -35385,41 +35376,6 @@ func (siw *ServerInterfaceWrapper) DeactivateRecurringSalesInvoice(w http.Respon
 	handler.ServeHTTP(w, r)
 }
 
-// DownloadRecurringSalesInvoiceExamplePdf operation middleware
-func (siw *ServerInterfaceWrapper) DownloadRecurringSalesInvoiceExamplePdf(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-	_ = err
-
-	// ------------- Path parameter "administration_id" -------------
-	var administrationId AdministrationId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
-		return
-	}
-
-	// ------------- Path parameter "id" -------------
-	var id Id
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DownloadRecurringSalesInvoiceExamplePdf(w, r, administrationId, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
 // CreateRecurringSalesInvoiceNote operation middleware
 func (siw *ServerInterfaceWrapper) CreateRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request) {
 
@@ -41925,9 +41881,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate", wrapper.DeactivateRecurringSalesInvoice)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf", wrapper.DownloadRecurringSalesInvoiceExamplePdf)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes", wrapper.CreateRecurringSalesInvoiceNote)

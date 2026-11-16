@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -285,6 +286,11 @@ func (s *Service) applyRecurring(ctx context.Context, a administration.Listed, u
 	if c.Mergeable != nil {
 		r.Mergeable = *c.Mergeable
 	}
+	if r.AutoSend && (c.AutoSend != nil || c.ContactID != nil) {
+		if err := s.checkAutoSend(ctx, a.ID, user, r.ContactID, &verr); err != nil {
+			return err
+		}
+	}
 	switch {
 	case c.LastDate != nil:
 		r.LastDate = nil
@@ -310,6 +316,26 @@ func (s *Service) applyRecurring(ctx context.Context, a administration.Listed, u
 		verr.Add("last_date", "must not lie before the next invoice date")
 	}
 	return verr.OrNil()
+}
+
+// checkAutoSend refuses sending by itself to a contact that gets its
+// invoices by email but has no address for them: each invoice would stay a
+// draft. Its address has to be fixed first.
+func (s *Service) checkAutoSend(ctx context.Context, admin, user, contactID resource.ID, verr *resource.ValidationError) error {
+	if contactID == 0 {
+		return nil
+	}
+	contact, err := s.contacts.Contact(ctx, admin, contactID, user)
+	if errors.Is(err, contacts.ErrNotFound) {
+		return nil // the contact itself is named as the problem
+	}
+	if err != nil {
+		return err
+	}
+	if (contact.DeliveryMethod == "" || contact.DeliveryMethod == "Email") && strings.TrimSpace(contact.SendInvoicesToEmail) == "" {
+		verr.Add("auto_send", "needs an email address to send invoices to; add one to the contact first")
+	}
+	return nil
 }
 
 func deref[T any](p *T) T {
@@ -649,31 +675,6 @@ func (r Recurring) next() (Invoice, time.Time) {
 		}
 	}
 	return inv, after
-}
-
-// RecurringExamplePDF renders the invoice the recurring invoice makes next,
-// with its layout, contact, lines and workflow, titled as an example. It
-// is not stored and has no number. An inactive one makes no next invoice.
-func (s *Service) RecurringExamplePDF(ctx context.Context, admin, id, user resource.ID) ([]byte, string, error) {
-	a, err := s.admins.Get(ctx, admin, user)
-	if err != nil {
-		return nil, "", err
-	}
-	r, err := s.Recurring(ctx, admin, id, user)
-	if err != nil {
-		return nil, "", err
-	}
-	if !r.Active {
-		return nil, "", invalid("base", "The recurring invoice is not active; it makes no next invoice")
-	}
-	inv, _ := r.next()
-	doc, err := s.document(ctx, a, user, inv)
-	if err != nil {
-		return nil, "", err
-	}
-	doc.Example = true
-	data, err := s.renderer.PDF(doc)
-	return data, "example-invoice-" + r.InvoiceDate.Format(time.DateOnly) + ".pdf", wrap("render example invoice", err)
 }
 
 // createdBy is Moneybird's event of an invoice a recurring invoice made:

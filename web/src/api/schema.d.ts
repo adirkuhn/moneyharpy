@@ -5370,7 +5370,7 @@ export interface paths {
         put?: never;
         /**
          * Create a recurring sales invoice
-         * @description A template that makes a draft sales invoice on invoice_date (today unless given, not in the past) and every frequency frequency_types after it (every month unless given), until last_date or desired_count invoices; with auto_send each is sent too, the way the contact receives invoices. Months, quarters and years keep the day of the first date, or the month's last day when the month is shorter. {period} in a line's description becomes the period the invoice covers, and lines with a period get that period. Workflow, document style and identity default like a new invoice's.
+         * @description A template that makes a draft sales invoice on invoice_date (today unless given, not in the past) and every frequency frequency_types after it (every month unless given), until last_date or desired_count invoices; with auto_send each is sent too, the way the contact receives invoices; auto_send is refused (422 on auto_send) while the contact gets its invoices by email but has no email address for them. Months, quarters and years keep the day of the first date, or the month's last day when the month is shorter. {period} in a line's description becomes the period the invoice covers, and lines with a period get that period. Workflow, document style and identity default like a new invoice's.
          */
         post: operations["createRecurringSalesInvoice"];
         delete?: never;
@@ -5422,7 +5422,7 @@ export interface paths {
         head?: never;
         /**
          * Update a recurring sales invoice
-         * @description Lines with an id change, lines with _destroy go, lines without an id are added; invoices already made stay as they are. A new invoice_date, frequency or frequency_type restarts the schedule from the next invoice date; invoice_date must not lie in the past.
+         * @description Lines with an id change, lines with _destroy go, lines without an id are added; invoices already made stay as they are. A new invoice_date, frequency or frequency_type restarts the schedule from the next invoice date; invoice_date must not lie in the past. Switching auto_send on, or changing the contact while it is on, is refused (422 on auto_send) when the contact gets its invoices by email but has no email address for them.
          */
         patch: operations["updateRecurringSalesInvoice"];
         trace?: never;
@@ -5448,29 +5448,6 @@ export interface paths {
          * @description Stops it from making invoices, for good; the recurring invoice and the invoices it made are kept. Not when it is deactivated already.
          */
         patch: operations["deactivateRecurringSalesInvoice"];
-        trace?: never;
-    };
-    "/api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                administration_id: components["parameters"]["administration_id"];
-                id: components["parameters"]["id"];
-            };
-            cookie?: never;
-        };
-        /**
-         * Download an example of the next invoice
-         * @description MoneyHarpy extension. The invoice the recurring invoice makes on its next date, with its document style, contact, lines and workflow, as a PDF titled "Example invoice"; it is not stored, has no number and no payment QR code. An inactive recurring invoice makes no next invoice and answers 422.
-         */
-        get: operations["downloadRecurringSalesInvoiceExamplePdf"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes": {
@@ -21348,35 +21325,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RecurringSalesInvoice"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            422: components["responses"]["UnprocessableEntity"];
-            429: components["responses"]["TooManyRequests"];
-        };
-    };
-    downloadRecurringSalesInvoiceExamplePdf: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                administration_id: components["parameters"]["administration_id"];
-                id: components["parameters"]["id"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The PDF */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/pdf": string;
                 };
             };
             400: components["responses"]["BadRequest"];

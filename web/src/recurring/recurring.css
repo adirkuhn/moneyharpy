@@ -63,3 +63,4 @@
   .recurring-timeline__item { width: 6rem; }
   .recurring-timeline__more { display: none; }
 }
+.recurring-schedule__unsendable { margin-top: 0.5rem; }

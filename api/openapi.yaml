@@ -10801,7 +10801,7 @@ paths:
       x-permissions: [sales_invoices]
       summary: Create a recurring sales invoice
       description: >-
-        A template that makes a draft sales invoice on invoice_date (today unless given, not in the past) and every frequency frequency_types after it (every month unless given), until last_date or desired_count invoices; with auto_send each is sent too, the way the contact receives invoices. Months, quarters and years keep the day of the first date, or the month's last day when the month is shorter. {period} in a line's description becomes the period the invoice covers, and lines with a period get that period. Workflow, document style and identity default like a new invoice's.
+        A template that makes a draft sales invoice on invoice_date (today unless given, not in the past) and every frequency frequency_types after it (every month unless given), until last_date or desired_count invoices; with auto_send each is sent too, the way the contact receives invoices; auto_send is refused (422 on auto_send) while the contact gets its invoices by email but has no email address for them. Months, quarters and years keep the day of the first date, or the month's last day when the month is shorter. {period} in a line's description becomes the period the invoice covers, and lines with a period get that period. Workflow, document style and identity default like a new invoice's.
       tags: [Recurring sales invoices]
       requestBody:
         required: true
@@ -10922,7 +10922,7 @@ paths:
       x-permissions: [sales_invoices]
       summary: Update a recurring sales invoice
       description: >-
-        Lines with an id change, lines with _destroy go, lines without an id are added; invoices already made stay as they are. A new invoice_date, frequency or frequency_type restarts the schedule from the next invoice date; invoice_date must not lie in the past.
+        Lines with an id change, lines with _destroy go, lines without an id are added; invoices already made stay as they are. A new invoice_date, frequency or frequency_type restarts the schedule from the next invoice date; invoice_date must not lie in the past. Switching auto_send on, or changing the contact while it is on, is refused (422 on auto_send) when the contact gets its invoices by email but has no email address for them.
       tags: [Recurring sales invoices]
       requestBody:
         required: true
@@ -10995,39 +10995,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecurringSalesInvoice'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
-  /api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf:
-    parameters:
-      - $ref: '#/components/parameters/administration_id'
-      - $ref: '#/components/parameters/id'
-    get:
-      operationId: downloadRecurringSalesInvoiceExamplePdf
-      x-permissions: [sales_invoices]
-      summary: Download an example of the next invoice
-      description: >-
-        MoneyHarpy extension. The invoice the recurring invoice makes on its next date, with its document style,
-        contact, lines and workflow, as a PDF titled "Example invoice"; it is not stored, has no number and no payment
-        QR code. An inactive recurring invoice makes no next invoice and answers 422.
-      tags: [Recurring sales invoices]
-      responses:
-        '200':
-          description: The PDF
-          content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

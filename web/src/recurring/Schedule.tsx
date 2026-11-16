@@ -70,6 +70,30 @@ export function scheduleLabels(t: (k: string) => string): Record<string, string>
   }
 }
 
+/** A contact the invoices cannot be sent to automatically, as it gets them by email but has no address for them. */
+export type Unsendable = { name: string; contactId: string }
+
+/** The recurring invoice's contact when it gets its invoices by email without an address for them; null when sending works. */
+export function unsendableContact(r: Pick<RecurringInvoice, 'contact' | 'contact_id'>, name: string): Unsendable | null {
+  const c = r.contact
+  if (!c || !r.contact_id) {
+    return null
+  }
+  const byEmail = !c.delivery_method || c.delivery_method === 'Email'
+  return byEmail && !c.send_invoices_to_email?.trim() ? { name, contactId: r.contact_id } : null
+}
+
+/** Says why invoices cannot go out by themselves, with the way to the contact's form to fix it. */
+function UnsendableWarning({ administrationId, contact }: { administrationId: string; contact: Unsendable }) {
+  const { t } = useTranslation()
+  return (
+    <p className="warning recurring-schedule__unsendable" role="alert">
+      {t('recurring.noEmail', { name: contact.name })}{' '}
+      <Link to={`/${administrationId}/contacts/${contact.contactId}/edit`}>{t('recurring.editContact')}</Link>
+    </p>
+  )
+}
+
 type FormProps = {
   value: ScheduleDraft
   onChange: (change: Partial<ScheduleDraft>) => void
@@ -79,6 +103,9 @@ type FormProps = {
   onCancel?: () => void
   pending?: boolean
   errors: FormErrors
+  administrationId?: string
+  /** The contact, when invoices cannot be sent to it: sending automatically is then refused until its address is fixed. */
+  unsendable?: Unsendable | null
 }
 
 /**
@@ -86,7 +113,7 @@ type FormProps = {
  * frequency as four common choices or "Every n units", "Add another n
  * times", and sending each invoice automatically.
  */
-export function ScheduleForm({ value, onChange, submitLabel, onSubmit, onCancel, pending = false, errors }: FormProps) {
+export function ScheduleForm({ value, onChange, submitLabel, onSubmit, onCancel, pending = false, errors, administrationId = '', unsendable }: FormProps) {
   const { t } = useTranslation()
   const id = useId()
   const submit = (e: FormEvent) => {
@@ -100,6 +127,8 @@ export function ScheduleForm({ value, onChange, submitLabel, onSubmit, onCancel,
   }
   const frequencyErrors = [...(errors.field('frequency') ?? []), ...(errors.field('frequency_type') ?? [])]
   const countErrors = [...(errors.field('desired_count') ?? []), ...(errors.field('last_date') ?? [])]
+  const blocked = value.autoSend && !!unsendable
+  const autoSendErrors = errors.field('auto_send') ?? []
   return (
     <form className="recurring-schedule__form" onSubmit={submit} noValidate aria-label={t('recurring.scheduleForm')}>
       <Problems messages={errors.general} />
@@ -177,11 +206,13 @@ export function ScheduleForm({ value, onChange, submitLabel, onSubmit, onCancel,
               <span>{t('recurring.mergeable')}</span>
             </label>
           )}
+          {blocked && unsendable && <UnsendableWarning administrationId={administrationId} contact={unsendable} />}
+          {!blocked && autoSendErrors.length > 0 && <p className="form-input__message form-input__message--error">{autoSendErrors.join(' ')}</p>}
         </div>
       </div>
       <hr />
       <div className="recurring-schedule__actions">
-        <button className="btn btn--primary" disabled={pending}>{submitLabel}</button>
+        <button className="btn btn--primary" disabled={pending || blocked}>{submitLabel}</button>
         {onCancel && <button type="button" className="btn btn--secondary" onClick={onCancel}>{t('common.cancel')}</button>}
       </div>
     </form>
@@ -197,6 +228,8 @@ type SummaryProps = {
   invoices?: SalesInvoice[]
   administrationId: string
   onEdit?: () => void
+  /** The contact, when it sends automatically but invoices cannot be sent to it. */
+  unsendable?: Unsendable | null
 }
 
 /** How many of the next invoices the timeline shows by date; dots stand for the ones after. */
@@ -207,7 +240,7 @@ const shown = 3
  * will be created every month indefinitely. Edit", and the timeline of the
  * invoices it makes.
  */
-export function ScheduleSummary({ schedule, active, made, invoices = [], administrationId, onEdit }: SummaryProps) {
+export function ScheduleSummary({ schedule, active, made, invoices = [], administrationId, onEdit, unsendable }: SummaryProps) {
   const { t } = useTranslation()
   const frequency = frequencyText(schedule, t)
   const lower = frequency.charAt(0).toLocaleLowerCase() + frequency.slice(1)
@@ -229,6 +262,7 @@ export function ScheduleSummary({ schedule, active, made, invoices = [], adminis
           </>
         )}
       </h2>
+      {active && unsendable && <UnsendableWarning administrationId={administrationId} contact={unsendable} />}
       {(before.length > 0 || dates.length > 0) && (
         <>
           <hr />
