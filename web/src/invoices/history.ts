@@ -125,6 +125,7 @@ const sentences: Record<string, string> = {
   estimate_send_email: 'quoteSentEmail',
   estimate_send_manually: 'quoteSentManually',
   estimate_billed: 'quoteBilled',
+  estimate_signed_online: 'quoteSignedOnline',
 }
 
 /** Which sentence tells an event, as a key under invoices.view.events; a quote's state is named as a quote's. */

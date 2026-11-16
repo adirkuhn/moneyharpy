@@ -154,7 +154,7 @@ func run(logger *slog.Logger) error {
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
 		Store: salesStore, Renderer: invoicedoc.New(), Mailer: sales.MailClient{Client: mailer}, Bank: bank, History: history.NewService(postgres.NewEventStore(pool), ids, time.Now),
-		Notifier: httpapi.SalesNotifier{Webhooks: hooks, Logger: logger}, IDs: ids, Now: time.Now,
+		Notifier: httpapi.SalesNotifier{Webhooks: hooks, Logger: logger}, IDs: ids, Now: time.Now, BaseURL: cfg.baseURL,
 	})
 	bank.UseInvoices(invoiceService)
 	// Subscriptions bill through recurring sales invoices and complete the

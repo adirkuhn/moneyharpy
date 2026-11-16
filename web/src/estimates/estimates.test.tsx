@@ -1,7 +1,7 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Contact } from '../contacts/queries'
 import { choose, rates, sales, senderStyle } from '../invoices/testkit'
 import type { SalesInvoice } from '../invoices/queries'
@@ -233,7 +233,7 @@ describe('a quote', () => {
     )
     await userEvent.click(within(form).getByRole('button', { name: 'Send quote' }))
     await waitFor(() => expect(sending).toEqual({ estimate_sending: {
-      delivery_method: 'Email', email_address: 'quotes@example.com, boss@example.com',
+      delivery_method: 'Email', email_address: 'quotes@example.com, boss@example.com', sign_online: true,
       email_message: 'Beste {contact_name},\n\nIn de bijlage vind je offerte {estimate_id} van {estimate_date} voor {total}. De offerte is geldig tot {due_date}.\n\nMet vriendelijke groet,\n{company_name}',
     } }))
     expect(screen.queryByRole('region', { name: /^Send quote / })).toBeNull()
@@ -246,6 +246,54 @@ describe('a quote', () => {
     expect(screen.getByRole('complementary', { name: 'Quote information' })).toHaveTextContent('Quote marked as accepted')
     await userEvent.click(screen.getByRole('button', { name: 'Bill quote' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/sales_invoices/991'))
+  })
+
+  it('is signed by its sender before it goes to be signed online', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,MINE')
+    let sending: unknown
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/estimates/971', () => HttpResponse.json(estimate())),
+      http.patch('*/api/v2/11/estimates/971/send_estimate', async ({ request }) => {
+        sending = await request.json()
+        return HttpResponse.json(estimate({ state: 'open', estimate_id: '2026-0002', draft_id: null, version: 2 }))
+      }),
+    )
+    renderAt('/11/estimates/971')
+    await userEvent.click(await screen.findByRole('button', { name: 'Send quote' }))
+    const form = screen.getByRole('region', { name: /^Send quote / })
+    expect(within(form).getByText(/Online accepting enables the recipient/)).toBeInTheDocument()
+    expect(within(form).getByRole('checkbox', { name: 'The recipient must sign and accept this quote online.' })).toBeChecked()
+    await userEvent.click(within(form).getByRole('checkbox', { name: 'I want to sign this quote myself before it is being sent.' }))
+    // Not signed yet: it says so and does not send.
+    await userEvent.click(within(form).getByRole('button', { name: 'Send quote' }))
+    expect(within(form).getByText('Sign in the field above.')).toBeInTheDocument()
+    expect(sending).toBeUndefined()
+    const pad = within(form).getByRole('img', { name: 'Signature' })
+    fireEvent.pointerDown(pad, { clientX: 5, clientY: 5, pointerId: 1 })
+    fireEvent.pointerMove(pad, { clientX: 30, clientY: 15, pointerId: 1 })
+    fireEvent.pointerUp(pad, { clientX: 30, clientY: 15, pointerId: 1 })
+    await userEvent.click(within(form).getByRole('button', { name: 'Send quote' }))
+    await waitFor(() => expect(sending).toMatchObject({ estimate_sending: { delivery_method: 'Email', sign_online: true, sender: true }, signature_output: 'data:image/png;base64,MINE' }))
+    vi.restoreAllMocks()
+  })
+
+  it('shows who signed it online, and their signed quote', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/estimates/971', () => HttpResponse.json(estimate({
+      state: 'accepted', estimate_id: '2026-0002', draft_id: null,
+      online_signature: { sender_signed: false, signed: true, signer_name: 'Jan Voorbeeld', signer_email: 'jan@example.com', signer_ip: '203.0.113.7', signed_at: '2026-11-16T14:30:00Z', online_url: 'https://books.example.com/online/estimates/971?code=1' },
+      events: [event('estimate_created', stamp), event('estimate_signed_online', '2026-11-16T14:30:00Z', { name: 'Jan Voorbeeld' })],
+    }))))
+    renderAt('/11/estimates/971')
+    const side = await screen.findByRole('complementary', { name: 'Quote information' })
+    expect(await within(side).findByText('Jan Voorbeeld', { selector: 'dd' })).toBeInTheDocument()
+    expect(within(side).getByText('203.0.113.7')).toBeInTheDocument()
+    expect(within(side).getByRole('link', { name: 'Download signed PDF' })).toHaveAttribute('href', '/api/v2/11/estimates/971/download_signed_pdf')
+    expect(side).toHaveTextContent('Quote accepted and signed online by Jan Voorbeeld')
+    await userEvent.click(screen.getByRole('button', { name: 'Extra' }))
+    expect(screen.getByRole('link', { name: 'View quote online' })).toHaveAttribute('href', 'https://books.example.com/online/estimates/971?code=1')
   })
 
   it('is marked as sent from the same form, without an email', async () => {

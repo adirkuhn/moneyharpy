@@ -20,3 +20,5 @@
 .send-options__indent { display: grid; gap: 1rem; padding-left: 1.5rem; }
 .send-form__emails--wide { max-width: 28rem; }
 .send-form__actions--start { justify-content: flex-start; }
+.send-options__note { margin: 0; color: var(--muted); font-size: 0.875rem; }
+.send-options__signature { display: grid; gap: 0.375rem; padding-left: 1.5rem; }

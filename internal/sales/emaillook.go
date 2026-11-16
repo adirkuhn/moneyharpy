@@ -20,7 +20,12 @@ type EmailLook struct {
 	Sender   administration.Identity
 	Language string
 	Details  [][2]string
+	// Button is a link the email shows as a button, such as the quote online.
+	Button *EmailButton
 }
+
+// EmailButton is a labelled link in an email.
+type EmailButton struct{ Label, URL string }
 
 // emailImages are the images an email can show, besides the style's logo
 // which stands in for a missing email logo.

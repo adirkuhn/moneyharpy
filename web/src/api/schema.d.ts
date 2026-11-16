@@ -4895,7 +4895,7 @@ export interface paths {
         };
         /**
          * Download the signed PDF
-         * @description The PDF the contact signed online. MoneyHarpy has no online signing yet, so every estimate answers 422: it is not signed.
+         * @description The PDF the contact signed online, through a temporary link: the estimate with a last page holding the signatures and what was kept of the signing (name, email address, IP address, browser and time). An estimate the contact has not signed answers 422.
          */
         get: operations["downloadSignedEstimatePdf"];
         put?: never;
@@ -6603,6 +6603,81 @@ export interface paths {
          * @description The first user to register becomes the instance administrator.
          */
         post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/online/estimates/{id}": {
+        parameters: {
+            query: {
+                /** @description The estimate's public_view_code, from the link in its email. */
+                code: components["parameters"]["online_code"];
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * An estimate as its contact sees it online
+         * @description MoneyHarpy's page for the link in an estimate email, after Moneybird's online quotes. Needs no account: the public_view_code opens it until it expires or the estimate is sent again. A wrong or expired code answers 404.
+         */
+        get: operations["getOnlineEstimate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/online/estimates/{id}/pdf": {
+        parameters: {
+            query: {
+                /** @description The estimate's public_view_code, from the link in its email. */
+                code: components["parameters"]["online_code"];
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The PDF of an estimate opened online
+         * @description The estimate's PDF; once the contact signed, the signed PDF.
+         */
+        get: operations["downloadOnlineEstimatePdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/online/estimates/{id}/sign": {
+        parameters: {
+            query: {
+                /** @description The estimate's public_view_code, from the link in its email. */
+                code: components["parameters"]["online_code"];
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept an estimate online with a signature
+         * @description The contact accepts the estimate with their name, email address and drawn signature; the signature need not match the name. The estimate becomes accepted, and the contact and the sender both get the signed PDF by email. As on Moneybird it cannot be rejected online, and it can be signed while it is open or late, once. The IP address and browser are kept with the signature.
+         */
+        post: operations["signOnlineEstimate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8992,6 +9067,81 @@ export interface components {
             original_sales_invoice_id?: components["schemas"]["Identifier"] | null;
             /** @description MoneyHarpy extension. How the estimate was last sent. */
             delivery_method?: string | null;
+            /** @description MoneyHarpy extension. The online signing, once the estimate was sent to be signed online: whether the sender signed it, and the contact's signature details once they signed. The signature images are only in the signed PDF. */
+            online_signature?: components["schemas"]["EstimateOnlineSignature"] | null;
+        };
+        EstimateOnlineSignature: {
+            /** @description The sender signed the estimate before sending it; the signature shows once the contact signed too. */
+            sender_signed: boolean;
+            signed: boolean;
+            signer_name?: string | null;
+            signer_email?: string | null;
+            signer_ip?: string | null;
+            /** Format: date-time */
+            signed_at?: string | null;
+            /** @description The link the contact opens the estimate with, while its public_view_code is valid. */
+            online_url?: string | null;
+        };
+        /** @description MoneyHarpy extension. What the contact sees of an estimate online. */
+        OnlineEstimate: {
+            id: components["schemas"]["Identifier"];
+            estimate_id?: string | null;
+            /** @enum {string} */
+            state: "open" | "late" | "accepted" | "rejected" | "billed" | "archived";
+            /** Format: date */
+            estimate_date?: string | null;
+            /** Format: date */
+            due_date?: string | null;
+            reference?: string | null;
+            currency: string;
+            language: string;
+            prices_are_incl_tax: boolean;
+            /** @description The text above the lines, its tags filled in, as plain text. */
+            pre_text?: string | null;
+            /** @description The text under the lines, its tags filled in, as plain text. */
+            post_text?: string | null;
+            details: {
+                description: string;
+                amount: string;
+                price: string;
+                total_price_excl_tax_with_discount: string;
+                tax_percentage: string;
+            }[];
+            total_price_excl_tax: string;
+            total_tax: string;
+            total_price_incl_tax: string;
+            tax_totals: {
+                tax_percentage: string;
+                taxable_amount: string;
+                tax_amount: string;
+            }[];
+            sender: {
+                company_name: string;
+                address1?: string;
+                address2?: string;
+                zipcode?: string;
+                city?: string;
+                country?: string;
+                email?: string;
+                phone?: string;
+                chamber_of_commerce?: string;
+                tax_number?: string;
+            };
+            contact_name: string;
+            /** @description The contact can still sign it. */
+            signable: boolean;
+            signed: boolean;
+            signer_name?: string | null;
+            /** Format: date-time */
+            signed_at?: string | null;
+        };
+        SignOnlineEstimateRequest: {
+            name: string;
+            email: string;
+            /** @description The drawn signature as a PNG data URL (data:image/png;base64,...). */
+            signature_output: string;
+            /** @description The strokes of the signature as drawn, kept as evidence. */
+            audit_trail?: string;
         };
         EstimateRequest: {
             estimate: {
@@ -9038,15 +9188,18 @@ export interface components {
                 email_address?: string;
                 /** @description Replaces the workflow's email text; {estimate_id}, {estimate_date}, {due_date}, {total}, {contact_name}, {company_name} and {reference} work. */
                 email_message?: string;
+                /** @description The contact accepts the estimate online with a signature; it stays as the estimate's sign_online. Each sending gives it a new public_view_code, valid for 90 days, and the previous code stops working; an email carries the link. An estimate signed already keeps its code. */
                 sign_online?: components["schemas"]["FlexibleBoolean"];
+                /** @description As the top-level sender, where Moneybird's own form puts it. */
+                sender?: components["schemas"]["FlexibleBoolean"];
             };
-            /** @description Accepted for compatibility; MoneyHarpy has no online signing yet. */
+            /** @description The sender signs the estimate before it is sent, with signature_output; as on Moneybird the signature shows only once the contact signed too. */
             sender?: components["schemas"]["FlexibleBoolean"];
-            /** @description Accepted for compatibility; MoneyHarpy has no online signing yet. */
+            /** @description The sender's signature when sender is true, as a PNG data URL (data:image/png;base64,...). */
             signature_output?: string;
-            /** @description Accepted for compatibility; MoneyHarpy has no online signing yet. */
+            /** @description Accepted for compatibility; the sender's signature keeps no strokes. */
             audit_trail?: string;
-            /** @description Accepted for compatibility; MoneyHarpy has no online signing yet. */
+            /** @description Accepted for compatibility. */
             ip_address?: string;
         };
         ChangeEstimateStateRequest: {
@@ -11174,6 +11327,8 @@ export interface components {
         media: string;
         administration_id: components["schemas"]["Identifier"];
         id: components["schemas"]["Identifier"];
+        /** @description The estimate's public_view_code, from the link in its email. */
+        online_code: string;
         /** @description Comma-separated key:value terms. */
         document_filter: string;
         /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
@@ -23423,6 +23578,95 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             403: components["responses"]["Forbidden"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getOnlineEstimate: {
+        parameters: {
+            query: {
+                /** @description The estimate's public_view_code, from the link in its email. */
+                code: components["parameters"]["online_code"];
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The estimate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnlineEstimate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadOnlineEstimatePdf: {
+        parameters: {
+            query: {
+                /** @description The estimate's public_view_code, from the link in its email. */
+                code: components["parameters"]["online_code"];
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    signOnlineEstimate: {
+        parameters: {
+            query: {
+                /** @description The estimate's public_view_code, from the link in its email. */
+                code: components["parameters"]["online_code"];
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignOnlineEstimateRequest"];
+            };
+        };
+        responses: {
+            /** @description The signed estimate */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnlineEstimate"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };

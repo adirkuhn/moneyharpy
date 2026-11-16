@@ -9991,7 +9991,7 @@ paths:
       x-permissions: [estimates]
       summary: Download the signed PDF
       description: >-
-        The PDF the contact signed online. MoneyHarpy has no online signing yet, so every estimate answers 422: it is not signed.
+        The PDF the contact signed online, through a temporary link: the estimate with a last page holding the signatures and what was kept of the signing (name, email address, IP address, browser and time). An estimate the contact has not signed answers 422.
       tags: [Estimates]
       responses:
         '302':
@@ -13172,6 +13172,90 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/online/estimates/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+      - $ref: '#/components/parameters/online_code'
+    get:
+      operationId: getOnlineEstimate
+      summary: An estimate as its contact sees it online
+      description: >-
+        MoneyHarpy's page for the link in an estimate email, after Moneybird's online quotes. Needs no account: the
+        public_view_code opens it until it expires or the estimate is sent again. A wrong or expired code answers 404.
+      tags: [Online estimates]
+      security: []
+      responses:
+        '200':
+          description: The estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnlineEstimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/online/estimates/{id}/pdf:
+    parameters:
+      - $ref: '#/components/parameters/id'
+      - $ref: '#/components/parameters/online_code'
+    get:
+      operationId: downloadOnlineEstimatePdf
+      summary: The PDF of an estimate opened online
+      description: The estimate's PDF; once the contact signed, the signed PDF.
+      tags: [Online estimates]
+      security: []
+      responses:
+        '200':
+          description: The PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/online/estimates/{id}/sign:
+    parameters:
+      - $ref: '#/components/parameters/id'
+      - $ref: '#/components/parameters/online_code'
+    post:
+      operationId: signOnlineEstimate
+      summary: Accept an estimate online with a signature
+      description: >-
+        The contact accepts the estimate with their name, email address and drawn signature; the signature need not
+        match the name. The estimate becomes accepted, and the contact and the sender both get the signed PDF by
+        email. As on Moneybird it cannot be rejected online, and it can be signed while it is open or late, once. The
+        IP address and browser are kept with the signature.
+      tags: [Online estimates]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignOnlineEstimateRequest'
+      responses:
+        '200':
+          description: The signed estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnlineEstimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/auth/login:
     post:
       operationId: login
@@ -13587,6 +13671,14 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/Identifier'
+    online_code:
+      name: code
+      in: query
+      required: true
+      description: The estimate's public_view_code, from the link in its email.
+      schema:
+        type: string
+        pattern: ^\d{1,32}$
     document_filter:
       name: filter
       in: query
@@ -18142,6 +18234,169 @@ components:
               type: string
               nullable: true
               description: MoneyHarpy extension. How the estimate was last sent.
+            online_signature:
+              description: >-
+                MoneyHarpy extension. The online signing, once the estimate was sent to be signed online: whether the
+                sender signed it, and the contact's signature details once they signed. The signature images are only
+                in the signed PDF.
+              nullable: true
+              allOf:
+                - $ref: '#/components/schemas/EstimateOnlineSignature'
+    EstimateOnlineSignature:
+      type: object
+      required: [sender_signed, signed]
+      properties:
+        sender_signed:
+          type: boolean
+          description: The sender signed the estimate before sending it; the signature shows once the contact signed too.
+        signed:
+          type: boolean
+        signer_name:
+          type: string
+          nullable: true
+        signer_email:
+          type: string
+          nullable: true
+        signer_ip:
+          type: string
+          nullable: true
+        signed_at:
+          type: string
+          format: date-time
+          nullable: true
+        online_url:
+          type: string
+          nullable: true
+          description: The link the contact opens the estimate with, while its public_view_code is valid.
+    OnlineEstimate:
+      description: MoneyHarpy extension. What the contact sees of an estimate online.
+      type: object
+      required: [id, state, currency, language, prices_are_incl_tax, details, total_price_excl_tax, total_tax, total_price_incl_tax, tax_totals, sender, contact_name, signable, signed]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        estimate_id:
+          type: string
+          nullable: true
+        state:
+          type: string
+          enum: [open, late, accepted, rejected, billed, archived]
+        estimate_date:
+          type: string
+          format: date
+          nullable: true
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        reference:
+          type: string
+          nullable: true
+        currency:
+          type: string
+        language:
+          type: string
+        prices_are_incl_tax:
+          type: boolean
+        pre_text:
+          type: string
+          nullable: true
+          description: The text above the lines, its tags filled in, as plain text.
+        post_text:
+          type: string
+          nullable: true
+          description: The text under the lines, its tags filled in, as plain text.
+        details:
+          type: array
+          items:
+            type: object
+            required: [description, amount, price, total_price_excl_tax_with_discount, tax_percentage]
+            properties:
+              description:
+                type: string
+              amount:
+                type: string
+              price:
+                type: string
+              total_price_excl_tax_with_discount:
+                type: string
+              tax_percentage:
+                type: string
+        total_price_excl_tax:
+          type: string
+        total_tax:
+          type: string
+        total_price_incl_tax:
+          type: string
+        tax_totals:
+          type: array
+          items:
+            type: object
+            required: [tax_percentage, taxable_amount, tax_amount]
+            properties:
+              tax_percentage:
+                type: string
+              taxable_amount:
+                type: string
+              tax_amount:
+                type: string
+        sender:
+          type: object
+          required: [company_name]
+          properties:
+            company_name:
+              type: string
+            address1:
+              type: string
+            address2:
+              type: string
+            zipcode:
+              type: string
+            city:
+              type: string
+            country:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            chamber_of_commerce:
+              type: string
+            tax_number:
+              type: string
+        contact_name:
+          type: string
+        signable:
+          type: boolean
+          description: The contact can still sign it.
+        signed:
+          type: boolean
+        signer_name:
+          type: string
+          nullable: true
+        signed_at:
+          type: string
+          format: date-time
+          nullable: true
+    SignOnlineEstimateRequest:
+      type: object
+      additionalProperties: false
+      required: [name, email, signature_output]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          maxLength: 255
+        signature_output:
+          type: string
+          maxLength: 400000
+          description: The drawn signature as a PNG data URL (data:image/png;base64,...).
+        audit_trail:
+          type: string
+          maxLength: 100000
+          description: The strokes of the signature as drawn, kept as evidence.
     EstimateRequest:
       type: object
       required: [estimate]
@@ -18254,20 +18509,27 @@ components:
               maxLength: 10000
               description: Replaces the workflow's email text; {estimate_id}, {estimate_date}, {due_date}, {total}, {contact_name}, {company_name} and {reference} work.
             sign_online:
+              description: >-
+                The contact accepts the estimate online with a signature; it stays as the estimate's sign_online. Each
+                sending gives it a new public_view_code, valid for 90 days, and the previous code stops working; an email
+                carries the link. An estimate signed already keeps its code.
+              $ref: '#/components/schemas/FlexibleBoolean'
+            sender:
+              description: As the top-level sender, where Moneybird's own form puts it.
               $ref: '#/components/schemas/FlexibleBoolean'
         sender:
-          description: Accepted for compatibility; MoneyHarpy has no online signing yet.
+          description: The sender signs the estimate before it is sent, with signature_output; as on Moneybird the signature shows only once the contact signed too.
           $ref: '#/components/schemas/FlexibleBoolean'
         signature_output:
-          description: Accepted for compatibility; MoneyHarpy has no online signing yet.
+          description: The sender's signature when sender is true, as a PNG data URL (data:image/png;base64,...).
           type: string
-          maxLength: 100000
+          maxLength: 400000
         audit_trail:
-          description: Accepted for compatibility; MoneyHarpy has no online signing yet.
+          description: Accepted for compatibility; the sender's signature keeps no strokes.
           type: string
           maxLength: 100000
         ip_address:
-          description: Accepted for compatibility; MoneyHarpy has no online signing yet.
+          description: Accepted for compatibility.
           type: string
           maxLength: 100
     ChangeEstimateStateRequest:

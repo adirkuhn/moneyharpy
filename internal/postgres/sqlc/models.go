@@ -373,6 +373,25 @@ type EstimateDetail struct {
 	UpdatedAt        pgtype.Timestamptz
 }
 
+type EstimateSigning struct {
+	EstimateID        int64
+	AdministrationID  int64
+	ViewCode          string
+	ViewCodeExpiresAt pgtype.Timestamptz
+	SentByUserID      pgtype.Int8
+	SenderSignature   []byte
+	SenderSignedAt    pgtype.Timestamptz
+	SenderUserID      pgtype.Int8
+	SignerName        string
+	SignerEmail       string
+	SignerIp          string
+	SignerUserAgent   string
+	Signature         []byte
+	AuditTrail        string
+	SignedAt          pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
 type Event struct {
 	ID               int64
 	AdministrationID int64

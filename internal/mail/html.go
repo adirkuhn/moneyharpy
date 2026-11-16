@@ -41,7 +41,12 @@ type Look struct {
 	ContactLines []string
 	// Details are the document's facts listed under the text, as label and value.
 	Details [][2]string
+	// Button is a web link shown as a button under the text.
+	Button *Button
 }
+
+// Button is a labelled web link.
+type Button struct{ Label, URL string }
 
 // inlineImage is an image the HTML shows through its Content-ID.
 type inlineImage struct {
@@ -87,6 +92,9 @@ var page = template.Must(template.New("email").Parse(`<!DOCTYPE html>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;width:100%;border-collapse:collapse">
 {{- range .Details}}<tr><th align="left" style="padding:4px 16px 4px 0;font-weight:bold;vertical-align:top">{{index . 0}}</th><td style="padding:4px 0">{{index . 1}}</td></tr>{{end}}
 </table>
+{{- end}}
+{{- with .Button}}
+<p style="margin:24px 0 0"><a href="{{.URL}}" style="display:inline-block;padding:10px 20px;border-radius:6px;background-color:#1678D3;color:#FFFFFF;font-weight:bold;text-decoration:none">{{.Label}}</a></p>
 {{- end}}
 </td></tr>
 {{- with .Footer}}
@@ -139,6 +147,7 @@ func renderHTML(text string, l Look) (string, []inlineImage) {
 		Footer                                *footerView
 		Paragraphs                            [][]string
 		Details                               [][2]string
+		Button                                *Button
 		Label                                 string
 	}{
 		BodyStyle:       template.CSS("margin:0;padding:0;background-color:" + pageColour),
@@ -146,6 +155,9 @@ func renderHTML(text string, l Look) (string, []inlineImage) {
 		HeaderTextStyle: template.CSS("margin:0;font-size:20px;line-height:1.4;color:" + safeColour(l.HeaderTextColor, "#465569")),
 		Details:         l.Details,
 		Label:           l.Label,
+	}
+	if b := l.Button; b != nil && (strings.HasPrefix(b.URL, "https://") || strings.HasPrefix(b.URL, "http://")) {
+		view.Button = b
 	}
 	for p := range strings.SplitSeq(strings.ReplaceAll(strings.TrimSpace(text), "\r\n", "\n"), "\n\n") {
 		if p = strings.TrimSpace(p); p != "" {

@@ -126,3 +126,14 @@ func TestDocumentMailWithLookIsHTML(t *testing.T) {
 		t.Errorf("attachment = %v, %v", file, err)
 	}
 }
+
+func TestRenderHTMLShowsTheButton(t *testing.T) {
+	html, _ := renderHTML("Hello", Look{Button: &Button{Label: "View quote", URL: "https://books.example.com/online/estimates/1?code=12"}})
+	if !strings.Contains(html, `href="https://books.example.com/online/estimates/1?code=12"`) || !strings.Contains(html, ">View quote</a>") {
+		t.Errorf("html = %s", html)
+	}
+	// Only web links become buttons.
+	if html, _ := renderHTML("Hello", Look{Button: &Button{Label: "Run", URL: "javascript:alert(1)"}}); strings.Contains(html, "Run</a>") {
+		t.Errorf("unsafe link = %s", html)
+	}
+}

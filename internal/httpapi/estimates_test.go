@@ -3,7 +3,11 @@ package httpapi_test
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"image"
+	"image/color"
+	"image/png"
 	"net/http"
 	"slices"
 	"strings"
@@ -127,7 +131,6 @@ func TestEstimateLifecycle(t *testing.T) {
 		t.Errorf("pdf = %d bytes, %s", len(pdf.body), pdf.header.Get("Content-Disposition"))
 	}
 	owner.follow(owner.do(http.MethodGet, estimates+"/"+e.ID+"/download_pdf.json?media=stationery", nil))
-	wantStatus(t, owner.do(http.MethodGet, estimates+"/"+e.ID+"/download_signed_pdf", nil), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodGet, estimates+"/1/download_signed_pdf", nil), http.StatusNotFound)
 
 	wantStatus(t, owner.do(http.MethodPost, estimates+"/"+e.ID+"/notes", map[string]any{"note": map[string]any{"note": "Called"}}), http.StatusCreated)
@@ -267,5 +270,107 @@ func TestEstimateWebhooks(t *testing.T) {
 		"estimate_updated", "sales_invoice_created_based_on_estimate"}
 	if !slices.Equal(actions, want) {
 		t.Errorf("actions = %v, want %v", actions, want)
+	}
+}
+
+// signaturePNG is a drawn signature as a signature pad sends it.
+func signaturePNG(t *testing.T) string {
+	t.Helper()
+	img := image.NewNRGBA(image.Rect(0, 0, 40, 12))
+	for x := range 40 {
+		img.Set(x, 6, color.Black)
+	}
+	var out bytes.Buffer
+	if err := png.Encode(&out, img); err != nil {
+		t.Fatal(err)
+	}
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(out.Bytes())
+}
+
+func TestEstimateIsSignedOnline(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	api, estimates, create := estimateSetup(t, owner)
+	wantStatus(t, owner.do(http.MethodPatch, api+"/identities/default", map[string]any{"identity": map[string]any{"email": "books@example.com"}}), http.StatusOK)
+	e := create(map[string]any{"language": "en"})
+
+	// Signed by the sender first, sent to be signed online.
+	sent := owner.do(http.MethodPatch, estimates+"/"+e.ID+"/send_estimate", map[string]any{
+		"estimate_sending": map[string]any{"delivery_method": "Email", "sign_online": true, "sender": true}, "signature_output": signaturePNG(t),
+	})
+	wantStatus(t, sent, http.StatusOK)
+	signing := decode[struct {
+		PublicViewCode *string `json:"public_view_code"`
+		Online         *struct {
+			SenderSigned bool    `json:"sender_signed"`
+			Signed       bool    `json:"signed"`
+			OnlineURL    *string `json:"online_url"`
+			SignerIP     *string `json:"signer_ip"`
+		} `json:"online_signature"`
+	}](t, sent)
+	if signing.PublicViewCode == nil || signing.Online == nil || !signing.Online.SenderSigned || signing.Online.Signed || signing.Online.OnlineURL == nil {
+		t.Fatalf("sent = %s", sent.body)
+	}
+	code := *signing.PublicViewCode
+	h.mailer.mu.Lock()
+	body := h.mailer.documents[len(h.mailer.documents)-1].Body
+	h.mailer.mu.Unlock()
+	if !strings.Contains(body, *signing.Online.OnlineURL) || !strings.Contains(*signing.Online.OnlineURL, "/online/estimates/"+e.ID+"?code="+code) {
+		t.Errorf("mail = %q, link %s", body, *signing.Online.OnlineURL)
+	}
+	wantStatus(t, owner.do(http.MethodGet, estimates+"/"+e.ID+"/download_signed_pdf", nil), http.StatusUnprocessableEntity)
+
+	// The contact needs no account, only the code.
+	contact := &client{t: t, base: owner.base, http: &http.Client{}}
+	online := "/api/online/estimates/" + e.ID
+	wantStatus(t, contact.do(http.MethodGet, online+"?code=1", nil), http.StatusNotFound)
+	wantStatus(t, contact.do(http.MethodGet, "/api/online/estimates/1?code="+code, nil), http.StatusNotFound)
+	page := contact.do(http.MethodGet, online+"?code="+code, nil)
+	wantStatus(t, page, http.StatusOK)
+	view := decode[struct {
+		State    string `json:"state"`
+		Signable bool   `json:"signable"`
+		Signed   bool   `json:"signed"`
+		Sender   struct {
+			Email string `json:"email"`
+		} `json:"sender"`
+		ContactName string `json:"contact_name"`
+		Details     []struct {
+			Description   string `json:"description"`
+			TaxPercentage string `json:"tax_percentage"`
+		} `json:"details"`
+	}](t, page)
+	if view.State != "open" || !view.Signable || view.Signed || view.Sender.Email != "books@example.com" || view.ContactName != "Example Shop B.V." ||
+		len(view.Details) != 1 || view.Details[0].TaxPercentage != "21" {
+		t.Fatalf("online = %s", page.body)
+	}
+	pdf := contact.do(http.MethodGet, online+"/pdf?code="+code, nil)
+	wantStatus(t, pdf, http.StatusOK)
+	if !bytes.HasPrefix(pdf.body, []byte("%PDF-")) {
+		t.Errorf("pdf = %d bytes", len(pdf.body))
+	}
+
+	refused := contact.do(http.MethodPost, online+"/sign?code="+code, map[string]any{"name": "", "email": "jan", "signature_output": "data:image/png;base64,AAAA"})
+	wantStatus(t, refused, http.StatusUnprocessableEntity)
+	for _, field := range []string{"name", "email", "signature_output"} {
+		if !strings.Contains(string(refused.body), field) {
+			t.Errorf("refusal lacks %s: %s", field, refused.body)
+		}
+	}
+	signed := contact.do(http.MethodPost, online+"/sign?code="+code, map[string]any{"name": "Jan Voorbeeld", "email": "jan@example.com", "signature_output": signaturePNG(t), "audit_trail": "[]"})
+	wantStatus(t, signed, http.StatusOK)
+	if !strings.Contains(string(signed.body), `"signed":true`) || !strings.Contains(string(signed.body), `"state":"accepted"`) {
+		t.Errorf("signed = %s", signed.body)
+	}
+	wantStatus(t, contact.do(http.MethodPost, online+"/sign?code="+code, map[string]any{"name": "Jan Voorbeeld", "email": "jan@example.com", "signature_output": signaturePNG(t)}), http.StatusUnprocessableEntity)
+
+	got := owner.do(http.MethodGet, estimates+"/"+e.ID, nil)
+	if !strings.Contains(string(got.body), `"state":"accepted"`) || !strings.Contains(string(got.body), `"signer_name":"Jan Voorbeeld"`) || !strings.Contains(string(got.body), `"signer_ip":"127.0.0.1"`) {
+		t.Errorf("estimate = %s", got.body)
+	}
+	file := owner.follow(owner.do(http.MethodGet, estimates+"/"+e.ID+"/download_signed_pdf", nil))
+	if !bytes.HasPrefix(file.body, []byte("%PDF-")) {
+		t.Errorf("signed pdf = %d bytes", len(file.body))
 	}
 }

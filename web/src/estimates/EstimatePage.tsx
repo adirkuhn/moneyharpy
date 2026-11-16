@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import { type FormEvent, type ReactNode, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -8,6 +9,7 @@ import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { useContact } from '../contacts/queries'
 import { ConfirmPanel } from '../detail/Detail'
 import { formErrors, FormRow, TextArea } from '../forms/Form'
+import { type Signature, SignaturePad } from '../forms/SignaturePad'
 import { type HistoryItem, historyOf } from '../invoices/history'
 import { NotesAndHistory } from '../invoices/InvoiceHistory'
 import { AttachmentZone } from '../invoices/InvoiceExtras'
@@ -22,7 +24,7 @@ import { Page } from '../layout/Page'
 import { ActionMenu, type MenuItem } from '../list/ListActions'
 import { EstimateBadge } from './EstimatesPage'
 import {
-  type Estimate, estimateAttachmentURL, estimatePdfURL, estimateTitle, isBillable, isEditable, transitions, useAddEstimateAttachment, useAddEstimateNote,
+  type Estimate, estimateAttachmentURL, estimatePdfURL, signedEstimatePdfURL, estimateTitle, isBillable, isEditable, transitions, useAddEstimateAttachment, useAddEstimateNote,
   useBillEstimate, useChangeEstimateState, useDeleteEstimate, useDeleteEstimateAttachment, useDeleteEstimateNote, useDuplicateEstimate, useEstimate,
   useSendEstimate,
 } from './queries'
@@ -114,6 +116,8 @@ function EstimateScreen({ administrationId, estimate: e }: { administrationId: s
       onSelect: () => duplicate.mutate(e, { onSuccess: (copy) => navigate(`${list}/${copy.id}`) }),
     },
     ...(editable ? [{ label: t('invoices.view.changeLayout'), onSelect: () => setLayoutsOpen(true) }] : []),
+    // Moneybird's "View quote online": the page the contact opens, while its code is valid.
+    ...(e.online_signature?.online_url ? [{ label: t('estimates.view.viewOnline'), href: e.online_signature.online_url }] : []),
     ...(state !== 'archived' && sent ? [{ label: t('estimates.view.archive'), onSelect: () => setPanel('archive') }] : []),
     { label: t('estimates.view.delete'), danger: true, onSelect: () => setPanel('delete') },
   ]
@@ -229,7 +233,13 @@ function SendPanel({ administrationId, estimate: e, onDone }: { administrationId
   const [email, setEmail] = useState(e.contact?.send_estimates_to_email || e.contact?.send_invoices_to_email || '')
   const [several, setSeveral] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [signOnline, setSignOnline] = useState(e.sign_online ?? true)
+  const [selfSign, setSelfSign] = useState(false)
+  const [signature, setSignature] = useState<Signature | null>(null)
+  const [unsigned, setUnsigned] = useState(false)
   const address = useRef<HTMLInputElement>(null)
+  // Sending again replaces the access code of the earlier email, as Moneybird warns.
+  const resending = !!e.public_view_code && !e.online_signature?.signed
   const flows = workflows.data ?? []
   const flow = flows.find((w) => w.id === e.workflow_id) ?? flows.find((w) => w.type === 'EstimateWorkflow' && w.default)
   const dt = i18n.getFixedT(e.language || flow?.language || i18n.language)
@@ -245,8 +255,16 @@ function SendPanel({ administrationId, estimate: e, onDone }: { administrationId
   }
   const submit = (ev: FormEvent) => {
     ev.preventDefault()
+    const signing = method === 'Email' && signOnline && selfSign
+    if (signing && !signature) {
+      setUnsigned(true)
+      return
+    }
     const body = method === 'Email'
-      ? { delivery_method: method, email_address: email.split(',').map((m) => m.trim()).filter(Boolean).join(', '), email_message: text }
+      ? {
+        delivery_method: method, email_address: email.split(',').map((m) => m.trim()).filter(Boolean).join(', '), email_message: text, sign_online: signOnline,
+        ...(signing && signature ? { sender: true, signature_output: signature.image } : {}),
+      }
       : { delivery_method: method }
     send.mutate(body, { onSuccess: onDone })
   }
@@ -290,6 +308,7 @@ function SendPanel({ administrationId, estimate: e, onDone }: { administrationId
                   </div>
                 )}
               </FormRow>
+              {resending && <p className="warning" role="note">{t('estimates.send.resendWarning')}</p>}
               <TextArea
                 label={labels.email_message}
                 rows={10}
@@ -298,6 +317,34 @@ function SendPanel({ administrationId, estimate: e, onDone }: { administrationId
                 errors={errors.field('email_message')}
                 onChange={(ev) => setMessage(ev.target.value)}
               />
+              <p className="send-options__note">{t('estimates.send.onlineText')}</p>
+              <label className="check">
+                <input type="checkbox" checked={signOnline} onChange={(ev) => setSignOnline(ev.target.checked)} />
+                <span>{t('estimates.send.signOnline')}</span>
+              </label>
+              {signOnline && (
+                <>
+                  <label className="check">
+                    <input type="checkbox" checked={selfSign} onChange={(ev) => setSelfSign(ev.target.checked)} />
+                    <span>{t('estimates.send.selfSign')}</span>
+                  </label>
+                  {selfSign && (
+                    <div className="send-options__signature">
+                      <SignaturePad
+                        label={t('signature.label')}
+                        invalid={unsigned && !signature}
+                        onChange={(s) => {
+                          setSignature(s)
+                          setUnsigned(false)
+                        }}
+                      />
+                      {(unsigned && !signature) || errors.field('signature_output') ? (
+                        <p className="form-input__message form-input__message--error">{errors.field('signature_output')?.join(' ') || t('signature.required')}</p>
+                      ) : null}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
           <hr />
@@ -329,6 +376,8 @@ function EstimateSidebar({ administrationId, estimate: e, onHighlight }: Sidebar
     [t('estimates.view.invoice'), invoice.data && <Link to={`/${administrationId}/sales_invoices/${invoice.data.id}`}>{invoiceTitle(invoice.data, t)}</Link>],
     [t('estimates.view.invoiced'), invoice.data && t('estimates.view.invoicedOf', { amount: money(invoice.data.total_price_incl_tax), total: money(e.total_price_incl_tax) })],
     [t('invoices.workflow'), flow && <Link to={`/${administrationId}/workflows/${flow.id}`}>{flow.name}</Link>],
+    // What was kept of the online signature, as Moneybird lists it beside the quote.
+    ...signatureFacts(e, t, i18n.language),
   ]
   return (
     <aside className="invoice-sidebar" aria-label={t('estimates.view.sidebar')}>
@@ -344,6 +393,22 @@ function EstimateSidebar({ administrationId, estimate: e, onHighlight }: Sidebar
       <NotesAndHistory administrationId={administrationId} items={estimateHistory(e)} currency={e.currency ?? 'EUR'} add={add} remove={remove} />
     </aside>
   )
+}
+
+/** The contact's online signature: who signed, with which address, from where and when, and the signed PDF. */
+function signatureFacts(e: Estimate, t: TFunction, language: string): [string, ReactNode][] {
+  const g = e.online_signature
+  if (!g?.signed) {
+    return []
+  }
+  const at = g.signed_at ? new Date(g.signed_at).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' }) : ''
+  return [
+    [t('estimates.signature.signedBy'), g.signer_name],
+    [t('estimates.signature.email'), g.signer_email],
+    [t('estimates.signature.ip'), g.signer_ip],
+    [t('estimates.signature.signedAt'), at],
+    [t('estimates.signature.document'), <a href={signedEstimatePdfURL(e.administration_id ?? '', e.id ?? '')} download>{t('estimates.signature.download')}</a>],
+  ]
 }
 
 /** What happened to the quote, newest first; a quote made before the server kept events tells only when it was created. */

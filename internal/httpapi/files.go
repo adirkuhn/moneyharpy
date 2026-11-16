@@ -179,6 +179,13 @@ func (s *server) DownloadFile(w http.ResponseWriter, r *http.Request, token stri
 			return
 		}
 		writeDocument(w, "application/pdf", name, data)
+	case fileSignedEstimatePDF:
+		data, name, err := s.deps.Sales.SignedEstimatePDF(r.Context(), l.Admin, l.ID, l.User)
+		if err != nil {
+			s.failEstimate(w, r, err)
+			return
+		}
+		writeDocument(w, "application/pdf", name, data)
 	case filePackingSlip:
 		data, name, err := s.deps.Sales.PackingSlip(r.Context(), l.Admin, l.ID, l.User, l.Stationery)
 		if err != nil {

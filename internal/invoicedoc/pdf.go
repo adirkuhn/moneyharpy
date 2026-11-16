@@ -181,6 +181,9 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	if pdf.GetY() > w.lastBottom() {
 		pdf.AddPage()
 	}
+	if prices {
+		w.signatures()
+	}
 	w.last = true
 	return pdf
 }
