@@ -169,25 +169,43 @@ describe('booking rule form', () => {
 })
 
 describe('transactions', () => {
-  it('lists transactions to book with filters in the address', async () => {
+  it('shows every transaction of this year as a card, filtered by the address', async () => {
     let filter = ''
     server.use(...loaded())
+    const paid = mutation({
+      id: '702', amount: '39.0', amount_open: '0.0', state: 'processed', contra_account_name: null, message: 'Order 12', uri: '/11/financial_mutations/702',
+      links: [{ payment_id: '951', document_type: 'SalesInvoice', document_id: '901', label: 'INV', reference: '2026-0001', contact_name: 'Example Shop B.V.', date: '2026-10-30', total: '39.0', currency: 'EUR', state: 'paid', payment_reference: 'RF18 0000 0000 0000 01', details: '2 Coffee', price: '39.0' }],
+    })
     server.use(http.get('*/api/v2/11/financial_mutations', ({ request }) => {
       filter = new URL(request.url).searchParams.get('filter') ?? ''
-      return HttpResponse.json([mutation()])
+      return HttpResponse.json([mutation(), paid])
     }))
     renderAt('/11/financial_mutations')
-    const table = await screen.findByRole('table', { name: 'Transactions' })
-    expect(within(table).getByRole('link', { name: 'Hosting Company' })).toHaveAttribute('href', '/11/financial_mutations/701')
-    expect(filter).toBe('period:this_year,state:unprocessed')
-    await userEvent.click(screen.getByRole('button', { name: 'Transactions to book' }))
+    const feed = await screen.findByRole('list', { name: 'Transactions' })
+    expect(filter).toBe('period:this_year,state:all')
+    const open = within(feed).getByRole('article', { name: 'Hosting Company' })
+    expect(open).toHaveTextContent('2026-11-01 - NL44 RABO 0123 4567 89')
+    expect(open).toHaveTextContent('Payment reference: Monthly hosting plan')
+    expect(open).toHaveTextContent('€-25.50')
+    expect(within(open).getByRole('img', { name: 'Unprocessed' })).toBeInTheDocument()
+    expect(within(open).getByRole('link', { name: 'Link open amount' })).toHaveAttribute('href', '/11/financial_mutations/701')
+    // A processed one shows what it pays, as Moneybird's card does.
+    const done = within(feed).getByRole('article', { name: 'Payment reference: Order 12' })
+    expect(within(done).getByRole('img', { name: 'Processed' })).toBeInTheDocument()
+    const linked = within(done).getByRole('list', { name: 'Linked to' })
+    expect(within(linked).getByRole('link', { name: 'INV 2026-0001 · Example Shop B.V.' })).toHaveAttribute('href', '/11/sales_invoices/901')
+    expect(linked).toHaveTextContent('2026-10-30 · €39.00')
+    expect(linked).toHaveTextContent('2 Coffee')
+    expect(within(done).queryByRole('link', { name: 'Link open amount' })).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Transactions from this year' }))
     const panel = screen.getByRole('search', { name: 'Filter transactions' })
     await userEvent.selectOptions(within(panel).getByLabelText('Account'), '501')
-    await userEvent.click(within(panel).getByRole('radio', { name: 'All' }))
+    await userEvent.click(within(panel).getByRole('radio', { name: 'Unprocessed' }))
+    await userEvent.click(within(panel).getByRole('radio', { name: 'Debit' }))
     await userEvent.click(within(panel).getByRole('button', { name: 'Filter' }))
-    await waitFor(() => expect(filter).toBe('period:this_year,state:all,financial_account_id:501'))
-    expect(screen.getByRole('button', { name: 'Filtered transactions' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Import statement' })).toHaveAttribute('href', '/11/financial_accounts/501')
+    await waitFor(() => expect(filter).toBe('period:this_year,state:unprocessed,mutation_type:debit,financial_account_id:501'))
+    expect(screen.getByRole('button', { name: 'Transactions of Main bank' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Administration menu' })
     expect(within(nav).getByRole('link', { name: 'Transactions' })).toHaveAttribute('aria-current', 'page')
   })
@@ -200,16 +218,16 @@ describe('transactions', () => {
       return HttpResponse.json([mutation()])
     }))
     renderAt('/11/financial_mutations')
-    await screen.findByRole('table', { name: 'Transactions' })
-    await userEvent.click(screen.getByRole('button', { name: 'Transactions to book' }))
+    await screen.findByRole('list', { name: 'Transactions' })
+    await userEvent.click(screen.getByRole('button', { name: 'Transactions from this year' }))
     const panel = screen.getByRole('search', { name: 'Filter transactions' })
-    expect(within(panel).getByRole('link', { name: 'Booked transactions' })).toHaveAttribute('href', '/11/financial_mutations?state=processed')
+    expect(within(panel).getByRole('link', { name: 'Processed transactions' })).toHaveAttribute('href', '/11/financial_mutations?state=processed')
     expect(within(panel).getByRole('link', { name: 'All periods' })).toHaveAttribute('href', '/11/financial_mutations?period=all')
     await userEvent.click(within(panel).getByRole('link', { name: 'All periods' }))
-    await waitFor(() => expect(filter).toBe('state:unprocessed'))
+    await waitFor(() => expect(filter).toBe('state:all'))
     await userEvent.click(screen.getByRole('button', { name: 'Filtered transactions' }))
-    await userEvent.click(screen.getByRole('link', { name: 'All transactions' }))
-    await waitFor(() => expect(filter).toBe('period:this_year,state:all'))
+    await userEvent.click(screen.getByRole('link', { name: 'Unprocessed transactions' }))
+    await waitFor(() => expect(filter).toBe('period:this_year,state:unprocessed'))
   })
 
   it('reads a range of months from the address', async () => {
@@ -384,7 +402,7 @@ describe('financial accounts', () => {
     expect(list).toHaveTextContent('There is 1 deactivated account.')
     await userEvent.click(within(list).getByRole('button', { name: 'Show deactivated account.' }))
     expect(within(list).getByRole('link', { name: 'Old bank' })).toHaveTextContent('This account is disabled')
-    expect(await screen.findByRole('link', { name: 'Link unprocessed transactions (431)' })).toHaveAttribute('href', '/11/financial_mutations')
+    expect(await screen.findByRole('link', { name: 'Link unprocessed transactions (431)' })).toHaveAttribute('href', '/11/financial_mutations?state=unprocessed')
   })
 
   it('imports a dropped statement file into its account and shows its transactions', async () => {

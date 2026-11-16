@@ -220,6 +220,18 @@ func TestBankTransactionsPayInvoices(t *testing.T) {
 	if got.State != "paid" || deref(got.Payments[0].FinancialMutationID) != incoming.ID {
 		t.Errorf("invoice = %+v", got)
 	}
+	// The transaction sums up the invoice it pays, as Moneybird's transaction list shows it.
+	shown := decode[struct {
+		Links []struct {
+			Label       string `json:"label"`
+			DocumentID  string `json:"document_id"`
+			ContactName string `json:"contact_name"`
+			Price       string `json:"price"`
+		} `json:"links"`
+	}](t, owner.do(http.MethodGet, api+"/financial_mutations/"+incoming.ID, nil))
+	if len(shown.Links) != 1 || shown.Links[0].Label != "INV" || shown.Links[0].DocumentID != inv.ID || shown.Links[0].ContactName == "" || shown.Links[0].Price != "1000.0" {
+		t.Errorf("links = %+v", shown.Links)
+	}
 	r = owner.do(http.MethodDelete, api+"/financial_mutations/"+incoming.ID+"/unlink_booking", map[string]any{"booking_type": "Payment", "booking_id": linked.Payments[0].ID})
 	wantStatus(t, r, http.StatusOK)
 	if m := decode[mutation](t, r); m.State != "unprocessed" || m.AmountOpen != "1000.0" {

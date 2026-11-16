@@ -1,10 +1,8 @@
-import { type DragEvent, useId, useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
-import { Problems } from '../auth/AuthLayout'
-import { formErrors } from '../forms/Form'
 import { CaretIcon, InfoIcon, ListIcon, type ListIconKind } from '../layout/icons'
 import { groupIBAN } from '../invoices/paper'
 import { Loading } from '../layout/Loading'
@@ -13,7 +11,8 @@ import { Page } from '../layout/Page'
 import { GettingStarted } from '../list/GettingStarted'
 import { ActionMenu } from '../list/ListActions'
 import { useOverview } from '../overview/queries'
-import { type FinancialAccount, formatAmount, useFinancialAccounts, useImportStatementFile } from './queries'
+import { AddTransactions } from './AddTransactions'
+import { type FinancialAccount, formatAmount, useFinancialAccounts } from './queries'
 import './accounts.css'
 
 /** The icon of an account by its kind, as Moneybird pictures banks, cash and the others. */
@@ -89,7 +88,7 @@ export function FinancialAccountsPage() {
       >
         <InfoIcon />
       </button>
-      <Link className="btn btn--secondary" to={`${base}/financial_mutations`}>{t('bank.accounts.linkUnprocessed', { count: unprocessed })}</Link>
+      <Link className="btn btn--secondary" to={`${base}/financial_mutations?state=unprocessed`}>{t('bank.accounts.linkUnprocessed', { count: unprocessed })}</Link>
       <button type="button" className={`btn btn--accent btn--with-icon${adding ? ' is-active' : ''}`} aria-expanded={adding} aria-controls={addId} onClick={() => setAdding(!adding)}>
         <span>{t('bank.accounts.addTransactions')}</span>
         <CaretIcon />
@@ -178,58 +177,5 @@ function AccountRow({ account: a, to, language }: { account: FinancialAccount; t
         <span className="accounts__chevron" aria-hidden="true">›</span>
       </Link>
     </li>
-  )
-}
-
-type AddProps = { id: string; administrationId: string; manualTo: string; onImported: (accountId: string) => void }
-
-/** Moneybird's Add transactions: a field to drop a CAMT.053 or MT940 file on, or a way to add them by hand. */
-function AddTransactions({ id, administrationId, manualTo, onImported }: AddProps) {
-  const { t } = useTranslation()
-  const upload = useImportStatementFile(administrationId)
-  const [over, setOver] = useState(false)
-  const take = (files: FileList | null) => {
-    const file = files?.[0]
-    if (file) {
-      upload.mutate(file, { onSuccess: (res) => onImported(res.financial_account_id) })
-    }
-  }
-  const drop = (e: DragEvent) => {
-    e.preventDefault()
-    setOver(false)
-    take(e.dataTransfer.files)
-  }
-  const errors = formErrors(upload.error, {})
-  return (
-    <section id={id} className="add-transactions" aria-label={t('bank.accounts.addTransactions')}>
-      <label
-        className={`add-transactions__drop${over ? ' is-over' : ''}`}
-        onDragOver={(e) => {
-          e.preventDefault()
-          setOver(true)
-        }}
-        onDragLeave={() => setOver(false)}
-        onDrop={drop}
-      >
-        <span className="add-transactions__icon" aria-hidden="true"><ListIcon kind="upload" /></span>
-        <span className="add-transactions__title">{upload.isPending ? t('bank.accounts.importing') : t('bank.accounts.dropTitle')}</span>
-        <span className="add-transactions__subtitle">{t('bank.accounts.dropSubtitle')}</span>
-        <input
-          className="sr-only"
-          type="file"
-          accept=".xml,.sta,.940,.mt940,.txt,.camt,application/xml,text/xml,text/plain"
-          aria-label={t('bank.accounts.dropTitle')}
-          disabled={upload.isPending}
-          onChange={(e) => {
-            take(e.target.files)
-            e.target.value = ''
-          }}
-        />
-      </label>
-      <Problems messages={[...errors.general, ...(errors.field('file') ?? [])]} />
-      <p className="add-transactions__manual">
-        {t('bank.accounts.manualText')} <Link to={manualTo}>{t('bank.accounts.manualLink')}</Link>
-      </p>
-    </section>
   )
 }

@@ -7931,6 +7931,32 @@ export interface components {
              */
             valutation_date: string | null;
             ledger_account_bookings: components["schemas"]["LedgerAccountBooking"][];
+            /** @description MoneyHarpy extension, on the list and a single transaction. The documents the payments pay, summed up as Moneybird's transaction list shows them. */
+            links?: components["schemas"]["FinancialMutationLink"][];
+        };
+        FinancialMutationLink: {
+            payment_id: components["schemas"]["Identifier"];
+            /** @enum {string} */
+            document_type: "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt";
+            document_id: components["schemas"]["Identifier"];
+            /**
+             * @description Moneybird's short name of the kind of document.
+             * @enum {string}
+             */
+            label: "INV" | "EXT" | "PUR" | "REC";
+            /** @description The invoice number or the document's reference. */
+            reference: string;
+            contact_name: string;
+            /** Format: date */
+            date?: string | null;
+            total: string;
+            currency: string;
+            state: string;
+            payment_reference?: string | null;
+            /** @description The lines, summed up as "2 Coffee, 1 Tea". */
+            details: string;
+            /** @description The amount of the transaction that pays this document. */
+            price: string;
         };
         /** @description A Moneybird financial statement with MoneyHarpy extensions. */
         FinancialStatement: components["schemas"]["financial_statement_response"] & {

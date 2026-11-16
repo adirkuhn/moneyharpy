@@ -15944,6 +15944,52 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/LedgerAccountBooking'
+            links:
+              type: array
+              description: >-
+                MoneyHarpy extension, on the list and a single transaction. The documents the payments pay, summed
+                up as Moneybird's transaction list shows them.
+              items:
+                $ref: '#/components/schemas/FinancialMutationLink'
+    FinancialMutationLink:
+      type: object
+      required: [payment_id, document_type, document_id, label, reference, contact_name, total, currency, state, details, price]
+      properties:
+        payment_id:
+          $ref: '#/components/schemas/Identifier'
+        document_type:
+          type: string
+          enum: [SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt]
+        document_id:
+          $ref: '#/components/schemas/Identifier'
+        label:
+          type: string
+          enum: [INV, EXT, PUR, REC]
+          description: Moneybird's short name of the kind of document.
+        reference:
+          type: string
+          description: The invoice number or the document's reference.
+        contact_name:
+          type: string
+        date:
+          type: string
+          format: date
+          nullable: true
+        total:
+          type: string
+        currency:
+          type: string
+        state:
+          type: string
+        payment_reference:
+          type: string
+          nullable: true
+        details:
+          type: string
+          description: The lines, summed up as "2 Coffee, 1 Tea".
+        price:
+          type: string
+          description: The amount of the transaction that pays this document.
     FinancialStatement:
       description: A Moneybird financial statement with MoneyHarpy extensions.
       allOf:

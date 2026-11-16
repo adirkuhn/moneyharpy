@@ -737,6 +737,15 @@ export const nl: Messages = {
     },
   },
   bank: {
+    feed: {
+      views: { all: 'Transacties van dit jaar', unprocessed: 'Onverwerkte transacties', processed: 'Verwerkte transacties', auto_booked: 'Automatisch geboekte transacties', custom: 'Gefilterde transacties' },
+      viewAccount: 'Transacties van {{name}}', status: 'Status', type: 'Soort transactie',
+      states: { all: 'Alle', unprocessed: 'Onverwerkt', processed: 'Verwerkt', auto_booked: 'Automatisch geboekt' },
+      types: { all: 'Alle', credit: 'Bij', debit: 'Af' },
+      paymentReference: 'Betalingskenmerk: {{reference}}', processed: 'Verwerkt', unprocessed: 'Onverwerkt', linked: 'Gekoppeld aan',
+      linkOpen: 'Openstaand bedrag koppelen', linkRest: 'De rest koppelen', about: 'Over transacties',
+      showMore_one: 'Nog {{count}} transactie tonen', showMore_other: 'Nog {{count}} transacties tonen',
+    },
     accounts: {
       title: 'Financiële rekeningen', moreInfo: 'Meer informatie', more: 'Meer acties', addTransactions: 'Transacties toevoegen',
       linkUnprocessed_one: 'Onverwerkte transacties koppelen ({{count}})', linkUnprocessed_other: 'Onverwerkte transacties koppelen ({{count}})',
