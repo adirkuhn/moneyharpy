@@ -1142,7 +1142,9 @@ test('a quote is written, sent, accepted and billed as an invoice', async ({ pag
   await expect(paper.getByRole('button', { name: 'Edit the text above the lines' })).toContainText('Example Shop B.V.')
 
   await page.getByRole('button', { name: 'Send quote' }).click()
-  await page.getByRole('button', { name: 'Mark as sent' }).click()
+  const sending = page.getByRole('region', { name: /^Send quote / })
+  await sending.getByRole('radio', { name: /Send quote manually/ }).check()
+  await sending.getByRole('button', { name: 'Send quote' }).click()
   await expect(page.locator('.actionbar .badge', { hasText: 'Open' })).toBeVisible()
   await expect(page.getByRole('document', { name: /^Quote \d/ })).toBeVisible()
   const pdf = await page.request.get((await page.getByRole('link', { name: 'Download' }).getAttribute('href')) ?? '')

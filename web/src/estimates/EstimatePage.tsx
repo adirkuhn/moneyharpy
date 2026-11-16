@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useId, useState } from 'react'
+import { type FormEvent, type ReactNode, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -7,7 +7,7 @@ import { formatAmount } from '../banking/queries'
 import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { useContact } from '../contacts/queries'
 import { ConfirmPanel } from '../detail/Detail'
-import { formErrors, TextArea, TextInput } from '../forms/Form'
+import { formErrors, FormRow, TextArea } from '../forms/Form'
 import { type HistoryItem, historyOf } from '../invoices/history'
 import { NotesAndHistory } from '../invoices/InvoiceHistory'
 import { AttachmentZone } from '../invoices/InvoiceExtras'
@@ -15,6 +15,7 @@ import { InvoiceEditor, type Opening } from '../invoices/InvoiceFormPage'
 import { CategoryChips } from '../invoices/InvoiceSidebar'
 import { invoiceTitle, useSalesInvoice } from '../invoices/queries'
 import { useWorkflows } from '../invoicing/queries'
+import { CaretIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
@@ -103,10 +104,6 @@ function EstimateScreen({ administrationId, estimate: e }: { administrationId: s
   const sent = state !== 'draft'
   const problems = formErrors(send.error ?? change.error ?? bill.error ?? remove.error ?? duplicate.error, {}).general
 
-  const sendItems: MenuItem[] = [
-    { label: sent ? t('estimates.view.sendAgain') : t('estimates.view.sendEmail'), onSelect: () => setPanel('send') },
-    { label: t('estimates.view.markSent'), disabled: send.isPending, onSelect: () => send.mutate({ delivery_method: 'Manual' }) },
-  ]
   // Archiving has its own entry under Extra, as at Moneybird.
   const states: MenuItem[] = transitions[state]
     .filter((s) => s !== 'archived')
@@ -124,7 +121,16 @@ function EstimateScreen({ administrationId, estimate: e }: { administrationId: s
   const actions = (
     <div className="invoice-actions">
       <div className="invoice-actions__buttons">
-        <ActionMenu primary={!sent} label={t('estimates.view.send')} items={sendItems} />
+        {/* As on Moneybird, Send quote opens its form above the quote rather than a menu. */}
+        <button
+          type="button"
+          className={`btn ${sent ? 'btn--secondary' : 'btn--primary'} btn--with-icon${panel === 'send' ? ' is-active' : ''}`}
+          aria-expanded={panel === 'send'}
+          onClick={() => setPanel(panel === 'send' ? null : 'send')}
+        >
+          <span>{t('estimates.view.send')}</span>
+          <CaretIcon />
+        </button>
         {isBillable(state) && (
           <button
             type="button"
@@ -205,32 +211,99 @@ function EstimateAttachments({ administrationId, estimate: e }: { administration
   return <AttachmentZone attachments={e.attachments ?? []} add={add} remove={remove} url={(a) => estimateAttachmentURL(administrationId, e.id ?? '', a)} />
 }
 
-/** Moneybird's send form of a quote: the address it goes to and a message of its own, else the workflow's. */
+const methods = ['Email', 'Manual'] as const
+type Method = (typeof methods)[number]
+
+/**
+ * Moneybird's send form of a quote, above the quote: by email, to one or
+ * more addresses with a message starting as the workflow's, or manually,
+ * which only marks it sent.
+ */
 function SendPanel({ administrationId, estimate: e, onDone }: { administrationId: string; estimate: Estimate; onDone: () => void }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const heading = useId()
+  const helpId = useId()
   const send = useSendEstimate(administrationId, e.id ?? '')
+  const workflows = useWorkflows(administrationId)
+  const [method, setMethod] = useState<Method>('Email')
   const [email, setEmail] = useState(e.contact?.send_estimates_to_email || e.contact?.send_invoices_to_email || '')
-  const [message, setMessage] = useState('')
-  const labels = { email_address: t('estimates.send.email'), email_message: t('estimates.send.message') }
+  const [several, setSeveral] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const address = useRef<HTMLInputElement>(null)
+  const flows = workflows.data ?? []
+  const flow = flows.find((w) => w.id === e.workflow_id) ?? flows.find((w) => w.type === 'EstimateWorkflow' && w.default)
+  const dt = i18n.getFixedT(e.language || flow?.language || i18n.language)
+  const text = message ?? (flow?.invoice_email_body?.trim() || dt('estimates.send.defaultMessage'))
+  const labels = { delivery_method: t('estimates.send.method'), email_address: t('estimates.send.email'), email_message: t('estimates.send.message') }
   const errors = formErrors(send.error, labels)
+
+  const addAddress = () => {
+    const kept = email.replace(/[\s,]+$/, '')
+    setEmail(kept ? `${kept}, ` : '')
+    setSeveral(true)
+    address.current?.focus()
+  }
   const submit = (ev: FormEvent) => {
     ev.preventDefault()
-    send.mutate({ delivery_method: 'Email', email_address: email.trim(), ...(message.trim() ? { email_message: message } : {}) }, { onSuccess: onDone })
+    const body = method === 'Email'
+      ? { delivery_method: method, email_address: email.split(',').map((m) => m.trim()).filter(Boolean).join(', '), email_message: text }
+      : { delivery_method: method }
+    send.mutate(body, { onSuccess: onDone })
   }
+  const option = (m: Method) => (
+    <label className="send-option">
+      <input type="radio" name={`${heading}-method`} value={m} checked={method === m} onChange={() => setMethod(m)} />
+      <span className="send-option__text">
+        <strong>{t(`estimates.send.methods.${m}`)}</strong> <small>{t(`estimates.send.methodsText.${m}`)}</small>
+      </span>
+    </label>
+  )
   return (
-    <section className="send-form" aria-labelledby={heading}>
+    <section className="send-form send-form--quote" aria-labelledby={heading}>
       <form onSubmit={submit} noValidate>
-        <div className="send-form__intro">
-          <h3 id={heading} className="send-form__title">{t('estimates.send.title')}</h3>
-          <p className="send-form__text">{t('estimates.send.text')}</p>
-        </div>
+        <h3 id={heading} className="send-form__title send-form__title--strong">{t('estimates.send.title', { name: estimateTitle(e, t) })}</h3>
         <Problems messages={errors.general} />
-        <div className="send-form__fields">
-          <TextInput label={labels.email_address} type="email" value={email} errors={errors.field('email_address')} onChange={(ev) => setEmail(ev.target.value)} />
-          <TextArea label={labels.email_message} help={t('estimates.send.messageHelp')} maxLength={10000} value={message} errors={errors.field('email_message')} onChange={(ev) => setMessage(ev.target.value)} />
-        </div>
-        <div className="send-form__actions">
+        <fieldset className="send-options" aria-label={labels.delivery_method}>
+          {option('Email')}
+          {method === 'Email' && (
+            <div className="send-options__indent">
+              <FormRow label={labels.email_address} errors={errors.field('email_address')}>
+                {({ labelId: _, ...control }) => (
+                  <div className="send-form__emails send-form__emails--wide">
+                    <div className="send-form__email">
+                      <input
+                        ref={address}
+                        type="text"
+                        autoCapitalize="none"
+                        maxLength={1000}
+                        value={email}
+                        onChange={(ev) => setEmail(ev.target.value)}
+                        onBlur={() => setEmail(email.replace(/[\s,]+$/, ''))}
+                        {...control}
+                        aria-describedby={[control['aria-describedby'], several ? helpId : undefined].filter(Boolean).join(' ') || undefined}
+                      />
+                      <button type="button" className="send-form__icon-button" aria-label={t('estimates.send.addEmail')} title={t('estimates.send.addEmail')} onClick={addAddress}>
+                        <span aria-hidden="true">+</span>
+                      </button>
+                    </div>
+                    {several && <p id={helpId} className="form-input__help">{t('estimates.send.severalHelp')}</p>}
+                  </div>
+                )}
+              </FormRow>
+              <TextArea
+                label={labels.email_message}
+                rows={10}
+                maxLength={10000}
+                value={text}
+                errors={errors.field('email_message')}
+                onChange={(ev) => setMessage(ev.target.value)}
+              />
+            </div>
+          )}
+          <hr />
+          {option('Manual')}
+        </fieldset>
+        <div className="send-form__actions send-form__actions--start">
           <button className="btn btn--primary" disabled={send.isPending}>{t('estimates.send.submit')}</button>
           <button type="button" className="btn btn--secondary" onClick={onDone}>{t('common.cancel')}</button>
         </div>
