@@ -1115,22 +1115,22 @@ func (e FinancialMutationLinkDocumentType) Valid() bool {
 
 // Defines values for FinancialMutationLinkLabel.
 const (
-	EXT FinancialMutationLinkLabel = "EXT"
-	INV FinancialMutationLinkLabel = "INV"
-	PUR FinancialMutationLinkLabel = "PUR"
-	REC FinancialMutationLinkLabel = "REC"
+	FinancialMutationLinkLabelEXT FinancialMutationLinkLabel = "EXT"
+	FinancialMutationLinkLabelINV FinancialMutationLinkLabel = "INV"
+	FinancialMutationLinkLabelPUR FinancialMutationLinkLabel = "PUR"
+	FinancialMutationLinkLabelREC FinancialMutationLinkLabel = "REC"
 )
 
 // Valid indicates whether the value is a known member of the FinancialMutationLinkLabel enum.
 func (e FinancialMutationLinkLabel) Valid() bool {
 	switch e {
-	case EXT:
+	case FinancialMutationLinkLabelEXT:
 		return true
-	case INV:
+	case FinancialMutationLinkLabelINV:
 		return true
-	case PUR:
+	case FinancialMutationLinkLabelPUR:
 		return true
-	case REC:
+	case FinancialMutationLinkLabelREC:
 		return true
 	default:
 		return false
@@ -1512,6 +1512,57 @@ func (e LinkBookingRequestBookingType) Valid() bool {
 	case LinkBookingRequestBookingTypeSalesInvoice:
 		return true
 	case LinkBookingRequestBookingTypeVatDocument:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LinkSuggestionBookingType.
+const (
+	LinkSuggestionBookingTypeDocument             LinkSuggestionBookingType = "Document"
+	LinkSuggestionBookingTypeExternalSalesInvoice LinkSuggestionBookingType = "ExternalSalesInvoice"
+	LinkSuggestionBookingTypeLedgerAccount        LinkSuggestionBookingType = "LedgerAccount"
+	LinkSuggestionBookingTypeSalesInvoice         LinkSuggestionBookingType = "SalesInvoice"
+)
+
+// Valid indicates whether the value is a known member of the LinkSuggestionBookingType enum.
+func (e LinkSuggestionBookingType) Valid() bool {
+	switch e {
+	case LinkSuggestionBookingTypeDocument:
+		return true
+	case LinkSuggestionBookingTypeExternalSalesInvoice:
+		return true
+	case LinkSuggestionBookingTypeLedgerAccount:
+		return true
+	case LinkSuggestionBookingTypeSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LinkSuggestionLabel.
+const (
+	LinkSuggestionLabelEXT   LinkSuggestionLabel = "EXT"
+	LinkSuggestionLabelEmpty LinkSuggestionLabel = ""
+	LinkSuggestionLabelINV   LinkSuggestionLabel = "INV"
+	LinkSuggestionLabelPUR   LinkSuggestionLabel = "PUR"
+	LinkSuggestionLabelREC   LinkSuggestionLabel = "REC"
+)
+
+// Valid indicates whether the value is a known member of the LinkSuggestionLabel enum.
+func (e LinkSuggestionLabel) Valid() bool {
+	switch e {
+	case LinkSuggestionLabelEXT:
+		return true
+	case LinkSuggestionLabelEmpty:
+		return true
+	case LinkSuggestionLabelINV:
+		return true
+	case LinkSuggestionLabelPUR:
+		return true
+	case LinkSuggestionLabelREC:
 		return true
 	default:
 		return false
@@ -4689,6 +4740,30 @@ func (e ListExternalSalesInvoicesParamsSort) Valid() bool {
 	case ListExternalSalesInvoicesParamsSortDateAsc:
 		return true
 	case ListExternalSalesInvoicesParamsSortDateDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListFinancialMutationLinkSuggestionsParamsScope.
+const (
+	ListFinancialMutationLinkSuggestionsParamsScopeAll            ListFinancialMutationLinkSuggestionsParamsScope = "all"
+	ListFinancialMutationLinkSuggestionsParamsScopeDocuments      ListFinancialMutationLinkSuggestionsParamsScope = "documents"
+	ListFinancialMutationLinkSuggestionsParamsScopeLedgerAccounts ListFinancialMutationLinkSuggestionsParamsScope = "ledger_accounts"
+	ListFinancialMutationLinkSuggestionsParamsScopeSalesInvoices  ListFinancialMutationLinkSuggestionsParamsScope = "sales_invoices"
+)
+
+// Valid indicates whether the value is a known member of the ListFinancialMutationLinkSuggestionsParamsScope enum.
+func (e ListFinancialMutationLinkSuggestionsParamsScope) Valid() bool {
+	switch e {
+	case ListFinancialMutationLinkSuggestionsParamsScopeAll:
+		return true
+	case ListFinancialMutationLinkSuggestionsParamsScopeDocuments:
+		return true
+	case ListFinancialMutationLinkSuggestionsParamsScopeLedgerAccounts:
+		return true
+	case ListFinancialMutationLinkSuggestionsParamsScopeSalesInvoices:
 		return true
 	default:
 		return false
@@ -8139,6 +8214,42 @@ type LinkBookingRequestProjectId1 = int
 type LinkBookingRequest_ProjectId struct {
 	union json.RawMessage
 }
+
+// LinkSuggestion MoneyHarpy extension. Something a transaction can be linked to.
+type LinkSuggestion struct {
+	// BookingId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	BookingId Identifier `json:"booking_id"`
+
+	// BookingType The booking_type of link_booking.
+	BookingType LinkSuggestionBookingType `json:"booking_type"`
+	ContactName string                    `json:"contact_name"`
+	Currency    string                    `json:"currency"`
+	Date        *openapi_types.Date       `json:"date,omitempty"`
+	Details     string                    `json:"details"`
+
+	// Label Moneybird's short name of the kind of document; empty for a category.
+	Label LinkSuggestionLabel `json:"label"`
+
+	// Open What is still to be received or paid.
+	Open             string  `json:"open"`
+	PaymentReference *string `json:"payment_reference,omitempty"`
+
+	// Price The price_base link_booking books when linking it.
+	Price string `json:"price"`
+
+	// Reference The invoice number, the document's reference or the category's name.
+	Reference string `json:"reference"`
+	State     string `json:"state"`
+	Total     string `json:"total"`
+}
+
+// LinkSuggestionBookingType The booking_type of link_booking.
+type LinkSuggestionBookingType string
+
+// LinkSuggestionLabel Moneybird's short name of the kind of document; empty for a category.
+type LinkSuggestionLabel string
 
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
@@ -14229,6 +14340,15 @@ type ListFinancialMutationVersionsParams struct {
 	// Filter Comma-separated key:value terms.
 	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
 }
+
+// ListFinancialMutationLinkSuggestionsParams defines parameters for ListFinancialMutationLinkSuggestions.
+type ListFinancialMutationLinkSuggestionsParams struct {
+	Query *string                                          `form:"query,omitempty" json:"query,omitempty"`
+	Scope *ListFinancialMutationLinkSuggestionsParamsScope `form:"scope,omitempty" json:"scope,omitempty"`
+}
+
+// ListFinancialMutationLinkSuggestionsParamsScope defines parameters for ListFinancialMutationLinkSuggestions.
+type ListFinancialMutationLinkSuggestionsParamsScope string
 
 // ImportFinancialStatementFile201JSONResponseBodyFormat defines parameters for ImportFinancialStatementFile.
 type ImportFinancialStatementFile201JSONResponseBodyFormat string
@@ -21975,6 +22095,9 @@ type ServerInterface interface {
 	// LinkFinancialMutationBooking Link a booking to a financial mutation
 	// (PATCH /api/v2/{administration_id}/financial_mutations/{id}/link_booking)
 	LinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListFinancialMutationLinkSuggestions What a transaction can be linked to
+	// (GET /api/v2/{administration_id}/financial_mutations/{id}/link_suggestions)
+	ListFinancialMutationLinkSuggestions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params ListFinancialMutationLinkSuggestionsParams)
 	// UnlinkFinancialMutationBooking Unlink a booking from a financial mutation
 	// (DELETE /api/v2/{administration_id}/financial_mutations/{id}/unlink_booking)
 	UnlinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -23991,6 +24114,12 @@ func (_ Unimplemented) GetFinancialMutation(w http.ResponseWriter, r *http.Reque
 // LinkFinancialMutationBooking Link a booking to a financial mutation
 // (PATCH /api/v2/{administration_id}/financial_mutations/{id}/link_booking)
 func (_ Unimplemented) LinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListFinancialMutationLinkSuggestions What a transaction can be linked to
+// (GET /api/v2/{administration_id}/financial_mutations/{id}/link_suggestions)
+func (_ Unimplemented) ListFinancialMutationLinkSuggestions(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params ListFinancialMutationLinkSuggestionsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -33864,6 +33993,70 @@ func (siw *ServerInterfaceWrapper) LinkFinancialMutationBooking(w http.ResponseW
 	handler.ServeHTTP(w, r)
 }
 
+// ListFinancialMutationLinkSuggestions operation middleware
+func (siw *ServerInterfaceWrapper) ListFinancialMutationLinkSuggestions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListFinancialMutationLinkSuggestionsParams
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "scope" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "scope", r.URL.Query(), &params.Scope, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "scope"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scope", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFinancialMutationLinkSuggestions(w, r, administrationId, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // UnlinkFinancialMutationBooking operation middleware
 func (siw *ServerInterfaceWrapper) UnlinkFinancialMutationBooking(w http.ResponseWriter, r *http.Request) {
 
@@ -41644,6 +41837,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/financial_mutations/{id}", wrapper.GetFinancialMutation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/financial_mutations/{id}/link_suggestions", wrapper.ListFinancialMutationLinkSuggestions)
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/financial_mutations/{id}/link_booking", wrapper.LinkFinancialMutationBooking)

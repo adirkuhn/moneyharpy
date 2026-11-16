@@ -735,12 +735,19 @@ export const en = {
     },
   },
   bank: {
+    link: {
+      title: 'Link transaction', scope: 'Search in', find: 'Find invoices or categories…', results: 'Matches', nothing: 'Nothing found.',
+      scopes: { all: 'All', sales_invoices: 'Invoices', documents: 'Incoming', ledger_accounts: 'Categories' },
+      newPurchaseInvoice: 'Purchase invoice', newReceipt: 'Receipt', amount: 'Amount to link', description: 'Description',
+      descriptionPlaceholder: 'Description (optional)', submit: 'Link', left: 'Left to link: {{amount}}',
+    },
     feed: {
       views: { all: 'Transactions from this year', unprocessed: 'Unprocessed transactions', processed: 'Processed transactions', auto_booked: 'Automatically booked transactions', custom: 'Filtered transactions' },
       viewAccount: 'Transactions of {{name}}', status: 'Status', type: 'Transaction type',
       states: { all: 'All', unprocessed: 'Unprocessed', processed: 'Processed', auto_booked: 'Automatically booked' },
       types: { all: 'All', credit: 'Credit', debit: 'Debit' },
       paymentReference: 'Payment reference: {{reference}}', processed: 'Processed', unprocessed: 'Unprocessed', linked: 'Linked to',
+      upload: 'Upload a document', uploading: 'Uploading…',
       linkOpen: 'Link open amount', linkRest: 'Link the rest', about: 'About transactions',
       showMore_one: 'Show {{count}} more transaction', showMore_other: 'Show {{count}} more transactions',
     },

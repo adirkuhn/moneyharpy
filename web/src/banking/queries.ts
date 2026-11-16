@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { fileBody } from '../invoices/queries'
 import { api, unwrap } from '../api/client'
 import type { components } from '../api/schema'
 import { balanceSheetTypes, type DocumentType, type LedgerAccount, profitAndLossTypes, tree } from '../bookkeeping/queries'
@@ -236,4 +237,68 @@ export function formatAmount(amount: string | number | null | undefined, currenc
   } catch {
     return value.toFixed(2)
   }
+}
+
+export type LinkSuggestion = components['schemas']['LinkSuggestion']
+export type LinkScope = 'all' | 'sales_invoices' | 'documents' | 'ledger_accounts'
+
+/** What the transaction can be linked to, best match first, as Moneybird suggests when linking. */
+export function useLinkSuggestions(administrationId: string, id: string, query: string, scope: LinkScope, enabled = true) {
+  return useQuery({
+    queryKey: ['financial-mutations', administrationId, 'suggestions', id, scope, query],
+    enabled,
+    placeholderData: keepPreviousData,
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/financial_mutations/{id}/link_suggestions', {
+      ...one(administrationId, id), params: { ...one(administrationId, id).params, query: { ...(query ? { query } : {}), scope } },
+    })),
+  })
+}
+
+type LinkBody = {
+  booking_type: LinkSuggestion['booking_type'] | 'NewPurchaseInvoice' | 'NewReceipt'
+  booking_id?: string
+  price_base?: string
+  description?: string
+}
+
+/** Links (part of) the transaction to anything: an invoice, a document, a category or a new purchase invoice or receipt. */
+export function useLink(administrationId: string, id: string) {
+  const client = useQueryClient()
+  const saved = useMutationSaved(administrationId, id)
+  return useMutation({
+    mutationFn: (body: LinkBody) => unwrap(api.PATCH('/api/v2/{administration_id}/financial_mutations/{id}/link_booking', { ...one(administrationId, id), body })),
+    onSuccess: saved.onSuccess,
+    onSettled: () => {
+      void saved.onSettled()
+      for (const key of ['sales-invoices', 'sales-invoice', 'external-invoices', 'external-invoice', 'documents', 'overview']) {
+        void client.invalidateQueries({ queryKey: [key, administrationId] })
+      }
+    },
+  })
+}
+
+/**
+ * Moneybird's Upload a document on a transaction: a new receipt for what
+ * is open, paid by the transaction, with the file attached.
+ */
+export function useUploadForTransaction(administrationId: string, id: string) {
+  const client = useQueryClient()
+  const saved = useMutationSaved(administrationId, id)
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const before = await unwrap(api.GET('/api/v2/{administration_id}/financial_mutations/{id}', one(administrationId, id)))
+      const known = new Set((before.payments ?? []).map((p) => p.id))
+      const linked = await unwrap(api.PATCH('/api/v2/{administration_id}/financial_mutations/{id}/link_booking', { ...one(administrationId, id), body: { booking_type: 'NewReceipt' } }))
+      const made = (linked.payments ?? []).find((p) => !known.has(p.id))
+      if (made?.invoice_id) {
+        await unwrap(api.POST('/api/v2/{administration_id}/documents/receipts/{id}/attachments', { ...one(administrationId, made.invoice_id), ...fileBody(file) }))
+      }
+      return linked
+    },
+    onSuccess: saved.onSuccess,
+    onSettled: () => {
+      void saved.onSettled()
+      void client.invalidateQueries({ queryKey: ['documents', administrationId] })
+    },
+  })
 }
