@@ -443,16 +443,22 @@ test('bank statements are imported, booked by rules and by hand', async ({ page 
   // Moneybird's feed of cards: this year's transactions, booked ones with what they are booked on.
   const feed = page.getByRole('list', { name: 'Transactions' })
   await expect(feed.getByRole('article', { name: 'Hosting Company' }).getByRole('img', { name: 'Processed' })).toBeVisible()
-  await feed.getByRole('article', { name: 'Example Client B.V.' }).getByRole('link', { name: 'Link open amount' }).click()
-
-  const form = page.getByRole('form', { name: 'Book' })
-  await form.getByLabel('Category').selectOption(await optionValue('Category', 'Revenue'))
-  await form.getByLabel('Amount').fill('600')
-  await form.getByRole('button', { name: 'Book' }).click()
-  await expect(page.getByRole('table', { name: 'Bookings' }).getByText('Revenue')).toBeVisible()
-  await page.getByRole('form', { name: 'Book' }).getByLabel('Category').selectOption(await optionValue('Category', 'Revenue'))
-  await page.getByRole('form', { name: 'Book' }).getByRole('button', { name: 'Book' }).click()
-  await expect(page.getByRole('form', { name: 'Book' })).toBeHidden()
+  // Linked in the card: part on Revenue, then the rest.
+  const client = feed.getByRole('article', { name: 'Example Client B.V.' })
+  const bookOnRevenue = async (amount?: string) => {
+    await client.getByRole('button', { name: /Link (open amount|the rest)/ }).click()
+    const panel = client.getByRole('form', { name: 'Link transaction' })
+    await panel.getByRole('combobox', { name: 'Search in' }).selectOption('ledger_accounts')
+    await panel.getByRole('searchbox').fill('Revenue')
+    await panel.locator('label', { hasText: /^Revenue/ }).first().click()
+    if (amount) await panel.getByRole('textbox', { name: 'Amount to link' }).fill(amount)
+    await panel.getByRole('button', { name: 'Link', exact: true }).click()
+    await expect(panel).toBeHidden()
+  }
+  await bookOnRevenue('600')
+  await expect(client.getByRole('list', { name: 'Linked to' })).toContainText('Revenue')
+  await bookOnRevenue()
+  await expect(client.getByRole('img', { name: 'Processed' })).toBeVisible()
 
   const id = uri.slice(1)
   const balance = await (await page.request.get(`/api/v2/${id}/reports/bank_balance`)).json()
