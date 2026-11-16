@@ -362,6 +362,11 @@ func TestAutoSendNeedsTheContactsEmailAddress(t *testing.T) {
 	if _, err := h.svc.CreateRecurring(ctx, adminID, owner, in); fieldsOf(t, err)["auto_send"] == nil {
 		t.Errorf("auto-send to a contact without an email address: %v", err)
 	}
+	// A subscription's recurring invoice always sends by itself.
+	in.ForSubscription = true
+	if _, err := h.svc.CreateRecurring(ctx, adminID, owner, in); err != nil {
+		t.Errorf("for a subscription: %v", err)
+	}
 
 	r := recurring(t, h, "2026-12-01", RecurringChanges{})
 	if _, err := h.svc.UpdateRecurring(ctx, adminID, r.ID, owner, RecurringChanges{ContactID: ptr(noEmail), AutoSend: ptr(true)}); fieldsOf(t, err)["auto_send"] == nil {

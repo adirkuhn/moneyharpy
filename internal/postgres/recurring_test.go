@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
@@ -15,6 +16,10 @@ func TestRecurringInvoicesAreStoredAndMakeInvoices(t *testing.T) {
 	ctx := context.Background()
 	f := newSalesFixture(t)
 	today := adminNow().Format(time.DateOnly)
+	// Sending by itself needs an email address to send to.
+	if _, err := f.contacts.Update(ctx, f.admin, f.customer, f.owner, contacts.Changes{SendInvoicesToEmail: ptr("billing@example.com")}); err != nil {
+		t.Fatal(err)
+	}
 	r, err := f.svc.CreateRecurring(ctx, f.admin, f.owner, sales.RecurringChanges{
 		ContactID: &f.customer, Reference: ptr("Contract 7"), InvoiceDate: ptr(today), FrequencyType: ptr(sales.Quarter), Frequency: ptr(2),
 		AutoSend: ptr(true), LastDate: ptr("2099-12-31"), Discount: ptr("10"),

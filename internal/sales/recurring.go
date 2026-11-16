@@ -161,6 +161,10 @@ type RecurringChanges struct {
 	Mergeable         *bool
 	Details           []DetailInput
 	CustomFields      []FieldValue
+	// ForSubscription marks the recurring invoice a subscription bills
+	// through; it always sends by itself, so the contact's email address is
+	// not checked for it.
+	ForSubscription bool
 }
 
 func (c RecurringChanges) invoiceChanges() Changes {
@@ -286,7 +290,7 @@ func (s *Service) applyRecurring(ctx context.Context, a administration.Listed, u
 	if c.Mergeable != nil {
 		r.Mergeable = *c.Mergeable
 	}
-	if r.AutoSend && (c.AutoSend != nil || c.ContactID != nil) {
+	if r.AutoSend && (c.AutoSend != nil || c.ContactID != nil) && !c.ForSubscription && r.SubscriptionID == nil {
 		if err := s.checkAutoSend(ctx, a.ID, user, r.ContactID, &verr); err != nil {
 			return err
 		}
