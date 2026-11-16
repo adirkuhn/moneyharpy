@@ -617,12 +617,16 @@ func (s *Service) bookLinear(ctx context.Context, admin, user resource.ID, a Ass
 	before := a
 	a.ValueChanges = append([]ValueChange(nil), a.ValueChanges...)
 	var added []ValueChange
+	language := ""
+	if adm, err := s.admins.Get(ctx, admin, user); err == nil {
+		language = adm.Language
+	}
 	for _, d := range days {
 		amount, ok := a.linearOn(d)
 		if !ok {
 			break
 		}
-		description := "Linear depreciation"
+		description := linearDescription(language)
 		c := ValueChange{ID: s.ids.Next(), Type: Linear, Date: d, Amount: amount, Description: &description, CreatedAt: s.now()}
 		a.addChange(c)
 		added = append(added, c)
@@ -760,4 +764,13 @@ func wrap(what string, err error) error {
 		return nil
 	}
 	return fmt.Errorf("%s: %w", what, err)
+}
+
+// linearDescription names a linear depreciation in the administration's
+// language, as it is booked.
+func linearDescription(language string) string {
+	if strings.HasPrefix(language, "nl") {
+		return "Lineaire afschrijving"
+	}
+	return "Linear depreciation"
 }

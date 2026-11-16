@@ -114,7 +114,7 @@ func TestEstimateLifecycle(t *testing.T) {
 	mails := h.mailer.documents
 	h.mailer.mu.Unlock()
 	if len(mails) != 1 || mails[0].To[0] != "quotes@example.com" || len(mails[0].Files) != 1 || !bytes.HasPrefix(mails[0].Files[0].Data, []byte("%PDF-")) ||
-		!strings.HasPrefix(mails[0].Files[0].Name, "estimate-") {
+		!strings.HasPrefix(mails[0].Files[0].Name, "quote-") {
 		t.Fatalf("mails = %+v", mails)
 	}
 	wantStatus(t, owner.do(http.MethodPatch, estimates+"/"+e.ID+"/send_estimate", map[string]any{"estimate_sending": map[string]any{"delivery_method": "Post"}}), http.StatusBadRequest)
@@ -127,7 +127,7 @@ func TestEstimateLifecycle(t *testing.T) {
 	wantStatus(t, missing, http.StatusNotFound)
 
 	pdf := owner.follow(owner.do(http.MethodGet, estimates+"/"+e.ID+"/download_pdf", nil))
-	if !bytes.HasPrefix(pdf.body, []byte("%PDF-")) || !strings.Contains(pdf.header.Get("Content-Disposition"), "estimate-") {
+	if !bytes.HasPrefix(pdf.body, []byte("%PDF-")) || !strings.Contains(pdf.header.Get("Content-Disposition"), "quote-") {
 		t.Errorf("pdf = %d bytes, %s", len(pdf.body), pdf.header.Get("Content-Disposition"))
 	}
 	owner.follow(owner.do(http.MethodGet, estimates+"/"+e.ID+"/download_pdf.json?media=stationery", nil))

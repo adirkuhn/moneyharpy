@@ -220,7 +220,8 @@ type PayInput struct {
 // Pay makes an open purchase transaction for what a purchase invoice or
 // receipt has unpaid, to the supplier's IBAN, to batch and export later.
 func (s *Service) Pay(ctx context.Context, admin, user resource.ID, in PayInput) (Transaction, error) {
-	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
 		return Transaction{}, err
 	}
 	d, err := s.store.DocumentByID(ctx, admin, in.DocumentID)
@@ -251,7 +252,7 @@ func (s *Service) Pay(ctx context.Context, admin, user resource.ID, in PayInput)
 	}
 	t := Transaction{
 		ID: s.ids.Next(), AdministrationID: admin, FinancialAccountID: in.FinancialAccountID, PayableType: PaymentType, PayableID: &d.ID,
-		Amount: d.Unpaid(), Date: when, Description: cmpString(d.Reference, d.label()), EndToEndID: d.ID.String(),
+		Amount: d.Unpaid(), Date: when, Description: d.label(a.Language), EndToEndID: d.ID.String(),
 		SourceIBAN: account.IBAN, SourceName: account.Name, CreatedAt: s.now(), UpdatedAt: s.now(),
 	}
 	if d.ContactID == 0 {

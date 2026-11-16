@@ -80,7 +80,7 @@ func TestSendEstimateNumbersAndEmails(t *testing.T) {
 	if m.To[0] != "billing@example.com" || m.BCC[0] != "quotes@example.com" || m.Subject != "Quote Q2026-0001 from Harpy B.V." || !strings.Contains(m.Body, "€363.00") {
 		t.Errorf("mail = %+v", m)
 	}
-	if len(m.Files) != 1 || m.Files[0].Name != "estimate-Q2026-0001.pdf" || !strings.HasPrefix(string(m.Files[0].Data), "%PDF Q2026-0001") {
+	if len(m.Files) != 1 || m.Files[0].Name != "quote-Q2026-0001.pdf" || !strings.HasPrefix(string(m.Files[0].Data), "%PDF Q2026-0001") {
 		t.Errorf("files = %+v", m.Files)
 	}
 	// Sending again keeps the number and state, and takes a message.
@@ -263,7 +263,7 @@ func TestEstimateNotesAttachmentsAndPDFs(t *testing.T) {
 		t.Error(err)
 	}
 	data, name, err := h.svc.EstimatePDF(ctx, adminID, e.ID, owner, false)
-	if err != nil || name != "estimate-draft-1.pdf" || !strings.HasPrefix(string(data), "%PDF") {
+	if err != nil || name != "quote-draft-1.pdf" || !strings.HasPrefix(string(data), "%PDF") {
 		t.Errorf("pdf = %s, %v", name, err)
 	}
 	if _, _, err := h.svc.SignedEstimatePDF(ctx, adminID, e.ID, owner); !errors.Is(err, ErrEstimateNotSigned) {

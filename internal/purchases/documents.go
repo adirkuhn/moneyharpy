@@ -128,12 +128,27 @@ func (d Document) complete() bool {
 	return len(d.Lines) > 0 && (d.ContactID != 0 || d.Kind == Receipt)
 }
 
-// label names the document in what it posts.
-func (d Document) label() string {
-	if d.Kind == Receipt {
+// label names the document in what it posts, in the administration's
+// language when it has no reference.
+func (d Document) label(language string) string {
+	nl := strings.HasPrefix(language, "nl")
+	switch {
+	case d.Kind == Receipt && nl:
+		return cmpString(d.Reference, "bon")
+	case d.Kind == Receipt:
 		return cmpString(d.Reference, "receipt")
+	case nl:
+		return cmpString(d.Reference, "inkoopfactuur")
 	}
 	return cmpString(d.Reference, "purchase invoice")
+}
+
+// language is the administration's, for the text booking writes.
+func (s *Service) language(ctx context.Context, admin, user resource.ID) string {
+	if a, err := s.admins.Get(ctx, admin, user); err == nil {
+		return a.Language
+	}
+	return ""
 }
 
 // Changes holds the fields to set; nil fields stay as they are. A zero
@@ -689,7 +704,7 @@ func (s *Service) post(ctx context.Context, admin, user resource.ID, d Document,
 			LedgerAccountID: ledger, ContactID: contact, TaxRateID: rate, Amount: sign * amount, Description: description,
 		}
 	}
-	label := d.label()
+	label := d.label(s.language(ctx, admin, user))
 	entries := []journal.Entry{entry(creditors, -d.Totals.InclTax, label, nil)}
 	for i, l := range d.Lines {
 		if d.Totals.LineBases[i] == 0 {

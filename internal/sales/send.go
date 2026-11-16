@@ -300,7 +300,7 @@ func (s *Service) PackingSlip(ctx context.Context, admin, id, user resource.ID, 
 	}
 	doc.Stationery = stationery
 	data, err := s.renderer.PackingSlip(doc)
-	return data, fileName(doc.Invoice, "packing-slip.pdf"), wrap("render packing slip", err)
+	return data, packingSlipFileName(doc.Invoice), wrap("render packing slip", err)
 }
 
 // UBL renders the sent invoice as a UBL 2.1 e-invoice.
@@ -316,12 +316,28 @@ func (s *Service) UBL(ctx context.Context, admin, id, user resource.ID) ([]byte,
 	return data, fileName(doc.Invoice, "xml"), wrap("render UBL", err)
 }
 
-func fileName(inv Invoice, ext string) string {
-	name := inv.InvoiceID
-	if name == "" {
-		name = fmt.Sprintf("draft-%d", inv.DraftID)
+// fileWords name the files of documents, in the document's language.
+var fileWords = map[bool]struct{ Invoice, Quote, PackingSlip, Draft string }{
+	true:  {"factuur", "offerte", "pakbon", "concept"},
+	false: {"invoice", "quote", "packing-slip", "draft"},
+}
+
+// documentFileName is a document's file name: what it is, then its number,
+// or "draft" and its draft number, in the document's language.
+func documentFileName(kind func(w struct{ Invoice, Quote, PackingSlip, Draft string }) string, language, number string, draft int, ext string) string {
+	w := fileWords[strings.HasPrefix(language, "nl")]
+	if number == "" {
+		number = fmt.Sprintf("%s-%d", w.Draft, draft)
 	}
-	return "invoice-" + strings.NewReplacer("/", "-", `\`, "-", " ", "-").Replace(name) + "." + ext
+	return kind(w) + "-" + strings.NewReplacer("/", "-", `\`, "-", " ", "-").Replace(number) + "." + ext
+}
+
+func fileName(inv Invoice, ext string) string {
+	return documentFileName(func(w struct{ Invoice, Quote, PackingSlip, Draft string }) string { return w.Invoice }, inv.Language, inv.InvoiceID, inv.DraftID, ext)
+}
+
+func packingSlipFileName(inv Invoice) string {
+	return documentFileName(func(w struct{ Invoice, Quote, PackingSlip, Draft string }) string { return w.PackingSlip }, inv.Language, inv.InvoiceID, inv.DraftID, "pdf")
 }
 
 // deliver sends the invoice the chosen way. Manual and Post leave sending

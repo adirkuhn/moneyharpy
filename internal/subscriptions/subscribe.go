@@ -401,7 +401,7 @@ func (s *Service) billDifference(ctx context.Context, admin, user resource.ID, s
 		return nil
 	}
 	last := before.InvoiceDate.AddDate(0, 0, -1)
-	text := fmt.Sprintf("%s (%s – %s)", change.product.LineDescription(), from.Format(time.DateOnly), last.Format(time.DateOnly))
+	text := fmt.Sprintf("%s (%s – %s)", change.product.LineDescription(), from.Format("02-01-2006"), last.Format("02-01-2006"))
 	_, err := s.scheduleOneOff(ctx, admin, user, sub, after, []sales.DetailInput{{
 		ProductID: &change.product.ID, Description: &text, Price: ptr(extra.String()), Amount: ptr("1"),
 		Period: ptr(from.Format("20060102") + ".." + last.Format("20060102")),

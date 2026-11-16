@@ -152,10 +152,16 @@ func (i Invoice) kind() string {
 func (i Invoice) external() bool { return i.Type == ExternalEntityType }
 
 // label names the invoice in what it posts: its number, an external
-// invoice's reference, or a draft's number.
+// invoice's reference, or a draft's number, in the invoice's language.
 func (i Invoice) label() string {
-	if i.external() {
+	nl := strings.HasPrefix(i.Language, "nl")
+	switch {
+	case i.external() && nl:
+		return cmpString(i.Reference, "externe factuur")
+	case i.external():
 		return cmpString(i.Reference, "external invoice")
+	case nl:
+		return cmpString(i.InvoiceID, fmt.Sprintf("concept %d", i.DraftID))
 	}
 	return cmpString(i.InvoiceID, fmt.Sprintf("draft %d", i.DraftID))
 }

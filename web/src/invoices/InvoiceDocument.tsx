@@ -68,7 +68,8 @@ export function InvoiceDocument({ administrationId, invoice: inv, editable, high
     { label: inclTax ? dt('invoices.document.subtotal') : dt('invoices.document.subtotalExcl'), amount: cents(totals.subtotal) },
     ...(totals.discount !== 0 ? [{ label: dt('invoices.document.discount', { percentage: Number(inv.discount ?? 0) }), amount: cents(-totals.discount) }] : []),
     ...(inv.tax_totals ?? []).map((r) => {
-      const name = rateOf(r.tax_rate_id)?.name ?? ''
+      // Named by its percentage in the document's language, as the PDF does; the rate's own name is the administration's.
+      const name = dt('invoices.document.vatRate', { rate: percentText(rateOf(r.tax_rate_id)?.percentage) })
       return { label: inclTax ? dt('invoices.document.includesVat', { name }) : dt('invoices.document.vatOver', { name, amount: money(r.taxable_amount) }), amount: money(r.tax_amount) }
     }),
     { label: dt('invoices.document.total'), amount: money(inv.total_price_incl_tax), strong: true },

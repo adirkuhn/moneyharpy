@@ -465,3 +465,11 @@ func TestReport(t *testing.T) {
 		t.Errorf("bad period: %v", err)
 	}
 }
+
+func TestLinearDepreciationIsNamedInTheAdministrationsLanguage(t *testing.T) {
+	for language, want := range map[string]string{"nl": "Lineaire afschrijving", "nl-NL": "Lineaire afschrijving", "en": "Linear depreciation", "": "Linear depreciation"} {
+		if got := linearDescription(language); got != want {
+			t.Errorf("linearDescription(%q) = %q, want %q", language, got, want)
+		}
+	}
+}

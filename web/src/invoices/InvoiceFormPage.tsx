@@ -523,7 +523,11 @@ function InvoiceForm(props: FormProps) {
       ...(totals.discount !== 0 ? [{ label: tt(key('discount'), { percentage: discount.trim() }), amount: format(-totals.discount) }] : []),
       ...totals.byRate
         .filter((r) => r.tax !== 0 || r.taxable !== 0)
-        .map((r) => ({ label: pricesInclTax ? tt(key('includesVat'), { name: rateName(r.taxRateId) }) : rateName(r.taxRateId), amount: format(r.tax) })),
+        .map((r) => {
+          // On the document the rate is named by its percentage in the document's language, as the PDF does.
+          const name = words === 'document' ? tt('invoices.document.vatRate', { rate: percentText(rateOf(r.taxRateId)?.percentage) }) : rateName(r.taxRateId)
+          return { label: pricesInclTax ? tt(key('includesVat'), { name }) : name, amount: format(r.tax) }
+        }),
       { label: tt(key('total')), amount: format(totals.inclTax), strong: true },
     ]
   }

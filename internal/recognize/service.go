@@ -591,7 +591,7 @@ func (s *Service) fill(ctx context.Context, r *Recognition) error {
 	if err != nil {
 		return err
 	}
-	plan := MakePlan(PlanInput{Extraction: e, Target: t, Previous: *r, Supplier: supplier, Memory: memory, Rates: rates})
+	plan := MakePlan(PlanInput{Extraction: e, Target: t, Previous: *r, Supplier: supplier, Memory: memory, Rates: rates, Language: self.Language})
 	d, err := s.Documents.Propose(ctx, admin, id, user, plan.Kind, plan.Changes)
 	var verr *resource.ValidationError
 	if errors.As(err, &verr) {

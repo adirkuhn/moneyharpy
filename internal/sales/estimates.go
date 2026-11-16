@@ -652,11 +652,7 @@ func ExpandEstimate(template string, doc Document) string {
 }
 
 func estimateFileName(e Estimate, ext string) string {
-	name := e.EstimateID
-	if name == "" {
-		name = fmt.Sprintf("draft-%d", e.DraftID)
-	}
-	return "estimate-" + strings.NewReplacer("/", "-", `\`, "-", " ", "-").Replace(name) + "." + ext
+	return documentFileName(func(w struct{ Invoice, Quote, PackingSlip, Draft string }) string { return w.Quote }, e.Language, e.EstimateID, e.DraftID, ext)
 }
 
 // estimateDocument gathers what the estimate's PDF shows.

@@ -57,11 +57,18 @@ type PlanInput struct {
 	Memory   Memory
 	// Rates are the administration's purchase VAT rates.
 	Rates []bookkeeping.TaxRate
+	// Language is the administration's, for the text the plan writes.
+	Language string
 }
 
 // fallbackDescription names a line made of a document's totals without a
-// supplier name.
-const fallbackDescription = "Purchase"
+// supplier name, in the administration's language.
+func fallbackDescription(language string) string {
+	if strings.HasPrefix(language, "nl") {
+		return "Inkoop"
+	}
+	return "Purchase"
+}
 
 var currencyPattern = regexp.MustCompile(`^[A-Z]{3}$`)
 
@@ -143,7 +150,7 @@ func MakePlan(in PlanInput) Plan {
 	case rem.Known():
 		incl, inclConf, inclKnown, inclOrigin = rem.V, rem.Confidence(), true, remembered(rem.SourceDocumentID)
 	}
-	lines, linesIncl := proposeLines(e, in.Supplier.Name, incl)
+	lines, linesIncl := proposeLines(e, cmpOr(strings.TrimSpace(in.Supplier.Name), fallbackDescription(in.Language)), incl)
 	if linesIncl != nil {
 		incl, inclConf, inclKnown, inclOrigin = *linesIncl, e.TotalInclTax.Confidence, true, read
 	}
@@ -261,8 +268,8 @@ type line struct {
 // proposeLines makes the lines of the document: those read, else one per
 // VAT rate of its VAT summary, else one with its total. A line of the total
 // including VAT makes the prices include VAT, which inclTax then tells.
-func proposeLines(e Extraction, supplierName string, incl bool) (lines []line, inclTax *bool) {
-	description := cmpOr(strings.TrimSpace(supplierName), fallbackDescription)
+// description names the lines made of totals.
+func proposeLines(e Extraction, description string, incl bool) (lines []line, inclTax *bool) {
 	summaryRate := Value[string]{}
 	if len(e.VAT) == 1 {
 		summaryRate = Value[string]{V: e.VAT[0].Rate, Found: true, Confidence: Uncertain}

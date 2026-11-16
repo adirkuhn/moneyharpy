@@ -15,6 +15,8 @@ import (
 // Self is the administration's own company: the buyer of the documents it
 // reads, which is never their supplier. Empty fields are unknown.
 type Self struct {
+	// Language is the administration's, for the text recognition writes.
+	Language  string
 	Name      string
 	Address1  string
 	Zipcode   string
@@ -56,7 +58,7 @@ func (o OwnCompany) Self(ctx context.Context, admin, user resource.ID) (Self, er
 	}
 	me := Self{
 		Name: cmpOr(id.CompanyName, a.Name), Address1: id.Address1, Zipcode: id.Zipcode, VATNumber: id.TaxNumber,
-		KVK: id.ChamberOfCommerce, Email: id.Email, Website: a.CompanyWebsiteURL,
+		KVK: id.ChamberOfCommerce, Email: id.Email, Website: a.CompanyWebsiteURL, Language: a.Language,
 	}
 	if id.BankAccountNumber != "" {
 		me.IBANs = append(me.IBANs, id.BankAccountNumber)

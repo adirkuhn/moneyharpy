@@ -265,7 +265,7 @@ export const nl: Messages = {
     document: {
       invoice: 'Factuur', draft: 'Concept', draftNumber: 'Concept #{{id}}', contact: 'Contact', invoiceDate: 'Factuurdatum', dueDate: 'Vervaldatum',
       senderAddress: 'Afzenderadres', lines: 'Factuurregels', quantity: 'Aantal', description: 'Omschrijving', price: 'Bedrag', total: 'Totaal', vat: 'Btw',
-      reference: 'Kenmerk', subtotalExcl: 'Subtotaal excl. btw', vatOver: '{{name}} over {{amount}}',
+      reference: 'Kenmerk', subtotalExcl: 'Subtotaal excl. btw', vatOver: '{{name}} over {{amount}}', vatRate: '{{rate}} btw',
       subtotal: 'Subtotaal', discount: 'Korting {{percentage}}%', includesVat: 'Inclusief {{name}}',
       payBefore: 'Graag ontvangen we {{amount}} vóór {{date}} op rekening {{account}} ten name van {{holder}}, onder vermelding van {{reference}}.',
       numberOnSend: 'het factuurnummer',
