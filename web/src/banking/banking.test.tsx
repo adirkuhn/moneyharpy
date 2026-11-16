@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import type { LedgerAccount } from '../bookkeeping/queries'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
-import type { BookingRule, FinancialAccount, Mutation } from './queries'
+import type { BookingRule, FinancialAccount, LinkSuggestion, Mutation } from './queries'
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 const stamp = '2026-11-10T09:00:00Z'
@@ -188,7 +188,7 @@ describe('transactions', () => {
     expect(open).toHaveTextContent('Payment reference: Monthly hosting plan')
     expect(open).toHaveTextContent('€-25.50')
     expect(within(open).getByRole('img', { name: 'Unprocessed' })).toBeInTheDocument()
-    expect(within(open).getByRole('link', { name: 'Link open amount' })).toHaveAttribute('href', '/11/financial_mutations/701')
+    expect(within(open).getByRole('button', { name: 'Link open amount' })).toBeInTheDocument()
     // A processed one shows what it pays, as Moneybird's card does.
     const done = within(feed).getByRole('article', { name: 'Payment reference: Order 12' })
     expect(within(done).getByRole('img', { name: 'Processed' })).toBeInTheDocument()
@@ -196,7 +196,7 @@ describe('transactions', () => {
     expect(within(linked).getByRole('link', { name: 'INV 2026-0001 · Example Shop B.V.' })).toHaveAttribute('href', '/11/sales_invoices/901')
     expect(linked).toHaveTextContent('2026-10-30 · €39.00')
     expect(linked).toHaveTextContent('2 Coffee')
-    expect(within(done).queryByRole('link', { name: 'Link open amount' })).toBeNull()
+    expect(within(done).queryByRole('button', { name: 'Link open amount' })).toBeNull()
 
     await userEvent.click(screen.getByRole('button', { name: 'Transactions from this year' }))
     const panel = screen.getByRole('search', { name: 'Filter transactions' })
@@ -420,5 +420,72 @@ describe('financial accounts', () => {
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/financial_mutations'))
     expect(screen.getByTestId('search')).toHaveTextContent('?account=501')
     expect(body).toBe('<Document/>')
+  })
+})
+
+describe('linking a transaction in its card', () => {
+  const suggestion = (over: Partial<LinkSuggestion> = {}): LinkSuggestion => ({
+    booking_type: 'Document', booking_id: '583', label: 'PUR', reference: '583', contact_name: 'Example Supplier', date: '2026-10-30', total: '25.5', open: '25.5',
+    currency: 'EUR', state: 'open', payment_reference: null, details: '1 Hosting plan', price: '25.5', ...over,
+  })
+
+  it('links the best match, searches and books on a category with a description', async () => {
+    let linked: unknown
+    let asked = ''
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/financial_mutations', () => HttpResponse.json([mutation()])),
+      http.get('*/api/v2/11/financial_mutations/701/link_suggestions', ({ request }) => {
+        asked = new URL(request.url).search
+        return HttpResponse.json(new URL(request.url).searchParams.get('query') === 'soft'
+          ? [suggestion({ booking_type: 'LedgerAccount', booking_id: '1201', label: '', reference: 'Software', contact_name: '', details: '', price: '25.5' })]
+          : [suggestion(), suggestion({ booking_type: 'SalesInvoice', booking_id: '901', label: 'INV', reference: '2026-0001', state: 'late', price: '-25.5' })])
+      }),
+      http.patch('*/api/v2/11/financial_mutations/701/link_booking', async ({ request }) => {
+        linked = await request.json()
+        return HttpResponse.json(mutation({ amount_open: '0.0', state: 'processed' }))
+      }),
+    )
+    renderAt('/11/financial_mutations')
+    const card = await screen.findByRole('article', { name: 'Hosting Company' })
+    await userEvent.click(within(card).getByRole('button', { name: 'Link open amount' }))
+    const panel = within(card).getByRole('form', { name: 'Link transaction' })
+    const results = await within(panel).findByRole('radiogroup', { name: 'Matches' })
+    // The best match is chosen, with what linking it books.
+    expect(within(results).getByRole('radio', { name: /PUR 583 · Example Supplier/ })).toBeChecked()
+    expect(results).toHaveTextContent('€+25.50')
+    expect(results).toHaveTextContent('€-25.50')
+    expect(within(panel).getByRole('textbox', { name: 'Amount to link' })).toHaveValue('25.5')
+    expect(within(panel).getByRole('combobox', { name: 'Search in' })).toHaveValue('all')
+
+    await userEvent.type(within(panel).getByRole('searchbox', { name: 'Find invoices or categories…' }), 'soft')
+    await waitFor(() => expect(asked).toContain('query=soft'))
+    await userEvent.click(await within(panel).findByRole('radio', { name: /Software/ }))
+    await userEvent.type(within(panel).getByRole('textbox', { name: 'Description' }), 'Yearly plan')
+    await userEvent.clear(within(panel).getByRole('textbox', { name: 'Amount to link' }))
+    await userEvent.type(within(panel).getByRole('textbox', { name: 'Amount to link' }), '20')
+    expect(panel).toHaveTextContent('Left to link: €5.50')
+    await userEvent.click(within(panel).getByRole('button', { name: 'Link' }))
+    await waitFor(() => expect(linked).toEqual({ booking_type: 'LedgerAccount', booking_id: '1201', price_base: '20', description: 'Yearly plan' }))
+  })
+
+  it('makes a new receipt for an uploaded document and attaches the file', async () => {
+    const calls: string[] = []
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/financial_mutations', () => HttpResponse.json([mutation()])),
+      http.patch('*/api/v2/11/financial_mutations/701/link_booking', async ({ request }) => {
+        calls.push(`link ${JSON.stringify(await request.json())}`)
+        return HttpResponse.json(mutation({ amount_open: '0.0', state: 'processed', payments: [{ id: '961', invoice_type: 'Document', invoice_id: '777' }] as Mutation['payments'] }))
+      }),
+      http.post('*/api/v2/11/documents/receipts/777/attachments', () => {
+        calls.push('attach 777')
+        return HttpResponse.json({}, { status: 201 })
+      }),
+    )
+    renderAt('/11/financial_mutations')
+    const card = await screen.findByRole('article', { name: 'Hosting Company' })
+    await userEvent.upload(within(card).getByLabelText('Upload a document'), new File(['%PDF'], 'receipt.pdf', { type: 'application/pdf' }))
+    await waitFor(() => expect(calls).toEqual(['link {"booking_type":"NewReceipt"}', 'attach 777']))
   })
 })

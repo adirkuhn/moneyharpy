@@ -33,3 +33,35 @@ a.transaction__link-title:hover { color: var(--blue); text-decoration: underline
   .transaction__row, .transaction__link { gap: 0.625rem; }
   .transaction__actions { margin-left: 0; }
 }
+
+/* Linking in the card, after Moneybird's: the search, the matches with what linking books, the amount and the buttons. */
+.btn--dashed { border: 1px dashed var(--line); background: none; color: var(--text); cursor: pointer; }
+.btn--dashed.is-busy { opacity: 0.6; }
+.link-panel { display: grid; gap: 0.75rem; margin: 0.75rem 0 0 3rem; padding-top: 0.75rem; border-top: 1px solid var(--line); }
+.link-panel__search { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.link-panel__search select { flex: none; width: 8rem; }
+.link-panel__search input { flex: 1; min-width: 12rem; }
+.link-panel__results { display: grid; max-height: 24rem; margin: 0; padding: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; list-style: none; }
+.link-panel__results > li + li { border-top: 1px solid var(--line); }
+.link-panel__result { display: flex; align-items: flex-start; gap: 0.625rem; padding: 0.625rem 0.75rem; cursor: pointer; }
+.link-panel__result:hover { background: var(--row-hover); }
+.link-panel__result.is-selected { background: var(--row-hover); box-shadow: inset 3px 0 0 var(--blue); }
+.link-panel__result:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+.link-panel__dot { flex: none; width: 0.625rem; height: 0.625rem; margin-top: 0.375rem; border-radius: 50%; background: #ca8a04; }
+.link-panel__dot.is-late { background: var(--danger); }
+.link-panel__dot.is-paid { background: var(--teal); }
+.link-panel__dot.is-category { background: var(--muted); }
+.link-panel__summary { display: grid; flex: 1; gap: 0.125rem; min-width: 0; line-height: 1.45; }
+.link-panel__details { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-panel__price { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.link-panel__empty { padding: 0.75rem; color: var(--muted); }
+.link-panel__description { min-height: 3.5rem; }
+.link-panel__footer { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.link-panel__buttons { display: flex; gap: 0.5rem; }
+.link-panel__amount { display: inline-flex; align-items: center; gap: 0.375rem; margin-left: auto; }
+.link-panel__amount input { width: 7rem; text-align: right; }
+.link-panel__left { color: var(--muted); font-size: 0.875rem; }
+@media (max-width: 640px) {
+  .link-panel { margin-left: 0; }
+  .link-panel__amount { margin-left: 0; }
+}

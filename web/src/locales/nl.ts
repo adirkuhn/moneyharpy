@@ -737,12 +737,19 @@ export const nl: Messages = {
     },
   },
   bank: {
+    link: {
+      title: 'Transactie koppelen', scope: 'Zoeken in', find: 'Zoek facturen of categorieën…', results: 'Resultaten', nothing: 'Niets gevonden.',
+      scopes: { all: 'Alle', sales_invoices: 'Facturen', documents: 'Inkomend', ledger_accounts: 'Categorieën' },
+      newPurchaseInvoice: 'Inkoopfactuur', newReceipt: 'Bon', amount: 'Te koppelen bedrag', description: 'Omschrijving',
+      descriptionPlaceholder: 'Omschrijving (optioneel)', submit: 'Koppelen', left: 'Nog te koppelen: {{amount}}',
+    },
     feed: {
       views: { all: 'Transacties van dit jaar', unprocessed: 'Onverwerkte transacties', processed: 'Verwerkte transacties', auto_booked: 'Automatisch geboekte transacties', custom: 'Gefilterde transacties' },
       viewAccount: 'Transacties van {{name}}', status: 'Status', type: 'Soort transactie',
       states: { all: 'Alle', unprocessed: 'Onverwerkt', processed: 'Verwerkt', auto_booked: 'Automatisch geboekt' },
       types: { all: 'Alle', credit: 'Bij', debit: 'Af' },
       paymentReference: 'Betalingskenmerk: {{reference}}', processed: 'Verwerkt', unprocessed: 'Onverwerkt', linked: 'Gekoppeld aan',
+      upload: 'Document uploaden', uploading: 'Bezig met uploaden…',
       linkOpen: 'Openstaand bedrag koppelen', linkRest: 'De rest koppelen', about: 'Over transacties',
       showMore_one: 'Nog {{count}} transactie tonen', showMore_other: 'Nog {{count}} transacties tonen',
     },

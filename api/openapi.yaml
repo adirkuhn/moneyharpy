@@ -3403,6 +3403,51 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_mutations/{id}/link_suggestions:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: listFinancialMutationLinkSuggestions
+      x-permissions: [bank]
+      summary: What a transaction can be linked to
+      description: >-
+        MoneyHarpy extension, after Moneybird's suggestions when linking a transaction. The sales invoices, external
+        invoices and incoming documents that are not fully paid, best match first: a payment reference or number in the
+        transaction's message, then an open amount equal to what is left, the contact named like the counterparty, money
+        going the way the invoice expects and a nearby date. Categories come with a query, or with the ledger_accounts
+        scope. Each has the price link_booking would book. A query keeps what holds every word of it.
+      tags: [Financial mutations]
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [all, sales_invoices, documents, ledger_accounts]
+      responses:
+        '200':
+          description: The suggestions, at most 25
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LinkSuggestion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/financial_mutations/{id}/link_booking:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -15990,6 +16035,47 @@ components:
         price:
           type: string
           description: The amount of the transaction that pays this document.
+    LinkSuggestion:
+      type: object
+      description: MoneyHarpy extension. Something a transaction can be linked to.
+      required: [booking_type, booking_id, label, reference, contact_name, total, open, currency, state, details, price]
+      properties:
+        booking_type:
+          type: string
+          enum: [SalesInvoice, ExternalSalesInvoice, Document, LedgerAccount]
+          description: The booking_type of link_booking.
+        booking_id:
+          $ref: '#/components/schemas/Identifier'
+        label:
+          type: string
+          enum: [INV, EXT, PUR, REC, '']
+          description: Moneybird's short name of the kind of document; empty for a category.
+        reference:
+          type: string
+          description: The invoice number, the document's reference or the category's name.
+        contact_name:
+          type: string
+        date:
+          type: string
+          format: date
+          nullable: true
+        total:
+          type: string
+        open:
+          type: string
+          description: What is still to be received or paid.
+        currency:
+          type: string
+        state:
+          type: string
+        payment_reference:
+          type: string
+          nullable: true
+        details:
+          type: string
+        price:
+          type: string
+          description: The price_base link_booking books when linking it.
     FinancialStatement:
       description: A Moneybird financial statement with MoneyHarpy extensions.
       allOf:

@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
+import { Problems } from '../auth/AuthLayout'
 import { useLedgerAccounts } from '../bookkeeping/queries'
+import { formErrors } from '../forms/Form'
 import { groupIBAN } from '../invoices/paper'
 import { CaretIcon, ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
@@ -16,7 +18,8 @@ import { allPeriods } from '../list/PeriodFilter'
 import { isPeriod, parsePeriod, periodValue } from '../list/period'
 import { PeriodPicker } from '../list/PeriodPicker'
 import { AddTransactions } from './AddTransactions'
-import { type Booking, formatAmount, type Mutation, useFinancialAccounts, useMutations } from './queries'
+import { LinkPanel } from './LinkPanel'
+import { type Booking, formatAmount, type Mutation, useFinancialAccounts, useMutations, useUploadForTransaction } from './queries'
 import './transactions.css'
 
 const states = ['all', 'unprocessed', 'processed', 'auto_booked'] as const
@@ -205,6 +208,8 @@ function TransactionCard({ administrationId, mutation: m, currency }: { administ
   const links = m.links ?? []
   const bookings = m.ledger_account_bookings as Booking[]
   const open = Number(m.amount_open ?? 0) !== 0
+  const [linking, setLinking] = useState(false)
+  const upload = useUploadForTransaction(administrationId, m.id ?? '')
 
   return (
     <article className={`transaction${processed ? ' is-processed' : ''}`} aria-label={title}>
@@ -251,12 +256,30 @@ function TransactionCard({ administrationId, mutation: m, currency }: { administ
           ))}
         </ul>
       )}
-      {open && (
+      {open && linking && <LinkPanel administrationId={administrationId} mutation={m} onDone={() => setLinking(false)} />}
+      {open && !linking && (
         <div className="transaction__actions">
-          <Link className="btn btn--secondary btn--small btn--with-icon" to={`${base}/financial_mutations/${m.id}`}>
+          <button type="button" className="btn btn--secondary btn--small btn--with-icon" onClick={() => setLinking(true)}>
             <ListIcon kind="plus" />
             <span>{processed ? t('bank.feed.linkRest') : t('bank.feed.linkOpen')}</span>
-          </Link>
+          </button>
+          <label className={`btn btn--dashed btn--small btn--with-icon${upload.isPending ? ' is-busy' : ''}`}>
+            <ListIcon kind="upload" />
+            <span>{upload.isPending ? t('bank.feed.uploading') : t('bank.feed.upload')}</span>
+            <input
+              className="sr-only"
+              type="file"
+              accept="application/pdf,image/*"
+              aria-label={t('bank.feed.upload')}
+              disabled={upload.isPending}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) upload.mutate(file)
+                e.target.value = ''
+              }}
+            />
+          </label>
+          <Problems messages={formErrors(upload.error, {}).general} />
         </div>
       )}
     </article>

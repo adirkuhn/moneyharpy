@@ -1465,6 +1465,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/financial_mutations/{id}/link_suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * What a transaction can be linked to
+         * @description MoneyHarpy extension, after Moneybird's suggestions when linking a transaction. The sales invoices, external invoices and incoming documents that are not fully paid, best match first: a payment reference or number in the transaction's message, then an open amount equal to what is left, the contact named like the counterparty, money going the way the invoice expects and a nearby date. Categories come with a query, or with the ledger_accounts scope. Each has the price link_booking would book. A query keeps what holds every word of it.
+         */
+        get: operations["listFinancialMutationLinkSuggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/financial_mutations/{id}/link_booking": {
         parameters: {
             query?: never;
@@ -7956,6 +7979,34 @@ export interface components {
             /** @description The lines, summed up as "2 Coffee, 1 Tea". */
             details: string;
             /** @description The amount of the transaction that pays this document. */
+            price: string;
+        };
+        /** @description MoneyHarpy extension. Something a transaction can be linked to. */
+        LinkSuggestion: {
+            /**
+             * @description The booking_type of link_booking.
+             * @enum {string}
+             */
+            booking_type: "SalesInvoice" | "ExternalSalesInvoice" | "Document" | "LedgerAccount";
+            booking_id: components["schemas"]["Identifier"];
+            /**
+             * @description Moneybird's short name of the kind of document; empty for a category.
+             * @enum {string}
+             */
+            label: "INV" | "EXT" | "PUR" | "REC" | "";
+            /** @description The invoice number, the document's reference or the category's name. */
+            reference: string;
+            contact_name: string;
+            /** Format: date */
+            date?: string | null;
+            total: string;
+            /** @description What is still to be received or paid. */
+            open: string;
+            currency: string;
+            state: string;
+            payment_reference?: string | null;
+            details: string;
+            /** @description The price_base link_booking books when linking it. */
             price: string;
         };
         /** @description A Moneybird financial statement with MoneyHarpy extensions. */
@@ -14569,6 +14620,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FinancialMutation"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listFinancialMutationLinkSuggestions: {
+        parameters: {
+            query?: {
+                query?: string;
+                scope?: "all" | "sales_invoices" | "documents" | "ledger_accounts";
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The suggestions, at most 25 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkSuggestion"][];
                 };
             };
             400: components["responses"]["BadRequest"];

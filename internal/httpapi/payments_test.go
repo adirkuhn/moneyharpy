@@ -204,6 +204,21 @@ func TestBankTransactionsPayInvoices(t *testing.T) {
 	incoming := list[i]
 
 	inv := send("1000", true, 20)
+	// The invoice of the open amount is suggested first, with the price that pays it.
+	type suggestion struct {
+		BookingType string `json:"booking_type"`
+		BookingID   string `json:"booking_id"`
+		Label       string `json:"label"`
+		Price       string `json:"price"`
+	}
+	suggested := decode[[]suggestion](t, owner.do(http.MethodGet, api+"/financial_mutations/"+incoming.ID+"/link_suggestions", nil))
+	if len(suggested) == 0 || suggested[0].BookingID != inv.ID || suggested[0].Label != "INV" || suggested[0].Price != "1000.0" {
+		t.Errorf("suggestions = %+v", suggested)
+	}
+	categories := decode[[]suggestion](t, owner.do(http.MethodGet, api+"/financial_mutations/"+incoming.ID+"/link_suggestions?scope=ledger_accounts&query=revenue", nil))
+	if len(categories) == 0 || categories[0].BookingType != "LedgerAccount" {
+		t.Errorf("categories = %+v", categories)
+	}
 	r := owner.do(http.MethodPatch, api+"/financial_mutations/"+incoming.ID+"/link_booking", map[string]any{"booking_type": "SalesInvoice", "booking_id": inv.ID})
 	wantStatus(t, r, http.StatusOK)
 	var linked struct {
