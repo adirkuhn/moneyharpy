@@ -302,3 +302,54 @@ export function useUploadForTransaction(administrationId: string, id: string) {
     },
   })
 }
+
+export type PurchaseTransaction = components['schemas']['PurchaseTransaction']
+
+/** The outgoing payments the filter selects (Moneybird's purchase transactions). */
+export function usePurchaseTransactions(administrationId: string, filter: string) {
+  return useQuery({
+    queryKey: ['purchase-transactions', administrationId, filter],
+    placeholderData: keepPreviousData,
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/purchase_transactions', { params: { path: { administration_id: administrationId }, query: { filter, per_page: '100' } } })),
+  })
+}
+
+function usePaymentsChanged(administrationId: string) {
+  const client = useQueryClient()
+  return () => {
+    for (const key of ['purchase-transactions', 'documents', 'incoming']) {
+      void client.invalidateQueries({ queryKey: [key, administrationId] })
+    }
+  }
+}
+
+/** Sets up a bank transfer paying a purchase invoice or receipt, from a bank account, to send in a batch. */
+export function useCreatePurchaseTransaction(administrationId: string) {
+  return useMutation({
+    mutationFn: (body: { payable_id: string; financial_account_id: string }) =>
+      unwrap(api.POST('/api/v2/{administration_id}/purchase_transactions', { ...admin(administrationId), body: { purchase_transaction: { ...body, payable_type: 'Document' } } })),
+    onSettled: usePaymentsChanged(administrationId),
+  })
+}
+
+/** Groups payments of an account in a batch, to download as one SEPA credit transfer file. */
+export function useCreatePaymentBatch(administrationId: string) {
+  return useMutation({
+    mutationFn: (body: { financial_account_id: string; purchase_transaction_ids: string[] }) =>
+      unwrap(api.POST('/api/v2/{administration_id}/purchase_transaction_batches', { ...admin(administrationId), body: { purchase_transaction_batch: body } })),
+    onSettled: usePaymentsChanged(administrationId),
+  })
+}
+
+/** Removes a payment that was not sent yet. */
+export function useDeletePurchaseTransaction(administrationId: string) {
+  return useMutation({
+    mutationFn: (id: string) => unwrap(api.DELETE('/api/v2/{administration_id}/purchase_transactions/{id}', one(administrationId, id))),
+    onSettled: usePaymentsChanged(administrationId),
+  })
+}
+
+/** Where the browser downloads a batch as a SEPA credit transfer file; the session cookie signs the request. */
+export function paymentBatchURL(administrationId: string, id: string) {
+  return `/api/v2/${administrationId}/purchase_transaction_batches/${id}/download`
+}

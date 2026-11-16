@@ -737,6 +737,24 @@ export const nl: Messages = {
     },
   },
   bank: {
+    payments: {
+      title: 'Betalingen', toSend: 'Te versturen', earlier: 'Eerdere betalingen', filter: 'Betalingen filteren',
+      toSendEmpty: 'Verzamel hier betalingen om ze in één keer te versturen. Stel een betaling in op een inkoopfactuur.',
+      earlierEmpty: 'Je verstuurde betalingen verschijnen hier, met hun status.',
+      batchAll: 'Betaalbatch maken', batchChosen_one: 'Batch maken van {{count}} betaling', batchChosen_other: 'Batch maken van {{count}} betalingen',
+      batchMade_one: 'De betaalbatch staat klaar om via je bank te versturen:', batchMade_other: '{{count}} betaalbatches staan klaar om via je bank te versturen:',
+      download: 'download het SEPA-bestand', batchFile: 'SEPA-bestand', from: 'Van {{account}}', choose: 'Betaling aan {{name}} kiezen',
+      remove: 'Betaling aan {{name}} verwijderen', removeShort: 'Verwijderen', reference: 'Kenmerk', date: 'Betaaldatum', method: 'Betaalmethode', status: 'Status',
+      sepa: 'SEPA-overboeking',
+      views: { pending: 'Openstaande of lopende betalingen van dit jaar', paid: 'Betaalde betalingen van dit jaar', cancelled: 'Geannuleerde betalingen van dit jaar', all: 'Alle betalingen van dit jaar' },
+      states: { open: 'Open', pending_payment: 'Betaling onderweg', paid: 'Betaald', cancelled: 'Geannuleerd', error: 'Fout', awaiting_authorization: 'Wacht op autorisatie', preparing: 'Wordt voorbereid' },
+      intro: {
+        title: 'Uitgaande betalingen beheren', text: 'Betaal inkoopfacturen via een betaalbatch vanuit MoneyHarpy. Alle uitgaande betalingen vind je hier in één overzicht.',
+        add: 'Betalingen toevoegen', addText: 'Stel een betaling in op een inkoopfactuur of bon.',
+        batch: 'Betaalbatch maken', batchText: 'Download de batch als SEPA-bestand en verstuur hem via je bank.',
+        view: 'Uitgaande betalingen bekijken', viewText: 'Zie hoe elke betaling is verstuurd en wat de status is.',
+      },
+    },
     link: {
       title: 'Transactie koppelen', scope: 'Zoeken in', find: 'Zoek facturen of categorieën…', results: 'Resultaten', nothing: 'Niets gevonden.',
       scopes: { all: 'Alle', sales_invoices: 'Facturen', documents: 'Inkomend', ledger_accounts: 'Categorieën' },
@@ -1176,7 +1194,7 @@ export const nl: Messages = {
       document: 'Document', attachments: 'Bijlagen', download: 'Bijlage downloaden', deleteAttachment: 'Bijlage verwijderen',
       confirmDeleteAttachment: 'Wil je deze bijlage verwijderen?', add: 'Toevoegen', noAttachment: 'Geen bijlage',
       noPreview: 'Er is geen voorbeeld van dit bestand. Download het om het te bekijken.', deleteDocument: 'Document verwijderen', confirmDelete: 'Wil je dit document verwijderen?',
-      chooseType: 'Selecteer een type...', chooseTypeText: 'Kies het type van dit document om de gegevens in te vullen.',
+      chooseType: 'Selecteer een type...', chooseTypeText: 'Kies het type van dit document om de gegevens in te vullen.', setUpPayment: 'Betaling instellen',
       reference: 'Referentie', invoiceId: 'Factuurnummer', date: 'Datum', dueDate: 'Vervaldatum', days: 'Dagen', dueAs: 'Vervaldatum als', numberOfDays: 'Aantal dagen',
       onlyNew: 'Wijzigen naar dit type kan alleen als het document de status "Nieuw" heeft',
       purchaseLines: 'Inkoopfactuurregels', receiptLines: 'Bonregels', save: 'Opslaan', next: 'Volgende',

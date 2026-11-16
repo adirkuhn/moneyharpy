@@ -78,7 +78,7 @@ describe('side menu', () => {
     expect(vat).toHaveAccessibleDescription('Not available yet')
     expect(within(nav).getByRole('link', { name: 'Quotes' })).toHaveAttribute('href', '/11/estimates')
     await userEvent.click(within(nav).getByRole('button', { name: 'Bank' }))
-    expect(within(nav).getByRole('link', { name: 'Payments' })).toHaveAttribute('aria-disabled', 'true')
+    expect(within(nav).getByRole('link', { name: 'Payments' })).toHaveAttribute('href', '/11/purchase_transaction_batches')
     expect(within(nav).getByRole('link', { name: 'Transactions' })).not.toHaveAttribute('aria-disabled')
   })
 

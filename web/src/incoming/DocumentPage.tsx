@@ -13,6 +13,7 @@ import { DangerDialog } from '../layout/Modal'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { PageIcon } from '../layout/pageIcons'
+import { useCreatePurchaseTransaction, useFinancialAccounts } from '../banking/queries'
 import { type MenuItem, MoreMenu } from '../list/ListActions'
 import { AttachmentViewer } from './AttachmentViewer'
 import { documentPath, useDocumentSummary, useToProcess } from './documents'
@@ -96,6 +97,11 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
   // Scan and Recognise reads an upload, or a new purchase invoice or receipt, which books nothing.
   const canRead = (type === 'TypelessDocument' || (purchase && isNew)) && attachments.length > 0 && recognition?.state !== 'pending'
   const readAgain = () => recognize.mutate()
+  // Moneybird's payment on a purchase invoice: a transfer from a bank account with an IBAN, sent with the next payment batch.
+  const accounts = useFinancialAccounts(administrationId)
+  const payFrom = accounts.data?.find((a) => a.active && a.type === 'BankAccount' && a.identifier)
+  const pay = useCreatePurchaseTransaction(administrationId)
+  const payable = purchase && !isNew && ['open', 'late'].includes(typed.doc.state ?? '')
 
   // Moneybird's Next: the next document still to process, or Incoming when there is none.
   const toNext = () => navigate(toProcess.next ? documentPath(administrationId, toProcess.next) : list)
@@ -150,6 +156,12 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
   })()
 
   const more: MenuItem[] = [
+    ...(payable && payFrom
+      ? [{
+        label: t('incoming.view.setUpPayment'), disabled: pay.isPending,
+        onSelect: () => pay.mutate({ payable_id: id, financial_account_id: payFrom.id ?? '' }, { onSuccess: () => navigate(`/${administrationId}/purchase_transaction_batches`) }),
+      }]
+      : []),
     ...(canRead ? [{ label: t('recognition.readAgain'), onSelect: readAgain, disabled: recognize.isPending }] : []),
     { label: t('incoming.new.back'), to: list },
   ]
@@ -167,7 +179,7 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
         </>
       }
     >
-      <Problems messages={[...formErrors(remove.error, {}).general, ...formErrors(recognize.error, {}).general]} />
+      <Problems messages={[...formErrors(remove.error, {}).general, ...formErrors(recognize.error, {}).general, ...formErrors(pay.error, {}).general]} />
       <div className="incoming-document">
         <div className="incoming-document__left">
           <AttachmentViewer
