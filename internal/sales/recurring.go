@@ -600,7 +600,9 @@ func (s *Service) recur(ctx context.Context, a administration.Listed, user resou
 	}
 	var errs []error
 	for _, r := range list {
-		for r.Active && !r.InvoiceDate.After(today) && ctx.Err() == nil {
+		// Made before its details, as on Moneybird, it waits for them
+		// rather than make an empty invoice that cannot be sent.
+		for r.Active && len(r.Lines) > 0 && !r.InvoiceDate.After(today) && ctx.Err() == nil {
 			inv, err := s.generate(ctx, a, user, &r)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("administration %s, recurring invoice %s: %w", a.ID, r.ID, err))
