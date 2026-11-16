@@ -14,7 +14,8 @@
 .send-options { display: grid; gap: 0.75rem; margin: 0; padding: 0; border: 0; min-width: 0; }
 .send-options hr { width: 100%; margin: 0; border: 0; border-top: 1px solid var(--line); }
 .send-option { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
-.send-option input { margin: 0.3125rem 0 0; }
+/* The global field height is not for radios: one the size of a line's text, centred on its first line (1.5 × 1rem). */
+.send-option input[type='radio'] { flex: none; width: 1rem; height: 1rem; min-height: 0; margin: 0.25rem 0 0; padding: 0; }
 .send-option__text { line-height: 1.5; }
 .send-option__text small { color: var(--muted); font-size: 0.875rem; }
 .send-options__indent { display: grid; gap: 1rem; padding-left: 1.5rem; }
