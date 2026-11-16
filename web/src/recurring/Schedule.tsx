@@ -2,7 +2,7 @@ import { type FormEvent, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
-import { todayDay } from '../forms/calendar'
+import { tomorrowDay } from '../forms/calendar'
 import { DatePicker } from '../forms/DatePicker'
 import { type FormErrors, FormRow } from '../forms/Form'
 import { invoiceTitle, type SalesInvoice } from '../invoices/queries'
@@ -22,13 +22,13 @@ export type ScheduleDraft = {
   mergeable: boolean
 }
 
-/** The form of a saved recurring invoice's schedule, or of a new one's starting today. */
-export function draftOf(r: RecurringInvoice | null, today: string): ScheduleDraft {
+/** The form of a saved recurring invoice's schedule, or of a new one's starting on start: tomorrow, as its first invoice is made from the next day on. */
+export function draftOf(r: RecurringInvoice | null, start: string): ScheduleDraft {
   const frequency = r?.frequency ?? 1
   const frequencyType = r?.frequency_type ?? 'month'
   const count = r ? countUntil(r) : null
   return {
-    invoiceDate: r?.invoice_date ?? today, preset: r ? presetOf(frequency, frequencyType) : '1:month', frequency: String(frequency), frequencyType,
+    invoiceDate: r?.invoice_date ?? start, preset: r ? presetOf(frequency, frequencyType) : '1:month', frequency: String(frequency), frequencyType,
     hasCount: count !== null, count: count === null ? '' : String(count), autoSend: r?.auto_send ?? false, mergeable: r?.mergeable ?? false,
   }
 }
@@ -134,7 +134,7 @@ export function ScheduleForm({ value, onChange, submitLabel, onSubmit, onCancel,
       <Problems messages={errors.general} />
       <FormRow label={t('recurring.startDate')} width="medium" errors={errors.field('invoice_date')}>
         {({ labelId: _, ...control }) => (
-          <DatePicker {...control} value={value.invoiceDate} min={todayDay()} onChange={(d) => onChange({ invoiceDate: d })} />
+          <DatePicker {...control} value={value.invoiceDate} min={tomorrowDay()} onChange={(d) => onChange({ invoiceDate: d })} />
         )}
       </FormRow>
       <hr />

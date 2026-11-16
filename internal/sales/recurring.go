@@ -176,7 +176,7 @@ func (c RecurringChanges) invoiceChanges() Changes {
 	}
 }
 
-// CreateRecurring adds a recurring invoice, monthly and starting today
+// CreateRecurring adds a recurring invoice, monthly and starting tomorrow
 // unless the changes say otherwise, filled from the administration's
 // defaults like a new invoice.
 func (s *Service) CreateRecurring(ctx context.Context, admin, user resource.ID, c RecurringChanges) (Recurring, error) {
@@ -184,10 +184,10 @@ func (s *Service) CreateRecurring(ctx context.Context, admin, user resource.ID, 
 	if err != nil {
 		return Recurring{}, err
 	}
-	now, today := s.now(), s.today(a)
+	now, tomorrow := s.now(), s.today(a).AddDate(0, 0, 1)
 	r := Recurring{
 		ID: s.ids.Next(), AdministrationID: admin, Active: true, Currency: a.Currency, Language: a.Language, FrequencyType: Month, Frequency: 1,
-		StartDate: today, InvoiceDate: today, Anchor: today, CreatedAt: now, UpdatedAt: now,
+		StartDate: tomorrow, InvoiceDate: tomorrow, Anchor: tomorrow, CreatedAt: now, UpdatedAt: now,
 	}
 	inv := r.invoice()
 	if err := s.defaults(ctx, a, user, &inv, c.invoiceChanges()); err != nil {
@@ -265,8 +265,10 @@ func (s *Service) applyRecurring(ctx context.Context, a administration.Listed, u
 		switch {
 		case err != nil:
 			verr.Add("invoice_date", "is not a date")
-		case d.Before(s.today(a)):
-			verr.Add("invoice_date", "must not lie in the past")
+		case !d.After(s.today(a)):
+			// Its first invoice is made the next day at the earliest, so its
+			// details can be added first.
+			verr.Add("invoice_date", "must lie after today")
 		default:
 			r.InvoiceDate, rescheduled = d, true
 			if created {
@@ -622,11 +624,15 @@ func (s *Service) recur(ctx context.Context, a administration.Listed, user resou
 					inv = completed
 				}
 			}
+			// Each invoice is a real one, numbered and booked: sent the way the
+			// contact receives invoices with automatic sending, otherwise only
+			// marked as sent, for the user to deliver.
+			in, what := SendInput{InvoiceDate: inv.InvoiceDate.Format(time.DateOnly)}, "auto-send"
 			if !r.AutoSend {
-				continue
+				in.DeliveryMethod, what = "Manual", "finalize"
 			}
-			if err := s.sendInBackground(ctx, a.ID, user, inv, SendInput{InvoiceDate: inv.InvoiceDate.Format(time.DateOnly)}); err != nil {
-				errs = append(errs, fmt.Errorf("administration %s, auto-send invoice %s of recurring invoice %s: %w", a.ID, inv.ID, r.ID, err))
+			if err := s.sendInBackground(ctx, a.ID, user, inv, in); err != nil {
+				errs = append(errs, fmt.Errorf("administration %s, %s invoice %s of recurring invoice %s: %w", a.ID, what, inv.ID, r.ID, err))
 			}
 		}
 	}

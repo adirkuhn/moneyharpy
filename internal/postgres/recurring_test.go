@@ -15,7 +15,7 @@ import (
 func TestRecurringInvoicesAreStoredAndMakeInvoices(t *testing.T) {
 	ctx := context.Background()
 	f := newSalesFixture(t)
-	today := adminNow().Format(time.DateOnly)
+	today := adminNow().AddDate(0, 0, 1).Format(time.DateOnly) // the first date it can start
 	// Sending by itself needs an email address to send to.
 	if _, err := f.contacts.Update(ctx, f.admin, f.customer, f.owner, contacts.Changes{SendInvoicesToEmail: ptr("billing@example.com")}); err != nil {
 		t.Fatal(err)
@@ -69,7 +69,7 @@ func TestRecurringInvoicesAreStoredAndMakeInvoices(t *testing.T) {
 	if err != nil || len(made) != 2 {
 		t.Fatalf("made = %d, %v", len(made), err)
 	}
-	if made[0].State != sales.Draft || made[0].InvoiceDate.Format(time.DateOnly) != start.Format(time.DateOnly) || made[0].Reference != "Contract 7" ||
+	if made[0].State == sales.Draft || made[0].InvoiceID == "" || made[0].InvoiceDate.Format(time.DateOnly) != start.Format(time.DateOnly) || made[0].Reference != "Contract 7" ||
 		made[0].Totals.InclTax != 10890 || made[1].InvoiceDate.Format(time.DateOnly) != sales.Occurrence(start, sales.Quarter, 2, 1).Format(time.DateOnly) {
 		t.Errorf("made = %+v", made)
 	}

@@ -4,12 +4,12 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { contactName } from '../contacts/queries'
+import { tomorrowDay } from '../forms/calendar'
 import { formErrors } from '../forms/Form'
 import { ContactHoverCard } from '../contacts/ContactHoverCard'
 import { type EditedInvoice, InvoiceEditor, type Opening } from '../invoices/InvoiceFormPage'
 import { NotesAndHistory } from '../invoices/InvoiceHistory'
 import { ChangeLayoutPanel, LayoutPicker } from '../invoices/LayoutPicker'
-import { today } from '../invoices/paper'
 import { useSalesInvoice } from '../invoices/queries'
 import { useDocumentStyles, useWorkflows } from '../invoicing/queries'
 import { Loading } from '../layout/Loading'
@@ -56,7 +56,7 @@ function NewRecurringInvoice({ administrationId, from, copy }: { administrationI
   const source = useSalesInvoice(administrationId, from)
   const original = useRecurringInvoice(administrationId, copy)
   const styles = useDocumentStyles(administrationId)
-  const [draft, setDraft] = useState<ScheduleDraft>(() => draftOf(null, today()))
+  const [draft, setDraft] = useState<ScheduleDraft>(() => draftOf(null, tomorrowDay()))
   const [step, setStep] = useState<'schedule' | 'document'>('schedule')
   const [layoutsOpen, setLayoutsOpen] = useState(false)
   const [styleId, setStyleId] = useState<string | undefined>(undefined)
@@ -156,7 +156,7 @@ function RecurringScreen({ administrationId, recurring: rec }: { administrationI
   const [layoutsOpen, setLayoutsOpen] = useState(false)
   const layoutsId = useId()
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(() => draftOf(rec, today()))
+  const [draft, setDraft] = useState(() => draftOf(rec, tomorrowDay()))
   const [asking, setAsking] = useState<'stop' | 'delete' | null>(null)
   const list = `/${administrationId}/recurring_sales_invoices`
   const here = `${list}/${rec.id}`
@@ -180,7 +180,7 @@ function RecurringScreen({ administrationId, recurring: rec }: { administrationI
   )
   const editSchedule = () => {
     save.reset()
-    setDraft(draftOf(rec, today()))
+    setDraft(draftOf(rec, tomorrowDay()))
     setEditing(true)
   }
   const scheduleErrors = formErrors(save.error, scheduleLabels(t))
