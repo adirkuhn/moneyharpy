@@ -36,7 +36,7 @@ export const navItems: NavItem[] = [
   {
     kind: 'bank', key: 'bank', to: 'financial_mutations', ready: true, permissions: ['bank'],
     children: [
-      link('financialAccounts', 'settings/bank', true),
+      link('financialAccounts', 'financial_accounts', true),
       link('transactions', 'financial_mutations', true),
       link('payments', 'purchase_transaction_batches'),
     ],

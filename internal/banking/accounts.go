@@ -54,6 +54,8 @@ type Account struct {
 	LastImportAt *time.Time
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	// Balance is the sum of its transactions; set on the list of accounts.
+	Balance Amount
 }
 
 // Ref locates the account.
@@ -75,7 +77,18 @@ func (s *Service) Accounts(ctx context.Context, admin, user resource.ID) ([]Acco
 	if _, err := s.ensure(ctx, admin, user); err != nil {
 		return nil, err
 	}
-	return s.accounts(ctx, admin)
+	list, err := s.accounts(ctx, admin)
+	if err != nil {
+		return nil, err
+	}
+	sums, err := s.store.Balances(ctx, admin, nil)
+	if err != nil {
+		return nil, fmt.Errorf("sum balances: %w", err)
+	}
+	for i := range list {
+		list[i].Balance = sums[list[i].ID]
+	}
+	return list, nil
 }
 
 func (s *Service) accounts(ctx context.Context, admin resource.ID) ([]Account, error) {

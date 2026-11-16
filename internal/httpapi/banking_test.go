@@ -141,6 +141,28 @@ func TestImportBookAndSynchronize(t *testing.T) {
 	}
 	wantStatus(t, owner.upload(api+"/financial_accounts/"+bank.ID+"/import", "application/octet-stream", []byte("hello")), http.StatusUnprocessableEntity)
 
+	// Dropped on the financial accounts page, the file finds its account by its IBAN.
+	r = owner.upload(api+"/financial_statements/import", "application/octet-stream", data)
+	wantStatus(t, r, http.StatusCreated)
+	if found := decode[struct {
+		Duplicates int    `json:"duplicates"`
+		AccountID  string `json:"financial_account_id"`
+	}](t, r); found.AccountID != bank.ID || found.Duplicates != 2 {
+		t.Errorf("detected import = %+v", found)
+	}
+	listed := decode[[]struct {
+		ID      string `json:"id"`
+		Balance string `json:"balance"`
+	}](t, owner.do(http.MethodGet, api+"/financial_accounts", nil))
+	if i := slices.IndexFunc(listed, func(a struct {
+		ID      string `json:"id"`
+		Balance string `json:"balance"`
+	}) bool {
+		return a.ID == bank.ID
+	}); i < 0 || listed[i].Balance == "" || listed[i].Balance == "0.0" {
+		t.Errorf("accounts = %+v", listed)
+	}
+
 	open := decode[[]mutation](t, owner.do(http.MethodGet, api+"/financial_mutations?filter="+url.QueryEscape("period:202611..202611,state:unprocessed"), nil))
 	if len(open) != 1 || open[0].Amount != "1000.0" || open[0].AmountOpen != "1000.0" {
 		t.Fatalf("unprocessed = %+v", open)

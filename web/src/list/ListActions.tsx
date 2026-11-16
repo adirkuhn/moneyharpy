@@ -163,10 +163,12 @@ type ActionMenuProps = {
   items: MenuItem[]
   /** The page's main action, such as Moneybird's Add, in the primary style. */
   primary?: boolean
+  /** Shows only the icon, with the label as its name, as Moneybird's ⋯ More actions. */
+  iconOnly?: boolean
 }
 
 /** A named button of a page's action bar with its own menu, after Moneybird's Export, Extra and Add. */
-export function ActionMenu({ label, icon, items, primary = false }: ActionMenuProps) {
+export function ActionMenu({ label, icon, items, primary = false, iconOnly = false }: ActionMenuProps) {
   const id = useId()
   const { open, toggle, close, root, button } = useDisclosure()
   return (
@@ -174,14 +176,15 @@ export function ActionMenu({ label, icon, items, primary = false }: ActionMenuPr
       <button
         ref={button}
         type="button"
-        className={`btn ${primary ? 'btn--accent' : 'btn--secondary'} btn--with-icon`}
+        className={`btn ${primary ? 'btn--accent' : 'btn--secondary'} ${iconOnly ? 'btn--icon' : 'btn--with-icon'}`}
         aria-expanded={open}
         aria-controls={id}
         onClick={toggle}
+        {...(iconOnly ? { 'aria-label': label, title: label } : {})}
       >
         {icon}
-        <span>{label}</span>
-        <CaretIcon />
+        {!iconOnly && <span>{label}</span>}
+        {!iconOnly && <CaretIcon />}
       </button>
       {open && (
         <div id={id} className="dropdown__panel dropdown__panel--right">

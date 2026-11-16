@@ -1193,16 +1193,16 @@ func (e IdentityRequestIdentityTaxNumberAbsenceReason) Valid() bool {
 
 // Defines values for ImportResultFormat.
 const (
-	Camt  ImportResultFormat = "camt"
-	Mt940 ImportResultFormat = "mt940"
+	ImportResultFormatCamt  ImportResultFormat = "camt"
+	ImportResultFormatMt940 ImportResultFormat = "mt940"
 )
 
 // Valid indicates whether the value is a known member of the ImportResultFormat enum.
 func (e ImportResultFormat) Valid() bool {
 	switch e {
-	case Camt:
+	case ImportResultFormatCamt:
 		return true
-	case Mt940:
+	case ImportResultFormatMt940:
 		return true
 	default:
 		return false
@@ -4647,6 +4647,24 @@ func (e ListExternalSalesInvoicesParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for ImportFinancialStatementFile201JSONResponseBodyFormat.
+const (
+	ImportFinancialStatementFile201JSONResponseBodyFormatCamt  ImportFinancialStatementFile201JSONResponseBodyFormat = "camt"
+	ImportFinancialStatementFile201JSONResponseBodyFormatMt940 ImportFinancialStatementFile201JSONResponseBodyFormat = "mt940"
+)
+
+// Valid indicates whether the value is a known member of the ImportFinancialStatementFile201JSONResponseBodyFormat enum.
+func (e ImportFinancialStatementFile201JSONResponseBodyFormat) Valid() bool {
+	switch e {
+	case ImportFinancialStatementFile201JSONResponseBodyFormatCamt:
+		return true
+	case ImportFinancialStatementFile201JSONResponseBodyFormatMt940:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListProductsParamsActive.
 const (
 	ListProductsParamsActiveFalse ListProductsParamsActive = "false"
@@ -6944,6 +6962,9 @@ type FinancialAccount struct {
 	//
 	// Example: 123456789012345678
 	AdministrationId *Identifier `json:"administration_id,omitempty"`
+
+	// Balance MoneyHarpy extension, in the list only. The sum of the account's transactions.
+	Balance *string `json:"balance,omitempty"`
 
 	// CreatedAt Moneybird-compatible timestamp.
 	CreatedAt *Timestamp `json:"created_at,omitempty"`
@@ -14118,6 +14139,9 @@ type ListFinancialMutationVersionsParams struct {
 	// Filter Comma-separated key:value terms.
 	Filter *DocumentFilter `form:"filter,omitempty" json:"filter,omitempty"`
 }
+
+// ImportFinancialStatementFile201JSONResponseBodyFormat defines parameters for ImportFinancialStatementFile.
+type ImportFinancialStatementFile201JSONResponseBodyFormat string
 
 // LookupKvkNumberParams defines parameters for LookupKvkNumber.
 type LookupKvkNumberParams struct {
@@ -21867,6 +21891,9 @@ type ServerInterface interface {
 	// CreateFinancialStatement Create a financial statement
 	// (POST /api/v2/{administration_id}/financial_statements)
 	CreateFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ImportFinancialStatementFile Import a statement file into the account it is for
+	// (POST /api/v2/{administration_id}/financial_statements/import)
+	ImportFinancialStatementFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// DeleteFinancialStatement Delete a financial statement
 	// (DELETE /api/v2/{administration_id}/financial_statements/{id})
 	DeleteFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -23886,6 +23913,12 @@ func (_ Unimplemented) UnlinkFinancialMutationBooking(w http.ResponseWriter, r *
 // CreateFinancialStatement Create a financial statement
 // (POST /api/v2/{administration_id}/financial_statements)
 func (_ Unimplemented) CreateFinancialStatement(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ImportFinancialStatementFile Import a statement file into the account it is for
+// (POST /api/v2/{administration_id}/financial_statements/import)
+func (_ Unimplemented) ImportFinancialStatementFile(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -33802,6 +33835,32 @@ func (siw *ServerInterfaceWrapper) CreateFinancialStatement(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// ImportFinancialStatementFile operation middleware
+func (siw *ServerInterfaceWrapper) ImportFinancialStatementFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportFinancialStatementFile(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteFinancialStatement operation middleware
 func (siw *ServerInterfaceWrapper) DeleteFinancialStatement(w http.ResponseWriter, r *http.Request) {
 
@@ -41468,6 +41527,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/financial_accounts/{id}/import", wrapper.ImportFinancialStatement)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/financial_statements/import", wrapper.ImportFinancialStatementFile)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/financial_statements", wrapper.CreateFinancialStatement)

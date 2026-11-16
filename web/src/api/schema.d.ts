@@ -1325,6 +1325,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/financial_statements/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import a statement file into the account it is for
+         * @description MoneyHarpy extension, after the file field of Moneybird's financial accounts page. Send a CAMT (052, 053 or 054) or MT940 file of at most 10 MB as the body. It goes to the account with the file's account number; an account the administration does not have yet is added as a bank account. As with an account's import, known transactions and those in the locked period are skipped.
+         */
+        post: operations["importFinancialStatementFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/financial_statements": {
         parameters: {
             query?: never;
@@ -7878,6 +7900,8 @@ export interface components {
              * @description MoneyHarpy extension. When transactions last came in.
              */
             last_import_at: string | null;
+            /** @description MoneyHarpy extension, in the list only. The sum of the account's transactions. */
+            balance?: string;
         };
         FinancialAccountRequest: {
             financial_account: {
@@ -14251,6 +14275,39 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    importFinancialStatementFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description What the import did, and the account it went to */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"] & {
+                        financial_account_id: components["schemas"]["Identifier"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };

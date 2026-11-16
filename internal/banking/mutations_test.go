@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -123,6 +124,10 @@ func TestSynchronizationAndBalances(t *testing.T) {
 	got, err := svc.MutationsByID(ctx, adminID, owner, []resource.ID{ms[0].ID, 1})
 	if err != nil || len(got) != 1 {
 		t.Errorf("by id = %d, %v", len(got), err)
+	}
+	accounts, err := svc.Accounts(ctx, adminID, owner)
+	if i := slices.IndexFunc(accounts, func(a Account) bool { return a.ID == acc.ID }); err != nil || i < 0 || accounts[i].Balance != 750 {
+		t.Errorf("accounts = %+v, %v", accounts, err)
 	}
 	balances, total, err := svc.Balances(ctx, adminID, owner)
 	if err != nil || len(balances) != 1 || total != 750 || balances[0].Account.ID != acc.ID {

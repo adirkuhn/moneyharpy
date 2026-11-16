@@ -3108,6 +3108,49 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/financial_statements/import:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: importFinancialStatementFile
+      x-permissions: [bank]
+      summary: Import a statement file into the account it is for
+      description: >-
+        MoneyHarpy extension, after the file field of Moneybird's financial accounts page. Send a CAMT (052, 053 or 054)
+        or MT940 file of at most 10 MB as the body. It goes to the account with the file's account number; an account
+        the administration does not have yet is added as a bank account. As with an account's import, known
+        transactions and those in the locked period are skipped.
+      tags: [Financial accounts]
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: What the import did, and the account it went to
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ImportResult'
+                  - type: object
+                    required: [financial_account_id]
+                    properties:
+                      financial_account_id:
+                        $ref: '#/components/schemas/Identifier'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/financial_statements:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -15834,6 +15877,9 @@ components:
               format: date-time
               nullable: true
               description: MoneyHarpy extension. When transactions last came in.
+            balance:
+              type: string
+              description: MoneyHarpy extension, in the list only. The sum of the account's transactions.
     FinancialAccountRequest:
       type: object
       required: [financial_account]

@@ -337,6 +337,60 @@ type ImportResult struct {
 	Imported, Duplicates, Locked, AutoBooked int
 }
 
+// ImportDetected reads a CAMT or MT940 file into the account of its account
+// number, as a file dropped on Moneybird's financial accounts page goes; an
+// account the administration does not have yet is added as a bank account.
+func (s *Service) ImportDetected(ctx context.Context, admin, user resource.ID, data []byte) (ImportResult, Account, error) {
+	if _, err := s.ensure(ctx, admin, user); err != nil {
+		return ImportResult{}, Account{}, err
+	}
+	files, _, err := bankfile.Parse(data)
+	if err != nil {
+		var verr resource.ValidationError
+		verr.Add("file", err.Error())
+		return ImportResult{}, Account{}, &verr
+	}
+	number := ""
+	currency := ""
+	for _, f := range files {
+		if f.Account != "" {
+			number, currency = f.Account, f.Currency
+			break
+		}
+	}
+	if number == "" {
+		var verr resource.ValidationError
+		verr.Add("file", "names no account number; import it from the account instead")
+		return ImportResult{}, Account{}, &verr
+	}
+	accounts, err := s.accounts(ctx, admin)
+	if err != nil {
+		return ImportResult{}, Account{}, err
+	}
+	compact := func(v string) string { return strings.ToUpper(strings.ReplaceAll(v, " ", "")) }
+	var acc *Account
+	for i := range accounts {
+		if compact(accounts[i].Identifier) == compact(number) {
+			acc = &accounts[i]
+			break
+		}
+	}
+	if acc == nil {
+		kind := BankAccount
+		c := AccountChanges{Type: &kind, Name: &number, Identifier: &number}
+		if currency != "" {
+			c.Currency = &currency
+		}
+		created, err := s.CreateAccount(ctx, admin, user, c)
+		if err != nil {
+			return ImportResult{}, Account{}, err
+		}
+		acc = &created
+	}
+	res, err := s.Import(ctx, admin, acc.ID, user, data)
+	return res, *acc, err
+}
+
 // Import reads a CAMT or MT940 file into the account. A file for another
 // account number is refused.
 func (s *Service) Import(ctx context.Context, admin, id, user resource.ID, data []byte) (ImportResult, error) {

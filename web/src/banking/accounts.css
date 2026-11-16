@@ -1,0 +1,39 @@
+/* Moneybird's financial accounts: a card of rows, each an account with its balance, the deactivated ones folded away under it. */
+.accounts-card { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.accounts { margin: 0; padding: 0 1rem; list-style: none; }
+.accounts > li + li { border-top: 1px solid var(--line); }
+.accounts__row { display: flex; align-items: center; gap: 1rem; padding: 0.875rem 0; color: var(--text); text-decoration: none; }
+.accounts__row:hover .accounts__title { color: var(--blue); }
+.accounts__icon {
+  display: grid; flex: none; place-items: center; width: 2.25rem; height: 2.25rem; border: 1px solid var(--line); border-radius: 8px; color: var(--muted);
+}
+.accounts__icon svg { width: 1.125rem; height: 1.125rem; }
+.accounts__name { display: grid; flex: 1; gap: 0.125rem; min-width: 0; }
+.accounts__title { overflow-wrap: anywhere; }
+.accounts__subtitle { color: var(--muted); font-size: 0.8125rem; }
+.accounts__balance { display: grid; justify-items: end; gap: 0.125rem; text-align: right; }
+.accounts__amount { font-variant-numeric: tabular-nums; }
+.accounts__chevron { flex: none; color: var(--muted); }
+.accounts .is-inactive .accounts__row { opacity: 0.7; }
+.accounts__inactive { margin: 0; padding: 0.75rem 1rem; border-top: 1px solid var(--line); background: var(--row-hover); color: var(--muted); font-size: 0.875rem; }
+.accounts__inactive .btn--link { padding: 0; border: 0; background: none; color: var(--text); font: inherit; cursor: pointer; }
+.accounts__inactive .btn--link:hover { text-decoration: underline; }
+
+/* Add transactions: the field to drop a statement file on. */
+.add-transactions { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
+.add-transactions__drop {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; padding: 1.75rem 1rem;
+  border: 1px dashed var(--line); border-radius: 10px; background: var(--surface); text-align: center; cursor: pointer;
+}
+.add-transactions__drop:hover, .add-transactions__drop.is-over { border-color: var(--blue); background: var(--row-hover); }
+.add-transactions__drop:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.add-transactions__icon { color: var(--blue); }
+.add-transactions__icon svg { width: 1.5rem; height: 1.5rem; }
+.add-transactions__subtitle { color: var(--muted); font-size: 0.8125rem; }
+.add-transactions__manual { margin: 0; color: var(--muted); font-size: 0.875rem; }
+
+@media (max-width: 640px) {
+  .accounts__row { gap: 0.75rem; }
+}
+
+.accounts-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }

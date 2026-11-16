@@ -50,7 +50,7 @@ describe('side menu', () => {
     const nav = await menu()
     expect(within(nav).getByRole('button', { name: 'Bank' })).toHaveAttribute('aria-expanded', 'true')
     expect(within(nav).getByRole('link', { name: 'Transactions' })).toHaveAttribute('aria-current', 'page')
-    expect(within(nav).getByRole('link', { name: 'Financial accounts' })).toHaveAttribute('href', '/11/settings/bank')
+    expect(within(nav).getByRole('link', { name: 'Financial accounts' })).toHaveAttribute('href', '/11/financial_accounts')
     expect(within(nav).getByRole('button', { name: 'Reports' })).toHaveAttribute('aria-expanded', 'false')
   })
 
