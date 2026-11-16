@@ -429,7 +429,7 @@ func (s *Service) paymentEntries(ctx context.Context, admin, user resource.ID, p
 		return nil, wrap("find category accounts_payable", err)
 	}
 	contact := optional(d.ContactID)
-	label := d.label()
+	label := d.label(s.language(ctx, admin, user))
 	entries := []journal.Entry{
 		{ID: s.ids.Next(), AdministrationID: admin, DocumentType: journal.Payment, DocumentID: p.ID, Date: p.PaymentDate, LedgerAccountID: creditors,
 			ContactID: contact, Amount: p.Price, Description: label},

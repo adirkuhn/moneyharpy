@@ -5,9 +5,18 @@ import { describe, expect, it, vi } from 'vitest'
 import type { LedgerAccount } from '../bookkeeping/queries'
 import { renderAt } from '../test/render'
 import { defaultConditions, server, workflow } from '../test/server'
-import { cells, choose, contactCounts, creating, draft, invoice, invoicePaper, loaded, sales, senderStyle, sidebar, stamp, stateLabel } from './testkit'
+import { cells, choose, contactCounts, creating, draft, invoice, invoicePaper, loaded, rate, sales, senderStyle, sidebar, stamp, stateLabel } from './testkit'
 
 describe('an invoice', () => {
+  it("names a VAT rate on the document by its percentage in the document's language, not by the rate's own name", async () => {
+    server.use(...loaded(), http.get('*/api/v2/11/tax_rates', () => HttpResponse.json([rate({ name: 'High rate' })])))
+    renderAt('/11/sales_invoices/901')
+    expect(await screen.findByRole('heading', { level: 1, name: '2026-0001' })).toBeInTheDocument()
+    const totals = within(invoicePaper('Invoice 2026-0001')).getByRole('table', { name: 'Totals' })
+    expect(await within(totals).findByRole('row', { name: /21% btw over €\s200,00/ })).toHaveTextContent('€ 42,00')
+    expect(within(totals).queryByText(/High rate/)).toBeNull()
+  })
+
   it("shows the invoice as its document with Moneybird's action bar and sidebar", async () => {
     server.use(...loaded())
     renderAt('/11/sales_invoices/901')

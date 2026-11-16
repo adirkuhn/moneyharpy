@@ -677,7 +677,7 @@ func (r Recurring) next() (Invoice, time.Time) {
 	after := Occurrence(r.Anchor, r.FrequencyType, r.Frequency, r.Periods+1)
 	end := after.AddDate(0, 0, -1)
 	period := day.Format("20060102") + ".." + end.Format("20060102")
-	text := day.Format(time.DateOnly) + " – " + end.Format(time.DateOnly)
+	text := day.Format("02-01-2006") + " – " + end.Format("02-01-2006")
 	inv := r.invoice()
 	for i := range inv.Lines {
 		d := &inv.Lines[i]

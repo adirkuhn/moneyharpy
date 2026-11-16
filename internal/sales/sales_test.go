@@ -144,7 +144,7 @@ func TestSendNumbersBooksAndEmails(t *testing.T) {
 	if m.To[0] != "billing@example.com" || m.BCC[0] != "copy@example.com" || !strings.Contains(m.Subject, "2026-0001") || len(m.Files) != 1 || !strings.Contains(m.Body, "€ 296,50") {
 		t.Errorf("mail = %+v", m)
 	}
-	if !strings.HasPrefix(string(m.Files[0].Data), "%PDF 2026-0001") || m.Files[0].Name != "invoice-2026-0001.pdf" {
+	if !strings.HasPrefix(string(m.Files[0].Data), "%PDF 2026-0001") || m.Files[0].Name != "factuur-2026-0001.pdf" {
 		t.Errorf("file = %s %q", m.Files[0].Name, m.Files[0].Data)
 	}
 	if m.Look == nil || m.Look.Style.HeaderType != "background_color_with_logo" || m.Look.Style.FontFamily != "georgia" || m.Look.Sender.CompanyName == "" {

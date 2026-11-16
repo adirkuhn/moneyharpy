@@ -263,7 +263,7 @@ export const en = {
     document: {
       invoice: 'Invoice', draft: 'Draft', draftNumber: 'Draft #{{id}}', contact: 'Contact', invoiceDate: 'Invoice date', dueDate: 'Due date',
       senderAddress: 'Sender address', lines: 'Invoice lines', quantity: 'Quantity', description: 'Description', price: 'Price', total: 'Total', vat: 'VAT',
-      reference: 'Reference', subtotalExcl: 'Subtotal excl. VAT', vatOver: '{{name}} over {{amount}}',
+      reference: 'Reference', subtotalExcl: 'Subtotal excl. VAT', vatOver: '{{name}} over {{amount}}', vatRate: '{{rate}} VAT',
       subtotal: 'Subtotal', discount: 'Discount {{percentage}}%', includesVat: 'Includes {{name}}',
       payBefore: 'Please pay {{amount}} before {{date}} to account {{account}} in the name of {{holder}}, quoting {{reference}}.',
       numberOnSend: 'the invoice number',

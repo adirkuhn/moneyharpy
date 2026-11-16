@@ -31,6 +31,36 @@ func side(a money.Amount) (string, string) {
 	return decimal(a), "D"
 }
 
+// dutchMonths name the months in the audit file, which is Dutch throughout.
+var dutchMonths = [...]string{"januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"}
+
+// dutchMonth names a period of the audit file, such as "januari 2026".
+func dutchMonth(t time.Time) string {
+	return fmt.Sprintf("%s %d", dutchMonths[t.Month()-1], t.Year())
+}
+
+// documentName describes a line without a description of its own by what
+// booked it, in Dutch as the rest of the audit file.
+func documentName(documentType string) string {
+	switch documentType {
+	case journal.SalesInvoice:
+		return "Verkoopfactuur"
+	case journal.ExternalSalesInvoice:
+		return "Externe verkoopfactuur"
+	case "PurchaseInvoice":
+		return "Inkoopfactuur"
+	case "Receipt":
+		return "Bon"
+	case journal.FinancialMutation:
+		return "Banktransactie"
+	case journal.Payment:
+		return "Betaling"
+	case journal.GeneralJournalDocument:
+		return "Memoriaalboeking"
+	}
+	return documentType
+}
+
 // journalOf is the XAF journal a document type books in.
 func journalOf(documentType string) (id, desc, kind string) {
 	switch documentType {
@@ -190,7 +220,7 @@ func auditfile(b book, contacts []Contact, now time.Time) ([]byte, error) {
 	for m := 1; m <= 12; m++ {
 		from := time.Date(b.year, time.Month(m), 1, 0, 0, 0, 0, time.UTC)
 		out.Company.Periods.Items = append(out.Company.Periods.Items, xafPeriod{
-			Number: m, Desc: from.Format("January 2006"), Start: from.Format(time.DateOnly), End: endOfMonth(from).Format(time.DateOnly),
+			Number: m, Desc: dutchMonth(from), Start: from.Format(time.DateOnly), End: endOfMonth(from).Format(time.DateOnly),
 		})
 	}
 	if lines := openingLines(b); len(lines) > 0 {
@@ -221,14 +251,14 @@ func auditfile(b book, contacts []Contact, now time.Time) ([]byte, error) {
 		key := e.DocumentType + e.DocumentID.String()
 		if current == nil || key != currentKey {
 			j.Transactions = append(j.Transactions, xafTransaction{
-				Nr: e.DocumentID.String(), Desc: cmpOr(e.Description, e.DocumentType), Period: int(e.Date.Month()), Date: e.Date.Format(time.DateOnly),
+				Nr: e.DocumentID.String(), Desc: cmpOr(e.Description, documentName(e.DocumentType)), Period: int(e.Date.Month()), Date: e.Date.Format(time.DateOnly),
 			})
 			current, currentKey = &j.Transactions[len(j.Transactions)-1], key
 		}
 		amnt, tp := side(e.Amount)
 		line := xafTrLine{
 			Nr: e.ID.String(), AccID: b.index[e.LedgerAccountID].Code, DocRef: e.DocumentID.String(), EffDate: e.Date.Format(time.DateOnly),
-			Desc: cmpOr(e.Description, e.DocumentType), Amount: amnt, Type: tp,
+			Desc: cmpOr(e.Description, documentName(e.DocumentType)), Amount: amnt, Type: tp,
 		}
 		if e.ContactID != nil {
 			line.CustSupID = e.ContactID.String()

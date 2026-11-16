@@ -130,7 +130,7 @@ func TestContactSignsOnline(t *testing.T) {
 	var to []string
 	for _, m := range sent {
 		to = append(to, m.To...)
-		if len(m.Files) != 1 || !strings.HasPrefix(m.Files[0].Name, "estimate-") || !strings.Contains(string(m.Files[0].Data), "signed") {
+		if len(m.Files) != 1 || !strings.HasPrefix(m.Files[0].Name, "quote-") || !strings.Contains(string(m.Files[0].Data), "signed") {
 			t.Errorf("files = %+v", m.Files)
 		}
 	}

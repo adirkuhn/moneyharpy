@@ -284,7 +284,7 @@ func TestWorkerMakesTheInvoicesThatAreDueAndCatchesUp(t *testing.T) {
 	if first.ContactID != customer || first.Reference != "Contract 7" || first.WorkflowID != flow || first.Totals.InclTax != 12100 {
 		t.Errorf("first = %+v", first)
 	}
-	if first.Lines[0].Description != "Hosting 2026-09-30 – 2026-10-29" || first.Lines[0].Period != "20260930..20261029" {
+	if first.Lines[0].Description != "Hosting 30-09-2026 – 29-10-2026" || first.Lines[0].Period != "20260930..20261029" {
 		t.Errorf("first line = %+v", first.Lines[0])
 	}
 	if second.Lines[0].Period != "20261030..20261129" || first.Lines[0].ID == second.Lines[0].ID {

@@ -118,9 +118,13 @@ func TestPlanMakesLinesOfTheVATSummaryOrTheTotal(t *testing.T) {
 	mem := Memory{Kind: Learned[Kind]{V: KindReceipt, Uses: 1}, Receipts: KindMemory{Lines: map[string]Category{"": {LedgerAccountID: 80, TaxRateID: 2, Uses: 1}}}}
 	p = MakePlan(PlanInput{Extraction: total, Target: Target{Kind: purchases.TypelessDocument}, Memory: mem, Rates: testRates})
 	d := p.Changes.Details
-	if len(d) != 1 || *d[0].Price != "42.5" || *d[0].Description != fallbackDescription || *d[0].TaxRateID != 2 || *d[0].LedgerAccountID != 80 ||
+	if len(d) != 1 || *d[0].Price != "42.5" || *d[0].Description != "Purchase" || *d[0].TaxRateID != 2 || *d[0].LedgerAccountID != 80 ||
 		!*p.Changes.PricesAreInclTax || p.Kind != purchases.Receipt {
 		t.Errorf("total line = %+v, plan %+v", d, p)
+	}
+	// In a Dutch administration the line is named in Dutch.
+	if nl := MakePlan(PlanInput{Extraction: total, Target: Target{Kind: purchases.TypelessDocument}, Memory: mem, Rates: testRates, Language: "nl"}); *nl.Changes.Details[0].Description != "Inkoop" {
+		t.Errorf("Dutch line = %q", *nl.Changes.Details[0].Description)
 	}
 	f := fieldNames(p.Fields)
 	if f[FieldDocumentType] != Uncertain || f["details.0.ledger_account_id"] != Uncertain || f["details.0.tax_rate_id"] != Uncertain {

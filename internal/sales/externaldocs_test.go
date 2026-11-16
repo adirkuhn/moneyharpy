@@ -23,7 +23,7 @@ func TestNextFillsInThePeriodWithoutMovingOn(t *testing.T) {
 		Lines: []Detail{{Description: "Hosting {period}", Period: "20260101..20260131"}},
 	}
 	inv, after := r.next()
-	if inv.Lines[0].Description != "Hosting 2026-09-30 – 2026-10-29" || inv.Lines[0].Period != "20260930..20261029" {
+	if inv.Lines[0].Description != "Hosting 30-09-2026 – 29-10-2026" || inv.Lines[0].Period != "20260930..20261029" {
 		t.Errorf("line = %+v", inv.Lines[0])
 	}
 	if !after.Equal(date("2026-10-30")) || !inv.InvoiceDate.Equal(date("2026-09-30")) {
