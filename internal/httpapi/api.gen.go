@@ -6405,7 +6405,9 @@ type DocumentStyleRequest struct {
 		// EstimateRecipientAddress MoneyHarpy extension. The same for quotes.
 		EstimateRecipientAddress *[]DocumentStyleLine `json:"estimate_recipient_address,omitempty"`
 		EstimateSenderAddress    *[]DocumentStyleLine `json:"estimate_sender_address,omitempty"`
-		FontFamily               *string              `json:"font_family,omitempty"`
+
+		// FontFamily Moneybird's lucida_grande, helvetica, arial, verdana, georgia, times_new_roman or courier; or inter, the app's typeface (MoneyHarpy extension). PDFs embed an openly licensed font for each.
+		FontFamily *string `json:"font_family,omitempty"`
 
 		// FontSize 8 to 14 points.
 		FontSize *int `json:"font_size,omitempty"`

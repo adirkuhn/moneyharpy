@@ -929,7 +929,7 @@ export const nl: Messages = {
     logoPosition: 'Positie van het logo', logoWidth: 'Breedte van het logo', fullWidth: 'Volledige breedte',
     positions: { left: 'Links', center: 'Gecentreerd', right: 'Rechts' },
     fontFamily: 'Lettertype', fontSize: 'Lettergrootte',
-    fonts: { lucida_grande: 'Lucida grande', helvetica: 'Helvetica', arial: 'Arial', verdana: 'Verdana', georgia: 'Georgia', times_new_roman: 'Times new roman', courier: 'Courier' },
+    fonts: { lucida_grande: 'Lucida grande', helvetica: 'Helvetica', arial: 'Arial', verdana: 'Verdana', georgia: 'Georgia', times_new_roman: 'Times new roman', courier: 'Courier', inter: 'Inter' },
     backgroundPreview: 'Het voorbeeld toont de achtergrondafbeelding niet.', hideSender: 'Verberg het afzendadres op facturen en offertes',
     addressPosition: 'Positie van het klantadres', senderWidth: 'Breedte van het afzendadres',
     senderHelp: 'Sleep velden om de indeling en volgorde van je afzendadres te wijzigen.',

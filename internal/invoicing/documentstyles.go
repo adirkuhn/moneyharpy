@@ -58,12 +58,20 @@ const (
 	imageBytes = 2 << 20
 )
 
+// DefaultFontFamily is the font family of a new document style, as
+// Moneybird's.
+const DefaultFontFamily = "lucida_grande"
+
 // Choices for document style fields.
 var (
 	LogoPositions    = []string{"left", "center", "right"}
 	AddressPositions = []string{"left", "right"}
 	PaperSizes       = []string{"A4", "letter"}
-	FontFamilies     = []string{"lucida_grande", "helvetica", "arial", "verdana", "georgia", "times_new_roman", "courier"}
+	// FontFamilies are Moneybird's, for documents and emails.
+	FontFamilies = []string{"lucida_grande", "helvetica", "arial", "verdana", "georgia", "times_new_roman", "courier"}
+	// DocumentFontFamilies add Inter, the web app's typeface, for documents:
+	// a MoneyHarpy extension.
+	DocumentFontFamilies = []string{"lucida_grande", "helvetica", "arial", "verdana", "georgia", "times_new_roman", "courier", "inter"}
 	// SenderFields are the parts of the sender block on a document, besides
 	// the identity's custom fields.
 	SenderFields = []string{"company_name", "address", "newline", "email", "phone", "company_website_url", "chamber_of_commerce", "tax_number", "bank_account_number", "bank_account_bic", "bank_account_name"}
@@ -553,7 +561,7 @@ func (s *Service) applyStyle(ctx context.Context, d *DocumentStyle, user resourc
 		{"logo_position", &d.LogoPosition, c.LogoPosition, LogoPositions},
 		{"paper_size", &d.PaperSize, c.PaperSize, PaperSizes},
 		{"address_position", &d.AddressPosition, c.AddressPosition, AddressPositions},
-		{"font_family", &d.FontFamily, c.FontFamily, FontFamilies},
+		{"font_family", &d.FontFamily, c.FontFamily, DocumentFontFamilies},
 	} {
 		if f.src == nil {
 			continue
@@ -692,7 +700,7 @@ func defaultDocumentStyle(admin, identity resource.ID, name string) DocumentStyl
 	return DocumentStyle{
 		AdministrationID: admin, Name: name, IdentityID: identity, Default: true,
 		LogoDisplayWidth: 50, LogoPosition: "left", PaperSize: "A4", AddressPosition: "left",
-		FontSize: 10, FontFamily: "lucida_grande", Layout: DefaultLayout(),
+		FontSize: 10, FontFamily: DefaultFontFamily, Layout: DefaultLayout(),
 		Email: DefaultEmailStyle(), PublicView: DefaultPublicViewStyle(), Checkout: DefaultCheckoutStyle(),
 	}
 }

@@ -13,7 +13,7 @@ import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { type CustomField, type Identity, useCustomFields, useIdentities } from '../settings/queries'
 import { AccordionItem, PartIcon } from './Accordion'
-import { CheckoutParts, EmailParts, fonts, PublicViewParts } from './ChannelParts'
+import { CheckoutParts, documentFonts, EmailParts, PublicViewParts } from './ChannelParts'
 import { type ChannelForm, CheckoutPreview, EmailPreview, PublicViewPreview } from './ChannelPreviews'
 import { FieldColumns } from './FieldColumns'
 import { type PreviewData, usePreviewData } from './previewData'
@@ -332,7 +332,7 @@ function DocumentParts({ administrationId, style, onFile, form, set, errors, sen
       {item('font', 'font', (
         <>
           <SelectInput label={t('documentStyle.fontFamily')} value={form.font_family} errors={errors.field('font_family')} onChange={(e) => set('font_family', e.target.value)}>
-            {fonts.map((f) => <option key={f} value={f}>{t(`documentStyle.fonts.${f}`)}</option>)}
+            {documentFonts.map((f) => <option key={f} value={f}>{t(`documentStyle.fonts.${f}`)}</option>)}
           </SelectInput>
           <SelectInput label={t('documentStyle.fontSize')} value={String(form.font_size)} errors={errors.field('font_size')} onChange={(e) => set('font_size', Number(e.target.value))}>
             {fontSizes.map((n) => <option key={n} value={n}>{n}pt</option>)}

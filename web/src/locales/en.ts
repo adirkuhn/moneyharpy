@@ -927,7 +927,7 @@ export const en = {
     logoPosition: 'Logo position', logoWidth: 'Logo width', fullWidth: 'Full width',
     positions: { left: 'Left', center: 'Centered', right: 'Right' },
     fontFamily: 'Font', fontSize: 'Font size',
-    fonts: { lucida_grande: 'Lucida grande', helvetica: 'Helvetica', arial: 'Arial', verdana: 'Verdana', georgia: 'Georgia', times_new_roman: 'Times new roman', courier: 'Courier' },
+    fonts: { lucida_grande: 'Lucida grande', helvetica: 'Helvetica', arial: 'Arial', verdana: 'Verdana', georgia: 'Georgia', times_new_roman: 'Times new roman', courier: 'Courier', inter: 'Inter' },
     backgroundPreview: 'The preview does not show the background image.', hideSender: 'Hide the sender address on invoices and quotes',
     addressPosition: 'Position of client address', senderWidth: 'Sender address width',
     senderHelp: 'Drag fields to change the layout and order of your sender address.',

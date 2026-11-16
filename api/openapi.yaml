@@ -18720,6 +18720,7 @@ components:
             font_family:
               type: string
               maxLength: 64
+              description: "Moneybird's lucida_grande, helvetica, arial, verdana, georgia, times_new_roman or courier; or inter, the app's typeface (MoneyHarpy extension). PDFs embed an openly licensed font for each."
             custom_css:
               type: string
               maxLength: 20000

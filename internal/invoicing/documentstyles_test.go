@@ -101,6 +101,20 @@ func TestDocumentStyleValidation(t *testing.T) {
 	}
 }
 
+func TestDocumentsMayPrintInInter(t *testing.T) {
+	svc, _, _ := newTestService()
+	ctx := context.Background()
+	d := defaultStyle(t, svc)
+	got, err := svc.UpdateDocumentStyle(ctx, adminID, d.ID, owner, DocumentStyleChanges{FontFamily: ptr("inter")})
+	if err != nil || got.FontFamily != "inter" {
+		t.Fatalf("UpdateDocumentStyle(inter) = %q, %v", got.FontFamily, err)
+	}
+	_, err = svc.UpdateDocumentStyle(ctx, adminID, d.ID, owner, DocumentStyleChanges{Email: EmailChanges{FontFamily: ptr("inter")}})
+	if fieldsOf(t, err)["email_font_family"] == nil {
+		t.Error("emails accept Inter, which Moneybird's email fonts do not include")
+	}
+}
+
 func TestUploadRejectsWrongFiles(t *testing.T) {
 	svc, _, _ := newTestService()
 	ctx := context.Background()

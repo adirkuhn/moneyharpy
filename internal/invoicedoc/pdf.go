@@ -75,9 +75,27 @@ const (
 	bodyMargin = 20.0
 	lineHeight = 5.0
 	maxLogoH   = 25.0
-	thinRule   = 0.2
-	heavyRule  = 0.35
+	// thinRule separates the lines of the table, in the line colour;
+	// heavyRule closes the table's header, its last line and the totals,
+	// in the text colour.
+	thinRule  = 0.2
+	heavyRule = 0.35
+	// rowPadding is the space above and below a line of the table.
+	rowPadding = 1.5
+	// columnGap is the least space between the quantity and description.
+	columnGap = 3.0
 )
+
+// The web app's colours (web/src/styles.css): text in --text, labels and
+// the page number in --muted, which reads at 6:1 on white, and the rules
+// between lines in --line.
+var (
+	textColor  = rgb{0x09, 0x26, 0x53}
+	mutedColor = rgb{0x4e, 0x64, 0x85}
+	lineColor  = rgb{0xd9, 0xe1, 0xed}
+)
+
+type rgb struct{ r, g, b int }
 
 func render(doc sales.Document, prices bool) ([]byte, error) {
 	var out bytes.Buffer
@@ -90,7 +108,7 @@ func render(doc sales.Document, prices bool) ([]byte, error) {
 // writer lays a document out page by page.
 type writer struct {
 	pdf    *fpdf.Fpdf
-	tr     func(string) string
+	face   face
 	doc    sales.Document
 	l      labels
 	prices bool
@@ -135,7 +153,8 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	if fontSize < 8 || fontSize > 14 {
 		fontSize = 10
 	}
-	w := &writer{pdf: pdf, tr: pdf.UnicodeTranslatorFromDescriptor("cp1252"), doc: doc, l: l, prices: prices, size: fontSize, cols: columns(l, prices)}
+	w := &writer{pdf: pdf, face: faceFor(doc.Style.FontFamily), doc: doc, l: l, prices: prices, size: fontSize}
+	w.cols = w.columns()
 	if prices && doc.Estimate == nil {
 		w.notice = w.paymentNotice()
 	}
@@ -148,7 +167,7 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	pdf.SetY(y + 8)
 	if doc.Estimate != nil && doc.Estimate.PreText != "" {
 		w.font("", fontSize-1)
-		pdf.MultiCell(0, lineHeight, w.tr(doc.Estimate.PreText), "", "L", false)
+		pdf.MultiCell(0, lineHeight, doc.Estimate.PreText, "", "L", false)
 		pdf.Ln(4)
 	}
 	w.table()
@@ -158,7 +177,7 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	if doc.Estimate != nil && doc.Estimate.PostText != "" {
 		pdf.Ln(8)
 		w.font("", fontSize-1)
-		pdf.MultiCell(0, lineHeight, w.tr(doc.Estimate.PostText), "", "L", false)
+		pdf.MultiCell(0, lineHeight, doc.Estimate.PostText, "", "L", false)
 	}
 	if pdf.GetY() > w.lastBottom() {
 		pdf.AddPage()
@@ -167,10 +186,13 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	return pdf
 }
 
+// font selects the face in a style and size, in the text colour.
 func (w *writer) font(style string, size float64) {
-	w.pdf.SetFont("Helvetica", style, size)
-	w.pdf.SetTextColor(0, 0, 0)
+	w.face.set(w.pdf, style, size)
+	w.color(textColor)
 }
+
+func (w *writer) color(c rgb) { w.pdf.SetTextColor(c.r, c.g, c.b) }
 
 func (w *writer) pageHeight() float64 {
 	_, h := w.pdf.GetPageSize()
@@ -205,9 +227,7 @@ func (w *writer) footer() {
 	pdf := w.pdf
 	if w.last && w.notice != nil {
 		y := w.noticeTop()
-		pdf.SetDrawColor(0, 0, 0)
-		pdf.SetLineWidth(thinRule)
-		pdf.Line(left, y-3, right, y-3)
+		w.rule(y-3, left, right, thinRule)
 		marginLeft, marginTop, marginRight, _ := pdf.GetMargins()
 		if w.notice.qrCode {
 			pdf.SetRightMargin(marginRight + 34)
@@ -215,12 +235,13 @@ func (w *writer) footer() {
 		}
 		pdf.SetXY(left, y)
 		w.font("", w.size-1)
-		writeSpans(pdf, w.tr, w.notice.spans, w.size-1)
+		writeSpans(pdf, w.face, w.notice.spans, w.size-1)
 		pdf.SetMargins(marginLeft, marginTop, marginRight)
 	}
 	pdf.SetY(-footerY)
-	w.font("", w.size-1)
-	pdf.CellFormat(0, lineHeight, w.tr(fmt.Sprintf(w.l.Page, pdf.PageNo())), "", 0, "C", false, 0, "")
+	w.font("", w.size-1.5)
+	w.color(mutedColor)
+	pdf.CellFormat(0, lineHeight, fmt.Sprintf(w.l.Page, pdf.PageNo()), "", 0, "C", false, 0, "")
 }
 
 // paymentNotice is the invoice's payment conditions, styled by their
@@ -251,7 +272,7 @@ func (w *writer) measure(spans []sales.Span, qrCode bool) float64 {
 	scratch := w.scratchPage()
 	scratch.SetMargins(left, 0, marginRight)
 	scratch.SetXY(left, 10)
-	writeSpans(scratch, w.tr, spans, w.size-1)
+	writeSpans(scratch, w.face, spans, w.size-1)
 	return scratch.GetY() - 10 + lineHeight
 }
 
@@ -259,9 +280,9 @@ func (w *writer) measure(spans []sales.Span, qrCode bool) float64 {
 // width cw.
 func (w *writer) wrappedHeight(text string, cw, size float64) float64 {
 	scratch := w.scratchPage()
-	scratch.SetFont("Helvetica", "", size)
+	w.face.set(scratch, "", size)
 	scratch.SetXY(left, 10)
-	scratch.MultiCell(cw, lineHeight, w.tr(text), "", "L", false)
+	scratch.MultiCell(cw, lineHeight, text, "", "L", false)
 	return max(scratch.GetY()-10, lineHeight)
 }
 
@@ -285,7 +306,7 @@ func (w *writer) letterhead() {
 	senderY := top
 	size := w.size - 1
 	// Where the capitals of the sender's first line start in its cell.
-	capOffset := 4.5/2 + (0.3-0.718)*size*25.4/72
+	capOffset := 4.5/2 + (0.3-w.face.capHeight(w.pdf))*size*25.4/72
 	if lw, lh, ok := w.logoSize(); ok {
 		x := left
 		y := senderY + capOffset
@@ -301,11 +322,34 @@ func (w *writer) letterhead() {
 	if layout(w.doc).HideSenderAddress {
 		return
 	}
-	sw := senderWidth(w.doc)
+	lines := senderLines(w.doc, w.l)
+	// The block starts where the style puts it, or further left when its
+	// widest line would cross the right margin in this face.
 	pageW, _ := w.pdf.GetPageSize()
-	x := pageW - senderMargin - sw
+	x := min(pageW-senderMargin-senderWidth(w.doc), right-w.widest(lines, size)-w.pdf.GetCellMargin())
 	w.pdf.SetXY(x, senderY)
-	drawStyled(w.pdf, w.tr, senderLines(w.doc, w.l), x, sw, size)
+	w.color(textColor)
+	drawStyled(w.pdf, w.face, lines, x, right-x, size)
+}
+
+// widest is the width of the widest of the lines as drawStyled prints them.
+func (w *writer) widest(lines []styledLine, size float64) float64 {
+	scratch := w.scratchPage()
+	widest := 0.0
+	for _, line := range lines {
+		style := ""
+		if line.Bold {
+			style = "B"
+		}
+		w.face.set(scratch, style, size)
+		for i, text := range line.Text {
+			if i == 0 && line.Label != "" {
+				text = line.Label + ": " + text
+			}
+			widest = max(widest, scratch.GetStringWidth(text))
+		}
+	}
+	return widest
 }
 
 // logoSize registers the logo and is the size it prints at: the style's
@@ -342,12 +386,12 @@ func (w *writer) recipient() {
 	pdf.SetXY(left, recipientY)
 	w.font("", w.size)
 	for _, line := range addressLines(doc) {
-		pdf.CellFormat(95, lineHeight, w.tr(line), "", 2, "L", false, 0, "")
+		pdf.CellFormat(95, lineHeight, line, "", 2, "L", false, 0, "")
 	}
 	if info := recipientInfo(doc, w.l); len(info) > 0 {
 		pdf.SetX(left)
 		pdf.CellFormat(95, 2, "", "", 2, "L", false, 0, "")
-		drawStyled(pdf, w.tr, info, left, 95, w.size-1)
+		drawStyled(pdf, w.face, info, left, 95, w.size-1)
 	}
 }
 
@@ -386,19 +430,19 @@ func addressLines(doc sales.Document) []string {
 // its right metadata beside it, and is where it ends.
 func (w *writer) heading() float64 {
 	pdf := w.pdf
-	titleSize := w.size + 8
+	titleSize := w.size * 2.3
 	w.font("", titleSize)
 	pdf.SetXY(left, titleY)
-	pdf.CellFormat(0, 10, w.tr(title(w.doc, w.l, w.prices)), "", 1, "L", false, 0, "")
+	pdf.CellFormat(0, 10, title(w.doc, w.l, w.prices), "", 1, "L", false, 0, "")
 	leftRows, rightRows := metaColumns(w.doc, w.l, w.prices)
 	size := w.size - 1
 	mm := func(pt float64) float64 { return pt * 25.4 / 72 }
 	// The right column's first line sits on the title's baseline.
 	baseline := titleY + 5 + 0.3*mm(titleSize)
 	rightY := baseline - lineHeight/2 - 0.3*mm(size)
-	leftEnd := w.metaBlock(leftRows, left, titleY+11, size, false)
+	leftEnd := w.metaBlock(leftRows, left, titleY+12, size, false)
 	rightEnd := w.metaBlock(rightRows, right, rightY, size, true)
-	return max(leftEnd, rightEnd, titleY+10)
+	return max(leftEnd, rightEnd, titleY+11)
 }
 
 // metaBlock prints label and value columns from x, or ending at x when
@@ -411,8 +455,8 @@ func (w *writer) metaBlock(rows [][2]string, x, y, size float64, alignRight bool
 	w.font("", size)
 	labelW, valueW := 0.0, 0.0
 	for _, r := range rows {
-		labelW = max(labelW, pdf.GetStringWidth(w.tr(r[0]+":")))
-		valueW = max(valueW, pdf.GetStringWidth(w.tr(r[1])))
+		labelW = max(labelW, pdf.GetStringWidth(r[0]+":"))
+		valueW = max(valueW, pdf.GetStringWidth(r[1]))
 	}
 	labelW += 4
 	valueW += 2 * pdf.GetCellMargin()
@@ -422,38 +466,69 @@ func (w *writer) metaBlock(rows [][2]string, x, y, size float64, alignRight bool
 	pdf.SetY(y)
 	for _, r := range rows {
 		pdf.SetX(x)
-		pdf.CellFormat(labelW, lineHeight, w.tr(r[0]+":"), "", 0, "L", false, 0, "")
-		pdf.CellFormat(valueW, lineHeight, w.tr(r[1]), "", 1, "L", false, 0, "")
+		w.color(mutedColor)
+		pdf.CellFormat(labelW, lineHeight, r[0]+":", "", 0, "L", false, 0, "")
+		w.color(textColor)
+		pdf.CellFormat(valueW, lineHeight, r[1], "", 1, "L", false, 0, "")
 	}
 	return pdf.GetY()
 }
 
 // columns are the lines table's: the quantity, the description and, with
-// prices, the price, line total and VAT rate.
-func columns(l labels, prices bool) []column {
-	if !prices {
-		return []column{{l.Quantity, 20, "L"}, {l.Description, width - 20, "L"}}
+// prices, the price, line total and VAT rate. The quantity column is as wide
+// as its header or widest quantity in this face, with columnGap to the
+// description, which takes the rest.
+func (w *writer) columns() []column {
+	l := w.l
+	quantity := 15.0
+	if !w.prices {
+		quantity = 20
 	}
-	return []column{{l.Quantity, 15, "L"}, {l.Description, 95, "L"}, {l.Price, 25, "R"}, {l.Total, 25, "R"}, {l.VAT, 10, "R"}}
+	scratch := w.scratchPage()
+	w.face.set(scratch, "B", w.size-1.5)
+	widest := scratch.GetStringWidth(l.Quantity)
+	w.face.set(scratch, "", w.size-0.5)
+	for _, d := range w.lines() {
+		widest = max(widest, scratch.GetStringWidth(d.Amount))
+	}
+	quantity = max(quantity, widest+scratch.GetCellMargin()+columnGap)
+	if !w.prices {
+		return []column{{l.Quantity, quantity, "L"}, {l.Description, width - quantity, "L"}}
+	}
+	return []column{{l.Quantity, quantity, "L"}, {l.Description, width - quantity - 60, "L"}, {l.Price, 25, "R"}, {l.Total, 25, "R"}, {l.VAT, 10, "R"}}
+}
+
+// lines are the invoice's lines the document prints: not the optional ones
+// the customer left out.
+func (w *writer) lines() []sales.Detail {
+	var lines []sales.Detail
+	for _, d := range w.doc.Invoice.Lines {
+		if !d.Optional || d.Selected {
+			lines = append(lines, d)
+		}
+	}
+	return lines
 }
 
 func (w *writer) tableHead() {
 	pdf := w.pdf
-	w.font("B", w.size-1)
+	w.font("B", w.size-1.5)
 	pdf.SetX(left)
 	for _, c := range w.cols {
-		pdf.CellFormat(c.w, 7, w.tr(c.head), "", 0, c.align, false, 0, "")
+		pdf.CellFormat(c.w, 7, c.head, "", 0, c.align, false, 0, "")
 	}
 	pdf.Ln(7)
-	w.rule(pdf.GetY(), left, right, thinRule)
+	w.rule(pdf.GetY(), left, right, heavyRule)
 }
 
+// rule draws a horizontal line: a heavy one in the text colour, a thin one
+// in the line colour.
 func (w *writer) rule(y, from, to, lineWidth float64) {
+	c := lineColor
 	if lineWidth >= heavyRule {
-		w.pdf.SetDrawColor(0, 0, 0)
-	} else {
-		w.pdf.SetDrawColor(190, 190, 190)
+		c = textColor
 	}
+	w.pdf.SetDrawColor(c.r, c.g, c.b)
 	w.pdf.SetLineWidth(lineWidth)
 	w.pdf.Line(from, y, to, y)
 }
@@ -462,12 +537,7 @@ func (w *writer) rule(y, from, to, lineWidth float64) {
 // the last; lines that do not fit go to the next page under the header.
 func (w *writer) table() {
 	pdf, inv := w.pdf, w.doc.Invoice
-	var lines []sales.Detail
-	for _, d := range inv.Lines {
-		if !d.Optional || d.Selected {
-			lines = append(lines, d)
-		}
-	}
+	lines := w.lines()
 	w.tableHead()
 	w.inTable = true
 	for i, d := range lines {
@@ -477,23 +547,23 @@ func (w *writer) table() {
 			total := money.Amount(divRound(int64(d.Price)*d.Quantity, 1000))
 			cells = append(cells, sales.FormatMoney(d.Price, inv.Currency, inv.Language), sales.FormatMoney(total, inv.Currency, inv.Language), percent(rate.Percentage))
 		}
-		w.font("", w.size-1)
-		height := w.wrappedHeight(d.Description, w.cols[1].w, w.size-1) + 2
+		height := w.wrappedHeight(d.Description, w.cols[1].w, w.size-0.5) + 2*rowPadding
 		if pdf.GetY()+height > w.bottom() {
 			pdf.AddPage()
 		}
-		y := pdf.GetY() + 1
+		w.font("", w.size-0.5)
+		y := pdf.GetY() + rowPadding
 		x := left
 		for j, c := range w.cols {
 			pdf.SetXY(x, y)
 			if j == 1 {
-				pdf.MultiCell(c.w, lineHeight, w.tr(cells[j]), "", "L", false)
+				pdf.MultiCell(c.w, lineHeight, cells[j], "", "L", false)
 			} else {
-				pdf.CellFormat(c.w, lineHeight, w.tr(cells[j]), "", 0, c.align, false, 0, "")
+				pdf.CellFormat(c.w, lineHeight, cells[j], "", 0, c.align, false, 0, "")
 			}
 			x += c.w
 		}
-		pdf.SetXY(left, y+height-1)
+		pdf.SetXY(left, y+height-rowPadding)
 		if i < len(lines)-1 {
 			w.rule(pdf.GetY(), left, right, thinRule)
 		}
@@ -531,15 +601,15 @@ func (w *writer) totals() {
 	row := func(r [2]string, style string) {
 		w.font(style, w.size)
 		pdf.SetX(labelX)
-		pdf.CellFormat(labelW, rowH, w.tr(r[0]), "", 0, "R", false, 0, "")
+		pdf.CellFormat(labelW, rowH, r[0], "", 0, "R", false, 0, "")
 		pdf.SetX(amountX)
-		pdf.CellFormat(amountW, rowH, w.tr(r[1]), "", 1, "R", false, 0, "")
+		pdf.CellFormat(amountW, rowH, r[1], "", 1, "R", false, 0, "")
 	}
 	for _, r := range rows {
 		row(r, "")
 	}
 	pdf.Ln(1)
-	w.rule(pdf.GetY(), labelX, amountX+amountW, thinRule)
+	w.rule(pdf.GetY(), labelX, amountX+amountW, heavyRule)
 	pdf.Ln(1)
 	row([2]string{w.l.Total, m(tot.InclTax)}, "B")
 }
@@ -572,7 +642,7 @@ func title(doc sales.Document, l labels, prices bool) string {
 }
 
 // writeSpans writes textile spans as flowing text, each in its style.
-func writeSpans(pdf *fpdf.Fpdf, tr func(string) string, spans []sales.Span, size float64) {
+func writeSpans(pdf *fpdf.Fpdf, f face, spans []sales.Span, size float64) {
 	for _, sp := range spans {
 		style := ""
 		if sp.Bold {
@@ -584,8 +654,8 @@ func writeSpans(pdf *fpdf.Fpdf, tr func(string) string, spans []sales.Span, size
 		if sp.Underline {
 			style += "U"
 		}
-		pdf.SetFont("Helvetica", style, size)
-		pdf.Write(5, tr(sp.Text))
+		f.set(pdf, style, size)
+		pdf.Write(5, sp.Text)
 	}
 }
 
