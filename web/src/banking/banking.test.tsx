@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import type { LedgerAccount } from '../bookkeeping/queries'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
-import type { BookingRule, FinancialAccount, LinkSuggestion, Mutation } from './queries'
+import type { BookingRule, FinancialAccount, LinkSuggestion, Mutation, PurchaseTransaction } from './queries'
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 const stamp = '2026-11-10T09:00:00Z'
@@ -487,5 +487,55 @@ describe('linking a transaction in its card', () => {
     const card = await screen.findByRole('article', { name: 'Hosting Company' })
     await userEvent.upload(within(card).getByLabelText('Upload a document'), new File(['%PDF'], 'receipt.pdf', { type: 'application/pdf' }))
     await waitFor(() => expect(calls).toEqual(['link {"booking_type":"NewReceipt"}', 'attach 777']))
+  })
+})
+
+describe('payments', () => {
+  const tx = (over: Partial<PurchaseTransaction> = {}): PurchaseTransaction => ({
+    id: '1001', administration_id: '11', financial_account_id: '501', amount: '25.5', state: 'open', sepa_iban: 'NL44RABO0123456789', sepa_iban_account_name: 'Hosting Company',
+    sepa_bic: 'RABONL2U', end_to_end_id: 'E2E-1001', description: 'Invoice 583', created_at: stamp, updated_at: stamp, uri: '/11/purchase_transactions/1001',
+    payable_id: '583', payable_type: 'Document', purchase_transaction_batch_id: null, date: null, ...over,
+  } as PurchaseTransaction)
+
+  it('batches the payments to send and lists the earlier ones, as Moneybird does', async () => {
+    let batched: unknown
+    const filters: string[] = []
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/purchase_transactions', ({ request }) => {
+        const filter = new URL(request.url).searchParams.get('filter') ?? ''
+        filters.push(filter)
+        return HttpResponse.json(filter.includes('unbatched:true')
+          ? [tx(), tx({ id: '1002', sepa_iban_account_name: 'Other Supplier', amount: '10.0' })]
+          : [tx({ id: '999', state: 'pending_payment', purchase_transaction_batch_id: '77', date: '2026-11-01' })])
+      }),
+      http.post('*/api/v2/11/purchase_transaction_batches', async ({ request }) => {
+        batched = await request.json()
+        return HttpResponse.json({ id: '78' }, { status: 201 })
+      }),
+    )
+    renderAt('/11/purchase_transaction_batches')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Payments' })).toBeInTheDocument()
+    const toSend = await screen.findByRole('list', { name: 'To send' })
+    expect(toSend).toHaveTextContent('Hosting Company')
+    expect(toSend).toHaveTextContent('NL44 RABO 0123 4567 89 · Invoice 583')
+    expect(toSend).toHaveTextContent('€25.50')
+    expect(filters).toContain('state:open|pending_payment,period:this_year,unbatched:false')
+
+    await userEvent.click(within(toSend).getByRole('checkbox', { name: 'Choose the payment to Hosting Company' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create a batch of 1 payment' }))
+    await waitFor(() => expect(batched).toEqual({ purchase_transaction_batch: { financial_account_id: '501', purchase_transaction_ids: ['1001'] } }))
+    expect(await screen.findByRole('link', { name: 'download the SEPA file' })).toHaveAttribute('href', '/api/v2/11/purchase_transaction_batches/78/download')
+
+    const earlier = screen.getByRole('table', { name: 'Earlier payments' })
+    expect(earlier).toHaveTextContent('Pending payment')
+    expect(within(earlier).getByRole('link', { name: 'SEPA file' })).toHaveAttribute('href', '/api/v2/11/purchase_transaction_batches/77/download')
+  })
+
+  it('says how to start while there is nothing to send', async () => {
+    server.use(...loaded(), http.get('*/api/v2/11/purchase_transactions', () => HttpResponse.json([])))
+    renderAt('/11/purchase_transaction_batches')
+    expect(await screen.findByText('Collect payments here to send them in one go. Set up a payment on a purchase invoice.')).toBeInTheDocument()
+    expect(await screen.findByText('Your sent payments appear here, with their status.')).toBeInTheDocument()
   })
 })

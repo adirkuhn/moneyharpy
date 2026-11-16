@@ -735,6 +735,24 @@ export const en = {
     },
   },
   bank: {
+    payments: {
+      title: 'Payments', toSend: 'To send', earlier: 'Earlier payments', filter: 'Filter payments',
+      toSendEmpty: 'Collect payments here to send them in one go. Set up a payment on a purchase invoice.',
+      earlierEmpty: 'Your sent payments appear here, with their status.',
+      batchAll: 'Create payment batch', batchChosen_one: 'Create a batch of {{count}} payment', batchChosen_other: 'Create a batch of {{count}} payments',
+      batchMade_one: 'The payment batch is ready to send through your bank:', batchMade_other: '{{count}} payment batches are ready to send through your bank:',
+      download: 'download the SEPA file', batchFile: 'SEPA file', from: 'From {{account}}', choose: 'Choose the payment to {{name}}',
+      remove: 'Remove the payment to {{name}}', removeShort: 'Remove', reference: 'Reference', date: 'Payment date', method: 'Payment method', status: 'Status',
+      sepa: 'SEPA transfer',
+      views: { pending: 'Open or pending payments from this year', paid: 'Paid payments from this year', cancelled: 'Cancelled payments from this year', all: 'All payments from this year' },
+      states: { open: 'Open', pending_payment: 'Pending payment', paid: 'Paid', cancelled: 'Cancelled', error: 'Error', awaiting_authorization: 'Awaiting authorization', preparing: 'Preparing' },
+      intro: {
+        title: 'Manage outgoing payments', text: 'Pay purchase invoices through a payment batch from MoneyHarpy. All outgoing payments can be found here in one view.',
+        add: 'Add payments', addText: 'Set up a payment on a purchase invoice or receipt.',
+        batch: 'Create payment batch', batchText: 'Download the batch as a SEPA file and send it through your bank.',
+        view: 'View outgoing payments', viewText: 'See how each payment was sent and what its status is.',
+      },
+    },
     link: {
       title: 'Link transaction', scope: 'Search in', find: 'Find invoices or categories…', results: 'Matches', nothing: 'Nothing found.',
       scopes: { all: 'All', sales_invoices: 'Invoices', documents: 'Incoming', ledger_accounts: 'Categories' },
@@ -1174,7 +1192,7 @@ export const en = {
       document: 'Document', attachments: 'Attachments', download: 'Download attachment', deleteAttachment: 'Delete attachment',
       confirmDeleteAttachment: 'Do you want to delete this attachment?', add: 'Add', noAttachment: 'No attachment',
       noPreview: 'There is no preview of this file. Download it to view it.', deleteDocument: 'Delete document', confirmDelete: 'Do you want to delete this document?',
-      chooseType: 'Select a type...', chooseTypeText: 'Choose the type of this document to fill in its details.',
+      chooseType: 'Select a type...', chooseTypeText: 'Choose the type of this document to fill in its details.', setUpPayment: 'Set up a payment',
       reference: 'Reference', invoiceId: 'Invoice id', date: 'Date', dueDate: 'Due date', days: 'Days', dueAs: 'Due date as', numberOfDays: 'Number of days',
       onlyNew: 'It is only possible to change to this type if the document is in the "New" state',
       purchaseLines: 'Purchase invoice lines', receiptLines: 'Receipt lines', save: 'Save', next: 'Next',
