@@ -24,8 +24,9 @@ func New() Renderer { return Renderer{} }
 type labels struct {
 	Invoice, Credit, DraftInvoice, DraftEstimate, PackingSlip, Number, Date, Due, Reference, Description, Quantity, Price, VAT, Amount,
 	Subtotal, Discount, VATOver, Total, Page, CoC, VATNumber, IBAN string
-	// Estimate, EstimateNumber, EstimateDate and ValidUntil label estimates.
-	Estimate, EstimateNumber, EstimateDate, ValidUntil string
+	// Estimate, EstimateNumber and EstimateDate label estimates; their due
+	// date is labelled Due, "Vervaldatum", as on Moneybird's quotes.
+	Estimate, EstimateNumber, EstimateDate string
 	// Example titles an example invoice.
 	Example string
 }
@@ -35,7 +36,7 @@ var dutch = labels{
 	Due: "Vervaldatum", Reference: "Kenmerk", Description: "Omschrijving", Quantity: "Aantal", Price: "Bedrag",
 	VAT: "Btw", Amount: "Bedrag", Subtotal: "Subtotaal excl. btw", Discount: "Korting", VATOver: "%s btw", Total: "Totaal",
 	Page: "Pagina %d van {nb}", CoC: "KVK", VATNumber: "Btw-nummer", IBAN: "IBAN",
-	Estimate: "Offerte", EstimateNumber: "Offertenummer", EstimateDate: "Offertedatum", ValidUntil: "Geldig tot",
+	Estimate: "Offerte", EstimateNumber: "Offertenummer", EstimateDate: "Offertedatum",
 	Example: "Voorbeeldfactuur",
 }
 
@@ -44,7 +45,7 @@ var english = labels{
 	Due: "Due date", Reference: "Reference", Description: "Description", Quantity: "Qty", Price: "Price",
 	VAT: "VAT", Amount: "Amount", Subtotal: "Subtotal excl. VAT", Discount: "Discount", VATOver: "%s VAT", Total: "Total",
 	Page: "Page %d of {nb}", CoC: "CoC", VATNumber: "VAT number", IBAN: "IBAN",
-	Estimate: "Quote", EstimateNumber: "Quote number", EstimateDate: "Quote date", ValidUntil: "Valid until",
+	Estimate: "Quote", EstimateNumber: "Quote number", EstimateDate: "Quote date",
 	Example: "Example invoice",
 }
 
@@ -170,8 +171,7 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	y := w.heading()
 	pdf.SetY(y + 8)
 	if doc.Estimate != nil && doc.Estimate.PreText != "" {
-		w.font("", fontSize-1)
-		pdf.MultiCell(0, lineHeight, doc.Estimate.PreText, "", "L", false)
+		w.estimateText(doc.Estimate.PreText)
 		pdf.Ln(4)
 	}
 	w.table()
@@ -180,14 +180,22 @@ func build(doc sales.Document, prices bool) *fpdf.Fpdf {
 	}
 	if doc.Estimate != nil && doc.Estimate.PostText != "" {
 		pdf.Ln(8)
-		w.font("", fontSize-1)
-		pdf.MultiCell(0, lineHeight, doc.Estimate.PostText, "", "L", false)
+		w.estimateText(doc.Estimate.PostText)
 	}
 	if pdf.GetY() > w.lastBottom() {
 		pdf.AddPage()
 	}
 	w.last = true
 	return pdf
+}
+
+// estimateText writes a text of a quote, above or under its lines, styled
+// by its textile and with its tags filled in, from the left margin.
+func (w *writer) estimateText(text string) {
+	w.font("", w.size-1)
+	w.pdf.SetX(left)
+	writeSpans(w.pdf, w.face, sales.EstimateTextSpans(w.doc, text, time.Now().UTC()), w.size-1)
+	w.pdf.Ln(lineHeight)
 }
 
 // font selects the face in a style and size, in the text colour.

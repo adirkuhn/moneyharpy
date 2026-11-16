@@ -14,8 +14,8 @@ type Props = {
   filter: ListFilter
   /** The states to choose from, the first being all of them. */
   states: { value: string; label: string }[]
-  /** Whether the list can be filtered on workflow. */
-  workflows?: boolean
+  /** Whether the list can be filtered on workflow, and on which kind: invoice workflows unless said otherwise. */
+  workflows?: boolean | 'EstimateWorkflow'
   /** More terms to choose one value of, such as Moneybird's Type of incoming documents; an empty value means all. */
   terms?: Term[]
   onApply: (filter: ListFilter) => void
@@ -65,16 +65,16 @@ export function DocumentFilter({ administrationId, filter, states, workflows = f
         />
       ))}
       <ContactFilter administrationId={administrationId} contactId={contactId} onChange={setContactId} />
-      {workflows && <WorkflowFilter administrationId={administrationId} value={workflowId} onChange={setWorkflowId} />}
+      {workflows && <WorkflowFilter administrationId={administrationId} value={workflowId} onChange={setWorkflowId} type={workflows === true ? 'InvoiceWorkflow' : workflows} />}
     </AdvancedFilter>
   )
 }
 
-/** The invoice workflows to filter on, or all of them. */
-export function WorkflowFilter({ administrationId, value, onChange }: { administrationId: string; value: string; onChange: (id: string) => void }) {
+/** The invoice workflows, or the quote workflows, to filter on, or all of them. */
+export function WorkflowFilter({ administrationId, value, onChange, type = 'InvoiceWorkflow' }: { administrationId: string; value: string; onChange: (id: string) => void; type?: string }) {
   const { t } = useTranslation()
   const list = useWorkflows(administrationId)
-  const options = (list.data ?? []).filter((w) => w.type === 'InvoiceWorkflow' || w.id === value)
+  const options = (list.data ?? []).filter((w) => w.type === type || w.id === value)
   return (
     <SelectFilter
       label={t('list.workflow')}

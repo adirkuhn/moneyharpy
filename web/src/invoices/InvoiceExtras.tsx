@@ -17,16 +17,40 @@ const externalTotal = 15 * 1024 * 1024
  * in all.
  */
 export function AttachmentDropZone({ administrationId, invoice, kind = 'sales' }: Props) {
-  const { t, i18n } = useTranslation()
   // As at Moneybird, a sales invoice holds 10 MB of files and an external invoice 15 MB, each file at most 10 MB.
-  const total = kind === 'external' ? externalTotal : maxSize
-  const texts = kind === 'external' ? 'external.attachments' : 'invoices.view.attachments'
+  const add = useAddInvoiceAttachment(administrationId, invoice.id ?? '', kind)
+  const remove = useDeleteInvoiceAttachment(administrationId, invoice.id ?? '', kind)
+  return (
+    <AttachmentZone
+      attachments={invoice.attachments ?? []}
+      add={add}
+      remove={remove}
+      url={(a) => attachmentURL(administrationId, invoice.id ?? '', a, kind)}
+      total={kind === 'external' ? externalTotal : maxSize}
+      texts={kind === 'external' ? 'external.attachments' : 'invoices.view.attachments'}
+    />
+  )
+}
+
+type Attachment = NonNullable<Collectable['attachments']>[number]
+type ZoneProps = {
+  attachments: Attachment[]
+  add: { mutateAsync: (file: File) => Promise<unknown>; isPending: boolean; error: unknown }
+  remove: { mutate: (attachmentId: string) => void; isPending: boolean; error: unknown }
+  /** Where an attachment is downloaded. */
+  url: (attachmentId: string) => string
+  /** The most all files together may weigh, in bytes. */
+  total?: number
+  /** Where the zone's texts about sizes are, such as invoices.view.attachments. */
+  texts?: string
+}
+
+/** The files of a document under it and the zone to drop more on, for a document of any kind. */
+export function AttachmentZone({ attachments, add, remove, url, total = maxSize, texts = 'invoices.view.attachments' }: ZoneProps) {
+  const { t, i18n } = useTranslation()
   const id = useId()
   const [problem, setProblem] = useState<string | null>(null)
   const [over, setOver] = useState(false)
-  const add = useAddInvoiceAttachment(administrationId, invoice.id ?? '', kind)
-  const remove = useDeleteInvoiceAttachment(administrationId, invoice.id ?? '', kind)
-  const attachments = invoice.attachments ?? []
   const problems = [...(problem ? [problem] : []), ...formErrors(add.error ?? remove.error, {}).general]
 
   const upload = async (files: File[]) => {
@@ -62,7 +86,7 @@ export function AttachmentDropZone({ administrationId, invoice, kind = 'sales' }
           {attachments.map((a) => (
             <li key={a.id} className="attachment-zone__file">
               <ListIcon kind="paperclip" />
-              <a href={attachmentURL(administrationId, invoice.id ?? '', a.id ?? '', kind)} download={a.filename}>{a.filename}</a>
+              <a href={url(a.id ?? '')} download={a.filename}>{a.filename}</a>
               <span className="hint">{size(a.size ?? 0, i18n.language)}</span>
               <ConfirmDelete
                 label={t('invoices.removeAttachment', { name: a.filename })}

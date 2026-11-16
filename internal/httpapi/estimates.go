@@ -68,7 +68,7 @@ type estimateJSON struct {
 	CustomFields            []customFieldValueJSON `json:"custom_fields"`
 	Notes                   []noteJSON             `json:"notes"`
 	Attachments             []attachmentJSON       `json:"attachments"`
-	Events                  []any                  `json:"events"`
+	Events                  []eventJSON            `json:"events"`
 	TaxTotals               []taxTotalJSON         `json:"tax_totals"`
 	FirstDueInterval        int                    `json:"first_due_interval"`
 	DeliveryMethod          *string                `json:"delivery_method"`
@@ -106,7 +106,7 @@ func (s *server) toEstimate(e sales.Estimate, contact *contacts.Contact, today t
 		Details: inv.Details, PricesAreInclTax: e.PricesAreInclTax, TotalPriceExclTax: e.Totals.ExclTax.String(),
 		TotalPriceExclTaxBase: e.Totals.ExclTax.String(), TotalPriceInclTax: e.Totals.InclTax.String(), TotalPriceInclTaxBase: e.Totals.InclTax.String(),
 		TotalDiscount: e.Totals.Discount.String(), TotalTax: e.Totals.Tax.String(), URL: strings.TrimSuffix(s.deps.BaseURL, "/") + e.Ref().URI(),
-		CustomFields: inv.CustomFields, Notes: inv.Notes, Attachments: inv.Attachments, Events: []any{}, TaxTotals: inv.TaxTotals,
+		CustomFields: inv.CustomFields, Notes: inv.Notes, Attachments: inv.Attachments, Events: toEvents(e.Events), TaxTotals: inv.TaxTotals,
 		FirstDueInterval: e.FirstDueInterval, URI: e.Ref().URI(),
 	}
 	if e.DraftID > 0 && e.EstimateID == "" {
@@ -217,6 +217,7 @@ type estimateBody struct {
 		PostText               *string       `json:"post_text"`
 		Discount               *flexString   `json:"discount"`
 		OriginalSalesInvoiceID *flexString   `json:"original_sales_invoice_id"`
+		OriginalEstimateID     *flexString   `json:"original_estimate_id"`
 		Details                *salesDetails `json:"details_attributes"`
 		CustomFields           *fieldValues  `json:"custom_fields_attributes"`
 	} `json:"estimate"`
@@ -238,6 +239,7 @@ func toEstimateChanges(w http.ResponseWriter, body estimateBody) (sales.Estimate
 	}{
 		{in.ContactID, &c.ContactID}, {in.ContactPersonID, &c.ContactPersonID}, {in.DocumentStyleID, &c.DocumentStyleID}, {in.WorkflowID, &c.WorkflowID},
 		{in.IdentityID, &c.IdentityID}, {in.OriginalSalesInvoiceID, &c.OriginalSalesInvoiceID},
+		{in.OriginalEstimateID, &c.OriginalEstimateID},
 	} {
 		if *f.dst, ok = flexOptionalID(w, f.src); !ok {
 			return c, false

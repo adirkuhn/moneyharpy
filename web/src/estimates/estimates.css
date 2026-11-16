@@ -1,0 +1,10 @@
+/* A quote's page, after Moneybird's: its state with Change state beside it at the right of the action bar. */
+.estimate-actions__state { display: inline-flex; align-items: center; gap: 0.5rem; }
+.estimate-actions__state .dropdown__panel--right { right: 0; left: auto; }
+.invoice-actions__state :is(.badge--accepted, .badge--billed) { background: var(--state-paid); }
+.invoice-actions__state .badge--rejected { background: var(--state-late); }
+.invoice-actions__state .badge--archived { background: var(--state-dark); }
+
+/* A billed or archived quote: its document as it is, without the marks that invite editing. */
+.estimate-locked .in-place__indicator, .estimate-locked .invoice-paper__edit, .estimate-locked .invoice-paper__settings,
+.estimate-locked .invoice-paper__edit-details { display: none; }

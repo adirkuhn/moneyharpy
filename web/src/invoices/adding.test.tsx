@@ -16,7 +16,7 @@ describe('adding an invoice', () => {
     // The document behind it: the sender from the document style and its identity.
     const sender = await within(paper()).findByRole('list', { name: 'Afzenderadres' })
     expect(within(sender).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
-      'Harpy B.V.', 'Dam 11012JS Amsterdam', '', 'books@example.com', '', 'KVK: 12345678', 'Bank: NL91ABNA0417164300',
+      'Harpy B.V.', 'Dam 11012JS Amsterdam', '', 'books@example.com', '', 'KVK: 12345678', 'Bank: NL91 ABNA 0417 1643 00',
     ])
     const recipient = within(paper()).getByRole('button', { name: 'Contact' })
     expect(recipient).toHaveTextContent('1. Select contact')
@@ -121,7 +121,7 @@ describe('adding an invoice', () => {
     await userEvent.click(within(layout).getByRole('radio', { name: 'Modern' }))
     expect(within(dialog).getByRole('note')).toHaveTextContent('The invoice is created using workflow English and document style Modern. The due date is 15 days after the invoice date.')
     // The document behind follows: the workflow is English.
-    expect(within(paper()).getByRole('button', { name: /Invoice date/ })).toHaveTextContent('Invoice date:12/01/2026')
+    expect(within(paper()).getByRole('button', { name: /Invoice date/ })).toHaveTextContent('Invoice date:01-12-2026')
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))

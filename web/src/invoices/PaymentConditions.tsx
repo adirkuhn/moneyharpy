@@ -18,6 +18,9 @@ type Props = {
   /** The workflow the text comes from, edited at its own page and back here. */
   workflow?: { name: string; to: string }
   extraTags?: ExtraTag[]
+  /** The words of another text of the document, such as a quote's text above its lines; the payment conditions' by default. */
+  words?: { label: string; add: string; edit: string }
+  maxLength?: number
 }
 
 /**
@@ -26,12 +29,13 @@ type Props = {
  * with the textile editor, a link to the workflow it came from, and Save
  * and Cancel.
  */
-export function PaymentConditions({ value, values, editing, onEdit, onChange, onSave, onCancel, saving, errors, workflow, extraTags }: Props) {
+export function PaymentConditions({ value, values, editing, onEdit, onChange, onSave, onCancel, saving, errors, workflow, extraTags, words, maxLength = 1000 }: Props) {
   const { t } = useTranslation()
-  const text = value ? <span className="invoice-paper__conditions"><TextileText text={value} values={values} /></span> : <span className="invoice-paper__placeholder">{t('invoices.editor.addConditions')}</span>
+  const w = words ?? { label: t('invoices.paymentConditions'), add: t('invoices.editor.addConditions'), edit: t('invoices.editor.editConditions') }
+  const text = value ? <span className="invoice-paper__conditions"><TextileText text={value} values={values} /></span> : <span className="invoice-paper__placeholder">{w.add}</span>
   if (!editing) {
     return (
-      <button type="button" className={`in-place__button invoice-paper__conditions-button${errors?.length ? ' is-invalid' : ''}`} aria-label={value ? t('invoices.editor.editConditions') : t('invoices.editor.addConditions')} onClick={onEdit}>
+      <button type="button" className={`in-place__button invoice-paper__conditions-button${errors?.length ? ' is-invalid' : ''}`} aria-label={value ? w.edit : w.add} onClick={onEdit}>
         {text}
         <span className="in-place__indicator"><ListIcon kind="edit" /></span>
       </button>
@@ -42,7 +46,7 @@ export function PaymentConditions({ value, values, editing, onEdit, onChange, on
     <>
       <EditableDocumentForm
         className="conditions-form"
-        label={t('invoices.paymentConditions')}
+        label={w.label}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             e.preventDefault()
@@ -51,10 +55,10 @@ export function PaymentConditions({ value, values, editing, onEdit, onChange, on
         }}
       >
         <TextileEditor
-          label={t('invoices.paymentConditions')}
+          label={w.label}
           value={value}
           onChange={onChange}
-          maxLength={1000}
+          maxLength={maxLength}
           autoFocus
           errors={errors}
           extraTags={extraTags}

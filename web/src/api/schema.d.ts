@@ -4701,6 +4701,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/estimates/next_draft_id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get the next draft number
+         * @description MoneyHarpy extension. The draft number an estimate created now gets, which the add quote screen shows as "Concept #n" as Moneybird does. Another estimate may take it first.
+         */
+        get: operations["getNextEstimateDraftId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/estimates/synchronization": {
         parameters: {
             query?: never;
@@ -9016,11 +9038,15 @@ export interface components {
                 show_tax?: components["schemas"]["FlexibleBoolean"];
                 /** @description Days from the estimate date until it expires. */
                 first_due_interval?: number | string;
+                /** @description The text above the lines. Textile (_italic_, *bold*, +underline+) and the tags of the payment conditions, such as {recipient.name}, and {document.estimate_id} and {document.estimate_date}, are filled in where the estimate is shown. */
                 pre_text?: string;
+                /** @description The text under the lines, as the pre_text. */
                 post_text?: string;
                 /** @description A percentage, such as "10" or "2.5"; empty for none. */
                 discount?: string | number;
                 original_sales_invoice_id?: components["schemas"]["FlexibleIdentifier"];
+                /** @description MoneyHarpy extension, only when creating: the estimate this one copies, as Moneybird's Duplicate quote makes it. The new estimate names it, and its history says it was based on it. */
+                original_estimate_id?: components["schemas"]["FlexibleIdentifier"];
                 /** @description An array of lines, or an object of lines keyed by position. */
                 details_attributes?: components["schemas"]["SalesInvoiceDetailInput"][] | {
                     [key: string]: components["schemas"]["SalesInvoiceDetailInput"];
@@ -20021,6 +20047,33 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getNextEstimateDraftId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The next draft number */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NextDraftId"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };

@@ -9640,6 +9640,34 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/estimates/next_draft_id:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getNextEstimateDraftId
+      x-permissions: [estimates]
+      summary: Get the next draft number
+      description: >-
+        MoneyHarpy extension. The draft number an estimate created now gets, which the add quote screen shows
+        as "Concept #n" as Moneybird does. Another estimate may take it first.
+      tags: [Estimates]
+      responses:
+        '200':
+          description: The next draft number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextDraftId'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/estimates/synchronization:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -18207,9 +18235,14 @@ components:
             pre_text:
               type: string
               maxLength: 10000
+              description: >-
+                The text above the lines. Textile (_italic_, *bold*, +underline+) and the tags of the payment conditions,
+                such as {recipient.name}, and {document.estimate_id} and {document.estimate_date}, are filled in where the
+                estimate is shown.
             post_text:
               type: string
               maxLength: 10000
+              description: The text under the lines, as the pre_text.
             discount:
               description: A percentage, such as "10" or "2.5"; empty for none.
               oneOf:
@@ -18217,6 +18250,11 @@ components:
                   maxLength: 10
                 - type: number
             original_sales_invoice_id:
+              $ref: '#/components/schemas/FlexibleIdentifier'
+            original_estimate_id:
+              description: >-
+                MoneyHarpy extension, only when creating: the estimate this one copies, as Moneybird's Duplicate quote
+                makes it. The new estimate names it, and its history says it was based on it.
               $ref: '#/components/schemas/FlexibleIdentifier'
             details_attributes:
               description: An array of lines, or an object of lines keyed by position.

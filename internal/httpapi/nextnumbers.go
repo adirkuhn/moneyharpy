@@ -31,3 +31,18 @@ func (s *server) GetNextSalesInvoiceDraftId(w http.ResponseWriter, r *http.Reque
 	}
 	writeJSON(w, http.StatusOK, NextDraftId{DraftId: n})
 }
+
+// GetNextEstimateDraftId implements ServerInterface: the draft number the
+// add quote screen shows as "Concept #n".
+func (s *server) GetNextEstimateDraftId(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	n, err := s.deps.Sales.NextEstimateDraftID(r.Context(), admin, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, NextDraftId{DraftId: n})
+}
