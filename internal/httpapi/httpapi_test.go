@@ -260,6 +260,18 @@ type harness struct {
 
 	subscriptions *subscriptions.Service
 	downloads     *downloads.Service
+	pool          *pgxpool.Pool
+}
+
+// dueToday makes a recurring invoice's next invoice due today, as the API
+// only takes dates from tomorrow on, so the worker makes it.
+func (h *harness) dueToday(id string) {
+	h.t.Helper()
+	today := adminNow().Format(time.DateOnly)
+	if _, err := h.pool.Exec(context.Background(),
+		"UPDATE recurring_sales_invoices SET invoice_date = $1::text::date, anchor_date = $1::text::date, start_date = $1::text::date, period_count = 0 WHERE id::text = $2", today, id); err != nil {
+		h.t.Fatal(err)
+	}
 }
 
 func newHarness(t *testing.T, opts options) *harness {
@@ -284,7 +296,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	mailer := &fakeMailer{resets: make(chan sentMail, 8)}
 
 	files := &fakeFiles{data: map[string][]byte{}}
-	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle, ocr: &fakeOCR{}, vies: &fakeVIES{}}
+	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle, ocr: &fakeOCR{}, vies: &fakeVIES{}, pool: pool}
 	h.server = httptest.NewUnstartedServer(nil)
 	h.server.Start()
 	t.Cleanup(h.server.Close)

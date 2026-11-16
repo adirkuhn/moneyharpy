@@ -15,7 +15,7 @@ import (
 func TestRecurringInvoicesAreStoredAndMakeInvoices(t *testing.T) {
 	ctx := context.Background()
 	f := newSalesFixture(t)
-	today := adminNow().Format(time.DateOnly)
+	today := adminNow().AddDate(0, 0, 1).Format(time.DateOnly) // the first date it can start
 	// Sending by itself needs an email address to send to.
 	if _, err := f.contacts.Update(ctx, f.admin, f.customer, f.owner, contacts.Changes{SendInvoicesToEmail: ptr("billing@example.com")}); err != nil {
 		t.Fatal(err)

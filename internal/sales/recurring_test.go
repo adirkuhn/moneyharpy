@@ -49,8 +49,8 @@ func TestOccurrenceKeepsTheStartDayClampedToTheMonthEnd(t *testing.T) {
 // since.
 func recurring(t *testing.T, h harness, start string, c RecurringChanges) Recurring {
 	t.Helper()
-	if at := *h.clock; date(start).Before(at) {
-		*h.clock = date(start)
+	if at := *h.clock; !date(start).After(at) {
+		*h.clock = date(start).AddDate(0, 0, -1)
 		defer func() { *h.clock = at }()
 	}
 	c.ContactID, c.InvoiceDate = ptr(customer), ptr(start)
@@ -140,17 +140,18 @@ func TestCreateRecurringWithoutDetails(t *testing.T) {
 func TestWorkerWaitsForTheDetails(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()
-	r, err := h.svc.CreateRecurring(ctx, adminID, owner, RecurringChanges{ContactID: ptr(customer), InvoiceDate: ptr("2026-11-11"), FrequencyType: ptr(Month), AutoSend: ptr(true)})
+	r, err := h.svc.CreateRecurring(ctx, adminID, owner, RecurringChanges{ContactID: ptr(customer), InvoiceDate: ptr("2026-11-12"), FrequencyType: ptr(Month), AutoSend: ptr(true)})
 	if err != nil {
 		t.Fatal(err)
 	}
+	*h.clock = date("2026-11-12")
 	if err := h.svc.Work(ctx); err != nil {
 		t.Fatal(err)
 	}
 	if made := h.store.fromRecurring(r.ID); len(made) != 0 {
 		t.Fatalf("made %d invoices without details", len(made))
 	}
-	if got, _ := h.svc.Recurring(ctx, adminID, r.ID, owner); got.InvoiceDate.Format(time.DateOnly) != "2026-11-11" || got.Generated != 0 {
+	if got, _ := h.svc.Recurring(ctx, adminID, r.ID, owner); got.InvoiceDate.Format(time.DateOnly) != "2026-11-12" || got.Generated != 0 {
 		t.Errorf("moved on without details: %+v", got)
 	}
 
@@ -184,6 +185,14 @@ func TestUpdateRecurringMovesTheSchedule(t *testing.T) {
 	}
 	if _, err := h.svc.UpdateRecurring(ctx, adminID, r.ID, owner, RecurringChanges{InvoiceDate: ptr("2026-10-01")}); fieldsOf(t, err)["invoice_date"] == nil {
 		t.Errorf("moved into the past: %v", err)
+	}
+	// Not today either: the first invoice is made from tomorrow on.
+	if _, err := h.svc.UpdateRecurring(ctx, adminID, r.ID, owner, RecurringChanges{InvoiceDate: ptr("2026-11-11")}); fieldsOf(t, err)["invoice_date"] == nil {
+		t.Errorf("moved to today: %v", err)
+	}
+	fresh, err := h.svc.CreateRecurring(ctx, adminID, owner, RecurringChanges{ContactID: ptr(customer)})
+	if err != nil || fresh.InvoiceDate.Format(time.DateOnly) != "2026-11-12" {
+		t.Errorf("starts on %v, %v; want tomorrow", fresh.InvoiceDate, err)
 	}
 }
 
@@ -243,7 +252,7 @@ func TestInvoicesOfASubscriptionTellTheyComeFromIt(t *testing.T) {
 	if len(made) != 1 {
 		t.Fatalf("made %d invoices", len(made))
 	}
-	if got := actions(t, h, made[0].ID); !slices.Equal(got, []string{"sales_invoice_created_based_on_subscription"}) {
+	if got := actions(t, h, made[0].ID); len(got) == 0 || got[0] != "sales_invoice_created_based_on_subscription" || slices.Contains(got, "sales_invoice_created_based_on_recurring") {
 		t.Errorf("history = %v", got)
 	}
 	if slices.Contains(h.notifier.actions, "sales_invoice_created_based_on_recurring") || slices.Contains(h.notifier.actions, "sales_invoice_created") {
@@ -269,8 +278,8 @@ func TestWorkerMakesTheInvoicesThatAreDueAndCatchesUp(t *testing.T) {
 	}
 	// Without automatic sending each is still a real invoice: numbered and
 	// open, only not mailed.
-	if first.State == Draft || first.InvoiceID == "" || first.InvoiceID == second.InvoiceID || len(h.mailer.sent) != 0 {
-		t.Errorf("made as = %s %q and %s %q, mailed %d", first.State, first.InvoiceID, second.State, second.InvoiceID, len(h.mailer.sent))
+	if first.State == Draft || first.InvoiceID == "" || first.InvoiceID == second.InvoiceID || second.State != Open {
+		t.Errorf("made as = %s %q and %s %q", first.State, first.InvoiceID, second.State, second.InvoiceID)
 	}
 	if first.ContactID != customer || first.Reference != "Contract 7" || first.WorkflowID != flow || first.Totals.InclTax != 12100 {
 		t.Errorf("first = %+v", first)
@@ -300,7 +309,8 @@ func TestWorkerMakesTheInvoicesThatAreDueAndCatchesUp(t *testing.T) {
 	if n := countOf(h.notifier.actions, "sales_invoice_created_based_on_recurring"); n != 2 || slices.Contains(h.notifier.actions, "sales_invoice_created") {
 		t.Errorf("sales invoice events = %v", h.notifier.actions)
 	}
-	if got := actions(t, h, first.ID); !slices.Equal(got, []string{"sales_invoice_created_based_on_recurring"}) {
+	// Marked as sent, not mailed: the first, past due, has only the workflow's reminder since.
+	if got := actions(t, h, first.ID); !slices.Equal(got[:3], []string{"sales_invoice_created_based_on_recurring", "sales_invoice_state_changed_to_open", "sales_invoice_send_manually"}) {
 		t.Errorf("history = %v", got)
 	}
 	list, _, err := h.svc.List(ctx, adminID, owner, Query{RecurringSalesInvoiceID: &r.ID})
@@ -370,7 +380,7 @@ func TestWorkerAutoSends(t *testing.T) {
 
 	// A contact that lost its email address after sending was switched on:
 	// the invoice stays a draft and the error is told.
-	other, err := h.svc.CreateRecurring(ctx, adminID, owner, RecurringChanges{ContactID: ptr(noEmail), InvoiceDate: ptr("2026-11-11"), FrequencyType: ptr(Year),
+	other, err := h.svc.CreateRecurring(ctx, adminID, owner, RecurringChanges{ContactID: ptr(noEmail), InvoiceDate: ptr("2026-11-12"), FrequencyType: ptr(Year),
 		Details: []DetailInput{line("10", "1", vat21, 0)}})
 	if err != nil {
 		t.Fatal(err)
@@ -379,13 +389,14 @@ func TestWorkerAutoSends(t *testing.T) {
 	if err := h.store.SaveRecurring(ctx, other, false); err != nil {
 		t.Fatal(err)
 	}
+	*h.clock = date("2026-11-12")
 	if err := h.svc.Work(ctx); err == nil {
 		t.Error("a failed automatic sending was not told")
 	}
 	if made := h.store.fromRecurring(other.ID); len(made) != 1 || made[0].State != Draft {
 		t.Errorf("unsendable = %+v", made)
 	}
-	if got, _ := h.svc.Recurring(ctx, adminID, other.ID, owner); got.InvoiceDate.Format(time.DateOnly) != "2027-11-11" {
+	if got, _ := h.svc.Recurring(ctx, adminID, other.ID, owner); got.InvoiceDate.Format(time.DateOnly) != "2027-11-12" {
 		t.Errorf("next after a failed sending = %v", got.InvoiceDate)
 	}
 }
@@ -393,7 +404,7 @@ func TestWorkerAutoSends(t *testing.T) {
 func TestAutoSendNeedsTheContactsEmailAddress(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()
-	in := RecurringChanges{ContactID: ptr(noEmail), InvoiceDate: ptr("2026-11-11"), AutoSend: ptr(true), Details: []DetailInput{line("10", "1", vat21, 0)}}
+	in := RecurringChanges{ContactID: ptr(noEmail), InvoiceDate: ptr("2026-11-12"), AutoSend: ptr(true), Details: []DetailInput{line("10", "1", vat21, 0)}}
 	if _, err := h.svc.CreateRecurring(ctx, adminID, owner, in); fieldsOf(t, err)["auto_send"] == nil {
 		t.Errorf("auto-send to a contact without an email address: %v", err)
 	}

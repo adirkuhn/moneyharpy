@@ -5370,7 +5370,7 @@ export interface paths {
         put?: never;
         /**
          * Create a recurring sales invoice
-         * @description A template that makes a sales invoice on invoice_date (today unless given, not in the past) and every frequency frequency_types after it (every month unless given), until last_date or desired_count invoices; each invoice is numbered and booked as soon as it is made (MoneyHarpy makes no drafts here): with auto_send it is sent the way the contact receives invoices, otherwise it is marked as sent manually (delivery_method Manual) for the user to deliver; auto_send is refused (422 on auto_send) while the contact gets its invoices by email but has no email address for them. Months, quarters and years keep the day of the first date, or the month's last day when the month is shorter. {period} in a line's description becomes the period the invoice covers, and lines with a period get that period. Workflow, document style and identity default like a new invoice's.
+         * @description A template that makes a sales invoice on invoice_date (tomorrow unless given; it must lie after today) and every frequency frequency_types after it (every month unless given), until last_date or desired_count invoices; each invoice is numbered and booked as soon as it is made (MoneyHarpy makes no drafts here): with auto_send it is sent the way the contact receives invoices, otherwise it is marked as sent manually (delivery_method Manual) for the user to deliver; auto_send is refused (422 on auto_send) while the contact gets its invoices by email but has no email address for them. Months, quarters and years keep the day of the first date, or the month's last day when the month is shorter. {period} in a line's description becomes the period the invoice covers, and lines with a period get that period. Workflow, document style and identity default like a new invoice's.
          */
         post: operations["createRecurringSalesInvoice"];
         delete?: never;
@@ -5422,7 +5422,7 @@ export interface paths {
         head?: never;
         /**
          * Update a recurring sales invoice
-         * @description Lines with an id change, lines with _destroy go, lines without an id are added; invoices already made stay as they are. A new invoice_date, frequency or frequency_type restarts the schedule from the next invoice date; invoice_date must not lie in the past. Switching auto_send on, or changing the contact while it is on, is refused (422 on auto_send) when the contact gets its invoices by email but has no email address for them.
+         * @description Lines with an id change, lines with _destroy go, lines without an id are added; invoices already made stay as they are. A new invoice_date, frequency or frequency_type restarts the schedule from the next invoice date; invoice_date must lie after today. Switching auto_send on, or changing the contact while it is on, is refused (422 on auto_send) when the contact gets its invoices by email but has no email address for them.
          */
         patch: operations["updateRecurringSalesInvoice"];
         trace?: never;

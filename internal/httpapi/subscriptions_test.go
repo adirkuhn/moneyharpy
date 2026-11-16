@@ -153,8 +153,7 @@ func TestSubscriptionLifecycle(t *testing.T) {
 		t.Errorf("one-off = %+v", scheduled)
 	}
 
-	today := adminNow().Format(time.DateOnly)
-	wantStatus(t, owner.do(http.MethodPatch, api+"/recurring_sales_invoices/"+sub.RecurringID, map[string]any{"recurring_sales_invoice": map[string]any{"invoice_date": today}}), http.StatusOK)
+	h.dueToday(sub.RecurringID)
 	if err := h.sales.Work(context.Background()); err != nil && strings.Contains(err.Error(), strings.TrimPrefix(api, "/api/v2/")) {
 		t.Fatal(err)
 	}
@@ -336,7 +335,7 @@ func TestSubscriptionWebhooks(t *testing.T) {
 	}}))
 	wantStatus(t, owner.do(http.MethodPatch, api+"/subscriptions/"+sub.ID, map[string]any{"subscription": map[string]any{"reference": "Contract 8"}}), http.StatusOK)
 	wantStatus(t, owner.do(http.MethodPatch, api+"/subscriptions/"+sub.ID, map[string]any{"subscription": map[string]any{"amount": "2"}}), http.StatusOK)
-	wantStatus(t, owner.do(http.MethodPatch, api+"/recurring_sales_invoices/"+sub.RecurringID, map[string]any{"recurring_sales_invoice": map[string]any{"invoice_date": adminNow().Format(time.DateOnly)}}), http.StatusOK)
+	h.dueToday(sub.RecurringID)
 	if err := h.sales.Work(ctx); err != nil {
 		t.Fatal(err)
 	}

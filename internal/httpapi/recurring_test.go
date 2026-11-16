@@ -77,7 +77,7 @@ func TestRecurringSalesInvoiceLifecycle(t *testing.T) {
 	owner := h.client()
 	owner.register()
 	api, recurrings, create := recurringSetup(t, owner)
-	today := adminNow().Format(time.DateOnly)
+	today := adminNow().AddDate(0, 0, 1).Format(time.DateOnly) // the first date a recurring invoice can start
 
 	r := create("100", map[string]any{"frequency": "3", "has_desired_count": true, "desired_count": 4, "auto_send": "true"})
 	if !r.Active || r.FrequencyType != "month" || r.Frequency != 3 || r.InvoiceDate != today || r.StartDate != today || r.TotalIncl != "121.0" ||
@@ -89,6 +89,7 @@ func TestRecurringSalesInvoiceLifecycle(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodPost, recurrings, map[string]any{"recurring_sales_invoice": map[string]any{"frequency_type": "fortnight"}}), http.StatusBadRequest)
 	wantStatus(t, owner.do(http.MethodPost, recurrings, map[string]any{"recurring_sales_invoice": map[string]any{"invoice_date": "2020-01-01"}}), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodPost, recurrings, map[string]any{"recurring_sales_invoice": map[string]any{"invoice_date": adminNow().Format(time.DateOnly)}}), http.StatusUnprocessableEntity)
 	wantStatus(t, owner.do(http.MethodPost, recurrings, map[string]any{"recurring_sales_invoice": map[string]any{"colour": "red"}}), http.StatusBadRequest)
 
 	next := adminNow().AddDate(0, 1, 0).Format(time.DateOnly)
@@ -117,6 +118,7 @@ func TestRecurringSalesInvoiceLifecycle(t *testing.T) {
 
 	// Due today: the worker makes its first invoice.
 	due := create("50", nil)
+	h.dueToday(due.ID)
 	// The shared database holds other tests' administrations too, whose
 	// work may fail; only errors about this administration count.
 	if err := h.sales.Work(context.Background()); err != nil {
@@ -209,6 +211,7 @@ func TestRecurringSalesInvoiceWebhooks(t *testing.T) {
 
 	r := create("100", nil)
 	wantStatus(t, owner.do(http.MethodPatch, recurrings+"/"+r.ID, map[string]any{"recurring_sales_invoice": map[string]any{"reference": "Contract 8"}}), http.StatusOK)
+	h.dueToday(r.ID)
 	if err := h.sales.Work(ctx); err != nil {
 		t.Fatal(err)
 	}

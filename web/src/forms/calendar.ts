@@ -99,6 +99,13 @@ export function noonOf(day: string): Date {
 }
 
 /** Today in the browser's own time zone. */
+/** The day after today, as yyyy-mm-dd in the browser's time zone. */
+export function tomorrowDay(now = new Date()): string {
+  const next = new Date(now)
+  next.setDate(next.getDate() + 1)
+  return todayDay(next)
+}
+
 export function todayDay(now = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`

@@ -156,7 +156,7 @@ describe('adding a recurring invoice', () => {
     renderAt('/11/recurring_sales_invoices/new')
     expect(await screen.findByRole('heading', { level: 1, name: 'Add recurring invoice' })).toBeInTheDocument()
     const form = within(scheduleCard()).getByRole('form', { name: 'Recurring invoice schedule' })
-    expect(within(form).getByLabelText('Start date')).toHaveValue('2026-11-11')
+    expect(within(form).getByLabelText('Start date')).toHaveValue('2026-11-12') // tomorrow: the first invoice is made from the next day on
     const frequency = within(form).getByRole('radiogroup', { name: 'Frequency' })
     expect(within(frequency).getAllByRole('radio').map((r) => r.closest('label')?.querySelector('span')?.textContent)).toEqual(['Every month', 'Every quarter', 'Every six months', 'Every year', 'Every'])
     expect(within(frequency).getByRole('radio', { name: 'Every month' })).toBeChecked()
@@ -183,7 +183,7 @@ describe('adding a recurring invoice', () => {
     await userEvent.click(await within(dialog).findByRole('option', { name: 'Example Shop B.V.' }))
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent).toMatchObject({
-      contact_id: '701', invoice_date: '2026-11-11', frequency: 6, frequency_type: 'month', has_desired_count: true, desired_count: 4,
+      contact_id: '701', invoice_date: '2026-11-12', frequency: 6, frequency_type: 'month', has_desired_count: true, desired_count: 4,
       auto_send: true, mergeable: false, document_style_id: '702',
     }))
     expect(sent).not.toHaveProperty('invoice_sequence_id')
