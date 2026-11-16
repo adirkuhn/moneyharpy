@@ -633,9 +633,12 @@ function InvoiceForm(props: FormProps) {
               <h2 className="invoice-paper__title">
                 {quote ? dt('estimates.document.title') : dt('invoices.document.invoice')} {quote && dated.number ? draftLabel : <em className="invoice-paper__draft">{draftLabel}</em>}
               </h2>
-              <p className="invoice-paper__contact">
-                <span>{dt('invoices.document.contact')}:</span> <span>{setup.contact.name || t('invoices.editor.placeholderName')}</span>
-              </p>
+              {/* A quote's document has no contact line under its title, as Moneybird's. */}
+              {!quote && (
+                <p className="invoice-paper__contact">
+                  <span>{dt('invoices.document.contact')}:</span> <span>{setup.contact.name || t('invoices.editor.placeholderName')}</span>
+                </p>
+              )}
               <button type="button" className="invoice-paper__settings" aria-label={t('invoices.settingsTitle')} title={t('invoices.settingsTitle')} aria-haspopup="dialog" onClick={() => openDialog()}>
                 <ListIcon kind="edit" />
               </button>
@@ -643,7 +646,7 @@ function InvoiceForm(props: FormProps) {
             <div className="invoice-paper__dates">
               {[
                 { label: quote ? dt('estimates.document.date') : dt('invoices.document.invoiceDate'), value: documentDate(shownDate, language), tentative: !scheduled && !setup.invoiceDate },
-                { label: quote ? dt('estimates.document.validUntil') : dt('invoices.document.dueDate'), value: documentDate(dueDate, language), tentative: false },
+                { label: quote ? dt('estimates.document.dueDate') : dt('invoices.document.dueDate'), value: documentDate(dueDate, language), tentative: false },
               ].map((d) => (
                 <button key={d.label} type="button" className={`in-place__button${dateErrors ? ' is-invalid' : ''}`} aria-haspopup="dialog" onClick={() => openDialog(true)}>
                   <DateView label={d.label} value={d.value} tentative={d.tentative} />

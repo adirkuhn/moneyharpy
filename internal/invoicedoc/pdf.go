@@ -24,8 +24,9 @@ func New() Renderer { return Renderer{} }
 type labels struct {
 	Invoice, Credit, DraftInvoice, DraftEstimate, PackingSlip, Number, Date, Due, Reference, Description, Quantity, Price, VAT, Amount,
 	Subtotal, Discount, VATOver, Total, Page, CoC, VATNumber, IBAN string
-	// Estimate, EstimateNumber, EstimateDate and ValidUntil label estimates.
-	Estimate, EstimateNumber, EstimateDate, ValidUntil string
+	// Estimate, EstimateNumber and EstimateDate label estimates; their due
+	// date is labelled Due, "Vervaldatum", as on Moneybird's quotes.
+	Estimate, EstimateNumber, EstimateDate string
 }
 
 var dutch = labels{
@@ -33,7 +34,7 @@ var dutch = labels{
 	Due: "Vervaldatum", Reference: "Kenmerk", Description: "Omschrijving", Quantity: "Aantal", Price: "Bedrag",
 	VAT: "Btw", Amount: "Bedrag", Subtotal: "Subtotaal excl. btw", Discount: "Korting", VATOver: "%s btw", Total: "Totaal",
 	Page: "Pagina %d van {nb}", CoC: "KVK", VATNumber: "Btw-nummer", IBAN: "IBAN",
-	Estimate: "Offerte", EstimateNumber: "Offertenummer", EstimateDate: "Offertedatum", ValidUntil: "Geldig tot",
+	Estimate: "Offerte", EstimateNumber: "Offertenummer", EstimateDate: "Offertedatum",
 }
 
 var english = labels{
@@ -41,7 +42,7 @@ var english = labels{
 	Due: "Due date", Reference: "Reference", Description: "Description", Quantity: "Qty", Price: "Price",
 	VAT: "VAT", Amount: "Amount", Subtotal: "Subtotal excl. VAT", Discount: "Discount", VATOver: "%s VAT", Total: "Total",
 	Page: "Page %d of {nb}", CoC: "CoC", VATNumber: "VAT number", IBAN: "IBAN",
-	Estimate: "Quote", EstimateNumber: "Quote number", EstimateDate: "Quote date", ValidUntil: "Valid until",
+	Estimate: "Quote", EstimateNumber: "Quote number", EstimateDate: "Quote date",
 }
 
 func labelsFor(language string) labels {

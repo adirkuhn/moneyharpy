@@ -15,7 +15,7 @@ describe('the sender block', () => {
       { field: 'email', bold: false, label: false, text: ['books@example.com'] },
       { field: 'newline' },
       { field: 'chamber_of_commerce', bold: false, label: true, text: ['12345678'] },
-      { field: 'bank_account_number', bold: false, label: true, text: ['NL91ABNA0417164300'] },
+      { field: 'bank_account_number', bold: false, label: true, text: ['NL91 ABNA 0417 1643 00'] },
     ])
   })
 

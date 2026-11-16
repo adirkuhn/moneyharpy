@@ -430,7 +430,7 @@ export const nl: Messages = {
     },
     tags: { estimateId: 'Offertenummer', estimateDate: 'Offertedatum' },
     document: {
-      title: 'Offerte', date: 'Offertedatum', validUntil: 'Geldig tot',
+      title: 'Offerte', date: 'Offertedatum', dueDate: 'Vervaldatum',
       preText: 'Beste {recipient.name},\n\nHieronder vindt u onze offerte {document.estimate_id} voor de beschreven werkzaamheden.',
       postText: 'Wij vertrouwen erop dat deze offerte aan uw wensen voldoet. Zij is geldig tot {document.due_date}.\n\nMet vriendelijke groet,\n{company.company_name}',
     },

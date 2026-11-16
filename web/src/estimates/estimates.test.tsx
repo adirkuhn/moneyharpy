@@ -127,7 +127,9 @@ describe('adding a quote', () => {
     const paper = await quotePaper(/^Quote preview$/)
     expect(await within(paper).findByRole('heading', { level: 2, name: 'Offerte Concept #5' })).toBeInTheDocument()
     expect(within(paper).getByRole('button', { name: /Offertedatum/ })).toHaveTextContent('Offertedatum:11-11-2026')
-    expect(within(paper).getByRole('button', { name: /Geldig tot/ })).toHaveTextContent('Geldig tot:25-11-2026')
+    expect(within(paper).getByRole('button', { name: /Vervaldatum/ })).toHaveTextContent('Vervaldatum:25-11-2026')
+    // As on Moneybird, no contact line under the title.
+    expect(paper.querySelector('.invoice-paper__contact')).toBeNull()
     // The default texts, in the workflow's language, greet the placeholder until a contact is chosen.
     expect(within(paper).getByRole('button', { name: 'Edit the text above the lines' })).toHaveTextContent('Beste First name Last name,')
     expect(within(paper).getByRole('button', { name: 'Edit the text above the lines' })).toHaveTextContent('onze offerte Concept #5')

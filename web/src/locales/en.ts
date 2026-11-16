@@ -428,7 +428,7 @@ export const en = {
     },
     tags: { estimateId: 'Quote id', estimateDate: 'Quote date' },
     document: {
-      title: 'Quote', date: 'Quote date', validUntil: 'Valid until',
+      title: 'Quote', date: 'Quote date', dueDate: 'Due date',
       preText: 'Dear {recipient.name},\n\nPlease find below our quote {document.estimate_id} for the work described.',
       postText: 'We trust this quote meets your wishes. It is valid until {document.due_date}.\n\nKind regards,\n{company.company_name}',
     },

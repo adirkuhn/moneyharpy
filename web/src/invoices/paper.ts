@@ -41,6 +41,9 @@ function fieldText(field: string, sender: Sender): string[] {
     return addressLines(sender)
   }
   const value = (sender as Record<string, string | null | undefined>)[field]
+  if (value && field === 'bank_account_number') {
+    return [groupIBAN(value)]
+  }
   return value ? [value] : []
 }
 
@@ -100,8 +103,15 @@ export function daysBetween(from: string, to: string) {
 }
 
 /** A date as the document prints it: 25-11-2026 in Dutch, 11/25/2026 in English. */
-export function documentDate(iso: string, language: string) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString(language, { day: '2-digit', month: '2-digit', year: 'numeric' })
+/** A date as the document prints it in every language, as Moneybird and the PDF do: 24-10-2026. */
+export function documentDate(iso: string, _language?: string) {
+  const [y, m, d] = iso.slice(0, 10).split('-')
+  return y && m && d ? `${d}-${m}-${y}` : ''
+}
+
+/** An IBAN in groups of four, as banks, Moneybird and the PDF print it: NL91 ABNA 0417 1643 00. */
+export function groupIBAN(iban: string) {
+  return iban.replace(/\s+/g, '').toUpperCase().replace(/(.{4})(?=.)/g, '$1 ')
 }
 
 /** A VAT percentage as the document prints it, such as 21%. */

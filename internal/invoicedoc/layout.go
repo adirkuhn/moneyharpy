@@ -96,9 +96,6 @@ func fieldValue(doc sales.Document, field string, l labels) (string, []string) {
 		d := inv.InvoiceDate.AddDate(0, 0, inv.FirstDueInterval)
 		due = &d
 	}
-	if isEstimate(doc) && field == "due_date" {
-		name = l.ValidUntil
-	}
 	switch field {
 	case "company_name":
 		return name, nonEmpty(id.CompanyName)

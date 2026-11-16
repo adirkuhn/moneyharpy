@@ -2,7 +2,6 @@
  * The rules of Moneybird's invoice details editor and "Add invoice" popup that
  * do not depend on the screen: reordering, periods, quantities and numbers.
  */
-import { documentDate } from './paper'
 
 /** The rows with the one at `from` moved to `to`; out of range leaves them as they are. */
 export function moveRow<T>(rows: T[], from: number, to: number): T[] {
@@ -57,7 +56,9 @@ export function toPeriod(from: string, to: string): string {
 /** A stored period as the user reads it, such as 01-11-2026 – 30-11-2026. */
 export function periodText(period: string | null | undefined, language: string): string {
   const range = periodRange(period)
-  return range ? `${documentDate(range.from, language)} – ${documentDate(range.to, language)}` : ''
+  // The editor shows a period in the user's language.
+  const day = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString(language, { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return range ? `${day(range.from)} – ${day(range.to)}` : ''
 }
 
 /** A quantity as the document prints it: a bare number gets " x", as Moneybird writes "2 x". */
