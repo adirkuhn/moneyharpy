@@ -77,9 +77,12 @@ func TestRecipientInfoAndMetadata(t *testing.T) {
 func TestDefaultMetadataIsMoneybirds(t *testing.T) {
 	doc := styled(t)
 	doc.Contact.CustomerID = "7"
-	want := [][2]string{{"Reference", "Order 7"}, {"Invoice date", "11-11-2026"}, {"Due date", "25-11-2026"}}
-	if diff := gocmp.Diff(want, metaRows(doc, english, true)); diff != "" {
-		t.Errorf("default metaRows() diff (-want +got):\n%s", diff)
+	leftRows, rightRows := metaColumns(doc, english, true)
+	if diff := gocmp.Diff([][2]string{{"Reference", "Order 7"}}, leftRows); diff != "" {
+		t.Errorf("default left column diff (-want +got):\n%s", diff)
+	}
+	if diff := gocmp.Diff([][2]string{{"Invoice date", "11-11-2026"}, {"Due date", "25-11-2026"}}, rightRows); diff != "" {
+		t.Errorf("default right column diff (-want +got):\n%s", diff)
 	}
 	if got := title(doc, english, true); got != "Invoice 2026-0001" {
 		t.Errorf("title = %q, want the number in it", got)
@@ -117,5 +120,31 @@ func TestPDFHidesTheSender(t *testing.T) {
 	hidden, err := New().PDF(doc)
 	if err != nil || !bytes.HasPrefix(hidden, []byte("%PDF-")) || len(hidden) >= len(shown) {
 		t.Errorf("hidden sender: %d bytes, shown %d, %v", len(hidden), len(shown), err)
+	}
+}
+
+// metaRows is both metadata columns, left first.
+func metaRows(doc sales.Document, l labels, prices bool) [][2]string {
+	leftRows, rightRows := metaColumns(doc, l, prices)
+	return append(leftRows, rightRows...)
+}
+
+func TestDraftDueDateFollowsTheInvoiceDate(t *testing.T) {
+	doc := styled(t)
+	doc.Invoice.InvoiceID, doc.Invoice.DueDate, doc.Invoice.FirstDueInterval = "", nil, 30
+	if _, rows := metaColumns(doc, english, true); !slices.Contains(rows, [2]string{"Due date", "11-12-2026"}) {
+		t.Errorf("rows = %v, want the due date 30 days after the invoice date", rows)
+	}
+	doc.Invoice.InvoiceDate = nil
+	if _, rows := metaColumns(doc, english, true); len(rows) != 0 {
+		t.Errorf("rows = %v, want no dates without an invoice date", rows)
+	}
+}
+
+func TestGroupIBAN(t *testing.T) {
+	for in, want := range map[string]string{"NL91ABNA0417164300": "NL91 ABNA 0417 1643 00", "nl91 abna 0417 1643 00": "NL91 ABNA 0417 1643 00", "": ""} {
+		if got := groupIBAN(in); got != want {
+			t.Errorf("groupIBAN(%q) = %q, want %q", in, got, want)
+		}
 	}
 }
