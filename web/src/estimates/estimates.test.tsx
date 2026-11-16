@@ -211,11 +211,32 @@ describe('a quote', () => {
     expect(screen.queryByRole('button', { name: 'Change state' })).toBeNull()
     expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('href', '/api/v2/11/estimates/971/download_pdf')
 
-    await choose('Send quote', 'Send by email')
-    const form = screen.getByRole('region', { name: 'Send quote by email' })
-    expect(within(form).getByLabelText('Email address')).toHaveValue('quotes@example.com')
+    // As on Moneybird, Send quote opens its form above the quote: by email, or manually.
+    const toggle = screen.getByRole('button', { name: 'Send quote' })
+    await userEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    const form = screen.getByRole('region', { name: /^Send quote / })
+    expect(within(form).getByRole('radio', { name: /Send quote by email/ })).toBeChecked()
+    expect(within(form).getByText('The quote will be added as a PDF attachment to the email message.')).toBeInTheDocument()
+    expect(within(form).getByRole('radio', { name: /Send quote manually/ })).not.toBeChecked()
+    expect(within(form).getByText('The quote will be marked as sent.')).toBeInTheDocument()
+    const address = within(form).getByRole('textbox', { name: 'Email address' })
+    expect(address).toHaveValue('quotes@example.com')
+    // Its + adds a comma for one more address, and says so.
+    await userEvent.click(within(form).getByRole('button', { name: 'Add an email address' }))
+    expect(address).toHaveValue('quotes@example.com, ')
+    expect(within(form).getByText('You can add multiple values separated with a comma.')).toBeInTheDocument()
+    await userEvent.type(address, 'boss@example.com')
+    // The message starts as the workflow's, else the default in the quote's language, with its tags.
+    expect(within(form).getByRole('textbox', { name: 'Email message' })).toHaveValue(
+      'Beste {contact_name},\n\nIn de bijlage vind je offerte {estimate_id} van {estimate_date} voor {total}. De offerte is geldig tot {due_date}.\n\nMet vriendelijke groet,\n{company_name}',
+    )
     await userEvent.click(within(form).getByRole('button', { name: 'Send quote' }))
-    await waitFor(() => expect(sending).toEqual({ estimate_sending: { delivery_method: 'Email', email_address: 'quotes@example.com' } }))
+    await waitFor(() => expect(sending).toEqual({ estimate_sending: {
+      delivery_method: 'Email', email_address: 'quotes@example.com, boss@example.com',
+      email_message: 'Beste {contact_name},\n\nIn de bijlage vind je offerte {estimate_id} van {estimate_date} voor {total}. De offerte is geldig tot {due_date}.\n\nMet vriendelijke groet,\n{company_name}',
+    } }))
+    expect(screen.queryByRole('region', { name: /^Send quote / })).toBeNull()
     expect(await screen.findByText('Open', { selector: '.actionbar .badge' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { level: 2, name: 'Offerte 2026-0002' })).toBeInTheDocument()
     expect(screen.getByRole('complementary', { name: 'Quote information' })).toHaveTextContent('Quote sent by email')
@@ -225,6 +246,26 @@ describe('a quote', () => {
     expect(screen.getByRole('complementary', { name: 'Quote information' })).toHaveTextContent('Quote marked as accepted')
     await userEvent.click(screen.getByRole('button', { name: 'Bill quote' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/sales_invoices/991'))
+  })
+
+  it('is marked as sent from the same form, without an email', async () => {
+    let sending: unknown
+    server.use(...loaded())
+    server.use(
+      http.get('*/api/v2/11/estimates/971', () => HttpResponse.json(estimate())),
+      http.patch('*/api/v2/11/estimates/971/send_estimate', async ({ request }) => {
+        sending = await request.json()
+        return HttpResponse.json(estimate({ state: 'open', estimate_id: '2026-0002', draft_id: null, version: 2 }))
+      }),
+    )
+    renderAt('/11/estimates/971')
+    await userEvent.click(await screen.findByRole('button', { name: 'Send quote' }))
+    const form = screen.getByRole('region', { name: /^Send quote / })
+    await userEvent.click(within(form).getByRole('radio', { name: /Send quote manually/ }))
+    expect(within(form).queryByRole('textbox', { name: 'Email address' })).toBeNull()
+    expect(within(form).queryByRole('textbox', { name: 'Email message' })).toBeNull()
+    await userEvent.click(within(form).getByRole('button', { name: 'Send quote' }))
+    await waitFor(() => expect(sending).toEqual({ estimate_sending: { delivery_method: 'Manual' } }))
   })
 
   it('names the invoice it was billed to in its sidebar, and cannot change once billed', async () => {

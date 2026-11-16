@@ -8,3 +8,15 @@
 /* A billed or archived quote: its document as it is, without the marks that invite editing. */
 .estimate-locked .in-place__indicator, .estimate-locked .invoice-paper__edit, .estimate-locked .invoice-paper__settings,
 .estimate-locked .invoice-paper__edit-details { display: none; }
+
+/* Moneybird's quote send form: the ways as radios with their explanation, the email fields indented under theirs. */
+.send-form__title--strong { margin: 0; font-size: 1rem; font-weight: 700; }
+.send-options { display: grid; gap: 0.75rem; margin: 0; padding: 0; border: 0; min-width: 0; }
+.send-options hr { width: 100%; margin: 0; border: 0; border-top: 1px solid var(--line); }
+.send-option { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
+.send-option input { margin: 0.3125rem 0 0; }
+.send-option__text { line-height: 1.5; }
+.send-option__text small { color: var(--muted); font-size: 0.875rem; }
+.send-options__indent { display: grid; gap: 1rem; padding-left: 1.5rem; }
+.send-form__emails--wide { max-width: 28rem; }
+.send-form__actions--start { justify-content: flex-start; }
