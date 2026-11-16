@@ -126,7 +126,7 @@ func TestRecurringSalesInvoiceLifecycle(t *testing.T) {
 		t.Log(err)
 	}
 	made := decode[[]salesInvoice](t, owner.do(http.MethodGet, api+"/sales_invoices?filter=recurring_sales_invoice_id:"+due.ID, nil))
-	if len(made) != 1 || made[0].State != "draft" {
+	if len(made) != 1 || made[0].State != "open" || made[0].InvoiceID == nil {
 		t.Fatalf("made = %+v", made)
 	}
 	if got := decode[recurringInvoice](t, owner.do(http.MethodGet, recurrings+"/"+due.ID, nil)); got.InvoicesCreated != 1 || got.InvoiceDate == today {

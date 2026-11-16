@@ -267,13 +267,18 @@ func TestWorkerMakesTheInvoicesThatAreDueAndCatchesUp(t *testing.T) {
 	if first.InvoiceDate.Format(time.DateOnly) != "2026-09-30" || second.InvoiceDate.Format(time.DateOnly) != "2026-10-30" {
 		t.Errorf("dates = %v, %v", first.InvoiceDate, second.InvoiceDate)
 	}
-	if first.State != Draft || first.ContactID != customer || first.Reference != "Contract 7" || first.WorkflowID != flow || first.Totals.InclTax != 12100 {
+	// Without automatic sending each is still a real invoice: numbered and
+	// open, only not mailed.
+	if first.State == Draft || first.InvoiceID == "" || first.InvoiceID == second.InvoiceID || len(h.mailer.sent) != 0 {
+		t.Errorf("made as = %s %q and %s %q, mailed %d", first.State, first.InvoiceID, second.State, second.InvoiceID, len(h.mailer.sent))
+	}
+	if first.ContactID != customer || first.Reference != "Contract 7" || first.WorkflowID != flow || first.Totals.InclTax != 12100 {
 		t.Errorf("first = %+v", first)
 	}
 	if first.Lines[0].Description != "Hosting 2026-09-30 – 2026-10-29" || first.Lines[0].Period != "20260930..20261029" {
 		t.Errorf("first line = %+v", first.Lines[0])
 	}
-	if second.Lines[0].Period != "20261030..20261129" || first.Lines[0].ID == second.Lines[0].ID || first.DraftID == second.DraftID {
+	if second.Lines[0].Period != "20261030..20261129" || first.Lines[0].ID == second.Lines[0].ID {
 		t.Errorf("second line = %+v", second.Lines[0])
 	}
 	got, _ := h.svc.Recurring(ctx, adminID, r.ID, owner)

@@ -622,11 +622,15 @@ func (s *Service) recur(ctx context.Context, a administration.Listed, user resou
 					inv = completed
 				}
 			}
+			// Each invoice is a real one, numbered and booked: sent the way the
+			// contact receives invoices with automatic sending, otherwise only
+			// marked as sent, for the user to deliver.
+			in, what := SendInput{InvoiceDate: inv.InvoiceDate.Format(time.DateOnly)}, "auto-send"
 			if !r.AutoSend {
-				continue
+				in.DeliveryMethod, what = "Manual", "finalize"
 			}
-			if err := s.sendInBackground(ctx, a.ID, user, inv, SendInput{InvoiceDate: inv.InvoiceDate.Format(time.DateOnly)}); err != nil {
-				errs = append(errs, fmt.Errorf("administration %s, auto-send invoice %s of recurring invoice %s: %w", a.ID, inv.ID, r.ID, err))
+			if err := s.sendInBackground(ctx, a.ID, user, inv, in); err != nil {
+				errs = append(errs, fmt.Errorf("administration %s, %s invoice %s of recurring invoice %s: %w", a.ID, what, inv.ID, r.ID, err))
 			}
 		}
 	}
