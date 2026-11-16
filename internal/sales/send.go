@@ -55,9 +55,6 @@ type Document struct {
 	// Estimate is set when the document is an estimate; Invoice then holds
 	// its lines, number and dates as an invoice would.
 	Estimate *Estimate
-	// Example marks a document that shows what an invoice will look like,
-	// such as the next invoice of a recurring invoice; it cannot be paid.
-	Example bool
 }
 
 // Send sends an invoice: a draft gets its number and is booked, a sent one

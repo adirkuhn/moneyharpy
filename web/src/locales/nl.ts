@@ -470,7 +470,7 @@ export const nl: Messages = {
     noMatches: 'Geen periodieke facturen voor dit filter. Probeer een ander filter.',
     states: { active: 'Actief', inactive: 'Gedeactiveerd', all: 'Alle' }, status: 'Status', filterStates: { active: 'Actief', inactive: 'Inactief', all: 'Alle' },
     views: { active: 'Actieve periodieke facturen', inactive: 'Inactieve periodieke facturen', all: 'Alle periodieke facturen', custom: 'Gefilterde periodieke facturen' },
-    showAllActive: 'Alle actieve periodieke facturen tonen', sendAutomatically: 'Automatisch versturen', nextInvoiceDate: 'Volgende factuurdatum', add: 'Periodieke factuur toevoegen', examplePdf: 'Voorbeeldfactuur (PDF)',
+    showAllActive: 'Alle actieve periodieke facturen tonen', sendAutomatically: 'Automatisch versturen', nextInvoiceDate: 'Volgende factuurdatum', add: 'Periodieke factuur toevoegen',
     intro: {
       title: 'Verstuur periodieke facturen', text: 'Factureer een klant volgens een schema, zoals elke week of elke maand, zonder elke factuur zelf te maken.',
       start: 'Startdatum', startText: 'Maak een periodieke factuur en kies de datum van de eerste factuur.',
@@ -488,6 +488,7 @@ export const nl: Messages = {
     startDate: 'Startdatum', presets: { '1_month': 'Elke maand', '1_quarter': 'Elk kwartaal', '6_month': 'Elk half jaar', '1_year': 'Elk jaar', custom: 'Elke' },
     interval: 'Om de hoeveel', unit: 'Frequentie', units: { day: 'dagen', week: 'weken', month: 'maanden', quarter: 'kwartalen', year: 'jaren' },
     addAnother: 'Nog', countLabel: 'Aantal facturen', times: 'keer toevoegen', autoSendText: 'Factuur automatisch versturen op geplande datums.',
+    noEmail: '{{name}} heeft geen e-mailadres om facturen naar te versturen. Voeg er eerst een toe aan het contact.', editContact: 'Contact bewerken',
     mergeable: 'Stuur dit contact één factuur met alle geplande facturen die vandaag verstuurd worden. Alle factuurregels en bijlagen worden samengevoegd tot één factuur.',
     continue: 'Doorgaan', save: 'Opslaan', edit: 'Wijzigen', timeline: 'Geplande facturen', andMore: 'En meer',
     sentence: {

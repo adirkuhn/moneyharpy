@@ -273,19 +273,3 @@ func TestPDFOtherDocumentsShareTheLayout(t *testing.T) {
 		t.Errorf("packing slip with prices or dates: %v", r.texts())
 	}
 }
-
-func TestPDFMarksAnExample(t *testing.T) {
-	doc := example(t, "en")
-	doc.Invoice.InvoiceID, doc.Example = "", true
-	doc.Style.ShowEPCCode, doc.Identity.BankAccountBIC = true, "ABNANL2A"
-	r := layoutOf(t, doc, true)
-	r.one(t, "Example invoice")
-	if len(r.find("Draft invoice")) != 0 {
-		t.Errorf("an example titled as a draft: %v", r.texts())
-	}
-	if _, ok := epcPayload(doc); ok {
-		t.Error("a payment QR code on an example")
-	}
-	doc.Invoice.Language = "nl"
-	layoutOf(t, doc, true).one(t, "Voorbeeldfactuur")
-}

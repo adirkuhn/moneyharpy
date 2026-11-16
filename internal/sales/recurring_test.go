@@ -333,10 +333,15 @@ func TestWorkerAutoSends(t *testing.T) {
 		t.Errorf("events = %v", h.notifier.actions)
 	}
 
-	// Without an email address the invoice stays a draft and the error is told.
+	// A contact that lost its email address after sending was switched on:
+	// the invoice stays a draft and the error is told.
 	other, err := h.svc.CreateRecurring(ctx, adminID, owner, RecurringChanges{ContactID: ptr(noEmail), InvoiceDate: ptr("2026-11-11"), FrequencyType: ptr(Year),
-		AutoSend: ptr(true), Details: []DetailInput{line("10", "1", vat21, 0)}})
+		Details: []DetailInput{line("10", "1", vat21, 0)}})
 	if err != nil {
+		t.Fatal(err)
+	}
+	other.AutoSend = true
+	if err := h.store.SaveRecurring(ctx, other, false); err != nil {
 		t.Fatal(err)
 	}
 	if err := h.svc.Work(ctx); err == nil {
@@ -347,6 +352,37 @@ func TestWorkerAutoSends(t *testing.T) {
 	}
 	if got, _ := h.svc.Recurring(ctx, adminID, other.ID, owner); got.InvoiceDate.Format(time.DateOnly) != "2027-11-11" {
 		t.Errorf("next after a failed sending = %v", got.InvoiceDate)
+	}
+}
+
+func TestAutoSendNeedsTheContactsEmailAddress(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	in := RecurringChanges{ContactID: ptr(noEmail), InvoiceDate: ptr("2026-11-11"), AutoSend: ptr(true), Details: []DetailInput{line("10", "1", vat21, 0)}}
+	if _, err := h.svc.CreateRecurring(ctx, adminID, owner, in); fieldsOf(t, err)["auto_send"] == nil {
+		t.Errorf("auto-send to a contact without an email address: %v", err)
+	}
+	// A subscription's recurring invoice always sends by itself.
+	in.ForSubscription = true
+	if _, err := h.svc.CreateRecurring(ctx, adminID, owner, in); err != nil {
+		t.Errorf("for a subscription: %v", err)
+	}
+
+	r := recurring(t, h, "2026-12-01", RecurringChanges{})
+	if _, err := h.svc.UpdateRecurring(ctx, adminID, r.ID, owner, RecurringChanges{ContactID: ptr(noEmail), AutoSend: ptr(true)}); fieldsOf(t, err)["auto_send"] == nil {
+		t.Errorf("switched on for a contact without an email address: %v", err)
+	}
+	on, err := h.svc.UpdateRecurring(ctx, adminID, r.ID, owner, RecurringChanges{AutoSend: ptr(true)})
+	if err != nil || !on.AutoSend {
+		t.Fatalf("switched on = %+v, %v", on, err)
+	}
+	if _, err := h.svc.UpdateRecurring(ctx, adminID, r.ID, owner, RecurringChanges{ContactID: ptr(noEmail)}); fieldsOf(t, err)["auto_send"] == nil {
+		t.Errorf("moved to a contact without an email address while sending: %v", err)
+	}
+	// Switching it off is always fine.
+	off, err := h.svc.UpdateRecurring(ctx, adminID, r.ID, owner, RecurringChanges{ContactID: ptr(noEmail), AutoSend: ptr(false)})
+	if err != nil || off.AutoSend {
+		t.Errorf("switched off = %+v, %v", off, err)
 	}
 }
 

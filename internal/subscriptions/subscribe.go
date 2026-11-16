@@ -146,7 +146,7 @@ func (s *Service) Create(ctx context.Context, admin, user resource.ID, in Input)
 		ContactID: &sub.ContactID, ContactPersonID: sub.ContactPersonID, DocumentStyleID: cmpID(in.DocumentStyleID, product.DocumentStyleID),
 		WorkflowID: product.WorkflowID, Reference: in.Reference, PricesAreInclTax: in.PricesAreInclTax, Mergeable: in.Mergeable,
 		Discount: ptr(percentText(item.Discount)), InvoiceDate: ptr(first.Format(time.DateOnly)), FrequencyType: &sub.FrequencyType,
-		Frequency: &sub.Frequency, AutoSend: ptr(true),
+		Frequency: &sub.Frequency, AutoSend: ptr(true), ForSubscription: true,
 		Details: []sales.DetailInput{{
 			ProductID: &product.ID, Amount: ptr(lineAmount(item.Amount)), Price: ptr(linePrice(product, count).String()),
 			Period: ptr(first.Format("20060102") + ".." + end.Format("20060102")),

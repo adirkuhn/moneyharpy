@@ -468,7 +468,7 @@ export const en = {
     noMatches: 'No recurring invoices match this filter. Try another one.',
     states: { active: 'Active', inactive: 'Deactivated', all: 'All' }, status: 'Status', filterStates: { active: 'Active', inactive: 'Inactive', all: 'All' },
     views: { active: 'Active recurring invoices', inactive: 'Inactive recurring invoices', all: 'All recurring invoices', custom: 'Filtered recurring invoices' },
-    showAllActive: 'Show all active recurring invoices', sendAutomatically: 'Send automatically', nextInvoiceDate: 'Next invoice date', add: 'Add recurring invoice', examplePdf: 'Example invoice (PDF)',
+    showAllActive: 'Show all active recurring invoices', sendAutomatically: 'Send automatically', nextInvoiceDate: 'Next invoice date', add: 'Add recurring invoice',
     intro: {
       title: 'Send periodic invoices', text: 'Invoice a customer on a schedule, such as every week or every month, without making each invoice yourself.',
       start: 'Start date', startText: 'Make a recurring invoice and choose the date of the first invoice.',
@@ -486,6 +486,7 @@ export const en = {
     startDate: 'Start date', presets: { '1_month': 'Every month', '1_quarter': 'Every quarter', '6_month': 'Every six months', '1_year': 'Every year', custom: 'Every' },
     interval: 'Every how many', unit: 'Frequency', units: { day: 'days', week: 'weeks', month: 'months', quarter: 'quarters', year: 'years' },
     addAnother: 'Add another', countLabel: 'Number of invoices', times: 'times', autoSendText: 'Automatically send invoice on scheduled dates.',
+    noEmail: '{{name}} has no email address to send invoices to. Add one to the contact first.', editContact: 'Edit contact',
     mergeable: 'Send one invoice to this contact with all scheduled invoices being sent today. All invoice details and attachments will be merged into one invoice.',
     continue: 'Continue', save: 'Save', edit: 'Edit', timeline: 'Planned invoices', andMore: 'And more',
     sentence: {

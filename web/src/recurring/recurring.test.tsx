@@ -317,20 +317,44 @@ describe('a recurring invoice', () => {
     expect(await screen.findAllByText('This recurring invoice has been stopped and creates no more invoices.')).not.toHaveLength(0)
     expect(screen.queryByRole('button', { name: 'Stop' })).toBeNull()
     expect(within(scheduleCard()).queryByRole('button', { name: 'Edit' })).toBeNull()
-    // Stopped, it makes no next invoice to show an example of.
+  })
+
+  it('has no Download as menu: nothing of it is a document yet', async () => {
+    server.use(...documentHandlers(() => recurring()))
+    renderAt('/11/recurring_sales_invoices/941')
+    await screen.findByRole('button', { name: 'Extra' })
     expect(screen.queryByRole('button', { name: 'Download as...' })).toBeNull()
   })
 
-  it('downloads an example of its next invoice, as the sales invoice page downloads its PDF', async () => {
-    server.use(...documentHandlers(() => recurring()))
+  it('does not send automatically while the contact has no email address, and says to fix it first', async () => {
+    let saved = false
+    const quiet = { ...shop, send_invoices_to_email: null }
+    server.use(...documentHandlers(() => recurring({ contact: quiet })), http.patch('*/api/v2/11/recurring_sales_invoices/941', () => {
+      saved = true
+      return HttpResponse.json(recurring({ contact: quiet }))
+    }))
     renderAt('/11/recurring_sales_invoices/941')
-    const button = await screen.findByRole('button', { name: 'Download as...' })
-    await userEvent.click(button)
-    const panel = document.getElementById(button.getAttribute('aria-controls') ?? '') as HTMLElement
-    expect(within(panel).getAllByRole('link').map((l) => [l.textContent, l.getAttribute('href')])).toEqual([
-      ['Example invoice (PDF)', '/api/v2/11/recurring_sales_invoices/941/download_example_pdf'],
-    ])
-    expect(within(panel).getByRole('link', { name: 'Example invoice (PDF)' })).toHaveAttribute('download')
+    await userEvent.click(await within(await screen.findByRole('region', { name: 'Schedule' })).findByRole('button', { name: 'Edit' }))
+    const form = within(scheduleCard()).getByRole('form', { name: 'Recurring invoice schedule' })
+    await userEvent.click(within(form).getByRole('checkbox', { name: 'Automatically send invoice on scheduled dates.' }))
+    const warning = within(form).getByRole('alert')
+    expect(warning).toHaveTextContent('Example Shop B.V. has no email address to send invoices to. Add one to the contact first.')
+    expect(within(warning).getByRole('link', { name: 'Edit contact' })).toHaveAttribute('href', '/11/contacts/701/edit')
+    expect(within(form).getByRole('button', { name: 'Save' })).toBeDisabled()
+    expect(saved).toBe(false)
+
+    // Without automatic sending it saves as before.
+    await userEvent.click(within(form).getByRole('checkbox', { name: 'Automatically send invoice on scheduled dates.' }))
+    expect(within(form).queryByRole('alert')).toBeNull()
+    expect(within(form).getByRole('button', { name: 'Save' })).toBeEnabled()
+  })
+
+  it('warns on the page when it sends automatically to a contact that lost its email address', async () => {
+    server.use(...documentHandlers(() => recurring({ auto_send: true, contact: { ...shop, send_invoices_to_email: '' } })))
+    renderAt('/11/recurring_sales_invoices/941')
+    const warning = await within(await screen.findByRole('region', { name: 'Schedule' })).findByRole('alert')
+    expect(warning).toHaveTextContent('Example Shop B.V. has no email address to send invoices to. Add one to the contact first.')
+    expect(within(warning).getByRole('link', { name: 'Edit contact' })).toHaveAttribute('href', '/11/contacts/701/edit')
   })
 
   it('is deleted after Moneybird’s question', async () => {

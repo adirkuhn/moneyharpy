@@ -271,7 +271,7 @@ func senderWidth(doc sales.Document) float64 {
 func epcPayload(doc sales.Document) (string, bool) {
 	inv, id := doc.Invoice, doc.Identity
 	iban := strings.ReplaceAll(id.BankAccountNumber, " ", "")
-	if !layout(doc).ShowEPCCode || isEstimate(doc) || doc.Example || iban == "" || inv.Currency != "EUR" || doc.Totals.InclTax <= 0 || doc.Contact.DirectDebit ||
+	if !layout(doc).ShowEPCCode || isEstimate(doc) || iban == "" || inv.Currency != "EUR" || doc.Totals.InclTax <= 0 || doc.Contact.DirectDebit ||
 		(doc.Workflow.ID != 0 && !doc.Workflow.ShowQRCode) {
 		return "", false
 	}

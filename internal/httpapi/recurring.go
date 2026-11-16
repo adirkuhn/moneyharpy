@@ -373,13 +373,6 @@ func (s *server) DeleteRecurringSalesInvoice(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// DownloadRecurringSalesInvoiceExamplePdf implements ServerInterface.
-func (s *server) DownloadRecurringSalesInvoiceExamplePdf(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
-	s.download(w, r, administrationID, id, "application/pdf", func(admin, rid resource.ID) ([]byte, string, error) {
-		return s.deps.Sales.RecurringExamplePDF(r.Context(), admin, rid, user(r).ID)
-	})
-}
-
 // DeactivateRecurringSalesInvoice implements ServerInterface.
 func (s *server) DeactivateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
 	admin, rid, ok := parseIDs(w, administrationID, id)
