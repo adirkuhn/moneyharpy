@@ -10,18 +10,18 @@ import { WriteOffPanel } from '../invoices/CollectPanels'
 import { InvoiceHistory } from '../invoices/InvoiceHistory'
 import { CategoryChips } from '../invoices/InvoiceSidebar'
 import { JournalEntriesPanel } from '../invoices/JournalEntriesPanel'
-import { isPayable } from '../invoices/queries'
+import { attachmentURL, isPayable } from '../invoices/queries'
 import { StateBadge } from '../invoices/StateBadge'
 import { ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { PageIcon } from '../layout/pageIcons'
-import { MoreMenu } from '../list/ListActions'
+import { ActionMenu, type MenuItem, MoreMenu } from '../list/ListActions'
 import { AttachmentPreviews } from './AttachmentPreviews'
 import { ExternalDocument } from './ExternalDocument'
 import { ExternalFormPage } from './ExternalFormPage'
-import { type ExternalInvoice, externalTitle, isEditable, useDeleteExternalInvoice, useExternalInvoice } from './queries'
+import { type ExternalInvoice, externalFileURL, externalTitle, isEditable, useDeleteExternalInvoice, useExternalInvoice } from './queries'
 import '../invoices/view.css'
 import './external.css'
 
@@ -50,7 +50,7 @@ type Panel = 'journal' | 'dubious' | 'uncollectible' | null
 
 /**
  * After Moneybird's external invoice page: the action bar with Register
- * payment, Edit, Journal entries and Delete and the state at its right, the
+ * payment, Edit, Download as, Journal entries and Delete and the state at its right, the
  * invoice's summary and lines with its files under it, and the sidebar with
  * its categories, notes and history.
  */
@@ -68,6 +68,14 @@ function ExternalInvoiceScreen({ administrationId, invoice: inv, rates }: { admi
     ...(payable && !inv.marked_dubious_on ? [{ label: t('invoices.writeOff.dubious'), onSelect: () => setPanel('dubious') }] : []),
     ...(payable ? [{ label: t('invoices.writeOff.uncollectible'), onSelect: () => setPanel('uncollectible') }] : []),
   ]
+  // Its own files, as Moneybird's attachment downloads, and all of them at once; without a file, the invoice made from its data.
+  const files = inv.attachments ?? []
+  const downloads: MenuItem[] = files.length === 0
+    ? [{ label: t('invoices.view.pdf'), href: externalFileURL(administrationId, inv.id ?? '', 'download_pdf'), download: true }]
+    : [
+        ...files.map((a) => ({ label: a.filename ?? '', href: attachmentURL(administrationId, inv.id ?? '', a.id ?? '', 'external'), download: true })),
+        ...(files.length > 1 ? [{ label: t('external.view.allAttachments'), href: externalFileURL(administrationId, inv.id ?? '', 'download_attachments'), download: true }] : []),
+      ]
 
   const actions = (
     <div className="invoice-actions invoice-actions--external">
@@ -75,6 +83,7 @@ function ExternalInvoiceScreen({ administrationId, invoice: inv, rates }: { admi
         {/* Moneybird offers it on a paid invoice too, e.g. to link the bank transaction of a payment without proof. */}
         {(payable || inv.state === 'paid') && <Link className="btn btn--secondary" to={`${here}/payments/new`}>{t('external.view.registerPayment')}</Link>}
         {isEditable(inv) && <Link className="btn btn--secondary" to={`${here}/edit`}>{t('external.view.edit')}</Link>}
+        <ActionMenu label={t('invoices.view.downloadAs')} items={downloads} />
         <button
           type="button"
           className="btn btn--secondary btn--icon invoice-actions__toggle"

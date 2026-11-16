@@ -114,3 +114,8 @@ export function externalTitle(inv: Pick<ExternalInvoice, 'reference' | 'entry_nu
 export function externalListName(inv: Pick<ExternalInvoice, 'reference' | 'entry_number' | 'source'>, t: TFunction) {
   return inv.source ? `${inv.source} › ${externalTitle(inv, t)}` : externalTitle(inv, t)
 }
+
+/** Where the browser downloads the invoice rendered from its data, or all its files as one ZIP; the session cookie signs the request. */
+export function externalFileURL(administrationId: string, id: string, file: 'download_pdf' | 'download_attachments') {
+  return `/api/v2/${administrationId}/external_sales_invoices/${id}/${file}`
+}

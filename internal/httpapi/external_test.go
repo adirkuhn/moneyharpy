@@ -1,15 +1,18 @@
 package httpapi_test
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"os"
 	"slices"
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf16"
 
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 	"github.com/adirkuhn/moneyharpy/internal/postgres/postgrestest"
@@ -286,4 +289,66 @@ func TestExternalSalesInvoiceWebhooks(t *testing.T) {
 	if !slices.Equal(actions, want) {
 		t.Errorf("actions = %v, want %v", actions, want)
 	}
+}
+
+// pdfTitle is a document title as fpdf writes it in the PDF's info: UTF-16
+// big-endian after a byte order mark.
+func pdfTitle(s string) []byte {
+	out := []byte{0xfe, 0xff}
+	for _, u := range utf16.Encode([]rune(s)) {
+		out = append(out, byte(u>>8), byte(u))
+	}
+	return out
+}
+
+func TestExternalSalesInvoiceDownloads(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	_, externals, create := externalSetup(t, owner)
+
+	// Without its own file, the invoice is rendered from its data.
+	e := create("100", 2)
+	pdf := owner.do(http.MethodGet, externals+"/"+e.ID+"/download_pdf", nil)
+	wantStatus(t, pdf, http.StatusOK)
+	if !bytes.HasPrefix(pdf.body, []byte("%PDF-")) || pdf.header.Get("Content-Type") != "application/pdf" ||
+		!strings.Contains(pdf.header.Get("Content-Disposition"), `filename="invoice-WEB-1001.pdf"`) {
+		t.Errorf("pdf = %d bytes, %s, %s", len(pdf.body), pdf.header.Get("Content-Type"), pdf.header.Get("Content-Disposition"))
+	}
+	if !bytes.Contains(pdf.body, pdfTitle("Invoice WEB-1001")) {
+		t.Error("pdf not titled Invoice WEB-1001")
+	}
+	wantStatus(t, owner.do(http.MethodGet, externals+"/"+e.ID+"/download_attachments", nil), http.StatusUnprocessableEntity)
+	wantStatus(t, owner.do(http.MethodGet, externals+"/1/download_pdf", nil), http.StatusNotFound)
+
+	// Its files come in one archive, a name used twice numbered.
+	for _, body := range []string{"%PDF-1.4 first", "%PDF-1.4 second"} {
+		wantStatus(t, owner.attach(externals+"/"+e.ID+"/attachment", "order.pdf", "application/pdf", []byte(body)), http.StatusOK)
+	}
+	r := owner.do(http.MethodGet, externals+"/"+e.ID+"/download_attachments", nil)
+	wantStatus(t, r, http.StatusOK)
+	if r.header.Get("Content-Type") != "application/zip" || !strings.Contains(r.header.Get("Content-Disposition"), `filename="invoice-WEB-1001.zip"`) {
+		t.Errorf("zip headers = %v", r.header)
+	}
+	zr, err := zip.NewReader(bytes.NewReader(r.body), int64(len(r.body)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]string{}
+	for _, f := range zr.File {
+		rc, err := f.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, _ := io.ReadAll(rc)
+		_ = rc.Close()
+		got[f.Name] = string(data)
+	}
+	if len(got) != 2 || got["order.pdf"] != "%PDF-1.4 first" || got["order (2).pdf"] != "%PDF-1.4 second" {
+		t.Errorf("zip = %v", got)
+	}
+
+	// A new invoice, not filled in, has nothing to render.
+	fresh := decode[externalInvoice](t, owner.attach(externals+"/attachment", "order.pdf", "application/pdf", []byte("%PDF-1.4 order")))
+	wantStatus(t, owner.do(http.MethodGet, externals+"/"+fresh.ID+"/download_pdf", nil), http.StatusUnprocessableEntity)
 }

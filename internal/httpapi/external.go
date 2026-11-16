@@ -383,6 +383,20 @@ func (s *server) DownloadExternalSalesInvoiceAttachment(w http.ResponseWriter, r
 	s.redirectToAttachment(w, r, fileExternalAttachment, administrationID, id, attachmentID)
 }
 
+// DownloadExternalSalesInvoiceAttachments implements ServerInterface.
+func (s *server) DownloadExternalSalesInvoiceAttachments(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	s.download(w, r, administrationID, id, "application/zip", func(admin, rid resource.ID) ([]byte, string, error) {
+		return s.deps.Sales.ExternalAttachmentsZip(r.Context(), admin, rid, user(r).ID)
+	})
+}
+
+// DownloadExternalSalesInvoicePdf implements ServerInterface.
+func (s *server) DownloadExternalSalesInvoicePdf(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	s.download(w, r, administrationID, id, "application/pdf", func(admin, rid resource.ID) ([]byte, string, error) {
+		return s.deps.Sales.ExternalPDF(r.Context(), admin, rid, user(r).ID)
+	})
+}
+
 // CreateExternalSalesInvoiceNote implements ServerInterface.
 func (s *server) CreateExternalSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
 	admin, rid, ok := parseIDs(w, administrationID, id)

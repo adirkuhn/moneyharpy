@@ -20,7 +20,7 @@ import { PageIcon } from '../layout/pageIcons'
 import { ActionMenu, type MenuItem } from '../list/ListActions'
 import {
   type RecurringInvoice, recurringHistory, recurringTitle, useAddRecurringNote, useDeactivateRecurringInvoice, useDeleteRecurringInvoice,
-  useDeleteRecurringNote, useInvoicesOf, useRecurringInvoice, useSaveRecurringInvoice,
+  useDeleteRecurringNote, useInvoicesOf, recurringExampleURL, useRecurringInvoice, useSaveRecurringInvoice,
 } from './queries'
 import { draftOf, type ScheduleDraft, scheduleChanges, ScheduleForm, scheduleLabels, scheduleOfDraft, ScheduleSummary } from './Schedule'
 import '../invoices/view.css'
@@ -166,8 +166,11 @@ function RecurringScreen({ administrationId, recurring: rec }: { administrationI
     ...(active ? [{ label: t('invoices.view.changeLayout'), onSelect: () => setLayoutsOpen(true) }] : []),
     { label: t('invoices.view.duplicateRecurring'), to: `${list}/new?recurring=${rec.id}` },
   ]
+  // An example of the next invoice; one that stopped makes no next invoice.
+  const downloads: MenuItem[] = [{ label: t('recurring.examplePdf'), href: recurringExampleURL(administrationId, rec.id ?? ''), download: true }]
   const actions = (
     <div className="recurring-actions">
+      {active && <ActionMenu label={t('invoices.view.downloadAs')} items={downloads} />}
       <ActionMenu label={t('invoices.view.extra')} items={extra} />
       {active && <button type="button" className="btn btn--secondary" disabled={stop.isPending} onClick={() => setAsking('stop')}>{t('recurring.stop')}</button>}
       <button type="button" className="btn btn--secondary btn--icon" aria-label={t('recurring.delete')} title={t('recurring.delete')} onClick={() => setAsking('delete')}>

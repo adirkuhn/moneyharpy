@@ -21650,6 +21650,12 @@ type ServerInterface interface {
 	// DownloadExternalSalesInvoiceAttachment Download an attachment
 	// (GET /api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id}/download)
 	DownloadExternalSalesInvoiceAttachment(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, attachmentId Identifier)
+	// DownloadExternalSalesInvoiceAttachments Download all attachments as one ZIP file
+	// (GET /api/v2/{administration_id}/external_sales_invoices/{id}/download_attachments)
+	DownloadExternalSalesInvoiceAttachments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DownloadExternalSalesInvoicePdf Download the invoice as PDF, made from its data
+	// (GET /api/v2/{administration_id}/external_sales_invoices/{id}/download_pdf)
+	DownloadExternalSalesInvoicePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// MarkExternalSalesInvoiceAsDubious Mark as dubious
 	// (PATCH /api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_dubious)
 	MarkExternalSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -21865,6 +21871,9 @@ type ServerInterface interface {
 	// DeactivateRecurringSalesInvoice Deactivate a recurring sales invoice
 	// (PATCH /api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate)
 	DeactivateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DownloadRecurringSalesInvoiceExamplePdf Download an example of the next invoice
+	// (GET /api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf)
+	DownloadRecurringSalesInvoiceExamplePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// CreateRecurringSalesInvoiceNote Add note to a recurring sales invoice
 	// (POST /api/v2/{administration_id}/recurring_sales_invoices/{id}/notes)
 	CreateRecurringSalesInvoiceNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -23585,6 +23594,18 @@ func (_ Unimplemented) DownloadExternalSalesInvoiceAttachment(w http.ResponseWri
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// DownloadExternalSalesInvoiceAttachments Download all attachments as one ZIP file
+// (GET /api/v2/{administration_id}/external_sales_invoices/{id}/download_attachments)
+func (_ Unimplemented) DownloadExternalSalesInvoiceAttachments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadExternalSalesInvoicePdf Download the invoice as PDF, made from its data
+// (GET /api/v2/{administration_id}/external_sales_invoices/{id}/download_pdf)
+func (_ Unimplemented) DownloadExternalSalesInvoicePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // MarkExternalSalesInvoiceAsDubious Mark as dubious
 // (PATCH /api/v2/{administration_id}/external_sales_invoices/{id}/mark_as_dubious)
 func (_ Unimplemented) MarkExternalSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
@@ -24010,6 +24031,12 @@ func (_ Unimplemented) UpdateRecurringSalesInvoice(w http.ResponseWriter, r *htt
 // DeactivateRecurringSalesInvoice Deactivate a recurring sales invoice
 // (PATCH /api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate)
 func (_ Unimplemented) DeactivateRecurringSalesInvoice(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadRecurringSalesInvoiceExamplePdf Download an example of the next invoice
+// (GET /api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf)
+func (_ Unimplemented) DownloadRecurringSalesInvoiceExamplePdf(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -32764,6 +32791,76 @@ func (siw *ServerInterfaceWrapper) DownloadExternalSalesInvoiceAttachment(w http
 	handler.ServeHTTP(w, r)
 }
 
+// DownloadExternalSalesInvoiceAttachments operation middleware
+func (siw *ServerInterfaceWrapper) DownloadExternalSalesInvoiceAttachments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadExternalSalesInvoiceAttachments(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadExternalSalesInvoicePdf operation middleware
+func (siw *ServerInterfaceWrapper) DownloadExternalSalesInvoicePdf(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadExternalSalesInvoicePdf(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // MarkExternalSalesInvoiceAsDubious operation middleware
 func (siw *ServerInterfaceWrapper) MarkExternalSalesInvoiceAsDubious(w http.ResponseWriter, r *http.Request) {
 
@@ -35279,6 +35376,41 @@ func (siw *ServerInterfaceWrapper) DeactivateRecurringSalesInvoice(w http.Respon
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeactivateRecurringSalesInvoice(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadRecurringSalesInvoiceExamplePdf operation middleware
+func (siw *ServerInterfaceWrapper) DownloadRecurringSalesInvoiceExamplePdf(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadRecurringSalesInvoiceExamplePdf(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -41747,6 +41879,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/attachments/{attachment_id}/download", wrapper.DownloadExternalSalesInvoiceAttachment)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/download_attachments", wrapper.DownloadExternalSalesInvoiceAttachments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/download_pdf", wrapper.DownloadExternalSalesInvoicePdf)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/external_sales_invoices/{id}/notes", wrapper.CreateExternalSalesInvoiceNote)
 	})
 	r.Group(func(r chi.Router) {
@@ -41787,6 +41925,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/deactivate", wrapper.DeactivateRecurringSalesInvoice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf", wrapper.DownloadRecurringSalesInvoiceExamplePdf)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes", wrapper.CreateRecurringSalesInvoiceNote)

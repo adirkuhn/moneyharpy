@@ -382,7 +382,7 @@ export const en = {
     },
     tooLarge: 'These files are larger than 10 MB: {{names}}.', refused: 'These files could not be uploaded: {{names}}.',
     salesInvoice: 'Sales invoice', externalInvoice: 'External invoice',
-    view: { title: 'External invoice {{name}}', registerPayment: 'Register payment', edit: 'Edit', delete: 'Delete external invoice', sidebar: 'About this invoice' },
+    view: { title: 'External invoice {{name}}', registerPayment: 'Register payment', edit: 'Edit', delete: 'Delete external invoice', sidebar: 'About this invoice', allAttachments: 'All attachments (ZIP)' },
     document: {
       contact: 'Contact', invoiceDate: 'Invoice date', dueDate: 'Due date', source: 'Source', facts: 'Invoice facts', lines: 'Invoice lines',
       description: 'Description', price: 'Amount', total: 'Total', vat: 'VAT', subtotal: 'Subtotal',
@@ -468,7 +468,7 @@ export const en = {
     noMatches: 'No recurring invoices match this filter. Try another one.',
     states: { active: 'Active', inactive: 'Deactivated', all: 'All' }, status: 'Status', filterStates: { active: 'Active', inactive: 'Inactive', all: 'All' },
     views: { active: 'Active recurring invoices', inactive: 'Inactive recurring invoices', all: 'All recurring invoices', custom: 'Filtered recurring invoices' },
-    showAllActive: 'Show all active recurring invoices', sendAutomatically: 'Send automatically', nextInvoiceDate: 'Next invoice date', add: 'Add recurring invoice',
+    showAllActive: 'Show all active recurring invoices', sendAutomatically: 'Send automatically', nextInvoiceDate: 'Next invoice date', add: 'Add recurring invoice', examplePdf: 'Example invoice (PDF)',
     intro: {
       title: 'Send periodic invoices', text: 'Invoice a customer on a schedule, such as every week or every month, without making each invoice yourself.',
       start: 'Start date', startText: 'Make a recurring invoice and choose the date of the first invoice.',
