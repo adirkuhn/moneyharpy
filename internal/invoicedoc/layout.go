@@ -25,7 +25,7 @@ type styledLine struct {
 var fieldNames = map[bool]map[string]string{
 	false: {
 		"company_name": "Company name", "address": "Address", "email": "Email", "phone": "Phone", "company_website_url": "Website",
-		"chamber_of_commerce": "CoC", "tax_number": "VAT number", "bank_account_number": "IBAN", "bank_account_bic": "BIC",
+		"chamber_of_commerce": "CoC", "tax_number": "VAT", "bank_account_number": "Bank", "bank_account_bic": "BIC",
 		"bank_account_name": "Account holder", "customer_tax_number": "VAT number", "customer_chamber_of_commerce": "CoC number",
 		"customer_id": "Client number", "customer_email": "Email address", "customer_phone": "Phone number", "reference": "Reference",
 		"invoice_id": "Invoice number", "invoice_date": "Invoice date", "due_date": "Due date", "estimate_id": "Quote number",
@@ -33,9 +33,9 @@ var fieldNames = map[bool]map[string]string{
 	},
 	true: {
 		"company_name": "Bedrijfsnaam", "address": "Adres", "email": "E-mail", "phone": "Telefoon", "company_website_url": "Website",
-		"chamber_of_commerce": "KVK", "tax_number": "Btw-nummer", "bank_account_number": "IBAN", "bank_account_bic": "BIC",
+		"chamber_of_commerce": "KVK", "tax_number": "Btw", "bank_account_number": "Bank", "bank_account_bic": "BIC",
 		"bank_account_name": "Rekeninghouder", "customer_tax_number": "Btw-nummer", "customer_chamber_of_commerce": "KVK-nummer",
-		"customer_id": "Klantnummer", "customer_email": "E-mailadres", "customer_phone": "Telefoonnummer", "reference": "Referentie",
+		"customer_id": "Klantnummer", "customer_email": "E-mailadres", "customer_phone": "Telefoonnummer", "reference": "Kenmerk",
 		"invoice_id": "Factuurnummer", "invoice_date": "Factuurdatum", "due_date": "Vervaldatum", "estimate_id": "Offertenummer",
 		"estimate_date": "Offertedatum",
 	},
@@ -91,6 +91,11 @@ func fieldValue(doc sales.Document, field string, l labels) (string, []string) {
 		customerEmail = c.SendEstimatesToEmail
 	}
 	due := inv.DueDate
+	if due == nil && !isEstimate(doc) && inv.InvoiceDate != nil {
+		// A draft's due date follows from its invoice date until it is sent.
+		d := inv.InvoiceDate.AddDate(0, 0, inv.FirstDueInterval)
+		due = &d
+	}
 	if isEstimate(doc) && field == "due_date" {
 		name = l.ValidUntil
 	}
@@ -116,7 +121,7 @@ func fieldValue(doc sales.Document, field string, l labels) (string, []string) {
 	case "tax_number":
 		return name, nonEmpty(id.TaxNumber)
 	case "bank_account_number":
-		return name, nonEmpty(id.BankAccountNumber)
+		return name, nonEmpty(groupIBAN(id.BankAccountNumber))
 	case "bank_account_bic":
 		return name, nonEmpty(id.BankAccountBIC)
 	case "bank_account_name":
@@ -141,6 +146,17 @@ func fieldValue(doc sales.Document, field string, l labels) (string, []string) {
 		return name, nonEmpty(pdfDay(due))
 	}
 	return name, nil
+}
+
+// groupIBAN writes an IBAN in groups of four, as banks print it.
+func groupIBAN(iban string) string {
+	compact := strings.ToUpper(strings.ReplaceAll(iban, " ", ""))
+	var groups []string
+	for len(compact) > 4 {
+		groups = append(groups, compact[:4])
+		compact = compact[4:]
+	}
+	return strings.Join(append(groups, compact), " ")
 }
 
 func nonEmpty(values ...string) []string {
@@ -191,29 +207,29 @@ func recipientInfo(doc sales.Document, l labels) []styledLine {
 	return styledLines(doc, ly.InvoiceRecipientAddress, l)
 }
 
-// metaRows are the document's details beside its title, which carries the
-// number as on Moneybird's documents: the style's left and right columns. A
-// packing slip has no due date.
-func metaRows(doc sales.Document, l labels, prices bool) [][2]string {
+// metaColumns are the document's details beside its title, which carries
+// the number as on Moneybird's documents: the style's left column, printed
+// under the title, and its right column, beside it. A packing slip has no
+// due date.
+func metaColumns(doc sales.Document, l labels, prices bool) (leftRows, rightRows [][2]string) {
 	ly := layout(doc)
-	columns := append(append([]invoicing.Line{}, ly.InvoiceMetadataLeft...), ly.InvoiceMetadataRight...)
+	leftLines, rightLines := ly.InvoiceMetadataLeft, ly.InvoiceMetadataRight
 	if isEstimate(doc) {
-		columns = append(append([]invoicing.Line{}, ly.EstimateMetadataLeft...), ly.EstimateMetadataRight...)
+		leftLines, rightLines = ly.EstimateMetadataLeft, ly.EstimateMetadataRight
 	}
-	var rows [][2]string
-	add := func(field string) {
-		name, text := fieldValue(doc, field, l)
-		if len(text) > 0 {
-			rows = append(rows, [2]string{name, strings.Join(text, ", ")})
+	rows := func(lines []invoicing.Line) [][2]string {
+		var out [][2]string
+		for _, line := range lines {
+			if line.Field == "newline" || (!prices && !isEstimate(doc) && line.Field == "due_date") {
+				continue
+			}
+			if name, text := fieldValue(doc, line.Field, l); len(text) > 0 {
+				out = append(out, [2]string{name, strings.Join(text, ", ")})
+			}
 		}
+		return out
 	}
-	for _, line := range columns {
-		if line.Field == "newline" || (!prices && !isEstimate(doc) && line.Field == "due_date") {
-			continue
-		}
-		add(line.Field)
-	}
-	return rows
+	return rows(leftLines), rows(rightLines)
 }
 
 // drawStyled prints lines from the current position in a column of width w.
@@ -243,14 +259,14 @@ func drawStyled(pdf *fpdf.Fpdf, tr func(string) string, lines []styledLine, x, w
 	pdf.SetFont("Helvetica", "", size)
 }
 
-// senderWidth turns the style's sender width in pixels into millimetres
-// that fit beside the customer's address.
+// senderWidth turns the style's sender width in CSS pixels (96 to the
+// inch) into millimetres that fit beside the customer's address.
 func senderWidth(doc sales.Document) float64 {
 	px := layout(doc).SenderAddressWidth
 	if px <= 0 {
 		px = 200
 	}
-	return min(max(float64(px)*0.3, 30), 90)
+	return min(max(float64(px)*25.4/96, 30), 90)
 }
 
 // epcPayload is the EPC QR code text (European Payments Council, version 2)
