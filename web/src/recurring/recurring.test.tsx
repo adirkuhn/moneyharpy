@@ -317,6 +317,20 @@ describe('a recurring invoice', () => {
     expect(await screen.findAllByText('This recurring invoice has been stopped and creates no more invoices.')).not.toHaveLength(0)
     expect(screen.queryByRole('button', { name: 'Stop' })).toBeNull()
     expect(within(scheduleCard()).queryByRole('button', { name: 'Edit' })).toBeNull()
+    // Stopped, it makes no next invoice to show an example of.
+    expect(screen.queryByRole('button', { name: 'Download as...' })).toBeNull()
+  })
+
+  it('downloads an example of its next invoice, as the sales invoice page downloads its PDF', async () => {
+    server.use(...documentHandlers(() => recurring()))
+    renderAt('/11/recurring_sales_invoices/941')
+    const button = await screen.findByRole('button', { name: 'Download as...' })
+    await userEvent.click(button)
+    const panel = document.getElementById(button.getAttribute('aria-controls') ?? '') as HTMLElement
+    expect(within(panel).getAllByRole('link').map((l) => [l.textContent, l.getAttribute('href')])).toEqual([
+      ['Example invoice (PDF)', '/api/v2/11/recurring_sales_invoices/941/download_example_pdf'],
+    ])
+    expect(within(panel).getByRole('link', { name: 'Example invoice (PDF)' })).toHaveAttribute('download')
   })
 
   it('is deleted after Moneybird’s question', async () => {

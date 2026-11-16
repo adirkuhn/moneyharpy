@@ -48,6 +48,14 @@ const fresh = external({
   uri: '/11/external_sales_invoices/932',
 })
 
+/** Opens Download as... and lists its entries with where they download from. */
+async function downloads() {
+  const button = await screen.findByRole('button', { name: 'Download as...' })
+  await userEvent.click(button)
+  const panel = document.getElementById(button.getAttribute('aria-controls') ?? '') as HTMLElement
+  return within(panel).getAllByRole('link').map((l) => [l.textContent, l.getAttribute('href')])
+}
+
 function loaded(list: ExternalInvoice[] = [external(), fresh], seen: URL[] = []) {
   return [
     signedIn(),
@@ -211,6 +219,37 @@ describe('an external invoice', () => {
     renderAt('/11/external_sales_invoices/931')
     const files = await screen.findByRole('region', { name: 'Attachments' })
     expect(within(files).getByRole('link', { name: 'order.pdf' })).toHaveAttribute('href', '/api/v2/11/external_sales_invoices/931/attachments/971/download')
+  })
+
+  it('downloads the invoice made from its data when no file is attached', async () => {
+    server.use(...loaded())
+    renderAt('/11/external_sales_invoices/931')
+    expect(await downloads()).toEqual([
+      ['Invoice (PDF)', '/api/v2/11/external_sales_invoices/931/download_pdf'],
+    ])
+    expect(screen.getByRole('link', { name: 'Invoice (PDF)' })).toHaveAttribute('download')
+  })
+
+  it('downloads its one file, without a ZIP or a PDF made from its data', async () => {
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/external_sales_invoices/931', () => HttpResponse.json(external({ attachments: fresh.attachments }))))
+    renderAt('/11/external_sales_invoices/931')
+    expect(await downloads()).toEqual([
+      ['order.pdf', '/api/v2/11/external_sales_invoices/931/attachments/971/download'],
+    ])
+  })
+
+  it('downloads each of its files, or all of them as one ZIP', async () => {
+    const files = fresh.attachments ?? []
+    const receipt = { ...files[0], id: '972', filename: 'receipt.png', content_type: 'image/png' }
+    server.use(...loaded())
+    server.use(http.get('*/api/v2/11/external_sales_invoices/931', () => HttpResponse.json(external({ attachments: [...files, receipt] }))))
+    renderAt('/11/external_sales_invoices/931')
+    expect(await downloads()).toEqual([
+      ['order.pdf', '/api/v2/11/external_sales_invoices/931/attachments/971/download'],
+      ['receipt.png', '/api/v2/11/external_sales_invoices/931/attachments/972/download'],
+      ['All attachments (ZIP)', '/api/v2/11/external_sales_invoices/931/download_attachments'],
+    ])
   })
 
   it('still offers Register payment once paid, as Moneybird does', async () => {

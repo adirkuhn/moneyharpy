@@ -186,7 +186,7 @@ export function ActionMenu({ label, icon, items, primary = false }: ActionMenuPr
       {open && (
         <div id={id} className="dropdown__panel dropdown__panel--right">
           <ul className="dropdown__list">
-            {items.map((item) => <li key={item.label}><MenuEntry item={item} close={close} /></li>)}
+            {items.map((item, i) => <li key={`${i}:${item.label}`}><MenuEntry item={item} close={close} /></li>)}
           </ul>
         </div>
       )}
@@ -216,7 +216,7 @@ export function MoreMenu({ items }: { items: MenuItem[] }) {
       {open && (
         <div id={id} className="dropdown__panel dropdown__panel--right">
           <ul className="dropdown__list">
-            {items.map((item) => <li key={item.label}><MenuEntry item={item} close={close} /></li>)}
+            {items.map((item, i) => <li key={`${i}:${item.label}`}><MenuEntry item={item} close={close} /></li>)}
           </ul>
         </div>
       )}

@@ -10476,6 +10476,71 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/download_attachments:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: downloadExternalSalesInvoiceAttachments
+      x-permissions: [sales_invoices]
+      summary: Download all attachments as one ZIP file
+      description: >-
+        MoneyHarpy extension. Every file of the invoice in one ZIP archive; a name used twice is numbered. An invoice
+        without attachments answers 422.
+      tags: [External sales invoices]
+      responses:
+        '200':
+          description: The ZIP archive
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/external_sales_invoices/{id}/download_pdf:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: downloadExternalSalesInvoicePdf
+      x-permissions: [sales_invoices]
+      summary: Download the invoice as PDF, made from its data
+      description: >-
+        MoneyHarpy extension. For an invoice whose own file is not attached: the invoice rendered from its contact,
+        lines and dates in the administration's default document style, sender and language, its reference as its
+        number. A new invoice, not filled in yet, answers 422.
+      tags: [External sales invoices]
+      responses:
+        '200':
+          description: The PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
   /api/v2/{administration_id}/external_sales_invoices/{id}/notes:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -10902,6 +10967,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecurringSalesInvoice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: downloadRecurringSalesInvoiceExamplePdf
+      x-permissions: [sales_invoices]
+      summary: Download an example of the next invoice
+      description: >-
+        MoneyHarpy extension. The invoice the recurring invoice makes on its next date, with its document style,
+        contact, lines and workflow, as a PDF titled "Example invoice"; it is not stored, has no number and no payment
+        QR code. An inactive recurring invoice makes no next invoice and answers 422.
+      tags: [Recurring sales invoices]
+      responses:
+        '200':
+          description: The PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

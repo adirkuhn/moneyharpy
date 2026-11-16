@@ -5151,6 +5151,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/external_sales_invoices/{id}/download_attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download all attachments as one ZIP file
+         * @description MoneyHarpy extension. Every file of the invoice in one ZIP archive; a name used twice is numbered. An invoice without attachments answers 422.
+         */
+        get: operations["downloadExternalSalesInvoiceAttachments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/external_sales_invoices/{id}/download_pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download the invoice as PDF, made from its data
+         * @description MoneyHarpy extension. For an invoice whose own file is not attached: the invoice rendered from its contact, lines and dates in the administration's default document style, sender and language, its reference as its number. A new invoice, not filled in yet, answers 422.
+         */
+        get: operations["downloadExternalSalesInvoicePdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/external_sales_invoices/{id}/notes": {
         parameters: {
             query?: never;
@@ -5380,6 +5426,29 @@ export interface paths {
          * @description Stops it from making invoices, for good; the recurring invoice and the invoices it made are kept. Not when it is deactivated already.
          */
         patch: operations["deactivateRecurringSalesInvoice"];
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/recurring_sales_invoices/{id}/download_example_pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download an example of the next invoice
+         * @description MoneyHarpy extension. The invoice the recurring invoice makes on its next date, with its document style, contact, lines and workflow, as a PDF titled "Example invoice"; it is not stored, has no number and no payment QR code. An inactive recurring invoice makes no next invoice and answers 422.
+         */
+        get: operations["downloadRecurringSalesInvoiceExamplePdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v2/{administration_id}/recurring_sales_invoices/{id}/notes": {
@@ -20751,6 +20820,64 @@ export interface operations {
             429: components["responses"]["TooManyRequests"];
         };
     };
+    downloadExternalSalesInvoiceAttachments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ZIP archive */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadExternalSalesInvoicePdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
     createExternalSalesInvoiceNote: {
         parameters: {
             query?: never;
@@ -21168,6 +21295,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RecurringSalesInvoice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadRecurringSalesInvoiceExamplePdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The PDF */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
                 };
             };
             400: components["responses"]["BadRequest"];

@@ -603,22 +603,12 @@ func (s *Service) recur(ctx context.Context, a administration.Listed, user resou
 
 // generate makes the draft invoice of r's next date and moves r on.
 func (s *Service) generate(ctx context.Context, a administration.Listed, user resource.ID, r *Recurring) (Invoice, error) {
-	day := r.InvoiceDate
-	next := Occurrence(r.Anchor, r.FrequencyType, r.Frequency, r.Periods+1)
-	end := next.AddDate(0, 0, -1)
-	period := day.Format("20060102") + ".." + end.Format("20060102")
-	text := day.Format(time.DateOnly) + " – " + end.Format(time.DateOnly)
+	inv, next := r.next()
 	now := s.now()
-	inv := r.invoice()
 	inv.ID, inv.RecurringSalesInvoiceID, inv.CreatedAt, inv.UpdatedAt = s.ids.Next(), &r.ID, now, now
-	inv.InvoiceDate = &day
 	for i := range inv.Lines {
 		d := &inv.Lines[i]
 		d.ID, d.CreatedAt, d.UpdatedAt = s.ids.Next(), now, now
-		d.Description = strings.ReplaceAll(d.Description, "{period}", text)
-		if d.Period != "" {
-			d.Period = period
-		}
 	}
 	var err error
 	if inv.DraftID, err = s.store.NextDraftID(ctx, a.ID); err != nil {
@@ -640,6 +630,50 @@ func (s *Service) generate(ctx context.Context, a administration.Listed, user re
 	}
 	*r = moved
 	return inv, nil
+}
+
+// next is the invoice of r's next date, its lines' {period} and periods
+// filled in, and the date after it.
+func (r Recurring) next() (Invoice, time.Time) {
+	day := r.InvoiceDate
+	after := Occurrence(r.Anchor, r.FrequencyType, r.Frequency, r.Periods+1)
+	end := after.AddDate(0, 0, -1)
+	period := day.Format("20060102") + ".." + end.Format("20060102")
+	text := day.Format(time.DateOnly) + " – " + end.Format(time.DateOnly)
+	inv := r.invoice()
+	for i := range inv.Lines {
+		d := &inv.Lines[i]
+		d.Description = strings.ReplaceAll(d.Description, "{period}", text)
+		if d.Period != "" {
+			d.Period = period
+		}
+	}
+	return inv, after
+}
+
+// RecurringExamplePDF renders the invoice the recurring invoice makes next,
+// with its layout, contact, lines and workflow, titled as an example. It
+// is not stored and has no number. An inactive one makes no next invoice.
+func (s *Service) RecurringExamplePDF(ctx context.Context, admin, id, user resource.ID) ([]byte, string, error) {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
+		return nil, "", err
+	}
+	r, err := s.Recurring(ctx, admin, id, user)
+	if err != nil {
+		return nil, "", err
+	}
+	if !r.Active {
+		return nil, "", invalid("base", "The recurring invoice is not active; it makes no next invoice")
+	}
+	inv, _ := r.next()
+	doc, err := s.document(ctx, a, user, inv)
+	if err != nil {
+		return nil, "", err
+	}
+	doc.Example = true
+	data, err := s.renderer.PDF(doc)
+	return data, "example-invoice-" + r.InvoiceDate.Format(time.DateOnly) + ".pdf", wrap("render example invoice", err)
 }
 
 // createdBy is Moneybird's event of an invoice a recurring invoice made:

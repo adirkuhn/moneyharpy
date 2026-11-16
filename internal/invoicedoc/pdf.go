@@ -26,6 +26,8 @@ type labels struct {
 	Subtotal, Discount, VATOver, Total, Page, CoC, VATNumber, IBAN string
 	// Estimate, EstimateNumber, EstimateDate and ValidUntil label estimates.
 	Estimate, EstimateNumber, EstimateDate, ValidUntil string
+	// Example titles an example invoice.
+	Example string
 }
 
 var dutch = labels{
@@ -34,6 +36,7 @@ var dutch = labels{
 	VAT: "Btw", Amount: "Bedrag", Subtotal: "Subtotaal excl. btw", Discount: "Korting", VATOver: "%s btw", Total: "Totaal",
 	Page: "Pagina %d van {nb}", CoC: "KVK", VATNumber: "Btw-nummer", IBAN: "IBAN",
 	Estimate: "Offerte", EstimateNumber: "Offertenummer", EstimateDate: "Offertedatum", ValidUntil: "Geldig tot",
+	Example: "Voorbeeldfactuur",
 }
 
 var english = labels{
@@ -42,6 +45,7 @@ var english = labels{
 	VAT: "VAT", Amount: "Amount", Subtotal: "Subtotal excl. VAT", Discount: "Discount", VATOver: "%s VAT", Total: "Total",
 	Page: "Page %d of {nb}", CoC: "CoC", VATNumber: "VAT number", IBAN: "IBAN",
 	Estimate: "Quote", EstimateNumber: "Quote number", EstimateDate: "Quote date", ValidUntil: "Valid until",
+	Example: "Example invoice",
 }
 
 func labelsFor(language string) labels {
@@ -622,11 +626,14 @@ func boolInt(b bool) money.Amount {
 }
 
 // title names the document with its number, as Moneybird's heading
-// "Invoice 2026-0001" does; a draft has no number yet.
+// "Invoice 2026-0001" does; a draft has no number yet, and an example says
+// it is one.
 func title(doc sales.Document, l labels, prices bool) string {
 	number := doc.Invoice.InvoiceID
 	name := l.Invoice
 	switch {
+	case doc.Example && prices && doc.Estimate == nil:
+		return l.Example
 	case doc.Estimate != nil && number == "":
 		return l.DraftEstimate
 	case doc.Estimate != nil:
