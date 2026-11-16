@@ -9,6 +9,8 @@ import { AlignIcon, ColorField, Range, Segmented, Toggle } from './StyleControls
 import { StyleFileField } from './StyleFileField'
 
 export const fonts = ['lucida_grande', 'arial', 'helvetica', 'verdana', 'georgia', 'times_new_roman', 'courier'] as const
+// documentFonts add Inter, the app's own typeface, for documents: a MoneyHarpy extension.
+export const documentFonts = [...fonts, 'inter'] as const
 export const headerTypes = ['', 'background_image_with_text', 'background_image_with_logo', 'background_image', 'background_color_with_logo', 'background_color_with_text'] as const
 export const footerTypes = ['', 'contact_information', 'signature', 'background_image'] as const
 export const publicViewColors = ['#F7F9FC', '#F6E4E2', '#EDE8F7', '#D5E8FA', '#DEF4F8', '#FBE0D5', '#FCF1DB', '#D7ECEA', '#E7F3E6', '#E4E9EB'] as const

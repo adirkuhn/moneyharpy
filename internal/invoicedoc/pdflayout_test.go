@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-pdf/fpdf"
+
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
 
@@ -43,8 +45,17 @@ func long(doc sales.Document) sales.Document {
 
 const ptToMM = 25.4 / 72
 
-// capTop is where a line of text's capitals start.
-func capTop(p placed) float64 { return p.Y - 0.718*p.Size*ptToMM }
+// The web app's --text, --muted and --line colours as fpdf writes them.
+const (
+	textRGB  = "0.035 0.149 0.325"
+	mutedRGB = "0.306 0.392 0.522"
+	lineRGB  = "0.851 0.882 0.929"
+)
+
+// capTop is where a line of text's capitals start, in the default face.
+func capTop(p placed) float64 {
+	return p.Y - faceFor("").capHeight(fpdf.New("P", "mm", "A4", ""))*p.Size*ptToMM
+}
 
 func near(a, b, tolerance float64) bool { return math.Abs(a-b) <= tolerance }
 
@@ -131,18 +142,42 @@ func TestPDFLinesAndTotals(t *testing.T) {
 	if len(r.containing("uur x")) != 0 || len(r.containing("2 x")) != 0 {
 		t.Error("quantity with an x")
 	}
-	heavy := 0
-	for _, rule := range r.Rules {
-		if rule.H >= 0.3 {
-			heavy++
-		}
-	}
-	if heavy != 1 {
-		t.Errorf("heavy rules = %d, want one under the last line", heavy)
-	}
 	subtotal, totals := r.one(t, "Subtotaal excl. btw"), r.find("Totaal")
 	total := totals[len(totals)-1]
 	nine := r.one(t, "9% btw")
+	// Heavy rules in the text colour close the header, the last line and
+	// the totals; thin ones in the light line colour separate the lines.
+	var heavy []float64
+	thin := 0
+	for _, rule := range r.Rules {
+		switch {
+		case rule.H >= 0.3 && rule.H <= 0.4 && rule.Color == textRGB:
+			heavy = append(heavy, rule.Y)
+		case near(rule.H, 0.2, 0.01) && rule.Color == lineRGB:
+			if rule.Y > first.Y && rule.Y < total.Y {
+				thin++
+			}
+		default:
+			t.Errorf("rule %+v, want a heavy one in the text colour or a thin one in the line colour", rule)
+		}
+	}
+	header := r.one(t, "Omschrijving")
+	if len(heavy) != 3 || heavy[0] < header.Y || heavy[0] > first.Y-3 || heavy[1] < second.Y || heavy[1] > subtotal.Y-3 || heavy[2] < nine.Y || heavy[2] > total.Y-3 {
+		t.Errorf("heavy rules at %v, want under the header, the last line and the VAT", heavy)
+	}
+	if thin != 1 {
+		t.Errorf("thin rules = %d, want one between the two lines", thin)
+	}
+	for _, p := range []placed{first, second, quantity, total} {
+		if p.Color != textRGB {
+			t.Errorf("%q in %q, want the text colour", p.Text, p.Color)
+		}
+	}
+	for _, p := range []placed{r.one(t, "Factuurdatum:"), r.one(t, "Kenmerk:"), r.one(t, "Pagina 1 van 1")} {
+		if p.Color != mutedRGB {
+			t.Errorf("%q in %q, want the muted colour", p.Text, p.Color)
+		}
+	}
 	if !(subtotal.Y < nine.Y && nine.Y < total.Y) || !total.Bold {
 		t.Errorf("totals %+v %+v %+v, want subtotal, VAT, then a bold total", subtotal, nine, total)
 	}

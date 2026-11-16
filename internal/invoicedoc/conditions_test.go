@@ -1,27 +1,27 @@
 package invoicedoc
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 )
 
 func TestPDFPrintsStyledPaymentConditions(t *testing.T) {
 	doc := document(t, "en")
-	plain, err := New().PDF(doc)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if bytes.Contains(plain, []byte("Helvetica-Oblique")) {
-		t.Fatal("italic font without italic text")
-	}
 	doc.Invoice.PaymentConditions = "Pay {document.total_price} _before_ {document.due_date},\nquoting *{document.payment_reference}*."
-	styled, err := New().PDF(doc)
-	if err != nil {
-		t.Fatal(err)
+	r := layoutOf(t, doc, true)
+	// The faces have no italic, so emphasis prints upright; strong text is
+	// bold.
+	before := r.one(t, "before")
+	quoting := r.containing("quoting")
+	reference := r.find("2026-0001")
+	if before.Bold || len(quoting) != 1 || quoting[0].Bold {
+		t.Errorf("conditions %+v %+v, want regular text", before, quoting)
 	}
-	if !bytes.Contains(styled, []byte("Helvetica-Oblique")) || len(styled) <= len(plain) {
-		t.Errorf("styled conditions: %d bytes, plain %d; want the italic font", len(styled), len(plain))
+	if len(reference) == 0 || !reference[len(reference)-1].Bold || reference[len(reference)-1].Y <= before.Y {
+		t.Errorf("reference %+v, want bold on the second line", reference)
+	}
+	if _, err := New().PDF(doc); err != nil {
+		t.Fatal(err)
 	}
 }
 

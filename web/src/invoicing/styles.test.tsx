@@ -59,13 +59,14 @@ describe('document style editor', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Font' }))
     await userEvent.selectOptions(screen.getByLabelText('Font size'), '12')
+    await userEvent.selectOptions(screen.getByLabelText('Font', { selector: 'select' }), 'inter')
     await userEvent.click(screen.getByRole('button', { name: 'Advanced' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Letter' }))
     await userEvent.click(screen.getByRole('switch', { name: 'Own stationery' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/settings/invoices_and_estimates'))
     expect(sent.document_style).toMatchObject({
-      font_size: 12, paper_size: 'letter', print_on_stationery: true,
+      font_size: 12, font_family: 'inter', paper_size: 'letter', print_on_stationery: true,
       invoice_sender_address: [{ field: 'email', bold: false, label: true }, { field: 'company_name', bold: true, label: false }],
     })
     expect(sent.document_style).not.toHaveProperty('name')
@@ -165,6 +166,7 @@ describe('document style editor', () => {
     await userEvent.selectOptions(screen.getByLabelText('Footer type'), 'signature')
     await userEvent.type(screen.getByLabelText('Title'), 'Ann de Vries')
     await userEvent.click(screen.getByRole('button', { name: 'General settings' }))
+    expect(within(screen.getByLabelText('Font')).queryByRole('option', { name: 'Inter' })).toBeNull()
     await userEvent.selectOptions(screen.getByLabelText('Font'), 'georgia')
     await userEvent.click(screen.getByRole('switch', { name: 'MoneyHarpy label' }))
     expect(screen.queryByText('Sent with MoneyHarpy')).toBeNull()

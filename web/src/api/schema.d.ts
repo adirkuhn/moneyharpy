@@ -9229,6 +9229,7 @@ export interface components {
                 address_position?: "left" | "right";
                 /** @description 8 to 14 points. */
                 font_size?: number;
+                /** @description Moneybird's lucida_grande, helvetica, arial, verdana, georgia, times_new_roman or courier; or inter, the app's typeface (MoneyHarpy extension). PDFs embed an openly licensed font for each. */
                 font_family?: string;
                 custom_css?: string;
                 invoice_sender_address?: components["schemas"]["DocumentStyleLine"][];

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
@@ -19,6 +20,8 @@ type placed struct {
 	Size       float64 // the font size in points
 	Bold       bool
 	Text       string
+	// Color is the text's, or the rule's, as fpdf writes it ("r g b").
+	Color string
 }
 
 // rendered is what a rendered PDF shows on its pages.
@@ -73,8 +76,8 @@ func (r rendered) texts() []string {
 var (
 	contentsPattern = regexp.MustCompile(`/Contents (\d+) 0 R>>`)
 	fontsPattern    = regexp.MustCompile(`/F(\w+) (\d+) 0 R`)
-	baseFontPattern = regexp.MustCompile(`(\d+) 0 obj\n<</Type /Font\n/BaseFont /([\w-]+)`)
-	opPattern       = regexp.MustCompile(`BT /F(\w+) ([\d.]+) Tf ET|BT ([\d.-]+) ([\d.-]+) Td \(((?:\\.|[^\\)])*)\) ?Tj ET|q ([\d.]+) 0 0 ([\d.]+) ([\d.-]+) ([\d.-]+) cm /I|([\d.]+) w|([\d.-]+) ([\d.-]+) m ([\d.-]+) ([\d.-]+) l S`)
+	baseFontPattern = regexp.MustCompile(`(\d+) 0 obj\n<</Type /Font\n/Subtype /Type0\n/BaseFont /([\w-]+)`)
+	opPattern       = regexp.MustCompile(`BT /F(\w+) ([\d.]+) Tf ET|BT ([\d.-]+) ([\d.-]+) Td \(((?:\\.|[^\\)])*)\) ?Tj ET|q ([\d.]+) 0 0 ([\d.]+) ([\d.-]+) ([\d.-]+) cm /I|([\d.]+) w|([\d.-]+) ([\d.-]+) m ([\d.-]+) ([\d.-]+) l S|([\d.]+ [\d.]+ [\d.]+) (rg|RG)`)
 )
 
 // layoutOf renders the document uncompressed and reads back where its text,
@@ -96,20 +99,21 @@ func layoutOf(t *testing.T, doc sales.Document, prices bool) rendered {
 		baseFonts[string(m[1])] = string(m[2])
 	}
 	for _, m := range fontsPattern.FindAllSubmatch(data, -1) {
-		bold[string(m[1])] = strings.Contains(baseFonts[string(m[2])], "Bold")
+		// fpdf names a font after its family and style: utf8<family>B is bold.
+		bold[string(m[1])] = strings.HasSuffix(baseFonts[string(m[2])], "B")
 	}
 	var r rendered
 	for page, m := range contentsPattern.FindAllSubmatch(data, -1) {
 		r.Pages++
 		stream := streamOf(t, data, string(m[1]))
-		size, isBold, lineWidth := 0.0, false, 0.0
+		size, isBold, lineWidth, textColor, drawColor := 0.0, false, 0.0, "", ""
 		for _, op := range opPattern.FindAllSubmatch(stream, -1) {
 			f := func(i int) float64 { v, _ := strconv.ParseFloat(string(op[i]), 64); return v }
 			switch {
 			case op[1] != nil:
 				size, isBold = f(2), bold[string(op[1])]
 			case op[3] != nil:
-				r.Texts = append(r.Texts, placed{Page: page + 1, X: f(3) / k, Y: pageH - f(4)/k, Size: size, Bold: isBold, Text: pdfString(op[5])})
+				r.Texts = append(r.Texts, placed{Page: page + 1, X: f(3) / k, Y: pageH - f(4)/k, Size: size, Bold: isBold, Text: pdfString(op[5]), Color: textColor})
 			case op[6] != nil:
 				w, h := f(6)/k, f(7)/k
 				r.Images = append(r.Images, placed{Page: page + 1, X: f(8) / k, Y: pageH - f(9)/k - h, W: w, H: h})
@@ -117,7 +121,11 @@ func layoutOf(t *testing.T, doc sales.Document, prices bool) rendered {
 				lineWidth = f(10) / k
 			case op[11] != nil:
 				x1, y1, x2 := f(11)/k, pageH-f(12)/k, f(13)/k
-				r.Rules = append(r.Rules, placed{Page: page + 1, X: x1, Y: y1, W: x2 - x1, H: lineWidth})
+				r.Rules = append(r.Rules, placed{Page: page + 1, X: x1, Y: y1, W: x2 - x1, H: lineWidth, Color: drawColor})
+			case string(op[16]) == "rg":
+				textColor = string(op[15])
+			case op[16] != nil:
+				drawColor = string(op[15])
 			}
 		}
 	}
@@ -137,23 +145,24 @@ func streamOf(t *testing.T, data []byte, n string) []byte {
 	return rest[open+len("stream\n") : end]
 }
 
-// pdfString decodes a PDF string written in cp1252.
+// pdfString decodes a PDF string fpdf writes for an embedded TrueType font:
+// UTF-16BE, as its fonts map character codes to Unicode.
 func pdfString(b []byte) string {
-	var out strings.Builder
+	var raw []byte
 	for i := 0; i < len(b); i++ {
 		c := b[i]
 		if c == '\\' && i+1 < len(b) {
 			i++
-			c = b[i]
+			c = map[byte]byte{'n': '\n', 'r': '\r', 't': '\t', 'b': '\b', 'f': '\f'}[b[i]]
+			if c == 0 {
+				c = b[i]
+			}
 		}
-		switch c {
-		case 0x80:
-			out.WriteRune('€')
-		case 0x95:
-			out.WriteRune('•')
-		default:
-			out.WriteRune(rune(c))
-		}
+		raw = append(raw, c)
 	}
-	return out.String()
+	units := make([]uint16, len(raw)/2)
+	for i := range units {
+		units[i] = uint16(raw[2*i])<<8 | uint16(raw[2*i+1])
+	}
+	return string(utf16.Decode(units))
 }

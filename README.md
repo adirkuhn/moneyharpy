@@ -822,3 +822,39 @@ those operations, and screens.
 ## License
 
 [MIT](LICENSE)
+
+### Third-party notices
+
+Invoice and quote PDFs embed an openly licensed font for the font family the
+document style chooses, from `internal/invoicedoc/fonts/`. Each directory holds
+the font's licence. The files are unmodified copies from the official releases;
+the PDFs embed only the glyphs they use.
+
+| Style font | Embedded font | Version and source | Licence |
+| --- | --- | --- | --- |
+| Lucida Grande (default) | Source Sans 3 | 3.052R, [adobe-fonts/source-sans](https://github.com/adobe-fonts/source-sans/releases/tag/3.052R) `TTF-source-sans-3.052R.zip` | SIL OFL 1.1 (`sourcesans/LICENSE.md`) |
+| Helvetica, Arial | Liberation Sans | 2.1.5, [liberationfonts/liberation-fonts](https://github.com/liberationfonts/liberation-fonts/releases/tag/2.1.5) `liberation-fonts-ttf-2.1.5.tar.gz` | SIL OFL 1.1 (`liberation/LICENSE`) |
+| Times New Roman | Liberation Serif | 2.1.5, as above | SIL OFL 1.1 (`liberation/LICENSE`) |
+| Courier | Liberation Mono | 2.1.5, as above | SIL OFL 1.1 (`liberation/LICENSE`) |
+| Georgia | Gelasio | [SorkinType/Gelasio](https://github.com/SorkinType/Gelasio) `fonts/ttf` at commit `7ab20e7e5c42791e603b9ee3201a0b49849cfdb2` | SIL OFL 1.1 (`gelasio/OFL.txt`) |
+| Verdana | DejaVu Sans | 2.37, [dejavu-fonts/dejavu-fonts](https://github.com/dejavu-fonts/dejavu-fonts/releases/tag/version_2_37) `dejavu-fonts-ttf-2.37.zip` | Bitstream Vera licence, DejaVu changes public domain (`dejavu/LICENSE`) |
+| Inter (MoneyHarpy extension) | Inter, bold as SemiBold | 4.1, [rsms/inter](https://github.com/rsms/inter/releases/tag/v4.1) `Inter-4.1.zip`, `extras/ttf` | SIL OFL 1.1 (`inter/OFL.txt`) |
+
+SHA-256 of the embedded files:
+
+```
+4644c81b86ec9caaa76b634889968ed3c4f4f52f054855933acc7c2b21e53b0f  sourcesans/SourceSans3-Regular.ttf
+9214b9d95e4231c609802815c2646c98174e2102d0d37f88978a7f8e71006e6a  sourcesans/SourceSans3-Bold.ttf
+76d04c18ea243f426b7de1f3ad208e927008f961dc5945e5aad352d0dfde8ee8  liberation/LiberationSans-Regular.ttf
+788abee4c806d660e8aee46689dd8540cd4bb98da03dcc9d171ce3efd99a9173  liberation/LiberationSans-Bold.ttf
+058ea80864aef09a23f45cbec2bb5400bc3dfbdea01c3f10538a21fcb497fb74  liberation/LiberationSerif-Regular.ttf
+d754ba427cfe0bca54ae052384baa8f842da5bd6550ad4da024ac441e7a7d5ce  liberation/LiberationSerif-Bold.ttf
+f2b83c763e8afd21709333370bed4774337fae82267937e2b5aea7e2fbd922c1  liberation/LiberationMono-Regular.ttf
+bd62a0672d0b9b6710b01df434c80ad54fa5f0835207eb7b17b7a761463067bb  liberation/LiberationMono-Bold.ttf
+48c797fbe0e07c48a18cb962e7bdfa23f19618327dddf54093265328dc9eb39d  gelasio/Gelasio-Regular.ttf
+e0ef3addf1acf35f5c6aef2be00d0a2c01363bf70a5950e16650976051a0c462  gelasio/Gelasio-Bold.ttf
+7da195a74c55bef988d0d48f9508bd5d849425c1770dba5d7bfc6ce9ed848954  dejavu/DejaVuSans.ttf
+e6476c1b80502924294eed40894c5b18e06c181444ca953e5334262df9c27724  dejavu/DejaVuSans-Bold.ttf
+40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82  inter/Inter-Regular.ttf
+78a843fade9d4612a5567302fb595b56976eb5fcebf4fea5a5912d638bafcde3  inter/Inter-SemiBold.ttf
+```

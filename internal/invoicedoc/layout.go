@@ -233,7 +233,7 @@ func metaColumns(doc sales.Document, l labels, prices bool) (leftRows, rightRows
 }
 
 // drawStyled prints lines from the current position in a column of width w.
-func drawStyled(pdf *fpdf.Fpdf, tr func(string) string, lines []styledLine, x, w, size float64) {
+func drawStyled(pdf *fpdf.Fpdf, f face, lines []styledLine, x, w, size float64) {
 	for _, line := range lines {
 		if len(line.Text) == 0 {
 			pdf.SetX(x)
@@ -247,16 +247,16 @@ func drawStyled(pdf *fpdf.Fpdf, tr func(string) string, lines []styledLine, x, w
 		if line.Italic {
 			style += "I"
 		}
-		pdf.SetFont("Helvetica", style, size)
+		f.set(pdf, style, size)
 		for i, text := range line.Text {
 			if i == 0 && line.Label != "" {
 				text = line.Label + ": " + text
 			}
 			pdf.SetX(x)
-			pdf.CellFormat(w, 4.5, tr(text), "", 2, "L", false, 0, "")
+			pdf.CellFormat(w, 4.5, text, "", 2, "L", false, 0, "")
 		}
 	}
-	pdf.SetFont("Helvetica", "", size)
+	f.set(pdf, "", size)
 }
 
 // senderWidth turns the style's sender width in CSS pixels (96 to the

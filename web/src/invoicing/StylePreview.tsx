@@ -28,6 +28,7 @@ export type PreviewLayout = {
 export const fontStacks: Record<string, string> = {
   lucida_grande: "'Lucida Grande', 'Lucida Sans Unicode', sans-serif", helvetica: 'Helvetica, Arial, sans-serif', arial: 'Arial, Helvetica, sans-serif',
   verdana: 'Verdana, Geneva, sans-serif', georgia: 'Georgia, serif', times_new_roman: "'Times New Roman', Times, serif", courier: "'Courier New', Courier, monospace",
+  inter: "'Inter Variable', Inter, sans-serif",
 }
 
 /** The width, in the pixels the sender address width is set in, the preview sheet stands for. */
