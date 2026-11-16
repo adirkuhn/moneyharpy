@@ -112,6 +112,7 @@ type financialAccountJSON struct {
 	Position         int        `json:"position"`
 	LedgerAccountID  string     `json:"ledger_account_id"`
 	LastImportAt     *time.Time `json:"last_import_at"`
+	Balance          *string    `json:"balance,omitempty"`
 }
 
 func toFinancialAccount(a banking.Account) financialAccountJSON {
@@ -136,6 +137,9 @@ func (s *server) ListFinancialAccounts(w http.ResponseWriter, r *http.Request, a
 	out := make([]financialAccountJSON, len(list))
 	for i, a := range list {
 		out[i] = toFinancialAccount(a)
+		// Only the list sums up the balances, as the financial accounts page shows them.
+		balance := a.Balance.String()
+		out[i].Balance = &balance
 	}
 	writeJSON(w, http.StatusOK, out)
 }
@@ -243,11 +247,38 @@ func (s *server) ImportFinancialStatement(w http.ResponseWriter, r *http.Request
 		s.fail(w, r, err)
 		return
 	}
+	writeJSON(w, http.StatusCreated, importResult(res))
+}
+
+// ImportFinancialStatementFile implements ServerInterface.
+func (s *server) ImportFinancialStatementFile(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeError(w, http.StatusRequestEntityTooLarge, "The file is too large")
+		return
+	}
+	res, acc, err := s.deps.Banking.ImportDetected(r.Context(), admin, user(r).ID, data)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	out := struct {
+		importResultJSON
+		FinancialAccountID string `json:"financial_account_id"`
+	}{importResult(res), acc.ID.String()}
+	writeJSON(w, http.StatusCreated, out)
+}
+
+func importResult(res banking.ImportResult) importResultJSON {
 	out := importResultJSON{Format: res.Format, Imported: res.Imported, Duplicates: res.Duplicates, Locked: res.Locked, AutoBooked: res.AutoBooked, FinancialStatements: []financialStatementJSON{}}
 	for _, st := range res.Statements {
 		out.FinancialStatements = append(out.FinancialStatements, toFinancialStatement(st))
 	}
-	writeJSON(w, http.StatusCreated, out)
+	return out
 }
 
 type bookingJSON struct {

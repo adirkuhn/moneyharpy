@@ -171,3 +171,28 @@ func TestImportFiles(t *testing.T) {
 		t.Error("imported an unknown format")
 	}
 }
+
+// A file dropped on the financial accounts page goes to the account of its
+// IBAN; one the administration does not have yet is added.
+func TestImportFindsTheAccountOfTheFile(t *testing.T) {
+	svc, _, _ := newTestService()
+	ctx := context.Background()
+	data, err := os.ReadFile("../bankfile/testdata/camt053.xml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, acc, err := svc.ImportDetected(ctx, adminID, owner, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if acc.Type != "BankAccount" || acc.Identifier != "NL91ABNA0417164300" || res.Imported == 0 {
+		t.Fatalf("new account = %+v, result %+v", acc, res)
+	}
+	again, same, err := svc.ImportDetected(ctx, adminID, owner, data)
+	if err != nil || same.ID != acc.ID || again.Imported != 0 {
+		t.Errorf("again into %+v: %+v, %v", same, again, err)
+	}
+	if _, _, err := svc.ImportDetected(ctx, adminID, owner, []byte("hello")); fieldsOf(t, err)["file"] == nil {
+		t.Error("imported an unknown format")
+	}
+}

@@ -67,6 +67,27 @@ export function useReorderFinancialAccounts(administrationId: string) {
 }
 
 /** Sends a statement file as the body, the way the API takes it. */
+/** Imports a statement file into the account of its account number, as the financial accounts page's file field does. */
+export function useImportStatementFile(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) =>
+      unwrap(
+        api.POST('/api/v2/{administration_id}/financial_statements/import', {
+          ...admin(administrationId),
+          body: file as unknown as string,
+          bodySerializer: (body: unknown) => body as Blob,
+          headers: { 'Content-Type': 'application/octet-stream' },
+        }),
+      ),
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: ['financial-mutations', administrationId] })
+      void client.invalidateQueries({ queryKey: ['financial-accounts', administrationId] })
+      void client.invalidateQueries({ queryKey: ['overview', administrationId] })
+    },
+  })
+}
+
 export function useImportStatement(administrationId: string, id: string) {
   const client = useQueryClient()
   return useMutation({

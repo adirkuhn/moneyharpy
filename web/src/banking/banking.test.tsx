@@ -362,3 +362,45 @@ describe('transactions', () => {
     expect(await within(paidTable).findByRole('link', { name: 'WEB-1001' })).toHaveAttribute('href', '/11/external_sales_invoices/931')
   })
 })
+
+describe('financial accounts', () => {
+  const overview = http.get('*/api/v2/11/overview', () => HttpResponse.json({ bank: { balance: '0.0', currency: 'EUR', unprocessed_count: 431, recently_processed: [] } }))
+  const accounts = http.get('*/api/v2/11/financial_accounts', () => HttpResponse.json([
+    account({ balance: '40912.61', last_import_at: '2026-09-10T09:00:00Z' }), { ...cash, balance: '0.0' }, { ...old, balance: '0.0' },
+  ]))
+
+  it('lists each account with its balance and opens its transactions, as Moneybird does', async () => {
+    server.use(accounts, overview, ...loaded())
+    renderAt('/11/financial_accounts')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Financial accounts' })).toBeInTheDocument()
+    const list = screen.getByRole('region', { name: 'Financial accounts' })
+    const bank = within(list).getByRole('link', { name: 'NL91 ABNA 0417 1643 00' })
+    expect(bank).toHaveAttribute('href', '/11/financial_mutations?account=501&state=all')
+    expect(bank).toHaveTextContent('€40,912.61')
+    expect(bank).toHaveTextContent(/Last update: .*ago/)
+    expect(within(list).getByRole('link', { name: 'Cash' })).toHaveTextContent('Last update: never')
+    // The deactivated account is folded away.
+    expect(within(list).queryByRole('link', { name: 'Old bank' })).toBeNull()
+    expect(list).toHaveTextContent('There is 1 deactivated account.')
+    await userEvent.click(within(list).getByRole('button', { name: 'Show deactivated account.' }))
+    expect(within(list).getByRole('link', { name: 'Old bank' })).toHaveTextContent('This account is disabled')
+    expect(await screen.findByRole('link', { name: 'Link unprocessed transactions (431)' })).toHaveAttribute('href', '/11/financial_mutations')
+  })
+
+  it('imports a dropped statement file into its account and shows its transactions', async () => {
+    let body: unknown
+    server.use(accounts, overview, ...loaded(), http.post('*/api/v2/11/financial_statements/import', async ({ request }) => {
+      body = await request.text()
+      return HttpResponse.json({ format: 'camt', imported: 2, duplicates: 0, locked: 0, auto_booked: 0, financial_statements: [], financial_account_id: '501' }, { status: 201 })
+    }))
+    renderAt('/11/financial_accounts')
+    await userEvent.click(await screen.findByRole('button', { name: 'Add transactions' }))
+    const add = screen.getByRole('region', { name: 'Add transactions' })
+    expect(add).toHaveTextContent('CAMT.053 or MT940, max. 10 MB')
+    expect(within(add).getByRole('link', { name: 'add transactions manually' })).toHaveAttribute('href', '/11/financial_accounts/501')
+    await userEvent.upload(within(add).getByLabelText('Drag a transaction file here or click to select one'), new File(['<Document/>'], 'statement.xml', { type: 'text/xml' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/financial_mutations'))
+    expect(screen.getByTestId('search')).toHaveTextContent('?account=501')
+    expect(body).toBe('<Document/>')
+  })
+})

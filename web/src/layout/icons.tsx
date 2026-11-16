@@ -148,7 +148,7 @@ export function TileIcon({ kind }: { kind: 'balance' | 'attention' | 'in' | 'out
 /** Line icons for the actions and steps of the document lists, drawn for MoneyHarpy. */
 export type ListIconKind =
   | 'plus' | 'chart' | 'export' | 'more' | 'paperclip' | 'at' | 'send' | 'file' | 'palette' | 'flow'
-  | 'coins' | 'upload' | 'plug' | 'calendar' | 'repeat' | 'edit' | 'scale'
+  | 'coins' | 'upload' | 'plug' | 'calendar' | 'repeat' | 'edit' | 'scale' | 'bank' | 'card' | 'person'
 
 export function ListIcon({ kind }: { kind: ListIconKind }) {
   const shapes: Record<ListIconKind, React.ReactNode> = {
@@ -169,6 +169,9 @@ export function ListIcon({ kind }: { kind: ListIconKind }) {
     repeat: <><path d="M4 11V9.500a3 3 0 0 1 3-3h12.500M16.500 3.500l3 3-3 3" /><path d="M20 13v1.500a3 3 0 0 1-3 3H4.500m3 3-3-3 3-3" /></>,
     edit: <><path d="M4 20h4L19 9a2.800 2.800 0 0 0-4-4L4 16Z" /><path d="m13.500 6.500 4 4" /></>,
     scale: <><path d="M12 4v16M8 20h8M5 7h14" /><path d="m5 7-2.500 6a2.500 2.500 0 0 0 5 0Zm14 0-2.500 6a2.500 2.500 0 0 0 5 0Z" /></>,
+    bank: <><path d="M3.500 9.500 12 4.500l8.500 5Z" /><path d="M5.500 10v7m4.500-7v7m4-7v7m4.500-7v7M3.500 20h17" /></>,
+    card: <><rect x="3" y="5.500" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></>,
+    person: <><circle cx="12" cy="8.500" r="3.500" /><path d="M5 20c.8-3.500 3.600-5.500 7-5.500s6.200 2 7 5.500" /></>,
   }
   return (
     <svg viewBox="0 0 24 24" width="1.125em" height="1.125em" aria-hidden="true" {...stroke}>
