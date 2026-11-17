@@ -353,3 +353,71 @@ export function useDeletePurchaseTransaction(administrationId: string) {
 export function paymentBatchURL(administrationId: string, id: string) {
   return `/api/v2/${administrationId}/purchase_transaction_batches/${id}/download`
 }
+
+export type BankConnection = components['schemas']['BankConnection']
+export type ConnectableBank = components['schemas']['ConnectableBank']
+
+export function useBankConnections(administrationId: string) {
+  return useQuery({
+    queryKey: ['bank-connections', administrationId],
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/bank_connections', admin(administrationId))),
+  })
+}
+
+/** The banks that can be connected; asked only once the user wants to connect one. */
+export function useConnectableBanks(administrationId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['connectable-banks', administrationId],
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/bank_connections/banks', { params: { path: { administration_id: administrationId }, query: { country: 'NL' } } })),
+    enabled,
+    retry: false,
+    staleTime: 60 * 60 * 1000,
+  })
+}
+
+/** Sends the browser to the bank, where the user authorises the connection; tests replace it. */
+export const bankRedirect = { go: (url: string) => window.location.assign(url) }
+const goToBank = (url: string) => bankRedirect.go(url)
+
+export function useConnectBank(administrationId: string) {
+  return useMutation({
+    mutationFn: (bank: ConnectableBank) =>
+      unwrap(api.POST('/api/v2/{administration_id}/bank_connections', { ...admin(administrationId), body: { bank: bank.name, country: bank.country } })),
+    onSuccess: (started) => goToBank(started.authorization_url),
+  })
+}
+
+export function useReconnectBank(administrationId: string) {
+  return useMutation({
+    mutationFn: (id: string) => unwrap(api.POST('/api/v2/{administration_id}/bank_connections/{id}/reconnect', one(administrationId, id))),
+    onSuccess: (started) => goToBank(started.authorization_url),
+  })
+}
+
+function useConnectionChange<T>(administrationId: string, fn: (id: string) => Promise<T>) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: fn,
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: ['bank-connections', administrationId] })
+      void client.invalidateQueries({ queryKey: ['financial-accounts', administrationId] })
+      void client.invalidateQueries({ queryKey: ['financial-mutations', administrationId] })
+      void client.invalidateQueries({ queryKey: ['overview', administrationId] })
+    },
+  })
+}
+
+export function useSyncBankConnection(administrationId: string) {
+  return useConnectionChange(administrationId, (id) => unwrap(api.POST('/api/v2/{administration_id}/bank_connections/{id}/sync', one(administrationId, id))))
+}
+
+export function useDisconnectBank(administrationId: string) {
+  return useConnectionChange(administrationId, (id) => unwrap(api.DELETE('/api/v2/{administration_id}/bank_connections/{id}', one(administrationId, id))))
+}
+
+/** Completes the connection the bank sent the user back from. */
+export function useCompleteBankConnection() {
+  return useMutation({
+    mutationFn: (body: { state: string; code: string }) => unwrap(api.POST('/api/bank_connections/complete', { body })),
+  })
+}

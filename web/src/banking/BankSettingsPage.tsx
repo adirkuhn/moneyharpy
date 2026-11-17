@@ -6,6 +6,7 @@ import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { SwitchRow } from '../invoicing/Switch'
 import { Block } from '../settings/Block'
+import { ConnectionList } from './BankConnections'
 import { type FinancialAccount, useBankSettings, useBookingRules, useFinancialAccounts, useReorderFinancialAccounts, useSaveFinancialAccount, useUpdateBankSettings } from './queries'
 
 /** Settings > Bank, block by block like Moneybird. */
@@ -31,10 +32,10 @@ export function BankSettingsPage() {
     <Page title={t('bank.title')} subtitle={t('bank.subtitle')}>
       <AccountsBlock administrationId={administrationId} />
       <Block id="bank-connections" title={t('bank.parts.connections')} subtitle={t('bank.connectionsSubtitle')}>
+        <ConnectionsBlock administrationId={administrationId} />
         <div className="card">
           <p className="card__title">{t('bank.statementFiles')}</p>
           <p className="hint">{t('bank.statementFilesHelp')}</p>
-          <p className="card__footer">{t('bank.connectionsLater')}</p>
         </div>
       </Block>
       <Block id="automatic-booking" title={t('bank.parts.automatic')} subtitle={t('bank.automaticSubtitle')}>
@@ -170,4 +171,9 @@ function RulesBlock({ administrationId }: { administrationId: string }) {
       )}
     </Block>
   )
+}
+
+function ConnectionsBlock({ administrationId }: { administrationId: string }) {
+  const accounts = useFinancialAccounts(administrationId)
+  return <ConnectionList administrationId={administrationId} accounts={accounts.data ?? []} />
 }

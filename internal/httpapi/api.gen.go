@@ -144,6 +144,42 @@ func (e AuditfileExportRequestVersion) Valid() bool {
 	}
 }
 
+// Defines values for BankConnectionProvider.
+const (
+	EnableBanking BankConnectionProvider = "enable_banking"
+)
+
+// Valid indicates whether the value is a known member of the BankConnectionProvider enum.
+func (e BankConnectionProvider) Valid() bool {
+	switch e {
+	case EnableBanking:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BankConnectionState.
+const (
+	BankConnectionStateActive  BankConnectionState = "active"
+	BankConnectionStateExpired BankConnectionState = "expired"
+	BankConnectionStatePending BankConnectionState = "pending"
+)
+
+// Valid indicates whether the value is a known member of the BankConnectionState enum.
+func (e BankConnectionState) Valid() bool {
+	switch e {
+	case BankConnectionStateActive:
+		return true
+	case BankConnectionStateExpired:
+		return true
+	case BankConnectionStatePending:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for BookingRuleDirection.
 const (
 	BookingRuleDirectionAny    BookingRuleDirection = "any"
@@ -5620,6 +5656,55 @@ type BalanceSheetReport struct {
 	} `json:"periods,omitempty"`
 }
 
+// BankAuthorization MoneyHarpy extension.
+type BankAuthorization struct {
+	// AuthorizationUrl The bank's page to send the user to.
+	AuthorizationUrl string `json:"authorization_url"`
+
+	// BankConnectionId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	BankConnectionId Identifier `json:"bank_connection_id"`
+}
+
+// BankConnection MoneyHarpy extension. A bank's consent to fetch the transactions of the administration's accounts there.
+type BankConnection struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId    Identifier   `json:"administration_id"`
+	Bank                string       `json:"bank"`
+	Country             string       `json:"country"`
+	CreatedAt           time.Time    `json:"created_at"`
+	FinancialAccountIds []Identifier `json:"financial_account_ids"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// LastError What went wrong at the last fetch; empty when it worked.
+	LastError  string     `json:"last_error"`
+	LastSyncAt *time.Time `json:"last_sync_at"`
+
+	// NeedsReconnect Expired, or ending within 14 days.
+	NeedsReconnect bool                   `json:"needs_reconnect"`
+	Provider       BankConnectionProvider `json:"provider"`
+
+	// State Active connections fetch transactions every few hours; expired ones need reconnecting.
+	State     BankConnectionState `json:"state"`
+	UpdatedAt time.Time           `json:"updated_at"`
+
+	// ValidUntil When the bank's consent ends.
+	ValidUntil *time.Time `json:"valid_until"`
+}
+
+// BankConnectionProvider defines model for BankConnection.Provider.
+type BankConnectionProvider string
+
+// BankConnectionState Active connections fetch transactions every few hours; expired ones need reconnecting.
+type BankConnectionState string
+
 // BankSettings MoneyHarpy extension.
 type BankSettings struct {
 	// AutomaticBooking Book new transactions that match a booking rule.
@@ -5777,6 +5862,13 @@ type CompanyMatch struct {
 	City              string `json:"city"`
 	Name              string `json:"name"`
 	Zipcode           string `json:"zipcode"`
+}
+
+// ConnectableBank MoneyHarpy extension.
+type ConnectableBank struct {
+	Country string `json:"country"`
+	Logo    string `json:"logo"`
+	Name    string `json:"name"`
 }
 
 // Connection MoneyHarpy extension. An API token or AI connection.
@@ -13894,6 +13986,12 @@ type Lm2CallbackParams struct {
 	RefreshToken *string `form:"refresh_token,omitempty" json:"refresh_token,omitempty"`
 }
 
+// CompleteBankConnectionJSONBody defines parameters for CompleteBankConnection.
+type CompleteBankConnectionJSONBody struct {
+	Code  string `json:"code"`
+	State string `json:"state"`
+}
+
 // AddressLookupParams defines parameters for AddressLookup.
 type AddressLookupParams struct {
 	Zipcode     string `form:"zipcode" json:"zipcode"`
@@ -13938,6 +14036,19 @@ type ListAssetsParams struct {
 
 // ListAssetsParamsActive defines parameters for ListAssets.
 type ListAssetsParamsActive string
+
+// CreateBankConnectionJSONBody defines parameters for CreateBankConnection.
+type CreateBankConnectionJSONBody struct {
+	// Bank The bank's name, as listed by the banks of the country.
+	Bank    string `json:"bank"`
+	Country string `json:"country"`
+}
+
+// ListConnectableBanksParams defines parameters for ListConnectableBanks.
+type ListConnectableBanksParams struct {
+	// Country Two-letter country code; NL when left out.
+	Country *string `form:"country,omitempty" json:"country,omitempty"`
+}
 
 // ListContactsParams defines parameters for ListContacts.
 type ListContactsParams struct {
@@ -14953,6 +15064,9 @@ type RegisterJSONRequestBody = RegisterRequest
 // CompleteSignInJSONRequestBody defines body for CompleteSignIn for application/json ContentType.
 type CompleteSignInJSONRequestBody = TwoFactorCode
 
+// CompleteBankConnectionJSONRequestBody defines body for CompleteBankConnection for application/json ContentType.
+type CompleteBankConnectionJSONRequestBody CompleteBankConnectionJSONBody
+
 // UpdateInstanceSettingsJSONRequestBody defines body for UpdateInstanceSettings for application/json ContentType.
 type UpdateInstanceSettingsJSONRequestBody = UpdateInstanceSettingsRequest
 
@@ -15012,6 +15126,9 @@ type CreateAssetFullDepreciationValueChangeJSONRequestBody = AssetFullDepreciati
 
 // CreateAssetManualValueChangeJSONRequestBody defines body for CreateAssetManualValueChange for application/json ContentType.
 type CreateAssetManualValueChangeJSONRequestBody = AssetValueChangeRequest
+
+// CreateBankConnectionJSONRequestBody defines body for CreateBankConnection for application/json ContentType.
+type CreateBankConnectionJSONRequestBody CreateBankConnectionJSONBody
 
 // UpdateBankSettingsJSONRequestBody defines body for UpdateBankSettings for application/json ContentType.
 type UpdateBankSettingsJSONRequestBody = BankSettingsRequest
@@ -21474,6 +21591,9 @@ type ServerInterface interface {
 	// CompleteSignIn Finish signing in with a second step
 	// (POST /api/auth/two_factor)
 	CompleteSignIn(w http.ResponseWriter, r *http.Request)
+	// CompleteBankConnection Complete a bank connection
+	// (POST /api/bank_connections/complete)
+	CompleteBankConnection(w http.ResponseWriter, r *http.Request)
 	// DownloadFile Download a file by a temporary link
 	// (GET /api/files/{token})
 	DownloadFile(w http.ResponseWriter, r *http.Request, token string)
@@ -21627,6 +21747,24 @@ type ServerInterface interface {
 	// CreateAssetRetroactiveLinearValueChanges Create linear value changes retroactively
 	// (POST /api/v2/{administration_id}/assets/{id}/value_changes/retroactive_linear_value_changes)
 	CreateAssetRetroactiveLinearValueChanges(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListBankConnections List the bank connections
+	// (GET /api/v2/{administration_id}/bank_connections)
+	ListBankConnections(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateBankConnection Connect a bank
+	// (POST /api/v2/{administration_id}/bank_connections)
+	CreateBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListConnectableBanks List the banks that can be connected
+	// (GET /api/v2/{administration_id}/bank_connections/banks)
+	ListConnectableBanks(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListConnectableBanksParams)
+	// DeleteBankConnection Disconnect a bank
+	// (DELETE /api/v2/{administration_id}/bank_connections/{id})
+	DeleteBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ReconnectBankConnection Reconnect a bank
+	// (POST /api/v2/{administration_id}/bank_connections/{id}/reconnect)
+	ReconnectBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// SyncBankConnection Fetch a bank connection's transactions now
+	// (POST /api/v2/{administration_id}/bank_connections/{id}/sync)
+	SyncBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// GetBankSettings Get bank settings
 	// (GET /api/v2/{administration_id}/bank_settings)
 	GetBankSettings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -22812,6 +22950,12 @@ func (_ Unimplemented) CompleteSignIn(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// CompleteBankConnection Complete a bank connection
+// (POST /api/bank_connections/complete)
+func (_ Unimplemented) CompleteBankConnection(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // DownloadFile Download a file by a temporary link
 // (GET /api/files/{token})
 func (_ Unimplemented) DownloadFile(w http.ResponseWriter, r *http.Request, token string) {
@@ -23115,6 +23259,42 @@ func (_ Unimplemented) CreateAssetManualValueChange(w http.ResponseWriter, r *ht
 // CreateAssetRetroactiveLinearValueChanges Create linear value changes retroactively
 // (POST /api/v2/{administration_id}/assets/{id}/value_changes/retroactive_linear_value_changes)
 func (_ Unimplemented) CreateAssetRetroactiveLinearValueChanges(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListBankConnections List the bank connections
+// (GET /api/v2/{administration_id}/bank_connections)
+func (_ Unimplemented) ListBankConnections(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateBankConnection Connect a bank
+// (POST /api/v2/{administration_id}/bank_connections)
+func (_ Unimplemented) CreateBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListConnectableBanks List the banks that can be connected
+// (GET /api/v2/{administration_id}/bank_connections/banks)
+func (_ Unimplemented) ListConnectableBanks(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListConnectableBanksParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteBankConnection Disconnect a bank
+// (DELETE /api/v2/{administration_id}/bank_connections/{id})
+func (_ Unimplemented) DeleteBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ReconnectBankConnection Reconnect a bank
+// (POST /api/v2/{administration_id}/bank_connections/{id}/reconnect)
+func (_ Unimplemented) ReconnectBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SyncBankConnection Fetch a bank connection's transactions now
+// (POST /api/v2/{administration_id}/bank_connections/{id}/sync)
+func (_ Unimplemented) SyncBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -25583,6 +25763,20 @@ func (siw *ServerInterfaceWrapper) CompleteSignIn(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// CompleteBankConnection operation middleware
+func (siw *ServerInterfaceWrapper) CompleteBankConnection(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CompleteBankConnection(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DownloadFile operation middleware
 func (siw *ServerInterfaceWrapper) DownloadFile(w http.ResponseWriter, r *http.Request) {
 
@@ -26959,6 +27153,205 @@ func (siw *ServerInterfaceWrapper) CreateAssetRetroactiveLinearValueChanges(w ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateAssetRetroactiveLinearValueChanges(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListBankConnections operation middleware
+func (siw *ServerInterfaceWrapper) ListBankConnections(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListBankConnections(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateBankConnection operation middleware
+func (siw *ServerInterfaceWrapper) CreateBankConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateBankConnection(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListConnectableBanks operation middleware
+func (siw *ServerInterfaceWrapper) ListConnectableBanks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListConnectableBanksParams
+
+	// ------------- Optional query parameter "country" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "country", r.URL.Query(), &params.Country, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "country"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "country", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListConnectableBanks(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteBankConnection operation middleware
+func (siw *ServerInterfaceWrapper) DeleteBankConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteBankConnection(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReconnectBankConnection operation middleware
+func (siw *ServerInterfaceWrapper) ReconnectBankConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReconnectBankConnection(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SyncBankConnection operation middleware
+func (siw *ServerInterfaceWrapper) SyncBankConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SyncBankConnection(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -41999,6 +42392,27 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/financial_statements/import", wrapper.ImportFinancialStatementFile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/bank_connections", wrapper.ListBankConnections)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/bank_connections", wrapper.CreateBankConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/bank_connections/banks", wrapper.ListConnectableBanks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/bank_connections/{id}", wrapper.DeleteBankConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/bank_connections/{id}/reconnect", wrapper.ReconnectBankConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/bank_connections/{id}/sync", wrapper.SyncBankConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/bank_connections/complete", wrapper.CompleteBankConnection)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/financial_statements", wrapper.CreateFinancialStatement)

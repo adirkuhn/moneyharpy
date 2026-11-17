@@ -46,6 +46,7 @@ const loaded = () => [
   http.get('*/api/v2/11/financial_mutations', () => HttpResponse.json([mutation(), mutation({ id: '702', amount: '1000.0', amount_open: '0.0', state: 'processed', contra_account_name: null, message: 'Invoice 1', uri: '/11/financial_mutations/702' })])),
   http.get('*/api/v2/11/financial_mutations/701', () => HttpResponse.json(mutation())),
   http.get('*/api/v2/11/sales_invoices', () => HttpResponse.json([], { headers: { 'X-Total-Count': '0' } })),
+  http.get('*/api/v2/11/bank_connections', () => HttpResponse.json([])),
 ]
 
 describe('bank settings', () => {
@@ -58,7 +59,7 @@ describe('bank settings', () => {
     }
     const nav = screen.getByRole('navigation', { name: 'Settings' })
     expect(within(nav).getByRole('link', { name: 'Booking rules' })).toHaveAttribute('href', '/11/settings/bank#booking-rules')
-    expect(screen.getByText(/Direct connections to banks come later/)).toBeInTheDocument()
+    expect(await screen.findByText(/No bank connected yet/)).toBeInTheDocument()
   })
 
   it('lists accounts, hides deactivated ones and reorders', async () => {

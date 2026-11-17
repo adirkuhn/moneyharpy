@@ -32,6 +32,7 @@ import { IntegrationsPage } from './integrations/IntegrationsPage'
 import { WebhookFormPage, WebhookPage } from './integrations/WebhookPages'
 import { TwoFactorSignInPage } from './auth/TwoFactorSignInPage'
 import { BankSettingsPage } from './banking/BankSettingsPage'
+import { BankConnectionCallback } from './banking/BankConnectionCallback'
 import { FinancialAccountsPage } from './banking/FinancialAccountsPage'
 import { PaymentsPage } from './banking/PaymentsPage'
 import { BookingRuleFormPage } from './banking/BookingRuleFormPage'
@@ -107,6 +108,7 @@ export function AppRoutes() {
         <Route path="/administrations" element={<AdministrationsPage />} />
         <Route path="/user" element={<UserPage />} />
         <Route path="/instance/settings" element={<InstanceSettingsPage />} />
+        <Route path="/bank_connection_callback" element={<BankConnectionCallback />} />
         <Route path="/r/:id" element={<PermalinkPage />} />
         <Route path="/:administrationId" element={<AdministrationHomePage />} />
         <Route element={<AdministrationLayout />}>

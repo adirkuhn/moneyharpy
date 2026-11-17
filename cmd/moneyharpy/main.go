@@ -140,7 +140,9 @@ func run(logger *slog.Logger) error {
 	people := identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, cipher, time.Now)
 	books := bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now)
 	bankLink := &enablebanking.Provider{Settings: instance, Now: time.Now}
-	bank := banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now)
+	bankStore := postgres.NewBankingStore(pool)
+	bank := banking.NewService(admins, books, bankStore, ids, time.Now)
+	bank.UseBankLinks(bankLink, bankStore, strings.TrimSuffix(cfg.baseURL, "/")+httpapi.BankLinkCallbackPath)
 	noteService := notes.NewService(postgres.NewNoteStore(pool), ids, time.Now)
 	journalStore := postgres.NewJournalStore(pool)
 	salesStore := postgres.NewSalesStore(pool)
@@ -273,6 +275,7 @@ func run(logger *slog.Logger) error {
 	go invoiceService.Run(ctx, time.Minute, func(err error) { logger.Error("sales invoice background work", "error", err) })
 	go subscriptionService.Run(ctx, time.Minute, func(err error) { logger.Error("subscription charge billing", "error", err) })
 	go recognition.Run(ctx, 15*time.Second, func(err error) { logger.Error("scan and recognise", "error", err) })
+	go bank.Run(ctx, 30*time.Minute)
 	go assetService.Run(ctx, time.Hour, func(err error) { logger.Error("asset depreciation", "error", err) })
 	// Attachments added before they had a sum get one, once, for duplicate detection.
 	go func() {

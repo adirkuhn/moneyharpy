@@ -3161,6 +3161,222 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/bank_connections:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listBankConnections
+      x-permissions: [bank]
+      summary: List the bank connections
+      description: >-
+        MoneyHarpy extension. The administration's connections with banks through Enable Banking, with the accounts
+        they fetch transactions for and whether they need reconnecting.
+      tags: [Bank connections]
+      responses:
+        '200':
+          description: The bank connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BankConnection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: createBankConnection
+      x-permissions: [bank]
+      summary: Connect a bank
+      description: >-
+        MoneyHarpy extension. Starts connecting a bank: send the user to `authorization_url`, where they authorise
+        access at their bank; the bank sends them back to the installation's bank connection callback, which completes
+        the connection. Needs bank connections turned on by an instance administrator.
+      tags: [Bank connections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [bank, country]
+              properties:
+                bank:
+                  type: string
+                  maxLength: 255
+                  description: The bank's name, as listed by the banks of the country.
+                country:
+                  type: string
+                  pattern: '^[A-Za-z]{2}$'
+      responses:
+        '201':
+          description: The connection waiting for authorisation, and where to authorise it
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAuthorization'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/bank_connections/banks:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listConnectableBanks
+      x-permissions: [bank]
+      summary: List the banks that can be connected
+      description: MoneyHarpy extension. The banks of the country whose business accounts can be connected, by name.
+      tags: [Bank connections]
+      parameters:
+        - name: country
+          in: query
+          required: false
+          description: Two-letter country code; NL when left out.
+          schema:
+            type: string
+            pattern: '^[A-Za-z]{2}$'
+      responses:
+        '200':
+          description: The banks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConnectableBank'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/bank_connections/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    delete:
+      operationId: deleteBankConnection
+      x-permissions: [bank]
+      summary: Disconnect a bank
+      description: MoneyHarpy extension. Stops fetching transactions and closes the consent; fetched transactions stay.
+      tags: [Bank connections]
+      responses:
+        '204':
+          description: Disconnected
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v2/{administration_id}/bank_connections/{id}/reconnect:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: reconnectBankConnection
+      x-permissions: [bank]
+      summary: Reconnect a bank
+      description: >-
+        MoneyHarpy extension. A bank's consent lasts some months; this asks the same bank for access again. Send the
+        user to `authorization_url`; their accounts stay connected.
+      tags: [Bank connections]
+      responses:
+        '200':
+          description: Where to authorise the connection again
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAuthorization'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/bank_connections/{id}/sync:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: syncBankConnection
+      x-permissions: [bank]
+      summary: Fetch a bank connection's transactions now
+      description: >-
+        MoneyHarpy extension. Fetches the new transactions at once rather than at the next scheduled fetch. Banks allow
+        a few fetches a day; what went wrong is in `last_error`.
+      tags: [Bank connections]
+      responses:
+        '200':
+          description: The connection after fetching
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankConnection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/bank_connections/complete:
+    post:
+      operationId: completeBankConnection
+      summary: Complete a bank connection
+      description: >-
+        MoneyHarpy extension. The bank connection callback page sends the `state` and `code` the bank sent the user
+        back with; the shared accounts are connected, matched to the administration's accounts by IBAN or added, and
+        their transactions fetched.
+      tags: [Bank connections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [state, code]
+              properties:
+                state:
+                  type: string
+                  maxLength: 128
+                code:
+                  type: string
+                  maxLength: 4096
+      responses:
+        '200':
+          description: The connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankConnection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '502':
+          description: The bank or Enable Banking refused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v2/{administration_id}/financial_statements:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -16363,6 +16579,72 @@ components:
           oneOf:
             - $ref: '#/components/schemas/Identifier'
             - type: integer
+    BankConnection:
+      type: object
+      description: MoneyHarpy extension. A bank's consent to fetch the transactions of the administration's accounts there.
+      required: [id, administration_id, provider, bank, country, state, valid_until, needs_reconnect, last_sync_at, last_error, financial_account_ids, created_at, updated_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        administration_id:
+          $ref: '#/components/schemas/Identifier'
+        provider:
+          type: string
+          enum: [enable_banking]
+        bank:
+          type: string
+        country:
+          type: string
+        state:
+          type: string
+          enum: [pending, active, expired]
+          description: Active connections fetch transactions every few hours; expired ones need reconnecting.
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the bank's consent ends.
+        needs_reconnect:
+          type: boolean
+          description: Expired, or ending within 14 days.
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_error:
+          type: string
+          description: What went wrong at the last fetch; empty when it worked.
+        financial_account_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/Identifier'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    BankAuthorization:
+      type: object
+      description: MoneyHarpy extension.
+      required: [authorization_url, bank_connection_id]
+      properties:
+        authorization_url:
+          type: string
+          description: The bank's page to send the user to.
+        bank_connection_id:
+          $ref: '#/components/schemas/Identifier'
+    ConnectableBank:
+      type: object
+      description: MoneyHarpy extension.
+      required: [name, country, logo]
+      properties:
+        name:
+          type: string
+        country:
+          type: string
+        logo:
+          type: string
     ImportResult:
       type: object
       description: MoneyHarpy extension.

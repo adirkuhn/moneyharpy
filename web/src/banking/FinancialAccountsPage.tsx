@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { CaretIcon, InfoIcon, ListIcon, type ListIconKind } from '../layout/icons'
@@ -12,7 +12,8 @@ import { GettingStarted } from '../list/GettingStarted'
 import { ActionMenu } from '../list/ListActions'
 import { useOverview } from '../overview/queries'
 import { AddTransactions } from './AddTransactions'
-import { type FinancialAccount, formatAmount, useFinancialAccounts } from './queries'
+import { ConnectBank, ConnectionNotices, connectionOf } from './BankConnections'
+import { type BankConnection, type FinancialAccount, formatAmount, useBankConnections, useFinancialAccounts } from './queries'
 import './accounts.css'
 
 /** The icon of an account by its kind, as Moneybird pictures banks, cash and the others. */
@@ -56,11 +57,15 @@ export function FinancialAccountsPage() {
   const administration = useAdministration(administrationId)
   const accounts = useFinancialAccounts(administrationId)
   const overview = useOverview(administrationId)
+  const connections = useBankConnections(administrationId)
+  const connected = (useLocation().state as { connected?: string } | null)?.connected
   const [info, setInfo] = useState(false)
   const [adding, setAdding] = useState(false)
+  const [connecting, setConnecting] = useState(false)
   const [showInactive, setShowInactive] = useState(false)
   const infoId = useId()
   const addId = useId()
+  const connectId = useId()
 
   if (administration.error instanceof ApiError && administration.error.status < 500) {
     return <NotFoundPage />
@@ -98,6 +103,7 @@ export function FinancialAccountsPage() {
         iconOnly
         icon={<ListIcon kind="more" />}
         items={[
+          { label: t('bank.connect.button'), onSelect: () => setConnecting(!connecting) },
           { label: t('bank.accounts.addAccount'), to: `${base}/financial_accounts/new` },
           { label: t('bank.accounts.settings'), to: `${base}/settings/bank` },
         ]}
@@ -119,12 +125,19 @@ export function FinancialAccountsPage() {
           ]}
         />
       )}
+      {connected && <p className="notice" role="status">{t('bank.connections.connected', { bank: connected })}</p>}
+      <ConnectionNotices administrationId={administrationId} />
+      {connecting && <ConnectBank id={connectId} administrationId={administrationId} />}
       {adding && (
         <AddTransactions
           id={addId}
           administrationId={administrationId}
           manualTo={active[0]?.id ? `${base}/financial_accounts/${active[0].id}` : `${base}/financial_accounts/new`}
           onImported={(ids) => navigate(ids.length === 1 ? `${base}/financial_mutations?account=${ids[0]}` : `${base}/financial_mutations`)}
+          onConnect={() => {
+            setAdding(false)
+            setConnecting(true)
+          }}
         />
       )}
       {all.length === 0 ? (
@@ -133,7 +146,7 @@ export function FinancialAccountsPage() {
         <section className="accounts-card" aria-label={t('bank.accounts.title')}>
           <ul className="accounts">
             {shown.map((a) => (
-              <AccountRow key={a.id} account={a} to={`${base}/financial_mutations?account=${a.id}&state=all`} language={i18n.language} />
+              <AccountRow key={a.id} account={a} connection={connectionOf(connections.data, a)} to={`${base}/financial_mutations?account=${a.id}&state=all`} language={i18n.language} />
             ))}
           </ul>
           {inactive.length > 0 && (
@@ -151,11 +164,14 @@ export function FinancialAccountsPage() {
 }
 
 /** One account: its icon, name and kind, and its balance with when it last changed. */
-function AccountRow({ account: a, to, language }: { account: FinancialAccount; to: string; language: string }) {
+function AccountRow({ account: a, connection, to, language }: { account: FinancialAccount; connection?: BankConnection; to: string; language: string }) {
   const { t } = useTranslation()
   // A bank account is named by its number, as Moneybird lists it; a name of its own shows under it.
   const title = a.type === 'BankAccount' && a.identifier ? groupIBAN(a.identifier) : a.name
-  const subtitle = title === a.name ? (a.provider ?? '') : a.name && groupIBAN(a.name) !== title ? a.name : ''
+  const own = title !== a.name && a.name && groupIBAN(a.name) !== title ? a.name : ''
+  // As Moneybird, a connected account says which bank it comes through.
+  const via = connection ? t(connection.needs_reconnect ? 'bank.connections.viaReconnect' : 'bank.connections.via', { bank: connection.bank }) : ''
+  const subtitle = [own, via].filter(Boolean).join(' · ')
   return (
     <li className={a.active ? undefined : 'is-inactive'}>
       <Link className="accounts__row" to={to} aria-label={title ?? ''}>
