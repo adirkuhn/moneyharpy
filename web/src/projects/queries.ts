@@ -29,6 +29,16 @@ export function useProjects(administrationId: string, state: ProjectState, page:
   })
 }
 
+/** The active projects to book time on, at most a hundred. */
+export function useActiveProjects(administrationId: string) {
+  return useQuery({
+    queryKey: ['projects', administrationId, 'active-all'],
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/projects', {
+      params: { path: admin(administrationId), query: { filter: 'state:active', per_page: '100' } },
+    })),
+  })
+}
+
 export function useProject(administrationId: string, id?: string) {
   return useQuery({
     queryKey: ['project', administrationId, id],
