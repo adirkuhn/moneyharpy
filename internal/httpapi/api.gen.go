@@ -5711,7 +5711,7 @@ type BankConnection struct {
 	// Provider enable_banking connects through Enable Banking; revolut connects Revolut Business with an API key.
 	Provider BankConnectionProvider `json:"provider"`
 
-	// State Active connections fetch transactions every few hours; expired ones need reconnecting.
+	// State Active connections fetch transactions once a day, or at once with sync; expired ones need reconnecting.
 	State     BankConnectionState `json:"state"`
 	UpdatedAt time.Time           `json:"updated_at"`
 
@@ -5722,7 +5722,7 @@ type BankConnection struct {
 // BankConnectionProvider enable_banking connects through Enable Banking; revolut connects Revolut Business with an API key.
 type BankConnectionProvider string
 
-// BankConnectionState Active connections fetch transactions every few hours; expired ones need reconnecting.
+// BankConnectionState Active connections fetch transactions once a day, or at once with sync; expired ones need reconnecting.
 type BankConnectionState string
 
 // BankSettings MoneyHarpy extension.

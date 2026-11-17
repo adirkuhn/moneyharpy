@@ -1174,7 +1174,7 @@ export const en = {
     title: 'Instance settings', register: 'Allow new users to register', googleTitle: 'Google login', googleEnable: 'Let users continue with Google', googleId: 'Google client ID', googleSecret: 'Google client secret', stored: 'Stored. Type to replace it.',
     lm2Title: 'LM2 login', lm2Enable: 'Let users continue with LM2', lm2Url: 'LM2 address', lm2App: 'App name in LM2',
     bankTitle: 'Bank connections', bankEnable: 'Connect bank accounts through Enable Banking',
-    bankHint: 'Off by default. Administrations can then connect their bank accounts, and their transactions are fetched every few hours through Enable Banking, which reaches the banks under its PSD2 licence. The transactions pass through Enable Banking.',
+    bankHint: 'Off by default. Administrations can then connect their bank accounts, and their transactions are fetched once a day through Enable Banking, which reaches the banks under its PSD2 licence. The transactions pass through Enable Banking.',
     bankSteps: 'Create a free account at enablebanking.com, register a production application with this redirect URL, link your own bank accounts in its control panel (restricted mode), and enter the application id and its private key here. Redirect URL:',
     bankAppId: 'Application id', bankKey: 'Private key (PEM)', testBank: 'Check application', bankWorks: 'Enable Banking accepted the application.',
     viesEnable: 'EU VAT number lookup (VIES)', viesHint: 'Off by default. Sends only the VAT number to VIES, the European Commission’s VAT number service: to fill in a contact from its VAT number, and to add a supplier Scan and Recognise found under its registered name. Without an answer, nothing changes.',

@@ -207,13 +207,13 @@ func TestConnectionsDueForSyncAndExpiring(t *testing.T) {
 	ctx := context.Background()
 	c := connect(t, svc, link)
 
-	svc.now = func() time.Time { return now.Add(5 * time.Hour) }
+	svc.now = func() time.Time { return now.Add(23 * time.Hour) }
 	if n := svc.SyncDue(ctx); n != 0 {
-		t.Errorf("synced %d within six hours", n)
+		t.Errorf("synced %d within a day", n)
 	}
-	svc.now = func() time.Time { return now.Add(7 * time.Hour) }
+	svc.now = func() time.Time { return now.Add(25 * time.Hour) }
 	if n := svc.SyncDue(ctx); n != 1 {
-		t.Errorf("synced %d after seven hours, want 1", n)
+		t.Errorf("synced %d after a day, want 1", n)
 	}
 	// Past the consent, the connection expires without asking the bank.
 	link.fetched = nil
@@ -474,7 +474,7 @@ func TestARejectedKeyAsksForANewOne(t *testing.T) {
 	}
 	// Due fetches use the key too.
 	keys.fetched = nil
-	svc.now = func() time.Time { return now.Add(7 * time.Hour) }
+	svc.now = func() time.Time { return now.Add(25 * time.Hour) }
 	if n := svc.SyncDue(ctx); n != 1 || len(keys.fetched) != 1 || !strings.HasPrefix(keys.fetched[0], "key-2/") {
 		t.Errorf("due = %d, fetched %v", n, keys.fetched)
 	}
