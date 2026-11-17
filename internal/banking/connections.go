@@ -51,10 +51,11 @@ var (
 	ErrLinkFailed = errors.New("the bank connection failed")
 )
 
-// Sync timing: banks allow about four fetches a day without the user, and
-// book some transactions days late.
+// Sync timing: once a day is enough for bookkeeping and well within the
+// banks' four fetches a day without the user; banks book some transactions
+// days late.
 const (
-	syncEvery    = 6 * time.Hour
+	syncEvery    = 24 * time.Hour
 	syncOverlap  = 7 * 24 * time.Hour
 	firstHistory = 90
 	// defaultConsent is asked when the bank does not say how long it allows.
@@ -481,8 +482,8 @@ func (s *Service) SyncConnection(ctx context.Context, admin, user, id resource.I
 	return s.sync(ctx, c)
 }
 
-// SyncDue fetches the transactions of the connections not fetched for six
-// hours, and returns how many it fetched.
+// SyncDue fetches the transactions of the connections not fetched for a
+// day, and returns how many it fetched.
 func (s *Service) SyncDue(ctx context.Context) int {
 	if s.connections == nil {
 		return 0

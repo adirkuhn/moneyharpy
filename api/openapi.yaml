@@ -16692,7 +16692,7 @@ components:
         state:
           type: string
           enum: [pending, active, expired]
-          description: Active connections fetch transactions every few hours; expired ones need reconnecting.
+          description: Active connections fetch transactions once a day, or at once with sync; expired ones need reconnecting.
         valid_until:
           type: string
           format: date-time

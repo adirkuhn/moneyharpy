@@ -8326,7 +8326,7 @@ export interface components {
             bank: string;
             country: string;
             /**
-             * @description Active connections fetch transactions every few hours; expired ones need reconnecting.
+             * @description Active connections fetch transactions once a day, or at once with sync; expired ones need reconnecting.
              * @enum {string}
              */
             state: "pending" | "active" | "expired";
