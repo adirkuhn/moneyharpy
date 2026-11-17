@@ -119,16 +119,19 @@ export const empty = invoice({ id: '902', invoice_id: null, draft_id: 12, state:
 
 /** The pages a new invoice goes through, with what was posted and patched. */
 export function creating(sent: { post?: Record<string, unknown>; patch?: Record<string, unknown> }, created: SalesInvoice = empty) {
+  // As the server does, the invoice is fetched as it was last saved, never an older version.
+  let current = created
   return [
     http.post('*/api/v2/11/sales_invoices', async ({ request }) => {
       sent.post = ((await request.json()) as { sales_invoice: Record<string, unknown> }).sales_invoice
       return HttpResponse.json(created, { status: 201 })
     }),
-    http.get('*/api/v2/11/sales_invoices/902', () => HttpResponse.json(created)),
+    http.get('*/api/v2/11/sales_invoices/902', () => HttpResponse.json(current)),
     http.patch('*/api/v2/11/sales_invoices/902', async ({ request }) => {
       sent.patch = ((await request.json()) as { sales_invoice: Record<string, unknown> }).sales_invoice
       // As the server does, a saved invoice comes back with a new version.
-      return HttpResponse.json({ ...created, version: (created.version ?? 0) + 1 })
+      current = { ...current, version: (current.version ?? 0) + 1 }
+      return HttpResponse.json(current)
     }),
   ]
 }
