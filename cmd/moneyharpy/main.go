@@ -52,6 +52,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/recognize/ai"
 	"github.com/adirkuhn/moneyharpy/internal/reports"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
+	"github.com/adirkuhn/moneyharpy/internal/revolut"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
 	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
@@ -143,6 +144,7 @@ func run(logger *slog.Logger) error {
 	bankStore := postgres.NewBankingStore(pool)
 	bank := banking.NewService(admins, books, bankStore, ids, time.Now)
 	bank.UseBankLinks(bankLink, bankStore, strings.TrimSuffix(cfg.baseURL, "/")+httpapi.BankLinkCallbackPath)
+	bank.UseKeyLinks(revolut.Link{}, cipher)
 	noteService := notes.NewService(postgres.NewNoteStore(pool), ids, time.Now)
 	journalStore := postgres.NewJournalStore(pool)
 	salesStore := postgres.NewSalesStore(pool)

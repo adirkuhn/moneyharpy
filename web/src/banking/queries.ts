@@ -394,7 +394,7 @@ export function useReconnectBank(administrationId: string) {
   })
 }
 
-function useConnectionChange<T>(administrationId: string, fn: (id: string) => Promise<T>) {
+function useConnectionChange<T, V = string>(administrationId: string, fn: (v: V) => Promise<T>) {
   const client = useQueryClient()
   return useMutation({
     mutationFn: fn,
@@ -420,4 +420,17 @@ export function useCompleteBankConnection() {
   return useMutation({
     mutationFn: (body: { state: string; code: string }) => unwrap(api.POST('/api/bank_connections/complete', { body })),
   })
+}
+
+/** Connects Revolut Business with a read-only API key. */
+export function useConnectWithKey(administrationId: string) {
+  return useConnectionChange(administrationId, (apiKey: string) =>
+    unwrap(api.POST('/api/v2/{administration_id}/bank_connections/api_key', { ...admin(administrationId), body: { provider: 'revolut', api_key: apiKey } })),
+  )
+}
+
+export function useReplaceKey(administrationId: string) {
+  return useConnectionChange(administrationId, ({ id, apiKey }: { id: string; apiKey: string }) =>
+    unwrap(api.PUT('/api/v2/{administration_id}/bank_connections/{id}/api_key', { ...one(administrationId, id), body: { api_key: apiKey } })),
+  )
 }

@@ -50,6 +50,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/recognize"
 	"github.com/adirkuhn/moneyharpy/internal/reports"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
+	"github.com/adirkuhn/moneyharpy/internal/revolut"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
 	"github.com/adirkuhn/moneyharpy/internal/subscriptions"
@@ -257,6 +258,8 @@ type harness struct {
 	vies *fakeVIES
 	// bank stands in for Enable Banking; tests never call the real one.
 	bank *fakeEnableBanking
+	// revolut stands in for Revolut's Business API.
+	revolut *httptest.Server
 	// recognition is Scan and Recognise, reading e-invoices only: XML
 	// files starting with <Invoice are read as testEInvoice.
 	recognition *recognize.Service
@@ -312,6 +315,8 @@ func newHarness(t *testing.T, opts options) *harness {
 	bankStore := postgres.NewBankingStore(pool)
 	bank := banking.NewService(admins, books, bankStore, ids, time.Now)
 	bank.UseBankLinks(&enablebanking.Provider{Settings: settle, BaseURL: h.bank.server.URL, HTTP: h.bank.server.Client(), Now: time.Now}, bankStore, h.server.URL+httpapi.BankLinkCallbackPath)
+	h.revolut = newFakeRevolut(t)
+	bank.UseKeyLinks(revolut.Link{BaseURL: h.revolut.URL, HTTP: h.revolut.Client()}, settings.NewCipher("test-secret"))
 	noteService := notes.NewService(postgres.NewNoteStore(pool), ids, time.Now)
 	journalStore := postgres.NewJournalStore(pool)
 	salesStore := postgres.NewSalesStore(pool)

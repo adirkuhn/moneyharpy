@@ -14,9 +14,18 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
-// ProviderEnableBanking is the provider of accounts connected through
-// Enable Banking.
-const ProviderEnableBanking = "enable_banking"
+// Providers of connected accounts.
+const (
+	// ProviderEnableBanking connects banks through Enable Banking, which
+	// asks the user to authorise access at their bank.
+	ProviderEnableBanking = "enable_banking"
+	// ProviderRevolut connects Revolut Business with an API key.
+	ProviderRevolut = "revolut"
+)
+
+// keyProviders are the providers connected with an API key, by the name
+// the connection shows.
+var keyProviders = map[string]string{ProviderRevolut: "Revolut Business"}
 
 // Connection states.
 const (
@@ -66,6 +75,8 @@ type Connection struct {
 	// AuthState finds the connection when the bank sends the user back;
 	// empty when no authorisation is under way.
 	AuthState string
+	// Secret is the sealed API key of a key provider.
+	Secret string
 	// CreatedBy is the user the transactions are fetched for.
 	CreatedBy  resource.ID
 	LastSyncAt *time.Time
@@ -138,6 +149,25 @@ type ConnectionStore interface {
 	DueConnections(ctx context.Context, before time.Time) ([]Connection, error)
 }
 
+// KeyLink reaches banks whose account holders make an API key, as Revolut
+// Business does.
+type KeyLink interface {
+	// Accounts lists the accounts the key reaches; UID addresses each.
+	Accounts(ctx context.Context, provider, key string) ([]LinkAccount, error)
+	Transactions(ctx context.Context, provider, key, uid string, from time.Time) ([]bankfile.Entry, error)
+}
+
+// Secrets seals API keys for storage and opens them again.
+type Secrets interface {
+	Seal(plain string) (string, error)
+	Open(sealed string) (string, error)
+}
+
+// UseKeyLinks lets administrations connect banks with an API key.
+func (s *Service) UseKeyLinks(k KeyLink, secrets Secrets) {
+	s.keys, s.secrets = k, secrets
+}
+
 // UseBankLinks lets administrations connect their banks; redirect is where
 // banks send users back to.
 func (s *Service) UseBankLinks(links BankLinks, store ConnectionStore, redirect string) {
@@ -183,7 +213,7 @@ func (s *Service) Connections(ctx context.Context, admin, user resource.ID) ([]C
 	out := list[:0]
 	for _, c := range list {
 		// A connection never authorised is an abandoned attempt.
-		if c.SessionID != "" {
+		if c.State != ConnectionPending {
 			out = append(out, s.expire(c))
 		}
 	}
@@ -241,7 +271,67 @@ func (s *Service) Reconnect(ctx context.Context, admin, user, id resource.ID) (s
 	if err != nil {
 		return "", err
 	}
+	if _, ok := keyProviders[c.Provider]; ok {
+		return "", invalid("api_key", "must be replaced with a new key to reconnect")
+	}
 	return s.authorize(ctx, &c)
+}
+
+// ConnectWithKey connects the accounts an API key reaches, matched to the
+// administration's accounts by IBAN or added, and fetches their
+// transactions.
+func (s *Service) ConnectWithKey(ctx context.Context, admin, user resource.ID, provider, key string) (Connection, error) {
+	if _, err := s.ensure(ctx, admin, user); err != nil {
+		return Connection{}, err
+	}
+	name, ok := keyProviders[provider]
+	if !ok || s.keys == nil {
+		return Connection{}, invalid("provider", "is not a bank that connects with an API key")
+	}
+	now := s.now()
+	c := Connection{ID: s.ids.Next(), AdministrationID: admin, Provider: provider, Bank: name, State: ConnectionActive, CreatedBy: user, CreatedAt: now, UpdatedAt: now}
+	return s.useKey(ctx, c, user, key)
+}
+
+// ReplaceKey connects a key provider's connection with a new API key, as
+// when the old one was revoked or expired; the accounts stay connected.
+func (s *Service) ReplaceKey(ctx context.Context, admin, user, id resource.ID, key string) (Connection, error) {
+	c, err := s.Connection(ctx, admin, user, id)
+	if err != nil {
+		return Connection{}, err
+	}
+	if _, ok := keyProviders[c.Provider]; !ok || s.keys == nil {
+		return Connection{}, invalid("provider", "is not a bank that connects with an API key")
+	}
+	return s.useKey(ctx, c, user, key)
+}
+
+// useKey checks the key with the bank, links the accounts it reaches and
+// fetches their transactions.
+func (s *Service) useKey(ctx context.Context, c Connection, user resource.ID, key string) (Connection, error) {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return Connection{}, invalid("api_key", "can't be blank")
+	}
+	shared, err := s.keys.Accounts(ctx, c.Provider, key)
+	switch {
+	case errors.Is(err, ErrLinkExpired):
+		return Connection{}, invalid("api_key", "was not accepted by the bank; check that it is active and may read accounts and transactions")
+	case err != nil:
+		return Connection{}, err
+	}
+	linked, err := s.linkAccounts(ctx, c.AdministrationID, user, c.Provider, shared)
+	if err != nil {
+		return Connection{}, err
+	}
+	if c.Secret, err = s.secrets.Seal(key); err != nil {
+		return Connection{}, fmt.Errorf("seal api key: %w", err)
+	}
+	c.Accounts, c.State, c.LastError, c.CreatedBy, c.UpdatedAt = linked, ConnectionActive, "", user, s.now()
+	if err := s.connections.SaveConnection(ctx, c); err != nil {
+		return Connection{}, err
+	}
+	return s.sync(ctx, c)
 }
 
 // authorize starts an authorisation for the connection at its bank.
@@ -309,7 +399,7 @@ func (s *Service) FinishConnection(ctx context.Context, user resource.ID, state,
 	if err != nil {
 		return Connection{}, err
 	}
-	linked, err := s.linkAccounts(ctx, c.AdministrationID, user, session.Accounts)
+	linked, err := s.linkAccounts(ctx, c.AdministrationID, user, c.Provider, session.Accounts)
 	if err != nil {
 		_ = l.Close(ctx, session.ID)
 		return Connection{}, err
@@ -323,11 +413,11 @@ func (s *Service) FinishConnection(ctx context.Context, user resource.ID, state,
 	if err := s.connections.SaveConnection(ctx, c); err != nil {
 		return Connection{}, err
 	}
-	return s.sync(ctx, l, c)
+	return s.sync(ctx, c)
 }
 
 // linkAccounts finds or adds the financial account of each shared account.
-func (s *Service) linkAccounts(ctx context.Context, admin, user resource.ID, shared []LinkAccount) ([]LinkedAccount, error) {
+func (s *Service) linkAccounts(ctx context.Context, admin, user resource.ID, provider string, shared []LinkAccount) ([]LinkedAccount, error) {
 	accounts, err := s.accounts(ctx, admin)
 	if err != nil {
 		return nil, err
@@ -355,8 +445,8 @@ func (s *Service) linkAccounts(ctx context.Context, admin, user resource.ID, sha
 			}
 			accounts = append(accounts, acc)
 		}
-		if acc.Provider != ProviderEnableBanking {
-			acc.Provider, acc.UpdatedAt = ProviderEnableBanking, s.now()
+		if acc.Provider != provider {
+			acc.Provider, acc.UpdatedAt = provider, s.now()
 			if err := s.store.UpdateAccounts(ctx, []Account{acc}); err != nil {
 				return nil, err
 			}
@@ -365,7 +455,11 @@ func (s *Service) linkAccounts(ctx context.Context, admin, user resource.ID, sha
 	}
 	if len(out) == 0 {
 		var verr resource.ValidationError
-		verr.Add("accounts", "were not shared by the bank; link them in the Enable Banking control panel and connect again")
+		if provider == ProviderEnableBanking {
+			verr.Add("accounts", "were not shared by the bank; link them in the Enable Banking control panel and connect again")
+		} else {
+			verr.Add("accounts", "with an IBAN were not found with this key")
+		}
 		return nil, &verr
 	}
 	return out, nil
@@ -384,11 +478,7 @@ func (s *Service) SyncConnection(ctx context.Context, admin, user, id resource.I
 	if err != nil {
 		return Connection{}, err
 	}
-	l, err := s.link(ctx)
-	if err != nil {
-		return Connection{}, err
-	}
-	return s.sync(ctx, l, c)
+	return s.sync(ctx, c)
 }
 
 // SyncDue fetches the transactions of the connections not fetched for six
@@ -398,10 +488,6 @@ func (s *Service) SyncDue(ctx context.Context) int {
 		return 0
 	}
 	due, err := s.connections.DueConnections(ctx, s.now().Add(-syncEvery))
-	if err != nil || len(due) == 0 {
-		return 0
-	}
-	l, err := s.link(ctx)
 	if err != nil {
 		return 0
 	}
@@ -412,19 +498,47 @@ func (s *Service) SyncDue(ctx context.Context) int {
 			_ = s.connections.SaveConnection(ctx, c)
 			continue
 		}
-		if _, err := s.sync(ctx, l, c); err == nil {
+		if synced, err := s.sync(ctx, c); err == nil && synced.LastError == "" {
 			n++
 		}
 	}
 	return n
 }
 
+// fetcher fetches an account's transactions the way the connection's
+// provider does.
+type fetcher func(ctx context.Context, uid string, from time.Time) ([]bankfile.Entry, error)
+
+func (s *Service) fetcher(ctx context.Context, c Connection) (fetcher, error) {
+	if _, ok := keyProviders[c.Provider]; ok {
+		if s.keys == nil {
+			return nil, ErrLinkOff
+		}
+		key, err := s.secrets.Open(c.Secret)
+		if err != nil {
+			return nil, fmt.Errorf("open api key: %w", err)
+		}
+		return func(ctx context.Context, uid string, from time.Time) ([]bankfile.Entry, error) {
+			return s.keys.Transactions(ctx, c.Provider, key, uid, from)
+		}, nil
+	}
+	l, err := s.link(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return l.Transactions, nil
+}
+
 // sync fetches the transactions of the connection's accounts and books the
 // new ones; what goes wrong is kept on the connection for the user to see.
-func (s *Service) sync(ctx context.Context, l BankLink, c Connection) (Connection, error) {
+func (s *Service) sync(ctx context.Context, c Connection) (Connection, error) {
 	c = s.expire(c)
 	if c.State != ConnectionActive {
 		return c, nil
+	}
+	fetch, err := s.fetcher(ctx, c)
+	if err != nil {
+		return Connection{}, err
 	}
 	now := s.now()
 	from := now.AddDate(0, 0, -firstHistory)
@@ -434,7 +548,7 @@ func (s *Service) sync(ctx context.Context, l BankLink, c Connection) (Connectio
 	from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.UTC)
 	var problem error
 	for _, la := range c.Accounts {
-		if err := s.syncAccount(ctx, l, c, la, from); err != nil {
+		if err := s.syncAccount(ctx, fetch, c, la, from); err != nil {
 			problem = err
 			break
 		}
@@ -456,7 +570,7 @@ func (s *Service) sync(ctx context.Context, l BankLink, c Connection) (Connectio
 	return c, nil
 }
 
-func (s *Service) syncAccount(ctx context.Context, l BankLink, c Connection, la LinkedAccount, from time.Time) error {
+func (s *Service) syncAccount(ctx context.Context, fetch fetcher, c Connection, la LinkedAccount, from time.Time) error {
 	acc, err := s.store.Account(ctx, c.AdministrationID, la.AccountID)
 	if errors.Is(err, ErrAccountNotFound) {
 		return nil // The account was deleted; nothing to book on.
@@ -464,7 +578,7 @@ func (s *Service) syncAccount(ctx context.Context, l BankLink, c Connection, la 
 	if err != nil {
 		return err
 	}
-	entries, err := l.Transactions(ctx, la.UID, from)
+	entries, err := fetch(ctx, la.UID, from)
 	if err != nil {
 		return err
 	}
@@ -472,7 +586,7 @@ func (s *Service) syncAccount(ctx context.Context, l BankLink, c Connection, la 
 		return nil
 	}
 	st := bankfile.Statement{Account: acc.Identifier, Currency: acc.Currency, Reference: fmt.Sprintf("%s %s", c.Bank, s.now().Format(time.DateOnly)), Entries: entries}
-	_, err = s.importStatements(ctx, c.AdministrationID, c.CreatedBy, acc, []bankfile.Statement{st}, ProviderEnableBanking)
+	_, err = s.importStatements(ctx, c.AdministrationID, c.CreatedBy, acc, []bankfile.Statement{st}, bankfile.Format(c.Provider))
 	return err
 }
 
@@ -483,7 +597,7 @@ func (s *Service) Disconnect(ctx context.Context, admin, user, id resource.ID) e
 	if err != nil {
 		return err
 	}
-	if c.SessionID != "" {
+	if c.SessionID != "" && c.Provider == ProviderEnableBanking {
 		if l, err := s.link(ctx); err == nil {
 			_ = l.Close(ctx, c.SessionID) // The bank may have closed it already.
 		}

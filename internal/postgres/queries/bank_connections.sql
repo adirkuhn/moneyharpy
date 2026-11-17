@@ -14,10 +14,10 @@ ORDER BY last_sync_at NULLS FIRST, id
 LIMIT 200;
 
 -- name: UpsertBankConnection :exec
-INSERT INTO bank_connections (id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+INSERT INTO bank_connections (id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at, secret)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 ON CONFLICT (id) DO UPDATE SET
-    state = EXCLUDED.state, session_id = EXCLUDED.session_id, valid_until = EXCLUDED.valid_until, auth_state = EXCLUDED.auth_state,
+    state = EXCLUDED.state, session_id = EXCLUDED.session_id, valid_until = EXCLUDED.valid_until, auth_state = EXCLUDED.auth_state, secret = EXCLUDED.secret,
     created_by = EXCLUDED.created_by, last_sync_at = EXCLUDED.last_sync_at, last_error = EXCLUDED.last_error, updated_at = EXCLUDED.updated_at;
 
 -- name: DeleteBankConnection :exec

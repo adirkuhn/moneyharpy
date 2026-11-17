@@ -130,6 +130,8 @@ type Service struct {
 	links       BankLinks
 	connections ConnectionStore
 	redirect    string
+	keys        KeyLink
+	secrets     Secrets
 }
 
 // NewService returns a Service.
