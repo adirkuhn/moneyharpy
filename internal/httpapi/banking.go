@@ -261,15 +261,19 @@ func (s *server) ImportFinancialStatementFile(w http.ResponseWriter, r *http.Req
 		writeError(w, http.StatusRequestEntityTooLarge, "The file is too large")
 		return
 	}
-	res, acc, err := s.deps.Banking.ImportDetected(r.Context(), admin, user(r).ID, data)
+	res, accs, err := s.deps.Banking.ImportDetected(r.Context(), admin, user(r).ID, data)
 	if err != nil {
 		s.fail(w, r, err)
 		return
 	}
 	out := struct {
 		importResultJSON
-		FinancialAccountID string `json:"financial_account_id"`
-	}{importResult(res), acc.ID.String()}
+		FinancialAccountID  string   `json:"financial_account_id"`
+		FinancialAccountIDs []string `json:"financial_account_ids"`
+	}{importResult(res), accs[0].ID.String(), make([]string, 0, len(accs))}
+	for _, a := range accs {
+		out.FinancialAccountIDs = append(out.FinancialAccountIDs, a.ID.String())
+	}
 	writeJSON(w, http.StatusCreated, out)
 }
 

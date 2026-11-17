@@ -124,7 +124,7 @@ export function FinancialAccountsPage() {
           id={addId}
           administrationId={administrationId}
           manualTo={active[0]?.id ? `${base}/financial_accounts/${active[0].id}` : `${base}/financial_accounts/new`}
-          onImported={(accountId) => navigate(`${base}/financial_mutations?account=${accountId}`)}
+          onImported={(ids) => navigate(ids.length === 1 ? `${base}/financial_mutations?account=${ids[0]}` : `${base}/financial_mutations`)}
         />
       )}
       {all.length === 0 ? (

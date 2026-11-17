@@ -7,7 +7,7 @@ import { ListIcon } from '../layout/icons'
 import { useImportStatementFile } from './queries'
 import './accounts.css'
 
-type AddProps = { id: string; administrationId: string; manualTo: string; onImported: (accountId: string) => void }
+type AddProps = { id: string; administrationId: string; manualTo: string; onImported: (accountIds: string[]) => void }
 
 /** Moneybird's Add transactions: a field to drop a CAMT.053 or MT940 file on, or a way to add them by hand. */
 export function AddTransactions({ id, administrationId, manualTo, onImported }: AddProps) {
@@ -17,7 +17,7 @@ export function AddTransactions({ id, administrationId, manualTo, onImported }: 
   const take = (files: FileList | null) => {
     const file = files?.[0]
     if (file) {
-      upload.mutate(file, { onSuccess: (res) => onImported(res.financial_account_id) })
+      upload.mutate(file, { onSuccess: (res) => onImported(res.financial_account_ids) })
     }
   }
   const drop = (e: DragEvent) => {

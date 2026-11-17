@@ -409,7 +409,7 @@ describe('financial accounts', () => {
     let body: unknown
     server.use(accounts, overview, ...loaded(), http.post('*/api/v2/11/financial_statements/import', async ({ request }) => {
       body = await request.text()
-      return HttpResponse.json({ format: 'camt', imported: 2, duplicates: 0, locked: 0, auto_booked: 0, financial_statements: [], financial_account_id: '501' }, { status: 201 })
+      return HttpResponse.json({ format: 'camt', imported: 2, duplicates: 0, locked: 0, auto_booked: 0, financial_statements: [], financial_account_id: '501', financial_account_ids: ['501'] }, { status: 201 })
     }))
     renderAt('/11/financial_accounts')
     await userEvent.click(await screen.findByRole('button', { name: 'Add transactions' }))
@@ -420,6 +420,18 @@ describe('financial accounts', () => {
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/financial_mutations'))
     expect(screen.getByTestId('search')).toHaveTextContent('?account=501')
     expect(body).toBe('<Document/>')
+  })
+
+  it('shows all transactions after a file for several accounts', async () => {
+    server.use(accounts, overview, ...loaded(), http.post('*/api/v2/11/financial_statements/import', () =>
+      HttpResponse.json({ format: 'mt940', imported: 3, duplicates: 0, locked: 0, auto_booked: 0, financial_statements: [], financial_account_id: '501', financial_account_ids: ['501', '502'] }, { status: 201 }),
+    ))
+    renderAt('/11/financial_accounts')
+    await userEvent.click(await screen.findByRole('button', { name: 'Add transactions' }))
+    const add = screen.getByRole('region', { name: 'Add transactions' })
+    await userEvent.upload(within(add).getByLabelText('Drag a transaction file here or click to select one'), new File([':20:A'], 'statement.sta', { type: 'text/plain' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/financial_mutations'))
+    expect(screen.getByTestId('search')).toBeEmptyDOMElement()
   })
 })
 

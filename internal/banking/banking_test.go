@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
@@ -181,18 +182,55 @@ func TestImportFindsTheAccountOfTheFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res, acc, err := svc.ImportDetected(ctx, adminID, owner, data)
+	res, accs, err := svc.ImportDetected(ctx, adminID, owner, data)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if acc.Type != "BankAccount" || acc.Identifier != "NL91ABNA0417164300" || res.Imported == 0 {
-		t.Fatalf("new account = %+v, result %+v", acc, res)
+	if len(accs) != 1 || accs[0].Type != "BankAccount" || accs[0].Identifier != "NL91ABNA0417164300" || res.Imported == 0 {
+		t.Fatalf("new accounts = %+v, result %+v", accs, res)
 	}
 	again, same, err := svc.ImportDetected(ctx, adminID, owner, data)
-	if err != nil || same.ID != acc.ID || again.Imported != 0 {
+	if err != nil || len(same) != 1 || same[0].ID != accs[0].ID || again.Imported != 0 {
 		t.Errorf("again into %+v: %+v, %v", same, again, err)
 	}
 	if _, _, err := svc.ImportDetected(ctx, adminID, owner, []byte("hello")); fieldsOf(t, err)["file"] == nil {
 		t.Error("imported an unknown format")
+	}
+}
+
+// A file with several accounts' statements books each statement's
+// transactions on exactly the account it names.
+func TestImportSendsEachStatementToItsAccount(t *testing.T) {
+	svc, _, _ := newTestService()
+	ctx := context.Background()
+	known, err := svc.CreateAccount(ctx, adminID, owner, AccountChanges{Name: ptr("Business"), Identifier: ptr("NL91 ABNA 0417 1643 00")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := ":20:A\n:25:NL91ABNA0417164300\n:28C:1\n:60F:C261031EUR0,00\n:61:2611011101C1,00NTRFNONREF\n:86:first\n:62F:C261101EUR1,00\n-\n" +
+		":20:B\n:25:NL20INGB0001234567EUR\n:28C:1\n:60F:C261031EUR0,00\n:61:2611011101C2,00NTRFNONREF\n:86:second\n:61:2611011101C3,00NTRFNONREF\n:86:third\n:62F:C261101EUR5,00\n-"
+	res, accs, err := svc.ImportDetected(ctx, adminID, owner, []byte(file))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(accs) != 2 || accs[0].ID != known.ID || accs[1].Identifier != "NL20INGB0001234567" || res.Imported != 3 || len(res.Statements) != 2 {
+		t.Fatalf("accounts = %+v, result %+v", accs, res)
+	}
+	for _, want := range []struct {
+		account  Account
+		messages []string
+	}{{accs[0], []string{"first"}}, {accs[1], []string{"second", "third"}}} {
+		ms, err := svc.Mutations(ctx, adminID, owner, MutationFilter{MutationQuery: MutationQuery{AccountID: &want.account.ID}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got []string
+		for _, m := range ms {
+			got = append(got, m.Message)
+		}
+		slices.Sort(got)
+		if !slices.Equal(got, want.messages) {
+			t.Errorf("%s has %v, want %v", want.account.Identifier, got, want.messages)
+		}
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -337,58 +338,93 @@ type ImportResult struct {
 	Imported, Duplicates, Locked, AutoBooked int
 }
 
-// ImportDetected reads a CAMT or MT940 file into the account of its account
-// number, as a file dropped on Moneybird's financial accounts page goes; an
-// account the administration does not have yet is added as a bank account.
-func (s *Service) ImportDetected(ctx context.Context, admin, user resource.ID, data []byte) (ImportResult, Account, error) {
+// ImportDetected reads a CAMT or MT940 file into the accounts of its
+// account numbers, as a file dropped on Moneybird's financial accounts page
+// goes: each statement's transactions go to exactly the account the
+// statement names, and an account the administration does not have yet is
+// added as a bank account. It returns the accounts in the file's order.
+func (s *Service) ImportDetected(ctx context.Context, admin, user resource.ID, data []byte) (ImportResult, []Account, error) {
 	if _, err := s.ensure(ctx, admin, user); err != nil {
-		return ImportResult{}, Account{}, err
+		return ImportResult{}, nil, err
 	}
-	files, _, err := bankfile.Parse(data)
+	files, format, err := bankfile.Parse(data)
 	if err != nil {
 		var verr resource.ValidationError
 		verr.Add("file", err.Error())
-		return ImportResult{}, Account{}, &verr
+		return ImportResult{}, nil, &verr
 	}
-	number := ""
-	currency := ""
 	for _, f := range files {
-		if f.Account != "" {
-			number, currency = f.Account, f.Currency
-			break
+		if f.Account == "" {
+			var verr resource.ValidationError
+			verr.Add("file", "names no account number; import it from the account instead")
+			return ImportResult{}, nil, &verr
 		}
-	}
-	if number == "" {
-		var verr resource.ValidationError
-		verr.Add("file", "names no account number; import it from the account instead")
-		return ImportResult{}, Account{}, &verr
 	}
 	accounts, err := s.accounts(ctx, admin)
 	if err != nil {
-		return ImportResult{}, Account{}, err
+		return ImportResult{}, nil, err
 	}
-	compact := func(v string) string { return strings.ToUpper(strings.ReplaceAll(v, " ", "")) }
-	var acc *Account
-	for i := range accounts {
-		if compact(accounts[i].Identifier) == compact(number) {
-			acc = &accounts[i]
-			break
+	var order []Account
+	byAccount := map[resource.ID][]bankfile.Statement{}
+	for _, f := range files {
+		i := slices.IndexFunc(accounts, func(a Account) bool { return sameAccount(a.Identifier, f.Account) })
+		if i < 0 {
+			kind := BankAccount
+			c := AccountChanges{Type: &kind, Name: &f.Account, Identifier: &f.Account}
+			if f.Currency != "" {
+				c.Currency = &f.Currency
+			}
+			created, err := s.CreateAccount(ctx, admin, user, c)
+			if err != nil {
+				return ImportResult{}, nil, err
+			}
+			accounts, i = append(accounts, created), len(accounts)
 		}
+		acc := accounts[i]
+		if _, seen := byAccount[acc.ID]; !seen {
+			order = append(order, acc)
+		}
+		byAccount[acc.ID] = append(byAccount[acc.ID], f)
 	}
-	if acc == nil {
-		kind := BankAccount
-		c := AccountChanges{Type: &kind, Name: &number, Identifier: &number}
-		if currency != "" {
-			c.Currency = &currency
-		}
-		created, err := s.CreateAccount(ctx, admin, user, c)
+	var verr resource.ValidationError
+	for _, acc := range order {
+		checkStatements(&verr, acc, byAccount[acc.ID])
+	}
+	if err := verr.OrNil(); err != nil {
+		return ImportResult{}, nil, err
+	}
+	result := ImportResult{Format: string(format)}
+	for _, acc := range order {
+		res, err := s.importStatements(ctx, admin, user, acc, byAccount[acc.ID], format)
 		if err != nil {
-			return ImportResult{}, Account{}, err
+			return ImportResult{}, nil, err
 		}
-		acc = &created
+		result.Statements = append(result.Statements, res.Statements...)
+		result.Imported += res.Imported
+		result.Duplicates += res.Duplicates
+		result.Locked += res.Locked
+		result.AutoBooked += res.AutoBooked
 	}
-	res, err := s.Import(ctx, admin, acc.ID, user, data)
-	return res, *acc, err
+	return result, order, nil
+}
+
+// sameAccount tells whether two account numbers are the same, whatever
+// their spacing and case.
+func sameAccount(a, b string) bool {
+	compact := func(v string) string { return strings.ToUpper(strings.ReplaceAll(v, " ", "")) }
+	return a != "" && compact(a) == compact(b)
+}
+
+// checkStatements refuses statements of another account or currency.
+func checkStatements(verr *resource.ValidationError, acc Account, files []bankfile.Statement) {
+	for _, f := range files {
+		if f.Account != "" && acc.Identifier != "" && !sameAccount(f.Account, acc.Identifier) {
+			verr.Add("file", "is for account "+f.Account+", not "+acc.Identifier)
+		}
+		if f.Currency != "" && f.Currency != acc.Currency {
+			verr.Add("file", "is in "+f.Currency+", not "+acc.Currency)
+		}
+	}
 }
 
 // Import reads a CAMT or MT940 file into the account. A file for another
@@ -407,17 +443,16 @@ func (s *Service) Import(ctx context.Context, admin, id, user resource.ID, data 
 		verr.Add("file", err.Error())
 		return ImportResult{}, &verr
 	}
-	for _, f := range files {
-		if f.Account != "" && acc.Identifier != "" && !strings.EqualFold(f.Account, acc.Identifier) {
-			verr.Add("file", "is for account "+f.Account+", not "+acc.Identifier)
-		}
-		if f.Currency != "" && f.Currency != acc.Currency {
-			verr.Add("file", "is in "+f.Currency+", not "+acc.Currency)
-		}
-	}
+	checkStatements(&verr, acc, files)
 	if err := verr.OrNil(); err != nil {
 		return ImportResult{}, err
 	}
+	return s.importStatements(ctx, admin, user, acc, files, format)
+}
+
+// importStatements books checked statements on the account, skipping the
+// transactions it has already and those in the locked period.
+func (s *Service) importStatements(ctx context.Context, admin, user resource.ID, acc Account, files []bankfile.Statement, format bankfile.Format) (ImportResult, error) {
 	locked, err := s.locked(ctx, admin, user)
 	if err != nil {
 		return ImportResult{}, err

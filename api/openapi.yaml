@@ -3117,9 +3117,9 @@ paths:
       summary: Import a statement file into the account it is for
       description: >-
         MoneyHarpy extension, after the file field of Moneybird's financial accounts page. Send a CAMT (052, 053 or 054)
-        or MT940 file of at most 10 MB as the body. It goes to the account with the file's account number; an account
-        the administration does not have yet is added as a bank account. As with an account's import, known
-        transactions and those in the locked period are skipped.
+        or MT940 file of at most 10 MB as the body. Each statement in it goes to exactly the account with the
+        statement's account number; an account the administration does not have yet is added as a bank account. As
+        with an account's import, known transactions and those in the locked period are skipped.
       tags: [Financial accounts]
       requestBody:
         required: true
@@ -3130,17 +3130,24 @@ paths:
               format: binary
       responses:
         '201':
-          description: What the import did, and the account it went to
+          description: What the import did, and the accounts it went to
           content:
             application/json:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/ImportResult'
                   - type: object
-                    required: [financial_account_id]
+                    required: [financial_account_id, financial_account_ids]
                     properties:
                       financial_account_id:
-                        $ref: '#/components/schemas/Identifier'
+                        description: The account of the file's first statement
+                        allOf:
+                          - $ref: '#/components/schemas/Identifier'
+                      financial_account_ids:
+                        description: The accounts of the file's statements, in the file's order
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Identifier'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

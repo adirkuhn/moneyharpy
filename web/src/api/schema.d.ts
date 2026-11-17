@@ -1338,7 +1338,7 @@ export interface paths {
         put?: never;
         /**
          * Import a statement file into the account it is for
-         * @description MoneyHarpy extension, after the file field of Moneybird's financial accounts page. Send a CAMT (052, 053 or 054) or MT940 file of at most 10 MB as the body. It goes to the account with the file's account number; an account the administration does not have yet is added as a bank account. As with an account's import, known transactions and those in the locked period are skipped.
+         * @description MoneyHarpy extension, after the file field of Moneybird's financial accounts page. Send a CAMT (052, 053 or 054) or MT940 file of at most 10 MB as the body. Each statement in it goes to exactly the account with the statement's account number; an account the administration does not have yet is added as a bank account. As with an account's import, known transactions and those in the locked period are skipped.
          */
         post: operations["importFinancialStatementFile"];
         delete?: never;
@@ -14371,14 +14371,17 @@ export interface operations {
             };
         };
         responses: {
-            /** @description What the import did, and the account it went to */
+            /** @description What the import did, and the accounts it went to */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ImportResult"] & {
+                        /** @description The account of the file's first statement */
                         financial_account_id: components["schemas"]["Identifier"];
+                        /** @description The accounts of the file's statements, in the file's order */
+                        financial_account_ids: components["schemas"]["Identifier"][];
                     };
                 };
             };

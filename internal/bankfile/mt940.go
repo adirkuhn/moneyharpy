@@ -50,6 +50,8 @@ func parseMT940(data []byte) ([]Statement, error) {
 	var out []Statement
 	var cur *Statement
 	var last *Entry
+	// ABN AMRO's files start with its BIC and name the old account number.
+	abnAmro := strings.HasPrefix(strings.TrimSpace(string(data)), "ABNANL2A")
 	for _, f := range mtFields(string(data)) {
 		value := strings.TrimSpace(f.value)
 		switch f.tag {
@@ -62,7 +64,7 @@ func parseMT940(data []byte) ([]Statement, error) {
 				if i := strings.LastIndex(account, "/"); i >= 0 {
 					account = account[i+1:]
 				}
-				cur.Account = strings.Fields(account + " ")[0]
+				cur.Account = accountNumber(strings.Fields(account + " ")[0], abnAmro)
 			}
 		case "28C":
 			if cur != nil && cur.Reference == "" {
@@ -141,7 +143,8 @@ func mtEntry(value string) (Entry, error) {
 	e := Entry{Date: day, ValueDate: &valueDate, Amount: amount, Code: m[5]}
 	if ref := strings.TrimSpace(m[7]); ref != "" {
 		e.TransactionID = ref
-	} else if ref := strings.TrimSpace(m[6]); ref != "" && ref != "NONREF" {
+	} else if ref := strings.TrimSpace(m[6]); ref != "" && ref != "NONREF" && ref != "EREF" {
+		// Rabobank puts EREF here when the reference is the :86: field's /EREF/.
 		e.TransactionID = ref
 	}
 	return e, nil
@@ -182,6 +185,10 @@ func mtInfo(e *Entry, value string) {
 			fields[key] += "/"
 		}
 		fields[key] += p
+	}
+	// Rabobank closes each field with a double slash.
+	for _, k := range []string{"EREF", "IBAN", "NAME"} {
+		fields[k] = strings.Trim(fields[k], "/")
 	}
 	if cntp, ok := fields["CNTP"]; ok {
 		// /CNTP/IBAN/BIC/NAME/CITY/

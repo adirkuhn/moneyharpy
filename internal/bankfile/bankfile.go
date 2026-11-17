@@ -64,7 +64,7 @@ func Parse(data []byte) ([]Statement, Format, error) {
 	case bytes.HasPrefix(trimmed, []byte("<")):
 		s, err := parseCAMT(trimmed)
 		return s, CAMT, err
-	case bytes.Contains(trimmed, []byte(":20:")) && bytes.Contains(trimmed, []byte(":61:")):
+	case bytes.Contains(trimmed, []byte(":20:")) && (bytes.Contains(trimmed, []byte(":61:")) || bytes.Contains(trimmed, []byte(":60F:"))):
 		s, err := parseMT940(trimmed)
 		return s, MT940, err
 	}

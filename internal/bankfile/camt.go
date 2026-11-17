@@ -1,13 +1,27 @@
 package bankfile
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"math"
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/text/encoding/ianaindex"
 )
+
+// charsetReader reads the files of banks that write Latin-1 or Windows-1252
+// rather than UTF-8.
+func charsetReader(label string, in io.Reader) (io.Reader, error) {
+	enc, err := ianaindex.IANA.Encoding(label)
+	if err != nil || enc == nil {
+		return nil, fmt.Errorf("encoding %q is not supported", label)
+	}
+	return enc.NewDecoder().Reader(in), nil
+}
 
 // The elements below match by local name, so every CAMT version and
 // namespace reads alike.
@@ -105,7 +119,9 @@ func cents(s string) (int64, error) {
 
 func parseCAMT(data []byte) ([]Statement, error) {
 	var doc camtDocument
-	if err := xml.Unmarshal(data, &doc); err != nil {
+	dec := xml.NewDecoder(bytes.NewReader(data))
+	dec.CharsetReader = charsetReader
+	if err := dec.Decode(&doc); err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalid, err)
 	}
 	all := append(append(doc.Statements, doc.Reports...), doc.Notifications...)
@@ -114,7 +130,7 @@ func parseCAMT(data []byte) ([]Statement, error) {
 	}
 	out := make([]Statement, 0, len(all))
 	for _, cs := range all {
-		s := Statement{Account: strings.ReplaceAll(cs.IBAN+cs.Other, " ", ""), Currency: cs.Currency, Reference: strings.TrimSpace(cs.ID)}
+		s := Statement{Account: accountNumber(cs.IBAN+cs.Other, false), Currency: cs.Currency, Reference: strings.TrimSpace(cs.ID)}
 		for _, b := range cs.Balances {
 			if b.Code != "CLBD" {
 				continue
