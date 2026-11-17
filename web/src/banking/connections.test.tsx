@@ -49,15 +49,21 @@ describe('connecting a bank', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Connect a bank' }))
     const panel = await screen.findByRole('region', { name: 'Connect a bank' })
     const banks = await within(panel).findByRole('list', { name: 'Banks' })
-    expect(within(banks).getAllByRole('button')).toHaveLength(2)
+    // One list: the banks of Enable Banking and those connected directly, by name.
+    await waitFor(() => expect(within(banks).getAllByRole('button').map((b) => b.lastElementChild?.textContent)).toEqual(['Example Bank', 'Other Bank', 'Revolut Business']))
     await userEvent.type(within(panel).getByRole('searchbox', { name: 'Search your bank' }), 'example')
     expect(within(banks).getAllByRole('button')).toHaveLength(1)
     await userEvent.click(within(banks).getByRole('button', { name: 'Example Bank' }))
+    expect(within(panel).getByRole('heading', { name: 'How to connect Example Bank' })).toBeInTheDocument()
+    expect(within(panel).queryByRole('article', { name: 'Directly, with an API key' })).toBeNull()
+    const via = within(panel).getByRole('article', { name: 'Through Enable Banking' })
+    expect(via).toHaveTextContent('licensed service')
+    await userEvent.click(within(via).getByRole('button', { name: 'Log in at Example Bank' }))
     await waitFor(() => expect(go).toHaveBeenCalledWith('https://bank.example.com/login'))
     expect(asked).toEqual({ bank: 'Example Bank', country: 'NL' })
   })
 
-  it('says when bank connections are turned off', async () => {
+  it('still offers the direct banks when Enable Banking is off', async () => {
     server.use(
       ...loaded([]),
       http.get('*/api/v2/11/bank_connections/banks', () =>
@@ -67,7 +73,27 @@ describe('connecting a bank', () => {
     renderAt('/11/financial_accounts')
     await userEvent.click(await screen.findByRole('button', { name: 'More actions' }))
     await userEvent.click(screen.getByRole('button', { name: 'Connect a bank' }))
-    expect(await screen.findByText(/turned off on this installation/)).toBeInTheDocument()
+    expect(await screen.findByText(/once an instance administrator turns it on/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Revolut Business' })).toBeInTheDocument()
+  })
+
+  it('offers both ways for a bank that connects directly and through Enable Banking, the direct one first', async () => {
+    server.use(
+      ...loaded([]),
+      http.get('*/api/v2/11/bank_connections/banks', () => HttpResponse.json([{ name: 'Revolut', country: 'NL', logo: 'https://example.com/revolut.png' }])),
+    )
+    renderAt('/11/financial_accounts')
+    await userEvent.click(await screen.findByRole('button', { name: 'More actions' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Connect a bank' }))
+    const panel = await screen.findByRole('region', { name: 'Connect a bank' })
+    const banks = await within(panel).findByRole('list', { name: 'Banks' })
+    await waitFor(() => expect(within(banks).getAllByRole('button').map((b) => b.lastElementChild?.textContent)).toEqual(['Revolut Business']))
+    await userEvent.click(within(banks).getByRole('button', { name: 'Revolut Business' }))
+    const ways = within(panel).getAllByRole('article').map((a) => a.getAttribute('aria-label'))
+    expect(ways).toEqual(['Directly, with an API key', 'Through Enable Banking'])
+    expect(within(panel).getByRole('article', { name: 'Directly, with an API key' })).toHaveTextContent('Recommended')
+    await userEvent.click(within(panel).getByRole('button', { name: /Choose another bank/ }))
+    expect(within(panel).getByRole('list', { name: 'Banks' })).toBeInTheDocument()
   })
 
   it('shows the bank an account comes through, and reconnects in one click when its consent ends', async () => {
@@ -184,8 +210,9 @@ describe('Revolut Business with an API key', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'More actions' }))
     await userEvent.click(screen.getByRole('button', { name: 'Connect a bank' }))
     const panel = await screen.findByRole('region', { name: 'Connect a bank' })
-    await userEvent.click(within(panel).getByRole('button', { name: 'Revolut Business (API key)' }))
+    await userEvent.click(await within(panel).findByRole('button', { name: 'Revolut Business' }))
     expect(within(panel).getByText(/without request signing/)).toBeInTheDocument()
+    expect(within(panel).queryByRole('article', { name: 'Through Enable Banking' })).toBeNull()
     await userEvent.type(within(panel).getByLabelText('API key'), 'secret-key')
     await userEvent.click(within(panel).getByRole('button', { name: 'Connect' }))
     expect(await within(panel).findByText('Connected to Revolut Business. Its transactions are in.')).toBeInTheDocument()

@@ -35,56 +35,51 @@ function KeyForm({ label, submit, pending, error, onSubmit }: { label: string; s
   )
 }
 
-/** Revolut Business connects with a read-only API key from its API Console. */
-function RevolutKey({ administrationId }: { administrationId: string }) {
-  const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const connect = useConnectWithKey(administrationId)
-  const formId = useId()
-  return (
-    <div className="connect-bank__key">
-      <button type="button" className="connect-bank__bank" aria-expanded={open} aria-controls={formId} onClick={() => setOpen(!open)}>
-        <span className="connect-bank__logo" aria-hidden="true">R</span>
-        <span>{t('bank.connect.revolut')}</span>
-      </button>
-      {open && (
-        <div id={formId} className="connect-bank__keyform">
-          <p className="hint">{t('bank.connect.revolutHelp')}</p>
-          {connect.isSuccess ? (
-            <p className="notice" role="status">{t('bank.connections.connected', { bank: connect.data.bank })}</p>
-          ) : (
-            <KeyForm label={t('bank.connect.apiKey')} submit={t('bank.connect.connect')} pending={connect.isPending} error={connect.error} onSubmit={(key) => connect.mutate(key)} />
-          )}
-        </div>
-      )}
-    </div>
-  )
+/** A bank the user can pick, with the ways it connects. */
+type Choice = { name: string; logo: string; direct?: 'revolut'; viaEnableBanking?: ConnectableBank }
+
+/** Banks MoneyHarpy connects to itself, without a service in between. */
+const directBanks: { name: string; provider: 'revolut'; matches: RegExp }[] = [{ name: 'Revolut Business', provider: 'revolut', matches: /revolut/i }]
+
+/** The banks to choose from: the direct ones, joined with the same bank at Enable Banking, and the rest of Enable Banking's. */
+function choices(banks: ConnectableBank[]): Choice[] {
+  const out: Choice[] = directBanks.map((d) => {
+    const via = banks.find((b) => d.matches.test(b.name))
+    return { name: d.name, logo: via?.logo ?? '', direct: d.provider, ...(via ? { viaEnableBanking: via } : {}) }
+  })
+  for (const b of banks) {
+    if (!directBanks.some((d) => d.matches.test(b.name))) {
+      out.push({ name: b.name, logo: b.logo, viaEnableBanking: b })
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name))
 }
 
-const day = (at: string | null | undefined, language: string) => (at ? new Date(at).toLocaleDateString(language, { dateStyle: 'medium' }) : '')
-const moment = (at: string | null | undefined, language: string) => (at ? new Date(at).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' }) : '')
+function BankLogo({ choice }: { choice: Choice }) {
+  return choice.logo ? <img src={choice.logo} alt="" loading="lazy" /> : <span className="connect-bank__logo" aria-hidden="true">{choice.name.slice(0, 1)}</span>
+}
 
 /**
- * Connect a bank: the banks that can be connected, to search and pick one;
- * the browser then goes to the bank, where the user authorises access.
+ * Connect a bank in two steps: choose the bank from one list, then how to
+ * connect it: directly with an API key where the bank allows that, or by
+ * logging in at the bank through Enable Banking.
  */
 export function ConnectBank({ id, administrationId }: { id: string; administrationId: string }) {
   const { t } = useTranslation()
   const banks = useConnectableBanks(administrationId, true)
-  const connect = useConnectBank(administrationId)
   const [query, setQuery] = useState('')
+  const [chosen, setChosen] = useState<Choice | null>(null)
   const listId = useId()
-  const shown = (banks.data ?? []).filter((b) => b.name.toLowerCase().includes(query.trim().toLowerCase()))
+  // Without Enable Banking the direct banks can still be connected.
+  const all = choices(banks.data ?? [])
+  const shown = all.filter((c) => c.name.toLowerCase().includes(query.trim().toLowerCase()))
   return (
     <section id={id} className="connect-bank" aria-label={t('bank.connect.title')}>
-      <p className="connect-bank__intro">{t('bank.connect.intro')}</p>
-      <RevolutKey administrationId={administrationId} />
-      {banks.isError ? (
-        <Problems messages={errorMessages(banks.error, {})} />
-      ) : !banks.data ? (
-        <Loading />
+      {chosen ? (
+        <ConnectChoice administrationId={administrationId} choice={chosen} onBack={() => setChosen(null)} />
       ) : (
         <>
+          <h2 className="connect-bank__step">{t('bank.connect.chooseBank')}</h2>
           <input
             type="search"
             className="connect-bank__search"
@@ -94,24 +89,72 @@ export function ConnectBank({ id, administrationId }: { id: string; administrati
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+          {banks.isPending && <Loading />}
           <ul id={listId} className="connect-bank__banks" aria-label={t('bank.connect.banks')}>
-            {shown.map((b: ConnectableBank) => (
-              <li key={`${b.country}-${b.name}`}>
-                <button type="button" className="connect-bank__bank" disabled={connect.isPending} onClick={() => connect.mutate(b)}>
-                  {b.logo ? <img src={b.logo} alt="" loading="lazy" /> : <span className="connect-bank__logo" aria-hidden="true" />}
-                  <span>{b.name}</span>
+            {shown.map((c) => (
+              <li key={c.name}>
+                <button type="button" className="connect-bank__bank" onClick={() => setChosen(c)}>
+                  <BankLogo choice={c} />
+                  <span>{c.name}</span>
                 </button>
               </li>
             ))}
-            {shown.length === 0 && <li className="connect-bank__empty">{t('bank.connect.none')}</li>}
+            {shown.length === 0 && !banks.isPending && <li className="connect-bank__empty">{t('bank.connect.none')}</li>}
           </ul>
-          {connect.isPending && <p role="status" className="hint">{t('bank.connect.going')}</p>}
-          <Problems messages={errorMessages(connect.error, {})} />
+          {banks.isError && <p className="hint">{t('bank.connect.moreBanksOff')}</p>}
         </>
       )}
     </section>
   )
 }
+
+/** Step two: the ways the chosen bank connects, each explained. */
+function ConnectChoice({ administrationId, choice, onBack }: { administrationId: string; choice: Choice; onBack: () => void }) {
+  const { t } = useTranslation()
+  const connectKey = useConnectWithKey(administrationId)
+  const connectBank = useConnectBank(administrationId)
+  return (
+    <div className="connect-choice">
+      <button type="button" className="btn btn--link connect-choice__back" onClick={onBack}>‹ {t('bank.connect.otherBank')}</button>
+      <h2 className="connect-bank__step connect-choice__bank">
+        <BankLogo choice={choice} />
+        <span>{t('bank.connect.how', { bank: choice.name })}</span>
+      </h2>
+      <div className="connect-choice__ways">
+        {choice.direct && (
+          <article className="connect-way" aria-label={t('bank.connect.directTitle')}>
+            <p className="connect-way__title">
+              {t('bank.connect.directTitle')}
+              {choice.viaEnableBanking && <span className="badge badge--paid">{t('bank.connect.recommended')}</span>}
+            </p>
+            <p className="hint">{t('bank.connect.directText')}</p>
+            <p className="hint">{t('bank.connect.revolutHelp')}</p>
+            {connectKey.isSuccess ? (
+              <p className="notice" role="status">{t('bank.connections.connected', { bank: connectKey.data.bank })}</p>
+            ) : (
+              <KeyForm label={t('bank.connect.apiKey')} submit={t('bank.connect.connect')} pending={connectKey.isPending} error={connectKey.error} onSubmit={(key) => connectKey.mutate(key)} />
+            )}
+          </article>
+        )}
+        {choice.viaEnableBanking && (
+          <article className="connect-way" aria-label={t('bank.connect.viaTitle')}>
+            <p className="connect-way__title">{t('bank.connect.viaTitle')}</p>
+            <p className="hint">{t('bank.connect.viaText')}</p>
+            <div>
+              <button type="button" className="btn btn--primary" disabled={connectBank.isPending} onClick={() => connectBank.mutate(choice.viaEnableBanking!)}>
+                {connectBank.isPending ? t('bank.connect.going') : t('bank.connect.logIn', { bank: choice.name })}
+              </button>
+            </div>
+            <Problems messages={errorMessages(connectBank.error, {})} />
+          </article>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const day = (at: string | null | undefined, language: string) => (at ? new Date(at).toLocaleDateString(language, { dateStyle: 'medium' }) : '')
+const moment = (at: string | null | undefined, language: string) => (at ? new Date(at).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' }) : '')
 
 /**
  * What needs the user about the connections: one click to reconnect a bank

@@ -807,9 +807,11 @@ export const nl: Messages = {
     statementFilesHelp: 'Download een CAMT.053- of MT940-bestand (Revolut: het CSV-afschrift) in je internetbankieren en importeer het bij de rekening. Transacties die je al hebt worden overgeslagen.',
     connect: {
       button: 'Bank koppelen', title: 'Bank koppelen', search: 'Zoek je bank', banks: 'Banken', none: 'Geen bank gevonden.',
-      intro: 'Kies je bank. Je logt in bij je bank en geeft MoneyHarpy toegang tot je zakelijke rekeningen; hun transacties komen dan elke paar uur binnen.',
       going: 'Naar je bank…',
-      revolut: 'Revolut Business (API-sleutel)', apiKey: 'API-sleutel', connect: 'Koppelen', checking: 'Bezig met controleren…',
+      chooseBank: 'Kies je bank', otherBank: 'Een andere bank kiezen', how: 'Hoe koppel je {{bank}}', recommended: 'Aanbevolen',
+      directTitle: 'Rechtstreeks, met een API-sleutel', directText: 'MoneyHarpy haalt rechtstreeks bij de bank op: geen dienst ertussen, en niet elke paar maanden opnieuw inloggen.',
+      viaTitle: 'Via Enable Banking', viaText: 'Je logt in bij je bank, die toegang geeft via Enable Banking, een dienst met vergunning die de transacties doorgeeft. Banken vragen je ongeveer elk half jaar opnieuw in te loggen.',
+      logIn: 'Inloggen bij {{bank}}', moreBanksOff: 'Meer banken kunnen via Enable Banking gekoppeld worden zodra een instantiebeheerder dat aanzet.', apiKey: 'API-sleutel', connect: 'Koppelen', checking: 'Bezig met controleren…',
       revolutHelp: 'Maak in Revolut Business in de API Console een API-sleutel met leestoegang tot rekeningen en transacties, zonder ondertekening van verzoeken, en plak hem hier. MoneyHarpy bewaart hem versleuteld, leest er alleen mee en haalt rechtstreeks bij Revolut op.', orText: 'Of laat ze vanzelf binnenkomen:', orLink: 'koppel je bank',
     },
     connections: {

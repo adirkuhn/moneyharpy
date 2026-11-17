@@ -805,9 +805,11 @@ export const en = {
     statementFilesHelp: 'Download a CAMT.053 or MT940 file (Revolut: the CSV statement) in your online banking and import it on the account. Transactions you have already are skipped.',
     connect: {
       button: 'Connect a bank', title: 'Connect a bank', search: 'Search your bank', banks: 'Banks', none: 'No bank found.',
-      intro: 'Pick your bank. You log in at your bank and give MoneyHarpy access to your business accounts; their transactions then come in every few hours.',
       going: 'Going to your bank…',
-      revolut: 'Revolut Business (API key)', apiKey: 'API key', connect: 'Connect', checking: 'Checking…',
+      chooseBank: 'Choose your bank', otherBank: 'Choose another bank', how: 'How to connect {{bank}}', recommended: 'Recommended',
+      directTitle: 'Directly, with an API key', directText: 'MoneyHarpy fetches straight from the bank: no service in between, and no need to log in again every few months.',
+      viaTitle: 'Through Enable Banking', viaText: 'You log in at your bank, which gives access through Enable Banking, a licensed service that passes the transactions on. Banks ask you to log in again about every six months.',
+      logIn: 'Log in at {{bank}}', moreBanksOff: 'More banks can be connected through Enable Banking once an instance administrator turns it on.', apiKey: 'API key', connect: 'Connect', checking: 'Checking…',
       revolutHelp: 'In Revolut Business, create an API key in the API Console with read access to accounts and transactions, without request signing, and paste it here. MoneyHarpy keeps it encrypted, only reads with it, and fetches straight from Revolut.', orText: 'Or have them come in by themselves:', orLink: 'connect your bank',
     },
     connections: {
