@@ -7,10 +7,10 @@ import { ListIcon } from '../layout/icons'
 import { useImportStatementFile } from './queries'
 import './accounts.css'
 
-type AddProps = { id: string; administrationId: string; manualTo: string; onImported: (accountIds: string[]) => void }
+type AddProps = { id: string; administrationId: string; manualTo: string; onImported: (accountIds: string[]) => void; onConnect?: () => void }
 
 /** Moneybird's Add transactions: a field to drop a CAMT.053, MT940 or Revolut CSV file on, or a way to add them by hand. */
-export function AddTransactions({ id, administrationId, manualTo, onImported }: AddProps) {
+export function AddTransactions({ id, administrationId, manualTo, onImported, onConnect }: AddProps) {
   const { t } = useTranslation()
   const upload = useImportStatementFile(administrationId)
   const [over, setOver] = useState(false)
@@ -56,6 +56,12 @@ export function AddTransactions({ id, administrationId, manualTo, onImported }: 
       <p className="add-transactions__manual">
         {t('bank.accounts.manualText')} <Link to={manualTo}>{t('bank.accounts.manualLink')}</Link>
       </p>
+      {onConnect && (
+        <p className="add-transactions__manual">
+          {t('bank.connect.orText')}{' '}
+          <button type="button" className="btn btn--link" onClick={onConnect}>{t('bank.connect.orLink')}</button>
+        </p>
+      )}
     </section>
   )
 }

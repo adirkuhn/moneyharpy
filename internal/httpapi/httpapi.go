@@ -77,6 +77,15 @@ type RegisterChecker interface {
 	Check(ctx context.Context) error
 }
 
+// BankLinkChecker tries the Enable Banking application of the settings.
+type BankLinkChecker interface {
+	Check(ctx context.Context) error
+}
+
+// BankLinkCallbackPath is where banks send users back to after they
+// authorised a bank connection.
+const BankLinkCallbackPath = "/bank_connection_callback"
+
 // AddressLookup completes Dutch addresses.
 type AddressLookup interface {
 	LookupAddress(ctx context.Context, zipcode, houseNumber string) (administration.AddressMatch, error)
@@ -135,7 +144,9 @@ type Deps struct {
 	// lookup off.
 	CompanyNumbers administration.CompanyLookup
 	CompanyCheck   RegisterChecker
-	Addresses      AddressLookup
+	// BankLink checks the Enable Banking application; nil reports it unavailable.
+	BankLink  BankLinkChecker
+	Addresses AddressLookup
 	// VATNumbers fills in contacts from VIES; nil leaves the lookup off.
 	VATNumbers VATNumbers
 	Mail       TestMailer
@@ -248,6 +259,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Remove or move the sub-categories first"}}))
 	case errors.Is(err, bookkeeping.ErrInUse):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This category is used by transactions or booking rules; keep it deactivated instead"}}))
+	case errors.Is(err, banking.ErrLinkOff):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Bank connections are turned off on this installation; an instance administrator can turn them on"}}))
 	case errors.Is(err, banking.ErrBookingUnavailable):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet in MoneyHarpy"}}))
 	case errors.Is(err, purchases.ErrNotEditable):

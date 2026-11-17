@@ -138,6 +138,30 @@ type Attachment struct {
 	Sha256           string
 }
 
+type BankConnection struct {
+	ID               int64
+	AdministrationID int64
+	Provider         string
+	Bank             string
+	Country          string
+	State            string
+	SessionID        string
+	ValidUntil       pgtype.Timestamptz
+	AuthState        pgtype.Text
+	CreatedBy        int64
+	LastSyncAt       pgtype.Timestamptz
+	LastError        string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type BankConnectionAccount struct {
+	FinancialAccountID int64
+	ConnectionID       int64
+	AccountUid         string
+	Position           int32
+}
+
 type BankJournalEntry struct {
 	ID                 int64
 	AdministrationID   int64

@@ -30,6 +30,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/downloads"
+	"github.com/adirkuhn/moneyharpy/internal/enablebanking"
 	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
@@ -254,6 +255,8 @@ type harness struct {
 	ocr    *fakeOCR
 	// vies stands in for VIES; tests never call the real one.
 	vies *fakeVIES
+	// bank stands in for Enable Banking; tests never call the real one.
+	bank *fakeEnableBanking
 	// recognition is Scan and Recognise, reading e-invoices only: XML
 	// files starting with <Invoice are read as testEInvoice.
 	recognition *recognize.Service
@@ -296,7 +299,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	mailer := &fakeMailer{resets: make(chan sentMail, 8)}
 
 	files := &fakeFiles{data: map[string][]byte{}}
-	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle, ocr: &fakeOCR{}, vies: &fakeVIES{}, pool: pool}
+	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle, ocr: &fakeOCR{}, vies: &fakeVIES{}, bank: newFakeEnableBanking(t), pool: pool}
 	h.server = httptest.NewUnstartedServer(nil)
 	h.server.Start()
 	t.Cleanup(h.server.Close)
@@ -306,7 +309,9 @@ func newHarness(t *testing.T, opts options) *harness {
 	h.hooks = webhooks.NewService(admins, postgres.NewWebhookStore(pool, settings.NewCipher("test-secret")), hookclient.New(), settle, ids, time.Now)
 	invoices := invoicing.NewService(admins, postgres.NewInvoicingStore(pool), files, ids, time.Now)
 	people := identity.NewService(postgres.NewIdentityStore(pool), settle, ids, identity.NewHasher(identity.Params{Time: 1, MemoryKiB: 8, Threads: 1}), mailer, settings.NewCipher("test-secret"), time.Now)
-	bank := banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now)
+	bankStore := postgres.NewBankingStore(pool)
+	bank := banking.NewService(admins, books, bankStore, ids, time.Now)
+	bank.UseBankLinks(&enablebanking.Provider{Settings: settle, BaseURL: h.bank.server.URL, HTTP: h.bank.server.Client(), Now: time.Now}, bankStore, h.server.URL+httpapi.BankLinkCallbackPath)
 	noteService := notes.NewService(postgres.NewNoteStore(pool), ids, time.Now)
 	journalStore := postgres.NewJournalStore(pool)
 	salesStore := postgres.NewSalesStore(pool)
@@ -379,6 +384,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Companies:       lookup,
 		CompanyNumbers:  lookup,
 		CompanyCheck:    lookup,
+		BankLink:        &enablebanking.Provider{Settings: settle, BaseURL: h.bank.server.URL, HTTP: h.bank.server.Client(), Now: time.Now},
 		Addresses:       lookup,
 		VATNumbers:      vatlookup.New(settle, h.vies),
 		LookupLimiter:   opts.lookupLimiter,
@@ -798,7 +804,11 @@ func TestInstanceSettings(t *testing.T) {
 	if strings.Contains(string(r.body), secret) {
 		t.Error("settings response contains the secret")
 	}
-	want := httpapi.InstanceSettings{RegistrationOpen: false, GoogleEnabled: true, GoogleClientId: "id", GoogleClientSecretSet: true, RecognitionAiConnections: []httpapi.RecognitionAIConnection{}}
+	want := httpapi.InstanceSettings{
+		RegistrationOpen: false, GoogleEnabled: true, GoogleClientId: "id", GoogleClientSecretSet: true, RecognitionAiConnections: []httpapi.RecognitionAIConnection{},
+	}
+	redirect := h.server.URL + "/bank_connection_callback"
+	want.EnableBankingRedirectUrl = &redirect
 	if diff := cmp.Diff(want, decode[httpapi.InstanceSettings](t, r)); diff != "" {
 		t.Errorf("settings diff (-want +got):\n%s", diff)
 	}

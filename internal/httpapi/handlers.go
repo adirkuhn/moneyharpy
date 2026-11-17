@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/enablebanking"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/settings"
@@ -822,7 +823,7 @@ func (s *server) DeleteToken(w http.ResponseWriter, r *http.Request, id Id) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func toInstanceSettings(inst settings.Instance) InstanceSettings {
+func (s *server) toInstanceSettings(inst settings.Instance) InstanceSettings {
 	return InstanceSettings{
 		RegistrationOpen:         inst.RegistrationOpen,
 		GoogleEnabled:            inst.Google.Enabled,
@@ -853,6 +854,11 @@ func toInstanceSettings(inst settings.Instance) InstanceSettings {
 		RecognitionAiEnabled:     inst.Recognition.AIEnabled,
 		RecognitionAiConnections: toAIConnections(inst.Recognition.Connections),
 		ViesEnabled:              inst.VIESEnabled,
+
+		BankConnectionsEnabled:     inst.BankLink.Enabled,
+		EnableBankingApplicationId: inst.BankLink.ApplicationID,
+		EnableBankingPrivateKeySet: inst.BankLink.PrivateKey != "",
+		EnableBankingRedirectUrl:   ptr(strings.TrimSuffix(s.deps.BaseURL, "/") + BankLinkCallbackPath),
 	}
 }
 
@@ -899,7 +905,7 @@ func (s *server) InstanceSettings(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toInstanceSettings(inst))
+	writeJSON(w, http.StatusOK, s.toInstanceSettings(inst))
 }
 
 // SendTestEmail implements ServerInterface. The mail server's reason is shown
@@ -925,6 +931,30 @@ func (s *server) TestKvkWebsiteSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// TestBankConnections implements ServerInterface. Enable Banking's reason is
+// shown because only instance administrators can reach this and need it to
+// fix the setup.
+func (s *server) TestBankConnections(w http.ResponseWriter, r *http.Request) {
+	if !requireInstanceAdmin(w, r) {
+		return
+	}
+	if s.deps.BankLink == nil {
+		writeError(w, http.StatusBadGateway, "Bank connections are not available on this server")
+		return
+	}
+	err := s.deps.BankLink.Check(r.Context())
+	switch {
+	case errors.Is(err, enablebanking.ErrNotConfigured):
+		var verr resource.ValidationError
+		verr.Add("enable_banking_private_key", "and the application id must be saved first")
+		s.fail(w, r, &verr)
+	case err != nil:
+		writeError(w, http.StatusBadGateway, err.Error())
+	default:
+		w.WriteHeader(http.StatusNoContent)
+	}
 }
 
 // UpdateInstanceSettings implements ServerInterface.
@@ -970,12 +1000,16 @@ func (s *server) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) 
 		RecognitionAIEnabled:     body.RecognitionAiEnabled,
 		RecognitionAIConnections: fromAIConnections(body.RecognitionAiConnections),
 		VIESEnabled:              cmp.Or(body.ViesEnabled, body.RecognitionViesEnabled),
+
+		BankLinkEnabled:       body.BankConnectionsEnabled,
+		BankLinkApplicationID: body.EnableBankingApplicationId,
+		BankLinkPrivateKey:    body.EnableBankingPrivateKey,
 	})
 	if err != nil {
 		s.fail(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toInstanceSettings(inst))
+	writeJSON(w, http.StatusOK, s.toInstanceSettings(inst))
 }
 
 // serveWeb serves the web application: real files where they exist, and the

@@ -125,6 +125,11 @@ type Service struct {
 	projects  Projects
 	ids       *resource.Generator
 	now       func() time.Time
+
+	// links, connections and redirect connect banks; nil leaves them off.
+	links       BankLinks
+	connections ConnectionStore
+	redirect    string
 }
 
 // NewService returns a Service.
@@ -210,7 +215,7 @@ func cashName(language string) string {
 // IsNotFound reports whether err means a banking resource is missing.
 func IsNotFound(err error) bool {
 	return errors.Is(err, ErrAccountNotFound) || errors.Is(err, ErrStatementNotFound) || errors.Is(err, ErrMutationNotFound) ||
-		errors.Is(err, ErrBookingNotFound) || errors.Is(err, ErrRuleNotFound)
+		errors.Is(err, ErrBookingNotFound) || errors.Is(err, ErrRuleNotFound) || errors.Is(err, ErrConnectionNotFound)
 }
 
 func invalid(field, problem string) error {

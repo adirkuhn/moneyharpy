@@ -1,0 +1,24 @@
+/* Connecting banks: the banks to pick from, notices to reconnect, and the connections in the settings. */
+.connect-bank { display: grid; gap: 0.75rem; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.connect-bank__intro { margin: 0; color: var(--muted); }
+.connect-bank__search { width: 100%; max-width: 24rem; }
+.connect-bank__banks { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.connect-bank__bank { display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 3rem; padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.connect-bank__bank:hover:not(:disabled), .connect-bank__bank:focus-visible { border-color: var(--blue); }
+.connect-bank__bank img, .connect-bank__logo { flex: none; width: 2rem; height: 2rem; border-radius: 6px; object-fit: contain; background: var(--track); }
+.connect-bank__empty { color: var(--muted); }
+.connection-notices { display: grid; gap: 0.5rem; margin-bottom: 1.25rem; }
+.connection-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem; border: 1px solid var(--gold); border-radius: 10px; background: var(--surface); }
+.connection-notice.is-expired { border-color: var(--danger); background: var(--danger-bg); color: var(--danger-text); }
+.connection-notice p { margin: 0; }
+.connection-list { display: grid; gap: 0.75rem; }
+.connection__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.connection__facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; margin: 0.5rem 0; }
+.connection__facts dt { color: var(--muted); }
+.connection__facts dd { margin: 0; overflow-wrap: anywhere; }
+.connection__error { color: var(--danger); }
+.connection__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+@media (max-width: 480px) {
+  .connection__facts { grid-template-columns: 1fr; }
+  .connection__facts dd { margin-bottom: 0.25rem; }
+}

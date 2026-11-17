@@ -74,3 +74,6 @@ func Parse(data []byte) ([]Statement, Format, error) {
 	}
 	return nil, "", ErrUnknownFormat
 }
+
+// Cents reads an unsigned decimal amount, such as "25.50", in cents.
+func Cents(s string) (int64, error) { return cents(s) }
