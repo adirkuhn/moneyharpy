@@ -29,6 +29,18 @@ export function useTimeEntries(administrationId: string, state: TimeState, page:
   })
 }
 
+/** A member's time in the week from its Monday, running timers included: Moneybird's timesheet register. */
+export function useWeekEntries(administrationId: string, userId: string, period: string) {
+  return useQuery({
+    queryKey: ['time_entries', administrationId, 'week', userId, period],
+    enabled: !!userId,
+    placeholderData: keepPreviousData,
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/time_entries', {
+      params: { path: admin(administrationId), query: { filter: `period:${period},include_active:true,user_id:${userId}`, per_page: '100' } },
+    })),
+  })
+}
+
 export function useTimeEntry(administrationId: string, id?: string) {
   return useQuery({
     queryKey: ['time_entry', administrationId, id],

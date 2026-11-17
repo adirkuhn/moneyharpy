@@ -574,6 +574,22 @@ export const en = {
     states: { running: 'Running', invoiced: 'Invoiced', open: 'Open', nonBillable: 'Not billable' },
     detailsTitle: 'Time details', stop: 'Stop timer', resume: 'Resume timer', delete: 'Delete', confirmDelete: 'Delete time',
     confirmDeleteText: 'Delete this time entry? This cannot be undone.',
+    billableShort: 'Billable',
+    register: {
+      title: 'Timesheets {{date}}', today: 'Today', more: 'More actions', moreInfo: 'More information', week: 'Week',
+      prevWeek: 'Previous week', nextWeek: 'Next week', weekTotal: 'Week total', form: 'Log time',
+      startedAt: 'Started at', endedAt: 'Ended at', pause: 'Pause duration', notATime: 'Enter a time as hh:mm, such as 09:30.',
+      describe: 'Describe what you worked on.', chooseProject: 'Select project', findProject: 'Find project', noProject: 'No project found',
+      noneProject: 'No project', addProject: 'Add project', save: 'Save', start: 'Start timer',
+      fromUntil: 'From / until', paused: 'Paused', worked: 'Worked', timer: 'Timer', now: 'Now', total: 'Total',
+      empty: 'No time logged on this day. Log time above, or start a timer.',
+      intro: {
+        title: 'Log worked hours', text: 'Keep track of hours for yourself or for your entire team. This way you know exactly how many hours you worked for a client.',
+        contact: 'Contact', contactText: 'Select the client you will be working for.',
+        project: 'Project', projectText: 'Select the project you are working on and indicate whether your hours are billable or not. Or add a project first.',
+        timer: 'Start timer', timerText: 'Keep track of your hours automatically by starting the timer. Or manually enter the start and end time.',
+      },
+    },
   },
   taskLists: {
     title: 'Task lists', add: 'Add task list', newTitle: 'New task list', backToList: 'To Task lists', form: 'Task list', save: 'Save task list',

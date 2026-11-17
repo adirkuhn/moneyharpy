@@ -576,6 +576,22 @@ export const nl: Messages = {
     states: { running: 'Loopt', invoiced: 'Gefactureerd', open: 'Open', nonBillable: 'Niet factureerbaar' },
     detailsTitle: 'Gegevens van de uren', stop: 'Timer stoppen', resume: 'Timer hervatten', delete: 'Verwijderen', confirmDelete: 'Uren verwijderen',
     confirmDeleteText: 'Deze uren verwijderen? Dit kan niet ongedaan worden gemaakt.',
+    billableShort: 'Factureerbaar',
+    register: {
+      title: 'Urenregistratie {{date}}', today: 'Vandaag', more: 'Meer acties', moreInfo: 'Meer informatie', week: 'Week',
+      prevWeek: 'Vorige week', nextWeek: 'Volgende week', weekTotal: 'Weektotaal', form: 'Uren registreren',
+      startedAt: 'Gestart om', endedAt: 'Gestopt om', pause: 'Pauzeduur', notATime: 'Vul een tijd in als uu:mm, zoals 09:30.',
+      describe: 'Omschrijf waar je aan hebt gewerkt.', chooseProject: 'Selecteer project', findProject: 'Project zoeken', noProject: 'Geen project gevonden',
+      noneProject: 'Geen project', addProject: 'Project toevoegen', save: 'Opslaan', start: 'Timer starten',
+      fromUntil: 'Van / tot', paused: 'Gepauzeerd', worked: 'Gewerkt', timer: 'Timer', now: 'Nu', total: 'Totaal',
+      empty: 'Geen uren geregistreerd op deze dag. Registreer hierboven uren, of start een timer.',
+      intro: {
+        title: 'Gewerkte uren registreren', text: 'Houd de uren bij voor jezelf of voor je hele team. Zo weet je precies hoeveel uur je voor een klant hebt gewerkt.',
+        contact: 'Contact', contactText: 'Selecteer de klant voor wie je gaat werken.',
+        project: 'Project', projectText: 'Selecteer het project waaraan je werkt en geef aan of je uren factureerbaar zijn. Of voeg eerst een project toe.',
+        timer: 'Timer starten', timerText: 'Houd je uren automatisch bij door de timer te starten. Of vul handmatig de begin- en eindtijd in.',
+      },
+    },
   },
   taskLists: {
     title: 'Takenlijsten', add: 'Takenlijst toevoegen', newTitle: 'Nieuwe takenlijst', backToList: 'Naar Takenlijsten', form: 'Takenlijst', save: 'Takenlijst opslaan',
