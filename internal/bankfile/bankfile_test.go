@@ -142,3 +142,47 @@ func TestParseKeepsEachAccountsStatement(t *testing.T) {
 		t.Errorf("statements = %+v", got)
 	}
 }
+
+// Revolut Business only exports CSV: its completed transactions, newest
+// first, with what each did to the balance in Total amount.
+func TestParseRevolutCSV(t *testing.T) {
+	got, format, err := Parse(read(t, "revolut.csv"))
+	if err != nil || format != Revolut || len(got) != 1 {
+		t.Fatalf("Parse() = %+v, %s, %v", got, format, err)
+	}
+	s := got[0]
+	if s.Account != "NL91ABNA0417164300" || s.Currency != "EUR" || *s.Balance != 119708 || !s.Date.Equal(day("2026-11-03")) {
+		t.Errorf("statement = %+v", s)
+	}
+	want := []Entry{
+		{Date: day("2026-10-31"), Amount: 100000, ContraName: "Example Shop B.V.", ContraAccount: "NL20INGB0001234567", Message: "Top up", Code: "TOPUP", TransactionID: "00000000-0000-4000-8000-000000000001"},
+		{Date: day("2026-11-01"), Amount: 25000, ContraName: "Example Client B.V.", ContraAccount: "NL02ABNA0123456789", Message: "Invoice 2026-0001, thanks", Code: "TRANSFER", TransactionID: "00000000-0000-4000-8000-000000000002"},
+		{Date: day("2026-11-02"), Amount: -2570, ContraName: "Hosting Company", ContraAccount: "NL44RABO0123456789", Message: "INV-2026-77", Code: "TRANSFER", TransactionID: "00000000-0000-4000-8000-000000000003"},
+		{Date: day("2026-11-02"), Amount: -1000, ContraName: "Revolut", Message: "Grow plan fee", Code: "FEE", TransactionID: "00000000-0000-4000-8000-000000000004"},
+		{Date: day("2026-11-03"), Amount: -2227, ContraName: "Example Cloud", Message: "Example Cloud USD 25.00", Code: "CARD_PAYMENT", TransactionID: "00000000-0000-4000-8000-000000000005"},
+	}
+	if len(s.Entries) != len(want) {
+		t.Fatalf("entries = %+v", s.Entries)
+	}
+	for i, w := range want {
+		e := s.Entries[i]
+		if !e.Date.Equal(w.Date) || e.Amount != w.Amount || e.ContraName != w.ContraName || e.ContraAccount != w.ContraAccount || e.Message != w.Message || e.Code != w.Code || e.TransactionID != w.TransactionID || e.Currency != "EUR" {
+			t.Errorf("entry %d = %+v, want %+v", i, e, w)
+		}
+	}
+	if s.Entries[2].ValueDate == nil || !s.Entries[2].ValueDate.Equal(day("2026-11-01")) {
+		t.Errorf("value date = %v, want the day it started", s.Entries[2].ValueDate)
+	}
+}
+
+func TestParseRevolutCSVRejectsBrokenRows(t *testing.T) {
+	head := "Date started (UTC),Date completed (UTC),ID,Type,State,Description,Reference,Payment currency,Amount,Total amount,Balance,International account number\n"
+	for name, row := range map[string]string{
+		"amount": "2026-11-01,2026-11-01,1,TRANSFER,COMPLETED,x,,EUR,ten,ten,1.00,NL91ABNA0417164300\n",
+		"date":   "2026-11-01,yesterday,1,TRANSFER,COMPLETED,x,,EUR,1.00,1.00,1.00,NL91ABNA0417164300\n",
+	} {
+		if _, _, err := Parse([]byte(head + row)); !errors.Is(err, ErrInvalid) {
+			t.Errorf("%s: error = %v", name, err)
+		}
+	}
+}

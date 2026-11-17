@@ -9,7 +9,7 @@ import './accounts.css'
 
 type AddProps = { id: string; administrationId: string; manualTo: string; onImported: (accountIds: string[]) => void }
 
-/** Moneybird's Add transactions: a field to drop a CAMT.053 or MT940 file on, or a way to add them by hand. */
+/** Moneybird's Add transactions: a field to drop a CAMT.053, MT940 or Revolut CSV file on, or a way to add them by hand. */
 export function AddTransactions({ id, administrationId, manualTo, onImported }: AddProps) {
   const { t } = useTranslation()
   const upload = useImportStatementFile(administrationId)
@@ -43,7 +43,7 @@ export function AddTransactions({ id, administrationId, manualTo, onImported }: 
         <input
           className="sr-only"
           type="file"
-          accept=".xml,.sta,.940,.mt940,.txt,.camt,application/xml,text/xml,text/plain"
+          accept=".xml,.sta,.940,.mt940,.txt,.camt,.csv,application/xml,text/xml,text/plain,text/csv"
           aria-label={t('bank.accounts.dropTitle')}
           disabled={upload.isPending}
           onChange={(e) => {

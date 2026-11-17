@@ -1241,8 +1241,9 @@ func (e IdentityRequestIdentityTaxNumberAbsenceReason) Valid() bool {
 
 // Defines values for ImportResultFormat.
 const (
-	ImportResultFormatCamt  ImportResultFormat = "camt"
-	ImportResultFormatMt940 ImportResultFormat = "mt940"
+	ImportResultFormatCamt    ImportResultFormat = "camt"
+	ImportResultFormatMt940   ImportResultFormat = "mt940"
+	ImportResultFormatRevolut ImportResultFormat = "revolut"
 )
 
 // Valid indicates whether the value is a known member of the ImportResultFormat enum.
@@ -1251,6 +1252,8 @@ func (e ImportResultFormat) Valid() bool {
 	case ImportResultFormatCamt:
 		return true
 	case ImportResultFormatMt940:
+		return true
+	case ImportResultFormatRevolut:
 		return true
 	default:
 		return false
@@ -4772,8 +4775,9 @@ func (e ListFinancialMutationLinkSuggestionsParamsScope) Valid() bool {
 
 // Defines values for ImportFinancialStatementFile201JSONResponseBodyFormat.
 const (
-	ImportFinancialStatementFile201JSONResponseBodyFormatCamt  ImportFinancialStatementFile201JSONResponseBodyFormat = "camt"
-	ImportFinancialStatementFile201JSONResponseBodyFormatMt940 ImportFinancialStatementFile201JSONResponseBodyFormat = "mt940"
+	ImportFinancialStatementFile201JSONResponseBodyFormatCamt    ImportFinancialStatementFile201JSONResponseBodyFormat = "camt"
+	ImportFinancialStatementFile201JSONResponseBodyFormatMt940   ImportFinancialStatementFile201JSONResponseBodyFormat = "mt940"
+	ImportFinancialStatementFile201JSONResponseBodyFormatRevolut ImportFinancialStatementFile201JSONResponseBodyFormat = "revolut"
 )
 
 // Valid indicates whether the value is a known member of the ImportFinancialStatementFile201JSONResponseBodyFormat enum.
@@ -4782,6 +4786,8 @@ func (e ImportFinancialStatementFile201JSONResponseBodyFormat) Valid() bool {
 	case ImportFinancialStatementFile201JSONResponseBodyFormatCamt:
 		return true
 	case ImportFinancialStatementFile201JSONResponseBodyFormatMt940:
+		return true
+	case ImportFinancialStatementFile201JSONResponseBodyFormatRevolut:
 		return true
 	default:
 		return false

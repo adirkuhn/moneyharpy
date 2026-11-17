@@ -414,7 +414,7 @@ describe('financial accounts', () => {
     renderAt('/11/financial_accounts')
     await userEvent.click(await screen.findByRole('button', { name: 'Add transactions' }))
     const add = screen.getByRole('region', { name: 'Add transactions' })
-    expect(add).toHaveTextContent('CAMT.053 or MT940, max. 10 MB')
+    expect(add).toHaveTextContent('CAMT.053, MT940 or Revolut CSV, max. 10 MB')
     expect(within(add).getByRole('link', { name: 'add transactions manually' })).toHaveAttribute('href', '/11/financial_accounts/501')
     await userEvent.upload(within(add).getByLabelText('Drag a transaction file here or click to select one'), new File(['<Document/>'], 'statement.xml', { type: 'text/xml' }))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/financial_mutations'))
