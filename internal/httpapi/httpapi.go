@@ -22,6 +22,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/downloads"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
@@ -106,7 +107,9 @@ type Deps struct {
 	Contacts        *contacts.Service
 	Journal         *journal.Service
 	Sales           *sales.Service
-	Purchases       *purchases.Service
+	// Events lists what happened to records, as Moneybird's events.
+	Events    *history.Service
+	Purchases *purchases.Service
 	// Recognition is Scan and Recognise; nil shows every document as never
 	// read.
 	Recognition   *recognize.Service

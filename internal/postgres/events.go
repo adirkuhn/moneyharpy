@@ -50,6 +50,26 @@ func (s *EventStore) EventsOf(ctx context.Context, admin resource.ID, entityType
 	if err != nil {
 		return nil, err
 	}
+	return eventsOf(rows)
+}
+
+// ListEvents implements history.Store.
+func (s *EventStore) ListEvents(ctx context.Context, admin resource.ID, q history.Query) ([]history.Event, error) {
+	p := sqlc.ListEventsParams{AdministrationID: int64(admin), EntityTypes: q.EntityTypes, EntityID: optionalID(q.EntityID), UserID: optionalID(q.UserID), MaxRows: int32(min(q.Limit, 1000))}
+	if q.EntityTypes != nil && len(q.EntityTypes) == 0 {
+		return nil, nil // The user may see no record type.
+	}
+	if q.After != nil {
+		p.AfterAt, p.AfterID = timestamp(q.After.At), pgtype.Int8{Int64: int64(q.After.ID), Valid: true}
+	}
+	rows, err := s.q.ListEvents(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	return eventsOf(rows)
+}
+
+func eventsOf(rows []sqlc.Event) ([]history.Event, error) {
 	out := make([]history.Event, 0, len(rows))
 	for _, r := range rows {
 		e := history.Event{

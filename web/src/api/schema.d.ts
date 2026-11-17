@@ -4720,6 +4720,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List events
+         * @description Returns the events of the administration, newest first: the same events the activity logs show. Give entity_type, entity_id or both; without either the answer is 400. With entity_type the user needs the permission of that record type: sales_invoices for SalesInvoice, ExternalSalesInvoice and RecurringSalesInvoice, estimates for Estimate, documents for Document and bank for FinancialMutation; Contact needs one of estimates, sales_invoices, documents, bank or settings. Without it the answer is 403, as for every missing permission in MoneyHarpy, where Moneybird answers 401. Purchase invoices, receipts and the other document types keep their events under Document, so asking for such a type is 400 naming Document; an unknown type is 400 naming the types the user can ask for. With entity_id only, events of record types the user may not see are left out. A user who only has the time_entries permission sees only their own events. The list is paginated with a cursor: follow the Link header with rel="next" for older events; the last page has no Link header.
+         */
+        get: operations["listEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/estimates": {
         parameters: {
             query?: never;
@@ -9890,6 +9912,7 @@ export interface components {
         };
         /** @description Moneybird-compatible contact_response. */
         contact_response: components["schemas"]["base_contact_response"] & {
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
         };
         /** @description Moneybird-compatible creditors_report_item. */
@@ -10079,6 +10102,7 @@ export interface components {
             estimate_date?: string | null;
             estimate_id?: string | null;
             estimate_sequence_id?: string | null;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             exchange_rate?: components["schemas"]["number"];
             id?: components["schemas"]["Identifier"];
@@ -10121,6 +10145,9 @@ export interface components {
             data?: {
                 [key: string]: unknown;
             };
+            entity_id?: components["schemas"]["identifier_nullable"];
+            entity_type?: string;
+            id?: components["schemas"]["Identifier"];
             link_entity_id?: components["schemas"]["identifier_nullable"];
             link_entity_type?: string | null;
             updated_at?: components["schemas"]["timestamp"];
@@ -10150,6 +10177,7 @@ export interface components {
             /** Format: date */
             due_date?: string | null;
             entry_number?: number;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             id?: components["schemas"]["Identifier"];
             /** Format: date */
@@ -10275,6 +10303,7 @@ export interface components {
             /** Format: date */
             due_date?: string | null;
             entry_number?: number | null;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             exchange_rate?: string | null;
             id?: components["schemas"]["Identifier"];
@@ -10306,6 +10335,7 @@ export interface components {
             created_at?: components["schemas"]["timestamp"];
             /** Format: date */
             date?: string;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             general_journal_document_entries?: components["schemas"]["general_journal_document_entry_response"][];
             id?: components["schemas"]["Identifier"];
@@ -10519,6 +10549,7 @@ export interface components {
             /** Format: date */
             due_date?: string | null;
             entry_number?: number | null;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             exchange_rate?: string | null;
             fiscal_allocations?: components["schemas"]["fiscal_allocation_response"][];
@@ -10593,6 +10624,7 @@ export interface components {
             /** Format: date */
             due_date?: string | null;
             entry_number?: number | null;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             exchange_rate?: components["schemas"]["number"];
             fiscal_allocations?: components["schemas"]["fiscal_allocation_response"][];
@@ -10645,6 +10677,7 @@ export interface components {
             custom_fields?: components["schemas"]["custom_field_value_response"][];
             details?: components["schemas"]["detail_response"][];
             discount?: string | null;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             first_due_interval?: number;
             frequency?: number;
@@ -10709,6 +10742,7 @@ export interface components {
             draft_id?: number | null;
             /** Format: date */
             due_date?: string;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             id?: components["schemas"]["Identifier"];
             identity_id?: components["schemas"]["Identifier"];
@@ -10931,6 +10965,7 @@ export interface components {
             completed_at?: string | null;
             created_at?: components["schemas"]["timestamp"];
             description?: string | null;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             id?: components["schemas"]["Identifier"];
             name?: string;
@@ -11007,6 +11042,7 @@ export interface components {
             created_at?: components["schemas"]["timestamp"];
             description?: string;
             ended_at?: components["schemas"]["timestamp"] | null;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             id?: components["schemas"]["Identifier"];
             notes?: components["schemas"]["note_response"][];
@@ -11034,6 +11070,7 @@ export interface components {
             created_at?: components["schemas"]["timestamp"];
             /** Format: date */
             date?: string;
+            /** @deprecated */
             events?: components["schemas"]["event_response"][];
             id?: components["schemas"]["Identifier"];
             /** @enum {string|null} */
@@ -20285,6 +20322,44 @@ export interface operations {
         requestBody?: never;
         responses: {
             302: components["responses"]["FileRedirect"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listEvents: {
+        parameters: {
+            query?: {
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+                /** @description Position in the list to continue from. Take the URL from the Link header with rel="next" instead of building it. A cursor this list did not make is refused with 400. */
+                cursor?: string;
+                /** @description Only return events of this record type, for example Contact, SalesInvoice or Document. */
+                entity_type?: string;
+                /** @description Only return the events of this record. */
+                entity_id?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of events, newest first */
+            200: {
+                headers: {
+                    /** @description RFC 8288 link to the next page, with rel="next"; absent on the last page. */
+                    Link?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["event_response"][];
+                };
+            };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];

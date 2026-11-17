@@ -111,7 +111,10 @@ type salesInvoiceJSON struct {
 
 // eventJSON is Moneybird's event_response.
 type eventJSON struct {
+	ID               string         `json:"id"`
 	AdministrationID string         `json:"administration_id"`
+	EntityType       string         `json:"entity_type"`
+	EntityID         string         `json:"entity_id"`
 	UserID           *string        `json:"user_id"`
 	Action           string         `json:"action"`
 	LinkEntityID     *string        `json:"link_entity_id"`
@@ -126,7 +129,7 @@ func toEvents(list []history.Event) []eventJSON {
 	out := make([]eventJSON, 0, len(list))
 	for _, e := range list {
 		j := eventJSON{
-			AdministrationID: e.AdministrationID.String(), Action: e.Action, LinkEntityID: idString(e.LinkEntityID), LinkEntityType: nz(e.LinkEntityType),
+			ID: e.ID.String(), EntityType: e.EntityType, EntityID: e.EntityID.String(), AdministrationID: e.AdministrationID.String(), Action: e.Action, LinkEntityID: idString(e.LinkEntityID), LinkEntityType: nz(e.LinkEntityType),
 			Data: e.Data, CreatedAt: e.CreatedAt, UpdatedAt: e.UpdatedAt,
 		}
 		if e.UserID != 0 {
