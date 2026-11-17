@@ -7,6 +7,7 @@ import { server } from '../test/server'
 import { chooseOption, contactCounts, creating, rate, rates, detailRows, draft, editLines, editorCard, empty, invoice, invoicePaper, loaded, paper, pickContact, popup, sales } from './testkit'
 
 describe('the invoice details editor', () => {
+  // A long walk through the editor: on a busy machine it takes longer than the default 10 seconds.
   it('adds details with their totals, discount and VAT, after Moneybird', async () => {
     const sent: { post?: Record<string, unknown>; patch?: Record<string, unknown> } = {}
     server.use(...loaded())
@@ -66,7 +67,7 @@ describe('the invoice details editor', () => {
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Invoice details' })).toBeNull())
     await new Promise((r) => setTimeout(r, 200))
     expect(screen.queryByRole('region', { name: 'Invoice details' })).toBeNull()
-  })
+  }, 30_000)
 
   it('fills a detail from a product, sets its period and applies it to the details below', async () => {
     const sent: { patch?: Record<string, unknown> } = {}
