@@ -1316,7 +1316,7 @@ export interface paths {
         put?: never;
         /**
          * Import a statement file
-         * @description MoneyHarpy extension. Send a CAMT (052, 053 or 054) or MT940 file of at most 10 MB as the body. Transactions the account has already are skipped, and so are transactions in the locked period. With automatic booking on, the booking rules book what they match.
+         * @description MoneyHarpy extension. Send a CAMT (052, 053 or 054) or MT940 file, or Revolut Business's CSV statement, of at most 10 MB as the body. Transactions the account has already are skipped, and so are transactions in the locked period. With automatic booking on, the booking rules book what they match.
          */
         post: operations["importFinancialStatement"];
         delete?: never;
@@ -1338,7 +1338,7 @@ export interface paths {
         put?: never;
         /**
          * Import a statement file into the account it is for
-         * @description MoneyHarpy extension, after the file field of Moneybird's financial accounts page. Send a CAMT (052, 053 or 054) or MT940 file of at most 10 MB as the body. Each statement in it goes to exactly the account with the statement's account number; an account the administration does not have yet is added as a bank account. As with an account's import, known transactions and those in the locked period are skipped.
+         * @description MoneyHarpy extension, after the file field of Moneybird's financial accounts page. Send a CAMT (052, 053 or 054) or MT940 file, or Revolut Business's CSV statement, of at most 10 MB as the body. Each statement in it goes to exactly the account with the statement's account number; an account the administration does not have yet is added as a bank account. As with an account's import, known transactions and those in the locked period are skipped.
          */
         post: operations["importFinancialStatementFile"];
         delete?: never;
@@ -8080,7 +8080,7 @@ export interface components {
         /** @description MoneyHarpy extension. */
         ImportResult: {
             /** @enum {string} */
-            format: "camt" | "mt940";
+            format: "camt" | "mt940" | "revolut";
             /** @description New transactions. */
             imported: number;
             /** @description Transactions the account had already. */

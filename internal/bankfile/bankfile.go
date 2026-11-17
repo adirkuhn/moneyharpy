@@ -1,5 +1,5 @@
 // Package bankfile reads bank statement files: ISO 20022 CAMT (052, 053
-// and 054) and SWIFT MT940.
+// and 054), SWIFT MT940 and Revolut Business's CSV.
 package bankfile
 
 import (
@@ -10,7 +10,7 @@ import (
 
 // Errors returned by Parse.
 var (
-	ErrUnknownFormat = errors.New("not a CAMT or MT940 file")
+	ErrUnknownFormat = errors.New("not a CAMT, MT940 or Revolut CSV file")
 	ErrInvalid       = errors.New("the file could not be read")
 )
 
@@ -19,8 +19,9 @@ type Format string
 
 // The formats Parse understands.
 const (
-	CAMT  Format = "camt"
-	MT940 Format = "mt940"
+	CAMT    Format = "camt"
+	MT940   Format = "mt940"
+	Revolut Format = "revolut"
 )
 
 // Statement is one account's statement in a file.
@@ -61,6 +62,9 @@ func Parse(data []byte) ([]Statement, Format, error) {
 	}
 	trimmed := bytes.TrimSpace(bytes.TrimPrefix(data, []byte("\xef\xbb\xbf")))
 	switch {
+	case isRevolut(trimmed):
+		s, err := parseRevolut(trimmed)
+		return s, Revolut, err
 	case bytes.HasPrefix(trimmed, []byte("<")):
 		s, err := parseCAMT(trimmed)
 		return s, CAMT, err

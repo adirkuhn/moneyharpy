@@ -198,6 +198,29 @@ func TestImportFindsTheAccountOfTheFile(t *testing.T) {
 	}
 }
 
+// Revolut Business's CSV, its only statement file, imports as the others do.
+func TestImportRevolutCSV(t *testing.T) {
+	svc, _, _ := newTestService()
+	ctx := context.Background()
+	data, err := os.ReadFile("../bankfile/testdata/revolut.csv")
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, accs, err := svc.ImportDetected(ctx, adminID, owner, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Format != "revolut" || res.Imported != 5 || len(accs) != 1 || accs[0].Identifier != "NL91ABNA0417164300" {
+		t.Fatalf("import = %+v into %+v", res, accs)
+	}
+	if st := res.Statements[0]; st.OfficialBalance == nil || *st.OfficialBalance != 119708 {
+		t.Errorf("statement balance = %v", st.OfficialBalance)
+	}
+	if again, _, err := svc.ImportDetected(ctx, adminID, owner, data); err != nil || again.Imported != 0 || again.Duplicates != 5 {
+		t.Errorf("again = %+v, %v", again, err)
+	}
+}
+
 // A file with several accounts' statements books each statement's
 // transactions on exactly the account it names.
 func TestImportSendsEachStatementToItsAccount(t *testing.T) {

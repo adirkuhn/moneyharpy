@@ -3078,7 +3078,8 @@ paths:
       x-permissions: [bank]
       summary: Import a statement file
       description: >-
-        MoneyHarpy extension. Send a CAMT (052, 053 or 054) or MT940 file of at most 10 MB as the body.
+        MoneyHarpy extension. Send a CAMT (052, 053 or 054) or MT940 file, or Revolut Business's CSV statement, of at
+        most 10 MB as the body.
         Transactions the account has already are skipped, and so are transactions in the locked period. With
         automatic booking on, the booking rules book what they match.
       tags: [Financial accounts]
@@ -3117,7 +3118,7 @@ paths:
       summary: Import a statement file into the account it is for
       description: >-
         MoneyHarpy extension, after the file field of Moneybird's financial accounts page. Send a CAMT (052, 053 or 054)
-        or MT940 file of at most 10 MB as the body. Each statement in it goes to exactly the account with the
+        or MT940 file, or Revolut Business's CSV statement, of at most 10 MB as the body. Each statement in it goes to exactly the account with the
         statement's account number; an account the administration does not have yet is added as a bank account. As
         with an account's import, known transactions and those in the locked period are skipped.
       tags: [Financial accounts]
@@ -16252,7 +16253,7 @@ components:
       properties:
         format:
           type: string
-          enum: [camt, mt940]
+          enum: [camt, mt940, revolut]
         imported:
           type: integer
           description: New transactions.

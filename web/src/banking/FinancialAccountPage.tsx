@@ -103,7 +103,7 @@ function ImportBlock({ administrationId, account }: { administrationId: string; 
             id={inputId}
             type="file"
             className="sr-only"
-            accept=".xml,.camt,.053,.052,.054,.sta,.940,.mt940,.txt"
+            accept=".xml,.camt,.053,.052,.054,.sta,.940,.mt940,.txt,.csv"
             disabled={upload.isPending}
             onChange={(e) => {
               const file = e.target.files?.[0]
