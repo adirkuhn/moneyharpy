@@ -41,6 +41,34 @@ export function useWeekEntries(administrationId: string, userId: string, period:
   })
 }
 
+/** How many time entries a report reads at most, a page of a hundred at a time. */
+export const reportLimit = 2000
+
+/** Every time entry the filter and search select, for the hours and projects reports. */
+export function useReportEntries(administrationId: string, filter: string, query = '') {
+  return useQuery({
+    queryKey: ['time_entries', administrationId, 'report', filter, query],
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const all: TimeEntry[] = []
+      for (let page = 1; all.length < reportLimit; page++) {
+        const { data, error, response } = await api.GET('/api/v2/{administration_id}/time_entries', {
+          params: { path: admin(administrationId), query: { filter, ...(query ? { query } : {}), page: String(page), per_page: '100' } },
+        })
+        if (!response.ok) {
+          throw new ApiError(response.status, error)
+        }
+        all.push(...(data ?? []))
+        const total = Number(response.headers.get('X-Total-Count') ?? all.length)
+        if ((data ?? []).length < 100 || all.length >= total) {
+          break
+        }
+      }
+      return all
+    },
+  })
+}
+
 export function useTimeEntry(administrationId: string, id?: string) {
   return useQuery({
     queryKey: ['time_entry', administrationId, id],

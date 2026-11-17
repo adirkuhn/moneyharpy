@@ -1217,6 +1217,10 @@ test('time is recorded with a timer, and a task list is ticked off', async ({ pa
   await expect(day.getByRole('row').nth(1)).toContainText('Open')
   await day.getByRole('row').nth(1).getByRole('link').click()
   await expect(page.getByRole('heading', { name: 'Support call' })).toBeVisible()
+  await menu.getByRole('link', { name: 'Hours report' }).click()
+  await expect(page.getByRole('table', { name: 'Timesheets' })).toContainText('Support call')
+  await menu.getByRole('link', { name: 'Projects report' }).click()
+  await expect(page.getByText('See all worked hours by project')).toBeVisible()
 
   await menu.getByRole('button', { name: 'Task lists' }).click()
   await menu.getByRole('link', { name: 'Task lists' }).last().click()
