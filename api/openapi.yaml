@@ -13721,6 +13721,29 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '503':
           $ref: '#/components/responses/RegisterUnavailable'
+  /api/instance/settings/test_bank_connections:
+    post:
+      operationId: testBankConnections
+      summary: Check the Enable Banking application
+      description: >-
+        Lists the Dutch banks through Enable Banking with the stored application id and key, also while bank
+        connections are not enabled, so an administrator can see whether the application is set up right.
+      tags: [Instance]
+      responses:
+        '204':
+          description: Enable Banking accepted the application
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '502':
+          description: Enable Banking refused the application or could not be reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/instance/settings/test_recognition:
     post:
       operationId: testRecognition
@@ -14902,7 +14925,7 @@ components:
           maxLength: 255
     InstanceSettings:
       type: object
-      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, kvk_website_search_enabled, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security, storage_enabled, storage_endpoint, storage_region, storage_bucket, storage_access_key, storage_secret_key_set, storage_path_style, webhooks_allow_local, recognition_ai_enabled, recognition_ai_connections, vies_enabled]
+      required: [registration_open, google_enabled, google_client_id, google_client_secret_set, lm2_enabled, lm2_url, lm2_app, kvk_enabled, kvk_api_key_set, kvk_website_search_enabled, address_lookup_enabled, smtp_enabled, smtp_host, smtp_port, smtp_username, smtp_password_set, smtp_from, smtp_security, storage_enabled, storage_endpoint, storage_region, storage_bucket, storage_access_key, storage_secret_key_set, storage_path_style, webhooks_allow_local, recognition_ai_enabled, recognition_ai_connections, vies_enabled, bank_connections_enabled, enable_banking_application_id, enable_banking_private_key_set, enable_banking_redirect_url]
       properties:
         registration_open:
           type: boolean
@@ -14982,6 +15005,21 @@ components:
             numbers. Scan and Recognise then adds a new supplier under its registered name and address, and the contact
             form fills in a contact from its VAT number. Off unless turned on; only the VAT number is sent to the
             European Commission.
+        bank_connections_enabled:
+          type: boolean
+          description: >-
+            Bank connections: administrations connect their bank accounts through Enable Banking, which fetches their
+            transactions under its PSD2 licence. Off unless turned on; the transactions then pass through Enable Banking.
+        enable_banking_application_id:
+          type: string
+          description: The id of the application registered in Enable Banking's control panel.
+        enable_banking_private_key_set:
+          type: boolean
+          description: Whether the application's private key is stored; the key itself is never sent back.
+        enable_banking_redirect_url:
+          type: string
+          readOnly: true
+          description: The address to allow as redirect URL in the Enable Banking application, where banks send users back to.
     UpdateInstanceSettingsRequest:
       type: object
       additionalProperties: false
@@ -15071,6 +15109,17 @@ components:
           type: boolean
           deprecated: true
           description: The former name of vies_enabled, still accepted; vies_enabled wins when both are sent.
+        bank_connections_enabled:
+          type: boolean
+          description: See InstanceSettings.
+        enable_banking_application_id:
+          type: string
+          maxLength: 64
+        enable_banking_private_key:
+          type: string
+          maxLength: 16384
+          writeOnly: true
+          description: The application's RSA private key in PEM; empty keeps the stored one.
 
     Workflow:
       description: A Moneybird workflow with MoneyHarpy extensions.

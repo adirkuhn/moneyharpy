@@ -25,6 +25,8 @@ import (
 // ErrNotSet reports a key with no stored value.
 var ErrNotSet = errors.New("setting not set")
 
+var errNotRSA = errors.New("not an RSA private key")
+
 const instanceKey = "instance"
 
 // Google configures sign-in with Google.
@@ -101,6 +103,7 @@ type Instance struct {
 	// Scan and Recognise found under its registered name, and to fill in a
 	// contact from its VAT number. Off by default.
 	VIESEnabled bool
+	BankLink    BankLink
 }
 
 // Update changes selected settings. Nil fields stay as they are, and an empty
@@ -142,6 +145,10 @@ type Update struct {
 	RecognitionAIConnections *[]AIConnectionUpdate
 
 	VIESEnabled *bool
+
+	BankLinkEnabled       *bool
+	BankLinkApplicationID *string
+	BankLinkPrivateKey    *string
 }
 
 // Store persists opaque values by key.
@@ -195,7 +202,10 @@ type storedInstance struct {
 	VIES             bool               `json:"vies_enabled"`
 	// LegacyVIES is the VIES switch saved when only Scan and Recognise used
 	// it; it is read as VIES until the settings are saved.
-	LegacyVIES bool `json:"recognition_vies_enabled,omitempty"`
+	LegacyVIES  bool   `json:"recognition_vies_enabled,omitempty"`
+	BankLink    bool   `json:"bank_connections_enabled"`
+	BankLinkID  string `json:"enable_banking_application_id"`
+	BankLinkKey string `json:"enable_banking_private_key_sealed"`
 	legacyRecognition
 }
 
@@ -222,6 +232,7 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 		WebhooksAllowLocal:   st.WebhooksLocal,
 		Recognition:          Recognition{AIEnabled: st.RecognitionAI},
 		VIESEnabled:          st.VIES || st.LegacyVIES,
+		BankLink:             BankLink{Enabled: st.BankLink, ApplicationID: st.BankLinkID},
 		SMTP: SMTP{
 			Enabled: st.SMTPEnabled, Host: st.SMTPHost, Port: st.SMTPPort, Username: st.SMTPUsername,
 			From: st.SMTPFrom, Security: st.SMTPSecurity,
@@ -239,6 +250,11 @@ func (s *Service) Instance(ctx context.Context) (Instance, error) {
 	if st.KVKKey != "" {
 		if inst.KVK.APIKey, err = s.cipher.Open(st.KVKKey); err != nil {
 			return Instance{}, fmt.Errorf("decrypt kvk key: %w", err)
+		}
+	}
+	if st.BankLinkKey != "" {
+		if inst.BankLink.PrivateKey, err = s.cipher.Open(st.BankLinkKey); err != nil {
+			return Instance{}, fmt.Errorf("decrypt bank connection key: %w", err)
 		}
 	}
 	if st.SMTPPassword != "" {
@@ -327,6 +343,7 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 	}
 
 	applySMTP(&inst.SMTP, u)
+	applyBankLink(&inst.BankLink, u)
 	applyStorage(&inst.Storage, u)
 	if err := applyRecognition(&inst.Recognition, u); err != nil {
 		return Instance{}, err
@@ -334,6 +351,7 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 
 	var verr resource.ValidationError
 	validateSMTP(inst.SMTP, &verr)
+	validateBankLink(inst.BankLink, &verr)
 	validateStorage(inst.Storage, &verr)
 	validateRecognition(inst.Recognition, &verr)
 	if inst.KVK.Enabled && inst.KVK.APIKey == "" {
@@ -383,6 +401,13 @@ func (s *Service) Update(ctx context.Context, u Update) (Instance, error) {
 		StoragePathStyle: inst.Storage.PathStyle,
 		RecognitionAI:    inst.Recognition.AIEnabled,
 		VIES:             inst.VIESEnabled,
+		BankLink:         inst.BankLink.Enabled,
+		BankLinkID:       inst.BankLink.ApplicationID,
+	}
+	if inst.BankLink.PrivateKey != "" {
+		if st.BankLinkKey, err = s.cipher.Seal(inst.BankLink.PrivateKey); err != nil {
+			return Instance{}, fmt.Errorf("encrypt bank connection key: %w", err)
+		}
 	}
 	if st.RecognitionConns, err = s.sealConnections(inst.Recognition.Connections); err != nil {
 		return Instance{}, err

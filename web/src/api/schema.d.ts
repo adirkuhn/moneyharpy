@@ -6987,6 +6987,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/instance/settings/test_bank_connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check the Enable Banking application
+         * @description Lists the Dutch banks through Enable Banking with the stored application id and key, also while bank connections are not enabled, so an administrator can see whether the application is set up right.
+         */
+        post: operations["testBankConnections"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/instance/settings/test_recognition": {
         parameters: {
             query?: never;
@@ -7427,6 +7447,14 @@ export interface components {
             recognition_ai_connections: components["schemas"]["RecognitionAIConnection"][];
             /** @description EU VAT number lookup (VIES): look VAT numbers up in VIES, the European Commission's register of EU VAT numbers. Scan and Recognise then adds a new supplier under its registered name and address, and the contact form fills in a contact from its VAT number. Off unless turned on; only the VAT number is sent to the European Commission. */
             vies_enabled: boolean;
+            /** @description Bank connections: administrations connect their bank accounts through Enable Banking, which fetches their transactions under its PSD2 licence. Off unless turned on; the transactions then pass through Enable Banking. */
+            bank_connections_enabled: boolean;
+            /** @description The id of the application registered in Enable Banking's control panel. */
+            enable_banking_application_id: string;
+            /** @description Whether the application's private key is stored; the key itself is never sent back. */
+            enable_banking_private_key_set: boolean;
+            /** @description The address to allow as redirect URL in the Enable Banking application, where banks send users back to. */
+            readonly enable_banking_redirect_url: string;
         };
         UpdateInstanceSettingsRequest: {
             registration_open?: boolean;
@@ -7470,6 +7498,11 @@ export interface components {
              * @description The former name of vies_enabled, still accepted; vies_enabled wins when both are sent.
              */
             recognition_vies_enabled?: boolean;
+            /** @description See InstanceSettings. */
+            bank_connections_enabled?: boolean;
+            enable_banking_application_id?: string;
+            /** @description The application's RSA private key in PEM; empty keeps the stored one. */
+            enable_banking_private_key?: string;
         };
         /** @description A Moneybird workflow with MoneyHarpy extensions. */
         Workflow: components["schemas"]["workflow_response"] & {
@@ -24260,6 +24293,36 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             503: components["responses"]["RegisterUnavailable"];
+        };
+    };
+    testBankConnections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Enable Banking accepted the application */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["UnprocessableEntity"];
+            /** @description Enable Banking refused the application or could not be reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     testRecognition: {

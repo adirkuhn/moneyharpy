@@ -30,6 +30,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/connections"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/downloads"
+	"github.com/adirkuhn/moneyharpy/internal/enablebanking"
 	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
@@ -254,6 +255,8 @@ type harness struct {
 	ocr    *fakeOCR
 	// vies stands in for VIES; tests never call the real one.
 	vies *fakeVIES
+	// bank stands in for Enable Banking; tests never call the real one.
+	bank *fakeEnableBanking
 	// recognition is Scan and Recognise, reading e-invoices only: XML
 	// files starting with <Invoice are read as testEInvoice.
 	recognition *recognize.Service
@@ -296,7 +299,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	mailer := &fakeMailer{resets: make(chan sentMail, 8)}
 
 	files := &fakeFiles{data: map[string][]byte{}}
-	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle, ocr: &fakeOCR{}, vies: &fakeVIES{}, pool: pool}
+	h := &harness{t: t, google: google, lm2: lm2, lookup: lookup, mailer: mailer, files: files, settle: settle, ocr: &fakeOCR{}, vies: &fakeVIES{}, bank: newFakeEnableBanking(t), pool: pool}
 	h.server = httptest.NewUnstartedServer(nil)
 	h.server.Start()
 	t.Cleanup(h.server.Close)
@@ -379,6 +382,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Companies:       lookup,
 		CompanyNumbers:  lookup,
 		CompanyCheck:    lookup,
+		BankLink:        &enablebanking.Provider{Settings: settle, BaseURL: h.bank.server.URL, HTTP: h.bank.server.Client(), Now: time.Now},
 		Addresses:       lookup,
 		VATNumbers:      vatlookup.New(settle, h.vies),
 		LookupLimiter:   opts.lookupLimiter,

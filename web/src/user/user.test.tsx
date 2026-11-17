@@ -41,7 +41,7 @@ describe('API tokens', () => {
 })
 
 describe('instance settings', () => {
-  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [] as InstanceSettings['recognition_ai_connections'], vies_enabled: false }
+  const current = { registration_open: true, google_enabled: false, google_client_id: '', google_client_secret_set: false, lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_api_key_set: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 0, smtp_username: '', smtp_password_set: false, smtp_from: '', smtp_security: '', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_secret_key_set: false, storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [] as InstanceSettings['recognition_ai_connections'], vies_enabled: false, bank_connections_enabled: false, enable_banking_application_id: '', enable_banking_private_key_set: false, enable_banking_redirect_url: 'https://books.example.com/bank_connection_callback' }
 
   it('is closed to regular users', async () => {
     server.use(signedIn(), listing([]))
@@ -64,7 +64,7 @@ describe('instance settings', () => {
     await userEvent.click(await screen.findByLabelText('Allow new users to register'))
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() =>
-      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [], vies_enabled: false }),
+      expect(sent).toEqual({ registration_open: false, google_enabled: false, google_client_id: '', lm2_enabled: false, lm2_url: '', lm2_app: '', kvk_enabled: false, kvk_website_search_enabled: false, address_lookup_enabled: false, smtp_enabled: false, smtp_host: '', smtp_port: 587, smtp_username: '', smtp_from: '', smtp_security: 'starttls', storage_enabled: false, storage_endpoint: '', storage_region: '', storage_bucket: '', storage_access_key: '', storage_path_style: false, webhooks_allow_local: false, recognition_ai_enabled: false, recognition_ai_connections: [], vies_enabled: false, bank_connections_enabled: false, enable_banking_application_id: '' }),
     )
     expect(await screen.findByRole('status')).toHaveTextContent('Settings saved')
   })
@@ -129,6 +129,39 @@ describe('instance settings', () => {
     await userEvent.click(vies)
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() => expect(sent).toMatchObject({ vies_enabled: true }))
+  })
+
+  it('sets up bank connections through Enable Banking, off by default, and checks the application', async () => {
+    let sent: unknown
+    let checked = false
+    server.use(
+      signedIn({ ...user, instance_admin: true }),
+      listing([]),
+      http.get('*/api/instance/settings', () => HttpResponse.json(current)),
+      http.patch('*/api/instance/settings', async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json({ ...current, bank_connections_enabled: true, enable_banking_application_id: '00000000-0000-4000-8000-000000000001', enable_banking_private_key_set: true })
+      }),
+      http.post('*/api/instance/settings/test_bank_connections', () => {
+        checked = true
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    renderAt('/instance/settings')
+    const enable = await screen.findByLabelText('Connect bank accounts through Enable Banking')
+    expect(enable).not.toBeChecked()
+    expect(screen.getByText(/The transactions pass through Enable Banking/)).toBeInTheDocument()
+    expect(screen.getByText('https://books.example.com/bank_connection_callback')).toBeInTheDocument()
+    await userEvent.click(enable)
+    await userEvent.type(screen.getByLabelText('Application id'), '00000000-0000-4000-8000-000000000001')
+    await userEvent.type(screen.getByLabelText('Private key (PEM)'), 'KEY')
+    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+    await waitFor(() => expect(sent).toMatchObject({ bank_connections_enabled: true, enable_banking_application_id: '00000000-0000-4000-8000-000000000001', enable_banking_private_key: 'KEY' }))
+    expect(await screen.findByLabelText('Private key (PEM)')).toHaveValue('')
+    expect(screen.getByLabelText('Private key (PEM)')).toHaveAttribute('placeholder', 'Stored. Type to replace it.')
+    await userEvent.click(screen.getByRole('button', { name: 'Check application' }))
+    expect(await screen.findByText('Enable Banking accepted the application.')).toBeInTheDocument()
+    expect(checked).toBe(true)
   })
 
   describe('the experimental KVK website search', () => {

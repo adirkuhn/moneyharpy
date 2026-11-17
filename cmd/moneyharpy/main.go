@@ -24,6 +24,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/diskstore"
 	"github.com/adirkuhn/moneyharpy/internal/downloads"
+	"github.com/adirkuhn/moneyharpy/internal/enablebanking"
 	"github.com/adirkuhn/moneyharpy/internal/google"
 	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/hookclient"
@@ -138,6 +139,7 @@ func run(logger *slog.Logger) error {
 	hooks := webhooks.NewService(admins, postgres.NewWebhookStore(pool, cipher), hookclient.New(), instance, ids, time.Now)
 	people := identity.NewService(postgres.NewIdentityStore(pool), instance, ids, identity.NewHasher(identity.DefaultParams), mailer, cipher, time.Now)
 	books := bookkeeping.NewService(admins, postgres.NewBookkeepingStore(pool), ids, time.Now)
+	bankLink := &enablebanking.Provider{Settings: instance, Now: time.Now}
 	bank := banking.NewService(admins, books, postgres.NewBankingStore(pool), ids, time.Now)
 	noteService := notes.NewService(postgres.NewNoteStore(pool), ids, time.Now)
 	journalStore := postgres.NewJournalStore(pool)
@@ -241,6 +243,7 @@ func run(logger *slog.Logger) error {
 		CompanyNumbers:    registers,
 		VATNumbers:        vatlookup.New(instance, viesClient),
 		CompanyCheck:      kvkWebsite,
+		BankLink:          bankLink,
 		Addresses:         pdok.New(instance, pdok.ProductionURL, outbound),
 		LookupLimiter:     ratelimit.New(60, time.Minute),
 		ResetLimiter:      ratelimit.New(3, time.Hour),

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api, ApiError, errorMessages, type InstanceSettings, unwrap, type UpdateInstanceSettings } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
-import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
+import { CheckboxInput, FormNotice, FormSection, formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
 import { useCurrentUser } from '../auth/queries'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
@@ -42,6 +42,8 @@ function SettingsForm() {
     storage_bucket: t('instance.storageBucket'),
     storage_access_key: t('instance.storageAccessKey'),
     storage_secret_key: t('instance.storageSecretKey'),
+    enable_banking_application_id: t('instance.bankAppId'),
+    enable_banking_private_key: t('instance.bankKey'),
   }
   const client = useQueryClient()
   const settings = useQuery({ queryKey: ['instance-settings'], queryFn: () => unwrap(api.GET('/api/instance/settings')) })
@@ -50,6 +52,7 @@ function SettingsForm() {
   const [kvkKey, setKvkKey] = useState('')
   const [smtpPassword, setSmtpPassword] = useState('')
   const [storageSecret, setStorageSecret] = useState('')
+  const [bankKey, setBankKey] = useState('')
   const [connections, setConnections] = useState<DraftConnection[]>([])
   const me = useCurrentUser()
 
@@ -67,6 +70,7 @@ function SettingsForm() {
       setKvkKey('')
       setSmtpPassword('')
       setStorageSecret('')
+      setBankKey('')
       client.setQueryData(['instance-settings'], saved)
       void client.invalidateQueries({ queryKey: ['providers'] })
     },
@@ -75,6 +79,7 @@ function SettingsForm() {
   const testEmail = useMutation({ mutationFn: () => unwrap(api.POST('/api/instance/settings/test_email')) })
   const testStorage = useMutation({ mutationFn: () => unwrap(api.POST('/api/instance/settings/test_storage')) })
   const testKvkWebsite = useMutation({ mutationFn: () => unwrap(api.POST('/api/instance/settings/test_kvk_website_search')) })
+  const testBank = useMutation({ mutationFn: () => unwrap(api.POST('/api/instance/settings/test_bank_connections')) })
   const testRecognition = useMutation({ mutationFn: () => unwrap(api.POST('/api/instance/settings/test_recognition')) })
 
   if (!form) {
@@ -115,15 +120,18 @@ function SettingsForm() {
       recognition_ai_enabled: form.recognition_ai_enabled,
       recognition_ai_connections: toRequest(connections),
       vies_enabled: form.vies_enabled,
+      bank_connections_enabled: form.bank_connections_enabled,
+      enable_banking_application_id: form.enable_banking_application_id,
+      ...(bankKey ? { enable_banking_private_key: bankKey } : {}),
     })
   }
 
   const errors = formErrors(save.error, { ...labels, ...connectionLabels(connections, t) })
-  const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'kvk_website_search_enabled' | 'address_lookup_enabled' | 'webhooks_allow_local' | 'smtp_enabled' | 'storage_enabled' | 'storage_path_style' | 'recognition_ai_enabled' | 'vies_enabled', label: string, help?: string) => (
+  const check = (key: 'registration_open' | 'google_enabled' | 'lm2_enabled' | 'kvk_enabled' | 'kvk_website_search_enabled' | 'address_lookup_enabled' | 'webhooks_allow_local' | 'smtp_enabled' | 'storage_enabled' | 'storage_path_style' | 'recognition_ai_enabled' | 'vies_enabled' | 'bank_connections_enabled', label: string, help?: string) => (
     <CheckboxInput label={label} help={help} checked={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />
   )
   const text = (
-    key: 'google_client_id' | 'lm2_url' | 'lm2_app' | 'smtp_host' | 'smtp_username' | 'smtp_from' | 'storage_endpoint' | 'storage_region' | 'storage_bucket' | 'storage_access_key',
+    key: 'google_client_id' | 'lm2_url' | 'lm2_app' | 'smtp_host' | 'smtp_username' | 'smtp_from' | 'storage_endpoint' | 'storage_region' | 'storage_bucket' | 'storage_access_key' | 'enable_banking_application_id',
     label: string,
     extra: Partial<React.ComponentProps<typeof TextInput>> = {},
   ) => (
@@ -177,6 +185,34 @@ function SettingsForm() {
           </div>
           {testKvkWebsite.isError && <Problems messages={[kvkWebsiteProblem(testKvkWebsite.error, t)]} />}
           {check('vies_enabled', t('instance.viesEnable'), t('instance.viesHint'))}
+        </FormSection>
+        <FormSection title={t('instance.bankTitle')}>
+          {check('bank_connections_enabled', t('instance.bankEnable'), t('instance.bankHint'))}
+          <FormNotice>
+            {t('instance.bankSteps')}{' '}
+            <code>{form.enable_banking_redirect_url}</code>
+          </FormNotice>
+          {text('enable_banking_application_id', labels.enable_banking_application_id, { placeholder: '00000000-0000-0000-0000-000000000000' })}
+          <TextArea
+            label={labels.enable_banking_private_key}
+            autoComplete="off"
+            spellCheck={false}
+            rows={4}
+            placeholder={form.enable_banking_private_key_set ? t('instance.stored') : '-----BEGIN PRIVATE KEY-----'}
+            value={bankKey}
+            errors={errors.field('enable_banking_private_key')}
+            onChange={(e) => setBankKey(e.target.value)}
+          />
+          <div className="form-input form-input--check">
+            <span className="form-input__label" aria-hidden="true" />
+            <div className="form-input__body form__actions">
+              <button type="button" className="btn btn--secondary" disabled={testBank.isPending} onClick={() => testBank.mutate()}>
+                {t('instance.testBank')}
+              </button>
+              {testBank.isSuccess && <span role="status" className="saved">{t('instance.bankWorks')}</span>}
+            </div>
+          </div>
+          {testBank.isError && <Problems messages={errorMessages(testBank.error, labels)} />}
         </FormSection>
         <FormSection title={t('instance.addressTitle')}>
           {check('address_lookup_enabled', t('instance.addressEnable'), t('instance.addressHint'))}

@@ -77,6 +77,15 @@ type RegisterChecker interface {
 	Check(ctx context.Context) error
 }
 
+// BankLinkChecker tries the Enable Banking application of the settings.
+type BankLinkChecker interface {
+	Check(ctx context.Context) error
+}
+
+// BankLinkCallbackPath is where banks send users back to after they
+// authorised a bank connection.
+const BankLinkCallbackPath = "/bank_connection_callback"
+
 // AddressLookup completes Dutch addresses.
 type AddressLookup interface {
 	LookupAddress(ctx context.Context, zipcode, houseNumber string) (administration.AddressMatch, error)
@@ -135,7 +144,9 @@ type Deps struct {
 	// lookup off.
 	CompanyNumbers administration.CompanyLookup
 	CompanyCheck   RegisterChecker
-	Addresses      AddressLookup
+	// BankLink checks the Enable Banking application; nil reports it unavailable.
+	BankLink  BankLinkChecker
+	Addresses AddressLookup
 	// VATNumbers fills in contacts from VIES; nil leaves the lookup off.
 	VATNumbers VATNumbers
 	Mail       TestMailer

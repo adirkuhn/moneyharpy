@@ -7752,12 +7752,24 @@ type IncomingDocumentSummaryType string
 
 // InstanceSettings defines model for InstanceSettings.
 type InstanceSettings struct {
-	AddressLookupEnabled  bool   `json:"address_lookup_enabled"`
-	GoogleClientId        string `json:"google_client_id"`
-	GoogleClientSecretSet bool   `json:"google_client_secret_set"`
-	GoogleEnabled         bool   `json:"google_enabled"`
-	KvkApiKeySet          bool   `json:"kvk_api_key_set"`
-	KvkEnabled            bool   `json:"kvk_enabled"`
+	AddressLookupEnabled bool `json:"address_lookup_enabled"`
+
+	// BankConnectionsEnabled Bank connections: administrations connect their bank accounts through Enable Banking, which fetches their transactions under its PSD2 licence. Off unless turned on; the transactions then pass through Enable Banking.
+	BankConnectionsEnabled bool `json:"bank_connections_enabled"`
+
+	// EnableBankingApplicationId The id of the application registered in Enable Banking's control panel.
+	EnableBankingApplicationId string `json:"enable_banking_application_id"`
+
+	// EnableBankingPrivateKeySet Whether the application's private key is stored; the key itself is never sent back.
+	EnableBankingPrivateKeySet bool `json:"enable_banking_private_key_set"`
+
+	// EnableBankingRedirectUrl The address to allow as redirect URL in the Enable Banking application, where banks send users back to.
+	EnableBankingRedirectUrl *string `json:"enable_banking_redirect_url,omitempty"`
+	GoogleClientId           string  `json:"google_client_id"`
+	GoogleClientSecretSet    bool    `json:"google_client_secret_set"`
+	GoogleEnabled            bool    `json:"google_enabled"`
+	KvkApiKeySet             bool    `json:"kvk_api_key_set"`
+	KvkEnabled               bool    `json:"kvk_enabled"`
 
 	// KvkWebsiteSearchEnabled Experimental. Search the company register through the public search of the KVK website while the KVK API is not enabled. Unofficial: it may stop working or be blocked at any time, and sends the typed name to KVK.
 	KvkWebsiteSearchEnabled bool   `json:"kvk_website_search_enabled"`
@@ -10878,12 +10890,19 @@ type UpdateAdministrationRequest struct {
 
 // UpdateInstanceSettingsRequest defines model for UpdateInstanceSettingsRequest.
 type UpdateInstanceSettingsRequest struct {
-	AddressLookupEnabled *bool   `json:"address_lookup_enabled,omitempty"`
-	GoogleClientId       *string `json:"google_client_id,omitempty"`
-	GoogleClientSecret   *string `json:"google_client_secret,omitempty"`
-	GoogleEnabled        *bool   `json:"google_enabled,omitempty"`
-	KvkApiKey            *string `json:"kvk_api_key,omitempty"`
-	KvkEnabled           *bool   `json:"kvk_enabled,omitempty"`
+	AddressLookupEnabled *bool `json:"address_lookup_enabled,omitempty"`
+
+	// BankConnectionsEnabled See InstanceSettings.
+	BankConnectionsEnabled     *bool   `json:"bank_connections_enabled,omitempty"`
+	EnableBankingApplicationId *string `json:"enable_banking_application_id,omitempty"`
+
+	// EnableBankingPrivateKey The application's RSA private key in PEM; empty keeps the stored one.
+	EnableBankingPrivateKey *string `json:"enable_banking_private_key,omitempty"`
+	GoogleClientId          *string `json:"google_client_id,omitempty"`
+	GoogleClientSecret      *string `json:"google_client_secret,omitempty"`
+	GoogleEnabled           *bool   `json:"google_enabled,omitempty"`
+	KvkApiKey               *string `json:"kvk_api_key,omitempty"`
+	KvkEnabled              *bool   `json:"kvk_enabled,omitempty"`
 
 	// KvkWebsiteSearchEnabled Experimental. See InstanceSettings.
 	KvkWebsiteSearchEnabled *bool `json:"kvk_website_search_enabled,omitempty"`
@@ -21464,6 +21483,9 @@ type ServerInterface interface {
 	// UpdateInstanceSettings Update instance settings
 	// (PATCH /api/instance/settings)
 	UpdateInstanceSettings(w http.ResponseWriter, r *http.Request)
+	// TestBankConnections Check the Enable Banking application
+	// (POST /api/instance/settings/test_bank_connections)
+	TestBankConnections(w http.ResponseWriter, r *http.Request)
 	// SendTestEmail Send a test email to yourself using the saved mail settings
 	// (POST /api/instance/settings/test_email)
 	SendTestEmail(w http.ResponseWriter, r *http.Request)
@@ -22805,6 +22827,12 @@ func (_ Unimplemented) InstanceSettings(w http.ResponseWriter, r *http.Request) 
 // UpdateInstanceSettings Update instance settings
 // (PATCH /api/instance/settings)
 func (_ Unimplemented) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// TestBankConnections Check the Enable Banking application
+// (POST /api/instance/settings/test_bank_connections)
+func (_ Unimplemented) TestBankConnections(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -25600,6 +25628,20 @@ func (siw *ServerInterfaceWrapper) UpdateInstanceSettings(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateInstanceSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestBankConnections operation middleware
+func (siw *ServerInterfaceWrapper) TestBankConnections(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestBankConnections(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -42935,6 +42977,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/instance/settings/test_kvk_website_search", wrapper.TestKvkWebsiteSearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/instance/settings/test_bank_connections", wrapper.TestBankConnections)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/instance/settings/test_recognition", wrapper.TestRecognition)
