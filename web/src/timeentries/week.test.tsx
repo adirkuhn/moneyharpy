@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, atTime, clock, dayOf, mondayOf, parseClock, parseDay, periodOf, stopwatch } from './week'
+import { addDays, atTime, clock, dayOf, mondayOf, parseClock, parseDay, periodOf, stopwatch, weekOf } from './week'
 
 describe('the timesheet week', () => {
   it('reads a day, falling back on today', () => {
@@ -36,5 +36,12 @@ describe('the timesheet week', () => {
     expect(clock(125)).toBe('02:05')
     expect(clock(61 * 60)).toBe('61:00')
     expect(stopwatch(63)).toBe('00:01:03')
+  })
+
+  it('numbers the weeks as ISO does', () => {
+    expect(weekOf('2026-11-18')).toEqual({ year: 2026, week: 47 })
+    expect(weekOf('2027-01-01')).toEqual({ year: 2026, week: 53 })
+    expect(weekOf('2026-01-01')).toEqual({ year: 2026, week: 1 })
+    expect(weekOf('2025-12-29')).toEqual({ year: 2026, week: 1 })
   })
 })

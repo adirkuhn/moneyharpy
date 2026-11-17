@@ -45,8 +45,8 @@ export const navItems: NavItem[] = [
     kind: 'timesheets', key: 'timesheets', to: 'time_entries', ready: true, permissions: ['time_entries'],
     children: [
       link('register', 'time_entries', true),
-      link('hoursReport', 'time_entries_report'),
-      link('projectsReport', 'time_entries_report/projects'),
+      link('hoursReport', 'time_entries_report', true),
+      link('projectsReport', 'time_entries_report/projects', true),
     ],
   },
   { kind: 'contacts', key: 'contacts', to: 'contacts', ready: true, permissions: ['sales_invoices', 'documents', 'estimates'] },

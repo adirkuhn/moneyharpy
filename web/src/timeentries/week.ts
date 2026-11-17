@@ -68,3 +68,10 @@ export function clock(minutes: number): string {
 export function stopwatch(seconds: number): string {
   return `${clock(Math.floor(seconds / 60))}:${pad(seconds % 60)}`
 }
+
+/** The ISO week of a day: the year its Thursday is in, and its number. */
+export function weekOf(day: string): { year: number; week: number } {
+  const thursday = toDate(addDays(mondayOf(day), 3))
+  const first = new Date(thursday.getFullYear(), 0, 1)
+  return { year: thursday.getFullYear(), week: Math.floor(Math.round((thursday.getTime() - first.getTime()) / 86400000) / 7) + 1 }
+}

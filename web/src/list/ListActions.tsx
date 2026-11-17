@@ -93,7 +93,7 @@ export function Unavailable({ icon, label, text = false }: { icon: ListIconKind;
   )
 }
 
-function ExportMenu({ entries }: { entries: string[] }) {
+export function ExportMenu({ entries }: { entries: string[] }) {
   const { t } = useTranslation()
   const id = useId()
   const { open, toggle, root, button } = useDisclosure()

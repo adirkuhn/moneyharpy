@@ -577,6 +577,30 @@ export const nl: Messages = {
     detailsTitle: 'Gegevens van de uren', stop: 'Timer stoppen', resume: 'Timer hervatten', delete: 'Verwijderen', confirmDelete: 'Uren verwijderen',
     confirmDeleteText: 'Deze uren verwijderen? Dit kan niet ongedaan worden gemaakt.',
     billableShort: 'Factureerbaar',
+    report: {
+      title: 'Urenrapportage', filters: 'Filters voor uren', search: 'Zoek op omschrijving..',
+      views: { thisYear: 'Uren van dit jaar', open: 'Openstaande uren', contact: 'Uren van {{name}}', custom: 'Gefilterde uren' },
+      states: { all: 'Alle', open: 'Open', non_billable: 'Niet factureerbaar' },
+      excel: 'Excel', pdf: 'PDF', bill: 'Uren factureren',
+      period: 'Periode', employee: 'Medewerker', total: 'Totaal', week: 'Week {{week}}',
+      empty: 'Geen uren gevonden voor dit filter.',
+      intro: {
+        title: 'Bekijk alle gewerkte uren', text: 'Een helder weekoverzicht van alle gewerkte uren, van jezelf en van je hele team. Ideaal om de voortgang per contact en project te volgen.',
+        filter: 'Filteren', filterText: 'Maak overzichten door te filteren op periode, contact of project. Handig om je gewerkte uren en de voortgang binnen je team te analyseren.',
+        bill: 'Uren factureren', billText: 'Maak factureren eenvoudig: selecteer het contact en kies de juiste uren. Je maakt een factuur in een paar klikken.',
+        status: 'Status', statusText: 'Bekijk per urenregel of de geregistreerde uren factureerbaar zijn en of ze al zijn gefactureerd.',
+      },
+    },
+    projects: {
+      title: 'Projecten', add: 'Project toevoegen', budget: 'Budget', worked: 'Gewerkt', billable: 'Factureerbaar', nonBillable: 'Niet factureerbaar', progress: 'Voortgang',
+      spent: '{{percent}}% besteed',
+      intro: {
+        title: 'Bekijk alle gewerkte uren per project', text: 'Zie in één oogopslag hoeveel uren er al in een project zijn geregistreerd. Zo blijf je altijd op koers en kun je snel bijsturen als het nodig is.',
+        budget: 'Urenbudget', budgetText: 'Zie per project hoeveel uren er volgens het ingestelde budget beschikbaar zijn. Dit budget stel je eenvoudig in bij het aanmaken van een project.',
+        progress: 'Voortgangspercentage', progressText: 'Krijg in één oogopslag inzicht in de voortgang: zie precies welk percentage van het urenbudget al is besteed.',
+        billable: 'Factureerbare uren', billableText: 'Houd per project bij hoeveel uren factureerbaar zijn en welke uren niet aan de klant kunnen worden doorberekend.',
+      },
+    },
     register: {
       title: 'Urenregistratie {{date}}', today: 'Vandaag', more: 'Meer acties', moreInfo: 'Meer informatie', week: 'Week',
       prevWeek: 'Vorige week', nextWeek: 'Volgende week', weekTotal: 'Weektotaal', form: 'Uren registreren',

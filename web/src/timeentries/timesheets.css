@@ -37,3 +37,14 @@
 .timesheet-table tfoot th, .timesheet-table tfoot td { border-top: 1px solid var(--line); color: var(--text); font-weight: 600; }
 .timer-button--stop { color: var(--danger); }
 .timer-button--play, .timer-button--resume { color: var(--state-paid); }
+
+/* The hours report's weeks, which fold, and the projects report's progress. */
+.hours-report__week th, .hours-report__week td { background: var(--bg); color: var(--text); font-weight: 600; }
+.hours-report__fold { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.hours-report__fold::before { content: '▾'; color: var(--muted); }
+.hours-report__fold[aria-expanded='false']::before { content: '▸'; }
+.project-progress { display: flex; align-items: center; gap: 0.5rem; }
+.project-progress__bar { flex: 1; min-width: 4rem; height: 0.5rem; border-radius: 999px; background: var(--track); overflow: hidden; }
+.project-progress__part { display: block; height: 100%; background: var(--teal); }
+.project-progress__part.is-over { background: var(--gold); }
+.project-progress__value { color: var(--muted); font-size: 0.8125rem; font-variant-numeric: tabular-nums; white-space: nowrap; }

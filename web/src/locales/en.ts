@@ -575,6 +575,30 @@ export const en = {
     detailsTitle: 'Time details', stop: 'Stop timer', resume: 'Resume timer', delete: 'Delete', confirmDelete: 'Delete time',
     confirmDeleteText: 'Delete this time entry? This cannot be undone.',
     billableShort: 'Billable',
+    report: {
+      title: 'Hours report', filters: 'Hours filters', search: 'Search for description..',
+      views: { thisYear: 'Time entries from this year', open: 'Open time entries', contact: 'Time entries of {{name}}', custom: 'Filtered time entries' },
+      states: { all: 'All', open: 'Open', non_billable: 'Non-billable' },
+      excel: 'Excel', pdf: 'PDF', bill: 'Bill time entries',
+      period: 'Period', employee: 'Employee', total: 'Total', week: 'Week {{week}}',
+      empty: 'No time entries match this filter.',
+      intro: {
+        title: 'View all worked hours', text: 'A clear weekly overview of all hours worked, both your own and those of your entire team. Ideal for tracking progress per contact and project.',
+        filter: 'Filter', filterText: 'Create overviews by filtering by period, contact or project. Useful for analyzing your working hours and progress within your team.',
+        bill: 'Invoicing hours', billText: 'Make invoicing easy: select the contact and choose the correct hours. You can generate an invoice in just a few clicks.',
+        status: 'Status', statusText: 'Check per hour line whether the registered hours are billable and whether they have already been invoiced.',
+      },
+    },
+    projects: {
+      title: 'Projects', add: 'Add project', budget: 'Budget', worked: 'Worked', billable: 'Billable', nonBillable: 'Non-billable', progress: 'Progress',
+      spent: '{{percent}}% spent',
+      intro: {
+        title: 'See all worked hours by project', text: 'See at a glance how many hours already have been logged in a project. This way you always stay on track and can switch quickly if necessary.',
+        budget: 'Hours budget', budgetText: 'See per project how many hours are available according to the set budget. This budget is easily set when creating a project.',
+        progress: 'Progress percentage', progressText: 'Get insight into the progress at a glance: see exactly what percentage of the hour budget has already been spent.',
+        billable: 'Billable hours', billableText: 'Monitor per project how many hours are billable and which hours cannot be charged to the customer.',
+      },
+    },
     register: {
       title: 'Timesheets {{date}}', today: 'Today', more: 'More actions', moreInfo: 'More information', week: 'Week',
       prevWeek: 'Previous week', nextWeek: 'Next week', weekTotal: 'Week total', form: 'Log time',
