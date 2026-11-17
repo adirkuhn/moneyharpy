@@ -145,9 +145,10 @@ func TestImportBookAndSynchronize(t *testing.T) {
 	r = owner.upload(api+"/financial_statements/import", "application/octet-stream", data)
 	wantStatus(t, r, http.StatusCreated)
 	if found := decode[struct {
-		Duplicates int    `json:"duplicates"`
-		AccountID  string `json:"financial_account_id"`
-	}](t, r); found.AccountID != bank.ID || found.Duplicates != 2 {
+		Duplicates int      `json:"duplicates"`
+		AccountID  string   `json:"financial_account_id"`
+		AccountIDs []string `json:"financial_account_ids"`
+	}](t, r); found.AccountID != bank.ID || !slices.Equal(found.AccountIDs, []string{bank.ID}) || found.Duplicates != 2 {
 		t.Errorf("detected import = %+v", found)
 	}
 	listed := decode[[]struct {

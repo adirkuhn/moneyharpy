@@ -164,6 +164,9 @@ function KeyedForm(props: EditorProps & { rates: TaxRate[] }) {
   const opened = useRef({ opening, key })
   if (opened.current.opening !== opening) {
     opened.current = { opening, key }
+  } else if (opened.current.key !== key) {
+    // Once the editor moved on to another version, what it opened with is spent: coming back to a version does not reopen it.
+    opened.current = { opening, key: '' }
   }
   return <InvoiceForm key={key} {...props} opening={opened.current.key === key ? opening : null} />
 }
