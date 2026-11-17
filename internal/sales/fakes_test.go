@@ -693,6 +693,10 @@ func (m *memEvents) InsertEvents(_ context.Context, list []history.Event) error 
 	m.list = append(m.list, list...)
 	return nil
 }
+func (m *memEvents) ListEvents(context.Context, resource.ID, history.Query) ([]history.Event, error) {
+	return nil, nil
+}
+
 func (m *memEvents) EventsOf(_ context.Context, _ resource.ID, t string, ids []resource.ID) ([]history.Event, error) {
 	var out []history.Event
 	for _, e := range m.list {

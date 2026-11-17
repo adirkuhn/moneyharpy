@@ -319,9 +319,10 @@ func newHarness(t *testing.T, opts options) *harness {
 	productService := products.NewService(admins, books, contactService, catalogStore, products.AnyReferences{salesStore, subscriptionStore, purchaseStore}, ids, time.Now)
 	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore, timeEntryStore, purchaseStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
+	events := history.NewService(postgres.NewEventStore(pool), ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
-		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, Bank: bank, History: history.NewService(postgres.NewEventStore(pool), ids, time.Now),
+		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, Bank: bank, History: events,
 		Notifier: httpapi.SalesNotifier{Webhooks: h.hooks}, IDs: ids, Now: time.Now, BaseURL: "https://books.example.com",
 	})
 	bank.UseInvoices(invoiceService)
@@ -358,6 +359,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Journal:         ledger,
 		Contacts:        contactService,
 		Sales:           invoiceService,
+		Events:          events,
 		Purchases:       documentService,
 		Recognition:     h.recognition,
 		Assets:          assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: h.hooks}, ids, time.Now),

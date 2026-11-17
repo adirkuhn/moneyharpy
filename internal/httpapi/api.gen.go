@@ -5852,8 +5852,9 @@ type Contact struct {
 
 	// EstimateWorkflowId Moneybird-compatible identifier_nullable.
 	EstimateWorkflowId *IdentifierNullable `json:"estimate_workflow_id,omitempty"`
-	Events             []EventResponse     `json:"events"`
-	Firstname          *string             `json:"firstname,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events    []EventResponse `json:"events"`
+	Firstname *string         `json:"firstname,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -6734,7 +6735,8 @@ type Estimate struct {
 	EstimateDate       *openapi_types.Date `json:"estimate_date,omitempty"`
 	EstimateId         *string             `json:"estimate_id,omitempty"`
 	EstimateSequenceId *string             `json:"estimate_sequence_id,omitempty"`
-	Events             []EventResponse     `json:"events"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events []EventResponse `json:"events"`
 
 	// ExchangeRate Moneybird-compatible number.
 	ExchangeRate *Number `json:"exchange_rate,omitempty"`
@@ -6994,7 +6996,8 @@ type ExternalSalesInvoice struct {
 	Details     []DetailResponse    `json:"details"`
 	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
 	EntryNumber int                 `json:"entry_number"`
-	Events      []EventResponse     `json:"events"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events []EventResponse `json:"events"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -7394,12 +7397,13 @@ type GeneralDocument struct {
 	ContactId *IdentifierNullable `json:"contact_id"`
 
 	// CreatedAt Moneybird-compatible timestamp.
-	CreatedAt    *Timestamp          `json:"created_at,omitempty"`
-	Date         openapi_types.Date  `json:"date"`
-	DueDate      *openapi_types.Date `json:"due_date,omitempty"`
-	EntryNumber  *int                `json:"entry_number"`
-	Events       []EventResponse     `json:"events"`
-	ExchangeRate *string             `json:"exchange_rate,omitempty"`
+	CreatedAt   *Timestamp          `json:"created_at,omitempty"`
+	Date        openapi_types.Date  `json:"date"`
+	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber *int                `json:"entry_number"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events       []EventResponse `json:"events"`
+	ExchangeRate *string         `json:"exchange_rate,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -7465,8 +7469,9 @@ type GeneralJournalDocument struct {
 	Attachments      []AttachmentResponse `json:"attachments"`
 
 	// CreatedAt Moneybird-compatible timestamp.
-	CreatedAt                     *Timestamp                            `json:"created_at,omitempty"`
-	Date                          openapi_types.Date                    `json:"date"`
+	CreatedAt *Timestamp         `json:"created_at,omitempty"`
+	Date      openapi_types.Date `json:"date"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Events                        []EventResponse                       `json:"events"`
 	GeneralJournalDocumentEntries []GeneralJournalDocumentEntryResponse `json:"general_journal_document_entries"`
 
@@ -9003,11 +9008,12 @@ type PurchaseInvoice struct {
 	CreatedAt *Timestamp `json:"created_at,omitempty"`
 
 	// Currency Moneybird-compatible currency.
-	Currency          Currency                   `json:"currency"`
-	Date              openapi_types.Date         `json:"date"`
-	Details           []DetailResponse           `json:"details"`
-	DueDate           *openapi_types.Date        `json:"due_date,omitempty"`
-	EntryNumber       *int                       `json:"entry_number"`
+	Currency    Currency            `json:"currency"`
+	Date        openapi_types.Date  `json:"date"`
+	Details     []DetailResponse    `json:"details"`
+	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber *int                `json:"entry_number"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Events            []EventResponse            `json:"events"`
 	ExchangeRate      *string                    `json:"exchange_rate,omitempty"`
 	FiscalAllocations []FiscalAllocationResponse `json:"fiscal_allocations"`
@@ -9224,7 +9230,8 @@ type Receipt struct {
 	Details     []DetailResponse    `json:"details"`
 	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
 	EntryNumber *int                `json:"entry_number"`
-	Events      []EventResponse     `json:"events"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events []EventResponse `json:"events"`
 
 	// ExchangeRate Moneybird-compatible number.
 	ExchangeRate      *Number                    `json:"exchange_rate,omitempty"`
@@ -9455,7 +9462,8 @@ type RecurringSalesInvoice struct {
 	// DocumentStyleId A unique record identifier. Parse as a string.
 	//
 	// Example: 123456789012345678
-	DocumentStyleId  *Identifier                        `json:"document_style_id,omitempty"`
+	DocumentStyleId *Identifier `json:"document_style_id,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Events           []EventResponse                    `json:"events"`
 	FirstDueInterval *int                               `json:"first_due_interval,omitempty"`
 	Frequency        int                                `json:"frequency"`
@@ -9746,7 +9754,8 @@ type SalesInvoice struct {
 	DocumentStyleId *Identifier         `json:"document_style_id,omitempty"`
 	DraftId         *int                `json:"draft_id,omitempty"`
 	DueDate         *openapi_types.Date `json:"due_date,omitempty"`
-	Events          []EventResponse     `json:"events"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events []EventResponse `json:"events"`
 
 	// FirstDueInterval MoneyHarpy extension. Days from the invoice date to the due date.
 	FirstDueInterval *int `json:"first_due_interval,omitempty"`
@@ -10376,9 +10385,10 @@ type TaskListTask struct {
 	CompletedAt *time.Time          `json:"completed_at"`
 
 	// CreatedAt Moneybird-compatible timestamp.
-	CreatedAt   *Timestamp      `json:"created_at,omitempty"`
-	Description *string         `json:"description"`
-	Events      []EventResponse `json:"events"`
+	CreatedAt   *Timestamp `json:"created_at,omitempty"`
+	Description *string    `json:"description"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events []EventResponse `json:"events"`
 
 	// Generated MoneyHarpy extension. Generated from a report or a category; such tasks cannot be deleted.
 	Generated *bool `json:"generated,omitempty"`
@@ -10621,7 +10631,8 @@ type TimeEntry struct {
 	CreatedAt   *Timestamp         `json:"created_at,omitempty"`
 	Description string             `json:"description"`
 	EndedAt     *TimeEntry_EndedAt `json:"ended_at"`
-	Events      []EventResponse    `json:"events"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events []EventResponse `json:"events"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -10777,7 +10788,8 @@ type TypelessDocument struct {
 	// CreatedAt Moneybird-compatible timestamp.
 	CreatedAt *Timestamp         `json:"created_at,omitempty"`
 	Date      openapi_types.Date `json:"date"`
-	Events    []EventResponse    `json:"events"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events []EventResponse `json:"events"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -11478,8 +11490,9 @@ type ContactResponse struct {
 
 	// EstimateWorkflowId Moneybird-compatible identifier_nullable.
 	EstimateWorkflowId *IdentifierNullable `json:"estimate_workflow_id,omitempty"`
-	Events             *[]EventResponse    `json:"events,omitempty"`
-	Firstname          *string             `json:"firstname,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events    *[]EventResponse `json:"events,omitempty"`
+	Firstname *string          `json:"firstname,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -11821,7 +11834,8 @@ type EstimateResponse struct {
 	EstimateDate       *openapi_types.Date `json:"estimate_date,omitempty"`
 	EstimateId         *string             `json:"estimate_id,omitempty"`
 	EstimateSequenceId *string             `json:"estimate_sequence_id,omitempty"`
-	Events             *[]EventResponse    `json:"events,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events *[]EventResponse `json:"events,omitempty"`
 
 	// ExchangeRate Moneybird-compatible number.
 	ExchangeRate *Number `json:"exchange_rate,omitempty"`
@@ -11899,6 +11913,15 @@ type EventResponse struct {
 	CreatedAt *Timestamp              `json:"created_at,omitempty"`
 	Data      *map[string]interface{} `json:"data,omitempty"`
 
+	// EntityId Moneybird-compatible identifier_nullable.
+	EntityId   *IdentifierNullable `json:"entity_id,omitempty"`
+	EntityType *string             `json:"entity_type,omitempty"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id *Identifier `json:"id,omitempty"`
+
 	// LinkEntityId Moneybird-compatible identifier_nullable.
 	LinkEntityId   *IdentifierNullable `json:"link_entity_id,omitempty"`
 	LinkEntityType *string             `json:"link_entity_type,omitempty"`
@@ -11965,7 +11988,8 @@ type ExternalSalesInvoiceResponse struct {
 	Details     *[]DetailResponse   `json:"details,omitempty"`
 	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
 	EntryNumber *int                `json:"entry_number,omitempty"`
-	Events      *[]EventResponse    `json:"events,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events *[]EventResponse `json:"events,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -12165,12 +12189,13 @@ type GeneralDocumentResponse struct {
 	ContactId *IdentifierNullable `json:"contact_id,omitempty"`
 
 	// CreatedAt Moneybird-compatible timestamp.
-	CreatedAt    *Timestamp          `json:"created_at,omitempty"`
-	Date         *openapi_types.Date `json:"date,omitempty"`
-	DueDate      *openapi_types.Date `json:"due_date,omitempty"`
-	EntryNumber  *int                `json:"entry_number,omitempty"`
-	Events       *[]EventResponse    `json:"events,omitempty"`
-	ExchangeRate *string             `json:"exchange_rate,omitempty"`
+	CreatedAt   *Timestamp          `json:"created_at,omitempty"`
+	Date        *openapi_types.Date `json:"date,omitempty"`
+	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber *int                `json:"entry_number,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events       *[]EventResponse `json:"events,omitempty"`
+	ExchangeRate *string          `json:"exchange_rate,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -12238,8 +12263,9 @@ type GeneralJournalDocumentResponse struct {
 	Attachments      *[]AttachmentResponse `json:"attachments,omitempty"`
 
 	// CreatedAt Moneybird-compatible timestamp.
-	CreatedAt                     *Timestamp                             `json:"created_at,omitempty"`
-	Date                          *openapi_types.Date                    `json:"date,omitempty"`
+	CreatedAt *Timestamp          `json:"created_at,omitempty"`
+	Date      *openapi_types.Date `json:"date,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Events                        *[]EventResponse                       `json:"events,omitempty"`
 	GeneralJournalDocumentEntries *[]GeneralJournalDocumentEntryResponse `json:"general_journal_document_entries,omitempty"`
 
@@ -12628,11 +12654,12 @@ type PurchaseInvoiceResponse struct {
 	CreatedAt *Timestamp `json:"created_at,omitempty"`
 
 	// Currency Moneybird-compatible currency.
-	Currency          *Currency                   `json:"currency,omitempty"`
-	Date              *openapi_types.Date         `json:"date,omitempty"`
-	Details           *[]DetailResponse           `json:"details,omitempty"`
-	DueDate           *openapi_types.Date         `json:"due_date,omitempty"`
-	EntryNumber       *int                        `json:"entry_number,omitempty"`
+	Currency    *Currency           `json:"currency,omitempty"`
+	Date        *openapi_types.Date `json:"date,omitempty"`
+	Details     *[]DetailResponse   `json:"details,omitempty"`
+	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
+	EntryNumber *int                `json:"entry_number,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Events            *[]EventResponse            `json:"events,omitempty"`
 	ExchangeRate      *string                     `json:"exchange_rate,omitempty"`
 	FiscalAllocations *[]FiscalAllocationResponse `json:"fiscal_allocations,omitempty"`
@@ -12775,7 +12802,8 @@ type ReceiptResponse struct {
 	Details     *[]DetailResponse   `json:"details,omitempty"`
 	DueDate     *openapi_types.Date `json:"due_date,omitempty"`
 	EntryNumber *int                `json:"entry_number,omitempty"`
-	Events      *[]EventResponse    `json:"events,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events *[]EventResponse `json:"events,omitempty"`
 
 	// ExchangeRate Moneybird-compatible number.
 	ExchangeRate      *Number                     `json:"exchange_rate,omitempty"`
@@ -12854,12 +12882,13 @@ type RecurringSalesInvoiceResponse struct {
 	ContactPerson *RecurringSalesInvoiceResponse_ContactPerson `json:"contact_person,omitempty"`
 
 	// ContactPersonId Moneybird-compatible identifier_nullable.
-	ContactPersonId  *IdentifierNullable                         `json:"contact_person_id,omitempty"`
-	CreatedAt        *time.Time                                  `json:"created_at,omitempty"`
-	Currency         *string                                     `json:"currency,omitempty"`
-	CustomFields     *[]CustomFieldValueResponse                 `json:"custom_fields,omitempty"`
-	Details          *[]DetailResponse                           `json:"details,omitempty"`
-	Discount         *string                                     `json:"discount,omitempty"`
+	ContactPersonId *IdentifierNullable         `json:"contact_person_id,omitempty"`
+	CreatedAt       *time.Time                  `json:"created_at,omitempty"`
+	Currency        *string                     `json:"currency,omitempty"`
+	CustomFields    *[]CustomFieldValueResponse `json:"custom_fields,omitempty"`
+	Details         *[]DetailResponse           `json:"details,omitempty"`
+	Discount        *string                     `json:"discount,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Events           *[]EventResponse                            `json:"events,omitempty"`
 	FirstDueInterval *int                                        `json:"first_due_interval,omitempty"`
 	Frequency        *int                                        `json:"frequency,omitempty"`
@@ -12975,7 +13004,8 @@ type SalesInvoiceResponse struct {
 	DocumentStyleId *Identifier         `json:"document_style_id,omitempty"`
 	DraftId         *int                `json:"draft_id,omitempty"`
 	DueDate         *openapi_types.Date `json:"due_date,omitempty"`
-	Events          *[]EventResponse    `json:"events,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events *[]EventResponse `json:"events,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -13335,9 +13365,10 @@ type TaskListTaskResponse struct {
 	CompletedAt *time.Time          `json:"completed_at,omitempty"`
 
 	// CreatedAt Moneybird-compatible timestamp.
-	CreatedAt   *Timestamp       `json:"created_at,omitempty"`
-	Description *string          `json:"description,omitempty"`
-	Events      *[]EventResponse `json:"events,omitempty"`
+	CreatedAt   *Timestamp `json:"created_at,omitempty"`
+	Description *string    `json:"description,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events *[]EventResponse `json:"events,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -13475,7 +13506,8 @@ type TimeEntryResponse struct {
 	CreatedAt   *Timestamp                 `json:"created_at,omitempty"`
 	Description *string                    `json:"description,omitempty"`
 	EndedAt     *TimeEntryResponse_EndedAt `json:"ended_at,omitempty"`
-	Events      *[]EventResponse           `json:"events,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events *[]EventResponse `json:"events,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -13545,7 +13577,8 @@ type TypelessDocumentResponse struct {
 	// CreatedAt Moneybird-compatible timestamp.
 	CreatedAt *Timestamp          `json:"created_at,omitempty"`
 	Date      *openapi_types.Date `json:"date,omitempty"`
-	Events    *[]EventResponse    `json:"events,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Events *[]EventResponse `json:"events,omitempty"`
 
 	// Id A unique record identifier. Parse as a string.
 	//
@@ -14301,6 +14334,21 @@ type CreateEstimateAttachmentMultipartBody struct {
 type DownloadEstimatePdfParams struct {
 	// Media stationery leaves out the sender's address and logo, for printing on paper that has them.
 	Media *Media `form:"media,omitempty" json:"media,omitempty"`
+}
+
+// ListEventsParams defines parameters for ListEvents.
+type ListEventsParams struct {
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// Cursor Position in the list to continue from. Take the URL from the Link header with rel="next" instead of building it. A cursor this list did not make is refused with 400.
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// EntityType Only return events of this record type, for example Contact, SalesInvoice or Document.
+	EntityType *string `form:"entity_type,omitempty" json:"entity_type,omitempty"`
+
+	// EntityId Only return the events of this record.
+	EntityId *string `form:"entity_id,omitempty" json:"entity_id,omitempty"`
 }
 
 // ListExternalSalesInvoicesParams defines parameters for ListExternalSalesInvoices.
@@ -22011,6 +22059,9 @@ type ServerInterface interface {
 	// SendEstimate Send an estimate
 	// (PATCH /api/v2/{administration_id}/estimates/{id}/send_estimate)
 	SendEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListEvents List events
+	// (GET /api/v2/{administration_id}/events)
+	ListEvents(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListEventsParams)
 	// ListExternalSalesInvoices List all external sales invoices
 	// (GET /api/v2/{administration_id}/external_sales_invoices)
 	ListExternalSalesInvoices(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListExternalSalesInvoicesParams)
@@ -23940,6 +23991,12 @@ func (_ Unimplemented) DeleteEstimateNote(w http.ResponseWriter, r *http.Request
 // SendEstimate Send an estimate
 // (PATCH /api/v2/{administration_id}/estimates/{id}/send_estimate)
 func (_ Unimplemented) SendEstimate(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListEvents List events
+// (GET /api/v2/{administration_id}/events)
+func (_ Unimplemented) ListEvents(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListEventsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -32900,6 +32957,87 @@ func (siw *ServerInterfaceWrapper) SendEstimate(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SendEstimate(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListEventsParams
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "entity_type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "entity_type", r.URL.Query(), &params.EntityType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "entity_type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entity_type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "entity_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "entity_id", r.URL.Query(), &params.EntityId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "entity_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entity_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListEvents(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -42395,6 +42533,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/sales_invoices/{id}/attachments/{attachment_id}/download", wrapper.DownloadSalesInvoiceAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/events", wrapper.ListEvents)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/estimates", wrapper.ListEstimates)

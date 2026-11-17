@@ -84,6 +84,8 @@ tags:
     description: What the administration has verified about itself. Compatible with the Moneybird API.
   - name: Downloads
     description: The files exports made. Compatible with the Moneybird API.
+  - name: Events
+    description: What happened to records, as the activity logs show it. Compatible with the Moneybird API.
   - name: Estimates
     description: Quotes that contacts accept or reject, and that are billed as sales invoices. Compatible with the Moneybird API.
   - name: Payments
@@ -9667,6 +9669,72 @@ paths:
       responses:
         '302':
           $ref: '#/components/responses/FileRedirect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/events:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listEvents
+      x-permissions: []
+      summary: List events
+      description: >-
+        Returns the events of the administration, newest first: the same events the activity logs show. Give
+        entity_type, entity_id or both; without either the answer is 400. With entity_type the user needs the
+        permission of that record type: sales_invoices for SalesInvoice, ExternalSalesInvoice and
+        RecurringSalesInvoice, estimates for Estimate, documents for Document and bank for FinancialMutation; Contact
+        needs one of estimates, sales_invoices, documents, bank or settings. Without it the answer is 403, as for every
+        missing permission in MoneyHarpy, where Moneybird answers 401. Purchase invoices, receipts and the other
+        document types keep their events under Document, so asking for such a type is 400 naming Document; an
+        unknown type is 400 naming the types the user can ask for. With entity_id only, events of record types the
+        user may not see are left out. A user who only has the time_entries permission sees only their own events.
+        The list is paginated with a cursor: follow the Link header with rel="next" for older events; the last page
+        has no Link header.
+      tags: [Events]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - name: cursor
+          in: query
+          description: >-
+            Position in the list to continue from. Take the URL from the Link header with rel="next" instead of
+            building it. A cursor this list did not make is refused with 400.
+          schema:
+            type: string
+            maxLength: 64
+        - name: entity_type
+          in: query
+          description: Only return events of this record type, for example Contact, SalesInvoice or Document.
+          schema:
+            type: string
+            maxLength: 64
+        - name: entity_id
+          in: query
+          description: Only return the events of this record.
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+      responses:
+        '200':
+          description: A page of events, newest first
+          headers:
+            Link:
+              description: RFC 8288 link to the next page, with rel="next"; absent on the last page.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/event_response'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -19965,9 +20033,11 @@ components:
         - $ref: '#/components/schemas/base_contact_response'
         - properties:
             events:
+              deprecated: true
               items:
                 $ref: '#/components/schemas/event_response'
               type: array
+              x-sunset: "2027-01-17"
           type: object
       description: Moneybird-compatible contact_response.
     creditors_report_item:
@@ -20412,9 +20482,11 @@ components:
           nullable: true
           type: string
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         exchange_rate:
           $ref: '#/components/schemas/number'
         id:
@@ -20510,6 +20582,12 @@ components:
         data:
           additionalProperties: true
           type: object
+        entity_id:
+          $ref: '#/components/schemas/identifier_nullable'
+        entity_type:
+          type: string
+        id:
+          $ref: '#/components/schemas/Identifier'
         link_entity_id:
           $ref: '#/components/schemas/identifier_nullable'
         link_entity_type:
@@ -20590,9 +20668,11 @@ components:
         entry_number:
           type: integer
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         id:
           $ref: '#/components/schemas/Identifier'
         marked_dubious_on:
@@ -20888,9 +20968,11 @@ components:
           nullable: true
           type: integer
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         exchange_rate:
           nullable: true
           type: string
@@ -20960,9 +21042,11 @@ components:
           format: date
           type: string
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         general_journal_document_entries:
           items:
             $ref: '#/components/schemas/general_journal_document_entry_response'
@@ -21539,9 +21623,11 @@ components:
           nullable: true
           type: integer
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         exchange_rate:
           nullable: true
           type: string
@@ -21733,9 +21819,11 @@ components:
           nullable: true
           type: integer
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         exchange_rate:
           $ref: '#/components/schemas/number'
         fiscal_allocations:
@@ -21882,9 +21970,11 @@ components:
           nullable: true
           type: string
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         first_due_interval:
           type: integer
         frequency:
@@ -22020,9 +22110,11 @@ components:
           format: date
           type: string
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         id:
           $ref: '#/components/schemas/Identifier'
         identity_id:
@@ -22537,9 +22629,11 @@ components:
           nullable: true
           type: string
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         id:
           $ref: '#/components/schemas/Identifier'
         name:
@@ -22705,9 +22799,11 @@ components:
           oneOf:
             - $ref: '#/components/schemas/timestamp'
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         id:
           $ref: '#/components/schemas/Identifier'
         notes:
@@ -22762,9 +22858,11 @@ components:
           format: date
           type: string
         events:
+          deprecated: true
           items:
             $ref: '#/components/schemas/event_response'
           type: array
+          x-sunset: "2027-01-17"
         id:
           $ref: '#/components/schemas/Identifier'
         origin:

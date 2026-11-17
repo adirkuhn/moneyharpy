@@ -151,9 +151,10 @@ func run(logger *slog.Logger) error {
 	productService := products.NewService(admins, books, contactService, catalogStore, products.AnyReferences{salesStore, subscriptionStore, purchaseStore}, ids, time.Now)
 	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore, timeEntryStore, purchaseStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
+	events := history.NewService(postgres.NewEventStore(pool), ids, time.Now)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
-		Store: salesStore, Renderer: invoicedoc.New(), Mailer: sales.MailClient{Client: mailer}, Bank: bank, History: history.NewService(postgres.NewEventStore(pool), ids, time.Now),
+		Store: salesStore, Renderer: invoicedoc.New(), Mailer: sales.MailClient{Client: mailer}, Bank: bank, History: events,
 		Notifier: httpapi.SalesNotifier{Webhooks: hooks, Logger: logger}, IDs: ids, Now: time.Now, BaseURL: cfg.baseURL,
 	})
 	bank.UseInvoices(invoiceService)
@@ -216,6 +217,7 @@ func run(logger *slog.Logger) error {
 		Journal:           ledger,
 		Contacts:          contactService,
 		Sales:             invoiceService,
+		Events:            events,
 		Purchases:         documentService,
 		Recognition:       recognition,
 		Assets:            assetService,

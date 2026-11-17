@@ -104,3 +104,64 @@ func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) error 
 	)
 	return err
 }
+
+const listEvents = `-- name: ListEvents :many
+SELECT id, administration_id, entity_type, entity_id, user_id, action, link_entity_type, link_entity_id, data, created_at, updated_at FROM events
+WHERE administration_id = $1
+  AND ($2::text[] IS NULL OR entity_type = ANY($2::text[]))
+  AND ($3::bigint IS NULL OR entity_id = $3::bigint)
+  AND ($4::bigint IS NULL OR user_id = $4::bigint)
+  AND ($5::timestamptz IS NULL OR (created_at, id) < ($5::timestamptz, $6::bigint))
+ORDER BY created_at DESC, id DESC
+LIMIT $7
+`
+
+type ListEventsParams struct {
+	AdministrationID int64
+	EntityTypes      []string
+	EntityID         pgtype.Int8
+	UserID           pgtype.Int8
+	AfterAt          pgtype.Timestamptz
+	AfterID          pgtype.Int8
+	MaxRows          int32
+}
+
+func (q *Queries) ListEvents(ctx context.Context, arg ListEventsParams) ([]Event, error) {
+	rows, err := q.db.Query(ctx, listEvents,
+		arg.AdministrationID,
+		arg.EntityTypes,
+		arg.EntityID,
+		arg.UserID,
+		arg.AfterAt,
+		arg.AfterID,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Event
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.AdministrationID,
+			&i.EntityType,
+			&i.EntityID,
+			&i.UserID,
+			&i.Action,
+			&i.LinkEntityType,
+			&i.LinkEntityID,
+			&i.Data,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -40,6 +40,9 @@ type Store interface {
 	InsertEvents(ctx context.Context, events []Event) error
 	// EventsOf returns the events of the records, oldest first.
 	EventsOf(ctx context.Context, admin resource.ID, entityType string, entities []resource.ID) ([]Event, error)
+	// ListEvents returns at most q.Limit events the query selects, newest
+	// first.
+	ListEvents(ctx context.Context, admin resource.ID, q Query) ([]Event, error)
 }
 
 // Service implements recording and reading events.
