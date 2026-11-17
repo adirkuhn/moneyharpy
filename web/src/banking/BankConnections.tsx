@@ -1,14 +1,65 @@
-import { useId, useState } from 'react'
+import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { errorMessages } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { groupIBAN } from '../invoices/paper'
 import { Loading } from '../layout/Loading'
 import {
-  type BankConnection, type ConnectableBank, type FinancialAccount, useBankConnections, useConnectableBanks, useConnectBank, useDisconnectBank,
-  useReconnectBank, useSyncBankConnection,
+  type BankConnection, type ConnectableBank, type FinancialAccount, useBankConnections, useConnectableBanks, useConnectBank, useConnectWithKey, useDisconnectBank,
+  useReconnectBank, useReplaceKey, useSyncBankConnection,
 } from './queries'
 import './connections.css'
+
+/** Connections made with an API key are reconnected with a new key, not at the bank. */
+const withKey = (c: BankConnection) => c.provider === 'revolut'
+
+/** A field to paste an API key in, as Revolut Business makes them. */
+function KeyForm({ label, submit, pending, error, onSubmit }: { label: string; submit: string; pending: boolean; error: unknown; onSubmit: (key: string) => void }) {
+  const { t } = useTranslation()
+  const [key, setKey] = useState('')
+  const send = (e: FormEvent) => {
+    e.preventDefault()
+    if (key.trim()) {
+      onSubmit(key.trim())
+    }
+  }
+  return (
+    <form className="key-form" onSubmit={send} noValidate>
+      <label className="key-form__field">
+        <span>{label}</span>
+        <input type="password" autoComplete="off" spellCheck={false} value={key} onChange={(e) => setKey(e.target.value)} />
+      </label>
+      <button className="btn btn--primary" disabled={pending || !key.trim()}>{pending ? t('bank.connect.checking') : submit}</button>
+      <Problems messages={errorMessages(error, { api_key: label })} />
+    </form>
+  )
+}
+
+/** Revolut Business connects with a read-only API key from its API Console. */
+function RevolutKey({ administrationId }: { administrationId: string }) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const connect = useConnectWithKey(administrationId)
+  const formId = useId()
+  return (
+    <div className="connect-bank__key">
+      <button type="button" className="connect-bank__bank" aria-expanded={open} aria-controls={formId} onClick={() => setOpen(!open)}>
+        <span className="connect-bank__logo" aria-hidden="true">R</span>
+        <span>{t('bank.connect.revolut')}</span>
+      </button>
+      {open && (
+        <div id={formId} className="connect-bank__keyform">
+          <p className="hint">{t('bank.connect.revolutHelp')}</p>
+          {connect.isSuccess ? (
+            <p className="notice" role="status">{t('bank.connections.connected', { bank: connect.data.bank })}</p>
+          ) : (
+            <KeyForm label={t('bank.connect.apiKey')} submit={t('bank.connect.connect')} pending={connect.isPending} error={connect.error} onSubmit={(key) => connect.mutate(key)} />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const day = (at: string | null | undefined, language: string) => (at ? new Date(at).toLocaleDateString(language, { dateStyle: 'medium' }) : '')
 const moment = (at: string | null | undefined, language: string) => (at ? new Date(at).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' }) : '')
@@ -27,6 +78,7 @@ export function ConnectBank({ id, administrationId }: { id: string; administrati
   return (
     <section id={id} className="connect-bank" aria-label={t('bank.connect.title')}>
       <p className="connect-bank__intro">{t('bank.connect.intro')}</p>
+      <RevolutKey administrationId={administrationId} />
       {banks.isError ? (
         <Problems messages={errorMessages(banks.error, {})} />
       ) : !banks.data ? (
@@ -70,6 +122,8 @@ export function ConnectionNotices({ administrationId }: { administrationId: stri
   const connections = useBankConnections(administrationId)
   const reconnect = useReconnectBank(administrationId)
   const sync = useSyncBankConnection(administrationId)
+  const replace = useReplaceKey(administrationId)
+  const [replacing, setReplacing] = useState<string | null>(null)
   const notices = (connections.data ?? []).filter((c) => c.needs_reconnect || c.last_error)
   if (notices.length === 0) {
     return null
@@ -79,13 +133,27 @@ export function ConnectionNotices({ administrationId }: { administrationId: stri
       {notices.map((c) => (
         <div key={c.id} className={`connection-notice${c.state === 'expired' ? ' is-expired' : ''}`} role="status">
           <p>
-            {c.state === 'expired'
+            {c.state === 'expired' && withKey(c)
+              ? t('bank.connections.keyRejected', { bank: c.bank })
+              : c.state === 'expired'
               ? t('bank.connections.expired', { bank: c.bank })
               : c.needs_reconnect
                 ? t('bank.connections.expiresOn', { bank: c.bank, date: day(c.valid_until, i18n.language) })
                 : t('bank.connections.failed', { bank: c.bank, error: c.last_error })}
           </p>
-          {c.needs_reconnect ? (
+          {c.needs_reconnect && withKey(c) ? (
+            replacing === c.id ? (
+              <KeyForm
+                label={t('bank.connect.apiKey')}
+                submit={t('bank.connections.replaceKey')}
+                pending={replace.isPending}
+                error={replace.error}
+                onSubmit={(apiKey) => replace.mutate({ id: c.id, apiKey }, { onSuccess: () => setReplacing(null) })}
+              />
+            ) : (
+              <button type="button" className="btn btn--primary btn--small" onClick={() => setReplacing(c.id)}>{t('bank.connections.newKey', { bank: c.bank })}</button>
+            )
+          ) : c.needs_reconnect ? (
             <button type="button" className="btn btn--primary btn--small" disabled={reconnect.isPending} onClick={() => reconnect.mutate(c.id)}>
               {t('bank.connections.reconnect', { bank: c.bank })}
             </button>
@@ -113,6 +181,8 @@ export function ConnectionList({ administrationId, accounts }: { administrationI
   const reconnect = useReconnectBank(administrationId)
   const sync = useSyncBankConnection(administrationId)
   const disconnect = useDisconnectBank(administrationId)
+  const replace = useReplaceKey(administrationId)
+  const [replacing, setReplacing] = useState<string | null>(null)
   const [confirming, setConfirming] = useState<string | null>(null)
   const [connecting, setConnecting] = useState(false)
   const connectId = useId()
@@ -137,8 +207,12 @@ export function ConnectionList({ administrationId, accounts }: { administrationI
           <dl className="connection__facts">
             <dt>{t('bank.connections.accounts')}</dt>
             <dd>{c.financial_account_ids.map(accountName).filter(Boolean).join(', ')}</dd>
-            <dt>{t('bank.connections.validUntil')}</dt>
-            <dd>{day(c.valid_until, i18n.language)}</dd>
+            {c.valid_until && (
+              <>
+                <dt>{t('bank.connections.validUntil')}</dt>
+                <dd>{day(c.valid_until, i18n.language)}</dd>
+              </>
+            )}
             <dt>{t('bank.connections.lastSync')}</dt>
             <dd>{c.last_sync_at ? moment(c.last_sync_at, i18n.language) : t('bank.accounts.never')}</dd>
             {c.last_error && (
@@ -149,9 +223,15 @@ export function ConnectionList({ administrationId, accounts }: { administrationI
             )}
           </dl>
           <div className="connection__actions">
-            <button type="button" className={`btn ${c.needs_reconnect ? 'btn--primary' : 'btn--secondary'}`} disabled={reconnect.isPending} onClick={() => reconnect.mutate(c.id)}>
-              {t('bank.connections.reconnectShort')}
-            </button>
+            {withKey(c) ? (
+              <button type="button" className={`btn ${c.needs_reconnect ? 'btn--primary' : 'btn--secondary'}`} aria-expanded={replacing === c.id} onClick={() => setReplacing(replacing === c.id ? null : c.id)}>
+                {t('bank.connections.replaceKey')}
+              </button>
+            ) : (
+              <button type="button" className={`btn ${c.needs_reconnect ? 'btn--primary' : 'btn--secondary'}`} disabled={reconnect.isPending} onClick={() => reconnect.mutate(c.id)}>
+                {t('bank.connections.reconnectShort')}
+              </button>
+            )}
             {c.state === 'active' && (
               <button type="button" className="btn btn--secondary" disabled={sync.isPending} onClick={() => sync.mutate(c.id)}>
                 {sync.isPending && sync.variables === c.id ? t('bank.connections.fetching') : t('bank.connections.fetchNow')}
@@ -169,6 +249,15 @@ export function ConnectionList({ administrationId, accounts }: { administrationI
             )}
           </div>
           {confirming === c.id && <p className="hint">{t('bank.connections.disconnectHint')}</p>}
+          {replacing === c.id && (
+            <KeyForm
+              label={t('bank.connect.apiKey')}
+              submit={t('bank.connections.replaceKey')}
+              pending={replace.isPending}
+              error={replace.error}
+              onSubmit={(apiKey) => replace.mutate({ id: c.id, apiKey }, { onSuccess: () => setReplacing(null) })}
+            />
+          )}
         </article>
       ))}
       <Problems messages={[...errorMessages(reconnect.error, {}), ...errorMessages(sync.error, {}), ...errorMessages(disconnect.error, {})]} />

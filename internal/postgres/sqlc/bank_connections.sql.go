@@ -64,7 +64,7 @@ func (q *Queries) DeleteBankConnectionAccounts(ctx context.Context, connectionID
 }
 
 const dueBankConnections = `-- name: DueBankConnections :many
-SELECT id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at FROM bank_connections
+SELECT id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at, secret FROM bank_connections
 WHERE state = 'active' AND (last_sync_at IS NULL OR last_sync_at < $1)
 ORDER BY last_sync_at NULLS FIRST, id
 LIMIT 200
@@ -94,6 +94,7 @@ func (q *Queries) DueBankConnections(ctx context.Context, lastSyncAt pgtype.Time
 			&i.LastError,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Secret,
 		); err != nil {
 			return nil, err
 		}
@@ -106,7 +107,7 @@ func (q *Queries) DueBankConnections(ctx context.Context, lastSyncAt pgtype.Time
 }
 
 const getBankConnection = `-- name: GetBankConnection :one
-SELECT id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at FROM bank_connections WHERE administration_id = $1 AND id = $2
+SELECT id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at, secret FROM bank_connections WHERE administration_id = $1 AND id = $2
 `
 
 type GetBankConnectionParams struct {
@@ -132,12 +133,13 @@ func (q *Queries) GetBankConnection(ctx context.Context, arg GetBankConnectionPa
 		&i.LastError,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Secret,
 	)
 	return i, err
 }
 
 const getBankConnectionByAuthState = `-- name: GetBankConnectionByAuthState :one
-SELECT id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at FROM bank_connections WHERE auth_state = $1
+SELECT id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at, secret FROM bank_connections WHERE auth_state = $1
 `
 
 func (q *Queries) GetBankConnectionByAuthState(ctx context.Context, authState pgtype.Text) (BankConnection, error) {
@@ -158,6 +160,7 @@ func (q *Queries) GetBankConnectionByAuthState(ctx context.Context, authState pg
 		&i.LastError,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Secret,
 	)
 	return i, err
 }
@@ -186,7 +189,7 @@ func (q *Queries) InsertBankConnectionAccount(ctx context.Context, arg InsertBan
 }
 
 const listBankConnections = `-- name: ListBankConnections :many
-SELECT id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at FROM bank_connections WHERE administration_id = $1 ORDER BY created_at, id
+SELECT id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at, secret FROM bank_connections WHERE administration_id = $1 ORDER BY created_at, id
 `
 
 func (q *Queries) ListBankConnections(ctx context.Context, administrationID int64) ([]BankConnection, error) {
@@ -213,6 +216,7 @@ func (q *Queries) ListBankConnections(ctx context.Context, administrationID int6
 			&i.LastError,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Secret,
 		); err != nil {
 			return nil, err
 		}
@@ -225,10 +229,10 @@ func (q *Queries) ListBankConnections(ctx context.Context, administrationID int6
 }
 
 const upsertBankConnection = `-- name: UpsertBankConnection :exec
-INSERT INTO bank_connections (id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+INSERT INTO bank_connections (id, administration_id, provider, bank, country, state, session_id, valid_until, auth_state, created_by, last_sync_at, last_error, created_at, updated_at, secret)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 ON CONFLICT (id) DO UPDATE SET
-    state = EXCLUDED.state, session_id = EXCLUDED.session_id, valid_until = EXCLUDED.valid_until, auth_state = EXCLUDED.auth_state,
+    state = EXCLUDED.state, session_id = EXCLUDED.session_id, valid_until = EXCLUDED.valid_until, auth_state = EXCLUDED.auth_state, secret = EXCLUDED.secret,
     created_by = EXCLUDED.created_by, last_sync_at = EXCLUDED.last_sync_at, last_error = EXCLUDED.last_error, updated_at = EXCLUDED.updated_at
 `
 
@@ -247,6 +251,7 @@ type UpsertBankConnectionParams struct {
 	LastError        string
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
+	Secret           string
 }
 
 func (q *Queries) UpsertBankConnection(ctx context.Context, arg UpsertBankConnectionParams) error {
@@ -265,6 +270,7 @@ func (q *Queries) UpsertBankConnection(ctx context.Context, arg UpsertBankConnec
 		arg.LastError,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.Secret,
 	)
 	return err
 }

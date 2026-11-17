@@ -146,13 +146,16 @@ func (e AuditfileExportRequestVersion) Valid() bool {
 
 // Defines values for BankConnectionProvider.
 const (
-	EnableBanking BankConnectionProvider = "enable_banking"
+	BankConnectionProviderEnableBanking BankConnectionProvider = "enable_banking"
+	BankConnectionProviderRevolut       BankConnectionProvider = "revolut"
 )
 
 // Valid indicates whether the value is a known member of the BankConnectionProvider enum.
 func (e BankConnectionProvider) Valid() bool {
 	switch e {
-	case EnableBanking:
+	case BankConnectionProviderEnableBanking:
+		return true
+	case BankConnectionProviderRevolut:
 		return true
 	default:
 		return false
@@ -4425,6 +4428,21 @@ func (e ListAssetsParamsActive) Valid() bool {
 	}
 }
 
+// Defines values for CreateKeyBankConnectionJSONBodyProvider.
+const (
+	CreateKeyBankConnectionJSONBodyProviderRevolut CreateKeyBankConnectionJSONBodyProvider = "revolut"
+)
+
+// Valid indicates whether the value is a known member of the CreateKeyBankConnectionJSONBodyProvider enum.
+func (e CreateKeyBankConnectionJSONBodyProvider) Valid() bool {
+	switch e {
+	case CreateKeyBankConnectionJSONBodyProviderRevolut:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListContactsParamsIncludeArchived.
 const (
 	ListContactsParamsIncludeArchivedFalse ListContactsParamsIncludeArchived = "false"
@@ -5688,8 +5706,10 @@ type BankConnection struct {
 	LastSyncAt *time.Time `json:"last_sync_at"`
 
 	// NeedsReconnect Expired, or ending within 14 days.
-	NeedsReconnect bool                   `json:"needs_reconnect"`
-	Provider       BankConnectionProvider `json:"provider"`
+	NeedsReconnect bool `json:"needs_reconnect"`
+
+	// Provider enable_banking connects through Enable Banking; revolut connects Revolut Business with an API key.
+	Provider BankConnectionProvider `json:"provider"`
 
 	// State Active connections fetch transactions every few hours; expired ones need reconnecting.
 	State     BankConnectionState `json:"state"`
@@ -5699,7 +5719,7 @@ type BankConnection struct {
 	ValidUntil *time.Time `json:"valid_until"`
 }
 
-// BankConnectionProvider defines model for BankConnection.Provider.
+// BankConnectionProvider enable_banking connects through Enable Banking; revolut connects Revolut Business with an API key.
 type BankConnectionProvider string
 
 // BankConnectionState Active connections fetch transactions every few hours; expired ones need reconnecting.
@@ -14044,10 +14064,24 @@ type CreateBankConnectionJSONBody struct {
 	Country string `json:"country"`
 }
 
+// CreateKeyBankConnectionJSONBody defines parameters for CreateKeyBankConnection.
+type CreateKeyBankConnectionJSONBody struct {
+	ApiKey   *string                                 `json:"api_key,omitempty"`
+	Provider CreateKeyBankConnectionJSONBodyProvider `json:"provider"`
+}
+
+// CreateKeyBankConnectionJSONBodyProvider defines parameters for CreateKeyBankConnection.
+type CreateKeyBankConnectionJSONBodyProvider string
+
 // ListConnectableBanksParams defines parameters for ListConnectableBanks.
 type ListConnectableBanksParams struct {
 	// Country Two-letter country code; NL when left out.
 	Country *string `form:"country,omitempty" json:"country,omitempty"`
+}
+
+// ReplaceBankConnectionKeyJSONBody defines parameters for ReplaceBankConnectionKey.
+type ReplaceBankConnectionKeyJSONBody struct {
+	ApiKey *string `json:"api_key,omitempty"`
 }
 
 // ListContactsParams defines parameters for ListContacts.
@@ -15129,6 +15163,12 @@ type CreateAssetManualValueChangeJSONRequestBody = AssetValueChangeRequest
 
 // CreateBankConnectionJSONRequestBody defines body for CreateBankConnection for application/json ContentType.
 type CreateBankConnectionJSONRequestBody CreateBankConnectionJSONBody
+
+// CreateKeyBankConnectionJSONRequestBody defines body for CreateKeyBankConnection for application/json ContentType.
+type CreateKeyBankConnectionJSONRequestBody CreateKeyBankConnectionJSONBody
+
+// ReplaceBankConnectionKeyJSONRequestBody defines body for ReplaceBankConnectionKey for application/json ContentType.
+type ReplaceBankConnectionKeyJSONRequestBody ReplaceBankConnectionKeyJSONBody
 
 // UpdateBankSettingsJSONRequestBody defines body for UpdateBankSettings for application/json ContentType.
 type UpdateBankSettingsJSONRequestBody = BankSettingsRequest
@@ -21753,12 +21793,18 @@ type ServerInterface interface {
 	// CreateBankConnection Connect a bank
 	// (POST /api/v2/{administration_id}/bank_connections)
 	CreateBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// CreateKeyBankConnection Connect a bank with an API key
+	// (POST /api/v2/{administration_id}/bank_connections/api_key)
+	CreateKeyBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// ListConnectableBanks List the banks that can be connected
 	// (GET /api/v2/{administration_id}/bank_connections/banks)
 	ListConnectableBanks(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListConnectableBanksParams)
 	// DeleteBankConnection Disconnect a bank
 	// (DELETE /api/v2/{administration_id}/bank_connections/{id})
 	DeleteBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ReplaceBankConnectionKey Replace a bank connection's API key
+	// (PUT /api/v2/{administration_id}/bank_connections/{id}/api_key)
+	ReplaceBankConnectionKey(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// ReconnectBankConnection Reconnect a bank
 	// (POST /api/v2/{administration_id}/bank_connections/{id}/reconnect)
 	ReconnectBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -23274,6 +23320,12 @@ func (_ Unimplemented) CreateBankConnection(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// CreateKeyBankConnection Connect a bank with an API key
+// (POST /api/v2/{administration_id}/bank_connections/api_key)
+func (_ Unimplemented) CreateKeyBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListConnectableBanks List the banks that can be connected
 // (GET /api/v2/{administration_id}/bank_connections/banks)
 func (_ Unimplemented) ListConnectableBanks(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListConnectableBanksParams) {
@@ -23283,6 +23335,12 @@ func (_ Unimplemented) ListConnectableBanks(w http.ResponseWriter, r *http.Reque
 // DeleteBankConnection Disconnect a bank
 // (DELETE /api/v2/{administration_id}/bank_connections/{id})
 func (_ Unimplemented) DeleteBankConnection(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ReplaceBankConnectionKey Replace a bank connection's API key
+// (PUT /api/v2/{administration_id}/bank_connections/{id}/api_key)
+func (_ Unimplemented) ReplaceBankConnectionKey(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -27214,6 +27272,32 @@ func (siw *ServerInterfaceWrapper) CreateBankConnection(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// CreateKeyBankConnection operation middleware
+func (siw *ServerInterfaceWrapper) CreateKeyBankConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateKeyBankConnection(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListConnectableBanks operation middleware
 func (siw *ServerInterfaceWrapper) ListConnectableBanks(w http.ResponseWriter, r *http.Request) {
 
@@ -27282,6 +27366,41 @@ func (siw *ServerInterfaceWrapper) DeleteBankConnection(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteBankConnection(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReplaceBankConnectionKey operation middleware
+func (siw *ServerInterfaceWrapper) ReplaceBankConnectionKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReplaceBankConnectionKey(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -42398,6 +42517,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/bank_connections", wrapper.CreateBankConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/bank_connections/api_key", wrapper.CreateKeyBankConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v2/{administration_id}/bank_connections/{id}/api_key", wrapper.ReplaceBankConnectionKey)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/bank_connections/banks", wrapper.ListConnectableBanks)

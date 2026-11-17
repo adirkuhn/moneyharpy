@@ -363,3 +363,128 @@ func (m *memConnections) DueConnections(_ context.Context, before time.Time) ([]
 	}
 	return out, nil
 }
+
+// fakeKeyLink stands in for Revolut's Business API.
+type fakeKeyLink struct {
+	accounts map[string][]LinkAccount // by key
+	entries  map[string][]bankfile.Entry
+	err      error
+	fetched  []string
+}
+
+func (f *fakeKeyLink) Accounts(_ context.Context, provider, key string) ([]LinkAccount, error) {
+	if provider != ProviderRevolut {
+		return nil, errors.New("unknown provider")
+	}
+	if f.err != nil {
+		return nil, f.err
+	}
+	a, ok := f.accounts[key]
+	if !ok {
+		return nil, ErrLinkExpired
+	}
+	return a, nil
+}
+
+func (f *fakeKeyLink) Transactions(_ context.Context, _, key, uid string, from time.Time) ([]bankfile.Entry, error) {
+	f.fetched = append(f.fetched, key+"/"+uid+"@"+from.Format(time.DateOnly))
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.entries[uid], nil
+}
+
+// sealer marks sealed secrets so tests see they are never stored plain.
+type sealer struct{}
+
+func (sealer) Seal(s string) (string, error) { return "sealed:" + s, nil }
+func (sealer) Open(s string) (string, error) {
+	plain, ok := strings.CutPrefix(s, "sealed:")
+	if !ok {
+		return "", errors.New("not sealed")
+	}
+	return plain, nil
+}
+
+func keyService(t *testing.T) (*Service, *fakeKeyLink, *memConnections) {
+	t.Helper()
+	svc, _, _ := newTestService()
+	keys := &fakeKeyLink{accounts: map[string][]LinkAccount{
+		"key-1": {{UID: "acc-eur", IBAN: "NL91ABNA0417164300", Currency: "EUR", Name: "Main"}, {UID: "acc-gbp", Currency: "GBP", Name: "GBP"}},
+		"key-2": {{UID: "acc-eur", IBAN: "NL91ABNA0417164300", Currency: "EUR", Name: "Main"}},
+	}, entries: map[string][]bankfile.Entry{"acc-eur": {{Date: now.AddDate(0, 0, -1), Amount: -2570, Currency: "EUR", Message: "INV-2026-77", ContraName: "Hosting Company", TransactionID: "tx-2"}}}}
+	store := newMemConnections()
+	svc.UseBankLinks(nil, store, callback)
+	svc.UseKeyLinks(keys, sealer{})
+	return svc, keys, store
+}
+
+func TestConnectingRevolutWithAnAPIKey(t *testing.T) {
+	svc, keys, store := keyService(t)
+	ctx := context.Background()
+	c, err := svc.ConnectWithKey(ctx, adminID, owner, ProviderRevolut, " key-1 ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Provider != ProviderRevolut || c.Bank != "Revolut Business" || c.State != ConnectionActive || c.ValidUntil != nil || c.LastSyncAt == nil || len(c.Accounts) != 1 {
+		t.Fatalf("connection = %+v; want the account with an IBAN connected and fetched", c)
+	}
+	stored, _ := store.Connection(ctx, adminID, c.ID)
+	if stored.Secret != "sealed:key-1" {
+		t.Errorf("stored secret = %q, want it sealed", stored.Secret)
+	}
+	if keys.fetched[0] != "key-1/acc-eur@"+now.AddDate(0, 0, -90).Format(time.DateOnly) {
+		t.Errorf("fetched = %v", keys.fetched)
+	}
+	ms, _ := svc.Mutations(ctx, adminID, owner, MutationFilter{})
+	if len(ms) != 1 || ms[0].Message != "INV-2026-77" {
+		t.Errorf("mutations = %+v", ms)
+	}
+	accounts, _ := svc.Accounts(ctx, adminID, owner)
+	if !slicesContain(accounts, func(a Account) bool { return a.Identifier == "NL91ABNA0417164300" && a.Provider == ProviderRevolut }) {
+		t.Errorf("accounts = %+v", accounts)
+	}
+	if _, err := svc.Reconnect(ctx, adminID, owner, c.ID); fieldsOf(t, err)["api_key"] == nil {
+		t.Errorf("reconnect = %v, want to be asked for a new key", err)
+	}
+}
+
+func TestARejectedKeyAsksForANewOne(t *testing.T) {
+	svc, keys, _ := keyService(t)
+	ctx := context.Background()
+	if _, err := svc.ConnectWithKey(ctx, adminID, owner, ProviderRevolut, "wrong"); fieldsOf(t, err)["api_key"] == nil {
+		t.Errorf("wrong key = %v", err)
+	}
+	if _, err := svc.ConnectWithKey(ctx, adminID, owner, "other", "key-1"); fieldsOf(t, err)["provider"] == nil {
+		t.Errorf("unknown provider = %v", err)
+	}
+	c, _ := svc.ConnectWithKey(ctx, adminID, owner, ProviderRevolut, "key-1")
+	keys.err = ErrLinkExpired
+	got, err := svc.SyncConnection(ctx, adminID, owner, c.ID)
+	if err != nil || got.State != ConnectionExpired {
+		t.Fatalf("revoked key = %+v, %v", got, err)
+	}
+	keys.err = nil
+	again, err := svc.ReplaceKey(ctx, adminID, owner, c.ID, "key-2")
+	if err != nil || again.ID != c.ID || again.State != ConnectionActive || again.LastError != "" {
+		t.Fatalf("replaced = %+v, %v", again, err)
+	}
+	if got, _ := svc.Connection(ctx, adminID, owner, c.ID); got.Secret != "sealed:key-2" {
+		t.Errorf("secret = %q", got.Secret)
+	}
+	// Due fetches use the key too.
+	keys.fetched = nil
+	svc.now = func() time.Time { return now.Add(7 * time.Hour) }
+	if n := svc.SyncDue(ctx); n != 1 || len(keys.fetched) != 1 || !strings.HasPrefix(keys.fetched[0], "key-2/") {
+		t.Errorf("due = %d, fetched %v", n, keys.fetched)
+	}
+}
+
+func slicesContain[T any](list []T, f func(T) bool) bool {
+	for _, x := range list {
+		if f(x) {
+			return true
+		}
+	}
+	return false
+}

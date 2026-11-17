@@ -3227,6 +3227,99 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/bank_connections/api_key:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: createKeyBankConnection
+      x-permissions: [bank]
+      summary: Connect a bank with an API key
+      description: >-
+        MoneyHarpy extension. Connects Revolut Business with a read-only API key made in its API Console: the accounts
+        the key reaches are matched to the administration's accounts by IBAN or added, and their transactions fetched.
+        The key is encrypted at rest and never sent back.
+      tags: [Bank connections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [provider, api_key]
+              properties:
+                provider:
+                  type: string
+                  enum: [revolut]
+                api_key:
+                  type: string
+                  maxLength: 1024
+                  writeOnly: true
+      responses:
+        '201':
+          description: The connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankConnection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '502':
+          description: The bank refused or could not be reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v2/{administration_id}/bank_connections/{id}/api_key:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    put:
+      operationId: replaceBankConnectionKey
+      x-permissions: [bank]
+      summary: Replace a bank connection's API key
+      description: MoneyHarpy extension. Reconnects a bank connected with an API key with a new one; the accounts stay connected.
+      tags: [Bank connections]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [api_key]
+              properties:
+                api_key:
+                  type: string
+                  maxLength: 1024
+                  writeOnly: true
+      responses:
+        '200':
+          description: The connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankConnection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '502':
+          description: The bank refused or could not be reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v2/{administration_id}/bank_connections/banks:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -16590,7 +16683,8 @@ components:
           $ref: '#/components/schemas/Identifier'
         provider:
           type: string
-          enum: [enable_banking]
+          enum: [enable_banking, revolut]
+          description: enable_banking connects through Enable Banking; revolut connects Revolut Business with an API key.
         bank:
           type: string
         country:

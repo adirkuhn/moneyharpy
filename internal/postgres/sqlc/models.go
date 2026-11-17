@@ -153,6 +153,7 @@ type BankConnection struct {
 	LastError        string
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
+	Secret           string
 }
 
 type BankConnectionAccount struct {

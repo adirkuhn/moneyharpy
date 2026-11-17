@@ -806,7 +806,9 @@ export const en = {
     connect: {
       button: 'Connect a bank', title: 'Connect a bank', search: 'Search your bank', banks: 'Banks', none: 'No bank found.',
       intro: 'Pick your bank. You log in at your bank and give MoneyHarpy access to your business accounts; their transactions then come in every few hours.',
-      going: 'Going to your bank…', orText: 'Or have them come in by themselves:', orLink: 'connect your bank',
+      going: 'Going to your bank…',
+      revolut: 'Revolut Business (API key)', apiKey: 'API key', connect: 'Connect', checking: 'Checking…',
+      revolutHelp: 'In Revolut Business, create an API key in the API Console with read access to accounts and transactions, without request signing, and paste it here. MoneyHarpy keeps it encrypted, only reads with it, and fetches straight from Revolut.', orText: 'Or have them come in by themselves:', orLink: 'connect your bank',
     },
     connections: {
       none: 'No bank connected yet. Connect your bank to fetch its transactions automatically.',
@@ -815,7 +817,9 @@ export const en = {
       expired: 'The connection with {{bank}} has expired, so no transactions come in. Reconnect to fetch them again.',
       expiresOn: 'The connection with {{bank}} ends on {{date}}. Reconnect to keep fetching its transactions.',
       failed: 'Fetching from {{bank}} failed: {{error}}',
-      reconnect: 'Reconnect {{bank}}', reconnectShort: 'Reconnect', tryAgain: 'Try again',
+      reconnect: 'Reconnect {{bank}}',
+      replaceKey: 'Replace API key', newKey: 'Enter a new {{bank}} API key',
+      keyRejected: '{{bank}} no longer accepts the API key, so no transactions come in. Enter a new key to fetch them again.', reconnectShort: 'Reconnect', tryAgain: 'Try again',
       stateActive: 'Connected', stateEnding: 'Reconnect soon', stateExpired: 'Expired',
       accounts: 'Accounts', validUntil: 'Access until', lastSync: 'Last fetched', problem: 'Problem',
       fetchNow: 'Fetch now', fetching: 'Fetching…', disconnect: 'Disconnect', confirmDisconnect: 'Yes, disconnect',

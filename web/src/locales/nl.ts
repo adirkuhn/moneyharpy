@@ -808,7 +808,9 @@ export const nl: Messages = {
     connect: {
       button: 'Bank koppelen', title: 'Bank koppelen', search: 'Zoek je bank', banks: 'Banken', none: 'Geen bank gevonden.',
       intro: 'Kies je bank. Je logt in bij je bank en geeft MoneyHarpy toegang tot je zakelijke rekeningen; hun transacties komen dan elke paar uur binnen.',
-      going: 'Naar je bank…', orText: 'Of laat ze vanzelf binnenkomen:', orLink: 'koppel je bank',
+      going: 'Naar je bank…',
+      revolut: 'Revolut Business (API-sleutel)', apiKey: 'API-sleutel', connect: 'Koppelen', checking: 'Bezig met controleren…',
+      revolutHelp: 'Maak in Revolut Business in de API Console een API-sleutel met leestoegang tot rekeningen en transacties, zonder ondertekening van verzoeken, en plak hem hier. MoneyHarpy bewaart hem versleuteld, leest er alleen mee en haalt rechtstreeks bij Revolut op.', orText: 'Of laat ze vanzelf binnenkomen:', orLink: 'koppel je bank',
     },
     connections: {
       none: 'Nog geen bank gekoppeld. Koppel je bank om de transacties automatisch op te halen.',
@@ -817,7 +819,9 @@ export const nl: Messages = {
       expired: 'De koppeling met {{bank}} is verlopen, dus er komen geen transacties binnen. Koppel opnieuw om ze weer op te halen.',
       expiresOn: 'De koppeling met {{bank}} loopt af op {{date}}. Koppel opnieuw om de transacties te blijven ophalen.',
       failed: 'Ophalen bij {{bank}} is mislukt: {{error}}',
-      reconnect: '{{bank}} opnieuw koppelen', reconnectShort: 'Opnieuw koppelen', tryAgain: 'Opnieuw proberen',
+      reconnect: '{{bank}} opnieuw koppelen',
+      replaceKey: 'API-sleutel vervangen', newKey: 'Nieuwe API-sleutel voor {{bank}} invullen',
+      keyRejected: '{{bank}} accepteert de API-sleutel niet meer, dus er komen geen transacties binnen. Vul een nieuwe sleutel in om ze weer op te halen.', reconnectShort: 'Opnieuw koppelen', tryAgain: 'Opnieuw proberen',
       stateActive: 'Gekoppeld', stateEnding: 'Binnenkort opnieuw koppelen', stateExpired: 'Verlopen',
       accounts: 'Rekeningen', validUntil: 'Toegang tot', lastSync: 'Laatst opgehaald', problem: 'Probleem',
       fetchNow: 'Nu ophalen', fetching: 'Bezig met ophalen…', disconnect: 'Ontkoppelen', confirmDisconnect: 'Ja, ontkoppelen',

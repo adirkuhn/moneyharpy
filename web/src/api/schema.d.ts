@@ -1373,6 +1373,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/bank_connections/api_key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Connect a bank with an API key
+         * @description MoneyHarpy extension. Connects Revolut Business with a read-only API key made in its API Console: the accounts the key reaches are matched to the administration's accounts by IBAN or added, and their transactions fetched. The key is encrypted at rest and never sent back.
+         */
+        post: operations["createKeyBankConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/bank_connections/{id}/api_key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace a bank connection's API key
+         * @description MoneyHarpy extension. Reconnects a bank connected with an API key with a new one; the accounts stay connected.
+         */
+        put: operations["replaceBankConnectionKey"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/bank_connections/banks": {
         parameters: {
             query?: never;
@@ -8273,8 +8318,11 @@ export interface components {
         BankConnection: {
             id: components["schemas"]["Identifier"];
             administration_id: components["schemas"]["Identifier"];
-            /** @enum {string} */
-            provider: "enable_banking";
+            /**
+             * @description enable_banking connects through Enable Banking; revolut connects Revolut Business with an API key.
+             * @enum {string}
+             */
+            provider: "enable_banking" | "revolut";
             bank: string;
             country: string;
             /**
@@ -14698,6 +14746,91 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+        };
+    };
+    createKeyBankConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    provider: "revolut";
+                    api_key: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The connection */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankConnection"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            /** @description The bank refused or could not be reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    replaceBankConnectionKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    api_key: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The connection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankConnection"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            /** @description The bank refused or could not be reached */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     listConnectableBanks: {

@@ -166,3 +166,65 @@ describe('adding transactions', () => {
     expect(screen.queryByRole('region', { name: 'Add transactions' })).toBeNull()
   })
 })
+
+describe('Revolut Business with an API key', () => {
+  const revolut = (over: Partial<BankConnection> = {}) => connection({ id: '902', provider: 'revolut', bank: 'Revolut Business', country: '', valid_until: null, ...over })
+
+  it('connects with a key pasted in the connect panel, also while other banks are off', async () => {
+    let sent: unknown
+    server.use(
+      ...loaded([]),
+      http.get('*/api/v2/11/bank_connections/banks', () => HttpResponse.json({ error: { base: ['Bank connections are turned off on this installation; an instance administrator can turn them on'] } }, { status: 422 })),
+      http.post('*/api/v2/11/bank_connections/api_key', async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json(revolut(), { status: 201 })
+      }),
+    )
+    renderAt('/11/financial_accounts')
+    await userEvent.click(await screen.findByRole('button', { name: 'More actions' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Connect a bank' }))
+    const panel = await screen.findByRole('region', { name: 'Connect a bank' })
+    await userEvent.click(within(panel).getByRole('button', { name: 'Revolut Business (API key)' }))
+    expect(within(panel).getByText(/without request signing/)).toBeInTheDocument()
+    await userEvent.type(within(panel).getByLabelText('API key'), 'secret-key')
+    await userEvent.click(within(panel).getByRole('button', { name: 'Connect' }))
+    expect(await within(panel).findByText('Connected to Revolut Business. Its transactions are in.')).toBeInTheDocument()
+    expect(sent).toEqual({ provider: 'revolut', api_key: 'secret-key' })
+  })
+
+  it('asks for a new key when Revolut no longer accepts it', async () => {
+    let sent: unknown
+    server.use(
+      ...loaded([revolut({ state: 'expired', needs_reconnect: true, last_error: 'the bank no longer gives access; reconnect the bank' })]),
+      http.put('*/api/v2/11/bank_connections/902/api_key', async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json(revolut())
+      }),
+    )
+    renderAt('/11/financial_accounts')
+    expect(await screen.findByText(/Revolut Business no longer accepts the API key/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Enter a new Revolut Business API key' }))
+    await userEvent.type(screen.getByLabelText('API key'), 'new-key')
+    await userEvent.click(screen.getByRole('button', { name: 'Replace API key' }))
+    await waitFor(() => expect(sent).toEqual({ api_key: 'new-key' }))
+  })
+
+  it('replaces the key from the settings, where it has no consent date', async () => {
+    let sent: unknown
+    server.use(
+      ...loaded([revolut()]),
+      http.put('*/api/v2/11/bank_connections/902/api_key', async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json(revolut())
+      }),
+    )
+    renderAt('/11/settings/bank')
+    const card = await screen.findByRole('article', { name: 'Revolut Business' })
+    expect(card).not.toHaveTextContent('Access until')
+    expect(within(card).queryByRole('button', { name: 'Reconnect' })).toBeNull()
+    await userEvent.click(within(card).getByRole('button', { name: 'Replace API key' }))
+    await userEvent.type(within(card).getByLabelText('API key'), 'new-key')
+    await userEvent.click(within(card).getAllByRole('button', { name: 'Replace API key' }).at(-1)!)
+    await waitFor(() => expect(sent).toEqual({ api_key: 'new-key' }))
+  })
+})

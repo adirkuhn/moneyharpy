@@ -49,7 +49,7 @@ func (s *BankingStore) SaveConnection(ctx context.Context, c banking.Connection)
 		if err := q.UpsertBankConnection(ctx, sqlc.UpsertBankConnectionParams{
 			ID: int64(c.ID), AdministrationID: int64(c.AdministrationID), Provider: c.Provider, Bank: c.Bank, Country: c.Country, State: c.State,
 			SessionID: c.SessionID, ValidUntil: optionalTime(c.ValidUntil), AuthState: optionalText(c.AuthState), CreatedBy: int64(c.CreatedBy),
-			LastSyncAt: optionalTime(c.LastSyncAt), LastError: c.LastError, CreatedAt: timestamp(c.CreatedAt), UpdatedAt: timestamp(c.UpdatedAt),
+			LastSyncAt: optionalTime(c.LastSyncAt), LastError: c.LastError, CreatedAt: timestamp(c.CreatedAt), UpdatedAt: timestamp(c.UpdatedAt), Secret: c.Secret,
 		}); err != nil {
 			return err
 		}
@@ -107,7 +107,7 @@ func (s *BankingStore) withAccounts(ctx context.Context, rows []sqlc.BankConnect
 		out[i] = banking.Connection{
 			ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), Provider: r.Provider, Bank: r.Bank, Country: r.Country,
 			State: r.State, SessionID: r.SessionID, ValidUntil: timeOf(r.ValidUntil), AuthState: r.AuthState.String, CreatedBy: resource.ID(r.CreatedBy),
-			LastSyncAt: timeOf(r.LastSyncAt), LastError: r.LastError, Accounts: byConnection[r.ID], CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
+			LastSyncAt: timeOf(r.LastSyncAt), LastError: r.LastError, Secret: r.Secret, Accounts: byConnection[r.ID], CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
 		}
 	}
 	return out, nil

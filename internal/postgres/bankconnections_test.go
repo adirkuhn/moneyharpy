@@ -34,7 +34,7 @@ func TestBankConnectionsRoundTrip(t *testing.T) {
 		t.Fatalf("by state = %+v, %v", got, err)
 	}
 
-	c.AuthState, c.State, c.SessionID, c.ValidUntil = "", banking.ConnectionActive, "session-1", &until
+	c.AuthState, c.State, c.SessionID, c.ValidUntil, c.Secret = "", banking.ConnectionActive, "session-1", &until, "sealed-key"
 	c.Accounts = []banking.LinkedAccount{{AccountID: acc.ID, UID: "uid-1"}, {AccountID: other.ID, UID: "uid-2"}}
 	if err := store.SaveConnection(ctx, c); err != nil {
 		t.Fatal(err)
@@ -43,7 +43,7 @@ func TestBankConnectionsRoundTrip(t *testing.T) {
 		t.Errorf("used state = %v", err)
 	}
 	got, err = store.Connection(ctx, admin, c.ID)
-	if err != nil || got.SessionID != "session-1" || !got.ValidUntil.Equal(until) || len(got.Accounts) != 2 || got.Accounts[0] != c.Accounts[0] || got.Accounts[1] != c.Accounts[1] {
+	if err != nil || got.SessionID != "session-1" || got.Secret != "sealed-key" || !got.ValidUntil.Equal(until) || len(got.Accounts) != 2 || got.Accounts[0] != c.Accounts[0] || got.Accounts[1] != c.Accounts[1] {
 		t.Fatalf("Connection() = %+v, %v", got, err)
 	}
 	due, err := store.DueConnections(ctx, now.Add(time.Minute))

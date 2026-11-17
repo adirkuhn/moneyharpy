@@ -167,3 +167,39 @@ func (s *server) failBankLink(w http.ResponseWriter, r *http.Request, err error)
 	}
 	s.fail(w, r, err)
 }
+
+// CreateKeyBankConnection implements ServerInterface.
+func (s *server) CreateKeyBankConnection(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	body, ok := decodeBody[CreateKeyBankConnectionJSONRequestBody](w, r)
+	if !ok {
+		return
+	}
+	c, err := s.deps.Banking.ConnectWithKey(r.Context(), admin, user(r).ID, string(body.Provider), deref(body.ApiKey))
+	if err != nil {
+		s.failBankLink(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, toBankConnection(c, time.Now()))
+}
+
+// ReplaceBankConnectionKey implements ServerInterface.
+func (s *server) ReplaceBankConnectionKey(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	body, ok := decodeBody[ReplaceBankConnectionKeyJSONRequestBody](w, r)
+	if !ok {
+		return
+	}
+	c, err := s.deps.Banking.ReplaceKey(r.Context(), admin, user(r).ID, rid, deref(body.ApiKey))
+	if err != nil {
+		s.failBankLink(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toBankConnection(c, time.Now()))
+}
