@@ -97,7 +97,7 @@ func (m Mutation) Open() Amount {
 // signed like the money: purchase documents (Document) are paid with money
 // going out.
 func invoiceSign(invoiceType string) Amount {
-	if invoiceType == DocumentType {
+	if invoiceType == DocumentType || invoiceType == VatDocumentType {
 		return -1
 	}
 	return 1
@@ -308,6 +308,10 @@ func (s *Service) MutationsByID(ctx context.Context, admin, user resource.ID, id
 // Moneybird names them.
 const DocumentType = "Document"
 
+// VatDocumentType is the booking type of VAT returns, as Moneybird names
+// them; like a purchase document, a return is paid with money going out.
+const VatDocumentType = "VatDocument"
+
 // Booking types Moneybird links transactions to. Categories, sales invoices,
 // external sales invoices, purchase invoices and receipts (Document) exist in
 // MoneyHarpy so far.
@@ -406,7 +410,7 @@ func (s *Service) UnlinkBooking(ctx context.Context, admin, id, user resource.ID
 	switch bookingType {
 	case "LedgerAccountBooking":
 	case "Payment":
-		if s.invoices == nil && s.documents == nil {
+		if s.invoices == nil && s.documents == nil && s.vatReturns == nil {
 			return Mutation{}, ErrBookingUnavailable
 		}
 		return s.unlinkPayment(ctx, admin, user, m, bookingID)

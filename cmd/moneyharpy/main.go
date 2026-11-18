@@ -60,6 +60,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"github.com/adirkuhn/moneyharpy/internal/uploads"
 	"github.com/adirkuhn/moneyharpy/internal/vatlookup"
+	"github.com/adirkuhn/moneyharpy/internal/vatreturns"
 	"github.com/adirkuhn/moneyharpy/internal/vies"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/adirkuhn/moneyharpy/web"
@@ -179,6 +180,8 @@ func run(logger *slog.Logger) error {
 		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
 	})
 	bank.UseDocuments(documentService)
+	vatReturnService := vatreturns.NewService(admins, vatreturns.BookkeepingBooks{Bookkeeping: books}, postgres.NewVatReturnStore(pool), ids, time.Now)
+	bank.UseVatReturns(vatReturnService)
 	// Scan and Recognise reads uploads in the background and fills them in:
 	// e-invoices and text by its rules, scans through the OCR service, and
 	// with the optional AI connections when an administrator turned them on.
@@ -234,6 +237,7 @@ func run(logger *slog.Logger) error {
 		Reports:           reportService,
 		TimeEntries:       timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now),
 		TaskLists:         tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
+		VatReturns:        vatReturnService,
 		Storage:           s3,
 		Identity:          people,
 		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),

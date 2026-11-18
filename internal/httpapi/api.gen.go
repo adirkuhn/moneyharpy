@@ -1360,6 +1360,7 @@ const (
 	JournalEntryDocumentTypePurchaseInvoice        JournalEntryDocumentType = "PurchaseInvoice"
 	JournalEntryDocumentTypeReceipt                JournalEntryDocumentType = "Receipt"
 	JournalEntryDocumentTypeSalesInvoice           JournalEntryDocumentType = "SalesInvoice"
+	JournalEntryDocumentTypeVatDocument            JournalEntryDocumentType = "VatDocument"
 )
 
 // Valid indicates whether the value is a known member of the JournalEntryDocumentType enum.
@@ -1380,6 +1381,8 @@ func (e JournalEntryDocumentType) Valid() bool {
 	case JournalEntryDocumentTypeReceipt:
 		return true
 	case JournalEntryDocumentTypeSalesInvoice:
+		return true
+	case JournalEntryDocumentTypeVatDocument:
 		return true
 	default:
 		return false
@@ -2937,6 +2940,234 @@ func (e UserType) Valid() bool {
 	}
 }
 
+// Defines values for VatReturnGranularity.
+const (
+	VatReturnGranularityMonth   VatReturnGranularity = "month"
+	VatReturnGranularityQuarter VatReturnGranularity = "quarter"
+	VatReturnGranularityYear    VatReturnGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnGranularity enum.
+func (e VatReturnGranularity) Valid() bool {
+	switch e {
+	case VatReturnGranularityMonth:
+		return true
+	case VatReturnGranularityQuarter:
+		return true
+	case VatReturnGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnKind.
+const (
+	VatReturnKindIcpDeclaration VatReturnKind = "icp_declaration"
+	VatReturnKindSupplement     VatReturnKind = "supplement"
+	VatReturnKindVatReturn      VatReturnKind = "vat_return"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnKind enum.
+func (e VatReturnKind) Valid() bool {
+	switch e {
+	case VatReturnKindIcpDeclaration:
+		return true
+	case VatReturnKindSupplement:
+		return true
+	case VatReturnKindVatReturn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnState.
+const (
+	VatReturnStatePaid      VatReturnState = "paid"
+	VatReturnStateSubmitted VatReturnState = "submitted"
+	VatReturnStateToPay     VatReturnState = "to_pay"
+	VatReturnStateToReceive VatReturnState = "to_receive"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnState enum.
+func (e VatReturnState) Valid() bool {
+	switch e {
+	case VatReturnStatePaid:
+		return true
+	case VatReturnStateSubmitted:
+		return true
+	case VatReturnStateToPay:
+		return true
+	case VatReturnStateToReceive:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnFiguresGranularity.
+const (
+	VatReturnFiguresGranularityMonth   VatReturnFiguresGranularity = "month"
+	VatReturnFiguresGranularityQuarter VatReturnFiguresGranularity = "quarter"
+	VatReturnFiguresGranularityYear    VatReturnFiguresGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnFiguresGranularity enum.
+func (e VatReturnFiguresGranularity) Valid() bool {
+	switch e {
+	case VatReturnFiguresGranularityMonth:
+		return true
+	case VatReturnFiguresGranularityQuarter:
+		return true
+	case VatReturnFiguresGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnFiguresKind.
+const (
+	VatReturnFiguresKindIcpDeclaration VatReturnFiguresKind = "icp_declaration"
+	VatReturnFiguresKindSupplement     VatReturnFiguresKind = "supplement"
+	VatReturnFiguresKindVatReturn      VatReturnFiguresKind = "vat_return"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnFiguresKind enum.
+func (e VatReturnFiguresKind) Valid() bool {
+	switch e {
+	case VatReturnFiguresKindIcpDeclaration:
+		return true
+	case VatReturnFiguresKindSupplement:
+		return true
+	case VatReturnFiguresKindVatReturn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnICPLineKind.
+const (
+	VatReturnICPLineKindGoods    VatReturnICPLineKind = "goods"
+	VatReturnICPLineKindServices VatReturnICPLineKind = "services"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnICPLineKind enum.
+func (e VatReturnICPLineKind) Valid() bool {
+	switch e {
+	case VatReturnICPLineKindGoods:
+		return true
+	case VatReturnICPLineKindServices:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnPeriodGranularity.
+const (
+	VatReturnPeriodGranularityMonth   VatReturnPeriodGranularity = "month"
+	VatReturnPeriodGranularityQuarter VatReturnPeriodGranularity = "quarter"
+	VatReturnPeriodGranularityYear    VatReturnPeriodGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnPeriodGranularity enum.
+func (e VatReturnPeriodGranularity) Valid() bool {
+	switch e {
+	case VatReturnPeriodGranularityMonth:
+		return true
+	case VatReturnPeriodGranularityQuarter:
+		return true
+	case VatReturnPeriodGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnPreviewGranularity.
+const (
+	VatReturnPreviewGranularityMonth   VatReturnPreviewGranularity = "month"
+	VatReturnPreviewGranularityQuarter VatReturnPreviewGranularity = "quarter"
+	VatReturnPreviewGranularityYear    VatReturnPreviewGranularity = "year"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnPreviewGranularity enum.
+func (e VatReturnPreviewGranularity) Valid() bool {
+	switch e {
+	case VatReturnPreviewGranularityMonth:
+		return true
+	case VatReturnPreviewGranularityQuarter:
+		return true
+	case VatReturnPreviewGranularityYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnPreviewKind.
+const (
+	VatReturnPreviewKindIcpDeclaration VatReturnPreviewKind = "icp_declaration"
+	VatReturnPreviewKindSupplement     VatReturnPreviewKind = "supplement"
+	VatReturnPreviewKindVatReturn      VatReturnPreviewKind = "vat_return"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnPreviewKind enum.
+func (e VatReturnPreviewKind) Valid() bool {
+	switch e {
+	case VatReturnPreviewKindIcpDeclaration:
+		return true
+	case VatReturnPreviewKindSupplement:
+		return true
+	case VatReturnPreviewKindVatReturn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnRequestVatReturnIcpLinesKind.
+const (
+	VatReturnRequestVatReturnIcpLinesKindGoods    VatReturnRequestVatReturnIcpLinesKind = "goods"
+	VatReturnRequestVatReturnIcpLinesKindServices VatReturnRequestVatReturnIcpLinesKind = "services"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnRequestVatReturnIcpLinesKind enum.
+func (e VatReturnRequestVatReturnIcpLinesKind) Valid() bool {
+	switch e {
+	case VatReturnRequestVatReturnIcpLinesKindGoods:
+		return true
+	case VatReturnRequestVatReturnIcpLinesKindServices:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VatReturnRequestVatReturnKind.
+const (
+	VatReturnRequestVatReturnKindIcpDeclaration VatReturnRequestVatReturnKind = "icp_declaration"
+	VatReturnRequestVatReturnKindSupplement     VatReturnRequestVatReturnKind = "supplement"
+	VatReturnRequestVatReturnKindVatReturn      VatReturnRequestVatReturnKind = "vat_return"
+)
+
+// Valid indicates whether the value is a known member of the VatReturnRequestVatReturnKind enum.
+func (e VatReturnRequestVatReturnKind) Valid() bool {
+	switch e {
+	case VatReturnRequestVatReturnKindIcpDeclaration:
+		return true
+	case VatReturnRequestVatReturnKindSupplement:
+		return true
+	case VatReturnRequestVatReturnKindVatReturn:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for WorkflowRequestWorkflowType.
 const (
 	EstimateWorkflow WorkflowRequestWorkflowType = "EstimateWorkflow"
@@ -4392,6 +4623,27 @@ func (e WorkflowStepResponseAction) Valid() bool {
 	}
 }
 
+// Defines values for DeclarationKind.
+const (
+	DeclarationKindIcpDeclaration DeclarationKind = "icp_declaration"
+	DeclarationKindSupplement     DeclarationKind = "supplement"
+	DeclarationKindVatReturn      DeclarationKind = "vat_return"
+)
+
+// Valid indicates whether the value is a known member of the DeclarationKind enum.
+func (e DeclarationKind) Valid() bool {
+	switch e {
+	case DeclarationKindIcpDeclaration:
+		return true
+	case DeclarationKindSupplement:
+		return true
+	case DeclarationKindVatReturn:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IncludeArchived.
 const (
 	IncludeArchivedFalse IncludeArchived = "false"
@@ -4575,6 +4827,48 @@ func (e ListContactAdditionalChargesParamsIncludeBilled) Valid() bool {
 	case ListContactAdditionalChargesParamsIncludeBilledFalse:
 		return true
 	case ListContactAdditionalChargesParamsIncludeBilledTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListVatReturnPeriodsParamsKind.
+const (
+	ListVatReturnPeriodsParamsKindIcpDeclaration ListVatReturnPeriodsParamsKind = "icp_declaration"
+	ListVatReturnPeriodsParamsKindSupplement     ListVatReturnPeriodsParamsKind = "supplement"
+	ListVatReturnPeriodsParamsKindVatReturn      ListVatReturnPeriodsParamsKind = "vat_return"
+)
+
+// Valid indicates whether the value is a known member of the ListVatReturnPeriodsParamsKind enum.
+func (e ListVatReturnPeriodsParamsKind) Valid() bool {
+	switch e {
+	case ListVatReturnPeriodsParamsKindIcpDeclaration:
+		return true
+	case ListVatReturnPeriodsParamsKindSupplement:
+		return true
+	case ListVatReturnPeriodsParamsKindVatReturn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PreviewVatReturnParamsKind.
+const (
+	PreviewVatReturnParamsKindIcpDeclaration PreviewVatReturnParamsKind = "icp_declaration"
+	PreviewVatReturnParamsKindSupplement     PreviewVatReturnParamsKind = "supplement"
+	PreviewVatReturnParamsKindVatReturn      PreviewVatReturnParamsKind = "vat_return"
+)
+
+// Valid indicates whether the value is a known member of the PreviewVatReturnParamsKind enum.
+func (e PreviewVatReturnParamsKind) Valid() bool {
+	switch e {
+	case PreviewVatReturnParamsKindIcpDeclaration:
+		return true
+	case PreviewVatReturnParamsKindSupplement:
+		return true
+	case PreviewVatReturnParamsKindVatReturn:
 		return true
 	default:
 		return false
@@ -5110,6 +5404,7 @@ const (
 	GetJournalEntriesReportParamsDocumentTypePurchaseInvoice        GetJournalEntriesReportParamsDocumentType = "PurchaseInvoice"
 	GetJournalEntriesReportParamsDocumentTypeReceipt                GetJournalEntriesReportParamsDocumentType = "Receipt"
 	GetJournalEntriesReportParamsDocumentTypeSalesInvoice           GetJournalEntriesReportParamsDocumentType = "SalesInvoice"
+	GetJournalEntriesReportParamsDocumentTypeVatDocument            GetJournalEntriesReportParamsDocumentType = "VatDocument"
 )
 
 // Valid indicates whether the value is a known member of the GetJournalEntriesReportParamsDocumentType enum.
@@ -5130,6 +5425,8 @@ func (e GetJournalEntriesReportParamsDocumentType) Valid() bool {
 	case GetJournalEntriesReportParamsDocumentTypeReceipt:
 		return true
 	case GetJournalEntriesReportParamsDocumentTypeSalesInvoice:
+		return true
+	case GetJournalEntriesReportParamsDocumentTypeVatDocument:
 		return true
 	default:
 		return false
@@ -11159,6 +11456,223 @@ type VatLookup struct {
 	Zipcode string `json:"zipcode"`
 }
 
+// VatReturn A filed VAT return, supplementary return or ICP declaration. MoneyHarpy extension.
+type VatReturn struct {
+	// AdministrationId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	AdministrationId Identifier     `json:"administration_id"`
+	Boxes            []VatReturnBox `json:"boxes"`
+
+	// Corrections What changed in periods declared before, per period.
+	Corrections []VatReturnCorrection `json:"corrections"`
+	CreatedAt   time.Time             `json:"created_at"`
+
+	// Deadline The last day to file and pay, the end of the month after the period.
+	Deadline    openapi_types.Date   `json:"deadline"`
+	Granularity VatReturnGranularity `json:"granularity"`
+	IcpLines    []VatReturnICPLine   `json:"icp_lines"`
+
+	// Id A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	Id Identifier `json:"id"`
+
+	// InputTax Box 5b, the input tax, in whole euros.
+	InputTax string        `json:"input_tax"`
+	Kind     VatReturnKind `json:"kind"`
+
+	// Owed Box 5a, the VAT owed, in whole euros.
+	Owed     string `json:"owed"`
+	Paid     string `json:"paid"`
+	Payments []struct {
+		// FinancialAccountId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		FinancialAccountId Identifier `json:"financial_account_id"`
+
+		// FinancialMutationId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		FinancialMutationId Identifier `json:"financial_mutation_id"`
+
+		// Id A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		Id          Identifier         `json:"id"`
+		PaymentDate openapi_types.Date `json:"payment_date"`
+		Price       string             `json:"price"`
+	} `json:"payments"`
+	PeriodFrom openapi_types.Date `json:"period_from"`
+	PeriodTo   openapi_types.Date `json:"period_to"`
+	SentOn     openapi_types.Date `json:"sent_on"`
+	State      VatReturnState     `json:"state"`
+
+	// Total What is to be paid; negative when it is to be received.
+	Total     string    `json:"total"`
+	Unpaid    string    `json:"unpaid"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Uri       string    `json:"uri"`
+}
+
+// VatReturnGranularity defines model for VatReturn.Granularity.
+type VatReturnGranularity string
+
+// VatReturnKind defines model for VatReturn.Kind.
+type VatReturnKind string
+
+// VatReturnState defines model for VatReturn.State.
+type VatReturnState string
+
+// VatReturnBox One box of the return in whole euros, rounded in the filer's favour: what VAT is charged on towards zero, the VAT owed down and the input tax (5b) up. base and tax include the corrections; period_ the period's own amounts.
+type VatReturnBox struct {
+	Base string `json:"base"`
+
+	// Box Example: 1a
+	Box            string `json:"box"`
+	CorrectionBase string `json:"correction_base"`
+	CorrectionTax  string `json:"correction_tax"`
+	PeriodBase     string `json:"period_base"`
+	PeriodTax      string `json:"period_tax"`
+	Tax            string `json:"tax"`
+}
+
+// VatReturnCorrection defines model for VatReturnCorrection.
+type VatReturnCorrection struct {
+	Boxes []struct {
+		Base string `json:"base"`
+		Box  string `json:"box"`
+		Tax  string `json:"tax"`
+	} `json:"boxes"`
+	PeriodFrom openapi_types.Date `json:"period_from"`
+	PeriodTo   openapi_types.Date `json:"period_to"`
+}
+
+// VatReturnFigures defines model for VatReturnFigures.
+type VatReturnFigures struct {
+	Boxes []VatReturnBox `json:"boxes"`
+
+	// Corrections What changed in periods declared before, per period.
+	Corrections []VatReturnCorrection `json:"corrections"`
+
+	// Deadline The last day to file and pay, the end of the month after the period.
+	Deadline    openapi_types.Date          `json:"deadline"`
+	Granularity VatReturnFiguresGranularity `json:"granularity"`
+	IcpLines    []VatReturnICPLine          `json:"icp_lines"`
+
+	// InputTax Box 5b, the input tax, in whole euros.
+	InputTax string               `json:"input_tax"`
+	Kind     VatReturnFiguresKind `json:"kind"`
+
+	// Owed Box 5a, the VAT owed, in whole euros.
+	Owed       string             `json:"owed"`
+	PeriodFrom openapi_types.Date `json:"period_from"`
+	PeriodTo   openapi_types.Date `json:"period_to"`
+
+	// Total What is to be paid; negative when it is to be received.
+	Total string `json:"total"`
+}
+
+// VatReturnFiguresGranularity defines model for VatReturnFigures.Granularity.
+type VatReturnFiguresGranularity string
+
+// VatReturnFiguresKind defines model for VatReturnFigures.Kind.
+type VatReturnFiguresKind string
+
+// VatReturnICPLine defines model for VatReturnICPLine.
+type VatReturnICPLine struct {
+	// Amount Whole euros.
+	Amount string `json:"amount"`
+
+	// ContactId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	ContactId Identifier           `json:"contact_id"`
+	Country   string               `json:"country"`
+	Kind      VatReturnICPLineKind `json:"kind"`
+	Name      string               `json:"name"`
+	VatNumber string               `json:"vat_number"`
+}
+
+// VatReturnICPLineKind defines model for VatReturnICPLine.Kind.
+type VatReturnICPLineKind string
+
+// VatReturnPeriod defines model for VatReturnPeriod.
+type VatReturnPeriod struct {
+	Granularity VatReturnPeriodGranularity `json:"granularity"`
+	PeriodFrom  openapi_types.Date         `json:"period_from"`
+	PeriodTo    openapi_types.Date         `json:"period_to"`
+}
+
+// VatReturnPeriodGranularity defines model for VatReturnPeriod.Granularity.
+type VatReturnPeriodGranularity string
+
+// VatReturnPreview A return as it would be filed, with what may be missing from the books. MoneyHarpy extension.
+type VatReturnPreview struct {
+	Boxes  []VatReturnBox `json:"boxes"`
+	Checks struct {
+		// BookingsWithoutVat Bank transactions in the period booked straight on revenue or costs, without VAT.
+		BookingsWithoutVat int `json:"bookings_without_vat"`
+
+		// OpenTransactions Bank transactions up to the period's end that are not fully booked.
+		OpenTransactions int `json:"open_transactions"`
+
+		// UnprocessedDocuments Incoming documents still to be processed.
+		UnprocessedDocuments int `json:"unprocessed_documents"`
+
+		// UntaxedPurchases What purchases on 0% rates other than reverse charge add up to in the period; not in the return.
+		UntaxedPurchases string `json:"untaxed_purchases"`
+	} `json:"checks"`
+
+	// Corrections What changed in periods declared before, per period.
+	Corrections []VatReturnCorrection `json:"corrections"`
+
+	// Deadline The last day to file and pay, the end of the month after the period.
+	Deadline    openapi_types.Date          `json:"deadline"`
+	Granularity VatReturnPreviewGranularity `json:"granularity"`
+	IcpLines    []VatReturnICPLine          `json:"icp_lines"`
+
+	// InputTax Box 5b, the input tax, in whole euros.
+	InputTax string               `json:"input_tax"`
+	Kind     VatReturnPreviewKind `json:"kind"`
+
+	// Owed Box 5a, the VAT owed, in whole euros.
+	Owed       string             `json:"owed"`
+	PeriodFrom openapi_types.Date `json:"period_from"`
+	PeriodTo   openapi_types.Date `json:"period_to"`
+
+	// Total What is to be paid; negative when it is to be received.
+	Total string `json:"total"`
+}
+
+// VatReturnPreviewGranularity defines model for VatReturnPreview.Granularity.
+type VatReturnPreviewGranularity string
+
+// VatReturnPreviewKind defines model for VatReturnPreview.Kind.
+type VatReturnPreviewKind string
+
+// VatReturnRequest defines model for VatReturnRequest.
+type VatReturnRequest struct {
+	VatReturn struct {
+		// IcpLines Of an ICP declaration, which contacts were supplied goods; services otherwise.
+		IcpLines *[]struct {
+			// ContactId An id as a string or a number; an empty string clears it.
+			ContactId FlexibleIdentifier                    `json:"contact_id"`
+			Kind      VatReturnRequestVatReturnIcpLinesKind `json:"kind"`
+		} `json:"icp_lines,omitempty"`
+		Kind VatReturnRequestVatReturnKind `json:"kind"`
+
+		// Period The period, as YYYYMMDD..YYYYMMDD.
+		Period string `json:"period"`
+	} `json:"vat_return"`
+}
+
+// VatReturnRequestVatReturnIcpLinesKind defines model for VatReturnRequest.VatReturn.IcpLines.Kind.
+type VatReturnRequestVatReturnIcpLinesKind string
+
+// VatReturnRequestVatReturnKind defines model for VatReturnRequest.VatReturn.Kind.
+type VatReturnRequestVatReturnKind string
+
 // Webhook A Moneybird webhook with MoneyHarpy extensions.
 type Webhook struct {
 	// AdministrationId A unique record identifier. Parse as a string.
@@ -13890,6 +14404,9 @@ type ContactId = Identifier
 // ContactQuery defines model for contact_query.
 type ContactQuery = string
 
+// DeclarationKind defines model for declaration_kind.
+type DeclarationKind string
+
 // DocumentFilter defines model for document_filter.
 type DocumentFilter = string
 
@@ -14244,6 +14761,27 @@ type ListContactAdditionalChargesParams struct {
 
 // ListContactAdditionalChargesParamsIncludeBilled defines parameters for ListContactAdditionalCharges.
 type ListContactAdditionalChargesParamsIncludeBilled string
+
+// ListVatReturnPeriodsParams defines parameters for ListVatReturnPeriods.
+type ListVatReturnPeriodsParams struct {
+	// Kind vat_return, supplement or icp_declaration.
+	Kind ListVatReturnPeriodsParamsKind `form:"kind" json:"kind"`
+}
+
+// ListVatReturnPeriodsParamsKind defines parameters for ListVatReturnPeriods.
+type ListVatReturnPeriodsParamsKind string
+
+// PreviewVatReturnParams defines parameters for PreviewVatReturn.
+type PreviewVatReturnParams struct {
+	// Kind vat_return, supplement or icp_declaration.
+	Kind PreviewVatReturnParamsKind `form:"kind" json:"kind"`
+
+	// Period The period, as YYYYMMDD..YYYYMMDD.
+	Period string `form:"period" json:"period"`
+}
+
+// PreviewVatReturnParamsKind defines parameters for PreviewVatReturn.
+type PreviewVatReturnParamsKind string
 
 // GetDetailUsageParams defines parameters for GetDetailUsage.
 type GetDetailUsageParams struct {
@@ -15223,6 +15761,9 @@ type ReorderCustomFieldsJSONRequestBody = CustomFieldOrderRequest
 
 // UpdateCustomFieldJSONRequestBody defines body for UpdateCustomField for application/json ContentType.
 type UpdateCustomFieldJSONRequestBody = CustomFieldUpdateRequest
+
+// SubmitVatReturnJSONRequestBody defines body for SubmitVatReturn for application/json ContentType.
+type SubmitVatReturnJSONRequestBody = VatReturnRequest
 
 // CreateDocumentStyleJSONRequestBody defines body for CreateDocumentStyle for application/json ContentType.
 type CreateDocumentStyleJSONRequestBody = DocumentStyleRequest
@@ -21955,6 +22496,24 @@ type ServerInterface interface {
 	// GetCustomerContactPortalSubscriptionLink Get a temporary link to the subscriptions in the customer contact portal
 	// (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id}/subscriptions/{id})
 	GetCustomerContactPortalSubscriptionLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id)
+	// ListVatReturns List the VAT returns
+	// (GET /api/v2/{administration_id}/declarations)
+	ListVatReturns(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// SubmitVatReturn Record a VAT return filed by hand
+	// (POST /api/v2/{administration_id}/declarations)
+	SubmitVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListVatReturnPeriods Periods a return can be filed for
+	// (GET /api/v2/{administration_id}/declarations/periods)
+	ListVatReturnPeriods(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListVatReturnPeriodsParams)
+	// PreviewVatReturn Work out a return without filing it
+	// (GET /api/v2/{administration_id}/declarations/preview)
+	PreviewVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params PreviewVatReturnParams)
+	// DeleteVatReturn Delete a VAT return recorded by mistake
+	// (DELETE /api/v2/{administration_id}/declarations/{id})
+	DeleteVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// GetVatReturn Get a VAT return
+	// (GET /api/v2/{administration_id}/declarations/{id})
+	GetVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// GetDetailUsage Retrieve the most used VAT rates and categories
 	// (GET /api/v2/{administration_id}/details/usage)
 	GetDetailUsage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDetailUsageParams)
@@ -23641,6 +24200,42 @@ func (_ Unimplemented) GetCustomerContactPortalInvoicesLink(w http.ResponseWrite
 // GetCustomerContactPortalSubscriptionLink Get a temporary link to the subscriptions in the customer contact portal
 // (GET /api/v2/{administration_id}/customer_contact_portal/{contact_id}/subscriptions/{id})
 func (_ Unimplemented) GetCustomerContactPortalSubscriptionLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, contactId ContactId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListVatReturns List the VAT returns
+// (GET /api/v2/{administration_id}/declarations)
+func (_ Unimplemented) ListVatReturns(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SubmitVatReturn Record a VAT return filed by hand
+// (POST /api/v2/{administration_id}/declarations)
+func (_ Unimplemented) SubmitVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListVatReturnPeriods Periods a return can be filed for
+// (GET /api/v2/{administration_id}/declarations/periods)
+func (_ Unimplemented) ListVatReturnPeriods(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListVatReturnPeriodsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PreviewVatReturn Work out a return without filing it
+// (GET /api/v2/{administration_id}/declarations/preview)
+func (_ Unimplemented) PreviewVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params PreviewVatReturnParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteVatReturn Delete a VAT return recorded by mistake
+// (DELETE /api/v2/{administration_id}/declarations/{id})
+func (_ Unimplemented) DeleteVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetVatReturn Get a VAT return
+// (GET /api/v2/{administration_id}/declarations/{id})
+func (_ Unimplemented) GetVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -29301,6 +29896,225 @@ func (siw *ServerInterfaceWrapper) GetCustomerContactPortalSubscriptionLink(w ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetCustomerContactPortalSubscriptionLink(w, r, administrationId, contactId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListVatReturns operation middleware
+func (siw *ServerInterfaceWrapper) ListVatReturns(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListVatReturns(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SubmitVatReturn operation middleware
+func (siw *ServerInterfaceWrapper) SubmitVatReturn(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SubmitVatReturn(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListVatReturnPeriods operation middleware
+func (siw *ServerInterfaceWrapper) ListVatReturnPeriods(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListVatReturnPeriodsParams
+
+	// ------------- Required query parameter "kind" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "kind", r.URL.Query(), &params.Kind, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kind"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListVatReturnPeriods(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PreviewVatReturn operation middleware
+func (siw *ServerInterfaceWrapper) PreviewVatReturn(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PreviewVatReturnParams
+
+	// ------------- Required query parameter "kind" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "kind", r.URL.Query(), &params.Kind, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kind"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewVatReturn(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteVatReturn operation middleware
+func (siw *ServerInterfaceWrapper) DeleteVatReturn(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteVatReturn(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetVatReturn operation middleware
+func (siw *ServerInterfaceWrapper) GetVatReturn(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetVatReturn(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -42985,6 +43799,24 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/tax", wrapper.GetTaxReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/declarations", wrapper.ListVatReturns)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/declarations", wrapper.SubmitVatReturn)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/declarations/periods", wrapper.ListVatReturnPeriods)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/declarations/preview", wrapper.PreviewVatReturn)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/declarations/{id}", wrapper.DeleteVatReturn)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/declarations/{id}", wrapper.GetVatReturn)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/working_capital", wrapper.GetWorkingCapitalReport)

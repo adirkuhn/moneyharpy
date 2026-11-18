@@ -57,6 +57,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/tasklists"
 	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"github.com/adirkuhn/moneyharpy/internal/vatlookup"
+	"github.com/adirkuhn/moneyharpy/internal/vatreturns"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -341,6 +342,8 @@ func newHarness(t *testing.T, opts options) *harness {
 		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
 	})
 	bank.UseDocuments(documentService)
+	vatReturnService := vatreturns.NewService(admins, vatreturns.BookkeepingBooks{Bookkeeping: books}, postgres.NewVatReturnStore(pool), ids, time.Now)
+	bank.UseVatReturns(vatReturnService)
 	bank.UsePurchases(documentService)
 	h.recognition = recognize.NewService(recognize.Deps{
 		Documents: documentService, Contacts: contactService, Ledger: books, Settings: settle, Store: postgres.NewRecognitionStore(pool),
@@ -380,6 +383,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Reports:         reports.NewService(admins, postgres.NewReportStore(pool), h.downloads, books, time.Now),
 		TimeEntries:     timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now),
 		TaskLists:       tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
+		VatReturns:      vatReturnService,
 		Storage:         files,
 		Identity:        people,
 		Settings:        settle,
