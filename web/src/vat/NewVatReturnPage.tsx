@@ -1,10 +1,11 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, type ReactNode, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { formErrors } from '../forms/Form'
+import { InfoIcon, ListIcon, WarningIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
@@ -17,12 +18,51 @@ import './vat.css'
 const loginURL = 'https://www.belastingdienst.nl/wps/wcm/connect/nl/ondernemers/content/inloggen-voor-ondernemers'
 const helpURL = 'https://www.belastingdienst.nl/wps/wcm/connect/nl/btw/content/ik-moet-btw-aangifte-doen-hoe-vul-ik-die-in'
 
-type Step = 'type' | 'period' | 'check' | 'submit'
+const steps = ['type', 'period', 'check', 'submit'] as const
+type Step = (typeof steps)[number]
+
+type StepProps = {
+  title: string
+  done: boolean
+  current: boolean
+  /** What a done step chose, which opens it again. */
+  value?: string
+  onEdit?: () => void
+  children?: ReactNode
+}
+
+/** One step of Moneybird's declare card: its mark and title, what was chosen at the right, and its fields while it is the current one. */
+function StepRow({ title, done, current, value, onEdit, children }: StepProps) {
+  const id = useId()
+  // As on Moneybird, a step shows once it is reached.
+  if (!done && !current) {
+    return null
+  }
+  return (
+    <section className={`vat-step${current ? ' is-current' : ''}`} aria-labelledby={id}>
+      <header className="vat-step__head">
+        <span className={`vat-step__mark${done ? ' is-done' : ''}`} aria-hidden="true">{done && <ListIcon kind="check" />}</span>
+        <h2 id={id} className="vat-step__title">{title}</h2>
+        {done && value && onEdit && (
+          <button type="button" className="vat-step__edit" onClick={onEdit}>
+            <ListIcon kind="edit" />
+            <span>{value}</span>
+          </button>
+        )}
+      </header>
+      {current && <div className="vat-step__body">{children}</div>}
+    </section>
+  )
+}
+
+/** The bar under a step with its centred button, as Moneybird's. */
+const Footer = ({ children }: { children: ReactNode }) => <div className="vat-step__footer">{children}</div>
 
 /**
  * Moneybird's "Declare new VAT Return" (/declarations/new), filed by hand:
- * the kind, the period, the checks with the amounts, and the amounts to
- * type over at the tax authority before marking it filed.
+ * one card whose steps open in turn: the kind, the period, the checks with
+ * the amounts, and the amounts to type over at the tax authority before
+ * marking it filed.
  */
 export function NewVatReturnPage() {
   const { t, i18n } = useTranslation()
@@ -44,88 +84,84 @@ export function NewVatReturnPage() {
   const options = periods.data ?? []
   const chosen = options.find((p) => periodParam(p) === period) ?? options[0]
   const name = chosen ? periodName(chosen.period_from, chosen.period_to, t, i18n.language) : ''
-  const at = (s: Step) => ['type', 'period', 'check', 'submit'].indexOf(s) <= ['type', 'period', 'check', 'submit'].indexOf(step)
-  const edit = (s: Step, label: string) => <button type="button" className="btn btn--link vat-step__value" onClick={() => setStep(s)}>{label}</button>
+  const at = steps.indexOf(step)
+  const row = (s: Step) => ({ done: steps.indexOf(s) < at, current: s === step, onEdit: () => setStep(s) })
 
   return (
-    <Page title={t('vat.new.title')} back={{ to: list, label: t('vat.backToList') }}>
-      <section className="vat-step" aria-labelledby="vat-step-type">
-        <h2 id="vat-step-type" className="vat-step__title">{t('vat.new.type')}</h2>
-        {step === 'type' ? (
+    <Page wide title={t('vat.new.title')} back={{ to: list, label: t('vat.backToList') }}>
+      <div className="vat-wizard">
+        <StepRow title={t('vat.new.type')} value={t(`vat.kinds.${kind}`)} {...row('type')}>
           <form onSubmit={(e) => { e.preventDefault(); setPeriod(''); setStep('period') }}>
             <fieldset className="vat-kinds">
               <legend className="sr-only">{t('vat.new.type')}</legend>
               {vatKinds.map((k) => (
                 <label key={k} className={`vat-kind${k === kind ? ' is-checked' : ''}`}>
-                  <input type="radio" name="kind" value={k} checked={k === kind} onChange={() => setKind(k)} />
                   <span className="vat-kind__title">{t(`vat.kinds.${k}`)}</span>
+                  <input type="radio" name="kind" value={k} checked={k === kind} onChange={() => setKind(k)} />
                   <span className="vat-kind__text">{t(`vat.new.kindText.${k}`)}</span>
                 </label>
               ))}
             </fieldset>
-            <button className="btn btn--primary">{t('vat.new.next')}</button>
+            <Footer><button className="btn btn--primary">{t('vat.new.next')}</button></Footer>
           </form>
-        ) : edit('type', t(`vat.kinds.${kind}`))}
-      </section>
+        </StepRow>
 
-      {at('period') && (
-        <section className="vat-step" aria-labelledby="vat-step-period">
-          <h2 id="vat-step-period" className="vat-step__title">{t('vat.new.period')}</h2>
-          {step === 'period' ? (
-            !periods.data ? <Loading /> : (
-              <form onSubmit={(e) => { e.preventDefault(); if (chosen) { setPeriod(periodParam(chosen)); setStep('check') } }}>
-                {kind !== 'supplement' && chosen && (
-                  <p className="vat-step__text">
+        <StepRow title={t('vat.new.period')} value={name} {...row('period')}>
+          {!periods.data ? <Loading /> : (
+            <form onSubmit={(e) => { e.preventDefault(); if (chosen) { setPeriod(periodParam(chosen)); setStep('check') } }}>
+              {kind !== 'supplement' && chosen && (
+                <p className="vat-info">
+                  <InfoIcon />
+                  <span>
                     {t('vat.new.periodSetting', { period: t(`vat.granularity.${chosen.granularity}`) })}{' '}
                     <Link to={`/${administrationId}/settings/bookkeeping`}>{t('vat.new.periodSettingLink')}</Link>
-                  </p>
-                )}
-                {options.length === 0 ? (
-                  <p className="empty">{t(`vat.new.noPeriods.${kind}`)}</p>
-                ) : (
-                  <label className="vat-step__field">
-                    <span>{t('vat.new.period')}</span>
-                    <select value={chosen ? periodParam(chosen) : ''} onChange={(e) => setPeriod(e.target.value)}>
-                      {options.map((p) => <option key={periodParam(p)} value={periodParam(p)}>{periodName(p.period_from, p.period_to, t, i18n.language)}</option>)}
-                    </select>
-                  </label>
-                )}
-                <button className="btn btn--primary" disabled={!chosen}>{t('vat.new.next')}</button>
-              </form>
-            )
-          ) : edit('period', name)}
-        </section>
-      )}
+                  </span>
+                </p>
+              )}
+              {options.length === 0 ? (
+                <p className="vat-info"><InfoIcon /><span>{t(`vat.new.noPeriods.${kind}`)}</span></p>
+              ) : (
+                <label className="vat-field">
+                  <span className="vat-field__label">{t('vat.new.period')}</span>
+                  <select value={chosen ? periodParam(chosen) : ''} onChange={(e) => setPeriod(e.target.value)}>
+                    {options.map((p) => <option key={periodParam(p)} value={periodParam(p)}>{periodName(p.period_from, p.period_to, t, i18n.language)}</option>)}
+                  </select>
+                </label>
+              )}
+              <Footer><button className="btn btn--primary" disabled={!chosen}>{t('vat.new.next')}</button></Footer>
+            </form>
+          )}
+        </StepRow>
 
-      {at('check') && (
-        <section className="vat-step" aria-labelledby="vat-step-check">
-          <h2 id="vat-step-check" className="vat-step__title">{t('vat.new.check')}</h2>
-          {step === 'check' ? (
-            !preview.data ? (preview.error ? <Problems messages={formErrors(preview.error, {}).general} /> : <Loading />) : (
-              <>
-                <button type="button" className="btn btn--link" onClick={() => void preview.refetch()}>{t('vat.new.reload')}</button>
-                <Checks administrationId={administrationId} preview={preview.data} />
-                {kind === 'icp_declaration'
-                  ? <IcpTable lines={preview.data.icp_lines} label={t('vat.icp.title')} />
-                  : <BoxTable figures={preview.data} periodName={name} label={t('vat.boxesOf', { period: name })} />}
-                <button type="button" className="btn btn--primary" onClick={() => setStep('submit')}>{t('vat.new.next')}</button>
-              </>
-            )
-          ) : edit('check', t('vat.new.checkAgain'))}
-        </section>
-      )}
+        <StepRow title={t('vat.new.check')} value={t('vat.new.checkAgain')} {...row('check')}>
+          {!preview.data ? (preview.error ? <Problems messages={formErrors(preview.error, {}).general} /> : <Loading />) : (
+            <>
+              <button type="button" className="vat-step__edit vat-step__reload" onClick={() => void preview.refetch()}>
+                <ListIcon kind="repeat" />
+                <span>{t('vat.new.reload')}</span>
+              </button>
+              <Checks administrationId={administrationId} preview={preview.data} />
+              {kind === 'icp_declaration'
+                ? <IcpTable lines={preview.data.icp_lines} label={t('vat.icp.title')} />
+                : <BoxTable figures={preview.data} periodName={name} label={t('vat.boxesOf', { period: name })} />}
+              <Footer><button type="button" className="btn btn--primary" onClick={() => setStep('submit')}>{t('vat.new.next')}</button></Footer>
+            </>
+          )}
+        </StepRow>
 
-      {step === 'submit' && preview.data && (
-        <Submit administrationId={administrationId} companyName={administration.data.name ?? ''} kind={kind} period={period} name={name} preview={preview.data} />
-      )}
+        <StepRow title={t('vat.new.submit')} {...row('submit')}>
+          {preview.data && (
+            <Submit administrationId={administrationId} companyName={administration.data.name ?? ''} kind={kind} period={period} name={name} preview={preview.data} />
+          )}
+        </StepRow>
+      </div>
     </Page>
   )
 }
 
-/** What may be missing from the books, as warnings, and the checks that passed. */
+/** What may be missing from the books, each a heading with what was found under it, and the checks that passed. */
 function Checks({ administrationId, preview }: { administrationId: string; preview: VatPreview }) {
-  const { t } = useTranslation()
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const c = preview.checks
   const money = (v: string) => new Intl.NumberFormat(i18n.language, { style: 'currency', currency: 'EUR' }).format(Number(v))
   const base = `/${administrationId}`
@@ -139,15 +175,17 @@ function Checks({ administrationId, preview }: { administrationId: string; previ
   return (
     <ul className="vat-checks" aria-label={t('vat.new.check')}>
       {all.filter((x) => x.failed).map((x) => (
-        <li key={x.title} className="vat-check is-warning">
-          <strong>{x.title}</strong>
-          <span>{x.text}</span>
+        <li key={x.title} className="vat-check">
+          <span className="vat-check__head is-warning"><WarningIcon /><strong>{x.title}</strong></span>
+          <span className="vat-check__text">{x.text}</span>
         </li>
       ))}
       {passed.length > 0 && (
-        <li className="vat-check is-passed">
-          <strong>{t('vat.checks.passed', { count: passed.length })}</strong>
-          {passed.map((x) => <span key={x.title}>{x.passed}</span>)}
+        <li className="vat-check">
+          <details>
+            <summary className="vat-check__head is-passed"><ListIcon kind="check" /><strong>{t('vat.checks.passed', { count: passed.length })}</strong></summary>
+            {passed.map((x) => <span key={x.title} className="vat-check__text">{x.passed}</span>)}
+          </details>
         </li>
       )}
     </ul>
@@ -157,7 +195,7 @@ function Checks({ administrationId, preview }: { administrationId: string; previ
 type SubmitProps = { administrationId: string; companyName: string; kind: VatKind; period: string; name: string; preview: VatPreview }
 
 /**
- * Moneybird's "Submit manually": log in at the tax authority, type the
+ * Moneybird's submit step, by hand: log in at the tax authority, type the
  * amounts over, file once the total matches; then confirm and mark it filed
  * here.
  */
@@ -177,38 +215,54 @@ function Submit({ administrationId, companyName, kind, period, name, preview }: 
     )
   }
   return (
-    <section className="vat-step" aria-labelledby="vat-step-submit">
-      <h2 id="vat-step-submit" className="vat-step__title">{t('vat.new.submit')}</h2>
-      <form onSubmit={send} aria-label={t('vat.new.submit')}>
-        {late && <p className="notice vat-late" role="alert">{t('vat.new.late', { date: preview.deadline })}</p>}
-        <ol className="vat-manual">
-          <li>
+    <form onSubmit={send} aria-label={t('vat.new.submit')}>
+      {late && <p className="vat-info is-warning" role="alert"><WarningIcon /><span>{t('vat.new.late', { date: preview.deadline })}</span></p>}
+      <div className="vat-kinds vat-kinds--single">
+        <label className="vat-kind is-checked">
+          <span className="vat-kind__title">{t('vat.manual.title')}</span>
+          <input type="radio" name="method" checked readOnly />
+          <span className="vat-kind__text">{t('vat.manual.text')}</span>
+        </label>
+      </div>
+      <ol className="vat-manual">
+        <li>
+          <span className="vat-manual__number" aria-hidden="true">1</span>
+          <div>
             <strong>{t('vat.manual.login')}</strong>
-            <span>{t('vat.manual.loginText', { period: name })}</span>
+            <p>{t('vat.manual.loginText', { period: name })}</p>
             <a className="btn btn--secondary" href={loginURL} target="_blank" rel="noopener noreferrer">{t('vat.manual.portal')}</a>
-          </li>
-          <li>
+          </div>
+        </li>
+        <li>
+          <span className="vat-manual__number" aria-hidden="true">2</span>
+          <div>
             <strong>{t('vat.manual.fill')}</strong>
-            <span>{t(kind === 'icp_declaration' ? 'vat.manual.fillIcp' : 'vat.manual.fillText')}</span>
+            <p>{t(kind === 'icp_declaration' ? 'vat.manual.fillIcp' : 'vat.manual.fillText')}</p>
             {kind === 'icp_declaration'
               ? <IcpTable lines={preview.icp_lines} label={t('vat.manual.amounts')} kinds={kinds} onKind={(id, k) => setKinds({ ...kinds, [id]: k })} />
               : <CopyTable figures={preview} label={t('vat.manual.amounts')} />}
-          </li>
-          <li>
+          </div>
+        </li>
+        <li>
+          <span className="vat-manual__number" aria-hidden="true">3</span>
+          <div>
             <strong>{t('vat.manual.send')}</strong>
-            <span>
+            <p>
               {kind === 'icp_declaration' ? t('vat.manual.sendIcp') : t('vat.manual.sendText', { total: euros(preview.total) })}{' '}
               <a href={helpURL} target="_blank" rel="noopener noreferrer">{t('vat.manual.help')}</a>
-            </span>
-          </li>
-        </ol>
-        <label className="check vat-confirm">
+            </p>
+          </div>
+        </li>
+      </ol>
+      <div className="vat-field vat-field--top">
+        <span className="vat-field__label">{t('vat.manual.confirmation')}</span>
+        <label className="check">
           <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
           <span>{t('vat.manual.confirm', { kind: t(`vat.kinds.${kind}`), name: companyName, period: name })}</span>
         </label>
-        <Problems messages={formErrors(submit.error, {}).general} />
-        <button className="btn btn--primary" disabled={!confirmed || submit.isPending}>{t('vat.manual.markFiled')}</button>
-      </form>
-    </section>
+      </div>
+      <Problems messages={formErrors(submit.error, {}).general} />
+      <Footer><button className="btn btn--primary" disabled={!confirmed || submit.isPending}>{t('vat.manual.markFiled')}</button></Footer>
+    </form>
   )
 }

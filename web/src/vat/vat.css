@@ -1,60 +1,104 @@
-/* VAT returns, after Moneybird's: the list per year, the steps to declare one, the boxes and the state of a return. */
+/* VAT returns, after Moneybird's: the list per year, the declare card with its steps, the boxes and the state of a return. */
 .vat-year { margin-bottom: 1.5rem; }
-.vat-year__title { margin: 0 0 0.5rem; font-size: 1.0625rem; }
+.vat-year__title { margin: 0 0 0.5rem; font-size: 1.0625rem; font-weight: 700; }
 .vat-list { table-layout: auto; }
-.vat-list th:last-child { width: auto; }
+.vat-list th:last-child { width: 7.5rem; }
+.vat-list td a { color: inherit; font-weight: 400; text-decoration: none; }
+.vat-list tbody tr:hover { background: var(--row-hover); }
+.vat-list .badge { display: block; text-align: center; }
 
-.vat-step { margin-bottom: 1.25rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-.vat-step__title { margin: 0 0 0.75rem; font-size: 1rem; }
-.vat-step__text { margin: 0 0 0.75rem; color: var(--muted); }
-.vat-step__field { display: grid; gap: 0.375rem; max-width: 20rem; margin-bottom: 1rem; }
-.vat-step__value { padding: 0; }
-.vat-step form > .btn, .vat-step > .btn--primary { margin-top: 0.75rem; }
-.vat-kinds { display: grid; gap: 0.5rem; margin: 0 0 1rem; padding: 0; border: 0; }
-.vat-kind { display: grid; grid-template-columns: auto 1fr; gap: 0.125rem 0.75rem; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
-.vat-kind.is-checked { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
-.vat-kind input { grid-row: span 2; margin-top: 0.2rem; accent-color: var(--blue); }
-.vat-kind__title { font-weight: 600; }
-.vat-kind__text { color: var(--muted); font-size: 0.875rem; }
+/* The declare card: a row per step, its fields under the current one. */
+.vat-wizard { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.vat-step + .vat-step { border-top: 1px solid var(--line); }
+.vat-step__head { display: flex; align-items: center; gap: 0.625rem; padding: 0.75rem 1rem; }
+.vat-step__mark { display: inline-grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); }
+.vat-step.is-current .vat-step__mark::after { content: ''; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--line); }
+.vat-step__mark.is-done { background: var(--teal); box-shadow: none; color: var(--white); }
+.vat-step__mark svg { width: 0.875rem; height: 0.875rem; }
+.vat-step__title { margin: 0; font-size: 1.0625rem; font-weight: 700; }
+.vat-step__edit { display: inline-flex; align-items: center; gap: 0.375rem; margin-left: auto; padding: 0; border: 0; background: none; color: var(--link); font: inherit; cursor: pointer; }
+.vat-step__edit:hover { text-decoration: underline; }
+.vat-step__reload { float: right; margin: -2.75rem 0 0; }
+.vat-step__body { padding: 0 1rem; }
+.vat-step__footer { display: flex; justify-content: center; margin: 1rem 0 0; padding: 1rem 0; border-top: 1px solid var(--line); }
 
-.vat-checks { display: grid; gap: 0.5rem; margin: 0.75rem 0 1rem; padding: 0; list-style: none; }
-.vat-check { display: grid; gap: 0.125rem; padding: 0.625rem 0.875rem; border-left: 4px solid var(--gold); border-radius: 6px; background: var(--row-hover); }
-.vat-check.is-passed { border-left-color: var(--state-paid); }
-.vat-check span { color: var(--muted); }
+.vat-kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin: 0; padding: 0; border: 0; }
+.vat-kinds--single { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 1rem; }
+.vat-kind { display: grid; grid-template-columns: 1fr auto; align-content: start; gap: 0.375rem 0.75rem; padding: 0.75rem; border: 1px solid transparent; border-radius: 8px; background: var(--bg); color: var(--muted); cursor: pointer; }
+.vat-kind.is-checked { border-color: var(--blue); background: var(--surface); color: var(--text); }
+.vat-kind input { margin: 0.125rem 0 0; accent-color: var(--blue); }
+.vat-kind__text { grid-column: 1 / -1; color: var(--muted); font-size: 0.875rem; }
+@media (max-width: 48rem) {
+  .vat-kinds, .vat-kinds--single { grid-template-columns: minmax(0, 1fr); }
+}
 
+.vat-info { display: flex; align-items: flex-start; gap: 0.625rem; margin: 0 0 1rem; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.vat-info > svg { flex: none; margin-top: 0.125rem; color: var(--blue); }
+.vat-info.is-warning > svg { color: var(--gold); }
+.vat-field { display: grid; grid-template-columns: 10rem minmax(0, 1fr); align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.vat-field--top { align-items: start; margin-top: 1rem; }
+.vat-field select { justify-self: start; min-width: 12rem; }
+.vat-field__label { color: var(--text); }
+
+.vat-checks { margin: 0 0 1rem; padding: 0; border: 1px solid var(--line); border-radius: 8px; list-style: none; overflow: hidden; }
+.vat-check + .vat-check { border-top: 1px solid var(--line); }
+.vat-check__head { display: flex; align-items: center; gap: 0.625rem; padding: 0.625rem 1rem; background: var(--bg); cursor: default; }
+.vat-check__head strong { font-weight: 500; }
+.vat-check__head > svg { flex: none; }
+.vat-check__head.is-warning > svg { color: var(--gold); }
+.vat-check__head.is-passed { cursor: pointer; list-style: none; }
+.vat-check__head.is-passed > svg { color: var(--blue); }
+.vat-check__head.is-passed::-webkit-details-marker { display: none; }
+.vat-check__text { display: block; padding: 0.625rem 1rem 0.625rem 2.75rem; border-top: 1px solid var(--line); }
+
+/* The boxes of a return. */
 .vat-boxes, .vat-copy, .vat-icp, .vat-bookings { table-layout: auto; }
 .vat-boxes th:last-child, .vat-copy th:last-child, .vat-icp th:last-child, .vat-bookings th:last-child { width: auto; }
-.vat-boxes__code { width: 3rem; white-space: nowrap; }
+.vat-boxes thead th { color: var(--text); font-weight: 400; }
+.vat-boxes thead th.vat-boxes__amount { max-width: 9rem; white-space: normal; }
+.vat-boxes thead th.vat-boxes__amount:last-child { white-space: nowrap; }
+.vat-boxes__code { width: 3.5rem; white-space: nowrap; }
 .vat-copy tr + tr th { border-top: 1px solid var(--line); }
 .vat-boxes__amount, .data-table th.vat-boxes__amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.vat-boxes__section th { background: var(--bg); color: var(--text); font-weight: 600; }
-.vat-boxes__part td { color: var(--muted); font-size: 0.875rem; }
-.vat-boxes__part td:nth-child(2) { padding-left: 2rem; }
-.vat-boxes tfoot th, .vat-boxes tfoot td { border-top: 1px solid var(--line); font-weight: 600; }
-.vat-boxes__hint { display: block; color: var(--muted); font-size: 0.8125rem; font-weight: 400; }
-.vat-boxes__total { font-size: 1.0625rem; }
+.vat-boxes__section th { background: var(--bg); color: var(--text); font-weight: 400; }
+.vat-boxes__part td { border-top: 0 !important; }
+.vat-boxes__correction .vat-boxes__amount { color: var(--link); }
+.vat-boxes tfoot th, .vat-boxes tfoot td { border-top: 1px solid var(--line); font-weight: 400; }
+.vat-boxes__hint { display: block; color: var(--muted); font-size: 0.8125rem; }
+.vat-bookings { margin-bottom: 1rem; }
 .vat-bookings caption { padding: 0.5rem 0; font-weight: 600; text-align: left; }
 .vat-empty { padding: 1.5rem 1rem; color: var(--muted); text-align: center; }
 .vat-missing { color: var(--danger); }
 
-.vat-manual { display: grid; gap: 1rem; margin: 0 0 1rem; padding-left: 1.25rem; }
-.vat-manual li { display: grid; gap: 0.375rem; justify-items: start; }
-.vat-manual li > span { color: var(--muted); }
-.vat-manual .data-table { justify-self: stretch; }
-.vat-confirm { margin-bottom: 1rem; }
-.vat-late { border-left-color: var(--gold); }
+.vat-manual { display: grid; gap: 1.25rem; margin: 0 0 0.5rem; padding: 1rem 0 0; border-top: 1px solid var(--line); list-style: none; }
+.vat-manual li { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 0.75rem; }
+.vat-manual li > div { display: grid; gap: 0.375rem; justify-items: start; }
+.vat-manual p { margin: 0; color: var(--muted); }
+.vat-manual .data-table { justify-self: stretch; margin-top: 0.25rem; }
+.vat-manual__number { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--bg); font-weight: 700; }
 
-.vat-status { display: grid; gap: 0.75rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); justify-items: start; }
-.vat-status__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
-.vat-status__amount { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.vat-status__late { color: var(--danger); font-weight: 600; }
-.vat-status__text, .vat-status__note { margin: 0; }
-.vat-status__note { color: var(--muted); font-size: 0.875rem; }
-.vat-status__facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1.25rem; margin: 0; }
-.vat-status__facts dt { color: var(--muted); }
-.vat-status__facts dd { margin: 0; }
-.vat-status__payment { display: contents; }
+/* A filed return: the dark state block, the card with its facts and boxes, and the history beside them. */
+.vat-view__main { display: grid; gap: 1rem; min-width: 0; }
+.vat-view__back { justify-self: start; }
+.vat-status { display: grid; gap: 0.75rem; padding: 1rem 1.25rem; border-radius: 10px; background: var(--navy); color: var(--white); }
+.vat-status__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgb(255 255 255 / 0.2); }
+.vat-status__amount { font-size: 1.375rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.vat-status__late { color: rgb(255 255 255 / 0.75); font-size: 0.8125rem; }
+.vat-status__badge { margin-left: auto; padding: 0.125rem 0.5rem; border-radius: 6px; background: var(--gold); color: var(--navy); font-size: 0.8125rem; font-weight: 700; }
+.vat-status__badge.is-paid { background: var(--teal); }
+.is-to_receive .vat-status__badge { background: var(--blue); color: var(--white); }
+.vat-status__text { margin: 0; color: rgb(255 255 255 / 0.85); font-size: 0.875rem; }
+.vat-status__actions .btn--secondary { border-color: var(--white); background: var(--white); color: var(--navy); }
+.vat-status__payments { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; font-size: 0.875rem; }
+.vat-status__payments li { display: flex; justify-content: space-between; gap: 1rem; }
+.vat-status__payments a { color: var(--white); }
+.vat-card { display: grid; gap: 0.75rem; padding: 1rem 0 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.vat-card > .vat-info, .vat-card > .vat-facts { margin: 0 1rem; }
+.vat-card > .data-table { margin: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+.vat-facts { display: grid; grid-template-columns: 10rem 1fr; gap: 0.5rem 1rem; margin: 0; }
+.vat-facts dd { margin: 0; }
+.vat-history { display: grid; gap: 0.75rem; align-content: start; }
 
 @media print {
-  .banner, .sidenav, .actionbar__actions, .actionbar__back { display: none !important; }
+  .banner, .sidenav, .actionbar__actions, .actionbar__back, .vat-history, .vat-status__actions, .vat-view__back { display: none !important; }
 }

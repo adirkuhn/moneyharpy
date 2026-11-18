@@ -149,7 +149,7 @@ export function TileIcon({ kind }: { kind: 'balance' | 'attention' | 'in' | 'out
 export type ListIconKind =
   | 'plus' | 'chart' | 'export' | 'more' | 'paperclip' | 'at' | 'send' | 'file' | 'palette' | 'flow'
   | 'coins' | 'upload' | 'plug' | 'calendar' | 'repeat' | 'edit' | 'scale' | 'bank' | 'card' | 'person'
-  | 'briefcase' | 'timer' | 'play' | 'stop' | 'clock'
+  | 'briefcase' | 'timer' | 'play' | 'stop' | 'clock' | 'check'
 
 export function ListIcon({ kind }: { kind: ListIconKind }) {
   const shapes: Record<ListIconKind, React.ReactNode> = {
@@ -178,6 +178,7 @@ export function ListIcon({ kind }: { kind: ListIconKind }) {
     play: <path d="M8 5.500v13l10-6.500Z" fill="currentColor" />,
     stop: <rect x="6.500" y="6.500" width="11" height="11" rx="1.500" fill="currentColor" />,
     clock: <><circle cx="12" cy="12" r="8.500" /><path d="M12 7.500V12l3 2" /></>,
+    check: <path d="m5 12.500 4.500 4.500L19 7.500" />,
   }
   return (
     <svg viewBox="0 0 24 24" width="1.125em" height="1.125em" aria-hidden="true" {...stroke}>
