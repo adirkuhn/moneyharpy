@@ -31,11 +31,10 @@ export function useVatReturn(administrationId: string, id?: string) {
 }
 
 /** The periods a return of the kind can be filed for. */
-export function useVatPeriods(administrationId: string, kind: VatKind | undefined) {
+export function useVatPeriods(administrationId: string, kind: VatKind) {
   return useQuery({
     queryKey: ['vat-periods', administrationId, kind],
-    enabled: !!kind,
-    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/declarations/periods', { params: { path: admin(administrationId), query: { kind: kind ?? 'vat_return' } } })),
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/declarations/periods', { params: { path: admin(administrationId), query: { kind } } })),
   })
 }
 

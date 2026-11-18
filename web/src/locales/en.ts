@@ -593,6 +593,11 @@ export const en = {
       kinds: { goods: 'Goods', services: 'Services' },
     },
     new: {
+      unavailable: {
+        vat_return: 'The "VAT return" option cannot be selected because there is no ended period left to declare.',
+        supplement: 'The "Supplementary VAT return" option cannot be selected because there are no corrections.',
+        icp_declaration: 'You cannot submit an ICP declaration because no goods or services have been supplied abroad and within the EU for a period for which an ICP declaration has not been previously submitted.',
+      },
       title: 'Declare new VAT return', type: 'Type', next: 'Next', period: 'Period', check: 'Check', submit: 'Submit',
       kindText: {
         vat_return: 'File your standard periodic VAT return for your sales and expenses from the past period.',

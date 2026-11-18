@@ -71,7 +71,12 @@ export function NewVatReturnPage() {
   const [step, setStep] = useState<Step>('type')
   const [kind, setKind] = useState<VatKind>('vat_return')
   const [period, setPeriod] = useState('')
-  const periods = useVatPeriods(administrationId, step === 'type' ? undefined : kind)
+  // Each kind's periods: a kind without any cannot be chosen, as on Moneybird.
+  const byKind = { vat_return: useVatPeriods(administrationId, 'vat_return'), supplement: useVatPeriods(administrationId, 'supplement'), icp_declaration: useVatPeriods(administrationId, 'icp_declaration') }
+  const periods = byKind[kind]
+  const loaded = vatKinds.every((k) => byKind[k].data !== undefined)
+  const unavailable = vatKinds.filter((k) => byKind[k].data?.length === 0)
+  const shownKind = unavailable.includes(kind) ? (vatKinds.find((k) => !unavailable.includes(k)) ?? kind) : kind
   const preview = useVatPreview(administrationId, kind, step === 'check' || step === 'submit' ? period : undefined)
 
   if (administration.error instanceof ApiError && administration.error.status < 500) {
@@ -91,19 +96,27 @@ export function NewVatReturnPage() {
     <Page wide title={t('vat.new.title')} back={{ to: list, label: t('vat.backToList') }}>
       <div className="vat-wizard">
         <StepRow title={t('vat.new.type')} value={t(`vat.kinds.${kind}`)} {...row('type')}>
-          <form onSubmit={(e) => { e.preventDefault(); setPeriod(''); setStep('period') }}>
-            <fieldset className="vat-kinds">
-              <legend className="sr-only">{t('vat.new.type')}</legend>
-              {vatKinds.map((k) => (
-                <label key={k} className={`vat-kind${k === kind ? ' is-checked' : ''}`}>
-                  <span className="vat-kind__title">{t(`vat.kinds.${k}`)}</span>
-                  <input type="radio" name="kind" value={k} checked={k === kind} onChange={() => setKind(k)} />
-                  <span className="vat-kind__text">{t(`vat.new.kindText.${k}`)}</span>
-                </label>
+          {!loaded ? <Loading /> : (
+            <form onSubmit={(e) => { e.preventDefault(); setKind(shownKind); setPeriod(''); setStep('period') }}>
+              <fieldset className="vat-kinds">
+                <legend className="sr-only">{t('vat.new.type')}</legend>
+                {vatKinds.map((k) => {
+                  const off = unavailable.includes(k)
+                  return (
+                    <label key={k} className={`vat-kind${k === shownKind && !off ? ' is-checked' : ''}${off ? ' is-disabled' : ''}`}>
+                      <span className="vat-kind__title">{t(`vat.kinds.${k}`)}</span>
+                      <input type="radio" name="kind" value={k} checked={k === shownKind && !off} disabled={off} onChange={() => setKind(k)} />
+                      <span className="vat-kind__text">{t(`vat.new.kindText.${k}`)}</span>
+                    </label>
+                  )
+                })}
+              </fieldset>
+              {unavailable.map((k) => (
+                <p key={k} className="vat-info vat-info--below"><InfoIcon /><span>{t(`vat.new.unavailable.${k}`)}</span></p>
               ))}
-            </fieldset>
-            <Footer><button className="btn btn--primary">{t('vat.new.next')}</button></Footer>
-          </form>
+              <Footer><button className="btn btn--primary" disabled={unavailable.length === vatKinds.length}>{t('vat.new.next')}</button></Footer>
+            </form>
+          )}
         </StepRow>
 
         <StepRow title={t('vat.new.period')} value={name} {...row('period')}>

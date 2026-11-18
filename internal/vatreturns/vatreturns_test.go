@@ -43,10 +43,12 @@ func (b *books) SystemLedgerAccount(_ context.Context, _, _ resource.ID, role st
 }
 
 type store struct {
-	returns  []Return
-	entries  map[resource.ID][]journal.Entry
-	sums     map[money.Period][]RateSum
-	icp      []ICPLine
+	returns []Return
+	entries map[resource.ID][]journal.Entry
+	sums    map[money.Period][]RateSum
+	icp     []ICPLine
+	// icpBy, when set, is the supplies per period; icp otherwise.
+	icpBy    map[money.Period][]ICPLine
 	first    *time.Time
 	payments map[resource.ID]resource.ID
 }
@@ -108,7 +110,10 @@ func (s *store) RateSums(_ context.Context, _ resource.ID, p money.Period) ([]Ra
 	return s.sums[p], nil
 }
 
-func (s *store) ICPSums(context.Context, resource.ID, money.Period) ([]ICPLine, error) {
+func (s *store) ICPSums(_ context.Context, _ resource.ID, p money.Period) ([]ICPLine, error) {
+	if s.icpBy != nil {
+		return s.icpBy[p], nil
+	}
 	return s.icp, nil
 }
 
@@ -168,8 +173,21 @@ func TestPeriods(t *testing.T) {
 	if got, _ := svc.Periods(context.Background(), admin, user, VATReturn); len(got) != 1 || got[0].Period != q3 {
 		t.Errorf("after Q2 periods = %+v, want Q3", got)
 	}
+	// A supplement needs something changed in a declared period.
+	if got, _ := svc.Periods(context.Background(), admin, user, Supplement); len(got) != 0 {
+		t.Errorf("supplement periods without changes = %+v, want none", got)
+	}
+	st.sums[q2] = sales(120_000, 0)
 	if got, _ := svc.Periods(context.Background(), admin, user, Supplement); len(got) != 1 || got[0].Period != q2 {
 		t.Errorf("supplement periods = %+v, want Q2", got)
+	}
+	// An ICP declaration needs supplies to the EU in a period not declared yet.
+	if got, _ := svc.Periods(context.Background(), admin, user, ICP); len(got) != 0 {
+		t.Errorf("icp periods without supplies = %+v, want none", got)
+	}
+	st.icpBy = map[money.Period][]ICPLine{q3: {{ContactID: 5, Amount: 1_000}}}
+	if got, _ := svc.Periods(context.Background(), admin, user, ICP); len(got) != 1 || got[0].Period != q3 {
+		t.Errorf("icp periods = %+v, want Q3", got)
 	}
 	if _, err := svc.Periods(context.Background(), admin, user, "other"); err == nil {
 		t.Error("an unknown kind is accepted")
