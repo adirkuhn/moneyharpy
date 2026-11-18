@@ -8757,6 +8757,46 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/declarations/overview:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getVatOverview
+      x-permissions: [documents]
+      summary: VAT overview of a period
+      description: >-
+        What a return or ICP declaration of any period would hold as the books are now: the period's own amounts in whole
+        euros, without corrections of earlier periods, as Moneybird's VAT overview report. Also needs the sales_invoices
+        permission. MoneyHarpy extension.
+      tags: [VAT returns]
+      parameters:
+        - $ref: '#/components/parameters/declaration_kind'
+        - name: period
+          in: query
+          required: true
+          description: The period, as YYYYMMDD..YYYYMMDD.
+          schema:
+            type: string
+            pattern: '^\d{8}\.\.\d{8}$'
+      responses:
+        '200':
+          description: The overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VatReturnFigures'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/declarations/{id}:
     parameters:
       - $ref: '#/components/parameters/administration_id'

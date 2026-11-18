@@ -276,6 +276,24 @@ func (s *server) PreviewVatReturn(w http.ResponseWriter, r *http.Request, admini
 	}})
 }
 
+// GetVatOverview implements ServerInterface.
+func (s *server) GetVatOverview(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, params GetVatOverviewParams) {
+	admin, ok := s.vatStart(w, r, administrationID)
+	if !ok {
+		return
+	}
+	p, ok := vatPeriod(w, params.Period)
+	if !ok {
+		return
+	}
+	o, err := s.deps.VatReturns.Overview(r.Context(), admin, user(r).ID, string(params.Kind), p)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toVatFigures(o))
+}
+
 // GetVatReturn implements ServerInterface.
 func (s *server) GetVatReturn(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
 	admin, ok := s.vatStart(w, r, administrationID)

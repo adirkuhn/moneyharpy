@@ -110,6 +110,23 @@ func TestVatReturns(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodGet, declarations+"/preview?kind=vat_return&period=20000101..20000331", nil), http.StatusUnprocessableEntity)
 
+	// The VAT overview report works any period out, such as the month of the sales.
+	month := from.Format("20060102") + ".." + from.AddDate(0, 3, -1).Format("20060102")
+	overview := decode[vatReturn](t, owner.do(http.MethodGet, declarations+"/overview?kind=vat_return&period="+period, nil))
+	if len(overview.Boxes) != len(want) || overview.Total != "21.0" {
+		t.Errorf("overview = %+v", overview)
+	}
+	icpOverview := decode[struct {
+		ICPLines []struct {
+			Name   string `json:"name"`
+			Amount string `json:"amount"`
+		} `json:"icp_lines"`
+	}](t, owner.do(http.MethodGet, declarations+"/overview?kind=icp_declaration&period="+month, nil))
+	if len(icpOverview.ICPLines) != 1 || icpOverview.ICPLines[0].Amount != "500.0" {
+		t.Errorf("icp overview = %+v", icpOverview)
+	}
+	wantStatus(t, owner.do(http.MethodGet, declarations+"/overview?kind=supplement&period="+period, nil), http.StatusUnprocessableEntity)
+
 	r := owner.do(http.MethodPost, declarations, map[string]any{"vat_return": map[string]any{"kind": "vat_return", "period": period}})
 	wantStatus(t, r, http.StatusCreated)
 	filed := decode[vatReturn](t, r)

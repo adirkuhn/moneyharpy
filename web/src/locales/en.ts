@@ -1405,8 +1405,11 @@ export const en = {
     per: { month: 'month', quarter: 'quarter', year: 'year' },
     showPer: 'Show per', granularities: { month: 'Month', quarter: 'Quarter', year: 'Year' },
     sortBy: 'Sort by', orders: { alphabetical: 'Name', account_id: 'Ledger code', rgs: 'RGS' },
+    comparePeriods: 'Compare periods', noComparison: 'No comparison', showPercentages: 'Show percentages of revenue', percentOfRevenue: 'Percentage of revenue',
+    vatFormat: 'Format for VAT report', vatFormats: { dutch: 'Dutch VAT overview', dutch_icp: 'Dutch ICP overview', overview: 'VAT summary' },
+    vatNames: { dutch: 'VAT report Netherlands', dutch_icp: 'ICP report Netherlands', overview: 'VAT summary' },
     collapseAll: 'Collapse all', expandAll: 'Expand all', collapse: 'Collapse {{name}}', expand: 'Expand {{name}}',
-    pdf: 'PDF', excel: 'Excel', vatName: 'VAT report',
+    pdf: 'PDF', excel: 'Excel',
     years_one: '{{count}} year', years_other: '{{count}} years', months_one: '{{count}} month', months_other: '{{count}} months',
     names: {
       agedReceivables: 'Aged receivables report', agedPayables: 'Aged payables report', revenueByContact: 'Revenue per contact',

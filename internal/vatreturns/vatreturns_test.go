@@ -330,3 +330,33 @@ func TestBankPayments(t *testing.T) {
 		t.Errorf("after removing the payment: %s", got.State())
 	}
 }
+
+func TestOverview(t *testing.T) {
+	svc, st, _ := setup(t)
+	ctx := context.Background()
+	st.sums[q2] = sales(100_000, 0)
+	if _, err := svc.Submit(ctx, admin, user, Filing{Kind: VATReturn, Period: q2}); err != nil {
+		t.Fatal(err)
+	}
+	// The overview shows the period as booked, whatever was filed, for any period.
+	st.sums[q2] = sales(150_000, 20_000)
+	r, err := svc.Overview(ctx, admin, user, VATReturn, q2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []Box{{"1a", 150_000, 31_500}, {"5b", 0, 4_200}}; !reflect.DeepEqual(r.Boxes, want) || len(r.Corrections) != 0 || r.Granularity != "quarter" {
+		t.Errorf("overview = %+v", r)
+	}
+	month := period("2026-05-01", "2026-05-31")
+	st.icp = []ICPLine{{ContactID: 5, Name: "Example GmbH", Amount: 12_000}}
+	icp, err := svc.Overview(ctx, admin, user, ICP, month)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(icp.ICP) != 1 || icp.ICP[0].Kind != Services || len(icp.Boxes) != 0 || icp.Granularity != "month" {
+		t.Errorf("icp overview = %+v", icp)
+	}
+	if _, err := svc.Overview(ctx, admin, user, Supplement, q2); err == nil {
+		t.Error("a supplement overview is accepted")
+	}
+}

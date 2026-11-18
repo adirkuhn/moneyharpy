@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode, useMemo } from 'react'
+import { Fragment, type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
@@ -8,15 +8,20 @@ import { InfoIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Pagination } from '../layout/Pagination'
 import { useProject } from '../projects/queries'
+import { BoxTable } from '../vat/BoxTable'
+import { IcpTable } from '../vat/IcpTable'
+import '../vat/vat.css'
 import { type MonthRange, parsePeriod } from '../list/period'
 import { lastDay, monthsParam, partName, rangeName } from './period'
 import {
   type AgingKind, amounts, balances, type ContactReportKind, type ProjectReportKind, reportPerPage, type Subject, type SubjectReport,
   useAgingReport, useAssetsReport, useBalanceSheet, useCashFlow, useContactReport, useGeneralLedger, useProfitLoss, useProjectReport, useTaxReport,
+  useVatOverview, type VatFormat, vatFormats,
 } from './queries'
-import { type Info, type ReportFilter, ReportPage, useReportFilter } from './ReportFrame'
+import { apiGranularity, type Info, type ReportFilter, ReportPage, useReportFilter } from './ReportFrame'
 import {
-  Amounts, CategoryRows, categoryTree, CollapseAll, CollapseProvider, type Column, ReportCard, ReportTable, Section, TotalRow, type TreeNode, useAmount, useCollapse,
+  Amounts, CategoryRows, categoryTree, CollapseAll, CollapseProvider, type Column, PercentProvider, ReportCard, ReportTable, Section, TotalRow, type TreeNode, useAmount,
+  useCollapse,
 } from './ReportTable'
 
 /** The parts of the period a report came back with, or the whole period when it is not split. */
@@ -101,7 +106,7 @@ function useInfo(key: 'profitLoss' | 'balanceSheet' | 'vat'): Info {
 export function ProfitLossPage() {
   const { t } = useTranslation()
   const f = useReportFilter('granular')
-  const report = useProfitLoss(f.administrationId, { period: f.period, granularity: f.granularity })
+  const report = useProfitLoss(f.administrationId, { period: f.period, granularity: apiGranularity(f) })
   const accounts = useAccounts(f.administrationId)
   const currency = useCurrency(f.administrationId)
   const info = useInfo('profitLoss')
@@ -117,6 +122,7 @@ export function ProfitLossPage() {
   const other = useTree(useMemo(() => of('other_income_expenses_by_ledger_account'), [parts]), accounts, width, f)
   const all = useMemo(() => [...revenue, ...direct, ...expenses, ...other], [revenue, direct, expenses, other])
   const collapse = useCollapse(all)
+  const [percent, setPercent] = useState(false)
   const title = t('sidenav.items.profitLoss')
   const page = (children: ReactNode) => <ReportPage filter={f} name={title} title={title} orderable info={info}>{children}</ReportPage>
   if (!r || !accounts) {
@@ -124,35 +130,46 @@ export function ProfitLossPage() {
   }
   const totals = (key: 'total_revenue' | 'gross_profit' | 'total_expenses' | 'net_profit' | 'operating_profit') => parts.map((p) => Number(p[key] ?? 0))
   const link = ledgerLink(f, columns)
-  const span = width + 1
+  const span = width * (percent ? 2 : 1) + 1
+  const tools = (
+    <>
+      <button type="button" className="report-tool" aria-pressed={percent} onClick={() => setPercent(!percent)}>
+        <span className={`report-tool__switch${percent ? ' is-on' : ''}`} aria-hidden="true" />
+        <span>{t('reports.showPercentages')}</span>
+      </button>
+      <CollapseAll collapse={collapse} />
+    </>
+  )
   return page(
     <ReportCard note={t('reports.excludingVat', { currency })}>
       <CollapseProvider value={collapse.context}>
-        <ReportTable label={title} columns={columns} tools={<CollapseAll collapse={collapse} />}>
-          <Section title={t('bookkeeping.accountTypes.revenue')} span={span}>
-            <CategoryRows nodes={revenue} link={link} />
-            <TotalRow label={t('reports.totalRevenue')} values={totals('total_revenue')} />
-          </Section>
-          <Section title={t('bookkeeping.accountTypes.direct_costs')} span={span}>
-            <CategoryRows nodes={direct} link={link} />
-            <TotalRow label={t('reports.totalDirectCosts')} values={sum(direct, width)} />
-            <TotalRow label={t('reports.grossProfit')} values={totals('gross_profit')} />
-          </Section>
-          <Section title={t('bookkeeping.accountTypes.expenses')} span={span}>
-            <CategoryRows nodes={expenses} link={link} />
-            <TotalRow label={t('reports.totalExpenses')} values={sum(expenses, width)} />
-          </Section>
-          {other.length > 0 && (
-            <Section title={t('bookkeeping.accountTypes.other_income_expenses')} span={span}>
-              <TotalRow label={t('reports.operatingProfit')} values={totals('operating_profit')} />
-              <CategoryRows nodes={other} link={link} />
-              <TotalRow label={t('reports.totalOther')} values={sum(other, width)} />
+        <PercentProvider revenue={percent ? totals('total_revenue') : null}>
+          <ReportTable label={title} columns={columns} tools={tools}>
+            <Section title={t('bookkeeping.accountTypes.revenue')} span={span}>
+              <CategoryRows nodes={revenue} link={link} />
+              <TotalRow label={t('reports.totalRevenue')} values={totals('total_revenue')} />
             </Section>
-          )}
-          <Section span={span}>
-            <TotalRow label={t('reports.netProfit')} values={totals('net_profit')} grand />
-          </Section>
-        </ReportTable>
+            <Section title={t('bookkeeping.accountTypes.direct_costs')} span={span}>
+              <CategoryRows nodes={direct} link={link} />
+              <TotalRow label={t('reports.totalDirectCosts')} values={sum(direct, width)} />
+              <TotalRow label={t('reports.grossProfit')} values={totals('gross_profit')} />
+            </Section>
+            <Section title={t('bookkeeping.accountTypes.expenses')} span={span}>
+              <CategoryRows nodes={expenses} link={link} />
+              <TotalRow label={t('reports.totalExpenses')} values={sum(expenses, width)} />
+            </Section>
+            {other.length > 0 && (
+              <Section title={t('bookkeeping.accountTypes.other_income_expenses')} span={span}>
+                <TotalRow label={t('reports.operatingProfit')} values={totals('operating_profit')} />
+                <CategoryRows nodes={other} link={link} />
+                <TotalRow label={t('reports.totalOther')} values={sum(other, width)} />
+              </Section>
+            )}
+            <Section span={span}>
+              <TotalRow label={t('reports.netProfit')} values={totals('net_profit')} grand />
+            </Section>
+          </ReportTable>
+        </PercentProvider>
       </CollapseProvider>
     </ReportCard>,
   )
@@ -164,18 +181,28 @@ type Side = { types: AccountType[]; label: string }
 export function BalanceSheetPage() {
   const { t } = useTranslation()
   const f = useReportFilter('granular')
-  const report = useBalanceSheet(f.administrationId, { period: f.period, granularity: f.granularity })
+  const report = useBalanceSheet(f.administrationId, { period: f.period, granularity: apiGranularity(f) })
   const before: MonthRange = { from: f.range.from - 1, to: f.range.from - 1 }
   const opening = useBalanceSheet(f.administrationId, { period: monthsParam(before) })
   const accounts = useAccounts(f.administrationId)
   const info = useInfo('balanceSheet')
   const title = t('sidenav.items.balanceSheet')
   const r = report.data
-  const sheets = useMemo(() => (r && opening.data ? [opening.data, ...(r.periods?.length ? r.periods : [r])] : []), [r, opening.data])
+  // Without comparison, only the end of the period; with it, the start and the end of each part, as Moneybird.
+  const single = f.granularity === 'none'
+  const sheets = useMemo(() => {
+    if (!r || !opening.data) {
+      return []
+    }
+    return single ? [r] : [opening.data, ...(r.periods?.length ? r.periods : [r])]
+  }, [r, opening.data, single])
   const ends = useMemo(() => {
+    if (single) {
+      return [lastDay(f.range.to)]
+    }
     const parts = partsOf(f, r?.periods).map((p) => parsePeriod(p, f.today)?.to ?? f.range.to)
     return [lastDay(f.range.from - 1), ...parts.map(lastDay)]
-  }, [f, r?.periods])
+  }, [f, r?.periods, single])
   const columns: Column[] = ends.map((d) => ({ key: d, label: d }))
   const width = columns.length
   const sides: Side[] = [
@@ -207,7 +234,7 @@ export function BalanceSheetPage() {
     return out
   }, [values, accounts, width, f.order, t, sheets])
   const collapse = useCollapse(useMemo(() => balanceSheetTypes.flatMap((type) => trees[type] ?? []), [trees]))
-  const page = (children: ReactNode) => <ReportPage filter={f} name={title} title={title} orderable info={info}>{children}</ReportPage>
+  const page = (children: ReactNode) => <ReportPage filter={f} name={title} title={title} orderable comparable info={info}>{children}</ReportPage>
   if (!r || !opening.data || !accounts) {
     return page(report.error || opening.error ? <Failed /> : <Loading />)
   }
@@ -238,30 +265,59 @@ export function BalanceSheetPage() {
   )
 }
 
-/** Per VAT rate what it was charged on and the VAT, in the period. */
+/**
+ * Moneybird's VAT report of a period in one of three formats: the boxes of
+ * the Dutch return, the Dutch ICP declaration, or what was charged on and
+ * the VAT per rate.
+ */
 export function TaxReportPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const f = useReportFilter('period')
-  const report = useTaxReport(f.administrationId, { period: f.period })
+  const format: VatFormat = vatFormats.includes(f.format as VatFormat) ? (f.format as VatFormat) : 'dutch'
+  const days = vatDays(f.range)
+  const overview = useVatOverview(f.administrationId, format === 'dutch_icp' ? 'icp_declaration' : 'vat_return', days, format !== 'overview')
+  const rates = useTaxReport(f.administrationId, { period: f.period })
   const info = useInfo('vat')
   const title = t('sidenav.items.vatSummary')
-  const page = (children: ReactNode) => <ReportPage filter={f} name={t('reports.vatName')} title={title} info={info}>{children}</ReportPage>
-  if (!report.data) {
-    return page(report.error ? <Failed /> : <Loading />)
+  const name = t(`reports.vatNames.${format}`)
+  const page = (children: ReactNode) => (
+    <ReportPage
+      filter={f}
+      name={name}
+      title={title}
+      info={info}
+      formats={{ legend: t('reports.vatFormat'), options: vatFormats.map((v) => ({ value: v, label: t(`reports.vatFormats.${v}`) })) }}
+    >
+      {children}
+    </ReportPage>
+  )
+  if (format !== 'overview') {
+    if (!overview.data) {
+      return page(overview.error ? <Failed /> : <Loading />)
+    }
+    if (format === 'dutch_icp') {
+      return page(overview.data.icp_lines.length === 0
+        ? <Empty f={f} />
+        : <ReportCard><IcpTable lines={overview.data.icp_lines} label={name} /></ReportCard>)
+    }
+    return page(<ReportCard><BoxTable figures={overview.data} periodName={rangeName(f.range, t, i18n.language)} label={name} /></ReportCard>)
   }
-  const rates = report.data.tax_rates ?? []
-  if (rates.length === 0) {
+  if (!rates.data) {
+    return page(rates.error ? <Failed /> : <Loading />)
+  }
+  const list = rates.data.tax_rates ?? []
+  if (list.length === 0) {
     return page(<Empty f={f} />)
   }
   return page(
     <ReportCard>
-      <ReportTable label={title} columns={[{ key: 'turnover', label: t('reports.turnover') }, { key: 'vat', label: t('reports.salesTax') }]} tools={t('reports.taxRate')}>
+      <ReportTable label={name} columns={[{ key: 'turnover', label: t('reports.turnover') }, { key: 'vat', label: t('reports.salesTax') }]} tools={t('reports.taxRate')}>
         <Section span={3}>
-          {rates.map((r) => (
+          {list.map((r) => (
             <tr key={`${r.tax_rate_id}`} className="report-table__category">
               <th scope="row">
                 <span className="report-table__name">
-                  <span>{r.name}</span>
+                  <span>{r.name}</span>{' '}
                   <span className="report-table__code">{r.report_reference} · {t(`reports.rateTypes.${r.type === 'sales_invoice' ? 'sales' : 'purchases'}`)}</span>
                 </span>
               </th>
@@ -274,11 +330,19 @@ export function TaxReportPage() {
   )
 }
 
+/** The first and the last day of the months, as the VAT overview takes them: 20261001..20261231. */
+function vatDays(range: MonthRange): string {
+  const first = lastDay(range.from - 1)
+  const start = new Date(`${first}T00:00:00Z`)
+  start.setUTCDate(start.getUTCDate() + 1)
+  return `${start.toISOString().slice(0, 10).replaceAll('-', '')}..${lastDay(range.to).replaceAll('-', '')}`
+}
+
 /** The cash received and paid per part of the period, between the opening and the closing balance. */
 export function CashFlowPage() {
   const { t } = useTranslation()
   const f = useReportFilter('granular')
-  const report = useCashFlow(f.administrationId, { period: f.period, granularity: f.granularity })
+  const report = useCashFlow(f.administrationId, { period: f.period, granularity: apiGranularity(f) })
   const accounts = useAccounts(f.administrationId)
   const title = t('sidenav.items.cashFlow')
   const r = report.data
@@ -380,7 +444,7 @@ export function ContactReportPage({ kind }: { kind: ContactReportKind }) {
   const names = contactReports[kind]
   const title = t(`sidenav.items.${names.menu}`)
   const f = useReportFilter('granular')
-  const report = useContactReport(f.administrationId, kind, { period: f.period, granularity: f.granularity }, f.page)
+  const report = useContactReport(f.administrationId, kind, { period: f.period, granularity: apiGranularity(f) }, f.page)
   const page = (children: ReactNode) => <ReportPage filter={f} name={t(`reports.names.${names.name}`)} title={title} sayPer={names.total !== 'totalThisPage'}>{children}</ReportPage>
   if (!report.data) {
     return page(report.error ? <Failed /> : <Loading />)
@@ -404,7 +468,7 @@ export function ProjectReportPage({ kind }: { kind: ProjectReportKind }) {
   const { t } = useTranslation()
   const title = t(kind === 'revenue_by_project' ? 'sidenav.items.revenueByProject' : 'sidenav.items.expensesByProject')
   const f = useReportFilter('granular')
-  const report = useProjectReport(f.administrationId, kind, { period: f.period, granularity: f.granularity }, f.page)
+  const report = useProjectReport(f.administrationId, kind, { period: f.period, granularity: apiGranularity(f) }, f.page)
   const page = (children: ReactNode) => <ReportPage filter={f} name={title} title={title}>{children}</ReportPage>
   if (!report.data) {
     return page(report.error ? <Failed /> : <Loading />)

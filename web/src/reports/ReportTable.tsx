@@ -14,6 +14,13 @@ export function useAmount() {
   }, [i18n.language])
 }
 
+/** The revenue of each column when amounts also show as a share of it, after Moneybird's "Show percentages of revenue". */
+const PercentContext = createContext<number[] | null>(null)
+
+export function PercentProvider({ revenue, children }: { revenue: number[] | null; children: ReactNode }) {
+  return <PercentContext.Provider value={revenue}>{children}</PercentContext.Provider>
+}
+
 /** A column of amounts: its head and, for amounts that can be looked into, the period it covers. */
 export type Column = { key: string; label: ReactNode; period?: string }
 
@@ -29,12 +36,19 @@ export function ReportCard({ children, note }: { children: ReactNode; note?: str
 
 /** A report's table: links to change how it shows in the corner, a column per part of the period. */
 export function ReportTable({ label, columns, tools, children, className = '' }: { label: string; columns: Column[]; tools?: ReactNode; children: ReactNode; className?: string }) {
+  const { t } = useTranslation()
+  const percent = useContext(PercentContext)
   return (
     <table className={`report-table ${className}`} aria-label={label}>
       <thead>
         <tr>
           <th scope="col" className="report-table__tools">{tools}</th>
-          {columns.map((c) => <th key={c.key} scope="col" className="report-table__amount">{c.label}</th>)}
+          {columns.map((c) => (
+            <Fragment key={c.key}>
+              <th scope="col" className="report-table__amount">{c.label}</th>
+              {percent && <th scope="col" className="report-table__percent"><abbr title={t('reports.percentOfRevenue')}>%</abbr></th>}
+            </Fragment>
+          ))}
         </tr>
       </thead>
       {children}
@@ -59,14 +73,23 @@ export function Section({ title, span, children }: { title?: string; span: numbe
 /** The amounts of a row; with a link, those that are not zero lead to what makes them up. */
 export function Amounts({ values, link }: { values: number[]; link?: (i: number) => string | undefined }) {
   const amount = useAmount()
+  const revenue = useContext(PercentContext)
+  const { i18n } = useTranslation()
+  const share = (v: number, i: number) => {
+    const base = revenue?.[i] ?? 0
+    return base === 0 ? '' : new Intl.NumberFormat(i18n.language, { style: 'percent', maximumFractionDigits: 1 }).format(v / base)
+  }
   return (
     <>
       {values.map((v, i) => {
         const to = v !== 0 ? link?.(i) : undefined
         return (
-          <td key={i} className="report-table__amount">
-            {to ? <Link to={to}>{amount(v)}</Link> : amount(v)}
-          </td>
+          <Fragment key={i}>
+            <td className="report-table__amount">
+              {to ? <Link to={to}>{amount(v)}</Link> : amount(v)}
+            </td>
+            {revenue && <td className="report-table__percent">{share(v, i)}</td>}
+          </Fragment>
         )
       })}
     </>
