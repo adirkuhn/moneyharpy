@@ -158,7 +158,8 @@ export function InvoiceEditor(props: EditorProps) {
  * unless something new is asked to open.
  */
 function KeyedForm(props: EditorProps & { rates: TaxRate[] }) {
-  const { opening } = props
+  // An opening spent before stays spent, also when this form is mounted again while the page still holds it.
+  const opening = props.opening && spentOpenings.has(props.opening) ? null : props.opening
   const inv = editedOf(props)
   const key = inv ? `${inv.id}-${inv.version ?? ''}` : 'new'
   const opened = useRef({ opening, key })
@@ -167,9 +168,15 @@ function KeyedForm(props: EditorProps & { rates: TaxRate[] }) {
   } else if (opened.current.key !== key) {
     // Once the editor moved on to another version, what it opened with is spent: coming back to a version does not reopen it.
     opened.current = { opening, key: '' }
+    if (opening) {
+      spentOpenings.add(opening)
+    }
   }
   return <InvoiceForm key={key} {...props} opening={opened.current.key === key ? opening : null} />
 }
+
+/** What pages asked the editor to open (their history state) once a saved version made it spent. */
+const spentOpenings = new WeakSet<object>()
 
 let nextKey = 0
 const newKey = () => `new-${++nextKey}`
