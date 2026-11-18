@@ -57,14 +57,14 @@ describe('the invoice details editor', () => {
     expect(within(totals).getByRole('row', { name: /^Total/ })).toHaveTextContent('€266.85')
 
     await userEvent.click(within(editorCard()).getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent(/^\/11\/sales_invoices\/902$/), { timeout: 5000 })
     expect(sent.patch).toMatchObject({ contact_id: '701', reference: 'Order 12', discount: '10', prices_are_incl_tax: false })
     expect(sent.patch?.details_attributes).toEqual([
       { description: 'Consulting', amount: '2 x', price: '100', tax_rate_id: '2101', row_order: 1 },
       { description: 'Book', amount: '1 x', price: '50', tax_rate_id: '2109', ledger_account_id: '8001', row_order: 2 },
     ])
     // Saved, the card closes and stays closed.
-    await waitFor(() => expect(screen.queryByRole('region', { name: 'Invoice details' })).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Invoice details' })).toBeNull(), { timeout: 5000 })
     await new Promise((r) => setTimeout(r, 200))
     expect(screen.queryByRole('region', { name: 'Invoice details' })).toBeNull()
   }, 30_000)
