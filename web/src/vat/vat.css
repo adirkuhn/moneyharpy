@@ -29,7 +29,6 @@
 .vat-kind input { margin: 0.125rem 0 0; accent-color: var(--blue); }
 .vat-kind__text { grid-column: 1 / -1; color: var(--muted); font-size: 0.875rem; }
 .vat-kind.is-disabled { cursor: not-allowed; opacity: 0.6; }
-.vat-info--below { margin: 0.75rem 0 0; }
 @media (max-width: 48rem) {
   .vat-kinds, .vat-kinds--single { grid-template-columns: minmax(0, 1fr); }
 }
@@ -37,6 +36,9 @@
 .vat-info { display: flex; align-items: flex-start; gap: 0.625rem; margin: 0 0 1rem; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .vat-info > svg { flex: none; margin-top: 0.125rem; color: var(--blue); }
 .vat-info.is-warning > svg { color: var(--gold); }
+/* The reasons a kind cannot be chosen, under the kinds. */
+.vat-info.vat-info--below { margin: 1rem 0 0; }
+.vat-info--below + .vat-info--below { margin-top: 0.5rem; }
 .vat-field { display: grid; grid-template-columns: 10rem minmax(0, 1fr); align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
 .vat-field--top { align-items: start; margin-top: 1rem; }
 .vat-field select { justify-self: start; min-width: 12rem; }
