@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { type AccountType, balanceSheetTypes, type LedgerAccount, profitAndLossTypes, useLedgerAccounts } from '../bookkeeping/queries'
 import { contactName, useContact } from '../contacts/queries'
-import { InfoIcon } from '../layout/icons'
+import { InfoIcon, ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Pagination } from '../layout/Pagination'
 import { useProject } from '../projects/queries'
@@ -12,6 +12,7 @@ import { BoxTable } from '../vat/BoxTable'
 import { IcpTable } from '../vat/IcpTable'
 import '../vat/vat.css'
 import { type MonthRange, parsePeriod } from '../list/period'
+import { BarsChart, Legend } from './charts'
 import { lastDay, monthsParam, partName, rangeName } from './period'
 import {
   type AgingKind, amounts, balances, type ContactReportKind, type ProjectReportKind, reportPerPage, type Subject, type SubjectReport,
@@ -110,6 +111,7 @@ export function ProfitLossPage() {
   const accounts = useAccounts(f.administrationId)
   const currency = useCurrency(f.administrationId)
   const info = useInfo('profitLoss')
+  const amount = useAmount()
   const r = report.data
   const parts = useMemo(() => (r?.periods?.length ? r.periods : r ? [r] : []), [r])
   const columns = useColumns(partsOf(f, r?.periods))
@@ -123,8 +125,21 @@ export function ProfitLossPage() {
   const all = useMemo(() => [...revenue, ...direct, ...expenses, ...other], [revenue, direct, expenses, other])
   const collapse = useCollapse(all)
   const [percent, setPercent] = useState(false)
+  const [graphs, setGraphs] = useState(true)
   const title = t('sidenav.items.profitLoss')
-  const page = (children: ReactNode) => <ReportPage filter={f} name={title} title={title} orderable info={info}>{children}</ReportPage>
+  const graphsButton = (
+    <button
+      type="button"
+      className={`btn btn--secondary btn--icon${graphs ? ' is-active' : ''}`}
+      aria-label={t('reports.showGraphs')}
+      title={t('reports.showGraphs')}
+      aria-pressed={graphs}
+      onClick={() => setGraphs(!graphs)}
+    >
+      <ListIcon kind="chart" />
+    </button>
+  )
+  const page = (children: ReactNode) => <ReportPage filter={f} name={title} title={title} orderable info={info} actions={graphsButton}>{children}</ReportPage>
   if (!r || !accounts) {
     return page(report.error ? <Failed /> : <Loading />)
   }
@@ -140,38 +155,66 @@ export function ProfitLossPage() {
       <CollapseAll collapse={collapse} />
     </>
   )
+  const labels = columns.map((c) => String(c.label))
+  const revenueValues = totals('total_revenue')
+  const costs = revenueValues.map((v, i) => v - (totals('net_profit')[i] ?? 0))
   return page(
-    <ReportCard note={t('reports.excludingVat', { currency })}>
-      <CollapseProvider value={collapse.context}>
-        <PercentProvider revenue={percent ? totals('total_revenue') : null}>
-          <ReportTable label={title} columns={columns} tools={tools}>
-            <Section title={t('bookkeeping.accountTypes.revenue')} span={span}>
-              <CategoryRows nodes={revenue} link={link} />
-              <TotalRow label={t('reports.totalRevenue')} values={totals('total_revenue')} />
-            </Section>
-            <Section title={t('bookkeeping.accountTypes.direct_costs')} span={span}>
-              <CategoryRows nodes={direct} link={link} />
-              <TotalRow label={t('reports.totalDirectCosts')} values={sum(direct, width)} />
-              <TotalRow label={t('reports.grossProfit')} values={totals('gross_profit')} />
-            </Section>
-            <Section title={t('bookkeeping.accountTypes.expenses')} span={span}>
-              <CategoryRows nodes={expenses} link={link} />
-              <TotalRow label={t('reports.totalExpenses')} values={sum(expenses, width)} />
-            </Section>
-            {other.length > 0 && (
-              <Section title={t('bookkeeping.accountTypes.other_income_expenses')} span={span}>
-                <TotalRow label={t('reports.operatingProfit')} values={totals('operating_profit')} />
-                <CategoryRows nodes={other} link={link} />
-                <TotalRow label={t('reports.totalOther')} values={sum(other, width)} />
+    <>
+      {graphs && (
+        <div className="report-graphs">
+          <section className="report-graph">
+            <h2>{t('reports.netResult')}</h2>
+            <BarsChart label={t('reports.netResult')} categories={labels} series={[{ key: 'net', label: t('reports.netProfit'), values: totals('net_profit'), color: 1 }]} />
+          </section>
+          <section className="report-graph">
+            <h2>{t('reports.costAndRevenue')}</h2>
+            <BarsChart
+              label={t('reports.costAndRevenue')}
+              categories={labels}
+              series={[
+                { key: 'revenue', label: t('reports.overview.revenue'), values: revenueValues, color: 1 },
+                { key: 'costs', label: t('reports.costs'), values: costs, color: 2 },
+              ]}
+            />
+            <Legend items={[
+              { key: 'revenue', label: t('reports.overview.revenue'), value: amount(revenueValues.reduce((a, b) => a + b, 0)), color: 1 },
+              { key: 'costs', label: t('reports.costs'), value: amount(costs.reduce((a, b) => a + b, 0)), color: 2 },
+            ]} />
+          </section>
+        </div>
+      )}
+      <ReportCard note={t('reports.excludingVat', { currency })}>
+        <CollapseProvider value={collapse.context}>
+          <PercentProvider revenue={percent ? totals('total_revenue') : null}>
+            <ReportTable label={title} columns={columns} tools={tools}>
+              <Section title={t('bookkeeping.accountTypes.revenue')} span={span}>
+                <CategoryRows nodes={revenue} link={link} />
+                <TotalRow label={t('reports.totalRevenue')} values={totals('total_revenue')} />
               </Section>
-            )}
-            <Section span={span}>
-              <TotalRow label={t('reports.netProfit')} values={totals('net_profit')} grand />
-            </Section>
-          </ReportTable>
-        </PercentProvider>
-      </CollapseProvider>
-    </ReportCard>,
+              <Section title={t('bookkeeping.accountTypes.direct_costs')} span={span}>
+                <CategoryRows nodes={direct} link={link} />
+                <TotalRow label={t('reports.totalDirectCosts')} values={sum(direct, width)} />
+                <TotalRow label={t('reports.grossProfit')} values={totals('gross_profit')} />
+              </Section>
+              <Section title={t('bookkeeping.accountTypes.expenses')} span={span}>
+                <CategoryRows nodes={expenses} link={link} />
+                <TotalRow label={t('reports.totalExpenses')} values={sum(expenses, width)} />
+              </Section>
+              {other.length > 0 && (
+                <Section title={t('bookkeeping.accountTypes.other_income_expenses')} span={span}>
+                  <TotalRow label={t('reports.operatingProfit')} values={totals('operating_profit')} />
+                  <CategoryRows nodes={other} link={link} />
+                  <TotalRow label={t('reports.totalOther')} values={sum(other, width)} />
+                </Section>
+              )}
+              <Section span={span}>
+                <TotalRow label={t('reports.netProfit')} values={totals('net_profit')} grand />
+              </Section>
+            </ReportTable>
+          </PercentProvider>
+        </CollapseProvider>
+      </ReportCard>
+    </>,
   )
 }
 

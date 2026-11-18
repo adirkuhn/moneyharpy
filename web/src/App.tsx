@@ -72,6 +72,7 @@ import { LedgerEntriesPage } from './journal/LedgerEntriesPage'
 import {
   AgingReportPage, AssetsReportPage, BalanceSheetPage, CashFlowPage, ContactReportPage, ProfitLossPage, ProjectReportPage, TaxReportPage, TrialBalancePage,
 } from './reports/ReportPages'
+import { ReportsOverviewPage } from './reports/OverviewPage'
 import { EstimatePage } from './estimates/EstimatePage'
 import { EstimatesPage } from './estimates/EstimatesPage'
 import { RecurringInvoicePage } from './recurring/RecurringInvoicePage'
@@ -162,6 +163,7 @@ export function AppRoutes() {
           <Route path="/:administrationId/task_lists/lists" element={<TaskListsPage />} />
           <Route path="/:administrationId/task_lists/new" element={<TaskListPage />} />
           <Route path="/:administrationId/task_lists/:taskListId" element={<TaskListPage />} />
+          <Route path="/:administrationId/reports" element={<ReportsOverviewPage />} />
           <Route path="/:administrationId/report/general_ledger" element={<TrialBalancePage />} />
           <Route path="/:administrationId/report/profit_loss" element={<ProfitLossPage />} />
           <Route path="/:administrationId/report/balance_sheet" element={<BalanceSheetPage />} />

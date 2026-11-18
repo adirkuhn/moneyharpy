@@ -103,6 +103,8 @@ type Props = {
   sayPer?: boolean
   /** Moneybird's introduction behind the More information button. */
   info?: Info
+  /** Whether the report can be exported; Moneybird's overview cannot. */
+  exportable?: boolean
   /** More buttons before Export, such as Show graphs. */
   actions?: ReactNode
   children: ReactNode
@@ -113,7 +115,7 @@ type Props = {
  * what is shown with buttons to the period before and after it, More
  * information, and Export; the report in a card below.
  */
-export function ReportPage({ filter, name, title, orderable = false, comparable = false, formats, sayPer = true, info, actions, children }: Props) {
+export function ReportPage({ filter, name, title, orderable = false, comparable = false, formats, sayPer = true, exportable = true, info, actions, children }: Props) {
   const { t, i18n } = useTranslation()
   const link = useFilterLink(filter)
   const infoId = useId()
@@ -155,10 +157,12 @@ export function ReportPage({ filter, name, title, orderable = false, comparable 
             </button>
           )}
           {actions}
-          <ActionMenu
-            label={t('list.export')}
-            items={[{ label: t('reports.pdf'), unavailable: true }, { label: t('reports.excel'), unavailable: true }]}
-          />
+          {exportable && (
+            <ActionMenu
+              label={t('list.export')}
+              items={[{ label: t('reports.pdf'), unavailable: true }, { label: t('reports.excel'), unavailable: true }]}
+            />
+          )}
         </>
       }
     >

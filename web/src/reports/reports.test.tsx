@@ -220,4 +220,45 @@ describe('reports', () => {
     const rates = await screen.findByRole('table', { name: 'VAT summary' })
     expect(within(rates).getByRole('row', { name: /21% VAT/ })).toHaveTextContent(/716\.00\s*150\.00/)
   })
+
+  it('shows the graphs above the profit and loss statement until hidden', async () => {
+    server.use(...loaded())
+    renderAt('/11/report/profit_loss?period=202610..202611')
+    await screen.findByRole('table', { name: 'Profit and loss statement' })
+    expect(screen.getByRole('img', { name: 'Net result' })).toBeInTheDocument()
+    const costs = screen.getByRole('img', { name: 'Cost and Revenue' }).closest('section')!
+    expect(within(costs).getByText('Revenue').closest('li')).toHaveTextContent('300.00')
+    expect(within(costs).getByText('Costs').closest('li')).toHaveTextContent('70.00')
+    await userEvent.click(screen.getByRole('button', { name: 'Show graphs' }))
+    expect(screen.queryByRole('img', { name: 'Net result' })).toBeNull()
+  })
+
+  it('gives an overview of the period in six cards', async () => {
+    server.use(
+      ...loaded(),
+      http.get('*/api/v2/11/reports/working_capital', () => HttpResponse.json({ working_capital: '900.0', bank: '1000.0', to_receive: '250.0', to_pay: '350.0', periods: [] })),
+      http.get('*/api/v2/11/declarations/overview', () => HttpResponse.json({
+        kind: 'vat_return', period_from: '2026-10-01', period_to: '2026-12-31', granularity: 'quarter', deadline: '2027-01-31',
+        boxes: [], corrections: [], icp_lines: [], owed: '63.0', input_tax: '12.0', total: '51.0',
+      })),
+      http.get('*/api/v2/11/reports/tax', () => HttpResponse.json({ tax_rates: [], periods: [] })),
+      http.get('*/api/v2/11/reports/bank_balance', () => HttpResponse.json({ total: '1000.0', financial_accounts: [], periods: [] })),
+      http.get('*/api/v2/11/reports/cash_flow', () => HttpResponse.json({ opening_balance: '400.0', closing_balance: '1000.0', cash_received_by_ledger_account: values([['1010', '700.0']]), cash_paid_by_ledger_account: values([['1201', '-100.0']]) })),
+      http.get('*/api/v2/11/reports/creditors', () => HttpResponse.json({ creditors: [{ contact_id: '301', amount: '-75.0' }] })),
+    )
+    renderAt('/11/reports?period=202610..202612')
+    expect(await screen.findByRole('button', { name: 'Report for quarter 4 2026 per month' })).toBeInTheDocument()
+    const card = (name: string) => screen.getByRole('heading', { name: new RegExp(`^${name}`) }).closest('section')!
+    await waitFor(() => expect(card('Profit')).toHaveTextContent('€240.00'))
+    expect(within(card('Profit')).getByRole('link', { name: 'Profit and loss statement' })).toHaveAttribute('href', expect.stringContaining('/11/report/profit_loss'))
+    await waitFor(() => expect(card('Working capital')).toHaveTextContent('€900.00'))
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(/current assets minus the current liabilities/)
+    await waitFor(() => expect(card('VAT')).toHaveTextContent(/€51\.00.*Payable VAT€63\.00.*Receivable VAT€12\.00/))
+    await waitFor(() => expect(card('Bank balance')).toHaveTextContent(/€1,000\.00.*Credited€700\.00.*Debited€100\.00/))
+    await waitFor(() => expect(card('Outstanding from customers')).toHaveTextContent(/€250\.00.*Example Shop B\.V\.€242\.00.*No contact€8\.00/))
+    await waitFor(() => expect(card('Owed to suppliers')).toHaveTextContent('€75.00'))
+    expect(screen.queryByRole('button', { name: 'Export' })).toBeNull()
+    const nav = screen.getByRole('navigation', { name: 'Administration menu' })
+    expect(within(nav).getByRole('link', { name: 'Overview' , current: 'page' })).toHaveAttribute('href', '/11/reports')
+  })
 })
