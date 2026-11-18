@@ -15410,7 +15410,7 @@ type GetCreditorsReportParamsGranularity string
 
 // GetCreditorsAgingReportParams defines parameters for GetCreditorsAgingReport.
 type GetCreditorsAgingReportParams struct {
-	// PeriodUntil The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today.
+	// PeriodUntil The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. A range of months, as ..202501 or 202412..202501, counts as its last month. This month unless given; a month still running counts up to today.
 	PeriodUntil *string `form:"period_until,omitempty" json:"period_until,omitempty"`
 
 	// Page The page to return, starting at 1.
@@ -15449,7 +15449,7 @@ type GetDebtorsReportParamsGranularity string
 
 // GetDebtorsAgingReportParams defines parameters for GetDebtorsAgingReport.
 type GetDebtorsAgingReportParams struct {
-	// PeriodUntil The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today.
+	// PeriodUntil The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. A range of months, as ..202501 or 202412..202501, counts as its last month. This month unless given; a month still running counts up to today.
 	PeriodUntil *string `form:"period_until,omitempty" json:"period_until,omitempty"`
 
 	// Page The page to return, starting at 1.
