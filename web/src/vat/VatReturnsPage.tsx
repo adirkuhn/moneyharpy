@@ -107,7 +107,7 @@ function YearTable({ returns, base, label, language }: { returns: VatReturn[]; b
         {returns.map((r) => (
           <tr key={r.id}>
             <td><Link to={`${base}/${r.id}`}>{t(`vat.kinds.${r.kind}`)}</Link></td>
-            <td>{periodName(r.period_from, r.period_to, t, language)}</td>
+            <td>{periodName(r.period_from, r.period_to, t, language).replace(/\s\d{4}$/, '')}</td>
             <td>{r.sent_on}</td>
             <td className="document-table__state"><span className={`badge badge--${stateLook[r.state] ?? 'open'}`}>{t(`vat.states.${r.state}`)}</span></td>
           </tr>

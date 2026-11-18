@@ -37,6 +37,8 @@ type Props = {
   /** The period's name, for the rows that split a corrected box. */
   periodName: string
   label: string
+  /** A filed return leaves the boxes without an amount empty; the check before filing shows €0. */
+  blankZero?: boolean
 }
 
 /**
@@ -44,10 +46,10 @@ type Props = {
  * charged on and the VAT, a corrected box split into the period and the
  * corrections, and the total to pay or receive.
  */
-export function BoxTable({ figures, periodName, label }: Props) {
+export function BoxTable({ figures, periodName, label, blankZero = false }: Props) {
   const { t } = useTranslation()
   const euros = useEuros()
-  const shown = (v: string, on: boolean) => (on ? euros(v) : '')
+  const shown = (v: string, on: boolean) => (on && !(blankZero && Number(v) === 0) ? euros(v) : '')
   return (
     <table className="data-table vat-boxes" aria-label={label}>
       <thead>
@@ -83,7 +85,7 @@ export function BoxTable({ figures, periodName, label }: Props) {
                       <td className="vat-boxes__amount">{shown(b.period_base, def.base)}</td>
                       <td className="vat-boxes__amount">{shown(b.period_tax, def.tax)}</td>
                     </tr>
-                    <tr className="vat-boxes__part">
+                    <tr className="vat-boxes__part vat-boxes__correction">
                       <td />
                       <td>{t('vat.corrections')}</td>
                       <td className="vat-boxes__amount">{shown(b.correction_base, def.base)}</td>

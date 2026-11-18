@@ -614,6 +614,7 @@ export const en = {
       documents: { title: 'Unprocessed documents found', text_one: '{{count}} incoming document still has to be processed', text_other: '{{count}} incoming documents still have to be processed', passed: 'All incoming documents have been processed' },
     },
     manual: {
+      title: 'Submit manually', text: 'Type the amounts over in Mijn Belastingdienst Zakelijk and mark the declaration as submitted here.', confirmation: 'Confirmation',
       login: 'Log in', loginText: 'Log in to Mijn Belastingdienst Zakelijk and open the declaration for {{period}}.', portal: 'Mijn Belastingdienst Zakelijk',
       fill: 'Fill in amounts', fillText: 'Copy the amounts below into the corresponding fields.', fillIcp: 'Enter each customer below with their VAT number and amount, as goods or services.',
       amounts: 'Amounts to fill in', send: 'Send declaration', sendText: 'Submit the declaration as soon as the total matches {{total}}.', sendIcp: 'Submit the declaration once every customer is entered.',
@@ -621,6 +622,7 @@ export const en = {
       confirm: 'I filed the {{kind}} of {{name}} for {{period}} at the tax authority and am authorized to do so.', markFiled: 'Mark as filed',
     },
     view: {
+      details: 'Return details', history: { title: 'History', created: '{{kind}} recorded', filed: 'Filed at the tax authority', paid: 'Payment linked' },
       title: '{{kind}} - {{period}}', pdf: 'Download PDF', delete: 'Delete', confirmDelete: 'Delete return', confirmDeleteText: 'Delete this return with its bookings? The books stay locked. Only do this when it was recorded by mistake.',
       toPay: 'Pay {{amount}} to the tax authority by {{date}}, then link the bank transaction.',
       overdue_one: 'The amount of {{amount}} is overdue by {{count}} day and should have been paid by {{date}}. Pay it and link the bank transaction.',

@@ -616,6 +616,7 @@ export const nl: Messages = {
       documents: { title: 'Onverwerkte documenten gevonden', text_one: '{{count}} binnengekomen document moet nog worden verwerkt', text_other: '{{count}} binnengekomen documenten moeten nog worden verwerkt', passed: 'Alle binnengekomen documenten zijn verwerkt' },
     },
     manual: {
+      title: 'Handmatig indienen', text: 'Neem de bedragen over in Mijn Belastingdienst Zakelijk en markeer de aangifte hier als ingediend.', confirmation: 'Bevestiging',
       login: 'Inloggen', loginText: 'Log in op Mijn Belastingdienst Zakelijk en open de aangifte over {{period}}.', portal: 'Mijn Belastingdienst Zakelijk',
       fill: 'Bedragen invullen', fillText: 'Neem de bedragen hieronder over in de bijbehorende velden.', fillIcp: 'Vul elke klant hieronder in met btw-nummer en bedrag, als goederen of diensten.',
       amounts: 'In te vullen bedragen', send: 'Aangifte versturen', sendText: 'Verstuur de aangifte zodra het totaal overeenkomt met {{total}}.', sendIcp: 'Verstuur de opgaaf zodra alle klanten zijn ingevuld.',
@@ -623,6 +624,7 @@ export const nl: Messages = {
       confirm: 'Ik heb de {{kind}} van {{name}} over {{period}} bij de Belastingdienst ingediend en ben daartoe bevoegd.', markFiled: 'Markeren als ingediend',
     },
     view: {
+      details: 'Gegevens van de aangifte', history: { title: 'Geschiedenis', created: '{{kind}} vastgelegd', filed: 'Ingediend bij de Belastingdienst', paid: 'Betaling gekoppeld' },
       title: '{{kind}} - {{period}}', pdf: 'PDF downloaden', delete: 'Verwijderen', confirmDelete: 'Aangifte verwijderen', confirmDeleteText: 'Deze aangifte met haar boekingen verwijderen? De boekhouding blijft afgesloten. Doe dit alleen als hij per vergissing is vastgelegd.',
       toPay: 'Betaal {{amount}} vóór {{date}} aan de Belastingdienst en koppel daarna de banktransactie.',
       overdue_one: 'Het bedrag van {{amount}} is {{count}} dag te laat en had betaald moeten zijn op {{date}}. Betaal het en koppel de banktransactie.',
