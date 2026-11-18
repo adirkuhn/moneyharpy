@@ -102,6 +102,26 @@ func TestReports(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodGet, reports+"debtors_aging?period_until=next_month", nil), http.StatusBadRequest)
 
+	type agingDocs struct {
+		Documents []struct {
+			DocumentType string       `json:"document_type"`
+			DocumentID   string       `json:"document_id"`
+			Amount       string       `json:"amount"`
+			Buckets      []reportItem `json:"aging_buckets"`
+		} `json:"documents"`
+	}
+	docs := decode[agingDocs](t, owner.do(http.MethodGet, reports+"debtors_aging/documents?period_until=this_month&contact_id="+customer.ID, nil))
+	if d := docs.Documents; len(d) != 1 || d[0].DocumentType != "SalesInvoice" || d[0].DocumentID != inv.ID || d[0].Amount != "200.0" || len(d[0].Buckets) != 4 {
+		t.Errorf("debtors aging documents = %+v", docs)
+	}
+	if d := decode[agingDocs](t, owner.do(http.MethodGet, reports+"creditors_aging/documents?contact_id="+supplier, nil)).Documents; len(d) != 1 || d[0].DocumentType != "PurchaseInvoice" || d[0].Amount != "121.0" {
+		t.Errorf("creditors aging documents = %+v", d)
+	}
+	if d := decode[agingDocs](t, owner.do(http.MethodGet, reports+"debtors_aging/documents", nil)).Documents; len(d) != 0 {
+		t.Errorf("without contact = %+v", d)
+	}
+	wantStatus(t, owner.do(http.MethodGet, reports+"debtors_aging/documents?period_until=next_month", nil), http.StatusBadRequest)
+
 	byContact := decode[map[string][]reportItem](t, owner.do(http.MethodGet, reports+"revenue_by_contact?contact_id="+customer.ID, nil))
 	if c := byContact["revenue_by_contact"]; len(c) != 1 || c[0].Amount != "200.0" {
 		t.Errorf("revenue by contact = %+v", byContact)

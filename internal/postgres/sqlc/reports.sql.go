@@ -393,7 +393,7 @@ WITH posted AS (
     WHERE p.administration_id = $1 AND p.payment_date <= $3
     GROUP BY p.invoice_id
 )
-SELECT d.contact_id, d.date, d.amount, coalesce(paid.paid, 0)::bigint AS paid
+SELECT d.document_type, d.document_id, d.contact_id, d.date, d.amount, coalesce(paid.paid, 0)::bigint AS paid
 FROM posted d LEFT JOIN paid ON paid.invoice_id = d.document_id
 ORDER BY d.date, d.document_id
 `
@@ -405,10 +405,12 @@ type ReportOpenItemsParams struct {
 }
 
 type ReportOpenItemsRow struct {
-	ContactID pgtype.Int8
-	Date      pgtype.Date
-	Amount    int64
-	Paid      int64
+	DocumentType string
+	DocumentID   int64
+	ContactID    pgtype.Int8
+	Date         pgtype.Date
+	Amount       int64
+	Paid         int64
 }
 
 // What each booked document on the category of the role still had open at
@@ -423,6 +425,8 @@ func (q *Queries) ReportOpenItems(ctx context.Context, arg ReportOpenItemsParams
 	for rows.Next() {
 		var i ReportOpenItemsRow
 		if err := rows.Scan(
+			&i.DocumentType,
+			&i.DocumentID,
 			&i.ContactID,
 			&i.Date,
 			&i.Amount,

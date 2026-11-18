@@ -2,9 +2,12 @@ import { Fragment, type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
+import { useExternalInvoice } from '../external/queries'
+import { incomingTitle, useTypedDocument } from '../incoming/queries'
+import { invoiceTitle, useSalesInvoice } from '../invoices/queries'
 import { type AccountType, balanceSheetTypes, type LedgerAccount, profitAndLossTypes, useLedgerAccounts } from '../bookkeeping/queries'
 import { contactName, useContact } from '../contacts/queries'
-import { InfoIcon, ListIcon } from '../layout/icons'
+import { CaretIcon, InfoIcon, ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Pagination } from '../layout/Pagination'
 import { useProject } from '../projects/queries'
@@ -15,8 +18,8 @@ import { type MonthRange, parsePeriod } from '../list/period'
 import { BarsChart, Legend } from './charts'
 import { lastDay, monthsParam, partName, rangeName } from './period'
 import {
-  type AgingKind, amounts, balances, type ContactReportKind, type ProjectReportKind, reportPerPage, type Subject, type SubjectReport,
-  useAgingReport, useAssetsReport, useBalanceSheet, useCashFlow, useContactReport, useGeneralLedger, useProfitLoss, useProjectReport, useTaxReport,
+  type AgingDocument, type AgingKind, amounts, balances, type ContactReportKind, type ProjectReportKind, reportPerPage, type Subject, type SubjectReport,
+  useAgingDocuments, useAgingReport, useAssetsReport, useBalanceSheet, useCashFlow, useContactReport, useGeneralLedger, useProfitLoss, useProjectReport, useTaxReport,
   useVatOverview, type VatFormat, vatFormats,
 } from './queries'
 import { apiGranularity, type Info, type ReportFilter, ReportPage, useReportFilter } from './ReportFrame'
@@ -548,10 +551,7 @@ export function AgingReportPage({ kind }: { kind: AgingKind }) {
       <ReportTable label={title} columns={columns}>
         <Section span={span}>
           {items.map((x) => (
-            <tr key={String(x.contact_id)} className="report-table__category">
-              <th scope="row"><span className="report-table__name"><ContactName administrationId={f.administrationId} id={x.contact_id == null ? null : String(x.contact_id)} link={false} /></span></th>
-              <Amounts values={row(x)} />
-            </tr>
+            <AgingRow key={String(x.contact_id)} f={f} kind={kind} contactId={x.contact_id == null ? null : String(x.contact_id)} values={row(x)} />
           ))}
         </Section>
         <Section span={span}>
@@ -561,6 +561,65 @@ export function AgingReportPage({ kind }: { kind: AgingKind }) {
       <Pagination total={report.data.total} perPage={reportPerPage} />
     </ReportCard>,
   )
+}
+
+/** A contact's row of the aging report, closed at first as at Moneybird; opened, it lists the invoices behind it. */
+function AgingRow({ f, kind, contactId, values }: { f: ReportFilter; kind: AgingKind; contactId: string | null; values: number[] }) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const contact = useContact(f.administrationId, contactId ?? undefined)
+  const name = contactId == null ? t('reports.noContact') : contact.data ? contactName(contact.data) : contactId
+  const docs = useAgingDocuments(f.administrationId, kind, f.period, contactId, open)
+  return (
+    <>
+      <tr className="report-table__category is-depth-0">
+        <th scope="row">
+          <span className="report-table__name">
+            <button
+              type="button"
+              className="report-table__fold"
+              aria-expanded={open}
+              aria-label={t(open ? 'reports.collapse' : 'reports.expand', { name })}
+              onClick={() => setOpen(!open)}
+            >
+              <CaretIcon />
+            </button>
+            <span>{name}</span>
+          </span>
+        </th>
+        <Amounts values={values} />
+      </tr>
+      {open && !docs.data && (
+        <tr className="report-table__category is-depth-1"><td colSpan={values.length + 1}>{docs.error ? <Failed /> : <Loading />}</td></tr>
+      )}
+      {open && docs.data?.map((d) => (
+        <tr key={`${d.document_type}-${d.document_id}`} className="report-table__category is-depth-1">
+          <th scope="row"><span className="report-table__name"><AgingDocumentName administrationId={f.administrationId} document={d} /></span></th>
+          <Amounts values={d.aging_buckets.map((b) => Number(b.amount))} />
+        </tr>
+      ))}
+    </>
+  )
+}
+
+/** Where each document of the aging report has its page. */
+const agingPages: Record<AgingDocument['document_type'], string> = {
+  SalesInvoice: 'sales_invoices', ExternalSalesInvoice: 'external_sales_invoices', PurchaseInvoice: 'documents', Receipt: 'documents',
+}
+
+/** An invoice or receipt by its number or reference, linked to its page. */
+function AgingDocumentName({ administrationId, document: d }: { administrationId: string; document: AgingDocument }) {
+  const { t } = useTranslation()
+  const id = d.document_id
+  const invoice = useSalesInvoice(administrationId, d.document_type === 'SalesInvoice' ? id : undefined)
+  const external = useExternalInvoice(administrationId, d.document_type === 'ExternalSalesInvoice' ? id : undefined)
+  const incoming = useTypedDocument(administrationId, d.document_type === 'PurchaseInvoice' || d.document_type === 'Receipt' ? d.document_type : undefined, id)
+  const name = invoice.data ? invoiceTitle(invoice.data, t)
+    : external.data ? (external.data.reference ?? '')
+    : incoming.data && (incoming.data.type === 'PurchaseInvoice' || incoming.data.type === 'Receipt')
+      ? incomingTitle(incoming.data.doc, incoming.data.type === 'Receipt' ? 'receipts' : 'purchase_invoices', t)
+      : ''
+  return <Link to={`/${administrationId}/${agingPages[d.document_type]}/${id}`}>{name || d.date}</Link>
 }
 
 /** A lifespan in seconds in words, such as "6 years" or "30 months". */

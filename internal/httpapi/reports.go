@@ -490,6 +490,57 @@ func (s *server) GetCreditorsAgingReport(w http.ResponseWriter, r *http.Request,
 	s.writeAging(w, r, "creditors", pg, report, err)
 }
 
+type agingDocumentJSON struct {
+	DocumentType string            `json:"document_type"`
+	DocumentID   string            `json:"document_id"`
+	Date         string            `json:"date"`
+	Amount       string            `json:"amount"`
+	Buckets      []agingBucketJSON `json:"aging_buckets"`
+}
+
+func (s *server) writeAgingDocuments(w http.ResponseWriter, r *http.Request, docs []reports.AgingDocument, err error) {
+	if err != nil {
+		s.failReport(w, r, err)
+		return
+	}
+	out := make([]agingDocumentJSON, len(docs))
+	for i, d := range docs {
+		out[i] = agingDocumentJSON{DocumentType: d.DocumentType, DocumentID: d.DocumentID.String(), Date: d.Date.Format(time.DateOnly), Amount: d.Amount.String()}
+		for _, b := range d.Buckets {
+			out[i].Buckets = append(out[i].Buckets, agingBucketJSON{b.Name, b.Amount.String()})
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"documents": out})
+}
+
+// GetDebtorsAgingDocuments implements ServerInterface.
+func (s *server) GetDebtorsAgingDocuments(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, params GetDebtorsAgingDocumentsParams) {
+	admin, ok := s.reportStart(w, r, administrationID)
+	if !ok {
+		return
+	}
+	contact, ok := optionalQueryID(w, params.ContactId)
+	if !ok {
+		return
+	}
+	docs, err := s.deps.Reports.DebtorsAgingDocuments(r.Context(), admin, user(r).ID, deref(params.PeriodUntil), contact)
+	s.writeAgingDocuments(w, r, docs, err)
+}
+
+// GetCreditorsAgingDocuments implements ServerInterface.
+func (s *server) GetCreditorsAgingDocuments(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, params GetCreditorsAgingDocumentsParams) {
+	admin, ok := s.reportStart(w, r, administrationID)
+	if !ok {
+		return
+	}
+	contact, ok := optionalQueryID(w, params.ContactId)
+	if !ok {
+		return
+	}
+	docs, err := s.deps.Reports.CreditorsAgingDocuments(r.Context(), admin, user(r).ID, deref(params.PeriodUntil), contact)
+	s.writeAgingDocuments(w, r, docs, err)
+}
+
 // GetSubscriptionsReport implements ServerInterface.
 func (s *server) GetSubscriptionsReport(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, params GetSubscriptionsReportParams) {
 	admin, ok := s.reportStart(w, r, administrationID)

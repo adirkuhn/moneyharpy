@@ -102,7 +102,7 @@ WITH posted AS (
     WHERE p.administration_id = @administration_id AND p.payment_date <= @until
     GROUP BY p.invoice_id
 )
-SELECT d.contact_id, d.date, d.amount, coalesce(paid.paid, 0)::bigint AS paid
+SELECT d.document_type, d.document_id, d.contact_id, d.date, d.amount, coalesce(paid.paid, 0)::bigint AS paid
 FROM posted d LEFT JOIN paid ON paid.invoice_id = d.document_id
 ORDER BY d.date, d.document_id;
 

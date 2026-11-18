@@ -123,10 +123,13 @@ type TaxSum struct {
 // OpenItem is a booked document on the debtors or creditors: what it posted
 // there and what was paid of it by a date.
 type OpenItem struct {
-	ContactID *resource.ID
-	Date      time.Time
-	Amount    money.Amount
-	Paid      money.Amount
+	// DocumentType and DocumentID name the invoice or receipt.
+	DocumentType string
+	DocumentID   resource.ID
+	ContactID    *resource.ID
+	Date         time.Time
+	Amount       money.Amount
+	Paid         money.Amount
 }
 
 // SubscriptionItem is a product a subscription ran.

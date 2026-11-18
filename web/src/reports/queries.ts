@@ -26,7 +26,7 @@ export type SubjectReport = { rows: Subject[]; parts: { period: string; rows: Su
 export type ReportQuery = { period: string; granularity?: Granularity }
 
 /** The rows of a report page. */
-export const reportPerPage = 100
+export const reportPerPage = 50
 
 const path = (administrationId: string) => ({ administration_id: administrationId })
 const query = (q: ReportQuery) => ({ period: q.period, ...(q.granularity ? { granularity: q.granularity } : {}) })
@@ -169,6 +169,23 @@ export function useAgingReport(administrationId: string, kind: AgingKind, until:
       }
       const items = 'debtors' in data ? data.debtors : data.creditors
       return { items, total: Number(response.headers.get('X-Total-Count') ?? items.length) }
+    },
+  })
+}
+
+export type AgingDocument = components['schemas']['AgingDocument']
+
+/** The invoices or receipts behind a contact's row of the aging report, asked for once the row is opened. */
+export function useAgingDocuments(administrationId: string, kind: AgingKind, until: string, contactId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['report', kind, 'documents', administrationId, until, contactId],
+    enabled,
+    queryFn: async (): Promise<AgingDocument[]> => {
+      const params = { params: { path: path(administrationId), query: { period_until: until, ...(contactId ? { contact_id: contactId } : {}) } } }
+      const data = kind === 'debtors_aging'
+        ? await unwrap(api.GET('/api/v2/{administration_id}/reports/debtors_aging/documents', params))
+        : await unwrap(api.GET('/api/v2/{administration_id}/reports/creditors_aging/documents', params))
+      return data.documents
     },
   })
 }

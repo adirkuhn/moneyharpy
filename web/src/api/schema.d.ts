@@ -3924,6 +3924,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/reports/creditors_aging/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Documents of a creditor's aging row
+         * @description The purchase invoices and receipts behind a row of the creditors aging report: each with what it still had open at the end of period_until, in the bucket of its age, oldest first. Without contact_id, those without a contact. MoneyHarpy extension.
+         */
+        get: operations["getCreditorsAgingDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/reports/debtors": {
         parameters: {
             query?: never;
@@ -3960,6 +3982,28 @@ export interface paths {
          * @description Per debtor, what booked sales invoices and external sales invoices still had open at the end of period_until, by their age from the invoice date: 0 to 30 days, 30 to 60 days, older, and the total. Bucket names are in the administration's language.
          */
         get: operations["getDebtorsAgingReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/debtors_aging/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Documents of a debtor's aging row
+         * @description The sales invoices and external sales invoices behind a row of the debtors aging report: each with what it still had open at the end of period_until, in the bucket of its age, oldest first. Without contact_id, those without a contact. MoneyHarpy extension.
+         */
+        get: operations["getDebtorsAgingDocuments"];
         put?: never;
         post?: never;
         delete?: never;
@@ -9419,6 +9463,23 @@ export interface components {
         /** @description The creditors aging report. */
         CreditorsAgingReport: {
             creditors: components["schemas"]["aging_report_item"][];
+        };
+        /** @description The documents behind a row of an aging report. MoneyHarpy extension. */
+        AgingDocuments: {
+            documents: components["schemas"]["AgingDocument"][];
+        };
+        /** @description What an invoice or receipt had open at the end of the period, in the bucket of its age. */
+        AgingDocument: {
+            /** @enum {string} */
+            document_type: "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt";
+            document_id: string;
+            /** Format: date */
+            date: string;
+            amount: string;
+            aging_buckets: {
+                name: string;
+                amount: string;
+            }[];
         };
         SubscriptionsReport: {
             monthly_recurring_revenue: string;
@@ -19532,7 +19593,7 @@ export interface operations {
     getCreditorsAgingReport: {
         parameters: {
             query?: {
-                /** @description The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today. */
+                /** @description The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. A range of months, as ..202501 or 202412..202501, counts as its last month. This month unless given; a month still running counts up to today. */
                 period_until?: string;
                 /** @description The page to return, starting at 1. */
                 page?: components["parameters"]["page"];
@@ -19558,6 +19619,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreditorsAgingReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getCreditorsAgingDocuments: {
+        parameters: {
+            query?: {
+                /** @description The month to look at the end of, as in the creditors aging report. */
+                period_until?: string;
+                /** @description The contact of the row. */
+                contact_id?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The documents */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgingDocuments"];
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -19610,7 +19703,7 @@ export interface operations {
     getDebtorsAgingReport: {
         parameters: {
             query?: {
-                /** @description The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today. */
+                /** @description The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. A range of months, as ..202501 or 202412..202501, counts as its last month. This month unless given; a month still running counts up to today. */
                 period_until?: string;
                 /** @description The page to return, starting at 1. */
                 page?: components["parameters"]["page"];
@@ -19636,6 +19729,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DebtorsAgingReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getDebtorsAgingDocuments: {
+        parameters: {
+            query?: {
+                /** @description The month to look at the end of, as in the debtors aging report. */
+                period_until?: string;
+                /** @description The contact of the row. */
+                contact_id?: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The documents */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgingDocuments"];
                 };
             };
             400: components["responses"]["BadRequest"];
