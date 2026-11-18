@@ -1,0 +1,59 @@
+/* VAT returns, after Moneybird's: the list per year, the steps to declare one, the boxes and the state of a return. */
+.vat-year { margin-bottom: 1.5rem; }
+.vat-year__title { margin: 0 0 0.5rem; font-size: 1.0625rem; }
+.vat-list { table-layout: auto; }
+.vat-list th:last-child { width: auto; }
+
+.vat-step { margin-bottom: 1.25rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.vat-step__title { margin: 0 0 0.75rem; font-size: 1rem; }
+.vat-step__text { margin: 0 0 0.75rem; color: var(--muted); }
+.vat-step__field { display: grid; gap: 0.375rem; max-width: 20rem; margin-bottom: 1rem; }
+.vat-step__value { padding: 0; }
+.vat-step form > .btn, .vat-step > .btn--primary { margin-top: 0.75rem; }
+.vat-kinds { display: grid; gap: 0.5rem; margin: 0 0 1rem; padding: 0; border: 0; }
+.vat-kind { display: grid; grid-template-columns: auto 1fr; gap: 0.125rem 0.75rem; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.vat-kind.is-checked { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+.vat-kind input { grid-row: span 2; margin-top: 0.2rem; accent-color: var(--blue); }
+.vat-kind__title { font-weight: 600; }
+.vat-kind__text { color: var(--muted); font-size: 0.875rem; }
+
+.vat-checks { display: grid; gap: 0.5rem; margin: 0.75rem 0 1rem; padding: 0; list-style: none; }
+.vat-check { display: grid; gap: 0.125rem; padding: 0.625rem 0.875rem; border-left: 4px solid var(--gold); border-radius: 6px; background: var(--row-hover); }
+.vat-check.is-passed { border-left-color: var(--state-paid); }
+.vat-check span { color: var(--muted); }
+
+.vat-boxes, .vat-copy, .vat-icp, .vat-bookings { table-layout: auto; }
+.vat-boxes th:last-child, .vat-copy th:last-child, .vat-icp th:last-child, .vat-bookings th:last-child { width: auto; }
+.vat-boxes__code { width: 3rem; white-space: nowrap; }
+.vat-boxes__amount, .data-table th.vat-boxes__amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vat-boxes__section th { background: var(--bg); color: var(--text); font-weight: 600; }
+.vat-boxes__part td { color: var(--muted); font-size: 0.875rem; }
+.vat-boxes__part td:nth-child(2) { padding-left: 2rem; }
+.vat-boxes tfoot th, .vat-boxes tfoot td { border-top: 1px solid var(--line); font-weight: 600; }
+.vat-boxes__hint { display: block; color: var(--muted); font-size: 0.8125rem; font-weight: 400; }
+.vat-boxes__total { font-size: 1.0625rem; }
+.vat-bookings caption { padding: 0.5rem 0; font-weight: 600; text-align: left; }
+.vat-empty { padding: 1.5rem 1rem; color: var(--muted); text-align: center; }
+.vat-missing { color: var(--danger); }
+
+.vat-manual { display: grid; gap: 1rem; margin: 0 0 1rem; padding-left: 1.25rem; }
+.vat-manual li { display: grid; gap: 0.375rem; justify-items: start; }
+.vat-manual li > span { color: var(--muted); }
+.vat-manual .data-table { justify-self: stretch; }
+.vat-confirm { margin-bottom: 1rem; }
+.vat-late { border-left-color: var(--gold); }
+
+.vat-status { display: grid; gap: 0.75rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); justify-items: start; }
+.vat-status__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.vat-status__amount { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.vat-status__late { color: var(--danger); font-weight: 600; }
+.vat-status__text, .vat-status__note { margin: 0; }
+.vat-status__note { color: var(--muted); font-size: 0.875rem; }
+.vat-status__facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1.25rem; margin: 0; }
+.vat-status__facts dt { color: var(--muted); }
+.vat-status__facts dd { margin: 0; }
+.vat-status__payment { display: contents; }
+
+@media print {
+  .banner, .sidenav, .actionbar__actions, .actionbar__back { display: none !important; }
+}

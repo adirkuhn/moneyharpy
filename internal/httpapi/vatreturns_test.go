@@ -2,6 +2,7 @@ package httpapi_test
 
 import (
 	"net/http"
+	"slices"
 	"testing"
 	"time"
 )
@@ -137,10 +138,34 @@ func TestVatReturns(t *testing.T) {
 		"financial_account_id": cash.ID, "reference": "Tax", "manual": true,
 		"financial_mutations_attributes": []map[string]any{{"date": adminNow().Format(time.DateOnly), "amount": -21, "message": "Belastingdienst", "account_servicer_transaction_id": "VAT1"}},
 	}}))
+	suggested := decode[[]struct {
+		BookingType string `json:"booking_type"`
+		BookingID   string `json:"booking_id"`
+		Price       string `json:"price"`
+	}](t, owner.do(http.MethodGet, api+"/financial_mutations/"+st.Mutations[0].ID+"/link_suggestions", nil))
+	if !slices.ContainsFunc(suggested, func(s struct {
+		BookingType string `json:"booking_type"`
+		BookingID   string `json:"booking_id"`
+		Price       string `json:"price"`
+	}) bool {
+		return s.BookingType == "VatDocument" && s.BookingID == filed.ID && s.Price == "21.0"
+	}) {
+		t.Errorf("suggestions = %+v, want the return", suggested)
+	}
 	r = owner.do(http.MethodPatch, api+"/financial_mutations/"+st.Mutations[0].ID+"/link_booking", map[string]any{"booking_type": "VatDocument", "booking_id": filed.ID})
 	wantStatus(t, r, http.StatusOK)
 	if m := decode[mutation](t, r); m.State != "processed" || m.AmountOpen != "0.0" {
 		t.Errorf("linked transaction = %+v", m)
+	}
+	linked := decode[struct {
+		Links []struct {
+			DocumentType string `json:"document_type"`
+			Label        string `json:"label"`
+			DocumentID   string `json:"document_id"`
+		} `json:"links"`
+	}](t, owner.do(http.MethodGet, api+"/financial_mutations/"+st.Mutations[0].ID, nil))
+	if len(linked.Links) != 1 || linked.Links[0].DocumentType != "VatDocument" || linked.Links[0].Label != "VAT" || linked.Links[0].DocumentID != filed.ID {
+		t.Errorf("links = %+v", linked.Links)
 	}
 	paid := decode[vatReturn](t, owner.do(http.MethodGet, declarations+"/"+filed.ID, nil))
 	if paid.State != "paid" || len(paid.Payments) != 1 || paid.Payments[0].Price != "21.0" || paid.Unpaid != "0.0" {

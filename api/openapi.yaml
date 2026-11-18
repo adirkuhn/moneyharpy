@@ -16641,13 +16641,13 @@ components:
           $ref: '#/components/schemas/Identifier'
         document_type:
           type: string
-          enum: [SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt]
+          enum: [SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt, VatDocument]
         document_id:
           $ref: '#/components/schemas/Identifier'
         label:
           type: string
-          enum: [INV, EXT, PUR, REC]
-          description: Moneybird's short name of the kind of document.
+          enum: [INV, EXT, PUR, REC, VAT]
+          description: Moneybird's short name of the kind of document; VAT for a VAT return, whose reference is its period.
         reference:
           type: string
           description: The invoice number or the document's reference.
@@ -16679,13 +16679,13 @@ components:
       properties:
         booking_type:
           type: string
-          enum: [SalesInvoice, ExternalSalesInvoice, Document, LedgerAccount]
+          enum: [SalesInvoice, ExternalSalesInvoice, Document, VatDocument, LedgerAccount]
           description: The booking_type of link_booking.
         booking_id:
           $ref: '#/components/schemas/Identifier'
         label:
           type: string
-          enum: [INV, EXT, PUR, REC, '']
+          enum: [INV, EXT, PUR, REC, VAT, '']
           description: Moneybird's short name of the kind of document; empty for a category.
         reference:
           type: string

@@ -50,7 +50,7 @@ export const navItems: NavItem[] = [
     ],
   },
   { kind: 'contacts', key: 'contacts', to: 'contacts', ready: true, permissions: ['sales_invoices', 'documents', 'estimates'] },
-  { kind: 'vat', key: 'vat', to: 'declarations', ready: false, permissions: bookkeeping },
+  { kind: 'vat', key: 'vat', to: 'declarations', ready: true, permissions: bookkeeping },
   {
     kind: 'reports', key: 'reports', to: 'reports', ready: false, permissions: ['bank', 'documents'],
     children: [

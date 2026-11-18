@@ -17,6 +17,7 @@ import { ActionMenu } from '../list/ListActions'
 import { allPeriods } from '../list/PeriodFilter'
 import { isPeriod, parsePeriod, periodValue } from '../list/period'
 import { PeriodPicker } from '../list/PeriodPicker'
+import { periodOfParam } from '../vat/period'
 import { AddTransactions } from './AddTransactions'
 import { LinkPanel } from './LinkPanel'
 import { type Booking, formatAmount, type Mutation, useFinancialAccounts, useMutations, useUploadForTransaction } from './queries'
@@ -179,7 +180,7 @@ export function TransactionsPage() {
 }
 
 const documentPaths: Record<string, string> = {
-  SalesInvoice: 'sales_invoices', ExternalSalesInvoice: 'external_sales_invoices', PurchaseInvoice: 'documents', Receipt: 'documents',
+  SalesInvoice: 'sales_invoices', ExternalSalesInvoice: 'external_sales_invoices', PurchaseInvoice: 'documents', Receipt: 'documents', VatDocument: 'declarations',
 }
 
 /**
@@ -235,7 +236,7 @@ function TransactionCard({ administrationId, mutation: m, currency }: { administ
               <span className="transaction__link-icon" aria-hidden="true"><ListIcon kind="paperclip" /></span>
               <div className="transaction__main">
                 <Link className="transaction__link-title" to={`${base}/${documentPaths[l.document_type] ?? 'documents'}/${l.document_id}`}>
-                  <span className="transaction__label">{l.label}</span> {[l.reference, l.contact_name].filter(Boolean).join(' · ')}
+                  <span className="transaction__label">{l.label}</span> {[l.document_type === 'VatDocument' ? periodOfParam(l.reference, t, i18n.language) : l.reference, l.contact_name].filter(Boolean).join(' · ')}
                 </Link>
                 <p className="transaction__subtitle">{[l.date, plain(l.total)].filter(Boolean).join(' · ')}</p>
                 {l.payment_reference && <p className="transaction__text">{t('bank.feed.paymentReference', { reference: l.payment_reference })}</p>}
