@@ -1389,6 +1389,26 @@ export const nl: Messages = {
     empty: 'Nog geen activa. Voeg ze toe via de API, gekoppeld aan de inkoopfacturen waarmee ze zijn gekocht.', noMatches: 'Geen activa voor dit filter.',
     loadError: 'De activa konden niet worden geladen.',
   },
+  events: {
+    label: 'Gebeurtenissen van {{period}}', filters: 'Filters voor gebeurtenissen', loadError: 'De gebeurtenissen konden niet worden geladen.', empty: 'Er is niets gebeurd in deze periode.',
+    event: 'Gebeurtenis', type: 'Type', user: 'Gebruiker', date: 'Datum', time: 'Tijd', initials: 'Initialen', newer: 'Nieuwere gebeurtenissen', older: 'Oudere gebeurtenissen',
+    text: '{{type}} {{what}}',
+    types: {
+      SalesInvoice: 'Factuur', ExternalSalesInvoice: 'Externe factuur', RecurringSalesInvoice: 'Periodieke factuur', Estimate: 'Offerte', Contact: 'Contact',
+      ContactPerson: 'Contactpersoon', Payment: 'Betaling', TimeEntry: 'Tijdregistratie', Document: 'Document', FinancialMutation: 'Transactie',
+      FinancialStatement: 'Bankafschrift', FinancialAccount: 'Financiële rekening', LedgerAccount: 'Categorie', Product: 'Product', Project: 'Project',
+      Asset: 'Activum', Disposal: 'Afstoting', Source: 'Bron', GeneralJournalDocument: 'Memoriaalboeking', DocumentStyle: 'Huisstijl', Identity: 'Identiteit',
+      Workflow: 'Workflow', TaxRate: 'Btw-tarief', Note: 'Notitie', CustomField: 'Eigen veld', Subscription: 'Abonnement', User: 'Gebruiker',
+    },
+    verbs: {
+      created: 'aangemaakt', updated: 'bijgewerkt', destroyed: 'verwijderd', registered: 'geregistreerd', send_manually: 'handmatig als verstuurd gemarkeerd',
+      send_email: 'per e-mail verstuurd', send_post: 'per post verstuurd', send_simplerinvoicing: 'via Peppol verstuurd', linked_to_financial_mutation: 'gekoppeld aan een transactie',
+      state_changed_to_paid: 'is betaald', state_changed_to: 'status gewijzigd naar {{state}}', send_reminder: 'herinnering verstuurd', mark_as_uncollectible: 'als oninbaar gemarkeerd',
+      created_from_recurring: 'aangemaakt op basis van periodieke factuur', activated: 'geactiveerd', deactivated: 'gedeactiveerd', archived: 'gearchiveerd',
+      accepted: 'geaccepteerd', rejected: 'afgewezen', billed: 'gefactureerd', processed: 'verwerkt', imported: 'geïmporteerd',
+    },
+    states: { paid: 'betaald', open: 'open', late: 'te laat', uncollectible: 'oninbaar', pending_payment: 'wacht op betaling', draft: 'concept' },
+  },
   reports: {
     totalRevenue: 'Totale omzet', grossProfit: 'Brutowinst', operatingProfit: 'Bedrijfsresultaat', netProfit: 'Nettowinst',
     totalDirectCosts: 'Totale directe kosten', totalExpenses: 'Totale kosten', totalOther: 'Totale overige baten en lasten',

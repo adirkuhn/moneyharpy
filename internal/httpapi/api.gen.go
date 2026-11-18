@@ -15096,6 +15096,9 @@ type ListEventsParams struct {
 
 	// EntityId Only return the events of this record.
 	EntityId *string `form:"entity_id,omitempty" json:"entity_id,omitempty"`
+
+	// Period Only return the events made in this period, in the administration's time zone: a month (202501), a range of months or days (202501..202503, 20250101..20250131) or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. With a period neither entity_type nor entity_id is needed; the list then holds the events of every record type the user may see. MoneyHarpy extension, for the Events page.
+	Period *string `form:"period,omitempty" json:"period,omitempty"`
 }
 
 // ListExternalSalesInvoicesParams defines parameters for ListExternalSalesInvoices.
@@ -34509,6 +34512,19 @@ func (siw *ServerInterfaceWrapper) ListEvents(w http.ResponseWriter, r *http.Req
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "entity_id"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entity_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
 		}
 		return
 	}

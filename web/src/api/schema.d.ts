@@ -5032,7 +5032,7 @@ export interface paths {
         };
         /**
          * List events
-         * @description Returns the events of the administration, newest first: the same events the activity logs show. Give entity_type, entity_id or both; without either the answer is 400. With entity_type the user needs the permission of that record type: sales_invoices for SalesInvoice, ExternalSalesInvoice and RecurringSalesInvoice, estimates for Estimate, documents for Document and bank for FinancialMutation; Contact needs one of estimates, sales_invoices, documents, bank or settings. Without it the answer is 403, as for every missing permission in MoneyHarpy, where Moneybird answers 401. Purchase invoices, receipts and the other document types keep their events under Document, so asking for such a type is 400 naming Document; an unknown type is 400 naming the types the user can ask for. With entity_id only, events of record types the user may not see are left out. A user who only has the time_entries permission sees only their own events. The list is paginated with a cursor: follow the Link header with rel="next" for older events; the last page has no Link header.
+         * @description Returns the events of the administration, newest first: the same events the activity logs show. Give entity_type, entity_id or both; without either, and without period, the answer is 400. With entity_type the user needs the permission of that record type: sales_invoices for SalesInvoice, ExternalSalesInvoice and RecurringSalesInvoice, estimates for Estimate, documents for Document and bank for FinancialMutation; Contact needs one of estimates, sales_invoices, documents, bank or settings. Without it the answer is 403, as for every missing permission in MoneyHarpy, where Moneybird answers 401. Purchase invoices, receipts and the other document types keep their events under Document, so asking for such a type is 400 naming Document; an unknown type is 400 naming the types the user can ask for. With entity_id only, events of record types the user may not see are left out. A user who only has the time_entries permission sees only their own events. The list is paginated with a cursor: follow the Link header with rel="next" for older events; the last page has no Link header.
          */
         get: operations["listEvents"];
         put?: never;
@@ -21338,6 +21338,8 @@ export interface operations {
                 entity_type?: string;
                 /** @description Only return the events of this record. */
                 entity_id?: string;
+                /** @description Only return the events made in this period, in the administration's time zone: a month (202501), a range of months or days (202501..202503, 20250101..20250131) or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. With a period neither entity_type nor entity_id is needed; the list then holds the events of every record type the user may see. MoneyHarpy extension, for the Events page. */
+                period?: string;
             };
             header?: never;
             path: {

@@ -60,6 +60,8 @@ type Query struct {
 	EntityID    *resource.ID
 	// UserID keeps only the events this user did.
 	UserID *resource.ID
+	// From and To keep the events made from From up to, not including, To.
+	From, To *time.Time
 	// After continues below the event the cursor points at.
 	After *Cursor
 	Limit int
@@ -68,9 +70,11 @@ type Query struct {
 // Scope works out which events a user may list for Moneybird's
 // entity_type and entity_id: a record type needs its permission, and a
 // record alone shows the events of the types the user may see. A user with
-// only the time_entries permission sees only their own events.
-func Scope(entityType string, entityID *resource.ID, user resource.ID, perms []administration.Permission, can func(...administration.Permission) bool) (Query, error) {
-	if entityType == "" && entityID == nil {
+// only the time_entries permission sees only their own events. With a
+// period (a MoneyHarpy extension) no record filter is needed: the list
+// holds the events of every type the user may see.
+func Scope(entityType string, entityID *resource.ID, period bool, user resource.ID, perms []administration.Permission, can func(...administration.Permission) bool) (Query, error) {
+	if entityType == "" && entityID == nil && !period {
 		return Query{}, ErrNoFilter
 	}
 	var allowed []string
