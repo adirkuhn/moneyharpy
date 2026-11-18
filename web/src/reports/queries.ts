@@ -207,3 +207,21 @@ export function useVatOverview(administrationId: string, kind: 'vat_return' | 'i
     queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/declarations/overview', { params: { path: path(administrationId), query: { kind, period } } })),
   })
 }
+
+/** Current assets less current liabilities at the end of the period and of each part. */
+export function useWorkingCapital(administrationId: string, q: ReportQuery) {
+  return useQuery({
+    queryKey: ['report', 'working_capital', administrationId, q],
+    placeholderData: keepPreviousData,
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/reports/working_capital', { params: { path: path(administrationId), query: query(q) } })),
+  })
+}
+
+/** The financial accounts' balance at the end of the period and of each part. */
+export function useBankBalance(administrationId: string, q: ReportQuery) {
+  return useQuery({
+    queryKey: ['report', 'bank_balance', administrationId, q],
+    placeholderData: keepPreviousData,
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/reports/bank_balance', { params: { path: path(administrationId), query: query(q) } })),
+  })
+}

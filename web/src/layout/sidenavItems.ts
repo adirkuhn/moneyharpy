@@ -52,9 +52,9 @@ export const navItems: NavItem[] = [
   { kind: 'contacts', key: 'contacts', to: 'contacts', ready: true, permissions: ['sales_invoices', 'documents', 'estimates'] },
   { kind: 'vat', key: 'vat', to: 'declarations', ready: true, permissions: bookkeeping },
   {
-    kind: 'reports', key: 'reports', to: 'reports', ready: false, permissions: ['bank', 'documents'],
+    kind: 'reports', key: 'reports', to: 'reports', ready: true, permissions: ['bank', 'documents'],
     children: [
-      link('reportsOverview', 'reports'),
+      link('reportsOverview', 'reports', true),
       link('profitLoss', 'report/profit_loss', true),
       link('balanceSheet', 'report/balance_sheet', true),
       link('assetsReport', 'report/assets_report', true),
