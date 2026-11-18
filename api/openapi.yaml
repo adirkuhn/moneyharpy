@@ -8142,7 +8142,7 @@ paths:
       parameters:
         - name: period_until
           in: query
-          description: The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today.
+          description: The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. A range of months, as ..202501 or 202412..202501, counts as its last month. This month unless given; a month still running counts up to today.
           schema:
             type: string
             maxLength: 20
@@ -8169,6 +8169,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreditorsAgingReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/creditors_aging/documents:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getCreditorsAgingDocuments
+      x-permissions: [documents]
+      summary: Documents of a creditor's aging row
+      description: >-
+        The purchase invoices and receipts behind a row of the creditors aging report: each with what it still had open at the end of period_until, in the bucket of its age, oldest first. Without contact_id, those without a contact. MoneyHarpy extension.
+      tags: [Reports]
+      parameters:
+        - name: period_until
+          in: query
+          description: The month to look at the end of, as in the creditors aging report.
+          schema:
+            type: string
+            maxLength: 20
+        - name: contact_id
+          in: query
+          description: The contact of the row.
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+      responses:
+        '200':
+          description: The documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgingDocuments'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -8243,7 +8283,7 @@ paths:
       parameters:
         - name: period_until
           in: query
-          description: The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. This month unless given; a month still running counts up to today.
+          description: The month to look at the end of, as 202501 (or a day as 20250115), or this_month, prev_month, this_quarter, prev_quarter, this_year or prev_year. A range of months, as ..202501 or 202412..202501, counts as its last month. This month unless given; a month still running counts up to today.
           schema:
             type: string
             maxLength: 20
@@ -8270,6 +8310,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DebtorsAgingReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/debtors_aging/documents:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getDebtorsAgingDocuments
+      x-permissions: [sales_invoices]
+      summary: Documents of a debtor's aging row
+      description: >-
+        The sales invoices and external sales invoices behind a row of the debtors aging report: each with what it still had open at the end of period_until, in the bucket of its age, oldest first. Without contact_id, those without a contact. MoneyHarpy extension.
+      tags: [Reports]
+      parameters:
+        - name: period_until
+          in: query
+          description: The month to look at the end of, as in the debtors aging report.
+          schema:
+            type: string
+            maxLength: 20
+        - name: contact_id
+          in: query
+          description: The contact of the row.
+          schema:
+            type: string
+            pattern: '^[0-9]{1,19}$'
+      responses:
+        '200':
+          description: The documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgingDocuments'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -18812,6 +18892,42 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/aging_report_item'
+    AgingDocuments:
+      type: object
+      description: The documents behind a row of an aging report. MoneyHarpy extension.
+      required: [documents]
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgingDocument'
+    AgingDocument:
+      type: object
+      description: What an invoice or receipt had open at the end of the period, in the bucket of its age.
+      required: [document_type, document_id, date, amount, aging_buckets]
+      properties:
+        document_type:
+          type: string
+          enum: [SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt]
+        document_id:
+          type: string
+        date:
+          type: string
+          format: date
+        amount:
+          type: string
+        aging_buckets:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            type: object
+            required: [name, amount]
+            properties:
+              name:
+                type: string
+              amount:
+                type: string
     SubscriptionsReport:
       type: object
       required: [monthly_recurring_revenue, annual_run_rate, churn_rate, lifetime_value]

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/money"
@@ -210,13 +211,20 @@ var monthPattern = regexp.MustCompile(`^\d{6}$`)
 
 // until reads period_until: a month (202501), a day (20250115) or a preset
 // such as this_month or prev_quarter; the report looks at its last day, or
-// today when that is still to come.
+// today when that is still to come. A range of months, as Moneybird's own
+// pages give (..202501 or 202412..202501), counts as its last month.
 func (s *Service) until(ctx context.Context, admin, user resource.ID, v string) (time.Time, string, error) {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
 		return time.Time{}, "", err
 	}
 	today := s.today(a)
+	if from, to, ok := strings.Cut(v, ".."); ok && (from == "" || monthPattern.MatchString(from)) {
+		v = to
+		if !monthPattern.MatchString(v) {
+			return time.Time{}, "", refuse("Period is invalid")
+		}
+	}
 	var day time.Time
 	switch {
 	case v == "":
@@ -258,42 +266,53 @@ var bucketNames = map[string][4]string{
 	"en": {"0 - 30 days", "30 - 60 days", "Older", "Total"},
 }
 
-func (s *Service) aging(ctx context.Context, admin, user resource.ID, periodUntil string, pg Paging, role string, sign money.Amount) (AgingReport, error) {
+// AgingDocument is what an invoice or receipt had open at a date, in the
+// bucket of its age, for a row of the aging report opened up.
+type AgingDocument struct {
+	DocumentType string
+	DocumentID   resource.ID
+	Date         time.Time
+	Amount       money.Amount
+	Buckets      [4]Bucket
+}
+
+// DebtorsAgingDocuments lists the sales invoices behind a debtor's row of
+// the aging report, oldest first; without a contact, those without one.
+func (s *Service) DebtorsAgingDocuments(ctx context.Context, admin, user resource.ID, periodUntil string, contact *resource.ID) ([]AgingDocument, error) {
+	return s.agingDocuments(ctx, admin, user, periodUntil, contact, "accounts_receivable", 1)
+}
+
+// CreditorsAgingDocuments lists the purchase invoices and receipts behind a
+// creditor's row of the aging report, oldest first.
+func (s *Service) CreditorsAgingDocuments(ctx context.Context, admin, user resource.ID, periodUntil string, contact *resource.ID) ([]AgingDocument, error) {
+	return s.agingDocuments(ctx, admin, user, periodUntil, contact, "accounts_payable", -1)
+}
+
+// openDocuments are the documents still open at the end of period_until,
+// each in the bucket of its age, with the bucket names of the language.
+func (s *Service) openDocuments(ctx context.Context, admin, user resource.ID, periodUntil, role string, sign money.Amount) ([]OpenItem, []AgingDocument, error) {
 	day, language, err := s.until(ctx, admin, user, periodUntil)
 	if err != nil {
-		return AgingReport{}, err
+		return nil, nil, err
 	}
 	items, err := s.store.OpenItems(ctx, admin, role, day)
 	if err != nil {
-		return AgingReport{}, fmt.Errorf("open items: %w", err)
+		return nil, nil, fmt.Errorf("open items: %w", err)
 	}
 	names := bucketNames["nl"] // also for nl-be
 	if language == "en" {
 		names = bucketNames["en"]
 	}
-	type key struct {
-		set bool
-		id  resource.ID
-	}
-	byContact := map[key]*AgingItem{}
-	var order []key
+	var kept []OpenItem
+	var docs []AgingDocument
 	for _, it := range items {
 		open := sign*it.Amount - it.Paid
 		if open == 0 {
 			continue
 		}
-		k := key{}
-		if it.ContactID != nil {
-			k = key{true, *it.ContactID}
-		}
-		row := byContact[k]
-		if row == nil {
-			row = &AgingItem{ContactID: it.ContactID}
-			for i := range row.Buckets {
-				row.Buckets[i].Name = names[i]
-			}
-			byContact[k] = row
-			order = append(order, k)
+		d := AgingDocument{DocumentType: it.DocumentType, DocumentID: it.DocumentID, Date: it.Date, Amount: open}
+		for i := range d.Buckets {
+			d.Buckets[i].Name = names[i]
 		}
 		bucket := 2
 		switch age := int(day.Sub(it.Date).Hours() / 24); {
@@ -302,9 +321,58 @@ func (s *Service) aging(ctx context.Context, admin, user resource.ID, periodUnti
 		case age <= 60:
 			bucket = 1
 		}
-		row.Buckets[bucket].Amount += open
-		row.Buckets[3].Amount += open
-		row.Amount += open
+		d.Buckets[bucket].Amount = open
+		d.Buckets[3].Amount = open
+		kept = append(kept, it)
+		docs = append(docs, d)
+	}
+	return kept, docs, nil
+}
+
+func (s *Service) agingDocuments(ctx context.Context, admin, user resource.ID, periodUntil string, contact *resource.ID, role string, sign money.Amount) ([]AgingDocument, error) {
+	items, docs, err := s.openDocuments(ctx, admin, user, periodUntil, role, sign)
+	if err != nil {
+		return nil, err
+	}
+	out := []AgingDocument{}
+	for i, it := range items {
+		if compareSubject(it.ContactID, contact) == 0 {
+			out = append(out, docs[i])
+		}
+	}
+	return out, nil
+}
+
+func (s *Service) aging(ctx context.Context, admin, user resource.ID, periodUntil string, pg Paging, role string, sign money.Amount) (AgingReport, error) {
+	items, docs, err := s.openDocuments(ctx, admin, user, periodUntil, role, sign)
+	if err != nil {
+		return AgingReport{}, err
+	}
+	type key struct {
+		set bool
+		id  resource.ID
+	}
+	byContact := map[key]*AgingItem{}
+	var order []key
+	for i, it := range items {
+		d := docs[i]
+		k := key{}
+		if it.ContactID != nil {
+			k = key{true, *it.ContactID}
+		}
+		row := byContact[k]
+		if row == nil {
+			row = &AgingItem{ContactID: it.ContactID, Buckets: d.Buckets}
+			for b := range row.Buckets {
+				row.Buckets[b].Amount = 0
+			}
+			byContact[k] = row
+			order = append(order, k)
+		}
+		for b := range row.Buckets {
+			row.Buckets[b].Amount += d.Buckets[b].Amount
+		}
+		row.Amount += d.Amount
 	}
 	all := []AgingItem{}
 	for _, k := range order {

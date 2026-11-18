@@ -102,6 +102,30 @@ func (e AdministrationUserType) Valid() bool {
 	}
 }
 
+// Defines values for AgingDocumentDocumentType.
+const (
+	AgingDocumentDocumentTypeExternalSalesInvoice AgingDocumentDocumentType = "ExternalSalesInvoice"
+	AgingDocumentDocumentTypePurchaseInvoice      AgingDocumentDocumentType = "PurchaseInvoice"
+	AgingDocumentDocumentTypeReceipt              AgingDocumentDocumentType = "Receipt"
+	AgingDocumentDocumentTypeSalesInvoice         AgingDocumentDocumentType = "SalesInvoice"
+)
+
+// Valid indicates whether the value is a known member of the AgingDocumentDocumentType enum.
+func (e AgingDocumentDocumentType) Valid() bool {
+	switch e {
+	case AgingDocumentDocumentTypeExternalSalesInvoice:
+		return true
+	case AgingDocumentDocumentTypePurchaseInvoice:
+		return true
+	case AgingDocumentDocumentTypeReceipt:
+		return true
+	case AgingDocumentDocumentTypeSalesInvoice:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AssetDisposalRequestReason.
 const (
 	AssetDisposalRequestReasonDivested          AssetDisposalRequestReason = "divested"
@@ -5756,6 +5780,26 @@ type AdministrationAccess string
 
 // AdministrationUserType MoneyHarpy extension. Your role; support is an instance admin let in through support access.
 type AdministrationUserType string
+
+// AgingDocument What an invoice or receipt had open at the end of the period, in the bucket of its age.
+type AgingDocument struct {
+	AgingBuckets []struct {
+		Amount string `json:"amount"`
+		Name   string `json:"name"`
+	} `json:"aging_buckets"`
+	Amount       string                    `json:"amount"`
+	Date         openapi_types.Date        `json:"date"`
+	DocumentId   string                    `json:"document_id"`
+	DocumentType AgingDocumentDocumentType `json:"document_type"`
+}
+
+// AgingDocumentDocumentType defines model for AgingDocument.DocumentType.
+type AgingDocumentDocumentType string
+
+// AgingDocuments The documents behind a row of an aging report. MoneyHarpy extension.
+type AgingDocuments struct {
+	Documents []AgingDocument `json:"documents"`
+}
 
 // ApiToken defines model for ApiToken.
 type ApiToken struct {
@@ -15376,6 +15420,15 @@ type GetCreditorsAgingReportParams struct {
 	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
 }
 
+// GetCreditorsAgingDocumentsParams defines parameters for GetCreditorsAgingDocuments.
+type GetCreditorsAgingDocumentsParams struct {
+	// PeriodUntil The month to look at the end of, as in the creditors aging report.
+	PeriodUntil *string `form:"period_until,omitempty" json:"period_until,omitempty"`
+
+	// ContactId The contact of the row.
+	ContactId *string `form:"contact_id,omitempty" json:"contact_id,omitempty"`
+}
+
 // GetDebtorsReportParams defines parameters for GetDebtorsReport.
 type GetDebtorsReportParams struct {
 	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
@@ -15404,6 +15457,15 @@ type GetDebtorsAgingReportParams struct {
 
 	// PerPage Records per page, 100 unless given, at most 100.
 	PerPage *string `form:"per_page,omitempty" json:"per_page,omitempty"`
+}
+
+// GetDebtorsAgingDocumentsParams defines parameters for GetDebtorsAgingDocuments.
+type GetDebtorsAgingDocumentsParams struct {
+	// PeriodUntil The month to look at the end of, as in the debtors aging report.
+	PeriodUntil *string `form:"period_until,omitempty" json:"period_until,omitempty"`
+
+	// ContactId The contact of the row.
+	ContactId *string `form:"contact_id,omitempty" json:"contact_id,omitempty"`
 }
 
 // GetExpensesByContactReportParams defines parameters for GetExpensesByContactReport.
@@ -23231,12 +23293,18 @@ type ServerInterface interface {
 	// GetCreditorsAgingReport Creditors aging report
 	// (GET /api/v2/{administration_id}/reports/creditors_aging)
 	GetCreditorsAgingReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetCreditorsAgingReportParams)
+	// GetCreditorsAgingDocuments Documents of a creditor's aging row
+	// (GET /api/v2/{administration_id}/reports/creditors_aging/documents)
+	GetCreditorsAgingDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetCreditorsAgingDocumentsParams)
 	// GetDebtorsReport Debtors report
 	// (GET /api/v2/{administration_id}/reports/debtors)
 	GetDebtorsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsReportParams)
 	// GetDebtorsAgingReport Debtors aging report
 	// (GET /api/v2/{administration_id}/reports/debtors_aging)
 	GetDebtorsAgingReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsAgingReportParams)
+	// GetDebtorsAgingDocuments Documents of a debtor's aging row
+	// (GET /api/v2/{administration_id}/reports/debtors_aging/documents)
+	GetDebtorsAgingDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsAgingDocumentsParams)
 	// GetExpensesByContactReport Expenses by contact report
 	// (GET /api/v2/{administration_id}/reports/expenses_by_contact)
 	GetExpensesByContactReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetExpensesByContactReportParams)
@@ -25571,6 +25639,12 @@ func (_ Unimplemented) GetCreditorsAgingReport(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetCreditorsAgingDocuments Documents of a creditor's aging row
+// (GET /api/v2/{administration_id}/reports/creditors_aging/documents)
+func (_ Unimplemented) GetCreditorsAgingDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetCreditorsAgingDocumentsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetDebtorsReport Debtors report
 // (GET /api/v2/{administration_id}/reports/debtors)
 func (_ Unimplemented) GetDebtorsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsReportParams) {
@@ -25580,6 +25654,12 @@ func (_ Unimplemented) GetDebtorsReport(w http.ResponseWriter, r *http.Request, 
 // GetDebtorsAgingReport Debtors aging report
 // (GET /api/v2/{administration_id}/reports/debtors_aging)
 func (_ Unimplemented) GetDebtorsAgingReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsAgingReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDebtorsAgingDocuments Documents of a debtor's aging row
+// (GET /api/v2/{administration_id}/reports/debtors_aging/documents)
+func (_ Unimplemented) GetDebtorsAgingDocuments(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetDebtorsAgingDocumentsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -38332,6 +38412,61 @@ func (siw *ServerInterfaceWrapper) GetCreditorsAgingReport(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// GetCreditorsAgingDocuments operation middleware
+func (siw *ServerInterfaceWrapper) GetCreditorsAgingDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCreditorsAgingDocumentsParams
+
+	// ------------- Optional query parameter "period_until" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period_until", r.URL.Query(), &params.PeriodUntil, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period_until"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period_until", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contact_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_id", r.URL.Query(), &params.ContactId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCreditorsAgingDocuments(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetDebtorsReport operation middleware
 func (siw *ServerInterfaceWrapper) GetDebtorsReport(w http.ResponseWriter, r *http.Request) {
 
@@ -38472,6 +38607,61 @@ func (siw *ServerInterfaceWrapper) GetDebtorsAgingReport(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetDebtorsAgingReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDebtorsAgingDocuments operation middleware
+func (siw *ServerInterfaceWrapper) GetDebtorsAgingDocuments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDebtorsAgingDocumentsParams
+
+	// ------------- Optional query parameter "period_until" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period_until", r.URL.Query(), &params.PeriodUntil, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period_until"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period_until", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contact_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contact_id", r.URL.Query(), &params.ContactId, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contact_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contact_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDebtorsAgingDocuments(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -44130,10 +44320,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/creditors_aging", wrapper.GetCreditorsAgingReport)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/creditors_aging/documents", wrapper.GetCreditorsAgingDocuments)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/debtors", wrapper.GetDebtorsReport)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/debtors_aging", wrapper.GetDebtorsAgingReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/debtors_aging/documents", wrapper.GetDebtorsAgingDocuments)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/expenses_by_contact", wrapper.GetExpensesByContactReport)

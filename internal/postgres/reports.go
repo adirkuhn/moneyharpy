@@ -163,7 +163,7 @@ func (s *ReportStore) OpenItems(ctx context.Context, admin resource.ID, role str
 	}
 	out := make([]reports.OpenItem, len(rows))
 	for i, r := range rows {
-		out[i] = reports.OpenItem{ContactID: idOf(r.ContactID), Date: dayOf(r.Date), Amount: money.Amount(r.Amount), Paid: money.Amount(r.Paid)}
+		out[i] = reports.OpenItem{DocumentType: r.DocumentType, DocumentID: resource.ID(r.DocumentID), ContactID: idOf(r.ContactID), Date: dayOf(r.Date), Amount: money.Amount(r.Amount), Paid: money.Amount(r.Paid)}
 	}
 	return out, nil
 }

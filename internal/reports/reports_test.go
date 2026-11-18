@@ -253,6 +253,13 @@ func TestAging(t *testing.T) {
 	if _, err := f.DebtorsAging(ctx, adminID, owner, "202504", Paging{}); err != nil || !f.store.gotUntil.Equal(day("2025-04-30")) {
 		t.Errorf("april: %v %s", err, f.store.gotUntil)
 	}
+	for _, v := range []string{"202504..202504", "..202504", "202501..202504"} {
+		if _, err := f.DebtorsAging(ctx, adminID, owner, v, Paging{}); err != nil || !f.store.gotUntil.Equal(day("2025-04-30")) {
+			t.Errorf("%s: %v %s", v, err, f.store.gotUntil)
+		}
+	}
+	_, err = f.DebtorsAging(ctx, adminID, owner, "202504..", Paging{})
+	refusal(t, err, "Period is invalid")
 	_, err = f.DebtorsAging(ctx, adminID, owner, "next_month", Paging{})
 	refusal(t, err, "Period is invalid")
 
@@ -261,6 +268,40 @@ func TestAging(t *testing.T) {
 	c, _ := f.CreditorsAging(ctx, adminID, owner, "this_month", Paging{})
 	if len(c.Items) != 1 || c.Items[0].Amount != 5000 || c.Items[0].Buckets[0] != (Bucket{"0 - 30 days", 5000}) {
 		t.Errorf("creditors aging = %+v", c.Items)
+	}
+}
+
+func TestAgingDocuments(t *testing.T) {
+	f := books()
+	f.store.open["accounts_receivable"] = []OpenItem{
+		{DocumentType: "SalesInvoice", DocumentID: 1, ContactID: ptr(bob), Date: day("2025-05-10"), Amount: 24200},
+		{DocumentType: "ExternalSalesInvoice", DocumentID: 2, ContactID: ptr(bob), Date: day("2025-06-01"), Amount: 1000, Paid: 400},
+		{DocumentType: "SalesInvoice", DocumentID: 3, ContactID: ptr(bob), Date: day("2025-01-01"), Amount: 500, Paid: 500},
+		{DocumentType: "SalesInvoice", DocumentID: 4, ContactID: ptr(alice), Date: day("2025-01-01"), Amount: 12100},
+		{DocumentType: "SalesInvoice", DocumentID: 5, Date: day("2025-01-01"), Amount: 300},
+	}
+	got, err := f.DebtorsAgingDocuments(ctx, adminID, owner, "", ptr(bob))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []AgingDocument{
+		{DocumentType: "SalesInvoice", DocumentID: 1, Date: day("2025-05-10"), Amount: 24200, Buckets: [4]Bucket{{"0 - 30 dagen", 0}, {"30 - 60 dagen", 24200}, {"Ouder", 0}, {"Totaal", 24200}}},
+		{DocumentType: "ExternalSalesInvoice", DocumentID: 2, Date: day("2025-06-01"), Amount: 600, Buckets: [4]Bucket{{"0 - 30 dagen", 600}, {"30 - 60 dagen", 0}, {"Ouder", 0}, {"Totaal", 600}}},
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("bob: %s", diff)
+	}
+	none, _ := f.DebtorsAgingDocuments(ctx, adminID, owner, "", nil)
+	if len(none) != 1 || none[0].DocumentID != 5 {
+		t.Errorf("without contact = %+v", none)
+	}
+	_, err = f.DebtorsAgingDocuments(ctx, adminID, owner, "next_month", nil)
+	refusal(t, err, "Period is invalid")
+
+	f.store.open["accounts_payable"] = []OpenItem{{DocumentType: "PurchaseInvoice", DocumentID: 9, ContactID: ptr(bob), Date: day("2025-06-08"), Amount: -7000, Paid: 2000}}
+	c, _ := f.CreditorsAgingDocuments(ctx, adminID, owner, "this_month", ptr(bob))
+	if len(c) != 1 || c[0].Amount != 5000 || c[0].DocumentType != "PurchaseInvoice" {
+		t.Errorf("creditors = %+v", c)
 	}
 }
 

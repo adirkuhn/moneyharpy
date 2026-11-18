@@ -133,6 +133,44 @@ describe('reports', () => {
     expect(within(table).getByRole('row', { name: /Total this page 121\.00 0\.00 0\.00 121\.00/ })).toBeInTheDocument()
   })
 
+  it('opens a row of the aging report up into its invoices', async () => {
+    const seen: URL[] = []
+    server.use(
+      ...loaded(seen),
+      http.get('*/api/v2/11/reports/creditors_aging/documents', ({ request }) => {
+        seen.push(new URL(request.url))
+        return HttpResponse.json({ documents: [{ document_type: 'PurchaseInvoice', document_id: '701', date: '2025-03-10', amount: '121.0', aging_buckets: [
+          { name: '0 - 30 days', amount: '121.0' }, { name: '30 - 60 days', amount: '0' }, { name: 'Older', amount: '0' }, { name: 'Total', amount: '121.0' },
+        ] }] })
+      }),
+      http.get('*/api/v2/11/documents/purchase_invoices/701', () => HttpResponse.json({ id: '701', reference: 'INV-2025-7', entry_number: 7 })),
+    )
+    renderAt('/11/report/creditors_aging?period=202503..202503')
+    const table = await screen.findByRole('table', { name: 'Payables aging' })
+    const expand = await within(table).findByRole('button', { name: 'Expand Example Shop B.V.' })
+    expect(expand).toHaveAttribute('aria-expanded', 'false')
+    expect(seen.some((u) => u.pathname.endsWith('/documents'))).toBe(false)
+    await userEvent.click(expand)
+    const link = await within(table).findByRole('link', { name: 'INV-2025-7' })
+    expect(link).toHaveAttribute('href', '/11/documents/701')
+    expect(within(table).getByRole('row', { name: /^INV-2025-7 121\.00 0\.00 0\.00 121\.00$/ })).toBeInTheDocument()
+    const asked = seen.find((u) => u.pathname.endsWith('/creditors_aging/documents'))
+    expect(asked?.searchParams.get('contact_id')).toBe('301')
+    expect(asked?.searchParams.get('period_until')).toBe('202503..202503')
+    await userEvent.click(within(table).getByRole('button', { name: 'Collapse Example Shop B.V.' }))
+    expect(within(table).queryByRole('link', { name: 'INV-2025-7' })).toBeNull()
+  })
+
+  it('pages the reports per contact by 50, as Moneybird', async () => {
+    const seen: URL[] = []
+    server.use(http.get('*/api/v2/11/reports/debtors', ({ request }) => {
+      seen.push(new URL(request.url))
+      return HttpResponse.json({ debtors: [] })
+    }), ...loaded(seen))
+    renderAt('/11/report/debtors')
+    await waitFor(() => expect(seen.find((u) => u.pathname.endsWith('/debtors'))?.searchParams.get('per_page')).toBe('50'))
+  })
+
   it('lists the expenses by project', async () => {
     server.use(
       ...loaded(),
