@@ -69,9 +69,8 @@ import { InvoicesPage } from './invoices/InvoicesPage'
 import { JournalDocumentPage } from './journal/JournalDocumentPage'
 import { JournalDocumentsPage } from './journal/JournalDocumentsPage'
 import { LedgerEntriesPage } from './journal/LedgerEntriesPage'
-import { TrialBalancePage } from './journal/TrialBalancePage'
 import {
-  AgingReportPage, AssetsReportPage, BalanceSheetPage, CashFlowPage, ContactReportPage, ProfitLossPage, ProjectReportPage, TaxReportPage,
+  AgingReportPage, AssetsReportPage, BalanceSheetPage, CashFlowPage, ContactReportPage, ProfitLossPage, ProjectReportPage, TaxReportPage, TrialBalancePage,
 } from './reports/ReportPages'
 import { EstimatePage } from './estimates/EstimatePage'
 import { EstimatesPage } from './estimates/EstimatesPage'

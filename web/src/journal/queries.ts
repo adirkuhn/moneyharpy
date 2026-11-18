@@ -4,21 +4,12 @@ import type { components } from '../api/schema'
 
 export type JournalDocument = components['schemas']['GeneralJournalDocument']
 export type JournalDocumentChanges = components['schemas']['GeneralJournalDocumentRequest']['general_journal_document']
-export type GeneralLedger = components['schemas']['GeneralLedgerReport']
 export type JournalEntry = components['schemas']['JournalEntry']
 
 export const reportPeriods = ['this_month', 'prev_month', 'this_quarter', 'prev_quarter', 'this_year', 'prev_year'] as const
 export const documentsPerPage = 50
 
 const path = (administrationId: string) => ({ administration_id: administrationId })
-
-export function useGeneralLedger(administrationId: string, period: string) {
-  return useQuery({
-    queryKey: ['general-ledger', administrationId, period],
-    placeholderData: keepPreviousData,
-    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/reports/general_ledger', { params: { path: path(administrationId), query: { period } } })),
-  })
-}
 
 export function useLedgerEntries(administrationId: string, ledgerAccountId: string, period: string, page: number) {
   return useQuery({
@@ -89,11 +80,6 @@ export function useDeleteJournalDocument(administrationId: string, id: string) {
     mutationFn: () => unwrap(api.DELETE('/api/v2/{administration_id}/documents/general_journal_documents/{id}', { params: { path: { ...path(administrationId), id } } })),
     onSuccess: refresh,
   })
-}
-
-/** Turns a ledger report's lists into values per category. */
-export function byAccount(values: { ledger_accounts: { ledger_account_id: string; value: string }[] } | undefined) {
-  return new Map((values?.ledger_accounts ?? []).map((v) => [v.ledger_account_id, Number(v.value)]))
 }
 
 /** Reads an amount people type, such as "1.000,50" or "400". */

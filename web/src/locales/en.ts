@@ -1389,13 +1389,68 @@ export const en = {
   },
   reports: {
     totalRevenue: 'Total revenue', grossProfit: 'Gross profit', operatingProfit: 'Operating profit', netProfit: 'Net profit',
-    debit: 'Assets', credit: 'Equity and liabilities', totalDebit: 'Total assets', totalCredit: 'Total equity and liabilities', openYears: 'Results of open years',
-    taxRate: 'VAT rate', reference: 'Box', turnover: 'Turnover', vat: 'VAT', rateTypes: { sales: 'sales', purchases: 'purchases' },
+    totalDirectCosts: 'Total direct costs', totalExpenses: 'Total expenses', totalOther: 'Total other income and expenses',
+    debitSide: 'Debit', creditSide: 'Credit', totalOf: 'Total {{side}}', openYears: 'Current year result',
+    taxRate: 'VAT rate', turnover: 'Amount over which tax payable is calculated', salesTax: 'Sales tax', rateTypes: { sales: 'sales', purchases: 'purchases' },
     openingBalance: 'Opening balance', closingBalance: 'Closing balance', received: 'Cash received', paid: 'Cash paid',
-    contact: 'Contact', noContact: 'Without a contact', nothing: 'Nothing to show for this period.', nothingOpen: 'Nothing is open.',
-    project: 'Project', noProject: 'Without a project', asset: 'Asset',
-    assetColumns: { value_at_begin: 'Value at the start', investment: 'Investment', value_changes: 'Value changes', divestment: 'Divestment', value_at_end: 'Value at the end' },
+    totalReceived: 'Total received', totalPaid: 'Total paid',
+    noContact: 'No contact', noProject: 'No project', total: 'Total', totalThisPage: 'Total this page',
+    general: '{{name}} General', excludingVat: 'All amounts are in {{currency}} and excluding VAT.',
+    noInformation: 'No information found for {{period}}',
+    quarterName: 'quarter {{n}} {{year}}', goTo: 'Go to {{period}}', filters: 'Report filters',
+    label: {
+      granular: '{{name}} for {{period}} per {{per}}', period: '{{name}} for {{period}}',
+      until: '{{name}} up to and including {{period}}', year: '{{name}} in {{period}}',
+    },
+    per: { month: 'month', quarter: 'quarter', year: 'year' },
+    showPer: 'Show per', granularities: { month: 'Month', quarter: 'Quarter', year: 'Year' },
+    sortBy: 'Sort by', orders: { alphabetical: 'Name', account_id: 'Ledger code', rgs: 'RGS' },
+    collapseAll: 'Collapse all', expandAll: 'Expand all', collapse: 'Collapse {{name}}', expand: 'Expand {{name}}',
+    pdf: 'PDF', excel: 'Excel', vatName: 'VAT report',
+    years_one: '{{count}} year', years_other: '{{count}} years', months_one: '{{count}} month', months_other: '{{count}} months',
+    names: {
+      agedReceivables: 'Aged receivables report', agedPayables: 'Aged payables report', revenueByContact: 'Revenue per contact',
+      expensesByContact: 'Expenses per contact', receivablesAging: 'Accounts receivable aging', payablesAging: 'Accounts payable aging', assets: 'Assets',
+    },
+    assets: {
+      description: 'Description', purchaseDate: 'Commissioning date', lifespan: 'Life span', purchase_value: 'Purchase value',
+      calculated_purchase_value: 'Fiscal purchase value', residual_value: 'Residual value', total_value_changes_since_purchase: 'Total depreciated', value_at_end: 'Book value',
+    },
+    trialBalance: {
+      notice: 'A trial balance shows the balance of every category in your administration. The opening balance plus debit, minus credit, is the ending balance.',
+      opening: 'Opening balance', ending: 'Ending balance',
+    },
+    info: {
+      profitLoss: {
+        title: 'Insight into the results',
+        text: 'View revenue and expenses by category and whether your business is making a profit or loss. Filter by month, quarter or year to view the desired period.',
+        steps: [
+          { title: 'Revenue', text: 'Revenue is determined by the sales invoices you sent on a given invoice date.' },
+          { title: 'Cost', text: 'Costs are determined by the incoming documents you added on a given date.' },
+          { title: 'Net profit', text: 'Revenue minus expenses determines your result. This can be profit or loss.' },
+        ],
+      },
+      balanceSheet: {
+        title: 'Balance sheet',
+        text: 'The balance sheet shows your assets and liabilities. These are calculated automatically from the bookings in your administration. Filter by month, quarter or year to see the desired period.',
+        steps: [
+          { title: 'Debit', text: 'The assets are on the debit side of the balance sheet, such as your financial accounts or investments.' },
+          { title: 'Credit', text: 'The credit side shows your equity and the debts of your company.' },
+          { title: 'Balance', text: 'A balance sheet is always balanced, so the totals on both sides are equal.' },
+        ],
+      },
+      vat: {
+        title: 'VAT overview',
+        text: 'The VAT overview shows per year, quarter or month whether you get VAT back from or have to pay it to the tax authority.',
+        steps: [
+          { title: 'Headings', text: 'The VAT rate determines in which heading of the return the VAT appears.' },
+          { title: 'Period', text: 'The invoice date of your incoming documents and sales invoices determines in which period the VAT appears in the overview.' },
+          { title: 'Total', text: 'Finally, you see what you have to pay to the tax authority. A minus sign in front of the amount means you get a refund.' },
+        ],
+      },
+    },
   },
+
   /** Currency names by ISO code, as Moneybird lists them. */
   currencies: {
     EUR: 'Euro', USD: 'United States Dollar', GBP: 'British Pound', AED: 'United Arab Emirates Dirham', AFN: 'Afghan Afghani', ALL: 'Albanian Lek',

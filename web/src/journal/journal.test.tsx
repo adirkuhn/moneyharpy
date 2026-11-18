@@ -68,26 +68,23 @@ describe('trial balance', () => {
     renderAt('/11/report/general_ledger')
     const table = await screen.findByRole('table', { name: 'Trial balance' })
     const row = within(table).getByRole('row', { name: /Main bank/ })
-    expect(within(row).getByText('€1,000.00')).toBeInTheDocument()
-    expect(within(row).getByText('€25.50')).toBeInTheDocument()
-    expect(within(row).getByText('€974.50')).toBeInTheDocument()
-    expect(within(table).getByRole('row', { name: /Total/ })).toHaveTextContent('€1,400.00')
+    expect(row).toHaveTextContent(/0\.00\s*1,000\.00\s*25\.50\s*974\.50/)
+    expect(within(table).getByRole('row', { name: /Total/ })).toHaveTextContent(/1,400\.00\s*425\.50/)
     expect(within(table).queryByRole('row', { name: /Accounts receivable/ })).toBeNull()
+    expect(screen.getByText(/The opening balance plus debit, minus credit, is the ending balance/)).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Administration menu' })
     expect(within(nav).getByRole('link', { name: 'Trial balance' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('changes the period', async () => {
+  it('shows this quarter and steps to the one before', async () => {
     const seen: URL[] = []
     server.use(...loaded(seen))
     renderAt('/11/report/general_ledger')
     await screen.findByRole('table', { name: 'Trial balance' })
-    expect(seen.at(-1)?.searchParams.get('period')).toBe('this_month')
-    await userEvent.click(screen.getByRole('button', { name: 'This month' }))
-    const panel = screen.getByRole('search', { name: 'Report filters' })
-    await userEvent.click(within(panel).getByRole('link', { name: 'Last year' }))
-    await waitFor(() => expect(seen.at(-1)?.searchParams.get('period')).toBe('prev_year'))
-    expect(screen.getByRole('button', { name: 'Last year' })).toBeInTheDocument()
+    expect(seen.at(-1)?.searchParams.get('period')).toBe('this_quarter')
+    expect(screen.getByRole('button', { name: /^Trial balance for quarter \d \d{4}$/ })).toBeInTheDocument()
+    await userEvent.click(screen.getAllByRole('link', { name: /^Go to quarter \d \d{4}$/ })[0]!)
+    await waitFor(() => expect(seen.at(-1)?.searchParams.get('period')).not.toBe('this_quarter'))
   })
 
   it('reports over a range of months picked in the period filter', async () => {
@@ -96,7 +93,7 @@ describe('trial balance', () => {
     renderAt('/11/report/general_ledger?period=202601..202601')
     await screen.findByRole('table', { name: 'Trial balance' })
     expect(seen.at(-1)?.searchParams.get('period')).toBe('202601..202601')
-    await userEvent.click(screen.getByRole('button', { name: 'Jan 2026' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Trial balance for January 2026' }))
     const picker = screen.getByRole('group', { name: 'Period' })
     // A report always covers a period.
     expect(within(picker).queryByRole('button', { name: 'All periods' })).toBeNull()
@@ -104,14 +101,14 @@ describe('trial balance', () => {
     await userEvent.click(within(picker).getByRole('button', { name: 'April 2026' }))
     await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
     await waitFor(() => expect(seen.at(-1)?.searchParams.get('period')).toBe('202602..202604'))
-    expect(screen.getByRole('button', { name: 'Feb 2026 – Apr 2026' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Trial balance for Feb 2026 – Apr 2026' })).toBeInTheDocument()
   })
 
   it('opens the bookings of a category', async () => {
     const seen: URL[] = []
     server.use(...loaded(seen))
     renderAt('/11/report/general_ledger')
-    await userEvent.click(within(await screen.findByRole('table', { name: 'Trial balance' })).getByRole('link', { name: /Main bank/ }))
+    await userEvent.click(within(await screen.findByRole('table', { name: 'Trial balance' })).getByRole('link', { name: 'Main bank' }))
     const entries = await screen.findByRole('table', { name: 'Bookings' })
     expect(within(entries).getByText('Invoice 1')).toBeInTheDocument()
     expect(within(entries).getByRole('link', { name: 'Bank transaction' })).toHaveAttribute('href', '/11/financial_mutations/701')
