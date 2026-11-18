@@ -45,9 +45,10 @@ export function useWeekEntries(administrationId: string, userId: string, period:
 export const reportLimit = 2000
 
 /** Every time entry the filter and search select, for the hours and projects reports. */
-export function useReportEntries(administrationId: string, filter: string, query = '') {
+export function useReportEntries(administrationId: string, filter: string, query = '', enabled = true) {
   return useQuery({
     queryKey: ['time_entries', administrationId, 'report', filter, query],
+    enabled,
     placeholderData: keepPreviousData,
     queryFn: async () => {
       const all: TimeEntry[] = []

@@ -589,6 +589,18 @@ export const en = {
         status: 'Status', statusText: 'Check per hour line whether the registered hours are billable and whether they have already been invoiced.',
       },
     },
+    bill: {
+      title: 'Time entries on sales invoice', contactStep: 'Contact to bill', timeStep: 'Time entries to bill', invoiceStep: 'Invoice settings',
+      whichContact: 'For which contact do you want to bill hours?', next: 'Next step', previous: 'Previous step', step: 'Step {{step}} of {{of}}',
+      openOf: 'Open time entries from contact {{name}} from this year', openOfFiltered: 'Open time entries from contact {{name}}',
+      withoutContact: 'Show time entries without a contact', selectAll: 'Select all', choose: 'Hours for {{date}} - {{description}}',
+      selected_one: '{{count}} item selected', selected_other: '{{count}} items selected', nothingOpen: 'No open time entries for this contact in this period.',
+      how: 'How do you want to process the time entries?', kind: 'Invoice', newInvoice: 'Create new sales invoice', existingInvoice: 'Link existing sales invoice',
+      noInvoice: 'This contact has no invoices', addDetails: 'Add details to sales invoice?', markup: 'Markup of invoice detail',
+      groupings: { combine_all: 'Merge all time entries into 1 invoice detail', group_by: 'Group hours by info per invoice detail', split_all: 'Split the time entries into separate details' },
+      parts: 'Info per invoice detail', partNames: { description: 'Description', project: 'Project', user: 'Employee' },
+      rate: 'Hourly rate', category: 'Category', create: 'Create invoice',
+    },
     projects: {
       title: 'Projects', add: 'Add project', budget: 'Budget', worked: 'Worked', billable: 'Billable', nonBillable: 'Non-billable', progress: 'Progress',
       spent: '{{percent}}% spent',
