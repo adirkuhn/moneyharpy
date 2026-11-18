@@ -591,6 +591,18 @@ export const nl: Messages = {
         status: 'Status', statusText: 'Bekijk per urenregel of de geregistreerde uren factureerbaar zijn en of ze al zijn gefactureerd.',
       },
     },
+    bill: {
+      title: 'Uren op verkoopfactuur', contactStep: 'Te factureren contact', timeStep: 'Te factureren uren', invoiceStep: 'Factuurinstellingen',
+      whichContact: 'Voor welk contact wil je uren factureren?', next: 'Volgende stap', previous: 'Vorige stap', step: 'Stap {{step}} van {{of}}',
+      openOf: 'Openstaande uren van contact {{name}} van dit jaar', openOfFiltered: 'Openstaande uren van contact {{name}}',
+      withoutContact: 'Toon uren zonder contact', selectAll: 'Alles selecteren', choose: 'Uren van {{date}} - {{description}}',
+      selected_one: '{{count}} item geselecteerd', selected_other: '{{count}} items geselecteerd', nothingOpen: 'Geen openstaande uren voor dit contact in deze periode.',
+      how: 'Hoe wil je de uren verwerken?', kind: 'Factuur', newInvoice: 'Nieuwe verkoopfactuur maken', existingInvoice: 'Bestaande verkoopfactuur koppelen',
+      noInvoice: 'Dit contact heeft geen facturen', addDetails: 'Factuurregels toevoegen aan verkoopfactuur?', markup: 'Opmaak van factuurregel',
+      groupings: { combine_all: 'Alle uren samenvoegen tot 1 factuurregel', group_by: 'Uren groeperen op info per factuurregel', split_all: 'De uren splitsen in losse factuurregels' },
+      parts: 'Info per factuurregel', partNames: { description: 'Omschrijving', project: 'Project', user: 'Medewerker' },
+      rate: 'Uurtarief', category: 'Categorie', create: 'Factuur maken',
+    },
     projects: {
       title: 'Projecten', add: 'Project toevoegen', budget: 'Budget', worked: 'Gewerkt', billable: 'Factureerbaar', nonBillable: 'Niet factureerbaar', progress: 'Voortgang',
       spent: '{{percent}}% besteed',

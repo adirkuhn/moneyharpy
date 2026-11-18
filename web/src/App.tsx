@@ -83,6 +83,7 @@ import { ProjectPage } from './projects/ProjectPage'
 import { ProjectsPage } from './projects/ProjectsPage'
 import { TaskListPage } from './tasklists/TaskListPage'
 import { TaskListsPage } from './tasklists/TaskListsPage'
+import { BillTimePage } from './timeentries/BillTimePage'
 import { HoursReportPage } from './timeentries/HoursReportPage'
 import { ProjectsReportPage } from './timeentries/ProjectsReportPage'
 import { TimeEntriesPage } from './timeentries/TimeEntriesPage'
@@ -151,6 +152,7 @@ export function AppRoutes() {
           <Route path="/:administrationId/time_entries/new" element={<TimeEntryPage />} />
           <Route path="/:administrationId/time_entries/:timeEntryId" element={<TimeEntryPage />} />
           <Route path="/:administrationId/time_entries_report" element={<HoursReportPage />} />
+          <Route path="/:administrationId/time_entries_wizard" element={<BillTimePage />} />
           <Route path="/:administrationId/time_entries_report/projects" element={<ProjectsReportPage />} />
           <Route path="/:administrationId/task_lists/lists" element={<TaskListsPage />} />
           <Route path="/:administrationId/task_lists/new" element={<TaskListPage />} />

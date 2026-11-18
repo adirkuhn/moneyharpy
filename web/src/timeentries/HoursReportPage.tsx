@@ -4,7 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { contactName as nameOf, useContact } from '../contacts/queries'
-import { InfoIcon, SearchIcon } from '../layout/icons'
+import { InfoIcon, ListIcon, SearchIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
@@ -117,7 +117,10 @@ export function HoursReportPage() {
       </button>
       <Unavailable icon="chart" label={t('list.statistics')} />
       <ExportMenu entries={[t('timeEntries.report.excel'), t('timeEntries.report.pdf')]} />
-      <Unavailable icon="send" label={t('timeEntries.report.bill')} text />
+      <Link className="btn btn--accent btn--with-icon" to={`/${administrationId}/time_entries_wizard`}>
+        <ListIcon kind="send" />
+        <span>{t('timeEntries.report.bill')}</span>
+      </Link>
     </>
   )
 
