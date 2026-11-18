@@ -217,6 +217,9 @@ func (s *Service) create(ctx context.Context, admin, user resource.ID, kind stri
 		return Document{}, err
 	}
 	s.edited(ctx, admin, user, Document{}, d, remembered)
+	if err := s.record(ctx, admin, d.ID, user, "document_saved"); err != nil {
+		return Document{}, err
+	}
 	return s.Document(ctx, admin, kind, d.ID, user)
 }
 
@@ -244,6 +247,9 @@ func (s *Service) CreateFromFile(ctx context.Context, admin, user resource.ID, k
 		return Document{}, err
 	}
 	if err := s.queue(ctx, admin, d.ID, user); err != nil {
+		return Document{}, err
+	}
+	if err := s.record(ctx, admin, d.ID, user, "document_saved"); err != nil {
 		return Document{}, err
 	}
 	return s.Document(ctx, admin, kind, d.ID, user)
@@ -295,6 +301,9 @@ func (s *Service) Update(ctx context.Context, admin, user resource.ID, kind stri
 	}
 	s.edited(ctx, admin, user, before, d, remembered)
 	s.confirmed(ctx, admin, id, c.confirmedFields()...)
+	if err := s.record(ctx, admin, id, user, "document_updated"); err != nil {
+		return Document{}, err
+	}
 	return s.Document(ctx, admin, kind, id, user)
 }
 
@@ -797,6 +806,9 @@ func (s *Service) Delete(ctx context.Context, admin, user resource.ID, kind stri
 	}
 	if err := s.store.DeleteDocument(ctx, admin, id); err != nil {
 		return wrap("delete document", err)
+	}
+	if err := s.record(ctx, admin, id, user, "document_destroyed"); err != nil {
+		return err
 	}
 	return s.forget(ctx, admin, id)
 }

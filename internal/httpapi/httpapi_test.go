@@ -332,6 +332,9 @@ func newHarness(t *testing.T, opts options) *harness {
 	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore, timeEntryStore, purchaseStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	events := history.NewService(postgres.NewEventStore(pool), ids, time.Now)
+	contactService.UseHistory(events)
+	timeEntryService := timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now)
+	timeEntryService.UseHistory(events)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
 		Store: salesStore, Renderer: invoicedoc.New(), Mailer: mailer, Bank: bank, History: events,
@@ -343,6 +346,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
 	})
 	bank.UseDocuments(documentService)
+	documentService.UseHistory(events)
 	vatReturnService := vatreturns.NewService(admins, vatreturns.BookkeepingBooks{Bookkeeping: books}, postgres.NewVatReturnStore(pool), ids, time.Now)
 	bank.UseVatReturns(vatReturnService)
 	bank.UsePurchases(documentService)
@@ -382,7 +386,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Subscriptions:   h.subscriptions,
 		Downloads:       h.downloads,
 		Reports:         reports.NewService(admins, postgres.NewReportStore(pool), h.downloads, books, time.Now),
-		TimeEntries:     timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now),
+		TimeEntries:     timeEntryService,
 		TaskLists:       tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
 		VatReturns:      vatReturnService,
 		Audits:          audits.NewService(admins, postgres.NewAuditStore(pool), ids, time.Now),

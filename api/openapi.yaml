@@ -10404,7 +10404,7 @@ paths:
         Returns the events of the administration, newest first: the same events the activity logs show. Give
         entity_type, entity_id or both; without either, and without period, the answer is 400. With entity_type the user needs the
         permission of that record type: sales_invoices for SalesInvoice, ExternalSalesInvoice and
-        RecurringSalesInvoice, estimates for Estimate, documents for Document and bank for FinancialMutation; Contact
+        RecurringSalesInvoice, estimates for Estimate, documents for Document, bank for FinancialMutation and time_entries for TimeEntry; Contact
         needs one of estimates, sales_invoices, documents, bank or settings. Without it the answer is 403, as for every
         missing permission in MoneyHarpy, where Moneybird answers 401. Purchase invoices, receipts and the other
         document types keep their events under Document, so asking for such a type is 400 naming Document; an

@@ -4,12 +4,15 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { contactName, useContact } from '../contacts/queries'
 import { estimateTitle, useEstimate } from '../estimates/queries'
 import { useExternalInvoice } from '../external/queries'
+import { useDocumentSummary } from '../incoming/documents'
 import { invoiceTitle, useSalesInvoice } from '../invoices/queries'
 import { ChevronIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { FilterPanel } from '../list/FilterPanel'
 import { useUsers } from '../management/queries'
+import { recurringTitle, useRecurringInvoice } from '../recurring/queries'
+import { useTimeEntry } from '../timeentries/queries'
 import { type Event, useEvents } from './queries'
 import { eventText, typeName } from './text'
 import '../reports/reports.css'
@@ -21,6 +24,7 @@ const periods = ['this_month', 'prev_month', 'this_quarter', 'prev_quarter', 'th
 const pages: Record<string, string> = {
   SalesInvoice: 'sales_invoices', ExternalSalesInvoice: 'external_sales_invoices', Estimate: 'estimates', Contact: 'contacts',
   Document: 'documents', FinancialMutation: 'financial_mutations', Project: 'projects', RecurringSalesInvoice: 'recurring_sales_invoices', Product: 'products',
+  TimeEntry: 'time_entries',
 }
 
 /**
@@ -133,10 +137,17 @@ function Subject({ administrationId, type, id, deleted }: { administrationId: st
   const external = useExternalInvoice(administrationId, live && type === 'ExternalSalesInvoice' ? id : undefined)
   const estimate = useEstimate(administrationId, live && type === 'Estimate' ? id : undefined)
   const contact = useContact(administrationId, live && type === 'Contact' ? id : undefined)
+  const document = useDocumentSummary(administrationId, live && type === 'Document' ? id : '')
+  const recurring = useRecurringInvoice(administrationId, live && type === 'RecurringSalesInvoice' ? id : undefined)
+  const customer = useContact(administrationId, recurring.data?.contact_id ? String(recurring.data.contact_id) : undefined)
+  const entry = useTimeEntry(administrationId, live && type === 'TimeEntry' ? id : undefined)
   const name = invoice.data ? invoiceTitle(invoice.data, t)
     : external.data ? (external.data.reference ?? '')
     : estimate.data ? estimateTitle(estimate.data, t)
     : contact.data ? contactName(contact.data)
+    : document.data ? document.data.reference
+    : recurring.data ? recurringTitle(recurring.data, customer.data ? contactName(customer.data) : '', t)
+    : entry.data ? (entry.data.description ?? '')
     : ''
   const text = name ? `${typeName(type, t)} ${name}` : typeName(type, t)
   const page = pages[type]

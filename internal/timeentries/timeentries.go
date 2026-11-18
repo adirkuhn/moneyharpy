@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -214,11 +215,23 @@ type Notes interface {
 
 // Service implements the time entry use cases.
 type Service struct {
-	admins Administrations
-	store  Store
-	notes  Notes
-	ids    *resource.Generator
-	now    func() time.Time
+	admins  Administrations
+	store   Store
+	notes   Notes
+	ids     *resource.Generator
+	now     func() time.Time
+	history history.Recorder
+}
+
+// UseHistory records what happens to time entries as Moneybird's events.
+func (s *Service) UseHistory(h history.Recorder) { s.history = h }
+
+// record notes that the user did action to the entry.
+func (s *Service) record(ctx context.Context, admin, id, user resource.ID, action string) error {
+	if err := history.Note(ctx, s.history, admin, "TimeEntry", id, user, action); err != nil {
+		return fmt.Errorf("record event: %w", err)
+	}
+	return nil
 }
 
 // NewService returns a Service.
@@ -347,6 +360,9 @@ func (s *Service) Create(ctx context.Context, admin resource.ID, actor Actor, in
 	if err := s.store.SaveEntry(ctx, e, true); err != nil {
 		return TimeEntry{}, fmt.Errorf("store time entry: %w", err)
 	}
+	if err := s.record(ctx, admin, e.ID, actor.ID, "time_entry_created"); err != nil {
+		return TimeEntry{}, err
+	}
 	e.Notes = []notes.Note{}
 	return e, nil
 }
@@ -369,6 +385,9 @@ func (s *Service) Update(ctx context.Context, admin, id resource.ID, actor Actor
 	e.UpdatedAt = s.now()
 	if err := s.store.SaveEntry(ctx, e, false); err != nil {
 		return TimeEntry{}, fmt.Errorf("store time entry: %w", err)
+	}
+	if err := s.record(ctx, admin, e.ID, actor.ID, "time_entry_updated"); err != nil {
+		return TimeEntry{}, err
 	}
 	return e, nil
 }
@@ -541,7 +560,10 @@ func (s *Service) Delete(ctx context.Context, admin, id resource.ID, actor Actor
 	if e.Invoiced() {
 		return invoiced()
 	}
-	return s.store.DeleteEntry(ctx, admin, id)
+	if err := s.store.DeleteEntry(ctx, admin, id); err != nil {
+		return err
+	}
+	return s.record(ctx, admin, id, actor.ID, "time_entry_destroyed")
 }
 
 // AddNote adds a note to an entry.

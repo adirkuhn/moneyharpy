@@ -76,6 +76,9 @@ func (s *Service) SetType(ctx context.Context, admin, id, user resource.ID, docu
 		return Incoming{}, wrap("change document type", err)
 	}
 	s.confirmed(ctx, admin, id, FieldDocumentType)
+	if err := s.record(ctx, admin, id, user, "document_updated"); err != nil {
+		return Incoming{}, err
+	}
 	return s.IncomingDocument(ctx, admin, id, user)
 }
 

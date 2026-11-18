@@ -86,6 +86,7 @@ export function useToProcess(administrationId: string, currentId: string) {
 export function useDocumentSummary(administrationId: string, id: string) {
   return useQuery({
     queryKey: [...documentsKey(administrationId), 'one', id],
+    enabled: !!id,
     refetchInterval: (query) => (isReading(query.state.data) ? polling.intervalMs : false),
     queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/documents/{id}', { params: { path: { ...admin(administrationId), id } } })),
   })

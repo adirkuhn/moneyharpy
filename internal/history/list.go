@@ -48,6 +48,7 @@ var typePermissions = map[string][]administration.Permission{
 	"Document":              {administration.Documents},
 	"FinancialMutation":     {administration.Bank},
 	"Contact":               {administration.Estimates, administration.SalesInvoices, administration.Documents, administration.Bank, administration.Settings},
+	"TimeEntry":             {administration.TimeEntries},
 }
 
 // documentKinds keep their events under Document.

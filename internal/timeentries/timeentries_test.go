@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/history/historytest"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -402,5 +403,28 @@ func TestParseFilterAndMatches(t *testing.T) {
 		if got := c.q.Matches(c.e); got != c.want {
 			t.Errorf("case %d: Matches() = %v", i, got)
 		}
+	}
+}
+
+func TestChangesAreRecordedAsEvents(t *testing.T) {
+	f := newFixture()
+	log := &historytest.Log{}
+	f.svc.UseHistory(log)
+	ctx := context.Background()
+	e, err := f.svc.Create(ctx, adminID, boss, Input{UserID: ptr(employee), StartedAt: at("2026-11-10T09:00:00Z"), EndedAt: at("2026-11-10T10:00:00Z"), Description: ptr("Design")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.svc.Update(ctx, adminID, e.ID, boss, Input{Description: ptr("Designing")}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.Delete(ctx, adminID, e.ID, boss); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := log.Actions(), []string{"time_entry_created", "time_entry_updated", "time_entry_destroyed"}; !slices.Equal(got, want) {
+		t.Errorf("actions = %v, want %v", got, want)
+	}
+	if ev := log.Events[0]; ev.EntityType != "TimeEntry" || ev.EntityID != e.ID || ev.UserID != owner || ev.AdministrationID != adminID {
+		t.Errorf("event = %+v", ev)
 	}
 }

@@ -70,6 +70,9 @@ func (s *Service) CreateGeneral(ctx context.Context, admin, user resource.ID, c 
 	if err := s.store.SaveGeneralDocument(ctx, g, true); err != nil {
 		return General{}, wrap("store general document", err)
 	}
+	if err := s.record(ctx, admin, g.ID, user, "document_saved"); err != nil {
+		return General{}, err
+	}
 	return s.GeneralDocument(ctx, admin, g.ID, user)
 }
 
@@ -89,6 +92,9 @@ func (s *Service) UpdateGeneral(ctx context.Context, admin, id, user resource.ID
 	g.UpdatedAt = s.now()
 	if err := s.store.SaveGeneralDocument(ctx, g, false); err != nil {
 		return General{}, wrap("store general document", err)
+	}
+	if err := s.record(ctx, admin, id, user, "document_updated"); err != nil {
+		return General{}, err
 	}
 	return s.GeneralDocument(ctx, admin, id, user)
 }
@@ -151,7 +157,10 @@ func (s *Service) DeleteGeneral(ctx context.Context, admin, id, user resource.ID
 	if err := s.attachments.DeleteAll(ctx, admin, GeneralDocument, id); err != nil {
 		return wrap("delete attachments", err)
 	}
-	return wrap("delete general document", s.store.DeleteGeneralDocument(ctx, admin, id))
+	if err := s.store.DeleteGeneralDocument(ctx, admin, id); err != nil {
+		return wrap("delete general document", err)
+	}
+	return s.record(ctx, admin, id, user, "document_destroyed")
 }
 
 // GeneralList returns the page of general documents the query selects.

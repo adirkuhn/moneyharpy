@@ -160,6 +160,9 @@ func run(logger *slog.Logger) error {
 	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore, timeEntryStore, purchaseStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	events := history.NewService(postgres.NewEventStore(pool), ids, time.Now)
+	contactService.UseHistory(events)
+	timeEntryService := timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now)
+	timeEntryService.UseHistory(events)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
 		Store: salesStore, Renderer: invoicedoc.New(), Mailer: sales.MailClient{Client: mailer}, Bank: bank, History: events,
@@ -181,6 +184,7 @@ func run(logger *slog.Logger) error {
 		Attachments: attachmentService, Store: purchaseStore, Bank: purchases.Banking{Service: bank}, IDs: ids, Now: time.Now,
 	})
 	bank.UseDocuments(documentService)
+	documentService.UseHistory(events)
 	vatReturnService := vatreturns.NewService(admins, vatreturns.BookkeepingBooks{Bookkeeping: books}, postgres.NewVatReturnStore(pool), ids, time.Now)
 	bank.UseVatReturns(vatReturnService)
 	// Scan and Recognise reads uploads in the background and fills them in:
@@ -236,7 +240,7 @@ func run(logger *slog.Logger) error {
 		Subscriptions:     subscriptionService,
 		Downloads:         downloadService,
 		Reports:           reportService,
-		TimeEntries:       timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now),
+		TimeEntries:       timeEntryService,
 		TaskLists:         tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
 		VatReturns:        vatReturnService,
 		Audits:            audits.NewService(admins, postgres.NewAuditStore(pool), ids, time.Now),

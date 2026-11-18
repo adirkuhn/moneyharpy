@@ -75,6 +75,9 @@ func (s *Service) CreateTypeless(ctx context.Context, admin, user resource.ID, c
 	if err := s.store.SaveTypelessDocument(ctx, t, true); err != nil {
 		return Typeless{}, wrap("store typeless document", err)
 	}
+	if err := s.record(ctx, admin, t.ID, user, "document_saved"); err != nil {
+		return Typeless{}, err
+	}
 	return s.TypelessDocument(ctx, admin, t.ID, user)
 }
 
@@ -110,6 +113,9 @@ func (s *Service) DeleteTypeless(ctx context.Context, admin, id, user resource.I
 	}
 	if err := s.store.DeleteTypelessDocument(ctx, admin, id); err != nil {
 		return wrap("delete typeless document", err)
+	}
+	if err := s.record(ctx, admin, id, user, "document_destroyed"); err != nil {
+		return err
 	}
 	return s.forget(ctx, admin, id)
 }

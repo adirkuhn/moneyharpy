@@ -44,6 +44,18 @@ func TestListEvents(t *testing.T) {
 	if len(month) < len(all) {
 		t.Errorf("events this month = %+v, want at least the estimate's", month)
 	}
+	// Contacts, documents and time entries record their events too.
+	doc := decode[struct{ ID string }](t, owner.do(http.MethodPost, api+"/documents/typeless_documents", map[string]any{"typeless_document": map[string]any{"reference": "Scan"}}))
+	actions := map[string]bool{}
+	for _, ev := range decode[[]event](t, owner.do(http.MethodGet, events+"?period=this_month", nil)) {
+		actions[ev.EntityType+" "+ev.Action] = true
+	}
+	if !actions["Contact contact_created"] || !actions["Document document_saved"] {
+		t.Errorf("events this month = %v, want the contact created and the document saved", actions)
+	}
+	if got := decode[[]event](t, owner.do(http.MethodGet, events+"?entity_id="+doc.ID, nil)); len(got) != 1 || got[0].EntityType != "Document" {
+		t.Errorf("events of the document = %+v", got)
+	}
 	if old := decode[[]event](t, owner.do(http.MethodGet, events+"?period=200001..200012", nil)); len(old) != 0 {
 		t.Errorf("events in 2000 = %+v", old)
 	}
