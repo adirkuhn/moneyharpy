@@ -1225,9 +1225,12 @@ test('time is recorded with a timer, and a task list is ticked off', async ({ pa
   await menu.getByRole('link', { name: 'VAT returns' }).click()
   await expect(page.getByText(/No VAT returns filed yet/)).toBeVisible()
   await page.getByRole('link', { name: 'Declare new VAT return' }).click()
-  await expect(page.getByText(/option cannot be selected because there is no ended period left to declare/)).toBeVisible()
+  // Nothing booked in an ended period yet: the last one can still be declared, as a zero return.
   await expect(page.getByRole('radio', { name: /Supplementary VAT return/ })).toBeDisabled()
-  await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByRole('combobox')).toBeVisible()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByRole('list', { name: 'Check' })).toContainText('checks passed')
 
   await menu.getByRole('button', { name: 'Task lists' }).click()
   await menu.getByRole('link', { name: 'Task lists' }).last().click()

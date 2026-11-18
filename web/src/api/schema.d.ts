@@ -4158,7 +4158,7 @@ export interface paths {
         put?: never;
         /**
          * Record a VAT return filed by hand
-         * @description Records a return filed by hand at the tax authority for a period the periods operation offers. A VAT return declares its period and the corrections of periods declared before; a supplementary return what changed in a declared period since. Both book the VAT owed off payable VAT and the input tax off receivable VAT on VAT paid or received, with the rounding to whole euros on rounding differences, and close the books up to the period's end. An ICP declaration lists the supplies to businesses in other EU countries and books nothing. Also needs the sales_invoices permission. MoneyHarpy extension.
+         * @description Records a return filed by hand at the tax authority for a period the periods operation offers. A VAT return declares its period and the corrections of periods declared before; a supplementary return what changed in a declared period since. Both book the VAT owed off payable VAT and the input tax off receivable VAT on VAT paid or received, with the rounding to whole euros on rounding differences; as on Moneybird the books stay open, and later changes to the period come back as corrections. An ICP declaration lists the supplies to businesses in other EU countries and books nothing. Also needs the sales_invoices permission. MoneyHarpy extension.
          */
         post: operations["submitVatReturn"];
         delete?: never;
@@ -4178,7 +4178,7 @@ export interface paths {
         };
         /**
          * Periods a return can be filed for
-         * @description The latest first. For a VAT return the periods of the declaration period setting that have ended and are not declared yet, from the first booking on; for an ICP declaration those of them with supplies to businesses in other EU countries (box 3b); for a supplementary return the declared periods whose amounts changed since. None means the kind cannot be filed now. Also needs the sales_invoices permission. MoneyHarpy extension.
+         * @description The latest first. For a VAT return the periods of the declaration period setting that have ended and are not declared yet, from the bookkeeping start or the first booking, whichever is earlier, and at least the last ended period, as a zero return if nothing was booked; for an ICP declaration those of them with supplies to businesses in other EU countries (box 3b); for a supplementary return the declared periods whose amounts changed since. None means the kind cannot be filed now. Also needs the sales_invoices permission. MoneyHarpy extension.
          */
         get: operations["listVatReturnPeriods"];
         put?: never;
@@ -4230,7 +4230,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a VAT return recorded by mistake
-         * @description Removes the return with what it booked; the books stay closed. Only a return without payments that no later return builds on can be deleted. Also needs the sales_invoices permission. MoneyHarpy extension.
+         * @description Removes the return with what it booked. Only a return without payments that no later return builds on can be deleted. Also needs the sales_invoices permission. MoneyHarpy extension.
          */
         delete: operations["deleteVatReturn"];
         options?: never;

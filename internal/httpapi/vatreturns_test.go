@@ -117,9 +117,9 @@ func TestVatReturns(t *testing.T) {
 		filed.Deadline != to.AddDate(0, 0, 1).AddDate(0, 1, -1).Format(time.DateOnly) {
 		t.Errorf("filed = %+v", filed)
 	}
-	settings := decode[map[string]any](t, owner.do(http.MethodGet, api+"/bookkeeping_settings", nil))
-	if settings["period_locked_until"] != to.Format(time.DateOnly) {
-		t.Errorf("locked until %v, want %s", settings["period_locked_until"], to.Format(time.DateOnly))
+	// As on Moneybird, the books stay open.
+	if settings := decode[map[string]any](t, owner.do(http.MethodGet, api+"/bookkeeping_settings", nil)); settings["period_locked_until"] != nil {
+		t.Errorf("locked until %v, want open books", settings["period_locked_until"])
 	}
 	booked := decode[[]struct {
 		Debit  string `json:"debit"`

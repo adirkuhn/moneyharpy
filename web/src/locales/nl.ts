@@ -574,7 +574,7 @@ export const nl: Messages = {
     states: { to_pay: 'Te betalen', to_receive: 'Te ontvangen', paid: 'Betaald', submitted: 'Ingediend' },
     quarter: 'Kwartaal {{quarter}} {{year}}', granularity: { month: 'Maand', quarter: 'Kwartaal', year: 'Jaar' },
     intro: {
-      title: 'Doe je btw-aangifte', text: 'Bereken de btw-aangifte van een periode uit je boekhouding, neem de bedragen over in Mijn Belastingdienst Zakelijk en leg hem hier vast: de btw wordt geboekt en de periode wordt afgesloten.',
+      title: 'Doe je btw-aangifte', text: 'Bereken de btw-aangifte van een periode uit je boekhouding, neem de bedragen over in Mijn Belastingdienst Zakelijk en leg hem hier vast: de btw wordt geboekt en latere wijzigingen in de periode komen terug als correcties.',
       check: 'Controles', checkText: 'Zie voor het indienen welke banktransacties en documenten nog openstaan, zodat er niets ontbreekt.',
       corrections: 'Correcties en suppleties', correctionsText: 'Wijzigingen in eerder aangegeven periodes komen in de volgende aangifte. Doe een suppletie voor grotere correcties.',
       icp: 'ICP-opgaaf', icpText: 'Zet je leveringen aan bedrijven in andere EU-landen per klant op een rij, klaar om over te nemen.',
@@ -630,7 +630,7 @@ export const nl: Messages = {
     },
     view: {
       details: 'Gegevens van de aangifte', history: { title: 'Geschiedenis', created: '{{kind}} vastgelegd', filed: 'Ingediend bij de Belastingdienst', paid: 'Betaling gekoppeld' },
-      title: '{{kind}} - {{period}}', pdf: 'PDF downloaden', delete: 'Verwijderen', confirmDelete: 'Aangifte verwijderen', confirmDeleteText: 'Deze aangifte met haar boekingen verwijderen? De boekhouding blijft afgesloten. Doe dit alleen als hij per vergissing is vastgelegd.',
+      title: '{{kind}} - {{period}}', pdf: 'PDF downloaden', delete: 'Verwijderen', confirmDelete: 'Aangifte verwijderen', confirmDeleteText: 'Deze aangifte met haar boekingen verwijderen? Doe dit alleen als hij per vergissing is vastgelegd.',
       toPay: 'Betaal {{amount}} vóór {{date}} aan de Belastingdienst en koppel daarna de banktransactie.',
       overdue_one: 'Het bedrag van {{amount}} is {{count}} dag te laat en had betaald moeten zijn op {{date}}. Betaal het en koppel de banktransactie.',
       overdue_other: 'Het bedrag van {{amount}} is {{count}} dagen te laat en had betaald moeten zijn op {{date}}. Betaal het en koppel de banktransactie.',

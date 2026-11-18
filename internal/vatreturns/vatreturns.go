@@ -3,8 +3,7 @@
 // periods, the supplementary return of a period declared before, and the
 // ICP declaration of supplies to businesses in other EU countries. They are
 // filed by hand at the tax authority; a return then books its VAT on what
-// is to be paid or received, closes the books up to its period's end, and
-// is paid by linking the bank transaction.
+// is to be paid or received and is paid by linking the bank transaction.
 package vatreturns
 
 import (
@@ -205,8 +204,6 @@ type Settings struct {
 // Books is the part of bookkeeping returns rely on.
 type Books interface {
 	Settings(ctx context.Context, admin, user resource.ID) (Settings, error)
-	// LockUntil closes the books up to and including the day.
-	LockUntil(ctx context.Context, admin, user resource.ID, day time.Time) error
 	SystemLedgerAccount(ctx context.Context, admin, user resource.ID, role string) (resource.ID, error)
 }
 
@@ -309,12 +306,12 @@ func (s *Service) Periods(ctx context.Context, admin, user resource.ID, kind str
 	if kind == ICP {
 		granularity, declared = st.ICPPeriod, ICP
 	}
-	first, err := s.store.FirstEntry(ctx, admin)
-	if err != nil || first == nil {
-		return []Candidate{}, err
+	start, err := s.start(ctx, a, granularity)
+	if err != nil {
+		return nil, err
 	}
 	today := s.today(a)
-	parts, err := money.Period{From: *first, To: today}.Split(granularity)
+	parts, err := money.Period{From: start, To: today}.Split(granularity)
 	if err != nil {
 		return nil, err
 	}
@@ -337,6 +334,29 @@ func (s *Service) Periods(ctx context.Context, admin, user resource.ID, kind str
 		out = append(out, Candidate{Period: p, Granularity: granularity})
 	}
 	return out, nil
+}
+
+// start is where periods to declare begin: the bookkeeping start or the
+// first booking, whichever is earlier; at the latest the period before
+// today's, so the last ended period can always be declared, if need be as a
+// zero return.
+func (s *Service) start(ctx context.Context, a administration.Listed, granularity string) (time.Time, error) {
+	months := map[string]int{"month": 1, "quarter": 3, "year": 12}[granularity]
+	if months == 0 {
+		return time.Time{}, invalid("vat_documents_period", "is not one of month, quarter, year")
+	}
+	start := s.today(a).AddDate(0, -months, 0)
+	if day, err := time.Parse(time.DateOnly, a.PeriodStartDate); err == nil && day.Before(start) {
+		start = day
+	}
+	first, err := s.store.FirstEntry(ctx, a.ID)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if first != nil && first.Before(start) {
+		start = *first
+	}
+	return start, nil
 }
 
 // whole stretches a part of a split to its whole calendar month, quarter
@@ -484,7 +504,8 @@ type Filing struct {
 }
 
 // Submit records a return filed by hand: it books the VAT on what is to be
-// paid or received and closes the books up to the period's end.
+// paid or received. As on Moneybird the books stay open; later changes to
+// the period come back as corrections.
 func (s *Service) Submit(ctx context.Context, admin, user resource.ID, f Filing) (Return, error) {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
@@ -508,26 +529,7 @@ func (s *Service) Submit(ctx context.Context, admin, user resource.ID, f Filing)
 	if err := s.store.Create(ctx, r, entries); err != nil {
 		return Return{}, fmt.Errorf("store vat return: %w", err)
 	}
-	if r.Kind != ICP {
-		if err := s.lock(ctx, admin, user, r.Period.To); err != nil {
-			return Return{}, err
-		}
-	}
 	return r, nil
-}
-
-// lock closes the books up to the day, unless they are closed further.
-func (s *Service) lock(ctx context.Context, admin, user resource.ID, day time.Time) error {
-	st, err := s.books.Settings(ctx, admin, user)
-	if err != nil {
-		return err
-	}
-	if st.LockedUntil != nil {
-		if until, err := time.Parse(time.DateOnly, *st.LockedUntil); err == nil && !until.Before(day) {
-			return nil
-		}
-	}
-	return s.books.LockUntil(ctx, admin, user, day)
 }
 
 // entries book the return: the VAT owed off payable VAT, the input tax off
@@ -577,8 +579,7 @@ func label(language string, r Return) string {
 	return name + " " + r.Period.From.Format(time.DateOnly) + " - " + r.Period.To.Format(time.DateOnly)
 }
 
-// Delete removes a return filed by mistake, with what it booked; the books
-// stay closed. Only a return without payments that no later return builds
+// Delete removes a return filed by mistake, with what it booked. Only a return without payments that no later return builds
 // on can go.
 func (s *Service) Delete(ctx context.Context, admin, id, user resource.ID) error {
 	if _, err := s.admins.Get(ctx, admin, user); err != nil {

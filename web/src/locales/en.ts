@@ -572,7 +572,7 @@ export const en = {
     states: { to_pay: 'To pay', to_receive: 'To receive', paid: 'Paid', submitted: 'Submitted' },
     quarter: 'Quarter {{quarter}} {{year}}', granularity: { month: 'Month', quarter: 'Quarter', year: 'Year' },
     intro: {
-      title: 'File your VAT return', text: 'Work out the VAT return of a period from your books, type the amounts over in Mijn Belastingdienst Zakelijk, and record it here: the VAT is booked and the period is locked.',
+      title: 'File your VAT return', text: 'Work out the VAT return of a period from your books, type the amounts over in Mijn Belastingdienst Zakelijk, and record it here: the VAT is booked and later changes to the period come back as corrections.',
       check: 'Checks', checkText: 'Before filing, see which bank transactions and documents are still open, so nothing is missing.',
       corrections: 'Corrections and supplements', correctionsText: 'Changes to periods you declared before are added to the next return. File a supplementary return for larger corrections.',
       icp: 'ICP declaration', icpText: 'List your supplies to businesses in other EU countries per customer, ready to type over.',
@@ -628,7 +628,7 @@ export const en = {
     },
     view: {
       details: 'Return details', history: { title: 'History', created: '{{kind}} recorded', filed: 'Filed at the tax authority', paid: 'Payment linked' },
-      title: '{{kind}} - {{period}}', pdf: 'Download PDF', delete: 'Delete', confirmDelete: 'Delete return', confirmDeleteText: 'Delete this return with its bookings? The books stay locked. Only do this when it was recorded by mistake.',
+      title: '{{kind}} - {{period}}', pdf: 'Download PDF', delete: 'Delete', confirmDelete: 'Delete return', confirmDeleteText: 'Delete this return with its bookings? Only do this when it was recorded by mistake.',
       toPay: 'Pay {{amount}} to the tax authority by {{date}}, then link the bank transaction.',
       overdue_one: 'The amount of {{amount}} is overdue by {{count}} day and should have been paid by {{date}}. Pay it and link the bank transaction.',
       overdue_other: 'The amount of {{amount}} is overdue by {{count}} days and should have been paid by {{date}}. Pay it and link the bank transaction.',

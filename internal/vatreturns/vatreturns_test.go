@@ -14,26 +14,18 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
-type admins struct{}
+type admins struct{ start string }
 
-func (admins) Get(_ context.Context, id, _ resource.ID) (administration.Listed, error) {
-	return administration.Listed{Administration: administration.Administration{ID: id, TimeZone: "Europe/Amsterdam", Language: "en"}}, nil
+func (a admins) Get(_ context.Context, id, _ resource.ID) (administration.Listed, error) {
+	return administration.Listed{Administration: administration.Administration{ID: id, TimeZone: "Europe/Amsterdam", Language: "en", PeriodStartDate: a.start}}, nil
 }
 
 type books struct {
 	settings Settings
-	locked   []time.Time
 }
 
 func (b *books) Settings(context.Context, resource.ID, resource.ID) (Settings, error) {
 	return b.settings, nil
-}
-
-func (b *books) LockUntil(_ context.Context, _, _ resource.ID, day time.Time) error {
-	b.locked = append(b.locked, day)
-	s := day.Format(time.DateOnly)
-	b.settings.LockedUntil = &s
-	return nil
 }
 
 var roles = map[string]resource.ID{"payable_vat": 1510, "receivable_vat": 1520, "vat_paid_or_received": 1530, "rounding": 9000}
@@ -152,10 +144,29 @@ func setup(t *testing.T) (*Service, *store, *books) {
 	st := &store{entries: map[resource.ID][]journal.Entry{}, sums: map[money.Period][]RateSum{}, first: &first, payments: map[resource.ID]resource.ID{}}
 	b := &books{settings: Settings{VATPeriod: "quarter", ICPPeriod: "quarter"}}
 	now := func() time.Time { return time.Date(2026, 11, 18, 10, 0, 0, 0, time.UTC) }
-	return NewService(admins{}, b, st, resource.NewGenerator(1), now), st, b
+	return NewService(admins{start: "2026-04-01"}, b, st, resource.NewGenerator(1), now), st, b
 }
 
 const admin, user = resource.ID(11), resource.ID(1)
+
+func TestPeriodsWithoutBookings(t *testing.T) {
+	svc, st, _ := setup(t)
+	// Nothing booked yet: the periods since the bookkeeping start are still to be declared, as zero returns.
+	st.first = nil
+	got, err := svc.Periods(context.Background(), admin, user, VATReturn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[0].Period != q3 || got[1].Period != q2 {
+		t.Fatalf("periods = %+v, want Q3 and Q2", got)
+	}
+	// Booked only after the last ended period, the bookkeeping start still counts.
+	late := date("2026-11-11")
+	st.first = &late
+	if got, _ := svc.Periods(context.Background(), admin, user, VATReturn); len(got) != 2 || got[0].Period != q3 {
+		t.Errorf("periods with late bookings = %+v, want Q3 and Q2", got)
+	}
+}
 
 func TestPeriods(t *testing.T) {
 	svc, st, _ := setup(t)
@@ -194,8 +205,8 @@ func TestPeriods(t *testing.T) {
 	}
 }
 
-func TestSubmitBooksAndLocks(t *testing.T) {
-	svc, st, b := setup(t)
+func TestSubmitBooks(t *testing.T) {
+	svc, st, _ := setup(t)
 	st.sums[q3] = sales(1_000_050, 200_000)
 	r, err := svc.Submit(context.Background(), admin, user, Filing{Kind: VATReturn, Period: q3})
 	if err != nil {
@@ -218,9 +229,6 @@ func TestSubmitBooksAndLocks(t *testing.T) {
 	want := map[resource.ID]money.Amount{1510: 210_010, 1520: -42_000, 1530: -168_000, 9000: -10}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("booked %v, want %v", got, want)
-	}
-	if len(b.locked) != 1 || !b.locked[0].Equal(q3.To) {
-		t.Errorf("locked %v, want up to %v", b.locked, q3.To)
 	}
 	if _, err := svc.Submit(context.Background(), admin, user, Filing{Kind: VATReturn, Period: q3}); err == nil {
 		t.Error("a period is declared twice")
@@ -276,14 +284,14 @@ func TestCorrectionsAndSupplements(t *testing.T) {
 }
 
 func TestICPDeclaration(t *testing.T) {
-	svc, st, b := setup(t)
+	svc, st, _ := setup(t)
 	st.icp = []ICPLine{{ContactID: 5, Name: "Example GmbH", Country: "DE", VATNumber: "DE123456789", Amount: 120_000}, {ContactID: 6, Amount: 5_000}}
 	r, err := svc.Submit(context.Background(), admin, user, Filing{Kind: ICP, Period: q3, ICPKinds: map[resource.ID]string{5: Goods}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.ICP[0].Kind != Goods || r.ICP[1].Kind != Services || r.State() != Submitted || len(st.entries[r.ID]) != 0 || len(b.locked) != 0 {
-		t.Errorf("icp = %+v state %s entries %v locked %v", r.ICP, r.State(), st.entries[r.ID], b.locked)
+	if r.ICP[0].Kind != Goods || r.ICP[1].Kind != Services || r.State() != Submitted || len(st.entries[r.ID]) != 0 {
+		t.Errorf("icp = %+v state %s entries %v", r.ICP, r.State(), st.entries[r.ID])
 	}
 	if _, err := svc.Submit(context.Background(), admin, user, Filing{Kind: ICP, Period: q2, ICPKinds: map[resource.ID]string{5: "food"}}); err == nil {
 		t.Error("an unknown supply kind is accepted")
