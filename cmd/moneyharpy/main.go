@@ -18,6 +18,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/assets"
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
+	"github.com/adirkuhn/moneyharpy/internal/audits"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
@@ -238,6 +239,7 @@ func run(logger *slog.Logger) error {
 		TimeEntries:       timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now),
 		TaskLists:         tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
 		VatReturns:        vatReturnService,
+		Audits:            audits.NewService(admins, postgres.NewAuditStore(pool), ids, time.Now),
 		Storage:           s3,
 		Identity:          people,
 		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),

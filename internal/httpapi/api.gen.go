@@ -5954,6 +5954,48 @@ type AssetsReportLine struct {
 	ValueNotInUse string `json:"value_not_in_use"`
 }
 
+// AuditLine A category of the audit report.
+type AuditLine struct {
+	Audit *struct {
+		AuditedAt time.Time `json:"audited_at"`
+
+		// Credit What was credited when the category was audited.
+		Credit string `json:"credit"`
+
+		// Debit What was debited when the category was audited.
+		Debit string `json:"debit"`
+
+		// UserId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		UserId Identifier `json:"user_id"`
+	} `json:"audit"`
+
+	// Changed Whether the bookings changed after the category was audited.
+	Changed bool `json:"changed"`
+
+	// Credit What was credited in the period.
+	Credit string `json:"credit"`
+
+	// Debit What was debited in the period.
+	Debit string `json:"debit"`
+
+	// LedgerAccountId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	LedgerAccountId Identifier `json:"ledger_account_id"`
+
+	// TaxRateIds The VAT rates booked on the category in the period.
+	TaxRateIds []Identifier `json:"tax_rate_ids"`
+}
+
+// AuditReport The audit report of a period. MoneyHarpy extension.
+type AuditReport struct {
+	LedgerAccounts []AuditLine        `json:"ledger_accounts"`
+	PeriodFrom     openapi_types.Date `json:"period_from"`
+	PeriodTo       openapi_types.Date `json:"period_to"`
+}
+
 // AuditfileExportRequest defines model for AuditfileExportRequest.
 type AuditfileExportRequest struct {
 	// Version The XAF version; 3.2 unless given. MoneyHarpy writes 3.2 for both.
@@ -15247,6 +15289,24 @@ type GetAssetsReportParams struct {
 	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
 }
 
+// GetAuditReportParams defines parameters for GetAuditReport.
+type GetAuditReportParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// UnauditLedgerAccountParams defines parameters for UnauditLedgerAccount.
+type UnauditLedgerAccountParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// AuditLedgerAccountParams defines parameters for AuditLedgerAccount.
+type AuditLedgerAccountParams struct {
+	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
+	Period *ReportPeriod `form:"period,omitempty" json:"period,omitempty"`
+}
+
 // GetBalanceSheetReportParams defines parameters for GetBalanceSheetReport.
 type GetBalanceSheetReportParams struct {
 	// Period A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given.
@@ -23147,6 +23207,15 @@ type ServerInterface interface {
 	// GetAssetsReport Assets report
 	// (GET /api/v2/{administration_id}/reports/assets)
 	GetAssetsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetAssetsReportParams)
+	// GetAuditReport Audit report
+	// (GET /api/v2/{administration_id}/reports/audit)
+	GetAuditReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetAuditReportParams)
+	// UnauditLedgerAccount Take an audit back
+	// (DELETE /api/v2/{administration_id}/reports/audit/{ledger_account_id})
+	UnauditLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, ledgerAccountId Identifier, params UnauditLedgerAccountParams)
+	// AuditLedgerAccount Mark a category as audited
+	// (POST /api/v2/{administration_id}/reports/audit/{ledger_account_id})
+	AuditLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, ledgerAccountId Identifier, params AuditLedgerAccountParams)
 	// GetBalanceSheetReport Balance sheet report
 	// (GET /api/v2/{administration_id}/reports/balance_sheet)
 	GetBalanceSheetReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetBalanceSheetReportParams)
@@ -25451,6 +25520,24 @@ func (_ Unimplemented) DeleteRecurringSalesInvoiceNote(w http.ResponseWriter, r 
 // GetAssetsReport Assets report
 // (GET /api/v2/{administration_id}/reports/assets)
 func (_ Unimplemented) GetAssetsReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetAssetsReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetAuditReport Audit report
+// (GET /api/v2/{administration_id}/reports/audit)
+func (_ Unimplemented) GetAuditReport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetAuditReportParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UnauditLedgerAccount Take an audit back
+// (DELETE /api/v2/{administration_id}/reports/audit/{ledger_account_id})
+func (_ Unimplemented) UnauditLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, ledgerAccountId Identifier, params UnauditLedgerAccountParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AuditLedgerAccount Mark a category as audited
+// (POST /api/v2/{administration_id}/reports/audit/{ledger_account_id})
+func (_ Unimplemented) AuditLedgerAccount(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, ledgerAccountId Identifier, params AuditLedgerAccountParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -37774,6 +37861,150 @@ func (siw *ServerInterfaceWrapper) GetAssetsReport(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetAuditReport operation middleware
+func (siw *ServerInterfaceWrapper) GetAuditReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAuditReportParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAuditReport(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnauditLedgerAccount operation middleware
+func (siw *ServerInterfaceWrapper) UnauditLedgerAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ledger_account_id" -------------
+	var ledgerAccountId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ledger_account_id", chi.URLParam(r, "ledger_account_id"), &ledgerAccountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ledger_account_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UnauditLedgerAccountParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnauditLedgerAccount(w, r, administrationId, ledgerAccountId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AuditLedgerAccount operation middleware
+func (siw *ServerInterfaceWrapper) AuditLedgerAccount(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ledger_account_id" -------------
+	var ledgerAccountId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ledger_account_id", chi.URLParam(r, "ledger_account_id"), &ledgerAccountId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ledger_account_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AuditLedgerAccountParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AuditLedgerAccount(w, r, administrationId, ledgerAccountId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetBalanceSheetReport operation middleware
 func (siw *ServerInterfaceWrapper) GetBalanceSheetReport(w http.ResponseWriter, r *http.Request) {
 
@@ -43876,6 +44107,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/profit_loss", wrapper.GetProfitLossReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/audit", wrapper.GetAuditReport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/reports/audit/{ledger_account_id}", wrapper.UnauditLedgerAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/reports/audit/{ledger_account_id}", wrapper.AuditLedgerAccount)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/reports/balance_sheet", wrapper.GetBalanceSheetReport)

@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
 import type { components } from '../api/schema'
 import type { Granularity } from './period'
@@ -223,5 +223,34 @@ export function useBankBalance(administrationId: string, q: ReportQuery) {
     queryKey: ['report', 'bank_balance', administrationId, q],
     placeholderData: keepPreviousData,
     queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/reports/bank_balance', { params: { path: path(administrationId), query: query(q) } })),
+  })
+}
+
+export type AuditReport = components['schemas']['AuditReport']
+export type AuditLine = components['schemas']['AuditLine']
+
+/** Which categories were audited for the period, by whom, and whether they changed since. */
+export function useAuditReport(administrationId: string, period: string) {
+  return useQuery({
+    queryKey: ['report', 'audit', administrationId, period],
+    placeholderData: keepPreviousData,
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/reports/audit', { params: { path: path(administrationId), query: { period } } })),
+  })
+}
+
+/** Marks a category as audited for the period, or takes the audit back. */
+export function useToggleAudit(administrationId: string, period: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ ledgerAccountId, audited }: { ledgerAccountId: string; audited: boolean }) => {
+      const params = { params: { path: { ...path(administrationId), ledger_account_id: ledgerAccountId }, query: { period } } }
+      if (audited) {
+        const { error, response } = await api.DELETE('/api/v2/{administration_id}/reports/audit/{ledger_account_id}', params)
+        if (!response.ok) throw new ApiError(response.status, error)
+        return
+      }
+      await unwrap(api.POST('/api/v2/{administration_id}/reports/audit/{ledger_account_id}', params))
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: ['report', 'audit', administrationId, period] }),
   })
 }

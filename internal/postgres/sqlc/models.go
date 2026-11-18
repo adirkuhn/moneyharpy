@@ -616,6 +616,18 @@ type LedgerAccount struct {
 	UpdatedAt            pgtype.Timestamptz
 }
 
+type LedgerAccountAudit struct {
+	ID               int64
+	AdministrationID int64
+	LedgerAccountID  int64
+	PeriodFrom       pgtype.Date
+	PeriodTo         pgtype.Date
+	Debit            int64
+	Credit           int64
+	UserID           int64
+	AuditedAt        pgtype.Timestamptz
+}
+
 type LedgerAccountBooking struct {
 	ID                  int64
 	AdministrationID    int64

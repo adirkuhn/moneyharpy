@@ -1446,6 +1446,21 @@ export const en = {
         ],
       },
     },
+    audit: {
+      balanceSheet: 'Balance sheet', profitLoss: 'Profit and loss statement', display: 'Display', all: 'All audits', accountants: 'Only bookkeepers',
+      label: { period: '{{name}} for {{period}}' }, progress: '{{done}} of {{total}} audited', progressLabel: 'Audited categories', vat: 'VAT', audited: 'Audited',
+      mark: 'Mark {{name}} as audited', auditedBy: '{{name}} audited by {{user}} on {{date}}; take the audit back',
+      changed: '{{name}} changed after {{user}} audited it on {{date}}; take the audit back',
+      info: {
+        title: 'How the audit report works',
+        text: 'The audit report is an extended trial balance to check your bookkeeping faster: check the bookings per period, mark what you have audited and keep track of changes made after an audit.',
+        steps: [
+          { title: 'Audit', text: 'Mark per category which bookings you have audited, so you see at once which categories still need attention.' },
+          { title: 'Progress and history', text: 'See who audited what and when, also when a booking changed after it was audited.' },
+          { title: 'View and edit', text: 'From a category, open its bookings and the documents behind them.' },
+        ],
+      },
+    },
     collapseAll: 'Collapse all', expandAll: 'Expand all', collapse: 'Collapse {{name}}', expand: 'Expand {{name}}',
     pdf: 'PDF', excel: 'Excel',
     years_one: '{{count}} year', years_other: '{{count}} years', months_one: '{{count}} month', months_other: '{{count}} months',
