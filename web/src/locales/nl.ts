@@ -1407,8 +1407,11 @@ export const nl: Messages = {
     per: { month: 'maand', quarter: 'kwartaal', year: 'jaar' },
     showPer: 'Toon per', granularities: { month: 'Maand', quarter: 'Kwartaal', year: 'Jaar' },
     sortBy: 'Sorteer op', orders: { alphabetical: 'Naam', account_id: 'Grootboekcode', rgs: 'RGS' },
+    comparePeriods: 'Vergelijk periodes', noComparison: 'Geen vergelijking', showPercentages: 'Toon percentages van omzet', percentOfRevenue: 'Percentage van de omzet',
+    vatFormat: 'Formaat btw-rapport', vatFormats: { dutch: 'Nederlands btw-overzicht', dutch_icp: 'Nederlands ICP-overzicht', overview: 'Btw-samenvatting' },
+    vatNames: { dutch: 'Btw-rapport Nederland', dutch_icp: 'ICP-rapport Nederland', overview: 'Btw-samenvatting' },
     collapseAll: 'Alles inklappen', expandAll: 'Alles uitklappen', collapse: '{{name}} inklappen', expand: '{{name}} uitklappen',
-    pdf: 'PDF', excel: 'Excel', vatName: 'Btw-rapport',
+    pdf: 'PDF', excel: 'Excel',
     years_one: '{{count}} jaar', years_other: '{{count}} jaar', months_one: '{{count}} maand', months_other: '{{count}} maanden',
     names: {
       agedReceivables: 'Debiteurenoverzicht', agedPayables: 'Crediteurenoverzicht', revenueByContact: 'Omzet per contact',

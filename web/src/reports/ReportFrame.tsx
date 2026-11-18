@@ -27,11 +27,17 @@ export type ReportFilter = {
   range: MonthRange
   /** The period as the API takes it. */
   period: string
-  granularity?: Granularity
+  /** What a column covers; none for one column over the whole period, which only the balance sheet offers. */
+  granularity?: Granularity | 'none'
   order: Order
+  /** A report's own choice of how it shows, such as the VAT report's format. */
+  format: string
   page: number
   today: Date
 }
+
+/** The granularity to ask the API for: none for a report in one column. */
+export const apiGranularity = (f: ReportFilter): Granularity | undefined => (f.granularity === 'none' ? undefined : f.granularity)
 
 const defaults: Record<FilterKind, string> = { granular: 'this_quarter', period: 'this_quarter', until: 'this_month', year: 'this_year' }
 
@@ -42,15 +48,16 @@ export function useReportFilter(kind: FilterKind): ReportFilter {
   const today = useMemo(() => new Date(), [])
   const asked = parsePeriod(search.get('period') ?? '', today) ?? parsePeriod(defaults[kind], today)!
   const range = kind === 'until' ? lastMonth(asked) : kind === 'year' ? yearRange(yearOfMonth(asked.to)) : asked
-  const g = search.get('granularity') as Granularity | null
+  const g = search.get('granularity') as Granularity | 'none' | null
   const o = search.get('order') as Order | null
   return {
     administrationId,
     kind,
     range,
     period: periodValue(range, today),
-    granularity: kind === 'granular' ? (g && granularities.includes(g) ? g : 'month') : undefined,
+    granularity: kind === 'granular' ? (g && (g === 'none' || granularities.includes(g)) ? g : 'month') : undefined,
     order: o && orders.includes(o) ? o : 'alphabetical',
+    format: search.get('format') ?? '',
     page: Math.max(1, Number(search.get('page')) || 1),
     today,
   }
@@ -59,7 +66,7 @@ export function useReportFilter(kind: FilterKind): ReportFilter {
 /** The address of the report with some of its filter changed; a new filter starts at the first page. */
 function useFilterLink(f: ReportFilter) {
   const { pathname } = useLocation()
-  return (change: { range?: MonthRange; granularity?: Granularity; order?: Order }) => {
+  return (change: { range?: MonthRange; granularity?: Granularity | 'none'; order?: Order; format?: string }) => {
     const params = new URLSearchParams()
     params.set('period', periodValue(change.range ?? f.range, f.today))
     const granularity = change.granularity ?? f.granularity
@@ -69,6 +76,10 @@ function useFilterLink(f: ReportFilter) {
     const order = change.order ?? f.order
     if (order !== 'alphabetical') {
       params.set('order', order)
+    }
+    const format = change.format ?? f.format
+    if (format) {
+      params.set('format', format)
     }
     return `${pathname}?${params.toString()}`
   }
@@ -84,6 +95,10 @@ type Props = {
   title: string
   /** Whether the categories can be sorted. */
   orderable?: boolean
+  /** Whether the columns are offered as Moneybird's balance sheet's "Compare periods", with No comparison. */
+  comparable?: boolean
+  /** The report's formats to choose from, such as the VAT report's, with the name of the choice. */
+  formats?: { legend: string; options: { value: string; label: string }[] }
   /** Whether the filter button says what a column covers, as "per month"; Moneybird's aged receivables do not. */
   sayPer?: boolean
   /** Moneybird's introduction behind the More information button. */
@@ -98,13 +113,13 @@ type Props = {
  * what is shown with buttons to the period before and after it, More
  * information, and Export; the report in a card below.
  */
-export function ReportPage({ filter, name, title, orderable = false, sayPer = true, info, actions, children }: Props) {
+export function ReportPage({ filter, name, title, orderable = false, comparable = false, formats, sayPer = true, info, actions, children }: Props) {
   const { t, i18n } = useTranslation()
   const link = useFilterLink(filter)
   const infoId = useId()
   const [infoShown, setInfoShown] = useState(false)
   const what = rangeName(filter.range, t, i18n.language)
-  const label = filter.kind === 'granular' && sayPer
+  const label = filter.kind === 'granular' && sayPer && filter.granularity !== 'none'
     ? t('reports.label.granular', { name, period: what, per: t(`reports.per.${filter.granularity}`) })
     : t(`reports.label.${filter.kind === 'granular' ? 'period' : filter.kind}`, { name, period: what })
   const lead = (
@@ -113,7 +128,7 @@ export function ReportPage({ filter, name, title, orderable = false, sayPer = tr
         <span className="btn btn--secondary report-filter__static">{label}</span>
       ) : (
         <FilterPanel label={label} title={t('reports.filters')}>
-          <ReportForm filter={filter} orderable={orderable} />
+          <ReportForm filter={filter} orderable={orderable} comparable={comparable} formats={formats} />
         </FilterPanel>
       )}
       {filter.kind !== 'until' && <Steps filter={filter} link={link} />}
@@ -174,29 +189,34 @@ function Steps({ filter, link }: { filter: ReportFilter; link: ReturnType<typeof
 }
 
 /** The filter panel: the period picker, and for a report in columns what a column covers, and the order of the categories. */
-function ReportForm({ filter, orderable }: { filter: ReportFilter; orderable: boolean }) {
+function ReportForm({ filter, orderable, comparable, formats }: { filter: ReportFilter; orderable: boolean; comparable: boolean; formats?: Props['formats'] }) {
   const { t } = useTranslation()
   const [, setSearch] = useSearchParams()
   const link = useFilterLink(filter)
   const [range, setRange] = useState<MonthRange | null>(filter.range)
   const [granularity, setGranularity] = useState(filter.granularity)
   const [order, setOrder] = useState(filter.order)
+  const [format, setFormat] = useState(filter.format || formats?.options[0]?.value || '')
   const apply = () => {
     const chosen = range ?? filter.range
-    const to = link({ range: filter.kind === 'until' ? lastMonth(chosen) : chosen, granularity, order })
+    const to = link({ range: filter.kind === 'until' ? lastMonth(chosen) : chosen, granularity, order, format })
     setSearch(new URLSearchParams(to.slice(to.indexOf('?') + 1)))
   }
   return (
-    <AdvancedFilter value={{ range, granularity, order }} onApply={apply}>
+    <AdvancedFilter value={{ range, granularity, order, format }} onApply={apply}>
       <PeriodPicker value={range} today={filter.today} onChange={setRange} />
       {granularity && (
         <RadioFilter
-          legend={t('reports.showPer')}
+          legend={t(comparable ? 'reports.comparePeriods' : 'reports.showPer')}
           value={granularity}
-          onChange={(g) => setGranularity(g as Granularity)}
-          options={granularities.map((g) => ({ value: g, label: t(`reports.granularities.${g}`) }))}
+          onChange={(g) => setGranularity(g as Granularity | 'none')}
+          options={[
+            ...(comparable ? [{ value: 'none', label: t('reports.noComparison') }] : []),
+            ...granularities.map((g) => ({ value: g, label: t(`reports.granularities.${g}`) })),
+          ]}
         />
       )}
+      {formats && <RadioFilter legend={formats.legend} value={format} onChange={setFormat} options={formats.options} />}
       {orderable && (
         <RadioFilter
           legend={t('reports.sortBy')}

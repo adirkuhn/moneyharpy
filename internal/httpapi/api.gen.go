@@ -4845,6 +4845,27 @@ func (e ListContactAdditionalChargesParamsIncludeBilled) Valid() bool {
 	}
 }
 
+// Defines values for GetVatOverviewParamsKind.
+const (
+	GetVatOverviewParamsKindIcpDeclaration GetVatOverviewParamsKind = "icp_declaration"
+	GetVatOverviewParamsKindSupplement     GetVatOverviewParamsKind = "supplement"
+	GetVatOverviewParamsKindVatReturn      GetVatOverviewParamsKind = "vat_return"
+)
+
+// Valid indicates whether the value is a known member of the GetVatOverviewParamsKind enum.
+func (e GetVatOverviewParamsKind) Valid() bool {
+	switch e {
+	case GetVatOverviewParamsKindIcpDeclaration:
+		return true
+	case GetVatOverviewParamsKindSupplement:
+		return true
+	case GetVatOverviewParamsKindVatReturn:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListVatReturnPeriodsParamsKind.
 const (
 	ListVatReturnPeriodsParamsKindIcpDeclaration ListVatReturnPeriodsParamsKind = "icp_declaration"
@@ -14774,6 +14795,18 @@ type ListContactAdditionalChargesParams struct {
 // ListContactAdditionalChargesParamsIncludeBilled defines parameters for ListContactAdditionalCharges.
 type ListContactAdditionalChargesParamsIncludeBilled string
 
+// GetVatOverviewParams defines parameters for GetVatOverview.
+type GetVatOverviewParams struct {
+	// Kind vat_return, supplement or icp_declaration.
+	Kind GetVatOverviewParamsKind `form:"kind" json:"kind"`
+
+	// Period The period, as YYYYMMDD..YYYYMMDD.
+	Period string `form:"period" json:"period"`
+}
+
+// GetVatOverviewParamsKind defines parameters for GetVatOverview.
+type GetVatOverviewParamsKind string
+
 // ListVatReturnPeriodsParams defines parameters for ListVatReturnPeriods.
 type ListVatReturnPeriodsParams struct {
 	// Kind vat_return, supplement or icp_declaration.
@@ -22514,6 +22547,9 @@ type ServerInterface interface {
 	// SubmitVatReturn Record a VAT return filed by hand
 	// (POST /api/v2/{administration_id}/declarations)
 	SubmitVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetVatOverview VAT overview of a period
+	// (GET /api/v2/{administration_id}/declarations/overview)
+	GetVatOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetVatOverviewParams)
 	// ListVatReturnPeriods Periods a return can be filed for
 	// (GET /api/v2/{administration_id}/declarations/periods)
 	ListVatReturnPeriods(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListVatReturnPeriodsParams)
@@ -24224,6 +24260,12 @@ func (_ Unimplemented) ListVatReturns(w http.ResponseWriter, r *http.Request, ad
 // SubmitVatReturn Record a VAT return filed by hand
 // (POST /api/v2/{administration_id}/declarations)
 func (_ Unimplemented) SubmitVatReturn(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetVatOverview VAT overview of a period
+// (GET /api/v2/{administration_id}/declarations/overview)
+func (_ Unimplemented) GetVatOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params GetVatOverviewParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -29960,6 +30002,61 @@ func (siw *ServerInterfaceWrapper) SubmitVatReturn(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SubmitVatReturn(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetVatOverview operation middleware
+func (siw *ServerInterfaceWrapper) GetVatOverview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetVatOverviewParams
+
+	// ------------- Required query parameter "kind" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "kind", r.URL.Query(), &params.Kind, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kind"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetVatOverview(w, r, administrationId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -43823,6 +43920,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/declarations/preview", wrapper.PreviewVatReturn)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/declarations/overview", wrapper.GetVatOverview)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/v2/{administration_id}/declarations/{id}", wrapper.DeleteVatReturn)

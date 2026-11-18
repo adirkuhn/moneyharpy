@@ -413,6 +413,42 @@ func Untaxed(sums []RateSum) money.Amount {
 	return out
 }
 
+// Overview works out what a return or ICP declaration of any period would
+// hold as the books are now, as Moneybird's VAT overview shows it: the
+// period's own amounts, without corrections of earlier periods.
+func (s *Service) Overview(ctx context.Context, admin, user resource.ID, kind string, period money.Period) (Return, error) {
+	if kind != VATReturn && kind != ICP {
+		return Return{}, invalid("kind", "is not one of vat_return, icp_declaration")
+	}
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
+		return Return{}, err
+	}
+	granularity := "month"
+	switch period.Months() {
+	case 3:
+		granularity = "quarter"
+	case 12:
+		granularity = "year"
+	}
+	r := Return{AdministrationID: a.ID, Kind: kind, Period: period, Granularity: granularity, SentOn: s.today(a), Boxes: []Box{}, ICP: []ICPLine{}, Corrections: []Correction{}}
+	if kind == ICP {
+		lines, err := s.store.ICPSums(ctx, a.ID, period)
+		if err != nil {
+			return Return{}, err
+		}
+		for _, l := range lines {
+			l.Kind = Services
+			r.ICP = append(r.ICP, l)
+		}
+		return r, nil
+	}
+	if r.Boxes, err = s.boxes(ctx, a.ID, period); err != nil {
+		return Return{}, err
+	}
+	return r, nil
+}
+
 // draft works the return out; kinds says per contact whether an ICP line is
 // goods, services by default.
 func (s *Service) draft(ctx context.Context, a administration.Listed, user resource.ID, kind string, period money.Period, kinds map[resource.ID]string) (Return, error) {

@@ -164,4 +164,60 @@ describe('reports', () => {
     expect(within(table).getByRole('link', { name: 'Laptop' })).toHaveAttribute('href', '/11/assets/601')
     expect(within(table).getByRole('row', { name: /Laptop/ })).toHaveTextContent(/5 years.*1,000\.00/)
   })
+
+  it('shows the amounts as percentages of revenue on request', async () => {
+    server.use(...loaded())
+    renderAt('/11/report/profit_loss?period=202610..202611')
+    const table = await screen.findByRole('table', { name: 'Profit and loss statement' })
+    await userEvent.click(within(table).getByRole('button', { name: 'Show percentages of revenue' }))
+    expect(within(table).getByRole('row', { name: /^Rent 4110 50\.00 25% 0\.00 0%$/ })).toBeInTheDocument()
+    expect(within(table).getByRole('row', { name: /Net profit 140\.00 70% 90\.00 90%/ })).toBeInTheDocument()
+  })
+
+  it('shows the balance sheet at the end of the period without comparison', async () => {
+    const seen: URL[] = []
+    server.use(...loaded(seen))
+    renderAt('/11/report/balance_sheet?period=202610..202612')
+    await screen.findByRole('table', { name: 'Debit' })
+    await userEvent.click(screen.getByRole('button', { name: /^Balance sheet for quarter 4 2026 per month$/ }))
+    await userEvent.click(screen.getByRole('radio', { name: 'No comparison' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
+    await waitFor(() => expect(seen.at(-1)?.searchParams.get('granularity')).toBeNull())
+    expect(screen.getByRole('button', { name: 'Balance sheet for quarter 4 2026' })).toBeInTheDocument()
+    const debit = screen.getByRole('table', { name: 'Debit' })
+    expect(within(debit).getAllByRole('columnheader').map((c) => c.textContent)).toEqual(['Collapse all', '2026-12-31'])
+  })
+
+  it('shows the VAT report as the Dutch return, the ICP declaration or per rate', async () => {
+    const seen: URL[] = []
+    const figures = (kind: string) => ({
+      kind, period_from: '2026-10-01', period_to: '2026-12-31', granularity: 'quarter', deadline: '2027-01-31', corrections: [],
+      boxes: kind === 'vat_return' ? [{ box: '1a', base: '716.0', tax: '150.0', period_base: '716.0', period_tax: '150.0', correction_base: '0', correction_tax: '0' }] : [],
+      icp_lines: kind === 'icp_declaration' ? [{ contact_id: '301', name: 'Beispiel GmbH', country: 'DE', vat_number: 'DE123456789', kind: 'services', amount: '500.0' }] : [],
+      owed: '150.0', input_tax: '0.0', total: '150.0',
+    })
+    server.use(
+      ...loaded(seen),
+      http.get('*/api/v2/11/declarations/overview', ({ request }) => {
+        const url = new URL(request.url)
+        seen.push(url)
+        return HttpResponse.json(figures(url.searchParams.get('kind') ?? ''))
+      }),
+      http.get('*/api/v2/11/reports/tax', () => HttpResponse.json({ tax_rates: [{ tax_rate_id: '9', name: '21% VAT', type: 'sales_invoice', report_reference: 'NL/1a', amount: '716.0', tax: '150.0' }] })),
+    )
+    renderAt('/11/report/tax?period=202610..202612')
+    const boxes = await screen.findByRole('table', { name: 'VAT report Netherlands' })
+    expect(seen.at(-1)?.searchParams.get('period')).toBe('20261001..20261231')
+    expect(within(boxes).getByRole('row', { name: /1a.*€716.*€150/ })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'VAT report Netherlands for quarter 4 2026' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Dutch ICP overview' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
+    const icp = await screen.findByRole('table', { name: 'ICP report Netherlands' })
+    expect(within(icp).getByRole('row', { name: /Beispiel GmbH/ })).toHaveTextContent('€500')
+    await userEvent.click(screen.getByRole('button', { name: 'ICP report Netherlands for quarter 4 2026' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'VAT summary' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
+    const rates = await screen.findByRole('table', { name: 'VAT summary' })
+    expect(within(rates).getByRole('row', { name: /21% VAT/ })).toHaveTextContent(/716\.00\s*150\.00/)
+  })
 })

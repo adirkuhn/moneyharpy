@@ -1415,7 +1415,8 @@ test('a booked purchase invoice shows in the reports and an auditfile lands in t
   await menu.getByRole('link', { name: 'Payable overview' }).click()
   await expect(page.getByRole('table', { name: 'Payable overview' }).getByRole('link', { name: 'Supplier B.V.' })).toBeVisible()
   await menu.getByRole('link', { name: 'VAT summary' }).click()
-  await expect(page.getByRole('table', { name: 'VAT summary' }).getByRole('row', { name: /21/ })).toContainText('21.00')
+  // As on Moneybird, the VAT report shows the boxes of the Dutch return: the input tax in 5b.
+  await expect(page.getByRole('table', { name: 'VAT report Netherlands' }).getByRole('row', { name: /^5b/ })).toContainText('€21')
   await menu.getByRole('link', { name: 'Expenses by project' }).click()
   await expect(page.getByRole('table', { name: 'Expenses by project' }).getByRole('row', { name: /Falcon/ })).toContainText('100.00')
 

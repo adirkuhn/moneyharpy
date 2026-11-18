@@ -193,3 +193,17 @@ export function balances(lines: BalanceLines): Map<string, number> {
   }
   return out
 }
+
+/** The VAT report's formats, after Moneybird's: the Dutch return's boxes, the Dutch ICP declaration, or a summary per VAT rate. */
+export type VatFormat = 'dutch' | 'dutch_icp' | 'overview'
+export const vatFormats: VatFormat[] = ['dutch', 'dutch_icp', 'overview']
+
+/** What a return or ICP declaration of the period would hold as the books are now. Period as YYYYMMDD..YYYYMMDD. */
+export function useVatOverview(administrationId: string, kind: 'vat_return' | 'icp_declaration', period: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['report', 'vat_overview', administrationId, kind, period],
+    placeholderData: keepPreviousData,
+    enabled,
+    queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/declarations/overview', { params: { path: path(administrationId), query: { kind, period } } })),
+  })
+}
