@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -206,6 +207,18 @@ type Service struct {
 	store      Store
 	ids        *resource.Generator
 	now        func() time.Time
+	history    history.Recorder
+}
+
+// UseHistory records what happens to contacts as Moneybird's events.
+func (s *Service) UseHistory(h history.Recorder) { s.history = h }
+
+// record notes that the user did action to the contact.
+func (s *Service) record(ctx context.Context, admin, contact, user resource.ID, action string) error {
+	if err := history.Note(ctx, s.history, admin, "Contact", contact, user, action); err != nil {
+		return fmt.Errorf("record event: %w", err)
+	}
+	return nil
 }
 
 // NewService returns a Service. References may be nil while no document

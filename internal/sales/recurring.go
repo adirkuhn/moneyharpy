@@ -10,6 +10,7 @@ import (
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -200,6 +201,9 @@ func (s *Service) CreateRecurring(ctx context.Context, admin, user resource.ID, 
 	if err := s.saveRecurring(ctx, admin, user, &r, true); err != nil {
 		return Recurring{}, err
 	}
+	if err := s.recordRecurring(ctx, user, r, "recurring_sales_invoice_created", nil); err != nil {
+		return Recurring{}, err
+	}
 	return s.Recurring(ctx, admin, r.ID, user)
 }
 
@@ -219,6 +223,9 @@ func (s *Service) UpdateRecurring(ctx context.Context, admin, id, user resource.
 	}
 	r.UpdatedAt = s.now()
 	if err := s.saveRecurring(ctx, admin, user, &r, false); err != nil {
+		return Recurring{}, err
+	}
+	if err := s.recordRecurring(ctx, user, r, "recurring_sales_invoice_updated", nil); err != nil {
 		return Recurring{}, err
 	}
 	return s.Recurring(ctx, admin, id, user)
@@ -369,6 +376,9 @@ func (s *Service) DeactivateRecurring(ctx context.Context, admin, id, user resou
 	if err := wrap("store recurring invoice", s.store.SaveRecurring(ctx, r, false)); err != nil {
 		return Recurring{}, err
 	}
+	if err := s.recordRecurring(ctx, user, r, "recurring_sales_invoice_deactivated", nil); err != nil {
+		return Recurring{}, err
+	}
 	return s.Recurring(ctx, admin, id, user)
 }
 
@@ -384,7 +394,10 @@ func (s *Service) DeleteRecurring(ctx context.Context, admin, id, user resource.
 		return false, err
 	}
 	if r.Generated == 0 {
-		return false, wrap("delete recurring invoice", s.store.DeleteRecurring(ctx, admin, id))
+		if err := s.store.DeleteRecurring(ctx, admin, id); err != nil {
+			return false, wrap("delete recurring invoice", err)
+		}
+		return false, s.recordRecurring(ctx, user, r, "recurring_sales_invoice_destroyed", nil)
 	}
 	_, err = s.DeactivateRecurring(ctx, admin, id, user)
 	return err == nil, err
@@ -666,6 +679,9 @@ func (s *Service) generate(ctx context.Context, a administration.Listed, user re
 	if err := s.record(ctx, user, on(inv, createdBy(*r))); err != nil {
 		return Invoice{}, err
 	}
+	if err := s.recordRecurring(ctx, user, moved, "recurring_sales_invoice_invoice_created", &inv.ID); err != nil {
+		return Invoice{}, err
+	}
 	*r = moved
 	return inv, nil
 }
@@ -708,6 +724,19 @@ type RecurringHook interface {
 // UseRecurringHook sets the hook invoices recurring invoices make pass
 // through; it is set after construction because the hook uses the service.
 func (s *Service) UseRecurringHook(h RecurringHook) { s.hook = h }
+
+// recordRecurring stores what happened to a recurring invoice, with the
+// invoice it made, if any. Without a history nothing is kept.
+func (s *Service) recordRecurring(ctx context.Context, user resource.ID, r Recurring, action string, invoice *resource.ID) error {
+	if s.history == nil {
+		return nil
+	}
+	e := history.Event{AdministrationID: r.AdministrationID, EntityType: "RecurringSalesInvoice", EntityID: r.ID, UserID: user, Action: action}
+	if invoice != nil {
+		e.LinkEntityType, e.LinkEntityID = "SalesInvoice", invoice
+	}
+	return wrap("record events", s.history.Record(ctx, e))
+}
 
 // notifyRecurring tells the notifier, if there is one.
 func (s *Service) notifyRecurring(ctx context.Context, admin resource.ID, action string, r Recurring) {

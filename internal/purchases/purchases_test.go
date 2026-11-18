@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/banking"
+	"github.com/adirkuhn/moneyharpy/internal/history/historytest"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -597,4 +598,41 @@ func TestPayables(t *testing.T) {
 	}
 	_, err = h.svc.Payables(ctx, adminID, owner, "PurchaseTransactionBatch", b.ID)
 	wantInvalid(t, err, "booking_id")
+}
+
+func TestDocumentChangesAreRecordedAsEvents(t *testing.T) {
+	h := newHarness(t)
+	log := &historytest.Log{}
+	h.svc.UseHistory(log)
+	d, err := h.svc.Create(ctx, adminID, owner, PurchaseInvoice, invoice(line("100", vat21, costs)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := h.svc.Update(ctx, adminID, owner, PurchaseInvoice, d.ID, Changes{Reference: ptr("INV-7")}); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.Delete(ctx, adminID, owner, PurchaseInvoice, d.ID); err != nil {
+		t.Fatal(err)
+	}
+	g, err := h.svc.CreateGeneral(ctx, adminID, owner, GeneralChanges{Reference: ptr("Contract")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.DeleteGeneral(ctx, adminID, g.ID, owner); err != nil {
+		t.Fatal(err)
+	}
+	tl, err := h.svc.CreateTypeless(ctx, adminID, owner, TypelessChanges{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.DeleteTypeless(ctx, adminID, tl.ID, owner); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"document_saved", "document_updated", "document_destroyed", "document_saved", "document_destroyed", "document_saved", "document_destroyed"}
+	if diff := cmp.Diff(want, log.Actions()); diff != "" {
+		t.Errorf("actions (-want +got):\n%s", diff)
+	}
+	if e := log.Events[0]; e.EntityType != "Document" || e.EntityID != d.ID || e.UserID != owner || e.AdministrationID != adminID {
+		t.Errorf("event = %+v", e)
+	}
 }

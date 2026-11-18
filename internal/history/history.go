@@ -45,6 +45,21 @@ type Store interface {
 	ListEvents(ctx context.Context, admin resource.ID, q Query) ([]Event, error)
 }
 
+// Recorder keeps events; a Service is one. Services that record events
+// take one, and record nothing without it.
+type Recorder interface {
+	Record(ctx context.Context, events ...Event) error
+}
+
+// Note records that the user did action to a record, when there is a
+// recorder.
+func Note(ctx context.Context, r Recorder, admin resource.ID, entityType string, entity, user resource.ID, action string) error {
+	if r == nil {
+		return nil
+	}
+	return r.Record(ctx, Event{AdministrationID: admin, EntityType: entityType, EntityID: entity, UserID: user, Action: action})
+}
+
 // Service implements recording and reading events.
 type Service struct {
 	store Store

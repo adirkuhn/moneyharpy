@@ -105,6 +105,7 @@ func TestScope(t *testing.T) {
 		"unknown":                  {entityType: "Spaceship", perms: administration.Permissions, err: ErrUnknownType},
 		"record of allowed types":  {entityID: &id, perms: []administration.Permission{administration.Estimates}, want: Query{EntityTypes: []string{"Contact", "Estimate"}, EntityID: &id}},
 		"time entries only: own":   {entityID: &id, perms: []administration.Permission{administration.TimeEntries}, want: Query{EntityID: &id, UserID: ptr(user)}},
+		"time entries":             {entityType: "TimeEntry", perms: []administration.Permission{administration.TimeEntries, administration.Estimates}, want: Query{EntityTypes: []string{"TimeEntry"}}},
 		"type and record":          {entityType: "Estimate", entityID: &id, perms: []administration.Permission{administration.Estimates}, want: Query{EntityTypes: []string{"Estimate"}, EntityID: &id}},
 	} {
 		t.Run(name, func(t *testing.T) {

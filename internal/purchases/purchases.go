@@ -17,6 +17,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -259,6 +260,7 @@ type Service struct {
 	store       Store
 	bank        Bank
 	recognition Recognition
+	history     history.Recorder
 	ids         *resource.Generator
 	now         func() time.Time
 }
@@ -285,6 +287,15 @@ func NewService(d Deps) *Service {
 		admins: d.Administrations, contacts: d.Contacts, products: d.Products, projects: d.Projects, ledger: d.Ledger, notes: d.Notes,
 		attachments: d.Attachments, store: d.Store, bank: d.Bank, ids: d.IDs, now: d.Now,
 	}
+}
+
+// UseHistory records what happens to documents as Moneybird's events,
+// all under the type Document.
+func (s *Service) UseHistory(h history.Recorder) { s.history = h }
+
+// record notes that the user did action to the document.
+func (s *Service) record(ctx context.Context, admin, id, user resource.ID, action string) error {
+	return wrap("record event", history.Note(ctx, s.history, admin, "Document", id, user, action))
 }
 
 // Summary sums up what is to pay and to process, for the overview.

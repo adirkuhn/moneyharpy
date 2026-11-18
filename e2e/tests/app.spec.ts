@@ -1429,6 +1429,12 @@ test('a booked purchase invoice shows in the reports and an auditfile lands in t
   await expect(page.getByRole('heading', { name: 'No information found for January 2025' })).toBeVisible()
   await expect(page.getByText('could not be loaded')).toHaveCount(0)
 
+  // Contacts and documents record their events, as on Moneybird.
+  await menu.getByRole('link', { name: 'Events' }).click()
+  const events = page.getByRole('table', { name: 'Events' })
+  await expect(events.getByRole('row', { name: /Contact created/ })).toContainText('Supplier B.V.')
+  await expect(events.getByRole('row', { name: /Document saved/ })).toContainText('INV-2026-88')
+
   const exported = await page.request.post(`${api}/reports/export/auditfile`, { data: { year: today.slice(0, 4) } })
   expect(exported.status()).toBe(204)
   const downloads = await (await page.request.get(`${api}/downloads`)).json()

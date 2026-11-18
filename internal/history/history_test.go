@@ -90,3 +90,21 @@ func TestOfGroupsEventsByRecordOldestFirst(t *testing.T) {
 		t.Errorf("no records give %v", empty)
 	}
 }
+
+func TestNoteRecordsOneEventOfARecord(t *testing.T) {
+	store := &memStore{}
+	svc := NewService(store, resource.NewGenerator(1), time.Now)
+	if err := Note(context.Background(), svc, admin, "Contact", record, user, "contact_created"); err != nil {
+		t.Fatal(err)
+	}
+	if len(store.events) != 1 {
+		t.Fatalf("stored %d events, want 1", len(store.events))
+	}
+	e := store.events[0]
+	if e.AdministrationID != admin || e.EntityType != "Contact" || e.EntityID != record || e.UserID != user || e.Action != "contact_created" {
+		t.Errorf("event = %+v", e)
+	}
+	if err := Note(context.Background(), nil, admin, "Contact", record, user, "contact_created"); err != nil {
+		t.Errorf("without a recorder: %v", err)
+	}
+}

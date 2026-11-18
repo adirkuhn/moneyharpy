@@ -77,7 +77,7 @@ func (s *Service) Create(ctx context.Context, admin, user resource.ID, c Changes
 	if err := s.store.CreateContact(ctx, contact); err != nil {
 		return Contact{}, fmt.Errorf("store contact: %w", err)
 	}
-	return contact, nil
+	return contact, s.record(ctx, admin, contact.ID, user, "contact_created")
 }
 
 // Update changes a contact.
@@ -89,6 +89,7 @@ func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, c Cha
 	if err != nil {
 		return Contact{}, err
 	}
+	wasArchived := contact.Archived
 	if err := s.apply(ctx, admin, user, &contact, c); err != nil {
 		return Contact{}, err
 	}
@@ -96,7 +97,14 @@ func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, c Cha
 	if err := s.store.UpdateContact(ctx, contact); err != nil {
 		return Contact{}, fmt.Errorf("store contact: %w", err)
 	}
-	return contact, nil
+	action := "contact_changed"
+	switch {
+	case contact.Archived && !wasArchived:
+		action = "contact_archived"
+	case !contact.Archived && wasArchived:
+		action = "contact_activated"
+	}
+	return contact, s.record(ctx, admin, contact.ID, user, action)
 }
 
 // Archive hides a contact from lists and pickers; its documents keep it.
@@ -124,7 +132,10 @@ func (s *Service) Delete(ctx context.Context, admin, id, user resource.ID) (kept
 			return err == nil, err
 		}
 	}
-	return false, s.store.DeleteContact(ctx, admin, id)
+	if err := s.store.DeleteContact(ctx, admin, id); err != nil {
+		return false, err
+	}
+	return false, s.record(ctx, admin, id, user, "contact_destroyed")
 }
 
 // Doubles groups the contacts that look like the same customer: they share

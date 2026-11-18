@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/history/historytest"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -389,5 +390,34 @@ func TestFetchByIDIsCapped(t *testing.T) {
 	ids := make([]resource.ID, MaxFetch+1)
 	if _, err := s.ContactsByID(context.Background(), adminID, owner, ids); err == nil {
 		t.Error("too many ids accepted")
+	}
+}
+
+func TestChangesAreRecordedAsEvents(t *testing.T) {
+	s, _ := newService()
+	log := &historytest.Log{}
+	s.UseHistory(log)
+	ctx := context.Background()
+	c := create(t, s, Changes{CompanyName: ptr("Example Shop B.V.")})
+	if _, err := s.Update(ctx, adminID, c.ID, owner, Changes{City: ptr("Utrecht")}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Archive(ctx, adminID, c.ID, owner); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Update(ctx, adminID, c.ID, owner, Changes{Archived: ptr(false)}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Delete(ctx, adminID, c.ID, owner); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"contact_created", "contact_changed", "contact_archived", "contact_activated", "contact_destroyed"}
+	if got := log.Actions(); !reflect.DeepEqual(got, want) {
+		t.Errorf("actions = %v, want %v", got, want)
+	}
+	for _, e := range log.Events {
+		if e.EntityType != "Contact" || e.EntityID != c.ID || e.UserID != owner || e.AdministrationID != adminID {
+			t.Errorf("event = %+v", e)
+		}
 	}
 }
