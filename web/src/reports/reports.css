@@ -1,0 +1,65 @@
+/* Reports, after Moneybird's: the filter button with the steps to the period before and after, and the report in a card. */
+.report-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.report-filter .button-group { display: inline-flex; }
+.report-filter .button-group > .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.report-filter .button-group > .btn + .btn { margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.report-filter__back { transform: rotate(180deg); }
+.report-filter__static { background: var(--bg); color: var(--muted); cursor: default; }
+
+.report-card { margin-bottom: 1.5rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.report-card .pagination { padding: 0.5rem 1rem 1rem; }
+.report-card__note { margin: 0; padding: 0.25rem 1rem 1rem; color: var(--muted); font-size: 0.8125rem; }
+.report-notice { display: flex; align-items: flex-start; gap: 0.625rem; margin: 0; padding: 0.875rem 1rem; border-bottom: 1px solid var(--line); }
+.report-notice > svg { flex: none; margin-top: 0.125rem; color: var(--blue); }
+.report-empty { display: grid; place-items: center; padding: 4rem 1rem; text-align: center; }
+.report-empty h2 { margin: 0; font-size: 1.75rem; font-weight: 700; }
+.report-scroll { overflow-x: auto; }
+
+.report-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.report-table thead th { padding: 0.625rem 1rem; background: var(--bg); color: var(--text); font-size: 0.8125rem; font-weight: 700; text-align: left; vertical-align: bottom; }
+.report-table th, .report-table td { padding: 0.5rem 1rem; text-align: left; font-weight: 400; }
+.report-table .report-table__amount, .report-table thead th.report-table__amount { width: 9rem; text-align: right; white-space: nowrap; }
+.report-table a { color: var(--link); text-decoration: none; }
+.report-table a:hover { text-decoration: underline; }
+.report-table__tools { white-space: nowrap; }
+.report-tool { display: inline-flex; align-items: center; gap: 0.375rem; margin-right: 1.25rem; padding: 0; border: 0; background: none; color: var(--link); font: inherit; font-weight: 700; cursor: pointer; }
+.report-tool svg { width: 0.875rem; height: 0.875rem; }
+.report-tool:hover span { text-decoration: underline; }
+
+.report-table__heading th { padding-top: 1.75rem; color: var(--text); }
+.report-table__category.is-depth-0 > th { padding-left: 2rem; }
+.report-table__category.is-depth-1 > th { padding-left: 3rem; }
+.report-table__category.is-depth-2 > th { padding-left: 4rem; }
+.report-table__category.is-depth-3 > th { padding-left: 5rem; }
+.report-table__category.is-depth-0 + .report-table__category.is-depth-0 > *, .report-table__category.is-depth-0:has(+ .is-depth-1) > * { border-bottom: 1px solid var(--line); }
+.report-table__category.is-depth-0:has(.report-table__fold) > * { border-top: 1px solid var(--line); }
+.report-table__name { display: inline-flex; white-space: nowrap; align-items: baseline; gap: 0.375rem; }
+.report-table__code { color: var(--muted); font-size: 0.8125rem; }
+.report-table__fold { display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; margin-left: -1.5rem; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--muted); cursor: pointer; }
+.report-table__fold svg { width: 0.875rem; height: 0.875rem; transition: transform 0.15s; }
+.report-table__fold[aria-expanded='false'] svg { transform: rotate(-90deg); }
+.report-table__fold:hover { background: var(--bg); color: var(--text); }
+
+.report-table__total > * { border-top: 1px solid var(--line); }
+.report-table__total.is-grand > * { padding-top: 1.75rem; border-top: 0; }
+.report-table__total.is-grand th { font-weight: 400; }
+
+/* The balance sheet: debit beside credit, as Moneybird's. */
+.report-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.report-side { min-width: 0; overflow-x: auto; }
+.report-side + .report-side { border-left: 1px solid var(--line); }
+.report-side__label { margin: 0; padding: 0.625rem 1rem 0; background: var(--bg); text-align: right; font-size: 0.9375rem; }
+.report-side .report-table thead th { padding-top: 0.25rem; }
+@media (max-width: 75rem) {
+  .report-sides { grid-template-columns: minmax(0, 1fr); }
+  .report-side + .report-side { border-top: 1px solid var(--line); border-left: 0; }
+}
+
+.report-table--assets th, .report-table--assets td { white-space: nowrap; }
+.report-table--assets thead th:first-child { width: 30%; }
+
+.report-filter .filter-menu__toggle { max-width: calc(100vw - 2rem); }
+
+@media print {
+  .banner, .sidenav, .actionbar__actions, .report-filter .button-group { display: none !important; }
+}

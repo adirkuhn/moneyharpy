@@ -69,7 +69,6 @@ export const navItems: NavItem[] = [
       link('revenueByProject', 'report/revenue_by_project', true),
       link('expensesByProject', 'report/expenses_by_project', true),
       link('trialBalance', 'report/general_ledger', true),
-      link('journalEntries', 'documents/general_journal_documents', true),
       link('auditReport', 'report/audit_report'),
       link('events', 'events'),
     ],

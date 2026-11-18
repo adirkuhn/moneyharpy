@@ -1391,13 +1391,68 @@ export const nl: Messages = {
   },
   reports: {
     totalRevenue: 'Totale omzet', grossProfit: 'Brutowinst', operatingProfit: 'Bedrijfsresultaat', netProfit: 'Nettowinst',
-    debit: 'Activa', credit: 'Passiva', totalDebit: 'Totaal activa', totalCredit: 'Totaal passiva', openYears: 'Resultaat open boekjaren',
-    taxRate: 'Btw-tarief', reference: 'Rubriek', turnover: 'Omzet', vat: 'Btw', rateTypes: { sales: 'verkoop', purchases: 'inkoop' },
+    totalDirectCosts: 'Totale directe kosten', totalExpenses: 'Totale kosten', totalOther: 'Totale overige baten en lasten',
+    debitSide: 'Debet', creditSide: 'Credit', totalOf: 'Totaal {{side}}', openYears: 'Resultaat lopend jaar',
+    taxRate: 'Btw-tarief', turnover: 'Bedrag waarover omzetbelasting wordt berekend', salesTax: 'Omzetbelasting', rateTypes: { sales: 'verkoop', purchases: 'inkoop' },
     openingBalance: 'Beginsaldo', closingBalance: 'Eindsaldo', received: 'Ontvangen', paid: 'Betaald',
-    contact: 'Contact', noContact: 'Zonder contact', nothing: 'Niets te tonen voor deze periode.', nothingOpen: 'Er staat niets open.',
-    project: 'Project', noProject: 'Zonder project', asset: 'Activum',
-    assetColumns: { value_at_begin: 'Beginwaarde', investment: 'Investering', value_changes: 'Waardeveranderingen', divestment: 'Desinvestering', value_at_end: 'Eindwaarde' },
+    totalReceived: 'Totaal ontvangen', totalPaid: 'Totaal betaald',
+    noContact: 'Geen contact', noProject: 'Geen project', total: 'Totaal', totalThisPage: 'Totaal deze pagina',
+    general: '{{name}} algemeen', excludingVat: 'Alle bedragen zijn in {{currency}} en exclusief btw.',
+    noInformation: 'Geen gegevens gevonden voor {{period}}',
+    quarterName: 'kwartaal {{n}} {{year}}', goTo: 'Ga naar {{period}}', filters: 'Rapportfilters',
+    label: {
+      granular: '{{name}} over {{period}} per {{per}}', period: '{{name}} over {{period}}',
+      until: '{{name}} tot en met {{period}}', year: '{{name}} in {{period}}',
+    },
+    per: { month: 'maand', quarter: 'kwartaal', year: 'jaar' },
+    showPer: 'Toon per', granularities: { month: 'Maand', quarter: 'Kwartaal', year: 'Jaar' },
+    sortBy: 'Sorteer op', orders: { alphabetical: 'Naam', account_id: 'Grootboekcode', rgs: 'RGS' },
+    collapseAll: 'Alles inklappen', expandAll: 'Alles uitklappen', collapse: '{{name}} inklappen', expand: '{{name}} uitklappen',
+    pdf: 'PDF', excel: 'Excel', vatName: 'Btw-rapport',
+    years_one: '{{count}} jaar', years_other: '{{count}} jaar', months_one: '{{count}} maand', months_other: '{{count}} maanden',
+    names: {
+      agedReceivables: 'Debiteurenoverzicht', agedPayables: 'Crediteurenoverzicht', revenueByContact: 'Omzet per contact',
+      expensesByContact: 'Kosten per contact', receivablesAging: 'Ouderdomsanalyse debiteuren', payablesAging: 'Ouderdomsanalyse crediteuren', assets: 'Activa',
+    },
+    assets: {
+      description: 'Omschrijving', purchaseDate: 'Ingebruikname', lifespan: 'Levensduur', purchase_value: 'Aanschafwaarde',
+      calculated_purchase_value: 'Fiscale aanschafwaarde', residual_value: 'Restwaarde', total_value_changes_since_purchase: 'Totaal afgeschreven', value_at_end: 'Boekwaarde',
+    },
+    trialBalance: {
+      notice: 'Een proef- en saldibalans toont het saldo van elke categorie in je administratie. Het beginsaldo plus debet, min credit, is het eindsaldo.',
+      opening: 'Beginsaldo', ending: 'Eindsaldo',
+    },
+    info: {
+      profitLoss: {
+        title: 'Inzicht in de resultaten',
+        text: 'Bekijk omzet en kosten per categorie en of je bedrijf winst of verlies maakt. Filter op maand, kwartaal of jaar om de gewenste periode te zien.',
+        steps: [
+          { title: 'Omzet', text: 'De omzet volgt uit de verkoopfacturen die je hebt verstuurd, op hun factuurdatum.' },
+          { title: 'Kosten', text: 'De kosten volgen uit de inkomende documenten die je hebt toegevoegd, op hun datum.' },
+          { title: 'Nettowinst', text: 'Omzet min kosten is je resultaat. Dat kan winst of verlies zijn.' },
+        ],
+      },
+      balanceSheet: {
+        title: 'Balans',
+        text: 'De balans toont je bezittingen en schulden. Die worden automatisch berekend uit de boekingen in je administratie. Filter op maand, kwartaal of jaar om de gewenste periode te zien.',
+        steps: [
+          { title: 'Debet', text: 'De bezittingen staan aan de debetkant van de balans, zoals je financiële rekeningen of investeringen.' },
+          { title: 'Credit', text: 'De creditkant toont je eigen vermogen en de schulden van je bedrijf.' },
+          { title: 'In balans', text: 'Een balans is altijd in evenwicht: de totalen aan beide kanten zijn gelijk.' },
+        ],
+      },
+      vat: {
+        title: 'Btw-overzicht',
+        text: 'Het btw-overzicht toont per jaar, kwartaal of maand of je btw terugkrijgt van of moet betalen aan de Belastingdienst.',
+        steps: [
+          { title: 'Rubrieken', text: 'Het btw-tarief bepaalt in welke rubriek van de aangifte de btw staat.' },
+          { title: 'Periode', text: 'De factuurdatum van je inkomende documenten en verkoopfacturen bepaalt in welke periode de btw in het overzicht staat.' },
+          { title: 'Totaal', text: 'Tot slot zie je wat je moet betalen aan de Belastingdienst. Staat er een min voor het bedrag, dan krijg je geld terug.' },
+        ],
+      },
+    },
   },
+
   /** Currency names by ISO code, as Moneybird lists them. */
   currencies: {
     EUR: 'Euro', USD: 'Amerikaanse dollar', GBP: 'Britse pond', AED: 'Verenigde Arabische Emiraten-dirham', AFN: 'Afghaanse afghani', ALL: 'Albanese lek',
