@@ -8,6 +8,7 @@ import { GettingStarted, type Step } from '../list/GettingStarted'
 import { ActionMenu } from '../list/ListActions'
 import { type MonthRange, parsePeriod, periodValue, yearOfMonth } from '../list/period'
 import { PeriodPicker } from '../list/PeriodPicker'
+import { fileName, reportSheet } from './exportFile'
 import { type Granularity, granularities, lastMonth, rangeName, shiftRange, yearRange } from './period'
 import './reports.css'
 
@@ -85,6 +86,13 @@ function useFilterLink(f: ReportFilter) {
   }
 }
 
+/** Downloads the report's tables on the page as an Excel file named after the report, as Moneybird's Export. */
+async function exportExcel(title: string, locale: string) {
+  const tables = Array.from(document.querySelectorAll<HTMLTableElement>('.content table'))
+  const { default: writeXlsxFile } = await import('write-excel-file/browser')
+  await writeXlsxFile(reportSheet(title, tables, locale), { sheet: title.replace(/[[\]:*?/\\]/g, ' ').slice(0, 31) }).toFile(fileName(title))
+}
+
 export type Info = { title: string; text: string; steps: Step[] }
 
 type Props = {
@@ -160,7 +168,10 @@ export function ReportPage({ filter, name, title, orderable = false, comparable 
           {exportable && (
             <ActionMenu
               label={t('list.export')}
-              items={[{ label: t('reports.pdf'), unavailable: true }, { label: t('reports.excel'), unavailable: true }]}
+              items={[
+                { label: t('reports.pdf'), onSelect: () => window.print() },
+                { label: t('reports.excel'), onSelect: () => void exportExcel(label, i18n.language) },
+              ]}
             />
           )}
         </>

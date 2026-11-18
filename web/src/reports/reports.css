@@ -67,8 +67,14 @@
 
 .report-filter .filter-menu__toggle { max-width: calc(100vw - 2rem); }
 
+/* Export to PDF prints the report as it shows: without the menus and buttons, the filter button as its title. */
 @media print {
-  .banner, .sidenav, .actionbar__actions, .report-filter .button-group { display: none !important; }
+  .banner, .topnav, .sidenav, .actionbar__actions, .report-filter .button-group, .report-tool, .report-table__fold, .audit-check, .events-pager { display: none !important; }
+  .report-filter .btn { border: 0; padding: 0; background: none; font-size: 1.25rem; font-weight: 700; }
+  .report-filter .btn svg { display: none; }
+  .report-card, .report-graph, .overview-card { break-inside: avoid-page; box-shadow: none; }
+  .report-sides { grid-template-columns: minmax(0, 1fr); }
+  .report-side + .report-side { border-top: 1px solid var(--line); border-left: 0; }
 }
 
 /* Charts: the brand's colours in a fixed order, checked for colour blindness on the light and the dark surface. */
