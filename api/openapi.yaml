@@ -52,6 +52,10 @@ tags:
     description: Customers and suppliers with their contact people and notes. Compatible with the Moneybird API.
   - name: Journal
     description: Journal entries made by hand and the reports that read the whole journal. Compatible with the Moneybird API.
+  - name: VAT returns
+    description: >-
+      VAT returns, supplementary returns and ICP declarations filed by hand at the tax authority, after Moneybird's
+      digital VAT returns. MoneyHarpy extension.
   - name: Reports
     description: The financial reports and the exports that land in the downloads, worked out from the journal. Compatible with the Moneybird API.
   - name: Purchase invoices
@@ -3781,7 +3785,7 @@ paths:
         invoice or receipt (NewPurchaseInvoice, NewReceipt; price_base signed like the document, the contact found by
         the transaction's IBAN) or pays what a purchase transaction or batch pays (PurchaseTransaction,
         PurchaseTransactionBatch). project_id puts a category booking or the new document's line on a project.
-        Payment, PaymentTransaction, PaymentTransactionBatch and VatDocument answer 422 until they exist. price_base is the amount; positive books in the direction of the
+        Payment, PaymentTransaction and PaymentTransactionBatch answer 422 until they exist; VatDocument pays or refunds a VAT return. price_base is the amount; positive books in the direction of the
         transaction, negative against it. Without it, the open amount is booked, and for an invoice at most
         what it has unpaid. A payment registered by hand that waits for its transaction is taken over by it.
         Split a transaction with one request per part. Not in the locked period.
@@ -7797,7 +7801,7 @@ paths:
           description: MoneyHarpy extension. The kind of document whose bookings to list; needs document_id.
           schema:
             type: string
-            enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt, Payment, Asset]
+            enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt, Payment, Asset, VatDocument]
         - name: document_id
           in: query
           description: MoneyHarpy extension. The document whose bookings to list; needs document_type.
@@ -8607,6 +8611,197 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/declarations:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listVatReturns
+      x-permissions: [documents]
+      summary: List the VAT returns
+      description: >-
+        The VAT returns, supplementary returns and ICP declarations filed, the latest period first. Also needs the
+        sales_invoices permission. MoneyHarpy extension.
+      tags: [VAT returns]
+      responses:
+        '200':
+          description: The returns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VatReturn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: submitVatReturn
+      x-permissions: [documents]
+      summary: Record a VAT return filed by hand
+      description: >-
+        Records a return filed by hand at the tax authority for a period the periods operation offers. A VAT return
+        declares its period and the corrections of periods declared before; a supplementary return what changed in a
+        declared period since. Both book the VAT owed off payable VAT and the input tax off receivable VAT on VAT paid or
+        received, with the rounding to whole euros on rounding differences, and close the books up to the period's end.
+        An ICP declaration lists the supplies to businesses in other EU countries and books nothing. Also needs the
+        sales_invoices permission. MoneyHarpy extension.
+      tags: [VAT returns]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VatReturnRequest'
+      responses:
+        '201':
+          description: The return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VatReturn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/declarations/periods:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listVatReturnPeriods
+      x-permissions: [documents]
+      summary: Periods a return can be filed for
+      description: >-
+        The latest first. For a VAT return or ICP declaration the periods of the declaration period setting that have
+        ended and are not declared yet, from the first booking on; for a supplementary return the periods declared. Also
+        needs the sales_invoices permission. MoneyHarpy extension.
+      tags: [VAT returns]
+      parameters:
+        - $ref: '#/components/parameters/declaration_kind'
+      responses:
+        '200':
+          description: The periods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VatReturnPeriod'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/declarations/preview:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: previewVatReturn
+      x-permissions: [documents]
+      summary: Work out a return without filing it
+      description: >-
+        The amounts a return of the kind for the period would declare, with what may be missing from the books. Also
+        needs the sales_invoices permission. MoneyHarpy extension.
+      tags: [VAT returns]
+      parameters:
+        - $ref: '#/components/parameters/declaration_kind'
+        - name: period
+          in: query
+          required: true
+          description: The period, as YYYYMMDD..YYYYMMDD.
+          schema:
+            type: string
+            pattern: '^\d{8}\.\.\d{8}$'
+      responses:
+        '200':
+          description: The return as it would be filed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VatReturnPreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/declarations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getVatReturn
+      x-permissions: [documents]
+      summary: Get a VAT return
+      description: Also needs the sales_invoices permission. MoneyHarpy extension.
+      tags: [VAT returns]
+      responses:
+        '200':
+          description: The return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VatReturn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteVatReturn
+      x-permissions: [documents]
+      summary: Delete a VAT return recorded by mistake
+      description: >-
+        Removes the return with what it booked; the books stay closed. Only a return without payments that no later
+        return builds on can be deleted. Also needs the sales_invoices permission. MoneyHarpy extension.
+      tags: [VAT returns]
+      responses:
+        '204':
+          description: The return is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/reports/working_capital:
@@ -14204,6 +14399,14 @@ components:
       schema:
         type: string
         pattern: '^[1-9][0-9]{0,8}$'
+    declaration_kind:
+      name: kind
+      in: query
+      required: true
+      description: vat_return, supplement or icp_declaration.
+      schema:
+        type: string
+        enum: [vat_return, supplement, icp_declaration]
     per_page:
       name: per_page
       in: query
@@ -17898,7 +18101,7 @@ components:
           format: date
         document_type:
           type: string
-          enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt, Payment, Asset]
+          enum: [FinancialMutation, GeneralJournalDocument, SalesInvoice, ExternalSalesInvoice, PurchaseInvoice, Receipt, Payment, Asset, VatDocument]
         document_id:
           $ref: '#/components/schemas/Identifier'
         ledger_account_id:
@@ -17987,6 +18190,230 @@ components:
                 allOf:
                   - $ref: '#/components/schemas/ReportPart'
                   - $ref: '#/components/schemas/cash_flow_amounts'
+    VatReturnBox:
+      type: object
+      description: >-
+        One box of the return in whole euros, rounded in the filer's favour: what VAT is charged on towards zero, the VAT
+        owed down and the input tax (5b) up. base and tax include the corrections; period_ the period's own amounts.
+      required: [box, base, tax, period_base, period_tax, correction_base, correction_tax]
+      additionalProperties: false
+      properties:
+        box:
+          type: string
+          example: 1a
+        base:
+          type: string
+        tax:
+          type: string
+        period_base:
+          type: string
+        period_tax:
+          type: string
+        correction_base:
+          type: string
+        correction_tax:
+          type: string
+    VatReturnCorrection:
+      type: object
+      required: [period_from, period_to, boxes]
+      additionalProperties: false
+      properties:
+        period_from:
+          type: string
+          format: date
+        period_to:
+          type: string
+          format: date
+        boxes:
+          type: array
+          items:
+            type: object
+            required: [box, base, tax]
+            additionalProperties: false
+            properties:
+              box:
+                type: string
+              base:
+                type: string
+              tax:
+                type: string
+    VatReturnICPLine:
+      type: object
+      required: [contact_id, name, country, vat_number, kind, amount]
+      additionalProperties: false
+      properties:
+        contact_id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+        country:
+          type: string
+        vat_number:
+          type: string
+        kind:
+          type: string
+          enum: [goods, services]
+        amount:
+          type: string
+          description: Whole euros.
+    VatReturnFigures:
+      type: object
+      required: [kind, period_from, period_to, granularity, deadline, boxes, corrections, icp_lines, owed, input_tax, total]
+      properties:
+        kind:
+          type: string
+          enum: [vat_return, supplement, icp_declaration]
+        period_from:
+          type: string
+          format: date
+        period_to:
+          type: string
+          format: date
+        granularity:
+          type: string
+          enum: [month, quarter, year]
+        deadline:
+          type: string
+          format: date
+          description: The last day to file and pay, the end of the month after the period.
+        boxes:
+          type: array
+          items:
+            $ref: '#/components/schemas/VatReturnBox'
+        corrections:
+          type: array
+          description: What changed in periods declared before, per period.
+          items:
+            $ref: '#/components/schemas/VatReturnCorrection'
+        icp_lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/VatReturnICPLine'
+        owed:
+          type: string
+          description: Box 5a, the VAT owed, in whole euros.
+        input_tax:
+          type: string
+          description: Box 5b, the input tax, in whole euros.
+        total:
+          type: string
+          description: What is to be paid; negative when it is to be received.
+    VatReturn:
+      description: A filed VAT return, supplementary return or ICP declaration. MoneyHarpy extension.
+      allOf:
+        - $ref: '#/components/schemas/VatReturnFigures'
+        - type: object
+          required: [id, administration_id, uri, sent_on, state, paid, unpaid, payments, created_at, updated_at]
+          properties:
+            id:
+              $ref: '#/components/schemas/Identifier'
+            administration_id:
+              $ref: '#/components/schemas/Identifier'
+            uri:
+              type: string
+            sent_on:
+              type: string
+              format: date
+            state:
+              type: string
+              enum: [to_pay, to_receive, paid, submitted]
+            paid:
+              type: string
+            unpaid:
+              type: string
+            payments:
+              type: array
+              items:
+                type: object
+                required: [id, financial_mutation_id, financial_account_id, payment_date, price]
+                additionalProperties: false
+                properties:
+                  id:
+                    $ref: '#/components/schemas/Identifier'
+                  financial_mutation_id:
+                    $ref: '#/components/schemas/Identifier'
+                  financial_account_id:
+                    $ref: '#/components/schemas/Identifier'
+                  payment_date:
+                    type: string
+                    format: date
+                  price:
+                    type: string
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+    VatReturnPreview:
+      description: A return as it would be filed, with what may be missing from the books. MoneyHarpy extension.
+      allOf:
+        - $ref: '#/components/schemas/VatReturnFigures'
+        - type: object
+          required: [checks]
+          properties:
+            checks:
+              type: object
+              required: [open_transactions, untaxed_purchases, bookings_without_vat, unprocessed_documents]
+              additionalProperties: false
+              properties:
+                open_transactions:
+                  type: integer
+                  description: Bank transactions up to the period's end that are not fully booked.
+                untaxed_purchases:
+                  type: string
+                  description: What purchases on 0% rates other than reverse charge add up to in the period; not in the return.
+                bookings_without_vat:
+                  type: integer
+                  description: Bank transactions in the period booked straight on revenue or costs, without VAT.
+                unprocessed_documents:
+                  type: integer
+                  description: Incoming documents still to be processed.
+    VatReturnPeriod:
+      type: object
+      required: [period_from, period_to, granularity]
+      additionalProperties: false
+      properties:
+        period_from:
+          type: string
+          format: date
+        period_to:
+          type: string
+          format: date
+        granularity:
+          type: string
+          enum: [month, quarter, year]
+    VatReturnRequest:
+      type: object
+      required: [vat_return]
+      additionalProperties: false
+      properties:
+        vat_return:
+          type: object
+          required: [kind, period]
+          additionalProperties: false
+          properties:
+            kind:
+              type: string
+              enum: [vat_return, supplement, icp_declaration]
+            period:
+              type: string
+              description: The period, as YYYYMMDD..YYYYMMDD.
+              pattern: '^\d{8}\.\.\d{8}$'
+            icp_lines:
+              type: array
+              description: Of an ICP declaration, which contacts were supplied goods; services otherwise.
+              maxItems: 1000
+              items:
+                type: object
+                required: [contact_id, kind]
+                additionalProperties: false
+                properties:
+                  contact_id:
+                    $ref: '#/components/schemas/FlexibleIdentifier'
+                  kind:
+                    type: string
+                    enum: [goods, services]
     TaxReport:
       description: The tax report.
       allOf:

@@ -127,6 +127,8 @@ const (
 	TypePurchaseTransactionBatch Type = "purchase_transaction_batches"
 	// Fixed assets.
 	TypeAsset Type = "assets"
+	// VAT returns.
+	TypeVatDocument Type = "declarations"
 )
 
 // Ref locates one resource.

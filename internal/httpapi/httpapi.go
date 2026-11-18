@@ -42,6 +42,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/tasklists"
 	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"github.com/adirkuhn/moneyharpy/internal/vatlookup"
+	"github.com/adirkuhn/moneyharpy/internal/vatreturns"
 	"github.com/adirkuhn/moneyharpy/internal/webhooks"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -130,6 +131,7 @@ type Deps struct {
 	Reports       *reports.Service
 	TimeEntries   *timeentries.Service
 	TaskLists     *tasklists.Service
+	VatReturns    *vatreturns.Service
 	Membership    *membership.Service
 	Connections   *connections.Service
 	Webhooks      *webhooks.Service
@@ -265,6 +267,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"booking_type": {"is not available yet in MoneyHarpy"}}))
 	case errors.Is(err, purchases.ErrNotEditable):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This document cannot be changed in its state; remove its payments first"}}))
+	case errors.Is(err, vatreturns.ErrNotDeletable):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Only the latest return without payments can be deleted"}}))
 	case errors.Is(err, sales.ErrNotEditable):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This invoice cannot be changed in its state; credit it instead"}}))
 	case errors.Is(err, sales.ErrDeliveryUnavailable):
@@ -321,6 +325,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		sales.IsNotFound(err),
 		purchases.IsNotFound(err),
 		assets.IsNotFound(err),
+		vatreturns.IsNotFound(err),
 		errors.Is(err, purchases.ErrNoSEPAFile),
 		errors.Is(err, products.ErrNotFound),
 		errors.Is(err, projects.ErrNotFound),

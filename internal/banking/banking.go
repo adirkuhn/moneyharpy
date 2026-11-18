@@ -121,10 +121,12 @@ type Service struct {
 	invoices Invoices
 	// documents pays purchase invoices and receipts.
 	documents Invoices
-	purchases Purchases
-	projects  Projects
-	ids       *resource.Generator
-	now       func() time.Time
+	// vatReturns pays VAT returns, or is nil.
+	vatReturns Invoices
+	purchases  Purchases
+	projects   Projects
+	ids        *resource.Generator
+	now        func() time.Time
 
 	// links, connections and redirect connect banks; nil leaves them off.
 	links       BankLinks
@@ -147,6 +149,9 @@ func (s *Service) UseInvoices(i Invoices) { s.invoices = i }
 // need the banking service too.
 func (s *Service) UseDocuments(d Invoices) { s.documents = d }
 
+// UseVatReturns lets transactions pay and refund VAT returns.
+func (s *Service) UseVatReturns(v Invoices) { s.vatReturns = v }
+
 // payer is what pays invoices of the type, or nil.
 func (s *Service) payer(invoiceType string) Invoices {
 	switch invoiceType {
@@ -154,6 +159,8 @@ func (s *Service) payer(invoiceType string) Invoices {
 		return s.invoices
 	case DocumentType:
 		return s.documents
+	case VatDocumentType:
+		return s.vatReturns
 	}
 	return nil
 }

@@ -1688,7 +1688,7 @@ export interface paths {
         head?: never;
         /**
          * Link a booking to a financial mutation
-         * @description Books on a category (LedgerAccount), pays a sales invoice (SalesInvoice, ExternalSalesInvoice) or a purchase invoice or receipt (Document), whose payment the bank posts on the creditors, makes and pays a new purchase invoice or receipt (NewPurchaseInvoice, NewReceipt; price_base signed like the document, the contact found by the transaction's IBAN) or pays what a purchase transaction or batch pays (PurchaseTransaction, PurchaseTransactionBatch). project_id puts a category booking or the new document's line on a project. Payment, PaymentTransaction, PaymentTransactionBatch and VatDocument answer 422 until they exist. price_base is the amount; positive books in the direction of the transaction, negative against it. Without it, the open amount is booked, and for an invoice at most what it has unpaid. A payment registered by hand that waits for its transaction is taken over by it. Split a transaction with one request per part. Not in the locked period.
+         * @description Books on a category (LedgerAccount), pays a sales invoice (SalesInvoice, ExternalSalesInvoice) or a purchase invoice or receipt (Document), whose payment the bank posts on the creditors, makes and pays a new purchase invoice or receipt (NewPurchaseInvoice, NewReceipt; price_base signed like the document, the contact found by the transaction's IBAN) or pays what a purchase transaction or batch pays (PurchaseTransaction, PurchaseTransactionBatch). project_id puts a category booking or the new document's line on a project. Payment, PaymentTransaction and PaymentTransactionBatch answer 422 until they exist; VatDocument pays or refunds a VAT return. price_base is the amount; positive books in the direction of the transaction, negative against it. Without it, the open amount is booked, and for an invoice at most what it has unpaid. A payment registered by hand that waits for its transaction is taken over by it. Split a transaction with one request per part. Not in the locked period.
          */
         patch: operations["linkFinancialMutationBooking"];
         trace?: never;
@@ -4136,6 +4136,103 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/declarations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List the VAT returns
+         * @description The VAT returns, supplementary returns and ICP declarations filed, the latest period first. Also needs the sales_invoices permission. MoneyHarpy extension.
+         */
+        get: operations["listVatReturns"];
+        put?: never;
+        /**
+         * Record a VAT return filed by hand
+         * @description Records a return filed by hand at the tax authority for a period the periods operation offers. A VAT return declares its period and the corrections of periods declared before; a supplementary return what changed in a declared period since. Both book the VAT owed off payable VAT and the input tax off receivable VAT on VAT paid or received, with the rounding to whole euros on rounding differences, and close the books up to the period's end. An ICP declaration lists the supplies to businesses in other EU countries and books nothing. Also needs the sales_invoices permission. MoneyHarpy extension.
+         */
+        post: operations["submitVatReturn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/declarations/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Periods a return can be filed for
+         * @description The latest first. For a VAT return or ICP declaration the periods of the declaration period setting that have ended and are not declared yet, from the first booking on; for a supplementary return the periods declared. Also needs the sales_invoices permission. MoneyHarpy extension.
+         */
+        get: operations["listVatReturnPeriods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/declarations/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Work out a return without filing it
+         * @description The amounts a return of the kind for the period would declare, with what may be missing from the books. Also needs the sales_invoices permission. MoneyHarpy extension.
+         */
+        get: operations["previewVatReturn"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/declarations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get a VAT return
+         * @description Also needs the sales_invoices permission. MoneyHarpy extension.
+         */
+        get: operations["getVatReturn"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a VAT return recorded by mistake
+         * @description Removes the return with what it booked; the books stay closed. Only a return without payments that no later return builds on can be deleted. Also needs the sales_invoices permission. MoneyHarpy extension.
+         */
+        delete: operations["deleteVatReturn"];
         options?: never;
         head?: never;
         patch?: never;
@@ -8979,7 +9076,7 @@ export interface components {
             /** Format: date */
             date: string;
             /** @enum {string} */
-            document_type: "FinancialMutation" | "GeneralJournalDocument" | "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt" | "Payment" | "Asset";
+            document_type: "FinancialMutation" | "GeneralJournalDocument" | "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt" | "Payment" | "Asset" | "VatDocument";
             document_id: components["schemas"]["Identifier"];
             ledger_account_id: components["schemas"]["Identifier"];
             project_id?: components["schemas"]["identifier_nullable"];
@@ -9019,6 +9116,122 @@ export interface components {
         CashFlowReport: components["schemas"]["cash_flow_amounts"] & {
             /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
             periods?: (components["schemas"]["ReportPart"] & components["schemas"]["cash_flow_amounts"])[];
+        };
+        /** @description One box of the return in whole euros, rounded in the filer's favour: what VAT is charged on towards zero, the VAT owed down and the input tax (5b) up. base and tax include the corrections; period_ the period's own amounts. */
+        VatReturnBox: {
+            /** @example 1a */
+            box: string;
+            base: string;
+            tax: string;
+            period_base: string;
+            period_tax: string;
+            correction_base: string;
+            correction_tax: string;
+        };
+        VatReturnCorrection: {
+            /** Format: date */
+            period_from: string;
+            /** Format: date */
+            period_to: string;
+            boxes: {
+                box: string;
+                base: string;
+                tax: string;
+            }[];
+        };
+        VatReturnICPLine: {
+            contact_id: components["schemas"]["Identifier"];
+            name: string;
+            country: string;
+            vat_number: string;
+            /** @enum {string} */
+            kind: "goods" | "services";
+            /** @description Whole euros. */
+            amount: string;
+        };
+        VatReturnFigures: {
+            /** @enum {string} */
+            kind: "vat_return" | "supplement" | "icp_declaration";
+            /** Format: date */
+            period_from: string;
+            /** Format: date */
+            period_to: string;
+            /** @enum {string} */
+            granularity: "month" | "quarter" | "year";
+            /**
+             * Format: date
+             * @description The last day to file and pay, the end of the month after the period.
+             */
+            deadline: string;
+            boxes: components["schemas"]["VatReturnBox"][];
+            /** @description What changed in periods declared before, per period. */
+            corrections: components["schemas"]["VatReturnCorrection"][];
+            icp_lines: components["schemas"]["VatReturnICPLine"][];
+            /** @description Box 5a, the VAT owed, in whole euros. */
+            owed: string;
+            /** @description Box 5b, the input tax, in whole euros. */
+            input_tax: string;
+            /** @description What is to be paid; negative when it is to be received. */
+            total: string;
+        };
+        /** @description A filed VAT return, supplementary return or ICP declaration. MoneyHarpy extension. */
+        VatReturn: components["schemas"]["VatReturnFigures"] & {
+            id: components["schemas"]["Identifier"];
+            administration_id: components["schemas"]["Identifier"];
+            uri: string;
+            /** Format: date */
+            sent_on: string;
+            /** @enum {string} */
+            state: "to_pay" | "to_receive" | "paid" | "submitted";
+            paid: string;
+            unpaid: string;
+            payments: {
+                id: components["schemas"]["Identifier"];
+                financial_mutation_id: components["schemas"]["Identifier"];
+                financial_account_id: components["schemas"]["Identifier"];
+                /** Format: date */
+                payment_date: string;
+                price: string;
+            }[];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /** @description A return as it would be filed, with what may be missing from the books. MoneyHarpy extension. */
+        VatReturnPreview: components["schemas"]["VatReturnFigures"] & {
+            checks: {
+                /** @description Bank transactions up to the period's end that are not fully booked. */
+                open_transactions: number;
+                /** @description What purchases on 0% rates other than reverse charge add up to in the period; not in the return. */
+                untaxed_purchases: string;
+                /** @description Bank transactions in the period booked straight on revenue or costs, without VAT. */
+                bookings_without_vat: number;
+                /** @description Incoming documents still to be processed. */
+                unprocessed_documents: number;
+            };
+        };
+        VatReturnPeriod: {
+            /** Format: date */
+            period_from: string;
+            /** Format: date */
+            period_to: string;
+            /** @enum {string} */
+            granularity: "month" | "quarter" | "year";
+        };
+        VatReturnRequest: {
+            vat_return: {
+                /** @enum {string} */
+                kind: "vat_return" | "supplement" | "icp_declaration";
+                /** @description The period, as YYYYMMDD..YYYYMMDD. */
+                period: string;
+                /** @description Of an ICP declaration, which contacts were supplied goods; services otherwise. */
+                icp_lines?: {
+                    contact_id: components["schemas"]["FlexibleIdentifier"];
+                    /** @enum {string} */
+                    kind: "goods" | "services";
+                }[];
+            };
         };
         /** @description The tax report. */
         TaxReport: components["schemas"]["tax_report_amounts"] & {
@@ -11734,6 +11947,8 @@ export interface components {
         contact_id: components["schemas"]["Identifier"];
         /** @description The page to return, starting at 1. */
         page: string;
+        /** @description vat_return, supplement or icp_declaration. */
+        declaration_kind: "vat_return" | "supplement" | "icp_declaration";
         /** @description Records per page, 50 unless given, at most 100. */
         per_page: string;
         /** @description Include archived records. */
@@ -18919,7 +19134,7 @@ export interface operations {
                 project_id?: string;
                 account_type?: "non_current_assets" | "current_assets" | "equity" | "provisions" | "non_current_liabilities" | "current_liabilities" | "revenue" | "direct_costs" | "expenses" | "other_income_expenses" | "other" | "temporary";
                 /** @description MoneyHarpy extension. The kind of document whose bookings to list; needs document_id. */
-                document_type?: "FinancialMutation" | "GeneralJournalDocument" | "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt" | "Payment" | "Asset";
+                document_type?: "FinancialMutation" | "GeneralJournalDocument" | "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt" | "Payment" | "Asset" | "VatDocument";
                 /** @description MoneyHarpy extension. The document whose bookings to list; needs document_type. */
                 document_id?: string;
             };
@@ -19589,6 +19804,184 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listVatReturns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The returns */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatReturn"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    submitVatReturn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VatReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description The return */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatReturn"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listVatReturnPeriods: {
+        parameters: {
+            query: {
+                /** @description vat_return, supplement or icp_declaration. */
+                kind: components["parameters"]["declaration_kind"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The periods */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatReturnPeriod"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    previewVatReturn: {
+        parameters: {
+            query: {
+                /** @description vat_return, supplement or icp_declaration. */
+                kind: components["parameters"]["declaration_kind"];
+                /** @description The period, as YYYYMMDD..YYYYMMDD. */
+                period: string;
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The return as it would be filed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatReturnPreview"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getVatReturn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The return */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatReturn"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteVatReturn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The return is deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
             429: components["responses"]["TooManyRequests"];
         };
     };

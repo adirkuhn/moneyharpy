@@ -1165,6 +1165,22 @@ type UserInvitation struct {
 	AcceptedBy       pgtype.Int8
 }
 
+type VatReturn struct {
+	ID               int64
+	AdministrationID int64
+	Kind             string
+	PeriodFrom       pgtype.Date
+	PeriodTo         pgtype.Date
+	Granularity      string
+	SentOn           pgtype.Date
+	Boxes            []byte
+	Corrections      []byte
+	IcpLines         []byte
+	CreatedBy        pgtype.Int8
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
 type Webhook struct {
 	ID               int64
 	AdministrationID int64
