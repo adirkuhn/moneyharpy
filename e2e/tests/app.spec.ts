@@ -1419,6 +1419,15 @@ test('a booked purchase invoice shows in the reports and an auditfile lands in t
   await expect(page.getByRole('table', { name: 'VAT report Netherlands' }).getByRole('row', { name: /^5b/ })).toContainText('€21')
   await menu.getByRole('link', { name: 'Expenses by project' }).click()
   await expect(page.getByRole('table', { name: 'Expenses by project' }).getByRole('row', { name: /Falcon/ })).toContainText('100.00')
+  // The aging row opens into the invoice behind it, as on Moneybird.
+  await menu.getByRole('link', { name: 'Payables aging' }).click()
+  const aging = page.getByRole('table', { name: 'Payables aging' })
+  await aging.getByRole('button', { name: 'Expand Supplier B.V.' }).click()
+  await expect(aging.getByRole('row', { name: /^INV-2026-88/ })).toContainText('121.00')
+  // A past month is asked for as a range of months, which the server takes.
+  await page.goto(`${uri}/report/creditors_aging?period=202501..202501`)
+  await expect(page.getByRole('heading', { name: 'No information found for January 2025' })).toBeVisible()
+  await expect(page.getByText('could not be loaded')).toHaveCount(0)
 
   const exported = await page.request.post(`${api}/reports/export/auditfile`, { data: { year: today.slice(0, 4) } })
   expect(exported.status()).toBe(204)
