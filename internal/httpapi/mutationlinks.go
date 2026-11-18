@@ -11,6 +11,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
+	"github.com/adirkuhn/moneyharpy/internal/vatreturns"
 )
 
 // mutationLinkJSON is MoneyHarpy's summary of a document a transaction pays,
@@ -65,7 +66,7 @@ func day(t *time.Time) *string {
 // pay, loading each kind of document and the contacts at once. A document
 // that cannot be read is left out.
 func (s *server) mutationLinks(ctx context.Context, admin, user resource.ID, list []banking.Mutation) (map[resource.ID][]mutationLinkJSON, error) {
-	var salesIDs, externalIDs, documentIDs []resource.ID
+	var salesIDs, externalIDs, documentIDs, vatIDs []resource.ID
 	for _, m := range list {
 		for _, p := range m.Payments {
 			switch p.InvoiceType {
@@ -75,6 +76,8 @@ func (s *server) mutationLinks(ctx context.Context, admin, user resource.ID, lis
 				externalIDs = append(externalIDs, p.InvoiceID)
 			case "Document":
 				documentIDs = append(documentIDs, p.InvoiceID)
+			case banking.VatDocumentType:
+				vatIDs = append(vatIDs, p.InvoiceID)
 			}
 		}
 	}
@@ -130,6 +133,18 @@ func (s *server) mutationLinks(ctx context.Context, admin, user resource.ID, lis
 				}
 			}
 		}
+	}
+	for _, id := range vatIDs {
+		v, err := s.deps.VatReturns.Return(ctx, admin, id, user)
+		if vatreturns.IsNotFound(err) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		deadline := v.Deadline()
+		docs[v.ID] = summary{kind: banking.VatDocumentType, label: "VAT", reference: v.Period.From.Format("20060102") + ".." + v.Period.To.Format("20060102"),
+			state: v.State(), date: &deadline, total: sales.Totals{InclTax: v.Totals().Total}}
 	}
 	names := map[resource.ID]string{}
 	for start := 0; start < len(contactIDs); start += contacts.MaxFetch {

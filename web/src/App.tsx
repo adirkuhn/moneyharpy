@@ -87,6 +87,9 @@ import { BillTimePage } from './timeentries/BillTimePage'
 import { HoursReportPage } from './timeentries/HoursReportPage'
 import { ProjectsReportPage } from './timeentries/ProjectsReportPage'
 import { TimeEntriesPage } from './timeentries/TimeEntriesPage'
+import { NewVatReturnPage } from './vat/NewVatReturnPage'
+import { VatReturnPage } from './vat/VatReturnPage'
+import { VatReturnsPage } from './vat/VatReturnsPage'
 import { TimeEntryPage } from './timeentries/TimeEntryPage'
 import { OnlineEstimatePage } from './online/OnlineEstimatePage'
 
@@ -151,6 +154,9 @@ export function AppRoutes() {
           <Route path="/:administrationId/time_entries" element={<TimeEntriesPage />} />
           <Route path="/:administrationId/time_entries/new" element={<TimeEntryPage />} />
           <Route path="/:administrationId/time_entries/:timeEntryId" element={<TimeEntryPage />} />
+          <Route path="/:administrationId/declarations" element={<VatReturnsPage />} />
+          <Route path="/:administrationId/declarations/new" element={<NewVatReturnPage />} />
+          <Route path="/:administrationId/declarations/:returnId" element={<VatReturnPage />} />
           <Route path="/:administrationId/time_entries_report" element={<HoursReportPage />} />
           <Route path="/:administrationId/time_entries_wizard" element={<BillTimePage />} />
           <Route path="/:administrationId/time_entries_report/projects" element={<ProjectsReportPage />} />

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Problems } from '../auth/AuthLayout'
 import { formErrors } from '../forms/Form'
 import { ListIcon } from '../layout/icons'
+import { periodOfParam } from '../vat/period'
 import { formatAmount, type LinkScope, type LinkSuggestion, type Mutation, useLink, useLinkSuggestions } from './queries'
 
 const scopes: LinkScope[] = ['all', 'sales_invoices', 'documents', 'ledger_accounts']
@@ -103,7 +104,8 @@ export function LinkPanel({ administrationId, mutation: m, onDone }: Props) {
         {list.length === 0 && !suggestions.isFetching && <li className="link-panel__empty">{t('bank.link.nothing')}</li>}
         {list.map((s) => {
           const isSelected = selected?.booking_type === s.booking_type && selected.booking_id === s.booking_id
-          const name = s.label ? `${s.label} ${[s.reference, s.contact_name].filter(Boolean).join(' · ')}` : s.reference
+          const reference = s.booking_type === 'VatDocument' ? periodOfParam(s.reference, t, i18n.language) : s.reference
+          const name = s.label ? `${s.label} ${[reference, s.contact_name].filter(Boolean).join(' · ')}` : s.reference
           return (
             <li key={`${s.booking_type}-${s.booking_id}`}>
               <label className={`link-panel__result${isSelected ? ' is-selected' : ''}`}>
@@ -111,7 +113,7 @@ export function LinkPanel({ administrationId, mutation: m, onDone }: Props) {
                 <span className={`link-panel__dot ${s.label ? stateTone(s.state) : 'is-category'}`} aria-hidden="true" />
                 <span className="link-panel__summary">
                   <span className="link-panel__name">
-                    {s.label ? <><strong>{s.label}</strong> {[s.reference, s.contact_name].filter(Boolean).join(' · ')}</> : name}
+                    {s.label ? <><strong>{s.label}</strong> {[reference, s.contact_name].filter(Boolean).join(' · ')}</> : name}
                   </span>
                   {s.label && <span className="link-panel__line">{[s.date, plain(s.total)].filter(Boolean).join(' · ')}</span>}
                   {s.payment_reference && <span className="link-panel__line">{t('bank.feed.paymentReference', { reference: s.payment_reference })}</span>}

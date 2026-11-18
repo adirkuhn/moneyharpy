@@ -8294,13 +8294,13 @@ export interface components {
         FinancialMutationLink: {
             payment_id: components["schemas"]["Identifier"];
             /** @enum {string} */
-            document_type: "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt";
+            document_type: "SalesInvoice" | "ExternalSalesInvoice" | "PurchaseInvoice" | "Receipt" | "VatDocument";
             document_id: components["schemas"]["Identifier"];
             /**
-             * @description Moneybird's short name of the kind of document.
+             * @description Moneybird's short name of the kind of document; VAT for a VAT return, whose reference is its period.
              * @enum {string}
              */
-            label: "INV" | "EXT" | "PUR" | "REC";
+            label: "INV" | "EXT" | "PUR" | "REC" | "VAT";
             /** @description The invoice number or the document's reference. */
             reference: string;
             contact_name: string;
@@ -8321,13 +8321,13 @@ export interface components {
              * @description The booking_type of link_booking.
              * @enum {string}
              */
-            booking_type: "SalesInvoice" | "ExternalSalesInvoice" | "Document" | "LedgerAccount";
+            booking_type: "SalesInvoice" | "ExternalSalesInvoice" | "Document" | "VatDocument" | "LedgerAccount";
             booking_id: components["schemas"]["Identifier"];
             /**
              * @description Moneybird's short name of the kind of document; empty for a category.
              * @enum {string}
              */
-            label: "INV" | "EXT" | "PUR" | "REC" | "";
+            label: "INV" | "EXT" | "PUR" | "REC" | "VAT" | "";
             /** @description The invoice number, the document's reference or the category's name. */
             reference: string;
             contact_name: string;

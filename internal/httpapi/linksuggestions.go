@@ -85,8 +85,8 @@ func cmpOr(a, b string) string {
 }
 
 // linkCandidates gathers what a transaction can be linked to in the scope:
-// the newest unpaid sales invoices, external invoices and incoming
-// documents, and the categories transactions may be booked on, which only
+// the newest unpaid sales invoices, external invoices, incoming documents
+// and VAT returns, and the categories transactions may be booked on, which only
 // a query or the categories scope brings.
 func (s *server) linkCandidates(ctx context.Context, admin, user resource.ID, scope, query string) ([]banking.Candidate, map[string]shown, error) {
 	var out []banking.Candidate
@@ -137,6 +137,21 @@ func (s *server) linkCandidates(ctx context.Context, admin, user resource.ID, sc
 				contactOf[c.Type+c.ID.String()] = d.ContactID
 				add(c, d.ContactID, shown{label: label, state: d.State, currency: d.Currency, total: d.Totals, details: c.Text})
 			}
+		}
+	}
+	if (scope == "all" || scope == "documents") && s.deps.VatReturns != nil {
+		returns, err := s.deps.VatReturns.Returns(ctx, admin, user)
+		if err != nil {
+			return nil, nil, err
+		}
+		for _, v := range returns {
+			if v.Unpaid() == 0 {
+				continue
+			}
+			deadline := v.Deadline()
+			period := v.Period.From.Format("20060102") + ".." + v.Period.To.Format("20060102")
+			c := banking.Candidate{Type: banking.VatDocumentType, ID: v.ID, Open: v.Unpaid(), Reference: period, Date: &deadline, Text: "Belastingdienst omzetbelasting btw VAT"}
+			add(c, 0, shown{label: "VAT", state: v.State(), total: sales.Totals{InclTax: v.Totals().Total}, details: period})
 		}
 	}
 	if scope == "ledger_accounts" || (scope == "all" && query != "") {

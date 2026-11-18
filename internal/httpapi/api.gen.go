@@ -1134,6 +1134,7 @@ const (
 	FinancialMutationLinkDocumentTypePurchaseInvoice      FinancialMutationLinkDocumentType = "PurchaseInvoice"
 	FinancialMutationLinkDocumentTypeReceipt              FinancialMutationLinkDocumentType = "Receipt"
 	FinancialMutationLinkDocumentTypeSalesInvoice         FinancialMutationLinkDocumentType = "SalesInvoice"
+	FinancialMutationLinkDocumentTypeVatDocument          FinancialMutationLinkDocumentType = "VatDocument"
 )
 
 // Valid indicates whether the value is a known member of the FinancialMutationLinkDocumentType enum.
@@ -1147,6 +1148,8 @@ func (e FinancialMutationLinkDocumentType) Valid() bool {
 		return true
 	case FinancialMutationLinkDocumentTypeSalesInvoice:
 		return true
+	case FinancialMutationLinkDocumentTypeVatDocument:
+		return true
 	default:
 		return false
 	}
@@ -1158,6 +1161,7 @@ const (
 	FinancialMutationLinkLabelINV FinancialMutationLinkLabel = "INV"
 	FinancialMutationLinkLabelPUR FinancialMutationLinkLabel = "PUR"
 	FinancialMutationLinkLabelREC FinancialMutationLinkLabel = "REC"
+	FinancialMutationLinkLabelVAT FinancialMutationLinkLabel = "VAT"
 )
 
 // Valid indicates whether the value is a known member of the FinancialMutationLinkLabel enum.
@@ -1170,6 +1174,8 @@ func (e FinancialMutationLinkLabel) Valid() bool {
 	case FinancialMutationLinkLabelPUR:
 		return true
 	case FinancialMutationLinkLabelREC:
+		return true
+	case FinancialMutationLinkLabelVAT:
 		return true
 	default:
 		return false
@@ -1569,6 +1575,7 @@ const (
 	LinkSuggestionBookingTypeExternalSalesInvoice LinkSuggestionBookingType = "ExternalSalesInvoice"
 	LinkSuggestionBookingTypeLedgerAccount        LinkSuggestionBookingType = "LedgerAccount"
 	LinkSuggestionBookingTypeSalesInvoice         LinkSuggestionBookingType = "SalesInvoice"
+	LinkSuggestionBookingTypeVatDocument          LinkSuggestionBookingType = "VatDocument"
 )
 
 // Valid indicates whether the value is a known member of the LinkSuggestionBookingType enum.
@@ -1582,6 +1589,8 @@ func (e LinkSuggestionBookingType) Valid() bool {
 		return true
 	case LinkSuggestionBookingTypeSalesInvoice:
 		return true
+	case LinkSuggestionBookingTypeVatDocument:
+		return true
 	default:
 		return false
 	}
@@ -1594,6 +1603,7 @@ const (
 	LinkSuggestionLabelINV   LinkSuggestionLabel = "INV"
 	LinkSuggestionLabelPUR   LinkSuggestionLabel = "PUR"
 	LinkSuggestionLabelREC   LinkSuggestionLabel = "REC"
+	LinkSuggestionLabelVAT   LinkSuggestionLabel = "VAT"
 )
 
 // Valid indicates whether the value is a known member of the LinkSuggestionLabel enum.
@@ -1608,6 +1618,8 @@ func (e LinkSuggestionLabel) Valid() bool {
 	case LinkSuggestionLabelPUR:
 		return true
 	case LinkSuggestionLabelREC:
+		return true
+	case LinkSuggestionLabelVAT:
 		return true
 	default:
 		return false
@@ -7667,7 +7679,7 @@ type FinancialMutationLink struct {
 	DocumentId   Identifier                        `json:"document_id"`
 	DocumentType FinancialMutationLinkDocumentType `json:"document_type"`
 
-	// Label Moneybird's short name of the kind of document.
+	// Label Moneybird's short name of the kind of document; VAT for a VAT return, whose reference is its period.
 	Label FinancialMutationLinkLabel `json:"label"`
 
 	// PaymentId A unique record identifier. Parse as a string.
@@ -7688,7 +7700,7 @@ type FinancialMutationLink struct {
 // FinancialMutationLinkDocumentType defines model for FinancialMutationLink.DocumentType.
 type FinancialMutationLinkDocumentType string
 
-// FinancialMutationLinkLabel Moneybird's short name of the kind of document.
+// FinancialMutationLinkLabel Moneybird's short name of the kind of document; VAT for a VAT return, whose reference is its period.
 type FinancialMutationLinkLabel string
 
 // FinancialStatement A Moneybird financial statement with MoneyHarpy extensions.
