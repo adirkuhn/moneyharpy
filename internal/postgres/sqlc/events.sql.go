@@ -111,9 +111,11 @@ WHERE administration_id = $1
   AND ($2::text[] IS NULL OR entity_type = ANY($2::text[]))
   AND ($3::bigint IS NULL OR entity_id = $3::bigint)
   AND ($4::bigint IS NULL OR user_id = $4::bigint)
-  AND ($5::timestamptz IS NULL OR (created_at, id) < ($5::timestamptz, $6::bigint))
+  AND ($5::timestamptz IS NULL OR created_at >= $5::timestamptz)
+  AND ($6::timestamptz IS NULL OR created_at < $6::timestamptz)
+  AND ($7::timestamptz IS NULL OR (created_at, id) < ($7::timestamptz, $8::bigint))
 ORDER BY created_at DESC, id DESC
-LIMIT $7
+LIMIT $9
 `
 
 type ListEventsParams struct {
@@ -121,6 +123,8 @@ type ListEventsParams struct {
 	EntityTypes      []string
 	EntityID         pgtype.Int8
 	UserID           pgtype.Int8
+	FromAt           pgtype.Timestamptz
+	ToAt             pgtype.Timestamptz
 	AfterAt          pgtype.Timestamptz
 	AfterID          pgtype.Int8
 	MaxRows          int32
@@ -132,6 +136,8 @@ func (q *Queries) ListEvents(ctx context.Context, arg ListEventsParams) ([]Event
 		arg.EntityTypes,
 		arg.EntityID,
 		arg.UserID,
+		arg.FromAt,
+		arg.ToAt,
 		arg.AfterAt,
 		arg.AfterID,
 		arg.MaxRows,

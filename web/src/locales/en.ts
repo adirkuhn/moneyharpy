@@ -1387,6 +1387,26 @@ export const en = {
     empty: 'No assets yet. Add them through the API, linked to the purchase invoices they were bought with.', noMatches: 'No assets match this filter.',
     loadError: 'The assets could not be loaded.',
   },
+  events: {
+    label: 'Events from {{period}}', filters: 'Event filters', loadError: 'The events could not be loaded.', empty: 'Nothing happened in this period.',
+    event: 'Event', type: 'Type', user: 'User', date: 'Date', time: 'Time', initials: 'Initials', newer: 'Newer events', older: 'Older events',
+    text: '{{type}} {{what}}',
+    types: {
+      SalesInvoice: 'Invoice', ExternalSalesInvoice: 'External invoice', RecurringSalesInvoice: 'Recurring invoice', Estimate: 'Quote', Contact: 'Contact',
+      ContactPerson: 'Contact person', Payment: 'Payment', TimeEntry: 'Time entry', Document: 'Document', FinancialMutation: 'Transaction',
+      FinancialStatement: 'Bank statement', FinancialAccount: 'Financial account', LedgerAccount: 'Category', Product: 'Product', Project: 'Project',
+      Asset: 'Asset', Disposal: 'Disposal', Source: 'Source', GeneralJournalDocument: 'Journal entry', DocumentStyle: 'Layout', Identity: 'Identity',
+      Workflow: 'Workflow', TaxRate: 'VAT rate', Note: 'Note', CustomField: 'Custom field', Subscription: 'Subscription', User: 'User',
+    },
+    verbs: {
+      created: 'created', updated: 'updated', destroyed: 'deleted', registered: 'registered', send_manually: 'manually marked as sent',
+      send_email: 'sent by email', send_post: 'sent by post', send_simplerinvoicing: 'sent by Peppol', linked_to_financial_mutation: 'linked to a transaction',
+      state_changed_to_paid: 'has been paid', state_changed_to: 'state changed to {{state}}', send_reminder: 'reminder sent', mark_as_uncollectible: 'marked as uncollectible',
+      created_from_recurring: 'created based on recurring invoice', activated: 'activated', deactivated: 'deactivated', archived: 'archived',
+      accepted: 'accepted', rejected: 'rejected', billed: 'billed', processed: 'processed', imported: 'imported',
+    },
+    states: { paid: 'paid', open: 'open', late: 'late', uncollectible: 'uncollectible', pending_payment: 'pending payment', draft: 'draft' },
+  },
   reports: {
     totalRevenue: 'Total revenue', grossProfit: 'Gross profit', operatingProfit: 'Operating profit', netProfit: 'Net profit',
     totalDirectCosts: 'Total direct costs', totalExpenses: 'Total expenses', totalOther: 'Total other income and expenses',

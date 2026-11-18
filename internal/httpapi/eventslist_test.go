@@ -39,6 +39,21 @@ func TestListEvents(t *testing.T) {
 		}
 	}
 
+	// With a period every record type the user may see is listed: the estimate's events this month, none last year.
+	month := decode[[]event](t, owner.do(http.MethodGet, events+"?period=this_month", nil))
+	if len(month) < len(all) {
+		t.Errorf("events this month = %+v, want at least the estimate's", month)
+	}
+	if old := decode[[]event](t, owner.do(http.MethodGet, events+"?period=200001..200012", nil)); len(old) != 0 {
+		t.Errorf("events in 2000 = %+v", old)
+	}
+	for _, ev := range decode[[]event](t, banker.do(http.MethodGet, api+"/events?period=this_month", nil)) {
+		if ev.EntityType == "Estimate" {
+			t.Errorf("the banker sees %+v", ev)
+		}
+	}
+	wantStatus(t, owner.do(http.MethodGet, events+"?period=someday", nil), http.StatusBadRequest)
+
 	// One per page: the Link header leads through all of them, the last page has none.
 	r := owner.do(http.MethodGet, events+"?entity_type=Estimate&per_page=1", nil)
 	var paged []event

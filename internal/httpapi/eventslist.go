@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/history"
+	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -56,7 +58,22 @@ func (s *server) ListEvents(w http.ResponseWriter, r *http.Request, administrati
 			perms = append(perms, p)
 		}
 	}
-	q, err := history.Scope(deref(params.EntityType), entityID, me, perms, can)
+	var from, to *time.Time
+	if params.Period != nil {
+		loc := time.UTC
+		if l, err := time.LoadLocation(listed.TimeZone); err == nil {
+			loc = l
+		}
+		p, err := money.ParseReportPeriod(*params.Period, time.Now().In(loc))
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "period is not a valid period")
+			return
+		}
+		start := time.Date(p.From.Year(), p.From.Month(), p.From.Day(), 0, 0, 0, 0, loc)
+		end := time.Date(p.To.Year(), p.To.Month(), p.To.Day()+1, 0, 0, 0, 0, loc)
+		from, to = &start, &end
+	}
+	q, err := history.Scope(deref(params.EntityType), entityID, from != nil, me, perms, can)
 	var unknown *history.UnknownTypeError
 	switch {
 	case errors.Is(err, history.ErrForbidden):
@@ -73,7 +90,7 @@ func (s *server) ListEvents(w http.ResponseWriter, r *http.Request, administrati
 	if perPage < 1 {
 		perPage = defaultEventsPerPage
 	}
-	q.Limit, q.After = perPage, after
+	q.Limit, q.After, q.From, q.To = perPage, after, from, to
 	events, next, err := s.deps.Events.List(ctx, admin, q)
 	if err != nil {
 		s.fail(w, r, err)

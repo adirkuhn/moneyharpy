@@ -59,6 +59,12 @@ func (s *EventStore) ListEvents(ctx context.Context, admin resource.ID, q histor
 	if q.EntityTypes != nil && len(q.EntityTypes) == 0 {
 		return nil, nil // The user may see no record type.
 	}
+	if q.From != nil {
+		p.FromAt = timestamp(*q.From)
+	}
+	if q.To != nil {
+		p.ToAt = timestamp(*q.To)
+	}
 	if q.After != nil {
 		p.AfterAt, p.AfterID = timestamp(q.After.At), pgtype.Int8{Int64: int64(q.After.ID), Valid: true}
 	}

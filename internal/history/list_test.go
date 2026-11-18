@@ -108,7 +108,7 @@ func TestScope(t *testing.T) {
 		"type and record":          {entityType: "Estimate", entityID: &id, perms: []administration.Permission{administration.Estimates}, want: Query{EntityTypes: []string{"Estimate"}, EntityID: &id}},
 	} {
 		t.Run(name, func(t *testing.T) {
-			got, err := Scope(tt.entityType, tt.entityID, user, tt.perms, can(tt.perms...))
+			got, err := Scope(tt.entityType, tt.entityID, false, user, tt.perms, can(tt.perms...))
 			if !errors.Is(err, tt.err) {
 				t.Fatalf("Scope() error = %v, want %v", err, tt.err)
 			}
@@ -123,8 +123,19 @@ func TestScope(t *testing.T) {
 		})
 	}
 	var unknown *UnknownTypeError
-	_, err := Scope("Spaceship", nil, user, []administration.Permission{administration.Estimates}, can(administration.Estimates))
+	_, err := Scope("Spaceship", nil, false, user, []administration.Permission{administration.Estimates}, can(administration.Estimates))
 	if !errors.As(err, &unknown) || !slices.Equal(unknown.Allowed, []string{"Contact", "Estimate"}) {
 		t.Errorf("unknown type error = %v, want the types the user can ask for", err)
+	}
+}
+
+func TestScopeWithAPeriod(t *testing.T) {
+	perms := []administration.Permission{administration.SalesInvoices}
+	if _, err := Scope("", nil, false, 1, perms, can(perms...)); !errors.Is(err, ErrNoFilter) {
+		t.Errorf("without a filter: %v, want ErrNoFilter", err)
+	}
+	q, err := Scope("", nil, true, 1, perms, can(perms...))
+	if err != nil || q.EntityTypes == nil {
+		t.Errorf("with a period: %+v, %v; want the types the user may see", q, err)
 	}
 }
