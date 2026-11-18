@@ -25,6 +25,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/assets"
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
+	"github.com/adirkuhn/moneyharpy/internal/audits"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
@@ -384,6 +385,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		TimeEntries:     timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now),
 		TaskLists:       tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
 		VatReturns:      vatReturnService,
+		Audits:          audits.NewService(admins, postgres.NewAuditStore(pool), ids, time.Now),
 		Storage:         files,
 		Identity:        people,
 		Settings:        settle,

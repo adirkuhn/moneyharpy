@@ -112,3 +112,27 @@
 @media (max-width: 64rem) {
   .report-graphs, .report-overview { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* The audit report: its progress above the trial balance, a VAT column and a round check per category. */
+.audit-progress { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-bottom: 1px solid var(--line); }
+.audit-progress > svg { color: var(--blue); }
+.audit-progress span { color: var(--muted); font-size: 0.8125rem; }
+.audit-progress progress { flex: 1 1 10rem; height: 0.375rem; appearance: none; border: 0; border-radius: 999px; background: var(--line); overflow: hidden; }
+.audit-progress progress::-webkit-progress-bar { background: var(--line); }
+.audit-progress progress::-webkit-progress-value { background: var(--teal); }
+.audit-progress progress::-moz-progress-bar { background: var(--teal); }
+.audit-date { color: var(--muted); font-size: 0.75rem; font-weight: 400; }
+.audit-table th, .audit-table td { border-top: 1px solid var(--line); }
+.audit-table__section th { padding: 0.625rem 1rem 0.625rem 3rem; background: var(--bg); }
+.audit-table__row > th { padding-left: 3rem; }
+.audit-table__row.is-depth-1 > th { padding-left: 4.5rem; }
+.audit-table__row.is-depth-2 > th { padding-left: 6rem; }
+.audit-table__row:not(.is-leaf) a, .audit-table__row:not(.is-leaf) td { color: var(--text); }
+.audit-table__rates { white-space: nowrap; }
+.audit-rate { display: inline-block; margin-right: 0.25rem; padding: 0.125rem 0.375rem; border-radius: 4px; background: var(--bg); font-size: 0.75rem; font-weight: 700; }
+.audit-table__check { width: 3rem; text-align: center; }
+.audit-check { display: inline-grid; place-items: center; width: 1.75rem; height: 1.75rem; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--white); font-weight: 700; cursor: pointer; }
+.audit-check:hover { border-color: var(--teal); }
+.audit-check.is-done { border-color: var(--teal); background: var(--teal); }
+.audit-check.is-changed { border-color: var(--gold); background: var(--gold); color: var(--navy); }
+.audit-check svg { width: 1rem; height: 1rem; }

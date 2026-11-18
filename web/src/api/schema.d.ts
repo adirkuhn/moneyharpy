@@ -3787,6 +3787,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/reports/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Audit report
+         * @description Moneybird's audit report of a period: every category with bookings in it or an audit of it, with its debits and credits in the period, the VAT rates booked on it, and who audited it when; changed says the bookings differ from when it was audited. Balances come from the general ledger report. MoneyHarpy extension.
+         */
+        get: operations["getAuditReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/reports/audit/{ledger_account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                ledger_account_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a category as audited
+         * @description Marks the category as audited for the period by the user, with what is booked on it now; an earlier audit of the category and period is replaced. MoneyHarpy extension.
+         */
+        post: operations["auditLedgerAccount"];
+        /**
+         * Take an audit back
+         * @description Takes the audit of the category for the period back. MoneyHarpy extension.
+         */
+        delete: operations["unauditLedgerAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/reports/balance_sheet": {
         parameters: {
             query?: never;
@@ -9138,6 +9187,35 @@ export interface components {
         CashFlowReport: components["schemas"]["cash_flow_amounts"] & {
             /** @description Only with granularity. One item for each month, quarter or year in the period, oldest first. */
             periods?: (components["schemas"]["ReportPart"] & components["schemas"]["cash_flow_amounts"])[];
+        };
+        /** @description The audit report of a period. MoneyHarpy extension. */
+        AuditReport: {
+            /** Format: date */
+            period_from: string;
+            /** Format: date */
+            period_to: string;
+            ledger_accounts: components["schemas"]["AuditLine"][];
+        };
+        /** @description A category of the audit report. */
+        AuditLine: {
+            ledger_account_id: components["schemas"]["Identifier"];
+            /** @description What was debited in the period. */
+            debit: string;
+            /** @description What was credited in the period. */
+            credit: string;
+            /** @description The VAT rates booked on the category in the period. */
+            tax_rate_ids: components["schemas"]["Identifier"][];
+            audit: {
+                user_id: components["schemas"]["Identifier"];
+                /** Format: date-time */
+                audited_at: string;
+                /** @description What was debited when the category was audited. */
+                debit: string;
+                /** @description What was credited when the category was audited. */
+                credit: string;
+            } | null;
+            /** @description Whether the bookings changed after the category was audited. */
+            changed: boolean;
         };
         /** @description One box of the return in whole euros, rounded in the filer's favour: what VAT is charged on towards zero, the VAT owed down and the input tax (5b) up. base and tax include the corrections; period_ the period's own amounts. */
         VatReturnBox: {
@@ -19247,6 +19325,96 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProfitLossReport"];
                 };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getAuditReport: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The audit report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditReport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    auditLedgerAccount: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                ledger_account_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The category with its audit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLine"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    unauditLedgerAccount: {
+        parameters: {
+            query?: {
+                /** @description A month (202501), a range of whole months (202501..202503 or 20250101..20250331) or this_month, prev_month, next_month, this_quarter, prev_quarter, next_quarter, this_year, prev_year or next_year. This month unless given. */
+                period?: components["parameters"]["report_period"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                ledger_account_id: components["schemas"]["Identifier"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The audit is gone */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];

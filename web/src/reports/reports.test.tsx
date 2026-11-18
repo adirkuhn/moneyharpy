@@ -261,4 +261,39 @@ describe('reports', () => {
     const nav = screen.getByRole('navigation', { name: 'Administration menu' })
     expect(within(nav).getByRole('link', { name: 'Overview' , current: 'page' })).toHaveAttribute('href', '/11/reports')
   })
+
+  it('marks categories as audited in the audit report', async () => {
+    const seen: { method: string; url: URL }[] = []
+    let audited = false
+    server.use(
+      ...loaded(),
+      http.get('*/api/v2/11/reports/general_ledger', () => HttpResponse.json({
+        start_balance: values([['1010', '0.0'], ['1201', '0.0']]), debit_sums: values([['1201', '50.0']]),
+        credit_sums: values([['1010', '50.0']]), final_balance: values([['1010', '-50.0'], ['1201', '50.0']]),
+      })),
+      http.get('*/api/v2/11/tax_rates', () => HttpResponse.json([{ id: '21', name: '21% VAT' }])),
+      http.get('*/api/v2/11/users', () => HttpResponse.json([{ id: '7', name: 'Jan Voorbeeld', user_type: 'owner' }])),
+      http.get('*/api/v2/11/reports/audit', () => HttpResponse.json({
+        period_from: '2026-10-01', period_to: '2026-12-31', ledger_accounts: [
+          { ledger_account_id: '1201', debit: '50.0', credit: '0.0', tax_rate_ids: ['21'], changed: false,
+            audit: audited ? { user_id: '7', audited_at: '2026-11-18T10:00:00Z', debit: '50.0', credit: '0.0' } : null },
+        ],
+      })),
+      http.post('*/api/v2/11/reports/audit/:id', ({ request }) => {
+        seen.push({ method: 'POST', url: new URL(request.url) })
+        audited = true
+        return HttpResponse.json({ ledger_account_id: '1201', debit: '50.0', credit: '0.0', tax_rate_ids: [], changed: false, audit: null })
+      }),
+    )
+    renderAt('/11/report/audit_report?period=202501..202503')
+    const table = await screen.findByRole('table', { name: 'Audit report' })
+    expect(screen.getByText('0 of 2 audited')).toBeInTheDocument()
+    const rent = within(table).getByRole('row', { name: /^Rent 4110/ })
+    expect(rent).toHaveTextContent(/0\.00\s*50\.00\s*0\.00\s*50\.00\s*21% VAT/)
+    await userEvent.click(within(rent).getByRole('button', { name: 'Mark Rent as audited' }))
+    expect(seen[0]?.url.pathname).toBe('/api/v2/11/reports/audit/1201')
+    expect(seen[0]?.url.searchParams.get('period')).toBe('202501..202503')
+    expect(await within(table).findByRole('button', { name: /Rent audited by Jan Voorbeeld/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('1 of 2 audited')).toBeInTheDocument()
+  })
 })

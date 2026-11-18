@@ -1448,6 +1448,21 @@ export const nl: Messages = {
         ],
       },
     },
+    audit: {
+      balanceSheet: 'Balans', profitLoss: 'Winst- en verliesrekening', display: 'Weergave', all: 'Alle controles', accountants: 'Alleen boekhouders',
+      label: { period: '{{name}} over {{period}}' }, progress: '{{done}} van {{total}} gecontroleerd', progressLabel: 'Gecontroleerde categorieën', vat: 'Btw', audited: 'Gecontroleerd',
+      mark: '{{name}} als gecontroleerd markeren', auditedBy: '{{name}} gecontroleerd door {{user}} op {{date}}; controle intrekken',
+      changed: '{{name}} gewijzigd nadat {{user}} het op {{date}} controleerde; controle intrekken',
+      info: {
+        title: 'Zo werkt het controlerapport',
+        text: 'Het controlerapport is een uitgebreide proef- en saldibalans om je boekhouding sneller te controleren: bekijk de boekingen per periode, markeer wat je hebt gecontroleerd en houd wijzigingen na een controle bij.',
+        steps: [
+          { title: 'Controleren', text: 'Markeer per categorie welke boekingen je hebt gecontroleerd, zodat je direct ziet welke categorieën nog aandacht nodig hebben.' },
+          { title: 'Voortgang en geschiedenis', text: 'Zie wie wat wanneer heeft gecontroleerd, ook als een boeking na de controle is gewijzigd.' },
+          { title: 'Bekijken en bewerken', text: 'Open vanuit een categorie de boekingen en de documenten erachter.' },
+        ],
+      },
+    },
     collapseAll: 'Alles inklappen', expandAll: 'Alles uitklappen', collapse: '{{name}} inklappen', expand: '{{name}} uitklappen',
     pdf: 'PDF', excel: 'Excel',
     years_one: '{{count}} jaar', years_other: '{{count}} jaar', months_one: '{{count}} maand', months_other: '{{count}} maanden',

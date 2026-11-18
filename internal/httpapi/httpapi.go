@@ -17,6 +17,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/api"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/assets"
+	"github.com/adirkuhn/moneyharpy/internal/audits"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/connections"
@@ -132,6 +133,7 @@ type Deps struct {
 	TimeEntries   *timeentries.Service
 	TaskLists     *tasklists.Service
 	VatReturns    *vatreturns.Service
+	Audits        *audits.Service
 	Membership    *membership.Service
 	Connections   *connections.Service
 	Webhooks      *webhooks.Service

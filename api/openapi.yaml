@@ -7915,6 +7915,93 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/audit:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getAuditReport
+      x-permissions: [documents, bank]
+      summary: Audit report
+      description: >-
+        Moneybird's audit report of a period: every category with bookings in it or an audit of it, with its debits and
+        credits in the period, the VAT rates booked on it, and who audited it when; changed says the bookings differ
+        from when it was audited. Balances come from the general ledger report. MoneyHarpy extension.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+      responses:
+        '200':
+          description: The audit report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/reports/audit/{ledger_account_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - name: ledger_account_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    post:
+      operationId: auditLedgerAccount
+      x-permissions: [documents, bank]
+      summary: Mark a category as audited
+      description: >-
+        Marks the category as audited for the period by the user, with what is booked on it now; an earlier audit of the
+        category and period is replaced. MoneyHarpy extension.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+      responses:
+        '200':
+          description: The category with its audit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: unauditLedgerAccount
+      x-permissions: [documents, bank]
+      summary: Take an audit back
+      description: Takes the audit of the category for the period back. MoneyHarpy extension.
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/report_period'
+      responses:
+        '204':
+          description: The audit is gone
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/reports/balance_sheet:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -18243,6 +18330,61 @@ components:
                 allOf:
                   - $ref: '#/components/schemas/ReportPart'
                   - $ref: '#/components/schemas/cash_flow_amounts'
+    AuditReport:
+      type: object
+      description: The audit report of a period. MoneyHarpy extension.
+      required: [period_from, period_to, ledger_accounts]
+      additionalProperties: false
+      properties:
+        period_from:
+          type: string
+          format: date
+        period_to:
+          type: string
+          format: date
+        ledger_accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLine'
+    AuditLine:
+      type: object
+      description: A category of the audit report.
+      required: [ledger_account_id, debit, credit, tax_rate_ids, audit, changed]
+      additionalProperties: false
+      properties:
+        ledger_account_id:
+          $ref: '#/components/schemas/Identifier'
+        debit:
+          type: string
+          description: What was debited in the period.
+        credit:
+          type: string
+          description: What was credited in the period.
+        tax_rate_ids:
+          type: array
+          description: The VAT rates booked on the category in the period.
+          items:
+            $ref: '#/components/schemas/Identifier'
+        audit:
+          type: object
+          nullable: true
+          required: [user_id, audited_at, debit, credit]
+          additionalProperties: false
+          properties:
+            user_id:
+              $ref: '#/components/schemas/Identifier'
+            audited_at:
+              type: string
+              format: date-time
+            debit:
+              type: string
+              description: What was debited when the category was audited.
+            credit:
+              type: string
+              description: What was credited when the category was audited.
+        changed:
+          type: boolean
+          description: Whether the bookings changed after the category was audited.
     VatReturnBox:
       type: object
       description: >-
