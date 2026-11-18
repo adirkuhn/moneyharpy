@@ -33,6 +33,13 @@ const preview: VatPreview = {
   checks: { open_transactions: 136, untaxed_purchases: '124.71', bookings_without_vat: 0, unprocessed_documents: 0 },
 }
 
+const q3 = { period_from: '2026-07-01', period_to: '2026-09-30', granularity: 'quarter' as const }
+const q2 = { period_from: '2026-04-01', period_to: '2026-06-30', granularity: 'quarter' as const }
+
+/** The periods each kind can be filed for. */
+const periods = (byKind: Record<string, (typeof q3)[]>) =>
+  http.get('*/api/v2/11/declarations/periods', ({ request }) => HttpResponse.json(byKind[new URL(request.url).searchParams.get('kind') ?? ''] ?? []))
+
 function loaded() {
   return [
     signedIn(),
@@ -77,10 +84,7 @@ describe('VAT returns', () => {
   it('declares a return by hand: type, period, checks and the amounts to copy', async () => {
     let sent: { vat_return?: Record<string, unknown> } = {}
     server.use(...loaded(),
-      http.get('*/api/v2/11/declarations/periods', ({ request }) => {
-        expect(new URL(request.url).searchParams.get('kind')).toBe('vat_return')
-        return HttpResponse.json([{ period_from: '2026-07-01', period_to: '2026-09-30', granularity: 'quarter' }, { period_from: '2026-04-01', period_to: '2026-06-30', granularity: 'quarter' }])
-      }),
+      periods({ vat_return: [q3, q2], supplement: [q2], icp_declaration: [q3] }),
       http.get('*/api/v2/11/declarations/preview', ({ request }) => {
         expect(new URL(request.url).searchParams.get('period')).toBe('20260701..20260930')
         return HttpResponse.json(preview)
@@ -122,6 +126,17 @@ describe('VAT returns', () => {
     expect(sent.vat_return).toEqual({ kind: 'vat_return', period: '20260701..20260930' })
   })
 
+  it('cannot choose a supplement without corrections nor an ICP declaration without EU supplies', async () => {
+    server.use(...loaded(), periods({ vat_return: [q3], supplement: [], icp_declaration: [] }))
+    renderAt('/11/declarations/new')
+    expect(await screen.findByRole('radio', { name: /Supplementary VAT return/ })).toBeDisabled()
+    expect(screen.getByRole('radio', { name: /ICP declaration/ })).toBeDisabled()
+    expect(screen.getByRole('radio', { name: /^VAT return/ })).toBeChecked()
+    expect(screen.getByText('The "Supplementary VAT return" option cannot be selected because there are no corrections.')).toBeInTheDocument()
+    expect(screen.getByText(/You cannot submit an ICP declaration because no goods or services have been supplied abroad/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+  })
+
   it('files an ICP declaration with goods or services per customer', async () => {
     let sent: { vat_return?: Record<string, unknown> } = {}
     const icp: VatPreview = {
@@ -129,7 +144,7 @@ describe('VAT returns', () => {
       icp_lines: [{ contact_id: '5', name: 'Beispiel GmbH', country: 'DE', vat_number: 'DE123456789', kind: 'services', amount: '500' }],
     }
     server.use(...loaded(),
-      http.get('*/api/v2/11/declarations/periods', () => HttpResponse.json([{ period_from: '2026-07-01', period_to: '2026-09-30', granularity: 'quarter' }])),
+      periods({ vat_return: [q3], supplement: [], icp_declaration: [q3] }),
       http.get('*/api/v2/11/declarations/preview', () => HttpResponse.json(icp)),
       http.post('*/api/v2/11/declarations', async ({ request }) => {
         sent = await request.json() as typeof sent

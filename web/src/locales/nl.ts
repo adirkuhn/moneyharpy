@@ -595,6 +595,11 @@ export const nl: Messages = {
       kinds: { goods: 'Goederen', services: 'Diensten' },
     },
     new: {
+      unavailable: {
+        vat_return: 'De optie "Btw-aangifte" kan niet worden gekozen omdat er geen afgelopen periode meer is om aan te geven.',
+        supplement: 'De optie "Suppletie btw-aangifte" kan niet worden gekozen omdat er geen correcties zijn.',
+        icp_declaration: 'Je kunt geen ICP-opgaaf doen omdat er geen goederen of diensten binnen de EU naar het buitenland zijn geleverd in een periode waarvoor nog geen ICP-opgaaf is gedaan.',
+      },
       title: 'Nieuwe btw-aangifte doen', type: 'Type', next: 'Volgende', period: 'Periode', check: 'Controle', submit: 'Indienen',
       kindText: {
         vat_return: 'Doe je gewone periodieke btw-aangifte over je verkopen en uitgaven van de afgelopen periode.',

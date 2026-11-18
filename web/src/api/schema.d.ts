@@ -4178,7 +4178,7 @@ export interface paths {
         };
         /**
          * Periods a return can be filed for
-         * @description The latest first. For a VAT return or ICP declaration the periods of the declaration period setting that have ended and are not declared yet, from the first booking on; for a supplementary return the periods declared. Also needs the sales_invoices permission. MoneyHarpy extension.
+         * @description The latest first. For a VAT return the periods of the declaration period setting that have ended and are not declared yet, from the first booking on; for an ICP declaration those of them with supplies to businesses in other EU countries (box 3b); for a supplementary return the declared periods whose amounts changed since. None means the kind cannot be filed now. Also needs the sales_invoices permission. MoneyHarpy extension.
          */
         get: operations["listVatReturnPeriods"];
         put?: never;

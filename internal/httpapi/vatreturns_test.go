@@ -173,10 +173,13 @@ func TestVatReturns(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodDelete, declarations+"/"+filed.ID, nil), http.StatusUnprocessableEntity)
 
-	// A supplement of the declared quarter has nothing to add.
-	sup := decode[vatReturn](t, owner.do(http.MethodGet, declarations+"/preview?kind=supplement&period="+period, nil))
-	if len(sup.Boxes) != 0 || sup.Total != "0.0" {
-		t.Errorf("supplement preview = %+v", sup)
+	// Nothing changed in the declared quarter, so it cannot be supplemented.
+	if got := decode[[]any](t, owner.do(http.MethodGet, declarations+"/periods?kind=supplement", nil)); len(got) != 0 {
+		t.Errorf("supplement periods = %v, want none", got)
+	}
+	wantStatus(t, owner.do(http.MethodGet, declarations+"/preview?kind=supplement&period="+period, nil), http.StatusUnprocessableEntity)
+	if got := decode[[]any](t, owner.do(http.MethodGet, declarations+"/periods?kind=icp_declaration", nil)); len(got) != 1 {
+		t.Errorf("icp periods = %v, want the quarter with the German sale", got)
 	}
 
 	// The ICP declaration lists the German customer.

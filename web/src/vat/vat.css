@@ -28,6 +28,8 @@
 .vat-kind.is-checked { border-color: var(--blue); background: var(--surface); color: var(--text); }
 .vat-kind input { margin: 0.125rem 0 0; accent-color: var(--blue); }
 .vat-kind__text { grid-column: 1 / -1; color: var(--muted); font-size: 0.875rem; }
+.vat-kind.is-disabled { cursor: not-allowed; opacity: 0.6; }
+.vat-info--below { margin: 0.75rem 0 0; }
 @media (max-width: 48rem) {
   .vat-kinds, .vat-kinds--single { grid-template-columns: minmax(0, 1fr); }
 }

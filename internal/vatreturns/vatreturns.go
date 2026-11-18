@@ -267,9 +267,10 @@ type Candidate struct {
 }
 
 // Periods are the periods a return of the kind can be filed for, the latest
-// first: for a VAT return or ICP declaration the ended periods not
-// declared yet, from the first booking on; for a supplement the periods
-// declared.
+// first: for a VAT return the ended periods not declared yet, from the
+// first booking on; for an ICP declaration those with supplies to
+// businesses in other EU countries; for a supplement the declared periods
+// that changed since.
 func (s *Service) Periods(ctx context.Context, admin, user resource.ID, kind string) ([]Candidate, error) {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
@@ -287,9 +288,17 @@ func (s *Service) Periods(ctx context.Context, admin, user resource.ID, kind str
 		return nil, err
 	}
 	if kind == Supplement {
-		var out []Candidate
+		// As Moneybird, only a declared period that changed since can be supplemented.
+		out := []Candidate{}
 		for _, r := range returns {
-			if r.Kind == VATReturn {
+			if r.Kind != VATReturn {
+				continue
+			}
+			now, err := s.boxes(ctx, admin, r.Period)
+			if err != nil {
+				return nil, err
+			}
+			if len(Minus(now, declared(returns, r.Period))) > 0 {
 				out = append(out, Candidate{Period: r.Period, Granularity: r.Granularity})
 			}
 		}
@@ -314,6 +323,16 @@ func (s *Service) Periods(ctx context.Context, admin, user resource.ID, kind str
 		p := whole(parts[i], granularity)
 		if !p.To.Before(today) || slices.ContainsFunc(returns, func(r Return) bool { return r.Kind == declared && overlaps(r.Period, p) }) {
 			continue
+		}
+		if kind == ICP {
+			// As Moneybird, an ICP declaration needs supplies to businesses in other EU countries.
+			lines, err := s.store.ICPSums(ctx, admin, p)
+			if err != nil {
+				return nil, err
+			}
+			if len(lines) == 0 {
+				continue
+			}
 		}
 		out = append(out, Candidate{Period: p, Granularity: granularity})
 	}
