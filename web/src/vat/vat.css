@@ -25,6 +25,7 @@
 .vat-boxes, .vat-copy, .vat-icp, .vat-bookings { table-layout: auto; }
 .vat-boxes th:last-child, .vat-copy th:last-child, .vat-icp th:last-child, .vat-bookings th:last-child { width: auto; }
 .vat-boxes__code { width: 3rem; white-space: nowrap; }
+.vat-copy tr + tr th { border-top: 1px solid var(--line); }
 .vat-boxes__amount, .data-table th.vat-boxes__amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .vat-boxes__section th { background: var(--bg); color: var(--text); font-weight: 600; }
 .vat-boxes__part td { color: var(--muted); font-size: 0.875rem; }
