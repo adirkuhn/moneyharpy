@@ -148,6 +148,8 @@ export const nl: Messages = {
     balanced: 'Debet en credit zijn gelijk.', difference: 'Verschil: {{amount}}', save: 'Memoriaalboeking opslaan', delete: 'Verwijderen', confirmDelete: 'Definitief verwijderen',
   },
   list: {
+    deactivated_one: 'Er is {{count}} gedeactiveerd item.', deactivated_other: 'Er zijn {{count}} gedeactiveerde items.',
+    showDeactivated: 'Toon gedeactiveerde items.', hideDeactivated: 'Verberg gedeactiveerde items.',
     moreInfo: 'Meer informatie', statistics: 'Statistieken tonen', export: 'Exporteren', moreActions: 'Meer acties', notAvailable: 'Nog niet beschikbaar.',
     excelPerInvoice: 'Excel per factuur', excelPerRow: 'Excel per regel', composeExport: 'Export samenstellen',
     quickFilter: 'Snelfilter', advancedFilter: 'Uitgebreid filter', filter: 'Filteren', all: 'Alle', status: 'Status',
@@ -584,25 +586,20 @@ export const nl: Messages = {
     },
   },
   projects: {
-    title: 'Projecten', add: 'Project toevoegen', newTitle: 'Nieuw project', backToList: 'Naar Projecten', form: 'Project', save: 'Project opslaan',
-    filters: 'Filters voor projecten', views: { active: 'Actieve projecten', archived: 'Gearchiveerde projecten', all: 'Alle projecten' },
+    title: 'Projecten', add: 'Project toevoegen', addShort: 'Toevoegen', newTitle: 'Project toevoegen', editTitle: 'Project bewerken', form: 'Project', save: 'Opslaan',
     loadError: 'De projecten konden niet worden geladen. Herlaad de pagina om het opnieuw te proberen.',
-    empty: 'Nog geen projecten. Voeg er een toe om de omzet en kosten van een klus bij elkaar te zien.',
-    noMatches: 'Geen projecten gevonden voor dit filter. Probeer een ander.',
     intro: {
-      title: 'Houd je projecten bij', text: 'Groepeer facturen, kosten en uren per project, en zie hoe elk project ervoor staat.',
-      add: 'Project toevoegen', addText: 'Geef het een naam en eventueel een budget in uren.',
-      book: 'Erop boeken', bookText: 'Kies het project bij factuurregels, bonnetjes en uren.',
-      report: 'Bekijk de resultaten', reportText: 'Vergelijk de omzet en kosten van elk project.',
+      title: 'Projecten toevoegen', text: 'Een project gebruik je voor verschillende projecten of afdelingen binnen je bedrijf. Je voegt een project eenvoudig toe aan facturen, offertes of inkomende documenten.',
+      add: 'Toevoegen', addText: 'Maak een project aan, geef het een naam en stel zo nodig een urenbudget in.',
+      select: 'Selecteren', selectText: 'Kies het bijbehorende project bij het maken van een factuur of het verwerken van een inkomend document.',
+      insight: 'Inzicht', insightText: 'Bekijk de rapportages ‘Omzet per project’ en ‘Kosten per project’ voor meer inzicht in de resultaten van je projecten.',
     },
-    name: 'Naam', budget: 'Budget', budgetHelp: 'In uren. Laat leeg voor geen budget.', hours_one: '{{count}} uur', hours_other: '{{count}} uur', status: 'Status',
-    states: { active: 'Actief', archived: 'Gearchiveerd' },
-    detailsTitle: 'Projectgegevens', editTitle: 'Project bewerken',
-    archive: 'Archiveren', reactivate: 'Opnieuw activeren', delete: 'Verwijderen', confirmDelete: 'Project verwijderen',
-    confirmDeleteText: 'Dit project verwijderen? Als er iets op geboekt is, wordt het in plaats daarvan gearchiveerd.',
+    name: 'Projectnaam', budget: 'Budget (uren)',
+    archive: 'Archiveren', reactivate: 'Opnieuw activeren', delete: 'Verwijderen', confirmDelete: 'Weet je zeker dat je dit project wilt verwijderen?',
     keptNotice: 'Er is iets op dit project geboekt, dus het is gearchiveerd in plaats van verwijderd.',
     archivedNotice: 'Dit project is gearchiveerd en wordt niet aangeboden voor nieuwe boekingen.',
   },
+
   vat: {
     title: 'Btw-aangiftes', declare: 'Nieuwe btw-aangifte doen', backToList: 'Naar btw-aangiftes',
     loadError: 'De btw-aangiftes konden niet worden geladen. Herlaad de pagina om het opnieuw te proberen.',
@@ -1417,8 +1414,6 @@ export const nl: Messages = {
   assets: {
     title: 'Activa', backTo: 'Activa',
     add: 'Activum toevoegen', addShort: 'Toevoegen', category: 'Categorie', commissioningDate: 'Datum ingebruikname', depreciated: 'Afgeschreven',
-    deactivatedCount_one: 'Er is {{count}} gedeactiveerd item.', deactivatedCount_other: 'Er zijn {{count}} gedeactiveerde items.',
-    showDeactivated: 'Toon gedeactiveerde items.', hideDeactivated: 'Verberg gedeactiveerde items.',
     intro: {
       title: 'Aan de slag met activa',
       text: 'Een laptop of bureau gekocht? Die gaan meerdere jaren mee, dus de aanschafwaarde wordt verdeeld over de jaren dat je ze gebruikt. Dit heet afschrijven.',

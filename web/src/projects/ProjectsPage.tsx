@@ -1,43 +1,66 @@
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { InfoIcon, ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
+import { Deactivated } from '../list/Deactivated'
 import { DocumentTable } from '../list/DocumentTable'
-import { FilterPanel } from '../list/FilterPanel'
 import { GettingStarted } from '../list/GettingStarted'
-import { ListActions } from '../list/ListActions'
-import { perPage, type Project, type ProjectState, projectStates, useProjects } from './queries'
+import { perPage, type Project, type ProjectState, useProjectCount, useProjects } from './queries'
 
-/** The administration's projects, active ones unless filtered otherwise, and paged (/projects). */
+/**
+ * The administration's projects, after Moneybird's list: the active ones by
+ * name, and below them how many are archived and a way to show those too
+ * (/projects).
+ */
 export function ProjectsPage() {
   const { t } = useTranslation()
   const { administrationId = '' } = useParams()
   const [params] = useSearchParams()
-  const asked = params.get('state') ?? ''
-  const state: ProjectState = (projectStates as readonly string[]).includes(asked) ? (asked as ProjectState) : 'active'
+  const state: ProjectState = params.get('state') === 'all' ? 'all' : 'active'
   const page = Math.max(1, Number(params.get('page')) || 1)
   const projects = useProjects(administrationId, state, page)
+  const archived = useProjectCount(administrationId, 'archived')
+  const all = useProjectCount(administrationId, 'all')
   const [info, setInfo] = useState<boolean | null>(null)
   const introId = useId()
   const base = `/${administrationId}/projects`
   const shown = projects.data?.projects ?? []
-  const firstUse = projects.data !== undefined && shown.length === 0 && state === 'active' && page === 1
+  const firstUse = all.data === 0
   const introShown = info ?? firstUse
 
-  const quick = projectStates.map((s) => ({ label: t(`projects.views.${s}`), to: s === 'active' ? base : `${base}?state=${s}`, current: s === state }))
+  const footer = firstUse ? (
+    <Link className="document-table__add" to={`${base}/new`}>
+      <ListIcon kind="plus" />
+      {t('projects.add')}
+    </Link>
+  ) : archived.data !== undefined && (
+    <Deactivated count={archived.data} shown={state === 'all'} show={`${base}?state=all`} hide={base} />
+  )
 
   return (
     <Page
       wide
       title={t('projects.title')}
-      lead={<FilterPanel label={t(`projects.views.${state}`)} title={t('projects.filters')} quick={quick} />}
       actions={
-        <ListActions
-          info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
-          exports={[]}
-          primary={{ to: `${base}/new`, label: t('projects.add') }}
-        />
+        <>
+          <button
+            type="button"
+            className={`btn btn--secondary btn--icon${introShown ? ' is-active' : ''}`}
+            aria-label={t('list.moreInfo')}
+            title={t('list.moreInfo')}
+            aria-expanded={introShown}
+            aria-controls={introId}
+            onClick={() => setInfo(!introShown)}
+          >
+            <InfoIcon />
+          </button>
+          <Link className="btn btn--accent btn--with-icon" to={`${base}/new`}>
+            <ListIcon kind="plus" />
+            <span>{t('projects.addShort')}</span>
+          </Link>
+        </>
       }
     >
       {introShown && (
@@ -47,36 +70,30 @@ export function ProjectsPage() {
           text={t('projects.intro.text')}
           steps={[
             { icon: 'plus', title: t('projects.intro.add'), text: t('projects.intro.addText') },
-            { icon: 'file', title: t('projects.intro.book'), text: t('projects.intro.bookText') },
-            { icon: 'chart', title: t('projects.intro.report'), text: t('projects.intro.reportText') },
+            { icon: 'check', title: t('projects.intro.select'), text: t('projects.intro.selectText') },
+            { icon: 'chart', title: t('projects.intro.insight'), text: t('projects.intro.insightText') },
           ]}
         />
       )}
       {!projects.data ? (
         projects.error ? <p className="empty">{t('projects.loadError')}</p> : <Loading />
-      ) : shown.length === 0 ? (
-        <p className="empty">{firstUse ? t('projects.empty') : t('projects.noMatches')}</p>
       ) : (
         <DocumentTable<Project>
           label={t('projects.title')}
           rows={shown}
           rowKey={(p) => p.id ?? ''}
-          href={(p) => `${base}/${p.id}`}
+          href={(p) => `${base}/${p.id}/edit`}
           total={projects.data.total}
           perPage={perPage}
+          footer={footer}
           columns={[
-            { key: 'name', header: t('projects.name'), link: true, cell: (p) => p.name },
-            { key: 'budget', header: t('projects.budget'), kind: 'amount', cell: (p) => (p.budget === null || p.budget === undefined ? '' : t('projects.hours', { count: p.budget })) },
-            { key: 'state', header: t('projects.status'), kind: 'state', cell: (p) => <ProjectBadge project={p} /> },
+            {
+              key: 'name', header: t('projects.name'), link: true,
+              cell: (p) => (p.state === 'archived' ? <span className="list-inactive">{p.name}</span> : p.name),
+            },
           ]}
         />
       )}
     </Page>
   )
-}
-
-export function ProjectBadge({ project }: { project: Project }) {
-  const { t } = useTranslation()
-  const archived = project.state === 'archived'
-  return <span className={`badge badge--${archived ? 'archived' : 'active'}`}>{t(`projects.states.${archived ? 'archived' : 'active'}`)}</span>
 }

@@ -7,6 +7,7 @@ import { useLedgerAccounts } from '../bookkeeping/queries'
 import { InfoIcon, ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
+import { Deactivated } from '../list/Deactivated'
 import { DocumentTable } from '../list/DocumentTable'
 import { GettingStarted } from '../list/GettingStarted'
 import { type Asset, type AssetView, perPage, useAssetCount, useAssets } from './queries'
@@ -43,12 +44,7 @@ export function AssetsPage() {
       {t('assets.add')}
     </Link>
   ) : deactivated !== undefined && (
-    <span className="asset-list__deactivated">
-      {t('assets.deactivatedCount', { count: deactivated })}{' '}
-      {view === 'active'
-        ? deactivated > 0 && <Link to={`${base}?active=false`}>{t('assets.showDeactivated')}</Link>
-        : <Link to={base}>{t('assets.hideDeactivated')}</Link>}
-    </span>
+    <Deactivated count={deactivated} shown={view === 'all'} show={`${base}?active=false`} hide={base} />
   )
 
   return (

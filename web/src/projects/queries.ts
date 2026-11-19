@@ -6,8 +6,7 @@ export type Project = components['schemas']['Project']
 export type ProjectChanges = components['schemas']['ProjectRequest']['project']
 
 export const perPage = 25
-export const projectStates = ['active', 'archived', 'all'] as const
-export type ProjectState = (typeof projectStates)[number]
+export type ProjectState = 'active' | 'archived' | 'all'
 
 const admin = (administrationId: string) => ({ administration_id: administrationId })
 const one = (administrationId: string, id: string) => ({ params: { path: { ...admin(administrationId), id } } })
@@ -25,6 +24,22 @@ export function useProjects(administrationId: string, state: ProjectState, page:
         throw new ApiError(response.status, error)
       }
       return { projects: data ?? [], total: Number(response.headers.get('X-Total-Count') ?? data?.length ?? 0) }
+    },
+  })
+}
+
+/** How many projects there are in a state (the X-Total-Count of a one-row page). */
+export function useProjectCount(administrationId: string, state: ProjectState) {
+  return useQuery({
+    queryKey: ['projects', administrationId, state, 'count'],
+    queryFn: async () => {
+      const { error, response } = await api.GET('/api/v2/{administration_id}/projects', {
+        params: { path: admin(administrationId), query: { filter: `state:${state}`, per_page: '1' } },
+      })
+      if (!response.ok) {
+        throw new ApiError(response.status, error)
+      }
+      return Number(response.headers.get('X-Total-Count') ?? 0)
     },
   })
 }
