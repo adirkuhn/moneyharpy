@@ -75,3 +75,9 @@
   .task-sheet__top { grid-template-columns: minmax(0, 1fr); }
   .task-sheet__deadline, .task-sheet__switch { text-align: left; justify-self: start; }
 }
+
+.task-row__box { flex: none; width: 1rem; height: 1rem; border: 1px solid var(--input-border); border-radius: 4px; background: var(--bg); }
+.task-sheet__deadline p + p { margin-top: 0.75rem; }
+.template-deadline { display: flex; align-items: center; gap: 0.5rem; }
+.template-deadline input[type='number'] { width: 5rem; flex: none; }
+.alert + .task-sheet { margin-top: 0.75rem; }

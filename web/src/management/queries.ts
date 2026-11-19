@@ -32,9 +32,10 @@ export function defaultPermissions(type: UserType): Permission[] {
 const admin = (administrationId: string) => ({ params: { path: { administration_id: administrationId } } })
 const one = (administrationId: string, id: string) => ({ params: { path: { administration_id: administrationId, id } } })
 
-export function useUsers(administrationId: string) {
+export function useUsers(administrationId: string, enabled = true) {
   return useQuery({
     queryKey: ['users', administrationId],
+    enabled,
     queryFn: () => unwrap(api.GET('/api/v2/{administration_id}/users', { params: { path: { administration_id: administrationId }, query: { include_inactive: true, include_accountants: true } } })),
   })
 }

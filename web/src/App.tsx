@@ -91,6 +91,7 @@ import { TaskListPage, TaskListRedirect } from './tasklists/TaskListPage'
 import { TaskListsPage } from './tasklists/TaskListsPage'
 import { EditTaskListPage, NewTaskListPage } from './tasklists/TaskListFormPage'
 import { TemplateSelectionPage } from './tasklists/TemplateSelectionPage'
+import { EditTemplatePage, NewTemplatePage, TemplatePage, TemplatesPage } from './tasklists/TemplatePages'
 import { BillTimePage } from './timeentries/BillTimePage'
 import { HoursReportPage } from './timeentries/HoursReportPage'
 import { ProjectsReportPage } from './timeentries/ProjectsReportPage'
@@ -186,6 +187,10 @@ export function AppRoutes() {
           <Route path="/:administrationId/task_lists/lists/templates_selection" element={<TemplateSelectionPage />} />
           <Route path="/:administrationId/task_lists/lists/:taskListId" element={<TaskListPage />} />
           <Route path="/:administrationId/task_lists/lists/:taskListId/edit" element={<EditTaskListPage />} />
+          <Route path="/:administrationId/task_lists/templates" element={<TemplatesPage />} />
+          <Route path="/:administrationId/task_lists/templates/new" element={<NewTemplatePage />} />
+          <Route path="/:administrationId/task_lists/templates/:templateId" element={<TemplatePage />} />
+          <Route path="/:administrationId/task_lists/templates/:templateId/edit" element={<EditTemplatePage />} />
           <Route path="/:administrationId/task_lists/:taskListId" element={<TaskListRedirect />} />
           <Route path="/:administrationId/reports" element={<ReportsOverviewPage />} />
           <Route path="/:administrationId/events" element={<EventsPage />} />

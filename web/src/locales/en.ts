@@ -764,6 +764,20 @@ export const en = {
     chooseTemplate: 'Add from template', noTemplates: 'There are no templates yet.', addTemplate: 'Add template',
   },
 
+  taskTemplates: {
+    title: 'Templates', add: 'Add template', newTitle: 'New template', editTitle: 'Edit template', backToList: 'To Templates', form: 'Template',
+    loadError: 'The templates could not be loaded. Reload the page to try again.', options: 'Template options',
+    intro: {
+      title: 'Getting started with templates',
+      text: 'Choose a template or make your own. With a template you keep a grip on progress and work more efficiently together in your administration.',
+      trusted: 'Choose from trusted templates', trustedText: 'Start a task list directly from a template made by you or your accountant.',
+      repeat: 'Avoid repetitive work', repeatText: 'Templates save you a lot of time if you often work with the same tasks. Use them for recurring workflows.',
+      together: 'Efficient collaboration', togetherText: 'Work together and share task lists with your accountant or other users in your administration.',
+    },
+    about: 'About this template', notice: 'Changes in this template will not be directly applied to existing task lists. The changes will only be visible when a new task list based on this template is created.',
+    days: 'Days', daysAfterPeriod: 'days after the end of the period', daysAfter_one: '{{count}} day after the period', daysAfter_other: '{{count}} days after the period',
+    confirmDelete: 'Are you sure you want to delete this template?',
+  },
   sidenav: {
     label: 'Administration menu', menu: 'Menu', collapse: 'Collapse menu', expand: 'Expand menu', collapseShort: 'Collapse', later: 'Not available yet',
     items: {

@@ -766,6 +766,20 @@ export const nl: Messages = {
     chooseTemplate: 'Toevoegen vanuit sjabloon', noTemplates: 'Er zijn nog geen sjablonen.', addTemplate: 'Sjabloon toevoegen',
   },
 
+  taskTemplates: {
+    title: 'Sjablonen', add: 'Sjabloon toevoegen', newTitle: 'Nieuw sjabloon', editTitle: 'Sjabloon bewerken', backToList: 'Naar Sjablonen', form: 'Sjabloon',
+    loadError: 'De sjablonen konden niet worden geladen. Herlaad de pagina om het opnieuw te proberen.', options: 'Opties van het sjabloon',
+    intro: {
+      title: 'Aan de slag met sjablonen',
+      text: 'Kies een sjabloon of maak er zelf een. Met een sjabloon houd je grip op de voortgang en werk je efficiënter samen in je administratie.',
+      trusted: 'Kies uit vertrouwde sjablonen', trustedText: 'Begin direct een takenlijst vanuit een sjabloon van jezelf of je boekhouder.',
+      repeat: 'Voorkom herhaald werk', repeatText: 'Sjablonen besparen je veel tijd als je vaak met dezelfde taken werkt. Gebruik ze voor terugkerende werkzaamheden.',
+      together: 'Efficiënt samenwerken', togetherText: 'Werk samen en deel takenlijsten met je boekhouder of andere gebruikers in je administratie.',
+    },
+    about: 'Over dit sjabloon', notice: 'Wijzigingen in dit sjabloon worden niet direct toegepast op bestaande takenlijsten. Ze zijn pas zichtbaar wanneer er een nieuwe takenlijst op basis van dit sjabloon wordt gemaakt.',
+    days: 'Dagen', daysAfterPeriod: 'dagen na het einde van de periode', daysAfter_one: '{{count}} dag na de periode', daysAfter_other: '{{count}} dagen na de periode',
+    confirmDelete: 'Weet je zeker dat je dit sjabloon wilt verwijderen?',
+  },
   sidenav: {
     label: 'Administratiemenu', menu: 'Menu', collapse: 'Menu inklappen', expand: 'Menu uitklappen', collapseShort: 'Inklappen', later: 'Nog niet beschikbaar',
     items: {
