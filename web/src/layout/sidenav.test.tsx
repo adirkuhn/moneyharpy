@@ -68,16 +68,13 @@ describe('side menu', () => {
     expect(within(nav).queryByRole('link', { name: 'Balance sheet' })).toBeNull()
   })
 
-  it('shows parts that do not exist yet without leading anywhere', async () => {
+  it('leads to the task lists and their templates, quotes and payments', async () => {
     open()
     renderAt('/11/feed')
     const nav = await menu()
     expect(within(nav).getByRole('link', { name: 'VAT returns' })).toHaveAttribute('href', '/11/declarations')
     await userEvent.click(within(nav).getByRole('button', { name: 'Task lists' }))
-    const audit = within(nav).getByRole('link', { name: 'Templates' })
-    expect(audit).toHaveAttribute('aria-disabled', 'true')
-    expect(audit).not.toHaveAttribute('href')
-    expect(audit).toHaveAccessibleDescription('Not available yet')
+    expect(within(nav).getByRole('link', { name: 'Templates' })).toHaveAttribute('href', '/11/task_lists/templates')
     expect(within(nav).getByRole('link', { name: 'Quotes' })).toHaveAttribute('href', '/11/estimates')
     await userEvent.click(within(nav).getByRole('button', { name: 'Bank' }))
     expect(within(nav).getByRole('link', { name: 'Payments' })).toHaveAttribute('href', '/11/purchase_transaction_batches')
