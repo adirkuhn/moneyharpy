@@ -1875,6 +1875,51 @@ func (e ProductFrequencyType) Valid() bool {
 	}
 }
 
+// Defines values for ProductProductType.
+const (
+	ProductProductTypeDigitalService ProductProductType = "digital_service"
+	ProductProductTypeLessThannil    ProductProductType = "<nil>"
+	ProductProductTypeProduct        ProductProductType = "product"
+	ProductProductTypeService        ProductProductType = "service"
+)
+
+// Valid indicates whether the value is a known member of the ProductProductType enum.
+func (e ProductProductType) Valid() bool {
+	switch e {
+	case ProductProductTypeDigitalService:
+		return true
+	case ProductProductTypeLessThannil:
+		return true
+	case ProductProductTypeProduct:
+		return true
+	case ProductProductTypeService:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProductVatRateType.
+const (
+	ProductVatRateTypeLessThannil ProductVatRateType = "<nil>"
+	ProductVatRateTypeReduced     ProductVatRateType = "reduced"
+	ProductVatRateTypeStandard    ProductVatRateType = "standard"
+)
+
+// Valid indicates whether the value is a known member of the ProductVatRateType enum.
+func (e ProductVatRateType) Valid() bool {
+	switch e {
+	case ProductVatRateTypeLessThannil:
+		return true
+	case ProductVatRateTypeReduced:
+		return true
+	case ProductVatRateTypeStandard:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ProductRequestProductCheckoutType.
 const (
 	ProductRequestProductCheckoutTypeEmpty        ProductRequestProductCheckoutType = ""
@@ -9193,6 +9238,9 @@ type Product struct {
 	// Example: 123456789012345678
 	AdministrationId Identifier `json:"administration_id"`
 
+	// CheckoutDescription The text of the checkout page, when it is not the description. MoneyHarpy extension.
+	CheckoutDescription *string `json:"checkout_description,omitempty"`
+
 	// CreatedAt Moneybird-compatible timestamp.
 	CreatedAt     Timestamp             `json:"created_at"`
 	Currency      string                `json:"currency"`
@@ -9206,11 +9254,21 @@ type Product struct {
 	Id         Identifier `json:"id"`
 	Identifier *string    `json:"identifier,omitempty"`
 
+	// Image The product's image, or null. MoneyHarpy extension.
+	Image *struct {
+		ContentType string `json:"content_type"`
+		Filename    string `json:"filename"`
+		Size        int    `json:"size"`
+	} `json:"image,omitempty"`
+
 	// LedgerAccountId A unique record identifier. Parse as a string.
 	//
 	// Example: 123456789012345678
 	LedgerAccountId Identifier `json:"ledger_account_id"`
 	Price           string     `json:"price"`
+
+	// ProductType What the product is, for the smart tax selection. MoneyHarpy extension.
+	ProductType *ProductProductType `json:"product_type,omitempty"`
 
 	// TaxRateId Moneybird-compatible identifier_nullable.
 	TaxRateId *IdentifierNullable `json:"tax_rate_id,omitempty"`
@@ -9221,10 +9279,19 @@ type Product struct {
 
 	// Uri MoneyHarpy extension. Canonical path of this resource.
 	Uri string `json:"uri"`
+
+	// VatRateType The kind of VAT rate, for the smart tax selection. MoneyHarpy extension.
+	VatRateType *ProductVatRateType `json:"vat_rate_type,omitempty"`
 }
 
 // ProductFrequencyType defines model for Product.FrequencyType.
 type ProductFrequencyType string
+
+// ProductProductType What the product is, for the smart tax selection. MoneyHarpy extension.
+type ProductProductType string
+
+// ProductVatRateType The kind of VAT rate, for the smart tax selection. MoneyHarpy extension.
+type ProductVatRateType string
 
 // ProductRequest defines model for ProductRequest.
 type ProductRequest struct {
@@ -15279,6 +15346,11 @@ type ListProductsParamsActive string
 // ListProductsParamsForCheckout defines parameters for ListProducts.
 type ListProductsParamsForCheckout string
 
+// SetProductImageMultipartBody defines parameters for SetProductImage.
+type SetProductImageMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
 // CreateProductSalesLinkParams defines parameters for CreateProductSalesLink.
 type CreateProductSalesLinkParams struct {
 	// ContactId The contact to fill in on the checkout page.
@@ -16133,6 +16205,9 @@ type CreateProductJSONRequestBody = ProductRequest
 
 // UpdateProductJSONRequestBody defines body for UpdateProduct for application/json ContentType.
 type UpdateProductJSONRequestBody = ProductRequest
+
+// SetProductImageMultipartRequestBody defines body for SetProductImage for multipart/form-data ContentType.
+type SetProductImageMultipartRequestBody SetProductImageMultipartBody
 
 // CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
 type CreateProjectJSONRequestBody = ProjectRequest
@@ -23192,6 +23267,15 @@ type ServerInterface interface {
 	// UpdateProduct Update a product
 	// (PATCH /api/v2/{administration_id}/products/{id})
 	UpdateProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteProductImage Remove a product's image
+	// (DELETE /api/v2/{administration_id}/products/{id}/image)
+	DeleteProductImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DownloadProductImage Download a product's image
+	// (GET /api/v2/{administration_id}/products/{id}/image)
+	DownloadProductImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// SetProductImage Set a product's image
+	// (PUT /api/v2/{administration_id}/products/{id}/image)
+	SetProductImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// CreateProductSalesLink Create an online sales link
 	// (POST /api/v2/{administration_id}/products/{id}/sales_link)
 	CreateProductSalesLink(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, params CreateProductSalesLinkParams)
@@ -25436,6 +25520,24 @@ func (_ Unimplemented) GetProduct(w http.ResponseWriter, r *http.Request, admini
 // UpdateProduct Update a product
 // (PATCH /api/v2/{administration_id}/products/{id})
 func (_ Unimplemented) UpdateProduct(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteProductImage Remove a product's image
+// (DELETE /api/v2/{administration_id}/products/{id}/image)
+func (_ Unimplemented) DeleteProductImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DownloadProductImage Download a product's image
+// (GET /api/v2/{administration_id}/products/{id}/image)
+func (_ Unimplemented) DownloadProductImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetProductImage Set a product's image
+// (PUT /api/v2/{administration_id}/products/{id}/image)
+func (_ Unimplemented) SetProductImage(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -36973,6 +37075,111 @@ func (siw *ServerInterfaceWrapper) UpdateProduct(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteProductImage operation middleware
+func (siw *ServerInterfaceWrapper) DeleteProductImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteProductImage(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadProductImage operation middleware
+func (siw *ServerInterfaceWrapper) DownloadProductImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadProductImage(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetProductImage operation middleware
+func (siw *ServerInterfaceWrapper) SetProductImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetProductImage(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateProductSalesLink operation middleware
 func (siw *ServerInterfaceWrapper) CreateProductSalesLink(w http.ResponseWriter, r *http.Request) {
 
@@ -44471,6 +44678,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/api/v2/{administration_id}/products/{id}", wrapper.UpdateProduct)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/products/{id}/image", wrapper.DeleteProductImage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/products/{id}/image", wrapper.DownloadProductImage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/api/v2/{administration_id}/products/{id}/image", wrapper.SetProductImage)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/products/{id}/sales_link", wrapper.CreateProductSalesLink)

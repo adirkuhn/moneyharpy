@@ -33,6 +33,12 @@ type journalDocument struct {
 // attach sends a file as multipart/form-data, checked against the contract.
 func (c *client) attach(path, filename, contentType string, data []byte) response {
 	c.t.Helper()
+	return c.sendFile(http.MethodPost, path, filename, contentType, data)
+}
+
+// sendFile sends a file as multipart/form-data with the method, checked against the contract.
+func (c *client) sendFile(method, path, filename, contentType string, data []byte) response {
+	c.t.Helper()
 	var body bytes.Buffer
 	form := multipart.NewWriter(&body)
 	header := textproto.MIMEHeader{}
@@ -41,7 +47,7 @@ func (c *client) attach(path, filename, contentType string, data []byte) respons
 	part, _ := form.CreatePart(header)
 	_, _ = part.Write(data)
 	_ = form.Close()
-	req, err := http.NewRequest(http.MethodPost, c.base+path, &body)
+	req, err := http.NewRequest(method, c.base+path, &body)
 	if err != nil {
 		c.t.Fatal(err)
 	}

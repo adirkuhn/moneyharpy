@@ -17,6 +17,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/api"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/assets"
+	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/audits"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
@@ -330,6 +331,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		vatreturns.IsNotFound(err),
 		errors.Is(err, purchases.ErrNoSEPAFile),
 		errors.Is(err, products.ErrNotFound),
+		errors.Is(err, products.ErrNoImage),
+		errors.Is(err, attachments.ErrNotFound),
 		errors.Is(err, projects.ErrNotFound),
 		errors.Is(err, subscriptions.ErrNotFound),
 		errors.Is(err, downloads.ErrNotFound),

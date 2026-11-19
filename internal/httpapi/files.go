@@ -26,6 +26,7 @@ const (
 	fileExternalAttachment = "external_sales_invoice_attachment"
 	fileJournalAttachment  = "general_journal_document_attachment"
 	fileDownload           = "download"
+	fileProductImage       = "product_image"
 )
 
 // fileLink names a file and the user who asked for it. Download operations
@@ -115,6 +116,9 @@ func (s *server) openAttachment(r *http.Request, l fileLink) (attachments.Attach
 		return s.deps.Sales.OpenEstimateAttachment(r.Context(), l.Admin, l.ID, l.Attachment, l.User)
 	case filePurchaseInvoiceAttachment, fileReceiptAttachment, fileGeneralDocumentAttachment, fileTypelessAttachment:
 		return s.openIncomingAttachment(r, l)
+	case fileProductImage:
+		img, body, err := s.deps.Products.Image(r.Context(), l.Admin, l.ID, l.User)
+		return attachments.Attachment{ID: img.ID, AdministrationID: l.Admin, EntityType: "Product", EntityID: l.ID, Filename: img.Filename, ContentType: img.ContentType, Size: img.Size}, body, err
 	default:
 		return s.deps.Journal.OpenDocumentAttachment(r.Context(), l.Admin, l.ID, l.Attachment, l.User)
 	}

@@ -157,6 +157,7 @@ func run(logger *slog.Logger) error {
 	catalogStore := postgres.NewCatalogStore(pool)
 	subscriptionStore := postgres.NewSubscriptionStore(pool)
 	productService := products.NewService(admins, books, contactService, catalogStore, products.AnyReferences{salesStore, subscriptionStore, purchaseStore}, ids, time.Now)
+	productService.UseImages(attachmentService)
 	projectService := projects.NewService(admins, catalogStore, projects.AnyReferences{salesStore, journalStore, timeEntryStore, purchaseStore}, ids, time.Now)
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	events := history.NewService(postgres.NewEventStore(pool), ids, time.Now)

@@ -1,6 +1,7 @@
 package httpapi_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -205,6 +206,53 @@ func TestProjectsLifecycle(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodDelete, api+"/projects/"+owl.ID, nil), http.StatusNoContent)
 	wantStatus(t, owner.do(http.MethodGet, api+"/projects/"+owl.ID, nil), http.StatusNotFound)
+}
+
+func TestProductImageAndSmartTax(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	a := owner.createAdministration("Harpy")
+	api := "/api/v2/" + a.Id
+	type withImage struct {
+		ID                  string  `json:"id"`
+		ProductType         *string `json:"product_type"`
+		VatRateType         *string `json:"vat_rate_type"`
+		CheckoutDescription *string `json:"checkout_description"`
+		Image               *struct {
+			Filename    string `json:"filename"`
+			ContentType string `json:"content_type"`
+		} `json:"image"`
+	}
+	p := decode[withImage](t, owner.do(http.MethodPost, api+"/products", map[string]any{"product": map[string]any{
+		"title": "Mug", "price": "12", "ledger_account_id": category(t, owner, a.Id, "Revenue"),
+		"product_type": "product", "vat_rate_type": "reduced", "checkout_description": "A big mug",
+	}}))
+	if deref(p.ProductType) != "product" || deref(p.VatRateType) != "reduced" || deref(p.CheckoutDescription) != "A big mug" || p.Image != nil {
+		t.Fatalf("created = %+v", p)
+	}
+	image := api + "/products/" + p.ID + "/image"
+	wantStatus(t, owner.do(http.MethodGet, image, nil), http.StatusNotFound)
+	png := []byte("\x89PNG\r\n\x1a\n" + strings.Repeat("x", 32))
+	set := owner.sendFile(http.MethodPut, image, "mug.png", "image/png", png)
+	wantStatus(t, set, http.StatusOK)
+	if got := decode[withImage](t, set); got.Image == nil || got.Image.Filename != "mug.png" || got.Image.ContentType != "image/png" {
+		t.Fatalf("with image = %+v", got)
+	}
+	if got := decode[withImage](t, owner.do(http.MethodGet, api+"/products/"+p.ID, nil)); got.Image == nil {
+		t.Errorf("read back without its image")
+	}
+	file := owner.follow(owner.do(http.MethodGet, image, nil))
+	if file.status != http.StatusOK || !bytes.Equal(file.body, png) {
+		t.Errorf("downloaded %d, %d bytes", file.status, len(file.body))
+	}
+	wantStatus(t, owner.sendFile(http.MethodPut, image, "terms.pdf", "application/pdf", []byte("%PDF-1.4 x")), http.StatusUnprocessableEntity)
+	gone := owner.do(http.MethodDelete, image, nil)
+	wantStatus(t, gone, http.StatusOK)
+	if got := decode[withImage](t, gone); got.Image != nil {
+		t.Errorf("after delete = %+v", got)
+	}
+	wantStatus(t, owner.do(http.MethodGet, image, nil), http.StatusNotFound)
 }
 
 func TestProductAndProjectWebhooks(t *testing.T) {

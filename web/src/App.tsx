@@ -79,6 +79,7 @@ import { EstimatePage } from './estimates/EstimatePage'
 import { EstimatesPage } from './estimates/EstimatesPage'
 import { RecurringInvoicePage } from './recurring/RecurringInvoicePage'
 import { RecurringInvoicesPage } from './recurring/RecurringInvoicesPage'
+import { ProductFormPage } from './products/ProductFormPage'
 import { ProductPage } from './products/ProductPage'
 import { ProductsPage } from './products/ProductsPage'
 import { ProjectPage } from './projects/ProjectPage'
@@ -146,8 +147,9 @@ export function AppRoutes() {
           <Route path="/:administrationId/estimates/new" element={<EstimatePage />} />
           <Route path="/:administrationId/estimates/:estimateId" element={<EstimatePage />} />
           <Route path="/:administrationId/products" element={<ProductsPage />} />
-          <Route path="/:administrationId/products/new" element={<ProductPage />} />
+          <Route path="/:administrationId/products/new" element={<ProductFormPage />} />
           <Route path="/:administrationId/products/:productId" element={<ProductPage />} />
+          <Route path="/:administrationId/products/:productId/edit" element={<ProductFormPage />} />
           <Route path="/:administrationId/assets" element={<AssetsPage />} />
           <Route path="/:administrationId/assets/:assetId" element={<AssetPage />} />
           <Route path="/:administrationId/projects" element={<ProjectsPage />} />

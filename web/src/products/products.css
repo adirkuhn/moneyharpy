@@ -1,0 +1,40 @@
+/* The product pages, after Moneybird's. */
+.product-image { display: block; max-width: 400px; max-height: 300px; border-radius: 6px; }
+.product-image--small { max-width: 4rem; max-height: 3rem; }
+.product-details { padding: 0.5rem 0; }
+
+/* The form: one column, labels above, the buttons in the middle of its foot. */
+.form-sheet--stacked .form-input { grid-template-columns: minmax(0, 1fr); }
+.form-sheet--stacked .form-input__label { padding-top: 0; }
+.form-sheet--stacked .form-input--check .form-input__label { display: none; }
+.form-sheet--stacked { display: flex; flex-direction: column; align-items: stretch; gap: 1rem; padding: 1.5rem 0 0; }
+.form-sheet--stacked > * { width: calc(100% - 4rem); max-width: 50rem; margin-inline: auto; }
+.form-sheet--stacked .form-input__control { max-width: none; }
+.form-sheet--stacked .form-input__control > :is(input, select, textarea) { max-width: none; }
+.form-sheet--stacked .form-input--medium .form-input__control { max-width: 18rem; }
+.form-sheet--stacked .form-input--small .form-input__control { max-width: 12rem; }
+.form-sheet--stacked .form-input__message { max-width: none; }
+.form-sheet--stacked > .form-sheet__actions { width: 100%; max-width: none; margin-top: 0.5rem; padding: 1.25rem 0 1.5rem; }
+.form-sheet__actions--center { justify-content: center; }
+
+.product-drop__zone {
+  display: flex; justify-content: center; align-items: center; min-height: 3rem; padding: 0.75rem; border: 1px dashed var(--teal);
+  border-radius: 8px; background: color-mix(in srgb, var(--teal) 6%, var(--surface)); color: var(--text); font-size: 0.875rem; font-weight: 600; cursor: pointer;
+}
+.product-drop__zone:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+.product-drop { width: 100%; }
+.product-drop__file { display: flex; align-items: center; gap: 0.75rem; }
+
+.product-amount { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.product-amount__field { position: relative; display: inline-flex; flex: 0 1 12rem; }
+.product-amount__field input { width: 100%; padding-right: 3rem; }
+.product-amount__currency { position: absolute; top: 50%; right: 0.625rem; color: var(--muted); font-size: 0.8125rem; transform: translateY(-50%); pointer-events: none; }
+
+.product-vat { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+.product-vat__label { margin: 0; }
+.product-vat .form-input { width: 100%; }
+/* Moneybird names the VAT choices once, above them. */
+.product-vat .form-input:not(.form-input--check) > .form-input__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.product-link-button { padding: 0; border: 0; background: none; color: var(--link); font: inherit; text-decoration: underline; cursor: pointer; }
+.product-preview { max-width: 32rem; margin: 0; }
+.product-period { max-width: 24rem; }

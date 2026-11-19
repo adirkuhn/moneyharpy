@@ -28,6 +28,17 @@ type productJSON struct {
 	UpdatedAt        time.Time `json:"updated_at"`
 	Active           bool      `json:"active"`
 	URI              string    `json:"uri"`
+	// MoneyHarpy extensions.
+	CheckoutDescription *string           `json:"checkout_description"`
+	ProductType         *string           `json:"product_type"`
+	VatRateType         *string           `json:"vat_rate_type"`
+	Image               *productImageJSON `json:"image"`
+}
+
+type productImageJSON struct {
+	Filename    string `json:"filename"`
+	ContentType string `json:"content_type"`
+	Size        int64  `json:"size"`
 }
 
 func toProduct(p products.Product) productJSON {
@@ -36,6 +47,10 @@ func toProduct(p products.Product) productJSON {
 		Identifier: nz(p.Identifier), Price: p.Price.String(), Currency: p.Currency, FrequencyType: nz(p.FrequencyType),
 		TaxRateID: idString(p.TaxRateID), LedgerAccountID: p.LedgerAccountID.String(), CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt,
 		Active: p.Active, URI: p.Ref().URI(),
+		CheckoutDescription: nz(p.CheckoutDescription), ProductType: nz(p.ProductType), VatRateType: nz(p.VatRateType),
+	}
+	if p.Image != nil {
+		out.Image = &productImageJSON{Filename: p.Image.Filename, ContentType: p.Image.ContentType, Size: p.Image.Size}
 	}
 	if p.FrequencyType != "" {
 		n := p.Frequency
@@ -386,4 +401,44 @@ func (s *server) DeleteProject(w http.ResponseWriter, r *http.Request, administr
 		w.Header().Set("X-Kept-As", "archived")
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// SetProductImage implements ServerInterface.
+func (s *server) SetProductImage(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	name, contentType, data, ok := readUpload(w, r)
+	if !ok {
+		return
+	}
+	p, err := s.deps.Products.SetImage(r.Context(), admin, rid, user(r).ID, name, contentType, data)
+	s.writeProduct(w, r, http.StatusOK, p, err)
+}
+
+// DeleteProductImage implements ServerInterface.
+func (s *server) DeleteProductImage(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	p, err := s.deps.Products.DeleteImage(r.Context(), admin, rid, user(r).ID)
+	s.writeProduct(w, r, http.StatusOK, p, err)
+}
+
+// DownloadProductImage implements ServerInterface.
+func (s *server) DownloadProductImage(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	l := fileLink{Kind: fileProductImage, Admin: admin, ID: rid, User: user(r).ID}
+	_, body, err := s.openAttachment(r, l)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	_ = body.Close()
+	s.redirectToFile(w, l)
 }

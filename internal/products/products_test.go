@@ -1,14 +1,17 @@
 package products
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -261,5 +264,92 @@ func TestSalesLinkIsNotAvailable(t *testing.T) {
 	}
 	if _, err := s.SalesLink(ctx, adminID, 5, owner, nil); !errors.Is(err, ErrNotFound) {
 		t.Errorf("unknown product = %v", err)
+	}
+}
+
+// memImages keeps product images in memory, as the attachments service does.
+type memImages struct {
+	files map[resource.ID][]attachments.Attachment
+	data  map[resource.ID][]byte
+	next  resource.ID
+}
+
+func (m *memImages) Add(_ context.Context, admin resource.ID, entityType string, entity resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error) {
+	m.next++
+	a := attachments.Attachment{ID: m.next, AdministrationID: admin, EntityType: entityType, EntityID: entity, Filename: filename, ContentType: contentType, Size: int64(len(data))}
+	m.files[entity] = append(m.files[entity], a)
+	m.data[a.ID] = data
+	return a, nil
+}
+
+func (m *memImages) Of(_ context.Context, _ resource.ID, _ string, entities []resource.ID) (map[resource.ID][]attachments.Attachment, error) {
+	out := map[resource.ID][]attachments.Attachment{}
+	for _, e := range entities {
+		if len(m.files[e]) > 0 {
+			out[e] = m.files[e]
+		}
+	}
+	return out, nil
+}
+
+func (m *memImages) Open(_ context.Context, _ resource.ID, _ string, entity, id resource.ID) (attachments.Attachment, io.ReadCloser, error) {
+	for _, a := range m.files[entity] {
+		if a.ID == id {
+			return a, io.NopCloser(bytes.NewReader(m.data[id])), nil
+		}
+	}
+	return attachments.Attachment{}, nil, attachments.ErrNotFound
+}
+
+func (m *memImages) DeleteAll(_ context.Context, _ resource.ID, _ string, entity resource.ID) error {
+	delete(m.files, entity)
+	return nil
+}
+
+func TestProductImage(t *testing.T) {
+	s, _ := newService()
+	images := &memImages{files: map[resource.ID][]attachments.Attachment{}, data: map[resource.ID][]byte{}}
+	s.UseImages(images)
+	ctx := context.Background()
+	p := create(t, s, Changes{Title: ptr("Mug")})
+	png := []byte("\x89PNG\r\n\x1a\n" + strings.Repeat("x", 20))
+
+	got, err := s.SetImage(ctx, adminID, p.ID, owner, "mug.png", "image/png", png)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Image == nil || got.Image.Filename != "mug.png" || got.Image.ContentType != "image/png" || images.files[p.ID][0].EntityType != "Product" {
+		t.Fatalf("product = %+v", got.Image)
+	}
+	// A new image replaces the one before.
+	if got, err = s.SetImage(ctx, adminID, p.ID, owner, "mug2.png", "image/png", png); err != nil || got.Image.Filename != "mug2.png" || len(images.files[p.ID]) != 1 {
+		t.Fatalf("replaced = %+v, %v (%d images)", got.Image, err, len(images.files[p.ID]))
+	}
+	if again, _ := s.Product(ctx, adminID, p.ID, owner); again.Image == nil || again.Image.Filename != "mug2.png" {
+		t.Errorf("read back = %+v", again.Image)
+	}
+	if list, _, _ := s.List(ctx, adminID, owner, Query{}); list[0].Image == nil {
+		t.Errorf("listed without its image")
+	}
+	img, body, err := s.Image(ctx, adminID, p.ID, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	read, _ := io.ReadAll(body)
+	if img.Filename != "mug2.png" || !bytes.Equal(read, png) {
+		t.Errorf("opened %+v", img)
+	}
+
+	// Only images.
+	_, err = s.SetImage(ctx, adminID, p.ID, owner, "terms.pdf", "application/pdf", []byte("%PDF-1.4"))
+	if fieldsOf(t, err)["image"] == nil {
+		t.Errorf("accepted a PDF: %v", err)
+	}
+
+	if _, err := s.DeleteImage(ctx, adminID, p.ID, owner); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := s.Image(ctx, adminID, p.ID, owner); !errors.Is(err, ErrNoImage) {
+		t.Errorf("after delete: %v", err)
 	}
 }
