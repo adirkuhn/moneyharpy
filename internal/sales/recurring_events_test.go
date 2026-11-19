@@ -40,6 +40,14 @@ func TestRecurringInvoiceEventsTellItsStory(t *testing.T) {
 		t.Errorf("events = %v, want %v", got, want)
 	}
 
+	// What the background work did is the system's, as Moneybird shows it done by "Moneybird".
+	events, _ := h.svc.history.Of(ctx, adminID, "RecurringSalesInvoice", []resource.ID{r.ID})
+	for _, e := range events[r.ID] {
+		if want := map[bool]resource.ID{true: 0, false: owner}[e.Action == "recurring_sales_invoice_invoice_created"]; e.UserID != want {
+			t.Errorf("%s by %d, want %d", e.Action, e.UserID, want)
+		}
+	}
+
 	gone := recurring(t, h, "2026-12-01", RecurringChanges{})
 	if _, err := h.svc.DeleteRecurring(ctx, adminID, gone.ID, owner); err != nil {
 		t.Fatal(err)

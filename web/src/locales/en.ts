@@ -1390,13 +1390,18 @@ export const en = {
   events: {
     label: 'Events from {{period}}', filters: 'Event filters', loadError: 'The events could not be loaded.', empty: 'Nothing happened in this period.',
     event: 'Event', type: 'Type', user: 'User', date: 'Date', time: 'Time', initials: 'Initials', newer: 'Newer events', older: 'Older events',
+    system: 'MoneyHarpy',
     text: '{{type}} {{what}}',
     types: {
       SalesInvoice: 'Invoice', ExternalSalesInvoice: 'External invoice', RecurringSalesInvoice: 'Recurring invoice', Estimate: 'Quote', Contact: 'Contact',
       ContactPerson: 'Contact person', Payment: 'Payment', TimeEntry: 'Time entry', Document: 'Document', FinancialMutation: 'Transaction',
-      FinancialStatement: 'Bank statement', FinancialAccount: 'Financial account', LedgerAccount: 'Category', Product: 'Product', Project: 'Project',
+      FinancialStatement: 'Financial statement', FinancialAccount: 'Financial account', LedgerAccount: 'Category', Product: 'Product', Project: 'Project',
       Asset: 'Asset', Disposal: 'Disposal', Source: 'Source', GeneralJournalDocument: 'Journal entry', DocumentStyle: 'Layout', Identity: 'Identity',
       Workflow: 'Workflow', TaxRate: 'VAT rate', Note: 'Note', CustomField: 'Custom field', Subscription: 'Subscription', User: 'User',
+    },
+    actions: {
+      financial_statement_created: 'added', webhook_destroyed: 'destroyed', estimate_send_manually: 'marked as sent manually',
+      estimate_created_from_original: 'created based on the original quote',
     },
     verbs: {
       created: 'created', updated: 'updated', destroyed: 'deleted', registered: 'registered', send_manually: 'manually marked as sent',

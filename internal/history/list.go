@@ -47,6 +47,8 @@ var typePermissions = map[string][]administration.Permission{
 	"Estimate":              {administration.Estimates},
 	"Document":              {administration.Documents},
 	"FinancialMutation":     {administration.Bank},
+	"FinancialStatement":    {administration.Bank},
+	"Webhook":               {administration.Settings},
 	"Contact":               {administration.Estimates, administration.SalesInvoices, administration.Documents, administration.Bank, administration.Settings},
 	"TimeEntry":             {administration.TimeEntries},
 }

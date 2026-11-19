@@ -60,6 +60,16 @@ func Note(ctx context.Context, r Recorder, admin resource.ID, entityType string,
 	return r.Record(ctx, Event{AdministrationID: admin, EntityType: entityType, EntityID: entity, UserID: user, Action: action})
 }
 
+type systemKey struct{}
+
+// AsSystem marks work the application does by itself, such as importing
+// bank statements or making recurring invoices: its events are recorded
+// without a user, as Moneybird shows them done by "Moneybird".
+func AsSystem(ctx context.Context) context.Context { return context.WithValue(ctx, systemKey{}, true) }
+
+// IsSystem reports whether the work is the application's own.
+func IsSystem(ctx context.Context) bool { v, _ := ctx.Value(systemKey{}).(bool); return v }
+
 // Service implements recording and reading events.
 type Service struct {
 	store Store
@@ -82,6 +92,9 @@ func (s *Service) Record(ctx context.Context, events ...Event) error {
 	list := make([]Event, len(events))
 	for i, e := range events {
 		e.ID = s.ids.Next()
+		if IsSystem(ctx) {
+			e.UserID = 0
+		}
 		e.CreatedAt = at.Add(time.Duration(i) * time.Microsecond)
 		e.UpdatedAt = e.CreatedAt
 		if e.Data == nil {

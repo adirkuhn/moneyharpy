@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/bankfile"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -533,6 +534,8 @@ func (s *Service) fetcher(ctx context.Context, c Connection) (fetcher, error) {
 // sync fetches the transactions of the connection's accounts and books the
 // new ones; what goes wrong is kept on the connection for the user to see.
 func (s *Service) sync(ctx context.Context, c Connection) (Connection, error) {
+	// Fetching is the application's own work, as Moneybird's automatic import, also when the user asked for it.
+	ctx = history.AsSystem(ctx)
 	c = s.expire(c)
 	if c.State != ConnectionActive {
 		return c, nil
