@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -261,4 +262,73 @@ func (s *AssetStore) Lock(ctx context.Context, admin resource.ID) (func(), bool,
 		conn.Release()
 	}
 	return release, true, nil
+}
+
+func purchaseBooking(id int64, kind string, document int64, reference string, date pgtype.Date, description string, amount int64) assets.Booking {
+	detail := resource.ID(id)
+	return assets.Booking{
+		DetailID: &detail, DocumentType: kind, DocumentID: resource.ID(document), Reference: reference, Date: dayOf(date),
+		Description: description, Amount: money.Amount(amount),
+	}
+}
+
+func entryBooking(id, document int64, date pgtype.Date, description string, amount int64) assets.Booking {
+	entry := resource.ID(id)
+	return assets.Booking{
+		EntryID: &entry, DocumentType: "GeneralJournalDocument", DocumentID: resource.ID(document), Date: dayOf(date),
+		Description: description, Amount: money.Amount(amount),
+	}
+}
+
+func int64s(ids []resource.ID) []int64 {
+	out := make([]int64, len(ids))
+	for i, id := range ids {
+		out[i] = int64(id)
+	}
+	return out
+}
+
+// Bookings implements assets.Store.
+func (s *AssetStore) Bookings(ctx context.Context, admin resource.ID, details, entries []resource.ID) ([]assets.Booking, error) {
+	var out []assets.Booking
+	if len(details) > 0 {
+		rows, err := s.q.PurchaseDetailBookings(ctx, sqlc.PurchaseDetailBookingsParams{AdministrationID: int64(admin), Ids: int64s(details)})
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range rows {
+			out = append(out, purchaseBooking(r.ID, r.Kind, r.DocumentID, r.Reference, r.Date, r.Description, r.LineBase))
+		}
+	}
+	if len(entries) > 0 {
+		rows, err := s.q.JournalEntryBookings(ctx, sqlc.JournalEntryBookingsParams{AdministrationID: int64(admin), Ids: int64s(entries)})
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range rows {
+			out = append(out, entryBooking(r.ID, r.DocumentID, r.Date, r.Description, r.Amount))
+		}
+	}
+	return out, nil
+}
+
+// Linkable implements assets.Store.
+func (s *AssetStore) Linkable(ctx context.Context, admin, ledger resource.ID) ([]assets.Booking, error) {
+	details, err := s.q.LinkablePurchaseDetails(ctx, sqlc.LinkablePurchaseDetailsParams{AdministrationID: int64(admin), LedgerAccountID: pgtype.Int8{Int64: int64(ledger), Valid: true}})
+	if err != nil {
+		return nil, err
+	}
+	entries, err := s.q.LinkableJournalEntries(ctx, sqlc.LinkableJournalEntriesParams{AdministrationID: int64(admin), LedgerAccountID: int64(ledger)})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]assets.Booking, 0, len(details)+len(entries))
+	for _, r := range details {
+		out = append(out, purchaseBooking(r.ID, r.Kind, r.DocumentID, r.Reference, r.Date, r.Description, r.LineBase))
+	}
+	for _, r := range entries {
+		out = append(out, entryBooking(r.ID, r.DocumentID, r.Date, r.Description, r.Amount))
+	}
+	slices.SortStableFunc(out, func(a, b assets.Booking) int { return b.Date.Compare(a.Date) })
+	return out, nil
 }

@@ -58,6 +58,12 @@ type assetJSON struct {
 	Sources []struct {
 		ID       string  `json:"id"`
 		DetailID *string `json:"detail_id"`
+		Booking  *struct {
+			DocumentType string `json:"document_type"`
+			DocumentID   string `json:"document_id"`
+			Description  string `json:"description"`
+			Amount       string `json:"amount"`
+		} `json:"booking"`
 	} `json:"sources"`
 	ReinvestmentReservePurchase *struct {
 		Amount string `json:"amount"`
@@ -109,6 +115,16 @@ func TestAssetLifecycle(t *testing.T) {
 		"contact_id": supplier, "date": purchase,
 		"details_attributes": []map[string]any{{"description": "Laptop", "price": "1200", "tax_rate_id": vat21, "ledger_account_id": equipment}},
 	}}))
+	r = owner.do(http.MethodGet, api+"/assets/"+a.ID+"/linkable_bookings", nil)
+	wantStatus(t, r, http.StatusOK)
+	linkable := decode[[]struct {
+		DetailID     string `json:"detail_id"`
+		DocumentType string `json:"document_type"`
+		Description  string `json:"description"`
+	}](t, r)
+	if len(linkable) != 1 || linkable[0].DetailID != inv.Details[0].ID || linkable[0].DocumentType != "PurchaseInvoice" || linkable[0].Description != "Laptop" {
+		t.Errorf("linkable = %+v", linkable)
+	}
 	r = owner.do(http.MethodPost, api+"/assets/"+a.ID+"/sources", map[string]any{"detail_id": inv.Details[0].ID})
 	wantStatus(t, r, http.StatusCreated)
 	src := decode[struct {
@@ -118,6 +134,13 @@ func TestAssetLifecycle(t *testing.T) {
 	}](t, r)
 	if src.AssetID != a.ID || src.DetailID != inv.Details[0].ID {
 		t.Errorf("source = %+v", src)
+	}
+	shown := decode[assetJSON](t, owner.do(http.MethodGet, api+"/assets/"+a.ID, nil))
+	if len(shown.Sources) != 1 || shown.Sources[0].Booking == nil || shown.Sources[0].Booking.DocumentID != inv.ID || shown.Sources[0].Booking.Amount != "1200.0" {
+		t.Errorf("shown sources = %+v", shown.Sources)
+	}
+	if b := decode[[]any](t, owner.do(http.MethodGet, api+"/assets/"+a.ID+"/linkable_bookings", nil)); len(b) != 0 {
+		t.Errorf("linkable after linking = %v", b)
 	}
 	wantStatus(t, owner.do(http.MethodPost, api+"/assets/"+a.ID+"/sources", map[string]any{"detail_id": "x"}), http.StatusBadRequest)
 	wantStatus(t, owner.do(http.MethodPost, api+"/assets/"+a.ID+"/sources", map[string]any{}), http.StatusBadRequest)

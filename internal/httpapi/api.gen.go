@@ -126,6 +126,27 @@ func (e AgingDocumentDocumentType) Valid() bool {
 	}
 }
 
+// Defines values for AssetBookingDocumentType.
+const (
+	AssetBookingDocumentTypeGeneralJournalDocument AssetBookingDocumentType = "GeneralJournalDocument"
+	AssetBookingDocumentTypePurchaseInvoice        AssetBookingDocumentType = "PurchaseInvoice"
+	AssetBookingDocumentTypeReceipt                AssetBookingDocumentType = "Receipt"
+)
+
+// Valid indicates whether the value is a known member of the AssetBookingDocumentType enum.
+func (e AssetBookingDocumentType) Valid() bool {
+	switch e {
+	case AssetBookingDocumentTypeGeneralJournalDocument:
+		return true
+	case AssetBookingDocumentTypePurchaseInvoice:
+		return true
+	case AssetBookingDocumentTypeReceipt:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AssetDisposalRequestReason.
 const (
 	AssetDisposalRequestReasonDivested          AssetDisposalRequestReason = "divested"
@@ -5891,7 +5912,30 @@ type Asset struct {
 	// PurchaseValue Moneybird-compatible number.
 	PurchaseValue               *Number                            `json:"purchase_value"`
 	ReinvestmentReservePurchase *Asset_ReinvestmentReservePurchase `json:"reinvestment_reserve_purchase"`
-	Sources                     []SourceResponse                   `json:"sources"`
+	Sources                     []struct {
+		// AssetId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		AssetId *Identifier `json:"asset_id,omitempty"`
+
+		// Booking MoneyHarpy extension. What the source books, with its document; set when one asset is read, null in lists and once the booking is gone.
+		Booking *AssetBooking `json:"booking,omitempty"`
+
+		// DetailId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		DetailId *Identifier `json:"detail_id,omitempty"`
+
+		// GeneralJournalDocumentEntryId A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		GeneralJournalDocumentEntryId *Identifier `json:"general_journal_document_entry_id,omitempty"`
+
+		// Id A unique record identifier. Parse as a string.
+		//
+		// Example: 123456789012345678
+		Id *Identifier `json:"id,omitempty"`
+	} `json:"sources"`
 
 	// UpdatedAt MoneyHarpy extension.
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
@@ -5920,6 +5964,33 @@ type Asset_Disposal struct {
 type Asset_ReinvestmentReservePurchase struct {
 	union json.RawMessage
 }
+
+// AssetBooking MoneyHarpy extension. A purchase invoice or receipt line (detail_id), or a row of a journal entry (general_journal_document_entry_id), with the document it is on.
+type AssetBooking struct {
+	Amount      string             `json:"amount"`
+	Date        openapi_types.Date `json:"date"`
+	Description string             `json:"description"`
+
+	// DetailId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DetailId *Identifier `json:"detail_id,omitempty"`
+
+	// DocumentId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	DocumentId   Identifier               `json:"document_id"`
+	DocumentType AssetBookingDocumentType `json:"document_type"`
+
+	// GeneralJournalDocumentEntryId A unique record identifier. Parse as a string.
+	//
+	// Example: 123456789012345678
+	GeneralJournalDocumentEntryId *Identifier `json:"general_journal_document_entry_id,omitempty"`
+	Reference                     *string     `json:"reference,omitempty"`
+}
+
+// AssetBookingDocumentType defines model for AssetBooking.DocumentType.
+type AssetBookingDocumentType string
 
 // AssetDisposalRequest defines model for AssetDisposalRequest.
 type AssetDisposalRequest struct {
@@ -22549,6 +22620,9 @@ type ServerInterface interface {
 	// CreateAssetDisposal Create a disposal
 	// (POST /api/v2/{administration_id}/assets/{id}/disposals)
 	CreateAssetDisposal(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// ListAssetLinkableBookings List the bookings an asset can link
+	// (GET /api/v2/{administration_id}/assets/{id}/linkable_bookings)
+	ListAssetLinkableBookings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
 	// CreateAssetNote Add a note to an asset
 	// (POST /api/v2/{administration_id}/assets/{id}/notes)
 	CreateAssetNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -24085,6 +24159,12 @@ func (_ Unimplemented) UpdateAsset(w http.ResponseWriter, r *http.Request, admin
 // CreateAssetDisposal Create a disposal
 // (POST /api/v2/{administration_id}/assets/{id}/disposals)
 func (_ Unimplemented) CreateAssetDisposal(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListAssetLinkableBookings List the bookings an asset can link
+// (GET /api/v2/{administration_id}/assets/{id}/linkable_bookings)
+func (_ Unimplemented) ListAssetLinkableBookings(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -27765,6 +27845,41 @@ func (siw *ServerInterfaceWrapper) CreateAssetDisposal(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateAssetDisposal(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAssetLinkableBookings operation middleware
+func (siw *ServerInterfaceWrapper) ListAssetLinkableBookings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAssetLinkableBookings(w, r, administrationId, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -44271,6 +44386,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/sources/{source_id}", wrapper.DeleteAssetSource)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/linkable_bookings", wrapper.ListAssetLinkableBookings)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/notes", wrapper.CreateAssetNote)

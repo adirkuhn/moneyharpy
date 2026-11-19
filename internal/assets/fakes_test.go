@@ -142,6 +142,41 @@ func (s *fakeStore) DetailLedgerAccount(_ context.Context, _, id resource.ID) (*
 	return nil, ErrBookingNotFound
 }
 
+// fakeBookings are the purchase line on equipment and the journal row.
+var fakeBookings = []Booking{
+	{DetailID: ptr(purchaseLine), DocumentType: "PurchaseInvoice", DocumentID: 800, Reference: "INV-1", Date: day("2026-11-01"), Description: "Laptop", Amount: amount("1000")},
+	{EntryID: ptr(journalRow), DocumentType: "GeneralJournalDocument", DocumentID: 801, Date: day("2026-10-01"), Description: "Desk", Amount: amount("300")},
+}
+
+func (s *fakeStore) Bookings(_ context.Context, _ resource.ID, details, entries []resource.ID) ([]Booking, error) {
+	var out []Booking
+	for _, b := range fakeBookings {
+		if b.DetailID != nil && slices.Contains(details, *b.DetailID) || b.EntryID != nil && slices.Contains(entries, *b.EntryID) {
+			out = append(out, b)
+		}
+	}
+	return out, nil
+}
+
+func (s *fakeStore) Linkable(_ context.Context, _, ledger resource.ID) ([]Booking, error) {
+	if ledger != equipment {
+		return nil, nil
+	}
+	var out []Booking
+	for _, b := range fakeBookings {
+		linked := false
+		for _, a := range s.assets {
+			for _, src := range a.Sources {
+				linked = linked || src.DetailID != nil && b.DetailID != nil && *src.DetailID == *b.DetailID || src.EntryID != nil && b.EntryID != nil && *src.EntryID == *b.EntryID
+			}
+		}
+		if !linked {
+			out = append(out, b)
+		}
+	}
+	return out, nil
+}
+
 func (s *fakeStore) EntryLedgerAccount(_ context.Context, _, id resource.ID) (resource.ID, error) {
 	if id == journalRow {
 		return equipment, nil

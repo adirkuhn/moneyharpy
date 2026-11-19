@@ -59,7 +59,51 @@ func (s *Service) withHistory(ctx context.Context, admin resource.ID, a *Asset) 
 		}
 		a.Notes = list[a.ID]
 	}
+	return s.withBookings(ctx, admin, a)
+}
+
+// withBookings adds what each of the asset's sources books.
+func (s *Service) withBookings(ctx context.Context, admin resource.ID, a *Asset) error {
+	var details, entries []resource.ID
+	for _, src := range a.Sources {
+		if src.DetailID != nil {
+			details = append(details, *src.DetailID)
+		}
+		if src.EntryID != nil {
+			entries = append(entries, *src.EntryID)
+		}
+	}
+	if len(details)+len(entries) == 0 {
+		return nil
+	}
+	list, err := s.store.Bookings(ctx, admin, details, entries)
+	if err != nil {
+		return fmt.Errorf("load bookings: %w", err)
+	}
+	sources := append([]Source(nil), a.Sources...)
+	for i, src := range sources {
+		for _, b := range list {
+			if src.DetailID != nil && b.DetailID != nil && *b.DetailID == *src.DetailID || src.EntryID != nil && b.EntryID != nil && *b.EntryID == *src.EntryID {
+				sources[i].Booking = &b
+			}
+		}
+	}
+	a.Sources = sources
 	return nil
+}
+
+// Linkable returns the bookings on the asset's category that no asset
+// links yet, for linking as its sources.
+func (s *Service) Linkable(ctx context.Context, admin, id, user resource.ID) ([]Booking, error) {
+	a, err := s.Asset(ctx, admin, id, user)
+	if err != nil {
+		return nil, err
+	}
+	list, err := s.store.Linkable(ctx, admin, a.LedgerAccountID)
+	if err != nil {
+		return nil, fmt.Errorf("load linkable bookings: %w", err)
+	}
+	return list, nil
 }
 
 // AddNote writes a note or to-do on an asset.

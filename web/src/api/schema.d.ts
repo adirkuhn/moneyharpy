@@ -1861,6 +1861,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/assets/{id}/linkable_bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List the bookings an asset can link
+         * @description MoneyHarpy extension. The purchase invoice and receipt lines and journal entry rows on the asset's ledger account that no asset links yet, newest first and at most 100 of each kind, to link as the asset's sources.
+         */
+        get: operations["listAssetLinkableBookings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/assets/{id}/notes": {
         parameters: {
             query?: never;
@@ -9171,6 +9194,10 @@ export interface components {
         /** @description A Moneybird asset with MoneyHarpy extensions. */
         Asset: components["schemas"]["asset_response"] & {
             administration_id?: components["schemas"]["Identifier"];
+            sources: (components["schemas"]["source_response"] & {
+                /** @description MoneyHarpy extension. What the source books, with its document; set when one asset is read, null in lists and once the booking is gone. */
+                booking?: components["schemas"]["AssetBooking"] | null;
+            })[];
             /** @description MoneyHarpy extension. The notes and to-dos on the asset, oldest first; empty in lists. */
             notes: components["schemas"]["note_response"][];
             /** @description MoneyHarpy extension. What happened to the asset, oldest first; empty in lists. Actions are asset_created, asset_updated, asset_destroyed, asset_source_created (data kind detail or entry), asset_source_destroyed, asset_value_change_created (data type and amount) and asset_disposal_created (data reason). */
@@ -9187,6 +9214,19 @@ export interface components {
              * @description MoneyHarpy extension.
              */
             updated_at?: string;
+        };
+        /** @description MoneyHarpy extension. A purchase invoice or receipt line (detail_id), or a row of a journal entry (general_journal_document_entry_id), with the document it is on. */
+        AssetBooking: {
+            detail_id?: components["schemas"]["Identifier"];
+            general_journal_document_entry_id?: components["schemas"]["Identifier"];
+            /** @enum {string} */
+            document_type: "PurchaseInvoice" | "Receipt" | "GeneralJournalDocument";
+            document_id: components["schemas"]["Identifier"];
+            reference?: string;
+            /** Format: date */
+            date: string;
+            description: string;
+            amount: string;
         };
         AssetPlanInput: {
             /** @description The lifespan in years; fractions are rounded to whole months. */
@@ -16071,6 +16111,34 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listAssetLinkableBookings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The bookings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetBooking"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };

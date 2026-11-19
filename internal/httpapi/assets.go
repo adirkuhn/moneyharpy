@@ -46,6 +46,26 @@ type sourceJSON struct {
 	AssetID                       string  `json:"asset_id"`
 	DetailID                      *string `json:"detail_id,omitempty"`
 	GeneralJournalDocumentEntryID *string `json:"general_journal_document_entry_id,omitempty"`
+	// Booking is a MoneyHarpy extension.
+	Booking *assetBookingJSON `json:"booking,omitempty"`
+}
+
+type assetBookingJSON struct {
+	DetailID                      *string `json:"detail_id,omitempty"`
+	GeneralJournalDocumentEntryID *string `json:"general_journal_document_entry_id,omitempty"`
+	DocumentType                  string  `json:"document_type"`
+	DocumentID                    string  `json:"document_id"`
+	Reference                     string  `json:"reference,omitempty"`
+	Date                          string  `json:"date"`
+	Description                   string  `json:"description"`
+	Amount                        string  `json:"amount"`
+}
+
+func toAssetBooking(b assets.Booking) assetBookingJSON {
+	return assetBookingJSON{
+		DetailID: idString(b.DetailID), GeneralJournalDocumentEntryID: idString(b.EntryID), DocumentType: b.DocumentType,
+		DocumentID: b.DocumentID.String(), Reference: b.Reference, Date: b.Date.Format(time.DateOnly), Description: b.Description, Amount: b.Amount.String(),
+	}
 }
 
 type planJSON struct {
@@ -103,7 +123,12 @@ func toReserveSale(d assets.Disposal, s assets.ReserveBooking) reserveJSON {
 }
 
 func toSource(a assets.Asset, s assets.Source) sourceJSON {
-	return sourceJSON{ID: s.ID.String(), AssetID: a.ID.String(), DetailID: idString(s.DetailID), GeneralJournalDocumentEntryID: idString(s.EntryID)}
+	out := sourceJSON{ID: s.ID.String(), AssetID: a.ID.String(), DetailID: idString(s.DetailID), GeneralJournalDocumentEntryID: idString(s.EntryID)}
+	if s.Booking != nil {
+		b := toAssetBooking(*s.Booking)
+		out.Booking = &b
+	}
+	return out
 }
 
 func toAsset(a assets.Asset) assetJSON {
@@ -660,4 +685,22 @@ func (s *server) DeleteAssetNote(w http.ResponseWriter, r *http.Request, adminis
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// ListAssetLinkableBookings implements ServerInterface.
+func (s *server) ListAssetLinkableBookings(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	list, err := s.deps.Assets.Linkable(r.Context(), admin, rid, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	out := make([]assetBookingJSON, len(list))
+	for i, b := range list {
+		out[i] = toAssetBooking(b)
+	}
+	writeJSON(w, http.StatusOK, out)
 }

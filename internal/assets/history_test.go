@@ -96,3 +96,28 @@ func TestAssetsKeepTheirHistoryAndNotes(t *testing.T) {
 		t.Errorf("last action = %s", last)
 	}
 }
+
+func TestSourcesShowTheirBookings(t *testing.T) {
+	h := newHarness()
+	a := h.create(t, input("Laptop", "2026-11-01", "1000", 5, "0"))
+	free, err := h.svc.Linkable(ctx, adminID, a.ID, owner)
+	if err != nil || len(free) != 2 {
+		t.Fatalf("linkable = %+v, %v", free, err)
+	}
+	if _, err := h.svc.AddSource(ctx, adminID, a.ID, owner, SourceInput{DetailID: ptr(purchaseLine)}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := h.svc.Asset(ctx, adminID, a.ID, owner)
+	if err != nil || len(got.Sources) != 1 || got.Sources[0].Booking == nil {
+		t.Fatalf("sources = %+v, %v", got.Sources, err)
+	}
+	if b := got.Sources[0].Booking; b.DocumentType != "PurchaseInvoice" || b.Description != "Laptop" || b.Amount != amount("1000") {
+		t.Errorf("booking = %+v", b)
+	}
+	if free, _ = h.svc.Linkable(ctx, adminID, a.ID, owner); len(free) != 1 || free[0].EntryID == nil {
+		t.Errorf("linkable after linking = %+v", free)
+	}
+	if _, err := h.svc.Linkable(ctx, adminID, a.ID, stranger); err == nil {
+		t.Error("a stranger saw the bookings")
+	}
+}

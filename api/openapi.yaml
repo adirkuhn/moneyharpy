@@ -4163,6 +4163,37 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/linkable_bookings:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: listAssetLinkableBookings
+      x-permissions: [documents]
+      summary: List the bookings an asset can link
+      description: >-
+        MoneyHarpy extension. The purchase invoice and receipt lines and journal entry rows on the asset's ledger
+        account that no asset links yet, newest first and at most 100 of each kind, to link as the asset's sources.
+      tags: [Assets]
+      responses:
+        '200':
+          description: The bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetBooking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/assets/{id}/notes:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -18286,6 +18317,20 @@ components:
           properties:
             administration_id:
               $ref: '#/components/schemas/Identifier'
+            sources:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/source_response'
+                  - type: object
+                    properties:
+                      booking:
+                        description: >-
+                          MoneyHarpy extension. What the source books, with its document; set when one asset is read,
+                          null in lists and once the booking is gone.
+                        nullable: true
+                        allOf:
+                          - $ref: '#/components/schemas/AssetBooking'
             notes:
               type: array
               description: MoneyHarpy extension. The notes and to-dos on the asset, oldest first; empty in lists.
@@ -18311,6 +18356,31 @@ components:
               type: string
               format: date-time
               description: MoneyHarpy extension.
+    AssetBooking:
+      type: object
+      description: >-
+        MoneyHarpy extension. A purchase invoice or receipt line (detail_id), or a row of a journal entry
+        (general_journal_document_entry_id), with the document it is on.
+      required: [document_type, document_id, date, description, amount]
+      properties:
+        detail_id:
+          $ref: '#/components/schemas/Identifier'
+        general_journal_document_entry_id:
+          $ref: '#/components/schemas/Identifier'
+        document_type:
+          type: string
+          enum: [PurchaseInvoice, Receipt, GeneralJournalDocument]
+        document_id:
+          $ref: '#/components/schemas/Identifier'
+        reference:
+          type: string
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+        amount:
+          type: string
     AssetPlanInput:
       type: object
       additionalProperties: false
