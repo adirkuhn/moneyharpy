@@ -203,11 +203,13 @@ func (a Asset) MonthlyDepreciation() money.Amount {
 
 // Schedule returns the month ends the plan depreciates on, up to and
 // including until: the end of each month from the purchase (or the last
-// arbitrary value change, after its day) for the months left.
+// arbitrary value change, after its day) for the months left. As on
+// Moneybird, a purchase after the first of a month adds a month at the end
+// for what the pro rata first month left.
 func (a Asset) Schedule(until time.Time) []time.Time {
-	from, _, months, restarted := a.basis()
+	from, _, _, restarted := a.basis()
 	var out []time.Time
-	for i := range months {
+	for i := range a.scheduledMonths() {
 		d := monthEnd(from, i)
 		if d.After(until) {
 			break
@@ -220,10 +222,35 @@ func (a Asset) Schedule(until time.Time) []time.Time {
 	return out
 }
 
+// proRata reports whether the plan's first month depreciates only the days
+// the asset was in use: it was bought after the first of the month and the
+// plan has not restarted from an arbitrary value change.
+func (a Asset) proRata() bool {
+	_, _, _, restarted := a.basis()
+	return a.Plan != nil && !restarted && a.PurchaseDate.Day() != 1
+}
+
+// scheduledMonths is the number of months the plan spans from its basis.
+func (a Asset) scheduledMonths() int {
+	_, _, months, _ := a.basis()
+	if months > 0 && a.proRata() {
+		return months + 1
+	}
+	return months
+}
+
 // lastScheduled is the plan's final month end.
 func (a Asset) lastScheduled() time.Time {
-	from, _, months, _ := a.basis()
-	return monthEnd(from, months-1)
+	from, _, _, _ := a.basis()
+	return monthEnd(from, a.scheduledMonths()-1)
+}
+
+// firstMonthShare is the monthly depreciation for the days of the purchase
+// month the asset was in use, counting the purchase day.
+func (a Asset) firstMonthShare() money.Amount {
+	days := monthEnd(a.PurchaseDate, 0).Day()
+	used := days - a.PurchaseDate.Day() + 1
+	return money.Amount(math.Round(float64(a.MonthlyDepreciation()) * float64(used) / float64(days)))
 }
 
 // hasLinearOn reports whether a linear value change is booked on day.
@@ -247,7 +274,7 @@ func (a Asset) Missing(until time.Time) []time.Time {
 }
 
 // linearOn is the linear value change of the month ending on day: the
-// monthly depreciation, the rest down to the residual value in the plan's
+// monthly depreciation (pro rata in a pro rata first month), the rest down to the residual value in the plan's
 // last month, and never below the residual value. ok is false when nothing
 // is left to depreciate.
 func (a Asset) linearOn(day time.Time) (money.Amount, bool) {
@@ -256,6 +283,9 @@ func (a Asset) linearOn(day time.Time) (money.Amount, bool) {
 		return 0, false
 	}
 	amount := min(a.MonthlyDepreciation(), left)
+	if a.proRata() && day.Equal(monthEnd(a.PurchaseDate, 0)) {
+		amount = min(a.firstMonthShare(), left)
+	}
 	if day.Equal(a.lastScheduled()) {
 		amount = left
 	}
