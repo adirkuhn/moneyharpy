@@ -1967,7 +1967,7 @@ export interface paths {
         put?: never;
         /**
          * Create linear value changes retroactively
-         * @description Books the depreciation plan's monthly linear value changes that are missing up to today, from the purchase date or the last arbitrary value change. Needs an active plan and missing months, none of them in the locked period. New months are booked by MoneyHarpy itself at each month's end, from the month the asset was added in.
+         * @description Books the depreciation plan's monthly linear value changes that are missing up to today, from the purchase date or the last arbitrary value change. Needs an active plan and missing months, none of them in the locked period. New months are booked by MoneyHarpy itself at each month's end, from the month the asset was added in. As on Moneybird, a purchase after the first of a month depreciates that month pro rata by its days in use, and the rest follows in one month after the lifespan.
          */
         post: operations["createAssetRetroactiveLinearValueChanges"];
         delete?: never;

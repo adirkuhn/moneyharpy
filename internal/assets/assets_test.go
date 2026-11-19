@@ -194,7 +194,8 @@ func TestPlanEndsAtResidualValue(t *testing.T) {
 	for _, c := range a.ValueChanges {
 		amounts = append(amounts, c.Date.Format(time.DateOnly)+" "+c.Amount.String())
 	}
-	want := []string{"2026-01-31 -33.33", "2026-02-28 -33.33", "2026-03-31 -33.34"}
+	// As Moneybird's: the first month pro rata by its days in use, the rest in the month after the lifespan.
+	want := []string{"2026-01-31 -18.28", "2026-02-28 -33.33", "2026-03-31 -33.33", "2026-04-30 -15.06"}
 	if !slices.Equal(amounts, want) || a.PlanActive() {
 		t.Errorf("changes = %v, active %v", amounts, a.PlanActive())
 	}
@@ -206,6 +207,37 @@ func TestPlanEndsAtResidualValue(t *testing.T) {
 	plot := h.create(t, terrain)
 	if err := h.svc.AddRetroactiveLinear(ctx, adminID, plot.ID, owner); fields(t, err)["base"][0] != "Asset has no value change plan" {
 		t.Errorf("no plan: %v", err)
+	}
+}
+
+// runPlan books the plan's months one by one, as the worker does, and returns them.
+func runPlan(a Asset) []string {
+	var out []string
+	for _, d := range a.Schedule(day("2100-01-01")) {
+		amount, ok := a.linearOn(d)
+		if !ok {
+			continue
+		}
+		a.addChange(ValueChange{Type: Linear, Date: d, Amount: amount})
+		out = append(out, d.Format(time.DateOnly)+" "+amount.String())
+	}
+	return out
+}
+
+func TestFirstMonthIsProRata(t *testing.T) {
+	// Moneybird's example: commissioned on 14 January 2025, 15,003.60 over 6 years.
+	car := Asset{PurchaseDate: day("2025-01-14"), PurchaseValue: amount("20003.60"), Plan: &Plan{LifespanMonths: 72, ResidualValue: amount("5000")}}
+	got := runPlan(car)
+	if car.MonthlyDepreciation() != amount("208.38") || len(got) != 73 {
+		t.Fatalf("monthly %s, %d months", car.MonthlyDepreciation(), len(got))
+	}
+	if got[0] != "2025-01-31 -120.99" || got[1] != "2025-02-28 -208.38" || got[72] != "2031-01-31 -87.63" {
+		t.Errorf("first %s, second %s, last %s", got[0], got[1], got[72])
+	}
+	// Bought on the first of a month, the plan takes exactly its lifespan.
+	desk := Asset{PurchaseDate: day("2026-06-01"), PurchaseValue: amount("1200"), Plan: &Plan{LifespanMonths: 12}}
+	if got := runPlan(desk); len(got) != 12 || got[0] != "2026-06-30 -100.0" || got[11] != "2027-05-31 -100.0" {
+		t.Errorf("desk = %v", got)
 	}
 }
 
