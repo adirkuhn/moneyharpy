@@ -13,7 +13,7 @@ const asset = (over: Partial<Asset> = {}): Asset => ({
   id: '701', administration_id: '11', ledger_account_id: '600', name: 'Laptop', purchase_date: '2026-06-01', purchase_value: '1200.0',
   calculated_purchase_value: '1200.0', current_value: '1100.0', uri: '/11/assets/701',
   value_change_plan: { lifespan_in_years: 1, residual_value: '0.0', active: true, monthly_depreciation: '100.0' },
-  disposal: null, sources: [], reinvestment_reserve_purchase: null,
+  disposal: null, sources: [], reinvestment_reserve_purchase: null, notes: [], events: [],
   value_changes: [{ type: 'linear', date: '2026-06-30', amount: '-100.0', description: 'Linear depreciation', externally_booked: false, asset_id: '701' }],
   ...over,
 })
