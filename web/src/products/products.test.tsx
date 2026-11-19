@@ -1,12 +1,22 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { LedgerAccount, TaxRate } from '../bookkeeping/queries'
 import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
 import type { Product } from './queries'
+
+const written: unknown[][] = []
+vi.mock('write-excel-file/browser', () => ({
+  default: (rows: unknown, options: object) => ({
+    toFile: (fileName: string) => {
+      written.push([rows, { ...options, fileName }])
+      return Promise.resolve()
+    },
+  }),
+}))
 
 const harpy = administration({ id: '11', name: 'Harpy B.V.' })
 const stamp = '2026-11-10T09:00:00Z'
@@ -49,40 +59,66 @@ function loaded(list: Product[] = [product(), consult], seen: URL[] = []) {
 }
 
 describe('the product list', () => {
-  it('lists products with their price and frequency, searches and shows deactivated ones on request', async () => {
+  it('lists products with their amount, VAT rate and category, as Moneybird, and searches', async () => {
     const seen: URL[] = []
     server.use(...loaded(undefined, seen))
     renderAt('/11/products')
     const table = await screen.findByRole('table', { name: 'Products' })
+    expect(screen.getByRole('heading', { name: 'Products', level: 1 })).toBeInTheDocument()
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Title', 'Amount', 'VAT rate', 'Category'])
     const rows = within(table).getAllByRole('row')
-    expect(rows[1]).toHaveTextContent('Website hosting')
-    expect(rows[1]).toHaveTextContent('HOST-1')
-    expect(rows[1]).toHaveTextContent('Every month')
-    expect(rows[1]).toHaveTextContent('€50.50')
-    expect(rows[1]).toHaveTextContent('Active')
+    expect(rows[1]).toHaveTextContent(/^Website hosting€50\.5021% btwSales$/)
     expect(within(rows[1] as HTMLElement).getByRole('link', { name: 'Website hosting' })).toHaveAttribute('href', '/11/products/501')
     expect(rows[2]).toHaveTextContent('Consultancy hour')
-    expect(rows[2]).toHaveTextContent('€95.00')
-    expect(seen.at(-1)?.searchParams.get('active')).toBeNull()
     expect(seen.at(-1)?.searchParams.get('per_page')).toBe('25')
+    // With products the introduction waits behind its button.
+    expect(screen.queryByRole('region', { name: 'Getting started with products' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'More information' }))
+    expect(screen.getByRole('region', { name: 'Getting started with products' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Add' })).toHaveAttribute('href', '/11/products/new')
     const nav = screen.getByRole('navigation', { name: 'Administration menu' })
     expect(within(nav).getByRole('link', { name: 'Overview', current: 'page' })).toHaveAttribute('href', '/11/products')
 
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Search products' }), 'host')
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search for products' }), 'host')
     await waitFor(() => expect(seen.at(-1)?.searchParams.get('query')).toBe('host'))
-
-    await userEvent.click(screen.getByRole('button', { name: 'Active products' }))
-    await userEvent.click(within(screen.getByRole('search', { name: 'Product filters' })).getByRole('link', { name: 'All products' }))
-    await waitFor(() => expect(seen.at(-1)?.searchParams.get('active')).toBe('false'))
-    expect(screen.getByRole('button', { name: 'All products' })).toBeInTheDocument()
   })
 
-  it('says when there are none yet', async () => {
+  it('sorts by amount', async () => {
+    server.use(...loaded())
+    renderAt('/11/products')
+    const table = await screen.findByRole('table', { name: 'Products' })
+    await userEvent.click(within(table).getByRole('button', { name: 'Amount' }))
+    expect(within(table).getAllByRole('row')[1]).toHaveTextContent('Website hosting')
+    expect(within(table).getByRole('columnheader', { name: /Amount/ })).toHaveAttribute('aria-sort', 'ascending')
+    await userEvent.click(within(table).getByRole('button', { name: 'Amount' }))
+    expect(within(table).getAllByRole('row')[1]).toHaveTextContent('Consultancy hour')
+    expect(within(table).getByRole('columnheader', { name: /Amount/ })).toHaveAttribute('aria-sort', 'descending')
+  })
+
+  it('starts with the introduction and an empty table to add the first product', async () => {
     server.use(...loaded([]))
     renderAt('/11/products')
-    expect(await screen.findByText(/No products yet/)).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Sell the same things faster' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Add product' })).toHaveAttribute('href', '/11/products/new')
+    expect(await screen.findByRole('region', { name: 'Getting started with products' })).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: 'Products' })
+    expect(within(table).getByRole('link', { name: 'Add product' })).toHaveAttribute('href', '/11/products/new')
+    expect(screen.queryByRole('searchbox', { name: 'Search for products' })).toBeNull()
+  })
+
+  it('exports all products to Excel', async () => {
+    const seen: URL[] = []
+    server.use(...loaded(undefined, seen))
+    renderAt('/11/products')
+    await screen.findByRole('table', { name: 'Products' })
+    await userEvent.click(screen.getByRole('button', { name: 'Export products' }))
+    await waitFor(() => expect(written).toHaveLength(1))
+    expect(seen.at(-1)?.searchParams.get('per_page')).toBe('100')
+    const [rows, options] = (written[0] ?? []) as [unknown[][] | undefined, object | undefined]
+    expect(rows?.[0]).toEqual(['Title', 'Reference', 'Description', 'Amount', 'Currency', 'VAT rate', 'Category', 'Frequency'].map((value) => ({ value, fontWeight: 'bold' })))
+    expect(rows?.[1]).toEqual([
+      { value: 'Website hosting' }, { value: 'HOST-1' }, { value: 'Hosting for one website' }, { value: 50.5, type: Number, format: '#,##0.00' },
+      { value: 'EUR' }, { value: '21% btw' }, { value: 'Sales' }, { value: 'Every month' },
+    ])
+    expect(options).toMatchObject({ fileName: 'Products.xlsx' })
   })
 })
 

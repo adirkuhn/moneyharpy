@@ -149,11 +149,13 @@ export function TileIcon({ kind }: { kind: 'balance' | 'attention' | 'in' | 'out
 export type ListIconKind =
   | 'plus' | 'chart' | 'export' | 'more' | 'paperclip' | 'at' | 'send' | 'file' | 'palette' | 'flow'
   | 'coins' | 'upload' | 'plug' | 'calendar' | 'repeat' | 'edit' | 'scale' | 'bank' | 'card' | 'person'
-  | 'briefcase' | 'timer' | 'play' | 'stop' | 'clock' | 'check'
+  | 'briefcase' | 'timer' | 'play' | 'stop' | 'clock' | 'check' | 'link' | 'download'
 
 export function ListIcon({ kind }: { kind: ListIconKind }) {
   const shapes: Record<ListIconKind, React.ReactNode> = {
     plus: <path d="M12 5v14M5 12h14" />,
+    link: <><path d="M10 14a4.500 4.500 0 0 0 6.400 0l3-3a4.500 4.500 0 0 0-6.400-6.400l-1 1" /><path d="M14 10a4.500 4.500 0 0 0-6.400 0l-3 3a4.500 4.500 0 0 0 6.400 6.400l1-1" /></>,
+    download: <><path d="M12 4v11m-4-4 4 4 4-4" /><path d="M5 19.500h14" /></>,
     chart: <path d="M4 20.5h16M7 17v-6m5 6V6.5m5 10.5v-8" />,
     export: <><path d="M12 15V4m-4 4 4-4 4 4" /><path d="M5 12.5v7h14v-7" /></>,
     more: <path d="M6 12h.01M12 12h.01M18 12h.01" strokeWidth={3} />,

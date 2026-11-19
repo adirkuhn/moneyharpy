@@ -14,6 +14,8 @@ export type Column<T> = {
   kind?: 'amount' | 'date' | 'state' | 'icons' | 'extra'
   /** A name for a column without a header, such as one of icons. */
   label?: string
+  /** Makes the header a button that sorts the rows by this column, as Moneybird's Amount. */
+  sort?: { direction: 'ascending' | 'descending' | 'none'; onToggle: () => void }
 }
 
 type Selection<T> = {
@@ -34,12 +36,14 @@ type Props<T> = {
   selection?: Selection<T>
   total: number
   perPage: number
+  /** A last row across the table, such as Moneybird's "+ Add product" in an empty list. */
+  footer?: ReactNode
 }
 
 const interactive = 'a, button, input, label, select, textarea'
 
 /** A page of documents, after Moneybird's lists: every row opens its document, rows can be ticked, and long lists are paged. */
-export function DocumentTable<T>({ label, rows, rowKey, href, columns, selection, total, perPage }: Props<T>) {
+export function DocumentTable<T>({ label, rows, rowKey, href, columns, selection, total, perPage, footer }: Props<T>) {
   const navigate = useNavigate()
   const keys = rows.map(rowKey)
   const allChosen = selection !== undefined && keys.length > 0 && keys.every((k) => selection.selected.has(k))
@@ -78,7 +82,14 @@ export function DocumentTable<T>({ label, rows, rowKey, href, columns, selection
                 </th>
               )}
               {columns.map((c) => (
-                <th key={c.key} scope="col" className={cellClass(c)} aria-label={c.label}>{c.header}</th>
+                <th key={c.key} scope="col" className={cellClass(c)} aria-label={c.label} aria-sort={c.sort?.direction}>
+                  {c.sort ? (
+                    <button type="button" className={`document-table__sort is-${c.sort.direction}`} onClick={c.sort.onToggle}>
+                      {c.header}
+                      <SortIcon />
+                    </button>
+                  ) : c.header}
+                </th>
               ))}
             </tr>
           </thead>
@@ -101,11 +112,26 @@ export function DocumentTable<T>({ label, rows, rowKey, href, columns, selection
                 </tr>
               )
             })}
+            {footer && (
+              <tr className="document-table__footer">
+                <td colSpan={columns.length + (selection ? 1 : 0)}>{footer}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
       <Pagination total={total} perPage={perPage} />
     </>
+  )
+}
+
+/** Up and down arrows beside a sortable header; the one of the current direction stands out. */
+function SortIcon() {
+  return (
+    <svg className="document-table__sort-icon" viewBox="0 0 12 16" width="10" height="14" aria-hidden="true">
+      <path className="is-up" d="M6 2 2.500 6.500h7z" />
+      <path className="is-down" d="M6 14 2.500 9.500h7z" />
+    </svg>
   )
 }
 

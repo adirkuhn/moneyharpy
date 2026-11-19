@@ -1094,8 +1094,8 @@ test('a project and a product are added, listed and the product repriced', async
 
   await menu.getByRole('button', { name: 'Products' }).click()
   await menu.getByRole('link', { name: 'Overview' }).last().click()
-  await expect(page.getByText(/No products yet/)).toBeVisible()
-  await page.getByRole('link', { name: 'Add product' }).click()
+  await expect(page.getByRole('region', { name: 'Getting started with products' })).toBeVisible()
+  await page.getByRole('table', { name: 'Products' }).getByRole('link', { name: 'Add product' }).click()
   const product = page.getByRole('form', { name: 'Product' })
   await product.getByLabel('Title').fill('Website hosting')
   await product.getByLabel('Price').fill('50')
