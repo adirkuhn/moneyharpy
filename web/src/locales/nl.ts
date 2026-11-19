@@ -1442,6 +1442,25 @@ export const nl: Messages = {
     reservePurchase: 'Uit de herinvesteringsreserve', reserveSale: 'Naar de herinvesteringsreserve',
     valueChanges: 'Waardeveranderingen', noValueChanges: 'Nog geen waardeveranderingen.', date: 'Datum', type: 'Soort', description: 'Omschrijving', amount: 'Bedrag',
     types: { linear: 'Maandelijks', manual: 'Handmatig', arbitrary: 'Willekeurig', divestment: 'Desinvestering', full_depreciation: 'Buiten gebruik gesteld' },
+    actionsTitle: 'Acties', back: 'Terug', contact: 'Contact', confirmDeleteTitle: 'Weet je zeker dat je dit activum wilt verwijderen? Dit kan niet ongedaan worden gemaakt.',
+    do: {
+      arbitrary: { title: 'Willekeurige afschrijving', text: 'Kies zelf hoe je dit activum afschrijft. Daarvoor gelden voorwaarden; de Belastingdienst noemt ze op zijn website, of vraag je adviseur.' },
+      outOfService: { title: 'Buiten gebruik stellen', text: 'Bijvoorbeeld na diefstal of een defect' },
+      divestment: { title: 'Desinvestering', text: 'Bij verkoop van het activum, of als je het privé gaat gebruiken' },
+      delete: { title: 'Verwijderen', text: 'Alle journaalposten die het boekte, worden verwijderd. Dit verandert ook eerdere balansen. Overweeg desinvesteren of buiten gebruik stellen.' },
+    },
+    forms: {
+      arbitrary: {
+        title: 'Willekeurige afschrijving', placeholder: 'Bijvoorbeeld willekeurige afschrijving op milieu-investeringen (VAMIL) of voor startende ondernemers',
+        intro: 'Bij een willekeurige afschrijving bepaal je zelf hoe en wanneer het activum wordt afgeschreven. Maandelijkse afschrijvingen daarna worden verwijderd, en het plan gaat verder vanaf deze.',
+      },
+      full_depreciation: { title: 'Buiten gebruik stellen', intro: 'Geef een reden waarom je dit activum buiten gebruik stelt. Het activum wordt van de balans gehaald.' },
+      divestment: {
+        title: 'Desinvestering', intro: 'Je gaat dit activum desinvesteren. Het activum wordt van de balans gehaald en een eventuele winst wordt als boekresultaat geboekt.',
+        createInvoice: 'Verkoopfactuur maken', createInvoiceHelp: 'Je kunt de verkoopfactuur overslaan. Maak je er later een voor de verkoop van dit activum, gebruik dan de categorie van het boekresultaat op de factuur.',
+        bookResult: 'Boekresultaat',
+      },
+    },
     journalEntries: 'Journaalposten', actions: 'Acties', edit: 'Bewerken', summary: 'Waarden', sidebar: 'Gegevens van het activum',
     depreciationType: 'Soort afschrijving', depreciation: 'Afschrijving', bookValue: 'Boekwaarde', showYear: 'Toon de afschrijvingen van {{year}}',
     inUse: 'In gebruik', operatingTime: 'Gebruiksduur', months_one: '{{count}} maand', months_other: '{{count}} maanden',

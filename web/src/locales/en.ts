@@ -1440,6 +1440,25 @@ export const en = {
     reservePurchase: 'From the reinvestment reserve', reserveSale: 'To the reinvestment reserve',
     valueChanges: 'Value changes', noValueChanges: 'No value changes yet.', date: 'Date', type: 'Type', description: 'Description', amount: 'Amount',
     types: { linear: 'Monthly', manual: 'Manual', arbitrary: 'Arbitrary', divestment: 'Divestment', full_depreciation: 'Taken out of service' },
+    actionsTitle: 'Actions', back: 'Back', contact: 'Contact', confirmDeleteTitle: 'Are you sure you want to delete this asset? This cannot be undone.',
+    do: {
+      arbitrary: { title: 'Arbitrary depreciation', text: 'Choose how you depreciate this asset. You need to meet some conditions for this; the tax authority lists them on its website, or ask your adviser.' },
+      outOfService: { title: 'Take out of service', text: 'For instance after theft or a defect' },
+      divestment: { title: 'Divestment', text: 'When selling the asset, or starting to use it privately' },
+      delete: { title: 'Delete', text: 'All journal entries it booked are removed. This also changes past balance sheets. Consider divesting or taking it out of service.' },
+    },
+    forms: {
+      arbitrary: {
+        title: 'Arbitrary depreciation', placeholder: 'For example, arbitrary depreciation on environmental assets (VAMIL) or arbitrary depreciation for starting entrepreneurs',
+        intro: 'With an arbitrary depreciation, you decide how and when the asset is depreciated. Monthly depreciations after it are removed, and the plan continues from it.',
+      },
+      full_depreciation: { title: 'Take out of service', intro: 'Give a reason why you take this asset out of service. The asset is removed from the balance sheet.' },
+      divestment: {
+        title: 'Divestment', intro: 'You are about to divest this asset. The asset is removed from the balance sheet and any profit is booked as book result.',
+        createInvoice: 'Create sales invoice', createInvoiceHelp: 'You can skip the sales invoice. To make one later for the sale of this asset, use the category of its book result on the invoice.',
+        bookResult: 'Book result',
+      },
+    },
     journalEntries: 'Journal entries', actions: 'Actions', edit: 'Edit', summary: 'Values', sidebar: 'Asset details',
     depreciationType: 'Depreciation type', depreciation: 'Depreciation', bookValue: 'Book value', showYear: 'Show the depreciations of {{year}}',
     inUse: 'In use', operatingTime: 'Operating time', months_one: '{{count}} month', months_other: '{{count}} months',

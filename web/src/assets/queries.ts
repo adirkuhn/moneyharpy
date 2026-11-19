@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
 import type { components } from '../api/schema'
@@ -131,5 +132,72 @@ export function useUnlinkSource(administrationId: string, id: string) {
       params: { path: { ...admin(administrationId), id, source_id: sourceId } },
     })),
     onSuccess: refresh,
+  })
+}
+
+/** Adds an arbitrary depreciation or takes the asset out of service (Moneybird's full depreciation). */
+export function useAssetChange(administrationId: string, id: string, kind: 'arbitrary' | 'full_depreciation') {
+  const refresh = useRefreshAsset(administrationId, id)
+  return useMutation({
+    mutationFn: (change: { date: string; description: string; amount?: string }) => kind === 'arbitrary'
+      ? unwrap(api.POST('/api/v2/{administration_id}/assets/{id}/value_changes/arbitrary', {
+        ...one(administrationId, id), body: { date: change.date, description: change.description, amount: change.amount ?? '' },
+      }))
+      : unwrap(api.POST('/api/v2/{administration_id}/assets/{id}/value_changes/full_depreciation', {
+        ...one(administrationId, id), body: { date: change.date, description: change.description },
+      })),
+    onSuccess: refresh,
+  })
+}
+
+/** The name of the category a divested asset's sale is booked on, as Moneybird's "Book result company car". */
+export const bookResultName = (category: string, prefix: string) => `${prefix} ${category.charAt(0).toLowerCase()}${category.slice(1)}`
+
+type Divestment = { date: string; invoice?: { contactId: string; amount: string } }
+
+/**
+ * Divests the asset and, when asked, makes the draft sales invoice of the
+ * sale, as Moneybird does: to the contact, for the amount, on the category
+ * of the book result of the asset's category (added when missing) at the
+ * standard VAT rate. Returns the invoice's id, if one was made.
+ */
+export function useDivestAsset(administrationId: string, asset: Asset) {
+  const { t } = useTranslation()
+  const id = String(asset.id)
+  const refresh = useRefreshAsset(administrationId, id)
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ date, invoice }: Divestment): Promise<string | null> => {
+      if (invoice && !invoice.contactId) {
+        throw new ApiError(422, { error: { contact_id: ["can't be blank"] } })
+      }
+      await unwrap(api.POST('/api/v2/{administration_id}/assets/{id}/value_changes/divestment', { ...one(administrationId, id), body: { date } }))
+      if (!invoice) {
+        return null
+      }
+      const accounts = await unwrap(api.GET('/api/v2/{administration_id}/ledger_accounts', { params: { path: admin(administrationId) } }))
+      const category = accounts.find((a) => a.id === asset.ledger_account_id)?.name ?? asset.name ?? ''
+      const name = bookResultName(category, t('assets.forms.divestment.bookResult'))
+      const existing = accounts.find((a) => a.name === name && a.active !== false)
+      const ledger = existing ?? await unwrap(api.POST('/api/v2/{administration_id}/ledger_accounts', {
+        params: { path: admin(administrationId) },
+        body: { ledger_account: { name, account_type: 'other_income_expenses', allowed_document_types: ['sales_invoice'] } },
+      }))
+      const rates = await unwrap(api.GET('/api/v2/{administration_id}/tax_rates', { params: { path: admin(administrationId) } }))
+      const standard = rates
+        .filter((r) => r.tax_rate_type === 'sales_invoice' && r.active !== false)
+        .sort((a, b) => Number(b.percentage ?? 0) - Number(a.percentage ?? 0))[0]
+      const made = await unwrap(api.POST('/api/v2/{administration_id}/sales_invoices', {
+        params: { path: admin(administrationId) },
+        body: { sales_invoice: {
+          contact_id: invoice.contactId, invoice_date: date,
+          details_attributes: [{ description: asset.name ?? '', price: invoice.amount || '0', amount: '1', ledger_account_id: String(ledger.id), ...(standard ? { tax_rate_id: String(standard.id) } : {}) }],
+        } },
+      }))
+      void client.invalidateQueries({ queryKey: ['ledger-accounts', administrationId] })
+      return String(made.id)
+    },
+    onSuccess: refresh,
+    onError: refresh,
   })
 }

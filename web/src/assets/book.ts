@@ -60,3 +60,40 @@ export function assetHistory(asset: Asset): HistoryItem[] {
   const ms = (iso: string) => new Date(iso).getTime()
   return [...events, ...notes].map((h, i) => ({ h, i })).sort((a, b) => ms(b.h.at) - ms(a.h.at) || b.i - a.i).map(({ h }) => h)
 }
+
+const cents = (v: string | number | null | undefined) => Math.round(Number(v ?? 0) * 100)
+
+/**
+ * The asset's value at the end of day (yyyy-mm-dd), as a divestment on that
+ * day books it: the value changes up to the day, less the day's month
+ * depreciated pro rata up to it when that month has no depreciation yet.
+ * The server does the same when it divests.
+ */
+export function valueOn(asset: Asset, day: string): number {
+  const changes = asset.value_changes ?? []
+  let value = cents(asset.calculated_purchase_value ?? asset.purchase_value)
+  for (const c of changes) {
+    if ((c.date ?? '') <= day) {
+      value += cents(c.amount)
+    }
+  }
+  const plan = asset.value_change_plan
+  const month = day.slice(0, 7)
+  const purchase = asset.purchase_date ?? ''
+  if (!plan?.active || asset.disposal || day < purchase || changes.some((c) => c.type === 'linear' && (c.date ?? '').startsWith(month))) {
+    return value / 100
+  }
+  const [year, m, d] = day.split('-').map(Number) as [number, number, number]
+  const days = new Date(Date.UTC(year, m, 0)).getUTCDate()
+  let first = purchase.startsWith(month) ? Number(purchase.slice(8, 10)) : 1
+  const restart = changes.filter((c) => c.type === 'arbitrary').map((c) => c.date ?? '').sort().pop()
+  if (restart?.startsWith(month)) {
+    first = Number(restart.slice(8, 10)) + 1
+  }
+  const used = d - first + 1
+  if (used <= 0) {
+    return value / 100
+  }
+  const share = Math.round((cents(plan.monthly_depreciation) * used) / days)
+  return (value - Math.max(0, Math.min(share, value - cents(plan.residual_value)))) / 100
+}

@@ -2,7 +2,6 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
-import { chooseMore } from '../test/menu'
 import { renderAt } from '../test/render'
 import { administration, listing, server, signedIn } from '../test/server'
 import type { Asset } from './queries'
@@ -224,17 +223,109 @@ describe('an asset', () => {
     await waitFor(() => expect(linked).toEqual({ general_journal_document_entry_id: '95' }))
   })
 
-  it('is deleted', async () => {
+  it('leads to its actions and its edit form', async () => {
+    server.use(...loaded())
+    renderAt('/11/assets/701')
+    expect(await screen.findByRole('link', { name: 'Actions' })).toHaveAttribute('href', '/11/assets/701/value_changes/new')
+    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/11/assets/701/edit')
+  })
+})
+
+describe('the actions of an asset', () => {
+  it('lists Moneybird\'s actions and deletes after asking', async () => {
     let deleted = false
     server.use(...loaded(), http.delete('*/api/v2/11/assets/701', () => {
       deleted = true
       return new HttpResponse(null, { status: 204 })
     }))
-    renderAt('/11/assets/701')
-    expect(await screen.findByRole('heading', { name: 'Laptop' })).toBeInTheDocument()
-    await chooseMore('Delete')
-    await userEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }))
+    renderAt('/11/assets/701/value_changes/new')
+    const list = await screen.findByRole('list', { name: 'Actions' })
+    const links = within(list).getAllByRole('link')
+    expect(links.map((l) => l.getAttribute('href'))).toEqual([
+      '/11/assets/701/value_changes/arbitrary/new', '/11/assets/701/value_changes/full_depreciation/new', '/11/assets/701/value_changes/divestment/new',
+    ])
+    expect(links[1]).toHaveTextContent('Take out of service')
+    await userEvent.click(within(list).getByRole('button', { name: /Delete/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Are you sure you want to delete this asset? This cannot be undone.' })
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Confirm' }))
     await waitFor(() => expect(deleted).toBe(true))
     await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/assets'))
+  })
+
+  it('books an arbitrary depreciation as a lower value', async () => {
+    let sent: unknown
+    server.use(...loaded(), http.post('*/api/v2/11/assets/701/value_changes/arbitrary', async ({ request }) => {
+      sent = await request.json()
+      return HttpResponse.json({ type: 'arbitrary' }, { status: 201 })
+    }))
+    renderAt('/11/assets/701/value_changes/arbitrary/new')
+    const form = await screen.findByRole('form', { name: 'Arbitrary depreciation' })
+    expect(within(form).getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/11/assets/701/value_changes/new')
+    await userEvent.type(within(form).getByRole('textbox', { name: 'Description' }), 'VAMIL')
+    await userEvent.type(within(form).getByRole('textbox', { name: 'Depreciation' }), '250')
+    const date = within(form).getByRole('textbox', { name: 'Date' })
+    await userEvent.clear(date)
+    await userEvent.type(date, '2026-07-15')
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent).toEqual({ date: '2026-07-15', description: 'VAMIL', amount: '-250' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/assets/701'))
+  })
+
+  it('takes an asset out of service with a reason', async () => {
+    let sent: unknown
+    server.use(...loaded(), http.post('*/api/v2/11/assets/701/value_changes/full_depreciation', async ({ request }) => {
+      sent = await request.json()
+      return HttpResponse.json({ type: 'full_depreciation' }, { status: 201 })
+    }))
+    renderAt('/11/assets/701/value_changes/full_depreciation/new')
+    const form = await screen.findByRole('form', { name: 'Take out of service' })
+    await userEvent.type(within(form).getByRole('textbox', { name: 'Description' }), 'Stolen')
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(sent).toMatchObject({ description: 'Stolen' }))
+  })
+
+  it('divests and makes the draft sales invoice of the sale', async () => {
+    const calls: string[] = []
+    let invoice: { sales_invoice?: { contact_id?: string; details_attributes?: { ledger_account_id?: string; price?: string; tax_rate_id?: string }[] } } = {}
+    let category: unknown
+    server.use(
+      ...loaded(),
+      http.get('*/api/v2/11/contacts', () => HttpResponse.json([{ id: '31', company_name: 'Beispiel GmbH' }])),
+      http.get('*/api/v2/11/tax_rates', () => HttpResponse.json([
+        { id: '2101', name: '21% VAT', percentage: '21.0', tax_rate_type: 'sales_invoice', active: true },
+        { id: '901', name: '9% VAT', percentage: '9.0', tax_rate_type: 'sales_invoice', active: true },
+      ])),
+      http.post('*/api/v2/11/assets/701/value_changes/divestment', () => {
+        calls.push('divest')
+        return HttpResponse.json({ type: 'divestment' }, { status: 201 })
+      }),
+      http.post('*/api/v2/11/ledger_accounts', async ({ request }) => {
+        category = await request.json()
+        return HttpResponse.json({ id: '650', name: 'Book result company car' }, { status: 201 })
+      }),
+      http.post('*/api/v2/11/sales_invoices', async ({ request }) => {
+        calls.push('invoice')
+        invoice = await request.json() as typeof invoice
+        return HttpResponse.json({ id: '77' }, { status: 201 })
+      }),
+    )
+    renderAt('/11/assets/701/value_changes/divestment/new')
+    const form = await screen.findByRole('form', { name: 'Divestment' })
+    expect(within(form).getByRole('switch', { name: 'Create sales invoice' })).toBeChecked()
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    expect(await within(form).findByText("Contact can't be blank")).toBeInTheDocument()
+    expect(calls).toEqual([])
+
+    await userEvent.click(within(form).getByRole('combobox', { name: 'Contact' }))
+    await userEvent.click(await screen.findByRole('option', { name: /Beispiel GmbH/ }))
+    const amount = within(form).getByRole('textbox', { name: 'Amount' })
+    await userEvent.clear(amount)
+    await userEvent.type(amount, '900')
+    await userEvent.click(within(form).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/sales_invoices/77'))
+    expect(calls).toEqual(['divest', 'invoice'])
+    expect(category).toEqual({ ledger_account: { name: 'Book result company car', account_type: 'other_income_expenses', allowed_document_types: ['sales_invoice'] } })
+    expect(invoice.sales_invoice?.contact_id).toBe('31')
+    expect(invoice.sales_invoice?.details_attributes?.[0]).toMatchObject({ ledger_account_id: '650', price: '900', tax_rate_id: '2101' })
   })
 })
