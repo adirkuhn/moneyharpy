@@ -51,6 +51,7 @@ var typePermissions = map[string][]administration.Permission{
 	"Webhook":               {administration.Settings},
 	"Contact":               {administration.Estimates, administration.SalesInvoices, administration.Documents, administration.Bank, administration.Settings},
 	"TimeEntry":             {administration.TimeEntries},
+	"Asset":                 {administration.Documents},
 }
 
 // documentKinds keep their events under Document.

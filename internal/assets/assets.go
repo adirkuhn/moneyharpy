@@ -13,6 +13,8 @@ package assets
 
 import (
 	"errors"
+	"github.com/adirkuhn/moneyharpy/internal/history"
+	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"math"
 	"slices"
 	"time"
@@ -116,8 +118,11 @@ type Asset struct {
 	// ReservePurchase funds part of the purchase value from the
 	// reinvestment reserve; it is dated on the purchase date.
 	ReservePurchase *ReserveBooking
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	// Notes and Events are filled when one asset is read.
+	Notes     []notes.Note
+	Events    []history.Event
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Ref locates the asset.

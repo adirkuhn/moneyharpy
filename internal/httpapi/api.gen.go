@@ -5874,13 +5874,19 @@ type Asset struct {
 	CurrentValue *Number         `json:"current_value"`
 	Disposal     *Asset_Disposal `json:"disposal"`
 
+	// Events MoneyHarpy extension. What happened to the asset, oldest first; empty in lists. Actions are asset_created, asset_updated, asset_destroyed, asset_source_created (data kind detail or entry), asset_source_destroyed, asset_value_change_created (data type and amount) and asset_disposal_created (data reason).
+	Events []EventResponse `json:"events"`
+
 	// Id Moneybird-compatible identifier_nullable.
 	Id *IdentifierNullable `json:"id"`
 
 	// LedgerAccountId Moneybird-compatible identifier_nullable.
 	LedgerAccountId *IdentifierNullable `json:"ledger_account_id"`
 	Name            string              `json:"name"`
-	PurchaseDate    openapi_types.Date  `json:"purchase_date"`
+
+	// Notes MoneyHarpy extension. The notes and to-dos on the asset, oldest first; empty in lists.
+	Notes        []NoteResponse     `json:"notes"`
+	PurchaseDate openapi_types.Date `json:"purchase_date"`
 
 	// PurchaseValue Moneybird-compatible number.
 	PurchaseValue               *Number                            `json:"purchase_value"`
@@ -15920,6 +15926,9 @@ type UpdateAssetJSONRequestBody = AssetUpdateRequest
 // CreateAssetDisposalJSONRequestBody defines body for CreateAssetDisposal for application/json ContentType.
 type CreateAssetDisposalJSONRequestBody = AssetDisposalRequest
 
+// CreateAssetNoteJSONRequestBody defines body for CreateAssetNote for application/json ContentType.
+type CreateAssetNoteJSONRequestBody = NoteRequest
+
 // CreateAssetReinvestmentReservePurchaseJSONRequestBody defines body for CreateAssetReinvestmentReservePurchase for application/json ContentType.
 type CreateAssetReinvestmentReservePurchaseJSONRequestBody = AssetReserveRequest
 
@@ -22540,6 +22549,12 @@ type ServerInterface interface {
 	// CreateAssetDisposal Create a disposal
 	// (POST /api/v2/{administration_id}/assets/{id}/disposals)
 	CreateAssetDisposal(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// CreateAssetNote Add a note to an asset
+	// (POST /api/v2/{administration_id}/assets/{id}/notes)
+	CreateAssetNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
+	// DeleteAssetNote Delete a note from an asset
+	// (DELETE /api/v2/{administration_id}/assets/{id}/notes/{note_id})
+	DeleteAssetNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier)
 	// DeleteAssetReinvestmentReservePurchase Delete a reinvestment reserve purchase
 	// (DELETE /api/v2/{administration_id}/assets/{id}/reinvestment_reserve_purchase)
 	DeleteAssetReinvestmentReservePurchase(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id)
@@ -24070,6 +24085,18 @@ func (_ Unimplemented) UpdateAsset(w http.ResponseWriter, r *http.Request, admin
 // CreateAssetDisposal Create a disposal
 // (POST /api/v2/{administration_id}/assets/{id}/disposals)
 func (_ Unimplemented) CreateAssetDisposal(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAssetNote Add a note to an asset
+// (POST /api/v2/{administration_id}/assets/{id}/notes)
+func (_ Unimplemented) CreateAssetNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteAssetNote Delete a note from an asset
+// (DELETE /api/v2/{administration_id}/assets/{id}/notes/{note_id})
+func (_ Unimplemented) DeleteAssetNote(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, id Id, noteId Identifier) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -27738,6 +27765,85 @@ func (siw *ServerInterfaceWrapper) CreateAssetDisposal(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateAssetDisposal(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAssetNote operation middleware
+func (siw *ServerInterfaceWrapper) CreateAssetNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAssetNote(w, r, administrationId, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAssetNote operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAssetNote(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "note_id" -------------
+	var noteId Identifier
+
+	err = runtime.BindStyledParameterWithOptions("simple", "note_id", chi.URLParam(r, "note_id"), &noteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "note_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAssetNote(w, r, administrationId, id, noteId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -44165,6 +44271,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/sources/{source_id}", wrapper.DeleteAssetSource)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/notes", wrapper.CreateAssetNote)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/notes/{note_id}", wrapper.DeleteAssetNote)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/assets/{id}/value_changes/manual", wrapper.CreateAssetManualValueChange)
