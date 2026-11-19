@@ -281,8 +281,13 @@ func TestTaskListsLifecycle(t *testing.T) {
 		t.Errorf("plain list = %+v", year)
 	}
 	wantStatus(t, owner.do(http.MethodPost, api+"/task_lists", map[string]any{"task_list": map[string]any{}}), http.StatusUnprocessableEntity)
+	r = owner.do(http.MethodPost, api+"/task_lists", map[string]any{"task_list": map[string]any{"name": "Ad hoc", "period_begin": nil, "period_end": nil}})
+	wantStatus(t, r, http.StatusCreated)
+	if open := decode[taskList](t, r); open.PeriodBegin != nil {
+		t.Errorf("list without a period = %+v", open)
+	}
 	page := owner.do(http.MethodGet, api+"/task_lists?per_page=1", nil)
-	if got := decode[[]taskList](t, page); len(got) != 1 || page.header.Get("X-Total-Count") != "2" {
+	if got := decode[[]taskList](t, page); len(got) != 1 || page.header.Get("X-Total-Count") != "3" {
 		t.Errorf("page = %+v", got)
 	}
 	up = owner.do(http.MethodPatch, api+"/task_lists/"+year.ID, map[string]any{"task_list": map[string]any{"description": "All of it", "deadline_on": "2026-03-31"}})
@@ -324,6 +329,15 @@ func TestTaskListsLifecycle(t *testing.T) {
 	wantStatus(t, r, http.StatusOK)
 	if got := decode[taskJSON](t, r); got.Name != "Bank accounts" || got.RelatedEntityID != nil {
 		t.Errorf("updated task = %+v", got)
+	}
+	r = owner.do(http.MethodPatch, api+"/task_list_tasks/"+task.ID, map[string]any{"task": map[string]any{"report_type": "debtor"}})
+	if got := decode[taskJSON](t, r); deref(got.ReportType) != "debtor" {
+		t.Errorf("task linked to a report = %+v", got)
+	}
+	r = owner.do(http.MethodPatch, api+"/task_list_tasks/"+task.ID, map[string]any{"task": map[string]any{"report_type": nil}})
+	wantStatus(t, r, http.StatusOK)
+	if got := decode[taskJSON](t, r); got.ReportType != nil || got.Name != "Bank accounts" {
+		t.Errorf("task unlinked from its report = %+v", got)
 	}
 	wantStatus(t, owner.do(http.MethodPost, api+"/task_list_tasks/"+task.ID+"/assignment", map[string]any{"assignee_id": "1"}), http.StatusNotFound)
 	if got := decode[taskJSON](t, owner.do(http.MethodDelete, api+"/task_list_tasks/"+task.ID+"/assignment", nil)); got.AssigneeID != nil {

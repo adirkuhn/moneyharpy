@@ -730,7 +730,7 @@ export interface paths {
         put?: never;
         /**
          * Create a task list
-         * @description With template_id the list is made from that template. Otherwise it gets a first group, without a name, for tasks outside any group, and covers last month unless period_begin and period_end are given. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
+         * @description With template_id the list is made from that template. Otherwise it gets a first group, without a name, for tasks outside any group, and covers last month unless period_begin and period_end are given, or both are null for none. Moneybird asks for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
          */
         post: operations["createTaskList"];
         delete?: never;
@@ -8279,14 +8279,14 @@ export interface components {
                 deadline_on?: string | null;
                 /**
                  * Format: date
-                 * @description On creation only.
+                 * @description On creation only. Null in both period_begin and period_end makes a list without a period (MoneyHarpy extension).
                  */
-                period_begin?: string;
+                period_begin?: string | null;
                 /**
                  * Format: date
-                 * @description On creation only.
+                 * @description On creation only. Null in both period_begin and period_end makes a list without a period (MoneyHarpy extension).
                  */
-                period_end?: string;
+                period_end?: string | null;
                 /** @description The template to make the list from; on creation only. */
                 template_id?: components["schemas"]["FlexibleIdentifier"];
             };
@@ -8308,7 +8308,8 @@ export interface components {
                 /** @description Required on creation. */
                 name?: string;
                 description?: string;
-                report_type?: components["schemas"]["TaskListReportType"];
+                /** @description The report the task links to; null unlinks it (MoneyHarpy extension). */
+                report_type?: components["schemas"]["TaskListReportType"] | null;
                 assignee_id?: components["schemas"]["FlexibleIdentifier"];
                 /** @description A category (ledger account) the task is about; null unlinks it. */
                 related_entity_id?: components["schemas"]["FlexibleIdentifier"] | null;

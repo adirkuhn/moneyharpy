@@ -471,7 +471,9 @@ type ListInput struct {
 	// ClearDeadline removes the deadline.
 	ClearDeadline          bool
 	PeriodBegin, PeriodEnd *time.Time
-	TemplateID             *resource.ID
+	// NoPeriod makes a list that covers no period, Moneybird's "No period".
+	NoPeriod   bool
+	TemplateID *resource.ID
 }
 
 // Lists returns a page of lists, newest first, with their tasks.
@@ -533,7 +535,7 @@ func (s *Service) CreateList(ctx context.Context, admin, user resource.ID, in Li
 	}
 	now := s.now()
 	l := List{ID: s.ids.Next(), AdministrationID: admin, CreatedAt: now, UpdatedAt: now}
-	if in.PeriodBegin == nil && in.PeriodEnd == nil {
+	if in.PeriodBegin == nil && in.PeriodEnd == nil && !in.NoPeriod {
 		begin, end := previous(today, "P1M")
 		l.PeriodBegin, l.PeriodEnd = begin, end
 	}
@@ -561,7 +563,7 @@ func (s *Service) FromTemplate(ctx context.Context, admin, template, user resour
 	}
 	now := s.now()
 	l := List{ID: s.ids.Next(), AdministrationID: admin, TemplateID: &t.ID, Name: t.Name, Description: t.Description, CreatedAt: now, UpdatedAt: now}
-	if in.PeriodBegin == nil && in.PeriodEnd == nil && t.Period != "" {
+	if in.PeriodBegin == nil && in.PeriodEnd == nil && !in.NoPeriod && t.Period != "" {
 		l.PeriodBegin, l.PeriodEnd = previous(today, t.Period)
 	}
 	in.TemplateID = nil

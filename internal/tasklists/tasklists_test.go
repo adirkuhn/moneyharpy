@@ -84,6 +84,14 @@ func TestNewListCoversLastMonthWithAFirstGroup(t *testing.T) {
 	}
 }
 
+func TestListWithoutAPeriod(t *testing.T) {
+	svc, _ := newService()
+	l, err := svc.CreateList(context.Background(), adminID, owner, ListInput{Name: ptr("Ad hoc"), NoPeriod: true})
+	if err != nil || l.PeriodBegin != nil || l.PeriodEnd != nil {
+		t.Errorf("list without a period = %+v, %v", l, err)
+	}
+}
+
 func TestListsFromTemplates(t *testing.T) {
 	svc, _ := newService()
 	ctx := context.Background()

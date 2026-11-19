@@ -1828,7 +1828,7 @@ paths:
       summary: Create a task list
       description: >-
         With template_id the list is made from that template. Otherwise it gets a first group, without a name, for
-        tasks outside any group, and covers last month unless period_begin and period_end are given. Moneybird asks
+        tasks outside any group, and covers last month unless period_begin and period_end are given, or both are null for none. Moneybird asks
         for all of bank, documents, estimates, sales_invoices, settings and time_entries; so does MoneyHarpy.
       tags: [Task lists]
       requestBody:
@@ -16588,11 +16588,13 @@ components:
             period_begin:
               type: string
               format: date
-              description: On creation only.
+              nullable: true
+              description: On creation only. Null in both period_begin and period_end makes a list without a period (MoneyHarpy extension).
             period_end:
               type: string
               format: date
-              description: On creation only.
+              nullable: true
+              description: On creation only. Null in both period_begin and period_end makes a list without a period (MoneyHarpy extension).
             template_id:
               description: The template to make the list from; on creation only.
               $ref: '#/components/schemas/FlexibleIdentifier'
@@ -16632,7 +16634,10 @@ components:
               type: string
               maxLength: 10000
             report_type:
-              $ref: '#/components/schemas/TaskListReportType'
+              description: The report the task links to; null unlinks it (MoneyHarpy extension).
+              nullable: true
+              oneOf:
+                - $ref: '#/components/schemas/TaskListReportType'
             assignee_id:
               $ref: '#/components/schemas/FlexibleIdentifier'
             related_entity_id:

@@ -1,0 +1,77 @@
+/* Task lists, after Moneybird's. */
+.task-lists .document-table th:nth-child(1) { width: 26%; }
+.task-lists .document-table th:nth-child(2), .task-lists .document-table th:nth-child(3) { width: 19%; }
+
+/* Moneybird's progress line: a thin bar with "1/2 tasks" beside it. */
+.progress-line { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+.progress-line__track { position: relative; width: 9.25rem; height: 0.1875rem; overflow: hidden; border-radius: 999px; background: var(--track); }
+.progress-line--large .progress-line__track { width: 25.5rem; max-width: 50vw; }
+.progress-line__fill { position: absolute; inset: 0; background: var(--blue); transform-origin: left; }
+.progress-line__fill.is-complete { background: var(--state-paid); }
+
+.radio-list { display: grid; gap: 0.5rem; padding-top: 0.4375rem; }
+.radio-list__item input[type='radio'] { min-height: 0; padding: 0; border: 0; }
+.radio-list__item { display: inline-flex; align-items: center; gap: 0.625rem; cursor: pointer; }
+.radio-list__item input { flex: none; width: 1rem; height: 1rem; margin: 0; accent-color: var(--blue); }
+.task-list-form__period { display: flex; flex: 1; gap: 0.375rem; }
+.task-list-form__period select { flex: 0 1 11.5rem; min-width: 0; }
+
+/* A list of choices that each lead on, as Moneybird's template selection. */
+.choice-list { margin: 0 0 1rem; padding: 0 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); list-style: none; }
+.choice-list li + li { border-top: 1px solid var(--line); }
+.choice-list__item { display: flex; align-items: center; gap: 1rem; width: 100%; padding: 0.875rem 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.choice-list__item:hover .choice-list__title { color: var(--link); }
+.choice-list__text { display: grid; flex: 1; gap: 0.125rem; }
+.choice-list__title { font-weight: 600; }
+.choice-list__help { color: var(--muted); font-size: 0.8125rem; }
+.choice-list__item svg { width: 0.875rem; height: 0.875rem; color: var(--muted); transform: rotate(-90deg); }
+.choice-list__foot { display: flex; justify-content: center; gap: 0.75rem; padding: 1.25rem; border-radius: 10px; background: var(--surface); }
+
+/* The task list itself: progress, deadline and description on a grey top, the tasks below. */
+.task-sheet { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.task-sheet__top {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem 1.5rem; padding: 1.25rem 3rem; border-bottom: 1px solid var(--line); background: var(--bg);
+}
+.task-sheet__label { margin: 0 0 0.75rem; font-size: 1rem; font-weight: 700; }
+.task-sheet__label--plain { font-weight: 400; }
+.task-sheet__deadline { text-align: right; }
+.task-sheet__deadline p, .task-sheet__about p { margin: 0; }
+.task-sheet__about .task-sheet__label { margin-bottom: 0.375rem; }
+.task-sheet__switch { display: inline-flex; align-items: center; gap: 0.5rem; align-self: start; justify-self: end; cursor: pointer; }
+.task-sheet__body { display: grid; gap: 0.5rem; padding: 1.25rem 3rem 1.5rem; }
+
+.task-rows { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+.task-rows__sub { padding-left: 1.5rem; }
+.task-row { display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 2.5rem; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; }
+.task-row > input[type='checkbox'] { flex: none; width: 1rem; height: 1rem; margin: 0; accent-color: var(--blue); }
+.task-row__name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.task-row__name.is-done { color: var(--muted); text-decoration: line-through; }
+.task-row .dropdown { opacity: 0; }
+.task-row .dropdown > .btn, .task-group__head .dropdown > .btn, .task-lists .dropdown > .btn { border-color: transparent; background: none; box-shadow: none; }
+.task-row:hover .dropdown, .task-row:focus-within .dropdown { opacity: 1; }
+.task-row--add { color: var(--muted); cursor: pointer; }
+.task-row--add svg, .task-group__head--add svg { flex: none; width: 1rem; height: 1rem; color: var(--blue); }
+.task-row--add:hover { color: var(--link); }
+
+.task-group__head { display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 2.75rem; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; }
+.task-group__head hr { flex: 1; margin: 0; border: 0; border-top: 1px solid var(--line); }
+.task-group__title { margin: 0; font-size: 1.125rem; font-weight: 700; }
+.task-group__head--add { color: var(--muted); cursor: pointer; }
+.task-group__head--add:hover .task-group__title { color: var(--link); }
+.task-group__tasks { padding-left: 1.5rem; }
+
+.task-form { display: grid; gap: 0.375rem; padding: 0.5rem 0; }
+.task-form__upper { display: flex; align-items: center; gap: 0.5rem; }
+.task-form__upper input[type='text'] { flex: 1; min-width: 0; }
+.task-form__upper input[type='checkbox'] { flex: none; width: 1rem; height: 1rem; margin: 0 0.25rem 0 0; }
+.task-form__description { margin-left: 1.75rem; }
+.task-form--group .task-form__upper { margin-left: 0; }
+.task-form__lower { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-left: 1.75rem; }
+.task-form__lower select { width: 11.5rem; }
+.task-form__check { display: inline-flex; align-items: center; gap: 0.5rem; }
+
+@media (max-width: 40rem) {
+  .task-sheet__top, .task-sheet__body { padding-inline: 1rem; }
+  .task-sheet__top { grid-template-columns: minmax(0, 1fr); }
+  .task-sheet__deadline, .task-sheet__switch { text-align: left; justify-self: start; }
+}

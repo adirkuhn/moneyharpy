@@ -87,8 +87,10 @@ import { ProductPage } from './products/ProductPage'
 import { ProductsPage } from './products/ProductsPage'
 import { EditProjectPage, NewProjectPage, ProjectRedirect } from './projects/ProjectPage'
 import { ProjectsPage } from './projects/ProjectsPage'
-import { TaskListPage } from './tasklists/TaskListPage'
+import { TaskListPage, TaskListRedirect } from './tasklists/TaskListPage'
 import { TaskListsPage } from './tasklists/TaskListsPage'
+import { EditTaskListPage, NewTaskListPage } from './tasklists/TaskListFormPage'
+import { TemplateSelectionPage } from './tasklists/TemplateSelectionPage'
 import { BillTimePage } from './timeentries/BillTimePage'
 import { HoursReportPage } from './timeentries/HoursReportPage'
 import { ProjectsReportPage } from './timeentries/ProjectsReportPage'
@@ -180,8 +182,11 @@ export function AppRoutes() {
           <Route path="/:administrationId/time_entries_wizard" element={<BillTimePage />} />
           <Route path="/:administrationId/time_entries_report/projects" element={<ProjectsReportPage />} />
           <Route path="/:administrationId/task_lists/lists" element={<TaskListsPage />} />
-          <Route path="/:administrationId/task_lists/new" element={<TaskListPage />} />
-          <Route path="/:administrationId/task_lists/:taskListId" element={<TaskListPage />} />
+          <Route path="/:administrationId/task_lists/lists/new" element={<NewTaskListPage />} />
+          <Route path="/:administrationId/task_lists/lists/templates_selection" element={<TemplateSelectionPage />} />
+          <Route path="/:administrationId/task_lists/lists/:taskListId" element={<TaskListPage />} />
+          <Route path="/:administrationId/task_lists/lists/:taskListId/edit" element={<EditTaskListPage />} />
+          <Route path="/:administrationId/task_lists/:taskListId" element={<TaskListRedirect />} />
           <Route path="/:administrationId/reports" element={<ReportsOverviewPage />} />
           <Route path="/:administrationId/events" element={<EventsPage />} />
           <Route path="/:administrationId/report/audit_report" element={<AuditReportPage />} />
