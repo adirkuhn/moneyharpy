@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/money"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
@@ -64,6 +65,7 @@ func (s *Service) Run(ctx context.Context, interval time.Duration, onError func(
 // on by one instance at a time, and each step changes the invoices so a
 // next round does not repeat it.
 func (s *Service) Work(ctx context.Context) error {
+	ctx = history.AsSystem(ctx)
 	list, err := s.store.Workload(ctx)
 	if err != nil {
 		return fmt.Errorf("list workload: %w", err)

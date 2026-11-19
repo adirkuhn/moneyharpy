@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -119,6 +120,7 @@ type Service struct {
 	ledger   Ledger
 	store    Store
 	invoices Invoices
+	history  history.Recorder
 	// documents pays purchase invoices and receipts.
 	documents Invoices
 	// vatReturns pays VAT returns, or is nil.
@@ -144,6 +146,22 @@ func NewService(admins Administrations, ledger Ledger, store Store, ids *resourc
 // UseInvoices lets transactions pay invoices. Sales needs the banking
 // service too, so it joins after both exist.
 func (s *Service) UseInvoices(i Invoices) { s.invoices = i }
+
+// UseHistory records what happens to bank statements as Moneybird's events.
+func (s *Service) UseHistory(h history.Recorder) { s.history = h }
+
+// record notes that the user did action to the statement, with its
+// reference, which the list of events shows also once it is gone.
+func (s *Service) record(ctx context.Context, st Statement, user resource.ID, action string) error {
+	if s.history == nil {
+		return nil
+	}
+	e := history.Event{AdministrationID: st.AdministrationID, EntityType: "FinancialStatement", EntityID: st.ID, UserID: user, Action: action, Data: map[string]any{"reference": st.Reference}}
+	if err := s.history.Record(ctx, e); err != nil {
+		return fmt.Errorf("record event: %w", err)
+	}
+	return nil
+}
 
 // UseDocuments lets transactions pay purchase invoices and receipts, which
 // need the banking service too.

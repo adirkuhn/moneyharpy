@@ -108,3 +108,18 @@ func TestNoteRecordsOneEventOfARecord(t *testing.T) {
 		t.Errorf("without a recorder: %v", err)
 	}
 }
+
+func TestSystemWorkIsRecordedWithoutAUser(t *testing.T) {
+	store := &memStore{}
+	svc := NewService(store, resource.NewGenerator(1), time.Now)
+	ctx := AsSystem(context.Background())
+	if err := Note(ctx, svc, admin, "FinancialStatement", record, user, "financial_statement_created"); err != nil {
+		t.Fatal(err)
+	}
+	if got := store.events[0]; got.UserID != 0 || !got.System {
+		t.Errorf("user = %d, system %v, want none: the system did it", got.UserID, got.System)
+	}
+	if IsSystem(context.Background()) || !IsSystem(ctx) {
+		t.Error("IsSystem should tell system work apart")
+	}
+}

@@ -333,6 +333,8 @@ func newHarness(t *testing.T, opts options) *harness {
 	ledger := journal.NewService(admins, books, contactService, projectService, journalStore, journalStore, noteService, attachmentService, ids, time.Now)
 	events := history.NewService(postgres.NewEventStore(pool), ids, time.Now)
 	contactService.UseHistory(events)
+	bank.UseHistory(events)
+	h.hooks.UseHistory(events)
 	timeEntryService := timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now)
 	timeEntryService.UseHistory(events)
 	invoiceService := sales.NewService(sales.Deps{

@@ -18,6 +18,9 @@ import { eventText, typeName } from './text'
 import '../reports/reports.css'
 import './events.css'
 
+/** The user_id of the application's own work, which no user has; see the events API. */
+const systemUser = '0'
+
 const periods = ['this_month', 'prev_month', 'this_quarter', 'prev_quarter', 'this_year', 'prev_year'] as const
 
 /** Where a record's page is, for the types that have one. */
@@ -74,7 +77,7 @@ export function EventsPage() {
               </tr>
             </thead>
             <tbody>
-              {events.data.events.map((e) => <Row key={String(e.id)} administrationId={administrationId} event={e} user={names.get(String(e.user_id)) ?? ''} />)}
+              {events.data.events.map((e) => <Row key={String(e.id)} administrationId={administrationId} event={e} user={String(e.user_id) === systemUser ? null : (names.get(String(e.user_id)) ?? '')} />)}
             </tbody>
           </table>
           {(cursors.length > 0 || events.data.next) && (
@@ -109,7 +112,8 @@ export function initials(name: string) {
   return parts.length === 1 ? (parts[0] ?? '').slice(0, 2).toUpperCase() : `${parts[0]?.[0] ?? ''}${parts.at(-1)?.[0] ?? ''}`.toUpperCase()
 }
 
-function Row({ administrationId, event: e, user }: { administrationId: string; event: Event; user: string }) {
+/** A row of the list; user is null for the application's own work, which MoneyHarpy did, as Moneybird shows "Moneybird". */
+function Row({ administrationId, event: e, user }: { administrationId: string; event: Event; user: string | null }) {
   const { t, i18n } = useTranslation()
   const at = new Date(e.created_at ?? '')
   const day = Number.isNaN(at.getTime()) ? '' : `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, '0')}-${String(at.getDate()).padStart(2, '0')}`
@@ -120,17 +124,23 @@ function Row({ administrationId, event: e, user }: { administrationId: string; e
   return (
     <tr>
       <td>{eventText(e.entity_type ?? '', e.action ?? '', t)}</td>
-      <td><Subject administrationId={administrationId} type={type} id={id} deleted={(e.action ?? '').endsWith('_destroyed')} /></td>
-      <td>{user}</td>
+      <td><Subject administrationId={administrationId} type={type} id={id} deleted={(e.action ?? '').endsWith('_destroyed')} data={e.data} /></td>
+      <td>{user ?? t('events.system')}</td>
       <td className="events-table__nowrap">{day}</td>
       <td className="events-table__nowrap">{time}</td>
-      <td><span className={`events-avatar is-${(Number(String(e.user_id ?? '0').slice(-2)) % 4) + 1}`} aria-hidden="true">{initials(user)}</span></td>
+      <td>{user !== null && <span className={`events-avatar is-${(Number(String(e.user_id ?? '0').slice(-2)) % 4) + 1}`} aria-hidden="true">{initials(user)}</span>}</td>
     </tr>
   )
 }
 
+/** A text the event kept about its record, such as a webhook's URL. */
+function stored(data: Event['data'] | undefined, key: string): string {
+  const v = key ? (data as Record<string, unknown> | undefined)?.[key] : undefined
+  return typeof v === 'string' ? v : ''
+}
+
 /** The record an event happened to, by name and with a link to it where it has a page. */
-function Subject({ administrationId, type, id, deleted }: { administrationId: string; type: string; id: string; deleted: boolean }) {
+function Subject({ administrationId, type, id, deleted, data }: { administrationId: string; type: string; id: string; deleted: boolean; data?: Event['data'] }) {
   const { t } = useTranslation()
   const live = !deleted && !!id
   const invoice = useSalesInvoice(administrationId, live && type === 'SalesInvoice' ? id : undefined)
@@ -148,7 +158,8 @@ function Subject({ administrationId, type, id, deleted }: { administrationId: st
     : document.data ? document.data.reference
     : recurring.data ? recurringTitle(recurring.data, customer.data ? contactName(customer.data) : '', t)
     : entry.data ? (entry.data.description ?? '')
-    : ''
+    // A bank statement and a webhook are named by what the event kept: their reference and URL, also once they are gone.
+    : stored(data, type === 'FinancialStatement' ? 'reference' : type === 'Webhook' ? 'url' : '')
   const text = name ? `${typeName(type, t)} ${name}` : typeName(type, t)
   const page = pages[type]
   return live && page ? <Link to={`/${administrationId}/${page}/${id}`}>{text}</Link> : <>{text}</>

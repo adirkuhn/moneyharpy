@@ -19,6 +19,11 @@ export function typeName(type: string, t: TFunction): string {
  * what happened to it, such as "Invoice created" or "Payment registered".
  */
 export function eventText(entityType: string, action: string, t: TFunction): string {
+  // Some actions have their own words at Moneybird, such as "Financial statement added".
+  const own = t(`events.actions.${action}`, { defaultValue: '' })
+  if (own) {
+    return t('events.text', { type: typeName(entityType, t), what: own })
+  }
   const prefixes = [snake(entityType), `company_assets_${snake(entityType)}`]
   const prefix = prefixes.find((p) => action.startsWith(`${p}_`))
   const verb = prefix ? action.slice(prefix.length + 1) : action

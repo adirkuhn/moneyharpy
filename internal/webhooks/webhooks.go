@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/history"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -127,12 +128,29 @@ type Store interface {
 
 // Service implements the webhook use cases.
 type Service struct {
-	admins Administrations
-	store  Store
-	sender Sender
-	policy Policy
-	ids    *resource.Generator
-	now    func() time.Time
+	admins  Administrations
+	store   Store
+	sender  Sender
+	policy  Policy
+	ids     *resource.Generator
+	now     func() time.Time
+	history history.Recorder
+}
+
+// UseHistory records webhooks made and removed as Moneybird's events, with
+// their URL, which the list of events shows also once a webhook is gone.
+func (s *Service) UseHistory(h history.Recorder) { s.history = h }
+
+// record notes that the user did action to the webhook.
+func (s *Service) record(ctx context.Context, w Webhook, user resource.ID, action string) error {
+	if s.history == nil {
+		return nil
+	}
+	e := history.Event{AdministrationID: w.AdministrationID, EntityType: "Webhook", EntityID: w.ID, UserID: user, Action: action, Data: map[string]any{"url": w.URL}}
+	if err := s.history.Record(ctx, e); err != nil {
+		return fmt.Errorf("record event: %w", err)
+	}
+	return nil
 }
 
 // NewService returns a Service.
@@ -233,7 +251,7 @@ func (s *Service) Create(ctx context.Context, admin, user resource.ID, in NewWeb
 	if err := s.store.CreateWebhook(ctx, w); err != nil {
 		return Webhook{}, fmt.Errorf("store webhook: %w", err)
 	}
-	return w, nil
+	return w, s.record(ctx, w, user, "webhook_created")
 }
 
 // Delete removes a webhook.
@@ -241,10 +259,14 @@ func (s *Service) Delete(ctx context.Context, admin, id, user resource.ID) error
 	if err := s.access(ctx, admin, user); err != nil {
 		return err
 	}
-	if _, err := s.store.Webhook(ctx, admin, id); err != nil {
+	w, err := s.store.Webhook(ctx, admin, id)
+	if err != nil {
 		return err
 	}
-	return s.store.DeleteWebhook(ctx, admin, id)
+	if err := s.store.DeleteWebhook(ctx, admin, id); err != nil {
+		return err
+	}
+	return s.record(ctx, w, user, "webhook_destroyed")
 }
 
 // SetActive turns a webhook on or off.

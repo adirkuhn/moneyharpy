@@ -15,11 +15,17 @@ type Log struct {
 	Events []history.Event
 }
 
-// Record implements history.Recorder.
-func (l *Log) Record(_ context.Context, events ...history.Event) error {
+// Record implements history.Recorder; as history.Service, it keeps the
+// application's own work without a user.
+func (l *Log) Record(ctx context.Context, events ...history.Event) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.Events = append(l.Events, events...)
+	for _, e := range events {
+		if history.IsSystem(ctx) {
+			e.UserID, e.System = 0, true
+		}
+		l.Events = append(l.Events, e)
+	}
 	return nil
 }
 

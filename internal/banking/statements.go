@@ -133,6 +133,9 @@ func (s *Service) persistStatement(ctx context.Context, admin, user resource.ID,
 	if err != nil {
 		return Statement{}, fmt.Errorf("store statement: %w", err)
 	}
+	if err := s.record(ctx, st, user, "financial_statement_created"); err != nil {
+		return Statement{}, err
+	}
 	if len(added) > 0 {
 		if added, err = s.autoBook(ctx, admin, user, added); err != nil {
 			return Statement{}, err
@@ -219,6 +222,9 @@ func (s *Service) UpdateStatement(ctx context.Context, admin, id, user resource.
 	if _, err := s.autoBook(ctx, admin, user, added); err != nil {
 		return Statement{}, err
 	}
+	if err := s.record(ctx, st, user, "financial_statement_updated"); err != nil {
+		return Statement{}, err
+	}
 	return s.store.Statement(ctx, admin, id)
 }
 
@@ -237,7 +243,10 @@ func (s *Service) DeleteStatement(ctx context.Context, admin, id, user resource.
 			return ErrStatementBooked
 		}
 	}
-	return s.store.DeleteStatement(ctx, admin, id)
+	if err := s.store.DeleteStatement(ctx, admin, id); err != nil {
+		return err
+	}
+	return s.record(ctx, st, user, "financial_statement_destroyed")
 }
 
 func applyStatement(st *Statement, in StatementInput, verr *resource.ValidationError) error {

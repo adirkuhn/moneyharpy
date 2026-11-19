@@ -26,7 +26,7 @@ func (q *Queries) DeleteEventsOf(ctx context.Context, arg DeleteEventsOfParams) 
 }
 
 const eventsOf = `-- name: EventsOf :many
-SELECT id, administration_id, entity_type, entity_id, user_id, action, link_entity_type, link_entity_id, data, created_at, updated_at FROM events
+SELECT id, administration_id, entity_type, entity_id, user_id, action, link_entity_type, link_entity_id, data, created_at, updated_at, by_system FROM events
 WHERE administration_id = $1 AND entity_type = $2 AND entity_id = ANY($3::bigint[])
 ORDER BY created_at, id
 `
@@ -58,6 +58,7 @@ func (q *Queries) EventsOf(ctx context.Context, arg EventsOfParams) ([]Event, er
 			&i.Data,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.BySystem,
 		); err != nil {
 			return nil, err
 		}
@@ -70,8 +71,8 @@ func (q *Queries) EventsOf(ctx context.Context, arg EventsOfParams) ([]Event, er
 }
 
 const insertEvent = `-- name: InsertEvent :exec
-INSERT INTO events (id, administration_id, entity_type, entity_id, user_id, action, link_entity_type, link_entity_id, data, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+INSERT INTO events (id, administration_id, entity_type, entity_id, user_id, action, link_entity_type, link_entity_id, data, created_at, updated_at, by_system)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 `
 
 type InsertEventParams struct {
@@ -86,6 +87,7 @@ type InsertEventParams struct {
 	Data             []byte
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
+	BySystem         bool
 }
 
 func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) error {
@@ -101,12 +103,13 @@ func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) error 
 		arg.Data,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.BySystem,
 	)
 	return err
 }
 
 const listEvents = `-- name: ListEvents :many
-SELECT id, administration_id, entity_type, entity_id, user_id, action, link_entity_type, link_entity_id, data, created_at, updated_at FROM events
+SELECT id, administration_id, entity_type, entity_id, user_id, action, link_entity_type, link_entity_id, data, created_at, updated_at, by_system FROM events
 WHERE administration_id = $1
   AND ($2::text[] IS NULL OR entity_type = ANY($2::text[]))
   AND ($3::bigint IS NULL OR entity_id = $3::bigint)
@@ -161,6 +164,7 @@ func (q *Queries) ListEvents(ctx context.Context, arg ListEventsParams) ([]Event
 			&i.Data,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.BySystem,
 		); err != nil {
 			return nil, err
 		}

@@ -8,11 +8,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/history/historytest"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -278,6 +280,28 @@ func TestSubscriptions(t *testing.T) {
 		}
 		if !group {
 			t.Errorf("%s belongs to no group", e)
+		}
+	}
+}
+
+func TestWebhooksAreRecordedAsEventsWithTheirURL(t *testing.T) {
+	svc, _, _, _ := newTestService(false)
+	log := &historytest.Log{}
+	svc.UseHistory(log)
+	ctx := context.Background()
+	w, err := svc.Create(ctx, adminID, owner, NewWebhook{URL: "https://example.com/hook"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.Delete(ctx, adminID, w.ID, owner); err != nil {
+		t.Fatal(err)
+	}
+	if got := log.Actions(); !slices.Equal(got, []string{"webhook_created", "webhook_destroyed"}) {
+		t.Fatalf("actions = %v", got)
+	}
+	for _, e := range log.Events {
+		if e.EntityType != "Webhook" || e.EntityID != w.ID || e.UserID != owner || e.Data["url"] != "https://example.com/hook" {
+			t.Errorf("event = %+v", e)
 		}
 	}
 }

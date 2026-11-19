@@ -132,7 +132,11 @@ func toEvents(list []history.Event) []eventJSON {
 			ID: e.ID.String(), EntityType: e.EntityType, EntityID: e.EntityID.String(), AdministrationID: e.AdministrationID.String(), Action: e.Action, LinkEntityID: idString(e.LinkEntityID), LinkEntityType: nz(e.LinkEntityType),
 			Data: e.Data, CreatedAt: e.CreatedAt, UpdatedAt: e.UpdatedAt,
 		}
-		if e.UserID != 0 {
+		switch {
+		case e.System:
+			// The application's own work, as Moneybird's events by "Moneybird": an id that is no user's.
+			j.UserID = ptr(history.SystemUserID)
+		case e.UserID != 0:
 			j.UserID = ptr(e.UserID.String())
 		}
 		if j.Data == nil {

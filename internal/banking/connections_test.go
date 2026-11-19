@@ -3,12 +3,14 @@ package banking
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/bankfile"
+	"github.com/adirkuhn/moneyharpy/internal/history/historytest"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
@@ -487,4 +489,40 @@ func slicesContain[T any](list []T, f func(T) bool) bool {
 		}
 	}
 	return false
+}
+
+func TestStatementsAreRecordedAsEvents(t *testing.T) {
+	svc, link := connectedService(t)
+	ctx := context.Background()
+	c := connect(t, svc, link)
+	log := &historytest.Log{}
+	svc.UseHistory(log)
+	in := StatementInput{AccountID: &c.Accounts[0].AccountID, Reference: ptr("S1"), Mutations: []MutationInput{{Date: ptr("2026-11-01"), Amount: ptr("10"), TransactionID: ptr("T1")}}}
+	st, err := svc.CreateStatement(ctx, adminID, owner, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.UpdateStatement(ctx, adminID, st.ID, owner, StatementInput{Reference: ptr("S1b")}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DeleteStatement(ctx, adminID, st.ID, owner); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"financial_statement_created", "financial_statement_updated", "financial_statement_destroyed"}
+	if got := log.Actions(); !slices.Equal(got, want) {
+		t.Fatalf("actions = %v, want %v", got, want)
+	}
+	if e := log.Events[0]; e.EntityType != "FinancialStatement" || e.EntityID != st.ID || e.Data["reference"] != "S1" || e.UserID != owner || e.AdministrationID != adminID {
+		t.Errorf("event = %+v", e)
+	}
+
+	// A bank connection's import is the application's own, as Moneybird's automatic import.
+	svc.now = func() time.Time { return now.Add(25 * time.Hour) }
+	if n := svc.SyncDue(ctx); n != 1 {
+		t.Fatalf("synced %d", n)
+	}
+	last := log.Events[len(log.Events)-1]
+	if last.Action != "financial_statement_created" || last.UserID != 0 {
+		t.Errorf("automatic import = %+v, want created without a user", last)
+	}
 }

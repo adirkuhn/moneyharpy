@@ -131,6 +131,14 @@ func TestRecurringSalesInvoiceLifecycle(t *testing.T) {
 	if len(made) != 1 || made[0].State != "open" || made[0].InvoiceID == nil {
 		t.Fatalf("made = %+v", made)
 	}
+	// The worker's events are the application's own: user_id "0", as Moneybird's by "Moneybird".
+	byWorker := decode[[]struct {
+		UserID string `json:"user_id"`
+		Action string `json:"action"`
+	}](t, owner.do(http.MethodGet, api+"/events?entity_id="+due.ID, nil))
+	if len(byWorker) == 0 || byWorker[0].Action != "recurring_sales_invoice_invoice_created" || byWorker[0].UserID != "0" {
+		t.Errorf("events of the recurring invoice = %+v", byWorker)
+	}
 	if got := decode[recurringInvoice](t, owner.do(http.MethodGet, recurrings+"/"+due.ID, nil)); got.InvoicesCreated != 1 || got.InvoiceDate == today {
 		t.Errorf("after the worker = %+v", got)
 	}

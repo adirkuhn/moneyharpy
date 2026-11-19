@@ -1392,6 +1392,7 @@ export const nl: Messages = {
   events: {
     label: 'Gebeurtenissen van {{period}}', filters: 'Filters voor gebeurtenissen', loadError: 'De gebeurtenissen konden niet worden geladen.', empty: 'Er is niets gebeurd in deze periode.',
     event: 'Gebeurtenis', type: 'Type', user: 'Gebruiker', date: 'Datum', time: 'Tijd', initials: 'Initialen', newer: 'Nieuwere gebeurtenissen', older: 'Oudere gebeurtenissen',
+    system: 'MoneyHarpy',
     text: '{{type}} {{what}}',
     types: {
       SalesInvoice: 'Factuur', ExternalSalesInvoice: 'Externe factuur', RecurringSalesInvoice: 'Periodieke factuur', Estimate: 'Offerte', Contact: 'Contact',
@@ -1399,6 +1400,10 @@ export const nl: Messages = {
       FinancialStatement: 'Bankafschrift', FinancialAccount: 'Financiële rekening', LedgerAccount: 'Categorie', Product: 'Product', Project: 'Project',
       Asset: 'Activum', Disposal: 'Afstoting', Source: 'Bron', GeneralJournalDocument: 'Memoriaalboeking', DocumentStyle: 'Huisstijl', Identity: 'Identiteit',
       Workflow: 'Workflow', TaxRate: 'Btw-tarief', Note: 'Notitie', CustomField: 'Eigen veld', Subscription: 'Abonnement', User: 'Gebruiker',
+    },
+    actions: {
+      financial_statement_created: 'toegevoegd', webhook_destroyed: 'verwijderd', estimate_send_manually: 'handmatig als verstuurd gemarkeerd',
+      estimate_created_from_original: 'aangemaakt op basis van de oorspronkelijke offerte',
     },
     verbs: {
       created: 'aangemaakt', updated: 'bijgewerkt', destroyed: 'verwijderd', registered: 'geregistreerd', send_manually: 'handmatig als verstuurd gemarkeerd',
@@ -1417,7 +1422,7 @@ export const nl: Messages = {
     taxRate: 'Btw-tarief', turnover: 'Bedrag waarover omzetbelasting wordt berekend', salesTax: 'Omzetbelasting', rateTypes: { sales: 'verkoop', purchases: 'inkoop' },
     openingBalance: 'Beginsaldo', closingBalance: 'Eindsaldo', received: 'Ontvangen', paid: 'Betaald',
     totalReceived: 'Totaal ontvangen', totalPaid: 'Totaal betaald',
-    noContact: 'Geen contact', noProject: 'Geen project', total: 'Totaal', totalThisPage: 'Totaal deze pagina',
+    ofContact: '{{name}} van {{contact}}', backTo: 'Naar {{name}}', noContact: 'Geen contact', noProject: 'Geen project', total: 'Totaal', totalThisPage: 'Totaal deze pagina',
     general: '{{name}} algemeen', excludingVat: 'Alle bedragen zijn in {{currency}} en exclusief btw.',
     noInformation: 'Geen gegevens gevonden voor {{period}}',
     quarterName: 'kwartaal {{n}} {{year}}', goTo: 'Ga naar {{period}}', filters: 'Rapportfilters',

@@ -35,7 +35,7 @@ func (s *EventStore) InsertEvents(ctx context.Context, events []history.Event) e
 				ID: int64(e.ID), AdministrationID: int64(e.AdministrationID), EntityType: e.EntityType, EntityID: int64(e.EntityID),
 				UserID: pgtype.Int8{Int64: int64(e.UserID), Valid: e.UserID != 0}, Action: e.Action,
 				LinkEntityType: pgtype.Text{String: e.LinkEntityType, Valid: e.LinkEntityType != ""}, LinkEntityID: optionalID(e.LinkEntityID),
-				Data: data, CreatedAt: timestamp(e.CreatedAt), UpdatedAt: timestamp(e.UpdatedAt),
+				Data: data, CreatedAt: timestamp(e.CreatedAt), UpdatedAt: timestamp(e.UpdatedAt), BySystem: e.System,
 			}); err != nil {
 				return err
 			}
@@ -81,7 +81,7 @@ func eventsOf(rows []sqlc.Event) ([]history.Event, error) {
 		e := history.Event{
 			ID: resource.ID(r.ID), AdministrationID: resource.ID(r.AdministrationID), EntityType: r.EntityType, EntityID: resource.ID(r.EntityID),
 			Action: r.Action, LinkEntityType: r.LinkEntityType.String, LinkEntityID: idOf(r.LinkEntityID), Data: map[string]any{},
-			CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time,
+			CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time, System: r.BySystem,
 		}
 		if r.UserID.Valid {
 			e.UserID = resource.ID(r.UserID.Int64)
