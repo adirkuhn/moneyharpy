@@ -11046,10 +11046,10 @@ type TaskListRequest struct {
 		// Name Required on creation, unless made from a template.
 		Name *string `json:"name,omitempty"`
 
-		// PeriodBegin On creation only.
+		// PeriodBegin On creation only. Null in both period_begin and period_end makes a list without a period (MoneyHarpy extension).
 		PeriodBegin *openapi_types.Date `json:"period_begin,omitempty"`
 
-		// PeriodEnd On creation only.
+		// PeriodEnd On creation only. Null in both period_begin and period_end makes a list without a period (MoneyHarpy extension).
 		PeriodEnd *openapi_types.Date `json:"period_end,omitempty"`
 
 		// TemplateId An id as a string or a number; an empty string clears it.
@@ -11116,13 +11116,18 @@ type TaskListTaskRequest struct {
 		// RelatedEntityId A category (ledger account) the task is about; null unlinks it.
 		RelatedEntityId *TaskListTaskRequest_Task_RelatedEntityId `json:"related_entity_id,omitempty"`
 
-		// ReportType The report the tasks are generated from.
-		ReportType *TaskListReportType `json:"report_type,omitempty"`
+		// ReportType The report the task links to; null unlinks it (MoneyHarpy extension).
+		ReportType *TaskListTaskRequest_Task_ReportType `json:"report_type,omitempty"`
 	} `json:"task"`
 }
 
 // TaskListTaskRequest_Task_RelatedEntityId A category (ledger account) the task is about; null unlinks it.
 type TaskListTaskRequest_Task_RelatedEntityId struct {
+	union json.RawMessage
+}
+
+// TaskListTaskRequest_Task_ReportType The report the task links to; null unlinks it (MoneyHarpy extension).
+type TaskListTaskRequest_Task_ReportType struct {
 	union json.RawMessage
 }
 
@@ -19903,6 +19908,42 @@ func (t TaskListTaskRequest_Task_RelatedEntityId) MarshalJSON() ([]byte, error) 
 }
 
 func (t *TaskListTaskRequest_Task_RelatedEntityId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTaskListReportType returns the union data inside the TaskListTaskRequest_Task_ReportType as a TaskListReportType
+func (t TaskListTaskRequest_Task_ReportType) AsTaskListReportType() (TaskListReportType, error) {
+	var body TaskListReportType
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTaskListReportType overwrites any union data inside the TaskListTaskRequest_Task_ReportType as the provided TaskListReportType
+func (t *TaskListTaskRequest_Task_ReportType) FromTaskListReportType(v TaskListReportType) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTaskListReportType performs a merge with any union data inside the TaskListTaskRequest_Task_ReportType, using the provided TaskListReportType
+func (t *TaskListTaskRequest_Task_ReportType) MergeTaskListReportType(v TaskListReportType) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TaskListTaskRequest_Task_ReportType) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TaskListTaskRequest_Task_ReportType) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }

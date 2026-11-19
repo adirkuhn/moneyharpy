@@ -686,13 +686,27 @@ func parseDay(w http.ResponseWriter, raw *string, field string) (*time.Time, boo
 	return &d, true
 }
 
+// sentDay reads an optional date field, telling a null that was sent from one left out.
+func sentDay(w http.ResponseWriter, p presence, field string) (day *time.Time, null, ok bool) {
+	if !p.sent {
+		return nil, false, true
+	}
+	var raw *string
+	if err := json.Unmarshal(p.raw, &raw); err != nil {
+		writeError(w, http.StatusBadRequest, field+" is not a date (YYYY-MM-DD)")
+		return nil, false, false
+	}
+	day, ok = parseDay(w, raw, field)
+	return day, raw == nil, ok
+}
+
 func readTaskListInput(w http.ResponseWriter, r *http.Request, optional bool) (tasklists.ListInput, bool) {
 	type fields struct {
 		Name        *string     `json:"name"`
 		Description *string     `json:"description"`
 		DeadlineOn  presence    `json:"deadline_on"`
-		PeriodBegin *string     `json:"period_begin"`
-		PeriodEnd   *string     `json:"period_end"`
+		PeriodBegin presence    `json:"period_begin"`
+		PeriodEnd   presence    `json:"period_end"`
 		TemplateID  *flexString `json:"template_id"`
 	}
 	var body struct {
@@ -717,12 +731,15 @@ func readTaskListInput(w http.ResponseWriter, r *http.Request, optional bool) (t
 			return in, false
 		}
 	}
-	if in.PeriodBegin, ok = parseDay(w, b.PeriodBegin, "period_begin"); !ok {
+	begin, beginNull, ok := sentDay(w, b.PeriodBegin, "period_begin")
+	if !ok {
 		return in, false
 	}
-	if in.PeriodEnd, ok = parseDay(w, b.PeriodEnd, "period_end"); !ok {
+	end, endNull, ok := sentDay(w, b.PeriodEnd, "period_end")
+	if !ok {
 		return in, false
 	}
+	in.PeriodBegin, in.PeriodEnd, in.NoPeriod = begin, end, beginNull && endNull
 	if in.TemplateID, ok = flexID(w, b.TemplateID); !ok {
 		return in, false
 	}
@@ -881,7 +898,7 @@ func readTaskInput(w http.ResponseWriter, r *http.Request) (tasklists.TaskInput,
 		Task struct {
 			Name             *string     `json:"name"`
 			Description      *string     `json:"description"`
-			ReportType       *string     `json:"report_type"`
+			ReportType       presence    `json:"report_type"`
 			AssigneeID       *flexString `json:"assignee_id"`
 			RelatedEntityID  presence    `json:"related_entity_id"`
 			GenerateSubtasks *flexBool   `json:"generate_subtasks"`
@@ -891,7 +908,18 @@ func readTaskInput(w http.ResponseWriter, r *http.Request) (tasklists.TaskInput,
 		return tasklists.TaskInput{}, false
 	}
 	b := body.Task
-	in := tasklists.TaskInput{Name: b.Name, Description: b.Description, ReportType: b.ReportType, GenerateSubtasks: b.GenerateSubtasks.ptr()}
+	in := tasklists.TaskInput{Name: b.Name, Description: b.Description, GenerateSubtasks: b.GenerateSubtasks.ptr()}
+	if b.ReportType.sent {
+		var report *string
+		if err := json.Unmarshal(b.ReportType.raw, &report); err != nil {
+			writeError(w, http.StatusBadRequest, "report_type is not a string")
+			return in, false
+		}
+		if report == nil {
+			report = new(string)
+		}
+		in.ReportType = report
+	}
 	if in.AssigneeID, ok = flexID(w, b.AssigneeID); !ok {
 		return in, false
 	}
