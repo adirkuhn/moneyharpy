@@ -35,6 +35,7 @@ function loaded(seen: URL[] = [], all = [asset(), sold]) {
     listing([harpy]),
     http.get('*/api/v2/administrations/11', () => HttpResponse.json(harpy)),
     http.get('*/api/v2/11/ledger_accounts', () => HttpResponse.json(accounts)),
+    http.get('*/api/v2/11/users', () => HttpResponse.json([{ id: '1', name: 'Ann de Vries' }])),
     http.get('*/api/v2/11/assets', ({ request }) => {
       const url = new URL(request.url)
       seen.push(url)
@@ -144,20 +145,93 @@ describe('the asset form', () => {
   })
 })
 
+const car = asset({
+  name: 'Car', purchase_date: '2025-01-14', purchase_value: '20003.6', calculated_purchase_value: '20003.6', current_value: '19465.85',
+  value_change_plan: { lifespan_in_years: 6, residual_value: '5000.0', active: true, monthly_depreciation: '208.38' },
+  value_changes: [
+    { type: 'linear', date: '2025-01-31', amount: '-120.99', description: null, externally_booked: false, asset_id: '701' },
+    { type: 'linear', date: '2025-02-28', amount: '-208.38', description: null, externally_booked: false, asset_id: '701' },
+    { type: 'linear', date: `${new Date().getFullYear()}-01-31`, amount: '-208.38', description: null, externally_booked: false, asset_id: '701' },
+  ],
+  sources: [{ id: '81', asset_id: '701', detail_id: '91', booking: {
+    detail_id: '91', document_type: 'PurchaseInvoice', document_id: '61', reference: 'INV-1', date: '2025-01-14', description: 'Car', amount: '20003.6',
+  } }] as Asset['sources'],
+  notes: [{ id: '5', note: 'Keys in the drawer', todo: false, user_id: '1', created_at: '2026-04-02T10:00:00Z', entity_type: 'Asset', entity_id: '701' }],
+  events: [
+    { action: 'asset_created', created_at: '2026-04-02T09:00:00Z', user_id: '1', data: {}, entity_type: 'Asset', entity_id: '701' },
+    { action: 'asset_source_created', created_at: '2026-04-02T09:01:00Z', user_id: '1', data: { kind: 'detail' }, entity_type: 'Asset', entity_id: '701' },
+  ],
+})
+
 describe('an asset', () => {
-  it('shows its plan and value changes, and is deleted', async () => {
+  it('shows its values, its depreciations by year and its side panel as Moneybird does', async () => {
+    server.use(http.get('*/api/v2/11/assets/701', () => HttpResponse.json(car)), ...loaded())
+    renderAt('/11/assets/701')
+    expect(await screen.findByRole('heading', { name: 'Car' })).toBeInTheDocument()
+    const values = screen.getByRole('region', { name: 'Values' })
+    expect(values).toHaveTextContent('Purchase value€20,003.60')
+    expect(values).toHaveTextContent('Current value€19,465.85')
+    expect(values).toHaveTextContent('Residual value€5,000.00')
+    expect(values).toHaveTextContent('Monthly depreciation€208.38')
+    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/11/assets/701/edit')
+    expect(screen.getByRole('link', { name: 'Journal entries' })).toHaveAttribute('href', '/11/report/journal_entries?ledger_account_id=600')
+
+    const table = screen.getByRole('table', { name: 'Value changes' })
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Date', 'Depreciation type', 'Depreciation', 'Book value'])
+    const rows = within(table).getAllByRole('row')
+    expect(rows[1]).toHaveTextContent(`${new Date().getFullYear()}-01-31Monthly€208.38€19,465.85`)
+    expect(rows[2]).toHaveTextContent('2025-12-31€329.37€19,674.23')
+    expect(within(table).queryByText('2025-01-31')).toBeNull()
+    await userEvent.click(within(table).getByRole('button', { name: 'Show the depreciations of 2025' }))
+    expect(within(table).getByText('2025-01-31').closest('tr')).toHaveTextContent('€120.99€19,882.61')
+
+    const side = screen.getByRole('complementary', { name: 'Asset details' })
+    expect(side).toHaveTextContent('Commissioning date2025-01-14')
+    expect(side).toHaveTextContent('In use6 years')
+    expect(within(side).getByText('Company car')).toBeInTheDocument()
+    expect(within(side).getByText('Invoice detail linked to asset')).toBeInTheDocument()
+    expect(within(side).getByText('Keys in the drawer')).toBeInTheDocument()
+  })
+
+  it('links and unlinks the documents it was bought with', async () => {
+    let linked: unknown
+    let unlinked = false
+    server.use(
+      http.get('*/api/v2/11/assets/701', () => HttpResponse.json(car)),
+      ...loaded(),
+      http.get('*/api/v2/11/assets/701/linkable_bookings', () => HttpResponse.json([
+        { general_journal_document_entry_id: '95', document_type: 'GeneralJournalDocument', document_id: '62', date: '2025-02-01', description: 'Winter tyres', amount: '800.0' },
+      ])),
+      http.post('*/api/v2/11/assets/701/sources', async ({ request }) => {
+        linked = await request.json()
+        return HttpResponse.json({ id: '82', asset_id: '701', general_journal_document_entry_id: '95' }, { status: 201 })
+      }),
+      http.delete('*/api/v2/11/assets/701/sources/81', () => {
+        unlinked = true
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    renderAt('/11/assets/701')
+    const side = await screen.findByRole('complementary', { name: 'Asset details' })
+    await userEvent.click(within(side).getByRole('button', { name: 'Linked documents' }))
+    const list = within(side).getByRole('list', { name: 'Linked documents' })
+    expect(within(list).getByRole('link', { name: 'Car' })).toHaveAttribute('href', '/11/documents/61')
+    await userEvent.click(within(list).getByRole('button', { name: 'Unlink' }))
+    await waitFor(() => expect(unlinked).toBe(true))
+
+    await userEvent.click(within(side).getByRole('button', { name: 'Link document' }))
+    await userEvent.click(await within(side).findByRole('button', { name: /Winter tyres/ }))
+    await waitFor(() => expect(linked).toEqual({ general_journal_document_entry_id: '95' }))
+  })
+
+  it('is deleted', async () => {
     let deleted = false
-    server.use(...loaded())
-    server.use(http.delete('*/api/v2/11/assets/701', () => {
+    server.use(...loaded(), http.delete('*/api/v2/11/assets/701', () => {
       deleted = true
       return new HttpResponse(null, { status: 204 })
     }))
     renderAt('/11/assets/701')
     expect(await screen.findByRole('heading', { name: 'Laptop' })).toBeInTheDocument()
-    expect(screen.getByText('Monthly depreciation')).toBeInTheDocument()
-    const changes = screen.getByRole('table', { name: 'Value changes' })
-    expect(within(changes).getAllByRole('row')[1]).toHaveTextContent('Depreciation')
-
     await chooseMore('Delete')
     await userEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(deleted).toBe(true))

@@ -1405,7 +1405,12 @@ test('an asset is added in the form, depreciated and shown with its value change
   await table.getByRole('link', { name: 'Office laptop' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Office laptop' })).toBeVisible()
   const changes = page.getByRole('table', { name: 'Value changes' })
-  await expect(changes.getByRole('row').nth(1)).toContainText('Depreciation')
+  // Last year's depreciations are folded into their total, as on Moneybird.
+  const lastYear = new Date().getFullYear() - 1
+  await expect(changes.getByRole('row').filter({ hasText: `${lastYear}-12-31` })).toContainText('€300.00')
+  await changes.getByRole('button', { name: `Show the depreciations of ${lastYear}` }).click()
+  await expect(changes.getByRole('row').filter({ hasText: `${lastYear}-01-31` })).toContainText('Monthly')
+  await expect(page.getByRole('complementary', { name: 'Asset details' })).toContainText('Asset created')
 })
 
 test('a booked purchase invoice shows in the reports and an auditfile lands in the downloads', async ({ page }) => {
