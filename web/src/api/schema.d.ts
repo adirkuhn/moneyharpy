@@ -4879,6 +4879,37 @@ export interface paths {
         patch: operations["updateProduct"];
         trace?: never;
     };
+    "/api/v2/{administration_id}/products/{id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Download a product's image
+         * @description Redirects to a link to the image, as for attachments; the link works for 30 seconds without signing in. 404 when the product has no image. MoneyHarpy extension: Moneybird keeps a product's image for its checkout page only.
+         */
+        get: operations["downloadProductImage"];
+        /**
+         * Set a product's image
+         * @description A PNG, JPEG, GIF or WebP image of at most 10 MB, sent as multipart/form-data in the field file, in place of the image the product had. MoneyHarpy extension.
+         */
+        put: operations["setProductImage"];
+        post?: never;
+        /**
+         * Remove a product's image
+         * @description MoneyHarpy extension.
+         */
+        delete: operations["deleteProductImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/products/{id}/sales_link": {
         parameters: {
             query?: never;
@@ -9542,6 +9573,24 @@ export interface components {
         };
         /** @description A Moneybird product with MoneyHarpy extensions. */
         Product: components["schemas"]["product_response"] & {
+            /** @description The text of the checkout page, when it is not the description. MoneyHarpy extension. */
+            checkout_description?: string | null;
+            /**
+             * @description What the product is, for the smart tax selection. MoneyHarpy extension.
+             * @enum {string|null}
+             */
+            product_type?: "digital_service" | "service" | "product" | null;
+            /**
+             * @description The kind of VAT rate, for the smart tax selection. MoneyHarpy extension.
+             * @enum {string|null}
+             */
+            vat_rate_type?: "standard" | "reduced" | null;
+            /** @description The product's image, or null. MoneyHarpy extension. */
+            image?: {
+                filename: string;
+                content_type: string;
+                size: number;
+            } | null;
             /** @description MoneyHarpy extension. False once deactivated. */
             active: boolean;
             /** @description MoneyHarpy extension. Canonical path of this resource. */
@@ -21222,6 +21271,90 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    downloadProductImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            302: components["responses"]["FileRedirect"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    setProductImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The product with its image */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    deleteProductImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The product without an image */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };

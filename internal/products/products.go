@@ -74,7 +74,9 @@ type Product struct {
 	// MaxAmountPerOrder applies to subscriptions sold online.
 	MaxAmountPerOrder *int
 	// Active is false once deactivated; deactivated products leave lists.
-	Active    bool
+	Active bool
+	// Image is the product's picture, or nil.
+	Image     *Image
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -201,6 +203,7 @@ type Service struct {
 	contacts   Contacts
 	store      Store
 	references References
+	images     Images
 	ids        *resource.Generator
 	now        func() time.Time
 }
@@ -224,6 +227,9 @@ func (s *Service) List(ctx context.Context, admin, user resource.ID, q Query) ([
 	if err != nil {
 		return nil, 0, fmt.Errorf("list products: %w", err)
 	}
+	if err := s.withImages(ctx, admin, list); err != nil {
+		return nil, 0, err
+	}
 	return list, total, nil
 }
 
@@ -232,7 +238,15 @@ func (s *Service) Product(ctx context.Context, admin, id, user resource.ID) (Pro
 	if _, err := s.admins.Get(ctx, admin, user); err != nil {
 		return Product{}, err
 	}
-	return s.store.Product(ctx, admin, id)
+	p, err := s.store.Product(ctx, admin, id)
+	if err != nil {
+		return Product{}, err
+	}
+	list := []Product{p}
+	if err := s.withImages(ctx, admin, list); err != nil {
+		return Product{}, err
+	}
+	return list[0], nil
 }
 
 // ByIdentifier returns the product with the identifier.
@@ -288,7 +302,11 @@ func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, c Cha
 	if err := s.store.SaveProduct(ctx, p, false); err != nil {
 		return Product{}, fmt.Errorf("store product: %w", err)
 	}
-	return p, nil
+	list := []Product{p}
+	if err := s.withImages(ctx, admin, list); err != nil {
+		return Product{}, err
+	}
+	return list[0], nil
 }
 
 func text(dst *string, src *string) {
@@ -469,7 +487,15 @@ func (s *Service) Delete(ctx context.Context, admin, id, user resource.ID) (kept
 			return true, nil
 		}
 	}
-	return false, s.store.DeleteProduct(ctx, admin, id)
+	if err := s.store.DeleteProduct(ctx, admin, id); err != nil {
+		return false, err
+	}
+	if s.images != nil {
+		if err := s.images.DeleteAll(ctx, admin, entityType, id); err != nil {
+			return false, fmt.Errorf("remove image: %w", err)
+		}
+	}
+	return false, nil
 }
 
 // SalesLink makes a link to an online checkout page for the product, as

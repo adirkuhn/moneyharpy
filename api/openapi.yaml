@@ -9971,6 +9971,92 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
+  /api/v2/{administration_id}/products/{id}/image:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: downloadProductImage
+      x-permissions: [settings, sales_invoices, estimates]
+      summary: Download a product's image
+      description: >-
+        Redirects to a link to the image, as for attachments; the link works for 30 seconds without signing in. 404 when
+        the product has no image. MoneyHarpy extension: Moneybird keeps a product's image for its checkout page only.
+      tags: [Products]
+      responses:
+        '302':
+          $ref: '#/components/responses/FileRedirect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    put:
+      operationId: setProductImage
+      x-permissions: [settings]
+      summary: Set a product's image
+      description: >-
+        A PNG, JPEG, GIF or WebP image of at most 10 MB, sent as multipart/form-data in the field file, in place of the
+        image the product had. MoneyHarpy extension.
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: The product with its image
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    delete:
+      operationId: deleteProductImage
+      x-permissions: [settings]
+      summary: Remove a product's image
+      description: MoneyHarpy extension.
+      tags: [Products]
+      responses:
+        '200':
+          description: The product without an image
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/products/{id}/sales_link:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -19050,6 +19136,32 @@ components:
         - type: object
           required: [id, administration_id, price, currency, ledger_account_id, created_at, updated_at, active, uri]
           properties:
+            checkout_description:
+              type: string
+              nullable: true
+              description: The text of the checkout page, when it is not the description. MoneyHarpy extension.
+            product_type:
+              type: string
+              nullable: true
+              enum: [digital_service, service, product, null]
+              description: What the product is, for the smart tax selection. MoneyHarpy extension.
+            vat_rate_type:
+              type: string
+              nullable: true
+              enum: [standard, reduced, null]
+              description: The kind of VAT rate, for the smart tax selection. MoneyHarpy extension.
+            image:
+              type: object
+              nullable: true
+              description: The product's image, or null. MoneyHarpy extension.
+              required: [filename, content_type, size]
+              properties:
+                filename:
+                  type: string
+                content_type:
+                  type: string
+                size:
+                  type: integer
             active:
               type: boolean
               description: MoneyHarpy extension. False once deactivated.
