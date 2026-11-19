@@ -1407,9 +1407,9 @@ test('an asset is added in the form, depreciated and shown with its value change
   const changes = page.getByRole('table', { name: 'Value changes' })
   // Last year's depreciations are folded into their total, as on Moneybird.
   const lastYear = new Date().getFullYear() - 1
-  await expect(changes.getByRole('row', { name: new RegExp(`${lastYear}-12-31`) })).toContainText('€300.00')
+  await expect(changes.getByRole('row').filter({ hasText: `${lastYear}-12-31` })).toContainText('€300.00')
   await changes.getByRole('button', { name: `Show the depreciations of ${lastYear}` }).click()
-  await expect(changes.getByRole('row', { name: new RegExp(`${lastYear}-01-31`) })).toContainText('Monthly')
+  await expect(changes.getByRole('row').filter({ hasText: `${lastYear}-01-31` })).toContainText('Monthly')
   await expect(page.getByRole('complementary', { name: 'Asset details' })).toContainText('Asset created')
 })
 
