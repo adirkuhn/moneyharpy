@@ -128,8 +128,27 @@ const sentences: Record<string, string> = {
   estimate_signed_online: 'quoteSignedOnline',
 }
 
+/** The sentence of an asset's event, by what its data says changed. */
+function assetSentence(action: string, data: Record<string, unknown>): string | undefined {
+  switch (action) {
+    case 'asset_created': return 'assetCreated'
+    case 'asset_updated': return 'assetUpdated'
+    case 'asset_source_created': return data.kind === 'entry' ? 'assetEntryLinked' : 'assetDetailLinked'
+    case 'asset_source_destroyed': return 'assetUnlinked'
+    case 'asset_value_change_created':
+      return data.type === 'arbitrary' ? 'assetArbitrary' : data.type === 'manual' ? 'assetManual' : 'assetWrittenOff'
+    case 'asset_disposal_created':
+      return data.reason === 'divested' ? 'assetDivested' : data.reason === 'out_of_use' ? 'assetOutOfUse' : 'assetDisposed'
+  }
+  return undefined
+}
+
 /** Which sentence tells an event, as a key under invoices.view.events; a quote's state is named as a quote's. */
-export function eventText(action: string): { key: string; state?: string; action?: string; quote?: boolean } {
+export function eventText(action: string, data: Record<string, unknown> = {}): { key: string; state?: string; action?: string; quote?: boolean } {
+  const asset = assetSentence(action, data)
+  if (asset) {
+    return { key: asset }
+  }
   const key = sentences[action]
   if (key) {
     return { key }
