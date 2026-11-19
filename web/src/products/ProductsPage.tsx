@@ -1,32 +1,41 @@
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { formatAmount } from '../banking/queries'
-import { SearchIcon } from '../layout/icons'
+import { useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
+import { InfoIcon, ListIcon, SearchIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { DocumentTable } from '../list/DocumentTable'
-import { FilterPanel } from '../list/FilterPanel'
 import { GettingStarted } from '../list/GettingStarted'
-import { ListActions } from '../list/ListActions'
-import { perPage, type Product, productFrequency, productName, type ProductSearch, useProducts } from './queries'
+import { exportProducts } from './exportProducts'
+import { perPage, type Product, productName, useProducts } from './queries'
 
-/** The administration's products, searchable, active ones unless all are asked for, and paged (/products). */
+type Order = 'none' | 'ascending' | 'descending'
+
+/**
+ * The administration's products, after Moneybird's: the title, amount, VAT
+ * rate and category of each, searchable and sortable by amount, with the
+ * introduction until the first product is added.
+ */
 export function ProductsPage() {
   const { t, i18n } = useTranslation()
   const { administrationId = '' } = useParams()
   const [params, setParams] = useSearchParams()
-  const all = params.get('active') === 'false'
   const page = Math.max(1, Number(params.get('page')) || 1)
   const [query, setQuery] = useState(params.get('q') ?? '')
-  const search: ProductSearch = { query: params.get('q') ?? '', all, page }
-  const products = useProducts(administrationId, search)
+  const products = useProducts(administrationId, { query: params.get('q') ?? '', all: false, page })
+  const rates = useTaxRates(administrationId).data ?? []
+  const accounts = useLedgerAccounts(administrationId).data ?? []
   const [info, setInfo] = useState<boolean | null>(null)
+  const [order, setOrder] = useState<Order>('none')
+  const [exporting, setExporting] = useState(false)
   const introId = useId()
   const base = `/${administrationId}/products`
-  const shown = products.data?.products ?? []
-  const firstUse = products.data !== undefined && shown.length === 0 && !search.query && !all && page === 1
+  const loaded = products.data?.products ?? []
+  const firstUse = products.data !== undefined && loaded.length === 0 && !params.get('q') && page === 1
   const introShown = info ?? firstUse
+  const shown = order === 'none' ? loaded : [...loaded].sort((a, b) => (Number(a.price) - Number(b.price)) * (order === 'ascending' ? 1 : -1))
 
   // Searching waits for a pause in typing, so each key does not ask the server.
   useEffect(() => {
@@ -46,22 +55,38 @@ export function ProductsPage() {
     return () => clearTimeout(timer)
   })
 
-  const quick = [
-    { label: t('products.views.active'), to: base, current: !all },
-    { label: t('products.views.all'), to: `${base}?active=false`, current: all },
-  ]
+  const rateName = (p: Product) => rates.find((r) => r.id === p.tax_rate_id)?.name ?? ''
+  const categoryName = (p: Product) => accounts.find((a) => a.id === p.ledger_account_id)?.name ?? ''
+  const download = () => {
+    setExporting(true)
+    void exportProducts(administrationId, { rate: rateName, category: categoryName }, t, i18n.language).finally(() => setExporting(false))
+  }
 
   return (
     <Page
       wide
       title={t('products.title')}
-      lead={<FilterPanel label={t(`products.views.${all ? 'all' : 'active'}`)} title={t('products.filters')} quick={quick} />}
       actions={
-        <ListActions
-          info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
-          exports={[]}
-          primary={{ to: `${base}/new`, label: t('products.add') }}
-        />
+        <>
+          <button
+            type="button"
+            className={`btn btn--secondary btn--icon${introShown ? ' is-active' : ''}`}
+            aria-label={t('list.moreInfo')}
+            title={t('list.moreInfo')}
+            aria-expanded={introShown}
+            aria-controls={introId}
+            onClick={() => setInfo(!introShown)}
+          >
+            <InfoIcon />
+          </button>
+          <button type="button" className="btn btn--secondary btn--icon" aria-label={t('products.export')} title={t('products.export')} disabled={exporting} onClick={download}>
+            <ListIcon kind="download" />
+          </button>
+          <Link className="btn btn--accent btn--with-icon" to={`${base}/new`}>
+            <ListIcon kind="plus" />
+            <span>{t('products.addShort')}</span>
+          </Link>
+        </>
       }
     >
       {introShown && (
@@ -71,19 +96,21 @@ export function ProductsPage() {
           text={t('products.intro.text')}
           steps={[
             { icon: 'plus', title: t('products.intro.add'), text: t('products.intro.addText') },
-            { icon: 'coins', title: t('products.intro.price'), text: t('products.intro.priceText') },
             { icon: 'file', title: t('products.intro.invoice'), text: t('products.intro.invoiceText') },
+            { icon: 'link', title: t('products.intro.online'), text: t('products.intro.onlineText') },
           ]}
         />
       )}
-      <div className="list-search" role="search" aria-label={t('products.search')}>
-        <SearchIcon />
-        <input type="search" aria-label={t('products.search')} placeholder={t('products.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
-      </div>
+      {!firstUse && products.data && (
+        <div className="list-search list-search--full" role="search" aria-label={t('products.search')}>
+          <SearchIcon />
+          <input type="search" aria-label={t('products.search')} placeholder={t('products.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
+        </div>
+      )}
       {!products.data ? (
         products.error ? <p className="empty">{t('products.loadError')}</p> : <Loading />
-      ) : shown.length === 0 ? (
-        <p className="empty">{firstUse ? t('products.empty') : t('products.noMatches')}</p>
+      ) : shown.length === 0 && !firstUse ? (
+        <p className="empty">{t('products.noMatches')}</p>
       ) : (
         <DocumentTable<Product>
           label={t('products.title')}
@@ -92,15 +119,20 @@ export function ProductsPage() {
           href={(p) => `${base}/${p.id}`}
           total={products.data.total}
           perPage={perPage}
+          footer={firstUse && (
+            <Link className="document-table__add" to={`${base}/new`}>
+              <ListIcon kind="plus" />
+              {t('products.add')}
+            </Link>
+          )}
           columns={[
-            { key: 'title', header: t('products.name'), link: true, cell: (p) => productName(p, t) },
-            { key: 'identifier', header: t('products.identifier'), kind: 'extra', cell: (p) => p.identifier },
-            { key: 'frequency', header: t('products.frequency'), kind: 'extra', cell: (p) => productFrequency(p, t) },
-            { key: 'price', header: t('products.price'), kind: 'amount', cell: (p) => formatAmount(p.price, p.currency ?? 'EUR', i18n.language) },
+            { key: 'title', header: t('products.productTitle'), link: true, cell: (p) => productName(p, t) },
             {
-              key: 'state', header: t('products.status'), kind: 'state',
-              cell: (p) => <span className={`badge badge--${p.active ? 'active' : 'inactive'}`}>{t(`products.states.${p.active ? 'active' : 'inactive'}`)}</span>,
+              key: 'price', header: t('products.amount'), kind: 'amount', cell: (p) => formatAmount(p.price, p.currency ?? 'EUR', i18n.language),
+              sort: { direction: order, onToggle: () => setOrder(order === 'ascending' ? 'descending' : 'ascending') },
             },
+            { key: 'rate', header: t('products.vatRate'), cell: rateName },
+            { key: 'category', header: t('products.category'), cell: categoryName },
           ]}
         />
       )}
