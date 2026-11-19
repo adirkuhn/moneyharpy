@@ -63,6 +63,7 @@ function ProductView({ administrationId, product, rates, accounts }: ViewProps) 
     <Page
       title={productName(product, t)}
       back={{ to: list, label: t('products.backToList') }}
+      wide
       actions={
         <>
           <Link

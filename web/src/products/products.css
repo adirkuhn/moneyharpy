@@ -49,3 +49,20 @@
 .online-not-ready__steps li + li { border-top: 1px solid var(--line); }
 .online-not-ready__steps svg { width: 1.125rem; height: 1.125rem; }
 .online-not-ready__actions { display: flex; justify-content: center; padding: 1.25rem; }
+
+/* The list, after Moneybird's: a wide title, narrow amount and VAT rate, the category in the rest. */
+.product-list .document-table { table-layout: fixed; }
+.product-list .document-table th:nth-child(1) { width: 38%; }
+.product-list .document-table th:nth-child(2) { width: 7rem; }
+.product-list .document-table th:nth-child(3) { width: 7.5rem; }
+.product-list .document-table td:nth-child(3) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The details, after Moneybird's: no lines between the rows, labels in the text colour, set in from the card's edge. */
+.product-details .detail-list__rows { padding: 1.5rem 6.5rem; }
+.product-details .detail-list__row { grid-template-columns: 10.5rem minmax(0, 1fr); padding: 0.375rem 0; }
+.product-details .detail-list__row + .detail-list__row { border-top: 0; }
+.product-details .detail-list__row dt { color: var(--text); }
+@media (max-width: 52rem) {
+  .product-details .detail-list__rows { padding: 1rem; }
+  .product-details .detail-list__row { grid-template-columns: minmax(0, 1fr); }
+}

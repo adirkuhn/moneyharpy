@@ -129,7 +129,7 @@ function ProductForm({ administrationId, product, rates, accounts }: FormProps) 
   }
 
   return (
-    <Page title={product ? t('products.editTitle') : t('products.newTitle')} back={{ to: product ? `${list}/${product.id}` : list, label: t('products.backToList') }}>
+    <Page title={product ? t('products.editTitle') : t('products.newTitle')} wide>
       <form className="form-sheet form-sheet--stacked" onSubmit={submit} noValidate aria-label={t('products.form')}>
         <Problems messages={errors.general} />
         <FormRow label={labels.image ?? ''} errors={errors.field('image')} help={t('products.imageHelp')}>

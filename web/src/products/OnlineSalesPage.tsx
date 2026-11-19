@@ -80,7 +80,7 @@ export function PaymentLinkNotReadyPage() {
     ? { to: product, label: t('onlineSales.backToProduct') }
     : { to: `/${administrationId}/payment_links`, label: t('onlineSales.back') }
   return (
-    <Page title={back.label} back={back}>
+    <Page title={back.label} back={back} wide>
       <section className="online-not-ready" aria-labelledby="online-not-ready">
         <div className="online-not-ready__intro">
           <h2 id="online-not-ready">{t('onlineSales.notReady.title')}</h2>

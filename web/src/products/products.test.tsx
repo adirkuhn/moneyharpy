@@ -142,6 +142,8 @@ describe('a product', () => {
     renderAt('/11/products/new')
     const form = await screen.findByRole('form', { name: 'Product' })
     expect(screen.getByRole('heading', { name: 'New product' })).toBeInTheDocument()
+    // As Moneybird's, the form has Cancel and no back button beside its title.
+    expect(screen.queryByRole('link', { name: 'To Products' })).toBeNull()
     expect(within(form).getByRole('checkbox', { name: 'Use above description on the checkout page' })).toBeChecked()
     expect(within(form).getByRole('checkbox', { name: 'Use smart tax selection' })).not.toBeChecked()
     const rate = within(form).getByRole('combobox', { name: 'VAT rate' })
