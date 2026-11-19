@@ -74,3 +74,32 @@ JOIN LATERAL (
     ORDER BY m.created_at, m.user_id LIMIT 1
 ) o ON true
 ORDER BY w.administration_id;
+
+-- name: PurchaseDetailBookings :many
+-- Purchase invoice and receipt lines with their document, for the sources
+-- of assets.
+SELECT d.id, p.kind, p.id AS document_id, p.reference, p.date, d.description, d.line_base
+FROM purchase_document_details d JOIN purchase_documents p ON p.id = d.purchase_document_id
+WHERE d.administration_id = $1 AND d.id = ANY(@ids::bigint[]);
+
+-- name: JournalEntryBookings :many
+-- Rows of journal entries, for the sources of assets.
+SELECT id, document_id, date, description, amount FROM journal_entries
+WHERE administration_id = $1 AND document_type = 'GeneralJournalDocument' AND id = ANY(@ids::bigint[]);
+
+-- name: LinkablePurchaseDetails :many
+-- Purchase invoice and receipt lines on a category that no asset links yet,
+-- newest first.
+SELECT d.id, p.kind, p.id AS document_id, p.reference, p.date, d.description, d.line_base
+FROM purchase_document_details d JOIN purchase_documents p ON p.id = d.purchase_document_id
+WHERE d.administration_id = $1 AND d.ledger_account_id = $2
+  AND NOT EXISTS (SELECT 1 FROM asset_sources s WHERE s.administration_id = d.administration_id AND s.detail_id = d.id)
+ORDER BY p.date DESC, d.id DESC LIMIT 100;
+
+-- name: LinkableJournalEntries :many
+-- Rows of journal entries on a category that no asset links yet, newest
+-- first.
+SELECT e.id, e.document_id, e.date, e.description, e.amount FROM journal_entries e
+WHERE e.administration_id = $1 AND e.ledger_account_id = $2 AND e.document_type = 'GeneralJournalDocument'
+  AND NOT EXISTS (SELECT 1 FROM asset_sources s WHERE s.administration_id = e.administration_id AND s.general_journal_document_entry_id = e.id)
+ORDER BY e.date DESC, e.id DESC LIMIT 100;

@@ -100,6 +100,22 @@ type Source struct {
 	DetailID  *resource.ID
 	EntryID   *resource.ID
 	CreatedAt time.Time
+	// Booking is filled when one asset is read; nil once the booking is gone.
+	Booking *Booking
+}
+
+// Booking is a purchase invoice or receipt line, or a row of a journal
+// entry, with the document it is on.
+type Booking struct {
+	DetailID *resource.ID
+	EntryID  *resource.ID
+	// DocumentType is PurchaseInvoice, Receipt or GeneralJournalDocument.
+	DocumentType string
+	DocumentID   resource.ID
+	Reference    string
+	Date         time.Time
+	Description  string
+	Amount       money.Amount
 }
 
 // Asset is a fixed asset.

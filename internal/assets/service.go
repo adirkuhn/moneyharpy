@@ -75,6 +75,12 @@ type Store interface {
 	// EntryLedgerAccount returns the category of a journal entry row, or
 	// ErrBookingNotFound.
 	EntryLedgerAccount(ctx context.Context, admin, id resource.ID) (resource.ID, error)
+	// Bookings returns the purchase lines and journal entry rows that
+	// exist of those asked for.
+	Bookings(ctx context.Context, admin resource.ID, details, entries []resource.ID) ([]Booking, error)
+	// Linkable returns the bookings on a category that no asset links yet,
+	// newest first.
+	Linkable(ctx context.Context, admin, ledger resource.ID) ([]Booking, error)
 	Workload(ctx context.Context) ([]Workload, error)
 	// Lock keeps other instances off the administration's assets until
 	// release; ok is false when another instance holds it.

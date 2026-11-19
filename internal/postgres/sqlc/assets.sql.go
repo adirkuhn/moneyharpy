@@ -278,6 +278,152 @@ func (q *Queries) JournalDocumentEntryLedgerAccount(ctx context.Context, arg Jou
 	return ledger_account_id, err
 }
 
+const journalEntryBookings = `-- name: JournalEntryBookings :many
+SELECT id, document_id, date, description, amount FROM journal_entries
+WHERE administration_id = $1 AND document_type = 'GeneralJournalDocument' AND id = ANY($2::bigint[])
+`
+
+type JournalEntryBookingsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+type JournalEntryBookingsRow struct {
+	ID          int64
+	DocumentID  int64
+	Date        pgtype.Date
+	Description string
+	Amount      int64
+}
+
+// Rows of journal entries, for the sources of assets.
+func (q *Queries) JournalEntryBookings(ctx context.Context, arg JournalEntryBookingsParams) ([]JournalEntryBookingsRow, error) {
+	rows, err := q.db.Query(ctx, journalEntryBookings, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []JournalEntryBookingsRow
+	for rows.Next() {
+		var i JournalEntryBookingsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.DocumentID,
+			&i.Date,
+			&i.Description,
+			&i.Amount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const linkableJournalEntries = `-- name: LinkableJournalEntries :many
+SELECT e.id, e.document_id, e.date, e.description, e.amount FROM journal_entries e
+WHERE e.administration_id = $1 AND e.ledger_account_id = $2 AND e.document_type = 'GeneralJournalDocument'
+  AND NOT EXISTS (SELECT 1 FROM asset_sources s WHERE s.administration_id = e.administration_id AND s.general_journal_document_entry_id = e.id)
+ORDER BY e.date DESC, e.id DESC LIMIT 100
+`
+
+type LinkableJournalEntriesParams struct {
+	AdministrationID int64
+	LedgerAccountID  int64
+}
+
+type LinkableJournalEntriesRow struct {
+	ID          int64
+	DocumentID  int64
+	Date        pgtype.Date
+	Description string
+	Amount      int64
+}
+
+// Rows of journal entries on a category that no asset links yet, newest
+// first.
+func (q *Queries) LinkableJournalEntries(ctx context.Context, arg LinkableJournalEntriesParams) ([]LinkableJournalEntriesRow, error) {
+	rows, err := q.db.Query(ctx, linkableJournalEntries, arg.AdministrationID, arg.LedgerAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LinkableJournalEntriesRow
+	for rows.Next() {
+		var i LinkableJournalEntriesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.DocumentID,
+			&i.Date,
+			&i.Description,
+			&i.Amount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const linkablePurchaseDetails = `-- name: LinkablePurchaseDetails :many
+SELECT d.id, p.kind, p.id AS document_id, p.reference, p.date, d.description, d.line_base
+FROM purchase_document_details d JOIN purchase_documents p ON p.id = d.purchase_document_id
+WHERE d.administration_id = $1 AND d.ledger_account_id = $2
+  AND NOT EXISTS (SELECT 1 FROM asset_sources s WHERE s.administration_id = d.administration_id AND s.detail_id = d.id)
+ORDER BY p.date DESC, d.id DESC LIMIT 100
+`
+
+type LinkablePurchaseDetailsParams struct {
+	AdministrationID int64
+	LedgerAccountID  pgtype.Int8
+}
+
+type LinkablePurchaseDetailsRow struct {
+	ID          int64
+	Kind        string
+	DocumentID  int64
+	Reference   string
+	Date        pgtype.Date
+	Description string
+	LineBase    int64
+}
+
+// Purchase invoice and receipt lines on a category that no asset links yet,
+// newest first.
+func (q *Queries) LinkablePurchaseDetails(ctx context.Context, arg LinkablePurchaseDetailsParams) ([]LinkablePurchaseDetailsRow, error) {
+	rows, err := q.db.Query(ctx, linkablePurchaseDetails, arg.AdministrationID, arg.LedgerAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LinkablePurchaseDetailsRow
+	for rows.Next() {
+		var i LinkablePurchaseDetailsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.DocumentID,
+			&i.Reference,
+			&i.Date,
+			&i.Description,
+			&i.LineBase,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAssets = `-- name: ListAssets :many
 
 SELECT a.id, a.administration_id, a.ledger_account_id, a.name, a.purchase_date, a.purchase_value, a.lifespan_months, a.residual_value, a.disposal_id, a.disposal_date, a.disposal_reason, a.disposal_externally_booked, a.reserve_sale_id, a.reserve_sale_amount, a.reserve_purchase_id, a.reserve_purchase_amount, a.created_at, a.updated_at, count(*) OVER () AS total
@@ -338,6 +484,57 @@ func (q *Queries) ListAssets(ctx context.Context, arg ListAssetsParams) ([]ListA
 			&i.Asset.CreatedAt,
 			&i.Asset.UpdatedAt,
 			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const purchaseDetailBookings = `-- name: PurchaseDetailBookings :many
+SELECT d.id, p.kind, p.id AS document_id, p.reference, p.date, d.description, d.line_base
+FROM purchase_document_details d JOIN purchase_documents p ON p.id = d.purchase_document_id
+WHERE d.administration_id = $1 AND d.id = ANY($2::bigint[])
+`
+
+type PurchaseDetailBookingsParams struct {
+	AdministrationID int64
+	Ids              []int64
+}
+
+type PurchaseDetailBookingsRow struct {
+	ID          int64
+	Kind        string
+	DocumentID  int64
+	Reference   string
+	Date        pgtype.Date
+	Description string
+	LineBase    int64
+}
+
+// Purchase invoice and receipt lines with their document, for the sources
+// of assets.
+func (q *Queries) PurchaseDetailBookings(ctx context.Context, arg PurchaseDetailBookingsParams) ([]PurchaseDetailBookingsRow, error) {
+	rows, err := q.db.Query(ctx, purchaseDetailBookings, arg.AdministrationID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PurchaseDetailBookingsRow
+	for rows.Next() {
+		var i PurchaseDetailBookingsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.DocumentID,
+			&i.Reference,
+			&i.Date,
+			&i.Description,
+			&i.LineBase,
 		); err != nil {
 			return nil, err
 		}
