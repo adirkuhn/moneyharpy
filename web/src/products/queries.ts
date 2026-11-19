@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
 import type { components } from '../api/schema'
+import { fileBody } from '../invoices/queries'
 
 export type Product = components['schemas']['Product']
 export type ProductChanges = components['schemas']['ProductRequest']['product']
@@ -107,4 +108,24 @@ export function productName(p: Pick<Product, 'title' | 'description'>, t: TFunct
 /** How often a subscription product is invoiced, such as "Every month"; empty for a one-off product. */
 export function productFrequency(p: Pick<Product, 'frequency' | 'frequency_type'>, t: TFunction) {
   return p.frequency_type ? t(`recurring.every.${p.frequency_type}`, { count: p.frequency ?? 1 }) : ''
+}
+
+/** Where a product's image is; the server redirects to the file. The file's name and size make a new image a new address. */
+export const productImageURL = (administrationId: string, p: Pick<Product, 'id' | 'image'>) =>
+  `/api/v2/${administrationId}/products/${p.id}/image?v=${encodeURIComponent(`${p.image?.filename ?? ''}-${p.image?.size ?? 0}`)}`
+
+/** Gives a product an image, in place of the one it had, or removes it with null. */
+export function useProductImage(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File | null }) =>
+      file
+        ? unwrap(api.PUT('/api/v2/{administration_id}/products/{id}/image', { ...one(administrationId, id), ...fileBody(file) }))
+        : unwrap(api.DELETE('/api/v2/{administration_id}/products/{id}/image', one(administrationId, id))),
+    onSuccess: (saved) => {
+      if (saved.id) {
+        client.setQueryData(['product', administrationId, saved.id], saved)
+      }
+    },
+  })
 }
