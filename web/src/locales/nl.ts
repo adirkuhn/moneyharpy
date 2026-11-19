@@ -1422,7 +1422,7 @@ export const nl: Messages = {
     taxRate: 'Btw-tarief', turnover: 'Bedrag waarover omzetbelasting wordt berekend', salesTax: 'Omzetbelasting', rateTypes: { sales: 'verkoop', purchases: 'inkoop' },
     openingBalance: 'Beginsaldo', closingBalance: 'Eindsaldo', received: 'Ontvangen', paid: 'Betaald',
     totalReceived: 'Totaal ontvangen', totalPaid: 'Totaal betaald',
-    noContact: 'Geen contact', noProject: 'Geen project', total: 'Totaal', totalThisPage: 'Totaal deze pagina',
+    ofContact: '{{name}} van {{contact}}', backTo: 'Naar {{name}}', noContact: 'Geen contact', noProject: 'Geen project', total: 'Totaal', totalThisPage: 'Totaal deze pagina',
     general: '{{name}} algemeen', excludingVat: 'Alle bedragen zijn in {{currency}} en exclusief btw.',
     noInformation: 'Geen gegevens gevonden voor {{period}}',
     quarterName: 'kwartaal {{n}} {{year}}', goTo: 'Ga naar {{period}}', filters: 'Rapportfilters',

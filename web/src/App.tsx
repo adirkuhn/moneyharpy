@@ -177,6 +177,8 @@ export function AppRoutes() {
           <Route path="/:administrationId/report/creditors" element={<ContactReportPage key="creditors" kind="creditors" />} />
           <Route path="/:administrationId/report/revenue_by_contact" element={<ContactReportPage key="revenue" kind="revenue_by_contact" />} />
           <Route path="/:administrationId/report/expenses_by_contact" element={<ContactReportPage key="expenses" kind="expenses_by_contact" />} />
+          <Route path="/:administrationId/report/revenue_by_contact/:contactId" element={<ContactReportPage key="revenue-one" kind="revenue_by_contact" />} />
+          <Route path="/:administrationId/report/expenses_by_contact/:contactId" element={<ContactReportPage key="expenses-one" kind="expenses_by_contact" />} />
           <Route path="/:administrationId/report/revenue_by_project" element={<ProjectReportPage key="revenue" kind="revenue_by_project" />} />
           <Route path="/:administrationId/report/expenses_by_project" element={<ProjectReportPage key="expenses" kind="expenses_by_project" />} />
           <Route path="/:administrationId/report/assets_report" element={<AssetsReportPage />} />

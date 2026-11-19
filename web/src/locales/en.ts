@@ -1420,7 +1420,7 @@ export const en = {
     taxRate: 'VAT rate', turnover: 'Amount over which tax payable is calculated', salesTax: 'Sales tax', rateTypes: { sales: 'sales', purchases: 'purchases' },
     openingBalance: 'Opening balance', closingBalance: 'Closing balance', received: 'Cash received', paid: 'Cash paid',
     totalReceived: 'Total received', totalPaid: 'Total paid',
-    noContact: 'No contact', noProject: 'No project', total: 'Total', totalThisPage: 'Total this page',
+    ofContact: '{{name}} of {{contact}}', backTo: 'To {{name}}', noContact: 'No contact', noProject: 'No project', total: 'Total', totalThisPage: 'Total this page',
     general: '{{name}} General', excludingVat: 'All amounts are in {{currency}} and excluding VAT.',
     noInformation: 'No information found for {{period}}',
     quarterName: 'quarter {{n}} {{year}}', goTo: 'Go to {{period}}', filters: 'Report filters',

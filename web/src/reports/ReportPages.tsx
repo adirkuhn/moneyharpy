@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { useExternalInvoice } from '../external/queries'
 import { incomingTitle, useTypedDocument } from '../incoming/queries'
@@ -432,14 +432,14 @@ export function CashFlowPage() {
   )
 }
 
-function ContactName({ administrationId, id, link = true }: { administrationId: string; id: string | null; link?: boolean }) {
+function ContactName({ administrationId, id, link = true, to }: { administrationId: string; id: string | null; link?: boolean; to?: string }) {
   const { t } = useTranslation()
   const contact = useContact(administrationId, id ?? undefined)
   if (id == null) {
     return <>{t('reports.noContact')}</>
   }
   const name = contact.data ? contactName(contact.data) : id
-  return link ? <Link to={`/${administrationId}/contacts/${id}`}>{name}</Link> : <>{name}</>
+  return link ? <Link to={to ?? `/${administrationId}/contacts/${id}`}>{name}</Link> : <>{name}</>
 }
 
 function ProjectName({ administrationId, id }: { administrationId: string; id: string | null }) {
@@ -487,11 +487,20 @@ const contactReports: Record<ContactReportKind, { menu: string; name: string; to
 /** An amount per contact per part of the period: the balances of debtors or creditors, or the revenue or costs per contact. */
 export function ContactReportPage({ kind }: { kind: ContactReportKind }) {
   const { t } = useTranslation()
+  // Revenue and costs per contact open one contact's own report from its row, as Moneybird's /report/revenue_by_contact/:id.
+  const { contactId } = useParams()
+  const { search } = useLocation()
   const names = contactReports[kind]
   const title = t(`sidenav.items.${names.menu}`)
   const f = useReportFilter('granular')
-  const report = useContactReport(f.administrationId, kind, { period: f.period, granularity: apiGranularity(f) }, f.page)
-  const page = (children: ReactNode) => <ReportPage filter={f} name={t(`reports.names.${names.name}`)} title={title} sayPer={names.total !== 'totalThisPage'}>{children}</ReportPage>
+  const report = useContactReport(f.administrationId, kind, { period: f.period, granularity: apiGranularity(f) }, f.page, contactId)
+  const contact = useContact(f.administrationId, contactId)
+  const perContact = names.total === 'total'
+  const list = `/${f.administrationId}/report/${kind}`
+  const reportName = t(`reports.names.${names.name}`)
+  const name = contactId ? t('reports.ofContact', { name: reportName, contact: contact.data ? contactName(contact.data) : '' }) : reportName
+  const back = contactId ? <Link className="btn btn--secondary" to={`${list}${search}`}>{t('reports.backTo', { name: title })}</Link> : undefined
+  const page = (children: ReactNode) => <ReportPage filter={f} name={name} title={title} sayPer={perContact} actions={back}>{children}</ReportPage>
   if (!report.data) {
     return page(report.error ? <Failed /> : <Loading />)
   }
@@ -504,7 +513,10 @@ export function ContactReportPage({ kind }: { kind: ContactReportKind }) {
       report={report.data}
       label={title}
       totalLabel={t(`reports.${names.total}`)}
-      name={(id) => <ContactName administrationId={f.administrationId} id={id} />}
+      name={(id) =>
+        perContact && id != null && !contactId
+          ? <ContactName administrationId={f.administrationId} id={id} to={`${list}/${id}${search}`} />
+          : <ContactName administrationId={f.administrationId} id={id} />}
     />,
   )
 }

@@ -161,6 +161,23 @@ describe('reports', () => {
     expect(within(table).queryByRole('link', { name: 'INV-2025-7' })).toBeNull()
   })
 
+  it('opens the revenue of one contact from its row, as Moneybird', async () => {
+    const seen: URL[] = []
+    server.use(...loaded(seen), http.get('*/api/v2/11/reports/revenue_by_contact', ({ request }) => {
+      seen.push(new URL(request.url))
+      return HttpResponse.json({ revenue_by_contact: [{ contact_id: '301', amount: '242.0' }] })
+    }))
+    renderAt('/11/report/revenue_by_contact?period=202501..202503')
+    const table = await screen.findByRole('table', { name: 'Revenue per contact' })
+    const row = await within(table).findByRole('link', { name: 'Example Shop B.V.' })
+    expect(row).toHaveAttribute('href', '/11/report/revenue_by_contact/301?period=202501..202503')
+    await userEvent.click(row)
+    await waitFor(() => expect(seen.at(-1)?.searchParams.get('contact_id')).toBe('301'))
+    expect(seen.at(-1)?.searchParams.get('period')).toBe('202501..202503')
+    expect(await screen.findByRole('button', { name: /^Revenue per contact of Example Shop B\.V\. for quarter 1 2025/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'To Revenue per contact' })).toHaveAttribute('href', '/11/report/revenue_by_contact?period=202501..202503')
+  })
+
   it('pages the reports per contact by 50, as Moneybird', async () => {
     const seen: URL[] = []
     server.use(http.get('*/api/v2/11/reports/debtors', ({ request }) => {

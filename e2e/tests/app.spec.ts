@@ -1417,6 +1417,10 @@ test('a booked purchase invoice shows in the reports and an auditfile lands in t
   await menu.getByRole('link', { name: 'VAT summary' }).click()
   // As on Moneybird, the VAT report shows the boxes of the Dutch return: the input tax in 5b.
   await expect(page.getByRole('table', { name: 'VAT report Netherlands' }).getByRole('row', { name: /^5b/ })).toContainText('€21')
+  // A contact's row opens its own report, as on Moneybird.
+  await menu.getByRole('link', { name: 'Costs per contact' }).click()
+  await page.getByRole('table', { name: 'Costs per contact' }).getByRole('link', { name: 'Supplier B.V.' }).click()
+  await expect(page.getByRole('button', { name: /^Expenses per contact of Supplier B\.V\./ })).toBeVisible()
   await menu.getByRole('link', { name: 'Expenses by project' }).click()
   await expect(page.getByRole('table', { name: 'Expenses by project' }).getByRole('row', { name: /Falcon/ })).toContainText('100.00')
   // The aging row opens into the invoice behind it, as on Moneybird.
@@ -1429,14 +1433,22 @@ test('a booked purchase invoice shows in the reports and an auditfile lands in t
   await expect(page.getByRole('heading', { name: 'No information found for January 2025' })).toBeVisible()
   await expect(page.getByText('could not be loaded')).toHaveCount(0)
 
-  // Contacts and documents record their events, as on Moneybird.
-  await menu.getByRole('link', { name: 'Events' }).click()
-  const events = page.getByRole('table', { name: 'Events' })
-  await expect(events.getByRole('row', { name: /Contact created/ })).toContainText('Supplier B.V.')
-  await expect(events.getByRole('row', { name: /Document saved/ })).toContainText('INV-2026-88')
-
   const exported = await page.request.post(`${api}/reports/export/auditfile`, { data: { year: today.slice(0, 4) } })
   expect(exported.status()).toBe(204)
   const downloads = await (await page.request.get(`${api}/downloads`)).json()
   expect(downloads.map((d: { download_type: string }) => d.download_type)).toContain('auditfile')
+
+  // A bank statement added through the API is an event too.
+  const account = await (await page.request.post(`${api}/financial_accounts`, { data: { financial_account: { name: 'Main bank', identifier: 'NL91ABNA0417164300' } } })).json()
+  const statement = await page.request.post(`${api}/financial_statements`, { data: { financial_statement: {
+    financial_account_id: account.id, reference: 'Statement 1', financial_mutations_attributes: [{ date: today, message: 'Rent', amount: '-50' }],
+  } } })
+  expect(statement.status()).toBe(201)
+
+  // Contacts and documents record their events, as on Moneybird.
+  await menu.getByRole('link', { name: 'Events' }).click()
+  await expect(page.getByRole('table', { name: 'Events' }).getByRole('row', { name: /Financial statement added/ })).toContainText('Statement 1')
+  const events = page.getByRole('table', { name: 'Events' })
+  await expect(events.getByRole('row', { name: /Contact created/ })).toContainText('Supplier B.V.')
+  await expect(events.getByRole('row', { name: /Document saved/ })).toContainText('INV-2026-88')
 })

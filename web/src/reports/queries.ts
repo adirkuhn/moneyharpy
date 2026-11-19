@@ -77,12 +77,13 @@ const ofContacts = (items: ContactItem[]): Subject[] => items.map((x) => ({ id: 
 const ofProjects = (items: ProjectItem[]): Subject[] => items.map((x) => ({ id: x.project_id == null ? null : String(x.project_id), amount: x.amount }))
 
 /** A page of a report per contact: the balances of debtors or creditors, or the revenue or costs per contact. */
-export function useContactReport(administrationId: string, kind: ContactReportKind, q: ReportQuery, page: number) {
+export function useContactReport(administrationId: string, kind: ContactReportKind, q: ReportQuery, page: number, contactId?: string) {
   return useQuery({
-    queryKey: ['report', kind, administrationId, q, page],
+    queryKey: ['report', kind, administrationId, q, page, contactId],
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<SubjectReport> => {
-      const params = { params: { path: path(administrationId), query: { ...query(q), page: String(page), per_page: String(reportPerPage) } } }
+      const one = contactId && (kind === 'revenue_by_contact' || kind === 'expenses_by_contact') ? { contact_id: contactId } : {}
+      const params = { params: { path: path(administrationId), query: { ...query(q), ...one, page: String(page), per_page: String(reportPerPage) } } }
       const total = (r: Response, n: number) => Number(r.headers.get('X-Total-Count') ?? n)
       switch (kind) {
         case 'debtors': {
