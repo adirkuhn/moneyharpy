@@ -231,6 +231,7 @@ describe('a product', () => {
     expect(value('Frequency')).toHaveTextContent('Every month')
     expect(value('Image')).toHaveTextContent('-')
     expect(screen.getByRole('link', { name: 'To Products' })).toHaveAttribute('href', '/11/products')
+    expect(screen.getByRole('link', { name: 'Create payment link' })).toHaveAttribute('href', '/11/payment_links/501/edit?return_to=%2F11%2Fproducts%2F501')
 
     await userEvent.click(screen.getByRole('link', { name: 'Edit' }))
     const form = await screen.findByRole('form', { name: 'Product' })

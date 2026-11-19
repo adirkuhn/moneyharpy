@@ -541,7 +541,7 @@ export const nl: Messages = {
     priceSection: 'Prijs en boeking', subscription: 'Abonnement', once: 'Eenmalig', frequencyHelp: 'Voor een product dat een langere tijd beslaat, zoals een abonnement. Dit kan niet veranderen zolang het product actieve abonnementen heeft.',
     noVatRate: 'Geen btw-tarief', chooseCategory: 'Kies een categorie',
     detailsTitle: 'Productgegevens', editTitle: 'Product bewerken',
-    edit: 'Bewerken', remove: 'Product verwijderen', confirmRemoveText: 'Dit product verwijderen? Als facturen het gebruiken, wordt het gedeactiveerd.',
+    createPaymentLink: 'Betaallink maken', edit: 'Bewerken', remove: 'Product verwijderen', confirmRemoveText: 'Dit product verwijderen? Als facturen het gebruiken, wordt het gedeactiveerd.',
     productImage: 'Productafbeelding', dropImage: 'Sleep een bestand hierheen of kies er een', removeImage: 'Afbeelding verwijderen', image: 'Afbeelding',
     imageHelp: 'Afbeeldingen staan op de betaalpagina, hoogstens 300px hoog en 400px breed.',
     referenceHelp: 'Bijvoorbeeld een productnummer, SKU of andere unieke code.', sameCheckout: 'Gebruik bovenstaande omschrijving op de betaalpagina',
@@ -563,6 +563,21 @@ export const nl: Messages = {
     confirmDeleteText: 'Dit product verwijderen? Als facturen het gebruiken, wordt het in plaats daarvan gedeactiveerd.',
     keptNotice: 'Facturen gebruiken dit product, dus het is gedeactiveerd in plaats van verwijderd.',
     inactiveNotice: 'Dit product is gedeactiveerd en wordt niet aangeboden voor nieuwe facturen.',
+  },
+  onlineSales: {
+    title: 'Online verkopen', add: 'Toevoegen', paymentLink: 'Betaallink', subscriptionTemplate: 'Abonnementsjabloon',
+    back: 'Terug naar online verkopen', backToProduct: 'Terug naar het product',
+    intro: {
+      title: 'Verkoop direct vanuit MoneyHarpy', text: 'Verkoop je product of dienst online met een eigen link die je kunt delen, en online betaalmethoden.',
+      add: 'Product toevoegen', addText: 'Maak je product of dienst één keer aan en kies een eenmalige verkoop of een abonnement. Deel de link en begin met verkopen.',
+      checkout: 'Betaalpagina', checkoutText: 'Je klant ziet een productpagina en betaalt online met een betaalmethode die hij vertrouwt.',
+      processed: 'Direct verwerkt', processedText: 'Verkopen en betalingen komen meteen in je administratie, zonder webwinkel.',
+    },
+    notReady: {
+      title: 'Niet klaar voor online verkopen', needs: 'Wat online verkopen nodig heeft',
+      text: 'MoneyHarpy kan nog geen betalingen online ontvangen, dus ook geen betaallinks of betaalpagina’s maken. Online verkopen heeft deze twee nodig:',
+      methods: 'Online betaalmethoden waarmee je klanten kunnen betalen', workflow: 'Een workflow met online betaalmethoden',
+    },
   },
   projects: {
     title: 'Projecten', add: 'Project toevoegen', newTitle: 'Nieuw project', backToList: 'Naar Projecten', form: 'Project', save: 'Project opslaan',

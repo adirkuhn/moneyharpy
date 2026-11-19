@@ -79,6 +79,7 @@ import { EstimatePage } from './estimates/EstimatePage'
 import { EstimatesPage } from './estimates/EstimatesPage'
 import { RecurringInvoicePage } from './recurring/RecurringInvoicePage'
 import { RecurringInvoicesPage } from './recurring/RecurringInvoicesPage'
+import { OnlineSalesPage, PaymentLinkNotReadyPage } from './products/OnlineSalesPage'
 import { ProductFormPage } from './products/ProductFormPage'
 import { ProductPage } from './products/ProductPage'
 import { ProductsPage } from './products/ProductsPage'
@@ -150,6 +151,11 @@ export function AppRoutes() {
           <Route path="/:administrationId/products/new" element={<ProductFormPage />} />
           <Route path="/:administrationId/products/:productId" element={<ProductPage />} />
           <Route path="/:administrationId/products/:productId/edit" element={<ProductFormPage />} />
+          <Route path="/:administrationId/payment_links" element={<OnlineSalesPage />} />
+          <Route path="/:administrationId/payment_links/new" element={<Navigate replace to="../incomplete" relative="path" />} />
+          <Route path="/:administrationId/payment_links/incomplete" element={<PaymentLinkNotReadyPage />} />
+          <Route path="/:administrationId/payment_links/:productId/edit" element={<PaymentLinkNotReadyPage />} />
+          <Route path="/:administrationId/subscription_templates/new" element={<PaymentLinkNotReadyPage />} />
           <Route path="/:administrationId/assets" element={<AssetsPage />} />
           <Route path="/:administrationId/assets/:assetId" element={<AssetPage />} />
           <Route path="/:administrationId/projects" element={<ProjectsPage />} />

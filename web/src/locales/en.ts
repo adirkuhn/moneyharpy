@@ -539,7 +539,7 @@ export const en = {
     priceSection: 'Price and booking', subscription: 'Subscription', once: 'Once', frequencyHelp: 'For a product that covers a longer time, such as a subscription. It cannot change while the product has active subscriptions.',
     noVatRate: 'No VAT rate', chooseCategory: 'Choose a category',
     detailsTitle: 'Product details', editTitle: 'Edit product',
-    edit: 'Edit', remove: 'Remove product', confirmRemoveText: 'Remove this product? If invoices use it, it is deactivated instead.',
+    createPaymentLink: 'Create payment link', edit: 'Edit', remove: 'Remove product', confirmRemoveText: 'Remove this product? If invoices use it, it is deactivated instead.',
     productImage: 'Product image', dropImage: 'Drag a file here or choose one', removeImage: 'Remove image', image: 'Image',
     imageHelp: 'Images are shown on the checkout page, at most 300px high and 400px wide.',
     referenceHelp: 'For example a product number, SKU or other unique code.', sameCheckout: 'Use above description on the checkout page',
@@ -561,6 +561,21 @@ export const en = {
     confirmDeleteText: 'Delete this product? If invoices use it, it is deactivated instead.',
     keptNotice: 'Invoices use this product, so it was deactivated instead of removed.',
     inactiveNotice: 'This product is deactivated and is not offered for new invoices.',
+  },
+  onlineSales: {
+    title: 'Online sales', add: 'Add', paymentLink: 'Payment link', subscriptionTemplate: 'Subscription template',
+    back: 'Back to online sales', backToProduct: 'Back to the product',
+    intro: {
+      title: 'Sell directly from MoneyHarpy', text: 'Sell your product or service online with a link of its own that you can share, and online payment methods.',
+      add: 'Add a product', addText: 'Make your product or service once and choose a one-time sale or a subscription. Share the link and start selling.',
+      checkout: 'Checkout page', checkoutText: 'Your customer sees a product page and pays online with a payment method they trust.',
+      processed: 'Processed at once', processedText: 'Sales and payments land in your administration straight away, without a webshop.',
+    },
+    notReady: {
+      title: 'Not ready for online sales', needs: 'What online sales need',
+      text: 'MoneyHarpy cannot take payments online yet, so it cannot make payment links or checkout pages. Online sales need both of these:',
+      methods: 'Online payment methods your customers can pay with', workflow: 'A workflow with online payment methods',
+    },
   },
   projects: {
     title: 'Projects', add: 'Add project', newTitle: 'New project', backToList: 'To Projects', form: 'Project', save: 'Save project',

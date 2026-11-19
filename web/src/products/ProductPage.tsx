@@ -65,6 +65,12 @@ function ProductView({ administrationId, product, rates, accounts }: ViewProps) 
       back={{ to: list, label: t('products.backToList') }}
       actions={
         <>
+          <Link
+            className="btn btn--accent"
+            to={`/${administrationId}/payment_links/${product.id}/edit?return_to=${encodeURIComponent(`${list}/${product.id}`)}`}
+          >
+            {t('products.createPaymentLink')}
+          </Link>
           <Link className="btn btn--secondary btn--with-icon" to={`${list}/${product.id}/edit`}>
             <ListIcon kind="edit" />
             <span>{t('products.edit')}</span>
