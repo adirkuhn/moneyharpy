@@ -112,29 +112,31 @@ export function ProductsPage() {
       ) : shown.length === 0 && !firstUse ? (
         <p className="empty">{t('products.noMatches')}</p>
       ) : (
-        <DocumentTable<Product>
-          label={t('products.title')}
-          rows={shown}
-          rowKey={(p) => p.id ?? ''}
-          href={(p) => `${base}/${p.id}`}
-          total={products.data.total}
-          perPage={perPage}
-          footer={firstUse && (
-            <Link className="document-table__add" to={`${base}/new`}>
-              <ListIcon kind="plus" />
-              {t('products.add')}
-            </Link>
-          )}
-          columns={[
-            { key: 'title', header: t('products.productTitle'), link: true, cell: (p) => productName(p, t) },
-            {
-              key: 'price', header: t('products.amount'), kind: 'amount', cell: (p) => formatAmount(p.price, p.currency ?? 'EUR', i18n.language),
-              sort: { direction: order, onToggle: () => setOrder(order === 'ascending' ? 'descending' : 'ascending') },
-            },
-            { key: 'rate', header: t('products.vatRate'), cell: rateName },
-            { key: 'category', header: t('products.category'), cell: categoryName },
-          ]}
-        />
+        <div className="product-list">
+          <DocumentTable<Product>
+            label={t('products.title')}
+            rows={shown}
+            rowKey={(p) => p.id ?? ''}
+            href={(p) => `${base}/${p.id}`}
+            total={products.data.total}
+            perPage={perPage}
+            footer={firstUse && (
+              <Link className="document-table__add" to={`${base}/new`}>
+                <ListIcon kind="plus" />
+                {t('products.add')}
+              </Link>
+            )}
+            columns={[
+              { key: 'title', header: t('products.productTitle'), link: true, cell: (p) => productName(p, t) },
+              {
+                key: 'price', header: t('products.amount'), kind: 'amount', cell: (p) => formatAmount(p.price, p.currency ?? 'EUR', i18n.language),
+                sort: { direction: order, onToggle: () => setOrder(order === 'ascending' ? 'descending' : 'ascending') },
+              },
+              { key: 'rate', header: t('products.vatRate'), cell: rateName },
+              { key: 'category', header: t('products.category'), cell: categoryName },
+            ]}
+          />
+        </div>
       )}
     </Page>
   )
