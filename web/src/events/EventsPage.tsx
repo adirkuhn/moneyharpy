@@ -18,6 +18,9 @@ import { eventText, typeName } from './text'
 import '../reports/reports.css'
 import './events.css'
 
+/** The user_id of the application's own work, which no user has; see the events API. */
+const systemUser = '0'
+
 const periods = ['this_month', 'prev_month', 'this_quarter', 'prev_quarter', 'this_year', 'prev_year'] as const
 
 /** Where a record's page is, for the types that have one. */
@@ -74,7 +77,7 @@ export function EventsPage() {
               </tr>
             </thead>
             <tbody>
-              {events.data.events.map((e) => <Row key={String(e.id)} administrationId={administrationId} event={e} user={e.user_id == null ? null : (names.get(String(e.user_id)) ?? '')} />)}
+              {events.data.events.map((e) => <Row key={String(e.id)} administrationId={administrationId} event={e} user={String(e.user_id) === systemUser ? null : (names.get(String(e.user_id)) ?? '')} />)}
             </tbody>
           </table>
           {(cursors.length > 0 || events.data.next) && (

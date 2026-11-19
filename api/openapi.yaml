@@ -10410,8 +10410,8 @@ paths:
         document types keep their events under Document, so asking for such a type is 400 naming Document; an
         unknown type is 400 naming the types the user can ask for. With entity_id only, events of record types the
         user may not see are left out. A user who only has the time_entries permission sees only their own events.
-        Events of the application's own work, such as a bank connection's import or a recurring invoice's invoice, have no
-        user_id, as Moneybird shows them done by "Moneybird".
+        Events of the application's own work, such as a bank connection's import or a recurring invoice's invoice, have
+        user_id "0", which is no user's, as Moneybird shows them done by "Moneybird".
         The list is paginated with a cursor: follow the Link header with rel="next" for older events; the last page
         has no Link header.
       tags: [Events]

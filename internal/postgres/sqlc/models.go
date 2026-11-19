@@ -429,6 +429,7 @@ type Event struct {
 	Data             []byte
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
+	BySystem         bool
 }
 
 type ExternalSalesInvoice struct {

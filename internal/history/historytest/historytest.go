@@ -22,7 +22,7 @@ func (l *Log) Record(ctx context.Context, events ...history.Event) error {
 	defer l.mu.Unlock()
 	for _, e := range events {
 		if history.IsSystem(ctx) {
-			e.UserID = 0
+			e.UserID, e.System = 0, true
 		}
 		l.Events = append(l.Events, e)
 	}

@@ -54,7 +54,7 @@ describe('events page', () => {
           return HttpResponse.json([{ id: '3', entity_type: 'Contact', entity_id: '302', action: 'contact_destroyed', user_id: '7', created_at: '2026-11-01T08:00:00Z' }])
         }
         return HttpResponse.json([
-          { id: '6', entity_type: 'FinancialStatement', entity_id: '901', action: 'financial_statement_created', user_id: null, data: { reference: 'Bank import 2026-11-18' }, created_at: '2026-11-18T12:00:00Z' },
+          { id: '6', entity_type: 'FinancialStatement', entity_id: '901', action: 'financial_statement_created', user_id: '0', data: { reference: 'Bank import 2026-11-18' }, created_at: '2026-11-18T12:00:00Z' },
           { id: '5', entity_type: 'Webhook', entity_id: '902', action: 'webhook_created', user_id: '7', data: { url: 'https://example.com/hook' }, created_at: '2026-11-18T11:30:00Z' },
           { id: '4', entity_type: 'Document', entity_id: '801', action: 'document_saved', user_id: '7', created_at: '2026-11-18T11:00:00Z' },
           { id: '2', entity_type: 'Contact', entity_id: '301', action: 'contact_created', user_id: '7', created_at: '2026-11-18T10:12:00Z' },

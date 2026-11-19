@@ -30,7 +30,9 @@ type Event struct {
 	LinkEntityType string
 	LinkEntityID   *resource.ID
 	// Data tells more, such as the email address an invoice went to.
-	Data      map[string]any
+	Data map[string]any
+	// System marks the application's own work, done by no user.
+	System    bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -59,6 +61,10 @@ func Note(ctx context.Context, r Recorder, admin resource.ID, entityType string,
 	}
 	return r.Record(ctx, Event{AdministrationID: admin, EntityType: entityType, EntityID: entity, UserID: user, Action: action})
 }
+
+// SystemUserID is the user_id the API gives events of the application's
+// own work: no user has it.
+const SystemUserID = "0"
 
 type systemKey struct{}
 
@@ -93,7 +99,7 @@ func (s *Service) Record(ctx context.Context, events ...Event) error {
 	for i, e := range events {
 		e.ID = s.ids.Next()
 		if IsSystem(ctx) {
-			e.UserID = 0
+			e.UserID, e.System = 0, true
 		}
 		e.CreatedAt = at.Add(time.Duration(i) * time.Microsecond)
 		e.UpdatedAt = e.CreatedAt
