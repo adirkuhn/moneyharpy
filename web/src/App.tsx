@@ -85,7 +85,7 @@ import { OnlineSalesPage, PaymentLinkNotReadyPage } from './products/OnlineSales
 import { ProductFormPage } from './products/ProductFormPage'
 import { ProductPage } from './products/ProductPage'
 import { ProductsPage } from './products/ProductsPage'
-import { ProjectPage } from './projects/ProjectPage'
+import { EditProjectPage, NewProjectPage, ProjectRedirect } from './projects/ProjectPage'
 import { ProjectsPage } from './projects/ProjectsPage'
 import { TaskListPage } from './tasklists/TaskListPage'
 import { TaskListsPage } from './tasklists/TaskListsPage'
@@ -167,8 +167,9 @@ export function AppRoutes() {
           <Route path="/:administrationId/assets/:assetId/value_changes/full_depreciation/new" element={<OutOfServicePage />} />
           <Route path="/:administrationId/assets/:assetId/value_changes/divestment/new" element={<DivestmentPage />} />
           <Route path="/:administrationId/projects" element={<ProjectsPage />} />
-          <Route path="/:administrationId/projects/new" element={<ProjectPage />} />
-          <Route path="/:administrationId/projects/:projectId" element={<ProjectPage />} />
+          <Route path="/:administrationId/projects/new" element={<NewProjectPage />} />
+          <Route path="/:administrationId/projects/:projectId" element={<ProjectRedirect />} />
+          <Route path="/:administrationId/projects/:projectId/edit" element={<EditProjectPage />} />
           <Route path="/:administrationId/time_entries" element={<TimeEntriesPage />} />
           <Route path="/:administrationId/time_entries/new" element={<TimeEntryPage />} />
           <Route path="/:administrationId/time_entries/:timeEntryId" element={<TimeEntryPage />} />

@@ -146,6 +146,8 @@ export const en = {
     balanced: 'Debit and credit are equal.', difference: 'Difference: {{amount}}', save: 'Save journal entry', delete: 'Delete', confirmDelete: 'Delete permanently',
   },
   list: {
+    deactivated_one: 'There is {{count}} deactivated item.', deactivated_other: 'There are {{count}} deactivated items.',
+    showDeactivated: 'Show deactivated items.', hideDeactivated: 'Hide deactivated items.',
     moreInfo: 'More information', statistics: 'Show statistics', export: 'Export', moreActions: 'More actions', notAvailable: 'Not available yet.',
     excelPerInvoice: 'Excel per invoice', excelPerRow: 'Excel per row', composeExport: 'Compose export',
     quickFilter: 'Quick filter', advancedFilter: 'Advanced filter', filter: 'Filter', all: 'All', status: 'Status',
@@ -582,25 +584,20 @@ export const en = {
     },
   },
   projects: {
-    title: 'Projects', add: 'Add project', newTitle: 'New project', backToList: 'To Projects', form: 'Project', save: 'Save project',
-    filters: 'Project filters', views: { active: 'Active projects', archived: 'Archived projects', all: 'All projects' },
+    title: 'Projects', add: 'Add project', addShort: 'Add', newTitle: 'Add project', editTitle: 'Edit project', form: 'Project', save: 'Save',
     loadError: 'The projects could not be loaded. Reload the page to try again.',
-    empty: 'No projects yet. Add one to see the revenue and costs of a piece of work together.',
-    noMatches: 'No projects match this filter. Try another one.',
     intro: {
-      title: 'Keep track of your projects', text: 'Group invoices, costs and hours by project, and see how each one is doing.',
-      add: 'Add a project', addText: 'Give it a name and, if you like, a budget in hours.',
-      book: 'Book on it', bookText: 'Choose the project on invoice lines, receipts and time entries.',
-      report: 'See the results', reportText: 'Compare the revenue and costs of each project.',
+      title: 'Add projects', text: 'A project is used for different projects or departments within your company. You can easily add a project to invoices, quotations or incoming documents.',
+      add: 'Add', addText: 'Create a project, give it a name and define an hour budget if necessary.',
+      select: 'Select', selectText: 'Choose the corresponding project when creating an invoice or while processing an incoming document.',
+      insight: 'Insight', insightText: 'View the ‘Revenue per project’ and ‘Cost per project’ reports to gain more insight into the results of your projects.',
     },
-    name: 'Name', budget: 'Budget', budgetHelp: 'In hours. Leave empty for no budget.', hours_one: '{{count}} hour', hours_other: '{{count}} hours', status: 'Status',
-    states: { active: 'Active', archived: 'Archived' },
-    detailsTitle: 'Project details', editTitle: 'Edit project',
-    archive: 'Archive', reactivate: 'Reactivate', delete: 'Delete', confirmDelete: 'Delete project',
-    confirmDeleteText: 'Delete this project? If something is booked on it, it is archived instead.',
+    name: 'Project name', budget: 'Budget (hours)',
+    archive: 'Archive', reactivate: 'Reactivate', delete: 'Delete', confirmDelete: 'Are you sure you want to delete this project?',
     keptNotice: 'Something is booked on this project, so it was archived instead of deleted.',
     archivedNotice: 'This project is archived and is not offered for new bookings.',
   },
+
   vat: {
     title: 'VAT returns', declare: 'Declare new VAT return', backToList: 'To VAT returns',
     loadError: 'The VAT returns could not be loaded. Reload the page to try again.',
@@ -1415,8 +1412,6 @@ export const en = {
   assets: {
     title: 'Assets', backTo: 'Assets',
     add: 'Add asset', addShort: 'Add', category: 'Category', commissioningDate: 'Commissioning date', depreciated: 'Depreciated',
-    deactivatedCount_one: 'There is {{count}} deactivated item.', deactivatedCount_other: 'There are {{count}} deactivated items.',
-    showDeactivated: 'Show deactivated items.', hideDeactivated: 'Hide deactivated items.',
     intro: {
       title: 'Getting started with assets',
       text: 'Bought a laptop or desk? These assets last for several years, so their purchase value is spread over the years you use them. This is called depreciation.',

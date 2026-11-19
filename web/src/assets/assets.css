@@ -2,8 +2,6 @@
 .asset-list .document-table th:nth-child(1) { width: 28%; }
 .asset-category { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 6px; background: var(--row-hover); color: var(--link); font-size: 0.8125rem; font-weight: 650; white-space: nowrap; }
 .asset-list .document-table__state .badge { display: flex; justify-content: center; align-items: center; min-height: 1.75rem; border-radius: 6px; }
-.asset-list__deactivated { color: var(--muted); font-size: 0.875rem; }
-.asset-list__deactivated a { color: var(--link); }
 
 /* An amount with its currency sign before it. */
 .asset-money { position: relative; display: inline-flex; width: 100%; }
