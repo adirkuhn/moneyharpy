@@ -18,3 +18,16 @@ describe('the calculation example', () => {
     expect(planExample('2026-06-01', '100', 0, '')).toBeNull()
   })
 })
+
+describe('the value on a day', () => {
+  it('takes the day\'s month pro rata, as a divestment books it', async () => {
+    const { valueOn } = await import('./book')
+    const car = {
+      purchase_date: '2025-01-14', purchase_value: '20003.6', calculated_purchase_value: '20003.6', disposal: null,
+      value_change_plan: { active: true, lifespan_in_years: 6, residual_value: '5000.0', monthly_depreciation: '208.38' },
+      value_changes: [{ type: 'linear', date: '2026-10-31', amount: '-4496.97' }],
+    } as unknown as Parameters<typeof valueOn>[0]
+    expect(valueOn(car, '2026-11-18')).toBe(15381.6)
+    expect(valueOn(car, '2026-10-31')).toBe(15506.63)
+  })
+})

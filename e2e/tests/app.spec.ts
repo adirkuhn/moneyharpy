@@ -1411,6 +1411,16 @@ test('an asset is added in the form, depreciated and shown with its value change
   await changes.getByRole('button', { name: `Show the depreciations of ${lastYear}` }).click()
   await expect(changes.getByRole('row').filter({ hasText: `${lastYear}-01-31` })).toContainText('Monthly')
   await expect(page.getByRole('complementary', { name: 'Asset details' })).toContainText('Asset created')
+
+  // Moneybird's actions: take it out of service, with a reason.
+  await page.getByRole('link', { name: 'Actions' }).click()
+  await page.getByRole('list', { name: 'Actions' }).getByRole('link', { name: /Take out of service/ }).click()
+  const out = page.getByRole('form', { name: 'Take out of service' })
+  await out.getByRole('textbox', { name: 'Description' }).fill('Stolen')
+  await out.getByRole('button', { name: 'Save' }).click()
+  const side = page.getByRole('complementary', { name: 'Asset details' })
+  await expect(side).toContainText('Out of use')
+  await expect(side).toContainText('Asset taken out of service')
 })
 
 test('a booked purchase invoice shows in the reports and an auditfile lands in the downloads', async ({ page }) => {

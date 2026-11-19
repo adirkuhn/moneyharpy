@@ -1,23 +1,21 @@
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
 import { useLedgerAccounts } from '../bookkeeping/queries'
-import { ConfirmPanel } from '../detail/Detail'
 import { formErrors } from '../forms/Form'
 import { NotesAndHistory } from '../invoices/InvoiceHistory'
 import { CaretIcon, ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
-import { MoreMenu } from '../list/ListActions'
 import { AssetBadge } from './AssetsPage'
 import { assetHistory, bookRows, type BookRow, monthsInUse } from './book'
 import {
-  type Asset, type AssetBooking, useAddAssetNote, useDeleteAssetNote, useAsset, useDeleteAsset, useLinkableBookings, useLinkSource, useUnlinkSource,
+  type Asset, type AssetBooking, useAddAssetNote, useDeleteAssetNote, useAsset, useLinkableBookings, useLinkSource, useUnlinkSource,
 } from './queries'
 import '../invoices/view.css'
 import './assets.css'
@@ -42,9 +40,6 @@ function AssetView({ administrationId, asset }: { administrationId: string; asse
   const money = (amount: string | number | null | undefined) => formatAmount(String(amount ?? '0'), currency, i18n.language)
   const base = `/${administrationId}/assets/${asset.id}`
   const plan = asset.value_change_plan
-  const navigate = useNavigate()
-  const remove = useDeleteAsset(administrationId, String(asset.id ?? ''))
-  const [confirming, setConfirming] = useState(false)
   const summary: [string, string][] = [
     [t('assets.purchaseValue'), money(asset.purchase_value)],
     [t('assets.currentValue'), money(asset.current_value)],
@@ -66,24 +61,17 @@ function AssetView({ administrationId, asset }: { administrationId: string; asse
           >
             <ListIcon kind="scale" />
           </Link>
+          <Link className="btn btn--secondary btn--with-icon" to={`${base}/value_changes/new`}>
+            <ListIcon kind="flow" />
+            <span>{t('assets.actions')}</span>
+          </Link>
           <Link className="btn btn--secondary btn--with-icon" to={`${base}/edit`}>
             <ListIcon kind="edit" />
             <span>{t('assets.edit')}</span>
           </Link>
-          <MoreMenu items={[{ label: t('assets.delete'), danger: true, onSelect: () => setConfirming(true) }]} />
         </>
       }
     >
-      <Problems messages={formErrors(remove.error, {}).general} />
-      {confirming && (
-        <ConfirmPanel
-          message={t('assets.confirmDelete')}
-          confirmLabel={t('assets.delete')}
-          disabled={remove.isPending}
-          onConfirm={() => remove.mutate(undefined, { onSuccess: () => navigate(`/${administrationId}/assets`) })}
-          onCancel={() => setConfirming(false)}
-        />
-      )}
       <div className="invoice-view asset-view">
         <div className="asset-view__main">
           <section className="asset-summary" aria-label={t('assets.summary')}>

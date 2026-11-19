@@ -56,6 +56,7 @@ import { ContactsPage } from './contacts/ContactsPage'
 import { ExternalEditPage } from './external/ExternalFormPage'
 import { ExternalInvoicePage } from './external/ExternalInvoicePage'
 import { ExternalInvoicesPage } from './external/ExternalInvoicesPage'
+import { ArbitraryDepreciationPage, AssetActionsPage, DivestmentPage, OutOfServicePage } from './assets/AssetActionsPage'
 import { EditAssetPage, NewAssetPage } from './assets/AssetFormPage'
 import { AssetPage } from './assets/AssetPage'
 import { AssetsPage } from './assets/AssetsPage'
@@ -161,6 +162,10 @@ export function AppRoutes() {
           <Route path="/:administrationId/assets/new" element={<NewAssetPage />} />
           <Route path="/:administrationId/assets/:assetId" element={<AssetPage />} />
           <Route path="/:administrationId/assets/:assetId/edit" element={<EditAssetPage />} />
+          <Route path="/:administrationId/assets/:assetId/value_changes/new" element={<AssetActionsPage />} />
+          <Route path="/:administrationId/assets/:assetId/value_changes/arbitrary/new" element={<ArbitraryDepreciationPage />} />
+          <Route path="/:administrationId/assets/:assetId/value_changes/full_depreciation/new" element={<OutOfServicePage />} />
+          <Route path="/:administrationId/assets/:assetId/value_changes/divestment/new" element={<DivestmentPage />} />
           <Route path="/:administrationId/projects" element={<ProjectsPage />} />
           <Route path="/:administrationId/projects/new" element={<ProjectPage />} />
           <Route path="/:administrationId/projects/:projectId" element={<ProjectPage />} />
