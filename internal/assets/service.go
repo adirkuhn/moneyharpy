@@ -436,6 +436,9 @@ func (s *Service) Dispose(ctx context.Context, admin, id, user resource.ID, kind
 	before := a
 	a.ValueChanges = append([]ValueChange(nil), a.ValueChanges...)
 	removed := a.removeLinearAfter(day)
+	if part := a.partialMonth(day); part > 0 {
+		a.addChange(ValueChange{ID: s.ids.Next(), Type: Linear, Date: day, Amount: -part, Description: s.linearDescription(ctx, admin, user), CreatedAt: s.now()})
+	}
 	c := ValueChange{ID: s.ids.Next(), Type: kind, Date: day, Amount: -a.ValueAt(day), Description: description, CreatedAt: s.now()}
 	a.addChange(c)
 	reason := "out_of_use"
@@ -812,4 +815,15 @@ func linearDescription(language string) string {
 // recordChange records a value change someone made, with its type and amount.
 func (s *Service) recordChange(ctx context.Context, admin, id, user resource.ID, c ValueChange) error {
 	return s.record(ctx, admin, id, user, "asset_value_change_created", map[string]any{"type": c.Type, "amount": c.Amount.String()})
+}
+
+// linearDescription names a linear value change in the administration's
+// language.
+func (s *Service) linearDescription(ctx context.Context, admin, user resource.ID) *string {
+	language := ""
+	if adm, err := s.admins.Get(ctx, admin, user); err == nil {
+		language = adm.Language
+	}
+	d := linearDescription(language)
+	return &d
 }

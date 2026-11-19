@@ -1991,7 +1991,7 @@ export interface paths {
         put?: never;
         /**
          * Create a divestment value change
-         * @description Writes off the value on the day (not before the last arbitrary value change) to the book result and disposes of the asset (reason divested). Linear value changes after the day are removed.
+         * @description Writes off the value on the day (not before the last arbitrary value change) to the book result and disposes of the asset (reason divested). Linear value changes after the day are removed. As on Moneybird, the day's month is first depreciated pro rata up to and including the day, as a linear value change on the day, unless that month has one already.
          */
         post: operations["createAssetDivestmentValueChange"];
         delete?: never;
@@ -2014,7 +2014,7 @@ export interface paths {
         put?: never;
         /**
          * Create a full depreciation value change
-         * @description Depreciates the value on the day (not before the last arbitrary value change) to zero, booked as depreciation costs, and disposes of the asset (reason out_of_use). Linear value changes after the day are removed.
+         * @description Depreciates the value on the day (not before the last arbitrary value change) to zero, booked as depreciation costs, and disposes of the asset (reason out_of_use). Linear value changes after the day are removed. As on Moneybird, the day's month is first depreciated pro rata up to and including the day, as a linear value change on the day, unless that month has one already.
          */
         post: operations["createAssetFullDepreciationValueChange"];
         delete?: never;

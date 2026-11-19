@@ -316,6 +316,43 @@ func (a Asset) linearOn(day time.Time) (money.Amount, bool) {
 	return -amount, true
 }
 
+// partialMonth is the depreciation of day's month up to and including day,
+// as Moneybird books it before a disposal: the monthly depreciation pro
+// rata by the days in use that month, from its first day, the purchase day
+// or the day after the plan restarted. It is zero without an active plan,
+// when that month has a linear value change already, or when nothing is
+// left above the residual value.
+func (a Asset) partialMonth(day time.Time) money.Amount {
+	if !a.PlanActive() || day.Before(a.PurchaseDate) {
+		return 0
+	}
+	end := monthEnd(day, 0)
+	for _, c := range a.ValueChanges {
+		if c.Type == Linear && monthEnd(c.Date, 0).Equal(end) {
+			return 0
+		}
+	}
+	first := 1
+	if monthEnd(a.PurchaseDate, 0).Equal(end) {
+		first = a.PurchaseDate.Day()
+	}
+	if from, _, _, restarted := a.basis(); restarted && monthEnd(from, 0).Equal(end) {
+		first = from.Day() + 1
+	}
+	days := day.Day() - first + 1
+	if days <= 0 {
+		return 0
+	}
+	share := money.Amount(math.Round(float64(a.MonthlyDepreciation()) * float64(days) / float64(end.Day())))
+	return max(0, min(share, a.ValueAt(day)-a.Plan.ResidualValue))
+}
+
+// ValueOn is the asset's value at the end of day, with its month's
+// depreciation up to that day as a disposal books it.
+func (a Asset) ValueOn(day time.Time) money.Amount {
+	return a.ValueAt(day) - a.partialMonth(day)
+}
+
 // addChange adds a value change, keeping them by date.
 func (a *Asset) addChange(c ValueChange) {
 	a.ValueChanges = append(a.ValueChanges, c)

@@ -212,7 +212,8 @@ func TestAssetLifecycle(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodPost, api+"/assets/"+van.ID+"/disposals", map[string]any{"date": purchase, "reason": "sold"}), http.StatusUnprocessableEntity)
 	r = owner.do(http.MethodPost, api+"/assets/"+van.ID+"/value_changes/full_depreciation", map[string]any{"date": purchase, "description": "Stolen"})
 	wantStatus(t, r, http.StatusCreated)
-	if c := decode[assetValueChange](t, r); c.Type != "full_depreciation" || c.Amount != "-1200.0" {
+	// Its one day in use is depreciated first, pro rata, as on Moneybird.
+	if c := decode[assetValueChange](t, r); c.Type != "full_depreciation" || c.Amount != "-1199.46" {
 		t.Errorf("full depreciation = %+v", c)
 	}
 

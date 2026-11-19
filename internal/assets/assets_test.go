@@ -282,8 +282,9 @@ func TestDivestmentDisposesAndBooksTheBookResult(t *testing.T) {
 	if _, err := h.svc.Dispose(ctx, adminID, a.ID, owner, Divestment, day("2026-02-01"), nil); fields(t, err)["date"] == nil {
 		t.Errorf("before the arbitrary change: %v", err)
 	}
+	// The first day of November is depreciated pro rata before the rest is written off.
 	c, err := h.svc.Dispose(ctx, adminID, a.ID, owner, Divestment, day("2026-11-01"), nil)
-	if err != nil || c.Type != Divestment || c.Amount != amount("-10000") || c.Description != nil {
+	if err != nil || c.Type != Divestment || c.Amount != amount("-9994.25") || c.Description != nil {
 		t.Fatalf("divestment = %+v, %v", c, err)
 	}
 	a, _ = h.store.Asset(ctx, adminID, a.ID)
@@ -291,7 +292,7 @@ func TestDivestmentDisposesAndBooksTheBookResult(t *testing.T) {
 		t.Fatalf("disposed = %+v", a)
 	}
 	entries := h.store.entries[a.ID]
-	if sumOn(entries, bookResult) != amount("10000") || sumOn(entries, depreciation) != amount("2000") || sumOn(entries, accumulated) != 0 ||
+	if sumOn(entries, bookResult) != amount("9994.25") || sumOn(entries, depreciation) != amount("2005.75") || sumOn(entries, accumulated) != 0 ||
 		sumOn(entries, equipment) != amount("-12000") {
 		t.Errorf("entries = %+v", entries)
 	}
@@ -300,6 +301,47 @@ func TestDivestmentDisposesAndBooksTheBookResult(t *testing.T) {
 	}
 	if _, err := h.svc.AddDisposal(ctx, adminID, a.ID, owner, day("2026-11-02"), "sold"); fields(t, err)["base"] == nil {
 		t.Errorf("second disposal: %v", err)
+	}
+}
+
+func TestDisposalDepreciatesItsMonthProRata(t *testing.T) {
+	// Moneybird's example: the car is depreciated up to October; divested on 18 November.
+	h := newHarness()
+	*h.clock = time.Date(2026, 11, 18, 9, 0, 0, 0, time.UTC)
+	a := h.create(t, input("Car", "2025-01-14", "20003.60", 6, "5000"))
+	if err := h.svc.AddRetroactiveLinear(ctx, adminID, a.ID, owner); err != nil {
+		t.Fatal(err)
+	}
+	a, _ = h.store.Asset(ctx, adminID, a.ID)
+	if a.CurrentValue() != amount("15506.63") {
+		t.Fatalf("value on 31 October = %s", a.CurrentValue())
+	}
+	if got := a.ValueOn(day("2026-11-18")); got != amount("15381.60") {
+		t.Errorf("value on 18 November = %s, want 15381.60", got)
+	}
+	c, err := h.svc.Dispose(ctx, adminID, a.ID, owner, Divestment, day("2026-11-18"), nil)
+	if err != nil || c.Amount != amount("-15381.60") {
+		t.Fatalf("divestment = %+v, %v", c, err)
+	}
+	a, _ = h.store.Asset(ctx, adminID, a.ID)
+	n := len(a.ValueChanges)
+	if p := a.ValueChanges[n-2]; p.Type != Linear || p.Date != day("2026-11-18") || p.Amount != amount("-125.03") {
+		t.Errorf("partial month = %+v", p)
+	}
+
+	// On a month end, the month is whole and nothing extra is booked.
+	h2 := newHarness()
+	*h2.clock = time.Date(2026, 11, 18, 9, 0, 0, 0, time.UTC)
+	b := h2.create(t, input("Desk", "2026-06-01", "1200", 1, "0"))
+	if got := b.ValueOn(day("2026-06-30")); got != amount("1100") {
+		t.Errorf("desk on 30 June = %s", got)
+	}
+	if _, err := h2.svc.Dispose(ctx, adminID, b.ID, owner, FullDepreciation, day("2026-06-30"), ptr("Broken")); err != nil {
+		t.Fatal(err)
+	}
+	b, _ = h2.store.Asset(ctx, adminID, b.ID)
+	if len(b.ValueChanges) != 2 || b.ValueChanges[0].Amount != amount("-100") || b.ValueChanges[1].Amount != amount("-1100") {
+		t.Errorf("desk changes = %+v", b.ValueChanges)
 	}
 }
 
@@ -326,7 +368,8 @@ func TestFullDepreciationAndDisposal(t *testing.T) {
 
 	b := h.create(t, input("Chair", "2026-01-01", "500", 5, "50"))
 	c, err := h.svc.Dispose(ctx, adminID, b.ID, owner, FullDepreciation, day("2026-11-11"), ptr("Broken"))
-	if err != nil || c.Amount != amount("-500") {
+	// 11 days of November are depreciated first, 7.50 a month pro rata.
+	if err != nil || c.Amount != amount("-497.25") {
 		t.Fatalf("full depreciation = %+v, %v", c, err)
 	}
 	b, _ = h.store.Asset(ctx, adminID, b.ID)
@@ -348,7 +391,8 @@ func TestReinvestmentReserve(t *testing.T) {
 	if err != nil || sale.Amount != amount("300") {
 		t.Fatalf("sale = %+v, %v", sale, err)
 	}
-	if e := h.store.entries[old.ID]; sumOn(e, reserve) != amount("-300") || sumOn(e, bookResult) != amount("1300") {
+	// The divestment's book result is the value after the first day of October's depreciation.
+	if e := h.store.entries[old.ID]; sumOn(e, reserve) != amount("-300") || sumOn(e, bookResult) != amount("1299.46") {
 		t.Errorf("sale entries = %+v", e)
 	}
 
