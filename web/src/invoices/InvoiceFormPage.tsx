@@ -234,20 +234,23 @@ function InvoiceForm(props: FormProps) {
     isPending: mutation.isPending,
     error: mutation.error,
     reset: mutation.reset,
+    // mutateAsync, not mutate with callbacks: saving stores the new version, which mounts this form again under its new key,
+    // and a mutate callback of a form that went away is never called, which left the part it saved open.
     mutate: (b: SalesInvoiceChanges, o: { onSuccess: (s: { id?: string }) => void }) => {
+      const after = (p: Promise<{ id?: string }>) => p.then(o.onSuccess, () => undefined)
       if (quote) {
         // A quote has its texts instead of payment conditions, and its own date and number.
         const { invoice_date: date, invoice_sequence_id: number, payment_conditions: _conditions, ...rest } = b
         const changes: EstimateChanges = { ...rest, estimate_date: date, ...(number ? { estimate_sequence_id: number } : {}), pre_text: shownTexts.pre, post_text: shownTexts.post }
-        saveQuote.mutate(changes, o)
+        void after(saveQuote.mutateAsync(changes))
         return
       }
       if (!recurring) {
-        saveSales.mutate(b, o)
+        void after(saveSales.mutateAsync(b))
         return
       }
       const { invoice_date: _date, invoice_sequence_id: _number, ...rest } = b
-      saveRecurring.mutate({ ...rest, ...(recurring.invoice ? {} : recurring.schedule) } as RecurringChanges, o)
+      void after(saveRecurring.mutateAsync({ ...rest, ...(recurring.invoice ? {} : recurring.schedule) } as RecurringChanges))
     },
   }
   const administration = useAdministration(administrationId)
