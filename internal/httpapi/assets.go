@@ -69,6 +69,8 @@ type assetJSON struct {
 	ValueChanges                []valueChangeJSON `json:"value_changes"`
 	Sources                     []sourceJSON      `json:"sources"`
 	ReinvestmentReservePurchase *reserveJSON      `json:"reinvestment_reserve_purchase"`
+	Notes                       []noteJSON        `json:"notes"`
+	Events                      []eventJSON       `json:"events"`
 	URI                         string            `json:"uri"`
 	CreatedAt                   time.Time         `json:"created_at"`
 	UpdatedAt                   time.Time         `json:"updated_at"`
@@ -109,7 +111,11 @@ func toAsset(a assets.Asset) assetJSON {
 		ID: a.ID.String(), AdministrationID: a.AdministrationID.String(), LedgerAccountID: a.LedgerAccountID.String(), Name: a.Name,
 		PurchaseDate: a.PurchaseDate.Format(time.DateOnly), PurchaseValue: a.PurchaseValue.String(),
 		CalculatedPurchaseValue: a.CalculatedPurchaseValue().String(), CurrentValue: a.CurrentValue().String(),
-		ValueChanges: []valueChangeJSON{}, Sources: []sourceJSON{}, URI: a.Ref().URI(), CreatedAt: a.CreatedAt, UpdatedAt: a.UpdatedAt,
+		ValueChanges: []valueChangeJSON{}, Sources: []sourceJSON{}, Notes: []noteJSON{}, Events: toEvents(a.Events),
+		URI: a.Ref().URI(), CreatedAt: a.CreatedAt, UpdatedAt: a.UpdatedAt,
+	}
+	for _, n := range a.Notes {
+		out.Notes = append(out.Notes, toNote(n))
 	}
 	if p := a.Plan; p != nil {
 		out.ValueChangePlan = &planJSON{
@@ -619,4 +625,39 @@ func (n AssetNotifier) Notify(ctx context.Context, admin resource.ID, action str
 	if err := n.Webhooks.Publish(context.WithoutCancel(ctx), admin, e); err != nil && n.Logger != nil {
 		n.Logger.ErrorContext(ctx, "publish webhook event", "action", action, "error", err)
 	}
+}
+
+// CreateAssetNote implements ServerInterface.
+func (s *server) CreateAssetNote(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	in, ok := decodeNote(w, r)
+	if !ok {
+		return
+	}
+	n, err := s.deps.Assets.AddNote(r.Context(), admin, rid, user(r).ID, in)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, toNote(n))
+}
+
+// DeleteAssetNote implements ServerInterface.
+func (s *server) DeleteAssetNote(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, id Id, noteID Identifier) {
+	admin, rid, ok := parseIDs(w, administrationID, id)
+	if !ok {
+		return
+	}
+	note, ok := parseID(w, noteID)
+	if !ok {
+		return
+	}
+	if err := s.deps.Assets.DeleteNote(r.Context(), admin, rid, note, user(r).ID); err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

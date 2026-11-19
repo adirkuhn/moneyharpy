@@ -216,6 +216,8 @@ func run(logger *slog.Logger) error {
 	bank.UseProjects(projectService)
 	// Fixed assets, depreciated each month by a background job.
 	assetService := assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: hooks, Logger: logger}, ids, time.Now)
+	assetService.UseHistory(events)
+	assetService.UseNotes(noteService)
 	home := overview.NewService(admins, bank, invoiceService)
 	home.UseIncoming(documentService)
 	// Reports read the journal; their exports land in the downloads.

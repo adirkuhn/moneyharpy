@@ -21,6 +21,13 @@ type assetValueChange struct {
 	AssetID          string  `json:"asset_id"`
 }
 
+type assetNote struct {
+	ID         string `json:"id"`
+	EntityID   string `json:"entity_id"`
+	EntityType string `json:"entity_type"`
+	Todo       bool   `json:"todo"`
+}
+
 type assetJSON struct {
 	ID                      string `json:"id"`
 	LedgerAccountID         string `json:"ledger_account_id"`
@@ -43,7 +50,12 @@ type assetJSON struct {
 		} `json:"reinvestment_reserve_sale"`
 	} `json:"disposal"`
 	ValueChanges []assetValueChange `json:"value_changes"`
-	Sources      []struct {
+	Notes        []assetNote        `json:"notes"`
+	Events       []struct {
+		Action string  `json:"action"`
+		UserID *string `json:"user_id"`
+	} `json:"events"`
+	Sources []struct {
 		ID       string  `json:"id"`
 		DetailID *string `json:"detail_id"`
 	} `json:"sources"`
@@ -191,6 +203,41 @@ func TestAssetLifecycle(t *testing.T) {
 	wantStatus(t, owner.do(http.MethodDelete, api+"/assets/"+van.ID, nil), http.StatusNoContent)
 	wantStatus(t, owner.do(http.MethodGet, api+"/assets/"+van.ID, nil), http.StatusNotFound)
 	wantStatus(t, owner.do(http.MethodDelete, api+"/assets/"+van.ID+"/reinvestment_reserve_sale", nil), http.StatusNotFound)
+}
+
+func TestAssetNotesAndHistory(t *testing.T) {
+	h := newHarness(t, options{})
+	owner := h.client()
+	owner.register()
+	adminID, api, _, _ := purchaseSetup(t, owner)
+	equipment := category(t, owner, adminID, "Equipment and furniture")
+	purchase := time.Date(adminNow().Year()-1, 1, 1, 0, 0, 0, 0, time.UTC).Format(time.DateOnly)
+	r := owner.do(http.MethodPost, api+"/assets", assetInput("Laptop", equipment, purchase, map[string]any{"lifespan_in_years": "1", "residual_value": 0}))
+	wantStatus(t, r, http.StatusCreated)
+	a := decode[assetJSON](t, r)
+
+	r = owner.do(http.MethodPost, api+"/assets/"+a.ID+"/notes", map[string]any{"note": map[string]any{"note": "Kept in the office", "todo": true}})
+	wantStatus(t, r, http.StatusCreated)
+	note := decode[assetNote](t, r)
+	if note.EntityType != "Asset" || note.EntityID != a.ID || !note.Todo {
+		t.Fatalf("note = %+v", note)
+	}
+	wantStatus(t, owner.do(http.MethodPost, api+"/assets/"+a.ID+"/notes", map[string]any{"note": map[string]any{"note": " "}}), http.StatusUnprocessableEntity)
+
+	r = owner.do(http.MethodGet, api+"/assets/"+a.ID, nil)
+	wantStatus(t, r, http.StatusOK)
+	got := decode[assetJSON](t, r)
+	if len(got.Notes) != 1 || len(got.Events) != 1 || got.Events[0].Action != "asset_created" || got.Events[0].UserID == nil {
+		t.Errorf("asset notes = %+v, events = %+v", got.Notes, got.Events)
+	}
+	r = owner.do(http.MethodGet, api+"/assets", nil)
+	if list := decode[[]assetJSON](t, r); len(list) != 1 || list[0].Notes == nil || len(list[0].Events) != 0 {
+		t.Errorf("list = %+v", list)
+	}
+
+	wantStatus(t, owner.do(http.MethodDelete, api+"/assets/"+a.ID+"/notes/"+note.ID, nil), http.StatusNoContent)
+	wantStatus(t, owner.do(http.MethodDelete, api+"/assets/"+a.ID+"/notes/"+note.ID, nil), http.StatusNotFound)
+	wantStatus(t, owner.do(http.MethodPost, api+"/assets/1/notes", map[string]any{"note": map[string]any{"note": "x"}}), http.StatusNotFound)
 }
 
 func TestAssetsNeedDocumentsPermission(t *testing.T) {

@@ -4,9 +4,11 @@ package historytest
 
 import (
 	"context"
+	"slices"
 	"sync"
 
 	"github.com/adirkuhn/moneyharpy/internal/history"
+	"github.com/adirkuhn/moneyharpy/internal/resource"
 )
 
 // Log is a history.Recorder that keeps what it is given.
@@ -38,4 +40,18 @@ func (l *Log) Actions() []string {
 		out[i] = e.Action
 	}
 	return out
+}
+
+// Of returns the events kept for each record, in the order recorded, as
+// history.Service.Of does.
+func (l *Log) Of(_ context.Context, admin resource.ID, entityType string, entities []resource.ID) (map[resource.ID][]history.Event, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	out := map[resource.ID][]history.Event{}
+	for _, e := range l.Events {
+		if e.AdministrationID == admin && e.EntityType == entityType && slices.Contains(entities, e.EntityID) {
+			out[e.EntityID] = append(out[e.EntityID], e)
+		}
+	}
+	return out, nil
 }

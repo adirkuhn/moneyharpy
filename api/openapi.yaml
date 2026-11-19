@@ -4163,6 +4163,69 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/notes:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: createAssetNote
+      x-permissions: [documents]
+      summary: Add a note to an asset
+      description: MoneyHarpy extension; Moneybird keeps notes on assets in its web app only.
+      tags: [Assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: The created note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/note_response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/assets/{id}/notes/{note_id}:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+      - $ref: '#/components/parameters/id'
+      - name: note_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Identifier'
+    delete:
+      operationId: deleteAssetNote
+      x-permissions: [documents]
+      summary: Delete a note from an asset
+      description: MoneyHarpy extension.
+      tags: [Assets]
+      responses:
+        '204':
+          description: The note is deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/assets/{id}/value_changes/manual:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -18219,10 +18282,24 @@ components:
         - $ref: '#/components/schemas/asset_response'
         - type: object
           required: [id, ledger_account_id, name, purchase_date, purchase_value, calculated_purchase_value, current_value,
-                     value_change_plan, disposal, value_changes, sources, reinvestment_reserve_purchase, uri]
+                     value_change_plan, disposal, value_changes, sources, reinvestment_reserve_purchase, notes, events, uri]
           properties:
             administration_id:
               $ref: '#/components/schemas/Identifier'
+            notes:
+              type: array
+              description: MoneyHarpy extension. The notes and to-dos on the asset, oldest first; empty in lists.
+              items:
+                $ref: '#/components/schemas/note_response'
+            events:
+              type: array
+              description: >-
+                MoneyHarpy extension. What happened to the asset, oldest first; empty in lists. Actions are
+                asset_created, asset_updated, asset_destroyed, asset_source_created (data kind detail or entry),
+                asset_source_destroyed, asset_value_change_created (data type and amount) and asset_disposal_created
+                (data reason).
+              items:
+                $ref: '#/components/schemas/event_response'
             uri:
               type: string
               description: MoneyHarpy extension. Canonical path of this resource.

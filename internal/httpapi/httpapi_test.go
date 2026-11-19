@@ -337,6 +337,9 @@ func newHarness(t *testing.T, opts options) *harness {
 	bank.UseHistory(events)
 	h.hooks.UseHistory(events)
 	timeEntryService := timeentries.NewService(admins, timeEntryStore, noteService, ids, time.Now)
+	assetService := assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: h.hooks}, ids, time.Now)
+	assetService.UseHistory(events)
+	assetService.UseNotes(noteService)
 	timeEntryService.UseHistory(events)
 	invoiceService := sales.NewService(sales.Deps{
 		Administrations: admins, Contacts: contactService, Products: productService, Projects: projectService, Invoicing: invoices, Ledger: books, Notes: noteService, Attachments: attachmentService,
@@ -383,7 +386,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Events:          events,
 		Purchases:       documentService,
 		Recognition:     h.recognition,
-		Assets:          assets.NewService(admins, books, postgres.NewAssetStore(pool), httpapi.AssetNotifier{Webhooks: h.hooks}, ids, time.Now),
+		Assets:          assetService,
 		Products:        productService,
 		Projects:        projectService,
 		Subscriptions:   h.subscriptions,

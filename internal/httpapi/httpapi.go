@@ -29,6 +29,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
+	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/ocr"
 	"github.com/adirkuhn/moneyharpy/internal/overview"
 	"github.com/adirkuhn/moneyharpy/internal/products"
@@ -328,6 +329,7 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		sales.IsNotFound(err),
 		purchases.IsNotFound(err),
 		assets.IsNotFound(err),
+		errors.Is(err, notes.ErrNotFound),
 		vatreturns.IsNotFound(err),
 		errors.Is(err, purchases.ErrNoSEPAFile),
 		errors.Is(err, products.ErrNotFound),

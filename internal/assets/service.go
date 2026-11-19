@@ -93,6 +93,8 @@ type Service struct {
 	ledger   Ledger
 	store    Store
 	notifier Notifier
+	history  History
+	notes    Notes
 	ids      *resource.Generator
 	now      func() time.Time
 }
@@ -128,7 +130,11 @@ func (s *Service) Asset(ctx context.Context, admin, id, user resource.ID) (Asset
 	if _, err := s.admins.Get(ctx, admin, user); err != nil {
 		return Asset{}, err
 	}
-	return s.store.Asset(ctx, admin, id)
+	a, err := s.store.Asset(ctx, admin, id)
+	if err != nil {
+		return Asset{}, err
+	}
+	return a, s.withHistory(ctx, admin, &a)
 }
 
 // PlanInput is a depreciation plan as sent; nil fields are not sent.
@@ -160,7 +166,7 @@ func (s *Service) Create(ctx context.Context, admin, user resource.ID, in Input)
 	if err := s.store.Save(ctx, a, true, nil); err != nil {
 		return Asset{}, wrap("store asset", err)
 	}
-	return a, nil
+	return a, s.record(ctx, admin, a.ID, user, "asset_created", nil)
 }
 
 // Update changes an asset. Once it has value changes, a disposal or a
@@ -181,7 +187,10 @@ func (s *Service) Update(ctx context.Context, admin, id, user resource.ID, in In
 		return Asset{}, err
 	}
 	a.UpdatedAt = s.now()
-	return a, s.save(ctx, user, &before, a, false)
+	if err := s.save(ctx, user, &before, a, false); err != nil {
+		return Asset{}, err
+	}
+	return a, s.record(ctx, admin, id, user, "asset_updated", nil)
 }
 
 func planChanges(p *Plan, in PlanInput) bool {
@@ -272,7 +281,10 @@ func (s *Service) Delete(ctx context.Context, admin, id, user resource.ID) error
 	if err := s.checkLocked(ctx, admin, user, a.Entries(acc), nil); err != nil {
 		return invalid("base", "Asset cannot be deleted because there are journal entries in the locked period of the administration.")
 	}
-	return wrap("delete asset", s.store.Delete(ctx, admin, id))
+	if err := s.store.Delete(ctx, admin, id); err != nil {
+		return wrap("delete asset", err)
+	}
+	return s.record(ctx, admin, id, user, "asset_destroyed", nil)
 }
 
 // SourceInput names the booking a source links: a purchase invoice or
@@ -317,7 +329,14 @@ func (s *Service) AddSource(ctx context.Context, admin, id, user resource.ID, in
 	before := a
 	a.Sources = append(append([]Source(nil), a.Sources...), src)
 	a.UpdatedAt = s.now()
-	return src, s.save(ctx, user, &before, a, false)
+	if err := s.save(ctx, user, &before, a, false); err != nil {
+		return Source{}, err
+	}
+	kind := "detail"
+	if in.EntryID != nil {
+		kind = "entry"
+	}
+	return src, s.record(ctx, admin, id, user, "asset_source_created", map[string]any{"kind": kind})
 }
 
 // DeleteSource unlinks a source; the booking stays.
@@ -340,7 +359,10 @@ func (s *Service) DeleteSource(ctx context.Context, admin, id, source, user reso
 		return ErrSourceNotFound
 	}
 	a.UpdatedAt = s.now()
-	return s.save(ctx, user, &before, a, false)
+	if err := s.save(ctx, user, &before, a, false); err != nil {
+		return err
+	}
+	return s.record(ctx, admin, id, user, "asset_source_destroyed", nil)
 }
 
 // ChangeInput is a value change as sent.
@@ -383,7 +405,7 @@ func (s *Service) AddValueChange(ctx context.Context, admin, id, user resource.I
 		return ValueChange{}, err
 	}
 	s.notifyAll(ctx, admin, "company_assets_value_changes_linear_destroyed", a, removed)
-	return c, nil
+	return c, s.recordChange(ctx, admin, id, user, c)
 }
 
 // Dispose writes the asset off on a day with a divestment (the rest of its
@@ -420,7 +442,10 @@ func (s *Service) Dispose(ctx context.Context, admin, id, user resource.ID, kind
 		return ValueChange{}, err
 	}
 	s.notifyAll(ctx, admin, "company_assets_value_changes_linear_destroyed", a, removed)
-	return c, nil
+	if err := s.recordChange(ctx, admin, id, user, c); err != nil {
+		return ValueChange{}, err
+	}
+	return c, s.record(ctx, admin, id, user, "asset_disposal_created", map[string]any{"reason": reason})
 }
 
 // forChange loads an asset that can still change value, with today.
@@ -477,7 +502,10 @@ func (s *Service) AddDisposal(ctx context.Context, admin, id, user resource.ID, 
 	d := Disposal{ID: s.ids.Next(), Date: day, Reason: reason}
 	a.Disposal = &d
 	a.UpdatedAt = s.now()
-	return d, s.save(ctx, user, &before, a, false)
+	if err := s.save(ctx, user, &before, a, false); err != nil {
+		return Disposal{}, err
+	}
+	return d, s.record(ctx, admin, id, user, "asset_disposal_created", map[string]any{"reason": reason})
 }
 
 // AddReservePurchase funds part of the purchase value from the
@@ -773,4 +801,9 @@ func linearDescription(language string) string {
 		return "Lineaire afschrijving"
 	}
 	return "Linear depreciation"
+}
+
+// recordChange records a value change someone made, with its type and amount.
+func (s *Service) recordChange(ctx context.Context, admin, id, user resource.ID, c ValueChange) error {
+	return s.record(ctx, admin, id, user, "asset_value_change_created", map[string]any{"type": c.Type, "amount": c.Amount.String()})
 }
