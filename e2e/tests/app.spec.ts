@@ -1370,7 +1370,7 @@ test('a saved purchase invoice gets a due date in days and becomes a receipt tha
   await expect(page.getByRole('table', { name: 'Profit and loss statement' }).getByRole('row', { name: /Net profit/ })).toContainText('100.00')
 })
 
-test('an asset is added through the API, depreciated and shown with its value changes', async ({ page }) => {
+test('an asset is added in the form, depreciated and shown with its value changes', async ({ page }) => {
   await register(page)
   await addAdministration(page, 'Asset Co')
   const uri = administrationUri(page)
@@ -1378,19 +1378,30 @@ test('an asset is added through the API, depreciated and shown with its value ch
   const categories = await (await page.request.get(`${api}/ledger_accounts`)).json()
   const equipment = categories.find((c: { name: string }) => c.name === 'Equipment and furniture').id
   const purchaseDate = `${new Date().getFullYear() - 1}-01-01`
-  const created = await page.request.post(`${api}/assets.json`, { data: { asset: {
-    name: 'Office laptop', ledger_account_id: equipment, purchase_date: purchaseDate, purchase_value: 1200,
-    value_change_plan_attributes: { lifespan_in_years: 4, residual_value: 0 },
-  } } })
-  expect(created.status()).toBe(201)
-  const asset = await created.json()
-  expect((await page.request.post(`${api}/assets/${asset.id}/value_changes/retroactive_linear_value_changes`)).status()).toBe(204)
 
   const menu = page.getByRole('navigation', { name: 'Administration menu' })
   await menu.getByRole('link', { name: 'Assets' }).click()
+  await expect(page.getByRole('region', { name: 'Getting started with assets' })).toBeVisible()
+  await page.getByRole('link', { name: 'Add', exact: true }).click()
+  const form = page.getByRole('form', { name: 'Asset' })
+  await form.getByRole('textbox', { name: 'Name' }).fill('Office laptop')
+  await form.getByRole('combobox', { name: 'Ledger account' }).selectOption({ label: 'Equipment and furniture' })
+  await form.getByRole('textbox', { name: 'Purchase value' }).fill('1200')
+  await form.getByRole('textbox', { name: 'Commissioning date' }).fill(purchaseDate)
+  await form.getByRole('combobox', { name: 'Lifespan' }).selectOption({ label: 'Otherwise, namely:' })
+  await form.getByRole('spinbutton', { name: 'Lifespan in years' }).fill('4')
+  await expect(form.getByRole('region', { name: 'Calculation example' })).toContainText('monthly depreciation of €25.00')
+  await form.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Office laptop' })).toBeVisible()
+  const id = page.url().split('/').pop()
+  expect(equipment).toBeTruthy()
+  expect((await page.request.post(`${api}/assets/${id}/value_changes/retroactive_linear_value_changes`)).status()).toBe(204)
+
+  await menu.getByRole('link', { name: 'Assets' }).click()
   const table = page.getByRole('table', { name: 'Assets' })
   await expect(table.getByRole('link', { name: 'Office laptop' })).toBeVisible()
-  await expect(table.locator('.badge', { hasText: 'Depreciating' })).toBeVisible()
+  await expect(table.getByRole('row', { name: /Office laptop/ })).toContainText('Equipment and furniture')
+  await expect(table.locator('.badge', { hasText: 'Active' })).toBeVisible()
   await table.getByRole('link', { name: 'Office laptop' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Office laptop' })).toBeVisible()
   const changes = page.getByRole('table', { name: 'Value changes' })

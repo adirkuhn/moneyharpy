@@ -1,0 +1,23 @@
+/* The asset pages, after Moneybird's. */
+.asset-list .document-table th:nth-child(1) { width: 28%; }
+.asset-category { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 6px; background: var(--row-hover); color: var(--link); font-size: 0.8125rem; font-weight: 650; white-space: nowrap; }
+.asset-list .document-table__state .badge { display: flex; justify-content: center; align-items: center; min-height: 1.75rem; border-radius: 6px; }
+.asset-list__deactivated { color: var(--muted); font-size: 0.875rem; }
+.asset-list__deactivated a { color: var(--link); }
+
+/* An amount with its currency sign before it. */
+.asset-money { position: relative; display: inline-flex; width: 100%; }
+.asset-money__currency { position: absolute; top: 50%; left: 0.625rem; color: var(--muted); font-size: 0.875rem; transform: translateY(-50%); pointer-events: none; }
+.asset-money input { width: 100%; padding-left: 1.75rem; text-align: right; }
+
+.asset-lifespan { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.asset-lifespan select { width: 14rem; max-width: 100%; }
+.asset-lifespan__years { width: 6rem; }
+
+.asset-example { margin-block: 0.5rem 1.25rem; padding: 1rem 1.25rem; border-radius: 10px; background: var(--bg); color: var(--muted); font-size: 0.8125rem; }
+.asset-example h4 { margin: 0 0 0.375rem; font-size: 0.8125rem; font-weight: 500; }
+.asset-example p { margin: 0; line-height: 1.5; }
+
+/* Moneybird's form: what cannot change any more is greyed out, and the buttons sit below a line across the card. */
+.asset-form :is(input, select):disabled { background: var(--bg); color: var(--muted); cursor: not-allowed; }
+.asset-form > .form-sheet__actions { max-width: none; margin-inline: -2rem; padding-inline: 2rem; }
