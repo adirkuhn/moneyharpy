@@ -38,3 +38,14 @@
 .product-link-button { padding: 0; border: 0; background: none; color: var(--link); font: inherit; text-decoration: underline; cursor: pointer; }
 .product-preview { max-width: 32rem; margin: 0; }
 .product-period { max-width: 24rem; }
+
+/* Online sales before MoneyHarpy can take payments online, after Moneybird's "Not ready for Moneybird Checkout". */
+.online-not-ready { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.online-not-ready__intro { padding: 1.75rem 2rem 1.5rem; text-align: center; }
+.online-not-ready__intro h2 { margin: 0 0 0.5rem; font-size: 1.5rem; }
+.online-not-ready__intro p { max-width: 46rem; margin: 0 auto; color: var(--muted); }
+.online-not-ready__steps { margin: 0; padding: 0; border-block: 1px solid var(--line); list-style: none; }
+.online-not-ready__steps li { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1.25rem; color: var(--muted); }
+.online-not-ready__steps li + li { border-top: 1px solid var(--line); }
+.online-not-ready__steps svg { width: 1.125rem; height: 1.125rem; }
+.online-not-ready__actions { display: flex; justify-content: center; padding: 1.25rem; }
