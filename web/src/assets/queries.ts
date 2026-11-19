@@ -3,10 +3,10 @@ import { api, ApiError, unwrap } from '../api/client'
 import type { components } from '../api/schema'
 
 export type Asset = components['schemas']['Asset']
+export type AssetInput = components['schemas']['AssetInput']
 
 export const perPage = 25
-export const assetViews = ['active', 'all'] as const
-export type AssetView = (typeof assetViews)[number]
+export type AssetView = 'active' | 'all'
 
 const admin = (administrationId: string) => ({ administration_id: administrationId })
 const one = (administrationId: string, id: string) => ({ params: { path: { ...admin(administrationId), id } } })
@@ -40,5 +40,35 @@ export function useDeleteAsset(administrationId: string, id: string) {
   return useMutation({
     mutationFn: () => unwrap(api.DELETE('/api/v2/{administration_id}/assets/{id}', one(administrationId, id))),
     onSuccess: () => client.invalidateQueries({ queryKey: ['assets', administrationId] }),
+  })
+}
+
+/** The number of assets, the active ones or all, read from one short page. */
+export function useAssetCount(administrationId: string, view: AssetView) {
+  return useQuery({
+    queryKey: ['assets', administrationId, view, 'count'],
+    queryFn: async () => {
+      const { error, response } = await api.GET('/api/v2/{administration_id}/assets', {
+        params: { path: admin(administrationId), query: { active: view === 'active' ? 'true' : 'false', per_page: '1' } },
+      })
+      if (!response.ok) {
+        throw new ApiError(response.status, error)
+      }
+      return Number(response.headers.get('X-Total-Count') ?? 0)
+    },
+  })
+}
+
+/** Creates an asset when id is undefined and updates it otherwise. */
+export function useSaveAsset(administrationId: string, id?: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (asset: AssetInput) => id === undefined
+      ? unwrap(api.POST('/api/v2/{administration_id}/assets', { params: { path: admin(administrationId) }, body: { asset } as components['schemas']['AssetRequest'] }))
+      : unwrap(api.PATCH('/api/v2/{administration_id}/assets/{id}', { ...one(administrationId, id), body: { asset } })),
+    onSuccess: (saved) => {
+      void client.invalidateQueries({ queryKey: ['assets', administrationId] })
+      client.setQueryData(['asset', administrationId, String(saved.id)], saved)
+    },
   })
 }

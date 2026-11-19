@@ -15,7 +15,6 @@
 .form-sheet--stacked .form-input--small .form-input__control { max-width: 12rem; }
 .form-sheet--stacked .form-input__message { max-width: none; }
 .form-sheet--stacked > .form-sheet__actions { width: 100%; max-width: none; margin-top: 0.5rem; padding: 1.25rem 0 1.5rem; }
-.form-sheet__actions--center { justify-content: center; }
 
 .product-drop__zone {
   display: flex; justify-content: center; align-items: center; min-height: 3rem; padding: 0.75rem; border: 1px dashed var(--teal);

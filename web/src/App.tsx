@@ -56,6 +56,7 @@ import { ContactsPage } from './contacts/ContactsPage'
 import { ExternalEditPage } from './external/ExternalFormPage'
 import { ExternalInvoicePage } from './external/ExternalInvoicePage'
 import { ExternalInvoicesPage } from './external/ExternalInvoicesPage'
+import { EditAssetPage, NewAssetPage } from './assets/AssetFormPage'
 import { AssetPage } from './assets/AssetPage'
 import { AssetsPage } from './assets/AssetsPage'
 import { DocumentPage } from './incoming/DocumentPage'
@@ -157,7 +158,9 @@ export function AppRoutes() {
           <Route path="/:administrationId/payment_links/:productId/edit" element={<PaymentLinkNotReadyPage />} />
           <Route path="/:administrationId/subscription_templates/new" element={<PaymentLinkNotReadyPage />} />
           <Route path="/:administrationId/assets" element={<AssetsPage />} />
+          <Route path="/:administrationId/assets/new" element={<NewAssetPage />} />
           <Route path="/:administrationId/assets/:assetId" element={<AssetPage />} />
+          <Route path="/:administrationId/assets/:assetId/edit" element={<EditAssetPage />} />
           <Route path="/:administrationId/projects" element={<ProjectsPage />} />
           <Route path="/:administrationId/projects/new" element={<ProjectPage />} />
           <Route path="/:administrationId/projects/:projectId" element={<ProjectPage />} />
