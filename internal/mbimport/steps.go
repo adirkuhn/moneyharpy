@@ -272,12 +272,13 @@ func (r *run) contacts(ctx context.Context) error {
 		changes.SendInvoicesToEmail, changes.SendEstimatesToEmail = emailList(changes.SendInvoicesToEmail), emailList(changes.SendEstimatesToEmail)
 		got, err := r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), changes, c.people())
 		if left := optionalOnly(err, contactOptional); left != nil {
-			// The contact comes in without what does not pass, which is noted.
+			// The contact comes in without what does not pass, which is noted with why.
+			why := describe(err)
 			for _, field := range left {
 				clearContactField(&changes, field)
 			}
 			if got, err = r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), changes, c.people()); err == nil {
-				if err := r.partial(ctx, r.job.Step(StepContacts), kindContact, c.ID.id(), "came in without "+strings.Join(left, ", ")+": they were not valid"); err != nil {
+				if err := r.partial(ctx, r.job.Step(StepContacts), kindContact, c.ID.id(), "came in without "+strings.Join(left, ", ")+" ("+why+")"); err != nil {
 					return 0, err
 				}
 			}

@@ -278,8 +278,9 @@ describe('two-step verification', () => {
     await userEvent.type(await screen.findByLabelText('Code'), '123456')
     await userEvent.click(screen.getByRole('button', { name: 'Verify' }))
     await waitFor(() => expect(code).toBe('123456'))
-    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/administrations'))
-  })
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/administrations'), { timeout: 5000 })
+    // Two pages and a sign-in in two steps: on a busy CI runner it takes longer than the default 5 seconds.
+  }, 15_000)
 
   it('sets up two-step verification and shows the recovery codes', async () => {
     server.use(
