@@ -1,0 +1,15 @@
+/* The import from Moneybird: its form, and its progress per kind of data. */
+.mb-import__form, .mb-import { margin-bottom: 1rem; }
+.mb-import__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 0; font-weight: 600; }
+.mb-import__steps { margin-bottom: 0; }
+.mb-import__steps th:last-child { width: auto; }
+.data-table th.mb-import__count, .mb-import__count { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mb-import__steps tbody th { border-bottom: 0; color: var(--text); font-weight: 400; }
+.mb-import__steps tbody tr + tr > th { border-top: 1px solid var(--line); }
+.mb-import__sources { margin: 0; padding: 0; border: 0; }
+.mb-import__sources .radio-list__item input[type='radio'] { min-height: 0; padding: 0; border: 0; }
+.mb-import__actions { display: flex; justify-content: flex-end; }
+.mb-import__problems summary { cursor: pointer; }
+.mb-import__problems ul { margin: 0.5rem 0 0; padding-left: 1.25rem; color: var(--muted); font-size: 0.875rem; }
+.mb-import__sources { display: grid; gap: 0.5rem; }
+.mb-import__sources .radio-list__item { display: inline-flex; align-items: center; gap: 0.625rem; cursor: pointer; }

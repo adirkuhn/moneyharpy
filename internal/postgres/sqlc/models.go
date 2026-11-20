@@ -665,6 +665,30 @@ type LoginChallenge struct {
 	ExpiresAt pgtype.Timestamptz
 }
 
+type MoneybirdImport struct {
+	AdministrationID       int64
+	UserID                 int64
+	SourceAdministrationID string
+	SourceName             string
+	State                  string
+	Steps                  []byte
+	WaitingUntil           pgtype.Timestamptz
+	Error                  string
+	Token                  string
+	Attempts               int32
+	NextAttemptAt          pgtype.Timestamptz
+	StartedAt              pgtype.Timestamptz
+	FinishedAt             pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+}
+
+type MoneybirdImportID struct {
+	AdministrationID int64
+	Kind             string
+	SourceID         int64
+	TargetID         int64
+}
+
 type Note struct {
 	ID               int64
 	AdministrationID int64

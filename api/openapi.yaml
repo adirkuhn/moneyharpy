@@ -13513,6 +13513,114 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/moneybird_import:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: getMoneybirdImport
+      x-permissions: [ownership]
+      summary: Show the import from Moneybird
+      description: >-
+        MoneyHarpy extension. How the import of a Moneybird administration goes, per kind of data. Not found until an
+        import was started.
+      tags: [Integrations]
+      responses:
+        '200':
+          description: The import
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoneybirdImport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      operationId: startMoneybirdImport
+      x-permissions: [ownership]
+      summary: Import a Moneybird administration
+      description: >-
+        MoneyHarpy extension. Copies a Moneybird administration into this one in the background, keeping Moneybird's
+        ids: its categories and VAT rates, which take the place of the defaults, then its contacts, products and
+        projects. This administration must be empty, unless it imported the same Moneybird administration before; then
+        only what is new comes in. The import reads Moneybird with the personal API token given, within Moneybird's
+        rate limit, and forgets the token once it ends.
+      tags: [Integrations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoneybirdImportRequest'
+      responses:
+        '201':
+          description: The import, started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoneybirdImport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/moneybird_import/administrations:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: listMoneybirdAdministrations
+      x-permissions: [ownership]
+      summary: List the Moneybird administrations a token reaches
+      description: >-
+        MoneyHarpy extension. Checks a Moneybird personal API token and lists the administrations it reaches, to pick
+        the one to import. The token is not kept.
+      tags: [Integrations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              additionalProperties: false
+              properties:
+                token:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: The administrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MoneybirdAdministration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/invitations/{token}:
     parameters:
       - name: token
@@ -20516,6 +20624,94 @@ components:
               description: Omit for the type's defaults.
               items:
                 $ref: '#/components/schemas/Permission'
+    MoneybirdAdministration:
+      type: object
+      description: A Moneybird administration. MoneyHarpy extension.
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        country:
+          type: string
+        currency:
+          type: string
+    MoneybirdImportRequest:
+      type: object
+      required: [moneybird_import]
+      additionalProperties: false
+      properties:
+        moneybird_import:
+          type: object
+          required: [token, administration_id]
+          additionalProperties: false
+          properties:
+            token:
+              type: string
+              maxLength: 500
+              description: A Moneybird personal API token, kept sealed only while the import runs.
+            administration_id:
+              type: string
+              maxLength: 30
+              description: The Moneybird administration to import.
+    MoneybirdImportStep:
+      type: object
+      required: [kind, total, imported, skipped, failed, done, problems]
+      properties:
+        kind:
+          type: string
+          enum: [chart, contacts, products, projects]
+        total:
+          type: integer
+        imported:
+          type: integer
+        skipped:
+          type: integer
+          description: Records imported before, which stay as they are.
+        failed:
+          type: integer
+        done:
+          type: boolean
+        problems:
+          type: array
+          description: Why records failed, at most 50.
+          items:
+            type: string
+    MoneybirdImport:
+      type: object
+      description: The import of a Moneybird administration. MoneyHarpy extension.
+      required: [source_administration_id, source_name, state, steps, waiting_until, error, started_at, finished_at, updated_at]
+      properties:
+        source_administration_id:
+          type: string
+        source_name:
+          type: string
+        state:
+          type: string
+          enum: [running, done, failed]
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/MoneybirdImportStep'
+        waiting_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: While the import waits for Moneybird's rate limit, until when.
+        error:
+          type: string
+          description: Why the import stopped, or last had to try again.
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
     InvitationPreview:
       type: object
       required: [administration_name, inviter_name, email, user_type, open]

@@ -28,6 +28,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/identity"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
+	"github.com/adirkuhn/moneyharpy/internal/mbimport"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/ocr"
@@ -125,27 +126,29 @@ type Deps struct {
 	Purchases *purchases.Service
 	// Recognition is Scan and Recognise; nil shows every document as never
 	// read.
-	Recognition   *recognize.Service
-	Assets        *assets.Service
-	Products      *products.Service
-	Projects      *projects.Service
-	Subscriptions *subscriptions.Service
-	Downloads     *downloads.Service
-	Reports       *reports.Service
-	TimeEntries   *timeentries.Service
-	TaskLists     *tasklists.Service
-	VatReturns    *vatreturns.Service
-	Audits        *audits.Service
-	Membership    *membership.Service
-	Connections   *connections.Service
-	Webhooks      *webhooks.Service
-	Storage       StorageChecker
-	Identity      *identity.Service
-	Settings      *settings.Service
-	Resources     ResourceLocator
-	Google        GoogleClient
-	LM2           LM2Client
-	Companies     CompanySearcher
+	Recognition *recognize.Service
+	// MoneybirdImport copies a Moneybird administration in.
+	MoneybirdImport *mbimport.Service
+	Assets          *assets.Service
+	Products        *products.Service
+	Projects        *projects.Service
+	Subscriptions   *subscriptions.Service
+	Downloads       *downloads.Service
+	Reports         *reports.Service
+	TimeEntries     *timeentries.Service
+	TaskLists       *tasklists.Service
+	VatReturns      *vatreturns.Service
+	Audits          *audits.Service
+	Membership      *membership.Service
+	Connections     *connections.Service
+	Webhooks        *webhooks.Service
+	Storage         StorageChecker
+	Identity        *identity.Service
+	Settings        *settings.Service
+	Resources       ResourceLocator
+	Google          GoogleClient
+	LM2             LM2Client
+	Companies       CompanySearcher
 	// CompanyNumbers looks Dutch companies up by KVK number; nil leaves the
 	// lookup off.
 	CompanyNumbers administration.CompanyLookup
@@ -281,6 +284,16 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The invoice is booked but could not be emailed; check the mail settings and send it again"}}))
 	case errors.Is(err, banking.ErrStatementBooked):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Remove the bookings of this statement's transactions first"}}))
+	case errors.Is(err, mbimport.ErrNotEmpty):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"This administration already has data; import into a new, empty administration"}}))
+	case errors.Is(err, mbimport.ErrRunning):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"An import from Moneybird is running already"}}))
+	case errors.Is(err, mbimport.ErrTokenRejected):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"token": {"was refused by Moneybird"}}))
+	case errors.Is(err, mbimport.ErrUnavailable):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Moneybird could not be reached; try again later"}}))
+	case errors.Is(err, mbimport.ErrNotFound):
+		writeError(w, http.StatusNotFound, "No import from Moneybird yet")
 	case errors.Is(err, connections.ErrForbidden):
 		writeError(w, http.StatusForbidden, "Only owners can create connections here, unless they let users connect")
 	case errors.Is(err, webhooks.ErrForbidden):

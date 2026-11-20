@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, unwrap } from '../api/client'
+import { api, ApiError, unwrap } from '../api/client'
 import type { components } from '../api/schema'
 
 export type Connection = components['schemas']['Connection']
@@ -96,5 +96,42 @@ export function useDeleteWebhook(administrationId: string) {
   return useMutation({
     mutationFn: (id: string) => unwrap(api.DELETE('/api/v2/{administration_id}/webhooks/{id}', one(administrationId, id))),
     onSettled: () => client.invalidateQueries({ queryKey: ['webhooks', administrationId] }),
+  })
+}
+
+export type MoneybirdImport = components['schemas']['MoneybirdImport']
+export type MoneybirdAdministration = components['schemas']['MoneybirdAdministration']
+
+/** The import from Moneybird, null before one was started. While it runs it is asked for again every few seconds. */
+export function useMoneybirdImport(administrationId: string) {
+  return useQuery({
+    queryKey: ['moneybird-import', administrationId],
+    queryFn: async () => {
+      try {
+        return await unwrap(api.GET('/api/v2/{administration_id}/moneybird_import', admin(administrationId)))
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) {
+          return null
+        }
+        throw e
+      }
+    },
+    refetchInterval: (query) => (query.state.data?.state === 'running' ? 3000 : false),
+  })
+}
+
+/** Checks a Moneybird API token and lists the administrations it reaches. */
+export function useMoneybirdAdministrations(administrationId: string) {
+  return useMutation({
+    mutationFn: (token: string) => unwrap(api.POST('/api/v2/{administration_id}/moneybird_import/administrations', { ...admin(administrationId), body: { token } })),
+  })
+}
+
+export function useStartMoneybirdImport(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { token: string; administration_id: string }) =>
+      unwrap(api.POST('/api/v2/{administration_id}/moneybird_import', { ...admin(administrationId), body: { moneybird_import: body } })),
+    onSuccess: (started) => client.setQueryData(['moneybird-import', administrationId], started),
   })
 }

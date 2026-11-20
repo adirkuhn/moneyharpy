@@ -22,6 +22,7 @@ const loaded = (a = harpy, may = false) => [
     HttpResponse.json([{ id: '41', administration_id: '11', url: 'https://example.com/hook', enabled_events: ['tax_rate'], last_http_status: 200, last_http_body: 'ok', token: 'tok', deactivated_at: null, uri: '/11/webhooks/41' }]),
   ),
   http.get('*/api/v2/11/webhooks/events', () => HttpResponse.json({ events: ['tax_rate_created', 'tax_rate_updated', 'booking_rule_created'], groups: ['tax_rate', 'booking_rule'] })),
+  http.get('*/api/v2/11/moneybird_import', () => HttpResponse.json({ error: 'No import' }, { status: 404 })),
 ]
 
 describe('integrations settings', () => {

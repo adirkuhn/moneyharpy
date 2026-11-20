@@ -1686,6 +1686,51 @@ func (e MarkUncollectibleRequestBookMethod) Valid() bool {
 	}
 }
 
+// Defines values for MoneybirdImportState.
+const (
+	MoneybirdImportStateDone    MoneybirdImportState = "done"
+	MoneybirdImportStateFailed  MoneybirdImportState = "failed"
+	MoneybirdImportStateRunning MoneybirdImportState = "running"
+)
+
+// Valid indicates whether the value is a known member of the MoneybirdImportState enum.
+func (e MoneybirdImportState) Valid() bool {
+	switch e {
+	case MoneybirdImportStateDone:
+		return true
+	case MoneybirdImportStateFailed:
+		return true
+	case MoneybirdImportStateRunning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MoneybirdImportStepKind.
+const (
+	Chart    MoneybirdImportStepKind = "chart"
+	Contacts MoneybirdImportStepKind = "contacts"
+	Products MoneybirdImportStepKind = "products"
+	Projects MoneybirdImportStepKind = "projects"
+)
+
+// Valid indicates whether the value is a known member of the MoneybirdImportStepKind enum.
+func (e MoneybirdImportStepKind) Valid() bool {
+	switch e {
+	case Chart:
+		return true
+	case Contacts:
+		return true
+	case Products:
+		return true
+	case Projects:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for OnlineEstimateState.
 const (
 	OnlineEstimateStateAccepted OnlineEstimateState = "accepted"
@@ -8968,6 +9013,62 @@ type Money0 = string
 // Money1 defines model for Money.1.
 type Money1 = float32
 
+// MoneybirdAdministration A Moneybird administration. MoneyHarpy extension.
+type MoneybirdAdministration struct {
+	Country  *string `json:"country,omitempty"`
+	Currency *string `json:"currency,omitempty"`
+	Id       string  `json:"id"`
+	Name     string  `json:"name"`
+}
+
+// MoneybirdImport The import of a Moneybird administration. MoneyHarpy extension.
+type MoneybirdImport struct {
+	// Error Why the import stopped, or last had to try again.
+	Error                  string                `json:"error"`
+	FinishedAt             *time.Time            `json:"finished_at"`
+	SourceAdministrationId string                `json:"source_administration_id"`
+	SourceName             string                `json:"source_name"`
+	StartedAt              time.Time             `json:"started_at"`
+	State                  MoneybirdImportState  `json:"state"`
+	Steps                  []MoneybirdImportStep `json:"steps"`
+	UpdatedAt              time.Time             `json:"updated_at"`
+
+	// WaitingUntil While the import waits for Moneybird's rate limit, until when.
+	WaitingUntil *time.Time `json:"waiting_until"`
+}
+
+// MoneybirdImportState defines model for MoneybirdImport.State.
+type MoneybirdImportState string
+
+// MoneybirdImportRequest defines model for MoneybirdImportRequest.
+type MoneybirdImportRequest struct {
+	MoneybirdImport struct {
+		// AdministrationId The Moneybird administration to import.
+		AdministrationId string `json:"administration_id"`
+
+		// Token A Moneybird personal API token, kept sealed only while the import runs.
+		Token string `json:"token"`
+	} `json:"moneybird_import"`
+}
+
+// MoneybirdImportStep defines model for MoneybirdImportStep.
+type MoneybirdImportStep struct {
+	Done     bool                    `json:"done"`
+	Failed   int                     `json:"failed"`
+	Imported int                     `json:"imported"`
+	Kind     MoneybirdImportStepKind `json:"kind"`
+
+	// Problems Why records failed, at most 50.
+	Problems []string `json:"problems"`
+
+	// Skipped Records imported before, which stay as they are.
+	Skipped int `json:"skipped"`
+	Total   int `json:"total"`
+}
+
+// MoneybirdImportStepKind defines model for MoneybirdImportStep.Kind.
+type MoneybirdImportStepKind string
+
 // NextCustomerId defines model for NextCustomerId.
 type NextCustomerId struct {
 	// CustomerId Example: 43
@@ -15398,6 +15499,11 @@ type LookupKvkNumberParams struct {
 	KvkNumber string `form:"kvk_number" json:"kvk_number"`
 }
 
+// ListMoneybirdAdministrationsJSONBody defines parameters for ListMoneybirdAdministrations.
+type ListMoneybirdAdministrationsJSONBody struct {
+	Token string `json:"token"`
+}
+
 // ListProductsParams defines parameters for ListProducts.
 type ListProductsParams struct {
 	// Query Free-text search across the title, description and identifier.
@@ -16284,6 +16390,12 @@ type UpdateLedgerAccountSchemeJSONRequestBody = LedgerAccountSchemeRequest
 
 // UpdateLedgerAccountJSONRequestBody defines body for UpdateLedgerAccount for application/json ContentType.
 type UpdateLedgerAccountJSONRequestBody = LedgerAccountRequest
+
+// StartMoneybirdImportJSONRequestBody defines body for StartMoneybirdImport for application/json ContentType.
+type StartMoneybirdImportJSONRequestBody = MoneybirdImportRequest
+
+// ListMoneybirdAdministrationsJSONRequestBody defines body for ListMoneybirdAdministrations for application/json ContentType.
+type ListMoneybirdAdministrationsJSONRequestBody ListMoneybirdAdministrationsJSONBody
 
 // CreateProductJSONRequestBody defines body for CreateProduct for application/json ContentType.
 type CreateProductJSONRequestBody = ProductRequest
@@ -23373,6 +23485,15 @@ type ServerInterface interface {
 	// LeaveAdministration Leave the administration
 	// (DELETE /api/v2/{administration_id}/membership)
 	LeaveAdministration(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// GetMoneybirdImport Show the import from Moneybird
+	// (GET /api/v2/{administration_id}/moneybird_import)
+	GetMoneybirdImport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// StartMoneybirdImport Import a Moneybird administration
+	// (POST /api/v2/{administration_id}/moneybird_import)
+	StartMoneybirdImport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListMoneybirdAdministrations List the Moneybird administrations a token reaches
+	// (POST /api/v2/{administration_id}/moneybird_import/administrations)
+	ListMoneybirdAdministrations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// GetOverview Get the administration's overview
 	// (GET /api/v2/{administration_id}/overview)
 	GetOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -25620,6 +25741,24 @@ func (_ Unimplemented) UpdateLedgerAccount(w http.ResponseWriter, r *http.Reques
 // LeaveAdministration Leave the administration
 // (DELETE /api/v2/{administration_id}/membership)
 func (_ Unimplemented) LeaveAdministration(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetMoneybirdImport Show the import from Moneybird
+// (GET /api/v2/{administration_id}/moneybird_import)
+func (_ Unimplemented) GetMoneybirdImport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// StartMoneybirdImport Import a Moneybird administration
+// (POST /api/v2/{administration_id}/moneybird_import)
+func (_ Unimplemented) StartMoneybirdImport(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListMoneybirdAdministrations List the Moneybird administrations a token reaches
+// (POST /api/v2/{administration_id}/moneybird_import/administrations)
+func (_ Unimplemented) ListMoneybirdAdministrations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -36990,6 +37129,84 @@ func (siw *ServerInterfaceWrapper) LeaveAdministration(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// GetMoneybirdImport operation middleware
+func (siw *ServerInterfaceWrapper) GetMoneybirdImport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMoneybirdImport(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StartMoneybirdImport operation middleware
+func (siw *ServerInterfaceWrapper) StartMoneybirdImport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StartMoneybirdImport(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMoneybirdAdministrations operation middleware
+func (siw *ServerInterfaceWrapper) ListMoneybirdAdministrations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMoneybirdAdministrations(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetOverview operation middleware
 func (siw *ServerInterfaceWrapper) GetOverview(w http.ResponseWriter, r *http.Request) {
 
@@ -45261,6 +45478,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/api/v2/{administration_id}/support_access", wrapper.UpdateSupportAccess)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/moneybird_import", wrapper.GetMoneybirdImport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/moneybird_import", wrapper.StartMoneybirdImport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/moneybird_import/administrations", wrapper.ListMoneybirdAdministrations)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/invitations/{token}", wrapper.GetInvitation)

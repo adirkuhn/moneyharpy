@@ -10,6 +10,7 @@ import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { can } from '../management/queries'
 import { Block } from '../settings/Block'
+import { MoneybirdImportBlock } from './MoneybirdImportBlock'
 import { type Connection, useConnections, useConnectionSettings, useRevokeConnection, useUpdateConnectionSettings, useWebhooks } from './queries'
 
 const payments = ['mollie', 'paypal', 'sepa', 'incasso'] as const
@@ -52,6 +53,7 @@ export function IntegrationsPage() {
       <ConnectionsBlock administration={a} kind="api" />
       <ConnectionsBlock administration={a} kind="ai" />
       {can(a, 'settings') && <WebhooksBlock administration={a} />}
+      {can(a, 'ownership') && <MoneybirdImportBlock administrationId={a.id} />}
     </Page>
   )
 }

@@ -39,6 +39,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/invoicedoc"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/journal"
+	"github.com/adirkuhn/moneyharpy/internal/mbclient"
+	"github.com/adirkuhn/moneyharpy/internal/mbimport"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/overview"
@@ -262,6 +264,9 @@ type harness struct {
 	bank *fakeEnableBanking
 	// revolut stands in for Revolut's Business API.
 	revolut *httptest.Server
+	// moneybird stands in for Moneybird's API; mbimport is the import from it.
+	moneybird *httptest.Server
+	mbimport  *mbimport.Service
 	// recognition is Scan and Recognise, reading e-invoices only: XML
 	// files starting with <Invoice are read as testEInvoice.
 	recognition *recognize.Service
@@ -371,6 +376,10 @@ func newHarness(t *testing.T, opts options) *harness {
 	})
 	invoiceService.UseRecurringHook(h.subscriptions)
 	h.downloads = downloads.NewService(admins, subscriptionStore, files, ids, time.Now)
+	h.moneybird = newFakeMoneybird(t)
+	h.mbimport = mbimport.NewService(admins, mbclient.ImportSource{BaseURL: h.moneybird.URL + "/api/v2", HTTP: h.moneybird.Client()},
+		postgres.NewMoneybirdImportStore(pool), settings.NewCipher("test-secret"),
+		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService}, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
@@ -386,6 +395,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Events:          events,
 		Purchases:       documentService,
 		Recognition:     h.recognition,
+		MoneybirdImport: h.mbimport,
 		Assets:          assetService,
 		Products:        productService,
 		Projects:        projectService,

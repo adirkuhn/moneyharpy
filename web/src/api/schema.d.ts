@@ -6688,6 +6688,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/moneybird_import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Show the import from Moneybird
+         * @description MoneyHarpy extension. How the import of a Moneybird administration goes, per kind of data. Not found until an import was started.
+         */
+        get: operations["getMoneybirdImport"];
+        put?: never;
+        /**
+         * Import a Moneybird administration
+         * @description MoneyHarpy extension. Copies a Moneybird administration into this one in the background, keeping Moneybird's ids: its categories and VAT rates, which take the place of the defaults, then its contacts, products and projects. This administration must be empty, unless it imported the same Moneybird administration before; then only what is new comes in. The import reads Moneybird with the personal API token given, within Moneybird's rate limit, and forgets the token once it ends.
+         */
+        post: operations["startMoneybirdImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/{administration_id}/moneybird_import/administrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * List the Moneybird administrations a token reaches
+         * @description MoneyHarpy extension. Checks a Moneybird personal API token and lists the administrations it reaches, to pick the one to import. The token is not kept.
+         */
+        post: operations["listMoneybirdAdministrations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/invitations/{token}": {
         parameters: {
             query?: never;
@@ -10210,6 +10258,54 @@ export interface components {
                 /** @description Omit for the type's defaults. */
                 permissions?: components["schemas"]["Permission"][];
             };
+        };
+        /** @description A Moneybird administration. MoneyHarpy extension. */
+        MoneybirdAdministration: {
+            id: string;
+            name: string;
+            country?: string;
+            currency?: string;
+        };
+        MoneybirdImportRequest: {
+            moneybird_import: {
+                /** @description A Moneybird personal API token, kept sealed only while the import runs. */
+                token: string;
+                /** @description The Moneybird administration to import. */
+                administration_id: string;
+            };
+        };
+        MoneybirdImportStep: {
+            /** @enum {string} */
+            kind: "chart" | "contacts" | "products" | "projects";
+            total: number;
+            imported: number;
+            /** @description Records imported before, which stay as they are. */
+            skipped: number;
+            failed: number;
+            done: boolean;
+            /** @description Why records failed, at most 50. */
+            problems: string[];
+        };
+        /** @description The import of a Moneybird administration. MoneyHarpy extension. */
+        MoneybirdImport: {
+            source_administration_id: string;
+            source_name: string;
+            /** @enum {string} */
+            state: "running" | "done" | "failed";
+            steps: components["schemas"]["MoneybirdImportStep"][];
+            /**
+             * Format: date-time
+             * @description While the import waits for Moneybird's rate limit, until when.
+             */
+            waiting_until: string | null;
+            /** @description Why the import stopped, or last had to try again. */
+            error: string;
+            /** Format: date-time */
+            started_at: string;
+            /** Format: date-time */
+            finished_at: string | null;
+            /** Format: date-time */
+            updated_at: string;
         };
         InvitationPreview: {
             administration_name: string;
@@ -24632,6 +24728,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SupportAccess"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    getMoneybirdImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The import */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoneybirdImport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    startMoneybirdImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoneybirdImportRequest"];
+            };
+        };
+        responses: {
+            /** @description The import, started */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoneybirdImport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listMoneybirdAdministrations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    token: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The administrations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoneybirdAdministration"][];
                 };
             };
             400: components["responses"]["BadRequest"];
