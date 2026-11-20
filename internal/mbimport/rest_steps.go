@@ -3,9 +3,9 @@ package mbimport
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/administration"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
@@ -63,10 +63,18 @@ func (i mbIdentity) changes() administration.IdentityChanges {
 		Country: opt(i.Country), Email: opt(i.Email), Phone: opt(i.Phone), ChamberOfCommerce: opt(i.ChamberOfCommerce), TaxNumber: opt(i.TaxNumber),
 		BankAccountName: opt(i.BankAccountName), BankAccountNumber: opt(i.BankAccountNumber), BankAccountBIC: opt(i.BankAccountBIC),
 	}
-	for _, f := range i.CustomFields {
-		c.CustomFields = append(c.CustomFields, administration.CustomFieldChange{ID: f.ID.id(), Value: f.Value})
-	}
 	return c
+}
+
+// identityChanges are an identity's fields with the values of the custom
+// fields that came in.
+func (r *run) identityChanges(ctx context.Context, i mbIdentity) (administration.IdentityChanges, error) {
+	c := i.changes()
+	fields, err := r.fieldValues(ctx, i.CustomFields)
+	for _, f := range fields {
+		c.CustomFields = append(c.CustomFields, administration.CustomFieldChange{ID: f.id, Value: f.value})
+	}
+	return c, err
 }
 
 type mbWorkflowStep struct {
@@ -91,10 +99,10 @@ type mbWorkflow struct {
 }
 
 type mbNote struct {
-	ID          mbID       `json:"id"`
-	Note        string     `json:"note"`
-	Todo        bool       `json:"todo"`
-	CompletedAt *time.Time `json:"completed_at"`
+	ID          mbID    `json:"id"`
+	Note        string  `json:"note"`
+	Todo        bool    `json:"todo"`
+	CompletedAt *mbTime `json:"completed_at"`
 	stamps
 }
 
@@ -104,28 +112,28 @@ type mbUser struct {
 }
 
 type mbTimeEntry struct {
-	ID             mbID       `json:"id"`
-	ContactID      *mbID      `json:"contact_id"`
-	ProjectID      *mbID      `json:"project_id"`
-	SalesInvoiceID *mbID      `json:"sales_invoice_id"`
-	UserID         mbID       `json:"user_id"`
-	StartedAt      *time.Time `json:"started_at"`
-	EndedAt        *time.Time `json:"ended_at"`
-	Description    *string    `json:"description"`
-	PausedDuration *int       `json:"paused_duration"`
-	Billable       *bool      `json:"billable"`
-	Notes          []mbNote   `json:"notes"`
+	ID             mbID     `json:"id"`
+	ContactID      *mbID    `json:"contact_id"`
+	ProjectID      *mbID    `json:"project_id"`
+	SalesInvoiceID *mbID    `json:"sales_invoice_id"`
+	UserID         mbID     `json:"user_id"`
+	StartedAt      *mbTime  `json:"started_at"`
+	EndedAt        *mbTime  `json:"ended_at"`
+	Description    *string  `json:"description"`
+	PausedDuration *int     `json:"paused_duration"`
+	Billable       *bool    `json:"billable"`
+	Notes          []mbNote `json:"notes"`
 	stamps
 }
 
 type mbTask struct {
-	ID          mbID       `json:"id"`
-	Name        string     `json:"name"`
-	Description *string    `json:"description"`
-	RowOrder    int        `json:"row_order"`
-	CompletedAt *time.Time `json:"completed_at"`
-	ReportType  *string    `json:"report_type"`
-	Subtasks    []mbTask   `json:"subtasks"`
+	ID          mbID     `json:"id"`
+	Name        string   `json:"name"`
+	Description *string  `json:"description"`
+	RowOrder    int      `json:"row_order"`
+	CompletedAt *mbTime  `json:"completed_at"`
+	ReportType  *string  `json:"report_type"`
+	Subtasks    []mbTask `json:"subtasks"`
 	stamps
 }
 
@@ -166,7 +174,7 @@ func tasksOf(in []mbTask) []tasklists.ImportedTask {
 	for _, t := range in {
 		out = append(out, tasklists.ImportedTask{
 			Origin: origin(t.ID, t.stamps), Name: t.Name, Description: deref(t.Description), RowOrder: t.RowOrder,
-			CompletedAt: t.CompletedAt, ReportType: deref(t.ReportType), Subtasks: tasksOf(t.Subtasks),
+			CompletedAt: t.CompletedAt.time(), ReportType: deref(t.ReportType), Subtasks: tasksOf(t.Subtasks),
 		})
 	}
 	return out
@@ -204,12 +212,18 @@ func (r *run) identities(ctx context.Context) error {
 		if _, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kindIdentity, d.ID.id()); err != nil {
 			return err
 		} else if !done {
-			own, err := r.s.targets.Admin.UpdateDefaultIdentity(ctx, r.job.AdministrationID, r.job.UserID, d.changes())
+			changes, err := r.identityChanges(ctx, d)
+			if err != nil {
+				return err
+			}
+			own, err := r.s.targets.Admin.UpdateDefaultIdentity(ctx, r.job.AdministrationID, r.job.UserID, changes)
 			if err != nil {
 				if !isRecordProblem(err) {
 					return err
 				}
-				st.problem("identity %d: %v", d.ID, err)
+				if err := r.fail(ctx, st, kindIdentity, d.ID.id(), err); err != nil {
+					return err
+				}
 			} else {
 				if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindIdentity, d.ID.id(), own.ID); err != nil {
 					return err
@@ -230,7 +244,11 @@ func (r *run) identities(ctx context.Context) error {
 		if err := json.Unmarshal(raw, &i); err != nil {
 			return 0, err
 		}
-		_, err := r.s.targets.Admin.ImportIdentity(ctx, r.job.AdministrationID, r.job.UserID, origin(i.ID, i.stamps), i.changes())
+		changes, err := r.identityChanges(ctx, i)
+		if err != nil {
+			return 0, err
+		}
+		_, err = r.s.targets.Admin.ImportIdentity(ctx, r.job.AdministrationID, r.job.UserID, origin(i.ID, i.stamps), changes)
 		return i.ID.id(), err
 	})
 }
@@ -318,7 +336,7 @@ func (r *run) timeEntries(ctx context.Context) error {
 		}
 		in := timeentries.Input{
 			UserID: &user, ContactID: ref(e.ContactID), ProjectID: ref(e.ProjectID), SalesInvoiceID: ref(e.SalesInvoiceID),
-			StartedAt: e.StartedAt, EndedAt: e.EndedAt, Description: e.Description, PausedDuration: e.PausedDuration, Billable: e.Billable,
+			StartedAt: e.StartedAt.time(), EndedAt: e.EndedAt.time(), Description: e.Description, PausedDuration: e.PausedDuration, Billable: e.Billable,
 		}
 		if in.Description == nil {
 			empty := ""
@@ -374,11 +392,13 @@ func (r *run) taskLists(ctx context.Context) error {
 func (r *run) notes(ctx context.Context, st *Step, entityType string, entity resource.ID, in []mbNote) error {
 	for _, n := range in {
 		_, err := r.s.targets.Notes.Import(ctx, r.job.AdministrationID, entityType, entity, r.job.UserID, notes.Imported{
-			Origin: origin(n.ID, n.stamps), Input: notes.Input{Note: n.Note, Todo: n.Todo}, CompletedAt: n.CompletedAt,
+			Origin: origin(n.ID, n.stamps), Input: notes.Input{Note: n.Note, Todo: n.Todo}, CompletedAt: n.CompletedAt.time(),
 		})
 		if err != nil {
 			if isRecordProblem(err) {
-				st.note("note %d: %v", n.ID, err)
+				if err := r.partial(ctx, st, entityType, entity, fmt.Sprintf("note %d left out: %s", n.ID, describe(err))); err != nil {
+					return err
+				}
 				continue
 			}
 			return err

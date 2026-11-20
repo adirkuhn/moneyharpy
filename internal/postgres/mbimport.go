@@ -112,3 +112,33 @@ func (s *MoneybirdImportStore) Empty(ctx context.Context, admin resource.ID) (bo
 	}
 	return !has.Bool, nil
 }
+
+// RecordProblem implements mbimport.Store.
+func (s *MoneybirdImportStore) RecordProblem(ctx context.Context, admin resource.ID, p mbimport.Problem) error {
+	return s.q.RecordMoneybirdImportProblem(ctx, sqlc.RecordMoneybirdImportProblemParams{
+		AdministrationID: int64(admin), Step: p.Step, Kind: p.Kind, SourceID: int64(p.SourceID), Message: p.Message, Partial: p.Partial,
+		CreatedAt: timestamp(p.CreatedAt),
+	})
+}
+
+// ResolveProblems implements mbimport.Store.
+func (s *MoneybirdImportStore) ResolveProblems(ctx context.Context, admin resource.ID, kind string, source resource.ID) error {
+	return s.q.ResolveMoneybirdImportProblems(ctx, sqlc.ResolveMoneybirdImportProblemsParams{AdministrationID: int64(admin), Kind: kind, SourceID: int64(source)})
+}
+
+// Problems implements mbimport.Store.
+func (s *MoneybirdImportStore) Problems(ctx context.Context, admin resource.ID, page, perPage int) ([]mbimport.Problem, int, error) {
+	total, err := s.q.CountMoneybirdImportProblems(ctx, int64(admin))
+	if err != nil {
+		return nil, 0, err
+	}
+	rows, err := s.q.MoneybirdImportProblems(ctx, sqlc.MoneybirdImportProblemsParams{AdministrationID: int64(admin), Limit: int32(perPage), Offset: int32((page - 1) * perPage)})
+	if err != nil {
+		return nil, 0, err
+	}
+	out := make([]mbimport.Problem, len(rows))
+	for i, r := range rows {
+		out[i] = mbimport.Problem{Step: r.Step, Kind: r.Kind, SourceID: resource.ID(r.SourceID), Message: r.Message, Partial: r.Partial, CreatedAt: r.CreatedAt.Time}
+	}
+	return out, int(total), nil
+}

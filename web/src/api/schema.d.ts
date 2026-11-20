@@ -6736,6 +6736,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/moneybird_import/problems": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List what the import could not bring in
+         * @description MoneyHarpy extension. Every record the import from Moneybird could not bring in, or brought in without part of it, with why, by step and record. One that comes in later, such as on importing again, is gone from the list. Paged with a Link header and X-Total-Count.
+         */
+        get: operations["listMoneybirdImportProblems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/moneybird_import/try_now": {
         parameters: {
             query?: never;
@@ -10329,6 +10351,19 @@ export interface components {
             done: boolean;
             /** @description Why records failed, at most 50. */
             problems: string[];
+        };
+        /** @description A record the import could not bring in, or brought in without part of it. MoneyHarpy extension. */
+        MoneybirdImportProblem: {
+            step: string;
+            /** @description The kind of Moneybird record, such as contact or sales_invoice. */
+            kind: string;
+            /** @description The record's id in Moneybird; "0" when it had none that could be read. */
+            source_id: string;
+            message: string;
+            /** @description The record came in, without part of it, such as a file. */
+            partial: boolean;
+            /** Format: date-time */
+            created_at: string;
         };
         /** @description The import of a Moneybird administration. MoneyHarpy extension. */
         MoneybirdImport: {
@@ -24873,6 +24908,41 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    listMoneybirdImportProblems: {
+        parameters: {
+            query?: {
+                /** @description The page to return, starting at 1. */
+                page?: components["parameters"]["page"];
+                /** @description Records per page, 50 unless given, at most 100. */
+                per_page?: components["parameters"]["per_page"];
+            };
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The problems */
+            200: {
+                headers: {
+                    Link?: string;
+                    /** @description The number of problems in all. */
+                    "X-Total-Count"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoneybirdImportProblem"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
         };
     };

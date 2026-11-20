@@ -40,6 +40,7 @@ var emptyStatements = []string{
 	`DELETE FROM supplier_memory_kinds WHERE administration_id = $1`,
 	`DELETE FROM supplier_memories WHERE administration_id = $1`,
 	`DELETE FROM moneybird_import_ids WHERE administration_id = $1`,
+	`DELETE FROM moneybird_import_problems WHERE administration_id = $1`,
 	`DELETE FROM moneybird_imports WHERE administration_id = $1`,
 	`DELETE FROM ledger_account_bookings WHERE administration_id = $1`,
 	`DELETE FROM payments WHERE administration_id = $1`,

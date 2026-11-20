@@ -22,3 +22,7 @@
 .mb-import__steps tr.is-current th, .mb-import__steps tr.is-current td { background: var(--row-hover); font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .mb-import__fill { transition: none; } }
 .mb-import__queued { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.mb-import__problem-list { margin: 0.5rem 0 0; font-size: 0.875rem; }
+.mb-import__problem-list th:last-child { width: auto; }
+.mb-import__id { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+.mb-import__pages { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem; }

@@ -43,7 +43,9 @@ func (r *run) attach(ctx context.Context, st *Step, base string, id resource.ID,
 		}
 		if err != nil {
 			if isRecordProblem(err) || isFileProblem(err) {
-				st.note("%s %d, file %s: %v", base, id, f.Filename, err)
+				if err := r.partial(ctx, st, base, id, fmt.Sprintf("file %s left out: %s", f.Filename, describe(err))); err != nil {
+					return err
+				}
 				continue
 			}
 			return err
@@ -61,8 +63,7 @@ func (r *run) keepPDF(ctx context.Context, st *Step, path, name string, add addF
 	}
 	if err != nil {
 		if isRecordProblem(err) || isFileProblem(err) {
-			st.note("%s: %v", path, err)
-			return nil
+			return r.partial(ctx, st, "pdf", 0, fmt.Sprintf("%s left out: %s", path, describe(err)))
 		}
 		return err
 	}
@@ -99,7 +100,7 @@ func (r *run) estimates(ctx context.Context) error {
 		}
 		in := sales.ImportedEstimate{
 			Origin: origin(e.ID, e.stamps), Changes: c, Details: details, EstimateID: deref(e.EstimateID), State: e.State,
-			DueDate: day(e.DueDate), SentAt: e.SentAt, AcceptedAt: e.AcceptedAt, RejectedAt: e.RejectedAt, ArchivedAt: e.ArchivedAt,
+			DueDate: day(e.DueDate), SentAt: e.SentAt.time(), AcceptedAt: e.AcceptedAt.time(), RejectedAt: e.RejectedAt.time(), ArchivedAt: e.ArchivedAt.time(),
 		}
 		if e.DraftID != nil {
 			in.DraftID = *e.DraftID
@@ -301,7 +302,9 @@ func (r *run) bookOnCategories(ctx context.Context, st *Step, m mbMutation) erro
 			return err
 		}
 		if ledger == nil {
-			st.note("transaction %d: its category is not here", m.ID)
+			if err := r.partial(ctx, st, kindFinancialMutation, m.ID.id(), "a booking left out: its category is not here"); err != nil {
+				return err
+			}
 			continue
 		}
 		// A booking's amount goes the transaction's way here, however Moneybird signs it.
@@ -312,7 +315,9 @@ func (r *run) bookOnCategories(ctx context.Context, st *Step, m mbMutation) erro
 		}
 		if _, err := r.s.targets.Banking.LinkBooking(ctx, r.job.AdministrationID, m.ID.id(), r.job.UserID, link); err != nil {
 			if isRecordProblem(err) {
-				st.note("transaction %d, booking %d: %v", m.ID, b.ID, err)
+				if err := r.partial(ctx, st, kindFinancialMutation, m.ID.id(), fmt.Sprintf("booking %d left out: %s", b.ID, describe(err))); err != nil {
+					return err
+				}
 				continue
 			}
 			return err
@@ -336,8 +341,7 @@ func (r *run) lockedPeriod(ctx context.Context) error {
 		locked := a.PeriodLockedUntil
 		if _, err := r.s.targets.Books.UpdateSettings(ctx, r.job.AdministrationID, r.job.UserID, bookkeeping.SettingsChanges{LockedUntil: &locked}); err != nil {
 			if isRecordProblem(err) {
-				st.problem("locked period: %v", err)
-				return nil
+				return r.fail(ctx, st, "locked_period", 0, err)
 			}
 			return err
 		}

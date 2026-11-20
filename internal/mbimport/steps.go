@@ -12,8 +12,12 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/tasklists"
 	"github.com/adirkuhn/moneyharpy/internal/timeentries"
+	"maps"
+	"net/mail"
 	"net/url"
 	"slices"
+	"strings"
+	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
@@ -201,7 +205,9 @@ func (r *run) chart(ctx context.Context) error {
 	for _, raw := range accounts {
 		var a mbLedgerAccount
 		if err := json.Unmarshal(raw, &a); err != nil || a.ID == 0 {
-			st.problem("category: %v", errOr(err, "no id"))
+			if err := r.fail(ctx, st, kindLedgerAccount, 0, errors.New(errOr(err, "no id"))); err != nil {
+				return err
+			}
 			continue
 		}
 		in.Accounts = append(in.Accounts, a.imported())
@@ -213,7 +219,9 @@ func (r *run) chart(ctx context.Context) error {
 	for _, raw := range rates {
 		var t mbTaxRate
 		if err := json.Unmarshal(raw, &t); err != nil || t.ID == 0 {
-			st.problem("VAT rate: %v", errOr(err, "no id"))
+			if err := r.fail(ctx, st, kindTaxRate, 0, errors.New(errOr(err, "no id"))); err != nil {
+				return err
+			}
 			continue
 		}
 		in.Rates = append(in.Rates, t.imported())
@@ -261,7 +269,20 @@ func (r *run) contacts(ctx context.Context) error {
 		for _, f := range fields {
 			changes.CustomFields = append(changes.CustomFields, contacts.FieldValue{FieldID: f.id, Value: f.value})
 		}
+		changes.SendInvoicesToEmail, changes.SendEstimatesToEmail = emailList(changes.SendInvoicesToEmail), emailList(changes.SendEstimatesToEmail)
 		got, err := r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), changes, c.people())
+		if left := optionalOnly(err, contactOptional); left != nil {
+			// The contact comes in without what does not pass, which is noted with why.
+			why := describe(err)
+			for _, field := range left {
+				clearContactField(&changes, field)
+			}
+			if got, err = r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), changes, c.people()); err == nil {
+				if err := r.partial(ctx, r.job.Step(StepContacts), kindContact, c.ID.id(), "came in without "+strings.Join(left, ", ")+" ("+why+")"); err != nil {
+					return 0, err
+				}
+			}
+		}
 		if err != nil {
 			return 0, err
 		}
@@ -319,7 +340,9 @@ func (r *run) synced(ctx context.Context, step, path, kind string, query url.Val
 	for _, v := range versions {
 		id, err := resource.ParseID(v.ID)
 		if err != nil {
-			st.problem("%s %s: %v", kind, v.ID, err)
+			if err := r.fail(ctx, st, kind, 0, fmt.Errorf("id %s: %w", v.ID, err)); err != nil {
+				return err
+			}
 			continue
 		}
 		_, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kind, id)
@@ -371,7 +394,9 @@ func (r *run) take(ctx context.Context, st *Step, kind string, raws []json.RawMe
 			ID mbID `json:"id"`
 		}
 		if err := json.Unmarshal(raw, &head); err != nil || head.ID == 0 {
-			st.problem("%s: %v", kind, errOr(err, "no id"))
+			if err := r.fail(ctx, st, kind, 0, errors.New(errOr(err, "no id"))); err != nil {
+				return err
+			}
 			continue
 		}
 		if _, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kind, head.ID.id()); err != nil {
@@ -383,9 +408,14 @@ func (r *run) take(ctx context.Context, st *Step, kind string, raws []json.RawMe
 		id, err := one(ctx, raw)
 		if err != nil {
 			if isRecordProblem(err) {
-				st.problem("%s %d: %v", kind, head.ID, err)
+				if err := r.fail(ctx, st, kind, head.ID.id(), err); err != nil {
+					return err
+				}
 				continue
 			}
+			return err
+		}
+		if err := r.s.store.ResolveProblems(ctx, r.job.AdministrationID, kind, id); err != nil {
 			return err
 		}
 		// A record that took another's place has recorded where it went.
@@ -407,7 +437,8 @@ func isRecordProblem(err error) bool {
 	var verr *resource.ValidationError
 	var syntax *json.SyntaxError
 	var typeErr *json.UnmarshalTypeError
-	return errors.As(err, &verr) || errors.As(err, &syntax) || errors.As(err, &typeErr) || isDuplicate(err)
+	var parseErr *time.ParseError
+	return errors.As(err, &verr) || errors.As(err, &syntax) || errors.As(err, &typeErr) || errors.As(err, &parseErr) || isDuplicate(err)
 }
 
 // uniqueViolation is the SQLSTATE of a record clashing with one here, such
@@ -434,4 +465,112 @@ func idOf(raw json.RawMessage) resource.ID {
 	}
 	_ = json.Unmarshal(raw, &head)
 	return head.ID.id()
+}
+
+// fail notes a record that could not come in, keeping all of them.
+func (r *run) fail(ctx context.Context, st *Step, kind string, id resource.ID, err error) error {
+	msg := describe(err)
+	st.problem("%s %d: %s", kind, id, msg)
+	return r.s.store.RecordProblem(ctx, r.job.AdministrationID, Problem{Step: st.Kind, Kind: kind, SourceID: id, Message: msg, CreatedAt: r.s.now()})
+}
+
+// partial notes what a record came in without, such as a file.
+func (r *run) partial(ctx context.Context, st *Step, kind string, id resource.ID, msg string) error {
+	st.note("%s %d: %s", kind, id, msg)
+	return r.s.store.RecordProblem(ctx, r.job.AdministrationID, Problem{Step: st.Kind, Kind: kind, SourceID: id, Message: msg, Partial: true, CreatedAt: r.s.now()})
+}
+
+// contactOptional are the contact fields a contact can come in without.
+var contactOptional = []string{
+	"send_invoices_to_email", "send_estimates_to_email", "send_invoices_to_attention", "send_estimates_to_attention", "email_ubl",
+	"sepa_bic", "sepa_iban", "sepa_iban_account_name", "sepa_mandate_id", "sepa_mandate_date", "sepa_active", "sepa_sequence_type",
+	"tax_number", "chamber_of_commerce", "bank_account", "phone", "si_identifier", "si_identifier_type", "delivery_method",
+	"invoice_workflow_id", "estimate_workflow_id", "custom_fields", "zipcode", "country",
+}
+
+// optionalOnly returns the fields of a validation error when all of them
+// are optional, so the record can come in without them; nil otherwise.
+func optionalOnly(err error, optional []string) []string {
+	var verr *resource.ValidationError
+	if !errors.As(err, &verr) || len(verr.Fields) == 0 {
+		return nil
+	}
+	fields := slices.Sorted(maps.Keys(verr.Fields))
+	for _, f := range fields {
+		if !slices.Contains(optional, strings.SplitN(f, ".", 2)[0]) {
+			return nil
+		}
+	}
+	return fields
+}
+
+// clearContactField leaves a field out of a contact, with what depends on it.
+func clearContactField(c *contacts.Changes, field string) {
+	switch strings.SplitN(field, ".", 2)[0] {
+	case "send_invoices_to_email", "email_ubl":
+		c.SendInvoicesToEmail, c.EmailUBL = nil, nil
+		if c.DeliveryMethod != nil && *c.DeliveryMethod == "Email" {
+			c.DeliveryMethod = nil
+		}
+	case "send_estimates_to_email":
+		c.SendEstimatesToEmail = nil
+	case "send_invoices_to_attention":
+		c.SendInvoicesToAttention = nil
+	case "send_estimates_to_attention":
+		c.SendEstimatesToAttention = nil
+	case "sepa_bic", "sepa_iban", "sepa_iban_account_name", "sepa_mandate_id", "sepa_mandate_date", "sepa_active", "sepa_sequence_type":
+		// A mandate that does not hold together does not come in at all.
+		c.SepaBIC, c.SepaIBAN, c.SepaIBANAccountName, c.SepaMandateID, c.SepaMandateDate, c.SepaActive, c.SepaSequenceType = nil, nil, nil, nil, nil, nil, nil
+		c.DirectDebit = nil
+	case "tax_number":
+		c.TaxNumber = nil
+	case "chamber_of_commerce":
+		c.ChamberOfCommerce = nil
+	case "bank_account":
+		c.BankAccount = nil
+	case "phone":
+		c.Phone = nil
+	case "si_identifier", "si_identifier_type":
+		c.SIIdentifier, c.SIIdentifierType = nil, nil
+	case "delivery_method":
+		c.DeliveryMethod = nil
+	case "invoice_workflow_id":
+		c.InvoiceWorkflowID = nil
+	case "estimate_workflow_id":
+		c.EstimateWorkflowID = nil
+	case "custom_fields":
+		c.CustomFields = nil
+	case "zipcode":
+		c.Zipcode = nil
+	case "country":
+		c.Country = nil
+	}
+}
+
+// emailList writes the addresses Moneybird keeps as they are kept here:
+// separated by commas, without names, whatever separated them there.
+func emailList(in *string) *string {
+	if in == nil {
+		return nil
+	}
+	var out []string
+	for _, part := range strings.FieldsFunc(*in, func(r rune) bool { return r == ',' || r == ';' || r == '\n' }) {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		if a, err := mail.ParseAddress(part); err == nil {
+			part = a.Address
+		} else if fields := strings.Fields(part); len(fields) > 1 {
+			// Addresses separated by spaces only.
+			out = append(out, fields...)
+			continue
+		}
+		out = append(out, part)
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	joined := strings.Join(out, ", ")
+	return &joined
 }

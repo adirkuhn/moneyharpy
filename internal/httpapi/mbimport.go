@@ -104,3 +104,23 @@ func (s *server) TryMoneybirdImportNow(w http.ResponseWriter, r *http.Request, a
 	}
 	writeJSON(w, http.StatusOK, toMoneybirdImport(j))
 }
+
+// ListMoneybirdImportProblems implements ServerInterface.
+func (s *server) ListMoneybirdImportProblems(w http.ResponseWriter, r *http.Request, administrationID AdministrationId, params ListMoneybirdImportProblemsParams) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	page, perPage := pageNumbers(params.Page, params.PerPage)
+	list, total, err := s.deps.MoneybirdImport.Problems(r.Context(), admin, user(r).ID, page, perPage)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	out := make([]MoneybirdImportProblem, len(list))
+	for i, p := range list {
+		out[i] = MoneybirdImportProblem{Step: p.Step, Kind: p.Kind, SourceId: p.SourceID.String(), Message: p.Message, Partial: p.Partial, CreatedAt: p.CreatedAt}
+	}
+	s.writeLinks(w, r, page, perPage, total)
+	writeJSON(w, http.StatusOK, out)
+}

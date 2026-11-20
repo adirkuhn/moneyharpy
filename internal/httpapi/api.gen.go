@@ -9097,6 +9097,22 @@ type MoneybirdImport struct {
 // MoneybirdImportState defines model for MoneybirdImport.State.
 type MoneybirdImportState string
 
+// MoneybirdImportProblem A record the import could not bring in, or brought in without part of it. MoneyHarpy extension.
+type MoneybirdImportProblem struct {
+	CreatedAt time.Time `json:"created_at"`
+
+	// Kind The kind of Moneybird record, such as contact or sales_invoice.
+	Kind    string `json:"kind"`
+	Message string `json:"message"`
+
+	// Partial The record came in, without part of it, such as a file.
+	Partial bool `json:"partial"`
+
+	// SourceId The record's id in Moneybird; "0" when it had none that could be read.
+	SourceId string `json:"source_id"`
+	Step     string `json:"step"`
+}
+
 // MoneybirdImportRequest defines model for MoneybirdImportRequest.
 type MoneybirdImportRequest struct {
 	MoneybirdImport struct {
@@ -15559,6 +15575,15 @@ type LookupKvkNumberParams struct {
 // ListMoneybirdAdministrationsJSONBody defines parameters for ListMoneybirdAdministrations.
 type ListMoneybirdAdministrationsJSONBody struct {
 	Token string `json:"token"`
+}
+
+// ListMoneybirdImportProblemsParams defines parameters for ListMoneybirdImportProblems.
+type ListMoneybirdImportProblemsParams struct {
+	// Page The page to return, starting at 1.
+	Page *Page `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Records per page, 50 unless given, at most 100.
+	PerPage *PerPage `form:"per_page,omitempty" json:"per_page,omitempty"`
 }
 
 // ListProductsParams defines parameters for ListProducts.
@@ -23557,6 +23582,9 @@ type ServerInterface interface {
 	// ListMoneybirdAdministrations List the Moneybird administrations a token reaches
 	// (POST /api/v2/{administration_id}/moneybird_import/administrations)
 	ListMoneybirdAdministrations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// ListMoneybirdImportProblems List what the import could not bring in
+	// (GET /api/v2/{administration_id}/moneybird_import/problems)
+	ListMoneybirdImportProblems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListMoneybirdImportProblemsParams)
 	// TryMoneybirdImportNow Try a queued import again now
 	// (POST /api/v2/{administration_id}/moneybird_import/try_now)
 	TryMoneybirdImportNow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -25831,6 +25859,12 @@ func (_ Unimplemented) StartMoneybirdImport(w http.ResponseWriter, r *http.Reque
 // ListMoneybirdAdministrations List the Moneybird administrations a token reaches
 // (POST /api/v2/{administration_id}/moneybird_import/administrations)
 func (_ Unimplemented) ListMoneybirdAdministrations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListMoneybirdImportProblems List what the import could not bring in
+// (GET /api/v2/{administration_id}/moneybird_import/problems)
+func (_ Unimplemented) ListMoneybirdImportProblems(w http.ResponseWriter, r *http.Request, administrationId AdministrationId, params ListMoneybirdImportProblemsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -37311,6 +37345,61 @@ func (siw *ServerInterfaceWrapper) ListMoneybirdAdministrations(w http.ResponseW
 	handler.ServeHTTP(w, r)
 }
 
+// ListMoneybirdImportProblems operation middleware
+func (siw *ServerInterfaceWrapper) ListMoneybirdImportProblems(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListMoneybirdImportProblemsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "per_page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "per_page", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "per_page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "per_page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMoneybirdImportProblems(w, r, administrationId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // TryMoneybirdImportNow operation middleware
 func (siw *ServerInterfaceWrapper) TryMoneybirdImportNow(w http.ResponseWriter, r *http.Request) {
 
@@ -45617,6 +45706,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/moneybird_import", wrapper.StartMoneybirdImport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/v2/{administration_id}/moneybird_import/problems", wrapper.ListMoneybirdImportProblems)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/moneybird_import/try_now", wrapper.TryMoneybirdImportNow)

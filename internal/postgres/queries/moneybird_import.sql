@@ -46,3 +46,18 @@ SELECT EXISTS (SELECT 1 FROM contacts t WHERE t.administration_id = @administrat
     OR EXISTS (SELECT 1 FROM projects t WHERE t.administration_id = @administration_id::bigint)
     OR EXISTS (SELECT 1 FROM time_entries t WHERE t.administration_id = @administration_id::bigint)
     OR EXISTS (SELECT 1 FROM assets t WHERE t.administration_id = @administration_id::bigint) AS has_data;
+
+-- name: RecordMoneybirdImportProblem :exec
+INSERT INTO moneybird_import_problems (administration_id, step, kind, source_id, message, partial, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (administration_id, kind, source_id, message) DO UPDATE SET step = excluded.step, created_at = excluded.created_at;
+
+-- name: ResolveMoneybirdImportProblems :exec
+-- A record that came in no longer failed; what came in without it stays.
+DELETE FROM moneybird_import_problems WHERE administration_id = $1 AND kind = $2 AND source_id = $3 AND NOT partial;
+
+-- name: MoneybirdImportProblems :many
+SELECT * FROM moneybird_import_problems WHERE administration_id = $1 ORDER BY step, kind, source_id, message LIMIT $2 OFFSET $3;
+
+-- name: CountMoneybirdImportProblems :one
+SELECT count(*) FROM moneybird_import_problems WHERE administration_id = $1;

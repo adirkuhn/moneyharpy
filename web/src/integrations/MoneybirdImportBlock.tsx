@@ -4,7 +4,7 @@ import { Problems } from '../auth/AuthLayout'
 import { FormRow, formErrors } from '../forms/Form'
 import { Block } from '../settings/Block'
 import './integrations.css'
-import { type MoneybirdAdministration, type MoneybirdImport, useMoneybirdAdministrations, useMoneybirdImport, useStartMoneybirdImport, useTryMoneybirdImportNow } from './queries'
+import { type MoneybirdAdministration, type MoneybirdImport, useMoneybirdAdministrations, useMoneybirdImport, useMoneybirdImportProblems, useStartMoneybirdImport, useTryMoneybirdImportNow } from './queries'
 
 /**
  * Settings > Integrations > Import from Moneybird: a personal API token, the
@@ -123,6 +123,51 @@ function Bar({ label, value }: { label: string; value: number }) {
 }
 
 /** The import's state, its progress over all steps and per step, the wait for Moneybird and what failed. */
+/** Every record the import could not bring in, or brought in without part of it, a page at a time. */
+function FailedRecords({ administrationId, failed }: { administrationId: string; failed: number }) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [page, setPage] = useState(1)
+  const list = useMoneybirdImportProblems(administrationId, page, open)
+  const total = list.data?.total ?? 0
+  const pages = Math.max(1, Math.ceil(total / 50))
+  return (
+    <details className="mb-import__problems" onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+      <summary>{t('mbImport.problems', { count: failed })}</summary>
+      {open && !list.data && <p className="hint">{t('mbImport.loadingProblems')}</p>}
+      {list.data && (
+        <>
+          <table className="data-table mb-import__problem-list" aria-label={t('mbImport.problemList')}>
+            <thead>
+              <tr>
+                <th scope="col">{t('mbImport.kind')}</th>
+                <th scope="col">{t('mbImport.moneybirdId')}</th>
+                <th scope="col">{t('mbImport.why')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.data.problems.map((p) => (
+                <tr key={`${p.kind}:${p.source_id}:${p.message}`}>
+                  <td>{t(`mbImport.kinds.${p.step}`, { defaultValue: p.step })}</td>
+                  <td className="mb-import__id">{p.source_id === '0' ? '' : p.source_id}</td>
+                  <td>{p.partial ? t('mbImport.partial', { why: p.message }) : p.message}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {pages > 1 && (
+            <div className="mb-import__pages">
+              <button type="button" className="btn btn--secondary btn--small" disabled={page <= 1} onClick={() => setPage(page - 1)}>{t('mbImport.previous')}</button>
+              <span className="hint">{t('mbImport.page', { page, pages, total })}</span>
+              <button type="button" className="btn btn--secondary btn--small" disabled={page >= pages} onClick={() => setPage(page + 1)}>{t('mbImport.next')}</button>
+            </div>
+          )}
+        </>
+      )}
+    </details>
+  )
+}
+
 function TryNow({ administrationId }: { administrationId: string }) {
   const { t } = useTranslation()
   const tryNow = useTryMoneybirdImportNow(administrationId)
@@ -188,12 +233,7 @@ function Progress({ administrationId, job }: { administrationId: string; job: Mo
         </tbody>
       </table>
       {job.steps.some((s) => s.problems.length > 0) && (
-        <details className="mb-import__problems">
-          <summary>{t('mbImport.problems', { count: job.steps.reduce((n, s) => n + s.failed, 0) })}</summary>
-          <ul>
-            {job.steps.flatMap((s) => s.problems.map((p) => <li key={`${s.kind}:${p}`}>{p}</li>))}
-          </ul>
-        </details>
+        <FailedRecords administrationId={administrationId} failed={job.steps.reduce((n, s) => n + s.failed, 0)} />
       )}
     </div>
   )

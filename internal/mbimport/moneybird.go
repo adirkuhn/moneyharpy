@@ -3,6 +3,7 @@ package mbimport
 import (
 	"bytes"
 	"encoding/json"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -351,7 +352,7 @@ type mbSalesInvoice struct {
 	Currency               *string        `json:"currency"`
 	Discount               mbDecimal      `json:"discount"`
 	OriginalSalesInvoiceID *mbID          `json:"original_sales_invoice_id"`
-	SentAt                 *time.Time     `json:"sent_at"`
+	SentAt                 *mbTime        `json:"sent_at"`
 	PricesAreInclTax       *bool          `json:"prices_are_incl_tax"`
 	MarkedDubiousOn        *string        `json:"marked_dubious_on"`
 	MarkedUncollectibleOn  *string        `json:"marked_uncollectible_on"`
@@ -428,10 +429,10 @@ type mbEstimate struct {
 	PricesAreInclTax *bool          `json:"prices_are_incl_tax"`
 	PreText          *string        `json:"pre_text"`
 	PostText         *string        `json:"post_text"`
-	SentAt           *time.Time     `json:"sent_at"`
-	AcceptedAt       *time.Time     `json:"accepted_at"`
-	RejectedAt       *time.Time     `json:"rejected_at"`
-	ArchivedAt       *time.Time     `json:"archived_at"`
+	SentAt           *mbTime        `json:"sent_at"`
+	AcceptedAt       *mbTime        `json:"accepted_at"`
+	RejectedAt       *mbTime        `json:"rejected_at"`
+	ArchivedAt       *mbTime        `json:"archived_at"`
 	WorkflowID       *mbID          `json:"workflow_id"`
 	IdentityID       *mbID          `json:"identity_id"`
 	CustomFields     []mbFieldValue `json:"custom_fields"`
@@ -512,4 +513,31 @@ type mbDocumentBase struct {
 	Attachments []mbAttachment `json:"attachments"`
 	Notes       []mbNote       `json:"notes"`
 	stamps
+}
+
+// mbTime reads a moment Moneybird writes as a timestamp, or as a date only
+// for some fields, such as when an estimate was accepted.
+type mbTime struct{ t *time.Time }
+
+// UnmarshalJSON implements json.Unmarshaler; null and "" read as none.
+func (m *mbTime) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(bytes.TrimSpace(b)), `"`)
+	if s == "" || s == "null" {
+		m.t = nil
+		return nil
+	}
+	for _, layout := range []string{time.RFC3339Nano, time.DateOnly} {
+		if t, err := time.Parse(layout, s); err == nil {
+			m.t = &t
+			return nil
+		}
+	}
+	return &json.UnmarshalTypeError{Value: s, Type: reflect.TypeFor[time.Time]()}
+}
+
+func (m *mbTime) time() *time.Time {
+	if m == nil {
+		return nil
+	}
+	return m.t
 }

@@ -47,9 +47,29 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Fatalf("import = %+v", done)
 	}
 	for _, st := range done.Steps {
-		if st.Kind == "contacts" && (st.Imported != 1 || st.Failed != 1 || !strings.Contains(st.Problems[0], "504000000000000502")) {
+		if st.Kind == "contacts" && (st.Imported != 3 || st.Failed != 1 || !strings.Contains(fmt.Sprint(st.Problems), "504000000000000504")) {
 			t.Errorf("contacts step = %+v", st)
 		}
+	}
+
+	// Every record that could not come in is listed with why; a contact that came in without what did not pass says so.
+	problems := owner.do(http.MethodGet, api+"/moneybird_import/problems?per_page=100", nil)
+	wantStatus(t, problems, http.StatusOK)
+	failures := decode[[]httpapi.MoneybirdImportProblem](t, problems)
+	text := fmt.Sprint(failures)
+	if !strings.Contains(text, "504000000000000504") || !strings.Contains(text, "can't be blank") || !strings.Contains(text, "sepa_bic: is not a valid BIC") ||
+		!strings.Contains(text, "send_invoices_to_email: is not a valid email address") {
+		t.Errorf("problems = %s", text)
+	}
+	// Moneybird's way of writing several addresses is tidied; a contact comes in without a field that does not pass.
+	beispiel := decode[map[string]any](t, owner.do(http.MethodGet, api+"/contacts/504000000000000503", nil))
+	if beispiel["send_invoices_to_email"] != "ann@example.com, billing@example.com" || beispiel["sepa_bic"] != nil {
+		t.Errorf("contact = %v, %v", beispiel["send_invoices_to_email"], beispiel["sepa_bic"])
+	}
+	wantStatus(t, owner.do(http.MethodGet, api+"/contacts/504000000000000502", nil), http.StatusOK)
+	// An account without a name, and one named like another, come in under names of their own.
+	for _, id := range []string{"504000000000000202", "504000000000000203"} {
+		wantStatus(t, owner.do(http.MethodGet, api+"/financial_accounts/"+id, nil), http.StatusOK)
 	}
 
 	// Records keep their Moneybird ids.

@@ -40,6 +40,10 @@ describe('import from Moneybird', () => {
       ...base,
       http.get('*/api/v2/11/moneybird_import', () => (current ? HttpResponse.json(current) : HttpResponse.json({ error: 'No import' }, { status: 404 }))),
       http.post('*/api/v2/11/moneybird_import/administrations', () => HttpResponse.json([{ id: '123', name: 'Example Shop B.V.' }, { id: '456', name: 'Beispiel GmbH' }])),
+      http.get('*/api/v2/11/moneybird_import/problems', () => HttpResponse.json(
+        [{ step: 'contacts', kind: 'contact', source_id: '504000000000000502', message: 'send_invoices_to_email: is not a valid email address', partial: false, created_at: '2026-11-20T09:01:00Z' }],
+        { headers: { 'X-Total-Count': '1' } },
+      )),
       http.post('*/api/v2/11/moneybird_import', async ({ request }) => {
         started = await request.json()
         current = running
@@ -68,7 +72,10 @@ describe('import from Moneybird', () => {
     expect(within(steps).getByRole('progressbar', { name: 'Contacts' })).toHaveAttribute('aria-valuenow', '40')
     expect(screen.queryByRole('button', { name: 'Start import' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Import again' })).toBeNull()
-    expect(within(progress).getByText('contact 502: send_invoices_to_email is invalid')).toBeInTheDocument()
+    // Every record that could not come in, with why.
+    await userEvent.click(within(progress).getByText('1 record could not be imported'))
+    const problems = await within(progress).findByRole('table', { name: 'Records that could not be imported' })
+    expect(within(problems).getByRole('row', { name: /504000000000000502/ })).toHaveTextContent('send_invoices_to_email: is not a valid email address')
   })
 
   it('is only there for owners', async () => {
