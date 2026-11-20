@@ -419,5 +419,10 @@ func describe(err error) string {
 	for _, f := range fields {
 		parts = append(parts, f+": "+strings.Join(verr.Fields[f], ", "))
 	}
-	return strings.Join(parts, "; ")
+	// What wrapped it says where, such as which payment.
+	where, _ := strings.CutSuffix(err.Error(), verr.Error())
+	if where == err.Error() {
+		where = ""
+	}
+	return where + strings.Join(parts, "; ")
 }

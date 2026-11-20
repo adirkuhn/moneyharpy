@@ -299,7 +299,7 @@ func (r *run) details(ctx context.Context, in []mbDetail) ([]sales.ImportedDetai
 		}
 		price := string(d.Price)
 		input := sales.DetailInput{
-			Description: d.Description, Period: opt(d.Period), Amount: opt(d.Amount), TaxRateID: rate, LedgerAccountID: ledger,
+			Description: d.Description, Period: opt(d.Period), Amount: opt(d.amount()), TaxRateID: rate, LedgerAccountID: ledger,
 			ProjectID: ref(d.ProjectID), ProductID: ref(d.ProductID), RowOrder: d.RowOrder, Optional: d.IsOptional, Selected: d.IsSelected,
 		}
 		if price != "" {

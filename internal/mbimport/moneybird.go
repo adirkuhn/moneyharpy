@@ -15,6 +15,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/products"
 	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
+	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
 
 // mbID reads a Moneybird id, which its API writes as a string or a number.
@@ -314,6 +315,7 @@ type mbDetail struct {
 	ProjectID       *mbID     `json:"project_id"`
 	ProductID       *mbID     `json:"product_id"`
 	Amount          *string   `json:"amount"`
+	AmountDecimal   string    `json:"amount_decimal"`
 	Description     *string   `json:"description"`
 	Price           mbDecimal `json:"price"`
 	Period          *string   `json:"period"`
@@ -540,4 +542,24 @@ func (m *mbTime) time() *time.Time {
 		return nil
 	}
 	return m.t
+}
+
+// amount is the detail's amount as kept here, which starts with a number.
+// Moneybird keeps text without one, such as "Pakket", beside the number it
+// counts, which then comes in front.
+func (d mbDetail) amount() *string {
+	if d.Amount != nil {
+		if _, err := sales.ParseQuantity(*d.Amount); err == nil {
+			return d.Amount
+		}
+	}
+	n := strings.TrimSpace(d.AmountDecimal)
+	if n == "" {
+		return d.Amount
+	}
+	if strings.Contains(n, ".") {
+		n = strings.TrimRight(strings.TrimRight(n, "0"), ".")
+	}
+	out := strings.TrimSpace(n + " " + strings.TrimSpace(deref(d.Amount)))
+	return &out
 }

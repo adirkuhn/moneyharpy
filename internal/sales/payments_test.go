@@ -442,3 +442,25 @@ func TestReminderEmailFillsMoneybirdsRemindersTable(t *testing.T) {
 		t.Errorf("table = %+v", table)
 	}
 }
+
+func TestAZeroPaymentPaysAnInvoiceOfNothing(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	inv := draft(t, h, line("0", "1", vat21, revenue))
+	inv, err := h.svc.Send(ctx, adminID, inv.ID, owner, SendInput{DeliveryMethod: "Manual", InvoiceDate: "2026-11-01"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Moneybird keeps an invoice of nothing as paid with a payment of nothing.
+	if _, err := h.svc.RegisterPayment(ctx, adminID, inv.ID, owner, PaymentInput{PaymentDate: "2026-11-05", Price: ptr("0")}); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := h.svc.Invoice(ctx, adminID, inv.ID, owner); got.State != Paid {
+		t.Errorf("state = %s", got.State)
+	}
+	// One of something takes no payment of nothing.
+	other := sent(t, h, "2026-11-01")
+	if _, err := h.svc.RegisterPayment(ctx, adminID, other.ID, owner, PaymentInput{PaymentDate: "2026-11-05", Price: ptr("0")}); fieldsOf(t, err)["price"] == nil {
+		t.Errorf("zero payment on an invoice of something: %v", err)
+	}
+}

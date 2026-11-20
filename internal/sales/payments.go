@@ -146,7 +146,9 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 			verr.Add("price_base", "is not an amount")
 		}
 	}
-	if verr.OrNil() == nil {
+	// Moneybird keeps an invoice of nothing as paid with a payment of nothing.
+	nothingForNothing := price == 0 && inv.Totals.InclTax == 0 && inv.Paid() == 0
+	if verr.OrNil() == nil && !nothingForNothing {
 		checkPrice(&verr, "price", price, inv.Unpaid())
 	}
 	day, err := time.Parse(time.DateOnly, strings.TrimSpace(firstPart(in.PaymentDate)))
