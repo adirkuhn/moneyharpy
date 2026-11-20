@@ -1070,6 +1070,7 @@ export const en = {
     types: { owner: 'Owner', employee: 'Employee', accountant: 'Accountant', support: 'Support' },
     openInvitations: 'Open invitations', expired: 'Expired', expires: 'Valid until {{date}}', withdraw: 'Withdraw', withdrawFor: 'Withdraw the invitation for {{email}}',
     permissions: 'What they can do', ownerHasAll: 'Owners can do everything, including managing users and deleting the administration.',
+    accountantReadOnly: 'Accountants see everything these rights allow, but change only the bookkeeping: journal entries, VAT returns, categories, VAT rates and the locked period.',
     permissionNames: { sales_invoices: 'Invoices', documents: 'Purchase invoices and receipts', estimates: 'Quotes', bank: 'Bank', settings: 'Settings', ownership: 'Ownership', time_entries: 'Time tracking' },
     permissionHelp: {
       sales_invoices: 'Create and send invoices.', documents: 'Process purchase invoices, receipts and other documents.', estimates: 'Create and send quotes.',

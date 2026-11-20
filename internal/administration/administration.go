@@ -146,6 +146,14 @@ func (m Membership) Can(perms ...Permission) bool {
 	return false
 }
 
+// MayChange reports whether the member may change data. Accountants read
+// everything their permissions allow but change only the bookkeeping, such
+// as journal entries, VAT returns and the locked period; everyone else
+// changes what their permissions allow.
+func (m Membership) MayChange(bookkeeping bool) bool {
+	return m.UserType != Accountant || bookkeeping
+}
+
 // Listed is an administration as seen by one user.
 type Listed struct {
 	Administration

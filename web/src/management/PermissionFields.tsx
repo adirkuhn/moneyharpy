@@ -4,7 +4,10 @@ import { type Permission, permissions, type UserType } from './queries'
 
 type Props = { type: UserType; value: Permission[]; onChange: (p: Permission[]) => void }
 
-/** Checkboxes for what a user may do. Owners hold everything; ownership comes only with the owner type. */
+/**
+ * Checkboxes for what a user may do. Owners hold everything; ownership comes
+ * only with the owner type. Accountants change only the bookkeeping.
+ */
 export function PermissionFields({ type, value, onChange }: Props) {
   const { t } = useTranslation()
   return (
@@ -20,6 +23,7 @@ export function PermissionFields({ type, value, onChange }: Props) {
         />
       ))}
       {type === 'owner' && <p className="hint">{t('management.ownerHasAll')}</p>}
+      {type === 'accountant' && <p className="hint">{t('management.accountantReadOnly')}</p>}
     </FormSection>
   )
 }

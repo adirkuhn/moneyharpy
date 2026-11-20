@@ -699,3 +699,18 @@ func TestCustomFieldEditingAndOrder(t *testing.T) {
 		t.Errorf("DeleteCustomField() by stranger error = %v", err)
 	}
 }
+
+func TestAccountantsOnlyChangeTheBookkeeping(t *testing.T) {
+	accountant := Membership{UserType: Accountant, Permissions: []Permission{SalesInvoices}}
+	if accountant.MayChange(false) {
+		t.Error("an accountant may change an invoice")
+	}
+	if !accountant.MayChange(true) {
+		t.Error("an accountant may not change the bookkeeping")
+	}
+	for _, typ := range []UserType{Owner, Employee, Support} {
+		if !(Membership{UserType: typ}).MayChange(false) {
+			t.Errorf("%s may not change what their permissions allow", typ)
+		}
+	}
+}

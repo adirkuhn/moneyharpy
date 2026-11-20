@@ -131,6 +131,7 @@ describe('users and invitations', () => {
     renderAt('/11/user_invitations/new?type=accountant')
     await userEvent.type(await screen.findByLabelText('Email address'), 'acc@example.com')
     expect(screen.getByRole('checkbox', { name: 'Settings' })).toBeChecked()
+    expect(screen.getByText(/change only the bookkeeping/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('checkbox', { name: 'Time tracking' }))
     await userEvent.click(screen.getByRole('button', { name: 'Send invitation' }))
     await waitFor(() =>
