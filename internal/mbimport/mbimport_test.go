@@ -481,3 +481,36 @@ func TestTryNowBringsAQueuedImportForward(t *testing.T) {
 		t.Errorf("a finished import: %v", err)
 	}
 }
+
+func TestARetryUnderWayShowsNoOldError(t *testing.T) {
+	s, store, mb, _ := setup()
+	ctx := context.Background()
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	s.source = downSource{mb}
+	_ = s.Work(ctx)
+	if store.job.Error == "" {
+		t.Fatal("no failure to start from")
+	}
+	_, _ = s.TryNow(ctx, adminID, owner)
+	// The retry shows itself working before it fails again, not the failure before.
+	saves := len(store.saves)
+	_ = s.Work(ctx)
+	if got := store.saves[saves:]; len(got) < 2 || got[0].Error != "" || got[len(got)-1].Error == "" {
+		t.Errorf("saves of a retry = %+v", got)
+	}
+}
+
+func TestATextAmountTakesItsNumber(t *testing.T) {
+	cases := map[string]mbDetail{
+		"2 x":      {Amount: ptrTo("2 x"), AmountDecimal: "2.0"},
+		"1 Pakket": {Amount: ptrTo("Pakket"), AmountDecimal: "1.0"},
+		"1.5":      {Amount: ptrTo(""), AmountDecimal: "1.5"},
+	}
+	for want, d := range cases {
+		if got := deref(d.amount()); got != want {
+			t.Errorf("amount %q, %q = %q, want %q", deref(d.Amount), d.AmountDecimal, got, want)
+		}
+	}
+}

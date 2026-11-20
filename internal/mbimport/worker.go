@@ -60,6 +60,13 @@ func (s *Service) Work(ctx context.Context) error {
 // process works through a job's steps, saving after every batch, and ends
 // it as done, failed, or due again for a passing failure.
 func (s *Service) process(ctx context.Context, j Job) {
+	if j.Error != "" {
+		// A retry under way shows itself working, not the failure before.
+		j.Error, j.UpdatedAt = "", s.now()
+		if err := s.store.SaveJob(ctx, j); err != nil {
+			return
+		}
+	}
 	err := s.steps(ctx, &j)
 	now := s.now()
 	j.WaitingUntil, j.UpdatedAt = nil, now
