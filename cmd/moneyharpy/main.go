@@ -231,7 +231,7 @@ func run(logger *slog.Logger) error {
 	registers := administration.Registers{kvk.New(instance, kvk.ProductionURL, outbound), kvkWebsite}
 	// Imports read Moneybird within its rate limit; a whole administration can take a while, hence the longer timeout.
 	moneybirdImport := mbimport.NewService(admins, mbclient.ImportSource{HTTP: &http.Client{Timeout: time.Minute}}, postgres.NewMoneybirdImportStore(pool), cipher,
-		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService, Banking: bank, Sales: invoiceService}, time.Now)
+		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService, Banking: bank, Sales: invoiceService, Purchases: documentService, Journal: ledger}, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,

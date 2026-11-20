@@ -36,6 +36,9 @@ var (
 	// ErrUnavailable reports that Moneybird could not be reached or did not
 	// answer as it should; trying again later may work.
 	ErrUnavailable = errors.New("moneybird is unavailable")
+	// ErrFileUnavailable reports a file Moneybird could not give, such as one
+	// too large or gone.
+	ErrFileUnavailable = errors.New("moneybird file unavailable")
 	// ErrRunning reports that an import is under way already.
 	ErrRunning = errors.New("moneybird import is running")
 )
@@ -61,12 +64,27 @@ const (
 	// before the invoices, whose payments are made with its transactions.
 	StepFinancialAccounts  = "financial_accounts"
 	StepFinancialMutations = "financial_mutations"
-	StepSalesInvoices      = "sales_invoices"
-	StepExternalInvoices   = "external_sales_invoices"
+	// StepEstimates and StepRecurring come before the invoices made from them.
+	StepEstimates         = "estimates"
+	StepRecurring         = "recurring_sales_invoices"
+	StepSalesInvoices     = "sales_invoices"
+	StepExternalInvoices  = "external_sales_invoices"
+	StepPurchaseInvoices  = "purchase_invoices"
+	StepReceipts          = "receipts"
+	StepGeneralDocuments  = "general_documents"
+	StepTypelessDocuments = "typeless_documents"
+	StepJournal           = "general_journal_documents"
+	// StepLockedPeriod locks the books as Moneybird had them, last, so the
+	// lock stops nothing the import brings in.
+	StepLockedPeriod = "locked_period"
 )
 
 // Steps lists the steps an import takes.
-var Steps = []string{StepChart, StepContacts, StepProducts, StepProjects, StepFinancialAccounts, StepFinancialMutations, StepSalesInvoices, StepExternalInvoices}
+var Steps = []string{
+	StepChart, StepContacts, StepProducts, StepProjects, StepFinancialAccounts, StepFinancialMutations, StepEstimates, StepRecurring,
+	StepSalesInvoices, StepExternalInvoices, StepPurchaseInvoices, StepReceipts, StepGeneralDocuments, StepTypelessDocuments, StepJournal,
+	StepLockedPeriod,
+}
 
 // maxProblems caps the problems a step keeps, so a step that fails on every
 // record does not grow without bound.
@@ -83,6 +101,14 @@ type Step struct {
 	Done     bool `json:"done"`
 	// Problems say why records failed, such as "contact 123: email is invalid".
 	Problems []string `json:"problems"`
+}
+
+// note keeps what went wrong with part of a record, such as one of its
+// files, which came in without it.
+func (s *Step) note(format string, args ...any) {
+	if len(s.Problems) < maxProblems {
+		s.Problems = append(s.Problems, fmt.Sprintf(format, args...))
+	}
 }
 
 func (s *Step) problem(format string, args ...any) {
@@ -130,6 +156,8 @@ func (j *Job) Step(kind string) *Step {
 // SourceAdministration is a Moneybird administration the token reaches.
 type SourceAdministration struct {
 	ID, Name, Country, Currency string
+	// PeriodLockedUntil is the last day of its locked period, yyyy-mm-dd, if any.
+	PeriodLockedUntil string
 }
 
 // Version is a record's id and version in Moneybird, as its
@@ -145,6 +173,9 @@ type Reader interface {
 	List(ctx context.Context, adminID, path string, query url.Values) ([]json.RawMessage, error)
 	SyncIDs(ctx context.Context, adminID, kind string, query url.Values) ([]Version, error)
 	FetchByIDs(ctx context.Context, adminID, kind string, ids []string) ([]json.RawMessage, error)
+	// Download reads a file, such as an attachment, at a path below the
+	// administration; it returns its content type too.
+	Download(ctx context.Context, adminID, path string) ([]byte, string, error)
 }
 
 // Source opens Moneybird with an API token.

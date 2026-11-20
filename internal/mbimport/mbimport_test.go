@@ -117,6 +117,10 @@ func (r *fakeReader) FetchByIDs(_ context.Context, _, kind string, ids []string)
 	return out, err
 }
 
+func (r *fakeReader) Download(_ context.Context, _, path string) ([]byte, string, error) {
+	return []byte("file " + path), "application/pdf", nil
+}
+
 type memStore struct {
 	job      *Job
 	imported map[string]resource.ID
@@ -181,6 +185,10 @@ func (f *fakeTargets) ImportChart(_ context.Context, _, _ resource.ID, in bookke
 		ids[r.Origin.ID] = r.Origin.ID
 	}
 	return ids, nil
+}
+
+func (f *fakeTargets) UpdateSettings(context.Context, resource.ID, resource.ID, bookkeeping.SettingsChanges) (bookkeeping.Settings, error) {
+	return bookkeeping.Settings{}, nil
 }
 
 func (f *fakeTargets) Import(_ context.Context, _, _ resource.ID, o resource.Origin, c contacts.Changes, people []contacts.ImportedPerson) (contacts.Contact, error) {

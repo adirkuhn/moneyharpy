@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"slices"
 	"time"
@@ -131,6 +132,9 @@ func (r *run) financialMutations(ctx context.Context) error {
 			return err
 		}
 		for _, m := range s.mutations {
+			if err := r.bookOnCategories(ctx, st, m); err != nil {
+				return err
+			}
 			if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kindFinancialMutation, m.ID.id(), m.ID.id()); err != nil {
 				return err
 			}
@@ -173,8 +177,25 @@ func (r *run) salesInvoices(ctx context.Context) error {
 		if inv.DraftID != nil {
 			in.DraftID = *inv.DraftID
 		}
-		_, err = r.s.targets.Sales.ImportInvoice(ctx, r.job.AdministrationID, r.job.UserID, in)
-		return inv.ID.id(), err
+		in.OriginalEstimateID, in.RecurringID = ref(inv.OriginalEstimateID), ref(inv.RecurringID)
+		got, err := r.s.targets.Sales.ImportInvoice(ctx, r.job.AdministrationID, r.job.UserID, in)
+		if err != nil {
+			return 0, err
+		}
+		st := r.job.Step(StepSalesInvoices)
+		add := func(ctx context.Context, name, contentType string, data []byte) error {
+			_, err := r.s.targets.Sales.AddAttachment(ctx, r.job.AdministrationID, got.ID, r.job.UserID, name, contentType, data)
+			return err
+		}
+		if err := r.attach(ctx, st, "sales_invoices", got.ID, inv.Attachments, add); err != nil {
+			return 0, err
+		}
+		if inv.sent() && deref(inv.InvoiceID) != "" {
+			if err := r.keepPDF(ctx, st, fmt.Sprintf("sales_invoices/%d/download_pdf", got.ID), fileName(deref(inv.InvoiceID))+" (Moneybird).pdf", add); err != nil {
+				return 0, err
+			}
+		}
+		return inv.ID.id(), nil
 	})
 }
 
@@ -203,7 +224,14 @@ func (r *run) externalInvoices(ctx context.Context) error {
 		if e.EntryNumber != nil {
 			in.EntryNumber = *e.EntryNumber
 		}
-		_, err = r.s.targets.Sales.ImportExternal(ctx, r.job.AdministrationID, r.job.UserID, in)
+		got, err := r.s.targets.Sales.ImportExternal(ctx, r.job.AdministrationID, r.job.UserID, in)
+		if err != nil {
+			return 0, err
+		}
+		err = r.attach(ctx, r.job.Step(StepExternalInvoices), "external_sales_invoices", got.ID, e.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
+			_, err := r.s.targets.Sales.AddExternalAttachment(ctx, r.job.AdministrationID, got.ID, r.job.UserID, name, contentType, data)
+			return err
+		})
 		return e.ID.id(), err
 	})
 }

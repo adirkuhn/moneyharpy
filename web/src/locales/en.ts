@@ -1132,7 +1132,7 @@ export const en = {
   mbImport: {
     title: 'Import from Moneybird', progress: 'Import from Moneybird', steps: 'Steps of the import',
     subtitle: 'Move to MoneyHarpy: copy a Moneybird administration into this one, keeping its ids.',
-    help: 'This administration must be empty. Moneybird\'s categories and VAT rates take the place of the defaults, then its contacts, products, projects, bank accounts with their transactions, and invoices come in. Quotes, incoming documents and the rest follow in a later version.',
+    help: 'This administration must be empty. Moneybird\'s categories and VAT rates take the place of the defaults; then contacts, products, projects, bank accounts with their transactions, quotes, invoices, incoming documents and journal entries come in with their files, and the books are locked as in Moneybird. Recurring invoices come in stopped, so customers are not billed twice; start them once you leave Moneybird.',
     againHelp: 'Only what is new in Moneybird since the last import comes in; what was imported stays as it is.',
     token: 'Moneybird API token', tokenHelp: 'Create a personal API token in Moneybird, under the developer settings of your account. MoneyHarpy keeps it encrypted only while the import runs.',
     administration: 'Moneybird administration', none: 'This token reaches no administration.', check: 'Check token', start: 'Start import', again: 'Import again',
@@ -1141,7 +1141,7 @@ export const en = {
     failed: 'The import stopped: {{error}}', retrying: 'The import tries again shortly: {{error}}',
     kind: 'Data', imported: 'Imported', skipped: 'Already here', failedCount: 'Failed', stepState: 'State', ofTotal: '{{count}} of {{total}}',
     stepDone: 'Done', stepBusy: 'Busy', stepWaiting: 'Not done',
-    kinds: { chart: 'Categories and VAT rates', contacts: 'Contacts', products: 'Products', projects: 'Projects', financial_accounts: 'Financial accounts', financial_mutations: 'Transactions', sales_invoices: 'Invoices', external_sales_invoices: 'External invoices' },
+    kinds: { chart: 'Categories and VAT rates', contacts: 'Contacts', products: 'Products', projects: 'Projects', financial_accounts: 'Financial accounts', financial_mutations: 'Transactions', estimates: 'Quotes', recurring_sales_invoices: 'Recurring invoices (stopped)', sales_invoices: 'Invoices', external_sales_invoices: 'External invoices', purchase_invoices: 'Purchase invoices', receipts: 'Receipts', general_documents: 'General documents', typeless_documents: 'Documents without a type', general_journal_documents: 'Journal entries', locked_period: 'Locked period' },
     problems_one: '{{count}} record could not be imported', problems_other: '{{count}} records could not be imported',
   },
   integrations: {

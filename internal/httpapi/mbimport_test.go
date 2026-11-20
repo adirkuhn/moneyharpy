@@ -35,7 +35,7 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Error("the token is shown")
 	}
 	started := decode[httpapi.MoneybirdImport](t, r)
-	if started.State != "running" || len(started.Steps) != 8 {
+	if started.State != "running" || len(started.Steps) != 16 {
 		t.Errorf("started = %+v", started)
 	}
 	if err := h.mbimport.Work(context.Background()); err != nil {
@@ -100,6 +100,52 @@ func TestImportFromMoneybird(t *testing.T) {
 	debtors := decode[map[string]any](t, owner.do(http.MethodGet, api+"/reports/debtors", nil))
 	if !strings.Contains(fmt.Sprint(debtors), "60.5") {
 		t.Errorf("debtors = %+v", debtors)
+	}
+
+	// The accepted estimate keeps its number; the invoice billed from it points to it.
+	estimate := decode[map[string]any](t, owner.do(http.MethodGet, api+"/estimates/504000000000000141", nil))
+	if estimate["estimate_id"] != "2026-0001" || estimate["state"] != "accepted" {
+		t.Errorf("estimate = %+v", estimate)
+	}
+	if paid["original_estimate_id"] != "504000000000000141" {
+		t.Errorf("invoice does not point to its estimate: %v", paid["original_estimate_id"])
+	}
+	// The sent invoice keeps its own attachment and the PDF Moneybird sent.
+	files := fmt.Sprint(paid["attachments"])
+	if !strings.Contains(files, "terms.pdf") || !strings.Contains(files, "2026-0001 (Moneybird).pdf") {
+		t.Errorf("invoice files = %s", files)
+	}
+	// The recurring invoice comes in stopped, so it bills nobody twice.
+	recurring := decode[map[string]any](t, owner.do(http.MethodGet, api+"/recurring_sales_invoices/504000000000000151", nil))
+	if recurring["active"] != false || recurring["auto_send"] != false {
+		t.Errorf("recurring = %+v", recurring)
+	}
+	// The purchase invoice is paid with its transaction; the rent is booked on its category.
+	purchase := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/504000000000000161", nil))
+	if purchase["state"] != "paid" || purchase["entry_number"] != float64(5) {
+		t.Errorf("purchase invoice = %+v", purchase)
+	}
+	for _, id := range []string{"504000000000000302", "504000000000000303"} {
+		if m := decode[map[string]any](t, owner.do(http.MethodGet, api+"/financial_mutations/"+id, nil)); m["state"] != "processed" {
+			t.Errorf("transaction %s = %+v", id, m)
+		}
+	}
+	general := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/general_documents/504000000000000181", nil))
+	if !strings.Contains(fmt.Sprint(general["attachments"]), "contract.pdf") {
+		t.Errorf("general document = %+v", general)
+	}
+	typeless := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/typeless_documents/504000000000000191", nil))
+	if !strings.Contains(fmt.Sprint(typeless["attachments"]), "scan.png") {
+		t.Errorf("typeless document = %+v", typeless)
+	}
+	entry := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/general_journal_documents/504000000000000195", nil))
+	if rows, _ := entry["general_journal_document_entries"].([]any); len(rows) != 2 || rows[0].(map[string]any)["id"] != "504000000000000196" {
+		t.Errorf("journal entry = %+v", entry)
+	}
+	// The books are locked as they were in Moneybird, once all came in.
+	settings := decode[map[string]any](t, owner.do(http.MethodGet, api+"/bookkeeping_settings", nil))
+	if settings["period_locked_until"] != "2026-01-31" {
+		t.Errorf("locked until %v", settings["period_locked_until"])
 	}
 
 	// Again, only what is new would come in; another Moneybird administration cannot mix in.

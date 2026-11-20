@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/mbimport"
@@ -31,7 +33,7 @@ func (s ImportSource) Administrations(ctx context.Context, token string) ([]mbim
 	}
 	out := make([]mbimport.SourceAdministration, len(list))
 	for i, a := range list {
-		out[i] = mbimport.SourceAdministration{ID: a.ID, Name: a.Name, Country: a.Country, Currency: a.Currency}
+		out[i] = mbimport.SourceAdministration{ID: a.ID, Name: a.Name, Country: a.Country, Currency: a.Currency, PeriodLockedUntil: a.PeriodLockedUntil}
 	}
 	return out, nil
 }
@@ -72,4 +74,21 @@ func importError(err error) error {
 		return mbimport.ErrTokenRejected
 	}
 	return err
+}
+
+// maxFile is the largest file an import downloads; MoneyHarpy keeps files
+// up to 10 MB, so a little more tells a file too large from a cut one.
+const maxFile = 11 << 20
+
+func (r importReader) Download(ctx context.Context, adminID, path string) ([]byte, string, error) {
+	base := r.c.BaseURL
+	if base == "" {
+		base = DefaultBaseURL
+	}
+	data, contentType, err := r.c.Download(ctx, strings.TrimRight(base, "/")+"/"+adminID+"/"+strings.TrimLeft(path, "/"), maxFile)
+	var status *StatusError
+	if errors.Is(err, ErrTooLarge) || errors.Is(err, ErrNotFound) || errors.As(err, &status) {
+		return nil, "", fmt.Errorf("%w: %w", mbimport.ErrFileUnavailable, err)
+	}
+	return data, contentType, importError(err)
 }

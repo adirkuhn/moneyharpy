@@ -50,26 +50,7 @@ func (s *Service) CreateTypeless(ctx context.Context, admin, user resource.ID, c
 	}
 	now := s.now()
 	t := Typeless{ID: s.ids.Next(), AdministrationID: admin, Date: s.today(a), Origin: OriginAPI, State: New, CreatedAt: now, UpdatedAt: now}
-	var verr resource.ValidationError
-	if c.ContactID != nil && *c.ContactID != 0 {
-		if _, err := s.contacts.Contact(ctx, admin, *c.ContactID, user); err != nil {
-			verr.Add("contact_id", "does not exist")
-		}
-		t.ContactID = *c.ContactID
-	}
-	if c.Reference != nil {
-		if t.Reference = strings.TrimSpace(*c.Reference); len(t.Reference) > 1000 {
-			verr.Add("reference", "is too long (maximum is 1000 characters)")
-		}
-	}
-	if c.Date != nil {
-		if d, err := time.Parse(time.DateOnly, strings.TrimSpace(*c.Date)); err != nil {
-			verr.Add("date", "is not a date")
-		} else {
-			t.Date = d
-		}
-	}
-	if err := verr.OrNil(); err != nil {
+	if err := s.applyTypeless(ctx, admin, user, &t, c); err != nil {
 		return Typeless{}, err
 	}
 	if err := s.store.SaveTypelessDocument(ctx, t, true); err != nil {
@@ -228,4 +209,28 @@ func (s *Service) DeleteTypelessAttachment(ctx context.Context, admin, id, attac
 		return err
 	}
 	return s.store.TouchTypelessDocument(ctx, admin, id, s.now())
+}
+
+// applyTypeless sets a typeless document's contact, reference and date.
+func (s *Service) applyTypeless(ctx context.Context, admin, user resource.ID, t *Typeless, c TypelessChanges) error {
+	var verr resource.ValidationError
+	if c.ContactID != nil && *c.ContactID != 0 {
+		if _, err := s.contacts.Contact(ctx, admin, *c.ContactID, user); err != nil {
+			verr.Add("contact_id", "does not exist")
+		}
+		t.ContactID = *c.ContactID
+	}
+	if c.Reference != nil {
+		if t.Reference = strings.TrimSpace(*c.Reference); len(t.Reference) > 1000 {
+			verr.Add("reference", "is too long (maximum is 1000 characters)")
+		}
+	}
+	if c.Date != nil {
+		if d, err := time.Parse(time.DateOnly, strings.TrimSpace(*c.Date)); err != nil {
+			verr.Add("date", "is not a date")
+		} else {
+			t.Date = d
+		}
+	}
+	return verr.OrNil()
 }
