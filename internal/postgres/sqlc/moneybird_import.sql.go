@@ -36,6 +36,17 @@ func (q *Queries) AdministrationHasData(ctx context.Context, administrationID in
 	return has_data, err
 }
 
+const countMoneybirdImportProblems = `-- name: CountMoneybirdImportProblems :one
+SELECT count(*) FROM moneybird_import_problems WHERE administration_id = $1
+`
+
+func (q *Queries) CountMoneybirdImportProblems(ctx context.Context, administrationID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, countMoneybirdImportProblems, administrationID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const leaseDueMoneybirdImports = `-- name: LeaseDueMoneybirdImports :many
 UPDATE moneybird_imports i SET next_attempt_at = $1
 WHERE i.administration_id IN (
@@ -117,6 +128,44 @@ func (q *Queries) MoneybirdImport(ctx context.Context, administrationID int64) (
 	return i, err
 }
 
+const moneybirdImportProblems = `-- name: MoneybirdImportProblems :many
+SELECT administration_id, step, kind, source_id, message, partial, created_at FROM moneybird_import_problems WHERE administration_id = $1 ORDER BY step, kind, source_id, message LIMIT $2 OFFSET $3
+`
+
+type MoneybirdImportProblemsParams struct {
+	AdministrationID int64
+	Limit            int32
+	Offset           int32
+}
+
+func (q *Queries) MoneybirdImportProblems(ctx context.Context, arg MoneybirdImportProblemsParams) ([]MoneybirdImportProblem, error) {
+	rows, err := q.db.Query(ctx, moneybirdImportProblems, arg.AdministrationID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MoneybirdImportProblem
+	for rows.Next() {
+		var i MoneybirdImportProblem
+		if err := rows.Scan(
+			&i.AdministrationID,
+			&i.Step,
+			&i.Kind,
+			&i.SourceID,
+			&i.Message,
+			&i.Partial,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const moneybirdImportedID = `-- name: MoneybirdImportedID :one
 SELECT target_id FROM moneybird_import_ids WHERE administration_id = $1 AND kind = $2 AND source_id = $3
 `
@@ -132,6 +181,35 @@ func (q *Queries) MoneybirdImportedID(ctx context.Context, arg MoneybirdImported
 	var target_id int64
 	err := row.Scan(&target_id)
 	return target_id, err
+}
+
+const recordMoneybirdImportProblem = `-- name: RecordMoneybirdImportProblem :exec
+INSERT INTO moneybird_import_problems (administration_id, step, kind, source_id, message, partial, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (administration_id, kind, source_id, message) DO UPDATE SET step = excluded.step, created_at = excluded.created_at
+`
+
+type RecordMoneybirdImportProblemParams struct {
+	AdministrationID int64
+	Step             string
+	Kind             string
+	SourceID         int64
+	Message          string
+	Partial          bool
+	CreatedAt        pgtype.Timestamptz
+}
+
+func (q *Queries) RecordMoneybirdImportProblem(ctx context.Context, arg RecordMoneybirdImportProblemParams) error {
+	_, err := q.db.Exec(ctx, recordMoneybirdImportProblem,
+		arg.AdministrationID,
+		arg.Step,
+		arg.Kind,
+		arg.SourceID,
+		arg.Message,
+		arg.Partial,
+		arg.CreatedAt,
+	)
+	return err
 }
 
 const recordMoneybirdImportedID = `-- name: RecordMoneybirdImportedID :exec
@@ -153,6 +231,22 @@ func (q *Queries) RecordMoneybirdImportedID(ctx context.Context, arg RecordMoney
 		arg.SourceID,
 		arg.TargetID,
 	)
+	return err
+}
+
+const resolveMoneybirdImportProblems = `-- name: ResolveMoneybirdImportProblems :exec
+DELETE FROM moneybird_import_problems WHERE administration_id = $1 AND kind = $2 AND source_id = $3 AND NOT partial
+`
+
+type ResolveMoneybirdImportProblemsParams struct {
+	AdministrationID int64
+	Kind             string
+	SourceID         int64
+}
+
+// A record that came in no longer failed; what came in without it stays.
+func (q *Queries) ResolveMoneybirdImportProblems(ctx context.Context, arg ResolveMoneybirdImportProblemsParams) error {
+	_, err := q.db.Exec(ctx, resolveMoneybirdImportProblems, arg.AdministrationID, arg.Kind, arg.SourceID)
 	return err
 }
 

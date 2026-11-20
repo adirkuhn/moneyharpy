@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -127,6 +128,7 @@ func (r *fakeReader) Download(_ context.Context, _, path string) ([]byte, string
 }
 
 type memStore struct {
+	problems []Problem
 	job      *Job
 	imported map[string]resource.ID
 	empty    bool
@@ -162,6 +164,17 @@ func (m *memStore) RecordImported(_ context.Context, _ resource.ID, kind string,
 	return nil
 }
 func (m *memStore) Empty(context.Context, resource.ID) (bool, error) { return m.empty, nil }
+func (m *memStore) RecordProblem(_ context.Context, _ resource.ID, p Problem) error {
+	m.problems = append(m.problems, p)
+	return nil
+}
+func (m *memStore) ResolveProblems(_ context.Context, _ resource.ID, kind string, id resource.ID) error {
+	m.problems = slices.DeleteFunc(m.problems, func(p Problem) bool { return p.Kind == kind && p.SourceID == id && !p.Partial })
+	return nil
+}
+func (m *memStore) Problems(context.Context, resource.ID, int, int) ([]Problem, int, error) {
+	return m.problems, len(m.problems), nil
+}
 
 type plainSecrets struct{}
 

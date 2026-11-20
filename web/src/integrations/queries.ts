@@ -144,3 +144,22 @@ export function useTryMoneybirdImportNow(administrationId: string) {
     onSuccess: (job) => client.setQueryData(['moneybird-import', administrationId], job),
   })
 }
+
+export type MoneybirdImportProblem = components['schemas']['MoneybirdImportProblem']
+
+/** One page of what the import could not bring in, with how many in all. */
+export function useMoneybirdImportProblems(administrationId: string, page: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ['moneybird-import-problems', administrationId, page],
+    enabled,
+    queryFn: async () => {
+      const { data, error, response } = await api.GET('/api/v2/{administration_id}/moneybird_import/problems', {
+        params: { path: { administration_id: administrationId }, query: { page: String(page), per_page: '50' } },
+      })
+      if (error || !data) {
+        throw new ApiError(response.status, error)
+      }
+      return { problems: data, total: Number(response.headers.get('X-Total-Count') ?? data.length) }
+    },
+  })
+}

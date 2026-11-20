@@ -4,9 +4,11 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/banking"
@@ -43,9 +45,26 @@ func (r *run) financialAccounts(ctx context.Context) error {
 		if err != nil {
 			return 0, err
 		}
-		acc, err := r.s.targets.Banking.ImportAccount(ctx, r.job.AdministrationID, r.job.UserID, banking.ImportedAccount{
-			Origin: origin(a.ID, a.stamps), Changes: a.changes(), LedgerAccountID: ledger, TakeOverCash: a.ID == firstCash,
-		})
+		in := banking.ImportedAccount{Origin: origin(a.ID, a.stamps), Changes: a.changes(), LedgerAccountID: ledger, TakeOverCash: a.ID == firstCash}
+		if strings.TrimSpace(deref(in.Changes.Name)) == "" {
+			// Moneybird's own accounts may have no name; one here needs one.
+			name := strings.TrimSpace(*in.Changes.Type + " " + deref(a.Identifier))
+			in.Changes.Name = &name
+		}
+		acc, err := r.s.targets.Banking.ImportAccount(ctx, r.job.AdministrationID, r.job.UserID, in)
+		for n := 2; err != nil && optionalOnly(err, []string{"name"}) != nil && n < 10; n++ {
+			// A name taken here takes the account's number, else a number of its own.
+			base := deref(a.changes().Name)
+			if base == "" {
+				base = *in.Changes.Type
+			}
+			name := fmt.Sprintf("%s (%d)", base, n)
+			if n == 2 && deref(a.Identifier) != "" {
+				name = fmt.Sprintf("%s (%s)", base, *a.Identifier)
+			}
+			in.Changes.Name = &name
+			acc, err = r.s.targets.Banking.ImportAccount(ctx, r.job.AdministrationID, r.job.UserID, in)
+		}
 		if err != nil {
 			return 0, err
 		}
@@ -73,7 +92,9 @@ func (r *run) financialMutations(ctx context.Context) error {
 	for _, v := range versions {
 		id, err := resource.ParseID(v.ID)
 		if err != nil {
-			st.problem("%s %s: %v", kindFinancialMutation, v.ID, err)
+			if err := r.fail(ctx, st, kindFinancialMutation, 0, fmt.Errorf("id %s: %w", v.ID, err)); err != nil {
+				return err
+			}
 			continue
 		}
 		if _, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kindFinancialMutation, id); err != nil {
@@ -98,7 +119,9 @@ func (r *run) financialMutations(ctx context.Context) error {
 		for _, raw := range raws {
 			var m mbMutation
 			if err := json.Unmarshal(raw, &m); err != nil || m.ID == 0 {
-				st.problem("%s: %v", kindFinancialMutation, errOr(err, "no id"))
+				if err := r.fail(ctx, st, kindFinancialMutation, 0, errors.New(errOr(err, "no id"))); err != nil {
+					return err
+				}
 				continue
 			}
 			key := m.FinancialStatement.id()
@@ -126,12 +149,20 @@ func (r *run) financialMutations(ctx context.Context) error {
 		}
 		if _, err := r.s.targets.Banking.ImportStatement(ctx, r.job.AdministrationID, r.job.UserID, in); err != nil {
 			if isRecordProblem(err) {
-				st.problem("statement %d: %v", key, err)
+				// Each of its transactions failed with it.
+				for _, m := range s.mutations {
+					if err := r.fail(ctx, st, kindFinancialMutation, m.ID.id(), fmt.Errorf("statement %d: %s", key, describe(err))); err != nil {
+						return err
+					}
+				}
 				continue
 			}
 			return err
 		}
 		for _, m := range s.mutations {
+			if err := r.s.store.ResolveProblems(ctx, r.job.AdministrationID, kindFinancialMutation, m.ID.id()); err != nil {
+				return err
+			}
 			if err := r.bookOnCategories(ctx, st, m); err != nil {
 				return err
 			}
@@ -181,7 +212,7 @@ func (r *run) salesInvoices(ctx context.Context) error {
 		}
 		in := sales.ImportedInvoice{
 			Origin: origin(inv.ID, inv.stamps), Changes: c, Details: details, InvoiceID: deref(inv.InvoiceID), Sent: inv.sent(),
-			DueDate: day(inv.DueDate), SentAt: inv.SentAt, PaymentReference: deref(inv.PaymentReference), OriginalID: ref(inv.OriginalSalesInvoiceID),
+			DueDate: day(inv.DueDate), SentAt: inv.SentAt.time(), PaymentReference: deref(inv.PaymentReference), OriginalID: ref(inv.OriginalSalesInvoiceID),
 			Payments: payments, Writeoff: sales.Writeoff{DubiousOn: deref(inv.MarkedDubiousOn), UncollectibleOn: deref(inv.MarkedUncollectibleOn)},
 		}
 		if inv.DraftID != nil {

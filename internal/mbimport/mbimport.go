@@ -16,7 +16,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -129,6 +131,20 @@ func (s *Step) problem(format string, args ...any) {
 	}
 }
 
+// Problem is a record an import could not bring in, or brought in without
+// part of it, with why.
+type Problem struct {
+	Step string
+	// Kind and SourceID name the Moneybird record; SourceID is 0 when it had
+	// none that could be read.
+	Kind     string
+	SourceID resource.ID
+	Message  string
+	// Partial is a record that came in without part of it, such as a file.
+	Partial   bool
+	CreatedAt time.Time
+}
+
 // Job is the import of one Moneybird administration into one here.
 type Job struct {
 	AdministrationID resource.ID
@@ -208,6 +224,13 @@ type Store interface {
 	// Empty reports whether the administration has none of the data an
 	// import brings: no contacts, documents, transactions and the like.
 	Empty(ctx context.Context, admin resource.ID) (bool, error)
+	// RecordProblem keeps what went wrong with a record; ResolveProblems
+	// forgets that a record failed once it came in.
+	RecordProblem(ctx context.Context, admin resource.ID, p Problem) error
+	ResolveProblems(ctx context.Context, admin resource.ID, kind string, source resource.ID) error
+	// Problems returns one page of them, by step and record, with how many
+	// there are in all.
+	Problems(ctx context.Context, admin resource.ID, page, perPage int) ([]Problem, int, error)
 }
 
 // Secrets seals the API token while a job keeps it.
@@ -373,4 +396,28 @@ func (s *Service) TryNow(ctx context.Context, admin, user resource.ID) (Job, err
 		return Job{}, fmt.Errorf("save import: %w", err)
 	}
 	return j, nil
+}
+
+// Problems returns one page of what the administration's import could not
+// bring in, with how many in all.
+func (s *Service) Problems(ctx context.Context, admin, user resource.ID, page, perPage int) ([]Problem, int, error) {
+	if err := s.owner(ctx, admin, user); err != nil {
+		return nil, 0, err
+	}
+	return s.store.Problems(ctx, admin, max(page, 1), min(max(perPage, 1), 100))
+}
+
+// describe says why a record could not come in: for a validation error,
+// what is wrong with each field.
+func describe(err error) string {
+	var verr *resource.ValidationError
+	if !errors.As(err, &verr) {
+		return err.Error()
+	}
+	fields := slices.Sorted(maps.Keys(verr.Fields))
+	parts := make([]string, 0, len(fields))
+	for _, f := range fields {
+		parts = append(parts, f+": "+strings.Join(verr.Fields[f], ", "))
+	}
+	return strings.Join(parts, "; ")
 }

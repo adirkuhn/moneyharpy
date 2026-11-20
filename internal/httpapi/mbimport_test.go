@@ -47,7 +47,7 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Fatalf("import = %+v", done)
 	}
 	for _, st := range done.Steps {
-		if st.Kind == "contacts" && (st.Imported != 1 || st.Failed != 1 || !strings.Contains(st.Problems[0], "504000000000000502")) {
+		if st.Kind == "contacts" && (st.Imported != 3 || st.Failed != 1 || !strings.Contains(fmt.Sprint(st.Problems), "504000000000000504")) {
 			t.Errorf("contacts step = %+v", st)
 		}
 	}

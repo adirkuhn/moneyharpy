@@ -13616,6 +13616,48 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/moneybird_import/problems:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    get:
+      operationId: listMoneybirdImportProblems
+      x-permissions: [ownership]
+      summary: List what the import could not bring in
+      description: >-
+        MoneyHarpy extension. Every record the import from Moneybird could not bring in, or brought in without part of
+        it, with why, by step and record. One that comes in later, such as on importing again, is gone from the list.
+        Paged with a Link header and X-Total-Count.
+      tags: [Integrations]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+      responses:
+        '200':
+          description: The problems
+          headers:
+            Link:
+              schema:
+                type: string
+            X-Total-Count:
+              description: The number of problems in all.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MoneybirdImportProblem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/moneybird_import/try_now:
     parameters:
       - $ref: '#/components/parameters/administration_id'
@@ -20747,6 +20789,27 @@ components:
           description: Why records failed, at most 50.
           items:
             type: string
+    MoneybirdImportProblem:
+      type: object
+      description: A record the import could not bring in, or brought in without part of it. MoneyHarpy extension.
+      required: [step, kind, source_id, message, partial, created_at]
+      properties:
+        step:
+          type: string
+        kind:
+          type: string
+          description: The kind of Moneybird record, such as contact or sales_invoice.
+        source_id:
+          type: string
+          description: The record's id in Moneybird; "0" when it had none that could be read.
+        message:
+          type: string
+        partial:
+          type: boolean
+          description: The record came in, without part of it, such as a file.
+        created_at:
+          type: string
+          format: date-time
     MoneybirdImport:
       type: object
       description: The import of a Moneybird administration. MoneyHarpy extension.

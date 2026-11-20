@@ -689,6 +689,16 @@ type MoneybirdImportID struct {
 	TargetID         int64
 }
 
+type MoneybirdImportProblem struct {
+	AdministrationID int64
+	Step             string
+	Kind             string
+	SourceID         int64
+	Message          string
+	Partial          bool
+	CreatedAt        pgtype.Timestamptz
+}
+
 type Note struct {
 	ID               int64
 	AdministrationID int64
