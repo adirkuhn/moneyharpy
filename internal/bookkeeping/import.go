@@ -183,6 +183,17 @@ func (s *Service) importAccounts(ctx context.Context, admin resource.ID, in []Im
 	if err := s.keepNamesApart(ctx, admin, changed, created); err != nil {
 		return err
 	}
+	if len(changed) > 0 {
+		// A default taking an imported name may hold the name an imported
+		// category takes, or another default's: the names are freed first.
+		parked := slices.Clone(changed)
+		for i := range parked {
+			parked[i].Name = fmt.Sprintf("~ %d", parked[i].ID)
+		}
+		if err := s.store.UpdateLedgerAccounts(ctx, parked); err != nil {
+			return fmt.Errorf("free the names of taken over ledger accounts: %w", err)
+		}
+	}
 	if len(created) > 0 {
 		// Parents first: a category may only point to one that exists.
 		slices.SortStableFunc(created, func(a, b LedgerAccount) int { return depth(created, a) - depth(created, b) })

@@ -21,3 +21,4 @@
 .data-table th.mb-import__progress, .mb-import__progress { width: 30%; }
 .mb-import__steps tr.is-current th, .mb-import__steps tr.is-current td { background: var(--row-hover); font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .mb-import__fill { transition: none; } }
+.mb-import__queued { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/httpapi"
 )
@@ -185,6 +186,20 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Errorf("task list = %+v", tasks)
 	}
 	wantStatus(t, owner.do(http.MethodGet, api+"/task_list_templates/504000000000000751", nil), http.StatusOK)
+
+	// A finished import has nothing to try again; a queued one tries at once.
+	wantStatus(t, owner.do(http.MethodPost, api+"/moneybird_import/try_now", nil), http.StatusUnprocessableEntity)
+	if _, err := h.pool.Exec(context.Background(), `UPDATE moneybird_imports SET state = 'running', error = 'Moneybird is down', next_attempt_at = now() + interval '1 hour' WHERE administration_id = $1`, a.Id); err != nil {
+		t.Fatal(err)
+	}
+	queued := decode[httpapi.MoneybirdImport](t, owner.do(http.MethodPost, api+"/moneybird_import/try_now", nil))
+	if queued.NextAttemptAt == nil || queued.NextAttemptAt.After(time.Now()) {
+		t.Errorf("tries at %v", queued.NextAttemptAt)
+	}
+	// A finished import keeps no token to go on with: it is finished again for what follows.
+	if _, err := h.pool.Exec(context.Background(), `UPDATE moneybird_imports SET state = 'done', error = '', next_attempt_at = NULL WHERE administration_id = $1`, a.Id); err != nil {
+		t.Fatal(err)
+	}
 
 	// Again, only what is new would come in; another Moneybird administration cannot mix in.
 	wantStatus(t, owner.do(http.MethodPost, api+"/moneybird_import", start), http.StatusCreated)

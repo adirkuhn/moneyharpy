@@ -4,7 +4,7 @@ import { Problems } from '../auth/AuthLayout'
 import { FormRow, formErrors } from '../forms/Form'
 import { Block } from '../settings/Block'
 import './integrations.css'
-import { type MoneybirdAdministration, type MoneybirdImport, useMoneybirdAdministrations, useMoneybirdImport, useStartMoneybirdImport } from './queries'
+import { type MoneybirdAdministration, type MoneybirdImport, useMoneybirdAdministrations, useMoneybirdImport, useStartMoneybirdImport, useTryMoneybirdImportNow } from './queries'
 
 /**
  * Settings > Integrations > Import from Moneybird: a personal API token, the
@@ -19,7 +19,7 @@ export function MoneybirdImportBlock({ administrationId }: { administrationId: s
   const showForm = !current || (again && current.state !== 'running')
   return (
     <Block id="moneybird-import" title={t('mbImport.title')} subtitle={t('mbImport.subtitle')}>
-      {current && <Progress job={current} />}
+      {current && <Progress administrationId={administrationId} job={current} />}
       {current && current.state !== 'running' && !again && (
         <button type="button" className="btn btn--secondary" onClick={() => setAgain(true)}>{t('mbImport.again')}</button>
       )}
@@ -123,7 +123,17 @@ function Bar({ label, value }: { label: string; value: number }) {
 }
 
 /** The import's state, its progress over all steps and per step, the wait for Moneybird and what failed. */
-function Progress({ job }: { job: MoneybirdImport }) {
+function TryNow({ administrationId }: { administrationId: string }) {
+  const { t } = useTranslation()
+  const tryNow = useTryMoneybirdImportNow(administrationId)
+  return (
+    <button type="button" className="btn btn--secondary btn--small" disabled={tryNow.isPending} onClick={() => tryNow.mutate()}>
+      {t('mbImport.tryNow')}
+    </button>
+  )
+}
+
+function Progress({ administrationId, job }: { administrationId: string; job: MoneybirdImport }) {
   const { t, i18n } = useTranslation()
   const time = (iso: string) => new Intl.DateTimeFormat(i18n.language, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(iso))
   const percent = importPercent(job)
@@ -149,7 +159,10 @@ function Progress({ job }: { job: MoneybirdImport }) {
         <p className="notice" role="status">{t('mbImport.waiting', { time: time(job.waiting_until) })}</p>
       )}
       {job.state === 'running' && job.next_attempt_at && (
-        <p className="notice" role="status">{t('mbImport.queued', { time: time(job.next_attempt_at), error: job.error })}</p>
+        <div className="notice mb-import__queued" role="status">
+          <span>{t('mbImport.queued', { time: time(job.next_attempt_at), error: job.error })}</span>
+          <TryNow administrationId={administrationId} />
+        </div>
       )}
       {job.state === 'failed' && job.error && <p className="form-input__error">{t('mbImport.failed', { error: job.error })}</p>}
       <table className="data-table mb-import__steps" aria-label={t('mbImport.steps')}>

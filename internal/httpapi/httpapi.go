@@ -297,6 +297,8 @@ func (s *server) fail(w http.ResponseWriter, r *http.Request, err error) {
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"Moneybird could not be reached; try again later"}}))
 	case errors.Is(err, purge.ErrImportRunning):
 		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"An import is running; empty the administration once it ends"}}))
+	case errors.Is(err, mbimport.ErrNotQueued):
+		writeJSON(w, http.StatusUnprocessableEntity, validationBody(map[string][]string{"base": {"The import is not waiting to try again"}}))
 	case errors.Is(err, mbimport.ErrNotFound):
 		writeError(w, http.StatusNotFound, "No import from Moneybird yet")
 	case errors.Is(err, connections.ErrForbidden):

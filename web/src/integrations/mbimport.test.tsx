@@ -91,4 +91,22 @@ describe('a queued import', () => {
     expect(within(block).queryByRole('button', { name: 'Import again' })).toBeNull()
     expect(within(block).queryByLabelText('Moneybird API token')).toBeNull()
   })
+
+  it('tries again now on request', async () => {
+    let tried = false
+    const queued: MoneybirdImport = { ...running, waiting_until: null, error: 'chart: the bank is down', next_attempt_at: '2026-11-20T10:30:00Z' }
+    server.use(
+      ...base,
+      http.get('*/api/v2/11/moneybird_import', () => HttpResponse.json(tried ? { ...queued, error: '', next_attempt_at: null } : queued)),
+      http.post('*/api/v2/11/moneybird_import/try_now', () => {
+        tried = true
+        return HttpResponse.json({ ...queued, error: '', next_attempt_at: null })
+      }),
+    )
+    renderAt('/11/settings/connections')
+    const block = await screen.findByRole('region', { name: 'Import from Moneybird' })
+    await userEvent.click(await within(block).findByRole('button', { name: 'Try now' }))
+    await waitFor(() => expect(tried).toBe(true))
+    await waitFor(() => expect(within(block).queryByRole('button', { name: 'Try now' })).toBeNull())
+  })
 })

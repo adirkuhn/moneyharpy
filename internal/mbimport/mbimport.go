@@ -39,6 +39,8 @@ var (
 	// ErrFileUnavailable reports a file Moneybird could not give, such as one
 	// too large or gone.
 	ErrFileUnavailable = errors.New("moneybird file unavailable")
+	// ErrNotQueued reports an import that is not waiting to try again.
+	ErrNotQueued = errors.New("moneybird import is not queued")
 	// ErrRunning reports that an import is under way already.
 	ErrRunning = errors.New("moneybird import is running")
 )
@@ -350,4 +352,25 @@ func (s *Service) Status(ctx context.Context, admin, user resource.ID) (Job, err
 		return Job{}, err
 	}
 	return s.store.Job(ctx, admin)
+}
+
+// TryNow brings an import queued after a failure forward, so it tries again
+// at once rather than after its pause, such as once the cause was fixed.
+func (s *Service) TryNow(ctx context.Context, admin, user resource.ID) (Job, error) {
+	if err := s.owner(ctx, admin, user); err != nil {
+		return Job{}, err
+	}
+	j, err := s.store.Job(ctx, admin)
+	if err != nil {
+		return Job{}, err
+	}
+	now := s.now()
+	if j.State != Running || j.Error == "" || j.NextAttemptAt == nil || !j.NextAttemptAt.After(now) {
+		return Job{}, ErrNotQueued
+	}
+	j.NextAttemptAt, j.UpdatedAt = &now, now
+	if err := s.store.SaveJob(ctx, j); err != nil {
+		return Job{}, fmt.Errorf("save import: %w", err)
+	}
+	return j, nil
 }

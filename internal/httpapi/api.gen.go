@@ -23557,6 +23557,9 @@ type ServerInterface interface {
 	// ListMoneybirdAdministrations List the Moneybird administrations a token reaches
 	// (POST /api/v2/{administration_id}/moneybird_import/administrations)
 	ListMoneybirdAdministrations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
+	// TryMoneybirdImportNow Try a queued import again now
+	// (POST /api/v2/{administration_id}/moneybird_import/try_now)
+	TryMoneybirdImportNow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
 	// GetOverview Get the administration's overview
 	// (GET /api/v2/{administration_id}/overview)
 	GetOverview(w http.ResponseWriter, r *http.Request, administrationId AdministrationId)
@@ -25828,6 +25831,12 @@ func (_ Unimplemented) StartMoneybirdImport(w http.ResponseWriter, r *http.Reque
 // ListMoneybirdAdministrations List the Moneybird administrations a token reaches
 // (POST /api/v2/{administration_id}/moneybird_import/administrations)
 func (_ Unimplemented) ListMoneybirdAdministrations(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// TryMoneybirdImportNow Try a queued import again now
+// (POST /api/v2/{administration_id}/moneybird_import/try_now)
+func (_ Unimplemented) TryMoneybirdImportNow(w http.ResponseWriter, r *http.Request, administrationId AdministrationId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -37302,6 +37311,32 @@ func (siw *ServerInterfaceWrapper) ListMoneybirdAdministrations(w http.ResponseW
 	handler.ServeHTTP(w, r)
 }
 
+// TryMoneybirdImportNow operation middleware
+func (siw *ServerInterfaceWrapper) TryMoneybirdImportNow(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "administration_id" -------------
+	var administrationId AdministrationId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "administration_id", chi.URLParam(r, "administration_id"), &administrationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "administration_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TryMoneybirdImportNow(w, r, administrationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetOverview operation middleware
 func (siw *ServerInterfaceWrapper) GetOverview(w http.ResponseWriter, r *http.Request) {
 
@@ -45582,6 +45617,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/moneybird_import", wrapper.StartMoneybirdImport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/{administration_id}/moneybird_import/try_now", wrapper.TryMoneybirdImportNow)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/{administration_id}/moneybird_import/administrations", wrapper.ListMoneybirdAdministrations)
