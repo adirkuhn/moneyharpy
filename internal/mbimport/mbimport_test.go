@@ -448,6 +448,9 @@ func TestADuplicateRecordIsAProblemNotAStop(t *testing.T) {
 	if !isRecordProblem(fmt.Errorf("store contact: %w", pgError{"23505"})) {
 		t.Error("a duplicate key stops the import")
 	}
+	if !isRecordProblem(fmt.Errorf("store invoice: %w", pgError{"23503"})) {
+		t.Error("a reference to a record not here stops the import")
+	}
 	if isRecordProblem(fmt.Errorf("store contact: %w", pgError{"57P01"})) {
 		t.Error("a database shutting down counts as a record's problem")
 	}

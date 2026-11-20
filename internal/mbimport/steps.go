@@ -438,17 +438,21 @@ func isRecordProblem(err error) bool {
 	var syntax *json.SyntaxError
 	var typeErr *json.UnmarshalTypeError
 	var parseErr *time.ParseError
-	return errors.As(err, &verr) || errors.As(err, &syntax) || errors.As(err, &typeErr) || errors.As(err, &parseErr) || isDuplicate(err)
+	return errors.As(err, &verr) || errors.As(err, &syntax) || errors.As(err, &typeErr) || errors.As(err, &parseErr) || isClash(err)
 }
 
-// uniqueViolation is the SQLSTATE of a record clashing with one here, such
-// as a second project of one name: that record cannot come in, but the
-// rest can, rather than the import trying again for ever.
-const uniqueViolation = "23505"
+// The SQLSTATEs of a record clashing with one here, such as a second
+// project of one name, or referring to one that is not here: that record
+// cannot come in, but the rest can, rather than the import trying again
+// for ever.
+const (
+	uniqueViolation     = "23505"
+	foreignKeyViolation = "23503"
+)
 
-func isDuplicate(err error) bool {
+func isClash(err error) bool {
 	var coded interface{ SQLState() string }
-	return errors.As(err, &coded) && coded.SQLState() == uniqueViolation
+	return errors.As(err, &coded) && (coded.SQLState() == uniqueViolation || coded.SQLState() == foreignKeyViolation)
 }
 
 func errOr(err error, fallback string) string {

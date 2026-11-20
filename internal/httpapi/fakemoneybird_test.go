@@ -35,7 +35,7 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 				"attachments":[{"id":"504000000000000171","filename":"terms.pdf","content_type":"application/pdf"}],"invoice_date":"2026-01-10","due_date":"2026-01-24","currency":"EUR","prices_are_incl_tax":false,"discount":"0.0","sent_at":"2026-01-10T09:00:00.000Z",
 				"details":[{"id":"504000000000000112","description":"Hosting","amount":"1","price":"10.0","tax_rate_id":"504000000000000911","ledger_account_id":"504000000000000902"}],
 				"payments":[{"id":"504000000000000113","payment_date":"2026-01-15","price":"12.1","price_base":"12.1","financial_account_id":"504000000000000201","financial_mutation_id":"504000000000000301"}]}`,
-			"504000000000000121": `{"id":"504000000000000121","contact_id":"504000000000000501","state":"draft","draft_id":3,"details":[{"id":"504000000000000122","description":"Support","amount":"2","price":"50","tax_rate_id":"504000000000000911"}],"payments":[]}`,
+			"504000000000000121": `{"id":"504000000000000121","contact_id":"504000000000000501","state":"draft","draft_id":3,"original_estimate_id":"504000000000000149","recurring_sales_invoice_id":"504000000000000159","details":[{"id":"504000000000000122","description":"Support","amount":"2","price":"50","tax_rate_id":"504000000000000911"}],"payments":[]}`,
 		},
 		"estimates": {
 			"504000000000000141": `{"id":"504000000000000141","contact_id":"504000000000000501","estimate_id":"2026-0001","state":"accepted","estimate_date":"2026-01-05","due_date":"2026-02-04","currency":"EUR","discount":"0.0","prices_are_incl_tax":false,"sent_at":"2026-01-05T09:00:00.000Z","accepted_at":"2026-01-08",

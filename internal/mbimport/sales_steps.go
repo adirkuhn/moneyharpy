@@ -218,12 +218,30 @@ func (r *run) salesInvoices(ctx context.Context) error {
 		if inv.DraftID != nil {
 			in.DraftID = *inv.DraftID
 		}
-		in.OriginalEstimateID, in.RecurringID = ref(inv.OriginalEstimateID), ref(inv.RecurringID)
+		st := r.job.Step(StepSalesInvoices)
+		// The estimate or recurring invoice it was made from, when it came in.
+		var missing []string
+		for _, link := range []struct {
+			kind string
+			from *mbID
+			to   **resource.ID
+		}{{kindEstimate, inv.OriginalEstimateID, &in.OriginalEstimateID}, {kindRecurring, inv.RecurringID, &in.RecurringID}} {
+			if *link.to, err = r.mapped(ctx, link.kind, ref(link.from)); err != nil {
+				return 0, err
+			}
+			if link.from != nil && *link.to == nil {
+				missing = append(missing, fmt.Sprintf("%s %d, which is not here", link.kind, link.from.id()))
+			}
+		}
 		got, err := r.s.targets.Sales.ImportInvoice(ctx, r.job.AdministrationID, r.job.UserID, in)
 		if err != nil {
 			return 0, err
 		}
-		st := r.job.Step(StepSalesInvoices)
+		if len(missing) > 0 {
+			if err := r.partial(ctx, st, kindSalesInvoice, got.ID, "came in without its link to "+strings.Join(missing, " or ")); err != nil {
+				return 0, err
+			}
+		}
 		add := func(ctx context.Context, name, contentType string, data []byte) error {
 			_, err := r.s.targets.Sales.AddAttachment(ctx, r.job.AdministrationID, got.ID, r.job.UserID, name, contentType, data)
 			return err
