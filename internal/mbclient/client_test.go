@@ -441,3 +441,24 @@ func TestCancelDuringAWaitStops(t *testing.T) {
 		t.Fatal("the wait ignored the cancel")
 	}
 }
+
+func TestRedirectsLeaveTheTokenBehind(t *testing.T) {
+	var gotAuth string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/signed/file.pdf" {
+			gotAuth = r.Header.Get("Authorization")
+			_, _ = w.Write([]byte("%PDF"))
+			return
+		}
+		http.Redirect(w, r, "/signed/file.pdf", http.StatusFound)
+	}))
+	defer srv.Close()
+	c := &Client{BaseURL: srv.URL, Token: "secret", HTTP: srv.Client()}
+	data, _, err := c.Download(context.Background(), srv.URL+"/123/sales_invoices/1/download_pdf", 1<<20)
+	if err != nil || string(data) != "%PDF" {
+		t.Fatalf("Download() = %q, %v", data, err)
+	}
+	if gotAuth != "" {
+		t.Errorf("the token followed the redirect: %q", gotAuth)
+	}
+}

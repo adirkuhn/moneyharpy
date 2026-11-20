@@ -278,17 +278,18 @@ func (a mbFinancialAccount) changes() banking.AccountChanges {
 }
 
 type mbMutation struct {
-	ID                  mbID      `json:"id"`
-	FinancialAccountID  mbID      `json:"financial_account_id"`
-	FinancialStatement  mbID      `json:"financial_statement_id"`
-	Date                string    `json:"date"`
-	Message             *string   `json:"message"`
-	Amount              mbDecimal `json:"amount"`
-	Code                *string   `json:"code"`
-	ContraAccountName   *string   `json:"contra_account_name"`
-	ContraAccountNumber *string   `json:"contra_account_number"`
-	BatchReference      *string   `json:"batch_reference"`
-	TransactionID       *string   `json:"account_servicer_transaction_id"`
+	ID                  mbID              `json:"id"`
+	FinancialAccountID  mbID              `json:"financial_account_id"`
+	FinancialStatement  mbID              `json:"financial_statement_id"`
+	Date                string            `json:"date"`
+	Message             *string           `json:"message"`
+	Amount              mbDecimal         `json:"amount"`
+	Code                *string           `json:"code"`
+	ContraAccountName   *string           `json:"contra_account_name"`
+	ContraAccountNumber *string           `json:"contra_account_number"`
+	BatchReference      *string           `json:"batch_reference"`
+	TransactionID       *string           `json:"account_servicer_transaction_id"`
+	Bookings            []mbLedgerBooking `json:"ledger_account_bookings"`
 	stamps
 }
 
@@ -332,26 +333,29 @@ type mbPayment struct {
 }
 
 type mbSalesInvoice struct {
-	ID                     mbID        `json:"id"`
-	ContactID              *mbID       `json:"contact_id"`
-	ContactPersonID        *mbID       `json:"contact_person_id"`
-	InvoiceID              *string     `json:"invoice_id"`
-	DraftID                *int        `json:"draft_id"`
-	State                  string      `json:"state"`
-	InvoiceDate            *string     `json:"invoice_date"`
-	DueDate                *string     `json:"due_date"`
-	PaymentConditions      *string     `json:"payment_conditions"`
-	PaymentReference       *string     `json:"payment_reference"`
-	Reference              *string     `json:"reference"`
-	Currency               *string     `json:"currency"`
-	Discount               mbDecimal   `json:"discount"`
-	OriginalSalesInvoiceID *mbID       `json:"original_sales_invoice_id"`
-	SentAt                 *time.Time  `json:"sent_at"`
-	PricesAreInclTax       *bool       `json:"prices_are_incl_tax"`
-	MarkedDubiousOn        *string     `json:"marked_dubious_on"`
-	MarkedUncollectibleOn  *string     `json:"marked_uncollectible_on"`
-	Details                []mbDetail  `json:"details"`
-	Payments               []mbPayment `json:"payments"`
+	ID                     mbID           `json:"id"`
+	ContactID              *mbID          `json:"contact_id"`
+	ContactPersonID        *mbID          `json:"contact_person_id"`
+	InvoiceID              *string        `json:"invoice_id"`
+	DraftID                *int           `json:"draft_id"`
+	State                  string         `json:"state"`
+	InvoiceDate            *string        `json:"invoice_date"`
+	DueDate                *string        `json:"due_date"`
+	PaymentConditions      *string        `json:"payment_conditions"`
+	PaymentReference       *string        `json:"payment_reference"`
+	Reference              *string        `json:"reference"`
+	Currency               *string        `json:"currency"`
+	Discount               mbDecimal      `json:"discount"`
+	OriginalSalesInvoiceID *mbID          `json:"original_sales_invoice_id"`
+	SentAt                 *time.Time     `json:"sent_at"`
+	PricesAreInclTax       *bool          `json:"prices_are_incl_tax"`
+	MarkedDubiousOn        *string        `json:"marked_dubious_on"`
+	MarkedUncollectibleOn  *string        `json:"marked_uncollectible_on"`
+	OriginalEstimateID     *mbID          `json:"original_estimate_id"`
+	RecurringID            *mbID          `json:"recurring_sales_invoice_id"`
+	Details                []mbDetail     `json:"details"`
+	Payments               []mbPayment    `json:"payments"`
+	Attachments            []mbAttachment `json:"attachments"`
 	stamps
 }
 
@@ -359,20 +363,21 @@ type mbSalesInvoice struct {
 func (i mbSalesInvoice) sent() bool { return i.State != "draft" && i.State != "scheduled" }
 
 type mbExternalInvoice struct {
-	ID                    mbID        `json:"id"`
-	ContactID             *mbID       `json:"contact_id"`
-	Date                  *string     `json:"date"`
-	DueDate               *string     `json:"due_date"`
-	Reference             *string     `json:"reference"`
-	EntryNumber           *int        `json:"entry_number"`
-	Source                *string     `json:"source"`
-	SourceURL             *string     `json:"source_url"`
-	Currency              *string     `json:"currency"`
-	PricesAreInclTax      *bool       `json:"prices_are_incl_tax"`
-	MarkedDubiousOn       *string     `json:"marked_dubious_on"`
-	MarkedUncollectibleOn *string     `json:"marked_uncollectible_on"`
-	Details               []mbDetail  `json:"details"`
-	Payments              []mbPayment `json:"payments"`
+	ID                    mbID           `json:"id"`
+	ContactID             *mbID          `json:"contact_id"`
+	Date                  *string        `json:"date"`
+	DueDate               *string        `json:"due_date"`
+	Reference             *string        `json:"reference"`
+	EntryNumber           *int           `json:"entry_number"`
+	Source                *string        `json:"source"`
+	SourceURL             *string        `json:"source_url"`
+	Currency              *string        `json:"currency"`
+	PricesAreInclTax      *bool          `json:"prices_are_incl_tax"`
+	MarkedDubiousOn       *string        `json:"marked_dubious_on"`
+	MarkedUncollectibleOn *string        `json:"marked_uncollectible_on"`
+	Details               []mbDetail     `json:"details"`
+	Payments              []mbPayment    `json:"payments"`
+	Attachments           []mbAttachment `json:"attachments"`
 	stamps
 }
 
@@ -381,4 +386,112 @@ func deref(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+type mbAttachment struct {
+	ID          mbID   `json:"id"`
+	Filename    string `json:"filename"`
+	ContentType string `json:"content_type"`
+}
+
+type mbLedgerBooking struct {
+	ID              mbID      `json:"id"`
+	LedgerAccountID *mbID     `json:"ledger_account_id"`
+	ProjectID       *mbID     `json:"project_id"`
+	Description     *string   `json:"description"`
+	Price           mbDecimal `json:"price"`
+}
+
+type mbEstimate struct {
+	ID               mbID           `json:"id"`
+	ContactID        *mbID          `json:"contact_id"`
+	ContactPersonID  *mbID          `json:"contact_person_id"`
+	EstimateID       *string        `json:"estimate_id"`
+	DraftID          *int           `json:"draft_id"`
+	State            string         `json:"state"`
+	EstimateDate     *string        `json:"estimate_date"`
+	DueDate          *string        `json:"due_date"`
+	Reference        *string        `json:"reference"`
+	Language         *string        `json:"language"`
+	Currency         *string        `json:"currency"`
+	Discount         mbDecimal      `json:"discount"`
+	ShowTax          *bool          `json:"show_tax"`
+	PricesAreInclTax *bool          `json:"prices_are_incl_tax"`
+	PreText          *string        `json:"pre_text"`
+	PostText         *string        `json:"post_text"`
+	SentAt           *time.Time     `json:"sent_at"`
+	AcceptedAt       *time.Time     `json:"accepted_at"`
+	RejectedAt       *time.Time     `json:"rejected_at"`
+	ArchivedAt       *time.Time     `json:"archived_at"`
+	Details          []mbDetail     `json:"details"`
+	Attachments      []mbAttachment `json:"attachments"`
+	stamps
+}
+
+type mbRecurring struct {
+	ID                mbID       `json:"id"`
+	ContactID         *mbID      `json:"contact_id"`
+	ContactPersonID   *mbID      `json:"contact_person_id"`
+	StartDate         *string    `json:"start_date"`
+	InvoiceDate       *string    `json:"invoice_date"`
+	LastDate          *string    `json:"last_date"`
+	PaymentConditions *string    `json:"payment_conditions"`
+	Reference         *string    `json:"reference"`
+	Currency          *string    `json:"currency"`
+	Discount          mbDecimal  `json:"discount"`
+	FirstDueInterval  *int       `json:"first_due_interval"`
+	FrequencyType     *string    `json:"frequency_type"`
+	Frequency         *int       `json:"frequency"`
+	PricesAreInclTax  *bool      `json:"prices_are_incl_tax"`
+	Details           []mbDetail `json:"details"`
+	stamps
+}
+
+type mbPurchase struct {
+	ID               mbID           `json:"id"`
+	ContactID        *mbID          `json:"contact_id"`
+	Reference        *string        `json:"reference"`
+	Date             *string        `json:"date"`
+	DueDate          *string        `json:"due_date"`
+	EntryNumber      *int           `json:"entry_number"`
+	Currency         *string        `json:"currency"`
+	RevenueInvoice   *bool          `json:"revenue_invoice"`
+	PricesAreInclTax *bool          `json:"prices_are_incl_tax"`
+	Details          []mbDetail     `json:"details"`
+	Payments         []mbPayment    `json:"payments"`
+	Attachments      []mbAttachment `json:"attachments"`
+	stamps
+}
+
+type mbJournalEntry struct {
+	ID              mbID      `json:"id"`
+	LedgerAccountID *mbID     `json:"ledger_account_id"`
+	ProjectID       *mbID     `json:"project_id"`
+	ContactID       *mbID     `json:"contact_id"`
+	Debit           mbDecimal `json:"debit"`
+	Credit          mbDecimal `json:"credit"`
+	RowOrder        *int      `json:"row_order"`
+	Description     *string   `json:"description"`
+}
+
+type mbJournal struct {
+	ID          mbID             `json:"id"`
+	Reference   *string          `json:"reference"`
+	Date        *string          `json:"date"`
+	JournalType *string          `json:"journal_type"`
+	Entries     []mbJournalEntry `json:"general_journal_document_entries"`
+	Attachments []mbAttachment   `json:"attachments"`
+	stamps
+}
+
+// mbDocumentBase is what general and typeless documents share.
+type mbDocumentBase struct {
+	ID          mbID           `json:"id"`
+	ContactID   *mbID          `json:"contact_id"`
+	Reference   *string        `json:"reference"`
+	Date        *string        `json:"date"`
+	DueDate     *string        `json:"due_date"`
+	EntryNumber *int           `json:"entry_number"`
+	Attachments []mbAttachment `json:"attachments"`
+	stamps
 }

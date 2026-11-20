@@ -107,6 +107,8 @@ type Client struct {
 // Administration is an administration the token can read.
 type Administration struct {
 	ID, Name, Country, Currency string
+	// PeriodLockedUntil is the last day of the locked period, yyyy-mm-dd, if any.
+	PeriodLockedUntil string
 }
 
 // Version is a record's id with the version Moneybird gives it, which
@@ -123,10 +125,11 @@ func (c *Client) Administrations(ctx context.Context) ([]Administration, error) 
 		return nil, err
 	}
 	var list []struct {
-		ID       flexID `json:"id"`
-		Name     string `json:"name"`
-		Country  string `json:"country"`
-		Currency string `json:"currency"`
+		ID       flexID  `json:"id"`
+		Name     string  `json:"name"`
+		Country  string  `json:"country"`
+		Currency string  `json:"currency"`
+		Locked   *string `json:"period_locked_until"`
 	}
 	if err := decode(resp.body, &list); err != nil {
 		return nil, err
@@ -134,6 +137,9 @@ func (c *Client) Administrations(ctx context.Context) ([]Administration, error) 
 	out := make([]Administration, len(list))
 	for i, a := range list {
 		out[i] = Administration{ID: string(a.ID), Name: a.Name, Country: a.Country, Currency: a.Currency}
+		if a.Locked != nil {
+			out[i].PeriodLockedUntil = *a.Locked
+		}
 	}
 	return out, nil
 }
@@ -323,7 +329,11 @@ func (c *Client) send(ctx context.Context, method, rawURL string, body []byte, m
 	if httpClient == nil {
 		httpClient = &http.Client{Timeout: 60 * time.Second}
 	}
-	resp, err := httpClient.Do(req)
+	// Moneybird sends files from links that need no token; it never follows
+	// a redirect, even to its own host.
+	client := *httpClient
+	client.CheckRedirect = withoutToken
+	resp, err := client.Do(req)
 	if err != nil {
 		return 0, nil, fmt.Errorf("mbclient: %w", err)
 	}
@@ -583,5 +593,14 @@ func (f *flexID) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*f = flexID(n)
+	return nil
+}
+
+// withoutToken follows up to 10 redirects, leaving the token behind.
+func withoutToken(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("mbclient: stopped after 10 redirects")
+	}
+	req.Header.Del("Authorization")
 	return nil
 }

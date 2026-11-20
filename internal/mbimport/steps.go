@@ -9,11 +9,14 @@ import (
 	"net/url"
 	"slices"
 
+	"github.com/adirkuhn/moneyharpy/internal/attachments"
 	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/journal"
 	"github.com/adirkuhn/moneyharpy/internal/products"
 	"github.com/adirkuhn/moneyharpy/internal/projects"
+	"github.com/adirkuhn/moneyharpy/internal/purchases"
 	"github.com/adirkuhn/moneyharpy/internal/resource"
 	"github.com/adirkuhn/moneyharpy/internal/sales"
 )
@@ -23,6 +26,7 @@ import (
 type Targets struct {
 	Books interface {
 		ImportChart(ctx context.Context, admin, user resource.ID, in bookkeeping.ChartImport) (bookkeeping.ChartIDs, error)
+		UpdateSettings(ctx context.Context, admin, user resource.ID, c bookkeeping.SettingsChanges) (bookkeeping.Settings, error)
 	}
 	Contacts interface {
 		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c contacts.Changes, people []contacts.ImportedPerson) (contacts.Contact, error)
@@ -36,10 +40,28 @@ type Targets struct {
 	Banking interface {
 		ImportAccount(ctx context.Context, admin, user resource.ID, in banking.ImportedAccount) (banking.Account, error)
 		ImportStatement(ctx context.Context, admin, user resource.ID, in banking.ImportedStatement) ([]banking.Mutation, error)
+		LinkBooking(ctx context.Context, admin, id, user resource.ID, l banking.Link) (banking.Mutation, error)
 	}
 	Sales interface {
 		ImportInvoice(ctx context.Context, admin, user resource.ID, in sales.ImportedInvoice) (sales.Invoice, error)
 		ImportExternal(ctx context.Context, admin, user resource.ID, in sales.ImportedExternal) (sales.ExternalInvoice, error)
+		ImportEstimate(ctx context.Context, admin, user resource.ID, in sales.ImportedEstimate) (sales.Estimate, error)
+		ImportRecurring(ctx context.Context, admin, user resource.ID, in sales.ImportedRecurring) (sales.Recurring, error)
+		AddAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
+		AddExternalAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
+		AddEstimateAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
+	}
+	Purchases interface {
+		Import(ctx context.Context, admin, user resource.ID, in purchases.ImportedDocument) (purchases.Document, error)
+		ImportTypeless(ctx context.Context, admin, user resource.ID, o resource.Origin, c purchases.TypelessChanges) (purchases.Typeless, error)
+		ImportGeneral(ctx context.Context, admin, user resource.ID, o resource.Origin, entryNumber int, c purchases.GeneralChanges) (purchases.General, error)
+		AddAttachment(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
+		AddTypelessAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
+		AddGeneralAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
+	}
+	Journal interface {
+		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c journal.DocumentChanges, rows []resource.Origin) (journal.Document, error)
+		AddDocumentAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
 	}
 }
 
@@ -49,10 +71,11 @@ const batch = 100
 
 // run is one job at work: its Moneybird reader and a way to save progress.
 type run struct {
-	s    *Service
-	job  *Job
-	read Reader
-	save func(ctx context.Context) error
+	s     *Service
+	job   *Job
+	token string
+	read  Reader
+	save  func(ctx context.Context) error
 }
 
 func (r *run) step(ctx context.Context, kind string) error {
@@ -69,10 +92,26 @@ func (r *run) step(ctx context.Context, kind string) error {
 		return r.financialAccounts(ctx)
 	case StepFinancialMutations:
 		return r.financialMutations(ctx)
+	case StepEstimates:
+		return r.estimates(ctx)
+	case StepRecurring:
+		return r.recurring(ctx)
 	case StepSalesInvoices:
 		return r.salesInvoices(ctx)
 	case StepExternalInvoices:
 		return r.externalInvoices(ctx)
+	case StepPurchaseInvoices:
+		return r.purchases(ctx, StepPurchaseInvoices, "documents/purchase_invoices", purchases.PurchaseInvoice)
+	case StepReceipts:
+		return r.purchases(ctx, StepReceipts, "documents/receipts", purchases.Receipt)
+	case StepGeneralDocuments:
+		return r.generalDocuments(ctx)
+	case StepTypelessDocuments:
+		return r.typelessDocuments(ctx)
+	case StepJournal:
+		return r.journal(ctx)
+	case StepLockedPeriod:
+		return r.lockedPeriod(ctx)
 	}
 	return fmt.Errorf("unknown import step %q", kind)
 }
@@ -217,7 +256,8 @@ func (r *run) synced(ctx context.Context, step, path, kind string, query url.Val
 	if err != nil {
 		return err
 	}
-	st.Total = len(versions)
+	// Added up: a kind may be listed in parts, such as by state.
+	st.Total += len(versions)
 	var todo []string
 	for _, v := range versions {
 		id, err := resource.ParseID(v.ID)

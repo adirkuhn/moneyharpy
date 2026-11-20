@@ -6705,7 +6705,7 @@ export interface paths {
         put?: never;
         /**
          * Import a Moneybird administration
-         * @description MoneyHarpy extension. Copies a Moneybird administration into this one in the background, keeping Moneybird's ids: its categories and VAT rates, which take the place of the defaults, then its contacts, products, projects, financial accounts with their transactions, and its sales and external invoices with their numbers, payments and write-offs. Nothing is sent to contacts. This administration must be empty, unless it imported the same Moneybird administration before; then only what is new comes in. The import reads Moneybird with the personal API token given, within Moneybird's rate limit, and forgets the token once it ends.
+         * @description MoneyHarpy extension. Copies a Moneybird administration into this one in the background, keeping Moneybird's ids: its categories and VAT rates, which take the place of the defaults, then its contacts, products, projects, financial accounts with their transactions and bookings, estimates, recurring invoices (stopped, so nobody is billed twice), sales and external invoices with their numbers, payments and write-offs, purchase invoices, receipts, general and typeless documents, journal entries, their files and the PDFs Moneybird sent, and last the locked period. Nothing is sent to contacts. This administration must be empty, unless it imported the same Moneybird administration before; then only what is new comes in. The import reads Moneybird with the personal API token given, within Moneybird's rate limit, and forgets the token once it ends.
          */
         post: operations["startMoneybirdImport"];
         delete?: never;
@@ -10276,7 +10276,7 @@ export interface components {
         };
         MoneybirdImportStep: {
             /** @enum {string} */
-            kind: "chart" | "contacts" | "products" | "projects" | "financial_accounts" | "financial_mutations" | "sales_invoices" | "external_sales_invoices";
+            kind: "chart" | "contacts" | "products" | "projects" | "financial_accounts" | "financial_mutations" | "estimates" | "recurring_sales_invoices" | "sales_invoices" | "external_sales_invoices" | "purchase_invoices" | "receipts" | "general_documents" | "typeless_documents" | "general_journal_documents" | "locked_period";
             total: number;
             imported: number;
             /** @description Records imported before, which stay as they are. */

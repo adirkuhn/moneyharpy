@@ -81,7 +81,7 @@ func (s *Service) steps(ctx context.Context, j *Job) error {
 	if err != nil {
 		return fmt.Errorf("open token: %w", err)
 	}
-	r := &run{s: s, job: j}
+	r := &run{s: s, job: j, token: token}
 	r.save = func(ctx context.Context) error {
 		now := s.now()
 		next := now.Add(lease)

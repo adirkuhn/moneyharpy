@@ -46,8 +46,11 @@ type ImportedInvoice struct {
 	PaymentReference string
 	// OriginalID is the invoice a credit invoice credits.
 	OriginalID *resource.ID
-	Payments   []ImportedPayment
-	Writeoff   Writeoff
+	// OriginalEstimateID and RecurringID are where the invoice came from;
+	// both must be here already.
+	OriginalEstimateID, RecurringID *resource.ID
+	Payments                        []ImportedPayment
+	Writeoff                        Writeoff
 }
 
 // ImportInvoice adds a sales invoice brought in from another system,
@@ -86,6 +89,7 @@ func (s *Service) ImportInvoice(ctx context.Context, admin, user resource.ID, in
 		return Invoice{}, err
 	}
 	keepLineIDs(inv.Lines, in.Details, created)
+	inv.OriginalEstimateID, inv.RecurringSalesInvoiceID = in.OriginalEstimateID, in.RecurringID
 	if in.Sent {
 		if inv.InvoiceDate == nil {
 			return Invoice{}, invalid("invoice_date", "can't be blank")
@@ -207,4 +211,137 @@ func (s *Service) importWriteoff(ctx context.Context, admin, user resource.ID, k
 		}
 	}
 	return nil
+}
+
+// ImportedEstimate is an estimate brought in from another system as it was
+// there: its number, dates and state.
+type ImportedEstimate struct {
+	Origin  resource.Origin
+	Changes EstimateChanges
+	Details []ImportedDetail
+	DraftID int
+	// EstimateID is the number of a sent estimate; empty for a draft.
+	EstimateID string
+	// State is draft, open, late, accepted, rejected, billed or archived.
+	State                              string
+	DueDate, SentAt                    *time.Time
+	AcceptedAt, RejectedAt, ArchivedAt *time.Time
+}
+
+// ImportEstimate adds an estimate brought in from another system, keeping
+// its id, number, dates and state. Estimates book nothing, and nothing is
+// sent. Bringing in an estimate that is here already changes nothing.
+func (s *Service) ImportEstimate(ctx context.Context, admin, user resource.ID, in ImportedEstimate) (Estimate, error) {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
+		return Estimate{}, err
+	}
+	if e, err := s.store.Estimate(ctx, admin, in.Origin.ID); err == nil {
+		return e, nil
+	} else if !IsNotFound(err) {
+		return Estimate{}, err
+	}
+	created, updated := in.Origin.Or(s.now())
+	e := Estimate{ID: in.Origin.ID, AdministrationID: admin, State: Draft, Currency: a.Currency, Language: a.Language, ShowTax: true, CreatedAt: created, UpdatedAt: updated}
+	c := in.Changes
+	c.Details = make([]DetailInput, len(in.Details))
+	for i, d := range in.Details {
+		c.Details[i] = d.Input
+	}
+	inv := e.invoice()
+	if err := s.defaults(ctx, a, user, &inv, c.invoiceChanges()); err != nil {
+		return Estimate{}, err
+	}
+	e.take(inv)
+	e.DraftID = in.DraftID
+	if e.DraftID == 0 {
+		if e.DraftID, err = s.store.NextEstimateDraftID(ctx, admin); err != nil {
+			return Estimate{}, wrap("number draft", err)
+		}
+	}
+	if err := s.applyEstimate(ctx, a, user, &e, c); err != nil {
+		return Estimate{}, err
+	}
+	keepLineIDs(e.Lines, in.Details, created)
+	if in.State != "" && in.State != Draft {
+		e.State, e.EstimateID = in.State, in.EstimateID
+		if e.State == Late {
+			// Late is worked out from the due date.
+			e.State = Open
+		}
+		e.SentAt, e.AcceptedAt, e.RejectedAt, e.ArchivedAt = in.SentAt, in.AcceptedAt, in.RejectedAt, in.ArchivedAt
+		if in.DueDate != nil {
+			e.DueDate = in.DueDate
+		}
+		if e.SentAt == nil {
+			e.SentAt = &created
+		}
+	}
+	if err := s.saveEstimate(ctx, admin, user, &e, true); err != nil {
+		return Estimate{}, err
+	}
+	return s.store.Estimate(ctx, admin, e.ID)
+}
+
+// ImportedRecurring is a recurring invoice brought in from another system.
+type ImportedRecurring struct {
+	Origin  resource.Origin
+	Changes RecurringChanges
+	Details []ImportedDetail
+	// StartDate and LastDate are as they were; the next invoice date is in
+	// Changes when it lies ahead.
+	StartDate *time.Time
+}
+
+// ImportRecurring adds a recurring invoice brought in from another system,
+// keeping its id and schedule, but stopped and without sending by itself:
+// while the other system still makes the invoices, starting it here would
+// bill the contact twice. Bringing in one that is here already changes
+// nothing.
+func (s *Service) ImportRecurring(ctx context.Context, admin, user resource.ID, in ImportedRecurring) (Recurring, error) {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
+		return Recurring{}, err
+	}
+	if r, err := s.store.RecurringInvoice(ctx, admin, in.Origin.ID); err == nil {
+		return r, nil
+	} else if !IsNotFound(err) {
+		return Recurring{}, err
+	}
+	created, updated := in.Origin.Or(s.now())
+	tomorrow := s.today(a).AddDate(0, 0, 1)
+	r := Recurring{
+		ID: in.Origin.ID, AdministrationID: admin, Active: true, Currency: a.Currency, Language: a.Language, FrequencyType: Month, Frequency: 1,
+		StartDate: tomorrow, InvoiceDate: tomorrow, Anchor: tomorrow, CreatedAt: created, UpdatedAt: updated,
+	}
+	c := in.Changes
+	c.Details = make([]DetailInput, len(in.Details))
+	for i, d := range in.Details {
+		c.Details[i] = d.Input
+	}
+	off := false
+	c.AutoSend = &off
+	if c.InvoiceDate != nil {
+		if d, err := time.Parse(time.DateOnly, *c.InvoiceDate); err != nil || !d.After(s.today(a)) {
+			// A next date that passed would make invoices at once.
+			c.InvoiceDate = nil
+		}
+	}
+	inv := r.invoice()
+	if err := s.defaults(ctx, a, user, &inv, c.invoiceChanges()); err != nil {
+		return Recurring{}, err
+	}
+	r.take(inv)
+	if err := s.applyRecurring(ctx, a, user, &r, c, true); err != nil {
+		return Recurring{}, err
+	}
+	keepLineIDs(r.Lines, in.Details, created)
+	if in.StartDate != nil {
+		r.StartDate = *in.StartDate
+	}
+	r.Active = false
+	if err := s.saveRecurring(ctx, admin, user, &r, true); err != nil {
+		return Recurring{}, err
+	}
+	return s.store.RecurringInvoice(ctx, admin, r.ID)
 }

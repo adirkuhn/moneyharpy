@@ -1709,14 +1709,22 @@ func (e MoneybirdImportState) Valid() bool {
 
 // Defines values for MoneybirdImportStepKind.
 const (
-	MoneybirdImportStepKindChart                 MoneybirdImportStepKind = "chart"
-	MoneybirdImportStepKindContacts              MoneybirdImportStepKind = "contacts"
-	MoneybirdImportStepKindExternalSalesInvoices MoneybirdImportStepKind = "external_sales_invoices"
-	MoneybirdImportStepKindFinancialAccounts     MoneybirdImportStepKind = "financial_accounts"
-	MoneybirdImportStepKindFinancialMutations    MoneybirdImportStepKind = "financial_mutations"
-	MoneybirdImportStepKindProducts              MoneybirdImportStepKind = "products"
-	MoneybirdImportStepKindProjects              MoneybirdImportStepKind = "projects"
-	MoneybirdImportStepKindSalesInvoices         MoneybirdImportStepKind = "sales_invoices"
+	MoneybirdImportStepKindChart                   MoneybirdImportStepKind = "chart"
+	MoneybirdImportStepKindContacts                MoneybirdImportStepKind = "contacts"
+	MoneybirdImportStepKindEstimates               MoneybirdImportStepKind = "estimates"
+	MoneybirdImportStepKindExternalSalesInvoices   MoneybirdImportStepKind = "external_sales_invoices"
+	MoneybirdImportStepKindFinancialAccounts       MoneybirdImportStepKind = "financial_accounts"
+	MoneybirdImportStepKindFinancialMutations      MoneybirdImportStepKind = "financial_mutations"
+	MoneybirdImportStepKindGeneralDocuments        MoneybirdImportStepKind = "general_documents"
+	MoneybirdImportStepKindGeneralJournalDocuments MoneybirdImportStepKind = "general_journal_documents"
+	MoneybirdImportStepKindLockedPeriod            MoneybirdImportStepKind = "locked_period"
+	MoneybirdImportStepKindProducts                MoneybirdImportStepKind = "products"
+	MoneybirdImportStepKindProjects                MoneybirdImportStepKind = "projects"
+	MoneybirdImportStepKindPurchaseInvoices        MoneybirdImportStepKind = "purchase_invoices"
+	MoneybirdImportStepKindReceipts                MoneybirdImportStepKind = "receipts"
+	MoneybirdImportStepKindRecurringSalesInvoices  MoneybirdImportStepKind = "recurring_sales_invoices"
+	MoneybirdImportStepKindSalesInvoices           MoneybirdImportStepKind = "sales_invoices"
+	MoneybirdImportStepKindTypelessDocuments       MoneybirdImportStepKind = "typeless_documents"
 )
 
 // Valid indicates whether the value is a known member of the MoneybirdImportStepKind enum.
@@ -1726,17 +1734,33 @@ func (e MoneybirdImportStepKind) Valid() bool {
 		return true
 	case MoneybirdImportStepKindContacts:
 		return true
+	case MoneybirdImportStepKindEstimates:
+		return true
 	case MoneybirdImportStepKindExternalSalesInvoices:
 		return true
 	case MoneybirdImportStepKindFinancialAccounts:
 		return true
 	case MoneybirdImportStepKindFinancialMutations:
 		return true
+	case MoneybirdImportStepKindGeneralDocuments:
+		return true
+	case MoneybirdImportStepKindGeneralJournalDocuments:
+		return true
+	case MoneybirdImportStepKindLockedPeriod:
+		return true
 	case MoneybirdImportStepKindProducts:
 		return true
 	case MoneybirdImportStepKindProjects:
 		return true
+	case MoneybirdImportStepKindPurchaseInvoices:
+		return true
+	case MoneybirdImportStepKindReceipts:
+		return true
+	case MoneybirdImportStepKindRecurringSalesInvoices:
+		return true
 	case MoneybirdImportStepKindSalesInvoices:
+		return true
+	case MoneybirdImportStepKindTypelessDocuments:
 		return true
 	default:
 		return false
