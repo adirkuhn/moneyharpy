@@ -3,10 +3,12 @@ package mbimport
 import (
 	"bytes"
 	"encoding/json"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/adirkuhn/moneyharpy/internal/banking"
 	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
 	"github.com/adirkuhn/moneyharpy/internal/contacts"
 	"github.com/adirkuhn/moneyharpy/internal/products"
@@ -83,7 +85,9 @@ type mbLedgerAccount struct {
 	Active               bool     `json:"active"`
 	AllowedDocumentTypes []string `json:"allowed_document_types"`
 	Description          *string  `json:"description"`
-	TaxonomyItem         *struct {
+	// FinancialAccountID is set on the category a financial account's money is in.
+	FinancialAccountID *mbID `json:"financial_account_id"`
+	TaxonomyItem       *struct {
 		Code string `json:"code"`
 	} `json:"taxonomy_item"`
 	stamps
@@ -252,4 +256,129 @@ func (p mbProject) changes() projects.Changes {
 		c.Budget = &b
 	}
 	return c
+}
+
+type mbFinancialAccount struct {
+	ID         mbID    `json:"id"`
+	Type       string  `json:"type"`
+	Name       *string `json:"name"`
+	Identifier *string `json:"identifier"`
+	Currency   *string `json:"currency"`
+	Active     *bool   `json:"active"`
+	stamps
+}
+
+func (a mbFinancialAccount) changes() banking.AccountChanges {
+	kind := a.Type
+	if !slices.Contains(banking.AccountTypes, kind) {
+		// Moneybird's own kinds of account, such as its payment account, are custom accounts here.
+		kind = banking.CustomAccount
+	}
+	return banking.AccountChanges{Type: &kind, Name: opt(a.Name), Identifier: opt(a.Identifier), Currency: opt(a.Currency), Active: a.Active}
+}
+
+type mbMutation struct {
+	ID                  mbID      `json:"id"`
+	FinancialAccountID  mbID      `json:"financial_account_id"`
+	FinancialStatement  mbID      `json:"financial_statement_id"`
+	Date                string    `json:"date"`
+	Message             *string   `json:"message"`
+	Amount              mbDecimal `json:"amount"`
+	Code                *string   `json:"code"`
+	ContraAccountName   *string   `json:"contra_account_name"`
+	ContraAccountNumber *string   `json:"contra_account_number"`
+	BatchReference      *string   `json:"batch_reference"`
+	TransactionID       *string   `json:"account_servicer_transaction_id"`
+	stamps
+}
+
+func (m mbMutation) input() banking.MutationInput {
+	amount := string(m.Amount)
+	date := m.Date
+	return banking.MutationInput{
+		Date: &date, Message: m.Message, Amount: &amount, Code: opt(m.Code), ContraName: opt(m.ContraAccountName),
+		ContraAccount: opt(m.ContraAccountNumber), BatchReference: opt(m.BatchReference), TransactionID: opt(m.TransactionID),
+	}
+}
+
+type mbDetail struct {
+	ID              mbID      `json:"id"`
+	TaxRateID       *mbID     `json:"tax_rate_id"`
+	LedgerAccountID *mbID     `json:"ledger_account_id"`
+	ProjectID       *mbID     `json:"project_id"`
+	ProductID       *mbID     `json:"product_id"`
+	Amount          *string   `json:"amount"`
+	Description     *string   `json:"description"`
+	Price           mbDecimal `json:"price"`
+	Period          *string   `json:"period"`
+	RowOrder        *int      `json:"row_order"`
+	IsOptional      *bool     `json:"is_optional"`
+	IsSelected      *bool     `json:"is_selected"`
+	stamps
+}
+
+type mbPayment struct {
+	ID                    mbID      `json:"id"`
+	PaymentDate           string    `json:"payment_date"`
+	Price                 mbDecimal `json:"price"`
+	PriceBase             mbDecimal `json:"price_base"`
+	FinancialAccountID    *mbID     `json:"financial_account_id"`
+	FinancialMutationID   *mbID     `json:"financial_mutation_id"`
+	LedgerAccountID       *mbID     `json:"ledger_account_id"`
+	CreditInvoiceID       *mbID     `json:"credit_invoice_id"`
+	TransactionIdentifier *string   `json:"transaction_identifier"`
+	ManualPaymentAction   *string   `json:"manual_payment_action"`
+	stamps
+}
+
+type mbSalesInvoice struct {
+	ID                     mbID        `json:"id"`
+	ContactID              *mbID       `json:"contact_id"`
+	ContactPersonID        *mbID       `json:"contact_person_id"`
+	InvoiceID              *string     `json:"invoice_id"`
+	DraftID                *int        `json:"draft_id"`
+	State                  string      `json:"state"`
+	InvoiceDate            *string     `json:"invoice_date"`
+	DueDate                *string     `json:"due_date"`
+	PaymentConditions      *string     `json:"payment_conditions"`
+	PaymentReference       *string     `json:"payment_reference"`
+	Reference              *string     `json:"reference"`
+	Currency               *string     `json:"currency"`
+	Discount               mbDecimal   `json:"discount"`
+	OriginalSalesInvoiceID *mbID       `json:"original_sales_invoice_id"`
+	SentAt                 *time.Time  `json:"sent_at"`
+	PricesAreInclTax       *bool       `json:"prices_are_incl_tax"`
+	MarkedDubiousOn        *string     `json:"marked_dubious_on"`
+	MarkedUncollectibleOn  *string     `json:"marked_uncollectible_on"`
+	Details                []mbDetail  `json:"details"`
+	Payments               []mbPayment `json:"payments"`
+	stamps
+}
+
+// sent reports an invoice that was sent: a scheduled one was not yet.
+func (i mbSalesInvoice) sent() bool { return i.State != "draft" && i.State != "scheduled" }
+
+type mbExternalInvoice struct {
+	ID                    mbID        `json:"id"`
+	ContactID             *mbID       `json:"contact_id"`
+	Date                  *string     `json:"date"`
+	DueDate               *string     `json:"due_date"`
+	Reference             *string     `json:"reference"`
+	EntryNumber           *int        `json:"entry_number"`
+	Source                *string     `json:"source"`
+	SourceURL             *string     `json:"source_url"`
+	Currency              *string     `json:"currency"`
+	PricesAreInclTax      *bool       `json:"prices_are_incl_tax"`
+	MarkedDubiousOn       *string     `json:"marked_dubious_on"`
+	MarkedUncollectibleOn *string     `json:"marked_uncollectible_on"`
+	Details               []mbDetail  `json:"details"`
+	Payments              []mbPayment `json:"payments"`
+	stamps
+}
+
+func deref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

@@ -1134,7 +1134,7 @@ export const nl: Messages = {
   mbImport: {
     title: 'Importeren uit Moneybird', progress: 'Importeren uit Moneybird', steps: 'Stappen van de import',
     subtitle: 'Overstappen naar MoneyHarpy: kopieer een Moneybird-administratie naar deze, met dezelfde id\'s.',
-    help: 'Deze administratie moet leeg zijn. De categorieën en btw-tarieven van Moneybird nemen de plaats in van de standaard, daarna komen de contacten, producten en projecten. Facturen, documenten en transacties volgen in een latere versie.',
+    help: 'Deze administratie moet leeg zijn. De categorieën en btw-tarieven van Moneybird nemen de plaats in van de standaard, daarna komen de contacten, producten, projecten, rekeningen met hun transacties en facturen. Offertes, inkomende documenten en de rest volgen in een latere versie.',
     againHelp: 'Alleen wat sinds de vorige import nieuw is in Moneybird komt erbij; wat al geïmporteerd is blijft zoals het is.',
     token: 'Moneybird API-token', tokenHelp: 'Maak in Moneybird een persoonlijk API-token aan, bij de ontwikkelaarsinstellingen van je account. MoneyHarpy bewaart het alleen versleuteld zolang de import loopt.',
     administration: 'Moneybird-administratie', none: 'Dit token geeft toegang tot geen enkele administratie.', check: 'Token controleren', start: 'Import starten', again: 'Opnieuw importeren',
@@ -1143,7 +1143,7 @@ export const nl: Messages = {
     failed: 'De import is gestopt: {{error}}', retrying: 'De import probeert het zo opnieuw: {{error}}',
     kind: 'Gegevens', imported: 'Geïmporteerd', skipped: 'Al aanwezig', failedCount: 'Mislukt', stepState: 'Status', ofTotal: '{{count}} van {{total}}',
     stepDone: 'Klaar', stepBusy: 'Bezig', stepWaiting: 'Nog niet klaar',
-    kinds: { chart: 'Categorieën en btw-tarieven', contacts: 'Contacten', products: 'Producten', projects: 'Projecten' },
+    kinds: { chart: 'Categorieën en btw-tarieven', contacts: 'Contacten', products: 'Producten', projects: 'Projecten', financial_accounts: 'Rekeningen', financial_mutations: 'Transacties', sales_invoices: 'Facturen', external_sales_invoices: 'Externe facturen' },
     problems_one: '{{count}} record kon niet worden geïmporteerd', problems_other: '{{count}} records konden niet worden geïmporteerd',
   },
   integrations: {

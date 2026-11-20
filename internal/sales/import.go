@@ -1,0 +1,210 @@
+package sales
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/adirkuhn/moneyharpy/internal/journal"
+	"github.com/adirkuhn/moneyharpy/internal/resource"
+)
+
+// ImportedDetail is an invoice line brought in with the id it had.
+type ImportedDetail struct {
+	Origin resource.Origin
+	Input  DetailInput
+}
+
+// ImportedPayment is a payment brought in with an invoice. A payment linked
+// to a bank transaction is made with that transaction, which must be here.
+type ImportedPayment struct {
+	Origin resource.Origin
+	Input  PaymentInput
+}
+
+// Writeoff is how an invoice was written off: dates as yyyy-mm-dd.
+type Writeoff struct {
+	DubiousOn       string
+	UncollectibleOn string
+}
+
+// ImportedInvoice is a sales invoice brought in from another system, such
+// as Moneybird, as it was there: its number, dates and payments.
+type ImportedInvoice struct {
+	Origin  resource.Origin
+	Changes Changes
+	Details []ImportedDetail
+	DraftID int
+	// InvoiceID is the number of a sent invoice; empty for a draft.
+	InvoiceID string
+	// Sent tells a sent invoice from a draft; a scheduled one comes in as a
+	// draft, so nothing sends it on its own.
+	Sent             bool
+	DueDate          *time.Time
+	SentAt           *time.Time
+	PaymentReference string
+	// OriginalID is the invoice a credit invoice credits.
+	OriginalID *resource.ID
+	Payments   []ImportedPayment
+	Writeoff   Writeoff
+}
+
+// ImportInvoice adds a sales invoice brought in from another system,
+// keeping its id, number and dates, and books it as the books here would
+// have: a sent one is posted on its invoice date, its payments are made,
+// and a write-off is booked last. Nothing is sent to the contact and no
+// number is taken from the administration's sequence. Bringing in an
+// invoice that is here already changes nothing.
+func (s *Service) ImportInvoice(ctx context.Context, admin, user resource.ID, in ImportedInvoice) (Invoice, error) {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
+		return Invoice{}, err
+	}
+	if inv, err := s.store.Invoice(ctx, admin, in.Origin.ID); err == nil {
+		return inv, nil
+	} else if !errors.Is(err, ErrNotFound) {
+		return Invoice{}, err
+	}
+	created, updated := in.Origin.Or(s.now())
+	inv := Invoice{ID: in.Origin.ID, AdministrationID: admin, State: Draft, Currency: a.Currency, Language: a.Language, CreatedAt: created, UpdatedAt: updated}
+	if err := s.defaults(ctx, a, user, &inv, in.Changes); err != nil {
+		return Invoice{}, err
+	}
+	inv.DraftID = in.DraftID
+	if inv.DraftID == 0 {
+		if inv.DraftID, err = s.store.NextDraftID(ctx, admin); err != nil {
+			return Invoice{}, wrap("number draft", err)
+		}
+	}
+	c := in.Changes
+	c.Details = make([]DetailInput, len(in.Details))
+	for i, d := range in.Details {
+		c.Details[i] = d.Input
+	}
+	if err := s.apply(ctx, a, user, &inv, c); err != nil {
+		return Invoice{}, err
+	}
+	keepLineIDs(inv.Lines, in.Details, created)
+	if in.Sent {
+		if inv.InvoiceDate == nil {
+			return Invoice{}, invalid("invoice_date", "can't be blank")
+		}
+		inv.State, inv.InvoiceID, inv.PaymentReference, inv.OriginalID = Open, in.InvoiceID, in.PaymentReference, in.OriginalID
+		inv.SentAt, inv.DueDate = in.SentAt, in.DueDate
+		if inv.SentAt == nil {
+			inv.SentAt = &created
+		}
+		if inv.DueDate == nil {
+			due := inv.InvoiceDate.AddDate(0, 0, inv.FirstDueInterval)
+			inv.DueDate = &due
+		}
+	}
+	// A draft is not in the books: it posts nothing.
+	var entries []journal.Entry
+	if inv.Sent() {
+		if entries, err = s.post(ctx, admin, user, inv); err != nil {
+			return Invoice{}, err
+		}
+	}
+	if err := s.save(ctx, admin, user, &inv, entries, true); err != nil {
+		return Invoice{}, err
+	}
+	if err := s.importPayments(ctx, admin, user, EntityType, inv.ID, in.Payments); err != nil {
+		return Invoice{}, err
+	}
+	if err := s.importWriteoff(ctx, admin, user, EntityType, inv.ID, in.Writeoff); err != nil {
+		return Invoice{}, err
+	}
+	return s.store.Invoice(ctx, admin, inv.ID)
+}
+
+// ImportedExternal is an external invoice brought in from another system.
+type ImportedExternal struct {
+	Origin      resource.Origin
+	Changes     ExternalChanges
+	Details     []ImportedDetail
+	EntryNumber int
+	Payments    []ImportedPayment
+	Writeoff    Writeoff
+}
+
+// ImportExternal adds an external invoice brought in from another system,
+// keeping its id and entry number, and books it with its payments and
+// write-off as ImportInvoice does.
+func (s *Service) ImportExternal(ctx context.Context, admin, user resource.ID, in ImportedExternal) (ExternalInvoice, error) {
+	a, err := s.admins.Get(ctx, admin, user)
+	if err != nil {
+		return ExternalInvoice{}, err
+	}
+	if e, err := s.store.ExternalInvoice(ctx, admin, in.Origin.ID); err == nil {
+		return e, nil
+	} else if !errors.Is(err, ErrNotFound) {
+		return ExternalInvoice{}, err
+	}
+	e, err := s.newExternal(ctx, a, OriginAPI)
+	if err != nil {
+		return ExternalInvoice{}, err
+	}
+	created, updated := in.Origin.Or(s.now())
+	e.ID, e.CreatedAt, e.UpdatedAt = in.Origin.ID, created, updated
+	if in.EntryNumber > 0 {
+		e.EntryNumber = in.EntryNumber
+	}
+	c := in.Changes
+	c.Details = make([]DetailInput, len(in.Details))
+	for i, d := range in.Details {
+		c.Details[i] = d.Input
+	}
+	if err := s.applyExternal(ctx, a, user, &e, c); err != nil {
+		return ExternalInvoice{}, err
+	}
+	keepLineIDs(e.Lines, in.Details, created)
+	if err := s.saveExternal(ctx, a, user, &e, true); err != nil {
+		return ExternalInvoice{}, err
+	}
+	if err := s.importPayments(ctx, admin, user, ExternalEntityType, e.ID, in.Payments); err != nil {
+		return ExternalInvoice{}, err
+	}
+	if err := s.importWriteoff(ctx, admin, user, ExternalEntityType, e.ID, in.Writeoff); err != nil {
+		return ExternalInvoice{}, err
+	}
+	return s.store.ExternalInvoice(ctx, admin, e.ID)
+}
+
+// keepLineIDs gives the lines made from the details the ids they had.
+func keepLineIDs(lines []Detail, details []ImportedDetail, created time.Time) {
+	for i := range lines {
+		if i >= len(details) || details[i].Origin.ID == 0 {
+			continue
+		}
+		lines[i].ID = details[i].Origin.ID
+		lines[i].CreatedAt, lines[i].UpdatedAt = details[i].Origin.Or(created)
+	}
+}
+
+// importPayments makes an imported invoice's payments, oldest first.
+func (s *Service) importPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []ImportedPayment) error {
+	for i, p := range payments {
+		if _, err := s.registerPayment(ctx, admin, user, kind, id, p.Input); err != nil {
+			return fmt.Errorf("payment %d: %w", i+1, err)
+		}
+	}
+	return nil
+}
+
+// importWriteoff books how an imported invoice was written off, after its
+// payments.
+func (s *Service) importWriteoff(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, w Writeoff) error {
+	if w.DubiousOn != "" {
+		if err := s.markDubious(ctx, admin, user, kind, id, w.DubiousOn); err != nil {
+			return fmt.Errorf("doubtful: %w", err)
+		}
+	}
+	if w.UncollectibleOn != "" {
+		if err := s.markUncollectible(ctx, admin, user, kind, id, w.UncollectibleOn, ""); err != nil {
+			return fmt.Errorf("uncollectible: %w", err)
+		}
+	}
+	return nil
+}

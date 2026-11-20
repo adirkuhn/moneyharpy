@@ -2,6 +2,7 @@ package httpapi_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -34,7 +35,7 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Error("the token is shown")
 	}
 	started := decode[httpapi.MoneybirdImport](t, r)
-	if started.State != "running" || len(started.Steps) != 4 {
+	if started.State != "running" || len(started.Steps) != 8 {
 		t.Errorf("started = %+v", started)
 	}
 	if err := h.mbimport.Work(context.Background()); err != nil {
@@ -71,6 +72,34 @@ func TestImportFromMoneybird(t *testing.T) {
 	}
 	if receivables != 1 {
 		t.Errorf("%d categories named Debiteuren", receivables)
+	}
+
+	// The bank account keeps its id and its imported category; the transaction is its statement's.
+	account := decode[map[string]any](t, owner.do(http.MethodGet, api+"/financial_accounts/504000000000000201", nil))
+	if account["name"] != "Zakelijke rekening" || account["identifier"] != "NL91ABNA0417164300" {
+		t.Errorf("account = %+v", account)
+	}
+	// The paid invoice keeps its number and dates, and its payment is made with the transaction.
+	paid := decode[map[string]any](t, owner.do(http.MethodGet, api+"/sales_invoices/504000000000000111", nil))
+	if paid["invoice_id"] != "2026-0001" || paid["state"] != "paid" || paid["invoice_date"] != "2026-01-10" || paid["due_date"] != "2026-01-24" {
+		t.Errorf("paid invoice = %+v", paid)
+	}
+	mutation := decode[map[string]any](t, owner.do(http.MethodGet, api+"/financial_mutations/504000000000000301", nil))
+	if mutation["state"] != "processed" || mutation["financial_statement_id"] != "504000000000000401" {
+		t.Errorf("transaction = %+v", mutation)
+	}
+	draft := decode[map[string]any](t, owner.do(http.MethodGet, api+"/sales_invoices/504000000000000121", nil))
+	if draft["state"] != "draft" || draft["invoice_id"] != nil || draft["total_price_excl_tax"] != "100.0" {
+		t.Errorf("draft = %+v", draft)
+	}
+	external := decode[map[string]any](t, owner.do(http.MethodGet, api+"/external_sales_invoices/504000000000000131", nil))
+	if external["reference"] != "WEB-1001" || external["entry_number"] != float64(4) || external["state"] == "new" {
+		t.Errorf("external = %+v", external)
+	}
+	// Nothing was booked twice: the debtors are what the open external invoice owes.
+	debtors := decode[map[string]any](t, owner.do(http.MethodGet, api+"/reports/debtors", nil))
+	if !strings.Contains(fmt.Sprint(debtors), "60.5") {
+		t.Errorf("debtors = %+v", debtors)
 	}
 
 	// Again, only what is new would come in; another Moneybird administration cannot mix in.
