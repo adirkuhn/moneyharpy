@@ -57,10 +57,16 @@ const (
 	StepContacts = "contacts"
 	StepProducts = "products"
 	StepProjects = "projects"
+	// StepFinancialAccounts and StepFinancialMutations bring the bank in
+	// before the invoices, whose payments are made with its transactions.
+	StepFinancialAccounts  = "financial_accounts"
+	StepFinancialMutations = "financial_mutations"
+	StepSalesInvoices      = "sales_invoices"
+	StepExternalInvoices   = "external_sales_invoices"
 )
 
 // Steps lists the steps an import takes.
-var Steps = []string{StepChart, StepContacts, StepProducts, StepProjects}
+var Steps = []string{StepChart, StepContacts, StepProducts, StepProjects, StepFinancialAccounts, StepFinancialMutations, StepSalesInvoices, StepExternalInvoices}
 
 // maxProblems caps the problems a step keeps, so a step that fails on every
 // record does not grow without bound.

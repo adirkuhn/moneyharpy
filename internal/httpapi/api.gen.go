@@ -1709,22 +1709,34 @@ func (e MoneybirdImportState) Valid() bool {
 
 // Defines values for MoneybirdImportStepKind.
 const (
-	Chart    MoneybirdImportStepKind = "chart"
-	Contacts MoneybirdImportStepKind = "contacts"
-	Products MoneybirdImportStepKind = "products"
-	Projects MoneybirdImportStepKind = "projects"
+	MoneybirdImportStepKindChart                 MoneybirdImportStepKind = "chart"
+	MoneybirdImportStepKindContacts              MoneybirdImportStepKind = "contacts"
+	MoneybirdImportStepKindExternalSalesInvoices MoneybirdImportStepKind = "external_sales_invoices"
+	MoneybirdImportStepKindFinancialAccounts     MoneybirdImportStepKind = "financial_accounts"
+	MoneybirdImportStepKindFinancialMutations    MoneybirdImportStepKind = "financial_mutations"
+	MoneybirdImportStepKindProducts              MoneybirdImportStepKind = "products"
+	MoneybirdImportStepKindProjects              MoneybirdImportStepKind = "projects"
+	MoneybirdImportStepKindSalesInvoices         MoneybirdImportStepKind = "sales_invoices"
 )
 
 // Valid indicates whether the value is a known member of the MoneybirdImportStepKind enum.
 func (e MoneybirdImportStepKind) Valid() bool {
 	switch e {
-	case Chart:
+	case MoneybirdImportStepKindChart:
 		return true
-	case Contacts:
+	case MoneybirdImportStepKindContacts:
 		return true
-	case Products:
+	case MoneybirdImportStepKindExternalSalesInvoices:
 		return true
-	case Projects:
+	case MoneybirdImportStepKindFinancialAccounts:
+		return true
+	case MoneybirdImportStepKindFinancialMutations:
+		return true
+	case MoneybirdImportStepKindProducts:
+		return true
+	case MoneybirdImportStepKindProjects:
+		return true
+	case MoneybirdImportStepKindSalesInvoices:
 		return true
 	default:
 		return false
