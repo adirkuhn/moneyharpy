@@ -10,7 +10,8 @@ import { ChevronIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { FilterPanel } from '../list/FilterPanel'
-import { useUsers } from '../management/queries'
+import { useAdministration } from '../administrations/queries'
+import { can, useUsers } from '../management/queries'
 import { recurringTitle, useRecurringInvoice } from '../recurring/queries'
 import { useTimeEntry } from '../timeentries/queries'
 import { type Event, useEvents } from './queries'
@@ -44,7 +45,9 @@ export function EventsPage() {
   const [cursors, setCursors] = useState<string[]>([])
   const cursor = cursors.at(-1)
   const events = useEvents(administrationId, period, cursor)
-  const users = useUsers(administrationId)
+  const administration = useAdministration(administrationId)
+  // Only members who may see the users get their names.
+  const users = useUsers(administrationId, can(administration.data, 'settings'))
   const names = useMemo(() => new Map((users.data ?? []).map((u) => [String(u.id), u.name ?? ''])), [users.data])
   const label = t('events.label', { period: t(`journal.periods.${period}`).toLowerCase() })
   return (

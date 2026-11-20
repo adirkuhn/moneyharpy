@@ -133,6 +133,20 @@ describe('side menu', () => {
     expect(within(nav).queryByRole('button', { name: 'Invoices' })).toBeNull()
     expect(within(nav).queryByRole('link', { name: 'Incoming' })).toBeNull()
     expect(within(nav).getByRole('link', { name: 'Overview' })).toBeInTheDocument()
+    // As on Moneybird, task lists ask for every permission but ownership.
+    expect(within(nav).queryByRole('button', { name: 'Task lists' })).toBeNull()
+  })
+
+  it('shows no access on a page the member may not open', async () => {
+    open(administration({ id: '11', user_type: 'employee', permissions: ['time_entries'] }))
+    renderAt('/11/sales_invoices')
+    expect(await screen.findByRole('heading', { name: 'No access' })).toBeInTheDocument()
+  })
+
+  it('keeps billing time to members who may make invoices', async () => {
+    open(administration({ id: '11', user_type: 'employee', permissions: ['time_entries'] }))
+    renderAt('/11/time_entries_wizard')
+    expect(await screen.findByRole('heading', { name: 'No access' })).toBeInTheDocument()
   })
 
   it('shows the bank to a member with only that permission', async () => {

@@ -533,6 +533,10 @@ test('owners invite users with limited rights and require two-step verification'
   await expect(colleague.getByRole('heading', { name: 'No access' })).toBeVisible()
   const api = await colleague.request.get(`/api/v2${uri}/bookkeeping_settings`)
   expect(api.status()).toBe(403)
+  // Pages of what they may not use say so, instead of failing to load.
+  await colleague.goto(`${uri}/sales_invoices`)
+  await expect(colleague.getByRole('heading', { name: 'No access' })).toBeVisible()
+  await expect(colleague.getByRole('navigation', { name: 'Administration menu' }).getByRole('button', { name: 'Task lists' })).toHaveCount(0)
 
   // The owner turns on two-step verification and requires it.
   await page.goto('/user')

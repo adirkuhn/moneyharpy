@@ -15,6 +15,7 @@ import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { GettingStarted } from '../list/GettingStarted'
 import { ActionMenu } from '../list/ListActions'
+import { can } from '../management/queries'
 import { useActiveProjects } from '../projects/queries'
 import { type TimeEntry, useCreateTimeEntry, useTimer, useWeekEntries, workedMinutes } from './queries'
 import { addDays, atTime, clock, dayOf, isoDay, mondayOf, parseClock, parseDay, periodOf, stopwatch } from './week'
@@ -124,7 +125,7 @@ export function TimeEntriesPage() {
         </span>
       </nav>
 
-      <TimerForm key={day} administrationId={administrationId} userId={me.data.id ?? ''} day={day} />
+      <TimerForm key={day} administrationId={administrationId} userId={me.data.id ?? ''} day={day} addProjects={can(administration.data, 'settings')} />
 
       {!week.data ? (
         <Loading />
@@ -155,7 +156,7 @@ const nowMinutes = () => {
  * minutes, the description, contact, project and billable. With an end it
  * saves the time; without, it starts a timer.
  */
-function TimerForm({ administrationId, userId, day }: { administrationId: string; userId: string; day: string }) {
+function TimerForm({ administrationId, userId, day, addProjects }: { administrationId: string; userId: string; day: string; addProjects: boolean }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const save = useCreateTimeEntry(administrationId)
@@ -238,7 +239,7 @@ function TimerForm({ administrationId, userId, day }: { administrationId: string
               placeholder={t('timeEntries.register.chooseProject')}
               value={project}
               options={[{ value: '', label: t('timeEntries.register.noneProject') }, ...(projects.data ?? []).map((p) => ({ value: p.id ?? '', label: p.name ?? '' }))]}
-              add={{ label: t('timeEntries.register.addProject'), onAdd: () => navigate(`/${administrationId}/projects/new`) }}
+              add={addProjects ? { label: t('timeEntries.register.addProject'), onAdd: () => navigate(`/${administrationId}/projects/new`) } : undefined}
               aria-invalid={control['aria-invalid']}
               aria-describedby={control['aria-describedby']}
               onChange={setProject}

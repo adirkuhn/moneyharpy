@@ -292,3 +292,23 @@ func TestCountryChangeMovesTheVATReturn(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodPatch, "/api/v2/administrations/"+a.Id, map[string]any{"administration": map[string]any{"country": "XX"}}), http.StatusUnprocessableEntity)
 }
+
+// Time is logged on projects, so a member who only tracks time may read
+// them, but changing them stays a setting.
+func TestTimeTrackersReadProjects(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, tracker := h.client(), h.client()
+	owner.register()
+	tracker.register()
+	a := owner.createAdministration("Harpy")
+	api := "/api/v2/" + a.Id
+	invite(t, h, owner, tracker, a.Id, "tracker@example.com", map[string]any{"user_type": "employee", "permissions": []string{"time_entries"}})
+	r := owner.do(http.MethodPost, api+"/projects", map[string]any{"project": map[string]any{"name": "Website"}})
+	wantStatus(t, r, http.StatusCreated)
+	p := decode[httpapi.Project](t, r)
+
+	wantStatus(t, tracker.do(http.MethodGet, api+"/projects", nil), http.StatusOK)
+	wantStatus(t, tracker.do(http.MethodGet, api+"/projects/"+p.Id, nil), http.StatusOK)
+	wantStatus(t, tracker.do(http.MethodPost, api+"/projects", map[string]any{"project": map[string]any{"name": "Mine"}}), http.StatusForbidden)
+	wantStatus(t, tracker.do(http.MethodPatch, api+"/projects/"+p.Id, map[string]any{"project": map[string]any{"name": "Mine"}}), http.StatusForbidden)
+}
