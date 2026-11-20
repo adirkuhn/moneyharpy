@@ -20685,7 +20685,7 @@ components:
     MoneybirdImport:
       type: object
       description: The import of a Moneybird administration. MoneyHarpy extension.
-      required: [source_administration_id, source_name, state, steps, waiting_until, error, started_at, finished_at, updated_at]
+      required: [source_administration_id, source_name, state, steps, waiting_until, next_attempt_at, error, started_at, finished_at, updated_at]
       properties:
         source_administration_id:
           type: string
@@ -20703,6 +20703,13 @@ components:
           format: date-time
           nullable: true
           description: While the import waits for Moneybird's rate limit, until when.
+        next_attempt_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: >-
+            While the import is queued after a passing failure, such as Moneybird being out of reach, when it tries
+            again. It stays queued until it finishes; only a token Moneybird refuses stops it.
         error:
           type: string
           description: Why the import stopped, or last had to try again.

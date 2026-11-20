@@ -19,13 +19,16 @@ const base = [
 ]
 
 const running: MoneybirdImport = {
-  source_administration_id: '123', source_name: 'Example Shop B.V.', state: 'running', error: '', waiting_until: '2026-11-20T09:05:00Z',
+  source_administration_id: '123', source_name: 'Example Shop B.V.', state: 'running', error: '', waiting_until: '2026-11-20T09:05:00Z', next_attempt_at: null,
   started_at: '2026-11-20T09:00:00Z', finished_at: null, updated_at: '2026-11-20T09:01:00Z',
   steps: [
     { kind: 'chart', total: 40, imported: 40, skipped: 0, failed: 0, done: true, problems: [] },
     { kind: 'contacts', total: 300, imported: 120, skipped: 0, failed: 1, done: false, problems: ['contact 502: send_invoices_to_email is invalid'] },
     { kind: 'products', total: 0, imported: 0, skipped: 0, failed: 0, done: false, problems: [] },
     { kind: 'projects', total: 0, imported: 0, skipped: 0, failed: 0, done: false, problems: [] },
+    { kind: 'custom_fields', total: 2, imported: 2, skipped: 0, failed: 0, done: true, problems: [] },
+    { kind: 'identities', total: 1, imported: 1, skipped: 0, failed: 0, done: true, problems: [] },
+    { kind: 'workflows', total: 3, imported: 3, skipped: 0, failed: 0, done: true, problems: [] },
   ],
 }
 
@@ -48,7 +51,9 @@ describe('import from Moneybird', () => {
     await userEvent.type(await within(block).findByLabelText('Moneybird API token'), 'secret-token')
     await userEvent.click(within(block).getByRole('button', { name: 'Check token' }))
     await userEvent.click(await within(block).findByRole('radio', { name: 'Beispiel GmbH' }))
-    await userEvent.click(within(block).getByRole('button', { name: 'Start import' }))
+    const start = within(block).getByRole('button', { name: 'Start import' })
+    await userEvent.click(start)
+    // Once triggered it cannot be triggered again.
     await waitFor(() => expect(started).toEqual({ moneybird_import: { token: 'secret-token', administration_id: '456' } }))
 
     const progress = await within(block).findByRole('region', { name: 'Import from Moneybird' })
@@ -56,6 +61,13 @@ describe('import from Moneybird', () => {
     expect(within(progress).getByRole('status')).toHaveTextContent(/Waiting for Moneybird's rate limit until/)
     const steps = within(progress).getByRole('table', { name: 'Steps of the import' })
     expect(within(steps).getByRole('row', { name: /Contacts/ })).toHaveTextContent('120 of 300')
+    // The progress over all steps, and the step at work.
+    const overall = within(progress).getByRole('progressbar', { name: 'Import progress' })
+    expect(overall).toHaveAttribute('aria-valuenow', String(Math.floor(((1 + 120 / 300 + 3) / 7) * 100)))
+    expect(progress).toHaveTextContent('Step 2 of 7: Contacts')
+    expect(within(steps).getByRole('progressbar', { name: 'Contacts' })).toHaveAttribute('aria-valuenow', '40')
+    expect(screen.queryByRole('button', { name: 'Start import' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Import again' })).toBeNull()
     expect(within(progress).getByText('contact 502: send_invoices_to_email is invalid')).toBeInTheDocument()
   })
 
@@ -66,5 +78,17 @@ describe('import from Moneybird', () => {
     renderAt('/11/settings/connections')
     expect(await screen.findByRole('region', { name: 'Webhooks' })).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Import from Moneybird' })).toBeNull()
+  })
+})
+
+describe('a queued import', () => {
+  it('says when it tries again, and keeps the start buttons away', async () => {
+    const queued: MoneybirdImport = { ...running, waiting_until: null, error: 'contacts: moneybird is down', next_attempt_at: '2026-11-20T10:30:00Z' }
+    server.use(...base, http.get('*/api/v2/11/moneybird_import', () => HttpResponse.json(queued)))
+    renderAt('/11/settings/connections')
+    const block = await screen.findByRole('region', { name: 'Import from Moneybird' })
+    expect(await within(block).findByText(/stays queued and tries again at/)).toBeInTheDocument()
+    expect(within(block).queryByRole('button', { name: 'Import again' })).toBeNull()
+    expect(within(block).queryByLabelText('Moneybird API token')).toBeNull()
   })
 })

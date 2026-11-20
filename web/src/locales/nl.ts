@@ -1132,6 +1132,7 @@ export const nl: Messages = {
     notFoundTitle: 'Uitnodiging niet gevonden', notFound: 'Deze uitnodiging bestaat niet of is ingetrokken.',
   },
   mbImport: {
+    starting: 'Starten…', checking: 'Controleren…', overall: 'Voortgang van de import', progressColumn: 'Voortgang', at: 'Stap {{step}} van {{of}}: {{kind}}', queued: 'Er ging voorlopig iets mis ({{error}}). De import blijft in de wachtrij en probeert het om {{time}} opnieuw, verder waar hij was.', failed: 'De import is gestopt: {{error}} Start hem opnieuw met een nieuw token; hij gaat verder waar hij stopte.',
     title: 'Importeren uit Moneybird', progress: 'Importeren uit Moneybird', steps: 'Stappen van de import',
     subtitle: 'Overstappen naar MoneyHarpy: kopieer een Moneybird-administratie naar deze, met dezelfde id\'s.',
     help: 'Deze administratie moet leeg zijn. Alles komt binnen met de id\'s van Moneybird: categorieën en btw-tarieven (in plaats van de standaard), extra velden, afzenders en workflows, contacten, producten en projecten, rekeningen en transacties, offertes, facturen, inkomende documenten, memoriaalboekingen, uren en takenlijsten, met hun notities en bestanden; tot slot wordt de boekhouding afgesloten zoals in Moneybird. Zolang je Moneybird nog gebruikt, benadert MoneyHarpy je klanten niet: periodieke facturen komen gestopt binnen en herinneringen gaan niet vanzelf. Huisstijlen blijven die van MoneyHarpy.',
@@ -1140,9 +1141,7 @@ export const nl: Messages = {
     administration: 'Moneybird-administratie', none: 'Dit token geeft toegang tot geen enkele administratie.', check: 'Token controleren', start: 'Import starten', again: 'Opnieuw importeren',
     from: 'Uit {{name}}', states: { running: 'Bezig met importeren', done: 'Klaar', failed: 'Gestopt' },
     waiting: 'Wachten op de limiet van Moneybird tot {{time}}. De import gaat vanzelf verder.',
-    failed: 'De import is gestopt: {{error}}', retrying: 'De import probeert het zo opnieuw: {{error}}',
-    kind: 'Gegevens', imported: 'Geïmporteerd', skipped: 'Al aanwezig', failedCount: 'Mislukt', stepState: 'Status', ofTotal: '{{count}} van {{total}}',
-    stepDone: 'Klaar', stepBusy: 'Bezig', stepWaiting: 'Nog niet klaar',
+    kind: 'Gegevens', imported: 'Geïmporteerd', skipped: 'Al aanwezig', failedCount: 'Mislukt', ofTotal: '{{count}} van {{total}}',
     kinds: { chart: 'Categorieën en btw-tarieven', custom_fields: 'Extra velden', identities: 'Afzenders', workflows: 'Workflows', contacts: 'Contacten', products: 'Producten', projects: 'Projecten', financial_accounts: 'Rekeningen', financial_mutations: 'Transacties', estimates: 'Offertes', recurring_sales_invoices: 'Periodieke facturen (gestopt)', sales_invoices: 'Facturen', external_sales_invoices: 'Externe facturen', purchase_invoices: 'Inkoopfacturen', receipts: 'Bonnetjes', general_documents: 'Algemene documenten', typeless_documents: 'Documenten zonder type', general_journal_documents: 'Memoriaalboekingen', time_entries: 'Uren', task_list_templates: 'Takenlijstsjablonen', task_lists: 'Takenlijsten', locked_period: 'Afgesloten periode' },
     problems_one: '{{count}} record kon niet worden geïmporteerd', problems_other: '{{count}} records konden niet worden geïmporteerd',
   },

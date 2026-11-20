@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/adirkuhn/moneyharpy/internal/mbimport"
 )
@@ -10,7 +11,8 @@ func toMoneybirdImport(j mbimport.Job) MoneybirdImport {
 	out := MoneybirdImport{
 		SourceAdministrationId: j.SourceID, SourceName: j.SourceName, State: MoneybirdImportState(j.State),
 		Steps: make([]MoneybirdImportStep, len(j.Steps)), WaitingUntil: j.WaitingUntil, Error: j.Error,
-		StartedAt: j.StartedAt, FinishedAt: j.FinishedAt, UpdatedAt: j.UpdatedAt,
+		NextAttemptAt: retryAt(j),
+		StartedAt:     j.StartedAt, FinishedAt: j.FinishedAt, UpdatedAt: j.UpdatedAt,
 	}
 	for i, st := range j.Steps {
 		problems := st.Problems
@@ -78,4 +80,13 @@ func (s *server) ListMoneybirdAdministrations(w http.ResponseWriter, r *http.Req
 		out[i] = MoneybirdAdministration{Id: a.ID, Name: a.Name, Country: &country, Currency: &currency}
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+// retryAt is when a queued import tries again after a failure; nil while it
+// runs or once it ended.
+func retryAt(j mbimport.Job) *time.Time {
+	if j.State != mbimport.Running || j.Error == "" {
+		return nil
+	}
+	return j.NextAttemptAt
 }
