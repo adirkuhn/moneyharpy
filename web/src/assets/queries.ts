@@ -1,3 +1,4 @@
+import { replaceCached } from '../api/cache'
 import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
@@ -69,7 +70,7 @@ export function useSaveAsset(administrationId: string, id?: string) {
       : unwrap(api.PATCH('/api/v2/{administration_id}/assets/{id}', { ...one(administrationId, id), body: { asset } })),
     onSuccess: (saved) => {
       void client.invalidateQueries({ queryKey: ['assets', administrationId] })
-      client.setQueryData(['asset', administrationId, String(saved.id)], saved)
+      replaceCached(client, ['asset', administrationId, String(saved.id)], saved)
     },
   })
 }

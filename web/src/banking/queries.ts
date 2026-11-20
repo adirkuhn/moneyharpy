@@ -1,3 +1,4 @@
+import { replaceCached } from '../api/cache'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fileBody } from '../invoices/queries'
 import { api, unwrap } from '../api/client'
@@ -33,7 +34,7 @@ export function useUpdateBankSettings(administrationId: string) {
   return useMutation({
     mutationFn: (automatic_booking: boolean) =>
       unwrap(api.PATCH('/api/v2/{administration_id}/bank_settings', { ...admin(administrationId), body: { bank_settings: { automatic_booking } } })),
-    onSuccess: (saved) => client.setQueryData(['bank-settings', administrationId], saved),
+    onSuccess: (saved) => replaceCached(client, ['bank-settings', administrationId], saved),
   })
 }
 
@@ -139,7 +140,7 @@ export function useMutationOne(administrationId: string, id: string) {
 function useMutationSaved(administrationId: string, id: string) {
   const client = useQueryClient()
   return {
-    onSuccess: (saved: Mutation) => client.setQueryData(['financial-mutations', administrationId, 'one', id], saved),
+    onSuccess: (saved: Mutation) => replaceCached(client, ['financial-mutations', administrationId, 'one', id], saved),
     onSettled: () => client.invalidateQueries({ queryKey: ['financial-mutations', administrationId] }),
   }
 }

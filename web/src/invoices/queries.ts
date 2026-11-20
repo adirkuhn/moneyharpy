@@ -1,3 +1,4 @@
+import { replaceCached } from '../api/cache'
 import type { TFunction } from 'i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
@@ -93,7 +94,7 @@ export function useSaved(administrationId: string, kind: InvoiceKind = 'sales') 
   const keys = invoiceKeys(kind)
   return (saved?: { id?: string }) => {
     if (saved?.id) {
-      client.setQueryData([keys.one, administrationId, saved.id], saved)
+      replaceCached(client, [keys.one, administrationId, saved.id], saved)
     }
     void client.invalidateQueries({ queryKey: [keys.list, administrationId] })
   }

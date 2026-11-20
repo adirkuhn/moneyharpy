@@ -1,3 +1,4 @@
+import { replaceCached } from '../api/cache'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, unwrap } from '../api/client'
 import type { components } from '../api/schema'
@@ -37,7 +38,7 @@ export function useUpdateBookkeepingSettings(administrationId: string) {
     mutationFn: (bookkeeping_settings: BookkeepingChanges) =>
       unwrap(api.PATCH('/api/v2/{administration_id}/bookkeeping_settings', { ...admin(administrationId), body: { bookkeeping_settings } })),
     onSuccess: (saved, changes) => {
-      client.setQueryData(['bookkeeping-settings', administrationId], saved)
+      replaceCached(client, ['bookkeeping-settings', administrationId], saved)
       if (changes.chart_scheme !== undefined) {
         void client.invalidateQueries({ queryKey: ['ledger-accounts', administrationId] })
       }
@@ -125,7 +126,7 @@ export function useUpdateScheme(administrationId: string) {
   return useMutation({
     mutationFn: (ledger_accounts: { id: string; rgs_code: string }[]) =>
       unwrap(api.PUT('/api/v2/{administration_id}/ledger_accounts/scheme', { ...admin(administrationId), body: { ledger_accounts } })),
-    onSuccess: (saved) => client.setQueryData(['ledger-accounts', administrationId], saved),
+    onSuccess: (saved) => replaceCached(client, ['ledger-accounts', administrationId], saved),
   })
 }
 

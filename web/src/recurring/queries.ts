@@ -1,3 +1,4 @@
+import { replaceCached } from '../api/cache'
 import type { TFunction } from 'i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
@@ -90,7 +91,7 @@ function useSaved(administrationId: string) {
   const client = useQueryClient()
   return (saved?: { id?: string }) => {
     if (saved?.id) {
-      client.setQueryData(['recurring-invoice', administrationId, saved.id], saved)
+      replaceCached(client, ['recurring-invoice', administrationId, saved.id], saved)
     }
     void client.invalidateQueries({ queryKey: ['recurring-invoices', administrationId] })
   }

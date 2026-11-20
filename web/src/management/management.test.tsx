@@ -147,10 +147,15 @@ describe('users and invitations', () => {
       return HttpResponse.json(clerk)
     }))
     renderAt('/11/users/2')
-    await userEvent.click(await screen.findByRole('checkbox', { name: 'Settings' }))
+    const settings = await screen.findByRole('checkbox', { name: 'Settings' })
+    // An owner holds every permission, so the boxes are ticked and fixed.
+    await userEvent.selectOptions(screen.getByLabelText('Access rights'), 'owner')
+    expect(settings).toBeChecked()
+    expect(settings).toBeDisabled()
+    await userEvent.selectOptions(screen.getByLabelText('Access rights'), 'employee')
+    await userEvent.click(settings)
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(sent).toEqual({ user: { user_type: 'employee', permissions: ['bank', 'settings'], active: true } }))
-    await userEvent.selectOptions(screen.getByLabelText('Access rights'), 'owner')
   })
 
   it('accepts an invitation when signed in', async () => {

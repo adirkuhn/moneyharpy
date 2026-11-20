@@ -1,3 +1,4 @@
+import { replaceCached } from '../api/cache'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, unwrap } from '../api/client'
 import type { components } from '../api/schema'
@@ -26,7 +27,7 @@ export function useUpdateInvoiceSettings(administrationId: string) {
   return useMutation({
     mutationFn: (invoice_settings: InvoiceSettingsChanges) =>
       unwrap(api.PATCH('/api/v2/{administration_id}/invoice_settings', { ...admin(administrationId), body: { invoice_settings } })),
-    onSuccess: (saved) => client.setQueryData(['invoice-settings', administrationId], saved),
+    onSuccess: (saved) => replaceCached(client, ['invoice-settings', administrationId], saved),
   })
 }
 
@@ -121,7 +122,7 @@ export function useUploadStyleFile(administrationId: string, id: string) {
         }),
       ),
     onSuccess: (saved) => {
-      client.setQueryData(['document-styles', administrationId, id], saved)
+      replaceCached(client, ['document-styles', administrationId, id], saved)
       void client.invalidateQueries({ queryKey: ['document-styles', administrationId] })
     },
   })
@@ -142,7 +143,7 @@ export function useAddStyleImage(administrationId: string, id: string) {
           headers: { 'Content-Type': data.type || 'application/octet-stream' },
         }),
       ),
-    onSuccess: (saved) => client.setQueryData(['document-styles', administrationId, id], saved),
+    onSuccess: (saved) => replaceCached(client, ['document-styles', administrationId, id], saved),
   })
 }
 
@@ -151,7 +152,7 @@ export function useRemoveStyleImage(administrationId: string, id: string) {
   return useMutation({
     mutationFn: (imageId: string) =>
       unwrap(api.DELETE('/api/v2/{administration_id}/document_styles/{id}/images/{image_id}', { params: { path: { administration_id: administrationId, id, image_id: imageId } } })),
-    onSuccess: (saved) => client.setQueryData(['document-styles', administrationId, id], saved),
+    onSuccess: (saved) => replaceCached(client, ['document-styles', administrationId, id], saved),
   })
 }
 
@@ -160,7 +161,7 @@ export function useRemoveStyleFile(administrationId: string, id: string) {
   return useMutation({
     mutationFn: (file: FileKind) => unwrap(api.DELETE(filePath, { params: { path: { administration_id: administrationId, id, file } } })),
     onSuccess: (saved) => {
-      client.setQueryData(['document-styles', administrationId, id], saved)
+      replaceCached(client, ['document-styles', administrationId, id], saved)
       void client.invalidateQueries({ queryKey: ['document-styles', administrationId] })
     },
   })
