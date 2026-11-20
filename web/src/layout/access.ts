@@ -62,6 +62,7 @@ export const pageAccess: Record<string, Access> = {
   user_invitations: { any: ['ownership'] },
   support_access: { any: ['ownership'] },
   delete: { any: ['ownership'] },
+  empty: { any: ['ownership'] },
   webhooks: { any: ['settings'] },
 }
 
@@ -91,7 +92,7 @@ const changeParts = new Set(['new', 'edit', 'edit_general', 'edit_default', 'val
 /** Pages, below the administration, that are forms as a whole. */
 const formPages = [
   'time_entries_wizard', 'time_entries/*', 'identities', 'document_styles', 'workflows', 'custom_fields',
-  'financial_accounts/*', 'booking_rules', 'webhooks', 'connections', 'users', 'user_invitations', 'support_access', 'delete',
+  'financial_accounts/*', 'booking_rules', 'webhooks', 'connections', 'users', 'user_invitations', 'support_access', 'delete', 'empty',
   'settings/company', 'settings/invoices_and_estimates', 'settings/bank', 'settings/connections',
 ]
 

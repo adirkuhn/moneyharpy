@@ -593,3 +593,20 @@ func qrSVG(text string) (string, error) {
 	b.WriteString(`"/></svg>`)
 	return b.String(), nil
 }
+
+// EmptyAdministration implements ServerInterface.
+func (s *server) EmptyAdministration(w http.ResponseWriter, r *http.Request, id Id) {
+	admin, ok := parseID(w, id)
+	if !ok {
+		return
+	}
+	body, ok := decodeBody[DeleteAdministrationRequest](w, r)
+	if !ok {
+		return
+	}
+	if err := s.deps.Purge.Empty(r.Context(), admin, user(r).ID, body.Name); err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

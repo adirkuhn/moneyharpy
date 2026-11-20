@@ -13217,6 +13217,41 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/administrations/{id}/empty:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    post:
+      operationId: emptyAdministration
+      x-permissions: [ownership]
+      summary: Empty an administration
+      description: >-
+        MoneyHarpy extension. Removes all the administration's data and files, permanently: contacts, documents,
+        invoices, estimates, the bank, the books, time, tasks, notes and events, and the history of imports. Its
+        users, company details, sender addresses, workflows, document styles, custom fields, connections and
+        webhooks stay; categories and VAT rates go back to the defaults. Send its name exactly as confirmation.
+        Owners only, and not while an import is running.
+      tags: [Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAdministrationRequest'
+      responses:
+        '204':
+          description: Emptied
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/users:
     parameters:
       - $ref: '#/components/parameters/administration_id'

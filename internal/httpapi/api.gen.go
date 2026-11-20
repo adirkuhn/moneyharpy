@@ -16156,6 +16156,9 @@ type UpdateAdministrationJSONRequestBody = UpdateAdministrationRequest
 // DeleteAdministrationJSONRequestBody defines body for DeleteAdministration for application/json ContentType.
 type DeleteAdministrationJSONRequestBody = DeleteAdministrationRequest
 
+// EmptyAdministrationJSONRequestBody defines body for EmptyAdministration for application/json ContentType.
+type EmptyAdministrationJSONRequestBody = DeleteAdministrationRequest
+
 // CreateAssetJSONRequestBody defines body for CreateAsset for application/json ContentType.
 type CreateAssetJSONRequestBody = AssetRequest
 
@@ -22806,6 +22809,9 @@ type ServerInterface interface {
 	// DeleteAdministration Delete an administration
 	// (POST /api/v2/administrations/{id}/delete)
 	DeleteAdministration(w http.ResponseWriter, r *http.Request, id Id)
+	// EmptyAdministration Empty an administration
+	// (POST /api/v2/administrations/{id}/empty)
+	EmptyAdministration(w http.ResponseWriter, r *http.Request, id Id)
 	// UnfavoriteAdministration Remove an administration from favorites
 	// (DELETE /api/v2/administrations/{id}/favorite)
 	UnfavoriteAdministration(w http.ResponseWriter, r *http.Request, id Id)
@@ -24330,6 +24336,12 @@ func (_ Unimplemented) UpdateAdministration(w http.ResponseWriter, r *http.Reque
 // DeleteAdministration Delete an administration
 // (POST /api/v2/administrations/{id}/delete)
 func (_ Unimplemented) DeleteAdministration(w http.ResponseWriter, r *http.Request, id Id) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// EmptyAdministration Empty an administration
+// (POST /api/v2/administrations/{id}/empty)
+func (_ Unimplemented) EmptyAdministration(w http.ResponseWriter, r *http.Request, id Id) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -27783,6 +27795,32 @@ func (siw *ServerInterfaceWrapper) DeleteAdministration(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteAdministration(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EmptyAdministration operation middleware
+func (siw *ServerInterfaceWrapper) EmptyAdministration(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id Id
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EmptyAdministration(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -45505,6 +45543,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/api/v2/administrations/{id}/delete", wrapper.DeleteAdministration)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/api/v2/administrations/{id}/empty", wrapper.EmptyAdministration)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/api/v2/{administration_id}/users", wrapper.ListUsers)

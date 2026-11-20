@@ -6520,6 +6520,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/administrations/{id}/empty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Empty an administration
+         * @description MoneyHarpy extension. Removes all the administration's data and files, permanently: contacts, documents, invoices, estimates, the bank, the books, time, tasks, notes and events, and the history of imports. Its users, company details, sender addresses, workflows, document styles, custom fields, connections and webhooks stay; categories and VAT rates go back to the defaults. Send its name exactly as confirmation. Owners only, and not while an import is running.
+         */
+        post: operations["emptyAdministration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/users": {
         parameters: {
             query?: never;
@@ -24440,6 +24462,36 @@ export interface operations {
         };
         responses: {
             /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    emptyAdministration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["id"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAdministrationRequest"];
+            };
+        };
+        responses: {
+            /** @description Emptied */
             204: {
                 headers: {
                     [name: string]: unknown;

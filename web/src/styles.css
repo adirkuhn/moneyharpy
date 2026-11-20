@@ -1178,3 +1178,7 @@ a.dropdown__item:hover { background: var(--row-hover); }
 
 /* An editor shown to a member who may not change it: only its fields are turned off. */
 fieldset.read-only { min-width: 0; margin: 0; padding: 0; border: 0; }
+
+/* What emptying an administration removes and keeps, side by side. */
+.empty-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin: 1rem 0; }
+.empty-lists__title { margin: 0 0 0.25rem; font-size: 0.9375rem; }

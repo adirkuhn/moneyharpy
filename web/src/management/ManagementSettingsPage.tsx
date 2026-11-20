@@ -311,6 +311,16 @@ function LeaveBlock({ administration: a }: { administration: Administration }) {
           <li className="ledger__row">
             <span className="link-row__icon"><PageIcon kind="delete" /></span>
             <div className="ledger__text">
+              <Link className="ledger__name ledger__name--danger" to={`/${a.id}/empty`}>{t('management.empty')}</Link>
+              <p className="hint">{t('management.emptyHelp')}</p>
+            </div>
+            <ChevronIcon className="ledger__chevron" />
+          </li>
+        )}
+        {can(a, 'ownership') && (
+          <li className="ledger__row">
+            <span className="link-row__icon"><PageIcon kind="delete" /></span>
+            <div className="ledger__text">
               <Link className="ledger__name ledger__name--danger" to={`/${a.id}/delete`}>{t('management.delete')}</Link>
               <p className="hint">{t('management.deleteHelp')}</p>
             </div>

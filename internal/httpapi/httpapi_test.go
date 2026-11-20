@@ -49,6 +49,7 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/products"
 	"github.com/adirkuhn/moneyharpy/internal/projects"
 	"github.com/adirkuhn/moneyharpy/internal/purchases"
+	"github.com/adirkuhn/moneyharpy/internal/purge"
 	"github.com/adirkuhn/moneyharpy/internal/ratelimit"
 	"github.com/adirkuhn/moneyharpy/internal/recognize"
 	"github.com/adirkuhn/moneyharpy/internal/reports"
@@ -399,6 +400,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Purchases:       documentService,
 		Recognition:     h.recognition,
 		MoneybirdImport: h.mbimport,
+		Purge:           purge.NewService(admins, postgres.NewPurgeStore(pool), files),
 		Assets:          assetService,
 		Products:        productService,
 		Projects:        projectService,

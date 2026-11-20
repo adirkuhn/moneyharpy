@@ -21,6 +21,7 @@ import { CompanySettingsPage } from './settings/CompanySettingsPage'
 import { CustomFieldFormPage } from './settings/CustomFieldFormPage'
 import { IdentityFormPage } from './settings/IdentityFormPage'
 import { DeletePage } from './management/DeletePage'
+import { EmptyPage } from './management/EmptyPage'
 import { InvitePage } from './management/InvitePage'
 import { ManagementSettingsPage } from './management/ManagementSettingsPage'
 import { PrivacyPage } from './management/PrivacyPage'
@@ -271,6 +272,9 @@ export function AppRoutes() {
         </Route>
         <Route path="/:administrationId/delete" element={<SettingsLayout />}>
           <Route index element={<DeletePage />} />
+        </Route>
+        <Route path="/:administrationId/empty" element={<SettingsLayout />}>
+          <Route index element={<EmptyPage />} />
         </Route>
         <Route path="/:administrationId/financial_accounts" element={<SettingsLayout />}>
           <Route path="new" element={<FinancialAccountPage />} />
