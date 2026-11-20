@@ -25,13 +25,13 @@ func (r *run) financialAccounts(ctx context.Context) error {
 		return err
 	}
 	st.Total = len(raws)
-	// The administration's own cash account makes way for Moneybird's,
-	// when Moneybird has exactly one.
-	cash := 0
+	// The administration's own cash account makes way for Moneybird's
+	// first one, rather than sit beside it under the same name.
+	var firstCash mbID
 	for _, raw := range raws {
 		var a mbFinancialAccount
-		if json.Unmarshal(raw, &a) == nil && a.Type == banking.CashAccount {
-			cash++
+		if json.Unmarshal(raw, &a) == nil && a.Type == banking.CashAccount && (firstCash == 0 || a.ID < firstCash) {
+			firstCash = a.ID
 		}
 	}
 	return r.take(ctx, st, kindFinancialAccount, raws, func(ctx context.Context, raw json.RawMessage) (resource.ID, error) {
@@ -44,7 +44,7 @@ func (r *run) financialAccounts(ctx context.Context) error {
 			return 0, err
 		}
 		acc, err := r.s.targets.Banking.ImportAccount(ctx, r.job.AdministrationID, r.job.UserID, banking.ImportedAccount{
-			Origin: origin(a.ID, a.stamps), Changes: a.changes(), LedgerAccountID: ledger, TakeOverCash: a.Type == banking.CashAccount && cash == 1,
+			Origin: origin(a.ID, a.stamps), Changes: a.changes(), LedgerAccountID: ledger, TakeOverCash: a.ID == firstCash,
 		})
 		if err != nil {
 			return 0, err
