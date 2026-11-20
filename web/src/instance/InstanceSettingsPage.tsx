@@ -1,3 +1,4 @@
+import { replaceCached } from '../api/cache'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -71,7 +72,7 @@ function SettingsForm() {
       setSmtpPassword('')
       setStorageSecret('')
       setBankKey('')
-      client.setQueryData(['instance-settings'], saved)
+      replaceCached(client, ['instance-settings'], saved)
       void client.invalidateQueries({ queryKey: ['providers'] })
     },
   })

@@ -1,3 +1,4 @@
+import { replaceCached } from '../api/cache'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
 import type { components } from '../api/schema'
@@ -72,7 +73,7 @@ export function useSaveProject(administrationId: string, id?: string) {
         : unwrap(api.POST('/api/v2/{administration_id}/projects', { params: { path: admin(administrationId) }, body: { project } })),
     onSuccess: (saved) => {
       if (saved.id) {
-        client.setQueryData(['project', administrationId, saved.id], saved)
+        replaceCached(client, ['project', administrationId, saved.id], saved)
       }
       void client.invalidateQueries({ queryKey: ['projects', administrationId] })
     },

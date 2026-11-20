@@ -1,3 +1,4 @@
+import { replaceCached } from '../api/cache'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from '../api/client'
 import type { components } from '../api/schema'
@@ -82,7 +83,7 @@ function useSettle(administrationId: string) {
   const client = useQueryClient()
   return (saved: TimeEntry) => {
     if (saved.id) {
-      client.setQueryData(['time_entry', administrationId, saved.id], saved)
+      replaceCached(client, ['time_entry', administrationId, saved.id], saved)
     }
     void client.invalidateQueries({ queryKey: ['time_entries', administrationId] })
   }
