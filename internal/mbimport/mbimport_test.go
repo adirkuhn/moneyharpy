@@ -514,3 +514,11 @@ func TestATextAmountTakesItsNumber(t *testing.T) {
 		}
 	}
 }
+
+func TestDescribeKeepsWhereItFailed(t *testing.T) {
+	var verr resource.ValidationError
+	verr.Add("price", "must not be zero")
+	if got := describe(fmt.Errorf("payment 1: %w", &verr)); got != "payment 1: price: must not be zero" {
+		t.Errorf("describe = %q", got)
+	}
+}
