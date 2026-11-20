@@ -525,3 +525,25 @@ func TestDescribeKeepsWhereItFailed(t *testing.T) {
 		t.Errorf("describe = %q", got)
 	}
 }
+
+func TestAResumedStepKeepsCountingWhatItImported(t *testing.T) {
+	s, store, _, _ := setup()
+	ctx := context.Background()
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	_ = s.Work(ctx)
+	// As if the import stopped in the middle of contacts and tries again.
+	now := s.now()
+	store.job.State, store.job.NextAttemptAt, store.job.Token = Running, &now, "good"
+	for i := range store.job.Steps {
+		if store.job.Steps[i].Kind == StepContacts {
+			store.job.Steps[i].Done = false
+		}
+	}
+	_ = s.Work(ctx)
+	// What this import brought in before is still imported, not skipped as if it was here before.
+	if st := store.job.Step(StepContacts); st.Imported != 1 || st.Skipped != 0 || st.Failed != 1 {
+		t.Errorf("contacts step %+v", st)
+	}
+}

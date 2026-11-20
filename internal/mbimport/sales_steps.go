@@ -100,7 +100,7 @@ func (r *run) financialMutations(ctx context.Context) error {
 		if _, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kindFinancialMutation, id); err != nil {
 			return err
 		} else if done {
-			st.Skipped++
+			st.skip()
 			continue
 		}
 		todo = append(todo, v.ID)

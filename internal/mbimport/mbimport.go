@@ -114,6 +114,19 @@ type Step struct {
 	Done     bool `json:"done"`
 	// Problems say why records failed, such as "contact 123: email is invalid".
 	Problems []string `json:"problems"`
+	// carried is what the step imported before it stopped and started
+	// again: those records it now finds here are not skipped.
+	carried int
+}
+
+// skip counts a record that is here already, unless this import brought
+// it in before it started the step again.
+func (s *Step) skip() {
+	if s.carried > 0 {
+		s.carried--
+		return
+	}
+	s.Skipped++
 }
 
 // note keeps what went wrong with part of a record, such as one of its
