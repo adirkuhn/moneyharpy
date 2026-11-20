@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -188,12 +189,12 @@ func (s *BookkeepingStore) LedgerAccount(ctx context.Context, admin, id resource
 
 // CreateLedgerAccounts implements bookkeeping.Store.
 func (s *BookkeepingStore) CreateLedgerAccounts(ctx context.Context, accounts []bookkeeping.LedgerAccount) error {
-	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error { return insertLedgerAccounts(ctx, s.q.WithTx(tx), accounts) })
+	return withDetail(pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error { return insertLedgerAccounts(ctx, s.q.WithTx(tx), accounts) }))
 }
 
 // UpdateLedgerAccounts implements bookkeeping.Store.
 func (s *BookkeepingStore) UpdateLedgerAccounts(ctx context.Context, accounts []bookkeeping.LedgerAccount) error {
-	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+	return withDetail(pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
 		for _, l := range accounts {
 			if err := q.UpdateLedgerAccount(ctx, sqlc.UpdateLedgerAccountParams{
@@ -205,7 +206,7 @@ func (s *BookkeepingStore) UpdateLedgerAccounts(ctx context.Context, accounts []
 			}
 		}
 		return nil
-	})
+	}))
 }
 
 // DeleteLedgerAccount implements bookkeeping.Store.
@@ -276,4 +277,14 @@ func (s *BookkeepingStore) DetailUsage(ctx context.Context, admin resource.ID, k
 		}
 	}
 	return u, nil
+}
+
+// withDetail adds what PostgreSQL says about a failed statement, such as
+// which name a category clashes on, to its error, which keeps its code.
+func withDetail(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Detail != "" {
+		return fmt.Errorf("%w: %s", err, pgErr.Detail)
+	}
+	return err
 }

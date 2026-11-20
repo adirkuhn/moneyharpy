@@ -90,3 +90,17 @@ func retryAt(j mbimport.Job) *time.Time {
 	}
 	return j.NextAttemptAt
 }
+
+// TryMoneybirdImportNow implements ServerInterface.
+func (s *server) TryMoneybirdImportNow(w http.ResponseWriter, r *http.Request, administrationID AdministrationId) {
+	admin, ok := parseID(w, administrationID)
+	if !ok {
+		return
+	}
+	j, err := s.deps.MoneybirdImport.TryNow(r.Context(), admin, user(r).ID)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toMoneybirdImport(j))
+}

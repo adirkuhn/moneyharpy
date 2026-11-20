@@ -439,3 +439,32 @@ func TestADuplicateRecordIsAProblemNotAStop(t *testing.T) {
 		t.Error("a database shutting down counts as a record's problem")
 	}
 }
+
+func TestTryNowBringsAQueuedImportForward(t *testing.T) {
+	s, store, mb, _ := setup()
+	ctx := context.Background()
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	s.source = downSource{mb}
+	_ = s.Work(ctx)
+	if store.job.NextAttemptAt == nil || !store.job.NextAttemptAt.After(now) {
+		t.Fatalf("not queued: %+v", store.job)
+	}
+	if _, err := s.TryNow(ctx, adminID, clerk); !errors.Is(err, membership.ErrForbidden) {
+		t.Errorf("a member who does not own it: %v", err)
+	}
+	j, err := s.TryNow(ctx, adminID, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !j.NextAttemptAt.Equal(now) || !store.job.NextAttemptAt.Equal(now) {
+		t.Errorf("next attempt %v", j.NextAttemptAt)
+	}
+	// Only a queued import can be brought forward.
+	s.source = mb
+	_ = s.Work(ctx)
+	if _, err := s.TryNow(ctx, adminID, owner); !errors.Is(err, ErrNotQueued) {
+		t.Errorf("a finished import: %v", err)
+	}
+}

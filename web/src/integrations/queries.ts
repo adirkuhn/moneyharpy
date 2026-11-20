@@ -135,3 +135,12 @@ export function useStartMoneybirdImport(administrationId: string) {
     onSuccess: (started) => client.setQueryData(['moneybird-import', administrationId], started),
   })
 }
+
+/** Brings an import queued after a failure forward, to try again now. */
+export function useTryMoneybirdImportNow(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: () => unwrap(api.POST('/api/v2/{administration_id}/moneybird_import/try_now', admin(administrationId))),
+    onSuccess: (job) => client.setQueryData(['moneybird-import', administrationId], job),
+  })
+}

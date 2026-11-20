@@ -6736,6 +6736,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/{administration_id}/moneybird_import/try_now": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Try a queued import again now
+         * @description MoneyHarpy extension. An import queued after a failure tries again at once rather than after its pause, such as once the cause was fixed. Only an import waiting to try again can.
+         */
+        post: operations["tryMoneybirdImportNow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/{administration_id}/moneybird_import/administrations": {
         parameters: {
             query?: never;
@@ -24839,6 +24861,34 @@ export interface operations {
         responses: {
             /** @description The import, started */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MoneybirdImport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    tryMoneybirdImportNow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                administration_id: components["parameters"]["administration_id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The import, due now */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

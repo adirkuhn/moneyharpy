@@ -13616,6 +13616,36 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /api/v2/{administration_id}/moneybird_import/try_now:
+    parameters:
+      - $ref: '#/components/parameters/administration_id'
+    post:
+      operationId: tryMoneybirdImportNow
+      x-permissions: [ownership]
+      summary: Try a queued import again now
+      description: >-
+        MoneyHarpy extension. An import queued after a failure tries again at once rather than after its pause, such as
+        once the cause was fixed. Only an import waiting to try again can.
+      tags: [Integrations]
+      responses:
+        '200':
+          description: The import, due now
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoneybirdImport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/v2/{administration_id}/moneybird_import/administrations:
     parameters:
       - $ref: '#/components/parameters/administration_id'
