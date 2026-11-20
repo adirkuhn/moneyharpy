@@ -6,6 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/invoicing"
+	"github.com/adirkuhn/moneyharpy/internal/membership"
+	"github.com/adirkuhn/moneyharpy/internal/notes"
+	"github.com/adirkuhn/moneyharpy/internal/tasklists"
+	"github.com/adirkuhn/moneyharpy/internal/timeentries"
 	"net/url"
 	"slices"
 
@@ -59,6 +65,27 @@ type Targets struct {
 		AddTypelessAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
 		AddGeneralAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
 	}
+	Admin interface {
+		ImportCustomField(ctx context.Context, admin, user resource.ID, o resource.Origin, in administration.NewCustomField) (administration.CustomField, error)
+		ImportIdentity(ctx context.Context, admin, user resource.ID, o resource.Origin, c administration.IdentityChanges) (administration.Identity, error)
+		UpdateDefaultIdentity(ctx context.Context, admin, user resource.ID, c administration.IdentityChanges) (administration.Identity, error)
+	}
+	Invoicing interface {
+		ImportWorkflow(ctx context.Context, admin, user resource.ID, o resource.Origin, t invoicing.WorkflowType, c invoicing.WorkflowChanges) (invoicing.Workflow, error)
+	}
+	Members interface {
+		Users(ctx context.Context, admin, user resource.ID, f membership.UserFilter) ([]membership.Member, error)
+	}
+	Notes interface {
+		Import(ctx context.Context, admin resource.ID, entityType string, entity, user resource.ID, in notes.Imported) (notes.Note, error)
+	}
+	TimeEntries interface {
+		Import(ctx context.Context, admin resource.ID, actor timeentries.Actor, o resource.Origin, in timeentries.Input) (timeentries.TimeEntry, error)
+	}
+	TaskLists interface {
+		ImportList(ctx context.Context, admin, user resource.ID, o resource.Origin, in tasklists.ListInput, groups []tasklists.ImportedGroup) (tasklists.List, error)
+		ImportTemplate(ctx context.Context, admin, user resource.ID, o resource.Origin, in tasklists.TemplateInput, groups []tasklists.ImportedGroup) (tasklists.Template, error)
+	}
 	Journal interface {
 		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c journal.DocumentChanges, rows []resource.Origin) (journal.Document, error)
 		AddDocumentAttachment(ctx context.Context, admin, id, user resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
@@ -82,6 +109,12 @@ func (r *run) step(ctx context.Context, kind string) error {
 	switch kind {
 	case StepChart:
 		return r.chart(ctx)
+	case StepCustomFields:
+		return r.customFields(ctx)
+	case StepIdentities:
+		return r.identities(ctx)
+	case StepWorkflows:
+		return r.workflows(ctx)
 	case StepContacts:
 		return r.contacts(ctx)
 	case StepProducts:
@@ -110,6 +143,12 @@ func (r *run) step(ctx context.Context, kind string) error {
 		return r.typelessDocuments(ctx)
 	case StepJournal:
 		return r.journal(ctx)
+	case StepTimeEntries:
+		return r.timeEntries(ctx)
+	case StepTaskTemplates:
+		return r.taskTemplates(ctx)
+	case StepTaskLists:
+		return r.taskLists(ctx)
 	case StepLockedPeriod:
 		return r.lockedPeriod(ctx)
 	}
@@ -207,8 +246,26 @@ func (r *run) contacts(ctx context.Context) error {
 		if err := json.Unmarshal(raw, &c); err != nil {
 			return 0, err
 		}
-		_, err := r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), c.changes(), c.people())
-		return c.ID.id(), err
+		changes := c.changes()
+		var err error
+		if changes.InvoiceWorkflowID, err = r.mapped(ctx, kindWorkflow, ref(c.InvoiceWorkflowID)); err != nil {
+			return 0, err
+		}
+		if changes.EstimateWorkflowID, err = r.mapped(ctx, kindWorkflow, ref(c.EstimateWorkflowID)); err != nil {
+			return 0, err
+		}
+		fields, err := r.fieldValues(ctx, c.CustomFields)
+		if err != nil {
+			return 0, err
+		}
+		for _, f := range fields {
+			changes.CustomFields = append(changes.CustomFields, contacts.FieldValue{FieldID: f.id, Value: f.value})
+		}
+		got, err := r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), changes, c.people())
+		if err != nil {
+			return 0, err
+		}
+		return c.ID.id(), r.notes(ctx, r.job.Step(StepContacts), contacts.NoteEntityType, got.ID, c.Notes)
 	})
 }
 

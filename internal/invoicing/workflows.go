@@ -166,6 +166,28 @@ func (s *Service) WorkflowKind(ctx context.Context, admin, id, user resource.ID)
 // CreateWorkflow adds a workflow of type t, filled from the administration's
 // defaults where c leaves fields out.
 func (s *Service) CreateWorkflow(ctx context.Context, admin, user resource.ID, t WorkflowType, c WorkflowChanges) (Workflow, error) {
+	return s.createWorkflow(ctx, admin, user, t, c, nil)
+}
+
+// ImportWorkflow adds a workflow brought in from another system, such as
+// Moneybird, keeping its id and times. Its reminders are not sent by
+// themselves: while the other system still reminds the contacts, this one
+// would remind them twice. One that is here already stays as it is.
+func (s *Service) ImportWorkflow(ctx context.Context, admin, user resource.ID, o resource.Origin, t WorkflowType, c WorkflowChanges) (Workflow, error) {
+	if w, err := s.store.Workflow(ctx, admin, o.ID); err == nil {
+		return w, nil
+	}
+	if c.Steps != nil {
+		steps := slices.Clone(*c.Steps)
+		for i := range steps {
+			steps[i].ReminderAutoSend = false
+		}
+		c.Steps = &steps
+	}
+	return s.createWorkflow(ctx, admin, user, t, c, &o)
+}
+
+func (s *Service) createWorkflow(ctx context.Context, admin, user resource.ID, t WorkflowType, c WorkflowChanges, o *resource.Origin) (Workflow, error) {
 	a, err := s.admins.Get(ctx, admin, user)
 	if err != nil {
 		return Workflow{}, err
@@ -187,6 +209,10 @@ func (s *Service) CreateWorkflow(ctx context.Context, admin, user resource.ID, t
 	}
 	if err := s.apply(&w, c); err != nil {
 		return Workflow{}, err
+	}
+	if o != nil {
+		w.ID = o.ID
+		w.CreatedAt, _ = o.Or(s.now())
 	}
 	s.stamp(&w)
 	// The store keeps one default per type, so a new default is stored as a

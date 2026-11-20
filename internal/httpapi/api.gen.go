@@ -1711,12 +1711,14 @@ func (e MoneybirdImportState) Valid() bool {
 const (
 	MoneybirdImportStepKindChart                   MoneybirdImportStepKind = "chart"
 	MoneybirdImportStepKindContacts                MoneybirdImportStepKind = "contacts"
+	MoneybirdImportStepKindCustomFields            MoneybirdImportStepKind = "custom_fields"
 	MoneybirdImportStepKindEstimates               MoneybirdImportStepKind = "estimates"
 	MoneybirdImportStepKindExternalSalesInvoices   MoneybirdImportStepKind = "external_sales_invoices"
 	MoneybirdImportStepKindFinancialAccounts       MoneybirdImportStepKind = "financial_accounts"
 	MoneybirdImportStepKindFinancialMutations      MoneybirdImportStepKind = "financial_mutations"
 	MoneybirdImportStepKindGeneralDocuments        MoneybirdImportStepKind = "general_documents"
 	MoneybirdImportStepKindGeneralJournalDocuments MoneybirdImportStepKind = "general_journal_documents"
+	MoneybirdImportStepKindIdentities              MoneybirdImportStepKind = "identities"
 	MoneybirdImportStepKindLockedPeriod            MoneybirdImportStepKind = "locked_period"
 	MoneybirdImportStepKindProducts                MoneybirdImportStepKind = "products"
 	MoneybirdImportStepKindProjects                MoneybirdImportStepKind = "projects"
@@ -1724,7 +1726,11 @@ const (
 	MoneybirdImportStepKindReceipts                MoneybirdImportStepKind = "receipts"
 	MoneybirdImportStepKindRecurringSalesInvoices  MoneybirdImportStepKind = "recurring_sales_invoices"
 	MoneybirdImportStepKindSalesInvoices           MoneybirdImportStepKind = "sales_invoices"
+	MoneybirdImportStepKindTaskListTemplates       MoneybirdImportStepKind = "task_list_templates"
+	MoneybirdImportStepKindTaskLists               MoneybirdImportStepKind = "task_lists"
+	MoneybirdImportStepKindTimeEntries             MoneybirdImportStepKind = "time_entries"
 	MoneybirdImportStepKindTypelessDocuments       MoneybirdImportStepKind = "typeless_documents"
+	MoneybirdImportStepKindWorkflows               MoneybirdImportStepKind = "workflows"
 )
 
 // Valid indicates whether the value is a known member of the MoneybirdImportStepKind enum.
@@ -1733,6 +1739,8 @@ func (e MoneybirdImportStepKind) Valid() bool {
 	case MoneybirdImportStepKindChart:
 		return true
 	case MoneybirdImportStepKindContacts:
+		return true
+	case MoneybirdImportStepKindCustomFields:
 		return true
 	case MoneybirdImportStepKindEstimates:
 		return true
@@ -1745,6 +1753,8 @@ func (e MoneybirdImportStepKind) Valid() bool {
 	case MoneybirdImportStepKindGeneralDocuments:
 		return true
 	case MoneybirdImportStepKindGeneralJournalDocuments:
+		return true
+	case MoneybirdImportStepKindIdentities:
 		return true
 	case MoneybirdImportStepKindLockedPeriod:
 		return true
@@ -1760,7 +1770,15 @@ func (e MoneybirdImportStepKind) Valid() bool {
 		return true
 	case MoneybirdImportStepKindSalesInvoices:
 		return true
+	case MoneybirdImportStepKindTaskListTemplates:
+		return true
+	case MoneybirdImportStepKindTaskLists:
+		return true
+	case MoneybirdImportStepKindTimeEntries:
+		return true
 	case MoneybirdImportStepKindTypelessDocuments:
+		return true
+	case MoneybirdImportStepKindWorkflows:
 		return true
 	default:
 		return false

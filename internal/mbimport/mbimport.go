@@ -56,10 +56,15 @@ const (
 // The steps of an import, in the order they run: what comes later refers to
 // what came before.
 const (
-	StepChart    = "chart"
-	StepContacts = "contacts"
-	StepProducts = "products"
-	StepProjects = "projects"
+	StepChart = "chart"
+	// StepCustomFields, StepIdentities and StepWorkflows come before the
+	// contacts and documents that use them.
+	StepCustomFields = "custom_fields"
+	StepIdentities   = "identities"
+	StepWorkflows    = "workflows"
+	StepContacts     = "contacts"
+	StepProducts     = "products"
+	StepProjects     = "projects"
 	// StepFinancialAccounts and StepFinancialMutations bring the bank in
 	// before the invoices, whose payments are made with its transactions.
 	StepFinancialAccounts  = "financial_accounts"
@@ -74,6 +79,10 @@ const (
 	StepGeneralDocuments  = "general_documents"
 	StepTypelessDocuments = "typeless_documents"
 	StepJournal           = "general_journal_documents"
+	// StepTimeEntries comes after the invoices the time was billed on.
+	StepTimeEntries   = "time_entries"
+	StepTaskTemplates = "task_list_templates"
+	StepTaskLists     = "task_lists"
 	// StepLockedPeriod locks the books as Moneybird had them, last, so the
 	// lock stops nothing the import brings in.
 	StepLockedPeriod = "locked_period"
@@ -81,9 +90,9 @@ const (
 
 // Steps lists the steps an import takes.
 var Steps = []string{
-	StepChart, StepContacts, StepProducts, StepProjects, StepFinancialAccounts, StepFinancialMutations, StepEstimates, StepRecurring,
+	StepChart, StepCustomFields, StepIdentities, StepWorkflows, StepContacts, StepProducts, StepProjects, StepFinancialAccounts, StepFinancialMutations, StepEstimates, StepRecurring,
 	StepSalesInvoices, StepExternalInvoices, StepPurchaseInvoices, StepReceipts, StepGeneralDocuments, StepTypelessDocuments, StepJournal,
-	StepLockedPeriod,
+	StepTimeEntries, StepTaskTemplates, StepTaskLists, StepLockedPeriod,
 }
 
 // maxProblems caps the problems a step keeps, so a step that fails on every
@@ -173,6 +182,7 @@ type Reader interface {
 	List(ctx context.Context, adminID, path string, query url.Values) ([]json.RawMessage, error)
 	SyncIDs(ctx context.Context, adminID, kind string, query url.Values) ([]Version, error)
 	FetchByIDs(ctx context.Context, adminID, kind string, ids []string) ([]json.RawMessage, error)
+	Get(ctx context.Context, adminID, path string, query url.Values) (json.RawMessage, error)
 	// Download reads a file, such as an attachment, at a path below the
 	// administration; it returns its content type too.
 	Download(ctx context.Context, adminID, path string) ([]byte, string, error)

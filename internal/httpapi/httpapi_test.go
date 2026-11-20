@@ -377,13 +377,16 @@ func newHarness(t *testing.T, opts options) *harness {
 	invoiceService.UseRecurringHook(h.subscriptions)
 	h.downloads = downloads.NewService(admins, subscriptionStore, files, ids, time.Now)
 	h.moneybird = newFakeMoneybird(t)
+	taskListService := tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now)
+	memberService := membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now)
 	h.mbimport = mbimport.NewService(admins, mbclient.ImportSource{BaseURL: h.moneybird.URL + "/api/v2", HTTP: h.moneybird.Client()},
 		postgres.NewMoneybirdImportStore(pool), settings.NewCipher("test-secret"),
-		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService, Banking: bank, Sales: invoiceService, Purchases: documentService, Journal: ledger}, time.Now)
+		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService, Banking: bank, Sales: invoiceService, Purchases: documentService, Journal: ledger,
+			Admin: admins, Invoicing: invoices, Members: memberService, Notes: noteService, TimeEntries: timeEntryService, TaskLists: taskListService}, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
-		Membership:      membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
+		Membership:      memberService,
 		Connections:     connections.NewService(admins, postgres.NewConnectionStore(pool), ids, time.Now),
 		Webhooks:        h.hooks,
 		Bookkeeping:     books,
@@ -403,7 +406,7 @@ func newHarness(t *testing.T, opts options) *harness {
 		Downloads:       h.downloads,
 		Reports:         reports.NewService(admins, postgres.NewReportStore(pool), h.downloads, books, time.Now),
 		TimeEntries:     timeEntryService,
-		TaskLists:       tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
+		TaskLists:       taskListService,
 		VatReturns:      vatReturnService,
 		Audits:          audits.NewService(admins, postgres.NewAuditStore(pool), ids, time.Now),
 		Storage:         files,

@@ -174,6 +174,10 @@ type mbContact struct {
 	SIIdentifier             *string           `json:"si_identifier"`
 	SIIdentifierType         *string           `json:"si_identifier_type"`
 	Archived                 *bool             `json:"archived"`
+	InvoiceWorkflowID        *mbID             `json:"invoice_workflow_id"`
+	EstimateWorkflowID       *mbID             `json:"estimate_workflow_id"`
+	CustomFields             []mbFieldValue    `json:"custom_fields"`
+	Notes                    []mbNote          `json:"notes"`
 	ContactPeople            []mbContactPerson `json:"contact_people"`
 	stamps
 }
@@ -352,6 +356,10 @@ type mbSalesInvoice struct {
 	MarkedDubiousOn        *string        `json:"marked_dubious_on"`
 	MarkedUncollectibleOn  *string        `json:"marked_uncollectible_on"`
 	OriginalEstimateID     *mbID          `json:"original_estimate_id"`
+	WorkflowID             *mbID          `json:"workflow_id"`
+	IdentityID             *mbID          `json:"identity_id"`
+	CustomFields           []mbFieldValue `json:"custom_fields"`
+	Notes                  []mbNote       `json:"notes"`
 	RecurringID            *mbID          `json:"recurring_sales_invoice_id"`
 	Details                []mbDetail     `json:"details"`
 	Payments               []mbPayment    `json:"payments"`
@@ -378,6 +386,7 @@ type mbExternalInvoice struct {
 	Details               []mbDetail     `json:"details"`
 	Payments              []mbPayment    `json:"payments"`
 	Attachments           []mbAttachment `json:"attachments"`
+	Notes                 []mbNote       `json:"notes"`
 	stamps
 }
 
@@ -423,6 +432,10 @@ type mbEstimate struct {
 	AcceptedAt       *time.Time     `json:"accepted_at"`
 	RejectedAt       *time.Time     `json:"rejected_at"`
 	ArchivedAt       *time.Time     `json:"archived_at"`
+	WorkflowID       *mbID          `json:"workflow_id"`
+	IdentityID       *mbID          `json:"identity_id"`
+	CustomFields     []mbFieldValue `json:"custom_fields"`
+	Notes            []mbNote       `json:"notes"`
 	Details          []mbDetail     `json:"details"`
 	Attachments      []mbAttachment `json:"attachments"`
 	stamps
@@ -443,6 +456,8 @@ type mbRecurring struct {
 	FrequencyType     *string    `json:"frequency_type"`
 	Frequency         *int       `json:"frequency"`
 	PricesAreInclTax  *bool      `json:"prices_are_incl_tax"`
+	WorkflowID        *mbID      `json:"workflow_id"`
+	Notes             []mbNote   `json:"notes"`
 	Details           []mbDetail `json:"details"`
 	stamps
 }
@@ -460,6 +475,7 @@ type mbPurchase struct {
 	Details          []mbDetail     `json:"details"`
 	Payments         []mbPayment    `json:"payments"`
 	Attachments      []mbAttachment `json:"attachments"`
+	Notes            []mbNote       `json:"notes"`
 	stamps
 }
 
@@ -481,6 +497,7 @@ type mbJournal struct {
 	JournalType *string          `json:"journal_type"`
 	Entries     []mbJournalEntry `json:"general_journal_document_entries"`
 	Attachments []mbAttachment   `json:"attachments"`
+	Notes       []mbNote         `json:"notes"`
 	stamps
 }
 
@@ -493,5 +510,6 @@ type mbDocumentBase struct {
 	DueDate     *string        `json:"due_date"`
 	EntryNumber *int           `json:"entry_number"`
 	Attachments []mbAttachment `json:"attachments"`
+	Notes       []mbNote       `json:"notes"`
 	stamps
 }

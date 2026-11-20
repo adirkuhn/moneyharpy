@@ -70,7 +70,22 @@ func NewService(store Store, ids *resource.Generator, now func() time.Time) *Ser
 
 // Add writes a note by user on a record.
 func (s *Service) Add(ctx context.Context, admin resource.ID, entityType string, entity, user resource.ID, in Input) (Note, error) {
-	n := Note{ID: s.ids.Next(), AdministrationID: admin, EntityID: entity, EntityType: entityType, UserID: user, Todo: in.Todo, Note: strings.TrimSpace(in.Note)}
+	n, err := s.build(ctx, admin, entityType, entity, user, in)
+	if err != nil {
+		return Note{}, err
+	}
+	n.ID = s.ids.Next()
+	n.CreatedAt = s.now()
+	n.UpdatedAt = n.CreatedAt
+	if err := s.store.CreateNote(ctx, n); err != nil {
+		return Note{}, fmt.Errorf("store note: %w", err)
+	}
+	return n, nil
+}
+
+// build checks a new note and makes it, without its id and times.
+func (s *Service) build(ctx context.Context, admin resource.ID, entityType string, entity, user resource.ID, in Input) (Note, error) {
+	n := Note{AdministrationID: admin, EntityID: entity, EntityType: entityType, UserID: user, Todo: in.Todo, Note: strings.TrimSpace(in.Note)}
 	var verr resource.ValidationError
 	switch {
 	case n.Note == "":
@@ -88,11 +103,6 @@ func (s *Service) Add(ctx context.Context, admin resource.ID, entityType string,
 	}
 	if err := verr.OrNil(); err != nil {
 		return Note{}, err
-	}
-	n.CreatedAt = s.now()
-	n.UpdatedAt = n.CreatedAt
-	if err := s.store.CreateNote(ctx, n); err != nil {
-		return Note{}, fmt.Errorf("store note: %w", err)
 	}
 	return n, nil
 }
