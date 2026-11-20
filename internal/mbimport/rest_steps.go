@@ -231,7 +231,7 @@ func (r *run) identities(ctx context.Context) error {
 				st.Imported++
 			}
 		} else {
-			st.Skipped++
+			st.skip()
 		}
 	}
 	raws, err := r.read.List(ctx, r.job.SourceID, "identities", nil)

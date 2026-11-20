@@ -122,8 +122,9 @@ func (s *Service) steps(ctx context.Context, j *Job) error {
 		if st.Done {
 			continue
 		}
-		// A step that ran before starts its counts again; what it imported is skipped.
-		*st = Step{Kind: kind, Problems: []string{}}
+		// A step that ran before counts again, but what it imported stays
+		// imported rather than skipped as if it had been here before.
+		*st = Step{Kind: kind, Problems: []string{}, Imported: st.Imported, carried: st.Imported}
 		if err := r.step(ctx, kind); err != nil {
 			return fmt.Errorf("%s: %w", kind, err)
 		}

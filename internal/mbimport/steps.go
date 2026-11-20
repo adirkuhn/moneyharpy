@@ -350,7 +350,7 @@ func (r *run) synced(ctx context.Context, step, path, kind string, query url.Val
 			return err
 		}
 		if done {
-			st.Skipped++
+			st.skip()
 			continue
 		}
 		todo = append(todo, v.ID)
@@ -402,7 +402,7 @@ func (r *run) take(ctx context.Context, st *Step, kind string, raws []json.RawMe
 		if _, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kind, head.ID.id()); err != nil {
 			return err
 		} else if done {
-			st.Skipped++
+			st.skip()
 			continue
 		}
 		id, err := one(ctx, raw)
