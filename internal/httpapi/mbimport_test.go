@@ -61,6 +61,10 @@ func TestImportFromMoneybird(t *testing.T) {
 		!strings.Contains(text, "send_invoices_to_email: is not a valid email address") {
 		t.Errorf("problems = %s", text)
 	}
+	// An invoice made from an estimate or recurring invoice that did not come in comes in without the link.
+	if !strings.Contains(text, "estimate 504000000000000149, which is not here") || !strings.Contains(text, "recurring_sales_invoice 504000000000000159, which is not here") {
+		t.Errorf("no note of the missing estimate: %s", text)
+	}
 	// Moneybird's way of writing several addresses is tidied; a contact comes in without a field that does not pass.
 	beispiel := decode[map[string]any](t, owner.do(http.MethodGet, api+"/contacts/504000000000000503", nil))
 	if beispiel["send_invoices_to_email"] != "ann@example.com, billing@example.com" || beispiel["sepa_bic"] != nil {
