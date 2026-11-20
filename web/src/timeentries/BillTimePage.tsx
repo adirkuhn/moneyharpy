@@ -8,7 +8,7 @@ import { useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
 import { formatAmount } from '../banking/queries'
 import { SegmentedRow } from '../contacts/ContactFormParts'
 import { contactName as nameOf } from '../contacts/queries'
-import { formErrors, SelectInput, TextInput } from '../forms/Form'
+import { FormRow, formErrors, SelectInput } from '../forms/Form'
 import { RadioRow } from '../forms/RadioRow'
 import { ContactPicker } from '../invoices/ContactPicker'
 import { useSalesInvoices, useSaveSalesInvoice } from '../invoices/queries'
@@ -59,8 +59,9 @@ export function BillTimePage() {
     return (
       <Page wide title={t('timeEntries.bill.title')}>
         <form className="bill-step" aria-label={t('timeEntries.bill.contactStep')} onSubmit={(e) => { e.preventDefault(); if (contact) setStep(2) }}>
-          <h2 className="bill-step__question">{t('timeEntries.bill.whichContact')}</h2>
           <div className="bill-step__card">
+            <h2 className="bill-step__question">{t('timeEntries.bill.whichContact')}</h2>
+            <div className="bill-step__body">
             <ContactPicker
               administrationId={administrationId}
               label={t('timeEntries.contact')}
@@ -70,6 +71,7 @@ export function BillTimePage() {
                 setChosen(new Set())
               }}
             />
+            </div>
           </div>
           <BottomBar step={1}>
             {cancel}
@@ -259,9 +261,11 @@ function InvoiceStep({ administrationId, contact, entries, cancel, back }: Invoi
 
   return (
     <form className="bill-step" aria-label={t('timeEntries.bill.invoiceStep')} onSubmit={submit}>
+      <div className="bill-step__card">
       <h2 className="bill-step__question">{t('timeEntries.bill.how')}</h2>
+      <div className="bill-step__body bill-step__body--narrow">
       <Problems messages={[...errors.general, ...(errors.field('price') ?? [])]} />
-      <div className="bill-step__card bill-step__kind">
+      <div className="bill-step__kind">
         <SegmentedRow
           label={t('timeEntries.bill.kind')}
           value={kind}
@@ -269,7 +273,6 @@ function InvoiceStep({ administrationId, contact, entries, cancel, back }: Invoi
           onChange={setKind}
         />
       </div>
-      <div className="bill-step__card">
         {kind === 'existing_invoice' && (
           <>
             <SelectInput label={t('timeEntries.invoice')} value={invoice?.id ?? ''} onChange={(e) => setInvoiceId(e.target.value)} disabled={existing.length === 0}>
@@ -311,11 +314,19 @@ function InvoiceStep({ administrationId, contact, entries, cancel, back }: Invoi
             </div>
           </fieldset>
         )}
-        <TextInput label={t('timeEntries.bill.rate')} inputMode="decimal" placeholder="0.00" width="medium" maxLength={16} value={rate} onChange={(e) => setRate(e.target.value)} />
-        <SelectInput label={t('timeEntries.bill.category')} value={ledger} onChange={(e) => setLedger(e.target.value)}>
+        <FormRow label={t('timeEntries.bill.rate')} width="small">
+          {({ labelId: _, ...control }) => (
+            <span className="bill-step__money">
+              <span className="bill-step__currency" aria-hidden="true">€</span>
+              <input {...control} type="text" inputMode="decimal" placeholder="0.00" maxLength={16} value={rate} onChange={(e) => setRate(e.target.value)} />
+            </span>
+          )}
+        </FormRow>
+        <SelectInput label={t('timeEntries.bill.category')} width="medium" value={ledger} onChange={(e) => setLedger(e.target.value)}>
           <option value="">{t('invoices.uncategorized')}</option>
           {revenue.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
         </SelectInput>
+      </div>
       </div>
       <BottomBar step={3}>
         {cancel}

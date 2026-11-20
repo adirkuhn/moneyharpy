@@ -96,6 +96,14 @@ export function isAt(path: string, to: string): boolean {
   return path === to || path.startsWith(`${to}/`)
 }
 
+/** The link of the page at `path`: the most specific one, so a report's sub-report does not also mark the report. */
+export function currentLink(items: NavItem[], path: string): string | undefined {
+  return items
+    .flatMap((i) => i.children ?? [i])
+    .filter((l) => l.ready && isAt(path, l.to))
+    .reduce<string | undefined>((best, l) => (best === undefined || l.to.length > best.length ? l.to : best), undefined)
+}
+
 /** Whether the page at `path` belongs to the item. */
 export function contains(item: NavItem, path: string): boolean {
   return (item.children ?? [item]).some((l) => l.ready && isAt(path, l.to))

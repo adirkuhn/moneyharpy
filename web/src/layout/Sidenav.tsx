@@ -4,7 +4,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { useAdministrationId } from './administrationId'
 import { CaretIcon, NavIcon } from './icons'
-import { contains, isAt, visibleItems, type NavItem, type NavLink } from './sidenavItems'
+import { contains, currentLink, visibleItems, type NavItem, type NavLink } from './sidenavItems'
 
 const sidenavId = 'sidenav'
 const laterId = 'sidenav-later'
@@ -80,6 +80,7 @@ function Sidenav() {
   const { setOpen, setPresent } = drawer
   const [collapsed, setCollapsed] = useState(storedCollapsed)
   const items = visibleItems(administration.data?.permissions ?? [])
+  const currentTo = currentLink(items, path)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -139,7 +140,7 @@ function Sidenav() {
         </span>
       )
     }
-    const current = isAt(path, link.to)
+    const current = link.to === currentTo
     return (
       <Link className={`sidenav__link${current ? ' is-active' : ''}`} to={`/${id}/${link.to}`} aria-current={current ? 'page' : undefined} title={title}>
         {content}

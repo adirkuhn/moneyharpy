@@ -246,9 +246,9 @@ function TimerForm({ administrationId, userId, day }: { administrationId: string
           )}
         </FormRow>
       </div>
-      <label className="timer-form__billable check">
+      <label className="timer-form__billable">
+        <span className="form-input__label">{t('timeEntries.billableShort')}</span>
         <input type="checkbox" checked={billable} onChange={(e) => setBillable(e.target.checked)} />
-        <span>{t('timeEntries.billableShort')}</span>
       </label>
       <div className="timer-form__button">
         {end.trim() ? (
@@ -299,7 +299,7 @@ function DayTable({ administrationId, entries, now, today }: DayProps) {
           </tr>
         ) : (
           entries.map((e) => (
-            <tr key={e.id}>
+            <tr key={e.id} className={e.ended_at ? undefined : 'is-running'}>
               <td>
                 <Link to={`/${administrationId}/time_entries/${e.id}`}>
                   {`${time(e.started_at)} - ${e.ended_at ? time(e.ended_at) : t('timeEntries.register.now')}`}
@@ -320,7 +320,7 @@ function DayTable({ administrationId, entries, now, today }: DayProps) {
       </tbody>
       <tfoot>
         <tr>
-          <th scope="row" colSpan={6}>{t('timeEntries.register.total')}</th>
+          <th scope="row" colSpan={6}><span className="sr-only">{t('timeEntries.register.total')}</span></th>
           <td className="timesheet-table__amount">{clock(total)}</td>
           <td />
         </tr>
@@ -341,7 +341,7 @@ function TimerButton({ administrationId, entry, canResume }: { administrationId:
   return (
     <button
       type="button"
-      className={`btn btn--secondary btn--icon btn--small timer-button timer-button--${action}`}
+      className={`icon-btn timer-button timer-button--${action}`}
       aria-label={label}
       title={label}
       disabled={timer.isPending}
