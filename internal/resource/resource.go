@@ -175,3 +175,23 @@ func (e *ValidationError) OrNil() error {
 func (e *ValidationError) Error() string {
 	return "invalid fields: " + strings.Join(slices.Sorted(maps.Keys(e.Fields)), ", ")
 }
+
+// Origin is where a record brought in from another system, such as
+// Moneybird, came from: the id and times it had there, which it keeps.
+type Origin struct {
+	ID        ID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// Or returns the origin's times, falling back to now for the ones missing.
+func (o Origin) Or(now time.Time) (created, updated time.Time) {
+	created, updated = o.CreatedAt, o.UpdatedAt
+	if created.IsZero() {
+		created = now
+	}
+	if updated.IsZero() {
+		updated = created
+	}
+	return created, updated
+}

@@ -1,0 +1,275 @@
+package mbimport
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/url"
+
+	"github.com/adirkuhn/moneyharpy/internal/bookkeeping"
+	"github.com/adirkuhn/moneyharpy/internal/contacts"
+	"github.com/adirkuhn/moneyharpy/internal/products"
+	"github.com/adirkuhn/moneyharpy/internal/projects"
+	"github.com/adirkuhn/moneyharpy/internal/resource"
+)
+
+// Targets are the services that take in imported records, keeping their
+// Moneybird ids. Each checks a record as it checks one made here.
+type Targets struct {
+	Books interface {
+		ImportChart(ctx context.Context, admin, user resource.ID, in bookkeeping.ChartImport) (bookkeeping.ChartIDs, error)
+	}
+	Contacts interface {
+		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c contacts.Changes, people []contacts.ImportedPerson) (contacts.Contact, error)
+	}
+	Products interface {
+		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c products.Changes) (products.Product, error)
+	}
+	Projects interface {
+		Import(ctx context.Context, admin, user resource.ID, o resource.Origin, c projects.Changes) (projects.Project, error)
+	}
+}
+
+// batch is how many records a step takes in before it saves its progress,
+// the most Moneybird's synchronization returns at once.
+const batch = 100
+
+// run is one job at work: its Moneybird reader and a way to save progress.
+type run struct {
+	s    *Service
+	job  *Job
+	read Reader
+	save func(ctx context.Context) error
+}
+
+func (r *run) step(ctx context.Context, kind string) error {
+	switch kind {
+	case StepChart:
+		return r.chart(ctx)
+	case StepContacts:
+		return r.contacts(ctx)
+	case StepProducts:
+		return r.products(ctx)
+	case StepProjects:
+		return r.projects(ctx)
+	}
+	return fmt.Errorf("unknown import step %q", kind)
+}
+
+// mapped returns the id here of a record Moneybird refers to by id: the same
+// id, unless the chart step took a default in its place.
+func (r *run) mapped(ctx context.Context, kind string, source *resource.ID) (*resource.ID, error) {
+	if source == nil {
+		return nil, nil
+	}
+	target, ok, err := r.s.store.Imported(ctx, r.job.AdministrationID, kind, *source)
+	if err != nil || !ok {
+		return nil, err
+	}
+	return &target, nil
+}
+
+// The kinds the store remembers imported ids by.
+const (
+	kindLedgerAccount = "ledger_account"
+	kindTaxRate       = "tax_rate"
+	kindContact       = "contact"
+	kindProduct       = "product"
+	kindProject       = "project"
+)
+
+func (r *run) chart(ctx context.Context) error {
+	st := r.job.Step(StepChart)
+	accounts, err := r.read.List(ctx, r.job.SourceID, "ledger_accounts", nil)
+	if err != nil {
+		return err
+	}
+	rates, err := r.read.List(ctx, r.job.SourceID, "tax_rates", nil)
+	if err != nil {
+		return err
+	}
+	st.Total = len(accounts) + len(rates)
+	in := bookkeeping.ChartImport{}
+	kinds := map[resource.ID]string{}
+	for _, raw := range accounts {
+		var a mbLedgerAccount
+		if err := json.Unmarshal(raw, &a); err != nil || a.ID == 0 {
+			st.problem("category: %v", errOr(err, "no id"))
+			continue
+		}
+		in.Accounts = append(in.Accounts, a.imported())
+		kinds[a.ID.id()] = kindLedgerAccount
+	}
+	for _, raw := range rates {
+		var t mbTaxRate
+		if err := json.Unmarshal(raw, &t); err != nil || t.ID == 0 {
+			st.problem("VAT rate: %v", errOr(err, "no id"))
+			continue
+		}
+		in.Rates = append(in.Rates, t.imported())
+		kinds[t.ID.id()] = kindTaxRate
+	}
+	ids, err := r.s.targets.Books.ImportChart(ctx, r.job.AdministrationID, r.job.UserID, in)
+	if err != nil {
+		return err
+	}
+	for source, target := range ids {
+		if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kinds[source], source, target); err != nil {
+			return err
+		}
+	}
+	st.Imported = len(ids)
+	st.Skipped = st.Total - st.Imported - st.Failed
+	return nil
+}
+
+func (r *run) contacts(ctx context.Context) error {
+	return r.synced(ctx, StepContacts, "contacts", kindContact, func(ctx context.Context, raw json.RawMessage) (resource.ID, error) {
+		var c mbContact
+		if err := json.Unmarshal(raw, &c); err != nil {
+			return 0, err
+		}
+		_, err := r.s.targets.Contacts.Import(ctx, r.job.AdministrationID, r.job.UserID, c.origin(), c.changes(), c.people())
+		return c.ID.id(), err
+	})
+}
+
+func (r *run) products(ctx context.Context) error {
+	return r.listed(ctx, StepProducts, "products", nil, kindProduct, func(ctx context.Context, raw json.RawMessage) (resource.ID, error) {
+		var p mbProduct
+		if err := json.Unmarshal(raw, &p); err != nil {
+			return 0, err
+		}
+		changes := p.changes()
+		var err error
+		if changes.TaxRateID, err = r.mapped(ctx, kindTaxRate, ref(p.TaxRateID)); err != nil {
+			return 0, err
+		}
+		if changes.LedgerAccountID, err = r.mapped(ctx, kindLedgerAccount, ref(p.LedgerAccountID)); err != nil {
+			return 0, err
+		}
+		_, err = r.s.targets.Products.Import(ctx, r.job.AdministrationID, r.job.UserID, p.origin(), changes)
+		return p.ID.id(), err
+	})
+}
+
+func (r *run) projects(ctx context.Context) error {
+	// Moneybird lists active projects unless asked for all.
+	query := url.Values{"filter": {"state:all"}}
+	return r.listed(ctx, StepProjects, "projects", query, kindProject, func(ctx context.Context, raw json.RawMessage) (resource.ID, error) {
+		var p mbProject
+		if err := json.Unmarshal(raw, &p); err != nil {
+			return 0, err
+		}
+		_, err := r.s.targets.Projects.Import(ctx, r.job.AdministrationID, r.job.UserID, p.origin(), p.changes())
+		return p.ID.id(), err
+	})
+}
+
+// importOne takes in one record and returns its Moneybird id.
+type importOne func(ctx context.Context, raw json.RawMessage) (resource.ID, error)
+
+// synced imports the records of a kind Moneybird synchronizes: it lists
+// their ids and versions, and fetches only the ones not imported yet, a
+// batch at a time.
+func (r *run) synced(ctx context.Context, step, path, kind string, one importOne) error {
+	st := r.job.Step(step)
+	versions, err := r.read.SyncIDs(ctx, r.job.SourceID, path, nil)
+	if err != nil {
+		return err
+	}
+	st.Total = len(versions)
+	var todo []string
+	for _, v := range versions {
+		id, err := resource.ParseID(v.ID)
+		if err != nil {
+			st.problem("%s %s: %v", kind, v.ID, err)
+			continue
+		}
+		_, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kind, id)
+		if err != nil {
+			return err
+		}
+		if done {
+			st.Skipped++
+			continue
+		}
+		todo = append(todo, v.ID)
+	}
+	for start := 0; start < len(todo); start += batch {
+		raws, err := r.read.FetchByIDs(ctx, r.job.SourceID, path, todo[start:min(start+batch, len(todo))])
+		if err != nil {
+			return err
+		}
+		if err := r.take(ctx, st, kind, raws, one); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// listed imports the records of a kind Moneybird only lists, page by page.
+func (r *run) listed(ctx context.Context, step, path string, query url.Values, kind string, one importOne) error {
+	st := r.job.Step(step)
+	raws, err := r.read.List(ctx, r.job.SourceID, path, query)
+	if err != nil {
+		return err
+	}
+	st.Total = len(raws)
+	for start := 0; start < len(raws); start += batch {
+		if err := r.take(ctx, st, kind, raws[start:min(start+batch, len(raws))], one); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// take imports a batch, skipping what was imported before and noting what
+// fails, and saves the progress.
+func (r *run) take(ctx context.Context, st *Step, kind string, raws []json.RawMessage, one importOne) error {
+	for _, raw := range raws {
+		var head struct {
+			ID mbID `json:"id"`
+		}
+		if err := json.Unmarshal(raw, &head); err != nil || head.ID == 0 {
+			st.problem("%s: %v", kind, errOr(err, "no id"))
+			continue
+		}
+		if _, done, err := r.s.store.Imported(ctx, r.job.AdministrationID, kind, head.ID.id()); err != nil {
+			return err
+		} else if done {
+			st.Skipped++
+			continue
+		}
+		id, err := one(ctx, raw)
+		if err != nil {
+			if isRecordProblem(err) {
+				st.problem("%s %d: %v", kind, head.ID, err)
+				continue
+			}
+			return err
+		}
+		if err := r.s.store.RecordImported(ctx, r.job.AdministrationID, kind, id, id); err != nil {
+			return err
+		}
+		st.Imported++
+	}
+	return r.save(ctx)
+}
+
+// isRecordProblem tells a record the import cannot take, which it notes and
+// passes, from a failure that stops the import.
+func isRecordProblem(err error) bool {
+	var verr *resource.ValidationError
+	var syntax *json.SyntaxError
+	var typeErr *json.UnmarshalTypeError
+	return errors.As(err, &verr) || errors.As(err, &syntax) || errors.As(err, &typeErr)
+}
+
+func errOr(err error, fallback string) string {
+	if err != nil {
+		return err.Error()
+	}
+	return fallback
+}

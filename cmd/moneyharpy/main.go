@@ -38,6 +38,8 @@ import (
 	"github.com/adirkuhn/moneyharpy/internal/kvkweb"
 	"github.com/adirkuhn/moneyharpy/internal/lm2"
 	"github.com/adirkuhn/moneyharpy/internal/mail"
+	"github.com/adirkuhn/moneyharpy/internal/mbclient"
+	"github.com/adirkuhn/moneyharpy/internal/mbimport"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
 	"github.com/adirkuhn/moneyharpy/internal/objectstore"
@@ -227,6 +229,9 @@ func run(logger *slog.Logger) error {
 	// installation to stay a polite visitor.
 	kvkWebsite := kvkweb.New(instance, kvkweb.ProductionURL, kvkweb.ProductionEnvConfig, outbound, ratelimit.New(30, time.Minute))
 	registers := administration.Registers{kvk.New(instance, kvk.ProductionURL, outbound), kvkWebsite}
+	// Imports read Moneybird within its rate limit; a whole administration can take a while, hence the longer timeout.
+	moneybirdImport := mbimport.NewService(admins, mbclient.ImportSource{HTTP: &http.Client{Timeout: time.Minute}}, postgres.NewMoneybirdImportStore(pool), cipher,
+		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService}, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
@@ -239,6 +244,7 @@ func run(logger *slog.Logger) error {
 		Events:            events,
 		Purchases:         documentService,
 		Recognition:       recognition,
+		MoneybirdImport:   moneybirdImport,
 		Assets:            assetService,
 		Products:          productService,
 		Projects:          projectService,
@@ -293,6 +299,7 @@ func run(logger *slog.Logger) error {
 	go subscriptionService.Run(ctx, time.Minute, func(err error) { logger.Error("subscription charge billing", "error", err) })
 	go recognition.Run(ctx, 15*time.Second, func(err error) { logger.Error("scan and recognise", "error", err) })
 	go bank.Run(ctx, 30*time.Minute)
+	go moneybirdImport.Run(ctx, 10*time.Second, func(err error) { logger.Error("moneybird import", "error", err) })
 	go assetService.Run(ctx, time.Hour, func(err error) { logger.Error("asset depreciation", "error", err) })
 	// Attachments added before they had a sum get one, once, for duplicate detection.
 	go func() {

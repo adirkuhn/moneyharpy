@@ -42,6 +42,7 @@ const parts: Partial<Record<Section, { id: string; label: string }[]>> = {
     { id: 'external-applications', label: 'integrations.parts.apps' },
     { id: 'ai-connections', label: 'integrations.parts.ai' },
     { id: 'webhooks', label: 'integrations.parts.webhooks' },
+    { id: 'moneybird-import', label: 'mbImport.title' },
   ],
   administration: [
     { id: 'administration-details', label: 'management.parts.details' },
