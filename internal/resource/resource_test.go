@@ -110,3 +110,13 @@ func TestPermalink(t *testing.T) {
 		t.Errorf("Permalink(99) = %q, want %q", got, want)
 	}
 }
+
+func TestNewIDsStayClearOfImportedOnes(t *testing.T) {
+	g := NewGenerator(1)
+	// Moneybird's ids, kept by imports, are far below this.
+	const moneybird = ID(504315055158854794)
+	a, b := g.Next(), g.Next()
+	if a < 1<<62 || b <= a || a <= moneybird {
+		t.Errorf("ids %d then %d", a, b)
+	}
+}

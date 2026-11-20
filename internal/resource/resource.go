@@ -46,6 +46,10 @@ const (
 	nodeBits     = 10
 	maxSequence  = 1<<sequenceBits - 1
 	maxNode      = 1<<nodeBits - 1
+	// idBase lifts new ids above every id an import keeps from another
+	// system: Moneybird's are below 10^18 and take decades to reach 2^62.
+	// Ids issued before stay below it, so new ids still sort after them.
+	idBase = 1 << 62
 )
 
 // Generator issues time-ordered IDs that are unique per node.
@@ -80,7 +84,7 @@ func (g *Generator) Next() ID {
 		g.sequence = 0
 	}
 	g.last = millis
-	return ID(millis<<(sequenceBits+nodeBits) | g.node<<sequenceBits | g.sequence)
+	return ID(idBase | millis<<(sequenceBits+nodeBits) | g.node<<sequenceBits | g.sequence)
 }
 
 // Type names a kind of resource, as it appears in URIs.

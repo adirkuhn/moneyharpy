@@ -214,5 +214,5 @@ func TestVatReturns(t *testing.T) {
 	}
 	wantStatus(t, owner.do(http.MethodDelete, declarations+"/"+got.ID, nil), http.StatusNoContent)
 	wantStatus(t, owner.do(http.MethodGet, declarations+"/"+got.ID, nil), http.StatusNotFound)
-	wantStatus(t, owner.do(http.MethodDelete, declarations+"/"+filed.ID+"1", nil), http.StatusNotFound)
+	wantStatus(t, owner.do(http.MethodDelete, declarations+"/123", nil), http.StatusNotFound)
 }
