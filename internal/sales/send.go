@@ -58,6 +58,14 @@ type Document struct {
 	// Signing is set on a signed estimate: its signatures, shown on a page
 	// of their own.
 	Signing *Signing
+	// Credits is the invoice a credit invoice credits, when it is here.
+	Credits *Credited
+}
+
+// Credited is the invoice a credit invoice credits, as its documents name it.
+type Credited struct {
+	InvoiceID   string
+	InvoiceDate *time.Time
 }
 
 // Send sends an invoice: a draft gets its number and is booked, a sent one
@@ -277,6 +285,13 @@ func (s *Service) document(ctx context.Context, a administration.Listed, user re
 	}
 	if inv.WorkflowID != 0 {
 		doc.Workflow, _ = s.invoicing.Workflow(ctx, admin, inv.WorkflowID, user)
+	}
+	if inv.OriginalID != nil {
+		if orig, err := s.store.Invoice(ctx, admin, *inv.OriginalID); err == nil {
+			doc.Credits = &Credited{InvoiceID: orig.InvoiceID, InvoiceDate: orig.InvoiceDate}
+		} else if !IsNotFound(err) {
+			return Document{}, wrap("load the credited invoice", err)
+		}
 	}
 	return doc, nil
 }
