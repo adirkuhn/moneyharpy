@@ -79,6 +79,7 @@ const pageSections: Record<string, Section> = {
   support_access: 'administration',
   privacy: 'administration',
   delete: 'administration',
+  empty: 'administration',
 }
 
 /** Every section but Management and Integrations works on the administration's settings. */

@@ -39,6 +39,7 @@ describe('management settings', () => {
     expect(within(users).getByText('Employee')).toBeInTheDocument()
     expect(await screen.findByRole('table', { name: 'Open invitations' })).toHaveTextContent('new@example.com')
     expect(screen.getByRole('link', { name: 'Delete administration' })).toHaveAttribute('href', '/11/delete')
+    expect(screen.getByRole('link', { name: 'Empty administration' })).toHaveAttribute('href', '/11/empty')
     expect(screen.getByText('You are the only owner. Make someone else an owner first.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Leave' })).toBeDisabled()
   })
@@ -186,6 +187,23 @@ describe('users and invitations', () => {
 })
 
 describe('leave, delete and support access', () => {
+  it('empties only after typing the name, and starts again on the overview', async () => {
+    let sent: unknown
+    server.use(...loaded(), http.post('*/api/v2/administrations/11/empty', async ({ request }) => {
+      sent = await request.json()
+      return new HttpResponse(null, { status: 204 })
+    }))
+    renderAt('/11/empty')
+    expect(await screen.findByText(/business account|bank accounts and transactions/)).toBeInTheDocument()
+    expect(screen.getByText(/sender addresses, workflows, layouts/)).toBeInTheDocument()
+    const button = screen.getByRole('button', { name: 'Empty permanently' })
+    expect(button).toBeDisabled()
+    await userEvent.type(screen.getByLabelText('Administration name'), 'Harpy B.V.')
+    await userEvent.click(button)
+    await waitFor(() => expect(sent).toEqual({ name: 'Harpy B.V.' }))
+    await waitFor(() => expect(screen.getByTestId('path')).toHaveTextContent('/11/feed'))
+  })
+
   it('deletes only after typing the name', async () => {
     let sent: unknown
     server.use(...loaded(), http.post('*/api/v2/administrations/11/delete', async ({ request }) => {

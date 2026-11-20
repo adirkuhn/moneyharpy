@@ -172,3 +172,16 @@ export function useNewRecoveryCodes() {
   const changed = useTwoFactorChanged()
   return useMutation({ mutationFn: (code: string) => unwrap(api.POST('/api/user/two_factor/recovery_codes', { body: { code } })), onSettled: changed })
 }
+
+/**
+ * Empties the administration, keeping its setup. Everything the browser
+ * holds of it is stale afterwards, so all of it loads again.
+ */
+export function useEmptyAdministration(administrationId: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) =>
+      unwrap(api.POST('/api/v2/administrations/{id}/empty', { params: { path: { id: administrationId } }, body: { name } })),
+    onSuccess: () => client.invalidateQueries(),
+  })
+}
