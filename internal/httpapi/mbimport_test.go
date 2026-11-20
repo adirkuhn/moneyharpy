@@ -73,6 +73,18 @@ func TestImportFromMoneybird(t *testing.T) {
 	if receivables != 1 {
 		t.Errorf("%d categories named Debiteuren", receivables)
 	}
+	// Names clash neither with the defaults nor with each other.
+	seen := map[string]bool{}
+	for _, l := range accounts {
+		key := fmt.Sprint(l["account_type"], "/", strings.ToLower(fmt.Sprint(l["name"])))
+		if seen[key] {
+			t.Errorf("two categories named %s", key)
+		}
+		seen[key] = true
+	}
+	if !seen["expenses/diversen (4901)"] {
+		t.Errorf("the second Diversen is not told apart: %v", seen)
+	}
 
 	// The bank account keeps its id and its imported category; the transaction is its statement's.
 	account := decode[map[string]any](t, owner.do(http.MethodGet, api+"/financial_accounts/504000000000000201", nil))

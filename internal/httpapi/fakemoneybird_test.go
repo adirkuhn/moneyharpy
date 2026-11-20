@@ -142,7 +142,10 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 				{"id":"504000000000000901","name":"Debiteuren","account_type":"current_assets","account_id":"13011","active":true,"taxonomy_item":{"code":"BVorDebHad"}},
 				{"id":"504000000000000902","name":"Omzet webshop","account_type":"revenue","account_id":"8010","active":true},
 				{"id":"504000000000000903","name":"Zakelijke rekening","account_type":"current_assets","account_id":"1010","active":true,"financial_account_id":"504000000000000201"},
-				{"id":"504000000000000904","name":"Huur kantoor","account_type":"expenses","account_id":"4111","active":true}]`))
+				{"id":"504000000000000904","name":"Huur kantoor","account_type":"expenses","account_id":"4111","active":true},
+				{"id":"504000000000000905","name":"Rent","account_type":"expenses","account_id":"4110","active":true},
+				{"id":"504000000000000906","name":"Diversen","account_type":"expenses","account_id":"4900","active":true},
+				{"id":"504000000000000907","name":"Diversen","account_type":"expenses","account_id":"4901","active":true}]`))
 		case "/123/tax_rates.json":
 			_, _ = w.Write([]byte(`[{"id":"504000000000000911","name":"21% btw","percentage":"21.0","tax_rate_type":"sales_invoice","show_tax":true,"active":true,"country":null},
 				{"id":"504000000000000912","name":"21% btw","percentage":"21.0","tax_rate_type":"purchase_invoice","show_tax":true,"active":true,"country":null}]`))

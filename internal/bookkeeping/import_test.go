@@ -2,6 +2,7 @@ package bookkeeping
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/adirkuhn/moneyharpy/internal/resource"
@@ -89,5 +90,43 @@ func TestImportChartTwiceChangesNothingMore(t *testing.T) {
 	}
 	if len(store.accounts) != count {
 		t.Errorf("accounts %d, then %d", count, len(store.accounts))
+	}
+}
+
+func TestImportChartTakesOverADefaultByNameAndKeepsNamesApart(t *testing.T) {
+	s, store := newTestService("NL")
+	general := accountBy(store, "general_costs")
+	if general.ID == 0 {
+		// Seeded on first use.
+		if _, err := s.LedgerAccounts(context.Background(), adminID, owner); err != nil {
+			t.Fatal(err)
+		}
+		general = accountBy(store, "general_costs")
+	}
+	in := ChartImport{Accounts: []ImportedAccount{
+		// The chart scheme code is the default's but not only its: the name decides.
+		{Origin: resource.Origin{ID: 9010}, Name: general.Name, Type: "expenses", Code: "46801.01", Taxonomy: "WBedAlkOal", Active: true},
+		// Moneybird may have two categories of one type with one name, which here must differ.
+		{Origin: resource.Origin{ID: 9011}, Name: "Diversen", Type: "expenses", Code: "4900", Active: true},
+		{Origin: resource.Origin{ID: 9012}, Name: "Diversen", Type: "expenses", Code: "4901", Active: true},
+	}}
+	ids, err := s.ImportChart(context.Background(), adminID, owner, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ids[9010] != general.ID {
+		t.Errorf("general costs map to %v, the default is %v", ids[9010], general.ID)
+	}
+	names := map[string]int{}
+	for _, a := range store.accounts {
+		names[a.Type+"/"+strings.ToLower(a.Name)]++
+	}
+	for name, n := range names {
+		if n > 1 {
+			t.Errorf("%d categories named %s", n, name)
+		}
+	}
+	if store.accounts[9011].Name != "Diversen" || store.accounts[9012].Name != "Diversen (4901)" {
+		t.Errorf("names %q and %q", store.accounts[9011].Name, store.accounts[9012].Name)
 	}
 }

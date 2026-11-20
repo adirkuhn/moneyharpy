@@ -407,7 +407,17 @@ func isRecordProblem(err error) bool {
 	var verr *resource.ValidationError
 	var syntax *json.SyntaxError
 	var typeErr *json.UnmarshalTypeError
-	return errors.As(err, &verr) || errors.As(err, &syntax) || errors.As(err, &typeErr)
+	return errors.As(err, &verr) || errors.As(err, &syntax) || errors.As(err, &typeErr) || isDuplicate(err)
+}
+
+// uniqueViolation is the SQLSTATE of a record clashing with one here, such
+// as a second project of one name: that record cannot come in, but the
+// rest can, rather than the import trying again for ever.
+const uniqueViolation = "23505"
+
+func isDuplicate(err error) bool {
+	var coded interface{ SQLState() string }
+	return errors.As(err, &coded) && coded.SQLState() == uniqueViolation
 }
 
 func errOr(err error, fallback string) string {

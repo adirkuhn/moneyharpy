@@ -85,17 +85,22 @@ func (s *Service) importAccounts(ctx context.Context, admin resource.ID, in []Im
 	// Defaults are the categories made from the seed, by their key.
 	defaults := slices.DeleteFunc(slices.Clone(existing), func(l LedgerAccount) bool { return l.Key == "" })
 	taken := map[resource.ID]bool{}
+	known := func(l LedgerAccount) []string { return append(names[l.Key], l.Name) }
 	match := func(ia ImportedAccount) (LedgerAccount, bool) {
-		if ia.Taxonomy == "" {
-			return LedgerAccount{}, false
+		if ia.Taxonomy != "" {
+			same := func(t string) bool { return strings.EqualFold(t, ia.Taxonomy) }
+			ours := slices.DeleteFunc(slices.Clone(defaults), func(l LedgerAccount) bool { return taken[l.ID] || !same(l.Taxonomy) })
+			theirs := slices.DeleteFunc(slices.Clone(in), func(o ImportedAccount) bool { return !same(o.Taxonomy) })
+			if len(ours) == 1 && len(theirs) == 1 {
+				return ours[0], true
+			}
+			if l, ok := byName(ours, ia.Name, known); ok {
+				return l, true
+			}
 		}
-		same := func(t string) bool { return strings.EqualFold(t, ia.Taxonomy) }
-		ours := slices.DeleteFunc(slices.Clone(defaults), func(l LedgerAccount) bool { return taken[l.ID] || !same(l.Taxonomy) })
-		theirs := slices.DeleteFunc(slices.Clone(in), func(o ImportedAccount) bool { return !same(o.Taxonomy) })
-		if len(ours) == 1 && len(theirs) == 1 {
-			return ours[0], true
-		}
-		return byName(ours, ia.Name, func(l LedgerAccount) []string { return append(names[l.Key], l.Name) })
+		// Whatever the codes say, a default of the same type and name is the same category.
+		ours := slices.DeleteFunc(slices.Clone(defaults), func(l LedgerAccount) bool { return taken[l.ID] || l.Type != ia.Type })
+		return byName(ours, ia.Name, known)
 	}
 
 	now := s.now()
@@ -155,22 +160,11 @@ func (s *Service) importAccounts(ctx context.Context, admin resource.ID, in []Im
 			changed[i].ParentID = p
 		}
 	}
-	if len(created) > 0 {
-		// Parents first: a category may only point to one that exists.
-		slices.SortStableFunc(created, func(a, b LedgerAccount) int { return depth(created, a) - depth(created, b) })
-		if err := s.store.CreateLedgerAccounts(ctx, created); err != nil {
-			return fmt.Errorf("store imported ledger accounts: %w", err)
-		}
-	}
-	if len(changed) > 0 {
-		if err := s.store.UpdateLedgerAccounts(ctx, changed); err != nil {
-			return fmt.Errorf("store taken over ledger accounts: %w", err)
-		}
-	}
 	if len(in) == 0 {
 		return nil
 	}
-	// Defaults nothing took over go, children first, unless the books rely on them or they are in use.
+	// Defaults nothing took over go first, children first, unless the books
+	// rely on them or they are in use: their names are free then.
 	var left []LedgerAccount
 	for _, l := range defaults {
 		if !taken[l.ID] && l.System == "" && !slices.ContainsFunc(changed, func(c LedgerAccount) bool { return c.ID == l.ID }) && !importedAgain(l, ids) {
@@ -185,6 +179,61 @@ func (s *Service) importAccounts(ctx context.Context, admin resource.ID, in []Im
 		if err := s.store.DeleteLedgerAccount(ctx, admin, l.ID); err != nil && !errors.Is(err, ErrInUse) {
 			return fmt.Errorf("remove default ledger account: %w", err)
 		}
+	}
+	if err := s.keepNamesApart(ctx, admin, changed, created); err != nil {
+		return err
+	}
+	if len(created) > 0 {
+		// Parents first: a category may only point to one that exists.
+		slices.SortStableFunc(created, func(a, b LedgerAccount) int { return depth(created, a) - depth(created, b) })
+		if err := s.store.CreateLedgerAccounts(ctx, created); err != nil {
+			return fmt.Errorf("store imported ledger accounts: %w", err)
+		}
+	}
+	if len(changed) > 0 {
+		if err := s.store.UpdateLedgerAccounts(ctx, changed); err != nil {
+			return fmt.Errorf("store taken over ledger accounts: %w", err)
+		}
+	}
+	return nil
+}
+
+// keepNamesApart gives the categories coming in names no other category of
+// their type has here: one name may be on several categories of a type in
+// Moneybird, not here. A clashing name takes the category's code, else a
+// number.
+func (s *Service) keepNamesApart(ctx context.Context, admin resource.ID, changed, created []LedgerAccount) error {
+	existing, err := s.store.LedgerAccounts(ctx, admin)
+	if err != nil {
+		return fmt.Errorf("list ledger accounts: %w", err)
+	}
+	coming := map[resource.ID]bool{}
+	for _, l := range slices.Concat(changed, created) {
+		coming[l.ID] = true
+	}
+	used := map[string]bool{}
+	key := func(t, name string) string { return t + "/" + strings.ToLower(strings.TrimSpace(name)) }
+	for _, l := range existing {
+		if !coming[l.ID] {
+			used[key(l.Type, l.Name)] = true
+		}
+	}
+	free := func(l *LedgerAccount) {
+		name := l.Name
+		if used[key(l.Type, name)] && l.Code != "" {
+			name = fmt.Sprintf("%s (%s)", l.Name, l.Code)
+		}
+		for n := 2; used[key(l.Type, name)]; n++ {
+			name = fmt.Sprintf("%s (%d)", l.Name, n)
+		}
+		l.Name = name
+		used[key(l.Type, name)] = true
+	}
+	for i := range changed {
+		free(&changed[i])
+	}
+	for i := range created {
+		free(&created[i])
 	}
 	return nil
 }

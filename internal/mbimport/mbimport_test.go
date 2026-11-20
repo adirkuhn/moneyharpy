@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 	"testing"
@@ -421,5 +422,20 @@ func TestAnImportStaysQueuedUntilItFinishes(t *testing.T) {
 	}
 	if store.job.State != Done || store.job.Error != "" {
 		t.Errorf("job %+v", store.job)
+	}
+}
+
+// pgError stands for a database error with its SQLSTATE, as pgx gives one.
+type pgError struct{ code string }
+
+func (e pgError) Error() string    { return "ERROR: duplicate key value (SQLSTATE " + e.code + ")" }
+func (e pgError) SQLState() string { return e.code }
+
+func TestADuplicateRecordIsAProblemNotAStop(t *testing.T) {
+	if !isRecordProblem(fmt.Errorf("store contact: %w", pgError{"23505"})) {
+		t.Error("a duplicate key stops the import")
+	}
+	if isRecordProblem(fmt.Errorf("store contact: %w", pgError{"57P01"})) {
+		t.Error("a database shutting down counts as a record's problem")
 	}
 }
