@@ -18,7 +18,8 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 	t.Helper()
 	synced := map[string]map[string]string{
 		"contacts": {
-			"504000000000000501": `{"id":"504000000000000501","company_name":"Example Shop B.V.","customer_id":"7","contact_people":[{"id":"504000000000000601","firstname":"Ann","lastname":"de Vries"}],"created_at":"2024-03-01T10:00:00.000Z","updated_at":"2024-03-02T10:00:00.000Z"}`,
+			"504000000000000501": `{"id":"504000000000000501","company_name":"Example Shop B.V.","customer_id":"7","invoice_workflow_id":"504000000000000581","custom_fields":[{"id":"504000000000000571","name":"Account manager","value":"Ann"}],
+				"notes":[{"id":"504000000000000711","note":"Prefers email","todo":false,"created_at":"2024-03-05T10:00:00.000Z"}],"contact_people":[{"id":"504000000000000601","firstname":"Ann","lastname":"de Vries"}],"created_at":"2024-03-01T10:00:00.000Z","updated_at":"2024-03-02T10:00:00.000Z"}`,
 			"504000000000000502": `{"id":"504000000000000502","firstname":"Jan","lastname":"Voorbeeld","send_invoices_to_email":"not an address"}`,
 		},
 		"financial_mutations": {
@@ -28,7 +29,7 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 			"504000000000000303": `{"id":"504000000000000303","financial_account_id":"504000000000000201","financial_statement_id":"504000000000000402","date":"2026-02-10","message":"PUR-77","amount":"-121.0"}`,
 		},
 		"sales_invoices": {
-			"504000000000000111": `{"id":"504000000000000111","contact_id":"504000000000000501","invoice_id":"2026-0001","state":"paid","original_estimate_id":"504000000000000141",
+			"504000000000000111": `{"id":"504000000000000111","contact_id":"504000000000000501","invoice_id":"2026-0001","state":"paid","original_estimate_id":"504000000000000141","workflow_id":"504000000000000581",
 				"attachments":[{"id":"504000000000000171","filename":"terms.pdf","content_type":"application/pdf"}],"invoice_date":"2026-01-10","due_date":"2026-01-24","currency":"EUR","prices_are_incl_tax":false,"discount":"0.0","sent_at":"2026-01-10T09:00:00.000Z",
 				"details":[{"id":"504000000000000112","description":"Hosting","amount":"1","price":"10.0","tax_rate_id":"504000000000000911","ledger_account_id":"504000000000000902"}],
 				"payments":[{"id":"504000000000000113","payment_date":"2026-01-15","price":"12.1","price_base":"12.1","financial_account_id":"504000000000000201","financial_mutation_id":"504000000000000301"}]}`,
@@ -150,6 +151,27 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 			"/123/documents/purchase_invoices/synchronization.json", "/123/documents/receipts/synchronization.json", "/123/documents/general_documents/synchronization.json",
 			"/123/documents/typeless_documents/synchronization.json", "/123/documents/general_journal_documents/synchronization.json":
 			sync(w, r, strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(r.URL.Path, "/api/v2"), "/123/"), "/synchronization.json"))
+		case "/123/custom_fields.json":
+			_, _ = w.Write([]byte(`[{"id":"504000000000000571","name":"Account manager","source":"contact"}]`))
+		case "/123/identities/default.json":
+			_, _ = w.Write([]byte(`{"id":"504000000000000721","company_name":"Example Shop B.V.","address1":"Hoofdstraat 1","zipcode":"1234 AB","city":"Utrecht","country":"NL","email":"info@example.com"}`))
+		case "/123/identities.json":
+			_, _ = w.Write([]byte(`[{"id":"504000000000000722","company_name":"Example Shop Webwinkel","city":"Utrecht","country":"NL"}]`))
+		case "/123/workflows.json":
+			_, _ = w.Write([]byte(`[{"id":"504000000000000581","type":"InvoiceWorkflow","name":"Strict reminders","default":false,"currency":"EUR","language":"nl","active":true,"prices_are_incl_tax":false,
+				"steps":[{"due_interval":14,"reminder_delay":7,"reminder_text":"Please pay","reminder_auto_send":true}]}]`))
+		case "/123/users.json":
+			_, _ = w.Write([]byte(`[{"id":"504000000000000731","name":"Someone","email":"someone@example.org"}]`))
+		case "/123/time_entries.json":
+			if f := r.URL.Query().Get("filter"); !strings.Contains(f, "state:all") {
+				t.Errorf("time entries listed with %q", f)
+			}
+			_, _ = w.Write([]byte(`[{"id":"504000000000000741","user_id":"504000000000000731","contact_id":"504000000000000501","project_id":"504000000000000801","started_at":"2026-02-02T09:00:00.000Z","ended_at":"2026-02-02T11:00:00.000Z","description":"Design work","billable":true,"notes":[]}]`))
+		case "/123/task_list_templates.json":
+			_, _ = w.Write([]byte(`[{"id":"504000000000000751","name":"Month close","period":"P1M","groups":[{"id":"504000000000000752","name":"Bank","row_order":0,"tasks":[{"id":"504000000000000753","name":"Check the bank","row_order":0,"subtasks":[]}]}]}]`))
+		case "/123/task_lists.json":
+			_, _ = w.Write([]byte(`[{"id":"504000000000000761","name":"January close","period_begin":"2026-01-01","period_end":"2026-01-31","groups":[{"id":"504000000000000762","name":"Bank","row_order":0,
+				"tasks":[{"id":"504000000000000763","name":"Check the bank","row_order":0,"completed_at":"2026-02-03T10:00:00.000Z","subtasks":[]}]}]}]`))
 		case "/123/financial_accounts.json":
 			_, _ = w.Write([]byte(`[{"id":"504000000000000201","type":"BankAccount","name":"Zakelijke rekening","identifier":"NL91ABNA0417164300","currency":"EUR","active":true}]`))
 		case "/123/products.json":

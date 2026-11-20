@@ -230,8 +230,11 @@ func run(logger *slog.Logger) error {
 	kvkWebsite := kvkweb.New(instance, kvkweb.ProductionURL, kvkweb.ProductionEnvConfig, outbound, ratelimit.New(30, time.Minute))
 	registers := administration.Registers{kvk.New(instance, kvk.ProductionURL, outbound), kvkWebsite}
 	// Imports read Moneybird within its rate limit; a whole administration can take a while, hence the longer timeout.
+	taskListService := tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now)
+	memberService := membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now)
 	moneybirdImport := mbimport.NewService(admins, mbclient.ImportSource{HTTP: &http.Client{Timeout: time.Minute}}, postgres.NewMoneybirdImportStore(pool), cipher,
-		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService, Banking: bank, Sales: invoiceService, Purchases: documentService, Journal: ledger}, time.Now)
+		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService, Banking: bank, Sales: invoiceService, Purchases: documentService, Journal: ledger,
+			Admin: admins, Invoicing: invoices, Members: memberService, Notes: noteService, TimeEntries: timeEntryService, TaskLists: taskListService}, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations:   admins,
 		Invoicing:         invoices,
@@ -252,12 +255,12 @@ func run(logger *slog.Logger) error {
 		Downloads:         downloadService,
 		Reports:           reportService,
 		TimeEntries:       timeEntryService,
-		TaskLists:         tasklists.NewService(admins, postgres.NewTaskListStore(pool), noteService, tasklists.LedgerReports{Accounts: books}, ids, time.Now),
+		TaskLists:         taskListService,
 		VatReturns:        vatReturnService,
 		Audits:            audits.NewService(admins, postgres.NewAuditStore(pool), ids, time.Now),
 		Storage:           s3,
 		Identity:          people,
-		Membership:        membership.NewService(admins, postgres.NewMembershipStore(pool), mailer, people, invoices, ids, time.Now),
+		Membership:        memberService,
 		Connections:       connections.NewService(admins, postgres.NewConnectionStore(pool), ids, time.Now),
 		Webhooks:          hooks,
 		Settings:          instance,

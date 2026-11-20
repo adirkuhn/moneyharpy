@@ -92,3 +92,8 @@ func (r importReader) Download(ctx context.Context, adminID, path string) ([]byt
 	}
 	return data, contentType, importError(err)
 }
+
+func (r importReader) Get(ctx context.Context, adminID, path string, query url.Values) (json.RawMessage, error) {
+	out, err := r.c.Get(ctx, adminID, path, query)
+	return out, importError(err)
+}

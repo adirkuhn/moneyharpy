@@ -87,6 +87,16 @@ func (r *run) estimates(ctx context.Context) error {
 		if d := string(e.Discount); d != "" {
 			c.Discount = &d
 		}
+		if c.WorkflowID, c.IdentityID, err = r.invoiceRefs(ctx, e.WorkflowID, e.IdentityID); err != nil {
+			return 0, err
+		}
+		fields, err := r.fieldValues(ctx, e.CustomFields)
+		if err != nil {
+			return 0, err
+		}
+		for _, f := range fields {
+			c.CustomFields = append(c.CustomFields, sales.FieldValue{FieldID: f.id, Value: f.value})
+		}
 		in := sales.ImportedEstimate{
 			Origin: origin(e.ID, e.stamps), Changes: c, Details: details, EstimateID: deref(e.EstimateID), State: e.State,
 			DueDate: day(e.DueDate), SentAt: e.SentAt, AcceptedAt: e.AcceptedAt, RejectedAt: e.RejectedAt, ArchivedAt: e.ArchivedAt,
@@ -104,6 +114,9 @@ func (r *run) estimates(ctx context.Context) error {
 			return err
 		}
 		if err := r.attach(ctx, st, "estimates", est.ID, e.Attachments, add); err != nil {
+			return 0, err
+		}
+		if err := r.notes(ctx, st, sales.EstimateEntityType, est.ID, e.Notes); err != nil {
 			return 0, err
 		}
 		if e.State != "draft" && deref(e.EstimateID) != "" {
@@ -133,10 +146,16 @@ func (r *run) recurring(ctx context.Context) error {
 		if d := string(rec.Discount); d != "" {
 			c.Discount = &d
 		}
-		_, err = r.s.targets.Sales.ImportRecurring(ctx, r.job.AdministrationID, r.job.UserID, sales.ImportedRecurring{
+		if c.WorkflowID, err = r.mapped(ctx, kindWorkflow, ref(rec.WorkflowID)); err != nil {
+			return 0, err
+		}
+		got, err := r.s.targets.Sales.ImportRecurring(ctx, r.job.AdministrationID, r.job.UserID, sales.ImportedRecurring{
 			Origin: origin(rec.ID, rec.stamps), Changes: c, Details: details, StartDate: day(rec.StartDate),
 		})
-		return rec.ID.id(), err
+		if err != nil {
+			return 0, err
+		}
+		return rec.ID.id(), r.notes(ctx, r.job.Step(StepRecurring), sales.RecurringEntityType, got.ID, rec.Notes)
 	}
 	// Moneybird lists only the active ones unless asked for each state.
 	for _, state := range []string{"active", "inactive"} {
@@ -183,7 +202,10 @@ func (r *run) purchases(ctx context.Context, step, path, kind string) error {
 			_, err := r.s.targets.Purchases.AddAttachment(ctx, r.job.AdministrationID, r.job.UserID, kind, doc.ID, name, contentType, data)
 			return err
 		})
-		return d.ID.id(), err
+		if err != nil {
+			return 0, err
+		}
+		return d.ID.id(), r.notes(ctx, r.job.Step(step), kind, doc.ID, d.Notes)
 	})
 }
 
@@ -206,7 +228,10 @@ func (r *run) generalDocuments(ctx context.Context) error {
 			_, err := r.s.targets.Purchases.AddGeneralAttachment(ctx, r.job.AdministrationID, g.ID, r.job.UserID, name, contentType, data)
 			return err
 		})
-		return d.ID.id(), err
+		if err != nil {
+			return 0, err
+		}
+		return d.ID.id(), r.notes(ctx, r.job.Step(StepGeneralDocuments), purchases.GeneralDocument, g.ID, d.Notes)
 	})
 }
 
@@ -260,7 +285,10 @@ func (r *run) journal(ctx context.Context) error {
 			_, err := r.s.targets.Journal.AddDocumentAttachment(ctx, r.job.AdministrationID, doc.ID, r.job.UserID, name, contentType, data)
 			return err
 		})
-		return j.ID.id(), err
+		if err != nil {
+			return 0, err
+		}
+		return j.ID.id(), r.notes(ctx, r.job.Step(StepJournal), journal.GeneralJournalDocument, doc.ID, j.Notes)
 	})
 }
 

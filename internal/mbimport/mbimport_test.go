@@ -117,6 +117,10 @@ func (r *fakeReader) FetchByIDs(_ context.Context, _, kind string, ids []string)
 	return out, err
 }
 
+func (r *fakeReader) Get(context.Context, string, string, url.Values) (json.RawMessage, error) {
+	return json.RawMessage(`{}`), nil
+}
+
 func (r *fakeReader) Download(_ context.Context, _, path string) ([]byte, string, error) {
 	return []byte("file " + path), "application/pdf", nil
 }

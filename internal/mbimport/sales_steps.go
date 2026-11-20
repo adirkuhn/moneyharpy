@@ -169,6 +169,16 @@ func (r *run) salesInvoices(ctx context.Context) error {
 		if discount != "" {
 			c.Discount = &discount
 		}
+		if c.WorkflowID, c.IdentityID, err = r.invoiceRefs(ctx, inv.WorkflowID, inv.IdentityID); err != nil {
+			return 0, err
+		}
+		fields, err := r.fieldValues(ctx, inv.CustomFields)
+		if err != nil {
+			return 0, err
+		}
+		for _, f := range fields {
+			c.CustomFields = append(c.CustomFields, sales.FieldValue{FieldID: f.id, Value: f.value})
+		}
 		in := sales.ImportedInvoice{
 			Origin: origin(inv.ID, inv.stamps), Changes: c, Details: details, InvoiceID: deref(inv.InvoiceID), Sent: inv.sent(),
 			DueDate: day(inv.DueDate), SentAt: inv.SentAt, PaymentReference: deref(inv.PaymentReference), OriginalID: ref(inv.OriginalSalesInvoiceID),
@@ -188,6 +198,9 @@ func (r *run) salesInvoices(ctx context.Context) error {
 			return err
 		}
 		if err := r.attach(ctx, st, "sales_invoices", got.ID, inv.Attachments, add); err != nil {
+			return 0, err
+		}
+		if err := r.notes(ctx, st, sales.EntityType, got.ID, inv.Notes); err != nil {
 			return 0, err
 		}
 		if inv.sent() && deref(inv.InvoiceID) != "" {
@@ -228,11 +241,15 @@ func (r *run) externalInvoices(ctx context.Context) error {
 		if err != nil {
 			return 0, err
 		}
-		err = r.attach(ctx, r.job.Step(StepExternalInvoices), "external_sales_invoices", got.ID, e.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
+		st := r.job.Step(StepExternalInvoices)
+		err = r.attach(ctx, st, "external_sales_invoices", got.ID, e.Attachments, func(ctx context.Context, name, contentType string, data []byte) error {
 			_, err := r.s.targets.Sales.AddExternalAttachment(ctx, r.job.AdministrationID, got.ID, r.job.UserID, name, contentType, data)
 			return err
 		})
-		return e.ID.id(), err
+		if err != nil {
+			return 0, err
+		}
+		return e.ID.id(), r.notes(ctx, st, sales.ExternalEntityType, got.ID, e.Notes)
 	})
 }
 

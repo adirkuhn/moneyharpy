@@ -13,7 +13,7 @@ import (
 func TestImportFromMoneybird(t *testing.T) {
 	h := newHarness(t, options{})
 	owner, clerk := h.client(), h.client()
-	owner.register()
+	me := owner.register()
 	clerk.register()
 	a := owner.createAdministration("Harpy")
 	api := "/api/v2/" + a.Id
@@ -35,7 +35,7 @@ func TestImportFromMoneybird(t *testing.T) {
 		t.Error("the token is shown")
 	}
 	started := decode[httpapi.MoneybirdImport](t, r)
-	if started.State != "running" || len(started.Steps) != 16 {
+	if started.State != "running" || len(started.Steps) != 22 {
 		t.Errorf("started = %+v", started)
 	}
 	if err := h.mbimport.Work(context.Background()); err != nil {
@@ -147,6 +147,32 @@ func TestImportFromMoneybird(t *testing.T) {
 	if settings["period_locked_until"] != "2026-01-31" {
 		t.Errorf("locked until %v", settings["period_locked_until"])
 	}
+
+	// The settings around the invoices came first: the custom field, the sender address and the workflow.
+	contact := decode[map[string]any](t, owner.do(http.MethodGet, api+"/contacts/504000000000000501", nil))
+	if contact["invoice_workflow_id"] != "504000000000000581" || !strings.Contains(fmt.Sprint(contact["custom_fields"]), "Ann") || !strings.Contains(fmt.Sprint(contact["notes"]), "Prefers email") {
+		t.Errorf("contact settings = %v, %v, %v", contact["invoice_workflow_id"], contact["custom_fields"], contact["notes"])
+	}
+	own := decode[map[string]any](t, owner.do(http.MethodGet, api+"/identities/default", nil))
+	if own["address1"] != "Hoofdstraat 1" || own["email"] != "info@example.com" {
+		t.Errorf("own identity = %+v", own)
+	}
+	wantStatus(t, owner.do(http.MethodGet, api+"/identities/504000000000000722", nil), http.StatusOK)
+	// Reminders do not send by themselves while Moneybird may still send them.
+	flow := decode[map[string]any](t, owner.do(http.MethodGet, api+"/workflows/504000000000000581", nil))
+	if !strings.Contains(fmt.Sprint(flow["steps"]), "reminder_auto_send:false") || paid["workflow_id"] != "504000000000000581" {
+		t.Errorf("workflow = %+v, invoice workflow %v", flow, paid["workflow_id"])
+	}
+	// Time of a Moneybird user who is no member here is the owner's.
+	timed := decode[map[string]any](t, owner.do(http.MethodGet, api+"/time_entries/504000000000000741", nil))
+	if timed["description"] != "Design work" || timed["user_id"] != me.Id {
+		t.Errorf("time entry = %+v", timed)
+	}
+	tasks := decode[map[string]any](t, owner.do(http.MethodGet, api+"/task_lists/504000000000000761", nil))
+	if !strings.Contains(fmt.Sprint(tasks["groups"]), "completed_at:2026-02-03") {
+		t.Errorf("task list = %+v", tasks)
+	}
+	wantStatus(t, owner.do(http.MethodGet, api+"/task_list_templates/504000000000000751", nil), http.StatusOK)
 
 	// Again, only what is new would come in; another Moneybird administration cannot mix in.
 	wantStatus(t, owner.do(http.MethodPost, api+"/moneybird_import", start), http.StatusCreated)
