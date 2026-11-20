@@ -54,6 +54,14 @@ describe('side menu', () => {
     expect(within(nav).getByRole('button', { name: 'Reports' })).toHaveAttribute('aria-expanded', 'false')
   })
 
+  it('marks only the most specific page of a section', async () => {
+    open()
+    renderAt('/11/time_entries_report/projects')
+    const nav = await menu()
+    expect(within(nav).getByRole('link', { name: 'Projects report' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: 'Hours report' })).not.toHaveAttribute('aria-current')
+  })
+
   it('expands a section on request', async () => {
     open()
     renderAt('/11/feed')

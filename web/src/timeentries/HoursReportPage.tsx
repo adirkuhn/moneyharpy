@@ -100,10 +100,6 @@ export function HoursReportPage() {
 
   const actions = (
     <>
-      <div className="list-search actionbar__search" role="search" aria-label={t('timeEntries.report.search')}>
-        <SearchIcon />
-        <input type="search" aria-label={t('timeEntries.report.search')} placeholder={t('timeEntries.report.search')} value={typed} onChange={(e) => setTyped(e.target.value)} />
-      </div>
       <button
         type="button"
         className={`btn btn--secondary btn--icon${info ? ' is-active' : ''}`}
@@ -138,6 +134,10 @@ export function HoursReportPage() {
           ]}
         />
       )}
+      <div className="list-search list-search--full hours-report__search" role="search" aria-label={t('timeEntries.report.search')}>
+        <SearchIcon />
+        <input type="search" aria-label={t('timeEntries.report.search')} placeholder={t('timeEntries.report.search')} value={typed} onChange={(e) => setTyped(e.target.value)} />
+      </div>
       {!entries.data ? (
         entries.error ? <p className="empty">{t('timeEntries.loadError')}</p> : <Loading />
       ) : (
@@ -229,7 +229,10 @@ function WeekTable({ administrationId, entries }: { administrationId: string; en
                     {t('timeEntries.report.week', { week: w.label })}
                   </button>
                 </th>
-                <td className="timesheet-table__amount">{clock(sum(w.entries))}</td>
+                <td className="timesheet-table__amount" onClick={() => toggle(w.key)}>
+                  {clock(sum(w.entries))}
+                  <span className="hours-report__chevron" aria-hidden="true" />
+                </td>
               </tr>
               {open && w.entries.map((e) => (
                 <tr key={e.id}>
