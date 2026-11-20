@@ -9,6 +9,7 @@ import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
 import { GettingStarted } from '../list/GettingStarted'
 import { ActionMenu } from '../list/ListActions'
+import { can } from '../management/queries'
 import { type Project, useActiveProjects } from '../projects/queries'
 import { type TimeEntry, useReportEntries, workedMinutes } from './queries'
 import { clock } from './week'
@@ -89,7 +90,7 @@ export function ProjectsReportPage() {
             icon={<ListIcon kind="more" />}
             items={[
               { label: t('sidenav.items.projects'), to: `/${administrationId}/projects` },
-              { label: t('timeEntries.projects.add'), to: `/${administrationId}/projects/new` },
+              ...(can(administration.data, 'settings') ? [{ label: t('timeEntries.projects.add'), to: `/${administrationId}/projects/new` }] : []),
             ]}
           />
         </div>
@@ -108,15 +109,15 @@ export function ProjectsReportPage() {
         />
       )}
       {projects.data.length > 0 && (
-        !entries.data ? <Loading /> : <ProjectTable administrationId={administrationId} projects={projects.data} totals={totals} />
+        !entries.data ? <Loading /> : <ProjectTable administrationId={administrationId} projects={projects.data} totals={totals} manage={can(administration.data, 'settings')} />
       )}
     </Page>
   )
 }
 
-type TableProps = { administrationId: string; projects: Project[]; totals: Map<string, Totals> }
+type TableProps = { administrationId: string; projects: Project[]; totals: Map<string, Totals>; manage: boolean }
 
-function ProjectTable({ administrationId, projects, totals }: TableProps) {
+function ProjectTable({ administrationId, projects, totals, manage }: TableProps) {
   const { t } = useTranslation()
   return (
     <table className="data-table timesheet-table" aria-label={t('timeEntries.projects.title')}>
@@ -137,7 +138,7 @@ function ProjectTable({ administrationId, projects, totals }: TableProps) {
           const spent = budget > 0 ? Math.round((sum.worked / budget) * 100) : null
           return (
             <tr key={p.id}>
-              <td><Link to={`/${administrationId}/projects/${p.id}`}>{p.name}</Link></td>
+              <td>{manage ? <Link to={`/${administrationId}/projects/${p.id}`}>{p.name}</Link> : p.name}</td>
               <td className="timesheet-table__amount">{budget > 0 ? clock(budget) : ''}</td>
               <td className="timesheet-table__amount">{clock(sum.worked)}</td>
               <td className="timesheet-table__amount">{clock(sum.billable)}</td>

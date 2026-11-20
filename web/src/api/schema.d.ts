@@ -5014,7 +5014,7 @@ export interface paths {
         };
         /**
          * List all projects
-         * @description By name, 25 a page unless per_page is given. Filter term: state, one of all, active (the default) or archived, several joined by |. Paged with a Link header and X-Total-Count. Members who may work on invoices, estimates or documents may list them too, to book on them.
+         * @description By name, 25 a page unless per_page is given. Filter term: state, one of all, active (the default) or archived, several joined by |. Paged with a Link header and X-Total-Count. Members who may work on invoices, estimates or documents may list them too, to book on them. MoneyHarpy extension: members who may track time may list them too, to log time on them.
          */
         get: operations["listProjects"];
         put?: never;
@@ -5039,7 +5039,10 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Get a project */
+        /**
+         * Get a project
+         * @description MoneyHarpy extension, as for the list, so members who may track time may read a project too.
+         */
         get: operations["getProject"];
         put?: never;
         post?: never;

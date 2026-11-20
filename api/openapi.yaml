@@ -10198,12 +10198,13 @@ paths:
       - $ref: '#/components/parameters/administration_id'
     get:
       operationId: listProjects
-      x-permissions: [settings, sales_invoices, documents, estimates]
+      x-permissions: [settings, sales_invoices, documents, estimates, time_entries]
       summary: List all projects
       description: >-
         By name, 25 a page unless per_page is given. Filter term: state, one of all, active (the default) or archived,
         several joined by |. Paged with a Link header and X-Total-Count. Members who may work on invoices, estimates or
-        documents may list them too, to book on them.
+        documents may list them too, to book on them. MoneyHarpy extension: members who may track time may list them
+        too, to log time on them.
       tags: [Projects]
       parameters:
         - $ref: '#/components/parameters/document_filter'
@@ -10259,8 +10260,9 @@ paths:
       - $ref: '#/components/parameters/id'
     get:
       operationId: getProject
-      x-permissions: [settings, sales_invoices, documents, estimates]
+      x-permissions: [settings, sales_invoices, documents, estimates, time_entries]
       summary: Get a project
+      description: MoneyHarpy extension, as for the list, so members who may track time may read a project too.
       tags: [Projects]
       responses:
         '200':

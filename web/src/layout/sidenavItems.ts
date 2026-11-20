@@ -1,4 +1,5 @@
 import type { components } from '../api/schema'
+import { mayOpen } from './access'
 
 type Permission = components['schemas']['Permission']
 
@@ -11,30 +12,26 @@ export type NavLink = { key: string; to: string; ready: boolean }
 
 export type NavItem = NavLink & {
   kind: NavKind
-  /** The member needs one of these; none means every member. */
-  permissions: Permission[]
   children?: NavLink[]
 }
 
 const link = (key: string, to: string, ready = false): NavLink => ({ key, to, ready })
 
-const bookkeeping: Permission[] = ['bank', 'documents', 'sales_invoices']
-
 /** The parts of an administration, in Moneybird's order. */
 export const navItems: NavItem[] = [
-  { kind: 'overview', key: 'overview', to: 'feed', ready: true, permissions: [] },
+  { kind: 'overview', key: 'overview', to: 'feed', ready: true },
   {
-    kind: 'invoices', key: 'invoices', to: 'sales_invoices', ready: true, permissions: ['sales_invoices'],
+    kind: 'invoices', key: 'invoices', to: 'sales_invoices', ready: true,
     children: [
       link('salesInvoices', 'sales_invoices', true),
       link('externalInvoices', 'external_sales_invoices', true),
       link('recurringInvoices', 'recurring_sales_invoices', true),
     ],
   },
-  { kind: 'incoming', key: 'incoming', to: 'documents', ready: true, permissions: ['documents'] },
-  { kind: 'quotes', key: 'quotes', to: 'estimates', ready: true, permissions: ['estimates'] },
+  { kind: 'incoming', key: 'incoming', to: 'documents', ready: true },
+  { kind: 'quotes', key: 'quotes', to: 'estimates', ready: true },
   {
-    kind: 'bank', key: 'bank', to: 'financial_mutations', ready: true, permissions: ['bank'],
+    kind: 'bank', key: 'bank', to: 'financial_mutations', ready: true,
     children: [
       link('financialAccounts', 'financial_accounts', true),
       link('transactions', 'financial_mutations', true),
@@ -42,17 +39,17 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    kind: 'timesheets', key: 'timesheets', to: 'time_entries', ready: true, permissions: ['time_entries'],
+    kind: 'timesheets', key: 'timesheets', to: 'time_entries', ready: true,
     children: [
       link('register', 'time_entries', true),
       link('hoursReport', 'time_entries_report', true),
       link('projectsReport', 'time_entries_report/projects', true),
     ],
   },
-  { kind: 'contacts', key: 'contacts', to: 'contacts', ready: true, permissions: ['sales_invoices', 'documents', 'estimates'] },
-  { kind: 'vat', key: 'vat', to: 'declarations', ready: true, permissions: bookkeeping },
+  { kind: 'contacts', key: 'contacts', to: 'contacts', ready: true },
+  { kind: 'vat', key: 'vat', to: 'declarations', ready: true },
   {
-    kind: 'reports', key: 'reports', to: 'reports', ready: true, permissions: ['bank', 'documents'],
+    kind: 'reports', key: 'reports', to: 'reports', ready: true,
     children: [
       link('reportsOverview', 'reports', true),
       link('profitLoss', 'report/profit_loss', true),
@@ -74,21 +71,30 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    kind: 'products', key: 'products', to: 'products', ready: true, permissions: ['settings', 'sales_invoices', 'estimates'],
+    kind: 'products', key: 'products', to: 'products', ready: true,
     children: [link('productsOverview', 'products', true), link('onlineSales', 'payment_links', true)],
   },
-  { kind: 'assets', key: 'assets', to: 'assets', ready: true, permissions: ['documents'] },
-  { kind: 'projects', key: 'projects', to: 'projects', ready: true, permissions: ['settings', 'sales_invoices', 'documents', 'estimates', 'time_entries'] },
+  { kind: 'assets', key: 'assets', to: 'assets', ready: true },
+  { kind: 'projects', key: 'projects', to: 'projects', ready: true },
   {
-    kind: 'tasks', key: 'tasks', to: 'task_lists/lists', ready: true, permissions: [],
+    kind: 'tasks', key: 'tasks', to: 'task_lists/lists', ready: true,
     children: [link('taskLists', 'task_lists/lists', true), link('taskTemplates', 'task_lists/templates', true)],
   },
-  { kind: 'settings', key: 'settings', to: 'settings', ready: true, permissions: [] },
+  { kind: 'settings', key: 'settings', to: 'settings', ready: true },
 ]
 
-/** The items a member with these permissions may see. */
+/** The items a member with these permissions may see, with only the pages they may open. */
 export function visibleItems(permissions: readonly Permission[]): NavItem[] {
-  return navItems.filter((item) => item.permissions.length === 0 || item.permissions.some((p) => permissions.includes(p)))
+  return navItems.flatMap((item) => {
+    if (!item.children) {
+      return mayOpen(permissions, item.to) ? [item] : []
+    }
+    const children = item.children.filter((l) => mayOpen(permissions, l.to))
+    if (children.length === 0) {
+      return []
+    }
+    return [{ ...item, to: children.some((l) => l.to === item.to) ? item.to : (children[0]?.to ?? item.to), children }]
+  })
 }
 
 /** Whether `to` is the page at `path` (relative to the administration) or a page below it. */

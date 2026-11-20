@@ -2,8 +2,10 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
+import { mayOpen } from './access'
 import { useAdministrationId } from './administrationId'
 import { CaretIcon, NavIcon } from './icons'
+import { NoAccess } from './NoAccess'
 import { contains, currentLink, visibleItems, type NavItem, type NavLink } from './sidenavItems'
 
 const sidenavId = 'sidenav'
@@ -48,10 +50,21 @@ export function AdministrationLayout() {
     <div className="workspace">
       <Sidenav />
       <div className="workspace__page">
-        <Outlet />
+        <Allowed />
       </div>
     </div>
   )
+}
+
+/** The page, or No access when the member may not open it. */
+function Allowed() {
+  const id = useAdministrationId()
+  const administration = useAdministration(id)
+  const { pathname } = useLocation()
+  if (administration.data && !mayOpen(administration.data.permissions, pathname.slice(id.length + 2))) {
+    return <NoAccess />
+  }
+  return <Outlet />
 }
 
 function storedCollapsed() {

@@ -5,8 +5,9 @@ import { ApiError } from '../api/client'
 import { ArrowLeftIcon, SectionIcon } from '../layout/icons'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Loading } from '../layout/Loading'
-import { Page } from '../layout/Page'
 import { can } from '../management/queries'
+import { mayOpen } from '../layout/access'
+import { NoAccess } from '../layout/NoAccess'
 
 export const sections = ['company', 'invoices_and_estimates', 'bookkeeping', 'bank', 'administration', 'connections'] as const
 export type Section = (typeof sections)[number]
@@ -139,18 +140,8 @@ export function SettingsLayout() {
         </ul>
       </nav>
       <div className="settings__page">
-        {visible.includes(current) ? <Outlet /> : <NoAccess />}
+        {visible.includes(current) && mayOpen(administration.data.permissions, pathname.slice(administrationId.length + 2)) ? <Outlet /> : <NoAccess />}
       </div>
     </div>
-  )
-}
-
-/** Shown in a section the user has no permission for. */
-function NoAccess() {
-  const { t } = useTranslation()
-  return (
-    <Page title={t('management.noAccessTitle')}>
-      <p className="empty">{t('management.noAccess')}</p>
-    </Page>
   )
 }

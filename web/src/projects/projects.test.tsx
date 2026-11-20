@@ -33,6 +33,17 @@ function loaded(list: Project[] = [project()], seen: URL[] = [], counts = { all:
 }
 
 describe('the project list', () => {
+  it('only shows the projects to a member who may not change them', async () => {
+    const tracker = administration({ id: '11', name: 'Harpy B.V.', user_type: 'employee', permissions: ['time_entries'] })
+    server.use(...loaded())
+    server.use(listing([tracker]), http.get('*/api/v2/administrations/11', () => HttpResponse.json(tracker)))
+    renderAt('/11/projects')
+    const table = await screen.findByRole('table', { name: 'Projects' })
+    expect(await within(table).findByText('Website redesign')).toBeInTheDocument()
+    expect(within(table).queryByRole('link', { name: 'Website redesign' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Add' })).toBeNull()
+  })
+
   it('lists the active projects by name, like Moneybird, and shows the archived ones on request', async () => {
     const seen: URL[] = []
     server.use(...loaded(undefined, seen))

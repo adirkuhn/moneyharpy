@@ -1,12 +1,14 @@
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useAdministration } from '../administrations/queries'
 import { InfoIcon, ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
 import { Deactivated } from '../list/Deactivated'
 import { DocumentTable } from '../list/DocumentTable'
 import { GettingStarted } from '../list/GettingStarted'
+import { can } from '../management/queries'
 import { perPage, type Project, type ProjectState, useProjectCount, useProjects } from './queries'
 
 /**
@@ -26,16 +28,18 @@ export function ProjectsPage() {
   const [info, setInfo] = useState<boolean | null>(null)
   const introId = useId()
   const base = `/${administrationId}/projects`
+  // Adding and changing projects is a setting; others only see them.
+  const manage = can(useAdministration(administrationId).data, 'settings')
   const shown = projects.data?.projects ?? []
   const firstUse = all.data === 0
   const introShown = info ?? firstUse
 
-  const footer = firstUse ? (
+  const footer = firstUse ? (manage && (
     <Link className="document-table__add" to={`${base}/new`}>
       <ListIcon kind="plus" />
       {t('projects.add')}
     </Link>
-  ) : archived.data !== undefined && (
+  )) : archived.data !== undefined && (
     <Deactivated count={archived.data} shown={state === 'all'} show={`${base}?state=all`} hide={base} />
   )
 
@@ -56,10 +60,12 @@ export function ProjectsPage() {
           >
             <InfoIcon />
           </button>
-          <Link className="btn btn--accent btn--with-icon" to={`${base}/new`}>
-            <ListIcon kind="plus" />
-            <span>{t('projects.addShort')}</span>
-          </Link>
+          {manage && (
+            <Link className="btn btn--accent btn--with-icon" to={`${base}/new`}>
+              <ListIcon kind="plus" />
+              <span>{t('projects.addShort')}</span>
+            </Link>
+          )}
         </>
       }
     >
@@ -82,13 +88,13 @@ export function ProjectsPage() {
           label={t('projects.title')}
           rows={shown}
           rowKey={(p) => p.id ?? ''}
-          href={(p) => `${base}/${p.id}/edit`}
+          href={(p) => (manage ? `${base}/${p.id}/edit` : undefined)}
           total={projects.data.total}
           perPage={perPage}
           footer={footer}
           columns={[
             {
-              key: 'name', header: t('projects.name'), link: true,
+              key: 'name', header: t('projects.name'), link: manage,
               cell: (p) => (p.state === 'archived' ? <span className="list-inactive">{p.name}</span> : p.name),
             },
           ]}
