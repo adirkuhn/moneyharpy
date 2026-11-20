@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { formatAmount } from '../banking/queries'
 import { useLedgerAccounts, useTaxRates } from '../bookkeeping/queries'
 import { InfoIcon, ListIcon, SearchIcon } from '../layout/icons'
@@ -82,10 +83,10 @@ export function ProductsPage() {
           <button type="button" className="btn btn--secondary btn--icon" aria-label={t('products.export')} title={t('products.export')} disabled={exporting} onClick={download}>
             <ListIcon kind="download" />
           </button>
-          <Link className="btn btn--accent btn--with-icon" to={`${base}/new`}>
+          <ActionLink className="btn btn--accent btn--with-icon" to={`${base}/new`}>
             <ListIcon kind="plus" />
             <span>{t('products.addShort')}</span>
-          </Link>
+          </ActionLink>
         </>
       }
     >
@@ -121,10 +122,10 @@ export function ProductsPage() {
             total={products.data.total}
             perPage={perPage}
             footer={firstUse && (
-              <Link className="document-table__add" to={`${base}/new`}>
+              <ActionLink className="document-table__add" to={`${base}/new`}>
                 <ListIcon kind="plus" />
                 {t('products.add')}
-              </Link>
+              </ActionLink>
             )}
             columns={[
               { key: 'title', header: t('products.productTitle'), link: true, cell: (p) => productName(p, t) },

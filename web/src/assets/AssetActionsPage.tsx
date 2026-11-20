@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -74,7 +75,7 @@ function Actions({ asset }: { asset: Asset }) {
         })}
       </ul>
       <div className="asset-actions__foot">
-        <Link className="btn btn--secondary" to={base}>{t('common.cancel')}</Link>
+        <ActionLink className="btn btn--secondary" to={base}>{t('common.cancel')}</ActionLink>
       </div>
       {confirming && (
         <DangerDialog
@@ -110,8 +111,8 @@ function ActionForm({ asset, kind, onSubmit, pending, error, children }: {
           <div className="asset-action-form__fields">{children}</div>
         </div>
         <div className="asset-action-form__actions">
-          <Link className="btn btn--secondary" to={base}>{t('common.cancel')}</Link>
-          <Link className="btn btn--secondary" to={`${base}/value_changes/new`}>{t('assets.back')}</Link>
+          <ActionLink className="btn btn--secondary" to={base}>{t('common.cancel')}</ActionLink>
+          <ActionLink className="btn btn--secondary" to={`${base}/value_changes/new`}>{t('assets.back')}</ActionLink>
           <button className="btn btn--primary" disabled={pending}>{t('assets.save')}</button>
         </div>
       </form>

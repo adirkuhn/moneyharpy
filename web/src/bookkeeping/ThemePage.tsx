@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
 import { formErrors, FormRow, SelectInput, TextInput } from '../forms/Form'
 import { InfoIcon } from '../layout/icons'
@@ -56,7 +57,7 @@ function ThemeForm({ template, flow, pending, onSubmit, children }: Omit<ThemePr
         {children}
         <div className="category-card__actions category-card__actions--center">
           <button className="btn btn--primary" disabled={pending}>{flow.forInvoice ? t('bookkeeping.theme.saveBack') : t('settings.save')}</button>
-          <Link className="btn btn--secondary" to={flow.returnTo} state={flow.returnState}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={flow.returnTo} state={flow.returnState}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

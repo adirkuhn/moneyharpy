@@ -1,3 +1,5 @@
+import { useAccess } from '../layout/useAccess'
+import { ActionLink } from '../layout/ActionLink'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -61,6 +63,7 @@ export function FinancialAccountsPage() {
   const connected = (useLocation().state as { connected?: string } | null)?.connected
   const [info, setInfo] = useState(false)
   const [adding, setAdding] = useState(false)
+  const mayChange = useAccess().mayChange()
   const [connecting, setConnecting] = useState(false)
   const [showInactive, setShowInactive] = useState(false)
   const infoId = useId()
@@ -93,11 +96,13 @@ export function FinancialAccountsPage() {
       >
         <InfoIcon />
       </button>
-      <Link className="btn btn--secondary" to={`${base}/financial_mutations?state=unprocessed`}>{t('bank.accounts.linkUnprocessed', { count: unprocessed })}</Link>
+      <ActionLink className="btn btn--secondary" to={`${base}/financial_mutations?state=unprocessed`}>{t('bank.accounts.linkUnprocessed', { count: unprocessed })}</ActionLink>
+      {mayChange && (
       <button type="button" className={`btn btn--accent btn--with-icon${adding ? ' is-active' : ''}`} aria-expanded={adding} aria-controls={addId} onClick={() => setAdding(!adding)}>
         <span>{t('bank.accounts.addTransactions')}</span>
         <CaretIcon />
       </button>
+      )}
       <ActionMenu
         label={t('bank.accounts.more')}
         iconOnly

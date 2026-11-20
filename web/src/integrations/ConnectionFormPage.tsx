@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { Problems } from '../auth/AuthLayout'
 import { CheckboxInput, FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
@@ -44,7 +45,7 @@ export function ConnectionFormPage() {
             <pre className="code-block">{config}</pre>
           </div>
         )}
-        <Link className="btn btn--primary" to={back}>{t('management.done')}</Link>
+        <ActionLink className="btn btn--primary" to={back}>{t('management.done')}</ActionLink>
       </Page>
     )
   }
@@ -71,7 +72,7 @@ export function ConnectionFormPage() {
         </FormSection>
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={create.isPending}>{t('integrations.create')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

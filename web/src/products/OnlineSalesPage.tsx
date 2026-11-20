@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { InfoIcon, ListIcon } from '../layout/icons'
 import { Page } from '../layout/Page'
 import { GettingStarted } from '../list/GettingStarted'
@@ -91,7 +92,7 @@ export function PaymentLinkNotReadyPage() {
           <li><ListIcon kind="flow" /><span>{t('onlineSales.notReady.workflow')}</span></li>
         </ol>
         <div className="online-not-ready__actions">
-          <Link className="btn btn--secondary" to={back.to}>{back.label}</Link>
+          <ActionLink className="btn btn--secondary" to={back.to}>{back.label}</ActionLink>
         </div>
       </section>
     </Page>

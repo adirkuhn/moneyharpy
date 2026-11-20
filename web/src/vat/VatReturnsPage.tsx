@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
@@ -56,10 +57,10 @@ export function VatReturnsPage() {
           >
             <InfoIcon />
           </button>
-          <Link className="btn btn--accent btn--with-icon" to={`${base}/new`}>
+          <ActionLink className="btn btn--accent btn--with-icon" to={`${base}/new`}>
             <ListIcon kind="plus" />
             <span>{t('vat.declare')}</span>
-          </Link>
+          </ActionLink>
         </div>
       }
     >

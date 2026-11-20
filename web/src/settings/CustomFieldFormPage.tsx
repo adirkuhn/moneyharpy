@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
@@ -81,7 +82,7 @@ function CustomFieldForm({ administrationId, field }: { administrationId: string
         </FormSection>
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={create.isPending || update.isPending}>{t('settings.save')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

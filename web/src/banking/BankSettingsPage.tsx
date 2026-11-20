@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useParams } from 'react-router-dom'
@@ -80,7 +81,7 @@ function AccountsBlock({ administrationId }: { administrationId: string }) {
       id="accounts"
       title={t('bank.parts.accounts')}
       subtitle={t('bank.accountsSubtitle')}
-      action={<Link className="btn btn--accent" to={`/${administrationId}/financial_accounts/new`}>{t('settings.add')}</Link>}
+      action={<ActionLink className="btn btn--accent" to={`/${administrationId}/financial_accounts/new`}>{t('settings.add')}</ActionLink>}
     >
       <table className="data-table" aria-label={t('bank.accountsTable')}>
         <thead>
@@ -142,7 +143,7 @@ function RulesBlock({ administrationId }: { administrationId: string }) {
       id="booking-rules"
       title={t('bank.parts.rules')}
       subtitle={t('bank.rulesSubtitle')}
-      action={<Link className="btn btn--accent" to={`/${administrationId}/booking_rules/new`}>{t('settings.add')}</Link>}
+      action={<ActionLink className="btn btn--accent" to={`/${administrationId}/booking_rules/new`}>{t('settings.add')}</ActionLink>}
     >
       {rules.data?.length ? (
         <table className="data-table" aria-label={t('bank.parts.rules')}>

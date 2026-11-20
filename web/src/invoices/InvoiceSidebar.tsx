@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type ReactNode, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -135,7 +136,7 @@ function ProductsTip({ administrationId }: { administrationId: string }) {
     <section className="feature-card" aria-labelledby={heading}>
       <h2 id={heading} className="feature-card__title">{t('invoices.view.tip.title')}</h2>
       <p className="feature-card__text">{t('invoices.view.tip.text')}</p>
-      <Link className="btn btn--on-color" to={`/${administrationId}/products/new`}>{t('invoices.view.tip.action')}</Link>
+      <ActionLink className="btn btn--on-color" to={`/${administrationId}/products/new`}>{t('invoices.view.tip.action')}</ActionLink>
       <button type="button" className="feature-card__close" aria-label={t('invoices.view.tip.close')} title={t('invoices.view.tip.close')} onClick={close}>
         <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
       </button>

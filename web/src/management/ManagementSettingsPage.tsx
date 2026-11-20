@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -61,7 +62,8 @@ function DetailsBlock({ administration: a }: { administration: Administration })
   const [form, setForm] = useState(saved)
   // Like Moneybird, Save and Cancel show once something changed.
   const dirty = JSON.stringify(form) !== JSON.stringify(saved)
-  const editable = can(a, 'settings')
+  // Accountants see the details; they change only the bookkeeping.
+  const editable = can(a, 'settings') && a.user_type !== 'accountant'
 
   const countryOptions = useMemo(() => {
     const names = new Intl.DisplayNames([i18n.language], { type: 'region', fallback: 'code' })
@@ -232,7 +234,7 @@ function SecurityBlock({ administration: a }: { administration: Administration }
               <>
                 <p>{t('management.setUpYoursFirst')}</p>
                 <div className="confirm-row__buttons">
-                  <Link className="btn btn--accent btn--small" to="/user#two-step">{t('management.setUpTwoFactor')}</Link>
+                  <ActionLink className="btn btn--accent btn--small" to="/user#two-step">{t('management.setUpTwoFactor')}</ActionLink>
                   <button type="button" className="btn btn--secondary btn--small" onClick={() => setConfirming(false)}>{t('common.cancel')}</button>
                 </div>
               </>

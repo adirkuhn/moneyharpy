@@ -1,3 +1,5 @@
+import { ReadOnly } from '../layout/ReadOnly'
+import { useAccess } from '../layout/useAccess'
 import { type ReactNode, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -158,6 +160,8 @@ function RecurringScreen({ administrationId, recurring: rec }: { administrationI
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(() => draftOf(rec, tomorrowDay()))
   const [asking, setAsking] = useState<'stop' | 'delete' | null>(null)
+  // Accountants see the recurring invoice as it is; they change only the bookkeeping.
+  const mayChange = useAccess().mayChange()
   const list = `/${administrationId}/recurring_sales_invoices`
   const here = `${list}/${rec.id}`
   const name = rec.contact ? contactName(rec.contact) : ''
@@ -172,10 +176,12 @@ function RecurringScreen({ administrationId, recurring: rec }: { administrationI
   const actions = (
     <div className="recurring-actions">
       <ActionMenu label={t('invoices.view.extra')} items={extra} />
-      {active && <button type="button" className="btn btn--secondary" disabled={stop.isPending} onClick={() => setAsking('stop')}>{t('recurring.stop')}</button>}
-      <button type="button" className="btn btn--secondary btn--icon" aria-label={t('recurring.delete')} title={t('recurring.delete')} onClick={() => setAsking('delete')}>
-        <PageIcon kind="trash" />
-      </button>
+      {active && mayChange && <button type="button" className="btn btn--secondary" disabled={stop.isPending} onClick={() => setAsking('stop')}>{t('recurring.stop')}</button>}
+      {mayChange && (
+        <button type="button" className="btn btn--secondary btn--icon" aria-label={t('recurring.delete')} title={t('recurring.delete')} onClick={() => setAsking('delete')}>
+          <PageIcon kind="trash" />
+        </button>
+      )}
     </div>
   )
   const editSchedule = () => {
@@ -224,13 +230,13 @@ function RecurringScreen({ administrationId, recurring: rec }: { administrationI
                 made={count}
                 invoices={made.data ?? []}
                 administrationId={administrationId}
-                onEdit={active ? editSchedule : undefined}
+                onEdit={active && mayChange ? editSchedule : undefined}
                 unsendable={rec.auto_send ? unsendable : null}
               />
             )}
           </section>
           {/* A stopped recurring invoice makes nothing more, so its document no longer changes. */}
-          <div inert={!active}>
+          <div inert={!active || !mayChange}>
             <InvoiceEditor
               mode="view"
               administrationId={administrationId}
@@ -244,7 +250,7 @@ function RecurringScreen({ administrationId, recurring: rec }: { administrationI
             />
           </div>
         </div>
-        <RecurringSidebar administrationId={administrationId} recurring={rec} />
+        <ReadOnly><RecurringSidebar administrationId={administrationId} recurring={rec} /></ReadOnly>
       </div>
       {asking === 'delete' && (
         <DangerDialog

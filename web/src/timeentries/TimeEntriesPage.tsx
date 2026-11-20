@@ -1,3 +1,5 @@
+import { useAccess } from '../layout/useAccess'
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -30,6 +32,7 @@ export function TimeEntriesPage() {
   const { t, i18n } = useTranslation()
   const { administrationId = '' } = useParams()
   const [search] = useSearchParams()
+  const mayChange = useAccess().mayChange()
   const administration = useAdministration(administrationId)
   const me = useCurrentUser()
   const day = parseDay(search.get('date'))
@@ -71,7 +74,7 @@ export function TimeEntriesPage() {
           >
             <ListIcon kind="flow" />
           </button>
-          <Link className="btn btn--secondary" to={at(today)}>{t('timeEntries.register.today')}</Link>
+          <ActionLink className="btn btn--secondary" to={at(today)}>{t('timeEntries.register.today')}</ActionLink>
           <ActionMenu
             label={t('timeEntries.register.more')}
             iconOnly
@@ -125,7 +128,7 @@ export function TimeEntriesPage() {
         </span>
       </nav>
 
-      <TimerForm key={day} administrationId={administrationId} userId={me.data.id ?? ''} day={day} addProjects={can(administration.data, 'settings')} />
+      {mayChange && <TimerForm key={day} administrationId={administrationId} userId={me.data.id ?? ''} day={day} addProjects={can(administration.data, 'settings')} />}
 
       {!week.data ? (
         <Loading />

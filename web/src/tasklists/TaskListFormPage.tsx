@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { todayDay } from '../forms/calendar'
@@ -128,7 +129,7 @@ function TaskListForm({ list }: { list?: TaskList }) {
         </FormSection>
         <div className="form-sheet__actions form-sheet__actions--center">
           <button className="btn btn--primary" disabled={save.isPending}>{t('taskLists.save')}</button>
-          <Link className="btn btn--secondary" to={list ? `${base}/${list.id}` : base}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={list ? `${base}/${list.id}` : base}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

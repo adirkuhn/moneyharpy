@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type ReactNode, type RefObject, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -120,7 +121,7 @@ export function AddInvoiceDialog(props: Props) {
         </button>
       </div>
       {'to' in cancel
-        ? <Link className="btn btn--secondary" to={cancel.to}>{t('common.cancel')}</Link>
+        ? <ActionLink className="btn btn--secondary" to={cancel.to}>{t('common.cancel')}</ActionLink>
         : <button type="button" className="btn btn--secondary" onClick={cancel.onClick}>{t('common.cancel')}</button>}
     </>
   )
@@ -224,9 +225,9 @@ export function AddInvoiceDialog(props: Props) {
                 errors={errors.field('workflow_id')}
                 labelExtra={<Tip text={p('workflowTip')} />}
                 action={flow?.id && (
-                  <Link className="btn btn--secondary btn--icon" to={`/${administrationId}/workflows/${flow.id}`} aria-label={p('editWorkflow')} title={p('editWorkflow')}>
+                  <ActionLink className="btn btn--secondary btn--icon" to={`/${administrationId}/workflows/${flow.id}`} aria-label={p('editWorkflow')} title={p('editWorkflow')}>
                     <ListIcon kind="edit" />
-                  </Link>
+                  </ActionLink>
                 )}
               >
                 {({ labelId: _, ...control }) => (
@@ -272,10 +273,10 @@ export function AddInvoiceDialog(props: Props) {
                 </>
               )}
               <div className="add-invoice__custom">
-                <Link className="btn btn--secondary btn--small btn--with-icon" to={newField}>
+                <ActionLink className="btn btn--secondary btn--small btn--with-icon" to={newField}>
                   <ListIcon kind="plus" />
                   <span>{p('addCustomField')}</span>
-                </Link>
+                </ActionLink>
               </div>
             </fieldset>
           )}

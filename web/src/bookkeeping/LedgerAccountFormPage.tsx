@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
 import { CheckboxInput, FormNotice, FormSection, formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
@@ -130,7 +131,7 @@ function LedgerAccountForm({ administrationId, hasScheme, accounts, account }: P
         )}
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={save.isPending}>{t('settings.save')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

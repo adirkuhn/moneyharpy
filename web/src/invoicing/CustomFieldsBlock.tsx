@@ -1,5 +1,5 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
 import { Block } from '../settings/Block'
 import { type CustomField, type CustomFieldSource, useCustomFields, useDeleteCustomField, useReorderCustomFields } from '../settings/queries'
@@ -19,7 +19,7 @@ export function CustomFieldsBlock({ administrationId }: { administrationId: stri
       id="custom-fields"
       title={t('invoicing.parts.customFields')}
       subtitle={t('invoicing.customFieldsSubtitle')}
-      action={<Link className="btn btn--accent" to={add}>{t('settings.add')}</Link>}
+      action={<ActionLink className="btn btn--accent" to={add}>{t('settings.add')}</ActionLink>}
     >
       {fields.data && groups.length === 0 && <p className="empty">{t('invoicing.noCustomFields')}</p>}
       {groups.map((g) => <FieldTable key={g.source} administrationId={administrationId} source={g.source} fields={g.fields} />)}
@@ -54,7 +54,7 @@ function FieldTable({ administrationId, source, fields }: TableProps) {
             <td className="data-table__actions">
               <button type="button" className="icon-btn" aria-label={t('invoicing.moveUp', { name: f.name })} disabled={index === 0 || reorder.isPending} onClick={() => move(index, -1)}>↑</button>
               <button type="button" className="icon-btn" aria-label={t('invoicing.moveDown', { name: f.name })} disabled={index === fields.length - 1 || reorder.isPending} onClick={() => move(index, 1)}>↓</button>
-              <Link className="btn btn--secondary btn--small" aria-label={t('invoicing.editName', { name: f.name })} to={`/${administrationId}/custom_fields/${f.id}/edit`}>{t('settings.edit')}</Link>
+              <ActionLink className="btn btn--secondary btn--small" aria-label={t('invoicing.editName', { name: f.name })} to={`/${administrationId}/custom_fields/${f.id}/edit`}>{t('settings.edit')}</ActionLink>
               <ConfirmDelete
                 label={t('invoicing.deleteName', { name: f.name })}
                 confirmLabel={t('invoicing.confirmDeleteName', { name: f.name })}

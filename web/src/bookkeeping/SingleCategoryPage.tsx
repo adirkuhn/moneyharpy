@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useDeferredValue, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
 import { formErrors, SelectInput, TextArea, TextInput } from '../forms/Form'
 import { Loading } from '../layout/Loading'
@@ -91,7 +92,7 @@ function SingleCategory({ administrationId, hasScheme, accounts, flow }: Props) 
           <TextInput label={labels.account_id} width="small" maxLength={20} autoComplete="off" value={form.account_id} help={b('single.optional')} errors={errors.field('account_id')} onChange={(e) => setForm({ ...form, account_id: e.target.value })} />
           <div className="category-card__actions">
             <button className="btn btn--primary" disabled={save.isPending}>{t('settings.save')}</button>
-            <Link className="btn btn--secondary" to={flow.returnTo} state={flow.returnState}>{t('common.cancel')}</Link>
+            <ActionLink className="btn btn--secondary" to={flow.returnTo} state={flow.returnState}>{t('common.cancel')}</ActionLink>
           </div>
         </form>
         <section className="category-card single-category__picker" aria-label={b('single.select')}>

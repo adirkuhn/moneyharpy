@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -308,7 +309,7 @@ function IdentityForm({ mode, administration, target, initial, customFields }: F
 
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={save.isPending}>{t('settings.save')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

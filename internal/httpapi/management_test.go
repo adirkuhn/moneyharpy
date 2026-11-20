@@ -337,6 +337,8 @@ func TestAccountantsOnlyChangeTheBookkeeping(t *testing.T) {
 	year := fmt.Sprint(time.Now().Year())
 	// Exporting passes; this one only finds no journal entries yet.
 	wantStatus(t, accountant.do(http.MethodPost, api+"/reports/export/ledger_accounts", map[string]any{"year": year}), http.StatusBadRequest)
+	// Task lists are kept for the bookkeeping, so accountants keep them too.
+	wantStatus(t, accountant.do(http.MethodPost, api+"/task_lists", map[string]any{"task_list": map[string]any{"name": "Year end"}}), http.StatusCreated)
 	// Leaving is their own business.
 	wantStatus(t, accountant.do(http.MethodDelete, api+"/membership", nil), http.StatusNoContent)
 }

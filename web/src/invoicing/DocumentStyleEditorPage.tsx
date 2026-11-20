@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -185,7 +186,7 @@ function Editor({ administrationId, style, identities, customFields, tab, langua
               ))}
             </ul>
           </Menu>
-          <Link className="btn btn--secondary" to={`${base}/edit_general`}>{t('documentStyle.general')}</Link>
+          <ActionLink className="btn btn--secondary" to={`${base}/edit_general`}>{t('documentStyle.general')}</ActionLink>
           {style.default ? (
             <button type="button" className="btn btn--secondary btn--small" disabled aria-label={t('documentStyle.defaultCannotBeDeleted')} title={t('documentStyle.defaultCannotBeDeleted')}>
               {t('documentStyle.deleteLayout')}
@@ -221,7 +222,7 @@ function Editor({ administrationId, style, identities, customFields, tab, langua
             </div>
             <div className="style-editor__actions">
               <button className="btn btn--primary" disabled={save.isPending}>{t('documentStyle.save')}</button>
-              <Link className="btn btn--secondary" to={back}>{t('documentStyle.goBack')}</Link>
+              <ActionLink className="btn btn--secondary" to={back}>{t('documentStyle.goBack')}</ActionLink>
             </div>
           </form>
           <div className="style-editor__preview">

@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from 'react'
+import { Fragment, type ReactNode, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
@@ -10,6 +10,7 @@ import { Loading } from '../layout/Loading'
 import { Menu } from '../layout/Menu'
 import { NotFoundPage } from '../layout/NotFoundPage'
 import { Page } from '../layout/Page'
+import { useAllowedItems } from '../list/ListActions'
 import { can } from '../management/queries'
 import { overdueStates, unpaidStates } from '../invoices/queries'
 import { type OverviewItem, type OverviewTally, partOfDay, rememberAdministration, useOverview } from './queries'
@@ -22,6 +23,7 @@ export function OverviewPage() {
   const administration = useAdministration(administrationId)
   const overview = useOverview(administrationId)
   const me = useCurrentUser()
+  const allowed = useAllowedItems()
 
   useEffect(() => {
     if (administration.data) {
@@ -46,29 +48,34 @@ export function OverviewPage() {
   const settings = can(a, 'settings')
   const base = `/${a.id}`
 
+  // The pages to add something on, in Moneybird's groups; only those the member may open.
+  const groups = [
+    allowed([
+      ...(sales ? [{ to: `${base}/sales_invoices/new`, label: t('overview.addInvoice') }, { to: `${base}/external_sales_invoices/new`, label: t('overview.addExternal') }, { to: `${base}/recurring_sales_invoices/new`, label: t('overview.addRecurring') }] : []),
+      ...(documents ? [{ to: `${base}/documents/general_journal_documents/new`, label: t('overview.addJournal') }] : []),
+      ...(sales || documents ? [{ to: `${base}/contacts/new`, label: t('overview.addContact') }] : []),
+    ]),
+    allowed(settings ? [
+      { to: `${base}/financial_accounts/new`, label: t('overview.addAccount') },
+      { to: `${base}/booking_rules/new`, label: t('overview.addRule') },
+      { to: `${base}/ledger_accounts/blueprints`, label: t('overview.addCategory') },
+    ] : []),
+  ].filter((g) => g.length > 0)
+
   return (
     <Page
       title={greeting}
-      actions={(sales || documents || settings) && (
+      actions={groups.length > 0 && (
         <Menu label={<><ListIcon kind="plus" />{t('overview.add')}</>} buttonClassName="btn btn--accent">
           <nav aria-label={t('overview.addMenu')}>
-            {(sales || documents) && (
-              <ul className="menu__list">
-                {sales && <li><Link to={`${base}/sales_invoices/new`}>{t('overview.addInvoice')}</Link></li>}
-                {sales && <li><Link to={`${base}/external_sales_invoices/new`}>{t('overview.addExternal')}</Link></li>}
-                {sales && <li><Link to={`${base}/recurring_sales_invoices/new`}>{t('overview.addRecurring')}</Link></li>}
-                {documents && <li><Link to={`${base}/documents/general_journal_documents/new`}>{t('overview.addJournal')}</Link></li>}
-                <li><Link to={`${base}/contacts/new`}>{t('overview.addContact')}</Link></li>
-              </ul>
-            )}
-            {(sales || documents) && settings && <hr />}
-            {settings && (
-              <ul className="menu__list">
-                <li><Link to={`${base}/financial_accounts/new`}>{t('overview.addAccount')}</Link></li>
-                <li><Link to={`${base}/booking_rules/new`}>{t('overview.addRule')}</Link></li>
-                <li><Link to={`${base}/ledger_accounts/blueprints`}>{t('overview.addCategory')}</Link></li>
-              </ul>
-            )}
+            {groups.map((group, i) => (
+              <Fragment key={group[0]?.to}>
+                {i > 0 && <hr />}
+                <ul className="menu__list">
+                  {group.map((l) => <li key={l.to}><Link to={l.to}>{l.label}</Link></li>)}
+                </ul>
+              </Fragment>
+            ))}
           </nav>
         </Menu>
       )}

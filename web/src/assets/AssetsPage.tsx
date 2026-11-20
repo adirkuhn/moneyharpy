@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { formatAmount } from '../banking/queries'
 import { useLedgerAccounts } from '../bookkeeping/queries'
@@ -39,10 +40,10 @@ export function AssetsPage() {
   const deactivated = all.data !== undefined && active.data !== undefined ? all.data - active.data : undefined
 
   const footer = firstUse ? (
-    <Link className="document-table__add" to={`${base}/new`}>
+    <ActionLink className="document-table__add" to={`${base}/new`}>
       <ListIcon kind="plus" />
       {t('assets.add')}
-    </Link>
+    </ActionLink>
   ) : deactivated !== undefined && (
     <Deactivated count={deactivated} shown={view === 'all'} show={`${base}?active=false`} hide={base} />
   )
@@ -64,10 +65,10 @@ export function AssetsPage() {
           >
             <InfoIcon />
           </button>
-          <Link className="btn btn--accent btn--with-icon" to={`${base}/new`}>
+          <ActionLink className="btn btn--accent btn--with-icon" to={`${base}/new`}>
             <ListIcon kind="plus" />
             <span>{t('assets.addShort')}</span>
-          </Link>
+          </ActionLink>
         </>
       }
     >

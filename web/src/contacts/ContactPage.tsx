@@ -1,6 +1,8 @@
+import { ReadOnly } from '../layout/ReadOnly'
+import { ActionLink } from '../layout/ActionLink'
 import { type KeyboardEvent, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { ConfirmPanel } from '../detail/Detail'
@@ -55,10 +57,10 @@ function ContactView({ administrationId, contact: c }: { administrationId: strin
 
   const actions = (
     <>
-      <Link className="btn btn--secondary btn--with-icon" to={`${list}/${id}/edit`}>
+      <ActionLink className="btn btn--secondary btn--with-icon" to={`${list}/${id}/edit`}>
         <ContactIcon kind="pen" />
         <span>{t('contacts.edit')}</span>
-      </Link>
+      </ActionLink>
       <ActionMenu
         label={t('contacts.view.export')}
         icon={<ListIcon kind="export" />}
@@ -184,7 +186,7 @@ function ContactTabs({ administrationId, contact, documents }: TabsProps) {
       <div role="tabpanel" id={`${base}-${current}-panel`} aria-labelledby={`${base}-${current}`} className="contact-view__panel">
         {current === 'feed' && <ContactFeed administrationId={administrationId} contact={contact} documents={documents.documents} pending={documents.pending} />}
         {current === 'details' && <ContactDetails administrationId={administrationId} contact={contact} />}
-        {current === 'notes' && <ContactNotes administrationId={administrationId} contact={contact} />}
+        {current === 'notes' && <ReadOnly><ContactNotes administrationId={administrationId} contact={contact} /></ReadOnly>}
       </div>
     </div>
   )

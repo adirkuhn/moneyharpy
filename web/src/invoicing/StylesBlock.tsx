@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { ChevronIcon, ListIcon } from '../layout/icons'
@@ -18,7 +19,7 @@ export function StylesBlock({ administrationId }: { administrationId: string }) 
       id="document-styles"
       title={t('invoicing.parts.styles')}
       subtitle={t('invoicing.stylesSubtitle')}
-      action={<Link className="btn btn--accent" to={`${base}/document_styles/new`}>{t('settings.add')}</Link>}
+      action={<ActionLink className="btn btn--accent" to={`${base}/document_styles/new`}>{t('settings.add')}</ActionLink>}
     >
       <ul className="ledger" aria-label={t('invoicing.parts.styles')}>
         {styles.data?.map((style) => (

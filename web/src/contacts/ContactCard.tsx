@@ -1,3 +1,4 @@
+import { useAccess } from '../layout/useAccess'
 import { type FormEvent, type ReactNode, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -124,6 +125,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 
 /** The people of a company, under its card; Moneybird offers to add them to companies only. */
 function People({ administrationId, contact, company }: { administrationId: string; contact: Contact; company: boolean }) {
+  const mayChange = useAccess().mayChange()
   const { t } = useTranslation()
   const [editing, setEditing] = useState<ContactPerson | 'new' | null>(null)
   const remove = useDeletePerson(administrationId, contact.id ?? '')
@@ -147,12 +149,14 @@ function People({ administrationId, contact, company }: { administrationId: stri
                       <p className="people__name">{name}</p>
                       {[p.department, p.email, p.phone].filter(Boolean).map((detail) => <p key={detail} className="hint">{detail}</p>)}
                     </div>
+                    {mayChange && (
                     <div className="people__actions">
                       <button type="button" className="btn btn--secondary btn--small" aria-label={t('contacts.view.editPerson', { name })} onClick={() => setEditing(p)}>
                         {t('contacts.edit')}
                       </button>
                       <ConfirmDelete label={t('contacts.deletePerson', { name })} confirmLabel={t('contacts.confirmDeletePerson', { name })} text={t('contacts.remove')} confirmText={t('contacts.confirmRemove')} disabled={remove.isPending} onConfirm={() => remove.mutate(String(p.id ?? ''))} />
                     </div>
+                    )}
                   </li>
                 )
               })}
@@ -161,7 +165,7 @@ function People({ administrationId, contact, company }: { administrationId: stri
         </dl>
       )}
       {editing === 'new' && <PersonForm administrationId={administrationId} contactId={contact.id ?? ''} onDone={() => setEditing(null)} />}
-      {company && editing === null && (
+      {company && editing === null && mayChange && (
         <button type="button" className="btn btn--secondary btn--with-icon contact-card__add" onClick={() => setEditing('new')}>
           <ContactIcon kind="plus" />
           <span>{t('contacts.addPerson')}</span>

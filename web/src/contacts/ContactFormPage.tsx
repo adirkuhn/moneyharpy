@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -412,10 +413,10 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
             icon="fields"
             title={f('customFieldsTitle')}
             action={
-              <Link className="btn btn--secondary btn--with-icon" to={newField}>
+              <ActionLink className="btn btn--secondary btn--with-icon" to={newField}>
                 <ContactIcon kind="plus" />
                 <span>{f('addCustomField')}</span>
-              </Link>
+              </ActionLink>
             }
           >
             {contactFields.length === 0 ? (
@@ -429,7 +430,7 @@ function ContactForm({ administrationId, contact, country }: { administrationId:
         </div>
         <div className="contact-form__bar">
           <button className="btn btn--primary" disabled={save.isPending}>{f('save')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type ReactNode, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { ChevronIcon, InfoIcon } from '../layout/icons'
 import { Page } from '../layout/Page'
 import { AdvancedFilter, FilterPanel, RadioFilter } from '../list/FilterPanel'
@@ -169,8 +170,8 @@ export function ReportPage({ filter, name, title, orderable = false, comparable 
             <ActionMenu
               label={t('list.export')}
               items={[
-                { label: t('reports.pdf'), onSelect: () => window.print() },
-                { label: t('reports.excel'), onSelect: () => void exportExcel(label, i18n.language) },
+                { label: t('reports.pdf'), reads: true, onSelect: () => window.print() },
+                { label: t('reports.excel'), reads: true, onSelect: () => void exportExcel(label, i18n.language) },
               ]}
             />
           )}
@@ -190,9 +191,9 @@ function Steps({ filter, link }: { filter: ReportFilter; link: ReturnType<typeof
     const range = shiftRange(filter.range, by)
     const name = t('reports.goTo', { period: rangeName(range, t, i18n.language) })
     return (
-      <Link className="btn btn--secondary btn--icon" to={link({ range })} aria-label={name} title={name}>
+      <ActionLink className="btn btn--secondary btn--icon" to={link({ range })} aria-label={name} title={name}>
         <ChevronIcon className={by < 0 ? 'report-filter__back' : undefined} />
-      </Link>
+      </ActionLink>
     )
   }
   return (

@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useParams } from 'react-router-dom'
@@ -90,7 +91,7 @@ function ConnectionsBlock({ administration: a, kind }: { administration: Adminis
       id={kind === 'api' ? 'external-applications' : 'ai-connections'}
       title={title}
       subtitle={kind === 'api' ? t('integrations.appsSubtitle') : t('integrations.aiSubtitle')}
-      action={mayCreate && <Link className="btn btn--accent" to={`/${a.id}/connections/new?kind=${kind}`}>{kind === 'api' ? t('integrations.newToken') : t('integrations.newAI')}</Link>}
+      action={mayCreate && <ActionLink className="btn btn--accent" to={`/${a.id}/connections/new?kind=${kind}`}>{kind === 'api' ? t('integrations.newToken') : t('integrations.newAI')}</ActionLink>}
     >
       {kind === 'api' && list.length > 0 && <p className="hint">{t('integrations.revokeWebhooksNote')}</p>}
       {list.length === 0 ? (
@@ -145,7 +146,7 @@ function WebhooksBlock({ administration: a }: { administration: Administration }
       id="webhooks"
       title={t('integrations.parts.webhooks')}
       subtitle={t('integrations.webhooksSubtitle')}
-      action={<Link className="btn btn--accent" to={`/${a.id}/webhooks/new`}>{t('settings.add')}</Link>}
+      action={<ActionLink className="btn btn--accent" to={`/${a.id}/webhooks/new`}>{t('settings.add')}</ActionLink>}
     >
       {hooks.data?.length ? (
         <table className="data-table data-table--rows" aria-label={t('integrations.parts.webhooks')}>

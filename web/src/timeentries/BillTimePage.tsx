@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, Fragment, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
@@ -52,7 +53,7 @@ export function BillTimePage() {
   const report = `/${administrationId}/time_entries_report`
   const open = entries.data ?? []
   const picked = open.filter((e) => chosen.has(e.id ?? ''))
-  const cancel = <Link className="btn btn--secondary" to={report}>{t('common.cancel')}</Link>
+  const cancel = <ActionLink className="btn btn--secondary" to={report}>{t('common.cancel')}</ActionLink>
   const back = (to: 1 | 2) => <button type="button" className="btn btn--secondary" onClick={() => setStep(to)}>{t('timeEntries.bill.previous')}</button>
 
   if (step === 1) {

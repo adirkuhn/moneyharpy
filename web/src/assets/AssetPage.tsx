@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
@@ -61,14 +62,14 @@ function AssetView({ administrationId, asset }: { administrationId: string; asse
           >
             <ListIcon kind="scale" />
           </Link>
-          <Link className="btn btn--secondary btn--with-icon" to={`${base}/value_changes/new`}>
+          <ActionLink className="btn btn--secondary btn--with-icon" to={`${base}/value_changes/new`}>
             <ListIcon kind="flow" />
             <span>{t('assets.actions')}</span>
-          </Link>
-          <Link className="btn btn--secondary btn--with-icon" to={`${base}/edit`}>
+          </ActionLink>
+          <ActionLink className="btn btn--secondary btn--with-icon" to={`${base}/edit`}>
             <ListIcon kind="edit" />
             <span>{t('assets.edit')}</span>
-          </Link>
+          </ActionLink>
         </>
       }
     >

@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, type ReactNode, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -126,7 +127,7 @@ function Ways({ administrationId, invoice: inv, kind }: PageProps) {
         </ul>
       </div>
       <div className="content-page__actions">
-        <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+        <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
       </div>
     </div>
   )
@@ -137,8 +138,8 @@ function Bottom({ back, children }: { back: string; children?: ReactNode }) {
   const { t } = useTranslation()
   return (
     <>
-      <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
-      <Link className="btn btn--secondary" to={`${back}/payments/new`}>{t('invoices.registerPage.back')}</Link>
+      <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
+      <ActionLink className="btn btn--secondary" to={`${back}/payments/new`}>{t('invoices.registerPage.back')}</ActionLink>
       {children}
     </>
   )

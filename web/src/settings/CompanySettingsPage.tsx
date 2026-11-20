@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { Page } from '../layout/Page'
 import { Block } from './Block'
 import { countryName, formatIBAN } from './format'
@@ -30,7 +31,7 @@ export function CompanySettingsPage() {
         id="sender-addresses"
         title={t('settings.senders')}
         subtitle={t('settings.sendersSubtitle')}
-        action={<Link className="btn btn--accent" to={`/${administrationId}/identities/new`}>{t('settings.add')}</Link>}
+        action={<ActionLink className="btn btn--accent" to={`/${administrationId}/identities/new`}>{t('settings.add')}</ActionLink>}
       >
         {identities.data && senders.length === 0 && <p className="empty">{t('settings.noSenders')}</p>}
         {senders.map((s) => <IdentityCard key={s.id} identity={s} editPath={`${s.uri}/edit`} />)}
@@ -55,9 +56,9 @@ function IdentityCard({ identity: i, editPath }: { identity: Identity; editPath:
     <div className="datalist">
       <div className="datalist__header">
         <p className="datalist__title">{i.company_name}</p>
-        <Link className="btn btn--secondary" to={editPath} aria-label={i.default ? undefined : t('settings.editName', { name: i.company_name })}>
+        <ActionLink className="btn btn--secondary" to={editPath} aria-label={i.default ? undefined : t('settings.editName', { name: i.company_name })}>
           {t('settings.edit')}
-        </Link>
+        </ActionLink>
       </div>
       <dl>
         {rows.map(([label, values]) => (

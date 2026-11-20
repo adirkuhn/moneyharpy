@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { formatAmount } from '../banking/queries'
@@ -66,16 +67,16 @@ function ProductView({ administrationId, product, rates, accounts }: ViewProps) 
       wide
       actions={
         <>
-          <Link
+          <ActionLink
             className="btn btn--accent"
             to={`/${administrationId}/payment_links/${product.id}/edit?return_to=${encodeURIComponent(`${list}/${product.id}`)}`}
           >
             {t('products.createPaymentLink')}
-          </Link>
-          <Link className="btn btn--secondary btn--with-icon" to={`${list}/${product.id}/edit`}>
+          </ActionLink>
+          <ActionLink className="btn btn--secondary btn--with-icon" to={`${list}/${product.id}/edit`}>
             <ListIcon kind="edit" />
             <span>{t('products.edit')}</span>
-          </Link>
+          </ActionLink>
           <MoreMenu items={more} />
         </>
       }
