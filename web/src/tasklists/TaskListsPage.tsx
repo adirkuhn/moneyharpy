@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { InfoIcon, ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
 import { DangerDialog } from '../layout/Modal'
@@ -82,10 +83,10 @@ export function TaskListsPage() {
             total={lists.data.total}
             perPage={perPage}
             footer={firstUse && (
-              <Link className="document-table__add" to={`${base}/new`}>
+              <ActionLink className="document-table__add" to={`${base}/new`}>
                 <ListIcon kind="plus" />
                 {t('taskLists.add')}
-              </Link>
+              </ActionLink>
             )}
             columns={[
               { key: 'name', header: t('taskLists.name'), link: true, cell: (l) => l.name },
@@ -101,7 +102,7 @@ export function TaskListsPage() {
                     label={t('taskLists.options')}
                     items={[
                       { label: t('taskLists.edit'), to: `${base}/${l.id}/edit` },
-                      { label: t('taskLists.delete'), danger: true, onSelect: () => setDeleting(l) },
+                      { label: t('taskLists.delete'), danger: true, bookkeeping: true, onSelect: () => setDeleting(l) },
                     ]}
                   />
                 ),

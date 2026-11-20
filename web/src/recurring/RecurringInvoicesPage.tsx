@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { ContactName } from '../contacts/ContactHoverCard'
 import { formatAmount } from '../banking/queries'
 import { contactName } from '../contacts/queries'
@@ -115,7 +116,7 @@ function RecurringFilterForm({ administrationId, filter, reset, onApply }: FormP
   const [draft, setDraft] = useState(filter)
   const set = (changes: Partial<RecurringFilter>) => setDraft({ ...draft, ...changes })
   return (
-    <AdvancedFilter value={draft} onApply={() => onApply(draft)} footer={<Link className="btn btn--secondary" to={reset}>{t('recurring.showAllActive')}</Link>}>
+    <AdvancedFilter value={draft} onApply={() => onApply(draft)} footer={<ActionLink className="btn btn--secondary" to={reset}>{t('recurring.showAllActive')}</ActionLink>}>
       <RadioFilter
         legend={t('recurring.status')}
         value={draft.state}

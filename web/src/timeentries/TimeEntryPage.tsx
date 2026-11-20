@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -121,7 +122,7 @@ function TimeEntryForm({ administrationId }: { administrationId: string }) {
       </FormSection>
       <div className="form-sheet__actions">
         <button className="btn btn--primary" disabled={save.isPending || !me.data}>{t('timeEntries.save')}</button>
-        <Link className="btn btn--secondary" to={`/${administrationId}/time_entries`}>{t('common.cancel')}</Link>
+        <ActionLink className="btn btn--secondary" to={`/${administrationId}/time_entries`}>{t('common.cancel')}</ActionLink>
       </div>
     </form>
   )

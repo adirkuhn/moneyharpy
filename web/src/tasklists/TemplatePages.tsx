@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { FormNotice, FormRow, FormSection, formErrors, TextArea, TextInput } from '../forms/Form'
@@ -61,7 +62,7 @@ export function TemplatesPage() {
           >
             <InfoIcon />
           </button>
-          <Link className="btn btn--accent" to={`${base}/new`}>{t('taskTemplates.add')}</Link>
+          <ActionLink className="btn btn--accent" to={`${base}/new`}>{t('taskTemplates.add')}</ActionLink>
         </>
       }
     >
@@ -89,10 +90,10 @@ export function TemplatesPage() {
             total={rows.length}
             perPage={Math.max(rows.length, 1)}
             footer={firstUse && (
-              <Link className="document-table__add" to={`${base}/new`}>
+              <ActionLink className="document-table__add" to={`${base}/new`}>
                 <ListIcon kind="plus" />
                 {t('taskTemplates.add')}
-              </Link>
+              </ActionLink>
             )}
             columns={[
               { key: 'name', header: t('taskLists.name'), link: true, cell: (r) => r.name },
@@ -107,7 +108,7 @@ export function TemplatesPage() {
                     label={t('taskTemplates.options')}
                     items={[
                       { label: t('taskLists.edit'), to: `${base}/${r.id}/edit` },
-                      { label: t('taskLists.delete'), danger: true, onSelect: () => setDeleting(r) },
+                      { label: t('taskLists.delete'), danger: true, bookkeeping: true, onSelect: () => setDeleting(r) },
                     ]}
                   />
                 ),
@@ -218,7 +219,7 @@ function TemplateForm({ template }: { template?: Template }) {
         </FormSection>
         <div className="form-sheet__actions form-sheet__actions--center">
           <button className="btn btn--primary" disabled={save.isPending}>{t('taskLists.save')}</button>
-          <Link className="btn btn--secondary" to={template ? `${base}/${template.id}` : base}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={template ? `${base}/${template.id}` : base}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>
@@ -250,11 +251,11 @@ export function TemplatePage() {
       back={{ to: base, label: t('taskTemplates.backToList') }}
       actions={
         <>
-          <Link className="btn btn--secondary btn--with-icon" to={`${base}/${tpl.id}/edit`}>
+          <ActionLink className="btn btn--secondary btn--with-icon" to={`${base}/${tpl.id}/edit`}>
             <ListIcon kind="edit" />
             <span>{t('taskLists.edit')}</span>
-          </Link>
-          <ActionMenu iconOnly icon={<ListIcon kind="more" />} label={t('taskTemplates.options')} items={[{ label: t('taskLists.delete'), danger: true, onSelect: () => setConfirming(true) }]} />
+          </ActionLink>
+          <ActionMenu iconOnly icon={<ListIcon kind="more" />} label={t('taskTemplates.options')} items={[{ label: t('taskLists.delete'), danger: true, bookkeeping: true, onSelect: () => setConfirming(true) }]} />
         </>
       }
     >

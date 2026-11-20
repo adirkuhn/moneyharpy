@@ -1,3 +1,6 @@
+import { ReadOnly } from '../layout/ReadOnly'
+import { useAccess } from '../layout/useAccess'
+import { ActionLink } from '../layout/ActionLink'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -56,6 +59,7 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+  const mayChange = useAccess().mayChange()
   const [layoutsOpen, setLayoutsOpen] = useState(false)
   // Cancel starts the draft's editor again from the invoice as it is.
   const remove = useDeleteSalesInvoice(administrationId, inv.id ?? '')
@@ -80,7 +84,8 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
   const closed = isClosed(inv.state)
   const payable = isPayable(inv.state)
   // As at Moneybird a sent or paid invoice can still change, after a warning; one written off cannot.
-  const editable = inv.state !== 'uncollectible'
+  // Accountants see the invoice as its document; they change only the bookkeeping.
+  const editable = inv.state !== 'uncollectible' && mayChange
   // As Moneybird's API, the server deletes an invoice with its payments, unless they are pending.
   const deletable = inv.state !== 'pending_payment'
   const toCredit = () => credit.mutate(undefined, { onSuccess: (c) => navigate(`${list}/${c.id}`) })
@@ -128,7 +133,7 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
       <div className="invoice-actions__buttons">
         {sendItems.length > 0 && <ActionMenu primary={draft} label={t('invoices.view.send')} items={sendItems} />}
         {/* Moneybird offers it on a paid invoice too, e.g. to link the bank transaction of a payment without proof. */}
-        {(payable || inv.state === 'paid') && <Link className="btn btn--secondary" to={`${list}/${inv.id}/payments/new`}>{t('invoices.view.registerPayment')}</Link>}
+        {(payable || inv.state === 'paid') && <ActionLink className="btn btn--secondary" to={`${list}/${inv.id}/payments/new`}>{t('invoices.view.registerPayment')}</ActionLink>}
         <ActionMenu label={t('invoices.view.downloadAs')} items={downloads} />
         {sent && (
           <button
@@ -220,9 +225,9 @@ function InvoiceScreen({ administrationId, invoice: inv }: { administrationId: s
           ) : (
             <InvoiceDocument administrationId={administrationId} invoice={inv} editable={editable} highlight={highlight} onEdit={setAsking} />
           )}
-          <AttachmentDropZone administrationId={administrationId} invoice={inv} />
+          {mayChange && <AttachmentDropZone administrationId={administrationId} invoice={inv} />}
         </div>
-        <InvoiceSidebar administrationId={administrationId} invoice={inv} onHighlight={setHighlight} />
+        <ReadOnly><InvoiceSidebar administrationId={administrationId} invoice={inv} onHighlight={setHighlight} /></ReadOnly>
       </div>
     </Page>
   )

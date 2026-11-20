@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { type TaxRate, useTaxRates } from '../bookkeeping/queries'
@@ -81,8 +82,8 @@ function ExternalInvoiceScreen({ administrationId, invoice: inv, rates }: { admi
     <div className="invoice-actions invoice-actions--external">
       <div className="invoice-actions__buttons">
         {/* Moneybird offers it on a paid invoice too, e.g. to link the bank transaction of a payment without proof. */}
-        {(payable || inv.state === 'paid') && <Link className="btn btn--secondary" to={`${here}/payments/new`}>{t('external.view.registerPayment')}</Link>}
-        {isEditable(inv) && <Link className="btn btn--secondary" to={`${here}/edit`}>{t('external.view.edit')}</Link>}
+        {(payable || inv.state === 'paid') && <ActionLink className="btn btn--secondary" to={`${here}/payments/new`}>{t('external.view.registerPayment')}</ActionLink>}
+        {isEditable(inv) && <ActionLink className="btn btn--secondary" to={`${here}/edit`}>{t('external.view.edit')}</ActionLink>}
         <ActionMenu label={t('invoices.view.downloadAs')} items={downloads} />
         <button
           type="button"

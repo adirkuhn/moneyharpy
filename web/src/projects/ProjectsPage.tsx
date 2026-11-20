@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { InfoIcon, ListIcon } from '../layout/icons'
 import { Loading } from '../layout/Loading'
@@ -35,10 +36,10 @@ export function ProjectsPage() {
   const introShown = info ?? firstUse
 
   const footer = firstUse ? (manage && (
-    <Link className="document-table__add" to={`${base}/new`}>
+    <ActionLink className="document-table__add" to={`${base}/new`}>
       <ListIcon kind="plus" />
       {t('projects.add')}
-    </Link>
+    </ActionLink>
   )) : archived.data !== undefined && (
     <Deactivated count={archived.data} shown={state === 'all'} show={`${base}?state=all`} hide={base} />
   )
@@ -61,10 +62,10 @@ export function ProjectsPage() {
             <InfoIcon />
           </button>
           {manage && (
-            <Link className="btn btn--accent btn--with-icon" to={`${base}/new`}>
+            <ActionLink className="btn btn--accent btn--with-icon" to={`${base}/new`}>
               <ListIcon kind="plus" />
               <span>{t('projects.addShort')}</span>
-            </Link>
+            </ActionLink>
           )}
         </>
       }

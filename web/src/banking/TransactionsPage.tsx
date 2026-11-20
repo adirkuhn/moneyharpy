@@ -1,3 +1,4 @@
+import { useAccess } from '../layout/useAccess'
 import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -59,6 +60,7 @@ export function TransactionsPage() {
   const mutations = useMutations(administrationId, filter)
   const [info, setInfo] = useState(false)
   const [adding, setAdding] = useState(false)
+  const mayChange = useAccess().mayChange()
   const [shownCount, setShownCount] = useState(pageSize)
   const introId = useId()
   const addId = useId()
@@ -110,17 +112,19 @@ export function TransactionsPage() {
 
   const actions = (
     <div className="accounts-actions">
+      {mayChange && (
       <button type="button" className={`btn btn--accent btn--with-icon${adding ? ' is-active' : ''}`} aria-expanded={adding} aria-controls={addId} onClick={() => setAdding(!adding)}>
         <ListIcon kind="plus" />
         <span>{t('bank.accounts.addTransactions')}</span>
         <CaretIcon />
       </button>
+      )}
       <ActionMenu
         label={t('bank.accounts.more')}
         iconOnly
         icon={<ListIcon kind="more" />}
         items={[
-          { label: t('bank.feed.about'), onSelect: () => setInfo(!info) },
+          { label: t('bank.feed.about'), reads: true, onSelect: () => setInfo(!info) },
           { label: t('bank.accounts.title'), to: `${base}/financial_accounts` },
           { label: t('bank.settings'), to: `${base}/settings/bank` },
         ]}
@@ -190,6 +194,7 @@ const documentPaths: Record<string, string> = {
  * way to link it.
  */
 function TransactionCard({ administrationId, mutation: m, currency }: { administrationId: string; mutation: Mutation; currency: string }) {
+  const mayChange = useAccess().mayChange()
   const { t, i18n } = useTranslation()
   const categories = useLedgerAccounts(administrationId)
   const names = new Map(categories.data?.map((c) => [c.id, c.name]))
@@ -264,6 +269,8 @@ function TransactionCard({ administrationId, mutation: m, currency }: { administ
             <ListIcon kind="plus" />
             <span>{processed ? t('bank.feed.linkRest') : t('bank.feed.linkOpen')}</span>
           </button>
+          {/* Uploading makes a document, which accountants do not change. */}
+          {mayChange && (
           <label className={`btn btn--dashed btn--small btn--with-icon${upload.isPending ? ' is-busy' : ''}`}>
             <ListIcon kind="upload" />
             <span>{upload.isPending ? t('bank.feed.uploading') : t('bank.feed.upload')}</span>
@@ -280,6 +287,7 @@ function TransactionCard({ administrationId, mutation: m, currency }: { administ
               }}
             />
           </label>
+          )}
           <Problems messages={formErrors(upload.error, {}).general} />
         </div>
       )}

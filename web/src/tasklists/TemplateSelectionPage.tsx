@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
@@ -50,7 +51,7 @@ export function TemplateSelectionPage() {
         </ul>
       )}
       <div className="choice-list__foot">
-        <Link className="btn btn--secondary" to={`${base}/lists`}>{t('common.cancel')}</Link>
+        <ActionLink className="btn btn--secondary" to={`${base}/lists`}>{t('common.cancel')}</ActionLink>
       </div>
     </Page>
   )

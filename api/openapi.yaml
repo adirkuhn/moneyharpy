@@ -23,7 +23,8 @@ info:
     **Permissions.** Each operation lists in `x-permissions` the permissions a
     user needs one of. MoneyHarpy extension: accountants read what their
     permissions allow but change only the bookkeeping, the operations marked
-    `x-bookkeeping: true`; any other change answers `403` for them.
+    `x-bookkeeping: true`, which include the task lists they keep for it; any
+    other change answers `403` for them.
 servers:
   - url: /
 tags:
@@ -1833,6 +1834,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createTaskList
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Create a task list
       description: >-
@@ -1896,6 +1898,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateTaskList
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Update a task list
       description: >-
@@ -1929,6 +1932,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteTaskList
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Delete a task list
       description: >-
@@ -1954,6 +1958,7 @@ paths:
       - $ref: '#/components/parameters/id'
     post:
       operationId: createTaskListGroup
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Add a group to a task list
       description: >-
@@ -2018,6 +2023,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateTaskListGroup
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Update a task list group
       description: >-
@@ -2052,6 +2058,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteTaskListGroup
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Delete a task list group
       description: >-
@@ -2079,6 +2086,7 @@ paths:
       - $ref: '#/components/parameters/id'
     post:
       operationId: createTaskListTask
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Add a task to a group
       description: >-
@@ -2142,6 +2150,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateTaskListTask
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Update a task
       description: >-
@@ -2175,6 +2184,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteTaskListTask
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Delete a task
       description: >-
@@ -2202,6 +2212,7 @@ paths:
       - $ref: '#/components/parameters/id'
     post:
       operationId: assignTaskListTask
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Assign a user to a task
       description: >-
@@ -2233,6 +2244,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: unassignTaskListTask
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Unassign the user from a task
       description: >-
@@ -2262,6 +2274,7 @@ paths:
       - $ref: '#/components/parameters/id'
     post:
       operationId: completeTaskListTask
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Complete a task
       description: >-
@@ -2287,6 +2300,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: reopenTaskListTask
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Reopen a task
       description: >-
@@ -2316,6 +2330,7 @@ paths:
       - $ref: '#/components/parameters/id'
     post:
       operationId: createTaskListTaskNote
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Add a note to a task
       description: >-
@@ -2379,6 +2394,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     post:
       operationId: createTaskListTemplate
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Create a task list template
       description: >-
@@ -2441,6 +2457,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     patch:
       operationId: updateTaskListTemplate
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Update a task list template
       description: >-
@@ -2474,6 +2491,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
     delete:
       operationId: deleteTaskListTemplate
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Delete a task list template
       description: >-
@@ -2499,6 +2517,7 @@ paths:
       - $ref: '#/components/parameters/id'
     post:
       operationId: createTaskListTemplateGroup
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Add a group to a task list template
       description: >-
@@ -2536,6 +2555,7 @@ paths:
       - $ref: '#/components/parameters/id'
     post:
       operationId: createTaskListFromTemplate
+      x-bookkeeping: true
       x-permissions: [time_entries]
       summary: Create a task list from a template
       description: >-

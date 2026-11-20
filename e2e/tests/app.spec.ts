@@ -498,6 +498,37 @@ function totp(secret: string, at = Date.now()): string {
   return String((mac.readUInt32BE(o) & 0x7fffffff) % 1_000_000).padStart(6, '0')
 }
 
+test('an accountant sees the books but changes only the bookkeeping', async ({ browser, page }) => {
+  await register(page)
+  await addAdministration(page, 'Ledger Co')
+  const uri = administrationUri(page)
+  const api = `/api/v2${uri}`
+  const contact = await (await page.request.post(`${api}/contacts`, { data: { contact: { company_name: 'Example Shop B.V.' } } })).json()
+  const email = unique()
+  expect((await page.request.post(`${api}/user_invitations`, { data: { user_invitation: { email, user_type: 'accountant' } } })).status()).toBe(201)
+
+  const link = new URL(await linkFor(email, /https?:\/\/\S+\/invitations\/\S+/))
+  const accountant = await (await browser.newContext()).newPage()
+  await accountant.setExtraHTTPHeaders(randomClient())
+  await accountant.goto(link.pathname)
+  await accountant.getByRole('link', { name: 'Create an account' }).click()
+  await accountant.getByLabel('Name').fill('Jan Voorbeeld')
+  await accountant.getByLabel('Password').fill(password)
+  await accountant.getByRole('button', { name: 'Create account' }).click()
+  await accountant.getByRole('button', { name: 'Accept invitation' }).click()
+  await expect(accountant).toHaveURL(new RegExp(`${uri}/feed$`))
+
+  // Contacts are there to read, without the buttons to change them.
+  await accountant.goto(`${uri}/contacts/${contact.id}`)
+  await expect(accountant.getByRole('heading', { name: 'Example Shop B.V.' })).toBeVisible()
+  await expect(accountant.getByRole('link', { name: 'Edit' })).toHaveCount(0)
+  await accountant.goto(`${uri}/sales_invoices/new`)
+  await expect(accountant.getByRole('heading', { name: 'No access' })).toBeVisible()
+  // The bookkeeping stays theirs.
+  await accountant.goto(`${uri}/documents/general_journal_documents`)
+  await expect(accountant.getByRole('link', { name: 'New journal entry' })).toBeVisible()
+})
+
 test('owners invite users with limited rights and require two-step verification', async ({ browser, page }) => {
   const ownerEmail = await register(page)
   await addAdministration(page, 'Team Co')

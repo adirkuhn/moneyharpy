@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
@@ -230,7 +231,7 @@ function ProductForm({ administrationId, product, rates, accounts }: FormProps) 
         )}
         <div className="form-sheet__actions form-sheet__actions--center">
           <button className="btn btn--primary" disabled={save.isPending || image.isPending}>{t('products.saveShort')}</button>
-          <Link className="btn btn--secondary" to={product ? `${list}/${product.id}` : list}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={product ? `${list}/${product.id}` : list}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

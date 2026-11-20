@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
@@ -39,7 +40,7 @@ function JournalForm({ administrationId, doc }: { administrationId: string; doc:
   const remove = useDeleteJournalDocument(administrationId, doc?.id ?? '')
   const [confirming, setConfirming] = useState(false)
   const list = `/${administrationId}/documents/general_journal_documents`
-  const actions = doc ? <MoreMenu items={[{ label: t('journal.delete'), danger: true, onSelect: () => setConfirming(true) }]} /> : undefined
+  const actions = doc ? <MoreMenu items={[{ label: t('journal.delete'), danger: true, bookkeeping: true, onSelect: () => setConfirming(true) }]} /> : undefined
 
   return (
     <Page title={doc?.reference || t('journal.newEntry')} subtitle={t('journal.entrySubtitle')} back={{ to: list, label: t('journal.backToEntries') }} actions={actions}>
@@ -183,7 +184,7 @@ export function JournalEntryForm({ administrationId, doc, cancelTo, onSaved, emb
       </FormSection>
       <div className="form-sheet__actions">
         <button className="btn btn--primary" disabled={save.isPending || !ready}>{t('journal.save')}</button>
-        <Link className="btn btn--secondary" to={cancelTo}>{t('common.cancel')}</Link>
+        <ActionLink className="btn btn--secondary" to={cancelTo}>{t('common.cancel')}</ActionLink>
       </div>
     </form>
   )

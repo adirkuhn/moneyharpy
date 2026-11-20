@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { Problems } from '../auth/AuthLayout'
 import { formErrors, FormNotice, FormSection, TextInput } from '../forms/Form'
@@ -36,7 +37,7 @@ export function DeletePage() {
         </FormSection>
         <div className="form-sheet__actions">
           <button className="btn btn--danger" disabled={remove.isPending || name.trim() !== a.name}>{t('management.deleteForGood')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

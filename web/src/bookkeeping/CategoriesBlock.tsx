@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Block } from '../settings/Block'
@@ -15,8 +16,8 @@ export function CategoriesBlock({ administrationId, hasScheme }: { administratio
       subtitle={t('bookkeeping.categoriesSubtitle')}
       action={
         <div className="block-actions">
-          {hasScheme && <Link className="btn btn--secondary" to={`${base}/ledger_accounts/scheme`}>{t('bookkeeping.editScheme')}</Link>}
-          <Link className="btn btn--accent" to={`${base}/ledger_accounts/blueprints`}>{t('bookkeeping.addCategory')}</Link>
+          {hasScheme && <ActionLink className="btn btn--secondary" to={`${base}/ledger_accounts/scheme`}>{t('bookkeeping.editScheme')}</ActionLink>}
+          <ActionLink className="btn btn--accent" to={`${base}/ledger_accounts/blueprints`}>{t('bookkeeping.addCategory')}</ActionLink>
         </div>
       }
     >

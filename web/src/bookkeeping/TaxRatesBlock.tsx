@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -20,7 +21,7 @@ export function TaxRatesBlock({ administrationId }: { administrationId: string }
       id="vat-rates"
       title={t('bookkeeping.parts.rates')}
       subtitle={t('bookkeeping.ratesSubtitle')}
-      action={<Link className="btn btn--accent" to={`${base}/tax_rates/new`}>{t('bookkeeping.addRate')}</Link>}
+      action={<ActionLink className="btn btn--accent" to={`${base}/tax_rates/new`}>{t('bookkeeping.addRate')}</ActionLink>}
     >
       {taxRateTypes.map((type) => (
         <RateTable key={type} administrationId={administrationId} type={type} rates={rates.data?.filter((r) => r.tax_rate_type === type) ?? []} />

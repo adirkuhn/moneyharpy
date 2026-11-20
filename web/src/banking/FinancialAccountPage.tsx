@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -84,7 +85,7 @@ function AccountForm({ administration, account, back }: { administration: Admini
       </FormSection>
       <div className="form-sheet__actions">
         <button className="btn btn--primary" disabled={save.isPending}>{t('settings.save')}</button>
-        <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+        <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
       </div>
     </form>
   )

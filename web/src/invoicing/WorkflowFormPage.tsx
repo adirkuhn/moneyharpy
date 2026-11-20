@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAdministration } from '../administrations/queries'
 import { type Administration, ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
@@ -240,7 +241,7 @@ function WorkflowForm({ administration, workflow, kind }: { administration: Admi
 
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={save.isPending}>{t('settings.save')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

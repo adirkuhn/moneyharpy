@@ -1,3 +1,5 @@
+import { ReadOnly } from '../layout/ReadOnly'
+import { useAccess } from '../layout/useAccess'
 import type { TFunction } from 'i18next'
 import { type FormEvent, type ReactNode, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -102,7 +104,9 @@ function EstimateScreen({ administrationId, estimate: e }: { administrationId: s
   const [panel, setPanel] = useState<Panel>(null)
   const [layoutsOpen, setLayoutsOpen] = useState(false)
   const [highlight, setHighlight] = useState<string | undefined>(undefined)
-  const editable = isEditable(state)
+  const mayChange = useAccess().mayChange()
+  // Accountants see the quote as it is; they change only the bookkeeping.
+  const editable = isEditable(state) && mayChange
   const sent = state !== 'draft'
   const problems = formErrors(send.error ?? change.error ?? bill.error ?? remove.error ?? duplicate.error, {}).general
 
@@ -126,7 +130,7 @@ function EstimateScreen({ administrationId, estimate: e }: { administrationId: s
     <div className="invoice-actions">
       <div className="invoice-actions__buttons">
         {/* As on Moneybird, Send quote opens its form above the quote rather than a menu. */}
-        <button
+        {mayChange && <button
           type="button"
           className={`btn ${sent ? 'btn--secondary' : 'btn--primary'} btn--with-icon${panel === 'send' ? ' is-active' : ''}`}
           aria-expanded={panel === 'send'}
@@ -134,8 +138,8 @@ function EstimateScreen({ administrationId, estimate: e }: { administrationId: s
         >
           <span>{t('estimates.view.send')}</span>
           <CaretIcon />
-        </button>
-        {isBillable(state) && (
+        </button>}
+        {isBillable(state) && mayChange && (
           <button
             type="button"
             className="btn btn--secondary"
@@ -185,7 +189,7 @@ function EstimateScreen({ administrationId, estimate: e }: { administrationId: s
               {t('estimates.copyOf')} <Link to={`${list}/${e.original_estimate_id}`}>{t('estimates.original')}</Link>.
             </p>
           )}
-          {!editable && <p className="notice">{t('estimates.lockedNotice')}</p>}
+          {!isEditable(state) && <p className="notice">{t('estimates.lockedNotice')}</p>}
           {/* A billed or archived quote shows its document as it is; the server no longer changes it. */}
           <div className={editable ? undefined : 'estimate-locked'} inert={!editable}>
             <InvoiceEditor
@@ -201,9 +205,9 @@ function EstimateScreen({ administrationId, estimate: e }: { administrationId: s
               onSaved={(_, opening) => navigate(here, { replace: true, state: opening })}
             />
           </div>
-          <EstimateAttachments administrationId={administrationId} estimate={e} />
+          <ReadOnly><EstimateAttachments administrationId={administrationId} estimate={e} /></ReadOnly>
         </div>
-        <EstimateSidebar administrationId={administrationId} estimate={e} onHighlight={setHighlight} />
+        <ReadOnly><EstimateSidebar administrationId={administrationId} estimate={e} onHighlight={setHighlight} /></ReadOnly>
       </div>
     </Page>
   )

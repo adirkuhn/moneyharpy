@@ -1,3 +1,4 @@
+import { useAccess } from '../layout/useAccess'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useSearchParams } from 'react-router-dom'
@@ -50,6 +51,7 @@ export function InvoicesPage() {
   const { t, i18n } = useTranslation()
   const { administrationId = '' } = useParams()
   const [params, setParams] = useSearchParams()
+  const mayChange = useAccess().mayChange()
   const filter = parseFilter(params.get('filter'))
   const page = Math.max(1, Number(params.get('page')) || 1)
   const invoices = useSalesInvoices(administrationId, filterTerms(filter), page)
@@ -131,7 +133,7 @@ export function InvoicesPage() {
             rows={shown}
             rowKey={(inv) => inv.id ?? ''}
             href={(inv) => `${base}/${inv.id}`}
-            selection={{ selected, onChange: setSelected, selectLabel: (inv) => t('invoices.bulk.select', { name: invoiceTitle(inv, t) }), allLabel: t('invoices.bulk.selectAll') }}
+            selection={mayChange ? { selected, onChange: setSelected, selectLabel: (inv) => t('invoices.bulk.select', { name: invoiceTitle(inv, t) }), allLabel: t('invoices.bulk.selectAll') } : undefined}
             total={invoices.data.total}
             perPage={perPage}
             columns={[

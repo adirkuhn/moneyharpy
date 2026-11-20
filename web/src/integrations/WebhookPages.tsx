@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
 import { errorMessages } from '../api/client'
 import { ConfirmDelete } from '../forms/ConfirmDelete'
@@ -28,7 +29,7 @@ export function WebhookFormPage() {
           <p>{t('integrations.copySecret')}</p>
           <code>{created.secret}</code>
         </div>
-        <Link className="btn btn--primary" to={back}>{t('management.done')}</Link>
+        <ActionLink className="btn btn--primary" to={back}>{t('management.done')}</ActionLink>
       </Page>
     )
   }
@@ -60,7 +61,7 @@ export function WebhookFormPage() {
         })}
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={create.isPending}>{t('integrations.createWebhook')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

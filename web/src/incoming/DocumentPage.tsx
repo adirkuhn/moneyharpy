@@ -1,3 +1,5 @@
+import { ReadOnly } from '../layout/ReadOnly'
+import { useAccess } from '../layout/useAccess'
 import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -80,10 +82,12 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
   const title = useTitle(typed)
   const isNew = 'state' in doc && doc.state === 'new'
   const purchase = typed.type === 'PurchaseInvoice' || typed.type === 'Receipt'
+  // Accountants change only the bookkeeping, so other documents read as they are.
+  const mayChange = useAccess().mayChange(type === 'GeneralJournalDocument')
   // A paid document, or one with payments, keeps what it booked, as the server refuses to change it; its fields read as text.
-  const editable = purchase && typed.doc.state !== 'paid' && (typed.doc.payments ?? []).length === 0
+  const editable = purchase && mayChange && typed.doc.state !== 'paid' && (typed.doc.payments ?? []).length === 0
   // As in Moneybird, a purchase invoice becomes a receipt and back until it is paid; other types only while it is new. A journal entry keeps its type.
-  const canChangeType = type === 'TypelessDocument' || type === 'GeneralDocument' || editable
+  const canChangeType = mayChange && (type === 'TypelessDocument' || type === 'GeneralDocument' || editable)
   const unavailable: TypeChoice[] = purchase && !isNew ? ['general_document', 'general_journal_document'] : []
   const [deleting, setDeleting] = useState(false)
   const setType = useSetDocumentType(administrationId, id)
@@ -172,9 +176,11 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
       title={title}
       actions={
         <>
-          <button type="button" className="btn btn--secondary btn--icon" aria-label={t('incoming.view.deleteDocument')} title={t('incoming.view.deleteDocument')} onClick={() => setDeleting(true)}>
-            <PageIcon kind="trash" />
-          </button>
+          {mayChange && (
+            <button type="button" className="btn btn--secondary btn--icon" aria-label={t('incoming.view.deleteDocument')} title={t('incoming.view.deleteDocument')} onClick={() => setDeleting(true)}>
+              <PageIcon kind="trash" />
+            </button>
+          )}
           <MoreMenu items={more} />
         </>
       }
@@ -188,12 +194,15 @@ function DocumentView({ administrationId, typed, duplicates, currency }: ViewPro
             documentId={id}
             attachments={attachments}
             analysedId={recognition?.state === 'done' ? attachments[0]?.id : undefined}
+            canAdd={mayChange}
           />
         </div>
         <div className="incoming-document__right">
-          {card}
+          <ReadOnly bookkeeping={type === 'GeneralJournalDocument'}>{card}</ReadOnly>
           {type !== 'TypelessDocument' && 'notes' in doc && (
-            <NotesAndHistory administrationId={administrationId} items={incomingHistory(doc)} currency={'currency' in doc ? (doc.currency ?? 'EUR') : 'EUR'} add={addNote} remove={removeNote} />
+            <ReadOnly bookkeeping={type === 'GeneralJournalDocument'}>
+              <NotesAndHistory administrationId={administrationId} items={incomingHistory(doc)} currency={'currency' in doc ? (doc.currency ?? 'EUR') : 'EUR'} add={addNote} remove={removeNote} />
+            </ReadOnly>
           )}
         </div>
       </div>

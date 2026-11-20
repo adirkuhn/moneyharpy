@@ -1,3 +1,4 @@
+import { useAccess } from '../layout/useAccess'
 import { type DragEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -61,6 +62,7 @@ export function ExternalInvoicesPage() {
   const base = `/${administrationId}/external_sales_invoices`
   const [info, setInfo] = useState<boolean | null>(null)
   const [emailShown, setEmailShown] = useState(false)
+  const mayChange = useAccess().mayChange()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [result, setResult] = useState<string | null>(null)
   const introId = useId()
@@ -97,7 +99,7 @@ export function ExternalInvoicesPage() {
       actions={
         <ListActions
           info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
-          extra={
+          extra={mayChange && (
             <button
               type="button"
               className={`btn btn--secondary btn--icon${emailShown ? ' is-active' : ''}`}
@@ -109,7 +111,7 @@ export function ExternalInvoicesPage() {
             >
               <ListIcon kind="at" />
             </button>
-          }
+          )}
           exports={[t('list.excelPerInvoice'), t('list.excelPerRow'), t('list.composeExport')]}
           primary={{ to: `${base}/new`, label: t('external.add') }}
         />
@@ -135,7 +137,7 @@ export function ExternalInvoicesPage() {
           <button type="button" className="btn btn--secondary btn--small" onClick={() => setEmailShown(false)}>{t('external.close')}</button>
         </section>
       )}
-      <UploadArea administrationId={administrationId} />
+      {mayChange && <UploadArea administrationId={administrationId} />}
       {result && chosen.length === 0 && <p className="notice" role="status">{result}</p>}
       {!invoices.data ? (
         invoices.error ? <p className="empty">{t('external.loadError')}</p> : <Loading />

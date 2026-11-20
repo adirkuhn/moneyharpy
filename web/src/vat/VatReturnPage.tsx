@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -66,7 +67,7 @@ export function VatReturnPage() {
               <ListIcon kind="scale" />
             </button>
           )}
-          <MoreMenu items={[{ label: t('vat.view.delete'), danger: true, onSelect: () => setConfirming(true) }]} />
+          <MoreMenu items={[{ label: t('vat.view.delete'), danger: true, bookkeeping: true, onSelect: () => setConfirming(true) }]} />
         </div>
       }
     >
@@ -125,7 +126,7 @@ function Status({ administrationId, vat }: { administrationId: string; vat: VatR
       <p className="vat-status__text">{text}</p>
       {(vat.state === 'to_pay' || vat.state === 'to_receive') && (
         <div className="vat-status__actions">
-          <Link className="btn btn--secondary" to={`/${administrationId}/financial_mutations`}>{t('vat.view.link')}</Link>
+          <ActionLink className="btn btn--secondary" to={`/${administrationId}/financial_mutations`}>{t('vat.view.link')}</ActionLink>
         </div>
       )}
       {vat.payments.length > 0 && (

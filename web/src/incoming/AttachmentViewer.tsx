@@ -19,6 +19,8 @@ type Props = {
   attachments: Attachment[]
   /** The attachment Scan and Recognise read the document from, marked with a bolt. */
   analysedId?: string
+  /** Whether the member may add files; accountants only read documents. */
+  canAdd?: boolean
 }
 
 /** Images and PDFs show in the page; other files only download. */
@@ -139,7 +141,7 @@ function Pages({ name, first, count, pageURL }: PagesProps) {
  * large, its name with download and delete, and a tile per file with an Add
  * tile to upload more.
  */
-export function AttachmentViewer({ administrationId, type, documentId, attachments, analysedId }: Props) {
+export function AttachmentViewer({ administrationId, type, documentId, attachments, analysedId, canAdd = true }: Props) {
   const { t } = useTranslation()
   const [chosenId, setChosenId] = useState<string | undefined>(undefined)
   const [deleting, setDeleting] = useState(false)
@@ -191,6 +193,7 @@ export function AttachmentViewer({ administrationId, type, documentId, attachmen
               <span className="file-tile__name">{withoutExtension(a.filename ?? '')}</span>
             </button>
           ))}
+          {canAdd && (
           <label className={`file-tile file-tile--add${add.isPending ? ' is-busy' : ''}`}>
             <ListIcon kind="upload" />
             <span>{add.isPending ? t('incoming.uploading') : t('incoming.view.add')}</span>
@@ -208,6 +211,7 @@ export function AttachmentViewer({ administrationId, type, documentId, attachmen
               }}
             />
           </label>
+          )}
         </div>
         <Problems messages={[...formErrors(add.error, {}).general, ...formErrors(remove.error, {}).general]} />
       </div>

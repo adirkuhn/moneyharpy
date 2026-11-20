@@ -61,7 +61,7 @@ function Allowed() {
   const id = useAdministrationId()
   const administration = useAdministration(id)
   const { pathname } = useLocation()
-  if (administration.data && !mayOpen(administration.data.permissions, pathname.slice(id.length + 2))) {
+  if (administration.data && !mayOpen(administration.data.permissions, pathname.slice(id.length + 2), administration.data.user_type)) {
     return <NoAccess />
   }
   return <Outlet />

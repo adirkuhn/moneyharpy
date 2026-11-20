@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { Fragment, type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useParams } from 'react-router-dom'
@@ -499,7 +500,7 @@ export function ContactReportPage({ kind }: { kind: ContactReportKind }) {
   const list = `/${f.administrationId}/report/${kind}`
   const reportName = t(`reports.names.${names.name}`)
   const name = contactId ? t('reports.ofContact', { name: reportName, contact: contact.data ? contactName(contact.data) : '' }) : reportName
-  const back = contactId ? <Link className="btn btn--secondary" to={`${list}${search}`}>{t('reports.backTo', { name: title })}</Link> : undefined
+  const back = contactId ? <ActionLink className="btn btn--secondary" to={`${list}${search}`}>{t('reports.backTo', { name: title })}</ActionLink> : undefined
   const page = (children: ReactNode) => <ReportPage filter={f} name={name} title={title} sayPer={perContact} actions={back}>{children}</ReportPage>
   if (!report.data) {
     return page(report.error ? <Failed /> : <Loading />)

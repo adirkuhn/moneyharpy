@@ -37,6 +37,15 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe('administration overview', () => {
+  it('offers an accountant only to add to the bookkeeping', async () => {
+    const accountant = administration({ id: '11', name: 'Harpy B.V.', user_type: 'accountant', permissions: ['sales_invoices', 'documents', 'estimates', 'bank', 'settings', 'time_entries'] })
+    open(accountant)
+    renderAt('/11/feed')
+    await userEvent.click(await screen.findByRole('button', { name: 'Add' }))
+    const menu = screen.getByRole('navigation', { name: 'Add to this administration' })
+    expect(within(menu).getAllByRole('link').map((l) => l.textContent)).toEqual(['Manual journal', 'Category'])
+  })
+
   it('opens on the overview with a greeting', async () => {
     open()
     renderAt('/11')

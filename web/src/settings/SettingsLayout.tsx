@@ -105,7 +105,7 @@ export function SettingsLayout() {
   const current: Section = area === 'settings' && sections.includes(page as Section) ? (page as Section) : (pageSections[area ?? ''] ?? 'company')
   const onSectionPage = area === 'settings' && page === current
   const settings = can(administration.data, 'settings')
-  const visible = sections.filter((section) => settings || !sectionNeedsSettings(section))
+  const visible = sections.filter((section) => (settings || !sectionNeedsSettings(section)) && mayOpen(administration.data.permissions, `settings/${section}`, administration.data.user_type))
 
   return (
     <div className="settings">
@@ -140,7 +140,7 @@ export function SettingsLayout() {
         </ul>
       </nav>
       <div className="settings__page">
-        {visible.includes(current) && mayOpen(administration.data.permissions, pathname.slice(administrationId.length + 2)) ? <Outlet /> : <NoAccess />}
+        {visible.includes(current) && mayOpen(administration.data.permissions, pathname.slice(administrationId.length + 2), administration.data.user_type) ? <Outlet /> : <NoAccess />}
       </div>
     </div>
   )

@@ -2,6 +2,8 @@ import { type ReactNode, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { CaretIcon, InfoIcon, ListIcon, type ListIconKind } from '../layout/icons'
+import { pathBelow, useAccess } from '../layout/useAccess'
+import { useAdministrationId } from '../layout/administrationId'
 import { useDisclosure } from './useDisclosure'
 
 type Props = {
@@ -22,7 +24,11 @@ type Props = {
 export type MenuItem =
   | { label: string; to: string }
   | { label: string; href: string; download?: boolean }
-  | { label: string; onSelect: () => void; disabled?: boolean; danger?: boolean }
+  /**
+   * An action on this page. It changes data unless `reads` says it only shows
+   * or prints something; `bookkeeping` changes are open to accountants too.
+   */
+  | { label: string; onSelect: () => void; disabled?: boolean; danger?: boolean; reads?: boolean; bookkeeping?: boolean }
   | { label: string; unavailable: true }
 
 /**
@@ -31,6 +37,7 @@ export type MenuItem =
  */
 export function ListActions({ info, statistics, exports, extra, trailing, primary }: Props) {
   const { t } = useTranslation()
+  const allowed = useAllowedItems()
   return (
     <>
       {info && (
@@ -64,10 +71,12 @@ export function ListActions({ info, statistics, exports, extra, trailing, primar
       {extra}
       {exports.length > 0 ? <ExportMenu entries={exports} /> : <Unavailable icon="export" label={t('list.export')} text />}
       {trailing}
-      <Link className="btn btn--accent btn--with-icon" to={primary.to}>
-        <ListIcon kind="plus" />
-        <span>{primary.label}</span>
-      </Link>
+      {allowed([primary]).length > 0 && (
+        <Link className="btn btn--accent btn--with-icon" to={primary.to}>
+          <ListIcon kind="plus" />
+          <span>{primary.label}</span>
+        </Link>
+      )}
     </>
   )
 }
@@ -168,9 +177,13 @@ type ActionMenuProps = {
 }
 
 /** A named button of a page's action bar with its own menu, after Moneybird's Export, Extra and Add. */
-export function ActionMenu({ label, icon, items, primary = false, iconOnly = false }: ActionMenuProps) {
+export function ActionMenu({ label, icon, items: all, primary = false, iconOnly = false }: ActionMenuProps) {
   const id = useId()
   const { open, toggle, close, root, button } = useDisclosure()
+  const items = useAllowedItems()(all)
+  if (items.length === 0) {
+    return null
+  }
   return (
     <div className="dropdown" ref={root}>
       <button
@@ -198,10 +211,14 @@ export function ActionMenu({ label, icon, items, primary = false, iconOnly = fal
 }
 
 /** The ⋯ button of an action bar, after Moneybird: the actions that do not need a button of their own. */
-export function MoreMenu({ items }: { items: MenuItem[] }) {
+export function MoreMenu({ items: all }: { items: MenuItem[] }) {
   const { t } = useTranslation()
   const id = useId()
   const { open, toggle, close, root, button } = useDisclosure()
+  const items = useAllowedItems()(all)
+  if (items.length === 0) {
+    return null
+  }
   return (
     <div className="dropdown" ref={root}>
       <button
@@ -225,4 +242,25 @@ export function MoreMenu({ items }: { items: MenuItem[] }) {
       )}
     </div>
   )
+}
+
+/**
+ * Keeps the entries the member may use: pages they may open and, for an
+ * accountant, only actions that read. The server refuses the rest anyway.
+ */
+export function useAllowedItems() {
+  const access = useAccess()
+  const administrationId = useAdministrationId()
+  return <T extends MenuItem | { to: string }>(items: T[]): T[] =>
+    items.filter((item) => {
+      if ('to' in item) {
+        const path = pathBelow(item.to, administrationId)
+        return path === null || access.mayOpen(path)
+      }
+      if ('onSelect' in item) {
+        return item.reads === true || access.mayChange(item.bookkeeping === true)
+      }
+      // Actions MoneyHarpy does not have yet only matter to who could use them.
+      return !('unavailable' in item) || access.mayChange()
+    })
 }

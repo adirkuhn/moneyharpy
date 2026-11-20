@@ -1,6 +1,8 @@
+import { useAccess } from '../layout/useAccess'
+import { ActionLink } from '../layout/ActionLink'
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useWorkflows } from '../invoicing/queries'
 import { Loading } from '../layout/Loading'
 import { Page } from '../layout/Page'
@@ -22,6 +24,7 @@ export function ContactsPage() {
   const { t } = useTranslation()
   const { administrationId = '' } = useParams()
   const [params, setParams] = useSearchParams()
+  const mayChange = useAccess().mayChange()
   const filter = parseContactFilter(params.get('filter'))
   const archived = params.get('archived') === '1'
   const duplicates = params.get('duplicates') === '1'
@@ -88,7 +91,7 @@ export function ContactsPage() {
           <ListActions
             info={{ shown: introShown, onToggle: () => setInfo(!introShown), controls: introId }}
             exports={[t('contacts.exportExcel'), t('contacts.exportVcard')]}
-            trailing={<ImportMenu />}
+            trailing={mayChange && <ImportMenu />}
             primary={{ to: `${base}/new`, label: t('contacts.add') }}
           />
         </>
@@ -179,10 +182,10 @@ function DuplicatesBanner({ count, to }: { count: number; to: string }) {
         <h2 id={id} className="feature-banner__title">{t('contacts.duplicates', { count })}</h2>
         <p>{t('contacts.duplicatesText')}</p>
       </div>
-      <Link className="btn btn--secondary btn--with-icon" to={to}>
+      <ActionLink className="btn btn--secondary btn--with-icon" to={to}>
         <ContactIcon kind="merge" />
         <span>{t('contacts.viewDuplicates')}</span>
-      </Link>
+      </ActionLink>
     </section>
   )
 }

@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { Problems } from '../auth/AuthLayout'
 import { formErrors } from '../forms/Form'
@@ -56,11 +57,11 @@ function TaskListView({ administrationId, list }: { administrationId: string; li
       back={{ to: base, label: t('taskLists.backToList') }}
       actions={
         <>
-          <Link className="btn btn--secondary btn--with-icon" to={`${base}/${listId}/edit`}>
+          <ActionLink className="btn btn--secondary btn--with-icon" to={`${base}/${listId}/edit`}>
             <ListIcon kind="edit" />
             <span>{t('taskLists.editList')}</span>
-          </Link>
-          <ActionMenu iconOnly icon={<ListIcon kind="more" />} label={t('taskLists.listOptions')} items={[{ label: t('taskLists.delete'), danger: true, onSelect: () => setConfirming(true) }]} />
+          </ActionLink>
+          <ActionMenu iconOnly icon={<ListIcon kind="more" />} label={t('taskLists.listOptions')} items={[{ label: t('taskLists.delete'), danger: true, bookkeeping: true, onSelect: () => setConfirming(true) }]} />
         </>
       }
     >

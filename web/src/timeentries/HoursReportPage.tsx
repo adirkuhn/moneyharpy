@@ -1,3 +1,4 @@
+import { ActionLink } from '../layout/ActionLink'
 import { Fragment, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
@@ -116,10 +117,10 @@ export function HoursReportPage() {
       <ExportMenu entries={[t('timeEntries.report.excel'), t('timeEntries.report.pdf')]} />
       {/* Billing time makes a sales invoice. */}
       {can(administration.data, 'sales_invoices') && (
-        <Link className="btn btn--accent btn--with-icon" to={`/${administrationId}/time_entries_wizard`}>
+        <ActionLink className="btn btn--accent btn--with-icon" to={`/${administrationId}/time_entries_wizard`}>
           <ListIcon kind="send" />
           <span>{t('timeEntries.report.bill')}</span>
-        </Link>
+        </ActionLink>
       )}
     </>
   )

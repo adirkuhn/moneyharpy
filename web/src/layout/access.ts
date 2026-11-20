@@ -83,8 +83,41 @@ export function accessFor(path: string): Access {
   return best?.access ?? {}
 }
 
-/** Whether a member with these permissions may open the page at `path`. */
-export function mayOpen(permissions: readonly Permission[], path: string): boolean {
+type UserType = components['schemas']['Administration']['user_type']
+
+/** Parts of a path that make a page one that changes data, such as a form. */
+const changeParts = new Set(['new', 'edit', 'edit_general', 'edit_default', 'value_changes', 'payments', 'templates_selection', 'blueprints', 'scheme'])
+
+/** Pages, below the administration, that are forms as a whole. */
+const formPages = [
+  'time_entries_wizard', 'time_entries/*', 'identities', 'document_styles', 'workflows', 'custom_fields',
+  'financial_accounts/*', 'booking_rules', 'webhooks', 'connections', 'users', 'user_invitations', 'support_access', 'delete',
+  'settings/company', 'settings/invoices_and_estimates', 'settings/bank', 'settings/connections',
+]
+
+/** The bookkeeping, which accountants may change, with the task lists they keep for it. */
+const bookkeepingPages = ['ledger_accounts', 'ledger_account_templates', 'tax_rates', 'declarations', 'documents/general_journal_documents', 'settings/bookkeeping', 'task_lists']
+
+const under = (rules: string[], parts: string[]) => rules.some((rule) => covers(rule.split('/'), parts))
+
+/** Whether the page at `path` is there to change data rather than to see it. */
+export function changesData(path: string): boolean {
+  const parts = path.split('/').filter(Boolean)
+  return parts.some((part) => changeParts.has(part)) || under(formPages, parts)
+}
+
+/** Whether the page at `path` belongs to the bookkeeping. */
+export function isBookkeeping(path: string): boolean {
+  return under(bookkeepingPages, path.split('/').filter(Boolean))
+}
+
+/**
+ * Whether a member with these permissions may open the page at `path`. An
+ * accountant sees what their permissions allow but only changes the
+ * bookkeeping, so other pages that change data are closed to them.
+ */
+export function mayOpen(permissions: readonly Permission[], path: string, userType?: UserType): boolean {
   const { any = [], all = [] } = accessFor(path)
-  return (any.length === 0 || any.some((p) => permissions.includes(p))) && all.every((p) => permissions.includes(p))
+  const permitted = (any.length === 0 || any.some((p) => permissions.includes(p))) && all.every((p) => permissions.includes(p))
+  return permitted && (userType !== 'accountant' || !changesData(path) || isBookkeeping(path))
 }

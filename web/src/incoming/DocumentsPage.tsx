@@ -1,3 +1,4 @@
+import { useAccess } from '../layout/useAccess'
 import { type DragEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
@@ -62,6 +63,7 @@ export function DocumentsPage() {
   const { t, i18n } = useTranslation()
   const { administrationId = '' } = useParams()
   const [params, setParams] = useSearchParams()
+  const mayChange = useAccess().mayChange()
   const filter = parseFilter(params.get('filter'))
   const terms = filterTerms(filter)
   const page = Math.max(1, Number(params.get('page')) || 1)
@@ -140,7 +142,7 @@ export function DocumentsPage() {
         />
       )}
       {statsShown && <Statistics id={statsId} administrationId={administrationId} filter={terms} />}
-      <DropBar administrationId={administrationId} />
+      {mayChange && <DropBar administrationId={administrationId} />}
       {result && chosen.length === 0 && <p className="notice" role="status">{result}</p>}
       {!documents.data ? (
         documents.error ? <p className="empty">{t('incoming.loadError')}</p> : <Loading />
@@ -153,7 +155,7 @@ export function DocumentsPage() {
             rows={shown}
             rowKey={(d) => d.id}
             href={(d) => documentPath(administrationId, d)}
-            selection={{ selected, onChange: setSelected, selectLabel: (d) => t('incoming.bulk.select', { name: title(d) }), allLabel: t('incoming.bulk.selectAll') }}
+            selection={mayChange ? { selected, onChange: setSelected, selectLabel: (d) => t('incoming.bulk.select', { name: title(d) }), allLabel: t('incoming.bulk.selectAll') } : undefined}
             total={documents.data.total}
             perPage={perPage}
             columns={[

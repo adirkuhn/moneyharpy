@@ -1,6 +1,7 @@
+import { ActionLink } from '../layout/ActionLink'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Problems } from '../auth/AuthLayout'
 import { FormSection, formErrors, SelectInput, TextInput } from '../forms/Form'
 import { Page } from '../layout/Page'
@@ -34,7 +35,7 @@ export function InvitePage() {
           <p>{t('management.shareLink')}</p>
           <code>{link}</code>
         </div>
-        <Link className="btn btn--primary" to={back}>{t('management.done')}</Link>
+        <ActionLink className="btn btn--primary" to={back}>{t('management.done')}</ActionLink>
       </Page>
     )
   }
@@ -54,7 +55,7 @@ export function InvitePage() {
         <PermissionFields type={form.user_type} value={form.permissions} onChange={(permissions: Permission[]) => setForm({ ...form, permissions })} />
         <div className="form-sheet__actions">
           <button className="btn btn--primary" disabled={invite.isPending}>{t('management.sendInvitation')}</button>
-          <Link className="btn btn--secondary" to={back}>{t('common.cancel')}</Link>
+          <ActionLink className="btn btn--secondary" to={back}>{t('common.cancel')}</ActionLink>
         </div>
       </form>
     </Page>

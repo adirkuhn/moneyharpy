@@ -59,8 +59,8 @@ export function TaskGroups({ administrationId, owner, groups, showCompleted = tr
                 icon={<ListIcon kind="more" />}
                 label={t('taskLists.groupOptions', { name: g.name })}
                 items={[
-                  { label: t('taskLists.editGroup'), onSelect: () => setOpen({ kind: 'group', id: g.id ?? '' }) },
-                  { label: t('taskLists.deleteGroup'), danger: true, onSelect: () => setConfirm({ kind: 'group', id: g.id ?? '' }) },
+                  { label: t('taskLists.editGroup'), bookkeeping: true, onSelect: () => setOpen({ kind: 'group', id: g.id ?? '' }) },
+                  { label: t('taskLists.deleteGroup'), danger: true, bookkeeping: true, onSelect: () => setConfirm({ kind: 'group', id: g.id ?? '' }) },
                 ]}
               />
             </div>
@@ -123,8 +123,8 @@ function TaskRows({ ctx, tasks }: { ctx: Ctx; tasks: Task[] }) {
                   icon={<ListIcon kind="more" />}
                   label={t('taskLists.taskOptions', { name: task.name })}
                   items={[
-                    { label: t('taskLists.editTask'), onSelect: () => setOpen({ kind: 'task', id }) },
-                    ...(task.generated ? [] : [{ label: t('taskLists.deleteTask'), danger: true, onSelect: () => onDelete(id) }]),
+                    { label: t('taskLists.editTask'), bookkeeping: true, onSelect: () => setOpen({ kind: 'task', id }) },
+                    ...(task.generated ? [] : [{ label: t('taskLists.deleteTask'), danger: true, bookkeeping: true, onSelect: () => onDelete(id) }]),
                   ]}
                 />
               </div>
