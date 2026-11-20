@@ -9078,8 +9078,11 @@ type MoneybirdAdministration struct {
 // MoneybirdImport The import of a Moneybird administration. MoneyHarpy extension.
 type MoneybirdImport struct {
 	// Error Why the import stopped, or last had to try again.
-	Error                  string                `json:"error"`
-	FinishedAt             *time.Time            `json:"finished_at"`
+	Error      string     `json:"error"`
+	FinishedAt *time.Time `json:"finished_at"`
+
+	// NextAttemptAt While the import is queued after a passing failure, such as Moneybird being out of reach, when it tries again. It stays queued until it finishes; only a token Moneybird refuses stops it.
+	NextAttemptAt          *time.Time            `json:"next_attempt_at"`
 	SourceAdministrationId string                `json:"source_administration_id"`
 	SourceName             string                `json:"source_name"`
 	StartedAt              time.Time             `json:"started_at"`

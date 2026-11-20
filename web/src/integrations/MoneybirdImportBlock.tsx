@@ -83,47 +83,93 @@ function StartForm({ administrationId, source, onStarted }: { administrationId: 
       )}
       <div className="mb-import__actions">
         {found ? (
-          <button className="btn btn--primary" disabled={!chosen || start.isPending}>{t('mbImport.start')}</button>
+          // Once triggered it stays off: the import runs until it finishes, and the form makes way for its progress.
+          <button className="btn btn--primary" disabled={!chosen || start.isPending || start.isSuccess}>
+            {start.isPending || start.isSuccess ? t('mbImport.starting') : t('mbImport.start')}
+          </button>
         ) : (
-          <button className="btn btn--primary" disabled={!token.trim() || check.isPending}>{t('mbImport.check')}</button>
+          <button className="btn btn--primary" disabled={!token.trim() || check.isPending}>{check.isPending ? t('mbImport.checking') : t('mbImport.check')}</button>
         )}
       </div>
     </form>
   )
 }
 
-/** The import's state, its steps with their counts, the wait for Moneybird and what failed. */
+/** How far a step is, 0 to 1: done, or its records so far of its total. */
+function stepShare(s: MoneybirdImport['steps'][number]): number {
+  if (s.done) {
+    return 1
+  }
+  return s.total > 0 ? Math.min(1, (s.imported + s.skipped + s.failed) / s.total) : 0
+}
+
+/** How far the whole import is, in percent: every step counts the same. */
+export function importPercent(job: MoneybirdImport): number {
+  if (job.state === 'done') {
+    return 100
+  }
+  if (job.steps.length === 0) {
+    return 0
+  }
+  return Math.floor((job.steps.reduce((sum, s) => sum + stepShare(s), 0) / job.steps.length) * 100)
+}
+
+function Bar({ label, value }: { label: string; value: number }) {
+  return (
+    <span className="mb-import__bar" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}>
+      <span className="mb-import__fill" style={{ width: `${value}%` }} />
+    </span>
+  )
+}
+
+/** The import's state, its progress over all steps and per step, the wait for Moneybird and what failed. */
 function Progress({ job }: { job: MoneybirdImport }) {
   const { t, i18n } = useTranslation()
   const time = (iso: string) => new Intl.DateTimeFormat(i18n.language, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(iso))
+  const percent = importPercent(job)
+  const at = job.steps.findIndex((s) => !s.done)
+  const current = job.state === 'running' && at >= 0 ? job.steps[at] : undefined
   return (
     <div className="card card-stack mb-import" aria-label={t('mbImport.progress')} role="region">
       <p className="mb-import__head">
         <span>{t('mbImport.from', { name: job.source_name })}</span>
         <span className={`badge badge--${job.state === 'done' ? 'paid' : job.state === 'failed' ? 'late' : 'open'}`}>{t(`mbImport.states.${job.state}`)}</span>
       </p>
+      <div className="mb-import__overall">
+        <Bar label={t('mbImport.overall')} value={percent} />
+        <span className="mb-import__percent">{percent}%</span>
+      </div>
+      {current && (
+        <p className="hint" aria-live="polite">
+          {t('mbImport.at', { step: at + 1, of: job.steps.length, kind: t(`mbImport.kinds.${current.kind}`) })}
+          {current.total > 0 && ` · ${t('mbImport.ofTotal', { count: current.imported + current.skipped + current.failed, total: current.total })}`}
+        </p>
+      )}
       {job.state === 'running' && job.waiting_until && (
         <p className="notice" role="status">{t('mbImport.waiting', { time: time(job.waiting_until) })}</p>
       )}
-      {job.error && <p className={job.state === 'failed' ? 'form-input__error' : 'hint'}>{job.state === 'failed' ? t('mbImport.failed', { error: job.error }) : t('mbImport.retrying', { error: job.error })}</p>}
+      {job.state === 'running' && job.next_attempt_at && (
+        <p className="notice" role="status">{t('mbImport.queued', { time: time(job.next_attempt_at), error: job.error })}</p>
+      )}
+      {job.state === 'failed' && job.error && <p className="form-input__error">{t('mbImport.failed', { error: job.error })}</p>}
       <table className="data-table mb-import__steps" aria-label={t('mbImport.steps')}>
         <thead>
           <tr>
             <th scope="col">{t('mbImport.kind')}</th>
+            <th scope="col" className="mb-import__progress">{t('mbImport.progressColumn')}</th>
             <th scope="col" className="mb-import__count">{t('mbImport.imported')}</th>
             <th scope="col" className="mb-import__count">{t('mbImport.skipped')}</th>
             <th scope="col" className="mb-import__count">{t('mbImport.failedCount')}</th>
-            <th scope="col">{t('mbImport.stepState')}</th>
           </tr>
         </thead>
         <tbody>
           {job.steps.map((s) => (
-            <tr key={s.kind}>
+            <tr key={s.kind} className={s === current ? 'is-current' : undefined}>
               <th scope="row">{t(`mbImport.kinds.${s.kind}`)}</th>
+              <td className="mb-import__progress"><Bar label={t(`mbImport.kinds.${s.kind}`)} value={Math.floor(stepShare(s) * 100)} /></td>
               <td className="mb-import__count">{s.total > 0 ? t('mbImport.ofTotal', { count: s.imported, total: s.total }) : s.imported}</td>
               <td className="mb-import__count">{s.skipped}</td>
               <td className="mb-import__count">{s.failed}</td>
-              <td>{s.done ? t('mbImport.stepDone') : job.state === 'running' ? t('mbImport.stepBusy') : t('mbImport.stepWaiting')}</td>
             </tr>
           ))}
         </tbody>

@@ -12,11 +12,21 @@ const (
 	// every saved batch renews it.
 	lease = 2 * time.Minute
 	// retryAfter is when a job that failed for a passing reason, such as
-	// Moneybird being down, runs again. It goes on where it was.
-	retryAfter = time.Minute
-	// maxAttempts stops a job that keeps failing.
-	maxAttempts = 5
+	// Moneybird being down, first runs again; the pause doubles with every
+	// failure in a row, up to maxRetryAfter. It goes on where it was, and
+	// stays queued until it finishes.
+	retryAfter    = time.Minute
+	maxRetryAfter = 30 * time.Minute
 )
+
+// backoff is the pause after a job's failures in a row.
+func backoff(failures int) time.Duration {
+	wait := retryAfter
+	for i := 1; i < failures && wait < maxRetryAfter; i++ {
+		wait *= 2
+	}
+	return min(wait, maxRetryAfter)
+}
 
 // Run works on due imports every interval until ctx ends.
 func (s *Service) Run(ctx context.Context, interval time.Duration, onError func(error)) {
@@ -55,17 +65,18 @@ func (s *Service) process(ctx context.Context, j Job) {
 	j.WaitingUntil, j.UpdatedAt = nil, now
 	switch {
 	case err == nil:
-		j.State, j.Error, j.FinishedAt, j.NextAttemptAt = Done, "", &now, nil
+		j.State, j.Error, j.FinishedAt, j.NextAttemptAt, j.Attempts = Done, "", &now, nil, 0
 	case errors.Is(err, context.Canceled):
 		// Stopping, such as at a restart: the job carries on next time.
 		next := now
 		j.NextAttemptAt = &next
-	case errors.Is(err, ErrTokenRejected) || j.Attempts+1 >= maxAttempts:
+	case errors.Is(err, ErrTokenRejected):
+		// Only a new token lets it go on: started again, it carries on where it stopped.
 		j.State, j.Error, j.FinishedAt, j.NextAttemptAt = Failed, err.Error(), &now, nil
 	default:
 		j.Attempts++
 		j.Error = err.Error()
-		next := now.Add(retryAfter)
+		next := now.Add(backoff(j.Attempts))
 		j.NextAttemptAt = &next
 	}
 	if j.State != Running {
@@ -82,17 +93,22 @@ func (s *Service) steps(ctx context.Context, j *Job) error {
 		return fmt.Errorf("open token: %w", err)
 	}
 	r := &run{s: s, job: j, token: token}
-	r.save = func(ctx context.Context) error {
+	saveUntil := func(ctx context.Context, held time.Time) error {
 		now := s.now()
-		next := now.Add(lease)
+		if held.Before(now) {
+			held = now
+		}
+		next := held.Add(lease)
 		j.UpdatedAt, j.NextAttemptAt = now, &next
 		return s.store.SaveJob(ctx, *j)
 	}
+	r.save = func(ctx context.Context) error { return saveUntil(ctx, s.now()) }
 	r.read = s.source.Open(token, func(until time.Time) {
-		// Shown while the import waits for Moneybird's rate limit.
+		// Shown while the import waits for Moneybird's rate limit; the job
+		// stays the worker's through the wait.
 		at := until
 		j.WaitingUntil = &at
-		_ = r.save(ctx)
+		_ = saveUntil(ctx, until)
 	})
 	for _, kind := range Steps {
 		st := j.Step(kind)
@@ -106,7 +122,8 @@ func (s *Service) steps(ctx context.Context, j *Job) error {
 		}
 		st = j.Step(kind)
 		st.Done = true
-		j.WaitingUntil = nil
+		// Progress: failures before it count no more against the next pause.
+		j.WaitingUntil, j.Attempts, j.Error = nil, 0, ""
 		if err := r.save(ctx); err != nil {
 			return err
 		}

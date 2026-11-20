@@ -1130,6 +1130,7 @@ export const en = {
     notFoundTitle: 'Invitation not found', notFound: 'This invitation does not exist or was withdrawn.',
   },
   mbImport: {
+    starting: 'Starting…', checking: 'Checking…', overall: 'Import progress', progressColumn: 'Progress', at: 'Step {{step}} of {{of}}: {{kind}}', queued: 'Something went wrong for now ({{error}}). The import stays queued and tries again at {{time}}, carrying on where it was.', failed: 'The import stopped: {{error}} Start it again with a new token; it carries on where it stopped.',
     title: 'Import from Moneybird', progress: 'Import from Moneybird', steps: 'Steps of the import',
     subtitle: 'Move to MoneyHarpy: copy a Moneybird administration into this one, keeping its ids.',
     help: 'This administration must be empty. Everything comes in with Moneybird\'s ids: categories and VAT rates (in place of the defaults), custom fields, sender addresses and workflows, contacts, products and projects, bank accounts and transactions, quotes, invoices, incoming documents, journal entries, time and task lists, with their notes and files; last the books are locked as in Moneybird. While you still use Moneybird nothing here contacts your customers: recurring invoices come in stopped and reminders do not send by themselves. Layouts stay MoneyHarpy\'s own.',
@@ -1138,9 +1139,7 @@ export const en = {
     administration: 'Moneybird administration', none: 'This token reaches no administration.', check: 'Check token', start: 'Start import', again: 'Import again',
     from: 'From {{name}}', states: { running: 'Importing', done: 'Done', failed: 'Stopped' },
     waiting: 'Waiting for Moneybird\'s rate limit until {{time}}. The import goes on by itself.',
-    failed: 'The import stopped: {{error}}', retrying: 'The import tries again shortly: {{error}}',
-    kind: 'Data', imported: 'Imported', skipped: 'Already here', failedCount: 'Failed', stepState: 'State', ofTotal: '{{count}} of {{total}}',
-    stepDone: 'Done', stepBusy: 'Busy', stepWaiting: 'Not done',
+    kind: 'Data', imported: 'Imported', skipped: 'Already here', failedCount: 'Failed', ofTotal: '{{count}} of {{total}}',
     kinds: { chart: 'Categories and VAT rates', custom_fields: 'Custom fields', identities: 'Sender addresses', workflows: 'Workflows', contacts: 'Contacts', products: 'Products', projects: 'Projects', financial_accounts: 'Financial accounts', financial_mutations: 'Transactions', estimates: 'Quotes', recurring_sales_invoices: 'Recurring invoices (stopped)', sales_invoices: 'Invoices', external_sales_invoices: 'External invoices', purchase_invoices: 'Purchase invoices', receipts: 'Receipts', general_documents: 'General documents', typeless_documents: 'Documents without a type', general_journal_documents: 'Journal entries', time_entries: 'Time entries', task_list_templates: 'Task list templates', task_lists: 'Task lists', locked_period: 'Locked period' },
     problems_one: '{{count}} record could not be imported', problems_other: '{{count}} records could not be imported',
   },

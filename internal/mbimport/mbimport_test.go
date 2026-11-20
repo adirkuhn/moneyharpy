@@ -377,3 +377,49 @@ func TestMoneybirdOutOfReachSaysSo(t *testing.T) {
 		t.Errorf("Start() = %v", err)
 	}
 }
+
+// failingReader stands for Moneybird being out of reach for a while.
+type failingReader struct{ Reader }
+
+func (failingReader) List(context.Context, string, string, url.Values) ([]json.RawMessage, error) {
+	return nil, errors.New("moneybird is down")
+}
+
+type downSource struct{ *fakeMoneybird }
+
+func (d downSource) Open(string, func(time.Time)) Reader { return failingReader{} }
+
+func TestAnImportStaysQueuedUntilItFinishes(t *testing.T) {
+	s, store, mb, _ := setup()
+	ctx := context.Background()
+	if _, err := s.Start(ctx, adminID, owner, "good", source); err != nil {
+		t.Fatal(err)
+	}
+	clock := now
+	s.now = func() time.Time { return clock }
+	s.source = downSource{mb}
+	var waits []time.Duration
+	for range 8 {
+		if err := s.Work(ctx); err != nil {
+			t.Fatal(err)
+		}
+		j := store.job
+		if j.State != Running || j.Token == "" || j.NextAttemptAt == nil || !strings.Contains(j.Error, "moneybird is down") {
+			t.Fatalf("after %d attempts: %+v", j.Attempts, j)
+		}
+		waits = append(waits, j.NextAttemptAt.Sub(clock))
+		clock = *j.NextAttemptAt
+	}
+	// The pauses grow, up to half an hour.
+	if waits[0] != time.Minute || waits[1] != 2*time.Minute || waits[7] != 30*time.Minute {
+		t.Errorf("waits %v", waits)
+	}
+	// Once Moneybird is back, the import goes on and ends.
+	s.source = mb
+	if err := s.Work(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if store.job.State != Done || store.job.Error != "" {
+		t.Errorf("job %+v", store.job)
+	}
+}

@@ -10298,6 +10298,11 @@ export interface components {
              * @description While the import waits for Moneybird's rate limit, until when.
              */
             waiting_until: string | null;
+            /**
+             * Format: date-time
+             * @description While the import is queued after a passing failure, such as Moneybird being out of reach, when it tries again. It stays queued until it finishes; only a token Moneybird refuses stops it.
+             */
+            next_attempt_at: string | null;
             /** @description Why the import stopped, or last had to try again. */
             error: string;
             /** Format: date-time */
