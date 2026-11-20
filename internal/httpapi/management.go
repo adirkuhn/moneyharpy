@@ -59,10 +59,31 @@ func permissionRules(spec *openapi3.T) (map[string][]administration.Permission, 
 	return rules, nil
 }
 
+// bookkeepingOps are the operations accountants may use to change data:
+// those the contract marks x-bookkeeping.
+func bookkeepingOps(spec *openapi3.T) map[string]bool {
+	ops := map[string]bool{}
+	for _, item := range spec.Paths.Map() {
+		for _, op := range item.Operations() {
+			if marked, _ := op.Extensions["x-bookkeeping"].(bool); marked {
+				ops[op.OperationID] = true
+			}
+		}
+	}
+	return ops
+}
+
+// changes reports whether a request changes data. The synchronization
+// endpoints fetch by POST and only read.
+func changes(r *http.Request, op string) bool {
+	return r.Method != http.MethodGet && r.Method != http.MethodHead && !strings.HasPrefix(op, "fetch")
+}
+
 // authorize lets a request on an administration through only for a user
 // who holds one of the operation's permissions and, where the administration
 // requires it, signs in with two-step verification.
 func (s *server) authorize(spec *openapi3.T, rules map[string][]administration.Permission) (func(http.Handler) http.Handler, error) {
+	bookkeeping := bookkeepingOps(spec)
 	router, err := gorillamux.NewRouter(spec)
 	if err != nil {
 		return nil, fmt.Errorf("route contract: %w", err)
@@ -107,8 +128,15 @@ func (s *server) authorize(spec *openapi3.T, rules map[string][]administration.P
 					return
 				}
 			}
-			if err := s.allowed(r.Context(), admin, u.ID, perms); err != nil {
+			l, err := s.allowed(r.Context(), admin, u.ID, perms)
+			if err != nil {
 				s.fail(w, r, err)
+				return
+			}
+			// Operations open to every member, such as leaving, are the user's own.
+			op := route.Operation.OperationID
+			if len(perms) > 0 && changes(r, op) && !l.MayChange(bookkeeping[op]) {
+				writeError(w, http.StatusForbidden, "Accountants may only change the bookkeeping")
 				return
 			}
 			next.ServeHTTP(w, r)
@@ -124,7 +152,7 @@ func (s *server) requireAlso(w http.ResponseWriter, r *http.Request, admin resou
 		writeError(w, http.StatusForbidden, "This connection has no scope for this")
 		return false
 	}
-	if err := s.allowed(r.Context(), admin, user(r).ID, []administration.Permission{perm}); err != nil {
+	if _, err := s.allowed(r.Context(), admin, user(r).ID, []administration.Permission{perm}); err != nil {
 		s.fail(w, r, err)
 		return false
 	}
@@ -136,18 +164,20 @@ var (
 	errNeedsTwoFactor = errors.New("administration requires two-step verification")
 )
 
-func (s *server) allowed(ctx context.Context, admin, user resource.ID, perms []administration.Permission) error {
+// allowed checks the user may use operations needing one of perms, and
+// returns how they are a member.
+func (s *server) allowed(ctx context.Context, admin, user resource.ID, perms []administration.Permission) (administration.Listed, error) {
 	l, err := s.deps.Administrations.Get(ctx, admin, user)
 	if err != nil {
-		return err
+		return l, err
 	}
 	if len(perms) > 0 && l.RequireTwoFactor {
 		on, err := s.deps.Identity.TwoFactorEnabled(ctx, user)
 		if err != nil {
-			return err
+			return l, err
 		}
 		if !on {
-			return errNeedsTwoFactor
+			return l, errNeedsTwoFactor
 		}
 	}
 	if !l.Can(perms...) {
@@ -155,9 +185,9 @@ func (s *server) allowed(ctx context.Context, admin, user resource.ID, perms []a
 		for i, p := range perms {
 			names[i] = string(p)
 		}
-		return fmt.Errorf("%w: needs %s", errNoPermission, strings.Join(names, " or "))
+		return l, fmt.Errorf("%w: needs %s", errNoPermission, strings.Join(names, " or "))
 	}
-	return nil
+	return l, nil
 }
 
 func toUser(m membership.Member, a administration.Listed) User {

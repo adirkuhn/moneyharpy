@@ -544,7 +544,8 @@ func (s *server) permitted(r *http.Request, admin resource.ID, perms []administr
 	if g, ok := grantFrom(r.Context()); ok && !g.Allows(perms...) {
 		return false
 	}
-	return s.allowed(r.Context(), admin, user(r).ID, perms) == nil
+	_, err := s.allowed(r.Context(), admin, user(r).ID, perms)
+	return err == nil
 }
 
 func flexQueryBool(v *string) *bool {

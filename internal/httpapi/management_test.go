@@ -312,3 +312,31 @@ func TestTimeTrackersReadProjects(t *testing.T) {
 	wantStatus(t, tracker.do(http.MethodPost, api+"/projects", map[string]any{"project": map[string]any{"name": "Mine"}}), http.StatusForbidden)
 	wantStatus(t, tracker.do(http.MethodPatch, api+"/projects/"+p.Id, map[string]any{"project": map[string]any{"name": "Mine"}}), http.StatusForbidden)
 }
+
+// An accountant reads what their permissions allow but changes only the
+// bookkeeping, a MoneyHarpy rule on top of Moneybird's permissions.
+func TestAccountantsOnlyChangeTheBookkeeping(t *testing.T) {
+	h := newHarness(t, options{})
+	owner, accountant := h.client(), h.client()
+	owner.register()
+	accountant.register()
+	a := owner.createAdministration("Harpy")
+	api := "/api/v2/" + a.Id
+	invite(t, h, owner, accountant, a.Id, "accountant@example.com", map[string]any{"user_type": "accountant"})
+	newContact := map[string]any{"contact": map[string]any{"company_name": "Example Shop B.V."}}
+
+	wantStatus(t, owner.do(http.MethodPost, api+"/contacts", newContact), http.StatusCreated)
+	wantStatus(t, accountant.do(http.MethodGet, api+"/contacts", nil), http.StatusOK)
+	wantStatus(t, accountant.do(http.MethodPost, api+"/contacts/synchronization", map[string]any{"ids": []string{}}), http.StatusOK)
+	r := accountant.do(http.MethodPost, api+"/contacts", newContact)
+	wantStatus(t, r, http.StatusForbidden)
+	if !strings.Contains(string(r.body), "bookkeeping") {
+		t.Errorf("refusal = %s", r.body)
+	}
+	wantStatus(t, accountant.do(http.MethodPost, api+"/ledger_account_templates/housing", nil), http.StatusCreated)
+	year := fmt.Sprint(time.Now().Year())
+	// Exporting passes; this one only finds no journal entries yet.
+	wantStatus(t, accountant.do(http.MethodPost, api+"/reports/export/ledger_accounts", map[string]any{"year": year}), http.StatusBadRequest)
+	// Leaving is their own business.
+	wantStatus(t, accountant.do(http.MethodDelete, api+"/membership", nil), http.StatusNoContent)
+}

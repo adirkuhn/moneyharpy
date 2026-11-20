@@ -1072,6 +1072,7 @@ export const nl: Messages = {
     types: { owner: 'Eigenaar', employee: 'Medewerker', accountant: 'Boekhouder', support: 'Support' },
     openInvitations: 'Openstaande uitnodigingen', expired: 'Verlopen', expires: 'Geldig tot {{date}}', withdraw: 'Intrekken', withdrawFor: 'Uitnodiging voor {{email}} intrekken',
     permissions: 'Wat ze mogen doen', ownerHasAll: 'Eigenaren mogen alles, ook gebruikers beheren en de administratie verwijderen.',
+    accountantReadOnly: 'Boekhouders zien alles wat deze rechten toestaan, maar wijzigen alleen de boekhouding: memoriaalboekingen, btw-aangiftes, categorieën, btw-tarieven en de afgesloten periode.',
     permissionNames: { sales_invoices: 'Facturen', documents: 'Inkoopfacturen en bonnetjes', estimates: 'Offertes', bank: 'Bank', settings: 'Instellingen', ownership: 'Eigendom', time_entries: 'Urenregistratie' },
     permissionHelp: {
       sales_invoices: 'Facturen maken en versturen.', documents: 'Inkoopfacturen, bonnetjes en andere documenten verwerken.', estimates: 'Offertes maken en versturen.',
