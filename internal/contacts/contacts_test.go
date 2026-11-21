@@ -129,6 +129,18 @@ func TestEInvoicingNeedsAnIdentifier(t *testing.T) {
 	}
 }
 
+func TestEmailUBLNeedsNoInvoiceAddress(t *testing.T) {
+	// Moneybird turns UBL on for every contact, with or without an address to send invoices to.
+	s, _ := newService()
+	c, err := s.Create(context.Background(), adminID, owner, Changes{CompanyName: ptr("X"), DeliveryMethod: ptr("Email"), EmailUBL: ptr(true)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !c.EmailUBL || c.DeliveryMethod != "Email" {
+		t.Errorf("contact = %+v", c)
+	}
+}
+
 func TestMandateNeedsItsDetails(t *testing.T) {
 	s, _ := newService()
 	_, err := s.Create(context.Background(), adminID, owner, Changes{CompanyName: ptr("X"), SepaActive: ptr(true)})
