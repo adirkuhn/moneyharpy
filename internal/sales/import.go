@@ -188,9 +188,28 @@ func keepLineIDs(lines []Detail, details []ImportedDetail, created time.Time) {
 }
 
 // importPayments makes an imported invoice's payments, oldest first.
+// ImportPayments brings in the payments of an invoice that came in before
+// without any, as the source has them. It reports whether it added them;
+// an invoice that has payments keeps them.
+func (s *Service) ImportPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []ImportedPayment) (bool, error) {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return false, err
+	}
+	inv, err := s.loadInvoice(ctx, admin, kind, id)
+	if err != nil {
+		return false, err
+	}
+	if len(inv.Payments) > 0 || len(payments) == 0 || inv.State == Draft {
+		return false, nil
+	}
+	return true, s.importPayments(ctx, admin, user, kind, id, payments)
+}
+
 func (s *Service) importPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []ImportedPayment) error {
 	for i, p := range payments {
-		if _, err := s.registerPayment(ctx, admin, user, kind, id, p.Input); err != nil {
+		in := p.Input
+		in.Imported = true
+		if _, err := s.registerPayment(ctx, admin, user, kind, id, in); err != nil {
 			return fmt.Errorf("payment %d: %w", i+1, err)
 		}
 	}

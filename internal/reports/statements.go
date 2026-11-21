@@ -177,11 +177,11 @@ func (s *Service) BalanceSheet(ctx context.Context, admin, user resource.ID, per
 				continue
 			}
 			t := a.Type
-			switch {
-			case t == CurrentAssets && sum.Amount < 0:
+			// A current asset that comes to a credit is owed; a liability
+			// with a debit, such as VAT to reclaim, stays with the
+			// liabilities, as Moneybird shows them.
+			if t == CurrentAssets && sum.Amount < 0 {
 				t = CurrentLiabilities
-			case t == CurrentLiabilities && sum.Amount > 0:
-				t = CurrentAssets
 			}
 			balances[a.ID], section[a.ID] = sum.Amount, t
 		}
@@ -368,6 +368,9 @@ func (s *Service) WorkingCapital(ctx context.Context, admin, user resource.ID, p
 			switch {
 			case a.Financial:
 				bank += sum.Amount
+			case a.Type == CurrentAssets && sum.Amount < 0:
+				// A current asset that comes to a credit is owed, as Moneybird shows it.
+				out.ToPay -= sum.Amount
 			case a.Type == CurrentAssets:
 				out.ToReceive += sum.Amount
 			case a.Type == CurrentLiabilities:

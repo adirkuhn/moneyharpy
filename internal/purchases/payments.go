@@ -73,10 +73,10 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 	if err != nil {
 		return sales.Payment{}, err
 	}
-	if in.FinancialMutationID != nil {
+	if in.FinancialMutationID != nil && !in.Imported {
 		return s.registerBankPayment(ctx, admin, user, d, *in.FinancialMutationID, in.Price)
 	}
-	if !payable(d) {
+	if !payable(d) && !in.Imported {
 		return sales.Payment{}, ErrNotEditable
 	}
 	var verr resource.ValidationError
@@ -92,7 +92,7 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 			verr.Add("price_base", "is not an amount")
 		}
 	}
-	if verr.OrNil() == nil {
+	if verr.OrNil() == nil && !in.Imported {
 		checkPrice(&verr, "price", price, d.Unpaid())
 	}
 	dayText, _, _ := strings.Cut(strings.TrimSpace(in.PaymentDate), "T")
@@ -113,18 +113,29 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 	if err := verr.OrNil(); err != nil {
 		return sales.Payment{}, err
 	}
-	if err := s.checkDay(ctx, admin, user, day, "payment_date"); err != nil {
-		return sales.Payment{}, err
+	if !in.Imported {
+		if err := s.checkDay(ctx, admin, user, day, "payment_date"); err != nil {
+			return sales.Payment{}, err
+		}
 	}
 	if action == sales.InvoicesSettlement {
 		return s.settle(ctx, a, user, d, in.InvoiceID, price, day)
 	}
-	contra, account, err := s.contra(ctx, admin, user, action, in)
-	if err != nil {
-		return sales.Payment{}, err
-	}
 	p := s.newPayment(d, user, price, day)
-	p.PriceBase, p.LedgerAccountID, p.FinancialAccountID, p.ManualPaymentAction = base, &contra, account, action
+	switch {
+	case in.Imported && in.FinancialMutationID != nil:
+		// The transaction books it.
+		p.FinancialMutationID, p.FinancialAccountID = in.FinancialMutationID, in.FinancialAccountID
+	case in.Imported && in.LedgerAccountID != nil:
+		p.LedgerAccountID, p.FinancialAccountID = in.LedgerAccountID, in.FinancialAccountID
+	default:
+		contra, account, err := s.contra(ctx, admin, user, action, in)
+		if err != nil {
+			return sales.Payment{}, err
+		}
+		p.LedgerAccountID, p.FinancialAccountID = &contra, account
+	}
+	p.PriceBase, p.ManualPaymentAction = base, action
 	p.TransactionIdentifier = strings.TrimSpace(in.TransactionIdentifier)
 	d.Payments = append(d.Payments, p)
 	if err := s.commit(ctx, a, user, []*Document{&d}, []sales.Payment{p}, nil); err != nil {

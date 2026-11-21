@@ -20815,7 +20815,7 @@ components:
       properties:
         kind:
           type: string
-          enum: [chart, custom_fields, identities, workflows, contacts, products, projects, financial_accounts, financial_mutations, estimates, recurring_sales_invoices, sales_invoices, external_sales_invoices, purchase_invoices, receipts, payment_links, general_documents, typeless_documents, general_journal_documents, time_entries, task_list_templates, task_lists, locked_period]
+          enum: [chart, custom_fields, identities, workflows, contacts, products, projects, financial_accounts, financial_mutations, estimates, recurring_sales_invoices, sales_invoices, external_sales_invoices, purchase_invoices, receipts, payment_links, general_documents, typeless_documents, general_journal_documents, assets, time_entries, task_list_templates, task_lists, locked_period]
         total:
           type: integer
         imported:

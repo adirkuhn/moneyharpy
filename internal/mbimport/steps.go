@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/adirkuhn/moneyharpy/internal/administration"
+	"github.com/adirkuhn/moneyharpy/internal/assets"
 	"github.com/adirkuhn/moneyharpy/internal/invoicing"
 	"github.com/adirkuhn/moneyharpy/internal/membership"
 	"github.com/adirkuhn/moneyharpy/internal/notes"
@@ -34,6 +35,9 @@ import (
 // Targets are the services that take in imported records, keeping their
 // Moneybird ids. Each checks a record as it checks one made here.
 type Targets struct {
+	Assets interface {
+		Import(ctx context.Context, admin, user resource.ID, in assets.ImportedAsset) (assets.Asset, error)
+	}
 	Books interface {
 		ImportChart(ctx context.Context, admin, user resource.ID, in bookkeeping.ChartImport) (bookkeeping.ChartIDs, error)
 		UpdateSettings(ctx context.Context, admin, user resource.ID, c bookkeeping.SettingsChanges) (bookkeeping.Settings, error)
@@ -53,8 +57,10 @@ type Targets struct {
 		ImportStatement(ctx context.Context, admin, user resource.ID, in banking.ImportedStatement) ([]banking.Mutation, error)
 		LinkBooking(ctx context.Context, admin, id, user resource.ID, l banking.Link) (banking.Mutation, error)
 		LinkImportedPayment(ctx context.Context, admin, user, mutation resource.ID, invoiceType string, invoice resource.ID, price banking.Amount) (bool, error)
+		SettleImported(ctx context.Context, admin, user, mutation resource.ID) error
 	}
 	Sales interface {
+		ImportPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []sales.ImportedPayment) (bool, error)
 		ImportInvoice(ctx context.Context, admin, user resource.ID, in sales.ImportedInvoice) (sales.Invoice, error)
 		ImportExternal(ctx context.Context, admin, user resource.ID, in sales.ImportedExternal) (sales.ExternalInvoice, error)
 		ImportEstimate(ctx context.Context, admin, user resource.ID, in sales.ImportedEstimate) (sales.Estimate, error)
@@ -66,6 +72,7 @@ type Targets struct {
 	Purchases interface {
 		Import(ctx context.Context, admin, user resource.ID, in purchases.ImportedDocument) (purchases.Document, error)
 		ImportedNew(ctx context.Context, admin, user resource.ID, kind string, id resource.ID) (bool, error)
+		ImportPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []sales.ImportedPayment) (bool, error)
 		ImportTypeless(ctx context.Context, admin, user resource.ID, o resource.Origin, c purchases.TypelessChanges) (purchases.Typeless, error)
 		ImportGeneral(ctx context.Context, admin, user resource.ID, o resource.Origin, entryNumber int, c purchases.GeneralChanges) (purchases.General, error)
 		AddAttachment(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)
@@ -153,6 +160,8 @@ func (r *run) step(ctx context.Context, kind string) error {
 		return r.purchases(ctx, StepReceipts, "documents/receipts", purchases.Receipt)
 	case StepPaymentLinks:
 		return r.paymentLinks(ctx)
+	case StepAssets:
+		return r.assets(ctx)
 	case StepGeneralDocuments:
 		return r.generalDocuments(ctx)
 	case StepTypelessDocuments:

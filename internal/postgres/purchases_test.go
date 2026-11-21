@@ -143,7 +143,7 @@ func TestBankTransactionPaysAPurchaseInvoice(t *testing.T) {
 		t.Fatalf("mutation = %+v", m)
 	}
 	creditors := categoryByKey(t, f.books, f.admin, f.owner, "accounts_payable")
-	unprocessed := categoryByKey(t, f.books, f.admin, f.owner, "unprocessed_transactions")
+	unprocessed := categoryByKey(t, f.books, f.admin, f.owner, "transactions_to_classify")
 	// The bank settles the creditors; only the incoming transaction waits.
 	if sums := f.ledger(t); sums[creditors] != 0 || sums[unprocessed] != -100000 {
 		t.Errorf("creditors %s, unprocessed %s", sums[creditors], sums[unprocessed])

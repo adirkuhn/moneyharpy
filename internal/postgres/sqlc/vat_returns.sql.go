@@ -166,7 +166,7 @@ const vatChecks = `-- name: VatChecks :one
 SELECT (SELECT count(*) FROM bank_journal_entries b
         JOIN ledger_accounts l ON l.id = b.ledger_account_id
         WHERE b.administration_id = $1 AND b.date <= $2 AND b.row_order = 2
-          AND l.seed_key = 'unprocessed_transactions')::int AS open_transactions,
+          AND l.seed_key = 'transactions_to_classify')::int AS open_transactions,
        (SELECT count(DISTINCT m.id) FROM ledger_account_bookings k
         JOIN financial_mutations m ON m.id = k.financial_mutation_id
         JOIN ledger_accounts l ON l.id = k.ledger_account_id

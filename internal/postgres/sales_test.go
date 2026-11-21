@@ -242,7 +242,7 @@ func TestBankTransactionPaysAnInvoice(t *testing.T) {
 		t.Errorf("invoice = %s %v", got.State, got.PaidAt)
 	}
 	debtors := categoryByKey(t, f.books, f.admin, f.owner, "accounts_receivable")
-	unprocessed := categoryByKey(t, f.books, f.admin, f.owner, "unprocessed_transactions")
+	unprocessed := categoryByKey(t, f.books, f.admin, f.owner, "transactions_to_classify")
 	sums := f.ledger(t)
 	// The debtors are settled by the bank; only the outgoing transaction
 	// waits on unprocessed transactions.

@@ -75,12 +75,38 @@ func (s *Service) Import(ctx context.Context, admin, user resource.ID, in Import
 	if err := s.save(ctx, a, user, &d, true); err != nil {
 		return Document{}, err
 	}
-	for i, p := range in.Payments {
-		if _, err := s.RegisterPayment(ctx, admin, user, in.Kind, d.ID, p.Input); err != nil {
-			return Document{}, fmt.Errorf("payment %d: %w", i+1, err)
-		}
+	if err := s.importPayments(ctx, admin, user, in.Kind, d.ID, in.Payments); err != nil {
+		return Document{}, err
 	}
 	return s.store.Document(ctx, admin, in.Kind, d.ID)
+}
+
+// ImportPayments brings in the payments of a document that came in before
+// without any, as the source has them. It reports whether it added them;
+// a document that has payments keeps them.
+func (s *Service) ImportPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []sales.ImportedPayment) (bool, error) {
+	if _, err := s.admins.Get(ctx, admin, user); err != nil {
+		return false, err
+	}
+	d, err := s.store.Document(ctx, admin, kind, id)
+	if err != nil {
+		return false, err
+	}
+	if len(d.Payments) > 0 || len(payments) == 0 || !d.Booked() {
+		return false, nil
+	}
+	return true, s.importPayments(ctx, admin, user, kind, id, payments)
+}
+
+func (s *Service) importPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []sales.ImportedPayment) error {
+	for i, p := range payments {
+		in := p.Input
+		in.Imported = true
+		if _, err := s.registerPayment(ctx, admin, user, kind, id, in); err != nil {
+			return fmt.Errorf("payment %d: %w", i+1, err)
+		}
+	}
+	return nil
 }
 
 // ImportedNew takes back the booking of an imported document the source

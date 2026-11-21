@@ -127,6 +127,51 @@ func TestAnImportedDocumentGoesBackToNewAsTheSourceHasIt(t *testing.T) {
 	}
 }
 
+func TestImportedPaymentsComeInAsTheSourceHasThem(t *testing.T) {
+	// Moneybird can have a document paid a little too much, put right after,
+	// and a cash payment booked on the category it chose.
+	h := newHarness(t)
+	in := ImportedDocument{
+		Origin: resource.Origin{ID: 9003}, Kind: PurchaseInvoice, Changes: invoice(),
+		Details: []sales.ImportedDetail{{Input: line("100", vat21, costs)}},
+		Payments: []sales.ImportedPayment{
+			{Input: sales.PaymentInput{PaymentDate: "2026-11-02", Price: ptr("121.20")}},
+			{Input: sales.PaymentInput{PaymentDate: "2026-11-02", Price: ptr("-0.20"), ManualPaymentAction: sales.CashPayment, LedgerAccountID: ptr(toClassify)}},
+		},
+	}
+	d, err := h.svc.Import(ctx, adminID, owner, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.State != Paid || len(d.Payments) != 2 || d.Unpaid() != 0 {
+		t.Fatalf("document = %+v", d)
+	}
+	if got := d.Payments[1]; got.LedgerAccountID == nil || *got.LedgerAccountID != toClassify {
+		t.Errorf("cash payment on %v, want the category given", got.LedgerAccountID)
+	}
+}
+
+func TestImportPaymentsAddsThemOnlyToADocumentWithout(t *testing.T) {
+	h := newHarness(t)
+	d, err := h.svc.Import(ctx, adminID, owner, ImportedDocument{
+		Origin: resource.Origin{ID: 9004}, Kind: PurchaseInvoice, Changes: invoice(),
+		Details: []sales.ImportedDetail{{Input: line("100", vat21, costs)}},
+	})
+	if err != nil || d.State != Open {
+		t.Fatalf("document = %+v, %v", d, err)
+	}
+	pays := []sales.ImportedPayment{{Input: sales.PaymentInput{PaymentDate: "2026-11-03", Price: ptr("121")}}}
+	if added, err := h.svc.ImportPayments(ctx, adminID, owner, PurchaseInvoice, d.ID, pays); err != nil || !added {
+		t.Fatalf("added %v, %v", added, err)
+	}
+	if added, err := h.svc.ImportPayments(ctx, adminID, owner, PurchaseInvoice, d.ID, pays); err != nil || added {
+		t.Errorf("again: %v, %v", added, err)
+	}
+	if got, _ := h.store.Document(ctx, adminID, PurchaseInvoice, d.ID); got.State != Paid || len(got.Payments) != 1 {
+		t.Errorf("document = %+v", got)
+	}
+}
+
 func TestReceiptNeedsNoSupplierAndLinesWithoutCategoryAreUncategorized(t *testing.T) {
 	h := newHarness(t)
 	rate := vat21

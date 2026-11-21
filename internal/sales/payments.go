@@ -46,6 +46,11 @@ type PaymentInput struct {
 	LedgerAccountID *resource.ID
 	// InvoiceID is the invoice an invoices settlement settles against.
 	InvoiceID *resource.ID
+	// Imported takes the payment as another system has it, which only an
+	// import sets: more than what is unpaid for a while, in the locked
+	// period, on the category it was booked on there, and linked to its
+	// bank transaction as it is, which settles the transaction later.
+	Imported bool
 }
 
 // payable reports an invoice that can take a payment.
@@ -125,12 +130,12 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 	if err != nil {
 		return Payment{}, err
 	}
-	if in.FinancialMutationID != nil {
+	if in.FinancialMutationID != nil && !in.Imported {
 		return s.registerBankPayment(ctx, admin, user, inv, *in.FinancialMutationID, in.Price)
 	}
 	// Moneybird offers Register payment on a paid invoice too; what may be
 	// paid is then left to the price check.
-	if !payable(inv) && inv.State != Paid {
+	if !payable(inv) && inv.State != Paid && !in.Imported {
 		return Payment{}, ErrNotEditable
 	}
 	var verr resource.ValidationError
@@ -148,7 +153,7 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 	}
 	// Moneybird keeps an invoice of nothing as paid with a payment of nothing.
 	nothingForNothing := price == 0 && inv.Totals.InclTax == 0 && inv.Paid() == 0
-	if verr.OrNil() == nil && !nothingForNothing {
+	if verr.OrNil() == nil && !nothingForNothing && !in.Imported {
 		checkPrice(&verr, "price", price, inv.Unpaid())
 	}
 	day, err := time.Parse(time.DateOnly, strings.TrimSpace(firstPart(in.PaymentDate)))
@@ -168,8 +173,10 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 	if err := verr.OrNil(); err != nil {
 		return Payment{}, err
 	}
-	if err := s.checkDay(ctx, admin, user, day, "payment_date"); err != nil {
-		return Payment{}, err
+	if !in.Imported {
+		if err := s.checkDay(ctx, admin, user, day, "payment_date"); err != nil {
+			return Payment{}, err
+		}
 	}
 	if action == InvoicesSettlement {
 		if in.InvoiceID == nil {
@@ -181,12 +188,21 @@ func (s *Service) registerPayment(ctx context.Context, admin, user resource.ID, 
 		}
 		return s.settle(ctx, a, user, inv, other, price, day)
 	}
-	contra, account, err := s.contra(ctx, admin, user, action, in)
-	if err != nil {
-		return Payment{}, err
-	}
 	p := s.newPayment(inv, user, price, day)
-	p.PriceBase, p.LedgerAccountID, p.FinancialAccountID, p.ManualPaymentAction = base, &contra, account, action
+	switch {
+	case in.Imported && in.FinancialMutationID != nil:
+		// The transaction books it.
+		p.FinancialMutationID, p.FinancialAccountID = in.FinancialMutationID, in.FinancialAccountID
+	case in.Imported && in.LedgerAccountID != nil:
+		p.LedgerAccountID, p.FinancialAccountID = in.LedgerAccountID, in.FinancialAccountID
+	default:
+		contra, account, err := s.contra(ctx, admin, user, action, in)
+		if err != nil {
+			return Payment{}, err
+		}
+		p.LedgerAccountID, p.FinancialAccountID = &contra, account
+	}
+	p.PriceBase, p.ManualPaymentAction = base, action
 	p.TransactionIdentifier = strings.TrimSpace(in.TransactionIdentifier)
 	inv.Payments = append(inv.Payments, p)
 	if err := s.commit(ctx, a, user, []*Invoice{&inv}, []Payment{p}, nil); err != nil {

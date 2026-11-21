@@ -129,7 +129,7 @@ func TestReportStoreReadsTheJournal(t *testing.T) {
 	for _, c := range cash {
 		flows[c.LedgerAccountID] = c
 	}
-	unprocessed := categoryByKey(t, books, admin, owner, "unprocessed_transactions")
+	unprocessed := categoryByKey(t, books, admin, owner, "transactions_to_classify")
 	if flows[software].Paid != 2550 || flows[unprocessed].Received != -100000 {
 		t.Errorf("cash flow = %+v", flows)
 	}

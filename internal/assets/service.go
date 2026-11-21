@@ -34,6 +34,9 @@ type Ledger interface {
 	// AccumulatedDepreciation returns the sub-category of a fixed asset
 	// category that holds its accumulated depreciation.
 	AccumulatedDepreciation(ctx context.Context, admin, user, parent resource.ID) (resource.ID, error)
+	// DepreciationCosts returns the costs category of a fixed asset
+	// category's depreciation.
+	DepreciationCosts(ctx context.Context, admin, user, asset resource.ID) (resource.ID, error)
 	LockedUntil(ctx context.Context, admin, user resource.ID) (string, error)
 }
 
@@ -720,7 +723,7 @@ func (s *Service) accounts(ctx context.Context, admin, user resource.ID, list ..
 	a := list[0]
 	var err error
 	if n.Depreciation {
-		if acc.Depreciation, err = s.ledger.SystemLedgerAccount(ctx, admin, user, DepreciationRole); err != nil {
+		if acc.Depreciation, err = s.ledger.DepreciationCosts(ctx, admin, user, a.LedgerAccountID); err != nil {
 			return acc, wrap("find depreciation category", err)
 		}
 		if acc.Accumulated, err = s.ledger.AccumulatedDepreciation(ctx, admin, user, a.LedgerAccountID); err != nil {

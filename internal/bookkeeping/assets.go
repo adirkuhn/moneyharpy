@@ -35,7 +35,9 @@ func (s *Service) AccumulatedDepreciation(ctx context.Context, admin, user, pare
 	}
 	p := all[i]
 	if j := slices.IndexFunc(all, func(l LedgerAccount) bool {
-		return l.ParentID != nil && *l.ParentID == parent && (l.System == AccumulatedDepreciationRole || strings.HasSuffix(l.Key, "_depreciation_total"))
+		return l.ParentID != nil && *l.ParentID == parent && (l.System == AccumulatedDepreciationRole || strings.HasSuffix(l.Key, "_depreciation_total") ||
+			// As a chart that follows the taxonomy has it, such as Moneybird's.
+			l.Type == p.Type && strings.HasSuffix(l.Taxonomy, "Cae"))
 	}); j >= 0 {
 		return all[j].ID, nil
 	}
@@ -69,4 +71,29 @@ func (s *Service) AccumulatedDepreciation(ctx context.Context, admin, user, pare
 		return 0, fmt.Errorf("store ledger account: %w", err)
 	}
 	return l.ID, nil
+}
+
+// DepreciationCosts returns the category the depreciation of a fixed asset
+// category is a cost on: the one the taxonomy gives it, such as
+// WAfsAmvTev for a car (BMvaTev...), when the chart has it, as Moneybird's
+// does; else the depreciation costs.
+func (s *Service) DepreciationCosts(ctx context.Context, admin, user, asset resource.ID) (resource.ID, error) {
+	if _, err := s.ensure(ctx, admin, user); err != nil {
+		return 0, err
+	}
+	all, err := s.store.LedgerAccounts(ctx, admin)
+	if err != nil {
+		return 0, fmt.Errorf("list ledger accounts: %w", err)
+	}
+	i := slices.IndexFunc(all, func(l LedgerAccount) bool { return l.ID == asset })
+	if i < 0 {
+		return 0, ErrLedgerAccountNotFound
+	}
+	if code := all[i].Taxonomy; len(code) >= 7 && strings.EqualFold(code[:4], "BMva") {
+		own := "WAfsAmv" + code[4:7]
+		if j := slices.IndexFunc(all, func(l LedgerAccount) bool { return l.Active && strings.EqualFold(l.Taxonomy, own) }); j >= 0 {
+			return all[j].ID, nil
+		}
+	}
+	return s.SystemLedgerAccount(ctx, admin, user, "depreciation")
 }

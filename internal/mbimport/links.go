@@ -49,6 +49,10 @@ func (r *run) paymentLinks(ctx context.Context) error {
 					return err
 				}
 			}
+			// Payments that came in linked with their invoices settle it too.
+			if err := r.s.targets.Banking.SettleImported(ctx, r.job.AdministrationID, r.job.UserID, m.ID.id()); err != nil {
+				return err
+			}
 		}
 		if err := r.save(ctx); err != nil {
 			return err
@@ -79,4 +83,36 @@ func (r *run) linkPayment(ctx context.Context, st *Step, m mbMutation, p mbMutat
 		st.Skipped++
 	}
 	return r.s.store.ForgetProblem(ctx, r.job.AdministrationID, kindFinancialMutation, mutation, missing)
+}
+
+// revisitPayments gives an invoice that came in before without its payments
+// the ones Moneybird has, such as when one was refused then.
+func (r *run) revisitPayments(step, kind, entityType string) {
+	if r.revisit == nil {
+		r.revisit = map[string]func(context.Context, json.RawMessage) error{}
+	}
+	r.revisit[kind] = func(ctx context.Context, raw json.RawMessage) error {
+		var inv struct {
+			ID       mbID        `json:"id"`
+			Payments []mbPayment `json:"payments"`
+		}
+		if err := json.Unmarshal(raw, &inv); err != nil || len(inv.Payments) == 0 {
+			return nil
+		}
+		payments, err := r.payments(ctx, inv.Payments)
+		if err != nil {
+			return err
+		}
+		_, err = r.s.targets.Sales.ImportPayments(ctx, r.job.AdministrationID, r.job.UserID, entityType, inv.ID.id(), payments)
+		return r.passed(ctx, step, kind, inv.ID.id(), err)
+	}
+}
+
+// passed notes a record that came in before and could not be put as
+// Moneybird has it now, passing it; any other failure stops the import.
+func (r *run) passed(ctx context.Context, step, kind string, id resource.ID, err error) error {
+	if err == nil || !isRecordProblem(err) {
+		return err
+	}
+	return r.s.store.RecordProblem(ctx, r.job.AdministrationID, Problem{Step: step, Kind: kind, SourceID: id, Message: describe(err), CreatedAt: r.s.now()})
 }

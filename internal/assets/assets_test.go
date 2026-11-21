@@ -110,6 +110,41 @@ func TestCreateValidatesAndPlans(t *testing.T) {
 	}
 }
 
+func TestImportKeepsTheValueChangesAsTheSourceBookedThem(t *testing.T) {
+	// Moneybird booked the first month pro rata and every month since; they
+	// come in as they are, booked, and the asset goes on from there.
+	h := newHarness()
+	in := ImportedAsset{
+		Origin:  resource.Origin{ID: 4801},
+		Input:   input("Car", "2025-01-14", "20003.60", 6, "5000"),
+		Sources: []resource.ID{purchaseLine, 999},
+		ValueChanges: []ValueChange{
+			{Type: Linear, Date: day("2025-01-31"), Amount: amount("-120.99")},
+			{Type: Linear, Date: day("2025-02-28"), Amount: amount("-208.38")},
+		},
+	}
+	a, err := h.svc.Import(ctx, adminID, owner, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.ID != 4801 || len(a.ValueChanges) != 2 || a.CurrentValue() != amount("19674.23") || len(a.Sources) != 1 || *a.Sources[0].DetailID != purchaseLine {
+		t.Fatalf("asset = %+v", a)
+	}
+	var booked money.Amount
+	for _, e := range h.store.entries[a.ID] {
+		if e.LedgerAccountID == depreciation {
+			booked += e.Amount
+		}
+	}
+	if booked != amount("329.37") {
+		t.Errorf("depreciation booked %s, entries %+v", booked, h.store.entries[a.ID])
+	}
+	// Again changes nothing.
+	if again, err := h.svc.Import(ctx, adminID, owner, in); err != nil || len(again.ValueChanges) != 2 {
+		t.Errorf("again: %+v, %v", again, err)
+	}
+}
+
 func TestUpdateOnlyNameOnceItHasValueChanges(t *testing.T) {
 	h := newHarness()
 	a := h.create(t, input("Laptop", "2026-11-11", "1000", 5, "100"))

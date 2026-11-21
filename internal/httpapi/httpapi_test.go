@@ -383,7 +383,7 @@ func newHarness(t *testing.T, opts options) *harness {
 	h.mbimport = mbimport.NewService(admins, mbclient.ImportSource{BaseURL: h.moneybird.URL + "/api/v2", HTTP: h.moneybird.Client()},
 		postgres.NewMoneybirdImportStore(pool), settings.NewCipher("test-secret"),
 		mbimport.Targets{Books: books, Contacts: contactService, Products: productService, Projects: projectService, Banking: bank, Sales: invoiceService, Purchases: documentService, Journal: ledger,
-			Admin: admins, Invoicing: invoices, Members: memberService, Notes: noteService, TimeEntries: timeEntryService, TaskLists: taskListService}, time.Now)
+			Admin: admins, Invoicing: invoices, Members: memberService, Notes: noteService, TimeEntries: timeEntryService, TaskLists: taskListService, Assets: assetService}, time.Now)
 	handler, err := httpapi.NewHandler(httpapi.Deps{
 		Administrations: admins,
 		Invoicing:       invoices,
