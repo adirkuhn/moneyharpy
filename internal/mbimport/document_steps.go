@@ -185,14 +185,20 @@ func (r *run) purchases(ctx context.Context, step, path, kind string) error {
 	}
 	r.revisit[idKind] = func(ctx context.Context, raw json.RawMessage) error {
 		var d mbPurchase
-		if err := json.Unmarshal(raw, &d); err != nil || d.State != "new" {
+		if err := json.Unmarshal(raw, &d); err != nil {
 			return nil
 		}
-		_, err := r.s.targets.Purchases.ImportedNew(ctx, r.job.AdministrationID, r.job.UserID, kind, d.ID.id())
-		if isRecordProblem(err) {
-			return nil
+		if d.State == "new" {
+			_, err := r.s.targets.Purchases.ImportedNew(ctx, r.job.AdministrationID, r.job.UserID, kind, d.ID.id())
+			return r.passed(ctx, step, idKind, d.ID.id(), err)
 		}
-		return err
+		// One whose payments did not come in gets them.
+		payments, err := r.payments(ctx, d.Payments)
+		if err != nil || len(payments) == 0 {
+			return err
+		}
+		_, err = r.s.targets.Purchases.ImportPayments(ctx, r.job.AdministrationID, r.job.UserID, kind, d.ID.id(), payments)
+		return r.passed(ctx, step, idKind, d.ID.id(), err)
 	}
 	return r.synced(ctx, step, path, idKind, everything, func(ctx context.Context, raw json.RawMessage) (resource.ID, error) {
 		var d mbPurchase

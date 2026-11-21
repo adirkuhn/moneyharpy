@@ -162,6 +162,11 @@ func TestImportFromMoneybird(t *testing.T) {
 	if linkedMutation["state"] != "processed" || !strings.Contains(fmt.Sprint(linkedMutation["payments"]), "504000000000000165") {
 		t.Errorf("transaction = %+v", linkedMutation)
 	}
+	// One paid a little too much and put right comes in paid, with both payments.
+	corrected := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/504000000000000170", nil))
+	if pays, _ := corrected["payments"].([]any); corrected["state"] != "paid" || len(pays) != 2 {
+		t.Errorf("corrected purchase invoice = %v, %v", corrected["state"], corrected["payments"])
+	}
 	// A purchase invoice Moneybird has not processed yet comes in so, booking nothing.
 	unprocessed := decode[map[string]any](t, owner.do(http.MethodGet, api+"/documents/purchase_invoices/504000000000000166", nil))
 	if unprocessed["state"] != "new" {

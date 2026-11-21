@@ -97,6 +97,18 @@ func TestAnImportedPaymentIsLinkedToItsTransactionAfterwards(t *testing.T) {
 	if linked, err := s.LinkImportedPayment(ctx, adminID, owner, 9501, DocumentType, 8001, 3628); err != nil || linked {
 		t.Errorf("again %v, %v", linked, err)
 	}
+	// One that came in linked settles the transaction too.
+	if _, err := s.ImportStatement(ctx, adminID, owner, ImportedStatement{Origin: resource.Origin{ID: 9402}, AccountID: 9201, Mutations: []ImportedMutation{
+		{Origin: resource.Origin{ID: 9502}, Input: MutationInput{Date: ptr("2026-09-11"), Message: ptr("Ink"), Amount: ptr("-10")}},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	m2 := store.mutations[9502]
+	m2.Payments = []PaymentLink{{ID: 7002, InvoiceType: DocumentType, InvoiceID: 8003, Price: 1000}}
+	store.mutations[9502] = m2
+	if linked, err := s.LinkImportedPayment(ctx, adminID, owner, 9502, DocumentType, 8003, 1000); err != nil || linked || store.mutations[9502].State != Processed {
+		t.Errorf("came in linked: %v, %v, %+v", linked, err, store.mutations[9502])
+	}
 	// No such payment here.
 	if _, err := s.LinkImportedPayment(ctx, adminID, owner, 9501, DocumentType, 8002, 100); !errors.Is(err, ErrBookingNotFound) {
 		t.Errorf("unknown payment: %v", err)

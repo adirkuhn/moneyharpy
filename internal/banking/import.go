@@ -151,7 +151,7 @@ func (s *Service) LinkImportedPayment(ctx context.Context, admin, user, mutation
 	if slices.ContainsFunc(m.Payments, func(p PaymentLink) bool {
 		return p.InvoiceType == invoiceType && p.InvoiceID == invoice && p.Price == price
 	}) {
-		return false, nil
+		return false, s.settleImported(ctx, admin, m)
 	}
 	found, err := s.store.AttachPayment(ctx, admin, mutation, invoiceType, invoice, price)
 	if err != nil {
@@ -164,6 +164,29 @@ func (s *Service) LinkImportedPayment(ctx context.Context, admin, user, mutation
 		return false, err
 	}
 	return true, nil
+}
+
+// SettleImported settles a transaction whose payments came in linked to it
+// with their invoices, as the transaction settles when they are linked here.
+func (s *Service) SettleImported(ctx context.Context, admin, user, mutation resource.ID) error {
+	if _, err := s.ensure(ctx, admin, user); err != nil {
+		return err
+	}
+	m, err := s.store.Mutation(ctx, admin, mutation)
+	if err != nil {
+		return err
+	}
+	return s.settleImported(ctx, admin, m)
+}
+
+func (s *Service) settleImported(ctx context.Context, admin resource.ID, m Mutation) error {
+	settled := m
+	settled.settle(s.now())
+	if settled.State == m.State {
+		return nil
+	}
+	_, err := s.resettle(ctx, admin, m.ID)
+	return err
 }
 
 func invalidField(field, problem string) error {

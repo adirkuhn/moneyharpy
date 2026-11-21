@@ -53,8 +53,10 @@ type Targets struct {
 		ImportStatement(ctx context.Context, admin, user resource.ID, in banking.ImportedStatement) ([]banking.Mutation, error)
 		LinkBooking(ctx context.Context, admin, id, user resource.ID, l banking.Link) (banking.Mutation, error)
 		LinkImportedPayment(ctx context.Context, admin, user, mutation resource.ID, invoiceType string, invoice resource.ID, price banking.Amount) (bool, error)
+		SettleImported(ctx context.Context, admin, user, mutation resource.ID) error
 	}
 	Sales interface {
+		ImportPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []sales.ImportedPayment) (bool, error)
 		ImportInvoice(ctx context.Context, admin, user resource.ID, in sales.ImportedInvoice) (sales.Invoice, error)
 		ImportExternal(ctx context.Context, admin, user resource.ID, in sales.ImportedExternal) (sales.ExternalInvoice, error)
 		ImportEstimate(ctx context.Context, admin, user resource.ID, in sales.ImportedEstimate) (sales.Estimate, error)
@@ -66,6 +68,7 @@ type Targets struct {
 	Purchases interface {
 		Import(ctx context.Context, admin, user resource.ID, in purchases.ImportedDocument) (purchases.Document, error)
 		ImportedNew(ctx context.Context, admin, user resource.ID, kind string, id resource.ID) (bool, error)
+		ImportPayments(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, payments []sales.ImportedPayment) (bool, error)
 		ImportTypeless(ctx context.Context, admin, user resource.ID, o resource.Origin, c purchases.TypelessChanges) (purchases.Typeless, error)
 		ImportGeneral(ctx context.Context, admin, user resource.ID, o resource.Origin, entryNumber int, c purchases.GeneralChanges) (purchases.General, error)
 		AddAttachment(ctx context.Context, admin, user resource.ID, kind string, id resource.ID, filename, contentType string, data []byte) (attachments.Attachment, error)

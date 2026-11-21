@@ -87,6 +87,33 @@ func TestRegisterPaymentPaysTheInvoice(t *testing.T) {
 	}
 }
 
+func TestImportedPaymentsComeInAsTheSourceHasThem(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+	inv := sent(t, h, "2026-11-01")
+	pays := []ImportedPayment{
+		{Input: PaymentInput{PaymentDate: "2026-11-05", Price: ptr("121.20")}},
+		{Input: PaymentInput{PaymentDate: "2026-11-05", Price: ptr("-0.20"), ManualPaymentAction: CashPayment, LedgerAccountID: ptr(toClassify)}},
+	}
+	added, err := h.svc.ImportPayments(ctx, adminID, owner, EntityType, inv.ID, pays)
+	if err != nil || !added {
+		t.Fatalf("added %v, %v", added, err)
+	}
+	got, _ := h.svc.Invoice(ctx, adminID, inv.ID, owner)
+	if got.State != Paid || got.Unpaid() != 0 || len(got.Payments) != 2 {
+		t.Fatalf("invoice = %+v", got)
+	}
+	for _, p := range got.Payments {
+		if p.Price == -20 && (p.LedgerAccountID == nil || *p.LedgerAccountID != toClassify) {
+			t.Errorf("cash payment on %v, want the category given", p.LedgerAccountID)
+		}
+	}
+	// It has payments now: again adds nothing.
+	if added, err := h.svc.ImportPayments(ctx, adminID, owner, EntityType, inv.ID, pays); err != nil || added {
+		t.Errorf("again: %v, %v", added, err)
+	}
+}
+
 func TestRegisterPaymentValidates(t *testing.T) {
 	h := newHarness(t)
 	ctx := context.Background()

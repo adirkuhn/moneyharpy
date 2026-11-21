@@ -57,6 +57,10 @@ func newFakeMoneybird(t *testing.T) *httptest.Server {
 			"504000000000000165": `{"id":"504000000000000165","contact_id":"504000000000000501","reference":"PUR-78","date":"2026-02-15","due_date":"2026-03-01","entry_number":7,"currency":"EUR","prices_are_incl_tax":false,"state":"paid",
 				"details":[{"id":"504000000000000167","description":"Ink","amount":"1","price":"20","tax_rate_id":"504000000000000912","ledger_account_id":"504000000000000904"}],
 				"payments":[{"id":"504000000000000168","payment_date":"2026-02-20","price":"24.2","price_base":"24.2"}],"attachments":[]}`,
+			// Paid a little too much, then put right, as Moneybird allows.
+			"504000000000000170": `{"id":"504000000000000170","contact_id":"504000000000000501","reference":"PUR-80","date":"2026-02-17","currency":"EUR","prices_are_incl_tax":false,"state":"paid",
+				"details":[{"id":"504000000000000171","description":"Paper","amount":"1","price":"100","tax_rate_id":"504000000000000912","ledger_account_id":"504000000000000904"}],
+				"payments":[{"id":"504000000000000172","payment_date":"2026-02-18","price":"121.2","price_base":"121.2"},{"id":"504000000000000173","payment_date":"2026-02-18","price":"-0.2","price_base":"-0.2"}],"attachments":[]}`,
 			// Not processed in Moneybird yet: it books nothing.
 			"504000000000000166": `{"id":"504000000000000166","contact_id":"504000000000000501","reference":"PUR-79","date":"2026-02-16","currency":"EUR","prices_are_incl_tax":false,"state":"new",
 				"details":[{"id":"504000000000000169","description":"Toner","amount":"1","price":"50","tax_rate_id":"504000000000000912","ledger_account_id":"504000000000000904"}],"payments":[],"attachments":[]}`,

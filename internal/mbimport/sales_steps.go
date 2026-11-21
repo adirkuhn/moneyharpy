@@ -181,6 +181,7 @@ func (r *run) financialMutations(ctx context.Context) error {
 }
 
 func (r *run) salesInvoices(ctx context.Context) error {
+	r.revisitPayments(StepSalesInvoices, kindSalesInvoice, sales.EntityType)
 	return r.synced(ctx, StepSalesInvoices, "sales_invoices", kindSalesInvoice, everything, func(ctx context.Context, raw json.RawMessage) (resource.ID, error) {
 		var inv mbSalesInvoice
 		if err := json.Unmarshal(raw, &inv); err != nil {
@@ -264,6 +265,7 @@ func (r *run) salesInvoices(ctx context.Context) error {
 }
 
 func (r *run) externalInvoices(ctx context.Context) error {
+	r.revisitPayments(StepExternalInvoices, kindExternalInvoice, sales.ExternalEntityType)
 	return r.synced(ctx, StepExternalInvoices, "external_sales_invoices", kindExternalInvoice, everything, func(ctx context.Context, raw json.RawMessage) (resource.ID, error) {
 		var e mbExternalInvoice
 		if err := json.Unmarshal(raw, &e); err != nil {
