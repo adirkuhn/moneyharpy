@@ -12,7 +12,7 @@ func toMoneybirdImport(j mbimport.Job) MoneybirdImport {
 		SourceAdministrationId: j.SourceID, SourceName: j.SourceName, State: MoneybirdImportState(j.State),
 		Steps: make([]MoneybirdImportStep, len(j.Steps)), WaitingUntil: j.WaitingUntil, Error: j.Error,
 		NextAttemptAt: retryAt(j), TokenKept: j.Token != "",
-		StartedAt:     j.StartedAt, FinishedAt: j.FinishedAt, UpdatedAt: j.UpdatedAt,
+		StartedAt: j.StartedAt, FinishedAt: j.FinishedAt, UpdatedAt: j.UpdatedAt,
 	}
 	for i, st := range j.Steps {
 		problems := st.Problems
