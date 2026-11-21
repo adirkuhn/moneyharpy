@@ -115,8 +115,8 @@ func TestImportKeepsTheValueChangesAsTheSourceBookedThem(t *testing.T) {
 	// come in as they are, booked, and the asset goes on from there.
 	h := newHarness()
 	in := ImportedAsset{
-		Origin: resource.Origin{ID: 4801},
-		Input:  input("Car", "2025-01-14", "20003.60", 6, "5000"),
+		Origin:  resource.Origin{ID: 4801},
+		Input:   input("Car", "2025-01-14", "20003.60", 6, "5000"),
 		Sources: []resource.ID{purchaseLine, 999},
 		ValueChanges: []ValueChange{
 			{Type: Linear, Date: day("2025-01-31"), Amount: amount("-120.99")},
